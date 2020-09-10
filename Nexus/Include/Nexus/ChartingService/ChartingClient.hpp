@@ -73,7 +73,6 @@ namespace Nexus::ChartingService {
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_queryRoutines;
 
-      void Shutdown();
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void OnSecurityQuery(ServiceProtocolClient& client, int queryId,
         const Queries::SequencedQueryVariant& value);
@@ -94,7 +93,6 @@ namespace Nexus::ChartingService {
       Beam::Store(m_clientHandler.GetSlots()), std::bind(
       &ChartingClient::OnSecurityQuery, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
-    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -166,13 +164,8 @@ namespace Nexus::ChartingService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void ChartingClient<B>::Shutdown() {
     m_clientHandler.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename B>

@@ -97,7 +97,6 @@ namespace Nexus::MarketDataService {
       SecuritySubscriptions<TimeAndSale> m_timeAndSaleSubscriptions;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       void OnQueryOrderImbalances(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
         const MarketWideDataQuery& query);
@@ -149,7 +148,6 @@ namespace Nexus::MarketDataService {
       : m_administrationClient(std::forward<AF>(administrationClient)),
         m_registry(std::forward<RF>(registry)),
         m_dataStore(std::forward<DF>(dataStore)) {
-    m_openState.SetOpening();
     try {
       auto securityInfo = m_dataStore->LoadAllSecurityInfo();
       for(auto& entry : securityInfo) {
@@ -157,10 +155,9 @@ namespace Nexus::MarketDataService {
       }
       m_entitlementDatabase = m_administrationClient->LoadEntitlements();
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename R, typename D, typename A>
@@ -190,11 +187,10 @@ namespace Nexus::MarketDataService {
     m_registry->PublishBboQuote(bboQuote, sourceId, *m_dataStore,
       [&] (const auto& bboQuote) {
         m_dataStore->Store(bboQuote);
-        m_bboQuoteSubscriptions.Publish(bboQuote,
-          [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<BboQuoteMessage>(clients,
-              bboQuote);
-          });
+        m_bboQuoteSubscriptions.Publish(bboQuote, [&] (const auto& clients) {
+          Beam::Services::BroadcastRecordMessage<BboQuoteMessage>(clients,
+            bboQuote);
+        });
       });
   }
 
@@ -340,13 +336,8 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::Shutdown() {
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename R, typename D, typename A>
@@ -543,11 +534,10 @@ namespace Nexus::MarketDataService {
   SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
       OnLoadSecurityTechnicals(ServiceProtocolClient& client,
       const Security& security) {
-    auto securityTechnicals = m_registry->FindSecurityTechnicals(security);
-    if(!securityTechnicals.is_initialized()) {
-      return {};
+    if(auto securityTechnicals = m_registry->FindSecurityTechnicals(security)) {
+      return *securityTechnicals;
     }
-    return *securityTechnicals;
+    return {};
   }
 
   template<typename C, typename R, typename D, typename A>

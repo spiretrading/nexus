@@ -126,9 +126,7 @@ namespace Nexus::AdministrationService {
   };
 
   inline LocalAdministrationDataStore::LocalAdministrationDataStore()
-      : m_lastMessageId(0) {
-    m_openState.SetOpen();
-  }
+    : m_lastMessageId(0) {}
 
   inline LocalAdministrationDataStore::~LocalAdministrationDataStore() {
     Close();
@@ -334,10 +332,7 @@ namespace Nexus::AdministrationService {
   }
 
   inline void LocalAdministrationDataStore::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   inline std::vector<AccountModificationRequest::Id>

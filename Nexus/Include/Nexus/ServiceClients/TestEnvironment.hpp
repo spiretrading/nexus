@@ -114,7 +114,7 @@ namespace Nexus {
        * @param timestamp The timestamp.
        */
       void UpdateBboPrice(const Security& security, Money bidPrice,
-        Money askPrice, const boost::posix_time::ptime& timestamp);
+        Money askPrice, boost::posix_time::ptime timestamp);
 
       /**
        * Updates the price of a BboQuote.
@@ -256,7 +256,6 @@ namespace Nexus {
       TestEnvironment& operator =(const TestEnvironment&) = delete;
       template<typename Index, typename Value>
       void PublishMarketData(const Index& index, const Value& value);
-      void Shutdown();
   };
 
   inline TestEnvironment::TestEnvironment()
@@ -275,27 +274,26 @@ namespace Nexus {
         boost::posix_time::second_clock::universal_time()) {}
 
   inline TestEnvironment::TestEnvironment(
-    std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
-    historicalDataStore, boost::posix_time::ptime time)
-    : m_timeEnvironment(time),
-      m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
-        std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-        Beam::Ref(m_timeEnvironment)))),
-      m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
-      m_uidClient(m_uidEnvironment.BuildClient()),
-      m_registryEnvironment(m_serviceLocatorClient),
-      m_definitionsEnvironment(m_serviceLocatorClient),
-      m_administrationEnvironment(m_serviceLocatorClient),
-      m_administrationClient(m_administrationEnvironment.BuildClient(
-        Beam::Ref(*m_serviceLocatorClient))),
-      m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
-        std::move(historicalDataStore)),
-      m_marketDataClient(m_marketDataEnvironment.BuildClient(
-        Beam::Ref(*m_serviceLocatorClient))),
-      m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
-      m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
-        m_timeClient) {
-    m_openState.SetOpening();
+      std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
+      historicalDataStore, boost::posix_time::ptime time)
+      : m_timeEnvironment(time),
+        m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
+          std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
+          Beam::Ref(m_timeEnvironment)))),
+        m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
+        m_uidClient(m_uidEnvironment.BuildClient()),
+        m_registryEnvironment(m_serviceLocatorClient),
+        m_definitionsEnvironment(m_serviceLocatorClient),
+        m_administrationEnvironment(m_serviceLocatorClient),
+        m_administrationClient(m_administrationEnvironment.BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
+        m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
+          std::move(historicalDataStore)),
+        m_marketDataClient(m_marketDataEnvironment.BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
+        m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
+        m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
+          m_timeClient) {
     try {
       auto definitionsClient = m_definitionsEnvironment.BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
@@ -321,10 +319,9 @@ namespace Nexus {
       m_serviceLocatorClient->Associate(rootAccount,
         m_administrationClient->LoadServicesRootEntry());
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   inline TestEnvironment::~TestEnvironment() {
@@ -368,8 +365,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::UpdateBboPrice(const Security& security,
-      Money bidPrice, Money askPrice,
-      const boost::posix_time::ptime& timestamp) {
+      Money bidPrice, Money askPrice, boost::posix_time::ptime timestamp) {
     auto quote = BboQuote(Quote(bidPrice, 100, Side::BID),
       Quote(askPrice, 100, Side::ASK), timestamp);
     Publish(security, quote);
@@ -567,25 +563,6 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename Index, typename Value>
-  void TestEnvironment::PublishMarketData(const Index& index,
-      const Value& value) {
-    if(Beam::Queries::GetTimestamp(value) !=
-        boost::posix_time::not_a_date_time) {
-      m_timeEnvironment.SetTime(Beam::Queries::GetTimestamp(value));
-      GetMarketDataEnvironment().Publish(index, value);
-    } else {
-      auto revisedValue = value;
-      Beam::Queries::GetTimestamp(revisedValue) = m_timeEnvironment.GetTime();
-      GetMarketDataEnvironment().Publish(index, revisedValue);
-    }
-    Beam::Routines::FlushPendingRoutines();
-  }
-
-  inline void TestEnvironment::Shutdown() {
     m_riskEnvironment->Close();
     m_orderExecutionClient->Close();
     m_orderExecutionEnvironment->Close();
@@ -603,7 +580,22 @@ namespace Nexus {
     m_serviceLocatorEnvironment.Close();
     m_timeClient->Close();
     m_timeEnvironment.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
+  }
+
+  template<typename Index, typename Value>
+  void TestEnvironment::PublishMarketData(const Index& index,
+      const Value& value) {
+    if(Beam::Queries::GetTimestamp(value) !=
+        boost::posix_time::not_a_date_time) {
+      m_timeEnvironment.SetTime(Beam::Queries::GetTimestamp(value));
+      GetMarketDataEnvironment().Publish(index, value);
+    } else {
+      auto revisedValue = value;
+      Beam::Queries::GetTimestamp(revisedValue) = m_timeEnvironment.GetTime();
+      GetMarketDataEnvironment().Publish(index, revisedValue);
+    }
+    Beam::Routines::FlushPendingRoutines();
   }
 }
 

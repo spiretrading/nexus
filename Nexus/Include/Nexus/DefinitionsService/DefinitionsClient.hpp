@@ -67,8 +67,6 @@ namespace Nexus::DefinitionsService {
     private:
       Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename B>
@@ -76,7 +74,6 @@ namespace Nexus::DefinitionsService {
   DefinitionsClient<B>::DefinitionsClient(BF&& clientBuilder)
       : m_clientHandler(std::forward<BF>(clientBuilder)) {
     RegisterDefinitionsServices(Beam::Store(m_clientHandler.GetSlots()));
-    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -155,13 +152,8 @@ namespace Nexus::DefinitionsService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void DefinitionsClient<B>::Shutdown() {
     m_clientHandler.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

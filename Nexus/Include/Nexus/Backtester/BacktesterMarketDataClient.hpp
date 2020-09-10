@@ -86,17 +86,14 @@ namespace Nexus {
       BacktesterMarketDataClient(const BacktesterMarketDataClient&) = delete;
       BacktesterMarketDataClient& operator =(
         const BacktesterMarketDataClient&) = delete;
-      void Shutdown();
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-      Beam::Ref<BacktesterMarketDataService> service,
-      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
-      marketDataClient)
-      : m_service(service.Get()),
-        m_marketDataClient(std::move(marketDataClient)) {
-    m_openState.SetOpen();
-  }
+    Beam::Ref<BacktesterMarketDataService> service,
+    std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+    marketDataClient)
+    : m_service(service.Get()),
+      m_marketDataClient(std::move(marketDataClient)) {}
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();
@@ -197,12 +194,8 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void BacktesterMarketDataClient::Shutdown() {
     m_marketDataClient->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

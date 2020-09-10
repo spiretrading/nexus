@@ -30,29 +30,30 @@
 
 namespace Nexus::MarketDataService::Tests {
 
-  /** Wraps most components needed to run an instance of the MarketDataService
-      with helper functions.
+  /**
+   * Wraps most components needed to run an instance of the MarketDataService
+   * with helper functions.
    */
   class MarketDataServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs an MarketDataServiceTestEnvironment.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient to use.
-        \param administrationClient The AdministrationClient to use.
-      */
+      /**
+       * Constructs an MarketDataServiceTestEnvironment.
+       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       * @param administrationClient The AdministrationClient to use.
+       */
       MarketDataServiceTestEnvironment(
         std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient,
         std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         administrationClient);
 
-      //! Constructs an MarketDataServiceTestEnvironment.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient to use.
-        \param administrationClient The AdministrationClient to use.
-        \param dataStore The data store containing market data to test with.
-      */
+      /**
+       * Constructs an MarketDataServiceTestEnvironment.
+       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       * @param administrationClient The AdministrationClient to use.
+       * @param dataStore The data store containing market data to test with.
+       */
       MarketDataServiceTestEnvironment(
         std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient,
@@ -62,61 +63,61 @@ namespace Nexus::MarketDataService::Tests {
 
       ~MarketDataServiceTestEnvironment();
 
-      //! Returns the historical data store.
+      /** Returns the historical data store. */
       const VirtualHistoricalDataStore& GetDataStore() const;
 
-      //! Returns the MarketDataRegistry.
+      /** Returns the MarketDataRegistry. */
       const MarketDataRegistry& GetRegistry() const;
 
-      //! Publishes an OrderImbalance.
-      /*!
-        \param market The market to publish to.
-        \param orderImbalance The OrderImbalance to publish.
-      */
+      /**
+       * Publishes an OrderImbalance.
+       * @param market The market to publish to.
+       * @param orderImbalance The OrderImbalance to publish.
+       */
       void Publish(MarketCode market, const OrderImbalance& orderImbalance);
 
-      //! Publishes a BboQuote.
-      /*!
-        \param security The Security to publish to.
-        \param bboQuote The BboQuote to publish.
-      */
+      /**
+       * Publishes a BboQuote.
+       * @param security The Security to publish to.
+       * @param bboQuote The BboQuote to publish.
+       */
       void Publish(const Security& security, const BboQuote& bboQuote);
 
-      //! Publishes a BookQuote.
-      /*!
-        \param security The Security to publish to.
-        \param bookQuote The BookQuote to publish.
-      */
+      /**
+       * Publishes a BookQuote.
+       * @param security The Security to publish to.
+       * @param bookQuote The BookQuote to publish.
+       */
       void Publish(const Security& security, const BookQuote& bookQuote);
 
-      //! Publishes a MarketQuote.
-      /*!
-        \param security The Security to publish to.
-        \param marketQuote The MarketQuote to publish.
-      */
+      /**
+       * Publishes a MarketQuote.
+       * @param security The Security to publish to.
+       * @param marketQuote The MarketQuote to publish.
+       */
       void Publish(const Security& security, const MarketQuote& marketQuote);
 
-      //! Publishes a TimeAndSale.
-      /*!
-        \param security The Security to publish to.
-        \param timeAndSale The TimeAndSale to publish.
-      */
+      /**
+       * Publishes a TimeAndSale.
+       * @param security The Security to publish to.
+       * @param timeAndSale The TimeAndSale to publish.
+       */
       void Publish(const Security& security, const TimeAndSale& timeAndSale);
 
-      //! Builds a new MarketDataClient.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate the MarketDataClient.
-      */
+      /**
+       * Builds a new MarketDataClient.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate the MarketDataClient.
+       */
       std::unique_ptr<VirtualMarketDataClient> BuildClient(
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
-      //! Builds a new MarketDataFeedClient.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate the MarketDataFeedClient.
-      */
+      /**
+       * Builds a new MarketDataFeedClient.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate the MarketDataFeedClient.
+       */
       std::unique_ptr<VirtualMarketDataFeedClient> BuildFeedClient(
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);

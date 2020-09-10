@@ -46,14 +46,11 @@ namespace Nexus::RiskService {
       std::unique_ptr<Connection> m_connection;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
-
-      void Shutdown();
   };
 
   template<typename C>
   SqlRiskDataStore<C>::SqlRiskDataStore(std::unique_ptr<Connection> connection)
       : m_connection(std::move(connection)) {
-    m_openState.SetOpening();
     try {
       m_connection->open();
       m_connection->execute(Viper::create_if_not_exists(
@@ -63,10 +60,9 @@ namespace Nexus::RiskService {
       m_connection->execute(Viper::create_if_not_exists(
         GetInventoryExcludedOrdersRow(), "inventory_excluded_orders"));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C>
@@ -136,15 +132,10 @@ namespace Nexus::RiskService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void SqlRiskDataStore<C>::Shutdown() {
     m_tasks.Break();
     m_tasks.Wait();
     m_connection->close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

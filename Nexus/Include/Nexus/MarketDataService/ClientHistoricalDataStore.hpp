@@ -25,8 +25,8 @@ namespace Nexus::MarketDataService {
        * Constructs a ClientHistoricalDataStore.
        * @param client Initializes the client to wrap.
        */
-      template<typename MarketDataClientForward>
-      ClientHistoricalDataStore(MarketDataClientForward&& client);
+      template<typename CF>
+      ClientHistoricalDataStore(CF&& client);
 
       ~ClientHistoricalDataStore();
 
@@ -82,16 +82,12 @@ namespace Nexus::MarketDataService {
 
       template<typename T, typename Query, typename F>
       std::vector<T> SubmitQuery(const Query& query, F f);
-      void Shutdown();
   };
 
   template<typename C>
-  template<typename MarketDataClientForward>
-  ClientHistoricalDataStore<C>::ClientHistoricalDataStore(
-      MarketDataClientForward&& client)
-      : m_client(std::forward<MarketDataClientForward>(client)) {
-    m_openState.SetOpen();
-  }
+  template<typename CF>
+  ClientHistoricalDataStore<C>::ClientHistoricalDataStore(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
   template<typename C>
   ClientHistoricalDataStore<C>::~ClientHistoricalDataStore() {
@@ -200,10 +196,7 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   void ClientHistoricalDataStore<C>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
+    m_openState.Close();
   }
 
   template<typename C>
@@ -219,14 +212,9 @@ namespace Nexus::MarketDataService {
     } else {
       ((*m_client).*f)(query, queue);
     }
-    std::vector<T> matches;
+    auto matches = std::vector<T>();
     Beam::Flush(queue, std::back_inserter(matches));
     return matches;
-  }
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Shutdown() {
-    m_openState.SetClosed();
   }
 }
 

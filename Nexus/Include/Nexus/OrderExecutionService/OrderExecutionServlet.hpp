@@ -26,75 +26,63 @@
 
 namespace Nexus::OrderExecutionService {
 
-  /*! Stores and executes Orders.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam TimeClientType The type of TimeClient used for timestamps.
-      \tparam ServiceLocatorClientType The type of ServiceLocatorClient used.
-      \tparam UidClientType The type of UidClient generating unique order ids.
-      \tparam AdministrationClientType The type of AdministrationClient to use.
-      \tparam OrderExecutionDriverType The OrderExecutionDriver submitting and
-              receiving the execution messaging.
-      \tparam OrderExecutionDataStoreType The type of OrderExecutionDataStore
-              to use.
+  /**
+   * Implements the servlet handling order submissions and cancellations.
+   * @param <C> The container instantiating this servlet.
+   * @param <T> The type of TimeClient used for timestamps.
+   * @param <S> The type of ServiceLocatorClient used.
+   * @param <U> The type of UidClient generating unique order ids.
+   * @param <A> The type of AdministrationClient to use.
+   * @param <O> The OrderExecutionDriver submitting and receiving the execution
+   *        messaging.
+   * @param <D> The type of OrderExecutionDataStore to use.
    */
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
   class OrderExecutionServlet : private boost::noncopyable {
     public:
-      using Container = ContainerType;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of TimeClient used for timestamps.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /** The type of TimeClient used for timestamps. */
+      using TimeClient = Beam::GetTryDereferenceType<T>;
 
-      //! The type of ServiceLocatorClient used.
-      using ServiceLocatorClient = Beam::GetTryDereferenceType<
-        ServiceLocatorClientType>;
+      /** The type of ServiceLocatorClient used. */
+      using ServiceLocatorClient = Beam::GetTryDereferenceType<S>;
 
-      //! The type of UidClient generating unique order ids.
-      using UidClient = Beam::GetTryDereferenceType<UidClientType>;
+      /** The type of UidClient generating unique order ids. */
+      using UidClient = Beam::GetTryDereferenceType<U>;
 
-      //! The type of AdministrationClient used to check permissions.
-      using AdministrationClient = Beam::GetTryDereferenceType<
-        AdministrationClientType>;
+      /** The type of AdministrationClient used to check permissions. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The OrderExecutionDriver submitting and receiving the execution
-      //! messaging.
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<
-        OrderExecutionDriverType>;
+      /**
+       * The OrderExecutionDriver submitting and receiving the execution
+       * messaging.
+       */
+      using OrderExecutionDriver = Beam::GetTryDereferenceType<O>;
 
-      //! The type of OrderExecutionDataStore used.
-      using OrderExecutionDataStore = Beam::GetTryDereferenceType<
-        OrderExecutionDataStoreType>;
+      /** The type of OrderExecutionDataStore used. */
+      using OrderExecutionDataStore = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs an OrderExecutionServlet.
-      /*!
-        \param sessionStartTime The time when the current trading session
-               started.
-        \param marketDatabase The MarketDatabase to use.
-        \param timeClient Initializes the TimeClient.
-        \param serviceLocatorClient Initializes the ServiceLocatorClient.
-        \param uidClient Initializes the UidClient.
-        \param administrationClient Initializes the AdministrationClient.
-        \param driver Initializes the OrderExecutionDriver.
-        \param dataStore Initializes the OrderExecutionDataStore.
-      */
-      template<typename TimeClientForward,
-        typename ServiceLocatorClientForward, typename UidClientForward,
-        typename AdministrationClientForward,
-        typename OrderExecutionDriverForward,
-        typename OrderExecutionDataStoreForward>
-      OrderExecutionServlet(const boost::posix_time::ptime& sessionStartTime,
-        const MarketDatabase& marketDatabase,
-        const DestinationDatabase& destinationDatabase,
-        TimeClientForward&& timeClient,
-        ServiceLocatorClientForward&& serviceLocatorClient,
-        UidClientForward&& uidClient,
-        AdministrationClientForward&& administrationClient,
-        OrderExecutionDriverForward&& driver,
-        OrderExecutionDataStoreForward&& dataStore);
+      /**
+       * Constructs an OrderExecutionServlet.
+       * @param sessionStartTime The time when the current trading session
+       *        started.
+       * @param marketDatabase The MarketDatabase to use.
+       * @param timeClient Initializes the TimeClient.
+       * @param serviceLocatorClient Initializes the ServiceLocatorClient.
+       * @param uidClient Initializes the UidClient.
+       * @param administrationClient Initializes the AdministrationClient.
+       * @param driver Initializes the OrderExecutionDriver.
+       * @param dataStore Initializes the OrderExecutionDataStore.
+       */
+      template<typename TF, typename SF, typename UF, typename AF, typename OF,
+        typename DF>
+      OrderExecutionServlet(boost::posix_time::ptime sessionStartTime,
+        MarketDatabase marketDatabase, DestinationDatabase destinationDatabase,
+        TF&& timeClient, SF&& serviceLocatorClient, UF&& uidClient,
+        AF&& administrationClient, OF&& driver, DF&& dataStore);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -111,14 +99,12 @@ namespace Nexus::OrderExecutionService {
       boost::posix_time::ptime m_sessionStartTime;
       MarketDatabase m_marketDatabase;
       DestinationDatabase m_destinationDatabase;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
-      Beam::GetOptionalLocalPtr<ServiceLocatorClientType>
-        m_serviceLocatorClient;
-      Beam::GetOptionalLocalPtr<UidClientType> m_uidClient;
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
-      Beam::GetOptionalLocalPtr<OrderExecutionDriverType> m_driver;
-      Beam::GetOptionalLocalPtr<OrderExecutionDataStoreType> m_dataStore;
+      Beam::GetOptionalLocalPtr<T> m_timeClient;
+      Beam::GetOptionalLocalPtr<S> m_serviceLocatorClient;
+      Beam::GetOptionalLocalPtr<U> m_uidClient;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<O> m_driver;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
       OrderSubmissionRegistry m_registry;
       Beam::Queries::IndexedSubscriptions<OrderRecord,
         Beam::ServiceLocator::DirectoryEntry, ServiceProtocolClient>
@@ -137,7 +123,6 @@ namespace Nexus::OrderExecutionService {
       Beam::RoutineTaskQueue m_tasks;
 
       void RecoverTradingSession();
-      void Shutdown();
       void OnExecutionReport(const ExecutionReport& executionReport,
         const Beam::ServiceLocator::DirectoryEntry& account,
         SyncShortingModel& shortingModel);
@@ -155,51 +140,34 @@ namespace Nexus::OrderExecutionService {
       void OnCancelOrder(ServiceProtocolClient& client, OrderId orderId);
   };
 
-  template<typename TimeClientType, typename ServiceLocatorClientType,
-    typename UidClientType, typename AdministrationClientType,
-    typename OrderExecutionDriverType, typename OrderExecutionDataStoreType>
+  template<typename T, typename S, typename U, typename A, typename O,
+    typename D>
   struct MetaOrderExecutionServlet {
     using Session = OrderExecutionSession;
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = OrderExecutionServlet<ContainerType, TimeClientType,
-        ServiceLocatorClientType, UidClientType, AdministrationClientType,
-        OrderExecutionDriverType, OrderExecutionDataStoreType>;
+      using type = OrderExecutionServlet<C, T, S, U, A, O, D>;
     };
   };
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  template<typename TimeClientForward, typename ServiceLocatorClientForward,
-    typename UidClientForward, typename AdministrationClientForward,
-    typename OrderExecutionDriverForward,
-    typename OrderExecutionDataStoreForward>
-  OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      OrderExecutionServlet(const boost::posix_time::ptime& sessionStartTime,
-      const MarketDatabase& marketDatabase,
-      const DestinationDatabase& destinationDatabase,
-      TimeClientForward&& timeClient,
-      ServiceLocatorClientForward&& serviceLocatorClient,
-      UidClientForward&& uidClient,
-      AdministrationClientForward&& administrationClient,
-      OrderExecutionDriverForward&& driver,
-      OrderExecutionDataStoreForward&& dataStore)
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  template<typename TF, typename SF, typename UF, typename AF, typename OF,
+    typename DF>
+  OrderExecutionServlet<C, T, S, U, A, O, D>::OrderExecutionServlet(
+      boost::posix_time::ptime sessionStartTime, MarketDatabase marketDatabase,
+      DestinationDatabase destinationDatabase, TF&& timeClient,
+      SF&& serviceLocatorClient, UF&& uidClient, AF&& administrationClient,
+      OF&& driver, DF&& dataStore)
       : m_sessionStartTime(sessionStartTime),
-        m_marketDatabase(marketDatabase),
-        m_destinationDatabase(destinationDatabase),
-        m_timeClient(std::forward<TimeClientForward>(timeClient)),
-        m_serviceLocatorClient(std::forward<ServiceLocatorClientForward>(
-          serviceLocatorClient)),
-        m_uidClient(std::forward<UidClientForward>(uidClient)),
-        m_administrationClient(std::forward<AdministrationClientForward>(
-          administrationClient)),
-        m_driver(std::forward<OrderExecutionDriverForward>(driver)),
-        m_dataStore(std::forward<OrderExecutionDataStoreForward>(dataStore)) {
-    m_openState.SetOpening();
+        m_marketDatabase(std::move(marketDatabase)),
+        m_destinationDatabase(std::move(destinationDatabase)),
+        m_timeClient(std::forward<TF>(timeClient)),
+        m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
+        m_uidClient(std::forward<UF>(uidClient)),
+        m_administrationClient(std::forward<AF>(administrationClient)),
+        m_driver(std::forward<OF>(driver)),
+        m_dataStore(std::forward<DF>(dataStore)) {
     try {
       auto accounts = m_serviceLocatorClient->LoadAllAccounts();
       for(auto& account : accounts) {
@@ -207,19 +175,14 @@ namespace Nexus::OrderExecutionService {
       }
       RecoverTradingSession();
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::RegisterServices(
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(slots));
@@ -241,14 +204,10 @@ namespace Nexus::OrderExecutionService {
       std::placeholders::_1, std::placeholders::_2));
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      HandleClientAccepted(ServiceProtocolClient& client) {
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::HandleClientAccepted(
+      ServiceProtocolClient& client) {
     auto& session = client.GetSession();
     m_registry.AddAccount(session.GetAccount());
     session.GrantOrderExecutionPermission(session.GetAccount());
@@ -257,76 +216,65 @@ namespace Nexus::OrderExecutionService {
     }
     auto tradingGroupDirectories =
       m_administrationClient->LoadManagedTradingGroups(session.GetAccount());
-    for(const auto& tradingGroupDirectory : tradingGroupDirectories) {
+    for(auto& tradingGroupDirectory : tradingGroupDirectories) {
       auto tradingGroup = m_administrationClient->LoadTradingGroup(
         tradingGroupDirectory);
-      for(const auto& trader : tradingGroup.GetTraders()) {
+      for(auto& trader : tradingGroup.GetTraders()) {
         m_registry.AddAccount(trader);
         session.GrantOrderExecutionPermission(trader);
       }
     }
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      HandleClientClosed(ServiceProtocolClient& client) {
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::HandleClientClosed(
+      ServiceProtocolClient& client) {
     m_executionReportSubscriptions.RemoveAll(client);
     m_orderSubscriptions.RemoveAll(client);
     m_submissionSubscriptions.RemoveAll(client);
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::Close() {
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    m_dataStore->Close();
+    m_driver->Close();
+    m_shortingModels.Clear();
+    m_openState.Close();
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      RecoverTradingSession() {
-    const auto& accounts = m_serviceLocatorClient->LoadAllAccounts();
-    for(const auto& account : accounts) {
-      AccountQuery recoveryQuery;
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::RecoverTradingSession() {
+    auto& accounts = m_serviceLocatorClient->LoadAllAccounts();
+    for(auto& account : accounts) {
+      auto recoveryQuery = AccountQuery();
       recoveryQuery.SetIndex(account);
       recoveryQuery.SetRange(m_sessionStartTime,
         Beam::Queries::Sequence::Last());
       recoveryQuery.SetSnapshotLimit(
         Beam::Queries::SnapshotLimit::Unlimited());
-      const auto& orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
-      for(const auto& orderRecord : orders) {
+      auto& orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+      for(auto& orderRecord : orders) {
         auto& syncShortingModel = m_shortingModels.GetOrInsert(
           orderRecord->m_info.m_fields.m_account,
           boost::factory<std::shared_ptr<SyncShortingModel>>());
-        syncShortingModel->With(
-          [&] (auto& shortingModel) {
-            shortingModel.Submit(orderRecord->m_info.m_orderId,
-              orderRecord->m_info.m_fields);
-            for(auto& executionReport : orderRecord->m_executionReports) {
-              shortingModel.Update(executionReport);
-            }
-          });
+        syncShortingModel->With([&] (auto& shortingModel) {
+          shortingModel.Submit(orderRecord->m_info.m_orderId,
+            orderRecord->m_info.m_fields);
+          for(auto& executionReport : orderRecord->m_executionReports) {
+            shortingModel.Update(executionReport);
+          }
+        });
         if(!orderRecord->m_executionReports.empty() &&
             IsTerminal(orderRecord->m_executionReports.back().m_status)) {
           continue;
         }
-        const Order* order;
+        auto order = static_cast<const Order*>(nullptr);
         try {
           order = &m_driver->Recover(Beam::Queries::SequencedValue(
             Beam::Queries::IndexedValue(*orderRecord, account),
@@ -334,72 +282,49 @@ namespace Nexus::OrderExecutionService {
         } catch(const std::exception&) {
           continue;
         }
-        order->GetPublisher().With(
-          [&] {
-            boost::optional<std::vector<ExecutionReport>>
-              existingExecutionReports;
-            order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
-              std::bind(&OrderExecutionServlet::OnExecutionReport, this,
-              std::placeholders::_1, order->GetInfo().m_fields.m_account,
-              std::ref(*syncShortingModel))),
-              Beam::Store(existingExecutionReports));
-            if(existingExecutionReports.is_initialized()) {
-              existingExecutionReports->erase(
-                existingExecutionReports->begin(),
-                existingExecutionReports->begin() +
-                orderRecord->m_executionReports.size());
-              for(const auto& executionReport : *existingExecutionReports) {
-                m_tasks.Push(
-                  std::bind(&OrderExecutionServlet::OnExecutionReport, this,
-                  executionReport, order->GetInfo().m_fields.m_account,
-                  std::ref(*syncShortingModel)));
-              }
+        order->GetPublisher().With([&] {
+          auto existingExecutionReports = 
+            boost::optional<std::vector<ExecutionReport>>();
+          order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+            std::bind(&OrderExecutionServlet::OnExecutionReport, this,
+            std::placeholders::_1, order->GetInfo().m_fields.m_account,
+            std::ref(*syncShortingModel))),
+            Beam::Store(existingExecutionReports));
+          if(existingExecutionReports) {
+            existingExecutionReports->erase(existingExecutionReports->begin(),
+              existingExecutionReports->begin() +
+              orderRecord->m_executionReports.size());
+            for(auto& executionReport : *existingExecutionReports) {
+              m_tasks.Push(std::bind(&OrderExecutionServlet::OnExecutionReport,
+                this, executionReport, order->GetInfo().m_fields.m_account,
+                std::ref(*syncShortingModel)));
             }
-          });
+          }
+        });
       }
     }
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::Shutdown() {
-    m_dataStore->Close();
-    m_driver->Close();
-    m_shortingModels.Clear();
-    m_openState.SetClosed();
-  }
-
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      OnExecutionReport(const ExecutionReport& executionReport,
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnExecutionReport(
+      const ExecutionReport& executionReport,
       const Beam::ServiceLocator::DirectoryEntry& account,
       SyncShortingModel& shortingModel) {
-    Beam::Threading::With(shortingModel,
-      [&] (auto& shortingModel) {
-        shortingModel.Update(executionReport);
-      });
+    Beam::Threading::With(shortingModel, [&] (auto& shortingModel) {
+      shortingModel.Update(executionReport);
+    });
     try {
-      m_registry.Publish(
-        Beam::Queries::IndexedValue(executionReport, account),
+      m_registry.Publish(Beam::Queries::IndexedValue(executionReport, account),
         [&] {
           return LoadInitialSequences(*m_dataStore, account);
         },
         [&] (auto& executionReport) {
           m_dataStore->Store(executionReport);
-          m_orderSubscriptions.Publish(executionReport,
-            [&] (auto& clients) {
-              Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(
-                clients, **executionReport);
-            });
+          m_orderSubscriptions.Publish(executionReport, [&] (auto& clients) {
+            Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(
+              clients, **executionReport);
+          });
           m_executionReportSubscriptions.Publish(executionReport,
             [&] (auto& clients) {
               Beam::Services::BroadcastRecordMessage<ExecutionReportMessage>(
@@ -414,13 +339,9 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::
       OnQueryOrderSubmissionsRequest(Beam::Services::RequestToken<
       ServiceProtocolClient, QueryOrderSubmissionsService>& request,
       const AccountQuery& query) {
@@ -431,17 +352,17 @@ namespace Nexus::OrderExecutionService {
       revisedQuery.SetIndex(session.GetAccount());
     }
     if(!session.HasOrderExecutionPermission(revisedQuery.GetIndex())) {
-      OrderSubmissionQueryResult result;
+      auto result = OrderSubmissionQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       revisedQuery.GetFilter(), Beam::Ref(m_liveOrders));
-    OrderSubmissionQueryResult submissionResult;
+    auto submissionResult = OrderSubmissionQueryResult();
     submissionResult.m_queryId = m_submissionSubscriptions.Initialize(
       revisedQuery.GetIndex(), request.GetClient(), revisedQuery.GetRange(),
       std::move(filter));
-    ExecutionReportQueryResult executionReportResult;
+    auto executionReportResult = ExecutionReportQueryResult();
     executionReportResult.m_queryId = m_orderSubscriptions.Initialize(
       revisedQuery.GetIndex(), request.GetClient(),
       Beam::Queries::Range::Total(),
@@ -449,19 +370,15 @@ namespace Nexus::OrderExecutionService {
     submissionResult.m_snapshot = m_dataStore->LoadOrderSubmissions(
       revisedQuery);
     m_submissionSubscriptions.Commit(revisedQuery.GetIndex(),
-      std::move(submissionResult),
-      [&] (auto submissionResult) {
+      std::move(submissionResult), [&] (auto submissionResult) {
         m_orderSubscriptions.Commit(revisedQuery.GetIndex(),
-          std::move(executionReportResult),
-          [&] (auto executionReportResult) {
+          std::move(executionReportResult), [&] (auto executionReportResult) {
             for(auto& executionReport : executionReportResult.m_snapshot) {
               auto submissionIterator = std::find_if(
                 submissionResult.m_snapshot.begin(),
-                submissionResult.m_snapshot.end(),
-                [&] (auto& orderRecord) {
-                  return orderRecord->m_info.m_orderId ==
-                    executionReport->m_id;
-                });
+                submissionResult.m_snapshot.end(), [&] (auto& orderRecord) {
+                return orderRecord->m_info.m_orderId == executionReport->m_id;
+              });
               if(submissionIterator == submissionResult.m_snapshot.end()) {
                 continue;
               }
@@ -480,16 +397,12 @@ namespace Nexus::OrderExecutionService {
             }
             request.SetResult(submissionResult);
           });
-      });
+    });
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::
       OnQueryExecutionReportsRequest(Beam::Services::RequestToken<
       ServiceProtocolClient, QueryExecutionReportsService>& request,
       const AccountQuery& query) {
@@ -500,47 +413,41 @@ namespace Nexus::OrderExecutionService {
       revisedQuery.SetIndex(session.GetAccount());
     }
     if(!session.HasOrderExecutionPermission(revisedQuery.GetIndex())) {
-      ExecutionReportQueryResult result;
+      auto result = ExecutionReportQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       revisedQuery.GetFilter());
-    ExecutionReportQueryResult result;
+    auto result = ExecutionReportQueryResult();
     result.m_queryId = m_executionReportSubscriptions.Initialize(
       revisedQuery.GetIndex(), request.GetClient(), revisedQuery.GetRange(),
       std::move(filter));
     result.m_snapshot = m_dataStore->LoadExecutionReports(revisedQuery);
     m_executionReportSubscriptions.Commit(revisedQuery.GetIndex(),
-      std::move(result),
-      [&] (auto result) {
+      std::move(result), [&] (auto result) {
         request.SetResult(result);
       });
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      OnNewOrderSingleRequest(
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnNewOrderSingleRequest(
       Beam::Services::RequestToken<ServiceProtocolClient,
       NewOrderSingleService>& request, const OrderFields& requestFields) {
     auto& session = request.GetSession();
-    boost::optional<OrderFields> revisedFields;
+    auto revisedFields = boost::optional<OrderFields>();
     auto fields = &requestFields;
     if(fields->m_account.m_type ==
         Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-      if(!revisedFields.is_initialized()) {
+      if(!revisedFields) {
         revisedFields.emplace(*fields);
         fields = revisedFields.get_ptr();
       }
       revisedFields->m_account = session.GetAccount();
     }
     if(fields->m_destination.empty()) {
-      if(!revisedFields.is_initialized()) {
+      if(!revisedFields) {
         revisedFields.emplace(*fields);
         fields = revisedFields.get_ptr();
       }
@@ -549,7 +456,7 @@ namespace Nexus::OrderExecutionService {
         fields->m_security.GetMarket()).m_id;
     }
     if(fields->m_currency == CurrencyId::NONE) {
-      if(!revisedFields.is_initialized()) {
+      if(!revisedFields) {
         revisedFields.emplace(*fields);
         fields = revisedFields.get_ptr();
       }
@@ -563,9 +470,9 @@ namespace Nexus::OrderExecutionService {
       [&] (auto& shortingModel) {
         return shortingModel.Submit(orderId, *fields);
       });
-    OrderInfo orderInfo{*fields, session.GetAccount(), orderId, shortingFlag,
-      m_timeClient->GetTime()};
-    const Order* order;
+    auto orderInfo = OrderInfo(*fields, session.GetAccount(), orderId,
+      shortingFlag, m_timeClient->GetTime());
+    auto order = static_cast<const Order*>(nullptr);
     if(!session.HasOrderExecutionPermission(orderInfo.m_fields.m_account)) {
       auto rejectedOrder = BuildRejectedOrder(orderInfo,
         "Insufficient permissions to execute order.");
@@ -583,9 +490,8 @@ namespace Nexus::OrderExecutionService {
         m_dataStore->Store(orderInfo);
         request.SetResult(orderInfo);
         auto orderRecord = Beam::Queries::SequencedValue(
-          Beam::Queries::IndexedValue(
-          OrderRecord{**orderInfo, {}}, orderInfo->GetIndex()),
-          orderInfo.GetSequence());
+          Beam::Queries::IndexedValue(OrderRecord(**orderInfo, {}),
+          orderInfo->GetIndex()), orderInfo.GetSequence());
         m_submissionSubscriptions.Publish(orderRecord,
           [&] (auto& client) {
             return &client != &request.GetClient();
@@ -601,32 +507,24 @@ namespace Nexus::OrderExecutionService {
       std::ref(*shortingModel))));
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::
-      OnUpdateOrderRequest(ServiceProtocolClient& client, OrderId orderId,
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnUpdateOrderRequest(
+      ServiceProtocolClient& client, OrderId orderId,
       const ExecutionReport& executionReport) {
     auto& session = client.GetSession();
     if(!session.IsAdministrator()) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     auto sanitizedExecutionReport = executionReport;
     sanitizedExecutionReport.m_id = orderId;
     m_driver->Update(session, orderId, sanitizedExecutionReport);
   }
 
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::OnCancelOrder(
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnCancelOrder(
       ServiceProtocolClient& client, OrderId orderId) {
     auto& session = client.GetSession();
     m_driver->Cancel(session, orderId);

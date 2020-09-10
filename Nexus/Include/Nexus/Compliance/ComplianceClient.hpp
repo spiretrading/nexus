@@ -104,7 +104,6 @@ namespace Nexus::Compliance {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void OnComplianceRuleEntry(ServiceProtocolClient& client,
         const ComplianceRuleEntry& entry);
   };
@@ -119,7 +118,6 @@ namespace Nexus::Compliance {
       Store(m_clientHandler.GetSlots()),
       std::bind(&ComplianceClient::OnComplianceRuleEntry, this,
       std::placeholders::_1, std::placeholders::_2));
-    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -188,23 +186,17 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void ComplianceClient<B>::Shutdown() {
     m_clientHandler.Close();
     m_tasks.Break();
-    m_complianceEntryQueues.With(
-      [&] (auto& entries) {
-        for(auto& entry : entries | boost::adaptors::map_values) {
-          for(auto& queue : entry->m_queues) {
-            queue.Break();
-          }
+    m_complianceEntryQueues.With([&] (auto& entries) {
+      for(auto& entry : entries | boost::adaptors::map_values) {
+        for(auto& queue : entry->m_queues) {
+          queue.Break();
         }
-        entries.clear();
-      });
-    m_openState.SetClosed();
+      }
+      entries.clear();
+    });
+    m_openState.Close();
   }
 
   template<typename B>

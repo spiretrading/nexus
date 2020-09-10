@@ -156,8 +156,8 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
       const Security&, Money, Money)>(&TestEnvironment::UpdateBboPrice),
       call_guard<GilRelease>())
     .def("update_bbo_price", static_cast<void (TestEnvironment::*)(
-      const Security&, Money, Money, const ptime&)>(
-      &TestEnvironment::UpdateBboPrice), call_guard<GilRelease>())
+      const Security&, Money, Money, ptime)>(&TestEnvironment::UpdateBboPrice),
+      call_guard<GilRelease>())
     .def("monitor_order_submissions", &TestEnvironment::MonitorOrderSubmissions,
       call_guard<GilRelease>())
     .def("accept", &TestEnvironment::Accept, call_guard<GilRelease>())

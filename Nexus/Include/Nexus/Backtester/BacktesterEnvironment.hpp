@@ -138,7 +138,6 @@ namespace Nexus {
 
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
       BacktesterEnvironment& operator =(const BacktesterEnvironment&) = delete;
-      void Shutdown();
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
@@ -179,7 +178,6 @@ namespace Nexus {
         m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
         m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
           m_timeClient) {
-    m_openState.SetOpening();
     try {
       auto definitionsClient = m_definitionsEnvironment.BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
@@ -209,10 +207,9 @@ namespace Nexus {
       m_serviceLocatorClient->Associate(rootAccount,
         m_administrationClient->LoadServicesRootEntry());
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
@@ -292,10 +289,6 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void BacktesterEnvironment::Shutdown() {
     m_riskEnvironment->Close();
     m_orderExecutionClient->Close();
     m_orderExecutionEnvironment->Close();
@@ -313,7 +306,7 @@ namespace Nexus {
     m_serviceLocatorEnvironment.Close();
     m_timeClient->Close();
     m_eventHandler.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 
