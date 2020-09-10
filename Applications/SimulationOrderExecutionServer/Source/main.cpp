@@ -291,7 +291,7 @@ int main(int argc, const char** argv) {
       &complianceCheckOrderExecutionDriver, dataStore.get())),
       Initialize(orderExecutionServerConnectionInitializer.m_interface,
       Ref(socketThreadPool)), std::bind(factory<std::shared_ptr<LiveTimer>>(),
-      seconds(10), Ref(timerThreadPool)));;
+      seconds(10), Ref(timerThreadPool)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening order server: " << e.what() << std::endl;
     return -1;
