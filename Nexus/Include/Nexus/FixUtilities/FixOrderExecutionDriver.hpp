@@ -88,13 +88,10 @@ namespace Nexus::FixUtilities {
       Beam::Threading::Sync<std::vector<
         std::unique_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   inline FixOrderExecutionDriver::Application::Application(
-    std::shared_ptr<FixApplication> application,
-    std::string configPath)
+    std::shared_ptr<FixApplication> application, std::string configPath)
     : m_application(std::move(application)),
       m_configPath(std::move(configPath)),
       m_isConnected(false) {}
@@ -108,7 +105,6 @@ namespace Nexus::FixUtilities {
         m_fixApplications.insert(std::make_pair(destination, application));
       }
     }
-    m_openState.SetOpening();
     try {
       auto initializedApplications =
         std::unordered_set<std::shared_ptr<Application>>();
@@ -161,10 +157,9 @@ namespace Nexus::FixUtilities {
         }
       }
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   inline FixOrderExecutionDriver::~FixOrderExecutionDriver() {
@@ -252,11 +247,7 @@ namespace Nexus::FixUtilities {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void FixOrderExecutionDriver::Shutdown() {
-    m_openState.SetClosed();
+    m_openState.Close();
     for(auto& fixApplication : m_fixApplications) {
       auto& entry = *(fixApplication.second);
       entry.m_initiator->stop();
