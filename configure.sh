@@ -25,8 +25,8 @@ targets+=" Applications/ReplayMarketDataFeedClient"
 targets+=" Applications/RiskServer"
 targets+=" Applications/SimulationMarketDataFeedClient"
 targets+=" Applications/SimulationOrderExecutionServer"
-targets+=" Applications/WebPortal"
 targets+=" Applications/WebPortal/WebApp"
+targets+=" Applications/WebPortal"
 
 for i in $targets; do
   if [ ! -d "$i" ]; then
