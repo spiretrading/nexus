@@ -133,22 +133,18 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto socketThreadPool = SocketThreadPool();
-  auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
   auto uidClient = ApplicationUidClient();
   try {
-    uidClient.BuildSession(Ref(*serviceLocatorClient), Ref(socketThreadPool),
-      Ref(timerThreadPool));
+    uidClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception& e) {
     std::cerr << "Error connecting to the UID service: " << e.what() <<
       std::endl;
@@ -165,8 +161,7 @@ int main(int argc, const char** argv) {
     auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
     try {
-      timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-        Ref(timerThreadPool));
+      timeClient = MakeLiveNtpTimeClient(ntpPool);
     } catch(const std::exception&) {
       std::cerr << "NTP service unavailable." << std::endl;
       return -1;
@@ -177,8 +172,7 @@ int main(int argc, const char** argv) {
   }
   auto administrationClient = ApplicationAdministrationClient();
   try {
-    administrationClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    administrationClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception& e) {
     std::cerr << "Error connecting to the administration service: " <<
       e.what() << std::endl;
@@ -186,24 +180,21 @@ int main(int argc, const char** argv) {
   }
   auto marketDataClient = ApplicationMarketDataClient();
   try {
-    marketDataClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    marketDataClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
   }
   auto definitionsClient = ApplicationDefinitionsClient();
   try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
   auto complianceClient = ApplicationComplianceClient();
   try {
-    complianceClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    complianceClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the compliance service." << std::endl;
     return -1;
@@ -214,8 +205,7 @@ int main(int argc, const char** argv) {
   auto internalMatchingOrderExecutionDriver =
     ApplicationInternalMatchingOrderExecutionDriver(
     serviceLocatorClient->GetAccount(), Initialize(), marketDataClient.Get(),
-    timeClient.get(), uidClient.Get(), &simulationOrderExecutionDriver,
-    Ref(timerThreadPool));
+    timeClient.get(), uidClient.Get(), &simulationOrderExecutionDriver);
   auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
@@ -289,9 +279,8 @@ int main(int argc, const char** argv) {
       definitionsClient->LoadDestinationDatabase(), timeClient.get(),
       serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
       &complianceCheckOrderExecutionDriver, dataStore.get())),
-      Initialize(orderExecutionServerConnectionInitializer.m_interface,
-      Ref(socketThreadPool)), std::bind(factory<std::shared_ptr<LiveTimer>>(),
-      seconds(10), Ref(timerThreadPool)));
+      Initialize(orderExecutionServerConnectionInitializer.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening order server: " << e.what() << std::endl;
     return -1;

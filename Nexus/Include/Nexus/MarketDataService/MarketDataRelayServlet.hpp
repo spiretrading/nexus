@@ -61,15 +61,13 @@ namespace Nexus::MarketDataService {
        * @param maxMarketDataClients The maximum number of MarketDataClients to
        *        pool.
        * @param administrationClient Used to check for entitlements.
-       * @param timerThreadPool The thread pool used for timed operations.
        */
       template<typename AF>
       MarketDataRelayServlet(EntitlementDatabase entitlementDatabase,
         boost::posix_time::time_duration clientTimeout,
         MarketDataClientBuilder marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-        AF&& administrationClient,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        AF&& administrationClient);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -165,12 +163,10 @@ namespace Nexus::MarketDataService {
       boost::posix_time::time_duration clientTimeout,
       MarketDataClientBuilder marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-      AF&& administrationClient,
-      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
+      AF&& administrationClient)
       : m_entitlementDatabase(entitlementDatabase),
         m_marketDataClients(clientTimeout, marketDataClientBuilder,
-          Beam::Ref(timerThreadPool), minMarketDataClients,
-          maxMarketDataClients),
+          minMarketDataClients, maxMarketDataClients),
         m_administrationClient(std::forward<AF>(administrationClient)) {
     for(auto i = std::size_t(0); i < boost::thread::hardware_concurrency();
         ++i) {

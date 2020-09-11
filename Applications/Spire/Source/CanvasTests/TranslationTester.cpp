@@ -1,4 +1,3 @@
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
@@ -29,7 +28,6 @@ using namespace Spire;
 
 namespace {
   struct Environment {
-    TimerThreadPool m_timerThreadPool;
     TestEnvironment m_environment;
     std::unique_ptr<VirtualServiceClients> m_serviceClients;
     UserProfile m_userProfile;
@@ -40,8 +38,7 @@ namespace {
         m_userProfile("", false, false, GetDefaultCountryDatabase(),
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-          EntitlementDatabase(), Ref(m_timerThreadPool),
-          Ref(*m_serviceClients)) {}
+          EntitlementDatabase(), Ref(*m_serviceClients)) {}
   };
 
   const auto TEST_SECURITY = ParseSecurity("TST.TSX");

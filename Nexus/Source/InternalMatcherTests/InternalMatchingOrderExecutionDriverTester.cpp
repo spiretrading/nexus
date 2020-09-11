@@ -1,5 +1,4 @@
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
@@ -60,7 +59,6 @@ namespace {
       VirtualMarketDataClient*, VirtualTimeClient*,
       std::unique_ptr<VirtualUidClient>, VirtualOrderExecutionDriver*>;
 
-    TimerThreadPool m_timerThreadPool;
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
     std::unique_ptr<VirtualUidClient> m_uidClient;
@@ -75,8 +73,7 @@ namespace {
             Initialize(), &m_serviceClients.GetMarketDataClient(),
             &m_serviceClients.GetTimeClient(),
             m_environment.GetUidEnvironment().BuildClient(),
-            &m_environment.GetOrderExecutionEnvironment().GetDriver(),
-            Ref(m_timerThreadPool)) {
+            &m_environment.GetOrderExecutionEnvironment().GetDriver()) {
       m_environment.MonitorOrderSubmissions(m_mockDriverMonitor);
     }
 

@@ -77,14 +77,12 @@ namespace Details {
        * @param timeClient Initializes the TimeClient.
        * @param uidClient Initializes the UidClient.
        * @param orderExecutionDriver Initializes the OrderExecutionDriver.
-       * @param timerThreadPool The thread pool used for timeouts.
        */
       template<typename BF, typename MF, typename TF, typename UF, typename DF>
       InternalMatchingOrderExecutionDriver(
         const Beam::ServiceLocator::DirectoryEntry& rootSessionAccount,
         BF&& matchReportBuilder, MF&& marketDataClient, TF&& timeClient,
-        UF&& uidClient, DF&& orderExecutionDriver,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        UF&& uidClient, DF&& orderExecutionDriver);
 
       ~InternalMatchingOrderExecutionDriver();
 
@@ -116,8 +114,7 @@ namespace Details {
         Beam::Threading::TimedConditionVariable m_isLiveCondition;
         Beam::Threading::TimedConditionVariable m_isTerminalCondition;
 
-        OrderEntry(const OrderExecutionService::OrderInfo& orderInfo,
-          Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        OrderEntry(const OrderExecutionService::OrderInfo& orderInfo);
       };
       struct SecurityEntry {
         std::vector<std::shared_ptr<OrderEntry>> m_asks;
@@ -131,7 +128,6 @@ namespace Details {
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::GetOptionalLocalPtr<U> m_uidClient;
       Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
-      Beam::Threading::TimerThreadPool* m_timerThreadPool;
       OrderExecutionService::OrderExecutionSession m_rootSession;
       Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
         OrderExecutionService::OrderId> m_orderIds;
@@ -162,8 +158,7 @@ namespace Details {
 
   template<typename B, typename M, typename T, typename U, typename D>
   InternalMatchingOrderExecutionDriver<B, M, T, U, D>::OrderEntry::OrderEntry(
-    const OrderExecutionService::OrderInfo& orderInfo,
-    Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
+    const OrderExecutionService::OrderInfo& orderInfo)
     : m_orderInfo(orderInfo),
       m_driverOrder(nullptr),
       m_order(std::make_shared<OrderExecutionService::PrimitiveOrder>(
@@ -172,9 +167,7 @@ namespace Details {
       m_isMatching(false),
       m_remainingQuantity(orderInfo.m_fields.m_quantity),
       m_isLive(false),
-      m_isTerminal(false),
-      m_isLiveCondition(Beam::Ref(timerThreadPool)),
-      m_isTerminalCondition(Beam::Ref(timerThreadPool)) {}
+      m_isTerminal(false) {}
 
   template<typename B, typename M, typename T, typename U, typename D>
   InternalMatchingOrderExecutionDriver<B, M, T, U, D>::
@@ -187,14 +180,12 @@ namespace Details {
       InternalMatchingOrderExecutionDriver(
       const Beam::ServiceLocator::DirectoryEntry& rootSessionAccount,
       BF&& matchReportBuilder, MF&& marketDataClient, TF&& timeClient,
-      UF&& uidClient, DF&& orderExecutionDriver,
-      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
+      UF&& uidClient, DF&& orderExecutionDriver)
       : m_matchReportBuilder(std::forward<BF>(matchReportBuilder)),
         m_marketDataClient(std::forward<MF>(marketDataClient)),
         m_timeClient(std::forward<TF>(timeClient)),
         m_uidClient(std::forward<UF>(uidClient)),
-        m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
-        m_timerThreadPool(timerThreadPool.Get()) {
+        m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)) {
     m_rootSession.SetAccount(rootSessionAccount);
   }
 
@@ -228,8 +219,7 @@ namespace Details {
       m_orderIds.Insert(orderInfo.m_orderId, orderInfo.m_orderId);
       return m_orderExecutionDriver->Submit(orderInfo);
     }
-    auto orderEntry = std::make_shared<OrderEntry>(orderInfo,
-      Beam::Ref(*m_timerThreadPool));
+    auto orderEntry = std::make_shared<OrderEntry>(orderInfo);
     m_submissionTasks.Push([=] {
       Submit(orderEntry);
     });

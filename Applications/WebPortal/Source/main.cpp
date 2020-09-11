@@ -2,7 +2,6 @@
 #include <iostream>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
@@ -60,8 +59,6 @@ int main(int argc, const char** argv) {
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  auto socketThreadPool = SocketThreadPool();
-  auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
@@ -77,8 +74,7 @@ int main(int argc, const char** argv) {
       std::make_unique<ApplicationServiceClients>(
       serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-      Ref(timerThreadPool)));
+      serviceLocatorClientConfig.m_address));
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
@@ -94,14 +90,13 @@ int main(int argc, const char** argv) {
     [&] (const std::string& username, const std::string& password) {
       return MakeVirtualServiceClients(
         std::make_unique<ApplicationServiceClients>(username, password,
-        serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-        Ref(timerThreadPool)));
+        serviceLocatorClientConfig.m_address));
     };
   auto server = optional<WebPortalServletContainer>();
   try {
     server.emplace(Initialize(std::move(serviceClientsBuilder),
-      Ref(*serviceClients)), Initialize(serverConnectionInitializer.m_interface,
-      Ref(socketThreadPool)));
+      Ref(*serviceClients)),
+      Initialize(serverConnectionInitializer.m_interface));
   } catch(const std::exception& e) {
     std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;

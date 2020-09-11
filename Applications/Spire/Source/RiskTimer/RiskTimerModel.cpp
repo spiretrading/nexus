@@ -17,8 +17,7 @@ namespace {
 RiskTimerModel::RiskTimerModel(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()),
       m_timeRemaining(seconds(0)),
-      m_timeRemainingTimer(milliseconds(UPDATE_INTERVAL),
-        Ref(m_userProfile->GetTimerThreadPool())) {
+      m_timeRemainingTimer(milliseconds(UPDATE_INTERVAL)) {
   connect(&m_updateTimer, &QTimer::timeout, this,
     &RiskTimerModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);

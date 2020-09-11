@@ -90,22 +90,18 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto socketThreadPool = SocketThreadPool();
-  auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
   auto marketDataClient = ApplicationMarketDataClient();
   try {
-    marketDataClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    marketDataClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
@@ -122,10 +118,8 @@ int main(int argc, const char** argv) {
   try {
     chartingServer.emplace(Initialize(serviceLocatorClient.Get(),
       Initialize(marketDataClient.Get())),
-      Initialize(chartingServerConnectionInitializer.m_interface,
-      Ref(socketThreadPool)),
-      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-      Ref(timerThreadPool)));
+      Initialize(chartingServerConnectionInitializer.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;

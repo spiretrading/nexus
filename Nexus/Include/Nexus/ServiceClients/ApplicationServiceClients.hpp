@@ -51,13 +51,9 @@ namespace Nexus {
        * @param username The client's username.
        * @param password The client's password.
        * @param address The IpAddress to connect to.
-       * @param socketThreadPool The SocketThreadPool to use by the clients.
-       * @param timerThreadPool The TimerThreadPool to use by the clients.
        */
       ApplicationServiceClients(std::string username, std::string password,
-        const Beam::Network::IpAddress& address,
-        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        const Beam::Network::IpAddress& address);
 
       ~ApplicationServiceClients();
 
@@ -87,7 +83,6 @@ namespace Nexus {
       void Close();
 
     private:
-      Beam::Threading::TimerThreadPool* m_timerThreadPool;
       Beam::ServiceLocator::ApplicationServiceLocatorClient
         m_serviceLocatorClient;
       Beam::RegistryService::ApplicationRegistryClient m_registryClient;
@@ -110,30 +105,18 @@ namespace Nexus {
 
   inline ApplicationServiceClients::ApplicationServiceClients(
       std::string username, std::string password,
-      const Beam::Network::IpAddress& address,
-      Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
-      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
-      : m_timerThreadPool(timerThreadPool.Get()) {
+      const Beam::Network::IpAddress& address) {
     try {
       m_serviceLocatorClient.BuildSession(std::move(username),
-        std::move(password), address, Beam::Ref(socketThreadPool),
-        Beam::Ref(timerThreadPool));
-      m_registryClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_administrationClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_definitionsClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_marketDataClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_chartingClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_complianceClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_orderExecutionClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
-      m_riskClient.BuildSession(Beam::Ref(*m_serviceLocatorClient),
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
+        std::move(password), address);
+      m_registryClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_administrationClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_definitionsClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_marketDataClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_chartingClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_complianceClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_orderExecutionClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
+      m_riskClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
       auto timeServices = m_serviceLocatorClient->Locate(
         Beam::TimeService::SERVICE_NAME);
       if(timeServices.empty()) {
@@ -144,8 +127,7 @@ namespace Nexus {
       auto ntpPool = Beam::Parsers::Parse<
         std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
         timeService.GetProperties().At("addresses")));
-      m_timeClient = Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
+      m_timeClient = Beam::TimeService::MakeLiveNtpTimeClient(ntpPool);
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;
@@ -209,7 +191,7 @@ namespace Nexus {
   inline std::unique_ptr<ApplicationServiceClients::Timer>
       ApplicationServiceClients::BuildTimer(
       boost::posix_time::time_duration duration) {
-    return std::make_unique<Timer>(duration, Beam::Ref(*m_timerThreadPool));
+    return std::make_unique<Timer>(duration);
   }
 
   inline void ApplicationServiceClients::Close() {

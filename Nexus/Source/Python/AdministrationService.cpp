@@ -450,18 +450,15 @@ void Nexus::Python::ExportApplicationAdministrationClient(
         auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
           [=] () mutable {
             if(delay) {
-              auto delayTimer = LiveTimer(seconds(3),
-                Ref(*GetTimerThreadPool()));
+              auto delayTimer = LiveTimer(seconds(3));
               delayTimer.Start();
               delayTimer.Wait();
             }
             delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses,
-              Ref(*GetSocketThreadPool()));
+            return std::make_unique<TcpSocketChannel>(addresses);
           },
           [=] {
-            return std::make_unique<LiveTimer>(seconds(10),
-              Ref(*GetTimerThreadPool()));
+            return std::make_unique<LiveTimer>(seconds(10));
           });
         return MakeToPythonAdministrationClient(std::make_unique<Client>(
           sessionBuilder));

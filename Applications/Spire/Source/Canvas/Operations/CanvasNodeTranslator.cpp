@@ -1144,10 +1144,8 @@ void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
-  auto timerFactory = [userProfile = &m_context->GetUserProfile()] (
-      time_duration interval) {
-    return make_unique<LiveTimer>(interval,
-      Ref(userProfile->GetTimerThreadPool()));
+  auto timerFactory = [] (time_duration interval) {
+    return make_unique<LiveTimer>(interval);
   };
   auto expiry = InternalTranslation(
     node.GetChildren().front()).Extract<Aspen::Box<ptime>>();
@@ -1642,9 +1640,8 @@ void CanvasNodeTranslationVisitor::Visit(const TimeRangeParameterNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const TimerNode& node) {
   auto period = InternalTranslation(node.GetChildren().front());
-  auto timerThreadPool = &m_context->GetUserProfile().GetTimerThreadPool();
   auto timerFactory = [=] (time_duration interval) {
-    return std::make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
+    return std::make_unique<LiveTimer>(interval);
   };
   m_translation = TimerReactor<Quantity>(timerFactory,
     period.Extract<Aspen::Box<time_duration>>());
