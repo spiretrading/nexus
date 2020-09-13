@@ -88,22 +88,18 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto socketThreadPool = SocketThreadPool();
-  auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
   auto definitionsClient = ApplicationDefinitionsClient();
   try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
@@ -119,12 +115,10 @@ int main(int argc, const char** argv) {
     auto marketDataAddresses = Parse<std::vector<IpAddress>>(
       get<std::string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
-    baseMarketDataFeedClient.emplace(
-      Initialize(marketDataAddresses, Ref(socketThreadPool)),
-      SessionAuthenticator<ApplicationServiceLocatorClient::Client>{
-        Ref(*serviceLocatorClient)},
-      Initialize(samplingTime, Ref(timerThreadPool)),
-      Initialize(seconds{10}, Ref(timerThreadPool)));
+    baseMarketDataFeedClient.emplace(Initialize(marketDataAddresses),
+      SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
+        Ref(*serviceLocatorClient)), Initialize(samplingTime),
+      Initialize(seconds(10)));
   } catch(const std::exception& e) {
     std::cerr << "Error initializing client: " << e.what() << std::endl;
     return -1;
@@ -138,8 +132,7 @@ int main(int argc, const char** argv) {
       DEFAULT_RECEIVE_BUFFER_SIZE);
     options.m_maxDatagramSize = Extract<int>(config, "mtu",
       options.m_maxDatagramSize);
-    multicastSocketChannel.emplace(host, interface, options,
-      Ref(socketThreadPool));
+    multicastSocketChannel.emplace(host, interface, options);
   } catch(const std::exception& e) {
     std::cerr << "Unable to initialize multicast socket: " << e.what() <<
       std::endl;

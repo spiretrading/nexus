@@ -47,13 +47,9 @@ struct LoginDialog::LoginRoutine {
 LoginDialog::LoginRoutine::LoginRoutine()
     : m_loginCount(0) {}
 
-LoginDialog::LoginDialog(std::vector<ServerEntry> servers,
-    Ref<SocketThreadPool> socketThreadPool,
-    Ref<TimerThreadPool> timerThreadPool)
+LoginDialog::LoginDialog(std::vector<ServerEntry> servers)
     : m_ui(std::make_unique<Ui_LoginDialog>()),
       m_servers(std::move(servers)),
-      m_socketThreadPool(socketThreadPool.Get()),
-      m_timerThreadPool(timerThreadPool.Get()),
       m_loginRoutine(std::make_unique<Sync<LoginRoutine>>()),
       m_state(READY) {
   m_ui->setupUi(this);
@@ -153,8 +149,6 @@ void LoginDialog::OnLoginButtonClicked() {
   auto address = m_servers[m_ui->m_serverComboBox->currentIndex()].m_address;
   auto username = GetUsername();
   auto password = GetPassword();
-  auto socketThreadPoolHandle = m_socketThreadPool;
-  auto timerThreadPoolHandle = m_timerThreadPool;
   int currentLoginCount;
   m_state = LOADING;
   With(*m_loginRoutine,
@@ -167,8 +161,7 @@ void LoginDialog::OnLoginButtonClicked() {
       auto serviceLocatorClient =
         std::make_unique<ApplicationServiceLocatorClient>();
       try {
-        serviceLocatorClient->BuildSession(username, password, address,
-          Ref(*socketThreadPoolHandle), Ref(*timerThreadPoolHandle));
+        serviceLocatorClient->BuildSession(username, password, address);
         With(*m_loginRoutine,
           [=, &serviceLocatorClient] (LoginRoutine& loginRoutine) {
             if(loginRoutine.m_loginCount != currentLoginCount) {

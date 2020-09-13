@@ -27,14 +27,10 @@ namespace Spire {
       /*!
         \param serviceLocatorClient The ServiceLocatorClient logged into the
                Spire services.
-        \param socketThreadPool The SocketThreadPool the clients will use.
-        \param timerThreadPool The TimerThreadPool the clients will use.
       */
       SpireServiceClients(
         std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
-        serviceLocatorClient,
-        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        serviceLocatorClient);
 
       ~SpireServiceClients();
 
@@ -84,8 +80,6 @@ namespace Spire {
         m_applicationServiceLocatorClient;
       std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         m_serviceLocatorClient;
-      Beam::Network::SocketThreadPool* m_socketThreadPool;
-      Beam::Threading::TimerThreadPool* m_timerThreadPool;
       std::unique_ptr<Nexus::DefinitionsService::VirtualDefinitionsClient>
         m_definitionsClient;
       std::unique_ptr<Beam::RegistryService::VirtualRegistryClient>

@@ -109,8 +109,7 @@ void Nexus::Python::ExportApplicationServiceClients(pybind11::module& module) {
           const IpAddress& address) {
         return MakeToPythonServiceClients(
           std::make_unique<ApplicationServiceClients>(std::move(username),
-          std::move(password), address, Ref(*GetSocketThreadPool()),
-          Ref(*GetTimerThreadPool())));
+          std::move(password), address));
       }), call_guard<GilRelease>());
 }
 

@@ -32,8 +32,8 @@ CALL:build Applications\Spire %*
 CALL:build Applications\TmxIpMarketDataFeedClient %*
 CALL:build Applications\TmxTl1MarketDataFeedClient %*
 CALL:build Applications\UtpMarketDataFeedClient %*
-CALL:build Applications\WebPortal %*
 CALL:build Applications\WebPortal\WebApp %*
+CALL:build Applications\WebPortal %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

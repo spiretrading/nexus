@@ -26,7 +26,6 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
-    Ref<TimerThreadPool> timerThreadPool,
     Ref<VirtualServiceClients> serviceClients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
@@ -37,7 +36,6 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
       m_marketDatabase(marketDatabase),
       m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
-      m_timerThreadPool(timerThreadPool.Get()),
       m_serviceClients(serviceClients.Get()),
       m_profilePath(path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
@@ -89,10 +87,6 @@ const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
-}
-
-TimerThreadPool& UserProfile::GetTimerThreadPool() {
-  return *m_timerThreadPool;
 }
 
 VirtualServiceClients& UserProfile::GetServiceClients() const {

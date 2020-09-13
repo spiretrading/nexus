@@ -72,8 +72,7 @@ namespace {
       std::vector<Security> securities, SqlDataStore* dataStore,
       const std::vector<IpAddress>& addresses,
       Ref<ApplicationServiceLocatorClient> serviceLocatorClient,
-      LiveNtpTimeClient* timeClient, Ref<SocketThreadPool> socketThreadPool,
-      Ref<TimerThreadPool> timerThreadPool) {
+      LiveNtpTimeClient* timeClient) {
     auto sampling = Extract<time_duration>(config, "sampling");
     auto startTime = Extract<ptime>(config, "start_time");
     auto clientCount = Extract<int>(config, "client_count");
@@ -82,7 +81,7 @@ namespace {
       ++chunks;
     }
     auto timerBuilder = [=] (auto duration) {
-      return std::make_unique<LiveTimer>(duration, Ref(timerThreadPool));
+      return std::make_unique<LiveTimer>(duration);
     };
     auto replayClients =
       std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
@@ -93,11 +92,10 @@ namespace {
         std::min(securities.begin() + (i + 1) * chunks, securities.end()));
       replayClients.emplace_back(std::make_unique<
         ApplicationMarketDataFeedClient>(std::move(securitySubset), startTime,
-        Initialize(Initialize(addresses, Ref(socketThreadPool)),
+        Initialize(Initialize(addresses),
         SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
-        Ref(**serviceLocatorClient)), Initialize(sampling,
-        Ref(timerThreadPool)), Initialize(seconds(10), Ref(timerThreadPool))),
-        dataStore, timeClient, timerBuilder));
+        Ref(**serviceLocatorClient)), Initialize(sampling),
+        Initialize(seconds(10))), dataStore, timeClient, timerBuilder));
     }
     return replayClients;
   }
@@ -128,22 +126,18 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto socketThreadPool = SocketThreadPool();
-  auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
   auto definitionsClient = ApplicationDefinitionsClient();
   try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
@@ -159,8 +153,7 @@ int main(int argc, const char** argv) {
     auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
     try {
-      timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-        Ref(timerThreadPool));
+      timeClient = MakeLiveNtpTimeClient(ntpPool);
     } catch(const std::exception&) {
       std::cerr << "Unable to connect to the time service." << std::endl;
       return -1;
@@ -190,8 +183,7 @@ int main(int argc, const char** argv) {
     auto marketDataAddresses = Parse<std::vector<IpAddress>>(
       get<std::string>(marketDataService.GetProperties().At("addresses")));
     feedClients = BuildReplayClients(config, securities, &historicalDataStore,
-      marketDataAddresses, Ref(serviceLocatorClient), timeClient.get(),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+      marketDataAddresses, Ref(serviceLocatorClient), timeClient.get());
   } catch(const YAML::ParserException& e) {
     std::cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
       "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;

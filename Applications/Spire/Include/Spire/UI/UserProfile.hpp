@@ -52,7 +52,6 @@ namespace Spire {
         \param destinationDatabase Stores the database of all destinations.
         \param entitlementDatabase Stores the database of market data
                entitlements.
-        \param timerThreadPool The ThreadPool used for LiveTimers.
         \param serviceClients The set of clients connected to Spire services.
       */
       UserProfile(const std::string& username, bool isAdministrator,
@@ -64,7 +63,6 @@ namespace Spire {
         const Nexus::DestinationDatabase& destinationDatabase,
         const Nexus::MarketDataService::EntitlementDatabase&
           entitlementDatabase,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool,
         Beam::Ref<Nexus::VirtualServiceClients> serviceClients);
 
       ~UserProfile();
@@ -100,9 +98,6 @@ namespace Spire {
       //! Returns the EntitlementDatabase.
       const Nexus::MarketDataService::EntitlementDatabase&
         GetEntitlementDatabase() const;
-
-      //! Returns the TimerThreadPool.
-      Beam::Threading::TimerThreadPool& GetTimerThreadPool();
 
       //! Returns the set of clients connected to Spire services.
       Nexus::VirtualServiceClients& GetServiceClients() const;
@@ -256,7 +251,6 @@ namespace Spire {
       Nexus::MarketDatabase m_marketDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;
       Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
-      Beam::Threading::TimerThreadPool* m_timerThreadPool;
       mutable Nexus::VirtualServiceClients* m_serviceClients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;

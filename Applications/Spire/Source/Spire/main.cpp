@@ -1,7 +1,5 @@
 #include <filesystem>
 #include <fstream>
-#include <Beam/Network/SocketThreadPool.hpp>
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -193,10 +191,7 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  LoginDialog loginDialog(std::move(servers), Ref(socketThreadPool),
-    Ref(timerThreadPool));
+  LoginDialog loginDialog(std::move(servers));
   auto loginResultCode = loginDialog.exec();
   if(loginResultCode == QDialog::Rejected) {
     return -1;
@@ -205,8 +200,7 @@ int main(int argc, char* argv[]) {
   try {
     serviceClients = MakeVirtualServiceClients(
       std::make_unique<SpireServiceClients>(
-      loginDialog.GetServiceLocatorClient(), Ref(socketThreadPool),
-      Ref(timerThreadPool)));
+      loginDialog.GetServiceLocatorClient()));
   } catch(const std::exception& e) {
     QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
     return -1;
@@ -225,7 +219,7 @@ int main(int argc, char* argv[]) {
     serviceClients->GetDefinitionsClient().LoadMarketDatabase(),
     serviceClients->GetDefinitionsClient().LoadDestinationDatabase(),
     serviceClients->GetAdministrationClient().LoadEntitlements(),
-    Ref(timerThreadPool), Ref(*serviceClients)};
+    Ref(*serviceClients)};
   try {
     userProfile.CreateProfilePath();
   } catch(std::exception&) {

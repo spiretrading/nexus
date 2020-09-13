@@ -106,30 +106,25 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto socketThreadPool = SocketThreadPool();
-  auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
   auto definitionsClient = ApplicationDefinitionsClient();
   try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
   auto administrationClient = ApplicationAdministrationClient();
   try {
-    administrationClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
+    administrationClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the administration service." <<
       std::endl;
@@ -182,8 +177,7 @@ int main(int argc, const char** argv) {
           IncomingMarketDataClientSessionBuilder>>(
           BuildBasicMarketDataClientSessionBuilder<
           IncomingMarketDataClientSessionBuilder>(Ref(*serviceLocatorClient),
-          Ref(socketThreadPool), Ref(timerThreadPool), servicePredicate,
-          REGISTRY_SERVICE_NAME)));
+          servicePredicate, REGISTRY_SERVICE_NAME)));
         if(lastCountries.empty()) {
           return incomingMarketDataClient;
         }
@@ -219,7 +213,7 @@ int main(int argc, const char** argv) {
       "max_connections", 10 * minConnections));
     baseRegistryServlet.emplace(entitlements, clientTimeout,
       marketDataClientBuilder, minConnections, maxConnections,
-      &*administrationClient, Ref(timerThreadPool));
+      &*administrationClient);
   } catch(const std::exception& e) {
     std::cerr << "Error initializing registry servlet: " << e.what() <<
       std::endl;
@@ -236,10 +230,9 @@ int main(int argc, const char** argv) {
   auto server = optional<MarketDataRelayServletContainer>();
   try {
     server.emplace(Initialize(serviceLocatorClient.Get(),
-      baseRegistryServlet.get_ptr()), Initialize(
-      serverConnectionInitializer.m_interface, Ref(socketThreadPool)),
-      std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
-      Ref(timerThreadPool)));
+      baseRegistryServlet.get_ptr()),
+      Initialize(serverConnectionInitializer.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;

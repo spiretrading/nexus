@@ -69,19 +69,14 @@ namespace {
 }
 
 SpireServiceClients::SpireServiceClients(
-  std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient,
-  Ref<SocketThreadPool> socketThreadPool,
-  Ref<TimerThreadPool> timerThreadPool)
+  std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient)
   : m_applicationServiceLocatorClient{std::move(serviceLocatorClient)},
     m_serviceLocatorClient{MakeVirtualServiceLocatorClient(
-      &**m_applicationServiceLocatorClient)},
-    m_socketThreadPool{socketThreadPool.Get()},
-    m_timerThreadPool{timerThreadPool.Get()} {
+      &**m_applicationServiceLocatorClient)} {
   try {
     auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>();
     definitionsClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     auto minimumVersion = (*definitionsClient)->LoadMinimumSpireClientVersion();
     if(minimumVersion > string{SPIRE_VERSION}) {
       BOOST_THROW_EXCEPTION(std::runtime_error{
@@ -99,8 +94,7 @@ SpireServiceClients::SpireServiceClients(
   try {
     auto registryClient = std::make_unique<ApplicationRegistryClient>();
     registryClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_registryClient = MakeVirtualRegistryClient(ByPassPtr(
       std::move(registryClient)));
   } catch(const std::exception&) {
@@ -111,8 +105,7 @@ SpireServiceClients::SpireServiceClients(
     auto administrationClient =
       std::make_unique<ApplicationAdministrationClient>();
     administrationClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_administrationClient = MakeVirtualAdministrationClient(ByPassPtr(
       std::move(administrationClient)));
   } catch(const std::exception&) {
@@ -122,8 +115,7 @@ SpireServiceClients::SpireServiceClients(
   try {
     auto marketDataClient = std::make_unique<ApplicationMarketDataClient>();
     marketDataClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_marketDataClient = MakeVirtualMarketDataClient(ByPassPtr(
       std::move(marketDataClient)));
   } catch(const std::exception&) {
@@ -133,8 +125,7 @@ SpireServiceClients::SpireServiceClients(
   try {
     auto chartingClient = std::make_unique<ApplicationChartingClient>();
     chartingClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_chartingClient = MakeVirtualChartingClient(ByPassPtr(
       std::move(chartingClient)));
   } catch(const std::exception&) {
@@ -144,8 +135,7 @@ SpireServiceClients::SpireServiceClients(
   try {
     auto complianceClient = std::make_unique<ApplicationComplianceClient>();
     complianceClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_complianceClient = MakeVirtualComplianceClient(ByPassPtr(
       std::move(complianceClient)));
   } catch(const std::exception&) {
@@ -161,8 +151,7 @@ SpireServiceClients::SpireServiceClients(
     auto& timeService = timeServices.front();
     auto ntpPool = Parse<vector<IpAddress>>(get<string>(
       timeService.GetProperties().At("addresses")));
-    auto timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(*m_socketThreadPool),
-      Ref(*m_timerThreadPool));
+    auto timeClient = MakeLiveNtpTimeClient(ntpPool);
     m_timeClient = MakeVirtualTimeClient(std::move(timeClient));
   } catch(std::exception&) {
     BOOST_THROW_EXCEPTION(ConnectException{
@@ -172,8 +161,7 @@ SpireServiceClients::SpireServiceClients(
     auto orderExecutionClient =
       std::make_unique<ApplicationOrderExecutionClient>();
     orderExecutionClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_orderExecutionClient = MakeVirtualOrderExecutionClient(ByPassPtr(
       std::move(orderExecutionClient)));
   } catch(const std::exception&) {
@@ -183,8 +171,7 @@ SpireServiceClients::SpireServiceClients(
   try {
     auto riskClient = std::make_unique<ApplicationRiskClient>();
     riskClient->BuildSession(
-      Ref(*(m_applicationServiceLocatorClient->Get())),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+      Ref(*(m_applicationServiceLocatorClient->Get())));
     m_riskClient = MakeVirtualRiskClient(ByPassPtr(std::move(riskClient)));
   } catch(const std::exception&) {
     BOOST_THROW_EXCEPTION(ConnectException{
@@ -241,8 +228,7 @@ VirtualTimeClient& SpireServiceClients::GetTimeClient() const {
 
 std::unique_ptr<VirtualTimer> SpireServiceClients::BuildTimer(
     time_duration expiry) {
-  return MakeVirtualTimer(
-    std::make_unique<LiveTimer>(expiry, Ref(*m_timerThreadPool)));
+  return MakeVirtualTimer(std::make_unique<LiveTimer>(expiry));
 }
 
 void SpireServiceClients::Close() {

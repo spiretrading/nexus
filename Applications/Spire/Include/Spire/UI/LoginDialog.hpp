@@ -34,13 +34,8 @@ namespace Spire::UI {
       //! Constructs the LoginDialog.
       /*!
         \param servers The list of servers available to connect to.
-        \param socketThreadPool The SocketThreadPool to use for socket
-               connections.
-        \param timerThreadPool The TimerThreadPool to use for heartbeats.
       */
-      LoginDialog(std::vector<ServerEntry> servers,
-        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+      LoginDialog(std::vector<ServerEntry> servers);
 
       virtual ~LoginDialog();
 
@@ -61,8 +56,6 @@ namespace Spire::UI {
       struct LoginRoutine;
       std::unique_ptr<Ui_LoginDialog> m_ui;
       std::vector<ServerEntry> m_servers;
-      Beam::Network::SocketThreadPool* m_socketThreadPool;
-      Beam::Threading::TimerThreadPool* m_timerThreadPool;
       std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
         m_serviceLocatorClient;
       std::unique_ptr<Beam::Threading::Sync<LoginRoutine>> m_loginRoutine;

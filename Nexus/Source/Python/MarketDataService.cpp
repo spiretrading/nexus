@@ -338,12 +338,10 @@ namespace {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       MarketDataService::FEED_SERVICE_NAME);
     return MakeToPythonMarketDataFeedClient(
-      std::make_unique<PythonMarketDataFeedClient>(
-      Initialize(addresses, Ref(*GetSocketThreadPool())),
+      std::make_unique<PythonMarketDataFeedClient>(Initialize(addresses),
       SessionAuthenticator<VirtualServiceLocatorClient>(
-      Ref(serviceLocatorClient)),
-      Initialize(sampling, Ref(*GetTimerThreadPool())),
-      Initialize(seconds(10), Ref(*GetTimerThreadPool()))));
+      Ref(serviceLocatorClient)), Initialize(sampling),
+      Initialize(seconds(10))));
   }
 
   auto MakePythonMarketDataFeedClient(
@@ -356,12 +354,10 @@ namespace {
     auto addresses = Parse<std::vector<IpAddress>>(get<std::string>(
       service->GetProperties().At("addresses")));
     return MakeToPythonMarketDataFeedClient(
-      std::make_unique<PythonMarketDataFeedClient>(
-      Initialize(addresses, Ref(*GetSocketThreadPool())),
+      std::make_unique<PythonMarketDataFeedClient>(Initialize(addresses),
       SessionAuthenticator<VirtualServiceLocatorClient>(
-      Ref(serviceLocatorClient)),
-      Initialize(sampling, Ref(*GetTimerThreadPool())),
-      Initialize(seconds(10), Ref(*GetTimerThreadPool()))));
+      Ref(serviceLocatorClient)), Initialize(sampling),
+      Initialize(seconds(10))));
   }
 }
 
@@ -382,18 +378,15 @@ void Nexus::Python::ExportApplicationMarketDataClient(
         auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
           [=] () mutable {
             if(delay) {
-              auto delayTimer = LiveTimer(seconds(3),
-                Ref(*GetTimerThreadPool()));
+              auto delayTimer = LiveTimer(seconds(3));
               delayTimer.Start();
               delayTimer.Wait();
             }
             delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses,
-              Ref(*GetSocketThreadPool()));
+            return std::make_unique<TcpSocketChannel>(addresses);
           },
           [] {
-            return std::make_unique<LiveTimer>(seconds(10),
-              Ref(*GetTimerThreadPool()));
+            return std::make_unique<LiveTimer>(seconds(10));
           });
         return MakeToPythonMarketDataClient(std::make_unique<Client>(
           sessionBuilder));

@@ -35,8 +35,8 @@ targets+=" Applications/SimulationOrderExecutionServer"
 targets+=" Applications/TmxIpMarketDataFeedClient"
 targets+=" Applications/TmxTl1MarketDataFeedClient"
 targets+=" Applications/UtpMarketDataFeedClient"
-targets+=" Applications/WebPortal"
 targets+=" Applications/WebPortal/WebApp"
+targets+=" Applications/WebPortal"
 
 for i in $targets; do
   if [ ! -d "$i" ]; then
