@@ -148,7 +148,6 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto threadPool = ThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
