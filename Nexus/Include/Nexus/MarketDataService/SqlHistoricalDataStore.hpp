@@ -6,7 +6,6 @@
 #include <Beam/Queries/SqlDataStore.hpp>
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Threading/ThreadPool.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
@@ -89,7 +88,6 @@ namespace Nexus::MarketDataService {
         Queries::SqlTranslator>;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
       Beam::DatabaseConnectionPool<Connection> m_writerPool;
-      Beam::Threading::ThreadPool m_threadPool;
       DataStore<Viper::Row<OrderImbalance>, Viper::Row<MarketCode>>
         m_orderImbalanceDataStore;
       DataStore<Viper::Row<BboQuote>, Viper::Row<Security>> m_bboQuoteDataStore;
@@ -116,20 +114,15 @@ namespace Nexus::MarketDataService {
           return connection;
         }),
         m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
-          GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
+          GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
+          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
-          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
+          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
+          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
-          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)) {
+          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)) {
     try {
       auto connection = m_writerPool.Acquire();
       connection->execute(Viper::create_if_not_exists(
