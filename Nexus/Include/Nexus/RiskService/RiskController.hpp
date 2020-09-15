@@ -8,6 +8,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Timer.hpp>
