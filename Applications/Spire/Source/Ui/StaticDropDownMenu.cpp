@@ -87,12 +87,12 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       on_key_press(e);
     } else if(event->type() == QEvent::Show) {
       if(m_entered_text.isEmpty()) {
-        if(!m_is_next_activated) {
-          m_menu_list->clear_activated_item();
-          m_menu_list->activate_next();
-        } else {
+        if(m_is_next_activated) {
           m_menu_list->set_highlight(m_item_delegate.displayText(
             m_current_item));
+        } else {
+          m_menu_list->clear_active_item();
+          m_menu_list->activate_next();
         }
       }
     } else if(event->type() == QEvent::Hide) {

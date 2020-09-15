@@ -62,8 +62,8 @@ namespace Spire {
       //! Returns the currently selected item.
       virtual QVariant get_current_item() const;
 
-      //! True iff the next item should be activated when the list is shown.
-      //! using the down arrow key. Defaults to true.
+      //! True iff the next item should be activated when the list is shown
+      //! using the down arrow key.
       virtual void set_next_activated(bool is_next_activated);
 
       //! Connects a slot to the index selected signal.
