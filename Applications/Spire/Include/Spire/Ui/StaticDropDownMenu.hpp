@@ -62,6 +62,10 @@ namespace Spire {
       //! Returns the currently selected item.
       virtual QVariant get_current_item() const;
 
+      //! True iff the next item should be activated when the list is shown
+      //! using the down arrow key.
+      virtual void set_next_activated(bool is_next_activated);
+
       //! Connects a slot to the index selected signal.
       virtual boost::signals2::connection connect_index_selected_signal(
         const IndexSelectedSignal::slot_type& slot) const;
@@ -73,8 +77,8 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void paintEvent(QPaintEvent* event);
-      void resizeEvent(QResizeEvent* event);
+      void paintEvent(QPaintEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable ValueSelectedSignal m_value_selected_signal;
@@ -89,6 +93,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_menu_activated_connection;
       QString m_entered_text;
       QTimer m_input_timer;
+      bool m_is_next_activated;
 
       void draw_arrow(const QImage& arrow_image, QPainter& painter);
       void draw_background(const QColor& color, QPainter& painter);
