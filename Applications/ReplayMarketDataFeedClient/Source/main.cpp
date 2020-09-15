@@ -13,6 +13,7 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -48,7 +49,8 @@ using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlHistoricalDataStore<Sqlite3::Connection>;
+  using SqlDataStore = SqlHistoricalDataStore<
+    SqlConnection<Sqlite3::Connection>>;
   using BaseMarketDataFeedClient = MarketDataFeedClient<std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
@@ -165,7 +167,7 @@ int main(int argc, const char** argv) {
   auto dataStorePath = Extract<std::string>(config, "data_store");
   auto historicalDataStore = SqlDataStore(
     [=] {
-      return Sqlite3::Connection(dataStorePath);
+      return SqlConnection(Sqlite3::Connection(dataStorePath));
     });
   auto feedClients =
     std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();

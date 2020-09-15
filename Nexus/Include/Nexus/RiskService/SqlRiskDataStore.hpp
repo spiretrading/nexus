@@ -6,7 +6,6 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/function_output_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <boost/noncopyable.hpp>
 #include <Viper/Viper.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
@@ -19,7 +18,7 @@ namespace Nexus::RiskService {
    * @param <C> The SQL connection to use.
    */
   template<typename C>
-  class SqlRiskDataStore : private boost::noncopyable {
+  class SqlRiskDataStore {
     public:
 
       /** The SQL connection to use. */
@@ -46,6 +45,9 @@ namespace Nexus::RiskService {
       std::unique_ptr<Connection> m_connection;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
+
+      SqlRiskDataStore(const SqlRiskDataStore&) = delete;
+      SqlRiskDataStore& operator =(const SqlRiskDataStore&) = delete;
   };
 
   template<typename C>

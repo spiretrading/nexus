@@ -8,6 +8,7 @@
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -44,7 +45,7 @@ namespace {
   using AdministrationServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaAdministrationServlet<
     ApplicationServiceLocatorClient::Client*, CachedAdministrationDataStore<
-    SqlAdministrationDataStore<MySql::Connection>>>,
+    SqlAdministrationDataStore<SqlConnection<MySql::Connection>>>>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
@@ -187,9 +188,9 @@ int main(int argc, const char** argv) {
     [&] (unsigned int id) {
       return serviceLocatorClient->LoadDirectoryEntry(id);
     };
-  auto mySqlConnection = std::make_unique<MySql::Connection>(
+  auto mySqlConnection = MakeSqlConnection(MySql::Connection(
     mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-    mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema);
+    mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema));
   auto administrationServer = optional<AdministrationServletContainer>();
   try {
     administrationServer.emplace(Initialize(serviceLocatorClient.Get(),

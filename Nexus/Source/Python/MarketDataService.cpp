@@ -13,6 +13,7 @@
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
@@ -370,27 +371,26 @@ void Nexus::Python::ExportApplicationMarketDataClient(
   using Client = MarketDataClient<SessionBuilder>;
   class_<ToPythonMarketDataClient<Client>, VirtualMarketDataClient>(
       module, "ApplicationMarketDataClient")
-    .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
-        auto addresses = LocateServiceAddresses(serviceLocatorClient,
-          MarketDataService::RELAY_SERVICE_NAME);
-        auto delay = false;
-        auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
-          [=] () mutable {
-            if(delay) {
-              auto delayTimer = LiveTimer(seconds(3));
-              delayTimer.Start();
-              delayTimer.Wait();
-            }
-            delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses);
-          },
-          [] {
-            return std::make_unique<LiveTimer>(seconds(10));
-          });
-        return MakeToPythonMarketDataClient(std::make_unique<Client>(
-          sessionBuilder));
-      }), call_guard<GilRelease>());
+    .def(init([] (VirtualServiceLocatorClient& serviceLocatorClient) {
+      auto addresses = LocateServiceAddresses(serviceLocatorClient,
+        MarketDataService::RELAY_SERVICE_NAME);
+      auto delay = false;
+      auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+        [=] () mutable {
+          if(delay) {
+            auto delayTimer = LiveTimer(seconds(3));
+            delayTimer.Start();
+            delayTimer.Wait();
+          }
+          delay = true;
+          return std::make_unique<TcpSocketChannel>(addresses);
+        },
+        [] {
+          return std::make_unique<LiveTimer>(seconds(10));
+        });
+      return MakeToPythonMarketDataClient(std::make_unique<Client>(
+        sessionBuilder));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportApplicationMarketDataFeedClient(
@@ -417,11 +417,10 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(
           time_duration sampling) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
       }), call_guard<GilRelease>())
-    .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
-        return MakePythonMarketDataFeedClient(serviceLocatorClient,
-          milliseconds(10));
-      }), call_guard<GilRelease>());
+    .def(init([] (VirtualServiceLocatorClient& serviceLocatorClient) {
+      return MakePythonMarketDataFeedClient(serviceLocatorClient,
+        milliseconds(10));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
@@ -631,32 +630,26 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
         return std::make_unique<MarketDataServiceTestEnvironment>(
           serviceLocatorClient, administrationClient);
       }), call_guard<GilRelease>())
-    .def("__del__",
-      [] (MarketDataServiceTestEnvironment& self) {
-        self.Close();
-      }, call_guard<GilRelease>())
+    .def("__del__", [] (MarketDataServiceTestEnvironment& self) {
+      self.Close();
+    }, call_guard<GilRelease>())
     .def("close", &MarketDataServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       MarketCode, const OrderImbalance&)>(
-      &MarketDataServiceTestEnvironment::Publish),
-      call_guard<GilRelease>())
+      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const BboQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish),
-      call_guard<GilRelease>())
+      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const BookQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish),
-      call_guard<GilRelease>())
+      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const MarketQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish),
-      call_guard<GilRelease>())
+      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const TimeAndSale&)>(
-      &MarketDataServiceTestEnvironment::Publish),
-      call_guard<GilRelease>())
+      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
     .def("build_client",
       [] (MarketDataServiceTestEnvironment& self,
           VirtualServiceLocatorClient& serviceLocatorClient) {
@@ -666,21 +659,20 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
 }
 
 void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
-  class_<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
-      Viper::MySql::Connection>>, VirtualHistoricalDataStore,
-      std::shared_ptr<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
-      Viper::MySql::Connection>>>>(module,
+  using PythonHistoricalDataStore = ToPythonHistoricalDataStore<
+    SqlHistoricalDataStore<SqlConnection<Viper::MySql::Connection>>>;
+  class_<PythonHistoricalDataStore, VirtualHistoricalDataStore,
+      std::shared_ptr<PythonHistoricalDataStore>>(module,
       "MySqlHistoricalDataStore")
-    .def(init(
-      [] (std::string host, unsigned int port, std::string username,
-          std::string password, std::string database) {
-        return MakeToPythonHistoricalDataStore(
-          std::make_unique<SqlHistoricalDataStore<Viper::MySql::Connection>>(
-          [=] {
-            return Viper::MySql::Connection(host, port, username, password,
-              database);
-          }));
-      }), call_guard<GilRelease>());
+    .def(init([] (std::string host, unsigned int port, std::string username,
+        std::string password, std::string database) {
+      return MakeToPythonHistoricalDataStore(std::make_unique<
+        SqlHistoricalDataStore<SqlConnection<Viper::MySql::Connection>>>(
+        [=] {
+          return SqlConnection(Viper::MySql::Connection(host, port, username,
+            password, database));
+        }));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
@@ -697,17 +689,16 @@ void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
-  using PythonSqliteHistoricalDataStore = ToPythonHistoricalDataStore<
-    SqlHistoricalDataStore<Viper::Sqlite3::Connection>>;
-  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore,
-      std::shared_ptr<PythonSqliteHistoricalDataStore>>(module,
+  using PythonHistoricalDataStore = ToPythonHistoricalDataStore<
+    SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
+  class_<PythonHistoricalDataStore, VirtualHistoricalDataStore,
+      std::shared_ptr<PythonHistoricalDataStore>>(module,
       "SqliteHistoricalDataStore")
-    .def(init(
-      [] (std::string path) {
-        return MakeToPythonHistoricalDataStore(
-          std::make_unique<SqlHistoricalDataStore<Viper::Sqlite3::Connection>>(
-          [=] {
-            return Viper::Sqlite3::Connection(path);
-          }));
-      }), call_guard<GilRelease>());
+    .def(init([] (std::string path) {
+      return MakeToPythonHistoricalDataStore(std::make_unique<
+        SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>>(
+        [=] {
+          return SqlConnection(Viper::Sqlite3::Connection(path));
+        }));
+    }), call_guard<GilRelease>());
 }

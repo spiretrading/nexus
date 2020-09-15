@@ -6,6 +6,7 @@
 #include <Beam/Codecs/ZLibEncoder.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -50,7 +51,7 @@ using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlHistoricalDataStore<MySql::Connection>;
+  using SqlDataStore = SqlHistoricalDataStore<SqlConnection<MySql::Connection>>;
   using RegistryServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaMarketDataRegistryServlet<
     MarketDataRegistry*, SessionCachedHistoricalDataStore<
@@ -212,9 +213,9 @@ int main(int argc, const char** argv) {
   }
   auto historicalDataStore = SqlDataStore(
     [=] {
-      return MySql::Connection(mySqlConfig.m_address.GetHost(),
+      return SqlConnection(MySql::Connection(mySqlConfig.m_address.GetHost(),
         mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-        mySqlConfig.m_password, mySqlConfig.m_schema);
+        mySqlConfig.m_password, mySqlConfig.m_schema));
     });
   auto asyncDataStore = optional<AsyncHistoricalDataStore<SqlDataStore*>>();
   auto marketDataRegistry = MarketDataRegistry();

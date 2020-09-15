@@ -80,8 +80,7 @@ namespace Nexus::OrderExecutionService {
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
       Beam::DatabaseConnectionPool<Connection> m_writerPool;
       DataStore<Viper::Row<OrderInfo>,
-        Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
-        m_submissionDataStore;
+        Viper::Row<Beam::ServiceLocator::DirectoryEntry>> m_submissionDataStore;
       DataStore<Viper::Row<OrderInfo>,
         Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
         m_statusSubmissionDataStore;

@@ -9,6 +9,7 @@
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/UidService/ApplicationDefinitions.hpp>
@@ -63,7 +64,8 @@ using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlOrderExecutionDataStore<MySql::Connection>;
+  using SqlDataStore = SqlOrderExecutionDataStore<
+    SqlConnection<MySql::Connection>>;
   using ApplicationSimulationOrderExecutionDriver =
     SimulationOrderExecutionDriver<ApplicationMarketDataClient::Client*,
     LiveNtpTimeClient*>;
@@ -265,9 +267,9 @@ int main(int argc, const char** argv) {
   auto connectionBuilders = std::vector<SqlDataStore::ConnectionBuilder>();
   for(auto& mySqlConfig : mySqlConfigs) {
     connectionBuilders.emplace_back([=] {
-      return MySql::Connection(mySqlConfig.m_address.GetHost(),
+      return SqlConnection(MySql::Connection(mySqlConfig.m_address.GetHost(),
         mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-        mySqlConfig.m_password, mySqlConfig.m_schema);
+        mySqlConfig.m_password, mySqlConfig.m_schema));
     });
   }
   auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(

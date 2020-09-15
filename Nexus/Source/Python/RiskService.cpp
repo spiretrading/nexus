@@ -1,5 +1,6 @@
 #include "Nexus/Python/RiskService.hpp"
 #include <Beam/Python/Beam.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/Python/RiskClient.hpp"
@@ -85,52 +86,48 @@ void Nexus::Python::ExportApplicationRiskClient(pybind11::module& module) {
   using Client = RiskClient<SessionBuilder>;
   class_<ToPythonRiskClient<Client>, VirtualRiskClient>(module,
       "ApplicationRiskClient")
-    .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
-        auto addresses = LocateServiceAddresses(serviceLocatorClient,
-          RiskService::SERVICE_NAME);
-        auto delay = false;
-        auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
-          [=] () mutable {
-            if(delay) {
-              auto delayTimer = LiveTimer(seconds(3));
-              delayTimer.Start();
-              delayTimer.Wait();
-            }
-            delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses);
-          },
-          [] {
-            return std::make_unique<LiveTimer>(seconds(10));
-          });
-        return MakeToPythonRiskClient(std::make_unique<Client>(sessionBuilder));
-      }), call_guard<GilRelease>());
+    .def(init([] (VirtualServiceLocatorClient& serviceLocatorClient) {
+      auto addresses = LocateServiceAddresses(serviceLocatorClient,
+        RiskService::SERVICE_NAME);
+      auto delay = false;
+      auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+        [=] () mutable {
+          if(delay) {
+            auto delayTimer = LiveTimer(seconds(3));
+            delayTimer.Start();
+            delayTimer.Wait();
+          }
+          delay = true;
+          return std::make_unique<TcpSocketChannel>(addresses);
+        },
+        [] {
+          return std::make_unique<LiveTimer>(seconds(10));
+        });
+      return MakeToPythonRiskClient(std::make_unique<Client>(sessionBuilder));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportLocalRiskDataStore(pybind11::module& module) {
   class_<ToPythonRiskDataStore<LocalRiskDataStore>, VirtualRiskDataStore,
       std::shared_ptr<ToPythonRiskDataStore<LocalRiskDataStore>>>(module,
       "LocalRiskDataStore")
-    .def(init(
-      [] () {
-        return MakeToPythonRiskDataStore(
-          std::make_unique<LocalRiskDataStore>());
-      }));
+    .def(init([] {
+      return MakeToPythonRiskDataStore(std::make_unique<LocalRiskDataStore>());
+    }));
 }
 
 void Nexus::Python::ExportMySqlRiskDataStore(pybind11::module& module) {
-  class_<ToPythonRiskDataStore<SqlRiskDataStore<Viper::MySql::Connection>>,
-      VirtualRiskDataStore, std::shared_ptr<
-      ToPythonRiskDataStore<SqlRiskDataStore<Viper::MySql::Connection>>>>(
-      module, "MySqlRiskDataStore")
-    .def(init(
-      [] (std::string host, unsigned int port, std::string username,
-          std::string password, std::string database) {
-        return MakeToPythonRiskDataStore(
-          std::make_unique<SqlRiskDataStore<Viper::MySql::Connection>>(
-          std::make_unique<Viper::MySql::Connection>(host, port, username,
-          password, database)));
-      }), call_guard<GilRelease>());
+  class_<ToPythonRiskDataStore<
+      SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>>,
+      VirtualRiskDataStore, std::shared_ptr<ToPythonRiskDataStore<
+      SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>>>>(module,
+      "MySqlRiskDataStore")
+    .def(init([] (std::string host, unsigned int port, std::string username,
+        std::string password, std::string database) {
+      return MakeToPythonRiskDataStore(std::make_unique<SqlRiskDataStore<
+        SqlConnection<Viper::MySql::Connection>>>(MakeSqlConnection(
+        Viper::MySql::Connection(host, port, username, password, database))));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportRiskClient(pybind11::module& module) {
@@ -203,15 +200,14 @@ void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
           std::move(exchangeRates), std::move(markets),
           std::move(destinations));
       }), call_guard<GilRelease>())
-    .def("__del__",
-      [] (RiskServiceTestEnvironment& self) {
-        self.Close();
-      }, call_guard<GilRelease>())
+    .def("__del__", [] (RiskServiceTestEnvironment& self) {
+      self.Close();
+    }, call_guard<GilRelease>())
     .def("build_client",
       [] (RiskServiceTestEnvironment& self,
           VirtualServiceLocatorClient& serviceLocatorClient) {
-        return MakeToPythonRiskClient(
-          self.BuildClient(Ref(serviceLocatorClient)));
+        return MakeToPythonRiskClient(self.BuildClient(
+          Ref(serviceLocatorClient)));
       }, call_guard<GilRelease>())
     .def("close", &RiskServiceTestEnvironment::Close, call_guard<GilRelease>());
 }
@@ -235,14 +231,14 @@ void Nexus::Python::ExportRiskState(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportSqliteRiskDataStore(pybind11::module& module) {
-  class_<ToPythonRiskDataStore<SqlRiskDataStore<Viper::Sqlite3::Connection>>,
-      VirtualRiskDataStore, std::shared_ptr<
-      ToPythonRiskDataStore<SqlRiskDataStore<Viper::Sqlite3::Connection>>>>(
-      module, "SqliteRiskDataStore")
-    .def(init(
-      [] (std::string path) {
-        return MakeToPythonRiskDataStore(
-          std::make_unique<SqlRiskDataStore<Viper::Sqlite3::Connection>>(
-          std::make_unique<Viper::Sqlite3::Connection>(path)));
-      }), call_guard<GilRelease>());
+  class_<ToPythonRiskDataStore<
+      SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>,
+      VirtualRiskDataStore, std::shared_ptr<ToPythonRiskDataStore<
+      SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>>>(module,
+      "SqliteRiskDataStore")
+    .def(init([] (std::string path) {
+      return MakeToPythonRiskDataStore(std::make_unique<
+        SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>(
+        MakeSqlConnection(Viper::Sqlite3::Connection(path))));
+    }), call_guard<GilRelease>());
 }
