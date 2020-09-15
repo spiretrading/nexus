@@ -51,7 +51,7 @@ namespace {
 }
 
 TEST_SUITE("RiskController") {
-  TEST_CASE_FIXTURE(Fixture, "single_security") {
+  TEST_CASE_FIXTURE(Fixture, "single_security_no_position") {
     auto exchangeRates = std::vector<ExchangeRate>();
     auto dataStore = LocalRiskDataStore();
     auto controller = RiskController(m_account,
@@ -79,5 +79,28 @@ TEST_SUITE("RiskController") {
       Quote(*Money::FromValue("1.00"), 100, Side::ASK),
       m_environment.GetTimeEnvironment().GetTime()));
     REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "single_security_existing_position") {
+    auto exchangeRates = std::vector<ExchangeRate>();
+    auto dataStore = LocalRiskDataStore();
+    auto snapshot = InventorySnapshot();
+    snapshot.m_inventories.push_back(RiskInventory(
+      RiskPosition(RiskPosition::Key(TSLA, DefaultCurrencies::USD())),
+      Money::ONE, Money::CENT, 200, 2));
+    dataStore.Store(m_account, snapshot);
+    auto controller = RiskController(m_account,
+      &m_adminClients.GetAdministrationClient(),
+      &m_adminClients.GetMarketDataClient(),
+      &m_adminClients.GetOrderExecutionClient(),
+      m_adminClients.BuildTimer(seconds(1)),
+      &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
+      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
+    auto state = std::make_shared<Queue<RiskState>>();
+    controller.GetRiskStatePublisher().Monitor(state);
+    REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
+    auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
+    controller.GetPortfolioPublisher().Monitor(portfolio);
+    auto update = portfolio->Pop();
   }
 }

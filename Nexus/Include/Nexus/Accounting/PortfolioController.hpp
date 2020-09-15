@@ -1,16 +1,12 @@
 #ifndef NEXUS_PORTFOLIO_CONTROLLER_HPP
 #define NEXUS_PORTFOLIO_CONTROLLER_HPP
+#include <unordered_map>
 #include <unordered_set>
-#include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Pointers/NativePointerPolicy.hpp>
-#include <Beam/Pointers/Out.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/Queues/ValueSnapshotPublisher.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -28,7 +24,7 @@ namespace Nexus::Accounting {
    * @param <C> The type of MarketDataClient to use.
    */
   template<typename P, typename C>
-  class PortfolioController : private boost::noncopyable {
+  class PortfolioController {
     public:
 
       /** The type of Portfolio to update. */
@@ -67,6 +63,8 @@ namespace Nexus::Accounting {
       std::unordered_set<Security> m_securities;
       Beam::RoutineTaskQueue m_tasks;
 
+      PortfolioController(const PortfolioController&) = delete;
+      PortfolioController& operator =(const PortfolioController&) = delete;
       void Subscribe(const Security& security);
       void PushUpdate(const Security& security);
       void OnBbo(const Security& security, const BboQuote& bbo);
@@ -82,13 +80,11 @@ namespace Nexus::Accounting {
       : m_portfolio(std::forward<PF>(portfolio)),
         m_marketDataClient(std::forward<CF>(marketDataClient)),
         m_executionReportPublisher(std::move(orders)),
-        m_publisher(
-          [] (auto snapshot, auto& queue) {
-            ForEach(*snapshot,
-              [&] (const auto& update) {
-                queue.Push(update);
-              });
-          }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
+        m_publisher([] (auto snapshot, auto& queue) {
+          ForEach(*snapshot, [&] (const auto& update) {
+            queue.Push(update);
+          });
+        }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
     m_publisher.With([&] {
       for(auto& inventory : m_portfolio->GetBookkeeper().GetInventoryRange()) {
         Subscribe(inventory.first.m_index);
@@ -118,7 +114,14 @@ namespace Nexus::Accounting {
   void PortfolioController<P, C>::Subscribe(const Security& security) {
     if(auto securityIterator = m_securities.find(security);
         securityIterator == m_securities.end()) {
-      m_marketDataClient->QueryBboQuotes(Beam::Queries::BuildCurrentQuery(
+      auto snapshot = std::make_shared<Beam::StateQueue<BboQuote>>();
+      m_marketDataClient->QueryBboQuotes(
+        Beam::Queries::BuildLatestQuery(security), snapshot);
+      try {
+        OnBbo(security, snapshot->Pop());
+      } catch(const std::exception&) {
+      }
+      m_marketDataClient->QueryBboQuotes(Beam::Queries::BuildRealTimeQuery(
         security), m_tasks.GetSlot<BboQuote>(std::bind(
         &PortfolioController::OnBbo, this, security, std::placeholders::_1)));
       m_securities.insert(security);
@@ -164,21 +167,20 @@ namespace Nexus::Accounting {
     if(bbo.m_ask.m_price == Money::ZERO && bbo.m_bid.m_price == Money::ZERO) {
       return;
     }
-    m_publisher.With(
-      [&] {
-        auto hasUpdate = [&] {
-          if(bbo.m_ask.m_price == Money::ZERO) {
-            return m_portfolio->UpdateBid(security, bbo.m_bid.m_price);
-          } else if(bbo.m_bid.m_price == Money::ZERO) {
-            return m_portfolio->UpdateAsk(security, bbo.m_ask.m_price);
-          }
-          return m_portfolio->Update(security, bbo.m_ask.m_price,
-            bbo.m_bid.m_price);
-        }();
-        if(hasUpdate) {
-          PushUpdate(security);
+    m_publisher.With([&] {
+      auto hasUpdate = [&] {
+        if(bbo.m_ask.m_price == Money::ZERO) {
+          return m_portfolio->UpdateBid(security, bbo.m_bid.m_price);
+        } else if(bbo.m_bid.m_price == Money::ZERO) {
+          return m_portfolio->UpdateAsk(security, bbo.m_ask.m_price);
         }
-      });
+        return m_portfolio->Update(security, bbo.m_ask.m_price,
+          bbo.m_bid.m_price);
+      }();
+      if(hasUpdate) {
+        PushUpdate(security);
+      }
+    });
   }
 
   template<typename P, typename C>
@@ -187,13 +189,12 @@ namespace Nexus::Accounting {
     if(executionReport.m_executionReport.m_status == OrderStatus::PENDING_NEW) {
       Subscribe(executionReport.m_order->GetInfo().m_fields.m_security);
     }
-    m_publisher.With(
-      [&] {
-        if(m_portfolio->Update(executionReport.m_order->GetInfo().m_fields,
-            executionReport.m_executionReport)) {
-          PushUpdate(executionReport.m_order->GetInfo().m_fields.m_security);
-        }
-      });
+    m_publisher.With([&] {
+      if(m_portfolio->Update(executionReport.m_order->GetInfo().m_fields,
+          executionReport.m_executionReport)) {
+        PushUpdate(executionReport.m_order->GetInfo().m_fields.m_security);
+      }
+    });
   }
 }
 
