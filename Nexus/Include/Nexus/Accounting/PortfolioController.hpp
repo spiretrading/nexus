@@ -5,6 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/ScopedQueueReader.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Queues/ValueSnapshotPublisher.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
