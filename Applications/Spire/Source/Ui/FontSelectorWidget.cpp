@@ -104,7 +104,7 @@ const QFont& FontSelectorWidget::get_font() const {
 
 void FontSelectorWidget::set_font(const QFont& font) {
   m_current_font = font;
-  m_font_list->set_current_item(m_current_font);
+  m_font_list->set_current_item(m_current_font.family());
   m_size_input->set_value(m_current_font.pointSize());
   m_bold_button->set_toggled(m_current_font.bold());
   m_italics_button->set_toggled(m_current_font.italic());
