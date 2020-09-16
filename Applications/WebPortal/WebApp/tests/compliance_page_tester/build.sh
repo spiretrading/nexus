@@ -27,9 +27,6 @@ if [ "$(uname -s)" = "Darwin" ]; then
 else
   STAT='stat'
 fi
-if [ "$config" = "Release" ]; then
-  export PROD_ENV=1
-fi
 if [ "$config" = "clean" ]; then
   rm -rf application
   rm -f mod_time.txt
