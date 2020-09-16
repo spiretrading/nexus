@@ -5,7 +5,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/QueueWriter.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
@@ -37,35 +37,34 @@ namespace Nexus::MarketDataService {
       ~DataStoreMarketDataClient();
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<
-        Beam::QueueWriter<SequencedOrderImbalance>>& queue);
+        Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue);
+        Beam::ScopedQueueWriter<OrderImbalance> queue);
 
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedBboQuote> queue);
 
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue);
+        Beam::ScopedQueueWriter<BboQuote> queue);
 
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedBookQuote> queue);
 
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue);
+        Beam::ScopedQueueWriter<BookQuote> queue);
 
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedMarketQuote> queue);
 
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue);
+        Beam::ScopedQueueWriter<MarketQuote> queue);
 
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue);
+        Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
 
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue);
+        Beam::ScopedQueueWriter<TimeAndSale> queue);
 
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
 
@@ -76,15 +75,11 @@ namespace Nexus::MarketDataService {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
-      void Open();
-
       void Close();
 
     private:
       Beam::GetOptionalLocalPtr<D> m_dataStore;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
@@ -99,112 +94,102 @@ namespace Nexus::MarketDataService {
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryOrderImbalances(
-      const MarketWideDataQuery& query, const std::shared_ptr<
-      Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
+      const MarketWideDataQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     auto values = m_dataStore->LoadOrderImbalances(query);
     for(auto& value : values) {
-      queue->Push(std::move(value));
+      queue.Push(std::move(value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryOrderImbalances(
       const MarketWideDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
+      Beam::ScopedQueueWriter<OrderImbalance> queue) {
     auto values = m_dataStore->LoadOrderImbalances(query);
     for(auto& value : values) {
-      queue->Push(std::move(*value));
+      queue.Push(std::move(*value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     auto values = m_dataStore->LoadBboQuotes(query);
     for(auto& value : values) {
-      queue->Push(std::move(value));
+      queue.Push(std::move(value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
+      Beam::ScopedQueueWriter<BboQuote> queue) {
     auto values = m_dataStore->LoadBboQuotes(query);
     for(auto& value : values) {
-      queue->Push(std::move(*value));
+      queue.Push(std::move(*value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     auto values = m_dataStore->LoadBookQuotes(query);
     for(auto& value : values) {
-      queue->Push(std::move(value));
+      queue.Push(std::move(value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
+      Beam::ScopedQueueWriter<BookQuote> queue) {
     auto values = m_dataStore->LoadBookQuotes(query);
     for(auto& value : values) {
-      queue->Push(std::move(*value));
+      queue.Push(std::move(*value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
     auto values = m_dataStore->LoadMarketQuotes(query);
     for(auto& value : values) {
-      queue->Push(std::move(value));
+      queue.Push(std::move(value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
+      Beam::ScopedQueueWriter<MarketQuote> queue) {
     auto values = m_dataStore->LoadMarketQuotes(query);
     for(auto& value : values) {
-      queue->Push(std::move(*value));
+      queue.Push(std::move(*value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     auto values = m_dataStore->LoadTimeAndSales(query);
     for(auto& value : values) {
-      queue->Push(std::move(value));
+      queue.Push(std::move(value));
     }
-    queue->Break();
   }
 
   template<typename D>
   void DataStoreMarketDataClient<D>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<TimeAndSale> queue) {
     auto values = m_dataStore->LoadTimeAndSales(query);
     for(auto& value : values) {
-      queue->Push(std::move(*value));
+      queue.Push(std::move(*value));
     }
-    queue->Break();
   }
 
   template<typename D>
@@ -232,31 +217,12 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  void DataStoreMarketDataClient<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename D>
   void DataStoreMarketDataClient<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void DataStoreMarketDataClient<D>::Shutdown() {
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

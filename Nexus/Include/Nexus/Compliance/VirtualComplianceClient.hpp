@@ -39,8 +39,6 @@ namespace Nexus::Compliance {
         const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -86,8 +84,6 @@ namespace Nexus::Compliance {
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
         const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -147,11 +143,6 @@ namespace Nexus::Compliance {
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
     return m_client->MonitorComplianceRuleEntries(directoryEntry, queue,
       Beam::Store(snapshot));
-  }
-
-  template<typename C>
-  void WrapperComplianceClient<C>::Open() {
-    return m_client->Open();
   }
 
   template<typename C>

@@ -25,7 +25,7 @@ namespace Nexus::Compliance {
       using Connection = C;
 
       /**
-       * Constructs a MySqlComplianceRuleDataStore.
+       * Constructs an SqlComplianceRuleDataStore.
        * @param connection The SQL connection to use.
        */
       explicit SqlComplianceRuleDataStore(
@@ -49,22 +49,30 @@ namespace Nexus::Compliance {
 
       void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-      void Open();
-
       void Close();
 
     private:
       mutable Beam::Threading::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::SqlComplianceRuleDataStore(
-    std::unique_ptr<Connection> connection)
-    : m_connection(std::move(connection)) {}
+      std::unique_ptr<Connection> connection)
+      : m_connection(std::move(connection)) {
+    try {
+      m_connection->open();
+      m_connection->execute(Viper::create_if_not_exists(
+        GetComplianceRuleEntriesRow(), "compliance_rule_entries"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetComplianceRuleViolationRecordsRow(),
+        "compliance_rule_violation_records"));
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::~SqlComplianceRuleDataStore() {
@@ -193,36 +201,12 @@ namespace Nexus::Compliance {
   }
 
   template<typename C>
-  void SqlComplianceRuleDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_connection->open();
-      m_connection->execute(Viper::create_if_not_exists(
-        GetComplianceRuleEntriesRow(), "compliance_rule_entries"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetComplianceRuleViolationRecordsRow(),
-        "compliance_rule_violation_records"));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename C>
   void SqlComplianceRuleDataStore<C>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void SqlComplianceRuleDataStore<C>::Shutdown() {
     m_connection->close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

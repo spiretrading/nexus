@@ -98,23 +98,37 @@ namespace Nexus::AdministrationService {
 
       void WithTransaction(const std::function<void ()>& transaction) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
       Beam::GetOptionalLocalPtr<D> m_dataStore;
       LocalAdministrationDataStore m_cache;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
   template<typename DF>
   CachedAdministrationDataStore<D>::CachedAdministrationDataStore(
-    DF&& dataStore)
-    : m_dataStore(std::forward<DF>(dataStore)) {}
+      DF&& dataStore)
+      : m_dataStore(std::forward<DF>(dataStore)) {
+    try {
+      auto identities = m_dataStore->LoadAllAccountIdentities();
+      for(auto& identity : identities) {
+        m_cache.Store(std::get<0>(identity), std::get<1>(identity));
+      }
+      auto riskParameters = m_dataStore->LoadAllRiskParameters();
+      for(auto& riskParameter : riskParameters) {
+        m_cache.Store(std::get<0>(riskParameter), std::get<1>(riskParameter));
+      }
+      auto riskStates = m_dataStore->LoadAllRiskStates();
+      for(auto& riskState : riskStates) {
+        m_cache.Store(std::get<0>(riskState), std::get<1>(riskState));
+      }
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   template<typename D>
   CachedAdministrationDataStore<D>::~CachedAdministrationDataStore() {
@@ -270,37 +284,9 @@ namespace Nexus::AdministrationService {
   template<typename D>
   void CachedAdministrationDataStore<D>::WithTransaction(
       const std::function<void ()>& transaction) {
-    m_dataStore->WithTransaction(
-      [&] {
-        m_cache.WithTransaction(transaction);
-      });
-  }
-
-  template<typename D>
-  void CachedAdministrationDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_cache.Open();
-      auto identities = m_dataStore->LoadAllAccountIdentities();
-      for(auto& identity : identities) {
-        m_cache.Store(std::get<0>(identity), std::get<1>(identity));
-      }
-      auto riskParameters = m_dataStore->LoadAllRiskParameters();
-      for(auto& riskParameter : riskParameters) {
-        m_cache.Store(std::get<0>(riskParameter), std::get<1>(riskParameter));
-      }
-      auto riskStates = m_dataStore->LoadAllRiskStates();
-      for(auto& riskState : riskStates) {
-        m_cache.Store(std::get<0>(riskState), std::get<1>(riskState));
-      }
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
+    m_dataStore->WithTransaction([&] {
+      m_cache.WithTransaction(transaction);
+    });
   }
 
   template<typename D>
@@ -308,14 +294,9 @@ namespace Nexus::AdministrationService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void CachedAdministrationDataStore<D>::Shutdown() {
     m_dataStore->Close();
     m_cache.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

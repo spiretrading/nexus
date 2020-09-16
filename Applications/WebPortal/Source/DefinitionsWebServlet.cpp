@@ -51,22 +51,8 @@ std::vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
   return slots;
 }
 
-void DefinitionsWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
-}
-
 void DefinitionsWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void DefinitionsWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadOrganizationName(

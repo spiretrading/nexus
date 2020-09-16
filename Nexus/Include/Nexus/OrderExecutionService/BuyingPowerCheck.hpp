@@ -1,12 +1,12 @@
 #ifndef NEXUS_BUYINGPOWERCHECK_HPP
 #define NEXUS_BUYINGPOWERCHECK_HPP
 #include <vector>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include "Nexus/Accounting/BuyingPowerTracker.hpp"
+#include "Nexus/Accounting/BuyingPowerModel.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -62,11 +62,10 @@ namespace OrderExecutionService {
 
     private:
       struct BuyingPowerEntry {
-        Beam::Threading::Sync<Accounting::BuyingPowerTracker>
-          m_buyingPowerTracker;
+        Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buyingPowerModel;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskParameters>>
           m_riskParametersQueue;
-        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
+        Beam::MultiQueueWriter<ExecutionReport> m_executionReportQueue;
         Beam::SynchronizedUnorderedMap<OrderId, CurrencyId> m_currencies;
 
         BuyingPowerEntry();
@@ -114,22 +113,20 @@ namespace OrderExecutionService {
     auto& fields = orderInfo.m_fields;
     auto price = GetExpectedPrice(fields);
     auto& buyingPowerEntry = LoadBuyingPowerEntry(fields.m_account);
-    Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
-      [&] (auto& buyingPowerTracker) {
-        auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Top();
-        while(!buyingPowerEntry.m_executionReportQueue.IsEmpty()) {
-          auto report = buyingPowerEntry.m_executionReportQueue.Top();
-          buyingPowerEntry.m_executionReportQueue.Pop();
-          if(report.m_lastQuantity != 0) {
-            auto currency = buyingPowerEntry.m_currencies.Find(report.m_id);
-            if(!currency.is_initialized()) {
+    Beam::Threading::With(buyingPowerEntry.m_buyingPowerModel,
+      [&] (auto& buyingPowerModel) {
+        auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Peek();
+        while(auto report = buyingPowerEntry.m_executionReportQueue.TryPop()) {
+          if(report->m_lastQuantity != 0) {
+            auto currency = buyingPowerEntry.m_currencies.Find(report->m_id);
+            if(!currency) {
               BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
                 "Currency not recognized."});
             }
-            report.m_lastPrice = m_exchangeRates.Convert(report.m_lastPrice,
+            report->m_lastPrice = m_exchangeRates.Convert(report->m_lastPrice,
               *currency, riskParameters.m_currency);
           }
-          buyingPowerTracker.Update(report);
+          buyingPowerModel.Update(*report);
         }
         auto convertedFields = fields;
         convertedFields.m_currency = riskParameters.m_currency;
@@ -145,13 +142,13 @@ namespace OrderExecutionService {
         }
         buyingPowerEntry.m_currencies.Insert(orderInfo.m_orderId,
           fields.m_currency);
-        auto updatedBuyingPower = buyingPowerTracker.Submit(
-          orderInfo.m_orderId, convertedFields, convertedPrice);
+        auto updatedBuyingPower = buyingPowerModel.Submit(orderInfo.m_orderId,
+          convertedFields, convertedPrice);
         if(updatedBuyingPower > riskParameters.m_buyingPower) {
           ExecutionReport report;
           report.m_id = orderInfo.m_orderId;
           report.m_status = OrderStatus::REJECTED;
-          buyingPowerTracker.Update(report);
+          buyingPowerModel.Update(report);
           BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
             "Order exceeds available buying power."});
         }
@@ -164,16 +161,16 @@ namespace OrderExecutionService {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(
       order.GetInfo().m_fields.m_account);
     auto price = GetExpectedPrice(order.GetInfo().m_fields);
-    Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
-      [&] (auto& buyingPowerTracker) {
-        if(buyingPowerTracker.HasOrder(order.GetInfo().m_orderId)) {
+    Beam::Threading::With(buyingPowerEntry.m_buyingPowerModel,
+      [&] (auto& buyingPowerModel) {
+        if(buyingPowerModel.HasOrder(order.GetInfo().m_orderId)) {
           return;
         }
         buyingPowerEntry.m_currencies.Insert(order.GetInfo().m_orderId,
           order.GetInfo().m_fields.m_currency);
         auto convertedFields = order.GetInfo().m_fields;
         convertedFields.m_currency =
-          buyingPowerEntry.m_riskParametersQueue->Top().m_currency;
+          buyingPowerEntry.m_riskParametersQueue->Peek().m_currency;
         Money convertedPrice;
         try {
           convertedFields.m_price = m_exchangeRates.Convert(
@@ -185,7 +182,7 @@ namespace OrderExecutionService {
           BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
             "Currency not recognized."});
         }
-        buyingPowerTracker.Submit(order.GetInfo().m_orderId, convertedFields,
+        buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
       });
     order.GetPublisher().Monitor(
@@ -196,15 +193,15 @@ namespace OrderExecutionService {
   void BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::Reject(
       const OrderInfo& orderInfo) {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(orderInfo.m_fields.m_account);
-    Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
-      [&] (auto& buyingPowerTracker) {
-        if(!buyingPowerTracker.HasOrder(orderInfo.m_orderId)) {
+    Beam::Threading::With(buyingPowerEntry.m_buyingPowerModel,
+      [&] (auto& buyingPowerModel) {
+        if(!buyingPowerModel.HasOrder(orderInfo.m_orderId)) {
           return;
         }
         ExecutionReport report;
         report.m_id = orderInfo.m_orderId;
         report.m_status = OrderStatus::REJECTED;
-        buyingPowerTracker.Update(report);
+        buyingPowerModel.Update(report);
       });
   }
 
@@ -219,7 +216,7 @@ namespace OrderExecutionService {
         return publisher;
       });
     try {
-      return publisher->Top();
+      return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
@@ -261,7 +258,7 @@ namespace OrderExecutionService {
           entry->m_riskParametersQueue);
         return entry;
       });
-    entry.m_riskParametersQueue->Top();
+    entry.m_riskParametersQueue->Peek();
     return entry;
   }
 }

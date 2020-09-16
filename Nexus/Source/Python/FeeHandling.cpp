@@ -1,13 +1,31 @@
 #include "Nexus/Python/FeeHandling.hpp"
 #include <Beam/Python/Beam.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Nexus/FeeHandling/AmexFeeTable.hpp"
+#include "Nexus/FeeHandling/ArcaFeeTable.hpp"
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
+#include "Nexus/FeeHandling/BatsFeeTable.hpp"
+#include "Nexus/FeeHandling/BatyFeeTable.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
+#include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
+#include "Nexus/FeeHandling/ConsolidatedUsFeeTable.hpp"
+#include "Nexus/FeeHandling/CseFeeTable.hpp"
+#include "Nexus/FeeHandling/EdgaFeeTable.hpp"
+#include "Nexus/FeeHandling/EdgxFeeTable.hpp"
 #include "Nexus/FeeHandling/HkexFeeTable.hpp"
 #include "Nexus/FeeHandling/JpxFeeTable.hpp"
-#include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/LynxFeeTable.hpp"
+#include "Nexus/FeeHandling/MatnFeeTable.hpp"
+#include "Nexus/FeeHandling/NeoeFeeTable.hpp"
+#include "Nexus/FeeHandling/NexFeeTable.hpp"
+#include "Nexus/FeeHandling/NsdqFeeTable.hpp"
+#include "Nexus/FeeHandling/NyseFeeTable.hpp"
+#include "Nexus/FeeHandling/OmgaFeeTable.hpp"
 #include "Nexus/FeeHandling/PureFeeTable.hpp"
+#include "Nexus/FeeHandling/TsxFeeTable.hpp"
+#include "Nexus/FeeHandling/XatsFeeTable.hpp"
+#include "Nexus/FeeHandling/Xcx2FeeTable.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
@@ -17,6 +35,66 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace pybind11;
+
+void Nexus::Python::ExportAmexFeeTable(pybind11::module& module) {
+  auto outer = class_<AmexFeeTable>(module, "AmexFeeTable")
+    .def_readwrite("fee_table", &AmexFeeTable::m_feeTable)
+    .def_readwrite("subdollar_table", &AmexFeeTable::m_subdollarTable);
+  enum_<AmexFeeTable::Type>(outer, "Type")
+    .value("ACTIVE", AmexFeeTable::Type::ACTIVE)
+    .value("PASSIVE", AmexFeeTable::Type::PASSIVE)
+    .value("HIDDEN_ACTIVE", AmexFeeTable::Type::HIDDEN_ACTIVE)
+    .value("HIDDEN_PASSIVE", AmexFeeTable::Type::HIDDEN_PASSIVE)
+    .value("AT_THE_OPEN", AmexFeeTable::Type::AT_THE_OPEN)
+    .value("AT_THE_CLOSE", AmexFeeTable::Type::AT_THE_CLOSE)
+    .value("ROUTED", AmexFeeTable::Type::ROUTED);
+  module.def("parse_amex_fee_table", &ParseAmexFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(
+    const AmexFeeTable&, AmexFeeTable::Type)>(&LookupFee));
+  module.def("lookup_subdollar_fee", static_cast<rational<int> (*)(
+    const AmexFeeTable&, AmexFeeTable::Type)>(&LookupSubdollarFee));
+  module.def("is_amex_hidden_liquidity_provider",
+    &IsAmexHiddenLiquidityProvider);
+  module.def("calculate_fee", static_cast<Money (*)(const AmexFeeTable&,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportArcaFeeTable(pybind11::module& module) {
+  auto outer = class_<ArcaFeeTable>(module, "ArcaFeeTable")
+    .def_readwrite("fee_table", &ArcaFeeTable::m_feeTable)
+    .def_readwrite("subdollar_table", &ArcaFeeTable::m_subdollarTable)
+    .def_readwrite("routed_fee", &ArcaFeeTable::m_routedFee)
+    .def_readwrite("auction_fee", &ArcaFeeTable::m_auctionFee);
+  enum_<ArcaFeeTable::Category>(outer, "Category")
+    .value("DEFAULT", ArcaFeeTable::Category::DEFAULT)
+    .value("ROUTED", ArcaFeeTable::Category::ROUTED)
+    .value("AUCTION", ArcaFeeTable::Category::AUCTION);
+  enum_<ArcaFeeTable::Tape>(outer, "Tape")
+    .value("A", ArcaFeeTable::Tape::A)
+    .value("B", ArcaFeeTable::Tape::B)
+    .value("C", ArcaFeeTable::Tape::C);
+  enum_<ArcaFeeTable::Type>(outer, "Type")
+    .value("ACTIVE", ArcaFeeTable::Type::ACTIVE)
+    .value("PASSIVE", ArcaFeeTable::Type::PASSIVE)
+    .value("HIDDEN_ACTIVE", ArcaFeeTable::Type::HIDDEN_ACTIVE)
+    .value("HIDDEN_PASSIVE", ArcaFeeTable::Type::HIDDEN_PASSIVE)
+    .value("AT_THE_OPEN", ArcaFeeTable::Type::AT_THE_OPEN)
+    .value("AT_THE_CLOSE", ArcaFeeTable::Type::AT_THE_CLOSE);
+  enum_<ArcaFeeTable::SubdollarType>(outer, "SubdollarType")
+    .value("ROUTED", ArcaFeeTable::SubdollarType::ROUTED)
+    .value("AUCTION", ArcaFeeTable::SubdollarType::AUCTION)
+    .value("ACTIVE", ArcaFeeTable::SubdollarType::ACTIVE)
+    .value("PASSIVE", ArcaFeeTable::SubdollarType::PASSIVE);
+  module.def("parse_arca_fee_table", &ParseArcaFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const ArcaFeeTable&,
+    ArcaFeeTable::Tape, ArcaFeeTable::Type)>(&LookupFee));
+  module.def("lookup_fee", static_cast<rational<int> (*)(const ArcaFeeTable&,
+    ArcaFeeTable::SubdollarType)>(&LookupFee));
+  module.def("is_arca_hidden_liquidity_provider",
+    &IsArcaHiddenLiquidityProvider);
+  module.def("calculate_fee", static_cast<Money (*)(const ArcaFeeTable&,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
 
 void Nexus::Python::ExportAsxtFeeTable(pybind11::module& module) {
   auto outer = class_<AsxtFeeTable>(module, "AsxtFeeTable")
@@ -45,6 +123,32 @@ void Nexus::Python::ExportAsxtFeeTable(pybind11::module& module) {
     &CalculateFee));
 }
 
+void Nexus::Python::ExportBatsFeeTable(pybind11::module& module) {
+  class_<BatsFeeTable>(module, "BatsFeeTable")
+    .def(init())
+    .def(init<const BatsFeeTable&>())
+    .def_readwrite("fee_table", &BatsFeeTable::m_feeTable)
+    .def_readwrite("default_flag", &BatsFeeTable::m_defaultFlag);
+  module.def("parse_bats_fee_table", &ParseBatsFeeTable);
+  module.def("lookup_fee", static_cast<rational<int> (*)(const BatsFeeTable&,
+    const std::string&)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const BatsFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportBatyFeeTable(pybind11::module& module) {
+  class_<BatyFeeTable>(module, "BatyFeeTable")
+    .def(init())
+    .def(init<const BatyFeeTable&>())
+    .def_readwrite("fee_table", &BatyFeeTable::m_feeTable)
+    .def_readwrite("default_flag", &BatyFeeTable::m_defaultFlag);
+  module.def("parse_baty_fee_table", &ParseBatyFeeTable);
+  module.def("lookup_fee", static_cast<rational<int> (*)(const BatyFeeTable&,
+    const std::string&)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const BatyFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
 void Nexus::Python::ExportChicFeeTable(pybind11::module& module) {
   auto outer = class_<ChicFeeTable>(module, "ChicFeeTable")
     .def(init())
@@ -55,8 +159,8 @@ void Nexus::Python::ExportChicFeeTable(pybind11::module& module) {
     .value("INTERLISTED", ChicFeeTable::Classification::INTERLISTED)
     .value("NON_INTERLISTED", ChicFeeTable::Classification::NON_INTERLISTED)
     .value("ETF", ChicFeeTable::Classification::ETF)
-    .value("SUB_DOLLAR", ChicFeeTable::Classification::SUB_DOLLAR)
-    .value("SUB_DIME", ChicFeeTable::Classification::SUB_DIME);
+    .value("SUBDOLLAR", ChicFeeTable::Classification::SUBDOLLAR)
+    .value("SUBDIME", ChicFeeTable::Classification::SUBDIME);
   enum_<ChicFeeTable::Index>(outer, "Index")
     .value("NONE", ChicFeeTable::Index::NONE)
     .value("ACTIVE", ChicFeeTable::Index::ACTIVE)
@@ -106,18 +210,102 @@ void Nexus::Python::ExportConsolidatedTmxFeeTable(pybind11::module& module) {
     const Order&, const ExecutionReport&)>(&CalculateFee));
 }
 
+void Nexus::Python::ExportConsolidatedUsFeeTable(pybind11::module& module) {
+  class_<ConsolidatedUsFeeTable>(module, "ConsolidatedUsFeeTable")
+    .def(init())
+    .def(init<const ConsolidatedUsFeeTable&>())
+    .def_readwrite("spire_fee", &ConsolidatedUsFeeTable::m_spireFee)
+    .def_readwrite("sec_rate", &ConsolidatedUsFeeTable::m_secRate)
+    .def_readwrite("taf_fee", &ConsolidatedUsFeeTable::m_tafFee)
+    .def_readwrite("nscc_rate", &ConsolidatedUsFeeTable::m_nsccRate)
+    .def_readwrite("clearing_fee", &ConsolidatedUsFeeTable::m_clearingFee)
+    .def_readwrite("amex_fee_table", &ConsolidatedUsFeeTable::m_amexFeeTable)
+    .def_readwrite("arca_fee_table", &ConsolidatedUsFeeTable::m_arcaFeeTable)
+    .def_readwrite("bats_fee_table", &ConsolidatedUsFeeTable::m_batsFeeTable)
+    .def_readwrite("baty_fee_table", &ConsolidatedUsFeeTable::m_batyFeeTable)
+    .def_readwrite("edga_fee_table", &ConsolidatedUsFeeTable::m_edgaFeeTable)
+    .def_readwrite("edgx_fee_table", &ConsolidatedUsFeeTable::m_edgxFeeTable)
+    .def_readwrite("nsdq_fee_table", &ConsolidatedUsFeeTable::m_nsdqFeeTable)
+    .def_readwrite("nyse_fee_table", &ConsolidatedUsFeeTable::m_nyseFeeTable);
+  module.def("parse_consolidated_us_fee_table", &ParseConsolidatedUsFeeTable);
+  module.def("calculate_fee", static_cast<ExecutionReport (*)(
+    const ConsolidatedUsFeeTable&, const Order&, const ExecutionReport&)>(
+    &CalculateFee));
+}
+
+void Nexus::Python::ExportCseFeeTable(pybind11::module& module) {
+  auto outer = class_<CseFeeTable>(module, "CseFeeTable")
+    .def(init())
+    .def(init<const CseFeeTable&>())
+    .def_readwrite("fee_table", &CseFeeTable::m_feeTable);
+  enum_<CseFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", CseFeeTable::PriceClass::NONE)
+    .value("DEFAULT", CseFeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", CseFeeTable::PriceClass::SUBDOLLAR)
+    .value("SUBDIME", CseFeeTable::PriceClass::SUBDIME);
+  module.def("parse_cse_fee_table", &ParseCseFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const CseFeeTable&,
+    LiquidityFlag, CseFeeTable::PriceClass)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const CseFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportEdgaFeeTable(pybind11::module& module) {
+  class_<EdgaFeeTable>(module, "EdgaFeeTable")
+    .def(init())
+    .def(init<const EdgaFeeTable&>())
+    .def_readwrite("fee_table", &EdgaFeeTable::m_feeTable)
+    .def_readwrite("default_flag", &EdgaFeeTable::m_defaultFlag);
+  module.def("parse_edga_fee_table", &ParseEdgaFeeTable);
+  module.def("lookup_fee", static_cast<rational<int> (*)(const EdgaFeeTable&,
+    const std::string&)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const EdgaFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportEdgxFeeTable(pybind11::module& module) {
+  class_<EdgxFeeTable>(module, "EdgxFeeTable")
+    .def(init())
+    .def(init<const EdgxFeeTable&>())
+    .def_readwrite("fee_table", &EdgxFeeTable::m_feeTable)
+    .def_readwrite("default_flag", &EdgxFeeTable::m_defaultFlag);
+  module.def("parse_edga_fee_table", &ParseEdgxFeeTable);
+  module.def("lookup_fee", static_cast<rational<int> (*)(const EdgxFeeTable&,
+    const std::string&)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const EdgxFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
 void Nexus::Python::ExportFeeHandling(pybind11::module& module) {
+  ExportAmexFeeTable(module);
+  ExportArcaFeeTable(module);
   ExportAsxtFeeTable(module);
+  ExportBatsFeeTable(module);
+  ExportBatyFeeTable(module);
   ExportChicFeeTable(module);
   ExportConsolidatedTmxFeeTable(module);
+  ExportConsolidatedUsFeeTable(module);
+  ExportCseFeeTable(module);
+  ExportEdgaFeeTable(module);
+  ExportEdgxFeeTable(module);
   ExportHkexFeeTable(module);
   ExportJpxFeeTable(module);
   ExportLiquidityFlag(module);
+  ExportLynxFeeTable(module);
+  ExportMatnFeeTable(module);
+  ExportNeoeFeeTable(module);
+  ExportNexFeeTable(module);
+  ExportNsdqFeeTable(module);
+  ExportNyseFeeTable(module);
+  ExportOmgaFeeTable(module);
   ExportPureFeeTable(module);
+  ExportTsxFeeTable(module);
+  ExportXatsFeeTable(module);
+  ExportXcx2FeeTable(module);
 }
 
 void Nexus::Python::ExportHkexFeeTable(pybind11::module& module) {
-  auto outer = class_<HkexFeeTable>(module, "HkexFeeTable")
+  class_<HkexFeeTable>(module, "HkexFeeTable")
     .def(init())
     .def(init<const HkexFeeTable&>())
     .def_readwrite("spire_fee", &HkexFeeTable::m_spireFee)
@@ -136,7 +324,7 @@ void Nexus::Python::ExportHkexFeeTable(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportJpxFeeTable(pybind11::module& module) {
-  auto outer = class_<JpxFeeTable>(module, "JpxFeeTable")
+  class_<JpxFeeTable>(module, "JpxFeeTable")
     .def(init())
     .def(init<const JpxFeeTable&>())
     .def_readwrite("spire_fee", &JpxFeeTable::m_spireFee)
@@ -155,10 +343,268 @@ void Nexus::Python::ExportLiquidityFlag(pybind11::module& module) {
     .def("__str__", &lexical_cast<std::string, LiquidityFlag>);
 }
 
+void Nexus::Python::ExportLynxFeeTable(pybind11::module& module) {
+  auto outer = class_<LynxFeeTable>(module, "LynxFeeTable")
+    .def(init())
+    .def(init<const LynxFeeTable&>())
+    .def_readwrite("fee_table", &LynxFeeTable::m_feeTable);
+  enum_<LynxFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", LynxFeeTable::PriceClass::NONE)
+    .value("DEFAULT", LynxFeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", LynxFeeTable::PriceClass::SUBDOLLAR);
+  module.def("parse_lynx_fee_table", &ParseLynxFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const LynxFeeTable&,
+    LiquidityFlag, LynxFeeTable::PriceClass)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const LynxFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportMatnFeeTable(pybind11::module& module) {
+  auto outer = class_<MatnFeeTable>(module, "MatnFeeTable")
+    .def(init())
+    .def(init<const MatnFeeTable&>())
+    .def_readwrite("general_fee_table", &MatnFeeTable::m_generalFeeTable)
+    .def_readwrite("alternative_fee_table",
+      &MatnFeeTable::m_alternativeFeeTable);
+  enum_<MatnFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", MatnFeeTable::PriceClass::NONE)
+    .value("DEFAULT", MatnFeeTable::PriceClass::DEFAULT)
+    .value("SUBFIVE_DOLLAR", MatnFeeTable::PriceClass::SUBFIVE_DOLLAR)
+    .value("SUBDOLLAR", MatnFeeTable::PriceClass::SUBDOLLAR);
+  enum_<MatnFeeTable::GeneralIndex>(outer, "GeneralIndex")
+    .value("NONE", MatnFeeTable::GeneralIndex::NONE)
+    .value("FEE", MatnFeeTable::GeneralIndex::FEE)
+    .value("MAX_CHARGE", MatnFeeTable::GeneralIndex::MAX_CHARGE);
+  enum_<MatnFeeTable::Category>(outer, "Category")
+    .value("NONE", MatnFeeTable::Category::NONE)
+    .value("ETF", MatnFeeTable::Category::ETF)
+    .value("ODD_LOT", MatnFeeTable::Category::ODD_LOT);
+  enum_<MatnFeeTable::Classification>(outer, "Classification")
+    .value("NONE", MatnFeeTable::Classification::NONE)
+    .value("DEFAULT", MatnFeeTable::Classification::DEFAULT)
+    .value("ETF", MatnFeeTable::Classification::ETF);
+  module.def("parse_matn_fee_table", &ParseMatnFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const MatnFeeTable&,
+    MatnFeeTable::GeneralIndex, MatnFeeTable::PriceClass)>(&LookupFee));
+  module.def("lookup_fee", static_cast<Money (*)(const MatnFeeTable&,
+    LiquidityFlag, MatnFeeTable::Category)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const MatnFeeTable&,
+    MatnFeeTable::Classification, const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportNeoeFeeTable(pybind11::module& module) {
+  auto outer = class_<NeoeFeeTable>(module, "NeoeFeeTable")
+    .def(init())
+    .def(init<const NeoeFeeTable&>())
+    .def_readwrite("general_fee_table", &NeoeFeeTable::m_generalFeeTable)
+    .def_readwrite("interlisted_fee_table",
+      &NeoeFeeTable::m_interlistedFeeTable)
+    .def_readwrite("neoe_book_fee_table", &NeoeFeeTable::m_neoBookFeeTable);
+  enum_<NeoeFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", NeoeFeeTable::PriceClass::NONE)
+    .value("DEFAULT", NeoeFeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", NeoeFeeTable::PriceClass::SUBDOLLAR);
+  module.def("parse_neoe_fee_table", &ParseNeoeFeeTable);
+  module.def("is_neo_book_order", &IsNeoBookOrder);
+  module.def("lookup_general_fee", static_cast<Money (*)(const NeoeFeeTable&,
+    LiquidityFlag, NeoeFeeTable::PriceClass)>(&LookupGeneralFee));
+  module.def("lookup_interlisted_fee", &LookupInterlistedFee);
+  module.def("lookup_neo_book_fee", &LookupNeoBookFee);
+  module.def("calculate_fee", static_cast<Money (*)(const NeoeFeeTable&, bool,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportNexFeeTable(pybind11::module& module) {
+  auto outer = class_<NexFeeTable>(module, "NexFeeTable")
+    .def(init())
+    .def(init<const NexFeeTable&>())
+    .def_readwrite("fee", &NexFeeTable::m_fee);
+  module.def("parse_nex_fee_table", &ParseNexFeeTable);
+  module.def("calculate_fee", static_cast<Money (*)(const NexFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportNsdqFeeTable(pybind11::module& module) {
+  auto outer = class_<NsdqFeeTable>(module, "NsdqFeeTable")
+    .def(init())
+    .def(init<const NsdqFeeTable&>())
+    .def_readwrite("fee_table", &NsdqFeeTable::m_feeTable)
+    .def_readwrite("subdollar_table", &NsdqFeeTable::m_subdollarTable);
+  enum_<NsdqFeeTable::Category>(outer, "Category")
+    .value("NONE", NsdqFeeTable::Category::NONE)
+    .value("DEFAULT", NsdqFeeTable::Category::DEFAULT)
+    .value("HIDDEN", NsdqFeeTable::Category::HIDDEN)
+    .value("CROSS", NsdqFeeTable::Category::CROSS)
+    .value("ON_OPEN", NsdqFeeTable::Category::ON_OPEN)
+    .value("ON_CLOSE", NsdqFeeTable::Category::ON_CLOSE)
+    .value("RETAIL", NsdqFeeTable::Category::RETAIL);
+  module.def("parse_nsdq_fee_table", &ParseNsdqFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const NsdqFeeTable&,
+    LiquidityFlag, NsdqFeeTable::Category)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const NsdqFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportNyseFeeTable(pybind11::module& module) {
+  auto outer = class_<NyseFeeTable>(module, "NyseFeeTable")
+    .def(init())
+    .def(init<const NyseFeeTable&>())
+    .def_readwrite("fee_table", &NyseFeeTable::m_feeTable)
+    .def_readwrite("subdollar_table", &NyseFeeTable::m_subdollarTable);
+  enum_<NyseFeeTable::Category>(outer, "Category")
+    .value("NONE", NyseFeeTable::Category::NONE)
+    .value("DEFAULT", NyseFeeTable::Category::DEFAULT)
+    .value("HIDDEN", NyseFeeTable::Category::HIDDEN)
+    .value("CROSS", NyseFeeTable::Category::CROSS)
+    .value("ON_OPEN", NyseFeeTable::Category::ON_OPEN)
+    .value("ON_CLOSE", NyseFeeTable::Category::ON_CLOSE)
+    .value("RETAIL", NyseFeeTable::Category::RETAIL);
+  module.def("parse_nyse_fee_table", &ParseNyseFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const NyseFeeTable&,
+    LiquidityFlag, NyseFeeTable::Category)>(&LookupFee));
+  module.def("is_nyse_hidden_liquidity_provider",
+    &IsNyseHiddenLiquidityProvider);
+  module.def("calculate_fee", static_cast<Money (*)(const NyseFeeTable&,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportOmgaFeeTable(pybind11::module& module) {
+  auto outer = class_<OmgaFeeTable>(module, "OmgaFeeTable")
+    .def(init())
+    .def(init<const OmgaFeeTable&>())
+    .def_readwrite("fee_table", &OmgaFeeTable::m_feeTable);
+  enum_<OmgaFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", OmgaFeeTable::PriceClass::NONE)
+    .value("DEFAULT", OmgaFeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", OmgaFeeTable::PriceClass::SUBDOLLAR);
+  enum_<OmgaFeeTable::Type>(outer, "Type")
+    .value("NONE", OmgaFeeTable::Type::NONE)
+    .value("PASSIVE", OmgaFeeTable::Type::PASSIVE)
+    .value("ACTIVE", OmgaFeeTable::Type::ACTIVE)
+    .value("HIDDEN_PASSIVE", OmgaFeeTable::Type::HIDDEN_PASSIVE)
+    .value("HIDDEN_ACTIVE", OmgaFeeTable::Type::HIDDEN_ACTIVE)
+    .value("ETF_PASSIVE", OmgaFeeTable::Type::ETF_PASSIVE)
+    .value("ETF_ACTIVE", OmgaFeeTable::Type::ETF_ACTIVE)
+    .value("ODD_LOT", OmgaFeeTable::Type::ODD_LOT);
+  module.def("parse_omga_fee_table", &ParseOmgaFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const OmgaFeeTable&,
+    OmgaFeeTable::Type, OmgaFeeTable::PriceClass)>(&LookupFee));
+  module.def("is_omga_hidden_liquidity_provider",
+    &IsOmgaHiddenLiquidityProvider);
+  module.def("calculate_fee", static_cast<Money (*)(const OmgaFeeTable&, bool,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
+
 void Nexus::Python::ExportPureFeeTable(pybind11::module& module) {
   class_<PureFeeTable>(module, "PureFeeTable")
     .def(init<const PureFeeTable&>());
   module.def("parse_pure_fee_table", &ParsePureFeeTable);
   module.def("calculate_fee", static_cast<Money (*)(const PureFeeTable&,
     const Security&, const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportTsxFeeTable(pybind11::module& module) {
+  auto outer = class_<TsxFeeTable>(module, "TsxFeeTable")
+    .def(init())
+    .def(init<const TsxFeeTable&>())
+    .def_readwrite("continuous_fee_table", &TsxFeeTable::m_continuousFeeTable)
+    .def_readwrite("auction_fee_table", &TsxFeeTable::m_auctionFeeTable)
+    .def_readwrite("odd_lot_fee_list", &TsxFeeTable::m_oddLotFeeList);
+  enum_<TsxFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", TsxFeeTable::PriceClass::NONE)
+    .value("SUBDIME", TsxFeeTable::PriceClass::SUBDIME)
+    .value("SUBDOLLAR", TsxFeeTable::PriceClass::SUBDOLLAR)
+    .value("DEFAULT", TsxFeeTable::PriceClass::DEFAULT)
+    .value("DEFAULT_INTERLISTED", TsxFeeTable::PriceClass::DEFAULT_INTERLISTED)
+    .value("DEFAULT_ETF", TsxFeeTable::PriceClass::DEFAULT_ETF);
+  enum_<TsxFeeTable::Type>(outer, "Type")
+    .value("NONE", TsxFeeTable::Type::NONE)
+    .value("ACTIVE", TsxFeeTable::Type::ACTIVE)
+    .value("PASSIVE", TsxFeeTable::Type::PASSIVE)
+    .value("HIDDEN_ACTIVE", TsxFeeTable::Type::HIDDEN_ACTIVE)
+    .value("HIDDEN_PASSIVE", TsxFeeTable::Type::HIDDEN_PASSIVE);
+  enum_<TsxFeeTable::AuctionIndex>(outer, "AuctionIndex")
+    .value("NONE", TsxFeeTable::AuctionIndex::NONE)
+    .value("FEE", TsxFeeTable::AuctionIndex::FEE)
+    .value("MAX_CHARGE", TsxFeeTable::AuctionIndex::MAX_CHARGE);
+  enum_<TsxFeeTable::AuctionType>(outer, "AuctionType")
+    .value("NONE", TsxFeeTable::AuctionType::NONE)
+    .value("OPEN", TsxFeeTable::AuctionType::OPEN)
+    .value("CLOSE", TsxFeeTable::AuctionType::CLOSE);
+  enum_<TsxFeeTable::Classification>(outer, "Classification")
+    .value("NONE", TsxFeeTable::Classification::NONE)
+    .value("DEFAULT", TsxFeeTable::Classification::DEFAULT)
+    .value("ETF", TsxFeeTable::Classification::ETF)
+    .value("INTERLISTED", TsxFeeTable::Classification::INTERLISTED);
+  module.def("parse_tsx_fee_table", &ParseTsxFeeTable);
+  module.def("lookup_continuous_fee", &LookupContinuousFee);
+  module.def("lookup_auction_fee", &LookupAuctionFee);
+  module.def("lookup_odd_lot_fee", &LookupOddLotFee);
+  module.def("is_tsx_hidden_order", &IsTsxHiddenOrder);
+  module.def("calculate_fee", static_cast<Money (*)(const TsxFeeTable&,
+    TsxFeeTable::Classification, const OrderFields&, const ExecutionReport&)>(
+    &CalculateFee));
+}
+
+void Nexus::Python::ExportXatsFeeTable(pybind11::module& module) {
+  auto outer = class_<XatsFeeTable>(module, "XatsFeeTable")
+    .def(init())
+    .def(init<const XatsFeeTable&>())
+    .def_readwrite("general_fee_table", &XatsFeeTable::m_generalFeeTable)
+    .def_readwrite("etf_fee_table", &XatsFeeTable::m_etfFeeTable)
+    .def_readwrite("intraspread_dark_to_dark_subdollar_max_fee",
+      &XatsFeeTable::m_intraspreadDarkToDarkSubdollarMaxFee)
+    .def_readwrite("intraspread_dark_to_dark_max_fee",
+      &XatsFeeTable::m_intraspreadDarkToDarkMaxFee);
+  enum_<XatsFeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", XatsFeeTable::PriceClass::NONE)
+    .value("SUBHALF_DOLLAR", XatsFeeTable::PriceClass::SUBHALF_DOLLAR)
+    .value("SUBDOLLAR", XatsFeeTable::PriceClass::SUBDOLLAR)
+    .value("SUBFIVE_DOLLAR", XatsFeeTable::PriceClass::SUBFIVE_DOLLAR)
+    .value("DEFAULT", XatsFeeTable::PriceClass::DEFAULT);
+  enum_<XatsFeeTable::Type>(outer, "Type")
+    .value("NONE", XatsFeeTable::Type::NONE)
+    .value("ACTIVE", XatsFeeTable::Type::ACTIVE)
+    .value("PASSIVE", XatsFeeTable::Type::PASSIVE)
+    .value("OPEN_AUCTION", XatsFeeTable::Type::OPEN_AUCTION)
+    .value("SDL_ACTIVE", XatsFeeTable::Type::SDL_ACTIVE)
+    .value("SDL_PASSIVE", XatsFeeTable::Type::SDL_PASSIVE)
+    .value("INTRASPREAD_ACTIVE", XatsFeeTable::Type::INTRASPREAD_ACTIVE)
+    .value("INTRASPREAD_PASSIVE", XatsFeeTable::Type::INTRASPREAD_PASSIVE);
+  module.def("parse_xats_fee_table", &ParseXatsFeeTable);
+  module.def("lookup_general_fee", static_cast<Money (*)(const XatsFeeTable&,
+    XatsFeeTable::Type, XatsFeeTable::PriceClass)>(&LookupGeneralFee));
+  module.def("lookup_etf_fee", static_cast<Money (*)(const XatsFeeTable&,
+    XatsFeeTable::Type, XatsFeeTable::PriceClass)>(&LookupEtfFee));
+  module.def("calculate_fee", static_cast<Money (*)(const XatsFeeTable&, bool,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportXcx2FeeTable(pybind11::module& module) {
+  auto outer = class_<Xcx2FeeTable>(module, "Xcx2FeeTable")
+    .def(init())
+    .def(init<const Xcx2FeeTable&>())
+    .def_readwrite("default_table", &Xcx2FeeTable::m_defaultTable)
+    .def_readwrite("tsx_table", &Xcx2FeeTable::m_tsxTable)
+    .def_readwrite("large_trade_size", &Xcx2FeeTable::m_largeTradeSize);
+  enum_<Xcx2FeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", Xcx2FeeTable::PriceClass::NONE)
+    .value("DEFAULT", Xcx2FeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", Xcx2FeeTable::PriceClass::SUBDOLLAR)
+    .value("SUBDIME", Xcx2FeeTable::PriceClass::SUBDIME);
+  enum_<Xcx2FeeTable::Type>(outer, "Type")
+    .value("NONE", Xcx2FeeTable::Type::NONE)
+    .value("ACTIVE", Xcx2FeeTable::Type::ACTIVE)
+    .value("PASSIVE", Xcx2FeeTable::Type::PASSIVE)
+    .value("LARGE_ACTIVE", Xcx2FeeTable::Type::LARGE_ACTIVE)
+    .value("LARGE_PASSIVE", Xcx2FeeTable::Type::LARGE_PASSIVE)
+    .value("HIDDEN_ACTIVE", Xcx2FeeTable::Type::HIDDEN_ACTIVE)
+    .value("HIDDEN_PASSIVE", Xcx2FeeTable::Type::HIDDEN_PASSIVE)
+    .value("ODD_LOT", Xcx2FeeTable::Type::ODD_LOT);
+  module.def("parse_xcx2_fee_table", &ParseXcx2FeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const Xcx2FeeTable&,
+    const OrderFields&, Xcx2FeeTable::Type, Xcx2FeeTable::PriceClass)>(
+    &LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const Xcx2FeeTable&,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }

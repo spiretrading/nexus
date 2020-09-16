@@ -26,7 +26,7 @@ export class HLine extends React.PureComponent<Properties> {
     })();
     const style = {
       borderBottom: `${height} solid ${this.props.color}`
-    };
+    } as React.CSSProperties;
     return <div style={style}/>;
   }
 }

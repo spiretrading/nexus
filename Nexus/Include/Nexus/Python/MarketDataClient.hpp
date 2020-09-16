@@ -26,40 +26,34 @@ namespace Nexus::MarketDataService {
       ~ToPythonMarketDataClient() override;
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<
-        Beam::QueueWriter<SequencedOrderImbalance>>& queue) override;
+        Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) override;
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue)
-        override;
+        Beam::ScopedQueueWriter<OrderImbalance> queue) override;
 
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue)
-        override;
+        Beam::ScopedQueueWriter<SequencedBboQuote> queue) override;
 
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) override;
+        Beam::ScopedQueueWriter<BboQuote> queue) override;
 
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<
-        Beam::QueueWriter<SequencedBookQuote>>& queue) override;
+        Beam::ScopedQueueWriter<SequencedBookQuote> queue) override;
 
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) override;
+        Beam::ScopedQueueWriter<BookQuote> queue) override;
 
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<
-        Beam::QueueWriter<SequencedMarketQuote>>& queue) override;
+        Beam::ScopedQueueWriter<SequencedMarketQuote> queue) override;
 
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) override;
+        Beam::ScopedQueueWriter<MarketQuote> queue) override;
 
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<
-        Beam::QueueWriter<SequencedTimeAndSale>>& queue) override;
+        Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) override;
 
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) override;
+        Beam::ScopedQueueWriter<TimeAndSale> queue) override;
 
       SecuritySnapshot LoadSecuritySnapshot(const Security& security) override;
 
@@ -71,8 +65,6 @@ namespace Nexus::MarketDataService {
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -104,82 +96,82 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryOrderImbalances(
-      const MarketWideDataQuery& query, const std::shared_ptr<
-      Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
+      const MarketWideDataQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderImbalances(query, queue);
+    m_client->QueryOrderImbalances(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryOrderImbalances(
       const MarketWideDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
+      Beam::ScopedQueueWriter<OrderImbalance> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderImbalances(query, queue);
+    m_client->QueryOrderImbalances(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBboQuotes(query, queue);
+    m_client->QueryBboQuotes(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
+      Beam::ScopedQueueWriter<BboQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBboQuotes(query, queue);
+    m_client->QueryBboQuotes(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBookQuotes(query, queue);
+    m_client->QueryBookQuotes(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
+      Beam::ScopedQueueWriter<BookQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBookQuotes(query, queue);
+    m_client->QueryBookQuotes(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryMarketQuotes(query, queue);
+    m_client->QueryMarketQuotes(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
+      Beam::ScopedQueueWriter<MarketQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryMarketQuotes(query, queue);
+    m_client->QueryMarketQuotes(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryTimeAndSales(query, queue);
+    m_client->QueryTimeAndSales(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<TimeAndSale> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryTimeAndSales(query, queue);
+    m_client->QueryTimeAndSales(query, std::move(queue));
   }
 
   template<typename C>
@@ -208,12 +200,6 @@ namespace Nexus::MarketDataService {
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     auto release = Beam::Python::GilRelease();
     return m_client->LoadSecurityInfoFromPrefix(prefix);
-  }
-
-  template<typename C>
-  void ToPythonMarketDataClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

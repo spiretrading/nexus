@@ -20,10 +20,9 @@ EventHandler::EventHandler()
 void EventHandler::on_expired() {
   auto start = microsec_clock::universal_time();
   auto tasks = m_tasks;
-  while(tasks.use_count() != 1 && !tasks->IsEmpty()) {
-    std::function<void ()> task;
-    tasks->Emplace(Store(task));
-    task();
+  for(auto task = tasks->TryPop(); task && !tasks.unique();
+      task = tasks->TryPop()) {
+    (*task)();
     auto duration = microsec_clock::universal_time();
     if(duration - start > seconds(1) / 10) {
       QCoreApplication::instance()->processEvents();

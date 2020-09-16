@@ -30,26 +30,20 @@ fi
 pushd "$dependencies"
 "$directory"/setup.sh
 popd
-if [ "$dependencies" != "$root/Dependencies" ]; then
-  if [ ! -L Dependencies ]; then
-    ln -s "$dependencies" Dependencies
-  fi
+if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
+  ln -s "$dependencies" Dependencies
 fi
 if [ "$directory" != "$root" ]; then
-  if [ -d source ]; then
-    rm -rf source
+  if [ ! -d "source" ]; then
+    ln -s "$directory/source" source
   fi
-  ln -s "$directory/source" source
-  if [ -L "package.json" ]; then
-    rm package.json
+  if [ ! -f "package.json" ]; then
+    ln -s "$directory/package.json" package.json
   fi
-  ln -s "$directory/package.json" package.json
-  if [ -L "tsconfig.json" ]; then
-    rm tsconfig.json
+  if [ ! -f "tsconfig.json" ]; then
+    ln -s "$directory/tsconfig.json" tsconfig.json
   fi
-  ln -s "$directory/tsconfig.json" tsconfig.json
-  if [ -L "webpack.config.js" ]; then
-    rm webpack.config.js
+  if [ ! -f "webpack.config.js" ]; then
+    ln -s "$directory/webpack.config.js" webpack.config.js
   fi
-  ln -s "$directory/webpack.config.js" webpack.config.js
 fi

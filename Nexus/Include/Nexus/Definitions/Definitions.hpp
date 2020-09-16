@@ -28,6 +28,7 @@ namespace Nexus {
   class Tag;
   struct TimeAndSale;
   class TimeInForce;
+  class TradingSchedule;
 }
 
 #endif

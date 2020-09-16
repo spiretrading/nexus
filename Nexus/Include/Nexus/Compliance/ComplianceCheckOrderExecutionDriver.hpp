@@ -1,11 +1,11 @@
 #ifndef NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
+#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
@@ -66,8 +66,6 @@ namespace Nexus::Compliance {
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -79,7 +77,6 @@ namespace Nexus::Compliance {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void OnExecutionReport(OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
   };
@@ -165,32 +162,12 @@ namespace Nexus::Compliance {
   }
 
   template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_orderExecutionDriver->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename D, typename C, typename S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Shutdown() {
     m_orderExecutionDriver->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename D, typename C, typename S>
@@ -200,12 +177,11 @@ namespace Nexus::Compliance {
     if(executionReport.m_status == OrderStatus::PENDING_NEW) {
       return;
     }
-    order.With(
-      [&] (auto status, const auto& reports) {
-        auto update = executionReport;
-        update.m_sequence = reports.back().m_sequence + 1;
-        order.Update(update);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      auto update = executionReport;
+      update.m_sequence = reports.back().m_sequence + 1;
+      order.Update(update);
+    });
   }
 }
 

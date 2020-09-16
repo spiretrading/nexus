@@ -54,28 +54,30 @@ using namespace pybind11;
 namespace {
   struct TrampolineOrderExecutionClient final : VirtualOrderExecutionClient {
     void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<QueueWriter<OrderRecord>>& queue) override {
+        ScopedQueueWriter<OrderRecord> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
-        "query_order_records", QueryOrderRecords, query, queue);
+        "query_order_records", QueryOrderRecords, query, std::move(queue));
     }
 
     void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedOrder>>& queue) override {
+        ScopedQueueWriter<SequencedOrder> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
         "query_sequenced_order_submissions", QueryOrderSubmissions, query,
-        queue);
+        std::move(queue));
     }
 
-    void QueryOrderSubmissions(const AccountQuery& query, const std::shared_ptr<
-        QueueWriter<const Order*>>& queue) override {
+    void QueryOrderSubmissions(const AccountQuery& query,
+        ScopedQueueWriter<const Order*> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
-        "query_order_submissions", QueryOrderSubmissions, query, queue);
+        "query_order_submissions", QueryOrderSubmissions, query,
+        std::move(queue));
     }
 
-    void QueryExecutionReports(const AccountQuery& query, const std::shared_ptr<
-        QueueWriter<ExecutionReport>>& queue) override {
+    void QueryExecutionReports(const AccountQuery& query,
+        ScopedQueueWriter<ExecutionReport> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
-        "query_execution_reports", QueryExecutionReports, query, queue);
+        "query_execution_reports", QueryExecutionReports, query,
+        std::move(queue));
     }
 
     const Order& Submit(const OrderFields& fields) override {
@@ -92,11 +94,6 @@ namespace {
         const ExecutionReport& executionReport) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient, "update",
         Update, orderId, executionReport);
-    }
-
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient, "open",
-        Open);
     }
 
     void Close() override {
@@ -123,22 +120,19 @@ void Nexus::Python::ExportApplicationOrderExecutionClient(
         auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
           [=] () mutable {
             if(delay) {
-              auto delayTimer = LiveTimer(seconds(3),
-                Ref(*GetTimerThreadPool()));
+              auto delayTimer = LiveTimer(seconds(3));
               delayTimer.Start();
               delayTimer.Wait();
             }
             delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses,
-              Ref(*GetSocketThreadPool()));
+            return std::make_unique<TcpSocketChannel>(addresses);
           },
-          [=] {
-            return std::make_unique<LiveTimer>(seconds(10),
-              Ref(*GetTimerThreadPool()));
+          [] {
+            return std::make_unique<LiveTimer>(seconds(10));
           });
         return MakeToPythonOrderExecutionClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
@@ -163,6 +157,7 @@ void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
     .def("__str__", &lexical_cast<std::string, ExecutionReport>)
     .def(self == self)
     .def(self != self);
+  module.def("get_fee_total", &GetFeeTotal);
   ExportQueueSuite<ExecutionReport>(module, "ExecutionReport");
   ExportQueueSuite<SequencedExecutionReport>(module,
     "SequencedExecutionReport");
@@ -186,7 +181,6 @@ void Nexus::Python::ExportMockOrderExecutionDriver(pybind11::module& module) {
       call_guard<GilRelease>(), return_value_policy::reference_internal)
     .def("cancel", &MockOrderExecutionDriver::Cancel, call_guard<GilRelease>())
     .def("update", &MockOrderExecutionDriver::Update, call_guard<GilRelease>())
-    .def("open", &MockOrderExecutionDriver::Open, call_guard<GilRelease>())
     .def("close", &MockOrderExecutionDriver::Close, call_guard<GilRelease>());
 }
 
@@ -216,11 +210,11 @@ void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
     .def("query_order_records", &VirtualOrderExecutionClient::QueryOrderRecords)
     .def("query_sequenced_order_submissions",
       static_cast<void (VirtualOrderExecutionClient::*)(const AccountQuery&,
-      const std::shared_ptr<QueueWriter<SequencedOrder>>&)>(
+      ScopedQueueWriter<SequencedOrder>)>(
       &VirtualOrderExecutionClient::QueryOrderSubmissions))
     .def("query_order_submissions",
       static_cast<void (VirtualOrderExecutionClient::*)(const AccountQuery&,
-      const std::shared_ptr<QueueWriter<const Order*>>&)>(
+      ScopedQueueWriter<const Order*>)>(
       &VirtualOrderExecutionClient::QueryOrderSubmissions))
     .def("query_execution_reports",
       &VirtualOrderExecutionClient::QueryExecutionReports)
@@ -228,7 +222,6 @@ void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
       return_value_policy::reference_internal)
     .def("cancel", &VirtualOrderExecutionClient::Cancel)
     .def("update", &VirtualOrderExecutionClient::Update)
-    .def("open", &VirtualOrderExecutionClient::Open)
     .def("close", &VirtualOrderExecutionClient::Close);
 }
 
@@ -249,16 +242,34 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   auto testModule = submodule.def_submodule("tests");
   ExportOrderExecutionServiceTestEnvironment(testModule);
   ExportMockOrderExecutionDriver(testModule);
-  testModule.def("cancel_order", &CancelOrder, call_guard<GilRelease>());
-  testModule.def("set_order_status", &SetOrderStatus, call_guard<GilRelease>());
-  testModule.def("fill_order",
-    static_cast<void (*)(PrimitiveOrder& order, Money price,
-    Quantity quantity, const ptime& timestamp)>(&FillOrder),
+  testModule.def("cancel", static_cast<void (*)(PrimitiveOrder&, ptime)>(
+    &Cancel), call_guard<GilRelease>());
+  testModule.def("cancel", static_cast<void (*)(PrimitiveOrder&)>(&Cancel),
     call_guard<GilRelease>());
-  testModule.def("fill_order",
-    static_cast<void (*)(PrimitiveOrder& order,
-    Quantity quantity, const ptime& timestamp)>(&FillOrder),
+  testModule.def("set_order_status",
+    static_cast<void (*)(PrimitiveOrder&, OrderStatus, ptime)>(&SetOrderStatus),
     call_guard<GilRelease>());
+  testModule.def("set_order_status",
+    static_cast<void (*)(PrimitiveOrder&, OrderStatus)>(&SetOrderStatus),
+    call_guard<GilRelease>());
+  testModule.def("accept", static_cast<void (*)(PrimitiveOrder&, ptime)>(
+    &Accept), call_guard<GilRelease>());
+  testModule.def("accept", static_cast<void (*)(PrimitiveOrder&)>(&Accept),
+    call_guard<GilRelease>());
+  testModule.def("reject", static_cast<void (*)(PrimitiveOrder&, ptime)>(
+    &Reject), call_guard<GilRelease>());
+  testModule.def("reject", static_cast<void (*)(PrimitiveOrder&)>(&Reject),
+    call_guard<GilRelease>());
+  testModule.def("fill",
+    static_cast<void (*)(PrimitiveOrder&, Money, Quantity, ptime)>(&Fill),
+    call_guard<GilRelease>());
+  testModule.def("fill",
+    static_cast<void (*)(PrimitiveOrder&, Money, Quantity)>(&Fill),
+    call_guard<GilRelease>());
+  testModule.def("fill", static_cast<void (*)(PrimitiveOrder&, Quantity,
+    ptime)>(&Fill), call_guard<GilRelease>());
+  testModule.def("fill", static_cast<void (*)(PrimitiveOrder&, Quantity)>(
+    &Fill), call_guard<GilRelease>());
   testModule.def("is_pending_cancel", &IsPendingCancel,
     call_guard<GilRelease>());
 }
@@ -270,11 +281,13 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
     .def(init<const MarketDatabase&, const DestinationDatabase&,
       std::shared_ptr<VirtualServiceLocatorClient>,
       std::shared_ptr<VirtualUidClient>,
-      std::shared_ptr<VirtualAdministrationClient>>())
+      std::shared_ptr<VirtualAdministrationClient>>(), call_guard<GilRelease>())
+    .def("__del__",
+      [] (OrderExecutionServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("get_driver", &OrderExecutionServiceTestEnvironment::GetDriver,
       return_value_policy::reference_internal)
-    .def("open", &OrderExecutionServiceTestEnvironment::Open,
-      call_guard<GilRelease>())
     .def("close", &OrderExecutionServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("build_client",
@@ -282,7 +295,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
           VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakeToPythonOrderExecutionClient(
           self.BuildClient(Ref(serviceLocatorClient)));
-      });
+      }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportOrderFields(pybind11::module& module) {

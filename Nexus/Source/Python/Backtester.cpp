@@ -64,30 +64,66 @@ void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
           std::shared_ptr<VirtualServiceClients> serviceClients) {
         return std::make_unique<TrampolineBacktesterEnvironment>(startTime,
           std::move(serviceClients));
-      }))
+      }), call_guard<GilRelease>())
     .def(init(
       [] (ptime startTime, ptime endTime,
           std::shared_ptr<VirtualServiceClients> serviceClients) {
         return std::make_unique<TrampolineBacktesterEnvironment>(startTime,
           endTime, std::move(serviceClients));
-      }))
+      }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (BacktesterEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def_property_readonly("event_handler",
       static_cast<BacktesterEventHandler& (BacktesterEnvironment::*)()>(
       &BacktesterEnvironment::GetEventHandler),
       return_value_policy::reference_internal)
-    .def_property_readonly("market_data_server",
+    .def_property_readonly("service_locator_environment",
+      &BacktesterEnvironment::GetServiceLocatorEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("uid_environment",
+      &BacktesterEnvironment::GetUidEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("registry_environment",
+      &BacktesterEnvironment::GetRegistryEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("definitions_environment",
+      &BacktesterEnvironment::GetDefinitionsEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("administration_environment",
+      &BacktesterEnvironment::GetAdministrationEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("market_data_environment",
+      &BacktesterEnvironment::GetMarketDataEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("market_data_service",
       static_cast<BacktesterMarketDataService& (BacktesterEnvironment::*)()>(
       &BacktesterEnvironment::GetMarketDataService),
       return_value_policy::reference_internal)
-    .def("open", &BacktesterEnvironment::Open, call_guard<GilRelease>())
-    .def("close", &BacktesterEnvironment::Close,
-      call_guard<GilRelease>());
+    .def_property_readonly("charting_environment",
+      &BacktesterEnvironment::GetChartingEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("compliance_environment",
+      &BacktesterEnvironment::GetComplianceEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("order_execution_environment",
+      &BacktesterEnvironment::GetOrderExecutionEnvironment,
+      return_value_policy::reference_internal)
+    .def_property_readonly("risk_environment",
+      &BacktesterEnvironment::GetRiskEnvironment,
+      return_value_policy::reference_internal)
+    .def("close", &BacktesterEnvironment::Close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
   class_<BacktesterEventHandler>(module, "BacktesterEventHandler")
-    .def(init<ptime>())
-    .def(init<ptime, ptime>())
+    .def(init<ptime>(), call_guard<GilRelease>())
+    .def(init<ptime, ptime>(), call_guard<GilRelease>())
+    .def("__del__",
+      [] (BacktesterEventHandler& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def_property_readonly("start_time", &BacktesterEventHandler::GetStartTime)
     .def_property_readonly("end_time", &BacktesterEventHandler::GetEndTime)
     .def("add", static_cast<void (BacktesterEventHandler::*)(
@@ -100,10 +136,7 @@ void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
         }
         self.Add(std::move(e));
       })
-    .def("open", &BacktesterEventHandler::Open,
-      call_guard<GilRelease>())
-    .def("close", &BacktesterEventHandler::Close,
-      call_guard<GilRelease>());
+    .def("close", &BacktesterEventHandler::Close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {
@@ -114,5 +147,5 @@ void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {
       [] (std::shared_ptr<BacktesterEnvironment> environment) {
         return std::make_shared<ToPythonBacktesterServiceClients>(
           std::move(environment));
-      }));
+      }), call_guard<GilRelease>());
 }

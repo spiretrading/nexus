@@ -46,8 +46,6 @@ namespace Nexus::WebPortal {
       std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
         GetWebSocketSlots();
 
-      void Open();
-
       void Close();
 
     private:
@@ -83,7 +81,6 @@ namespace Nexus::WebPortal {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       const Beam::ServiceLocator::DirectoryEntry& FindTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& trader);
       void SendPortfolioEntry(const PortfolioModel::Entry& entry,

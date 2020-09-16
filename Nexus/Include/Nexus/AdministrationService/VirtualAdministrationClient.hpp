@@ -47,7 +47,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) = 0;
 
-      virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      virtual Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
       virtual AccountIdentity LoadIdentity(
@@ -145,8 +145,6 @@ namespace Nexus::AdministrationService {
       virtual Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -171,9 +169,7 @@ namespace Nexus::AdministrationService {
        * @param client The AdministrationClient to wrap.
        */
       template<typename CF>
-      WrapperAdministrationClient(CF&& client);
-
-      ~WrapperAdministrationClient() override;
+      explicit WrapperAdministrationClient(CF&& client);
 
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
@@ -196,7 +192,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) override;
 
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       AccountIdentity LoadIdentity(
@@ -286,8 +282,6 @@ namespace Nexus::AdministrationService {
       Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -309,11 +303,6 @@ namespace Nexus::AdministrationService {
   template<typename CF>
   WrapperAdministrationClient<C>::WrapperAdministrationClient(CF&& client)
     : m_client(std::forward<CF>(client)) {}
-
-  template<typename C>
-  WrapperAdministrationClient<C>::~WrapperAdministrationClient() {
-    Close();
-  }
 
   template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
@@ -360,9 +349,9 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
-      LoadTradingGroupEntry(
+      LoadParentTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_client->LoadTradingGroupEntry(account);
+    return m_client->LoadParentTradingGroup(account);
   }
 
   template<typename C>
@@ -541,11 +530,6 @@ namespace Nexus::AdministrationService {
       SendAccountModificationRequestMessage(AccountModificationRequest::Id id,
       const Message& message) {
     return m_client->SendAccountModificationRequestMessage(id, message);
-  }
-
-  template<typename C>
-  void WrapperAdministrationClient<C>::Open() {
-    m_client->Open();
   }
 
   template<typename C>

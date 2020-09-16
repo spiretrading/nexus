@@ -22,8 +22,8 @@ CALL:configure Applications\RiskServer %*
 CALL:configure Applications\SimulationMarketDataFeedClient %*
 CALL:configure Applications\SimulationOrderExecutionServer %*
 CALL:configure Applications\Spire %*
-CALL:configure Applications\WebPortal %*
 CALL:configure Applications\WebPortal\WebApp %*
+CALL:configure Applications\WebPortal %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

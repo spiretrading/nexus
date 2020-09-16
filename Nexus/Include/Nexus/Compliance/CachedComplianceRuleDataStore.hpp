@@ -47,8 +47,6 @@ namespace Nexus::Compliance {
 
       void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-      void Open();
-
       void Close();
 
     private:
@@ -56,15 +54,23 @@ namespace Nexus::Compliance {
       Beam::GetOptionalLocalPtr<D> m_dataStore;
       LocalComplianceRuleDataStore m_cache;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
   template<typename DF>
   CachedComplianceRuleDataStore<D>::CachedComplianceRuleDataStore(
-    DF&& dataStore)
-    : m_dataStore(std::forward<DF>(dataStore)) {}
+      DF&& dataStore)
+      : m_dataStore(std::forward<DF>(dataStore)) {
+    try {
+      auto entries = m_dataStore->LoadAllComplianceRuleEntries();
+      for(auto& entry : entries) {
+        m_cache.Store(entry);
+      }
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   template<typename D>
   CachedComplianceRuleDataStore<D>::~CachedComplianceRuleDataStore() {
@@ -125,37 +131,13 @@ namespace Nexus::Compliance {
   }
 
   template<typename D>
-  void CachedComplianceRuleDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_cache.Open();
-      auto entries = m_dataStore->LoadAllComplianceRuleEntries();
-      for(auto& entry : entries) {
-        m_cache.Store(entry);
-      }
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename D>
   void CachedComplianceRuleDataStore<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void CachedComplianceRuleDataStore<D>::Shutdown() {
     m_dataStore->Close();
     m_cache.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

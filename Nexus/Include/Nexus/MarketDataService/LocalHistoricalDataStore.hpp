@@ -1,7 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queries/LocalDataStore.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -72,8 +72,6 @@ namespace Nexus::MarketDataService {
       void Store(const SequencedSecurityTimeAndSale& timeAndSale);
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
-
-      void Open();
 
       void Close();
 
@@ -213,8 +211,6 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_timeAndSaleDataStore.Store(timeAndSales);
   }
-
-  inline void LocalHistoricalDataStore::Open() {}
 
   inline void LocalHistoricalDataStore::Close() {}
 }

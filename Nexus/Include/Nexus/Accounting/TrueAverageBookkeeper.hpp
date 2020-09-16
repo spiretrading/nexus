@@ -17,6 +17,16 @@ namespace Nexus::Accounting {
       using Index = typename Bookkeeper<I>::Index;
       using Key = typename Bookkeeper<I>::Key;
 
+      /** Constructs an empty bookkeeper. */
+      TrueAverageBookkeeper() = default;
+
+      /**
+       * Constructs a bookkeeper with an initial inventory.
+       * @param inventories The initial inventories.
+       */
+      explicit TrueAverageBookkeeper(
+        const Beam::View<const Inventory>& inventories);
+
       void RecordTransaction(const Index& index, CurrencyId currency,
         Quantity quantity, Money costBasis, Money fees);
 
@@ -35,6 +45,24 @@ namespace Nexus::Accounting {
 
       Inventory& InternalGetTotal(CurrencyId currency);
   };
+
+  template<typename I>
+  TrueAverageBookkeeper<I>::TrueAverageBookkeeper(
+      const Beam::View<const Inventory>& inventories) {
+    for(auto& inventory : inventories) {
+      if(IsEmpty(inventory)) {
+        continue;
+      }
+      m_inventories.insert(std::pair(inventory.m_position.m_key, inventory));
+      auto& total = InternalGetTotal(inventory.m_position.m_key.m_currency);
+      total.m_grossProfitAndLoss += inventory.m_grossProfitAndLoss;
+      total.m_position.m_quantity += Abs(inventory.m_position.m_quantity);
+      total.m_position.m_costBasis += Abs(inventory.m_position.m_costBasis);
+      total.m_fees += inventory.m_fees;
+      total.m_volume += inventory.m_volume;
+      total.m_transactionCount += inventory.m_transactionCount;
+    }
+  }
 
   template<typename I>
   void TrueAverageBookkeeper<I>::RecordTransaction(const Index& index,
@@ -126,14 +154,14 @@ namespace Nexus::Accounting {
       const typename TrueAverageBookkeeper<I>::Key,
       typename TrueAverageBookkeeper<I>::Inventory>>
       TrueAverageBookkeeper<I>::GetInventoryRange() const {
-    return Beam::MakeView(m_inventories.begin(), m_inventories.end());
+    return Beam::View(m_inventories.begin(), m_inventories.end());
   }
 
   template<typename I>
   Beam::View<std::pair<const CurrencyId,
       typename TrueAverageBookkeeper<I>::Inventory>>
       TrueAverageBookkeeper<I>::GetTotalsRange() const {
-    return Beam::MakeView(m_totals.begin(), m_totals.end());
+    return Beam::View(m_totals.begin(), m_totals.end());
   }
 
   template<typename I>

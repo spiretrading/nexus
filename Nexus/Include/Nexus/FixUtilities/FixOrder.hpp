@@ -1,5 +1,5 @@
-#ifndef NEXUS_FIXORDER_HPP
-#define NEXUS_FIXORDER_HPP
+#ifndef NEXUS_FIX_ORDER_HPP
+#define NEXUS_FIX_ORDER_HPP
 #include <type_traits>
 #include <Beam/Threading/Sync.hpp>
 #include <boost/lexical_cast.hpp>
@@ -10,8 +10,7 @@
 #include "Nexus/FixUtilities/FixUtilities.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus {
-namespace FixUtilities {
+namespace Nexus::FixUtilities {
 namespace Details {
   template<bool Enabled>
   struct AddAdditionalFix42Tag {
@@ -24,42 +23,42 @@ namespace Details {
     template<typename Message>
     void operator ()(const Tag& tag, Beam::Out<Message> message) const {
       if(tag.GetKey() == FIX::FIELD::PegDifference) {
-        Money value = boost::get<Money>(tag.GetValue());
-        FIX::PegDifference pegDifference(static_cast<double>(value));
+        auto value = boost::get<Money>(tag.GetValue());
+        auto pegDifference = FIX::PegDifference(static_cast<double>(value));
         message->set(pegDifference);
       }
     }
   };
 }
 
-  /*! \class FixOrder
-      \brief Extends a PrimitiveOrder to store information useful when
-             transmitting Orders via the FIX protocol.
+  /**
+   * Extends a PrimitiveOrder to store information useful when transmitting
+   * Orders via the FIX protocol.
    */
   class FixOrder : public OrderExecutionService::PrimitiveOrder {
     public:
 
-      //! Constructs a FixOrder.
-      /*!
-        \param info The OrderInfo represented.
-        \param side The FIX Side used to execute this Order.
-      */
+      /**
+       * Constructs a FixOrder.
+       * @param info The OrderInfo represented.
+       * @param side The FIX Side used to execute this Order.
+       */
       FixOrder(OrderExecutionService::OrderInfo info, FIX::Side side);
 
-      //! Constructs a FixOrder.
-      /*!
-        \param orderRecord The OrderRecord represented.
-        \param side The FIX Side used to execute this Order.
-      */
+      /**
+       * Constructs a FixOrder.
+       * @param orderRecord The OrderRecord represented.
+       * @param side The FIX Side used to execute this Order.
+       */
       FixOrder(OrderExecutionService::OrderRecord orderRecord, FIX::Side side);
 
-      //! Returns the FIX Symbol used to execute this Order.
+      /** Returns the FIX Symbol used to execute this Order. */
       const FIX::Symbol& GetSymbol() const;
 
-      //! Returns the FIX Side used to execute this Order.
+      /** Returns the FIX Side used to execute this Order. */
       FIX::Side GetSide() const;
 
-      //! Returns the next available cancel ID.
+      /** Returns the next available cancel ID. */
       FIX::ClOrdID GetNextCancelId();
 
     private:
@@ -98,16 +97,16 @@ namespace Details {
   inline FixOrder::FixOrder(OrderExecutionService::OrderInfo info,
       FIX::Side side)
       : OrderExecutionService::PrimitiveOrder(std::move(info)),
-        m_side{side},
-        m_cancelId{0} {
+        m_side(side),
+        m_cancelId(0) {
     m_symbol = GetInfo().m_fields.m_security.GetSymbol();
   }
 
   inline FixOrder::FixOrder(OrderExecutionService::OrderRecord orderRecord,
       FIX::Side side)
       : OrderExecutionService::PrimitiveOrder(std::move(orderRecord)),
-        m_side{side},
-        m_cancelId{0} {
+        m_side(side),
+        m_cancelId(0) {
     m_symbol = GetInfo().m_fields.m_security.GetSymbol();
   }
 
@@ -120,16 +119,15 @@ namespace Details {
   }
 
   inline FIX::ClOrdID FixOrder::GetNextCancelId() {
-    std::string cancelToken;
+    auto cancelToken = std::string();
     Beam::Threading::With(m_cancelId,
-      [&] (int& cancelId) {
+      [&] (auto& cancelId) {
         cancelToken = boost::lexical_cast<std::string>(GetInfo().m_orderId) +
           "-" + boost::lexical_cast<std::string>(cancelId);
         ++cancelId;
       });
     return cancelToken;
   }
-}
 }
 
 #endif

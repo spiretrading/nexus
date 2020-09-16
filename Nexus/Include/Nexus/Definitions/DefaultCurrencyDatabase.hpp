@@ -61,6 +61,15 @@ namespace Details {
     return database;
   }
 
+  /**
+   * Parses a CurrencyId from a string.
+   * @param source The string to parse.
+   * @return The CurrencyId represented by the <i>source</i>.
+   */
+  inline CurrencyId ParseCurrency(const std::string& source) {
+    return ParseCurrency(source, GetDefaultCurrencyDatabase());
+  }
+
   namespace DefaultCurrencies {
     inline CurrencyId AUD() {
       static auto value = GetDefaultCurrencyDatabase().FromCode("AUD").m_id;

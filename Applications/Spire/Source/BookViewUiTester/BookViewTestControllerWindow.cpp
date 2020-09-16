@@ -8,10 +8,8 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewTestControllerWindow::BookViewTestControllerWindow(
-    BookViewWindow* window,
-    Beam::Threading::TimerThreadPool& timer_thread_pool)
-    : m_window(window),
-      m_timer_thread_pool(&timer_thread_pool) {
+    BookViewWindow* window)
+    : m_window(window) {
   setFixedSize(scale(250, 300));
   m_window->installEventFilter(this);
   m_window->connect_security_change_signal(
@@ -83,8 +81,7 @@ void BookViewTestControllerWindow::on_security_changed(
     const Security& security) {
   m_model = std::make_shared<RandomBookViewModel>(security,
     Definitions::GetDefaults(),
-    boost::posix_time::millisec(m_load_time_spin_box->value()),
-    *m_timer_thread_pool);
+    boost::posix_time::millisec(m_load_time_spin_box->value()));
   m_model->set_period(boost::posix_time::milliseconds(
     m_model_update_period_spin_box->value()));
   m_window->set_model(m_model);

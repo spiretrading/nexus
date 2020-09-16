@@ -1,5 +1,5 @@
-#ifndef NEXUS_BUYING_POWER_TRACKER_HPP
-#define NEXUS_BUYING_POWER_TRACKER_HPP
+#ifndef NEXUS_BUYING_POWER_MODEL_HPP
+#define NEXUS_BUYING_POWER_MODEL_HPP
 #include <unordered_map>
 #include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
@@ -13,7 +13,7 @@
 namespace Nexus::Accounting {
 
   /** Tracks the amount of buying power used up by a series of Orders. */
-  class BuyingPowerTracker {
+  class BuyingPowerModel {
     public:
 
       /**
@@ -45,8 +45,8 @@ namespace Nexus::Accounting {
         Money expectedPrice);
 
       /**
-       * Updates this tracker with the contents of an ExecutionReport.
-       * @param executionReport The ExecutionReport to update this tracker with.
+       * Updates this model with the contents of an ExecutionReport.
+       * @param executionReport The ExecutionReport to update this model with.
        */
       void Update(
         const OrderExecutionService::ExecutionReport& executionReport);
@@ -80,7 +80,7 @@ namespace Nexus::Accounting {
       static Money ComputeBuyingPower(const BuyingPowerEntry& entry);
   };
 
-  inline BuyingPowerTracker::OrderEntry::OrderEntry(
+  inline BuyingPowerModel::OrderEntry::OrderEntry(
     OrderExecutionService::OrderId id,
     const OrderExecutionService::OrderFields& fields, Money expectedPrice)
     : m_id(id),
@@ -88,15 +88,15 @@ namespace Nexus::Accounting {
       m_expectedPrice(expectedPrice),
       m_remainingQuantity(fields.m_quantity) {}
 
-  inline BuyingPowerTracker::BuyingPowerEntry::BuyingPowerEntry()
+  inline BuyingPowerModel::BuyingPowerEntry::BuyingPowerEntry()
     : m_quantity(0) {}
 
-  inline bool BuyingPowerTracker::HasOrder(
+  inline bool BuyingPowerModel::HasOrder(
       OrderExecutionService::OrderId id) const {
     return m_idToOrderFields.find(id) != m_idToOrderFields.end();
   }
 
-  inline Money BuyingPowerTracker::GetBuyingPower(CurrencyId currency) const {
+  inline Money BuyingPowerModel::GetBuyingPower(CurrencyId currency) const {
     auto currencyIterator = m_currencyToBuyingPower.find(currency);
     if(currencyIterator == m_currencyToBuyingPower.end()) {
       return Money::ZERO;
@@ -104,7 +104,7 @@ namespace Nexus::Accounting {
     return currencyIterator->second;
   }
 
-  inline Money BuyingPowerTracker::Submit(OrderExecutionService::OrderId id,
+  inline Money BuyingPowerModel::Submit(OrderExecutionService::OrderId id,
       const OrderExecutionService::OrderFields& orderFields,
       Money expectedPrice) {
     auto& entry = m_buyingPowerEntries[orderFields.m_security];
@@ -131,7 +131,7 @@ namespace Nexus::Accounting {
     return buyingPower;
   }
 
-  inline void BuyingPowerTracker::Update(
+  inline void BuyingPowerModel::Update(
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_status == OrderStatus::PENDING_NEW ||
         executionReport.m_status == OrderStatus::SUSPENDED ||
@@ -174,7 +174,7 @@ namespace Nexus::Accounting {
     buyingPower += ComputeBuyingPower(buyingPowerEntry);
   }
 
-  inline Money BuyingPowerTracker::ComputeBuyingPower(
+  inline Money BuyingPowerModel::ComputeBuyingPower(
       const std::vector<OrderEntry>& orderEntries, Quantity quantityOffset) {
     auto buyingPower = Money();
     for(auto& orderEntry : orderEntries) {
@@ -192,7 +192,7 @@ namespace Nexus::Accounting {
     return buyingPower;
   }
 
-  inline Money BuyingPowerTracker::ComputeBuyingPower(
+  inline Money BuyingPowerModel::ComputeBuyingPower(
       const BuyingPowerEntry& entry) {
     auto askBuyingPower = Money();
     auto bidBuyingPower = Money();

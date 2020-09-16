@@ -36,7 +36,6 @@ export class RolesField extends React.Component<Properties, State> {
     this.state = {
       mobileTooltipRole: null
     };
-    this.onTouchTooltipEvent = this.onTouchTooltipEvent.bind(this);
   }
 
   public render(): JSX.Element {
@@ -89,7 +88,7 @@ export class RolesField extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onTouchTooltipEvent(role: Nexus.AccountRoles.Role) {
+  private onTouchTooltipEvent = (role: Nexus.AccountRoles.Role) => {
     this.setState({mobileTooltipRole: role});
     clearTimeout(this.timerID);
     this.timerID = setTimeout(() => {

@@ -1,5 +1,5 @@
-#ifndef NEXUS_TESTSERVICECLIENTS_HPP
-#define NEXUS_TESTSERVICECLIENTS_HPP
+#ifndef NEXUS_TEST_SERVICE_CLIENTS_HPP
+#define NEXUS_TEST_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
@@ -8,7 +8,6 @@
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -19,10 +18,8 @@
 
 namespace Nexus {
 
-  /*! \class TestServiceClients
-      \brief Implements the ServiceClients interface for testing.
-   */
-  class TestServiceClients : private boost::noncopyable {
+  /** Implements the ServiceClients interface for testing. */
+  class TestServiceClients {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::VirtualServiceLocatorClient;
@@ -49,11 +46,20 @@ namespace Nexus {
 
       using Timer = Beam::Threading::VirtualTimer;
 
-      //! Constructs a TestServiceClients.
-      /*!
-        \param environment The TestEnvironment to use.
-      */
+      /**
+       * Constructs a TestServiceClients.
+       * @param environment The TestEnvironment to use.
+       */
       TestServiceClients(Beam::Ref<TestEnvironment> environment);
+
+      /**
+       * Constructs a TestServiceClients.
+       * @param username The username to login with.
+       * @param password The password to use.
+       * @param environment The TestEnvironment to use.
+       */
+      TestServiceClients(std::string username, std::string password,
+        Beam::Ref<TestEnvironment> environment);
 
       ~TestServiceClients();
 
@@ -80,8 +86,6 @@ namespace Nexus {
       std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry);
 
-      void Open();
-
       void Close();
 
     private:
@@ -98,25 +102,39 @@ namespace Nexus {
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
+      TestServiceClients(const TestServiceClients&) = delete;
+      TestServiceClients& operator =(const TestServiceClients&) = delete;
   };
 
   inline TestServiceClients::TestServiceClients(
-      Beam::Ref<TestEnvironment> environment)
-      : m_environment{environment.Get()},
-        m_serviceLocatorClient{
-          m_environment->GetServiceLocatorEnvironment().BuildClient()},
-        m_definitionsClient{m_environment->GetDefinitionsEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_administrationClient{m_environment->GetAdministrationEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_marketDataClient{m_environment->GetMarketDataEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_orderExecutionClient{m_environment->GetOrderExecutionEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
-          std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-          Beam::Ref(m_environment->GetTimeEnvironment())))} {}
+    Beam::Ref<TestEnvironment> environment)
+    : TestServiceClients("root", "", Beam::Ref(environment)) {}
+
+  inline TestServiceClients::TestServiceClients(std::string username,
+    std::string password, Beam::Ref<TestEnvironment> environment)
+    : m_environment(environment.Get()),
+      m_serviceLocatorClient(
+        m_environment->GetServiceLocatorEnvironment().BuildClient(
+        std::move(username), std::move(password))),
+      m_registryClient(m_environment->GetRegistryEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_definitionsClient(m_environment->GetDefinitionsEnvironment().
+        BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+      m_administrationClient(m_environment->GetAdministrationEnvironment().
+        BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+      m_marketDataClient(m_environment->GetMarketDataEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_chartingClient(m_environment->GetChartingEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_complianceClient(m_environment->GetComplianceEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_orderExecutionClient(m_environment->GetOrderExecutionEnvironment().
+        BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+      m_riskClient(m_environment->GetRiskEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
+        std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
+        Beam::Ref(m_environment->GetTimeEnvironment())))) {}
 
   inline TestServiceClients::~TestServiceClients() {
     Close();
@@ -177,39 +195,21 @@ namespace Nexus {
       Beam::Ref(m_environment->GetTimeEnvironment())));
   }
 
-  inline void TestServiceClients::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->SetCredentials("root", "");
-      m_serviceLocatorClient->Open();
-      m_definitionsClient->Open();
-      m_administrationClient->Open();
-      m_marketDataClient->Open();
-      m_orderExecutionClient->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
   inline void TestServiceClients::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void TestServiceClients::Shutdown() {
     m_timeClient->Close();
+    m_riskClient->Close();
     m_orderExecutionClient->Close();
+    m_complianceClient->Close();
+    m_chartingClient->Close();
     m_marketDataClient->Close();
     m_administrationClient->Close();
+    m_definitionsClient->Close();
+    m_registryClient->Close();
     m_serviceLocatorClient->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

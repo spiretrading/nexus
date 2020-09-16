@@ -40,12 +40,10 @@ connection LoginController::connect_logged_in_signal(
 
 void LoginController::on_login(const std::string& username,
     const std::string& password) {
-  auto service_clients = m_service_clients_factory(username, password,
-    m_servers.front().m_address);
   m_login_promise = QtPromise(
-    [=, service_clients = std::move(service_clients)] () mutable {
-      service_clients->Open();
-      return std::move(service_clients);
+    [=] {
+      return m_service_clients_factory(username, password,
+        m_servers.front().m_address);
     }, LaunchPolicy::ASYNC);
   m_login_promise.then(
     [=] (auto&& result) { on_login_promise(std::move(result)); });

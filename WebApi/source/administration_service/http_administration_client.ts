@@ -48,6 +48,16 @@ export class HttpAdministrationClient extends AdministrationClient {
     return Beam.arrayFromJson(Beam.DirectoryEntry, response);
   }
 
+  public async loadParentTradingGroup(account: Beam.DirectoryEntry):
+      Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post(
+      '/api/administration_service/load_parent_trading_group',
+      {
+        account: account.toJson()
+      });
+    return Beam.DirectoryEntry.fromJson(response);
+  }
+
   public async loadAccountRoles(account: Beam.DirectoryEntry):
       Promise<AccountRoles> {
     const response = await Beam.post(
