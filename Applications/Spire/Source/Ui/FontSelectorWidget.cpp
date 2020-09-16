@@ -48,14 +48,17 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   grid_layout->setVerticalSpacing(VERTICAL_SPACING());
   layout->addLayout(grid_layout);
   auto fonts = QFontDatabase().families();
-  m_font_list = new DropDownMenu(
-    std::vector<QString>(fonts.begin(), fonts.end()), this);
+  m_font_list = new StaticDropDownMenu(
+    std::vector<QVariant>(fonts.begin(), fonts.end()), this);
   m_font_list->setFixedSize(scale(162, 26));
-  m_font_list->connect_selected_signal([=] (const auto& font) {
-    on_font_selected(font);
+  m_font_list->connect_value_selected_signal([=] (const auto& font) {
+    on_font_selected(font.value<QFont>().family());
+  });
+  m_font_list->connect_activated_signal([=] (const auto& font) {
+    on_font_preview(font.value<QFont>().family());
   });
   m_font_list->connect_highlighted_signal([=] (const auto& font) {
-    on_font_preview(font);
+    on_font_preview(font.value<QFont>().family());
   });
   m_font_list->connect_menu_closed_signal([=] { on_font_list_closed(); });
   grid_layout->addWidget(m_font_list, 0, 0, 1, 5);
@@ -101,7 +104,7 @@ const QFont& FontSelectorWidget::get_font() const {
 
 void FontSelectorWidget::set_font(const QFont& font) {
   m_current_font = font;
-  m_font_list->set_current_text(m_current_font.family());
+  m_font_list->set_current_item(m_current_font);
   m_size_input->set_value(m_current_font.pointSize());
   m_bold_button->set_toggled(m_current_font.bold());
   m_italics_button->set_toggled(m_current_font.italic());

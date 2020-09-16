@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Ui/RecentColors.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -56,7 +57,7 @@ namespace Spire {
       SecurityWidget* m_security_widget;
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
-      DropDownMenu* m_period_dropdown;
+      StaticDropDownMenu* m_period_dropdown;
       ToggleButton* m_lock_grid_button;
       ToggleButton* m_auto_scale_button;
       ToggleButton* m_draw_line_button;

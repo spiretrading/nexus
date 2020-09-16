@@ -12,11 +12,26 @@ namespace Spire {
   class StaticDropDownMenu : public QWidget {
     public:
 
+      //! Signals that an item was highlighted using the keyboard.
+      /*!
+        \param value The item's value.
+      */
+      using ActivatedSignal = Signal<void (const QVariant& value)>;
+
       //! Signals that an item was selected.
       /*!
         \param index The index of the selected item.
       */
       using IndexSelectedSignal = Signal<void (int index)>;
+
+      //! Signals that an item was highlighted using the mouse.
+      /*!
+        \param value The item's value.
+      */
+      using HighlightedSignal = Signal<void (const QVariant& value)>;
+
+      //! Signals that the drop down menu was closed.
+      using MenuClosedSignal = Signal<void ()>;
 
       //! Signals that an item was selected.
       /*!
@@ -53,6 +68,12 @@ namespace Spire {
       */
       virtual void remove_item(int index);
 
+      //! Sets the current item iff the given item is currently in the menu.
+      /*!
+        \param item The current item.
+      */
+      virtual void set_current_item(const QVariant& item);
+
       //! Sets the items to display, overwriting any existing items.
       /*!
         \param items The items to display.
@@ -66,9 +87,21 @@ namespace Spire {
       //! using the down arrow key.
       virtual void set_next_activated(bool is_next_activated);
 
+      //! Connects a slot to the activated signal.
+      virtual boost::signals2::connection connect_activated_signal(
+        const ActivatedSignal::slot_type& slot) const;
+
+      //! Connects a slot to the highlighted signal.
+      virtual boost::signals2::connection connect_highlighted_signal(
+        const HighlightedSignal::slot_type& slot) const;
+
       //! Connects a slot to the index selected signal.
       virtual boost::signals2::connection connect_index_selected_signal(
         const IndexSelectedSignal::slot_type& slot) const;
+
+      //! Connects a slot to the menu closed signal.
+      boost::signals2::connection connect_menu_closed_signal(
+        const MenuClosedSignal::slot_type& slot) const;
 
       //! Connects a slot to the value selected signal.
       virtual boost::signals2::connection connect_value_selected_signal(
@@ -81,6 +114,7 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      mutable MenuClosedSignal m_menu_closed_signal;
       mutable ValueSelectedSignal m_value_selected_signal;
       QVariant m_current_item;
       QString m_display_text;

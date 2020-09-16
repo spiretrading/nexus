@@ -58,6 +58,10 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
           break;
       }
     }
+  } else if(isAncestorOf(static_cast<QWidget*>(watched))) {
+    if(event->type() == QEvent::HoverEnter) {
+      m_highlighted_signal(static_cast<DropDownItem*>(watched)->get_value());
+    }
   }
   return DropDownWindow::eventFilter(watched, event);
 }
@@ -162,6 +166,7 @@ void DropDownList::set_items(const std::vector<DropDownItem*>& items) {
   m_item_selected_connections.DisconnectAll();
   for(auto& item : items) {
     m_layout->addWidget(item);
+    item->installEventFilter(this);
     m_item_selected_connections.AddConnection(item->connect_selected_signal(
       [=] (const auto& value) {
         on_item_selected(value, item);

@@ -53,6 +53,15 @@ void StaticDropDownMenu::insert_item(DropDownItem* item) {
   m_menu_list->insert_item(item);
 }
 
+void StaticDropDownMenu::set_current_item(const QVariant& item) {
+  for(auto i = 0; i < m_menu_list->item_count(); ++i) {
+    if(m_menu_list->get_value(i) == item) {
+      m_current_item = item;
+      break;
+    }
+  }
+}
+
 void StaticDropDownMenu::remove_item(int index) {
   m_menu_list->remove_item(index);
 }
@@ -99,6 +108,7 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       if(m_last_activated_item.isValid()) {
         on_item_selected(m_last_activated_item);
       }
+      m_menu_closed_signal();
       update();
     }
   } else if(watched == this) {
@@ -155,9 +165,24 @@ void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
   m_menu_list->setFixedWidth(width());
 }
 
+connection StaticDropDownMenu::connect_activated_signal(
+    const ActivatedSignal::slot_type& slot) const {
+  return m_menu_list->connect_activated_signal(slot);
+}
+
+connection StaticDropDownMenu::connect_highlighted_signal(
+    const HighlightedSignal::slot_type& slot) const {
+  return m_menu_list->connect_highlighted_signal(slot);
+}
+
 connection StaticDropDownMenu::connect_index_selected_signal(
     const IndexSelectedSignal::slot_type& slot) const {
   return m_menu_list->connect_index_selected_signal(slot);
+}
+
+connection StaticDropDownMenu::connect_menu_closed_signal(
+    const MenuClosedSignal::slot_type& slot) const {
+  return m_menu_closed_signal.connect(slot);
 }
 
 connection StaticDropDownMenu::connect_value_selected_signal(
