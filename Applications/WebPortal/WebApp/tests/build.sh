@@ -13,26 +13,36 @@ fi
 if [ ! -f "configure.sh" ]; then
   ln -s "$directory/configure.sh" configure.sh
 fi
-projects=""
-projects+=" account_directory_page_tester"
-projects+=" account_page_tester"
-projects+=" compliance_page_tester"
-projects+=" create_account_page_tester"
-projects+=" dashboard_page_tester"
-projects+=" entitlements_page_tester"
-projects+=" group_info_page_tester"
-projects+=" group_page_tester"
-projects+=" loading_page_tester"
-projects+=" login_page_tester"
-projects+=" page_not_found_page_tester"
-projects+=" profile_page_tester"
-projects+=" risk_page_tester"
-projects+=" scratch"
-for i in $projects; do
-  if [ ! -d "$i" ]; then
-    mkdir "$i"
+
+build_function() {
+  location="${@: -1}"
+  if [ ! -d "$location" ]; then
+    mkdir -p "$location"
   fi
-  pushd "$i"
-  "$directory/$i/build.sh" -DD="$root/../library/Dependencies" "$@"
+  pushd "$location"
+  "$directory/$location/build.sh" -DD="$root/../library/Dependencies" "${@:1:$#-1}"
   popd
-done
+}
+
+export -f build_function
+export directory
+export root
+
+targets+=" account_directory_page_tester"
+targets+=" account_page_tester"
+targets+=" compliance_page_tester"
+targets+=" create_account_page_tester"
+targets+=" dashboard_page_tester"
+targets+=" entitlements_page_tester"
+targets+=" group_info_page_tester"
+targets+=" group_page_tester"
+targets+=" loading_page_tester"
+targets+=" login_page_tester"
+targets+=" page_not_found_page_tester"
+targets+=" profile_page_tester"
+targets+=" risk_page_tester"
+targets+=" scratch"
+
+cores=`grep -c "processor" < /proc/cpuinfo`
+jobs="$(($cores))"
+parallel -j$jobs --no-notice build_function "$@" ::: $targets

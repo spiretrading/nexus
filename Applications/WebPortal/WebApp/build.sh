@@ -13,15 +13,25 @@ fi
 if [ ! -f "configure.sh" ]; then
   ln -s "$directory/configure.sh" configure.sh
 fi
-projects=""
-projects+=" library"
-projects+=" tests"
-projects+=" application"
-for i in $projects; do
-  if [ ! -d "$i" ]; then
-    mkdir "$i"
+
+build_function() {
+  location="${@: -1}"
+  if [ ! -d "$location" ]; then
+    mkdir -p "$location"
   fi
-  pushd "$i"
-  "$directory/$i/build.sh" -DD="$root/library/Dependencies" "$@"
+  pushd "$location"
+  "$directory/$location/build.sh" -DD="$root/library/Dependencies" "${@:1:$#-1}"
   popd
-done
+}
+
+export -f build_function
+export directory
+export root
+
+build_function "$@" "library"
+targets+=" tests"
+targets+=" application"
+
+cores=`grep -c "processor" < /proc/cpuinfo`
+jobs="$(($cores))"
+parallel -j$jobs --no-notice build_function "$@" ::: $targets
