@@ -288,7 +288,7 @@ QString RealSpinBox::display_string(Real value) {
     return QString::fromStdString(value.str(decimal_places,
       std::ios_base::fixed));
   }
-  return QString::fromStdString(value.str(text().length(),
+  return QString::fromStdString(value.str(text().length() + 1,
     std::ios_base::dec));
 }
 
