@@ -23,6 +23,12 @@ namespace Spire {
       //! Returns the current selected item.
       const QVariant& get_item() const;
 
+      //! Sets the current item iff it exists in the list of unfiltered items.
+      /*!
+        \param item The current item.
+      */
+      void set_current_item(const QVariant& item);
+
       //! Sets the items to display, overwriting any existing items.
       /*!
         \param items The new items to display.
