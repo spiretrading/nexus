@@ -56,7 +56,6 @@ bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
       auto editor = static_cast<QWidget*>(watched);
-      Q_EMIT commitData(editor);
       if(e->key() == Qt::Key_Tab) {
         Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
       } else {
