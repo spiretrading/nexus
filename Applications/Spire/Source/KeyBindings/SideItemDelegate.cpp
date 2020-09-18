@@ -1,7 +1,7 @@
 #include "Spire/KeyBindings/SideItemDelegate.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "Spire/KeyBindings/InputFieldEditor.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FilteredDropDownMenu.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -19,10 +19,12 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
     }
     return QString();
   }();
-  auto editor = new InputFieldEditor(current_data,
+  auto editor = new FilteredDropDownMenu(
     {Spire::displayText(Side::ASK), Spire::displayText(Side::BID)},
     static_cast<QWidget*>(this->parent()));
-  connect(editor, &InputFieldEditor::editingFinished,
+  editor->set_current_item(current_data);
+  editor->set_cell_style();
+  connect(editor, &FilteredDropDownMenu::editingFinished,
     this, &SideItemDelegate::on_editing_finished);
   return editor;
 }
@@ -30,7 +32,8 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
 void SideItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto variant = [&] {
-    auto item = static_cast<InputFieldEditor*>(editor)->get_item().toLower();
+    auto item = static_cast<FilteredDropDownMenu*>(
+      editor)->get_item_or_invalid().value<QString>().toLower();
     if(item == Spire::displayText(Side::BID).toLower()) {
       return QVariant::fromValue<Side>(Side::BID);
     } else if(item == Spire::displayText(Side::ASK).toLower()) {

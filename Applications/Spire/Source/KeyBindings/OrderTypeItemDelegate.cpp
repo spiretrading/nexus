@@ -51,7 +51,7 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
 
 void OrderTypeItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto item =
-    static_cast<FilteredDropDownMenu*>(editor)->get_item().value<QString>();
+  auto item = static_cast<FilteredDropDownMenu*>(
+    editor)->get_item_or_invalid().value<QString>();
   model->setData(index, get_order_type_variant(item), Qt::DisplayRole);
 }
