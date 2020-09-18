@@ -64,7 +64,7 @@ else
 fi
 if [ "$UPDATE_NODE" = "1" ]; then
   UPDATE_BUILD=1
-  npm install
+  npm install --no-package-lock
 fi
 if [ ! -d "library" ]; then
   UPDATE_BUILD=1
