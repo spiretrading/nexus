@@ -18,8 +18,6 @@ IF "!IS_DEPENDENCY!" == "1" (
   SHIFT
   GOTO begin_args
 )
-SET UPDATE_NODE=
-SET UPDATE_BUILD=
 IF "!CONFIG!" == "clean" (
   IF EXIST library (
     RMDIR /q /s library
@@ -65,6 +63,7 @@ POPD
 PUSHD !NEXUS_PATH!
 CALL build.bat %*
 POPD
+SET UPDATE_NODE=
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
 ) ELSE (
@@ -82,9 +81,10 @@ IF NOT EXIST node_modules (
     )
   )
 )
+SET UPDATE_BUILD=
 IF "!UPDATE_NODE!" == "1" (
   SET UPDATE_BUILD=1
-  CALL npm install
+  CALL npm install --no-package-lock
 )
 IF NOT EXIST library (
   SET UPDATE_BUILD=1

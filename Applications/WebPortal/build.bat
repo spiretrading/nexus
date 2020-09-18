@@ -19,7 +19,7 @@ IF "!IS_DEPENDENCY!" == "1" (
   GOTO begin_args
 )
 IF "!CONFIG!" == "clean" (
-  git clean -ffxd -e *Dependencies*
+  git clean -ffxd -e *Dependencies* -e *WebApp*
   IF EXIST Dependencies\cache_files\nexus.txt (
     DEL Dependencies\cache_files\nexus.txt
   )

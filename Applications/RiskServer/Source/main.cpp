@@ -12,6 +12,7 @@
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -52,7 +53,8 @@ using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  using ApplicationDataStore = SqlRiskDataStore<MySql::Connection>;
+  using ApplicationDataStore = SqlRiskDataStore<
+    SqlConnection<MySql::Connection>>;
   using RiskServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
     MetaRiskServlet<ApplicationAdministrationClient::Client*,
@@ -173,9 +175,9 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto dataStore = ApplicationDataStore(std::make_unique<MySql::Connection>(
+  auto dataStore = ApplicationDataStore(MakeSqlConnection(MySql::Connection(
     mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-    mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema));
+    mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema)));
   auto exchangeRates = std::vector<ExchangeRate>();
   try {
     exchangeRates = definitionsClient->LoadExchangeRates();

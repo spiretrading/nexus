@@ -296,8 +296,12 @@ namespace Nexus::Accounting {
 
   template<typename B>
   Portfolio<B>::Portfolio(MarketDatabase marketDatabase, Bookkeeper bookkeeper)
-    : m_marketDatabase(std::move(marketDatabase)),
-      m_bookkeeper(std::move(bookkeeper)) {}
+      : m_marketDatabase(std::move(marketDatabase)),
+        m_bookkeeper(std::move(bookkeeper)) {
+    for(auto& inventory : m_bookkeeper.GetInventoryRange()) {
+      GetSecurityEntry(inventory.first.m_index);
+    }
+  }
 
   template<typename B>
   const typename Portfolio<B>::Bookkeeper& Portfolio<B>::GetBookkeeper() const {

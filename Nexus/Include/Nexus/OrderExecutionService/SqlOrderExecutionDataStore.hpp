@@ -7,7 +7,6 @@
 #include <Beam/Queries/SqlDataStore.hpp>
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Threading/ThreadPool.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
@@ -80,10 +79,8 @@ namespace Nexus::OrderExecutionService {
         Beam::Threading::Mutex> m_accountEntries;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
       Beam::DatabaseConnectionPool<Connection> m_writerPool;
-      Beam::Threading::ThreadPool m_threadPool;
       DataStore<Viper::Row<OrderInfo>,
-        Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
-        m_submissionDataStore;
+        Viper::Row<Beam::ServiceLocator::DirectoryEntry>> m_submissionDataStore;
       DataStore<Viper::Row<OrderInfo>,
         Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
         m_statusSubmissionDataStore;
@@ -139,14 +136,11 @@ namespace Nexus::OrderExecutionService {
           return connection;
         }),
         m_submissionDataStore("submissions", GetOrderInfoRow(), GetAccountRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
+          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
-          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
-          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)) {
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)) {
     m_liveOrdersRow = Viper::Row<OrderId>().
       add_column("order_id").
       set_primary_key("order_id");

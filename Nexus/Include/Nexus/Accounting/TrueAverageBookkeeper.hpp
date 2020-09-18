@@ -50,6 +50,9 @@ namespace Nexus::Accounting {
   TrueAverageBookkeeper<I>::TrueAverageBookkeeper(
       const Beam::View<const Inventory>& inventories) {
     for(auto& inventory : inventories) {
+      if(IsEmpty(inventory)) {
+        continue;
+      }
       m_inventories.insert(std::pair(inventory.m_position.m_key, inventory));
       auto& total = InternalGetTotal(inventory.m_position.m_key.m_currency);
       total.m_grossProfitAndLoss += inventory.m_grossProfitAndLoss;

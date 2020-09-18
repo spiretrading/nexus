@@ -60,6 +60,17 @@ namespace Nexus::Accounting {
     bool operator !=(const Inventory& inventory) const;
   };
 
+  /**
+  * Tests if an Inventory is empty, ie. has no position, volume, or
+  * transactions.
+  * @param inventory The inventory to test.
+  * @return <code>true</code> iff the <i>inventory</i> is empty.
+  */
+  template<typename P>
+  bool IsEmpty(const Inventory<P>& inventory) {
+    return inventory == Inventory<P>(inventory.m_position.m_key);
+  }
+
   template<typename P>
   Inventory<P>::Inventory()
     : m_volume(0),

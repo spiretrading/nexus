@@ -21,6 +21,7 @@ TEST_SUITE("Portfolio") {
     bookkeeper.RecordTransaction(TST, DefaultCurrencies::USD(), 1, Money::ONE,
       Money::ZERO);
     auto portfolio = Portfolio(GetDefaultMarketDatabase(), bookkeeper);
+    REQUIRE(portfolio.GetSecurityEntries().at(TST).m_unrealized == Money::ZERO);
     portfolio.Update(TST, 3 * Money::ONE, 2 * Money::ONE);
     REQUIRE(portfolio.GetUnrealizedProfitAndLosses().at(
       DefaultCurrencies::USD()) == Money::ONE);
