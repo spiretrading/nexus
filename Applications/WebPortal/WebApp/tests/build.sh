@@ -20,7 +20,7 @@ build_function() {
     mkdir -p "$location"
   fi
   pushd "$location"
-  "$directory/$location/build.sh" -DD="$root/../library/Dependencies" "${@:1:$#-1}"
+  "$directory/$location/build.sh" -DD="$root/../library/Dependencies" "${@:1:$#-1}" 2>&1
   popd
 }
 
@@ -28,7 +28,7 @@ export -f build_function
 export directory
 export root
 
-targets+=" account_directory_page_tester"
+build_function "$@" "account_directory_page_tester"
 targets+=" account_page_tester"
 targets+=" compliance_page_tester"
 targets+=" create_account_page_tester"
