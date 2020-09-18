@@ -15,7 +15,7 @@ QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
     {"One", "Two", "Three"}, static_cast<QWidget*>(this->parent()));
   editor->set_current_item(QString::fromStdString(
     index.data(Qt::DisplayRole).value<Region>().GetName()));
-  editor->set_cell_style();
+  editor->set_style(FilteredDropDownMenu::Style::CELL);
   connect(editor, &FilteredDropDownMenu::editingFinished,
     this, &DestinationItemDelegate::on_editing_finished);
   return editor;
@@ -26,7 +26,7 @@ void DestinationItemDelegate::setModelData(QWidget* editor,
   auto item = static_cast<FilteredDropDownMenu*>(
     editor)->get_item_or_invalid().value<QString>();
   auto region = [&] {
-    if(item.isEmpty() && !index.data().value<Region>().IsGlobal()) {
+    if(item.isEmpty() && index.data().value<Region>().IsGlobal()) {
       return Region();
     }
     return Region::Global();

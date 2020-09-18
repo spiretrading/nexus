@@ -23,7 +23,7 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
     {Spire::displayText(Side::ASK), Spire::displayText(Side::BID)},
     static_cast<QWidget*>(this->parent()));
   editor->set_current_item(current_data);
-  editor->set_cell_style();
+  editor->set_style(FilteredDropDownMenu::Style::CELL);
   connect(editor, &FilteredDropDownMenu::editingFinished,
     this, &SideItemDelegate::on_editing_finished);
   return editor;

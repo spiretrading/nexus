@@ -172,7 +172,7 @@ void FilteredDropDownMenu::draw_highlight(const QString& highlight_text) {
   font.setPixelSize(scale_height(12));
   painter.setFont(font);
   auto metrics = QFontMetrics(font);
-  auto highlight_x_pos = metrics.horizontalAdvance(text()) + PADDING() +
+  auto highlight_x_pos = metrics.horizontalAdvance(text()) + get_padding() +
     scale_width(3);
   painter.fillRect(highlight_x_pos,
     (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,

@@ -1,7 +1,7 @@
 #include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
-#include "Spire/KeyBindings/InputFieldEditor.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FilteredDropDownMenu.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -10,7 +10,7 @@ using namespace Spire;
 
 namespace {
   auto create_time_in_force_item_list() {
-    static auto list = std::vector<QString>({
+    static auto list = std::vector<QVariant>({
       displayText(TimeInForce(TimeInForce::Type::DAY)),
       displayText(TimeInForce(TimeInForce::Type::FOK)),
       displayText(TimeInForce(TimeInForce::Type::GTC)),
@@ -48,15 +48,18 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
     }
     return QString();
   }();
-  auto editor = new InputFieldEditor(current_data,
-    create_time_in_force_item_list(), static_cast<QWidget*>(this->parent()));
-  connect(editor, &InputFieldEditor::editingFinished,
+  auto editor = new FilteredDropDownMenu(create_time_in_force_item_list(),
+    static_cast<QWidget*>(this->parent()));
+  editor->set_current_item(current_data);
+  editor->set_style(FilteredDropDownMenu::Style::CELL);
+  connect(editor, &FilteredDropDownMenu::editingFinished,
     this, &TimeInForceItemDelegate::on_editing_finished);
   return editor;
 }
 
 void TimeInForceItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto item = static_cast<InputFieldEditor*>(editor)->get_item().toUpper();
+  auto item = static_cast<FilteredDropDownMenu*>(
+    editor)->get_item_or_invalid().value<QString>().toUpper();
   model->setData(index, get_time_in_force_variant(item), Qt::DisplayRole);
 }

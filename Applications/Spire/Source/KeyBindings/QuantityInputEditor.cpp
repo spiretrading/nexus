@@ -10,7 +10,7 @@ QuantityInputEditor::QuantityInputEditor(int initial_value, QWidget* parent)
       m_initial_value(initial_value) {
   setContextMenuPolicy(Qt::NoContextMenu);
   setValidator(new QIntValidator(0, std::numeric_limits<int>::max(), this));
-  set_cell_style();
+  set_style(Style::CELL);
 }
 
 void QuantityInputEditor::keyPressEvent(QKeyEvent* event) {

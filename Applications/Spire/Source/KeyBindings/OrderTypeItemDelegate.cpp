@@ -43,7 +43,7 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
   auto editor = new FilteredDropDownMenu(ORDER_TYPE_NAMES(),
     static_cast<QWidget*>(this->parent()));
   editor->set_current_item(current_data);
-  editor->set_cell_style();
+  editor->set_style(FilteredDropDownMenu::Style::CELL);
   connect(editor, &FilteredDropDownMenu::editingFinished,
     this, &OrderTypeItemDelegate::on_editing_finished);
   return editor;
