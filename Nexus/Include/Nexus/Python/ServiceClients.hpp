@@ -67,28 +67,28 @@ namespace Python {
 
       ~ToPythonServiceClients() override;
 
-      ServiceLocatorClient& GetServiceLocatorClient() override final;
+      ServiceLocatorClient& GetServiceLocatorClient() override;
 
-      RegistryClient& GetRegistryClient() override final;
+      RegistryClient& GetRegistryClient() override;
 
-      AdministrationClient& GetAdministrationClient() override final;
+      AdministrationClient& GetAdministrationClient() override;
 
-      DefinitionsClient& GetDefinitionsClient() override final;
+      DefinitionsClient& GetDefinitionsClient() override;
 
-      MarketDataClient& GetMarketDataClient() override final;
+      MarketDataClient& GetMarketDataClient() override;
 
-      ChartingClient& GetChartingClient() override final;
+      ChartingClient& GetChartingClient() override;
 
-      ComplianceClient& GetComplianceClient() override final;
+      ComplianceClient& GetComplianceClient() override;
 
-      OrderExecutionClient& GetOrderExecutionClient() override final;
+      OrderExecutionClient& GetOrderExecutionClient() override;
 
-      RiskClient& GetRiskClient() override final;
+      RiskClient& GetRiskClient() override;
 
-      TimeClient& GetTimeClient() override final;
+      TimeClient& GetTimeClient() override;
 
       std::unique_ptr<Timer> BuildTimer(
-        boost::posix_time::time_duration expiry);
+        boost::posix_time::time_duration expiry) override;
 
       void Close() override;
 

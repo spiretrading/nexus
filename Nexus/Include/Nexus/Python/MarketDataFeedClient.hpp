@@ -26,7 +26,7 @@ namespace Nexus::MarketDataService {
 
       ~ToPythonMarketDataFeedClient() override;
 
-      void Add(const SecurityInfo& securityInfo);
+      void Add(const SecurityInfo& securityInfo) override;
 
       void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance)
         override;
