@@ -53,7 +53,7 @@ namespace Python {
    * @param <C> The type of ServiceClients to wrap.
    */
   template<typename C>
-  class ToPythonServiceClients final : public VirtualServiceClients {
+  class ToPythonServiceClients : public VirtualServiceClients {
     public:
 
       /** The type of ServiceClients to wrap. */
