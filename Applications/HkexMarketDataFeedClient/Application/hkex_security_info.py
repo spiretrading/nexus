@@ -27,7 +27,7 @@ def parse_ip_address(source):
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2019 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
   parser.add_argument('-d', '--dry', action='store_true', help='Dry run.')
@@ -46,12 +46,10 @@ def main():
     username = config['username']
     password = config['password']
     service_locator_client = \
-      beam.service_locator.ApplicationServiceLocatorClient(address)
-    service_locator_client.set_credentials(username, password)
-    service_locator_client.open()
+      beam.service_locator.ApplicationServiceLocatorClient(username, password,
+      address)
     feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
       service_locator_client, nexus.default_countries.HK)
-    feed_client.open()
   with urllib.request.urlopen(URL) as response, open('hkex.xlsx', 'wb') as \
       destination:
     destination.write(response.read())
