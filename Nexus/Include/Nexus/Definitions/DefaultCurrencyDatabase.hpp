@@ -32,7 +32,7 @@ namespace Details {
       auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(392);
       entry.m_code = "JPY";
-      entry.m_sign = "¥";
+      entry.m_sign = "\u00A5";
       database.Add(entry);
     }
     {
@@ -46,7 +46,7 @@ namespace Details {
       auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(1001);
       entry.m_code = "XBT";
-      entry.m_sign = "B";
+      entry.m_sign = "\u20BF";
       database.Add(entry);
     }
     return database;
