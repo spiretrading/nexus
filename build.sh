@@ -42,7 +42,7 @@ targets+=" Applications/SimulationOrderExecutionServer"
 targets+=" Applications/WebPortal/WebApp"
 targets+=" Applications/WebPortal"
 
-cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
+cores="`grep -c "processor" < /proc/cpuinfo` - 2"
 mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"
 jobs="$(($cores<$mem?$cores:$mem))"
 parallel -j$jobs --no-notice build_function "$@" ::: $targets
