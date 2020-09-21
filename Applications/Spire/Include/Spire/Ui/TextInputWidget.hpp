@@ -12,10 +12,10 @@ namespace Spire {
       //! Represents style types that the TextInputWidget supports;
       enum class Style {
 
-        //! Style used when embedded in a table or list.
+        //! Style used when input is embedded in a table or list.
         CELL,
 
-        //! Style used 
+        //! Style used when input is used in a layout.
         DEFAULT
       };
 
