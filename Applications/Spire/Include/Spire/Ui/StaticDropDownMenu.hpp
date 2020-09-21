@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/DropDownMenuList.hpp"
 
 namespace Spire {
 
@@ -60,7 +60,7 @@ namespace Spire {
       virtual int item_count() const;
 
       //! Appends an item to the list.
-      virtual void insert_item(DropDownItem* item);
+      virtual void insert_item(DropDownMenuItem* item);
 
       //! Removes and deletes the item at the given index.
       /*!
@@ -121,7 +121,7 @@ namespace Spire {
       QVariant m_last_activated_item;
       QImage m_dropdown_image;
       QImage m_disabled_dropdown_image;
-      DropDownList* m_menu_list;
+      DropDownMenuList* m_menu_list;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_menu_selection_connection;
       boost::signals2::scoped_connection m_menu_activated_connection;

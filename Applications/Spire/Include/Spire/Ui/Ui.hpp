@@ -16,10 +16,10 @@ namespace Spire {
   class DateInputWidget;
   class DecimalSpinBox;
   class Dialog;
-  class DropDownMenu;
   class DropDownMenuItem;
   class DropDownMenuList;
   class DropShadow;
+  class FilteredDropDownMenu;
   class FlatButton;
   class IconButton;
   class IntegerSpinBox;
@@ -34,6 +34,7 @@ namespace Spire {
   class ScrollArea;
   class SecurityStack;
   class SecurityWidget;
+  class StaticDropDownMenu;
   class TitleBar;
   class ToggleButton;
   class TransitionWidget;

@@ -11,7 +11,7 @@ ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
 }
 
 void ToolbarMenu::add(const QString& text, const QImage& icon) {
-  auto item = new DropDownItem(text, icon, this);
+  auto item = new DropDownMenuItem(text, icon, this);
   item->setFixedHeight(scale_height(20));
   StaticDropDownMenu::insert_item(item);
   setEnabled(true);

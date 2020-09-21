@@ -2,7 +2,7 @@
 #define SPIRE_FILTERED_DROP_DOWN_MENU_HPP
 #include <QVariant>
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/DropDownMenuList.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
 namespace Spire {
@@ -49,7 +49,7 @@ namespace Spire {
 
     private:
       std::vector<QVariant> m_items;
-      DropDownList* m_menu_list;
+      DropDownMenuList* m_menu_list;
       QVariant m_current_item;
       QVariant m_last_activated_item;
       bool m_was_click_focused;
@@ -58,9 +58,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_item_activated_connection;
       boost::signals2::scoped_connection m_list_selection_connection;
 
-      std::vector<DropDownItem*> create_widget_items(
+      std::vector<DropDownMenuItem*> create_widget_items(
         const std::vector<QVariant>& items);
-      std::vector<DropDownItem*> create_widget_items(
+      std::vector<DropDownMenuItem*> create_widget_items(
         const std::vector<QVariant>& items, const QString& filter_text);
       void draw_border(const QColor& color);
       void draw_highlight(const QString& highlight_text);

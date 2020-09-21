@@ -2,7 +2,6 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTableView>
-#include "Spire/KeyBindings/InputFieldEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;

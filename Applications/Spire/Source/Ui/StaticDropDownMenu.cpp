@@ -33,7 +33,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   if(!items.empty()) {
     m_current_item = items.front();
   }
-  m_menu_list = new DropDownList({}, true, this);
+  m_menu_list = new DropDownMenuList({}, true, this);
   m_menu_activated_connection = m_menu_list->connect_activated_signal(
     [=] (const auto& value) { on_item_activated(value); });
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
@@ -49,7 +49,7 @@ int StaticDropDownMenu::item_count() const {
   return m_menu_list->item_count();
 }
 
-void StaticDropDownMenu::insert_item(DropDownItem* item) {
+void StaticDropDownMenu::insert_item(DropDownMenuItem* item) {
   m_menu_list->insert_item(item);
 }
 
@@ -67,10 +67,10 @@ void StaticDropDownMenu::remove_item(int index) {
 }
 
 void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
-  auto widget_items = std::vector<DropDownItem*>(items.size());
+  auto widget_items = std::vector<DropDownMenuItem*>(items.size());
   std::transform(items.begin(), items.end(), widget_items.begin(),
     [&] (const auto& item) {
-      auto item_widget = new DropDownItem(item, this);
+      auto item_widget = new DropDownMenuItem(item, this);
       item_widget->setFixedHeight(scale_height(20));
       return item_widget;
     });
