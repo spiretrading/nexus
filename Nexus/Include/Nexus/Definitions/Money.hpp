@@ -26,18 +26,6 @@ namespace Details {
     /** Stores a value of 0.0001. */
     static const T BIP;
   };
-
-  template<typename T>
-  constexpr const T MoneyDefinitions<T>::ZERO(0);
-
-  template<typename T>
-  constexpr const T MoneyDefinitions<T>::ONE(1);
-
-  template<typename T>
-  constexpr const T MoneyDefinitions<T>::CENT(ONE / 100);
-
-  template<typename T>
-  constexpr const T MoneyDefinitions<T>::BIP(CENT / 100);
 }
 
   /** Used to represent money without rounding or floating point issues. */
@@ -386,6 +374,20 @@ namespace Details {
   inline constexpr Money Money::operator -() const {
     return Money(-m_value);
   }
+
+namespace Details {
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::ZERO(0);
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::ONE(1);
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::CENT(T(1) / 100);
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::BIP(T(1) / 10000);
+}
 }
 
 namespace Beam::Serialization {
