@@ -1,5 +1,5 @@
-#ifndef NEXUS_NEOEFEETABLE_HPP
-#define NEXUS_NEOEFEETABLE_HPP
+#ifndef NEXUS_NEOE_FEE_TABLE_HPP
+#define NEXUS_NEOE_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -10,49 +10,45 @@
 
 namespace Nexus {
 
-  /*! \struct NeoeFeeTable
-      \brief Stores the table of fees used by Aequitas NEO on TSX.
-   */
+  /** Stores the table of fees used by Aequitas NEO on TSX. */
   struct NeoeFeeTable {
 
-    /*! \enum PriceClass
-        \brief Enumerates the types of price classes.
-     */
-    enum class PriceClass : int {
+    /** Enumerates the types of price classes. */
+    enum class PriceClass {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Price < $1.00.
-      SUB_DOLLAR,
+      /** Price < $1.00. */
+      SUBDOLLAR,
 
-      //! Price >= $1.00.
+      /** Price >= $1.00. */
       DEFAULT,
     };
 
-    //! The number of price classes enumerated.
-    static const std::size_t PRICE_CLASS_COUNT = 2;
+    /** The number of price classes enumerated. */
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(2);
 
-    //! The general fee table.
+    /** The general fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_generalFeeTable;
 
-    //! The interlisted fee table.
+    /** The interlisted fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_interlistedFeeTable;
 
-    //! The NEO book fee table.
+    /** The NEO book fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_neoBookFeeTable;
   };
 
-  //! Parses a NeoeFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the NeoeFeeTable from.
-    \return The NeoeFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a NeoeFeeTable from a YAML configuration.
+   * @param config The configuration to parse the NeoeFeeTable from.
+   * @return The NeoeFeeTable represented by the <i>config</i>.
+   */
   inline NeoeFeeTable ParseNeoeFeeTable(const YAML::Node& config) {
-    NeoeFeeTable feeTable;
+    auto feeTable = NeoeFeeTable();
     ParseFeeTable(config, "general_table",
       Beam::Store(feeTable.m_generalFeeTable));
     ParseFeeTable(config, "interlisted_table",
@@ -62,65 +58,66 @@ namespace Nexus {
     return feeTable;
   }
 
-  //! Tests whether a NEO Order is part of the NEO book.
-  /*!
-    \param fields The OrderFields to test.
-    \return <code>true</code> iff the <i>order</i> was submitted to the NEO
-            book.
-  */
+  /**
+   * Tests whether a NEO Order is part of the NEO book.
+   * @param fields The OrderFields to test.
+   * @return <code>true</code> iff the <i>order</i> was submitted to the NEO
+   *         book.
+   */
   inline bool IsNeoBookOrder(const OrderExecutionService::OrderFields& fields) {
-    return OrderExecutionService::HasField(fields, Tag{100, "N"});
+    return OrderExecutionService::HasField(fields, Tag(100, "N"));
   }
 
-  //! Looks up a general fee.
-  /*!
-    \param feeTable The NeoeFeeTable used to lookup the fee.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>liquidityFlag</i> and
-            <i>priceClass</i>.
-  */
+  /**
+   * Looks up a general fee.
+   * @param feeTable The NeoeFeeTable used to lookup the fee.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   *         <i>priceClass</i>.
+   */
   inline Money LookupGeneralFee(const NeoeFeeTable& feeTable,
       LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
     return feeTable.m_generalFeeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
 
-  //! Looks up an interlisted fee.
-  /*!
-    \param feeTable The NeoeFeeTable used to lookup the fee.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>liquidityFlag</i> and
-            <i>priceClass</i>.
-  */
+  /**
+   * Looks up an interlisted fee.
+   * @param feeTable The NeoeFeeTable used to lookup the fee.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   *         <i>priceClass</i>.
+   */
   inline Money LookupInterlistedFee(const NeoeFeeTable& feeTable,
       LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
     return feeTable.m_interlistedFeeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
 
-  //! Looks up a NEO book fee.
-  /*!
-    \param feeTable The NeoeFeeTable used to lookup the fee.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>liquidityFlag</i>.
-  */
+  /**
+   * Looks up a NEO book fee.
+   * @param feeTable The NeoeFeeTable used to lookup the fee.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i>.
+   */
   inline Money LookupNeoBookFee(const NeoeFeeTable& feeTable,
       LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
     return feeTable.m_neoBookFeeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
 
-  //! Calculates the fee on a trade executed on NEOE.
-  /*!
-    \param feeTable The NeoeFeeTable used to calculate the fee.
-    \param isInterlisted Whether the calculation is for an interlisted security.
-    \param orderFields The OrderFields submitted for the Order.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on NEOE.
+   * @param feeTable The NeoeFeeTable used to calculate the fee.
+   * @param isInterlisted Whether the calculation is for an interlisted
+   *        security.
+   * @param orderFields The OrderFields submitted for the Order.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const NeoeFeeTable& feeTable, bool isInterlisted,
       const OrderExecutionService::OrderFields& orderFields,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -129,7 +126,7 @@ namespace Nexus {
     }
     auto priceClass = [&] {
       if(executionReport.m_lastPrice < Money::ONE) {
-        return NeoeFeeTable::PriceClass::SUB_DOLLAR;
+        return NeoeFeeTable::PriceClass::SUBDOLLAR;
       } else {
         return NeoeFeeTable::PriceClass::DEFAULT;
       }

@@ -17,145 +17,137 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Client used to access the MarketDataFeedServlet.
-      \tparam OrderIdType The type used to represent order ids.
-      \tparam SamplingTimerType The type of Timer used to sample market data
-              sent to the servlet.
-      \tparam MessageProtocolType The type of MessageProtocol used to send and
-              receive messages.
-      \tparam HeartbeatTimerType The type of Timer used for heartbeats.
+  /**
+   * Client used to access the MarketDataFeedServlet.
+   * @param <O> The type used to represent order ids.
+   * @param <S> The type of Timer used to sample market data sent to the
+   *        servlet.
+   * @param <P> The type of MessageProtocol used to send and receive messages.
+   * @param <H> The type of Timer used for heartbeats.
    */
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
+  template<typename O, typename S, typename P, typename H>
   class MarketDataFeedClient : private boost::noncopyable {
     public:
 
-      //! The type used to represent order ids.
-      using OrderId = OrderIdType;
+      /** The type used to represent order ids. */
+      using OrderId = O;
 
-      //! The type of Timer used for sampling.
-      using SamplingTimer = Beam::GetTryDereferenceType<SamplingTimerType>;
+      /** The type of Timer used for sampling. */
+      using SamplingTimer = Beam::GetTryDereferenceType<S>;
 
-      //! The type of MessageProtocol used to send and receive messages.
-      using MessageProtocol = MessageProtocolType;
+      /** The type of MessageProtocol used to send and receive messages. */
+      using MessageProtocol = P;
 
-      //! The type of Timer used for heartbeats.
-      using HeartbeatTimer = Beam::GetTryDereferenceType<HeartbeatTimerType>;
+      /** The type of Timer used for heartbeats. */
+      using HeartbeatTimer = Beam::GetTryDereferenceType<H>;
 
-      //! The type of ServiceProtocol to use.
-      using ServiceProtocolClient = Beam::Services::ServiceProtocolClient<
-        MessageProtocolType, HeartbeatTimerType>;
+      /** The type of ServiceProtocol to use. */
+      using ServiceProtocolClient = Beam::Services::ServiceProtocolClient<P, H>;
 
-      //! The type of Authenticator to use.
+      /** The type of Authenticator to use. */
       using Authenticator = typename Beam::ServiceLocator::Authenticator<
         ServiceProtocolClient>::type;
 
-      //! Constructs a MarketDataFeedClient.
-      /*!
-        \param channel Initializes the Channel to the ServiceProtocol server.
-        \param authenticator The Authenticator to use.
-        \param samplingTimer Initializes the SamplingTimer.
-        \param heartbeatTimer Initializes the Timer used for heartbeats.
-      */
-      template<typename ChannelForward, typename SamplingTimerForward,
-        typename HeartbeatTimerForward>
-      MarketDataFeedClient(ChannelForward&& channel,
-        const Authenticator& authenticator,
-        SamplingTimerForward&& samplingTimer,
-        HeartbeatTimerForward&& heartbeatTimer);
+      /**
+       * Constructs a MarketDataFeedClient.
+       * @param channel Initializes the Channel to the ServiceProtocol server.
+       * @param authenticator The Authenticator to use.
+       * @param samplingTimer Initializes the SamplingTimer.
+       * @param heartbeatTimer Initializes the Timer used for heartbeats.
+       */
+      template<typename CF, typename SF, typename HF>
+      MarketDataFeedClient(CF&& channel, const Authenticator& authenticator,
+        SF&& samplingTimer, HF&& heartbeatTimer);
 
       ~MarketDataFeedClient();
 
-      //! Adds or updates a SecurityInfo.
-      /*!
-        \param securityInfo The SecurityInfo to add or update.
-      */
+      /**
+       * Adds or updates a SecurityInfo.
+       * @param securityInfo The SecurityInfo to add or update.
+       */
       void Add(const SecurityInfo& securityInfo);
 
-      //! Publishes an OrderImbalance.
-      /*!
-        \param orderImbalance The OrderImbalance to publish.
-      */
+      /**
+       * Publishes an OrderImbalance.
+       * @param orderImbalance The OrderImbalance to publish.
+       */
       void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance);
 
-      //! Publishes a BboQuote.
-      /*!
-        \param bboQuote The BboQuote to publish.
-      */
+      /**
+       * Publishes a BboQuote.
+       * @param bboQuote The BboQuote to publish.
+       */
       void PublishBboQuote(const SecurityBboQuote& bboQuote);
 
-      //! Publishes a MarketQuote.
-      /*!
-        \param marketQuote The MarketQuote to publish.
-      */
+      /**
+       * Publishes a MarketQuote.
+       * @param marketQuote The MarketQuote to publish.
+       */
       void PublishMarketQuote(const SecurityMarketQuote& marketQuote);
 
-      //! Sets a BookQuote.
-      /*!
-        \param bookQuote The BookQuote to set.
-      */
+      /**
+       * Sets a BookQuote.
+       * @param bookQuote The BookQuote to set.
+       */
       void SetBookQuote(const SecurityBookQuote& bookQuote);
 
-      //! Adds an order.
-      /*!
-        \param security The Security the order belongs to.
-        \param market The market the order belongs to.
-        \param mpid The MPID submitting the order.
-        \param isPrimaryMpid Whether the <i>mpid</i> is the <i>market</i>'s
-               primary MPID.
-        \param id The order id.
-        \param side The order's Side.
-        \param price The price of the order.
-        \param size The size of the order.
-        \param timestamp The Order's timestamp.
-      */
+      /**
+       * Adds an order.
+       * @param security The Security the order belongs to.
+       * @param market The market the order belongs to.
+       * @param mpid The MPID submitting the order.
+       * @param isPrimaryMpid Whether the <i>mpid</i> is the <i>market</i>'s
+       *        primary MPID.
+       * @param id The order id.
+       * @param side The order's Side.
+       * @param price The price of the order.
+       * @param size The size of the order.
+       * @param timestamp The Order's timestamp.
+       */
       void AddOrder(const Security& security, MarketCode market,
         const std::string& mpid, bool isPrimaryMpid, const OrderId& id,
         Side side, Money price, Quantity size,
-        const boost::posix_time::ptime& timestamp);
+        boost::posix_time::ptime timestamp);
 
-      //! Modifies the size of an order.
-      /*!
-        \param id The order id.
-        \param size The order's new size.
-        \param timestamp The modification's timestamp.
-      */
+      /**
+       * Modifies the size of an order.
+       * @param id The order id.
+       * @param size The order's new size.
+       * @param timestamp The modification's timestamp.
+       */
       void ModifyOrderSize(const OrderId& id, Quantity size,
-        const boost::posix_time::ptime& timestamp);
+        boost::posix_time::ptime timestamp);
 
-      //! Adds an offset to the size of an order.
-      /*!
-        \param id The order id.
-        \param delta The change in the order's size.
-        \param timestamp The modification's timestamp.
-      */
+      /**
+       * Adds an offset to the size of an order.
+       * @param id The order id.
+       * @param delta The change in the order's size.
+       * @param timestamp The modification's timestamp.
+       */
       void OffsetOrderSize(const OrderId& id, Quantity delta,
-        const boost::posix_time::ptime& timestamp);
+        boost::posix_time::ptime timestamp);
 
-      //! Modifies the price of an order.
-      /*!
-        \param id The order id.
-        \param price The order's new price.
-        \param timestamp The modification's timestamp.
-      */
+      /**
+       * Modifies the price of an order.
+       * @param id The order id.
+       * @param price The order's new price.
+       * @param timestamp The modification's timestamp.
+       */
       void ModifyOrderPrice(const OrderId& id, Money price,
-        const boost::posix_time::ptime& timestamp);
+        boost::posix_time::ptime timestamp);
 
-      //! Deletes an order.
-      /*!
-        \param id The order id.
-        \param timestamp The modification's timestamp.
-      */
-      void DeleteOrder(const OrderId& id,
-        const boost::posix_time::ptime& timestamp);
+      /**
+       * Deletes an order.
+       * @param id The order id.
+       * @param timestamp The modification's timestamp.
+       */
+      void DeleteOrder(const OrderId& id, boost::posix_time::ptime timestamp);
 
-      //! Publishes a TimeAndSale.
-      /*!
-        \param timeAndSale The TimeAndSale to publish.
-      */
+      /**
+       * Publishes a TimeAndSale.
+       * @param timeAndSale The TimeAndSale to publish.
+       */
       void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale);
-
-      void Open();
 
       void Close();
 
@@ -182,34 +174,32 @@ namespace Nexus::MarketDataService {
       };
       mutable boost::mutex m_mutex;
       ServiceProtocolClient m_client;
-      Authenticator m_authenticator;
-      Beam::GetOptionalLocalPtr<SamplingTimerType> m_samplingTimer;
+      Beam::GetOptionalLocalPtr<S> m_samplingTimer;
       std::unordered_map<Security, QuoteUpdates> m_quoteUpdates;
       std::vector<MarketOrderImbalance> m_orderImbalances;
       std::unordered_map<OrderId, OrderEntry> m_orders;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_callbacks;
+      Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void UpdateBookSampling(const SecurityBookQuote& bookQuote);
       void LockedAddOrder(const Security& security, MarketCode market,
         const std::string& mpid, bool isPrimaryMpid, const OrderId& id,
         Side side, Money price, Quantity size,
-        const boost::posix_time::ptime& timestamp);
-      void LockedDeleteOrder(typename std::unordered_map<OrderId,
-        OrderEntry>::iterator& orderIterator,
-        const boost::posix_time::ptime& timestamp);
-      void OnTimerExpired(const Beam::Threading::Timer::Result& result);
+        boost::posix_time::ptime timestamp);
+      void LockedDeleteOrder(
+        typename std::unordered_map<OrderId, OrderEntry>::iterator&
+        orderIterator, boost::posix_time::ptime timestamp);
+      void OnTimerExpired(Beam::Threading::Timer::Result result);
   };
 
-  //! Finds a MarketDataFeedService for a specified country.
-  /*!
-    \param country The country to service.
-    \param serviceLocatorClient The ServiceLocatorClient used to locate
-           services.
-    \return The ServiceEntry belonging to the MarketDataFeedService for the
-            specified <i>country</i>.
-  */
+  /**
+   * Finds a MarketDataFeedService for a specified country.
+   * @param country The country to service.
+   * @param serviceLocatorClient The ServiceLocatorClient used to locate
+   *        services.
+   * @return The ServiceEntry belonging to the MarketDataFeedService for the
+   *         specified <i>country</i>.
+   */
   template<typename ServiceLocatorClient>
   boost::optional<Beam::ServiceLocator::ServiceEntry>
       FindMarketDataFeedService(CountryCode country,
@@ -218,7 +208,7 @@ namespace Nexus::MarketDataService {
     for(auto& entry : services) {
       auto& properties = entry.GetProperties();
       auto countriesProperty = properties.Get("countries");
-      if(!countriesProperty.is_initialized()) {
+      if(!countriesProperty) {
         return entry;
       } else if(auto countriesList = boost::get<std::vector<Beam::JsonValue>>(
           &*countriesProperty)) {
@@ -235,73 +225,69 @@ namespace Nexus::MarketDataService {
     return boost::none;
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::OrderEntry::OrderEntry(const Security& security,
-      MarketCode market, const std::string& mpid, bool isPrimaryMpid, Side side,
-      Money price, Quantity size)
-      : m_security(security),
-        m_market(market),
-        m_mpid(mpid),
-        m_isPrimaryMpid(isPrimaryMpid),
-        m_side(side),
-        m_price(price),
-        m_size(size) {}
+  template<typename O, typename S, typename P, typename H>
+  MarketDataFeedClient<O, S, P, H>::OrderEntry::OrderEntry(
+    const Security& security, MarketCode market, const std::string& mpid,
+    bool isPrimaryMpid, Side side, Money price, Quantity size)
+    : m_security(security),
+      m_market(market),
+      m_mpid(mpid),
+      m_isPrimaryMpid(isPrimaryMpid),
+      m_side(side),
+      m_price(price),
+      m_size(size) {}
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  template<typename ChannelForward, typename SamplingTimerForward,
-    typename HeartbeatTimerForward>
-  MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::MarketDataFeedClient(ChannelForward&& channel,
-      const Authenticator& authenticator, SamplingTimerForward&& samplingTimer,
-      HeartbeatTimerForward&& heartbeatTimer)
-      : m_client(std::forward<ChannelForward>(channel),
-          std::forward<HeartbeatTimerForward>(heartbeatTimer)),
-        m_authenticator(authenticator),
-        m_samplingTimer(std::forward<SamplingTimerForward>(samplingTimer)) {
+  template<typename O, typename S, typename P, typename H>
+  template<typename CF, typename SF, typename HF>
+  MarketDataFeedClient<O, S, P, H>::MarketDataFeedClient(CF&& channel,
+      const Authenticator& authenticator, SF&& samplingTimer,
+      HF&& heartbeatTimer)
+      : m_client(std::forward<CF>(channel), std::forward<HF>(heartbeatTimer)),
+        m_samplingTimer(std::forward<SF>(samplingTimer)) {
     RegisterMarketDataFeedMessages(Beam::Store(m_client.GetSlots()));
+    try {
+      Beam::ServiceLocator::OpenAndAuthenticate(authenticator, m_client);
+      m_samplingTimer->GetPublisher().Monitor(
+        m_tasks.GetSlot<Beam::Threading::Timer::Result>(
+        std::bind(&MarketDataFeedClient::OnTimerExpired, this,
+        std::placeholders::_1)));
+      m_samplingTimer->Start();
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::~MarketDataFeedClient() {
+  template<typename O, typename S, typename P, typename H>
+  MarketDataFeedClient<O, S, P, H>::~MarketDataFeedClient() {
     Close();
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::Add(const SecurityInfo& securityInfo) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::Add(const SecurityInfo& securityInfo) {
     Beam::Services::SendRecordMessage<SetSecurityInfoMessage>(m_client,
       securityInfo);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::PublishBboQuote(const SecurityBboQuote& bboQuote) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::PublishBboQuote(
+      const SecurityBboQuote& bboQuote) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[bboQuote.GetIndex()];
     updates.m_bboQuote = bboQuote;
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::PublishMarketQuote(
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::PublishMarketQuote(
       const SecurityMarketQuote& marketQuote) {
     auto lock = boost::lock_guard(m_mutex);
     m_quoteUpdates[marketQuote.GetIndex()].m_marketQuotes[
       marketQuote->m_market] = marketQuote;
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::SetBookQuote(const SecurityBookQuote& bookQuote) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::SetBookQuote(
+      const SecurityBookQuote& bookQuote) {
     auto id = bookQuote.GetIndex().GetSymbol() + '-' +
       boost::lexical_cast<std::string>(bookQuote.GetIndex().GetCountry()) +
       bookQuote->m_mpid + '-' +
@@ -325,22 +311,19 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::AddOrder(const Security& security, MarketCode market,
-      const std::string& mpid, bool isPrimaryMpid, const OrderId& id, Side side,
-      Money price, Quantity size, const boost::posix_time::ptime& timestamp) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::AddOrder(const Security& security,
+      MarketCode market, const std::string& mpid, bool isPrimaryMpid,
+      const OrderId& id, Side side, Money price, Quantity size,
+      boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     LockedAddOrder(security, market, mpid, isPrimaryMpid, id, side, price,
       size, timestamp);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::ModifyOrderSize(const OrderId& id, Quantity size,
-      const boost::posix_time::ptime& timestamp) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::ModifyOrderSize(const OrderId& id,
+      Quantity size, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -352,11 +335,9 @@ namespace Nexus::MarketDataService {
       entry.m_isPrimaryMpid, id, entry.m_side, entry.m_price, size, timestamp);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::OffsetOrderSize(const OrderId& id, Quantity delta,
-      const boost::posix_time::ptime& timestamp) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::OffsetOrderSize(const OrderId& id,
+      Quantity delta, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -369,11 +350,9 @@ namespace Nexus::MarketDataService {
       entry.m_size + delta, timestamp);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::ModifyOrderPrice(const OrderId& id, Money price,
-      const boost::posix_time::ptime& timestamp) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::ModifyOrderPrice(const OrderId& id,
+      Money price, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -385,11 +364,9 @@ namespace Nexus::MarketDataService {
       entry.m_isPrimaryMpid, id, entry.m_side, price, entry.m_size, timestamp);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::DeleteOrder(const OrderId& id,
-      const boost::posix_time::ptime& timestamp) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::DeleteOrder(const OrderId& id,
+      boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -398,70 +375,34 @@ namespace Nexus::MarketDataService {
     LockedDeleteOrder(orderIterator, timestamp);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::PublishTimeAndSale(
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::PublishTimeAndSale(
       const SecurityTimeAndSale& timeAndSale) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
     updates.m_timeAndSales.push_back(timeAndSale);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::PublishOrderImbalance(
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::PublishOrderImbalance(
       const MarketOrderImbalance& orderImbalance) {
     auto lock = boost::lock_guard(m_mutex);
     m_orderImbalances.push_back(orderImbalance);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      Beam::ServiceLocator::OpenAndAuthenticate(m_authenticator, m_client);
-      m_samplingTimer->GetPublisher().Monitor(
-        m_callbacks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind(&MarketDataFeedClient::OnTimerExpired, this,
-        std::placeholders::_1)));
-      m_samplingTimer->Start();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::Close() {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::Shutdown() {
     m_client.Close();
     m_samplingTimer->Cancel();
-    m_callbacks.Break();
-    m_openState.SetClosed();
+    m_tasks.Break();
+    m_openState.Close();
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::UpdateBookSampling(
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::UpdateBookSampling(
       const SecurityBookQuote& bookQuote) {
     auto book = [&] {
       if(bookQuote->m_quote.m_side == Side::ASK) {
@@ -484,13 +425,11 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::LockedAddOrder(const Security& security,
-      MarketCode market, const std::string& mpid, bool isPrimaryMpid,
-      const OrderId& id, Side side, Money price, Quantity size,
-      const boost::posix_time::ptime& timestamp) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::LockedAddOrder(
+      const Security& security, MarketCode market, const std::string& mpid,
+      bool isPrimaryMpid, const OrderId& id, Side side, Money price,
+      Quantity size, boost::posix_time::ptime timestamp) {
     if(size <= 0) {
       return;
     }
@@ -506,26 +445,22 @@ namespace Nexus::MarketDataService {
       std::move(bookQuote), security));
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::LockedDeleteOrder(
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::LockedDeleteOrder(
       typename std::unordered_map<OrderId, OrderEntry>::iterator& orderIterator,
-      const boost::posix_time::ptime& timestamp) {
+      boost::posix_time::ptime timestamp) {
     auto& entry = orderIterator->second;
     auto bookQuote = BookQuote(entry.m_mpid, entry.m_isPrimaryMpid,
       entry.m_market, Quote(entry.m_price, -entry.m_size, entry.m_side),
       timestamp);
-    UpdateBookSampling(Beam::Queries::IndexedValue(
-      std::move(bookQuote), entry.m_security));
+    UpdateBookSampling(Beam::Queries::IndexedValue(std::move(bookQuote),
+      entry.m_security));
     m_orders.erase(orderIterator);
   }
 
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::OnTimerExpired(
-      const Beam::Threading::Timer::Result& result) {
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::OnTimerExpired(
+      Beam::Threading::Timer::Result result) {
     auto messages = std::vector<MarketDataFeedMessage>();
     auto quoteUpdates = std::unordered_map<Security, QuoteUpdates>();
     auto orderImbalances = std::vector<MarketOrderImbalance>();

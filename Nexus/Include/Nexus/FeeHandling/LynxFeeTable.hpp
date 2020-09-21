@@ -1,5 +1,5 @@
-#ifndef NEXUS_LYNXFEETABLE_HPP
-#define NEXUS_LYNXFEETABLE_HPP
+#ifndef NEXUS_LYNX_FEE_TABLE_HPP
+#define NEXUS_LYNX_FEE_TABLE_HPP
 #include <array>
 #include <exception>
 #include <unordered_map>
@@ -14,65 +14,61 @@
 
 namespace Nexus {
 
-  /*! \struct LynxFeeTable
-      \brief Stores the table of fees used by the LYNX ATS.
-   */
+  /** Stores the table of fees used by the LYNX ATS. */
   struct LynxFeeTable {
 
-    /*! \enum PriceClass
-        \brief Enumerates the types of price classes.
-     */
-    enum class PriceClass : int {
+    /** Enumerates the types of price classes. */
+    enum class PriceClass {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Price >= $1.00.
+      /** Price >= $1.00. */
       DEFAULT = 0,
 
-      //! Price < $1.00.
-      SUB_DOLLAR,
+      /** Price < $1.00. */
+      SUBDOLLAR,
     };
 
-    //! The number of price classes enumerated.
-    static const std::size_t PRICE_CLASS_COUNT = 2;
+    /** The number of price classes enumerated. */
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(2);
 
-    //! The fee table.
+    /** The fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_feeTable;
   };
 
-  //! Parses a LynxFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the LynxFeeTable from.
-    \return The LynxFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a LynxFeeTable from a YAML configuration.
+   * @param config The configuration to parse the LynxFeeTable from.
+   * @return The LynxFeeTable represented by the <i>config</i>.
+   */
   inline LynxFeeTable ParseLynxFeeTable(const YAML::Node& config) {
-    LynxFeeTable feeTable;
+    auto feeTable = LynxFeeTable();
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
     return feeTable;
   }
 
-  //! Looks up a fee.
-  /*!
-    \param feeTable The LynxFeeTable used to lookup the fee.
-    \param liquidityFlag The liquidity flag to lookup.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>liquidityFlag</i> and
-            <i>priceClass</i>.
-  */
+  /**
+   * Looks up a fee.
+   * @param feeTable The LynxFeeTable used to lookup the fee.
+   * @param liquidityFlag The liquidity flag to lookup.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   *         <i>priceClass</i>.
+   */
   inline Money LookupFee(const LynxFeeTable& feeTable,
       LiquidityFlag liquidityFlag, LynxFeeTable::PriceClass priceClass) {
     return feeTable.m_feeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
 
-  //! Calculates the fee on a trade executed on LYNX.
-  /*!
-    \param feeTable The LynxFeeTable used to calculate the fee.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on LYNX.
+   * @param feeTable The LynxFeeTable used to calculate the fee.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const LynxFeeTable& feeTable,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
@@ -97,7 +93,7 @@ namespace Nexus {
     }();
     auto priceClass = [&] {
       if(executionReport.m_lastPrice < Money::ONE) {
-        return LynxFeeTable::PriceClass::SUB_DOLLAR;
+        return LynxFeeTable::PriceClass::SUBDOLLAR;
       } else {
         return LynxFeeTable::PriceClass::DEFAULT;
       }

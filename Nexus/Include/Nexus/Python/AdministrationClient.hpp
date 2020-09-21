@@ -47,7 +47,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) override;
 
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       AccountIdentity LoadIdentity(
@@ -137,8 +137,6 @@ namespace Nexus::AdministrationService {
       Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -219,10 +217,10 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   Beam::ServiceLocator::DirectoryEntry
-      ToPythonAdministrationClient<C>::LoadTradingGroupEntry(
+      ToPythonAdministrationClient<C>::LoadParentTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadTradingGroupEntry(account);
+    return m_client->LoadParentTradingGroup(account);
   }
 
   template<typename C>
@@ -427,12 +425,6 @@ namespace Nexus::AdministrationService {
       const Message& message) {
     auto release = Beam::Python::GilRelease();
     return m_client->SendAccountModificationRequestMessage(id, message);
-  }
-
-  template<typename C>
-  void ToPythonAdministrationClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

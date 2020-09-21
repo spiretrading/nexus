@@ -2,7 +2,6 @@
 #define SPIRE_RANDOM_BOOK_VIEW_MODEL_HPP
 #include <random>
 #include <Beam/Threading/CallOnce.hpp>
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <QTimer>
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/LocalBookViewModel.hpp"
@@ -21,8 +20,7 @@ namespace Spire {
         \param load_time The amount of time to take to load.
       */
       RandomBookViewModel(Nexus::Security security,
-        Definitions definitions, boost::posix_time::time_duration load_time,
-        Beam::Threading::TimerThreadPool& timer_thread_pool);
+        Definitions definitions, boost::posix_time::time_duration load_time);
 
       //! Returns the update period.
       boost::posix_time::time_duration get_period() const;
@@ -79,7 +77,6 @@ namespace Spire {
     private:
       LocalBookViewModel m_model;
       boost::posix_time::time_duration m_load_time;
-      Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       boost::posix_time::time_duration m_period;
       std::default_random_engine m_random_engine;
       QTimer m_timer;

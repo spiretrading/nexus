@@ -22,8 +22,7 @@
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/ChartingService.hpp"
 
-namespace Nexus {
-namespace ChartingService {
+namespace Nexus::ChartingService {
 namespace Details {
   using ChartingClientSessionBuilder =
     Beam::Services::AuthenticatedServiceProtocolClientBuilder<
@@ -35,47 +34,40 @@ namespace Details {
     Beam::Threading::LiveTimer>;
 }
 
-  /*! \class ApplicationChartingClient
-      \brief Encapsulates a standard ChartingClient used in an application.
-   */
+  /** Encapsulates a standard ChartingClient used in an application. */
   class ApplicationChartingClient : private boost::noncopyable {
     public:
 
-      //! Defines the standard ChartingClient used for applications.
+      /** Defines the standard ChartingClient used for applications. */
       using Client = ChartingClient<Details::ChartingClientSessionBuilder>;
 
-      //! Constructs an ApplicationChartingClient.
+      /** Constructs an ApplicationChartingClient. */
       ApplicationChartingClient() = default;
 
-      //! Builds the session.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate sessions.
-        \param socketThreadPool The SocketThreadPool used for the socket
-               connection.
-        \param timerThreadPool The TimerThreadPool used for heartbeats.
-      */
+      /**
+       * Builds the session.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate sessions.
+       */
       void BuildSession(Beam::Ref<Beam::ServiceLocator::
-        ApplicationServiceLocatorClient::Client> serviceLocatorClient,
-        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        ApplicationServiceLocatorClient::Client> serviceLocatorClient);
 
-      //! Returns a reference to the Client.
+      /** Returns a reference to the Client. */
       Client& operator *();
 
-      //! Returns a reference to the Client.
+      /** Returns a reference to the Client. */
       const Client& operator *() const;
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       Client* operator ->();
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       const Client* operator ->() const;
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       Client* Get();
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       const Client* Get() const;
 
     private:
@@ -83,17 +75,13 @@ namespace Details {
   };
 
   inline void ApplicationChartingClient::BuildSession(
-      Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::
-      Client> serviceLocatorClient, Beam::Ref<Beam::Network::
-      SocketThreadPool> socketThreadPool, Beam::Ref<
-      Beam::Threading::TimerThreadPool> timerThreadPool) {
-    if(m_client.has_value()) {
+      Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
+      serviceLocatorClient) {
+    if(m_client) {
       m_client->Close();
       m_client = std::nullopt;
     }
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
-    auto socketThreadPoolHandle = socketThreadPool.Get();
-    auto timerThreadPoolHandle = timerThreadPool.Get();
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, SERVICE_NAME);
     auto delay = false;
@@ -102,17 +90,16 @@ namespace Details {
       [=] () mutable {
         if(delay) {
           auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
+            boost::posix_time::seconds(3));
           delayTimer.Start();
           delayTimer.Wait();
         }
         delay = true;
-        return std::make_unique<Beam::Network::TcpSocketChannel>(addresses,
-          Beam::Ref(*socketThreadPoolHandle));
+        return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
-      [=] {
+      [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
-          boost::posix_time::seconds(10), Beam::Ref(*timerThreadPoolHandle));
+          boost::posix_time::seconds(10));
       });
     m_client.emplace(sessionBuilder);
   }
@@ -145,7 +132,6 @@ namespace Details {
       ApplicationChartingClient::Get() const {
     return &*m_client;
   }
-}
 }
 
 #endif

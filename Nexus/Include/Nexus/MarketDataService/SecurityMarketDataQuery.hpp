@@ -59,7 +59,7 @@ namespace MarketDataService {
         client.QueryBboQuotes(snapshotQuery, snapshotQueue);
         SequencedBboQuote snapshot;
         try {
-          snapshot = snapshotQueue->Top();
+          snapshot = snapshotQueue->Pop();
           queue->Push(std::move(*snapshot));
         } catch(const Beam::PipeBrokenException&) {
           queue->Break();

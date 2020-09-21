@@ -44,7 +44,7 @@ namespace Nexus::DefinitionsService {
       std::vector<Compliance::ComplianceRuleSchema>
         LoadComplianceRuleSchemas() override;
 
-      void Open() override;
+      TradingSchedule LoadTradingSchedule() override;
 
       void Close() override;
 
@@ -131,9 +131,9 @@ namespace Nexus::DefinitionsService {
   }
 
   template<typename C>
-  void ToPythonDefinitionsClient<C>::Open() {
+  TradingSchedule ToPythonDefinitionsClient<C>::LoadTradingSchedule() {
     auto release = Beam::Python::GilRelease();
-    m_client->Open();
+    return m_client->LoadTradingSchedule();
   }
 
   template<typename C>

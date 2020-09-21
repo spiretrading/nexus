@@ -54,9 +54,6 @@ export class DurationField extends React.Component<Properties, State> {
       componentWidth: 0
     };
     this.containerRef = React.createRef<HTMLDivElement>();
-    this.handleResize = this.handleResize.bind(this);
-    this.onBlur = this.onBlur.bind(this);
-    this.onFocus = this.onFocus.bind(this);
   }
 
   public render(): JSX.Element {
@@ -137,26 +134,26 @@ export class DurationField extends React.Component<Properties, State> {
     window.addEventListener('resize', this.handleResize);
   }
 
-  private handleResize() {
+  private handleResize = () => {
     if(this.props.displaySize === DisplaySize.SMALL &&
         this.state.componentWidth !== this.containerRef.current.clientWidth) {
       this.setState({componentWidth: this.containerRef.current.clientWidth});
     }
   }
 
-  private onFocus() {
+  private onFocus = () => {
     if(!this.props.readonly) {
       this.setState({isFocused: true});
     }
   }
 
-  private onBlur() {
+  private onBlur = () => {
     if(!this.props.readonly) {
       this.setState({isFocused: false});
     }
   }
 
-  private onChange(timeUnit: TimeUnit, value: number) {
+  private onChange = (timeUnit: TimeUnit, value: number) => {
     const oldDuration = this.props.value.split();
     const newValue = (() => {
       switch(timeUnit) {
@@ -179,73 +176,73 @@ export class DurationField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     containerSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
       minWidth: '110px',
       width: '100%',
       flexShrink: 1,
       flexGrow: 1,
       backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
+      justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       height: '34px'
-    },
+    } as React.CSSProperties,
     containerLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
       flexGrow: 1,
       flexShrink: 1,
       maxWidth: '246px',
       backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
+      justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       height: '34px'
-    },
+    } as React.CSSProperties,
     inner: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       flexGrow: 1,
-      justifyContent: 'flex-start' as 'flex-start',
+      justifyContent: 'flex-start',
       alignItems: 'center',
       marginLeft: '9px' 
-    },
+    } as React.CSSProperties,
     integerBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       width: '18px',
       height: '17px',
       border: '0px solid #ffffff',
       padding: 0
-    },
+    } as React.CSSProperties,
     colon: {
       width: '10px',
       height: '16px',
       flexGrow: 0,
       flexShrink: 0,
-      display: 'flex' as 'flex',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      cursor: 'default' as 'default'
-    },
+      cursor: 'default'
+    } as React.CSSProperties,
     placeholder: {
       font: '500 11px Roboto',
       color: '#8C8C8C',
-      display: 'flex' as 'flex',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: '10px',
-      cursor: 'default' as 'default'
-    },
+      cursor: 'default'
+    } as React.CSSProperties,
     focused: {
       outlineColor: 'transparent',
       outlineStyle: 'none',
       border: '1px solid #684BC7',
       borderRadius: '1px'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

@@ -49,15 +49,12 @@ namespace Nexus::AdministrationService {
        */
       template<typename SF, typename DF>
       AdministrationServlet(SF&& serviceLocatorClient,
-        const MarketDataService::EntitlementDatabase& entitlements,
-        DF&& dataStore);
+        MarketDataService::EntitlementDatabase entitlements, DF&& dataStore);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
 
       void HandleClientClosed(ServiceProtocolClient& client);
-
-      void Open();
 
       void Close();
 
@@ -88,7 +85,6 @@ namespace Nexus::AdministrationService {
       std::atomic_int m_nextMessageId;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountRoles LoadAccountRoles(
@@ -126,11 +122,11 @@ namespace Nexus::AdministrationService {
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadAccountsByRoles(
         ServiceProtocolClient& client, AccountRoles roles);
       Beam::ServiceLocator::DirectoryEntry OnLoadAdministratorsRootEntry(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       Beam::ServiceLocator::DirectoryEntry OnLoadServicesRootEntry(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       Beam::ServiceLocator::DirectoryEntry OnLoadTradingGroupsRootEntry(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountRoles OnLoadAccountRolesRequest(ServiceProtocolClient& client,
@@ -139,8 +135,8 @@ namespace Nexus::AdministrationService {
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child);
-      Beam::ServiceLocator::DirectoryEntry
-        OnLoadAccountTradingGroupEntryRequest(ServiceProtocolClient& client,
+      Beam::ServiceLocator::DirectoryEntry OnLoadParentTradingGroupRequest(
+        ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountIdentity OnLoadAccountIdentityRequest(
         ServiceProtocolClient& client,
@@ -151,11 +147,11 @@ namespace Nexus::AdministrationService {
       TradingGroup OnLoadTradingGroupRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& directory);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
-        OnLoadAdministratorsRequest(ServiceProtocolClient& client, int dummy);
+        OnLoadAdministratorsRequest(ServiceProtocolClient& client);
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadServicesRequest(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       MarketDataService::EntitlementDatabase OnLoadEntitlementsRequest(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         OnLoadAccountEntitlementsRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
@@ -231,10 +227,32 @@ namespace Nexus::AdministrationService {
   template<typename SF, typename DF>
   AdministrationServlet<C, S, D>::AdministrationServlet(
     SF&& serviceLocatorClient,
-    const MarketDataService::EntitlementDatabase& entitlements, DF&& dataStore)
+    MarketDataService::EntitlementDatabase entitlements, DF&& dataStore)
     : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
-      m_entitlements(entitlements),
-      m_dataStore(std::forward<DF>(dataStore)) {}
+      m_entitlements(std::move(entitlements)),
+      m_dataStore(std::forward<DF>(dataStore)) {
+    try {
+      auto requestIds = m_dataStore->LoadAccountModificationRequestIds(-1, 1);
+      if(requestIds.empty()) {
+        m_nextModificationRequestId = 0;
+      } else {
+        m_nextModificationRequestId = requestIds.back();
+      }
+      m_nextMessageId = m_dataStore->LoadLastMessageId();
+      m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "administrators",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_servicesRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "services",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_tradingGroupsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "trading_groups",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   template<typename C, typename S, typename D>
   void AdministrationServlet<C, S, D>::RegisterServices(
@@ -246,13 +264,13 @@ namespace Nexus::AdministrationService {
       std::placeholders::_1, std::placeholders::_2));
     LoadAdministratorsRootEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAdministratorsRootEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadServicesRootEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadServicesRootEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadTradingGroupsRootEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadTradingGroupsRootEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     CheckAdministratorService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnCheckAdministratorRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -262,8 +280,8 @@ namespace Nexus::AdministrationService {
     LoadSupervisedAccountRolesService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadSupervisedAccountRolesRequest, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    LoadAccountTradingGroupEntryService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountTradingGroupEntryRequest, this,
+    LoadParentTradingGroupService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadParentTradingGroupRequest, this,
       std::placeholders::_1, std::placeholders::_2));
     LoadAccountIdentityService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountIdentityRequest, this,
@@ -276,13 +294,13 @@ namespace Nexus::AdministrationService {
       std::placeholders::_1, std::placeholders::_2));
     LoadAdministratorsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAdministratorsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadServicesService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadServicesRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadEntitlementsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadEntitlementsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadAccountEntitlementsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountEntitlementsRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -358,49 +376,16 @@ namespace Nexus::AdministrationService {
       [&] (auto& accountToSubscribers) {
         for(auto& subscribers : accountToSubscribers |
             boost::adaptors::map_values) {
-          Beam::Threading::With(subscribers,
-            [&] (auto& subscribers) {
-              Beam::RemoveAll(subscribers, &client);
-            });
+          Beam::Threading::With(subscribers, [&] (auto& subscribers) {
+            Beam::RemoveAll(subscribers, &client);
+          });
         }
       });
-    Beam::Threading::With(m_riskStateEntries,
-      [&] (auto& riskStateEntries) {
-        for(auto& entry : riskStateEntries | boost::adaptors::map_values) {
-          Beam::RemoveAll(entry.m_subscribers, &client);
-        }
-      });
-  }
-
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->Open();
-      m_dataStore->Open();
-      auto requestIds = m_dataStore->LoadAccountModificationRequestIds(-1, 1);
-      if(requestIds.empty()) {
-        m_nextModificationRequestId = 0;
-      } else {
-        m_nextModificationRequestId = requestIds.back();
+    Beam::Threading::With(m_riskStateEntries, [&] (auto& riskStateEntries) {
+      for(auto& entry : riskStateEntries | boost::adaptors::map_values) {
+        Beam::RemoveAll(entry.m_subscribers, &client);
       }
-      m_nextMessageId = m_dataStore->LoadLastMessageId();
-      m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
-        *m_serviceLocatorClient, "administrators",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-      m_servicesRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
-        *m_serviceLocatorClient, "services",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-      m_tradingGroupsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
-        *m_serviceLocatorClient, "trading_groups",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
+    });
   }
 
   template<typename C, typename S, typename D>
@@ -408,13 +393,8 @@ namespace Nexus::AdministrationService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::Shutdown() {
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename S, typename D>
@@ -525,8 +505,8 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C, typename S, typename D>
-  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      C, S, D>::LoadManagedTradingGroups(
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<C, S, D>::LoadManagedTradingGroups(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
     auto tradingGroups = m_serviceLocatorClient->LoadChildren(
@@ -596,8 +576,7 @@ namespace Nexus::AdministrationService {
       auto& entry = entitlement.m_groupEntry;
       if(entitlementSet.find(entry) != entitlementSet.end()) {
         if(std::find(existingEntitlements.begin(),
-            existingEntitlements.end(), entry) ==
-            existingEntitlements.end()) {
+            existingEntitlements.end(), entry) == existingEntitlements.end()) {
           m_serviceLocatorClient->Associate(account, entry);
           auto ss = std::stringstream();
           ss << boost::posix_time::to_simple_string(
@@ -608,8 +587,7 @@ namespace Nexus::AdministrationService {
         }
       } else {
         if(std::find(existingEntitlements.begin(),
-            existingEntitlements.end(), entry) !=
-            existingEntitlements.end()) {
+            existingEntitlements.end(), entry) != existingEntitlements.end()) {
           m_serviceLocatorClient->Detach(account, entry);
           auto ss = std::stringstream();
           ss << boost::posix_time::to_simple_string(
@@ -630,17 +608,15 @@ namespace Nexus::AdministrationService {
       [&] (auto& accountToSubscribers) -> decltype(auto) {
         return accountToSubscribers[account];
       });
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(account, parameters);
-        Beam::Threading::With(subscribers,
-          [&] (auto& subscribers) {
-            for(auto& subscriber : subscribers) {
-              Beam::Services::SendRecordMessage<RiskParametersMessage>(
-                *subscriber, account, parameters);
-            }
-          });
+    m_dataStore->WithTransaction([&] {
+      m_dataStore->Store(account, parameters);
+      Beam::Threading::With(subscribers, [&] (auto& subscribers) {
+        for(auto& subscriber : subscribers) {
+          Beam::Services::SendRecordMessage<RiskParametersMessage>(*subscriber,
+            account, parameters);
+        }
       });
+    });
   }
 
   template<typename C, typename S, typename D>
@@ -648,10 +624,9 @@ namespace Nexus::AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id id) {
     auto request = AccountModificationRequest();
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      request = m_dataStore->LoadAccountModificationRequest(id);
+    });
     if(!CheckReadPermission(account, request.GetAccount())) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
@@ -665,11 +640,8 @@ namespace Nexus::AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountRoles& roles, AccountModificationRequest::Type type) {
-    if(!CheckReadPermission(sessionAccount, submissionAccount)) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
-    }
-    if(roles.GetBitset().none()) {
+    if(!CheckReadPermission(sessionAccount, submissionAccount) ||
+        roles.GetBitset().none()) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
@@ -741,19 +713,19 @@ namespace Nexus::AdministrationService {
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadAdministratorsRootEntry(ServiceProtocolClient& client, int dummy) {
+      OnLoadAdministratorsRootEntry(ServiceProtocolClient& client) {
     return m_administratorsRoot;
   }
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadServicesRootEntry(ServiceProtocolClient& client, int dummy) {
+      OnLoadServicesRootEntry(ServiceProtocolClient& client) {
     return m_servicesRoot;
   }
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadTradingGroupsRootEntry(ServiceProtocolClient& client, int dummy) {
+      OnLoadTradingGroupsRootEntry(ServiceProtocolClient& client) {
     return m_tradingGroupsRoot;
   }
 
@@ -781,7 +753,7 @@ namespace Nexus::AdministrationService {
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadAccountTradingGroupEntryRequest(ServiceProtocolClient& client,
+      OnLoadParentTradingGroupRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
     auto tradingGroups = m_serviceLocatorClient->LoadChildren(
@@ -805,10 +777,9 @@ namespace Nexus::AdministrationService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto identity = AccountIdentity();
-    m_dataStore->WithTransaction(
-      [&] {
-        identity = m_dataStore->LoadIdentity(account);
-      });
+    m_dataStore->WithTransaction([&] {
+      identity = m_dataStore->LoadIdentity(account);
+    });
     identity.m_lastLoginTime = m_serviceLocatorClient->LoadLastLoginTime(
       account);
     identity.m_registrationTime = m_serviceLocatorClient->LoadRegistrationTime(
@@ -823,10 +794,9 @@ namespace Nexus::AdministrationService {
       const AccountIdentity& identity) {
     auto accountEntry = m_serviceLocatorClient->LoadDirectoryEntry(
       account.m_id);
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(accountEntry, identity);
-      });
+    m_dataStore->WithTransaction([&] {
+      m_dataStore->Store(accountEntry, identity);
+    });
   }
 
   template<typename C, typename S, typename D>
@@ -841,14 +811,14 @@ namespace Nexus::AdministrationService {
   template<typename C, typename S, typename D>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationServlet<C, S, D>::OnLoadAdministratorsRequest(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_serviceLocatorClient->LoadChildren(m_administratorsRoot);
   }
 
   template<typename C, typename S, typename D>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationServlet<C, S, D>::OnLoadServicesRequest(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     auto servicesDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(), "services");
     return m_serviceLocatorClient->LoadChildren(servicesDirectory);
@@ -856,7 +826,7 @@ namespace Nexus::AdministrationService {
 
   template<typename C, typename S, typename D>
   MarketDataService::EntitlementDatabase AdministrationServlet<C, S, D>::
-      OnLoadEntitlementsRequest(ServiceProtocolClient& client, int dummy) {
+      OnLoadEntitlementsRequest(ServiceProtocolClient& client) {
     return m_entitlements;
   }
 
@@ -889,18 +859,16 @@ namespace Nexus::AdministrationService {
       [&] (auto& accountToSubscribers) -> decltype(auto) {
         return accountToSubscribers[account];
       });
-    Beam::Threading::With(syncSubscribers,
-      [&] (auto& subscribers) {
-        if(std::find(subscribers.begin(), subscribers.end(), &client) ==
-            subscribers.end()) {
-          subscribers.push_back(&client);
-        }
-      });
+    Beam::Threading::With(syncSubscribers, [&] (auto& subscribers) {
+      if(std::find(subscribers.begin(), subscribers.end(), &client) ==
+          subscribers.end()) {
+        subscribers.push_back(&client);
+      }
+    });
     auto parameters = RiskService::RiskParameters();
-    m_dataStore->WithTransaction(
-      [&] {
-        parameters = m_dataStore->LoadRiskParameters(account);
-      });
+    m_dataStore->WithTransaction([&] {
+      parameters = m_dataStore->LoadRiskParameters(account);
+    });
     return parameters;
   }
 
@@ -922,20 +890,18 @@ namespace Nexus::AdministrationService {
       OnMonitorRiskStateRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto riskState = RiskService::RiskState();
-    m_dataStore->WithTransaction(
-      [&] {
-        Beam::Threading::With(m_riskStateEntries,
-          [&] (auto& riskStateEntries) {
-            auto& riskStateEntry = riskStateEntries[account];
-            riskState = m_dataStore->LoadRiskState(account);
-            if(std::find(riskStateEntry.m_subscribers.begin(),
-                riskStateEntry.m_subscribers.end(), &client) !=
-                riskStateEntry.m_subscribers.end()) {
-              return;
-            }
-            riskStateEntry.m_subscribers.push_back(&client);
-          });
+    m_dataStore->WithTransaction([&] {
+      Beam::Threading::With(m_riskStateEntries, [&] (auto& riskStateEntries) {
+        auto& riskStateEntry = riskStateEntries[account];
+        riskState = m_dataStore->LoadRiskState(account);
+        if(std::find(riskStateEntry.m_subscribers.begin(),
+            riskStateEntry.m_subscribers.end(), &client) !=
+            riskStateEntry.m_subscribers.end()) {
+          return;
+        }
+        riskStateEntry.m_subscribers.push_back(&client);
       });
+    });
     return riskState;
   }
 
@@ -950,24 +916,22 @@ namespace Nexus::AdministrationService {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(account, riskState);
-        request.SetResult();
-        Beam::Threading::With(m_riskStateEntries,
-          [&] (auto& riskStateEntries) {
-            auto riskStateEntryIterator = riskStateEntries.find(account);
-            if(riskStateEntryIterator == riskStateEntries.end()) {
-              return;
-            }
-            auto& riskStateEntry = riskStateEntryIterator->second;
-            riskStateEntry.m_riskState = riskState;
-            for(auto& subscriber : riskStateEntry.m_subscribers) {
-              Beam::Services::SendRecordMessage<RiskStateMessage>(*subscriber,
-                account, riskState);
-            }
-          });
+    m_dataStore->WithTransaction([&] {
+      m_dataStore->Store(account, riskState);
+      request.SetResult();
+      Beam::Threading::With(m_riskStateEntries, [&] (auto& riskStateEntries) {
+        auto riskStateEntryIterator = riskStateEntries.find(account);
+        if(riskStateEntryIterator == riskStateEntries.end()) {
+          return;
+        }
+        auto& riskStateEntry = riskStateEntryIterator->second;
+        riskStateEntry.m_riskState = riskState;
+        for(auto& subscriber : riskStateEntry.m_subscribers) {
+          Beam::Services::SendRecordMessage<RiskStateMessage>(*subscriber,
+            account, riskState);
+        }
       });
+    });
   }
 
   template<typename C, typename S, typename D>
@@ -984,10 +948,9 @@ namespace Nexus::AdministrationService {
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     auto request = AccountModificationRequest();
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      request = m_dataStore->LoadAccountModificationRequest(id);
+    });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
@@ -1007,11 +970,10 @@ namespace Nexus::AdministrationService {
         "Insufficient permissions.");
     }
     auto ids = std::vector<AccountModificationRequest::Id>();
-    m_dataStore->WithTransaction(
-      [&] {
-        ids = m_dataStore->LoadAccountModificationRequestIds(account, startId,
-          maxCount);
-      });
+    m_dataStore->WithTransaction([&] {
+      ids = m_dataStore->LoadAccountModificationRequestIds(account, startId,
+        maxCount);
+    });
     return ids;
   }
 
@@ -1027,11 +989,9 @@ namespace Nexus::AdministrationService {
     }
     if(CheckAdministrator(session.GetAccount())) {
       auto ids = std::vector<AccountModificationRequest::Id>();
-      m_dataStore->WithTransaction(
-        [&] {
-          ids = m_dataStore->LoadAccountModificationRequestIds(startId,
-            maxCount);
-        });
+      m_dataStore->WithTransaction([&] {
+        ids = m_dataStore->LoadAccountModificationRequestIds(startId, maxCount);
+      });
       return ids;
     }
     auto tradingGroupEntries = LoadManagedTradingGroups(account);
@@ -1050,11 +1010,10 @@ namespace Nexus::AdministrationService {
         continue;
       }
       auto accountRequestIds = std::vector<AccountModificationRequest::Id>();
-      m_dataStore->WithTransaction(
-        [&] {
-          accountRequestIds = m_dataStore->LoadAccountModificationRequestIds(
-            accounts[i], startId, maxCount);
-        });
+      m_dataStore->WithTransaction([&] {
+        accountRequestIds = m_dataStore->LoadAccountModificationRequestIds(
+          accounts[i], startId, maxCount);
+      });
       ids.insert(ids.end(), accountRequestIds.begin(), accountRequestIds.end());
     }
     std::sort(ids.begin(), ids.end());
@@ -1071,10 +1030,9 @@ namespace Nexus::AdministrationService {
     auto& session = client.GetSession();
     EnsureModificationReadPermission(session.GetAccount(), id);
     auto modification = EntitlementModification();
-    m_dataStore->WithTransaction(
-      [&] {
-        modification = m_dataStore->LoadEntitlementModification(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      modification = m_dataStore->LoadEntitlementModification(id);
+    });
     return modification;
   }
 
@@ -1097,18 +1055,16 @@ namespace Nexus::AdministrationService {
         throw Beam::Services::ServiceRequestException("Invalid entitlement.");
       }
       if(std::find_if(m_entitlements.GetEntries().begin(),
-          m_entitlements.GetEntries().end(),
-          [&] (auto& entry) {
+          m_entitlements.GetEntries().end(), [&] (auto& entry) {
             return entry.m_groupEntry == entitlement;
           }) == m_entitlements.GetEntries().end()) {
         throw Beam::Services::ServiceRequestException("Invalid entitlement.");
       }
     }
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(request, modification);
-        StoreModificationRequest(request, comment, roles);
-      });
+    m_dataStore->WithTransaction([&] {
+      m_dataStore->Store(request, modification);
+      StoreModificationRequest(request, comment, roles);
+    });
     if(roles.Test(AccountRole::ADMINISTRATOR)) {
       GrantEntitlements(request.GetSubmissionAccount(),
         request.GetAccount(), modification.GetEntitlements());
@@ -1122,10 +1078,9 @@ namespace Nexus::AdministrationService {
     auto& session = client.GetSession();
     EnsureModificationReadPermission(session.GetAccount(), id);
     auto modification = RiskModification();
-    m_dataStore->WithTransaction(
-      [&] {
-        modification = m_dataStore->LoadRiskModification(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      modification = m_dataStore->LoadRiskModification(id);
+    });
     return modification;
   }
 
@@ -1142,11 +1097,10 @@ namespace Nexus::AdministrationService {
     auto request = MakeModificationRequest(session.GetAccount(),
       session.GetAccount(), account, roles,
       AccountModificationRequest::Type::RISK);
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(request, modification);
-        StoreModificationRequest(request, comment, roles);
-      });
+    m_dataStore->WithTransaction([&] {
+      m_dataStore->Store(request, modification);
+      StoreModificationRequest(request, comment, roles);
+    });
     if(roles.Test(AccountRole::ADMINISTRATOR)) {
       UpdateRiskParameters(request.GetAccount(), modification.GetParameters());
     }
@@ -1159,19 +1113,17 @@ namespace Nexus::AdministrationService {
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     auto request = AccountModificationRequest();
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      request = m_dataStore->LoadAccountModificationRequest(id);
+    });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
     auto status = AccountModificationRequest::Update();
-    m_dataStore->WithTransaction(
-      [&] {
-        status = m_dataStore->LoadAccountModificationRequestStatus(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      status = m_dataStore->LoadAccountModificationRequestStatus(id);
+    });
     return status;
   }
 
@@ -1181,10 +1133,9 @@ namespace Nexus::AdministrationService {
       AccountModificationRequest::Id id, Message comment) {
     auto& session = client.GetSession();
     auto request = AccountModificationRequest();
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      request = m_dataStore->LoadAccountModificationRequest(id);
+    });
     auto roles = LoadAccountRoles(session.GetAccount(), request.GetAccount());
     if(roles.GetBitset().none()) {
       throw Beam::Services::ServiceRequestException(
@@ -1198,43 +1149,40 @@ namespace Nexus::AdministrationService {
         comment.GetBodies()};
     }
     auto update = AccountModificationRequest::Update();
-    m_dataStore->WithTransaction(
-      [&] {
-        update = m_dataStore->LoadAccountModificationRequestStatus(
-          request.GetId());
-        if(IsTerminal(update.m_status)) {
-          throw Beam::Services::ServiceRequestException(
-            "Request can not be updated.");
-        }
-        if(comment.GetId() != -1) {
-          m_dataStore->Store(request.GetId(), comment);
-        }
-        if(roles.Test(AccountRole::ADMINISTRATOR)) {
-          update.m_status = AccountModificationRequest::Status::GRANTED;
-        } else if(roles.Test(AccountRole::MANAGER)) {
-          update.m_status = AccountModificationRequest::Status::REVIEWED;
-        }
-        update.m_account = session.GetAccount();
-        ++update.m_sequenceNumber;
-        update.m_timestamp = timestamp;
-        m_dataStore->Store(request.GetId(), update);
-      });
+    m_dataStore->WithTransaction([&] {
+      update = m_dataStore->LoadAccountModificationRequestStatus(
+        request.GetId());
+      if(IsTerminal(update.m_status)) {
+        throw Beam::Services::ServiceRequestException(
+          "Request can not be updated.");
+      }
+      if(comment.GetId() != -1) {
+        m_dataStore->Store(request.GetId(), comment);
+      }
+      if(roles.Test(AccountRole::ADMINISTRATOR)) {
+        update.m_status = AccountModificationRequest::Status::GRANTED;
+      } else if(roles.Test(AccountRole::MANAGER)) {
+        update.m_status = AccountModificationRequest::Status::REVIEWED;
+      }
+      update.m_account = session.GetAccount();
+      ++update.m_sequenceNumber;
+      update.m_timestamp = timestamp;
+      m_dataStore->Store(request.GetId(), update);
+    });
     if(update.m_status == AccountModificationRequest::Status::GRANTED) {
       if(request.GetType() == AccountModificationRequest::Type::ENTITLEMENTS) {
         auto modification = EntitlementModification();
-        m_dataStore->WithTransaction(
-          [&] {
-            modification = m_dataStore->LoadEntitlementModification(
-              request.GetId());
-          });
+        m_dataStore->WithTransaction([&] {
+          modification = m_dataStore->LoadEntitlementModification(
+            request.GetId());
+        });
         GrantEntitlements(update.m_account, session.GetAccount(),
           modification.GetEntitlements());
       } else if(request.GetType() == AccountModificationRequest::Type::RISK) {
         auto modification = RiskModification();
-        m_dataStore->WithTransaction(
-          [&] {
-            modification = m_dataStore->LoadRiskModification(request.GetId());
-          });
+        m_dataStore->WithTransaction([&] {
+          modification = m_dataStore->LoadRiskModification(request.GetId());
+        });
         UpdateRiskParameters(request.GetAccount(),
           modification.GetParameters());
       }
@@ -1248,10 +1196,9 @@ namespace Nexus::AdministrationService {
       AccountModificationRequest::Id id, Message comment) {
     auto& session = client.GetSession();
     auto request = AccountModificationRequest();
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      request = m_dataStore->LoadAccountModificationRequest(id);
+    });
     auto roles = LoadAccountRoles(session.GetAccount(), request.GetAccount());
     if(roles.GetBitset().none()) {
       throw Beam::Services::ServiceRequestException(
@@ -1265,23 +1212,22 @@ namespace Nexus::AdministrationService {
         comment.GetBodies()};
     }
     auto update = AccountModificationRequest::Update();
-    m_dataStore->WithTransaction(
-      [&] {
-        update = m_dataStore->LoadAccountModificationRequestStatus(
-          request.GetId());
-        if(IsTerminal(update.m_status)) {
-          throw Beam::Services::ServiceRequestException(
-            "Request can not be updated.");
-        }
-        if(comment.GetId() != -1) {
-          m_dataStore->Store(request.GetId(), comment);
-        }
-        update.m_status = AccountModificationRequest::Status::REJECTED;
-        update.m_account = session.GetAccount();
-        ++update.m_sequenceNumber;
-        update.m_timestamp = timestamp;
-        m_dataStore->Store(request.GetId(), update);
-      });
+    m_dataStore->WithTransaction([&] {
+      update = m_dataStore->LoadAccountModificationRequestStatus(
+        request.GetId());
+      if(IsTerminal(update.m_status)) {
+        throw Beam::Services::ServiceRequestException(
+          "Request can not be updated.");
+      }
+      if(comment.GetId() != -1) {
+        m_dataStore->Store(request.GetId(), comment);
+      }
+      update.m_status = AccountModificationRequest::Status::REJECTED;
+      update.m_account = session.GetAccount();
+      ++update.m_sequenceNumber;
+      update.m_timestamp = timestamp;
+      m_dataStore->Store(request.GetId(), update);
+    });
     return update;
   }
 
@@ -1290,10 +1236,9 @@ namespace Nexus::AdministrationService {
       ServiceProtocolClient& client, Message::Id id) {
     auto& session = client.GetSession();
     auto message = Message();
-    m_dataStore->WithTransaction(
-      [&] {
-        message = m_dataStore->LoadMessage(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      message = m_dataStore->LoadMessage(id);
+    });
     return message;
   }
 
@@ -1302,19 +1247,17 @@ namespace Nexus::AdministrationService {
       ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     auto request = AccountModificationRequest();
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      request = m_dataStore->LoadAccountModificationRequest(id);
+    });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
     auto messageIds = std::vector<Message::Id>();
-    m_dataStore->WithTransaction(
-      [&] {
-        messageIds = m_dataStore->LoadMessageIds(id);
-      });
+    m_dataStore->WithTransaction([&] {
+      messageIds = m_dataStore->LoadMessageIds(id);
+    });
     return messageIds;
   }
 
@@ -1335,10 +1278,9 @@ namespace Nexus::AdministrationService {
     auto timestamp = boost::posix_time::second_clock::universal_time();
     message = Message{++m_nextMessageId, account, timestamp,
       message.GetBodies()};
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(id, message);
-      });
+    m_dataStore->WithTransaction([&] {
+      m_dataStore->Store(id, message);
+    });
     return message;
   }
 }

@@ -26,15 +26,12 @@ namespace Nexus::WebPortal {
 
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
-      void Open();
-
       void Close();
 
     private:
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       Beam::WebServices::HttpResponse OnLoadSecurityInfoFromPrefix(
         const Beam::WebServices::HttpRequest& request);
   };

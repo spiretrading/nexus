@@ -31,22 +31,8 @@ std::vector<HttpRequestSlot> MarketDataWebServlet::GetSlots() {
   return slots;
 }
 
-void MarketDataWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
-}
-
 void MarketDataWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void MarketDataWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse MarketDataWebServlet::OnLoadSecurityInfoFromPrefix(

@@ -1,5 +1,5 @@
-#ifndef NEXUS_SOUPBINTCPCLIENT_HPP
-#define NEXUS_SOUPBINTCPCLIENT_HPP
+#ifndef NEXUS_SOUP_BIN_TCP_CLIENT_HPP
+#define NEXUS_SOUP_BIN_TCP_CLIENT_HPP
 #include <cstdint>
 #include <string>
 #include <Beam/IO/Channel.hpp>
@@ -18,59 +18,58 @@
 #include "Nexus/SoupBinTcp/SoupBinTcp.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpPacket.hpp"
 
-namespace Nexus {
-namespace SoupBinTcp {
+namespace Nexus::SoupBinTcp {
 
-  /*! \struct SoupBinTcpClient
-      \brief Implements a client using the SoupBinTCP protocol.
-      \tparam ChannelType The Channel connected to the SoupBinTCP server.
-      \tparam TimerType The type of Timer used for heartbeats.
+  /**
+   * Implements a client using the SoupBinTCP protocol.
+   * @param <C> The Channel connected to the SoupBinTCP server.
+   * @param <T> The type of Timer used for heartbeats.
    */
-  template<typename ChannelType, typename TimerType>
+  template<typename C, typename T>
   class SoupBinTcpClient : private boost::noncopyable {
     public:
 
-      //! The Channel connected to the SoupBinTCP server.
-      using Channel = Beam::GetTryDereferenceType<ChannelType>;
+      /** The Channel connected to the SoupBinTCP server. */
+      using Channel = Beam::GetTryDereferenceType<C>;
 
-      //! The type of Timer used for heartbeats.
-      using Timer = Beam::GetTryDereferenceType<TimerType>;
+      /** The type of Timer used for heartbeats. */
+      using Timer = Beam::GetTryDereferenceType<T>;
 
-      //! Constructs a SoupBinTcpClient.
-      /*!
-        \param channel The Channel connected to the SoupBinTCP server.
-        \param timer The Timer used for heartbeats.
-      */
-      template<typename ChannelForward, typename TimerForward>
-      SoupBinTcpClient(ChannelForward&& channel, TimerForward&& timer);
+      /**
+       * Constructs a SoupBinTcpClient.
+       * @param username The username.
+       * @param password The password.
+       * @param channel The Channel connected to the SoupBinTCP server.
+       * @param timer The Timer used for heartbeats.
+       */
+      template<typename CF, typename TF>
+      SoupBinTcpClient(const std::string& username, const std::string& password,
+        CF&& channel, TF&& timer);
 
-      //! Reads the next SoupBinTcpPacket.
+      /**
+       * Constructs a SoupBinTcpClient.
+       * @param username The username.
+       * @param password The password.
+       * @param session The existing session to log into.
+       * @param sequenceNumber The next sequence number to receive from the
+       *        server.
+       * @param channel The Channel connected to the SoupBinTCP server.
+       * @param timer The Timer used for heartbeats.
+       */
+      template<typename CF, typename TF>
+      SoupBinTcpClient(const std::string& username, const std::string& password,
+        const std::string& session, std::uint64_t sequenceNumber, CF&& channel,
+        TF&& timer);
+
+      /** Reads the next SoupBinTcpPacket. */
       SoupBinTcpPacket Read();
 
-      //! Logs onto the server.
-      /*!
-        \param username The username.
-        \param password The password.
-      */
-      void Login(const std::string& username, const std::string& password);
-
-      //! Logs onto the server.
-      /*!
-        \param username The username.
-        \param password The password.
-        \param session The existing session to log into.
-        \param sequenceNumber The next sequence number to receive from the
-               server.
-      */
-      void Login(const std::string& username, const std::string& password,
-        const std::string& session, std::uint64_t sequenceNumber);
-
-      //! Closes the connection to the server.
+      /** Closes the connection to the server. */
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<ChannelType> m_channel;
-      Beam::GetOptionalLocalPtr<TimerType> m_timer;
+      Beam::GetOptionalLocalPtr<C> m_channel;
+      Beam::GetOptionalLocalPtr<T> m_timer;
       typename Channel::Reader::Buffer m_buffer;
       std::string m_session;
       std::uint64_t m_sequenceNumber;
@@ -78,50 +77,31 @@ namespace SoupBinTcp {
       std::shared_ptr<Beam::Queue<Beam::Threading::Timer::Result>> m_timerQueue;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       void HeartbeatLoop();
   };
 
-  template<typename ChannelType, typename TimerType>
-  template<typename ChannelForward, typename TimerForward>
-  SoupBinTcpClient<ChannelType, TimerType>::SoupBinTcpClient(
-      ChannelForward&& channel, TimerForward&& timer)
-      : m_channel{std::forward<ChannelForward>(channel)},
-        m_timer{std::forward<TimerForward>(timer)},
-        m_timerQueue{std::make_shared<
-          Beam::Queue<Beam::Threading::Timer::Result>>()} {
+  template<typename C, typename T>
+  template<typename CF, typename TF>
+  SoupBinTcpClient<C, T>::SoupBinTcpClient(const std::string& username,
+    const std::string& password, CF&& channel, TF&& timer)
+    : SoupBinTcpClient(username, password, {}, 1, std::forward<CF>(channel),
+        std::forward<TF>(timer)) {}
+
+  template<typename C, typename T>
+  template<typename CF, typename TF>
+  SoupBinTcpClient<C, T>::SoupBinTcpClient(const std::string& username,
+      const std::string& password, const std::string& session,
+      std::uint64_t sequenceNumber, CF&& channel, TF&& timer)
+      : m_channel(std::forward<CF>(channel)),
+        m_timer(std::forward<TF>(timer)),
+        m_timerQueue(
+          std::make_shared<Beam::Queue<Beam::Threading::Timer::Result>>()) {
     m_timer->GetPublisher().Monitor(m_timerQueue);
-  }
-
-  template<typename ChannelType, typename TimerType>
-  SoupBinTcpPacket SoupBinTcpClient<ChannelType, TimerType>::Read() {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
-    }
-    m_buffer.Reset();
-    return ReadPacket(m_channel->GetReader(), Beam::Store(m_buffer));
-  }
-
-  template<typename ChannelType, typename TimerType>
-  void SoupBinTcpClient<ChannelType, TimerType>::Login(
-      const std::string& username, const std::string& password) {
-    Login(username, password, {}, 1);
-  }
-
-  template<typename ChannelType, typename TimerType>
-  void SoupBinTcpClient<ChannelType, TimerType>::Login(
-      const std::string& username, const std::string& password,
-      const std::string& session, std::uint64_t sequenceNumber) {
-    if(m_openState.SetOpening()) {
-      return;
-    }
     try {
-      m_channel->GetConnection().Open();
-      m_buffer.Reset();
       BuildLoginRequestPacket(username, password, session, sequenceNumber,
         Beam::Store(m_buffer));
       m_channel->GetWriter().Write(m_buffer);
-      SoupBinTcpPacket loginResponse;
+      auto loginResponse = SoupBinTcpPacket();
       while(true)  {
         m_buffer.Reset();
         loginResponse = ReadPacket(m_channel->GetReader(),
@@ -133,16 +113,16 @@ namespace SoupBinTcp {
       if(loginResponse.m_type == 'J') {
         auto loginRejectedPacket = ParseLoginRejectedPacket(loginResponse);
         if(loginRejectedPacket.m_reason == "A") {
-          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{"Not authorized."});
+          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException("Not authorized."));
         } else if(loginRejectedPacket.m_reason == "S") {
           BOOST_THROW_EXCEPTION(
-            Beam::IO::ConnectException{"Session unavailable."});
+            Beam::IO::ConnectException("Session unavailable."));
         } else {
-          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{"Unable to login."});
+          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException("Unable to login."));
         }
       } else if(loginResponse.m_type != 'A') {
         BOOST_THROW_EXCEPTION(
-          Beam::IO::ConnectException{"Unrecognized login response."});
+          Beam::IO::ConnectException("Unrecognized login response."));
       }
       auto loginAcceptedPacket = ParseLoginAcceptedPacket(loginResponse);
       m_session = loginAcceptedPacket.m_session;
@@ -151,37 +131,37 @@ namespace SoupBinTcp {
       m_heartbeatLoop = Beam::Routines::Spawn(
         std::bind(&SoupBinTcpClient::HeartbeatLoop, this));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
-  template<typename ChannelType, typename TimerType>
-  void SoupBinTcpClient<ChannelType, TimerType>::Close() {
+  template<typename C, typename T>
+  SoupBinTcpPacket SoupBinTcpClient<C, T>::Read() {
+    m_openState.EnsureOpen();
+    m_buffer.Reset();
+    return ReadPacket(m_channel->GetReader(), Beam::Store(m_buffer));
+  }
+
+  template<typename C, typename T>
+  void SoupBinTcpClient<C, T>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename ChannelType, typename TimerType>
-  void SoupBinTcpClient<ChannelType, TimerType>::Shutdown() {
     m_channel->GetConnection().Close();
     m_timer->Cancel();
     m_timerQueue->Break();
     m_heartbeatLoop.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
-  template<typename ChannelType, typename TimerType>
-  void SoupBinTcpClient<ChannelType, TimerType>::HeartbeatLoop() {
-    typename Channel::Writer::Buffer heartbeatBuffer;
+  template<typename C, typename T>
+  void SoupBinTcpClient<C, T>::HeartbeatLoop() {
+    auto heartbeatBuffer = typename Channel::Writer::Buffer();
     BuildClientHeartbeatPacket(Beam::Store(heartbeatBuffer));
     try {
-      while(m_openState.IsRunning()) {
-        auto result = m_timerQueue->Top();
-        m_timerQueue->Pop();
+      while(m_openState.IsOpen()) {
+        auto result = m_timerQueue->Pop();
         if(result == Beam::Threading::Timer::Result::EXPIRED) {
           m_channel->GetWriter().Write(heartbeatBuffer);
         } else {
@@ -193,7 +173,6 @@ namespace SoupBinTcp {
       return;
     }
   }
-}
 }
 
 #endif

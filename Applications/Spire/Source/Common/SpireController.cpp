@@ -3,8 +3,6 @@
   #undef slots
 #endif
 #include <filesystem>
-#include <Beam/Network/SocketThreadPool.hpp>
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
@@ -20,9 +18,7 @@ using namespace Nexus;
 using namespace Spire;
 
 SpireController::SpireController()
-    : m_state(State::NONE),
-      m_socket_thread_pool(std::make_unique<SocketThreadPool>()),
-      m_timer_thread_pool(std::make_unique<TimerThreadPool>()) {}
+  : m_state(State::NONE) {}
 
 SpireController::~SpireController() = default;
 
@@ -33,8 +29,8 @@ void SpireController::open() {
   auto service_clients_factory =
     [=] (const auto& username, const auto& password, const auto& address) {
       return MakeVirtualServiceClients(
-        std::make_unique<ApplicationServiceClients>(address, username,
-        password, Ref(*m_socket_thread_pool), Ref(*m_timer_thread_pool)));
+        std::make_unique<ApplicationServiceClients>(username, password,
+        address));
     };
   auto server_entries = load_server_entries();
   if(server_entries.empty()) {

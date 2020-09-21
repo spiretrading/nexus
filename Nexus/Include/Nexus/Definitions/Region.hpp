@@ -135,6 +135,30 @@ namespace Nexus {
       Region(GlobalTag, std::string name);
   };
 
+  inline bool operator <(const Security& security, const Region& region) {
+    return Region(security) < region;
+  }
+
+  inline bool operator <=(const Security& security, const Region& region) {
+    return Region(security) <= region;
+  }
+
+  inline bool operator ==(const Security& security, const Region& region) {
+    return Region(security) == region;
+  }
+
+  inline bool operator !=(const Security& security, const Region& region) {
+    return Region(security) != region;
+  }
+
+  inline bool operator >=(const Security& security, const Region& region) {
+    return Region(security) >= region;
+  }
+
+  inline bool operator >(const Security& security, const Region& region) {
+    return Region(security) > region;
+  }
+
   inline Region::MarketEntry::MarketEntry(MarketCode market,
     CountryCode country)
     : m_market(market),

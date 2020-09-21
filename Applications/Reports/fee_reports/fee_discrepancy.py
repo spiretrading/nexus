@@ -95,8 +95,7 @@ def main():
   password = config['password']
   start_date = beam.time_service.to_utc_time(args.start)
   end_date = beam.time_service.to_utc_time(args.end)
-  service_clients = nexus.ApplicationServiceClients(address, username, password)
-  service_clients.open()
+  service_clients = nexus.ApplicationServiceClients(username, password, address)
   market_database = \
     service_clients.get_definitions_client().load_market_database()
   fee_table = load_fee_table(config, market_database)

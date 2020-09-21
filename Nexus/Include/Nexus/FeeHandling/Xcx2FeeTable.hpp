@@ -10,74 +10,74 @@
 
 namespace Nexus {
 
-  /* Stores the table of fees used by CX2 on TSX. */
+  /** Stores the table of fees used by CX2 on TSX. */
   struct Xcx2FeeTable {
 
-    /* Enumerates the types of price classes. */
-    enum class PriceClass : int {
+    /** Enumerates the types of price classes. */
+    enum class PriceClass {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Price >= $1.00.
+      /** Price >= $1.00. */
       DEFAULT,
 
-      //! Price < $1.00.
-      SUB_DOLLAR,
+      /** Price < $1.00. */
+      SUBDOLLAR,
 
-      //! Price < $0.10.
-      SUB_DIME,
+      /** Price < $0.10. */
+      SUBDIME,
     };
 
-    //! The number of price classes enumerated.
-    static constexpr std::size_t PRICE_CLASS_COUNT = 3;
+    /** The number of price classes enumerated. */
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(3);
 
-    /* Enumerates the types of trades. */
-    enum class Type : int {
+    /** Enumerates the types of trades. */
+    enum class Type {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Active.
+      /** Active. */
       ACTIVE = 0,
 
-      //! Passive.
+      /** Passive. */
       PASSIVE,
 
-      //! Large Size Trade Active.
+      /** Large Size Trade Active. */
       LARGE_ACTIVE,
 
-      //! Large Size Trade Passive.
+      /** Large Size Trade Passive. */
       LARGE_PASSIVE,
 
-      //! Hidden Active.
+      /** Hidden Active. */
       HIDDEN_ACTIVE,
 
-      //! Hidden Passive.
+      /** Hidden Passive. */
       HIDDEN_PASSIVE,
 
-      //! Odd-lot.
+      /** Odd-lot. */
       ODD_LOT
     };
 
-    //! The number of trade types enumerated.
-    static constexpr std::size_t TYPE_COUNT = 7;
+    /** The number of trade types enumerated. */
+    static constexpr auto TYPE_COUNT = std::size_t(7);
 
-    //! The fee table for non-TSX listed securities.
+    /** The fee table for non-TSX listed securities. */
     std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_defaultTable;
 
-    //! The fee table for TSX listed securities.
+    /** The fee table for TSX listed securities. */
     std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_tsxTable;
 
-    //! The large trade size threshold.
+    /** The large trade size threshold. */
     Quantity m_largeTradeSize;
   };
 
-  //! Parses an Xcx2FeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the Xcx2FeeTable from.
-    \return The Xcx2FeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses an Xcx2FeeTable from a YAML configuration.
+   * @param config The configuration to parse the Xcx2FeeTable from.
+   * @return The Xcx2FeeTable represented by the <i>config</i>.
+   */
   inline Xcx2FeeTable ParseXcx2FeeTable(const YAML::Node& config) {
     auto feeTable = Xcx2FeeTable();
     ParseFeeTable(config, "default_table",
@@ -88,15 +88,15 @@ namespace Nexus {
     return feeTable;
   }
 
-  //! Looks up a fee.
-  /*!
-    \param feeTable The Xcx2FeeTable used to lookup the fee.
-    \param orderFields The OrderFields the trade took place on.
-    \param type The trade's Type.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>type</i> and
-            <i>priceClass</i>.
-  */
+  /**
+   * Looks up a fee.
+   * @param feeTable The Xcx2FeeTable used to lookup the fee.
+   * @param orderFields The OrderFields the trade took place on.
+   * @param type The trade's Type.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>type</i> and
+   *         <i>priceClass</i>.
+   */
   inline Money LookupFee(const Xcx2FeeTable& feeTable,
       const OrderExecutionService::OrderFields& fields, Xcx2FeeTable::Type type,
       Xcx2FeeTable::PriceClass priceClass) {
@@ -109,13 +109,13 @@ namespace Nexus {
     }
   }
 
-  //! Calculates the fee on a trade executed on XCX2.
-  /*!
-    \param feeTable The Xcx2FeeTable used to calculate the fee.
-    \param orderFields The OrderFields the trade took place on.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on XCX2.
+   * @param feeTable The Xcx2FeeTable used to calculate the fee.
+   * @param orderFields The OrderFields the trade took place on.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const Xcx2FeeTable& feeTable,
       const OrderExecutionService::OrderFields& fields,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -124,9 +124,9 @@ namespace Nexus {
     }
     auto priceClass = [&] {
       if(executionReport.m_lastPrice < 10 * Money::CENT) {
-        return Xcx2FeeTable::PriceClass::SUB_DIME;
+        return Xcx2FeeTable::PriceClass::SUBDIME;
       } else if(executionReport.m_lastPrice < Money::ONE) {
-        return Xcx2FeeTable::PriceClass::SUB_DOLLAR;
+        return Xcx2FeeTable::PriceClass::SUBDOLLAR;
       } else {
         return Xcx2FeeTable::PriceClass::DEFAULT;
       }

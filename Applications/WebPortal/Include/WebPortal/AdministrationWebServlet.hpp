@@ -25,15 +25,12 @@ namespace Nexus::WebPortal {
 
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
-      void Open();
-
       void Close();
 
     private:
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       Beam::WebServices::HttpResponse OnLoadAccountsByRoles(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAdministratorsRootEntry(
@@ -45,6 +42,8 @@ namespace Nexus::WebPortal {
       Beam::WebServices::HttpResponse OnLoadTradingGroup(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadParentTradingGroup(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAccountRoles(
         const Beam::WebServices::HttpRequest& request);

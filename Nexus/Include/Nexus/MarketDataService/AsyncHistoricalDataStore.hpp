@@ -72,8 +72,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -88,8 +86,6 @@ namespace Nexus::MarketDataService {
       DataStore<MarketQuote> m_marketQuoteDataStore;
       DataStore<TimeAndSale> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
@@ -215,41 +211,17 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  void AsyncHistoricalDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_orderImbalanceDataStore.Open();
-      m_bboQuoteDataStore.Open();
-      m_bookQuoteDataStore.Open();
-      m_marketQuoteDataStore.Open();
-      m_timeAndSaleDataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename D>
   void AsyncHistoricalDataStore<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Shutdown() {
     m_timeAndSaleDataStore.Close();
     m_marketQuoteDataStore.Close();
     m_bookQuoteDataStore.Close();
     m_bboQuoteDataStore.Close();
     m_orderImbalanceDataStore.Close();
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

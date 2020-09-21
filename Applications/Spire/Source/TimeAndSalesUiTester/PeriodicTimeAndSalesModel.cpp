@@ -10,10 +10,8 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-PeriodicTimeAndSalesModel::PeriodicTimeAndSalesModel(Security s,
-      Beam::Threading::TimerThreadPool& timer_thread_pool)
-    : m_security(std::move(s)),
-      m_timer_thread_pool(&timer_thread_pool),
+PeriodicTimeAndSalesModel::PeriodicTimeAndSalesModel(Security security)
+    : m_security(std::move(security)),
       m_price(Money::ONE),
       m_price_range(TimeAndSalesProperties::PriceRange::AT_ASK),
       m_period(pos_infin),
@@ -115,9 +113,9 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     e = Decrement(e);
   }
   snapshot.insert(snapshot.begin(), i, i + count);
-  return QtPromise([duration = m_load_duration, pool = m_timer_thread_pool,
-      snapshot=std::move(snapshot), is_loaded = m_is_loaded] {
-    auto timer = LiveTimer(duration, Ref(*pool));
+  return QtPromise([duration = m_load_duration, snapshot = std::move(snapshot),
+      is_loaded = m_is_loaded] {
+    auto timer = LiveTimer(duration);
     timer.Start();
     timer.Wait();
     *is_loaded = true;

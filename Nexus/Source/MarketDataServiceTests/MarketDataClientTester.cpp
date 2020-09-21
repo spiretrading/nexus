@@ -53,7 +53,6 @@ namespace {
       QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),
         std::bind(&Fixture::OnQuerySecurityBboQuotes, this,
         std::placeholders::_1, std::placeholders::_2));
-      m_server.Open();
     }
 
     template<typename T>
@@ -64,10 +63,9 @@ namespace {
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", Ref(*m_serverConnection));
+            "test", *m_serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       auto clientEntry = std::make_unique<ClientEntry>(builder);
-      clientEntry->m_client.Open();
       return clientEntry;
     }
 
@@ -89,8 +87,7 @@ TEST_SUITE("MarketDataClient") {
     query.SetRange(Beam::Queries::Range::RealTime());
     auto bboQuotes = std::make_shared<Queue<BboQuote>>();
     client->m_client.QueryBboQuotes(query, bboQuotes);
-    auto request = m_requestQueue->Top();
-    m_requestQueue->Pop();
+    auto request = m_requestQueue->Pop();
     REQUIRE(request.size() == 2);
     auto requestToken = optional<Request<QueryBboQuotesService>>();
     REQUIRE_NOTHROW(requestToken =
@@ -109,7 +106,7 @@ TEST_SUITE("MarketDataClient") {
     SendRecordMessage<BboQuoteMessage>(requestToken->GetClient(),
       SequencedValue(IndexedValue(bbo, SECURITY_A),
       Beam::Queries::Sequence(1)));
-    auto updatedBbo = bboQuotes->Top();
+    auto updatedBbo = bboQuotes->Pop();
     REQUIRE(updatedBbo == bbo);
   }
 }
