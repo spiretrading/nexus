@@ -1,7 +1,8 @@
 #ifndef SPIRE_DECIMAL_SPIN_BOX_HPP
 #define SPIRE_DECIMAL_SPIN_BOX_HPP
 #include <QAbstractSpinBox>
-#include "Spire/Ui/RealSpinBox.hpp"
+#include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -20,28 +21,8 @@ namespace Spire {
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit DecimalSpinBox(double value, QWidget* parent = nullptr);
-
-      //! Sets the minimum accepted value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(double minimum);
-
-      //! Sets the maximum accepted value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(double maximum);
-
-      //! Returns the current step value.
-      double get_step() const;
-
-      //! Sets the value to increment/decrement by when stepping up or down.
-      /*!
-        \param step The increment/decrement value.
-      */
-      void set_step(double step);
+      explicit DecimalSpinBox(std::shared_ptr<DecimalSpinBoxModel> model,
+        QWidget* parent = nullptr);
 
       //! Returns the last submitted value.
       double get_value() const;

@@ -1,14 +1,17 @@
 #include "Spire/Ui/DecimalSpinBox.hpp"
 #include <QHBoxLayout>
+#include "Spire/Spire/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
-DecimalSpinBox::DecimalSpinBox(double value, QWidget* parent)
+DecimalSpinBox::DecimalSpinBox(
+    std::shared_ptr<DecimalSpinBoxModel> model, QWidget* parent)
     : QAbstractSpinBox(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_spin_box = new RealSpinBox(static_cast<long double>(value), this);
+  m_spin_box = new RealSpinBox(
+    std::make_unique<RealSpinBoxModelImpl<double>>(std::move(model)), this);
   setFocusProxy(m_spin_box);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_spin_box);
@@ -22,22 +25,6 @@ DecimalSpinBox::DecimalSpinBox(double value, QWidget* parent)
 connection DecimalSpinBox::connect_change_signal(
     const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
-}
-
-void DecimalSpinBox::set_minimum(double minimum) {
-  m_spin_box->set_minimum(static_cast<long double>(minimum));
-}
-
-void DecimalSpinBox::set_maximum(double maximum) {
-  m_spin_box->set_maximum(static_cast<long double>(maximum));
-}
-
-double DecimalSpinBox::get_step() const {
-  return m_spin_box->get_step().extract_double();
-}
-
-void DecimalSpinBox::set_step(double step) {
-  m_spin_box->set_step(static_cast<long double>(step));
 }
 
 double DecimalSpinBox::get_value() const {

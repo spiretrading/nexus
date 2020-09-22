@@ -90,8 +90,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
   auto number_of_bands_spin_box = new IntegerSpinBox(0, this);
-  number_of_bands_spin_box->set_minimum(1);
-  number_of_bands_spin_box->set_maximum(INT_MAX);
+  //number_of_bands_spin_box->set_minimum(1);
+  //number_of_bands_spin_box->set_maximum(INT_MAX);
   number_of_bands_spin_box->set_value(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());
   number_of_bands_spin_box->connect_change_signal([=] (auto value) {

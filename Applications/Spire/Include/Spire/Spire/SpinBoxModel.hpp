@@ -12,12 +12,10 @@ namespace Spire {
   class SpinBoxModel {
     public:
 
-      SpinBoxModel(T initial, T minimum, T maximmum,
-        QHasH<QKeySequence, T> sequences)
+      SpinBoxModel(T initial, T minimum, T maximum)
         : m_initial(initial),
           m_minimum(minimum),
-          m_maximum(maximum),
-          m_sequences(std::move(sequences)) {}
+          m_maximum(maximum) {}
 
       T get_initial() const {
         return m_initial;
@@ -35,7 +33,7 @@ namespace Spire {
         m_sequences[sequence] = increment;
       }
 
-      T get_mininum() const {
+      T get_minimum() const {
         return m_minimum;
       }
 
@@ -65,6 +63,18 @@ namespace Spire {
   using MoneySpinBoxModel = SpinBoxModel<Nexus::Money>;
 
   using QuantitySpinBoxModel = SpinBoxModel<Nexus::Quantity>;
+
+  std::shared_ptr<DecimalSpinBoxModel> make_decimal_spin_box_model(
+    double initial, double minimum, double maximum);
+
+  std::shared_ptr<IntegerSpinBoxModel> make_integer_spin_box_model(
+    std::int64_t initial, std::int64_t minimum, std::int64_t maximum);
+
+  std::shared_ptr<MoneySpinBoxModel> make_money_spin_box_model(
+    Nexus::Money initial, Nexus::Money minimum, Nexus::Money maximum);
+
+  std::shared_ptr<QuantitySpinBoxModel> make_quantity_spin_box_model(
+    Nexus::Quantity initial, Nexus::Quantity minimum, Nexus::Quantity maximum);
 }
 
 #endif

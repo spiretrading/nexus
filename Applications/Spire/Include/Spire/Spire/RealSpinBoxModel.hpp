@@ -1,6 +1,8 @@
 #ifndef SPIRE_REAL_SPIN_BOX_MODEL_HPP
 #define SPIRE_REAL_SPIN_BOX_MODEL_HPP
 #include <QKeySequence>
+#include <QLocale>
+#include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
@@ -24,47 +26,51 @@ namespace Spire {
     public:
 
       RealSpinBoxModelImpl(std::shared_ptr<SpinBoxModel<T>> model)
-        : m_model(std::move(model)) {}
+          : m_model(std::move(model)) {
+        m_locale.setNumberOptions(m_locale.numberOptions().setFlag(
+          QLocale::OmitGroupSeparator, true));
+      }
 
       Real get_increment(const QKeySequence& sequence) const override {
         return to_real(m_model->get_increment(sequence));
       }
 
-      RealSpinBox::Real get_initial() const override {
+      Real get_initial() const override {
         return to_real(m_model->get_initial());
       }
 
-      RealSpinBox::Real get_minimum() const override {
+      Real get_minimum() const override {
         return to_real(m_model->get_minimum());
       }
 
-      RealSpinBox::Real get_maximum() const override {
+      Real get_maximum() const override {
         return to_real(m_model->get_maximum());
       }
 
     private:
       std::shared_ptr<SpinBoxModel<T>> m_model;
       CustomVariantItemDelegate m_item_delegate;
+      QLocale m_locale;
 
-      Real variant_to_real(auto value) {
-        return m_item_delegate.displayText(
-          QVariant::fromValue(value), m_locale).toStdString().c_str();
+      Real variant_to_real(const QVariant& value) const {
+        return m_item_delegate.displayText(value,
+          m_locale).toStdString().c_str();
       }
 
-      Real to_real(int value) {
-        return value.extract_signal_long_long();
+      Real to_real(std::int64_t value) const {
+        return value;
       }
 
-      Real to_real(double value) {
-        return value.extract_double();
+      Real to_real(double value) const {
+        return static_cast<long double>(value);
       }
 
-      Real to_real(Nexus::Quantity value) {
-        return variant_to_real(value);
+      Real to_real(Nexus::Quantity value) const {
+        return variant_to_real(QVariant::fromValue<Nexus::Quantity>(value));
       }
 
-      Real to_real(Nexus::Money value) {
-        return variant_to_real(value);
+      Real to_real(Nexus::Money value) const {
+        return variant_to_real(QVariant::fromValue<Nexus::Money>(value));
       }
   };
 }

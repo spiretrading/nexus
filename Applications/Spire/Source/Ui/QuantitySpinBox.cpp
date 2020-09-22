@@ -1,5 +1,6 @@
 #include "Spire/Ui/QuantitySpinBox.hpp"
 #include <QHBoxLayout>
+#include "Spire/Spire/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -16,11 +17,13 @@ namespace {
   }
 }
 
-QuantitySpinBox::QuantitySpinBox(Quantity value, QWidget* parent)
+QuantitySpinBox::QuantitySpinBox(std::shared_ptr<SpinBoxModel<Quantity>> model,
+    QWidget* parent)
     : QAbstractSpinBox(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_spin_box = new RealSpinBox(to_real(value), this);
+  m_spin_box = new RealSpinBox(
+    std::make_unique<RealSpinBoxModelImpl<Quantity>>(std::move(model)), this);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
   layout->addWidget(m_spin_box);
@@ -38,20 +41,9 @@ connection QuantitySpinBox::connect_change_signal(
   return m_change_signal.connect(slot);
 }
 
-void QuantitySpinBox::set_minimum(Quantity minimum) {
-  m_spin_box->set_minimum(to_real(minimum));
-}
-
-void QuantitySpinBox::set_maximum(Quantity maximum) {
-  m_spin_box->set_maximum(to_real(maximum));
-}
-
-Quantity QuantitySpinBox::get_step() const {
-  return to_quantity(m_spin_box->get_step());
-}
-
-void QuantitySpinBox::set_step(Quantity step) {
-  m_spin_box->set_step(to_real(step));
+RealSpinBox::Real QuantitySpinBox::to_real(Nexus::Quantity value) {
+  return m_item_delegate.displayText(
+    QVariant::fromValue(value), m_locale).toStdString().c_str();
 }
 
 Quantity QuantitySpinBox::get_value() const {
@@ -60,9 +52,4 @@ Quantity QuantitySpinBox::get_value() const {
 
 void QuantitySpinBox::set_value(Quantity value) {
   m_spin_box->set_value(to_real(value));
-}
-
-RealSpinBox::Real QuantitySpinBox::to_real(Nexus::Quantity value) {
-  return m_item_delegate.displayText(
-    QVariant::fromValue(value), m_locale).toStdString().c_str();
 }

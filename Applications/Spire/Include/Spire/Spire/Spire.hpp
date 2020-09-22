@@ -13,6 +13,7 @@ namespace Spire {
   template<typename T> class QtFuture;
   template<typename T> class QtPromise;
   class RangeInputModel;
+  class RealSpinBoxModel;
   class Scalar;
   class SpireController;
   template<typename T> struct SubscriptionResult;

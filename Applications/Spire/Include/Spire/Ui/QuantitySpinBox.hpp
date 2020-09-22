@@ -1,6 +1,7 @@
 #ifndef SPIRE_QUANTITY_SPIN_BOX_HPP
 #define SPIRE_QUANTITY_SPIN_BOX_HPP
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
@@ -18,32 +19,12 @@ namespace Spire {
 
       //! Constructs a QuantitySpinBox.
       /*!
-        \param value The initial value to display.
+        \param model TODO.
         \param parent The parent widget.
       */
-      explicit QuantitySpinBox(Nexus::Quantity value,
+      explicit QuantitySpinBox(
+        std::shared_ptr<SpinBoxModel<Nexus::Quantity>> model,
         QWidget* parent = nullptr);
-
-      //! Sets the minimum accepted value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(Nexus::Quantity minimum);
-
-      //! Sets the maximum accepted value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(Nexus::Quantity maximum);
-
-      //! Returns the current step value.
-      Nexus::Quantity get_step() const;
-
-      //! Sets the value to increment/decrement by when stepping up or down.
-      /*!
-        \param step The increment/decrement value.
-      */
-      void set_step(Nexus::Quantity step);
 
       //! Returns the last submitted value.
       Nexus::Quantity get_value() const;
@@ -60,6 +41,7 @@ namespace Spire {
 
     private:
       mutable ChangeSignal m_change_signal;
+      std::shared_ptr<SpinBoxModel<Nexus::Quantity>> m_model;
       RealSpinBox* m_spin_box;
       CustomVariantItemDelegate m_item_delegate;
       QLocale m_locale;
