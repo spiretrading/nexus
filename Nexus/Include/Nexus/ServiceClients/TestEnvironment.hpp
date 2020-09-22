@@ -5,8 +5,9 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/RegistryServiceTests/RegistryServiceTestEnvironment.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
+#include <Beam/TimeServiceTests/TestTimeClient.hpp>
+#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
