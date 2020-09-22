@@ -19,6 +19,7 @@ CALL:build Applications\MarketDataRelayServer %*
 CALL:build Applications\MarketDataServer %*
 CALL:build Applications\ReplayMarketDataFeedClient %*
 CALL:build Applications\RiskServer %*
+CALL:build Applications\Scratch %*
 CALL:build Applications\SimulationMarketDataFeedClient %*
 CALL:build Applications\SimulationOrderExecutionServer %*
 CALL:build Applications\Spire %*
