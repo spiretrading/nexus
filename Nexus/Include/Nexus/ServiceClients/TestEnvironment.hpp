@@ -237,13 +237,15 @@ namespace Nexus {
         m_administrationEnvironment;
       std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         m_administrationClient;
-      MarketDataService::Tests::MarketDataServiceTestEnvironment
+      boost::optional<
+        MarketDataService::Tests::MarketDataServiceTestEnvironment>
         m_marketDataEnvironment;
       std::shared_ptr<MarketDataService::VirtualMarketDataClient>
         m_marketDataClient;
-      ChartingService::Tests::ChartingServiceTestEnvironment
+      boost::optional<ChartingService::Tests::ChartingServiceTestEnvironment>
         m_chartingEnvironment;
-      Compliance::Tests::ComplianceTestEnvironment m_complianceEnvironment;
+      boost::optional<Compliance::Tests::ComplianceTestEnvironment>
+        m_complianceEnvironment;
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
@@ -287,15 +289,20 @@ namespace Nexus {
         m_definitionsEnvironment(m_serviceLocatorClient),
         m_administrationEnvironment(m_serviceLocatorClient),
         m_administrationClient(m_administrationEnvironment.BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))),
-        m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
-          std::move(historicalDataStore)),
-        m_marketDataClient(m_marketDataEnvironment.BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))),
-        m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
-        m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
-          m_timeClient) {
+          Beam::Ref(*m_serviceLocatorClient))) {
     try {
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
+      m_serviceLocatorClient->Associate(rootAccount,
+        m_administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        m_administrationClient->LoadServicesRootEntry());
+      m_marketDataEnvironment.emplace(m_serviceLocatorClient,
+        m_administrationClient, std::move(historicalDataStore));
+      m_marketDataClient = m_marketDataEnvironment->BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_chartingEnvironment.emplace(m_serviceLocatorClient, m_marketDataClient);
+      m_complianceEnvironment.emplace(m_serviceLocatorClient,
+        m_administrationClient, m_timeClient);
       auto definitionsClient = m_definitionsEnvironment.BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_orderExecutionEnvironment.emplace(
@@ -314,11 +321,6 @@ namespace Nexus {
         m_timeClient, definitionsClient->LoadExchangeRates(),
         definitionsClient->LoadMarketDatabase(),
         definitionsClient->LoadDestinationDatabase());
-      auto rootAccount = m_serviceLocatorClient->GetAccount();
-      m_serviceLocatorClient->Associate(rootAccount,
-        m_administrationClient->LoadAdministratorsRootEntry());
-      m_serviceLocatorClient->Associate(rootAccount,
-        m_administrationClient->LoadServicesRootEntry());
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;
@@ -537,17 +539,17 @@ namespace Nexus {
 
   inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
       TestEnvironment::GetMarketDataEnvironment() {
-    return m_marketDataEnvironment;
+    return *m_marketDataEnvironment;
   }
 
   inline ChartingService::Tests::ChartingServiceTestEnvironment&
       TestEnvironment::GetChartingEnvironment() {
-    return m_chartingEnvironment;
+    return *m_chartingEnvironment;
   }
 
   inline Compliance::Tests::ComplianceTestEnvironment&
       TestEnvironment::GetComplianceEnvironment() {
-    return m_complianceEnvironment;
+    return *m_complianceEnvironment;
   }
 
   inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
@@ -567,10 +569,10 @@ namespace Nexus {
     m_riskEnvironment->Close();
     m_orderExecutionClient->Close();
     m_orderExecutionEnvironment->Close();
-    m_complianceEnvironment.Close();
-    m_chartingEnvironment.Close();
+    m_complianceEnvironment->Close();
+    m_chartingEnvironment->Close();
     m_marketDataClient->Close();
-    m_marketDataEnvironment.Close();
+    m_marketDataEnvironment->Close();
     m_administrationClient->Close();
     m_administrationEnvironment.Close();
     m_definitionsEnvironment.Close();
