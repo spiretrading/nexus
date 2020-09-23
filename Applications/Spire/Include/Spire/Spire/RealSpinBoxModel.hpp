@@ -1,6 +1,5 @@
 #ifndef SPIRE_REAL_SPIN_BOX_MODEL_HPP
 #define SPIRE_REAL_SPIN_BOX_MODEL_HPP
-#include <QKeySequence>
 #include <QLocale>
 #include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
@@ -12,7 +11,7 @@ namespace Spire {
   class RealSpinBoxModel {
     public:
 
-      virtual Real get_increment(const QKeySequence& sequence) const = 0;
+      virtual Real get_increment(Qt::KeyboardModifiers modifiers) const = 0;
 
       virtual Real get_initial() const = 0;
 
@@ -31,8 +30,8 @@ namespace Spire {
           QLocale::OmitGroupSeparator, true));
       }
 
-      Real get_increment(const QKeySequence& sequence) const override {
-        return to_real(m_model->get_increment(sequence));
+      Real get_increment(Qt::KeyboardModifiers modifiers) const override {
+        return to_real(m_model->get_increment(modifiers));
       }
 
       Real get_initial() const override {

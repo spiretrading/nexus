@@ -25,12 +25,12 @@ namespace Spire {
         m_initial = initial;
       }
 
-      T get_increment(const QKeySequence& sequence) const {
-        return m_sequences[sequence];
+      T get_increment(Qt::KeyboardModifiers modifiers) const {
+        return m_modifiers[modifiers];
       }
 
-      void set_increment(const QKeySequence& sequence, T increment) {
-        m_sequences[sequence] = increment;
+      void set_increment(Qt::KeyboardModifiers modifiers, T increment) {
+        m_modifiers[modifiers] = increment;
       }
 
       T get_minimum() const {
@@ -53,7 +53,7 @@ namespace Spire {
       T m_initial;
       T m_minimum;
       T m_maximum;
-      QHash<QKeySequence, T> m_sequences;
+      QHash<Qt::KeyboardModifiers, T> m_modifiers;
   };
 
   using DecimalSpinBoxModel = SpinBoxModel<double>;
