@@ -19,7 +19,7 @@ namespace Spire {
 
       //! Constructs a QuantitySpinBox.
       /*!
-        \param model TODO.
+        \param model The input's model.
         \param parent The parent widget.
       */
       explicit QuantitySpinBox(

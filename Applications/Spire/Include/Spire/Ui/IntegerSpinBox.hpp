@@ -18,7 +18,7 @@ namespace Spire {
 
       //! Constructs an IntegerSpinBox.
       /*!
-        \param value The initial value to display.
+        \param model The input's model.
         \param parent The parent widget.
       */
       explicit IntegerSpinBox(

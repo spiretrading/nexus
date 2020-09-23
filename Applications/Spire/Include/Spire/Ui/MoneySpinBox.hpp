@@ -19,7 +19,7 @@ namespace Spire {
 
       //! Constructs a MoneySpinBox.
       /*!
-        \param value The initial value to display.
+        \param model The input's model.
         \param parent The parent widget.
       */
       explicit MoneySpinBox(std::shared_ptr<MoneySpinBoxModel> model,

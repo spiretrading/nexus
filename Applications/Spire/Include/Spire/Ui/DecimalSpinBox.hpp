@@ -18,7 +18,7 @@ namespace Spire {
 
       //! Constructs a DecimalSpinBox.
       /*!
-        \param value The initial value to display.
+        \param model The input's model.
         \param parent The parent widget.
       */
       explicit DecimalSpinBox(std::shared_ptr<DecimalSpinBoxModel> model,
