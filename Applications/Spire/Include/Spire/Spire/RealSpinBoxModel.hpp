@@ -8,22 +8,35 @@ namespace Spire {
 
   using Real = RealSpinBox::Real;
 
+  //! Represents a RealSpinBox's data model.
   class RealSpinBoxModel {
     public:
 
+      //! Returns an increment value.
+      /*
+        \param modifiers The modifiers to get the increment value of.
+      */
       virtual Real get_increment(Qt::KeyboardModifiers modifiers) const = 0;
 
+      //! Returns the initial value.
       virtual Real get_initial() const = 0;
 
+      //! Returns the minimum acceptable value.
       virtual Real get_minimum() const = 0;
 
+      //! Returns the maximum acceptable value.
       virtual Real get_maximum() const = 0;
   };
 
+  //! Wraps a SpinBoxModel to provide a generic interface.
   template <typename T>
   class RealSpinBoxModelImpl : public RealSpinBoxModel {
     public:
 
+      //! Constructs a RealSpinBoxModelImpl.
+      /*
+        \param model The source model.
+      */
       RealSpinBoxModelImpl(std::shared_ptr<SpinBoxModel<T>> model)
           : m_model(std::move(model)) {
         m_locale.setNumberOptions(m_locale.numberOptions().setFlag(

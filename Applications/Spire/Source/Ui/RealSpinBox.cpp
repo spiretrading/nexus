@@ -87,7 +87,6 @@ void RealSpinBox::focusOutEvent(QFocusEvent* event) {
 }
 
 void RealSpinBox::keyPressEvent(QKeyEvent* event) {
-  qDebug() << event->text();
   if(event->modifiers().testFlag(Qt::ControlModifier) &&
         event->key() != Qt::Key_Up && event->key() != Qt::Key_Down) {
     QAbstractSpinBox::keyPressEvent(event);
@@ -231,8 +230,6 @@ void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
     value = get_value("0");
   }
   auto stepped_value = m_model->get_increment(modifiers);
-  qDebug() << modifiers;
-  qDebug() << m_model->get_increment(modifiers).extract_signed_long_long();
   stepped_value *= step;
   *value += stepped_value;
   value = clamp(*value, m_model->get_minimum(), m_model->get_maximum());
