@@ -99,15 +99,23 @@ namespace Spire {
 
   using QuantitySpinBoxModel = SpinBoxModel<Nexus::Quantity>;
 
+  //! Constructs a DecimalSpinBoxModel with a default NoModifier increment
+  //! value of 1.
   std::shared_ptr<DecimalSpinBoxModel> make_decimal_spin_box_model(
     double initial, double minimum, double maximum);
 
+  //! Constructs a DecimalSpinBoxModel with a default NoModifier increment
+  //! value of 1.
   std::shared_ptr<IntegerSpinBoxModel> make_integer_spin_box_model(
     std::int64_t initial, std::int64_t minimum, std::int64_t maximum);
 
+  //! Constructs a DecimalSpinBoxModel with a default NoModifier increment
+  //! value of 0.01.
   std::shared_ptr<MoneySpinBoxModel> make_money_spin_box_model(
     Nexus::Money initial, Nexus::Money minimum, Nexus::Money maximum);
 
+  //! Constructs a DecimalSpinBoxModel with a default NoModifier increment
+  //! value of 1.
   std::shared_ptr<QuantitySpinBoxModel> make_quantity_spin_box_model(
     Nexus::Quantity initial, Nexus::Quantity minimum, Nexus::Quantity maximum);
 }
