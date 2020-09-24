@@ -244,6 +244,8 @@ namespace Nexus::OrderExecutionService {
     if(m_openState.SetClosing()) {
       return;
     }
+    m_executionReportTasks.Break();
+    m_executionReportTasks.Wait();
     m_clientHandler.Close();
     m_openState.Close();
   }

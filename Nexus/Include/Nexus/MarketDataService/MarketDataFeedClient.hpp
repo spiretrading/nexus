@@ -395,9 +395,10 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    m_client.Close();
     m_samplingTimer->Cancel();
     m_tasks.Break();
+    m_tasks.Wait();
+    m_client.Close();
     m_openState.Close();
   }
 

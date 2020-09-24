@@ -5,7 +5,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <Beam/Services/ServiceRequestException.hpp>
 #include <boost/atomic/atomic.hpp>
@@ -73,7 +72,6 @@ namespace Nexus::Compliance {
         Beam::SynchronizedVector<ServiceProtocolClient*>>
         m_complianceEntrySubscriptions;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_tasks;
 
       std::vector<ComplianceRuleEntry> OnLoadDirectoryEntryComplianceRuleEntry(
         ServiceProtocolClient& client,
@@ -157,7 +155,6 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
-    m_tasks.Break();
     m_openState.Close();
   }
 

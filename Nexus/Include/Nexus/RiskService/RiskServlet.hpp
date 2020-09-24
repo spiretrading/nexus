@@ -197,6 +197,8 @@ namespace Nexus::RiskService {
       return;
     }
     m_controller = boost::none;
+    m_tasks.Break();
+    m_tasks.Wait();
     m_openState.Close();
   }
 
