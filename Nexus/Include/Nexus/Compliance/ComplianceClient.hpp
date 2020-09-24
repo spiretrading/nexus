@@ -3,7 +3,6 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Threading/CallOnce.hpp>
@@ -102,7 +101,6 @@ namespace Nexus::Compliance {
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<ComplianceQueueEntry>> m_complianceEntryQueues;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_tasks;
 
       void OnComplianceRuleEntry(ServiceProtocolClient& client,
         const ComplianceRuleEntry& entry);
@@ -187,7 +185,6 @@ namespace Nexus::Compliance {
       return;
     }
     m_clientHandler.Close();
-    m_tasks.Break();
     m_complianceEntryQueues.With([&] (auto& entries) {
       for(auto& entry : entries | boost::adaptors::map_values) {
         for(auto& queue : entry->m_queues) {

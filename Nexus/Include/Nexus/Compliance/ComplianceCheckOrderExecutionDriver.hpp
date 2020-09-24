@@ -166,6 +166,8 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
+    m_tasks.Break();
+    m_tasks.Wait();
     m_orderExecutionDriver->Close();
     m_openState.Close();
   }
