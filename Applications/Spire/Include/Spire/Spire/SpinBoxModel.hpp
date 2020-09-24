@@ -20,8 +20,10 @@ namespace Spire {
         \param initial The initial value.
         \param minimum The minimum acceptable value.
         \param maximum The maximum acceptable value.
+        \param increment The default increment value.
       */
-      SpinBoxModel(Type initial, Type minimum, Type maximum);
+      SpinBoxModel(Type initial, Type minimum, Type maximum,
+        Type default_increment);
 
       //! Returns the initial value.
       Type get_initial() const;
@@ -72,10 +74,13 @@ namespace Spire {
   };
 
   template<typename T>
-  SpinBoxModel<T>::SpinBoxModel(T initial, T minimum, T maximum)
-    : m_initial(initial),
-      m_minimum(minimum),
-      m_maximum(maximum) {}
+  SpinBoxModel<T>::SpinBoxModel(T initial, T minimum, T maximum,
+      T default_increment)
+      : m_initial(initial),
+        m_minimum(minimum),
+        m_maximum(maximum) {
+    set_increment(Qt::NoModifier, default_increment);
+  }
 
   template<typename T>
   T SpinBoxModel<T>::get_initial() const {
@@ -119,21 +124,6 @@ namespace Spire {
   template<typename T>
   void SpinBoxModel<T>::set_maximum(T maximum) {
     m_maximum = maximum;
-  }
-
-  //! Constructs a SpinBoxModel.
-  /*!
-    \param initial The initial value.
-    \param minimum The minimum acceptable value.
-    \param maximum The maximum acceptable value.
-    \param increment The default increment value.
-  */
-  template<typename T>
-  std::shared_ptr<SpinBoxModel<T>> make_spin_box_model(
-      T initial, T minimum, T maximum, T default_increment) {
-    auto model = std::make_shared<SpinBoxModel<T>>(initial, minimum, maximum);
-    model->set_increment(Qt::NoModifier, default_increment);
-    return model;
   }
 }
 

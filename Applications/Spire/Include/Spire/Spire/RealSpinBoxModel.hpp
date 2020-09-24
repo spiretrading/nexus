@@ -56,11 +56,11 @@ namespace Spire {
       static const CustomVariantItemDelegate m_item_delegate;
       static const QLocale m_locale;
 
-      RealSpinBox::Real variant_to_real(const QVariant& value) const;
-      RealSpinBox::Real to_real(std::int64_t value) const;
-      RealSpinBox::Real to_real(double value) const;
-      RealSpinBox::Real to_real(Nexus::Quantity value) const;
-      RealSpinBox::Real to_real(Nexus::Money value) const;
+      static RealSpinBox::Real variant_to_real(const QVariant& value);
+      static RealSpinBox::Real to_real(std::int64_t value);
+      static RealSpinBox::Real to_real(double value);
+      static RealSpinBox::Real to_real(Nexus::Quantity value);
+      static RealSpinBox::Real to_real(Nexus::Money value);
   };
 
   template<typename T>
@@ -99,31 +99,28 @@ namespace Spire {
 
   template<typename T>
   RealSpinBox::Real RealSpinBoxAdapterModel<T>::variant_to_real(
-      const QVariant& value) const {
-    return m_item_delegate.displayText(value,
-      m_locale).toStdString().c_str();
+      const QVariant& value) {
+    return m_item_delegate.displayText(value, m_locale).toStdString().c_str();
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
-      std::int64_t value) const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(std::int64_t value) {
     return value;
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(double value) const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(double value) {
     return static_cast<long double>(value);
   }
 
   template<typename T>
   RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
-      Nexus::Quantity value) const {
+      Nexus::Quantity value) {
     return variant_to_real(QVariant::fromValue<Nexus::Quantity>(value));
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
-      Nexus::Money value) const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(Nexus::Money value) {
     return variant_to_real(QVariant::fromValue<Nexus::Money>(value));
   }
 }
