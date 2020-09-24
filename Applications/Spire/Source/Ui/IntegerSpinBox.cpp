@@ -16,6 +16,7 @@ IntegerSpinBox::IntegerSpinBox(
   m_spin_box->set_decimal_places(0);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
+  layout->addWidget(m_spin_box);
   m_spin_box->connect_change_signal([=] (auto value) {
     m_change_signal(value.extract_signed_long_long());
   });
