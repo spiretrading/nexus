@@ -9,8 +9,7 @@ namespace Spire {
   //! Represents a RealSpinBox's data model.
   class RealSpinBoxModel {
     public:
-
-      virtual ~RealSpinBoxModel() {};
+      virtual ~RealSpinBoxModel() = default;
 
       //! Returns an increment value.
       /*
@@ -31,16 +30,17 @@ namespace Spire {
 
   //! Wraps a SpinBoxModel to provide a generic interface.
   template<typename T>
-  class RealSpinBoxModelImpl : public RealSpinBoxModel {
+  class RealSpinBoxAdapterModel : public RealSpinBoxModel {
     public:
 
+      //! The type stored in the model.
       using Type = T;
 
-      //! Constructs a RealSpinBoxModelImpl.
+      //! Constructs a RealSpinBoxModelAdapter.
       /*
         \param model The source model.
       */
-      RealSpinBoxModelImpl(std::shared_ptr<SpinBoxModel<Type>> model);
+      RealSpinBoxAdapterModel(std::shared_ptr<SpinBoxModel<Type>> model);
 
       RealSpinBox::Real get_increment(
         Qt::KeyboardModifiers modifiers) const override;
@@ -53,8 +53,8 @@ namespace Spire {
 
     private:
       std::shared_ptr<SpinBoxModel<Type>> m_model;
-      CustomVariantItemDelegate m_item_delegate;
-      QLocale m_locale;
+      static const CustomVariantItemDelegate m_item_delegate;
+      static const QLocale m_locale;
 
       RealSpinBox::Real variant_to_real(const QVariant& value) const;
       RealSpinBox::Real to_real(std::int64_t value) const;
@@ -64,60 +64,65 @@ namespace Spire {
   };
 
   template<typename T>
-  RealSpinBoxModelImpl<T>::RealSpinBoxModelImpl(
+  RealSpinBoxAdapterModel<T>::RealSpinBoxAdapterModel(
       std::shared_ptr<SpinBoxModel<Type>> model)
-      : m_model(std::move(model)) {
-    m_locale.setNumberOptions(m_locale.numberOptions().setFlag(
-      QLocale::OmitGroupSeparator, true));
-  }
+      : m_model(std::move(model)) {}
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::get_increment(
+  const QLocale RealSpinBoxAdapterModel<T>::m_locale = [] {
+    auto locale = QLocale();
+    locale.setNumberOptions(m_locale.numberOptions().setFlag(
+      QLocale::OmitGroupSeparator, true));
+    return locale;
+  }();
+
+  template<typename T>
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_increment(
       Qt::KeyboardModifiers modifiers) const {
     return to_real(m_model->get_increment(modifiers));
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::get_initial() const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_initial() const {
     return to_real(m_model->get_initial());
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::get_minimum() const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_minimum() const {
     return to_real(m_model->get_minimum());
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::get_maximum() const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_maximum() const {
     return to_real(m_model->get_maximum());
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::variant_to_real(
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::variant_to_real(
       const QVariant& value) const {
     return m_item_delegate.displayText(value,
       m_locale).toStdString().c_str();
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::to_real(
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
       std::int64_t value) const {
     return value;
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::to_real(double value) const {
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(double value) const {
     return static_cast<long double>(value);
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::to_real(
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
       Nexus::Quantity value) const {
     return variant_to_real(QVariant::fromValue<Nexus::Quantity>(value));
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxModelImpl<T>::to_real(
+  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
       Nexus::Money value) const {
     return variant_to_real(QVariant::fromValue<Nexus::Money>(value));
   }

@@ -91,7 +91,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
   auto number_of_bands_spin_box = new IntegerSpinBox(
-    make_integer_spin_box_model(bg_colors.size(), 1, INT_MAX), this);
+    make_spin_box_model<std::int64_t>(bg_colors.size(), 1,
+      std::numeric_limits<int>::max(), 1), this);
   number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());
   number_of_bands_spin_box->connect_change_signal([=] (auto value) {
     on_number_of_bands_spin_box_changed(static_cast<int>(value));

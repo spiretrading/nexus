@@ -12,7 +12,7 @@ DecimalSpinBox::DecimalSpinBox(
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(
-    std::make_unique<RealSpinBoxModelImpl<double>>(std::move(model)), this);
+    std::make_unique<RealSpinBoxAdapterModel<double>>(std::move(model)), this);
   setFocusProxy(m_spin_box);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_spin_box);

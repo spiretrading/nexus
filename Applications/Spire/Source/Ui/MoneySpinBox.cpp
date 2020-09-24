@@ -22,7 +22,7 @@ MoneySpinBox::MoneySpinBox(std::shared_ptr<SpinBoxModel<Money>> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(
-    std::make_unique<RealSpinBoxModelImpl<Money>>(std::move(model)), this);
+    std::make_unique<RealSpinBoxAdapterModel<Money>>(std::move(model)), this);
   m_spin_box->set_minimum_decimal_places(2);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);

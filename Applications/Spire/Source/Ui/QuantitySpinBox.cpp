@@ -23,7 +23,8 @@ QuantitySpinBox::QuantitySpinBox(std::shared_ptr<SpinBoxModel<Quantity>> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(
-    std::make_unique<RealSpinBoxModelImpl<Quantity>>(std::move(model)), this);
+    std::make_unique<RealSpinBoxAdapterModel<Quantity>>(std::move(model)),
+    this);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
   layout->addWidget(m_spin_box);

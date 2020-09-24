@@ -4,10 +4,6 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DecimalSpinBox.hpp"
-#include "Spire/Ui/IntegerSpinBox.hpp"
-#include "Spire/Ui/MoneySpinBox.hpp"
-#include "Spire/Ui/QuantitySpinBox.hpp"
 
 namespace Spire {
 
@@ -16,6 +12,7 @@ namespace Spire {
   class SpinBoxModel {
     public:
 
+      //! The type stored in the model.
       using Type = T;
 
       //! Constructs a SpinBoxModel with no modifiers.
@@ -124,25 +121,20 @@ namespace Spire {
     m_maximum = maximum;
   }
 
-  //! Constructs a DecimalSpinBoxModel with a default NoModifier increment
-  //! value of 1.
-  std::shared_ptr<DecimalSpinBoxModel> make_decimal_spin_box_model(
-    double initial, double minimum, double maximum);
-
-  //! Constructs a IntegerSpinBoxModel with a default NoModifier increment
-  //! value of 1.
-  std::shared_ptr<IntegerSpinBoxModel> make_integer_spin_box_model(
-    std::int64_t initial, std::int64_t minimum, std::int64_t maximum);
-
-  //! Constructs a MoneySpinBoxModel with a default NoModifier increment
-  //! value of 0.01.
-  std::shared_ptr<MoneySpinBoxModel> make_money_spin_box_model(
-    Nexus::Money initial, Nexus::Money minimum, Nexus::Money maximum);
-
-  //! Constructs a QuantitySpinBoxModel with a default NoModifier increment
-  //! value of 1.
-  std::shared_ptr<QuantitySpinBoxModel> make_quantity_spin_box_model(
-    Nexus::Quantity initial, Nexus::Quantity minimum, Nexus::Quantity maximum);
+  //! Constructs a SpinBoxModel.
+  /*!
+    \param initial The initial value.
+    \param minimum The minimum acceptable value.
+    \param maximum The maximum acceptable value.
+    \param increment The default increment value.
+  */
+  template<typename T>
+  std::shared_ptr<SpinBoxModel<T>> make_spin_box_model(
+      T initial, T minimum, T maximum, T default_increment) {
+    auto model = std::make_shared<SpinBoxModel<T>>(initial, minimum, maximum);
+    model->set_increment(Qt::NoModifier, default_increment);
+    return model;
+  }
 }
 
 #endif

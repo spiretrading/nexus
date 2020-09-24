@@ -11,7 +11,7 @@ IntegerSpinBox::IntegerSpinBox(
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(
-    std::make_unique<RealSpinBoxModelImpl<std::int64_t>>(std::move(model)),
+    std::make_unique<RealSpinBoxAdapterModel<std::int64_t>>(std::move(model)),
     this);
   m_spin_box->set_decimal_places(0);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
