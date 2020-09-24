@@ -6,6 +6,30 @@
 
 namespace Spire {
 
+  //! Converts an integer to a Real.
+  /*!
+    \param value The integer to convert.
+  */
+  RealSpinBox::Real to_real(std::int64_t value);
+
+  //! Converts a double to a Real.
+  /*!
+    \param value The double to convert.
+  */
+  RealSpinBox::Real to_real(double value);
+
+  //! Converts a Money to a Real.
+  /*!
+    \param value The Money to convert.
+  */
+  RealSpinBox::Real to_real(Nexus::Money value);
+
+  //! Converts a Quantity to a Real.
+  /*!
+    \param value The Quantity to convert.
+  */
+  RealSpinBox::Real to_real(Nexus::Quantity value);
+
   //! Represents a RealSpinBox's data model.
   class RealSpinBoxModel {
     public:
@@ -53,28 +77,12 @@ namespace Spire {
 
     private:
       std::shared_ptr<SpinBoxModel<Type>> m_model;
-      static const CustomVariantItemDelegate m_item_delegate;
-      static const QLocale m_locale;
-
-      static RealSpinBox::Real variant_to_real(const QVariant& value);
-      static RealSpinBox::Real to_real(std::int64_t value);
-      static RealSpinBox::Real to_real(double value);
-      static RealSpinBox::Real to_real(Nexus::Quantity value);
-      static RealSpinBox::Real to_real(Nexus::Money value);
   };
 
   template<typename T>
   RealSpinBoxAdapterModel<T>::RealSpinBoxAdapterModel(
-      std::shared_ptr<SpinBoxModel<Type>> model)
-      : m_model(std::move(model)) {}
-
-  template<typename T>
-  const QLocale RealSpinBoxAdapterModel<T>::m_locale = [] {
-    auto locale = QLocale();
-    locale.setNumberOptions(m_locale.numberOptions().setFlag(
-      QLocale::OmitGroupSeparator, true));
-    return locale;
-  }();
+    std::shared_ptr<SpinBoxModel<Type>> model)
+    : m_model(std::move(model)) {}
 
   template<typename T>
   RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_increment(
@@ -95,33 +103,6 @@ namespace Spire {
   template<typename T>
   RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_maximum() const {
     return to_real(m_model->get_maximum());
-  }
-
-  template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::variant_to_real(
-      const QVariant& value) {
-    return m_item_delegate.displayText(value, m_locale).toStdString().c_str();
-  }
-
-  template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(std::int64_t value) {
-    return value;
-  }
-
-  template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(double value) {
-    return static_cast<long double>(value);
-  }
-
-  template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(
-      Nexus::Quantity value) {
-    return variant_to_real(QVariant::fromValue<Nexus::Quantity>(value));
-  }
-
-  template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::to_real(Nexus::Money value) {
-    return variant_to_real(QVariant::fromValue<Nexus::Money>(value));
   }
 }
 
