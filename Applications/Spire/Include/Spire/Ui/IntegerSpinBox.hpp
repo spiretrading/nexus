@@ -1,10 +1,12 @@
 #ifndef SPIRE_INTEGER_SPIN_BOX_HPP
 #define SPIRE_INTEGER_SPIN_BOX_HPP
 #include <QAbstractSpinBox>
-#include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using IntegerSpinBoxModel = SpinBoxModel<std::int64_t>;
 
   //! Represents a widget for displaying and modifying integers.
   class IntegerSpinBox : public QAbstractSpinBox {
@@ -21,8 +23,7 @@ namespace Spire {
         \param model The input's model.
         \param parent The parent widget.
       */
-      explicit IntegerSpinBox(
-        std::shared_ptr<IntegerSpinBoxModel> model,
+      explicit IntegerSpinBox(std::shared_ptr<IntegerSpinBoxModel> model,
         QWidget* parent = nullptr);
 
       //! Returns the last submitted value.

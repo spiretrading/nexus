@@ -33,7 +33,7 @@ namespace {
   }
 }
 
-RealSpinBox::RealSpinBox(std::unique_ptr<RealSpinBoxModel> model,
+RealSpinBox::RealSpinBox(std::shared_ptr<RealSpinBoxModel> model,
     QWidget* parent)
     : QAbstractSpinBox(parent),
       m_model(std::move(model)),

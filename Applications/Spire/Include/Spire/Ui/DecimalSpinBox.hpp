@@ -1,10 +1,12 @@
 #ifndef SPIRE_DECIMAL_SPIN_BOX_HPP
 #define SPIRE_DECIMAL_SPIN_BOX_HPP
 #include <QAbstractSpinBox>
-#include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using DecimalSpinBoxModel = SpinBoxModel<double>;
 
   //! Represents a widget for displaying and modifying decimal numbers.
   class DecimalSpinBox : public QAbstractSpinBox {

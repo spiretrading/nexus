@@ -61,8 +61,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   connect(m_period_line_edit, &QLineEdit::editingFinished, this,
     &ChartingWindow::on_period_line_edit_changed);
   m_period_line_edit->setFixedSize(scale(36, 26));
-  m_period_line_edit->setValidator(new QIntValidator(1, INT_MAX,
-    m_period_line_edit));
+  m_period_line_edit->setValidator(new QIntValidator(1,
+    std::numeric_limits<int>::max(), m_period_line_edit));
   m_period_line_edit->setText("1");
   m_period_line_edit->setAlignment(Qt::AlignCenter);
   m_period_line_edit->setStyleSheet(QString(R"(

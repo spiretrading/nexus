@@ -34,7 +34,7 @@ namespace Spire {
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit RealSpinBox(std::unique_ptr<RealSpinBoxModel> model,
+      explicit RealSpinBox(std::shared_ptr<RealSpinBoxModel> model,
         QWidget* parent = nullptr);
 
       //! Sets the number of decimal places that can be input, up to
@@ -85,7 +85,7 @@ namespace Spire {
 
     private:
       mutable ChangeSignal m_change_signal;
-      std::unique_ptr<RealSpinBoxModel> m_model;
+      std::shared_ptr<RealSpinBoxModel> m_model;
       QRegularExpression m_real_regex;
       QLocale m_locale;
       int m_decimals;

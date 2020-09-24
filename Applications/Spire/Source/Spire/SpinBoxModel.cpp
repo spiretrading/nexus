@@ -1,4 +1,8 @@
 #include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Ui/DecimalSpinBox.hpp"
+#include "Spire/Ui/IntegerSpinBox.hpp"
+#include "Spire/Ui/MoneySpinBox.hpp"
+#include "Spire/Ui/QuantitySpinBox.hpp"
 
 using namespace Nexus;
 using namespace Spire;

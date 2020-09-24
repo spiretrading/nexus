@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"

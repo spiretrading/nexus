@@ -1,11 +1,13 @@
 #ifndef SPIRE_QUANTITY_SPIN_BOX_HPP
 #define SPIRE_QUANTITY_SPIN_BOX_HPP
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using QuantitySpinBoxModel = SpinBoxModel<Nexus::Quantity>;
 
   //! Represents a widget for displaying and modifying Quantities.
   class QuantitySpinBox : public QAbstractSpinBox {

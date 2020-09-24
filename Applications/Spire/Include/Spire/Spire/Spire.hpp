@@ -15,6 +15,7 @@ namespace Spire {
   class RangeInputModel;
   class RealSpinBoxModel;
   class Scalar;
+  template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
   class TechnicalsModel;

@@ -1,11 +1,13 @@
 #ifndef SPIRE_MONEY_SPIN_BOX_HPP
 #define SPIRE_MONEY_SPIN_BOX_HPP
 #include "Nexus/Definitions/Money.hpp"
-#include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using MoneySpinBoxModel = SpinBoxModel<Nexus::Money>;
 
   //! Represents a widget for displaying and modifying Money values.
   class MoneySpinBox : public QAbstractSpinBox {
