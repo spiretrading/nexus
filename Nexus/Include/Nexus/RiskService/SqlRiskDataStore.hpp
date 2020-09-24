@@ -2,7 +2,6 @@
 #define NEXUS_SQL_RISK_DATA_STORE_HPP
 #include <memory>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/function_output_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
@@ -44,7 +43,6 @@ namespace Nexus::RiskService {
       mutable Beam::Threading::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_tasks;
 
       SqlRiskDataStore(const SqlRiskDataStore&) = delete;
       SqlRiskDataStore& operator =(const SqlRiskDataStore&) = delete;
@@ -134,8 +132,6 @@ namespace Nexus::RiskService {
     if(m_openState.SetClosing()) {
       return;
     }
-    m_tasks.Break();
-    m_tasks.Wait();
     m_connection->close();
     m_openState.Close();
   }

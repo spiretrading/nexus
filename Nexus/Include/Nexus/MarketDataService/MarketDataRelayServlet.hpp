@@ -292,6 +292,8 @@ namespace Nexus::MarketDataService {
       return;
     }
     for(auto& entry : m_realTimeQueryEntries) {
+      entry->m_tasks.Break();
+      entry->m_tasks.Wait();
       entry->m_marketDataClient->Close();
     }
     m_openState.Close();

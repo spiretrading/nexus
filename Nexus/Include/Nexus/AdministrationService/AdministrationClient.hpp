@@ -696,8 +696,9 @@ namespace Nexus::AdministrationService {
     if(m_openState.SetClosing()) {
       return;
     }
-    m_clientHandler.Close();
     m_tasks.Break();
+    m_tasks.Wait();
+    m_clientHandler.Close();
     m_openState.Close();
   }
 

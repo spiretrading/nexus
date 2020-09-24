@@ -80,7 +80,7 @@ namespace Details {
         m_dataStore;
       QueryEntry<SequencedTimeAndSale> m_timeAndSaleQueries;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_taskQueue;
+      Beam::RoutineTaskQueue m_tasks;
 
       void OnQuerySecurityRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, QuerySecurityService>& request,
@@ -146,6 +146,8 @@ namespace Details {
     if(m_openState.SetClosing()) {
       return;
     }
+    m_tasks.Break();
+    m_tasks.Wait();
     m_marketDataClient->Close();
     m_openState.Close();
   }
@@ -231,7 +233,7 @@ namespace Details {
         realTimeQuery.SetIndex(query.GetIndex());
         realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
         MarketDataService::QueryMarketDataClient(*m_marketDataClient,
-          realTimeQuery, m_taskQueue.GetSlot<MarketDataType>(std::bind(
+          realTimeQuery, m_tasks.GetSlot<MarketDataType>(std::bind(
           &ChartingServlet::OnQueryUpdate<
           typename Query::Index, MarketDataType>, this, query.GetIndex(),
           std::placeholders::_1, std::ref(queryEntry))));
