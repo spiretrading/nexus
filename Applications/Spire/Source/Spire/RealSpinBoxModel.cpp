@@ -15,18 +15,18 @@ namespace {
   }
 }
 
-RealSpinBox::Real Spire::to_real(Nexus::Quantity value) {
+RealSpinBoxModel::Real Spire::to_real(Nexus::Quantity value) {
   return ::to_real(QVariant::fromValue<Nexus::Quantity>(value));
 }
 
-RealSpinBox::Real Spire::to_real(Nexus::Money value) {
+RealSpinBoxModel::Real Spire::to_real(Nexus::Money value) {
   return ::to_real(QVariant::fromValue<Nexus::Money>(value));
 }
 
-RealSpinBox::Real Spire::to_real(std::int64_t value) {
+RealSpinBoxModel::Real Spire::to_real(std::int64_t value) {
   return value;
 }
 
-RealSpinBox::Real Spire::to_real(double value) {
+RealSpinBoxModel::Real Spire::to_real(double value) {
   return static_cast<long double>(value);
 }

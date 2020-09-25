@@ -1,12 +1,11 @@
 #ifndef SPIRE_REAL_SPIN_BOX_HPP
 #define SPIRE_REAL_SPIN_BOX_HPP
-#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional.hpp>
 #include <QAbstractSpinBox>
 #include <QLocale>
 #include <QRegularExpression>
 #include <QStyle>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/RealSpinBoxModel.hpp"
 
 namespace Spire {
 
@@ -14,14 +13,10 @@ namespace Spire {
   class RealSpinBox : public QAbstractSpinBox {
     public:
 
+      using Real = RealSpinBoxModel::Real;
+
       //! The maximum number of decimal places that can be input.
       static const auto MAXIMUM_DECIMAL_PLACES = 6;
-
-      //! The precision of the spin box's floating point type.
-      static constexpr auto PRECISION = 15;
-
-      //! Numeric type used by the widget.
-      using Real = boost::multiprecision::cpp_dec_float<PRECISION>;
 
       //! Signal type for value changes.
       /*!

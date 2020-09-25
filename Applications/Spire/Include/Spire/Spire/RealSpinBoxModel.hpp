@@ -1,56 +1,63 @@
 #ifndef SPIRE_REAL_SPIN_BOX_MODEL_HPP
 #define SPIRE_REAL_SPIN_BOX_MODEL_HPP
+#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <QLocale>
 #include "Spire/Spire/SpinBoxModel.hpp"
-#include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
-
-  //! Converts an integer to a Real.
-  /*!
-    \param value The integer to convert.
-  */
-  RealSpinBox::Real to_real(std::int64_t value);
-
-  //! Converts a double to a Real.
-  /*!
-    \param value The double to convert.
-  */
-  RealSpinBox::Real to_real(double value);
-
-  //! Converts a Money to a Real.
-  /*!
-    \param value The Money to convert.
-  */
-  RealSpinBox::Real to_real(Nexus::Money value);
-
-  //! Converts a Quantity to a Real.
-  /*!
-    \param value The Quantity to convert.
-  */
-  RealSpinBox::Real to_real(Nexus::Quantity value);
 
   //! Represents a RealSpinBox's data model.
   class RealSpinBoxModel {
     public:
+      
+      //! The precision of the model's floating point type.
+      static constexpr auto PRECISION = 15;
+
+      //! Numeric type used by the model.
+      using Real = boost::multiprecision::cpp_dec_float<PRECISION>;
+
       virtual ~RealSpinBoxModel() = default;
 
       //! Returns an increment value.
       /*
         \param modifiers The modifiers to get the increment value of.
       */
-      virtual RealSpinBox::Real get_increment(
+      virtual Real get_increment(
         Qt::KeyboardModifiers modifiers) const = 0;
 
       //! Returns the initial value.
-      virtual RealSpinBox::Real get_initial() const = 0;
+      virtual Real get_initial() const = 0;
 
       //! Returns the minimum acceptable value.
-      virtual RealSpinBox::Real get_minimum() const = 0;
+      virtual Real get_minimum() const = 0;
 
       //! Returns the maximum acceptable value.
-      virtual RealSpinBox::Real get_maximum() const = 0;
+      virtual Real get_maximum() const = 0;
   };
+
+  //! Converts an integer to a Real.
+  /*!
+    \param value The integer to convert.
+  */
+  RealSpinBoxModel::Real to_real(std::int64_t value);
+
+  //! Converts a double to a Real.
+  /*!
+    \param value The double to convert.
+  */
+  RealSpinBoxModel::Real to_real(double value);
+
+  //! Converts a Money to a Real.
+  /*!
+    \param value The Money to convert.
+  */
+  RealSpinBoxModel::Real to_real(Nexus::Money value);
+
+  //! Converts a Quantity to a Real.
+  /*!
+    \param value The Quantity to convert.
+  */
+  RealSpinBoxModel::Real to_real(Nexus::Quantity value);
 
   //! Wraps a SpinBoxModel to provide a generic interface.
   template<typename T>
@@ -85,23 +92,23 @@ namespace Spire {
     : m_model(std::move(model)) {}
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_increment(
+  RealSpinBoxModel::Real RealSpinBoxAdapterModel<T>::get_increment(
       Qt::KeyboardModifiers modifiers) const {
     return to_real(m_model->get_increment(modifiers));
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_initial() const {
+  RealSpinBoxModel::Real RealSpinBoxAdapterModel<T>::get_initial() const {
     return to_real(m_model->get_initial());
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_minimum() const {
+  RealSpinBoxModel::Real RealSpinBoxAdapterModel<T>::get_minimum() const {
     return to_real(m_model->get_minimum());
   }
 
   template<typename T>
-  RealSpinBox::Real RealSpinBoxAdapterModel<T>::get_maximum() const {
+  RealSpinBoxModel::Real RealSpinBoxAdapterModel<T>::get_maximum() const {
     return to_real(m_model->get_maximum());
   }
 }
