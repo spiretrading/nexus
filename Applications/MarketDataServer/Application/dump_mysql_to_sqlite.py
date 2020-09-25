@@ -98,7 +98,6 @@ def main():
   schema = data_store_config['schema']
   mysql_data_store = nexus.market_data_service.MySqlHistoricalDataStore(
     address.host, address.port, username, password, schema)
-  mysql_data_store.open()
   mysql_connection = pymysql.connect(address.host, username, password, schema,
     address.port)
   securities = []
@@ -115,7 +114,6 @@ def main():
       markets.append(result[0])
   sqlite_data_store = nexus.market_data_service.SqliteHistoricalDataStore(
     args.out)
-  sqlite_data_store.open()
   routines = []
   for security in securities:
     if len(routines) == args.cores:

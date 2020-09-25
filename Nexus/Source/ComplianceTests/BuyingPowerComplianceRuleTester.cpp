@@ -21,11 +21,9 @@ namespace {
     Fixture()
         : m_orderSubmissions(std::make_shared<Queue<const Order*>>()),
           m_serviceClients(Ref(m_testEnvironment)) {
-      m_testEnvironment.Open();
       m_testEnvironment.MonitorOrderSubmissions(m_orderSubmissions);
       m_testEnvironment.UpdateBboPrice(TST, Money::ONE,
         Money::ONE + Money::CENT);
-      m_serviceClients.Open();
     }
   };
 }
@@ -44,17 +42,15 @@ TEST_SUITE("BuyingPowerComplianceRule") {
       Money::ONE);
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
-    auto submittedRecoveryOrder = m_orderSubmissions->Top();
-    m_orderSubmissions->Pop();
-    m_testEnvironment.AcceptOrder(*submittedRecoveryOrder);
-    m_testEnvironment.FillOrder(*submittedRecoveryOrder, 100);
+    auto submittedRecoveryOrder = m_orderSubmissions->Pop();
+    m_testEnvironment.Accept(*submittedRecoveryOrder);
+    m_testEnvironment.Fill(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
     auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
       2 * Money::ONE);
     auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       submissionFields);
-    auto submittedOrder = m_orderSubmissions->Top();
-    m_orderSubmissions->Pop();
+    auto submittedOrder = m_orderSubmissions->Pop();
     REQUIRE_NOTHROW(rule.Submit(*submittedOrder));
   }
 }

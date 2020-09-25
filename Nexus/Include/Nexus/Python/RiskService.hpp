@@ -5,10 +5,34 @@
 namespace Nexus::Python {
 
   /**
-   * Exports the RiskService namespace.
+   * Exports the ApplicationRiskClient class.
    * @param module The module to export to.
    */
-  void ExportRiskService(pybind11::module& module);
+  void ExportApplicationRiskClient(pybind11::module& module);
+
+  /**
+   * Exports the LocalRiskDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportLocalRiskDataStore(pybind11::module& module);
+
+  /**
+   * Exports the SqlRiskDataStore class connecting to MySQL.
+   * @param module The module to export to.
+   */
+  void ExportMySqlRiskDataStore(pybind11::module& module);
+
+  /**
+   * Exports the RiskClient class.
+   * @param module The module to export to.
+   */
+  void ExportRiskClient(pybind11::module& module);
+
+  /**
+   * Exports the RiskDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportRiskDataStore(pybind11::module& module);
 
   /**
    * Exports the RiskParameters class.
@@ -17,10 +41,28 @@ namespace Nexus::Python {
   void ExportRiskParameters(pybind11::module& module);
 
   /**
+   * Exports the RiskService namespace.
+   * @param module The module to export to.
+   */
+  void ExportRiskService(pybind11::module& module);
+
+  /**
+   * Exports the RiskServiceTestEnvironment class.
+   * @param module The module to export to.
+   */
+  void ExportRiskServiceTestEnvironment(pybind11::module& module);
+
+  /**
    * Exports the RiskState struct.
    * @param module The module to export to.
    */
   void ExportRiskState(pybind11::module& module);
+
+  /**
+   * Exports the SqlRiskDataStore class connecting to SQLite.
+   * @param module The module to export to.
+   */
+  void ExportSqliteRiskDataStore(pybind11::module& module);
 }
 
 #endif

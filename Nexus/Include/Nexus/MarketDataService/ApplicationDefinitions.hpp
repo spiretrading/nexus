@@ -51,14 +51,9 @@ namespace Details {
       /*!
         \param serviceLocatorClient The ServiceLocatorClient used to
                authenticate sessions.
-        \param socketThreadPool The SocketThreadPool used for the socket
-               connection.
-        \param timerThreadPool The TimerThreadPool used for heartbeats.
       */
       void BuildSession(Beam::Ref<Beam::ServiceLocator::
-        ApplicationServiceLocatorClient::Client> serviceLocatorClient,
-        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        ApplicationServiceLocatorClient::Client> serviceLocatorClient);
 
       //! Returns a reference to the Client.
       Client& operator *();
@@ -86,8 +81,6 @@ namespace Details {
   /*!
     \param serviceLocatorClient The ServiceLocatorClient used to authenticate
            sessions.
-    \param socketThreadPool The SocketThreadPool used for the socket connection.
-    \param timerThreadPool The TimerThreadPool used for heartbeats.
     \param servicePredicate The function used to match an appropriate
            ServiceEntry.
     \param service The name of the service to connect to.
@@ -95,13 +88,9 @@ namespace Details {
   template<typename SessionBuilder, typename Predicate>
   SessionBuilder BuildBasicMarketDataClientSessionBuilder(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
-      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
-      timerThreadPool, const Predicate& servicePredicate,
+      serviceLocatorClient, const Predicate& servicePredicate,
       const std::string& service = RELAY_SERVICE_NAME) {
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
-    auto socketThreadPoolHandle = socketThreadPool.Get();
-    auto timerThreadPoolHandle = timerThreadPool.Get();
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, service, servicePredicate);
     auto delay = false;
@@ -109,17 +98,16 @@ namespace Details {
       [=] () mutable {
         if(delay) {
           auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
+            boost::posix_time::seconds(3));
           delayTimer.Start();
           delayTimer.Wait();
         }
         delay = true;
-        return std::make_unique<Beam::Network::TcpSocketChannel>(
-          addresses, Beam::Ref(*socketThreadPoolHandle));
+        return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
-      [=] {
+      [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
-          boost::posix_time::seconds(10), Beam::Ref(*timerThreadPoolHandle));
+          boost::posix_time::seconds(10));
       });
     return sessionBuilder;
   }
@@ -128,19 +116,13 @@ namespace Details {
   /*!
     \param serviceLocatorClient The ServiceLocatorClient used to authenticate
            sessions.
-    \param socketThreadPool The SocketThreadPool used for the socket connection.
-    \param timerThreadPool The TimerThreadPool used for heartbeats.
     \param service The name of the service to connect to.
   */
   inline Details::MarketDataClientSessionBuilder
       BuildMarketDataClientSessionBuilder(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
-      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
-      timerThreadPool, const std::string& service = RELAY_SERVICE_NAME) {
+      serviceLocatorClient, const std::string& service = RELAY_SERVICE_NAME) {
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
-    auto socketThreadPoolHandle = socketThreadPool.Get();
-    auto timerThreadPoolHandle = timerThreadPool.Get();
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, service);
     auto delay = false;
@@ -149,33 +131,29 @@ namespace Details {
       [=] () mutable {
         if(delay) {
           auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
+            boost::posix_time::seconds(3));
           delayTimer.Start();
           delayTimer.Wait();
         }
         delay = true;
-        return std::make_unique<Beam::Network::TcpSocketChannel>(
-          addresses, Beam::Ref(*socketThreadPoolHandle));
+        return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
-      [=] {
+      [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
-          boost::posix_time::seconds(10), Beam::Ref(*timerThreadPoolHandle));
+          boost::posix_time::seconds(10));
       });
     return sessionBuilder;
   }
 
   inline void ApplicationMarketDataClient::BuildSession(
       Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::
-      Client> serviceLocatorClient, Beam::Ref<Beam::Network::
-      SocketThreadPool> socketThreadPool, Beam::Ref<
-      Beam::Threading::TimerThreadPool> timerThreadPool) {
+      Client> serviceLocatorClient) {
     if(m_client.has_value()) {
       m_client->Close();
       m_client = std::nullopt;
     }
     m_client.emplace(BuildMarketDataClientSessionBuilder(
-      Beam::Ref(serviceLocatorClient), Beam::Ref(socketThreadPool),
-      Beam::Ref(timerThreadPool)));
+      Beam::Ref(serviceLocatorClient)));
   }
 
   inline ApplicationMarketDataClient::Client&

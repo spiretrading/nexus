@@ -1,9 +1,12 @@
 #ifndef SPIRE_DECIMAL_SPIN_BOX_HPP
 #define SPIRE_DECIMAL_SPIN_BOX_HPP
 #include <QAbstractSpinBox>
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using DecimalSpinBoxModel = SpinBoxModel<double>;
 
   //! Represents a widget for displaying and modifying decimal numbers.
   class DecimalSpinBox : public QAbstractSpinBox {
@@ -17,22 +20,11 @@ namespace Spire {
 
       //! Constructs a DecimalSpinBox.
       /*!
-        \param value The initial value to display.
+        \param model The input's model.
         \param parent The parent widget.
       */
-      explicit DecimalSpinBox(double value, QWidget* parent = nullptr);
-
-      //! Sets the minimum accepted value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(double minimum);
-
-      //! Sets the maximum accepted value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(double maximum);
+      explicit DecimalSpinBox(std::shared_ptr<DecimalSpinBoxModel> model,
+        QWidget* parent = nullptr);
 
       //! Returns the last submitted value.
       double get_value() const;

@@ -128,6 +128,15 @@ namespace Nexus::OrderExecutionService {
     return !(lhs == rhs);
   }
 
+  /**
+   * Returns the sum of all fees.
+   * @param report The ExecutionReport to calculate.
+   * @return The sum of all of the <i>report</i>'s fees.
+   */
+  inline Money GetFeeTotal(const ExecutionReport& report) {
+    return report.m_executionFee + report.m_processingFee + report.m_commission;
+  }
+
   inline ExecutionReport::ExecutionReport()
     : m_id(0),
       m_lastQuantity(0) {}

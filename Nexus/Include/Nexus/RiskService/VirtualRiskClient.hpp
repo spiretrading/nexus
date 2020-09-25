@@ -1,71 +1,72 @@
-#ifndef NEXUS_VIRTUALRISKCLIENT_HPP
-#define NEXUS_VIRTUALRISKCLIENT_HPP
+#ifndef NEXUS_VIRTUAL_RISK_CLIENT_HPP
+#define NEXUS_VIRTUAL_RISK_CLIENT_HPP
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/TablePublisher.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
 
-  /*! \class VirtualRiskClient
-      \brief Provides a pure virtual interface to an RiskClient.
-   */
+  /** Provides a pure virtual interface to an RiskClient. */
   class VirtualRiskClient : private boost::noncopyable {
     public:
-      virtual ~VirtualRiskClient();
+      virtual ~VirtualRiskClient() = default;
+
+      virtual InventorySnapshot LoadInventorySnapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account) = 0;
+
+      virtual void Reset(const Region& region) = 0;
 
       virtual const RiskPortfolioUpdatePublisher&
         GetRiskPortfolioUpdatePublisher() = 0;
-
-      virtual void Open() = 0;
 
       virtual void Close() = 0;
 
     protected:
 
-      //! Constructs a VirtualRiskClient.
-      VirtualRiskClient();
+      /** Constructs a VirtualRiskClient. */
+      VirtualRiskClient() = default;
   };
 
-  /*! \class WrapperRiskClient
-      \brief Wraps a RiskClient providing it with a virtual interface.
-      \tparam ClientType The type of RiskClient to wrap.
+  /**
+   * Wraps a RiskClient providing it with a virtual interface.
+   * @param <C> The type of RiskClient to wrap.
    */
-  template<typename ClientType>
+  template<typename C>
   class WrapperRiskClient : public VirtualRiskClient {
     public:
 
-      //! The RiskClient to wrap.
-      using Client = Beam::GetTryDereferenceType<ClientType>;
+      /** The RiskClient to wrap. */
+      using Client = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a WrapperRiskClient.
-      /*!
-        \param client The RiskClient to wrap.
-      */
-      template<typename RiskClientForward>
-      WrapperRiskClient(RiskClientForward&& client);
+      /**
+       * Constructs a WrapperRiskClient.
+       * @param client The RiskClient to wrap.
+       */
+      template<typename CF>
+      explicit WrapperRiskClient(CF&& client);
 
-      virtual ~WrapperRiskClient();
+      InventorySnapshot LoadInventorySnapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual const RiskPortfolioUpdatePublisher&
-        GetRiskPortfolioUpdatePublisher();
+      void Reset(const Region& region) override;
 
-      virtual void Open();
+      const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher()
+        override;
 
-      virtual void Close();
+      void Close() override;
 
     private:
-      typename Beam::OptionalLocalPtr<ClientType>::type m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
   };
 
-  //! Wraps a RiskClient into a VirtualRiskClient.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps a RiskClient into a VirtualRiskClient.
+   * @param client The client to wrap.
+   */
   template<typename RiskClient>
   std::unique_ptr<VirtualRiskClient> MakeVirtualRiskClient(
       RiskClient&& client) {
@@ -73,34 +74,32 @@ namespace RiskService {
       std::forward<RiskClient>(client));
   }
 
-  inline VirtualRiskClient::~VirtualRiskClient() {}
+  template<typename C>
+  template<typename CF>
+  WrapperRiskClient<C>::WrapperRiskClient(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
-  inline VirtualRiskClient::VirtualRiskClient() {}
+  template<typename C>
+  InventorySnapshot WrapperRiskClient<C>::LoadInventorySnapshot(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    return m_client->LoadInventorySnapshot(account);
+  }
 
-  template<typename ClientType>
-  template<typename RiskClientForward>
-  WrapperRiskClient<ClientType>::WrapperRiskClient(RiskClientForward&& client)
-      : m_client(std::forward<RiskClientForward>(client)) {}
+  template<typename C>
+  void WrapperRiskClient<C>::Reset(const Region& region) {
+    return m_client->Reset(region);
+  }
 
-  template<typename ClientType>
-  WrapperRiskClient<ClientType>::~WrapperRiskClient() {}
-
-  template<typename ClientType>
-  const RiskPortfolioUpdatePublisher& WrapperRiskClient<ClientType>::
+  template<typename C>
+  const RiskPortfolioUpdatePublisher& WrapperRiskClient<C>::
       GetRiskPortfolioUpdatePublisher() {
     return m_client->GetRiskPortfolioUpdatePublisher();
   }
 
-  template<typename ClientType>
-  void WrapperRiskClient<ClientType>::Open() {
-    return m_client->Open();
-  }
-
-  template<typename ClientType>
-  void WrapperRiskClient<ClientType>::Close() {
+  template<typename C>
+  void WrapperRiskClient<C>::Close() {
     return m_client->Close();
   }
-}
 }
 
 #endif

@@ -3,29 +3,31 @@
 #include <string>
 
 namespace Nexus::RiskService {
-  struct AccountRecord;
-  template<typename ServiceProtocolClientBuilderType> class RiskClient;
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D> class ConsolidatedRiskController;
+  struct InventorySnapshot;
+  template<typename B> class RiskClient;
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D> class RiskController;
+  struct RiskDataStore;
   struct RiskParameters;
   struct RiskPositionUpdate;
   struct RiskProfitAndLossUpdate;
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-    class RiskServlet;
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D> class RiskServlet;
   class RiskSession;
   struct RiskState;
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType> class RiskStateMonitor;
-  template<typename PortfolioType, typename TimeClientType>
-    class RiskStateTracker;
+  template<typename T> class RiskStateModel;
   struct RiskStateUpdate;
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-    class RiskTransitionController;
-  template<typename OrderExecutionClientType> class RiskTransitionTracker;
+  template<typename O> class RiskTransitionModel;
+  template<typename C> class SqlRiskDataStore;
+  class TestRiskDataStore;
   class VirtualRiskClient;
-  template<typename ClientType> class WrapperRiskClient;
+  class VirtualRiskDataStore;
+  template<typename C> class WrapperRiskClient;
+  template<typename D> class WrapperRiskDataStore;
 
-  // Standard name for the risk service.
+  /** Standard name for the risk service. */
   inline const std::string SERVICE_NAME = "risk_service";
 }
 

@@ -1,9 +1,12 @@
 #ifndef SPIRE_INTEGER_SPIN_BOX_HPP
 #define SPIRE_INTEGER_SPIN_BOX_HPP
 #include <QAbstractSpinBox>
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using IntegerSpinBoxModel = SpinBoxModel<std::int64_t>;
 
   //! Represents a widget for displaying and modifying integers.
   class IntegerSpinBox : public QAbstractSpinBox {
@@ -17,23 +20,11 @@ namespace Spire {
 
       //! Constructs an IntegerSpinBox.
       /*!
-        \param value The initial value to display.
+        \param model The input's model.
         \param parent The parent widget.
       */
-      explicit IntegerSpinBox(std::int64_t value,
+      explicit IntegerSpinBox(std::shared_ptr<IntegerSpinBoxModel> model,
         QWidget* parent = nullptr);
-
-      //! Sets the minimum accepted value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(std::int64_t minimum);
-
-      //! Sets the maximum accepted value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(std::int64_t maximum);
 
       //! Returns the last submitted value.
       std::int64_t get_value() const;
@@ -50,6 +41,7 @@ namespace Spire {
 
     private:
       mutable ChangeSignal m_change_signal;
+      std::shared_ptr<IntegerSpinBoxModel> m_model;
       RealSpinBox* m_spin_box;
   };
 }

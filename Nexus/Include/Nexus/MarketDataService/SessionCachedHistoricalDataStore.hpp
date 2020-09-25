@@ -26,9 +26,8 @@ namespace Nexus::MarketDataService {
        * @param dataStore Initializes the data store to commit data to.
        * @param blockSize The size of a single cache block.
        */
-      template<typename HistoricalDataStoreForward>
-      SessionCachedHistoricalDataStore(HistoricalDataStoreForward&& dataStore,
-        int blockSize);
+      template<typename DF>
+      SessionCachedHistoricalDataStore(DF&& dataStore, int blockSize);
 
       ~SessionCachedHistoricalDataStore();
 
@@ -74,8 +73,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -89,16 +86,13 @@ namespace Nexus::MarketDataService {
       DataStore<MarketQuote> m_marketQuoteDataStore;
       DataStore<TimeAndSale> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
-  template<typename HistoricalDataStoreForward>
+  template<typename DF>
   SessionCachedHistoricalDataStore<D>::SessionCachedHistoricalDataStore(
-    HistoricalDataStoreForward&& dataStore,
-    int blockSize)
-    : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
+    DF&& dataStore, int blockSize)
+    : m_dataStore(std::forward<DF>(dataStore)),
       m_bboQuoteDataStore(&*m_dataStore, blockSize / 10),
       m_bookQuoteDataStore(&*m_dataStore, blockSize / 10),
       m_marketQuoteDataStore(&*m_dataStore, blockSize / 10),
@@ -217,39 +211,16 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  void SessionCachedHistoricalDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_bboQuoteDataStore.Open();
-      m_bookQuoteDataStore.Open();
-      m_marketQuoteDataStore.Open();
-      m_timeAndSaleDataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename D>
   void SessionCachedHistoricalDataStore<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void SessionCachedHistoricalDataStore<D>::Shutdown() {
     m_timeAndSaleDataStore.Close();
     m_marketQuoteDataStore.Close();
     m_bookQuoteDataStore.Close();
     m_bboQuoteDataStore.Close();
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

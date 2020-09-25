@@ -45,8 +45,6 @@ namespace Nexus::Compliance {
         const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -118,12 +116,6 @@ namespace Nexus::Compliance {
     auto release = Beam::Python::GilRelease();
     return m_client->MonitorComplianceRuleEntries(directoryEntry, queue,
       snapshot);
-  }
-
-  template<typename C>
-  void ToPythonComplianceClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
-#include <Beam/Queues/MultiQueueWriter.hpp>
+#include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -27,7 +27,7 @@ namespace Nexus::WebPortal {
         Beam::ServiceLocator::DirectoryEntry m_account;
 
         /** The Entry's Inventory. */
-        RiskService::RiskPortfolioInventory m_inventory;
+        RiskService::RiskInventory m_inventory;
 
         /** The position's unrealized profit and loss. */
         boost::optional<Money> m_unrealizedProfitAndLoss;
@@ -61,8 +61,6 @@ namespace Nexus::WebPortal {
       /** Returns the Publisher updating the position Entries. */
       const Beam::Publisher<Entry>& GetPublisher() const;
 
-      void Open();
-
       void Close();
 
     private:
@@ -71,12 +69,12 @@ namespace Nexus::WebPortal {
         m_entries;
       std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>
         m_securityToEntries;
-      Beam::MultiQueueWriter<Entry> m_publisher;
+      Beam::QueueWriterPublisher<Entry> m_publisher;
       std::unordered_map<Security, Accounting::SecurityValuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
       void OnRiskPortfolioInventoryUpdate(
-        const RiskService::RiskPortfolioInventoryEntry& inventory);
+        const RiskService::RiskInventoryEntry& inventory);
       void OnBboQuote(const Security& security,
         Accounting::SecurityValuation& valuation, const BboQuote& quote);
   };

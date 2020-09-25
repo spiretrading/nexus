@@ -19,7 +19,7 @@ build_function() {
     mkdir -p "$location"
   fi
   pushd "$location"
-  "$directory/$location/build.sh" -DD="$root/Nexus/Dependencies" "${@:1:$#-1}"
+  "$directory/$location/build.sh" -DD="$root/Nexus/Dependencies" "${@:1:$#-1}" 2>&1
   popd
 }
 
@@ -37,12 +37,13 @@ targets+=" Applications/MarketDataRelayServer"
 targets+=" Applications/MarketDataServer"
 targets+=" Applications/ReplayMarketDataFeedClient"
 targets+=" Applications/RiskServer"
+targets+=" Applications/Scratch"
 targets+=" Applications/SimulationMarketDataFeedClient"
 targets+=" Applications/SimulationOrderExecutionServer"
-targets+=" Applications/WebPortal"
 targets+=" Applications/WebPortal/WebApp"
+targets+=" Applications/WebPortal"
 
-cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
+cores="`grep -c "processor" < /proc/cpuinfo` - 2"
 mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"
 jobs="$(($cores<$mem?$cores:$mem))"
 parallel -j$jobs --no-notice build_function "$@" ::: $targets

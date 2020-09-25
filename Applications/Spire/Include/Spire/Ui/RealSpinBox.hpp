@@ -1,12 +1,11 @@
 #ifndef SPIRE_REAL_SPIN_BOX_HPP
 #define SPIRE_REAL_SPIN_BOX_HPP
-#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional.hpp>
 #include <QAbstractSpinBox>
 #include <QLocale>
 #include <QRegularExpression>
 #include <QStyle>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/RealSpinBoxModel.hpp"
 
 namespace Spire {
 
@@ -14,14 +13,11 @@ namespace Spire {
   class RealSpinBox : public QAbstractSpinBox {
     public:
 
+      //! Numeric type used by the spin box.
+      using Real = RealSpinBoxModel::Real;
+
       //! The maximum number of decimal places that can be input.
       static const auto MAXIMUM_DECIMAL_PLACES = 6;
-
-      //! The precision of the spin box's floating point type.
-      static constexpr auto PRECISION = 15;
-
-      //! Numeric type used by the widget.
-      using Real = boost::multiprecision::cpp_dec_float<PRECISION>;
 
       //! Signal type for value changes.
       /*!
@@ -34,7 +30,8 @@ namespace Spire {
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit RealSpinBox(Real value, QWidget* parent = nullptr);
+      explicit RealSpinBox(std::shared_ptr<RealSpinBoxModel> model,
+        QWidget* parent = nullptr);
 
       //! Sets the number of decimal places that can be input, up to
       //! MAXIMUM_DECIMAL_PLACES.
@@ -50,28 +47,11 @@ namespace Spire {
       */
       void set_minimum_decimal_places(int decimals);
 
-      //! Sets the minimum accepted value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(Real minimum);
-
-      //! Sets the maximum accepted value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(Real maximum);
-
-      //! Sets the value to increment/decrement by when stepping up or down.
-      /*!
-        \param step The increment/decrement value.
-      */
-      void set_step(Real step);
-
       //! Returns the last submitted value.
       Real get_value() const;
 
-      //! Sets the current displayed value.
+      //! Sets the current displayed value iff the given value is a valid
+      //! number.
       /*!
         \param value The current value.
       */
@@ -101,13 +81,11 @@ namespace Spire {
 
     private:
       mutable ChangeSignal m_change_signal;
+      std::shared_ptr<RealSpinBoxModel> m_model;
       QRegularExpression m_real_regex;
       QLocale m_locale;
-      Real m_minimum;
-      Real m_maximum;
       int m_decimals;
       int m_minimum_decimals;
-      Real m_step;
       Real m_last_valid_value;
       QString m_last_valid_text;
       bool m_has_first_click;
@@ -116,6 +94,7 @@ namespace Spire {
 
       void add_step(int step);
       void add_step(int step, Qt::KeyboardModifiers modifiers);
+      void assign_value(Real& variable, Real value);
       QString display_string(Real value);
       QStyle::SubControl get_current_control(const QPoint& mouse_pos);
       boost::optional<Real> get_value(const QString& text) const;

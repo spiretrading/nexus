@@ -16,11 +16,10 @@ namespace Spire {
 
       //! Constructs an empty model.
       /*!
-        \param s The security to model.
+        \param security The security to model.
         \param timer_thread_pool The timer pool used to simulating load times.
       */
-      PeriodicTimeAndSalesModel(Nexus::Security s,
-        Beam::Threading::TimerThreadPool& timer_thread_pool);
+      PeriodicTimeAndSalesModel(Nexus::Security security);
 
       //! Returns the price of new time and sales.
       Nexus::Money get_price() const;
@@ -63,7 +62,6 @@ namespace Spire {
       mutable TimeAndSaleSignal m_time_and_sale_signal;
       mutable VolumeSignal m_volume_signal;
       Nexus::Security m_security;
-      Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       Nexus::Money m_price;
       TimeAndSalesProperties::PriceRange m_price_range;
       boost::posix_time::time_duration m_load_duration;

@@ -4,14 +4,13 @@
 
 namespace Nexus::ChartingService {
   class ApplicationChartingClient;
-  template<typename ServiceProtocolClientBuilderType> class ChartingClient;
-  template<typename ContainerType, typename MarketDataClientType>
-    class ChartingServlet;
+  template<typename B> class ChartingClient;
+  template<typename C, typename M> class ChartingServlet;
   class SecurityChartingQuery;
   class VirtualChartingClient;
-  template<typename ClientType> class WrapperChartingClient;
+  template<typename C> class WrapperChartingClient;
 
-  // Standard name for the charting service.
+  /** Standard name for the charting service. */
   inline const std::string SERVICE_NAME = "charting_service";
 }
 

@@ -44,22 +44,8 @@ std::vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
   return slots;
 }
 
-void ComplianceWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
-}
-
 void ComplianceWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void ComplianceWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse ComplianceWebServlet::OnLoadDirectoryEntryComplianceRuleEntry(

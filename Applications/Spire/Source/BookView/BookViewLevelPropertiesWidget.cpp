@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
@@ -89,10 +90,9 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   number_of_bands_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
-  auto number_of_bands_spin_box = new IntegerSpinBox(0, this);
-  number_of_bands_spin_box->set_minimum(1);
-  number_of_bands_spin_box->set_maximum(INT_MAX);
-  number_of_bands_spin_box->set_value(static_cast<int>(bg_colors.size()));
+  auto number_of_bands_spin_box = new IntegerSpinBox(
+    std::make_shared<IntegerSpinBoxModel>(bg_colors.size(), 1,
+      std::numeric_limits<int>::max(), 1), this);
   number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());
   number_of_bands_spin_box->connect_change_signal([=] (auto value) {
     on_number_of_bands_spin_box_changed(static_cast<int>(value));

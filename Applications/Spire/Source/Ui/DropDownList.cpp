@@ -6,6 +6,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -69,6 +70,7 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
       }
       break;
     case Qt::Key_Enter:
+    case Qt::Key_Return:
       if(m_highlight_index) {
         on_item_selected(get_item(*m_highlight_index)->get_value(),
           *m_highlight_index);
@@ -135,6 +137,9 @@ void DropDownList::remove_item(int index) {
   m_item_selected_connections.Disconnect(layout_item->widget());
   delete layout_item->widget();
   delete layout_item;
+  if(index == m_highlight_index) {
+    m_highlight_index = none;
+  }
   update_height();
 }
 
@@ -167,6 +172,7 @@ void DropDownList::set_items(const std::vector<DropDownItem*>& items) {
     static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
     m_highlight_index = 0;
   } else {
+    m_highlight_index = none;
     hide();
   }
 }
@@ -209,6 +215,13 @@ void DropDownList::activate_previous() {
     return index;
   }();
   set_highlight(previous_index);
+}
+
+void DropDownList::clear_active_item() {
+  if(m_highlight_index) {
+    get_item(*m_highlight_index)->reset_highlight();
+    m_highlight_index = none;
+  }
 }
 
 void DropDownList::set_highlight(int index) {

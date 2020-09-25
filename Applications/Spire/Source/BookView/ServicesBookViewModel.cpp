@@ -80,39 +80,44 @@ QtPromise<void> ServicesBookViewModel::load() {
     [=] (const auto& value) { on_close(value); });
   auto loader = m_loader;
   auto definitions = m_definitions;
-  return QtPromise([=, clients = m_clients] {
-    loader->Call(
-      [&] {
-        auto query = BuildCurrentQuery(security);
-        query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-        clients->GetMarketDataClient().QueryBboQuotes(query, bbo_slot);
-        QueryRealTimeBookQuotesWithSnapshot(clients->GetMarketDataClient(),
-          security, book_quote_slot, InterruptionPolicy::BREAK_QUERY);
-        QueryRealTimeMarketQuotesWithSnapshot(clients->GetMarketDataClient(),
-          security, market_quote_slot, InterruptionPolicy::BREAK_QUERY);
-        QueryDailyVolume(clients->GetChartingClient(), security,
-          clients->GetTimeClient().GetTime(), pos_infin,
-          definitions.get_market_database(),
-          definitions.get_time_zone_database(), volume_slot);
-        QueryDailyHigh(clients->GetChartingClient(), security,
-          clients->GetTimeClient().GetTime(), pos_infin,
-          definitions.get_market_database(),
-          definitions.get_time_zone_database(), high_slot);
-        QueryDailyLow(clients->GetChartingClient(), security,
-          clients->GetTimeClient().GetTime(), pos_infin,
-          definitions.get_market_database(),
-          definitions.get_time_zone_database(), low_slot);
-        QueryOpen(clients->GetMarketDataClient(), security,
-          clients->GetTimeClient().GetTime(), definitions.get_market_database(),
-          definitions.get_time_zone_database(), "", open_slot);
-        auto close = LoadPreviousClose(clients->GetMarketDataClient(), security,
-          clients->GetTimeClient().GetTime(),
-          definitions.get_market_database(),
-          definitions.get_time_zone_database(), "");
-        if(close.is_initialized()) {
-          close_slot->Push(*close);
-        }
-      });
+  return QtPromise([=, clients = m_clients, bbo_slot = std::move(bbo_slot),
+      book_quote_slot = std::move(book_quote_slot),
+      market_quote_slot = std::move(market_quote_slot),
+      volume_slot = std::move(volume_slot), high_slot = std::move(high_slot),
+      low_slot = std::move(low_slot), open_slot = std::move(open_slot),
+      close_slot = std::move(close_slot)] () mutable {
+    loader->Call([&] {
+      auto query = BuildCurrentQuery(security);
+      query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
+      clients->GetMarketDataClient().QueryBboQuotes(query, std::move(bbo_slot));
+      QueryRealTimeBookQuotesWithSnapshot(clients->GetMarketDataClient(),
+        security, std::move(book_quote_slot), InterruptionPolicy::BREAK_QUERY);
+      QueryRealTimeMarketQuotesWithSnapshot(clients->GetMarketDataClient(),
+        security, std::move(market_quote_slot),
+        InterruptionPolicy::BREAK_QUERY);
+      QueryDailyVolume(clients->GetChartingClient(), security,
+        clients->GetTimeClient().GetTime(), pos_infin,
+        definitions.get_market_database(),
+        definitions.get_time_zone_database(), std::move(volume_slot));
+      QueryDailyHigh(clients->GetChartingClient(), security,
+        clients->GetTimeClient().GetTime(), pos_infin,
+        definitions.get_market_database(),
+        definitions.get_time_zone_database(), std::move(high_slot));
+      QueryDailyLow(clients->GetChartingClient(), security,
+        clients->GetTimeClient().GetTime(), pos_infin,
+        definitions.get_market_database(),
+        definitions.get_time_zone_database(), std::move(low_slot));
+      QueryOpen(clients->GetMarketDataClient(), security,
+        clients->GetTimeClient().GetTime(), definitions.get_market_database(),
+        definitions.get_time_zone_database(), "", std::move(open_slot));
+      auto close = LoadPreviousClose(clients->GetMarketDataClient(), security,
+        clients->GetTimeClient().GetTime(),
+        definitions.get_market_database(),
+        definitions.get_time_zone_database(), "");
+      if(close) {
+        close_slot.Push(*close);
+      }
+    });
   }, LaunchPolicy::ASYNC);
 }
 

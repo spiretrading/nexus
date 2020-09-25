@@ -16,6 +16,7 @@ CALL:build create_account_page_tester %*
 CALL:build dashboard_page_tester %*
 CALL:build entitlements_page_tester %*
 CALL:build group_info_page_tester %*
+CALL:build group_page_tester %*
 CALL:build loading_page_tester %*
 CALL:build login_page_tester %*
 CALL:build page_not_found_page_tester %*
@@ -30,6 +31,6 @@ IF NOT EXIST "%~1" (
   MD "%~1"
 )
 PUSHD "%~1"
-CALL "%~dp0%~1\build.bat" -DD="%ROOT%\Nexus\Dependencies" %~2 %~3 %~4 %~5 %~6 %~7
+CALL "%~dp0%~1\build.bat" -DD="%ROOT%\..\library\Dependencies" %~2 %~3 %~4 %~5 %~6 %~7
 POPD
 EXIT /B 0

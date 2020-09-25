@@ -26,7 +26,7 @@ namespace Nexus::MarketDataService {
 
       ~ToPythonMarketDataFeedClient() override;
 
-      void Add(const SecurityInfo& securityInfo);
+      void Add(const SecurityInfo& securityInfo) override;
 
       void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance)
         override;
@@ -56,8 +56,6 @@ namespace Nexus::MarketDataService {
 
       void PublishTimeAndSale(
         const SecurityTimeAndSale& timeAndSale) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -164,12 +162,6 @@ namespace Nexus::MarketDataService {
       const SecurityTimeAndSale& timeAndSale) {
     auto release = Beam::Python::GilRelease();
     m_client->PublishTimeAndSale(timeAndSale);
-  }
-
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

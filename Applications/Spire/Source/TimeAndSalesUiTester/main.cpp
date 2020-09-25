@@ -1,4 +1,3 @@
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <QApplication>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -18,8 +17,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  TimerThreadPool timer_thread_pool;
-  LocalSecurityInputModel model;
+  auto model = LocalSecurityInputModel();
   model.add(SecurityInfo(
     Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
     "Microsoft Corp", "Software", 100));
@@ -43,8 +41,7 @@ int main(int argc, char** argv) {
     "Morgan Stanley", "Finance", 100));
   auto test_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
     Ref(model));
-  auto tester = new TimeAndSalesTestControllerWindow(test_window,
-    timer_thread_pool);
+  auto tester = new TimeAndSalesTestControllerWindow(test_window);
   test_window->show();
   tester->show();
   tester->move(test_window->pos().x() + test_window->width() + 100,

@@ -6,6 +6,7 @@
 #include <QWidget>
 #include "Spire/Toolbar/RecentlyClosedModel.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -42,9 +43,6 @@ namespace Spire {
       boost::signals2::connection connect_reopen_signal(
         const ReopenSignal::slot_type& slot) const;
 
-    protected:
-      void keyPressEvent(QKeyEvent* event) override;
-
     private:
       mutable OpenSignal m_open_signal;
       mutable ReopenSignal m_reopen_signal;
@@ -52,7 +50,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_entry_added_connection;
       boost::signals2::scoped_connection m_entry_removed_connection;
       std::vector<RecentlyClosedModel::Entry> m_entries;
-      ToolbarMenu* m_window_manager_button;
+      StaticDropDownMenu* m_window_manager_button;
       ToolbarMenu* m_recently_closed_button;
       IconButton* m_account_button;
       IconButton* m_key_bindings_button;

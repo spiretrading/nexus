@@ -32,7 +32,7 @@ namespace Details {
       auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(392);
       entry.m_code = "JPY";
-      entry.m_sign = "¥";
+      entry.m_sign = u8"\u00A5";
       database.Add(entry);
     }
     {
@@ -46,7 +46,7 @@ namespace Details {
       auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(1001);
       entry.m_code = "XBT";
-      entry.m_sign = "B";
+      entry.m_sign = u8"\u20BF";
       database.Add(entry);
     }
     return database;
@@ -59,6 +59,15 @@ namespace Details {
   inline const CurrencyDatabase& GetDefaultCurrencyDatabase() {
     static auto database = Details::BuildDefaultCurrencyDatabase();
     return database;
+  }
+
+  /**
+   * Parses a CurrencyId from a string.
+   * @param source The string to parse.
+   * @return The CurrencyId represented by the <i>source</i>.
+   */
+  inline CurrencyId ParseCurrency(const std::string& source) {
+    return ParseCurrency(source, GetDefaultCurrencyDatabase());
   }
 
   namespace DefaultCurrencies {

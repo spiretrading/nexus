@@ -38,8 +38,6 @@ namespace Nexus::Compliance {
 
       void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-      void Open();
-
       void Close();
 
     private:
@@ -146,18 +144,8 @@ namespace Nexus::Compliance {
   inline void LocalComplianceRuleDataStore::Store(
     const ComplianceRuleViolationRecord& violationRecord) {}
 
-  inline void LocalComplianceRuleDataStore::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
-  }
-
   inline void LocalComplianceRuleDataStore::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

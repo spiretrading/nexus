@@ -27,7 +27,8 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_display_text(display_text),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
-        scale(6, 4))) {
+        scale(6, 4))),
+      m_is_next_activated(true) {
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
     m_current_item = items.front();
@@ -72,6 +73,10 @@ QVariant StaticDropDownMenu::get_current_item() const {
   return m_current_item;
 }
 
+void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
+  m_is_next_activated = is_next_activated;
+}
+
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
@@ -80,8 +85,16 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
         m_last_activated_item = QVariant();
       }
       on_key_press(e);
-    } else if(event->type() == QEvent::Show && m_entered_text.isEmpty()) {
-      m_menu_list->set_highlight(m_item_delegate.displayText(m_current_item));
+    } else if(event->type() == QEvent::Show) {
+      if(m_entered_text.isEmpty()) {
+        if(m_is_next_activated) {
+          m_menu_list->set_highlight(m_item_delegate.displayText(
+            m_current_item));
+        } else {
+          m_menu_list->clear_active_item();
+          m_menu_list->activate_next();
+        }
+      }
     } else if(event->type() == QEvent::Hide) {
       if(m_last_activated_item.isValid()) {
         on_item_selected(m_last_activated_item);
@@ -96,7 +109,9 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       } else if(e->key() == Qt::Key_Down) {
         if(!m_menu_list->isVisible()) {
           m_menu_list->show();
-          m_menu_list->activate_next();
+          if(m_is_next_activated) {
+            m_menu_list->activate_next();
+          }
           return true;
         }
       }

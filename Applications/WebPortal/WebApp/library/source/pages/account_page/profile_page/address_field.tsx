@@ -48,7 +48,7 @@ export class AddressField extends React.Component<Properties, State> {
       displayValue: this.props.addressLineOne + 
         '\n' + this.props.addressLineTwo + '\n' + this.props.addressLineThree,
       isEditing: false
-    }
+    };
   }
 
   public render(): JSX.Element {
@@ -154,11 +154,12 @@ export class AddressField extends React.Component<Properties, State> {
 
   public static readonly STYLE = {
     containerSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       font: '400 14px Roboto',
       color: '#333333',
+      overflow: 'hidden',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       lineHeight: '16px',
@@ -171,7 +172,7 @@ export class AddressField extends React.Component<Properties, State> {
       width: '100%'
     } as React.CSSProperties,
     containerMedium: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '284px',
@@ -179,6 +180,7 @@ export class AddressField extends React.Component<Properties, State> {
       borderRadius: '1px',
       font: '400 14px Roboto',
       color: '#333333',
+      overflow: 'hidden',
       lineHeight: '16px',
       paddingLeft: '10px',
       paddingTop: '7px',
@@ -186,7 +188,7 @@ export class AddressField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     containerLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '350px',
@@ -194,6 +196,7 @@ export class AddressField extends React.Component<Properties, State> {
       borderRadius: '1px',
       font: '400 14px Roboto',
       color: '#333333',
+      overflow: 'hidden',
       lineHeight: '16px',
       paddingLeft: '10px',
       paddingTop: '7px',
@@ -201,11 +204,12 @@ export class AddressField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     readonlySmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       font: '400 14px Roboto',
       color: '#333333',
+      overflow: 'hidden',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       lineHeight: '16px',
@@ -218,7 +222,7 @@ export class AddressField extends React.Component<Properties, State> {
       width: '100%'
     } as React.CSSProperties,
     readonlyMedium: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '284px',
@@ -226,6 +230,7 @@ export class AddressField extends React.Component<Properties, State> {
       borderRadius: '1px',
       font: '400 14px Roboto',
       color: '#333333',
+      overflow: 'hidden',
       lineHeight: '16px',
       paddingLeft: '10px',
       paddingTop: '7px',
@@ -233,7 +238,7 @@ export class AddressField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     readonlyLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '350px',
@@ -241,6 +246,7 @@ export class AddressField extends React.Component<Properties, State> {
       borderRadius: '1px',
       font: '400 14px Roboto',
       color: '#333333',
+      overflow: 'hidden',
       lineHeight: '16px',
       paddingLeft: '10px',
       paddingTop: '7px',
