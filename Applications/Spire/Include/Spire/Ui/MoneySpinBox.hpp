@@ -1,10 +1,13 @@
 #ifndef SPIRE_MONEY_SPIN_BOX_HPP
 #define SPIRE_MONEY_SPIN_BOX_HPP
 #include "Nexus/Definitions/Money.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
+
+  using MoneySpinBoxModel = SpinBoxModel<Nexus::Money>;
 
   //! Represents a widget for displaying and modifying Money values.
   class MoneySpinBox : public QAbstractSpinBox {
@@ -18,32 +21,11 @@ namespace Spire {
 
       //! Constructs a MoneySpinBox.
       /*!
-        \param value The initial value to display.
+        \param model The input's model.
         \param parent The parent widget.
       */
-      explicit MoneySpinBox(Nexus::Money value,
+      explicit MoneySpinBox(std::shared_ptr<MoneySpinBoxModel> model,
         QWidget* parent = nullptr);
-
-      //! Sets the minimum accepted value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(Nexus::Money minimum);
-
-      //! Sets the maximum accepted value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(Nexus::Money maximum);
-
-      //! Returns the current step value.
-      Nexus::Money get_step() const;
-
-      //! Sets the value to increment/decrement by when stepping up or down.
-      /*!
-        \param step The increment/decrement value.
-      */
-      void set_step(Nexus::Money step);
 
       //! Returns the last submitted value.
       Nexus::Money get_value() const;

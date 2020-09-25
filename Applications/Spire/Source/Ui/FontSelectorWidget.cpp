@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/SpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -87,9 +88,8 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_underline_button->connect_clicked_signal(
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
-  m_size_input = new IntegerSpinBox(0, this);
-  m_size_input->set_minimum(6);
-  m_size_input->set_maximum(72);
+  m_size_input = new IntegerSpinBox(std::make_shared<IntegerSpinBoxModel>(0, 6,
+    72, 1), this);
   m_size_input->setFixedHeight(scale_height(26));
   m_size_input->connect_change_signal([=] (auto value) {
     on_size_selected(static_cast<int>(value));

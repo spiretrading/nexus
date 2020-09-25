@@ -14,7 +14,7 @@ BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
       m_properties(properties),
       m_size(0) {
   for(auto& entry : m_model->get_market_database().GetEntries()) {
-    m_first_market_index[entry.m_code] = INT_MAX;
+    m_first_market_index[entry.m_code] = std::numeric_limits<int>::max();
   }
   auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
   for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {

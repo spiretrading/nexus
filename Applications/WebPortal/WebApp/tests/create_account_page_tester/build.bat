@@ -21,8 +21,6 @@ IF "!IS_DEPENDENCY!" == "1" (
 IF "!CONFIG!" == "" (
   SET CONFIG=Release
 )
-SET UPDATE_NODE=
-SET UPDATE_BUILD=
 IF "!CONFIG!" == "clean" (
   IF EXIST application (
     RMDIR /q /s application
@@ -66,6 +64,7 @@ SET WEB_PORTAL_PATH=Dependencies\library
 PUSHD !WEB_PORTAL_PATH!
 CALL build.bat %*
 POPD
+SET UPDATE_NODE=
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
 ) ELSE (
@@ -83,9 +82,10 @@ IF NOT EXIST node_modules (
     )
   )
 )
+SET UPDATE_BUILD=
 IF "!UPDATE_NODE!" == "1" (
   SET UPDATE_BUILD=1
-  CALL npm install
+  CALL npm install --no-package-lock
 )
 IF NOT EXIST application (
   SET UPDATE_BUILD=1

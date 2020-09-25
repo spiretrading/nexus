@@ -265,6 +265,8 @@ namespace Details {
     }
     m_executionReportTasks.Break();
     m_submissionTasks.Break();
+    m_submissionTasks.Wait();
+    m_executionReportTasks.Wait();
     m_orderExecutionDriver->Close();
     m_openState.Close();
   }

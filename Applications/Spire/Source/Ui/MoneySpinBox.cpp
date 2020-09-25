@@ -1,5 +1,6 @@
 #include "Spire/Ui/MoneySpinBox.hpp"
 #include <QHBoxLayout>
+#include "Spire/Spire/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -15,14 +16,14 @@ namespace {
   }
 }
 
-MoneySpinBox::MoneySpinBox(Money value, QWidget* parent)
+MoneySpinBox::MoneySpinBox(std::shared_ptr<SpinBoxModel<Money>> model,
+    QWidget* parent)
     : QAbstractSpinBox(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_spin_box = new RealSpinBox(to_real(value), this);
+  m_spin_box = new RealSpinBox(
+    std::make_unique<RealSpinBoxAdapterModel<Money>>(std::move(model)), this);
   m_spin_box->set_minimum_decimal_places(2);
-  // TODO: workaround for Money::CENT compiling as 0.
-  set_step(*Money::FromValue("0.01"));
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
   layout->addWidget(m_spin_box);
@@ -38,22 +39,6 @@ MoneySpinBox::MoneySpinBox(Money value, QWidget* parent)
 connection MoneySpinBox::connect_change_signal(
     const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
-}
-
-void MoneySpinBox::set_minimum(Money minimum) {
-  m_spin_box->set_minimum(to_real(minimum));
-}
-
-void MoneySpinBox::set_maximum(Money maximum) {
-  m_spin_box->set_maximum(to_real(maximum));
-}
-
-Money MoneySpinBox::get_step() const {
-  return to_money(m_spin_box->get_step());
-}
-
-void MoneySpinBox::set_step(Money step) {
-  m_spin_box->set_step(to_real(step));
 }
 
 Money MoneySpinBox::get_value() const {

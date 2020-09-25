@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QStyleOption>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -62,22 +63,22 @@ namespace {
   }
 }
 
-RealSpinBox::RealSpinBox(Real value, QWidget* parent)
+RealSpinBox::RealSpinBox(std::shared_ptr<RealSpinBoxModel> model,
+    QWidget* parent)
     : QAbstractSpinBox(parent),
+      m_model(std::move(model)),
       m_minimum_decimals(0),
-      m_minimum(std::numeric_limits<Real>::lowest()),
-      m_maximum(std::numeric_limits<Real>::max()),
-      m_step(1),
       m_has_first_click(false),
       m_up_arrow_timer_id(-1),
       m_down_arrow_timer_id(-1) {
-  set_value(value);
+  set_value(m_model->get_initial());
   connect(lineEdit(), &QLineEdit::textChanged, this,
     &RealSpinBox::on_text_changed);
   setContextMenuPolicy(Qt::NoContextMenu);
   lineEdit()->setText(display_string(m_last_valid_value));
   set_decimal_places(MAXIMUM_DECIMAL_PLACES);
   lineEdit()->installEventFilter(this);
+  update_stylesheet();
 }
 
 void RealSpinBox::changeEvent(QEvent* event) {
@@ -116,7 +117,8 @@ void RealSpinBox::focusOutEvent(QFocusEvent* event) {
 }
 
 void RealSpinBox::keyPressEvent(QKeyEvent* event) {
-  if(event->modifiers().testFlag(Qt::ControlModifier)) {
+  if(event->modifiers().testFlag(Qt::ControlModifier) &&
+        event->key() != Qt::Key_Up && event->key() != Qt::Key_Down) {
     QAbstractSpinBox::keyPressEvent(event);
     return;
   }
@@ -226,32 +228,6 @@ void RealSpinBox::set_minimum_decimal_places(int decimals) {
   lineEdit()->setText(display_string(m_last_valid_value));
 }
 
-void RealSpinBox::set_minimum(Real minimum) {
-  assign_value(m_minimum, minimum);
-  if(auto value = get_value(text()); value && value->compare(m_minimum) < 0) {
-    m_last_valid_value = m_minimum;
-    lineEdit()->setText(display_string(m_minimum));
-  }
-  update_stylesheet();
-}
-
-void RealSpinBox::set_maximum(Real maximum) {
-  assign_value(m_maximum, maximum);
-  if(auto value = get_value(text()); value && value->compare(m_maximum) > 0) {
-    m_last_valid_value = m_maximum;
-    lineEdit()->setText(display_string(m_maximum));
-  }
-  update_stylesheet();
-}
-
-RealSpinBox::Real RealSpinBox::get_step() const {
-  return m_step;
-}
-
-void RealSpinBox::set_step(Real step) {
-  assign_value(m_step, step);
-}
-
 RealSpinBox::Real RealSpinBox::get_value() const {
   return m_last_valid_value;
 }
@@ -259,7 +235,8 @@ RealSpinBox::Real RealSpinBox::get_value() const {
 void RealSpinBox::set_value(Real value) {
   blockSignals(true);
   assign_value(m_last_valid_value, value);
-  m_last_valid_value = clamp(m_last_valid_value, m_minimum, m_maximum);
+  m_last_valid_value = clamp(m_last_valid_value, m_model->get_minimum(),
+    m_model->get_maximum());
   lineEdit()->setText(display_string(m_last_valid_value));
   blockSignals(false);
 }
@@ -278,17 +255,14 @@ void RealSpinBox::add_step(int step) {
 }
 
 void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
-  if(modifiers == Qt::ShiftModifier) {
-    step *= SHIFT_STEPS;
-  }
   auto value = get_value(text());
   if(text().isEmpty() || !value) {
     value = get_value("0");
   }
-  auto stepped_value = m_step;
+  auto stepped_value = m_model->get_increment(modifiers);
   stepped_value *= step;
   *value += stepped_value;
-  value = clamp(*value, m_minimum, m_maximum);
+  value = clamp(*value, m_model->get_minimum(), m_model->get_maximum());
   lineEdit()->setText(display_string(*value));
   lineEdit()->setCursorPosition(text().length());
 }
@@ -339,12 +313,12 @@ boost::optional<RealSpinBox::Real> RealSpinBox::get_value(
 }
 
 bool RealSpinBox::is_valid_input(const QString& text) {
-  if(m_minimum.compare(Real::zero()) != -1 &&
+  if(m_model->get_minimum().compare(Real::zero()) != -1 &&
       text.contains(m_locale.negativeSign())) {
     return false;
   }
   if(auto value = get_value(text)) {
-    if(m_maximum.compare(*value) == -1) {
+    if(m_model->get_maximum().compare(*value) == -1) {
       return false;
     }
   }
@@ -359,7 +333,8 @@ bool RealSpinBox::is_valid_value(const QString& text) {
     return true;
   }
   if(auto value = get_value(text)) {
-    return value->compare(m_minimum) >= 0 && value->compare(m_maximum) <= 0;
+    return value->compare(m_model->get_minimum()) >= 0 &&
+      value->compare(m_model->get_maximum()) <= 0;
   }
   return true;
 }
@@ -457,9 +432,9 @@ void RealSpinBox::stop_timer(int& timer_id) {
 void RealSpinBox::update_stylesheet() {
   if(auto value = get_value(text()); !value) {
     set_stylesheet(false, false);
-  } else if(value->compare(m_minimum) == 0) {
+  } else if(value->compare(m_model->get_minimum()) == 0) {
     set_stylesheet(false, true);
-  } else if(value->compare(m_maximum) == 0) {
+  } else if(value->compare(m_model->get_maximum()) == 0) {
     set_stylesheet(true, false);
   } else {
     set_stylesheet(false, false);
@@ -470,7 +445,8 @@ void RealSpinBox::on_editing_finished() {
   if(auto value = get_value(text()); text().isEmpty() || !value) {
     lineEdit()->setText(display_string(m_last_valid_value));
   } else {
-    if(value->compare(m_minimum) >= 0 && value->compare(m_maximum) <= 0) {
+    if(value->compare(m_model->get_minimum()) >= 0 &&
+        value->compare(m_model->get_maximum()) <= 0) {
       m_last_valid_value = *value;
     }
     lineEdit()->setText(display_string(m_last_valid_value));

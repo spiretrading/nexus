@@ -20,7 +20,7 @@ build_function() {
     mkdir -p "$location"
   fi
   pushd "$location"
-  "$directory/$location/build.sh" -DD="$root/library/Dependencies" "${@:1:$#-1}"
+  "$directory/$location/build.sh" -DD="$root/library/Dependencies" "${@:1:$#-1}" 2>&1
   popd
 }
 
@@ -29,8 +29,8 @@ export directory
 export root
 
 build_function "$@" "library"
+build_function "$@" "application"
 targets+=" tests"
-targets+=" application"
 
 cores=`grep -c "processor" < /proc/cpuinfo`
 jobs="$(($cores))"
