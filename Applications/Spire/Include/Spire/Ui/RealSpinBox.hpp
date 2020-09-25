@@ -13,6 +13,7 @@ namespace Spire {
   class RealSpinBox : public QAbstractSpinBox {
     public:
 
+      //! Numeric type used by the spin box.
       using Real = RealSpinBoxModel::Real;
 
       //! The maximum number of decimal places that can be input.
