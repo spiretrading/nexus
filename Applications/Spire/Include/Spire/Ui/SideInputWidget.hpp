@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       //! Signals that a Side was selected.
-      /*1
+      /*!
         \param side The selected Side.
       */
       using SideSignal = Signal<void (const Nexus::Side& side)>;
