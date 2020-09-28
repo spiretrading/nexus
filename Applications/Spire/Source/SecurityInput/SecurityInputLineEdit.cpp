@@ -91,7 +91,9 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
       //  update();
       //  return;
       //}
-      m_is_suggestion_disabled = true;
+      if(!text().isEmpty()) {
+        m_is_suggestion_disabled = true;
+      }
       if(selectionLength() > 0) {
         setText(text().remove(selectedText()));
         m_last_key = static_cast<Qt::Key>(event->key());
