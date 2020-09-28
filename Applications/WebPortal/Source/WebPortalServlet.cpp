@@ -74,39 +74,17 @@ std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
   return slots;
 }
 
-void WebPortalServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  try {
-    m_serviceLocatorServlet.Open();
-    m_definitionsServlet.Open();
-    m_administrationServlet.Open();
-    m_marketDataServlet.Open();
-    m_complianceServlet.Open();
-    m_riskServlet.Open();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
-  }
-  m_openState.SetOpen();
-}
-
 void WebPortalServlet::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
-  Shutdown();
-}
-
-void WebPortalServlet::Shutdown() {
   m_riskServlet.Close();
   m_complianceServlet.Close();
   m_marketDataServlet.Close();
   m_administrationServlet.Close();
   m_definitionsServlet.Close();
   m_serviceLocatorServlet.Close();
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse WebPortalServlet::OnIndex(const HttpRequest& request) {

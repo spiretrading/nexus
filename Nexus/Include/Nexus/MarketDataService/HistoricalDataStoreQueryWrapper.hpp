@@ -36,8 +36,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<IndexedValue>& values);
 
-      void Open();
-
       void Close();
 
     protected:
@@ -150,11 +148,6 @@ namespace Nexus::MarketDataService {
   void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Store(
       const std::vector<IndexedValue>& values) {
     return m_dataStore->Store(values);
-  }
-
-  template<typename Q, typename V, typename I, typename D>
-  void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Open() {
-    m_dataStore->Open();
   }
 
   template<typename Q, typename V, typename I, typename D>

@@ -40,9 +40,6 @@ namespace {
 
     Fixture()
       : m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
-        m_administrationServiceEnvironment(m_serviceLocatorClient) {
-      m_serviceLocatorEnvironment.Open();
-      m_administrationServiceEnvironment.Open();
-    }
+        m_administrationServiceEnvironment(m_serviceLocatorClient) {}
   };
 }

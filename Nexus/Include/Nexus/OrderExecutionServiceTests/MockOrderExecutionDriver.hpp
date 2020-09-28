@@ -24,8 +24,6 @@ namespace Tests {
       //! Constructs a MockOrderExecutionDriver.
       MockOrderExecutionDriver();
 
-      ~MockOrderExecutionDriver();
-
       //! Sets the state of any submitted Order to NEW upon submission.
       void SetOrderStatusNewOnSubmission(bool value);
 
@@ -54,8 +52,6 @@ namespace Tests {
       void Update(const OrderExecutionSession& session, OrderId orderId,
         const ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -63,17 +59,10 @@ namespace Tests {
       std::unordered_map<OrderId, std::unique_ptr<PrimitiveOrder>> m_orders;
       Beam::SequencePublisher<PrimitiveOrder*> m_publisher;
       std::unordered_map<OrderId, std::vector<ExecutionReport>> m_recoveries;
-      Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   inline MockOrderExecutionDriver::MockOrderExecutionDriver()
-      : m_setOrderStatusNewOnSubmission(false) {}
-
-  inline MockOrderExecutionDriver::~MockOrderExecutionDriver() {
-    Close();
-  }
+    : m_setOrderStatusNewOnSubmission(false) {}
 
   inline void MockOrderExecutionDriver::SetOrderStatusNewOnSubmission(
       bool value) {
@@ -166,23 +155,7 @@ namespace Tests {
       });
   }
 
-  inline void MockOrderExecutionDriver::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
-  }
-
-  inline void MockOrderExecutionDriver::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
-  }
-
-  inline void MockOrderExecutionDriver::Shutdown() {
-    m_openState.SetClosed();
-  }
+  inline void MockOrderExecutionDriver::Close() {}
 }
 }
 }

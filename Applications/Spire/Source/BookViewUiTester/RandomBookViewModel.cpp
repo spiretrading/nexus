@@ -10,11 +10,9 @@ using namespace Nexus;
 using namespace Spire;
 
 RandomBookViewModel::RandomBookViewModel(Security security,
-    Definitions definitions, time_duration load_time,
-    TimerThreadPool& timer_thread_pool)
+    Definitions definitions, time_duration load_time)
     : m_model(std::move(security), std::move(definitions)),
       m_load_time(load_time),
-      m_timer_thread_pool(&timer_thread_pool),
       m_random_engine(std::random_device()()),
       m_loader(std::make_shared<CallOnce<Mutex>>()) {
   connect(&m_timer, &QTimer::timeout, this, &RandomBookViewModel::on_timeout);
@@ -77,30 +75,28 @@ Quantity RandomBookViewModel::get_volume() const {
 
 QtPromise<void> RandomBookViewModel::load() {
   auto load_time = m_load_time;
-  auto timer_thread_pool = m_timer_thread_pool;
   auto loader = m_loader;
   return QtPromise([=] {
-    auto load_timer = LiveTimer(load_time, Ref(*timer_thread_pool));
+    auto load_timer = LiveTimer(load_time);
     load_timer.Start();
     load_timer.Wait();
-    loader->Call(
-      [&] {
-        for(auto i = 0; i < 1000; ++i) {
-          update();
-        }
-        auto bid_quote = Nexus::Quote(Money(), 100, Side::BID);
-        auto ask_quote = Nexus::Quote(Money(), 100, Side::ASK);
-        for(auto i = 0; i < 100; ++i) {
-          bid_quote.m_price = (100 * Money::ONE) - (i * Money::CENT);
-          auto market = get_random_market();
-          m_model.update(BookQuote(market.GetData(), true, market, bid_quote,
-            second_clock::universal_time()));
-          market = get_random_market();
-          ask_quote.m_price = (100 * Money::ONE) + (i * Money::CENT);
-          m_model.update(BookQuote(market.GetData(), true, market, ask_quote,
-            second_clock::universal_time()));
-        }
-      });
+    loader->Call([&] {
+      for(auto i = 0; i < 1000; ++i) {
+        update();
+      }
+      auto bid_quote = Nexus::Quote(Money(), 100, Side::BID);
+      auto ask_quote = Nexus::Quote(Money(), 100, Side::ASK);
+      for(auto i = 0; i < 100; ++i) {
+        bid_quote.m_price = (100 * Money::ONE) - (i * Money::CENT);
+        auto market = get_random_market();
+        m_model.update(BookQuote(market.GetData(), true, market, bid_quote,
+          second_clock::universal_time()));
+        market = get_random_market();
+        ask_quote.m_price = (100 * Money::ONE) + (i * Money::CENT);
+        m_model.update(BookQuote(market.GetData(), true, market, ask_quote,
+          second_clock::universal_time()));
+      }
+    });
   }, LaunchPolicy::ASYNC);
 }
 

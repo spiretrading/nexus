@@ -1,20 +1,16 @@
-#ifndef NEXUS_VIRTUALORDEREXECUTIONDATASTORE_HPP
-#define NEXUS_VIRTUALORDEREXECUTIONDATASTORE_HPP
+#ifndef NEXUS_VIRTUAL_ORDER_EXECUTION_DATA_STORE_HPP
+#define NEXUS_VIRTUAL_ORDER_EXECUTION_DATA_STORE_HPP
 #include <memory>
 #include <utility>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class VirtualOrderExecutionDataStore
-      \brief Provides a pure virtual interface to an OrderExecutionDataStore.
-   */
-  class VirtualOrderExecutionDataStore : private boost::noncopyable {
+  /** Provides a pure virtual interface to an OrderExecutionDataStore. */
+  class VirtualOrderExecutionDataStore {
     public:
       virtual ~VirtualOrderExecutionDataStore() = default;
 
@@ -29,62 +25,62 @@ namespace OrderExecutionService {
       virtual void Store(
         const SequencedAccountExecutionReport& executionReport) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
 
-      //! Constructs a VirtualOrderExecutionDataStore.
+      /** Constructs a VirtualOrderExecutionDataStore. */
       VirtualOrderExecutionDataStore() = default;
-  };
-
-  /*! \class WrapperOrderExecutionDataStore
-      \brief Wraps an OrderExecutionDataStore providing it with a virtual
-             interface.
-      \tparam DataStoreType The type of OrderExecutionDataStore to wrap.
-   */
-  template<typename DataStoreType>
-  class WrapperOrderExecutionDataStore : public VirtualOrderExecutionDataStore {
-    public:
-
-      //! The OrderExecutionDataStore to wrap.
-      using DataStore = Beam::GetTryDereferenceType<DataStoreType>;
-
-      //! Constructs a WrapperOrderExecutionDataStore.
-      /*!
-        \param dataStore The OrderExecutionDataStore to wrap.
-      */
-      template<typename OrderExecutionDataStoreForward>
-      WrapperOrderExecutionDataStore(
-        OrderExecutionDataStoreForward&& dataStore);
-
-      virtual ~WrapperOrderExecutionDataStore() override final;
-
-      virtual std::vector<SequencedOrderRecord> LoadOrderSubmissions(
-        const AccountQuery& query) override final;
-
-      virtual std::vector<SequencedExecutionReport> LoadExecutionReports(
-        const AccountQuery& query) override final;
-
-      virtual void Store(const SequencedAccountOrderInfo& orderInfo)
-        override final;
-
-      virtual void Store(
-        const SequencedAccountExecutionReport& executionReport) override final;
-
-      virtual void Open() override final;
-
-      virtual void Close() override final;
 
     private:
-      Beam::GetOptionalLocalPtr<DataStoreType> m_dataStore;
+      VirtualOrderExecutionDataStore(
+        const VirtualOrderExecutionDataStore&) = delete;
+      VirtualOrderExecutionDataStore& operator =(
+        const VirtualOrderExecutionDataStore&) = delete;
   };
 
-  //! Wraps an OrderExecutionDataStore into a VirtualOrderExecutionDataStore.
-  /*!
-    \param dataStore The data store to wrap.
-  */
+  /**
+   * Wraps an OrderExecutionDataStore providing it with a virtual interface.
+   * @param <D> The type of OrderExecutionDataStore to wrap.
+   */
+  template<typename D>
+  class WrapperOrderExecutionDataStore final :
+      public VirtualOrderExecutionDataStore {
+    public:
+
+      /** The OrderExecutionDataStore to wrap. */
+      using DataStore = Beam::GetTryDereferenceType<D>;
+
+      /**
+       * Constructs a WrapperOrderExecutionDataStore.
+       * @param dataStore The OrderExecutionDataStore to wrap.
+       */
+      template<typename DF>
+      WrapperOrderExecutionDataStore(DF&& dataStore);
+
+      ~WrapperOrderExecutionDataStore() override;
+
+      std::vector<SequencedOrderRecord> LoadOrderSubmissions(
+        const AccountQuery& query) override;
+
+      std::vector<SequencedExecutionReport> LoadExecutionReports(
+        const AccountQuery& query) override;
+
+      void Store(const SequencedAccountOrderInfo& orderInfo) override;
+
+      void Store(
+        const SequencedAccountExecutionReport& executionReport) override;
+
+      void Close() override;
+
+    private:
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
+  };
+
+  /**
+   * Wraps an OrderExecutionDataStore into a VirtualOrderExecutionDataStore.
+   * @param dataStore The data store to wrap.
+   */
   template<typename OrderExecutionDataStore>
   std::unique_ptr<VirtualOrderExecutionDataStore>
       MakeVirtualOrderExecutionDataStore(OrderExecutionDataStore&& dataStore) {
@@ -93,54 +89,47 @@ namespace OrderExecutionService {
       std::forward<OrderExecutionDataStore>(dataStore));
   }
 
-  template<typename DataStoreType>
-  template<typename OrderExecutionDataStoreForward>
-  WrapperOrderExecutionDataStore<DataStoreType>::WrapperOrderExecutionDataStore(
-      OrderExecutionDataStoreForward&& dataStore)
-      : m_dataStore{std::forward<OrderExecutionDataStoreForward>(dataStore)} {}
+  template<typename D>
+  template<typename DF>
+  WrapperOrderExecutionDataStore<D>::WrapperOrderExecutionDataStore(
+    DF&& dataStore)
+    : m_dataStore(std::forward<DF>(dataStore)) {}
 
-  template<typename DataStoreType>
-  WrapperOrderExecutionDataStore<DataStoreType>::
-      ~WrapperOrderExecutionDataStore() {
+  template<typename D>
+  WrapperOrderExecutionDataStore<D>::~WrapperOrderExecutionDataStore() {
     Close();
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<SequencedOrderRecord>
-      WrapperOrderExecutionDataStore<DataStoreType>::LoadOrderSubmissions(
+      WrapperOrderExecutionDataStore<D>::LoadOrderSubmissions(
       const AccountQuery& query) {
     return m_dataStore->LoadOrderSubmissions(query);
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<SequencedExecutionReport>
-      WrapperOrderExecutionDataStore<DataStoreType>::LoadExecutionReports(
+      WrapperOrderExecutionDataStore<D>::LoadExecutionReports(
       const AccountQuery& query) {
     return m_dataStore->LoadExecutionReports(query);
   }
 
-  template<typename DataStoreType>
-  void WrapperOrderExecutionDataStore<DataStoreType>::Store(
+  template<typename D>
+  void WrapperOrderExecutionDataStore<D>::Store(
       const SequencedAccountOrderInfo& orderInfo) {
     return m_dataStore->Store(orderInfo);
   }
 
-  template<typename DataStoreType>
-  void WrapperOrderExecutionDataStore<DataStoreType>::Store(
+  template<typename D>
+  void WrapperOrderExecutionDataStore<D>::Store(
       const SequencedAccountExecutionReport& executionReport) {
     return m_dataStore->Store(executionReport);
   }
 
-  template<typename DataStoreType>
-  void WrapperOrderExecutionDataStore<DataStoreType>::Open() {
-    m_dataStore->Open();
-  }
-
-  template<typename DataStoreType>
-  void WrapperOrderExecutionDataStore<DataStoreType>::Close() {
+  template<typename D>
+  void WrapperOrderExecutionDataStore<D>::Close() {
     m_dataStore->Close();
   }
-}
 }
 
 #endif

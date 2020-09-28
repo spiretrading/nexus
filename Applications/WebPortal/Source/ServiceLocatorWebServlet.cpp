@@ -1,5 +1,5 @@
 #include "WebPortal/ServiceLocatorWebServlet.hpp"
-#include <Beam/Utilities/Trie.hpp>
+#include <Beam/Collections/Trie.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
@@ -64,22 +64,8 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
   return slots;
 }
 
-void ServiceLocatorWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
-}
-
 void ServiceLocatorWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void ServiceLocatorWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse ServiceLocatorWebServlet::OnLogin(const HttpRequest& request) {
@@ -99,18 +85,17 @@ HttpResponse ServiceLocatorWebServlet::OnLogin(const HttpRequest& request) {
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto serviceClients = m_serviceClientsBuilder(parameters.m_username,
-    parameters.m_password);
   try {
-    serviceClients->Open();
+    auto serviceClients = m_serviceClientsBuilder(parameters.m_username,
+      parameters.m_password);
+    auto account = serviceClients->GetServiceLocatorClient().GetAccount();
+    session->SetServiceClients(std::move(serviceClients));
+    session->ShuttleResponse(account, Store(response));
+    session->SetAccount(account);
   } catch(const std::exception&) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto account = serviceClients->GetServiceLocatorClient().GetAccount();
-  session->SetServiceClients(std::move(serviceClients));
-  session->ShuttleResponse(account, Store(response));
-  session->SetAccount(account);
   return response;
 }
 

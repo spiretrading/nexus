@@ -1,4 +1,3 @@
-#include <Beam/Threading/TimerThreadPool.hpp>
 #include <QApplication>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -15,11 +14,10 @@ using namespace Spire;
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);
-  application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
+  application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Book View UI Tester"));
   initialize_resources();
-  TimerThreadPool timer_thread_pool;
-  LocalSecurityInputModel model;
+  auto model = LocalSecurityInputModel();
   model.add(SecurityInfo(
     Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
     "Microsoft Corp", "Software", 100));
@@ -43,10 +41,9 @@ int main(int argc, char** argv) {
     "Morgan Stanley", "Finance", 100));
   auto window = new BookViewWindow(BookViewProperties(), Ref(model));
   window->show();
-  auto tester = new BookViewTestControllerWindow(window, timer_thread_pool);
+  auto tester = new BookViewTestControllerWindow(window);
   tester->show();
-  tester->move(window->pos().x() + window->width() + 100,
-    tester->pos().y());
+  tester->move(window->pos().x() + window->width() + 100, tester->pos().y());
   window->activateWindow();
   application->exec();
 }

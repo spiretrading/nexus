@@ -1,12 +1,12 @@
 #ifndef NEXUS_COMPLIANCE_CLIENT_HPP
 #define NEXUS_COMPLIANCE_CLIENT_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -84,18 +84,15 @@ namespace Nexus::Compliance {
        */
       void MonitorComplianceRuleEntries(
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
-        const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
+        Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot);
-
-      void Open();
 
       void Close();
 
     private:
       struct ComplianceQueueEntry {
         Beam::Threading::Mutex m_mutex;
-        std::vector<std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>>
-          m_queues;
+        std::vector<Beam::ScopedQueueWriter<ComplianceRuleEntry>> m_queues;
         Beam::Threading::CallOnce<Beam::Threading::Mutex> m_initializer;
       };
       using ServiceProtocolClient =
@@ -104,9 +101,7 @@ namespace Nexus::Compliance {
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<ComplianceQueueEntry>> m_complianceEntryQueues;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void OnComplianceRuleEntry(ServiceProtocolClient& client,
         const ComplianceRuleEntry& entry);
   };
@@ -129,8 +124,7 @@ namespace Nexus::Compliance {
   }
 
   template<typename B>
-  std::vector<ComplianceRuleEntry>
-      ComplianceClient<B>::Load(
+  std::vector<ComplianceRuleEntry> ComplianceClient<B>::Load(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
@@ -169,7 +163,7 @@ namespace Nexus::Compliance {
   template<typename B>
   void ComplianceClient<B>::MonitorComplianceRuleEntries(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
-      const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
+      Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
     auto entry = m_complianceEntryQueues.GetOrInsert(directoryEntry,
       boost::factory<std::shared_ptr<ComplianceQueueEntry>>());
@@ -182,21 +176,7 @@ namespace Nexus::Compliance {
     auto lock = boost::lock_guard(entry->m_mutex);
     *snapshot = client->template SendRequest<
       LoadDirectoryEntryComplianceRuleEntryService>(directoryEntry);
-    entry->m_queues.push_back(queue);
-  }
-
-  template<typename B>
-  void ComplianceClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
+    entry->m_queues.push_back(std::move(queue));
   }
 
   template<typename B>
@@ -204,35 +184,28 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void ComplianceClient<B>::Shutdown() {
     m_clientHandler.Close();
-    m_tasks.Break();
-    m_complianceEntryQueues.With(
-      [&] (auto& entries) {
-        for(auto& entry : entries | boost::adaptors::map_values) {
-          for(auto& queue : entry->m_queues) {
-            queue->Break();
-          }
+    m_complianceEntryQueues.With([&] (auto& entries) {
+      for(auto& entry : entries | boost::adaptors::map_values) {
+        for(auto& queue : entry->m_queues) {
+          queue.Break();
         }
-        entries.clear();
-      });
-    m_openState.SetClosed();
+      }
+      entries.clear();
+    });
+    m_openState.Close();
   }
 
   template<typename B>
   void ComplianceClient<B>::OnComplianceRuleEntry(ServiceProtocolClient& client,
       const ComplianceRuleEntry& entry) {
     auto queues = m_complianceEntryQueues.FindValue(entry.GetDirectoryEntry());
-    if(!queues.is_initialized()) {
+    if(!queues) {
       return;
     }
     auto lock = boost::lock_guard((*queues)->m_mutex);
     for(auto& queue : (*queues)->m_queues) {
-      queue->Push(entry);
+      queue.Push(entry);
     }
   }
 }

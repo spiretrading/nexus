@@ -1,9 +1,9 @@
-#ifndef NEXUS_VIRTUALCHARTINGCLIENT_HPP
-#define NEXUS_VIRTUALCHARTINGCLIENT_HPP
+#ifndef NEXUS_VIRTUAL_CHARTING_CLIENT_HPP
+#define NEXUS_VIRTUAL_CHARTING_CLIENT_HPP
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/Queues.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/ChartingService/ChartingQueryResults.hpp"
@@ -12,75 +12,63 @@
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Queries/Queries.hpp"
 
-namespace Nexus {
-namespace ChartingService {
+namespace Nexus::ChartingService {
 
-  /*! \class VirtualChartingClient
-      \brief Provides a pure virtual interface to a ChartingClient.
-   */
+  /** Provides a pure virtual interface to a ChartingClient. */
   class VirtualChartingClient : private boost::noncopyable {
     public:
-      virtual ~VirtualChartingClient();
+      virtual ~VirtualChartingClient() = default;
 
       virtual void QuerySecurity(const SecurityChartingQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>&
-        queue) = 0;
+        Beam::ScopedQueueWriter<Queries::QueryVariant> queue) = 0;
 
       virtual TimePriceQueryResult LoadTimePriceSeries(const Security& security,
-        const boost::posix_time::ptime& startTime,
-        const boost::posix_time::ptime& endTime,
+        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
         boost::posix_time::time_duration interval) = 0;
-
-      virtual void Open() = 0;
 
       virtual void Close() = 0;
 
     protected:
 
-      //! Constructs a VirtualChartingClient.
-      VirtualChartingClient();
+      /** Constructs a VirtualChartingClient. */
+      VirtualChartingClient() = default;
   };
 
-  /*! \class WrapperChartingClient
-      \brief Wraps a ChartingClient providing it with a virtual interface.
-      \tparam ClientType The type of ChartingClient to wrap.
+  /**
+   * Wraps a ChartingClient providing it with a virtual interface.
+   * @param <C> The type of ChartingClient to wrap.
    */
-  template<typename ClientType>
+  template<typename C>
   class WrapperChartingClient : public VirtualChartingClient {
     public:
 
-      //! The ChartingClient to wrap.
-      using Client = typename Beam::TryDereferenceType<ClientType>::type;
+      /** The ChartingClient to wrap. */
+      using Client = typename Beam::TryDereferenceType<C>::type;
 
-      //! Constructs a WrapperChartingClient.
-      /*!
-        \param client The ChartingClient to wrap.
-      */
-      template<typename ChartingClientForward>
-      WrapperChartingClient(ChartingClientForward&& client);
+      /**
+       * Constructs a WrapperChartingClient.
+       * @param client The ChartingClient to wrap.
+       */
+      template<typename CF>
+      explicit WrapperChartingClient(CF&& client);
 
-      virtual ~WrapperChartingClient();
+      void QuerySecurity(const SecurityChartingQuery& query,
+        Beam::ScopedQueueWriter<Queries::QueryVariant> queue) override;
 
-      virtual void QuerySecurity(const SecurityChartingQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue);
+      TimePriceQueryResult LoadTimePriceSeries(const Security& security,
+        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
+        boost::posix_time::time_duration interval) override;
 
-      virtual TimePriceQueryResult LoadTimePriceSeries(const Security& security,
-        const boost::posix_time::ptime& startTime,
-        const boost::posix_time::ptime& endTime,
-        boost::posix_time::time_duration interval);
-
-      virtual void Open();
-
-      virtual void Close();
+      void Close() override;
 
     private:
-      typename Beam::OptionalLocalPtr<ClientType>::type m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
   };
 
-  //! Wraps a ChartingClient into a VirtualChartingClient.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps a ChartingClient into a VirtualChartingClient.
+   * @param client The client to wrap.
+   */
   template<typename ChartingClient>
   std::unique_ptr<VirtualChartingClient> MakeVirtualChartingClient(
       ChartingClient&& client) {
@@ -88,45 +76,31 @@ namespace ChartingService {
       std::forward<ChartingClient>(client));
   }
 
-  inline VirtualChartingClient::~VirtualChartingClient() {}
+  template<typename C>
+  template<typename CF>
+  WrapperChartingClient<C>::WrapperChartingClient(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
-  inline VirtualChartingClient::VirtualChartingClient() {}
-
-  template<typename ClientType>
-  template<typename ChartingClientForward>
-  WrapperChartingClient<ClientType>::WrapperChartingClient(
-      ChartingClientForward&& client)
-      : m_client(std::forward<ChartingClientForward>(client)) {}
-
-  template<typename ClientType>
-  WrapperChartingClient<ClientType>::~WrapperChartingClient() {}
-
-  template<typename ClientType>
-  void WrapperChartingClient<ClientType>::QuerySecurity(
+  template<typename C>
+  void WrapperChartingClient<C>::QuerySecurity(
       const SecurityChartingQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
-    m_client->QuerySecurity(query, queue);
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+    m_client->QuerySecurity(query, std::move(queue));
   }
 
-  template<typename ClientType>
-  TimePriceQueryResult WrapperChartingClient<ClientType>::LoadTimePriceSeries(
-      const Security& security, const boost::posix_time::ptime& startTime,
-      const boost::posix_time::ptime& endTime,
+  template<typename C>
+  TimePriceQueryResult WrapperChartingClient<C>::LoadTimePriceSeries(
+      const Security& security, boost::posix_time::ptime startTime,
+      boost::posix_time::ptime endTime,
       boost::posix_time::time_duration interval) {
     return m_client->LoadTimePriceSeries(security, startTime, endTime,
       interval);
   }
 
-  template<typename ClientType>
-  void WrapperChartingClient<ClientType>::Open() {
-    m_client->Open();
-  }
-
-  template<typename ClientType>
-  void WrapperChartingClient<ClientType>::Close() {
+  template<typename C>
+  void WrapperChartingClient<C>::Close() {
     m_client->Close();
   }
-}
 }
 
 #endif

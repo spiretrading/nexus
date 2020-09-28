@@ -47,11 +47,9 @@ namespace {
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_server.emplace(serverConnection,
         factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot());
-      m_client.emplace(Initialize("test", Ref(*serverConnection)),
+      m_client.emplace(Initialize("test", *serverConnection),
         NullAuthenticator(), &m_samplingTimer, Initialize());
-      m_server->Open();
       RegisterMarketDataFeedMessages(Store(m_server->GetSlots()));
-      m_client->Open();
     }
   };
 }

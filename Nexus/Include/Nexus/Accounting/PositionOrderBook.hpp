@@ -3,9 +3,11 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <Beam/Collections/View.hpp>
 #include <Beam/Utilities/CachedValue.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
+#include "Nexus/Accounting/Inventory.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
@@ -35,11 +37,19 @@ namespace Nexus::Accounting {
          * @param security The position's Security.
          * @param quantity The position's quantity.
          */
-        PositionEntry(const Security& security, Quantity quantity);
+        PositionEntry(Security security, Quantity quantity);
       };
 
       /** Constructs a PositionOrderBook. */
       PositionOrderBook();
+
+      /**
+       * Constructs a PositionOrderBook.
+       * @param positions The initial set of positions to populate the book
+       *        with.
+       */
+      PositionOrderBook(
+        Beam::View<const Inventory<Position<Security>>> positions);
 
       //! Returns all live Orders.
       const std::vector<const OrderExecutionService::Order*>&
@@ -96,8 +106,6 @@ namespace Nexus::Accounting {
         Quantity m_position;
         Quantity m_askOpenQuantity;
         Quantity m_bidOpenQuantity;
-
-        SecurityEntry();
       };
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
       std::unordered_map<OrderExecutionService::OrderId,
@@ -120,9 +128,9 @@ namespace Nexus::Accounting {
     return !(rhs == lhs);
   }
 
-  inline PositionOrderBook::PositionEntry::PositionEntry(
-    const Security& security, Quantity quantity)
-    : m_security(security),
+  inline PositionOrderBook::PositionEntry::PositionEntry(Security security,
+    Quantity quantity)
+    : m_security(std::move(security)),
       m_quantity(quantity) {}
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
@@ -130,11 +138,6 @@ namespace Nexus::Accounting {
     : m_order(&order),
       m_remainingQuantity(m_order->GetInfo().m_fields.m_quantity),
       m_sequenceNumber(sequenceNumber) {}
-
-  inline PositionOrderBook::SecurityEntry::SecurityEntry()
-    : m_position(0),
-      m_askOpenQuantity(0),
-      m_bidOpenQuantity(0) {}
 
   inline PositionOrderBook::PositionOrderBook()
       : m_orderSequenceNumber(0) {
@@ -201,6 +204,16 @@ namespace Nexus::Accounting {
         }
         return positions;
       });
+  }
+
+  inline PositionOrderBook::PositionOrderBook(
+      Beam::View<const Inventory<Position<Security>>> positions)
+      : PositionOrderBook() {
+    for(auto& position : positions) {
+      auto& securityEntry =
+        m_securityEntries[position.m_position.m_key.m_index];
+      securityEntry.m_position = position.m_position.m_quantity;
+    }
   }
 
   inline const std::vector<const OrderExecutionService::Order*>&

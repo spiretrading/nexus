@@ -1,13 +1,9 @@
-#ifndef NEXUS_VIRTUALSERVICECLIENTS_HPP
-#define NEXUS_VIRTUALSERVICECLIENTS_HPP
+#ifndef NEXUS_VIRTUAL_SERVICE_CLIENTS_HPP
+#define NEXUS_VIRTUAL_SERVICE_CLIENTS_HPP
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
-#include <Beam/Utilities/BeamWorkaround.hpp>
-#include <Beam/Utilities/Remote.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
@@ -18,10 +14,8 @@
 
 namespace Nexus {
 
-  /*! \class VirtualServiceClients
-      \brief Provides a pure virtual interface to the set of ServiceClients.
-   */
-  class VirtualServiceClients : private boost::noncopyable {
+  /** Provides a pure virtual interface to the set of ServiceClients. */
+  class VirtualServiceClients {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::VirtualServiceLocatorClient;
@@ -73,277 +67,184 @@ namespace Nexus {
       virtual std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
 
-      //! Constructs a VirtualServiceClients.
+      /** Constructs a VirtualServiceClients. */
       VirtualServiceClients() = default;
-  };
-
-  /*! \class WrapperServiceClients
-      \brief Wraps ServiceClients providing it with a virtual interface.
-      \tparam ClientType The type of ServiceClients to wrap.
-   */
-  template<typename ClientType>
-  class WrapperServiceClients : public VirtualServiceClients {
-    public:
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      using RegistryClient = Beam::RegistryService::VirtualRegistryClient;
-
-      using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
-
-      using DefinitionsClient = DefinitionsService::VirtualDefinitionsClient;
-
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
-
-      using ChartingClient = ChartingService::VirtualChartingClient;
-
-      using ComplianceClient = Compliance::VirtualComplianceClient;
-
-      using OrderExecutionClient =
-        OrderExecutionService::VirtualOrderExecutionClient;
-
-      using RiskClient = RiskService::VirtualRiskClient;
-
-      using TimeClient = Beam::TimeService::VirtualTimeClient;
-
-      using Timer = Beam::Threading::VirtualTimer;
-
-      //! The ServiceClients to wrap.
-      using Client = Beam::GetTryDereferenceType<ClientType>;
-
-      //! Constructs a WrapperServiceClients.
-      /*!
-        \param client The ServiceClients to wrap.
-      */
-      template<typename ServiceClientsForward>
-      WrapperServiceClients(ServiceClientsForward&& client);
-
-      virtual ~WrapperServiceClients() override = default;
-
-      virtual ServiceLocatorClient& GetServiceLocatorClient() override;
-
-      virtual RegistryClient& GetRegistryClient() override;
-
-      virtual AdministrationClient& GetAdministrationClient() override;
-
-      virtual DefinitionsClient& GetDefinitionsClient() override;
-
-      virtual MarketDataClient& GetMarketDataClient() override;
-
-      virtual ChartingClient& GetChartingClient() override;
-
-      virtual ComplianceClient& GetComplianceClient() override;
-
-      virtual OrderExecutionClient& GetOrderExecutionClient() override;
-
-      virtual RiskClient& GetRiskClient() override;
-
-      virtual TimeClient& GetTimeClient() override;
-
-      virtual std::unique_ptr<Timer> BuildTimer(
-        boost::posix_time::time_duration expiry) override;
-
-      virtual void Open() override;
-
-      virtual void Close() override;
 
     private:
-      Beam::GetOptionalLocalPtr<ClientType> m_client;
-      Beam::Remote<std::unique_ptr<ServiceLocatorClient>,
-        Beam::Threading::Mutex> m_serviceLocatorClient;
-      Beam::Remote<std::unique_ptr<RegistryClient>, Beam::Threading::Mutex>
-        m_registryClient;
-      Beam::Remote<std::unique_ptr<AdministrationClient>,
-        Beam::Threading::Mutex> m_administrationClient;
-      Beam::Remote<std::unique_ptr<DefinitionsClient>, Beam::Threading::Mutex>
-        m_definitionsClient;
-      Beam::Remote<std::unique_ptr<MarketDataClient>, Beam::Threading::Mutex>
-        m_marketDataClient;
-      Beam::Remote<std::unique_ptr<ChartingClient>, Beam::Threading::Mutex>
-        m_chartingClient;
-      Beam::Remote<std::unique_ptr<ComplianceClient>, Beam::Threading::Mutex>
-        m_complianceClient;
-      Beam::Remote<std::unique_ptr<OrderExecutionClient>,
-        Beam::Threading::Mutex> m_orderExecutionClient;
-      Beam::Remote<std::unique_ptr<RiskClient>, Beam::Threading::Mutex>
-        m_riskClient;
-      Beam::Remote<std::unique_ptr<TimeClient>, Beam::Threading::Mutex>
-        m_timeClient;
+      VirtualServiceClients(const VirtualServiceClients&) = delete;
+      VirtualServiceClients& operator =(const VirtualServiceClients&) = delete;
   };
 
-  //! Wraps ServiceClients into a VirtualServiceClients.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps ServiceClients providing it with a virtual interface.
+   * @param <C> The type of ServiceClients to wrap.
+   */
+  template<typename C>
+  class WrapperServiceClients : public VirtualServiceClients {
+    public:
+
+      /** The ServiceClients to wrap. */
+      using Client = Beam::GetTryDereferenceType<C>;
+
+      /**
+       * Constructs a WrapperServiceClients.
+       * @param client The ServiceClients to wrap.
+       */
+      template<typename CF>
+      WrapperServiceClients(CF&& client);
+
+      ServiceLocatorClient& GetServiceLocatorClient() override;
+
+      RegistryClient& GetRegistryClient() override;
+
+      AdministrationClient& GetAdministrationClient() override;
+
+      DefinitionsClient& GetDefinitionsClient() override;
+
+      MarketDataClient& GetMarketDataClient() override;
+
+      ChartingClient& GetChartingClient() override;
+
+      ComplianceClient& GetComplianceClient() override;
+
+      OrderExecutionClient& GetOrderExecutionClient() override;
+
+      RiskClient& GetRiskClient() override;
+
+      TimeClient& GetTimeClient() override;
+
+      std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration expiry) override;
+
+      void Close() override;
+
+    private:
+      Beam::GetOptionalLocalPtr<C> m_client;
+      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+      std::unique_ptr<RegistryClient> m_registryClient;
+      std::unique_ptr<AdministrationClient> m_administrationClient;
+      std::unique_ptr<DefinitionsClient> m_definitionsClient;
+      std::unique_ptr<MarketDataClient> m_marketDataClient;
+      std::unique_ptr<ChartingClient> m_chartingClient;
+      std::unique_ptr<ComplianceClient> m_complianceClient;
+      std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
+      std::unique_ptr<RiskClient> m_riskClient;
+      std::unique_ptr<TimeClient> m_timeClient;
+  };
+
+  /**
+   * Wraps ServiceClients into a VirtualServiceClients.
+   * @param client The client to wrap.
+   */
   template<typename ServiceClients>
   std::unique_ptr<VirtualServiceClients> MakeVirtualServiceClients(
       ServiceClients&& client) {
-    return std::make_unique<WrapperServiceClients<ServiceClients>>(
+    return std::make_unique<WrapperServiceClients<
+      std::remove_reference_t<ServiceClients>>>(
       std::forward<ServiceClients>(client));
   }
 
-  //! Wraps ServiceClients into a VirtualServiceClients.
-  /*!
-    \param initializer Initializes the client being wrapped.
-  */
-  template<typename ServiceClients, typename... Args>
-  std::unique_ptr<VirtualServiceClients> MakeVirtualServiceClients(
-      Beam::Initializer<Args...>&& initializer) {
-    return std::make_unique<WrapperServiceClients<ServiceClients>>(
-      std::move(initializer));
-  }
-  template<typename ClientType>
-  template<typename ServiceClientsForward>
-  WrapperServiceClients<ClientType>::WrapperServiceClients(
-      ServiceClientsForward&& client)
-      BEAM_SUPPRESS_THIS_INITIALIZER()
-      : m_client{std::forward<ServiceClientsForward>(client)},
-        m_serviceLocatorClient{
-          [=] (std::optional<std::unique_ptr<ServiceLocatorClient>>& client) {
-            client.emplace(
-              Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
-              &m_client->GetServiceLocatorClient()));
-          }
-        },
-        m_registryClient{
-          [=] (std::optional<std::unique_ptr<RegistryClient>>& client) {
-            client.emplace(Beam::RegistryService::MakeVirtualRegistryClient(
-              &m_client->GetRegistryClient()));
-          }
-        },
-        m_administrationClient{
-          [=] (std::optional<std::unique_ptr<AdministrationClient>>& client) {
-            client.emplace(
-              AdministrationService::MakeVirtualAdministrationClient(
-              &m_client->GetAdministrationClient()));
-          }
-        },
-        m_definitionsClient{
-          [=] (std::optional<std::unique_ptr<DefinitionsClient>>& client) {
-            client.emplace(DefinitionsService::MakeVirtualDefinitionsClient(
-              &m_client->GetDefinitionsClient()));
-          }
-        },
-        m_marketDataClient{
-          [=] (std::optional<std::unique_ptr<MarketDataClient>>& client) {
-            client.emplace(MarketDataService::MakeVirtualMarketDataClient(
-              &m_client->GetMarketDataClient()));
-          }
-        },
-        m_chartingClient{
-          [=] (std::optional<std::unique_ptr<ChartingClient>>& client) {
-            client.emplace(ChartingService::MakeVirtualChartingClient(
-              &m_client->GetChartingClient()));
-          }
-        },
-        m_complianceClient{
-          [=] (std::optional<std::unique_ptr<ComplianceClient>>& client) {
-            client.emplace(Compliance::MakeVirtualComplianceClient(
-              &m_client->GetComplianceClient()));
-          }
-        },
-        m_orderExecutionClient{
-          [=] (std::optional<std::unique_ptr<OrderExecutionClient>>& client) {
-            client.emplace(
-              OrderExecutionService::MakeVirtualOrderExecutionClient(
-              &m_client->GetOrderExecutionClient()));
-          }
-        },
-        m_riskClient{
-          [=] (std::optional<std::unique_ptr<RiskClient>>& client) {
-            client.emplace(RiskService::MakeVirtualRiskClient(
-              &m_client->GetRiskClient()));
-          }
-        },
-        m_timeClient{
-          [=] (std::optional<std::unique_ptr<TimeClient>>& client) {
-            client.emplace(Beam::TimeService::MakeVirtualTimeClient(
-              &m_client->GetTimeClient()));
-          }
-        } {}
-      BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  template<typename C>
+  template<typename CF>
+  WrapperServiceClients<C>::WrapperServiceClients(CF&& client)
+    : m_client(std::forward<CF>(client)),
+      m_serviceLocatorClient(
+        Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
+          &m_client->GetServiceLocatorClient())),
+      m_registryClient(Beam::RegistryService::MakeVirtualRegistryClient(
+        &m_client->GetRegistryClient())),
+      m_administrationClient(
+        AdministrationService::MakeVirtualAdministrationClient(
+          &m_client->GetAdministrationClient())),
+      m_definitionsClient(DefinitionsService::MakeVirtualDefinitionsClient(
+        &m_client->GetDefinitionsClient())),
+      m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
+        &m_client->GetMarketDataClient())),
+      m_chartingClient(ChartingService::MakeVirtualChartingClient(
+        &m_client->GetChartingClient())),
+      m_complianceClient(Compliance::MakeVirtualComplianceClient(
+        &m_client->GetComplianceClient())),
+      m_orderExecutionClient(
+        OrderExecutionService::MakeVirtualOrderExecutionClient(
+          &m_client->GetOrderExecutionClient())),
+      m_riskClient(RiskService::MakeVirtualRiskClient(
+        &m_client->GetRiskClient())),
+      m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
+        &m_client->GetTimeClient())) {}
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::ServiceLocatorClient&
-      WrapperServiceClients<ClientType>::GetServiceLocatorClient() {
-    return **m_serviceLocatorClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::ServiceLocatorClient&
+      WrapperServiceClients<C>::GetServiceLocatorClient() {
+    return *m_serviceLocatorClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::RegistryClient&
-      WrapperServiceClients<ClientType>::GetRegistryClient() {
-    return **m_registryClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::RegistryClient&
+      WrapperServiceClients<C>::GetRegistryClient() {
+    return *m_registryClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::AdministrationClient&
-      WrapperServiceClients<ClientType>::GetAdministrationClient() {
-    return **m_administrationClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::AdministrationClient&
+      WrapperServiceClients<C>::GetAdministrationClient() {
+    return *m_administrationClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::DefinitionsClient&
-      WrapperServiceClients<ClientType>::GetDefinitionsClient() {
-    return **m_definitionsClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::DefinitionsClient&
+      WrapperServiceClients<C>::GetDefinitionsClient() {
+    return *m_definitionsClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::MarketDataClient&
-      WrapperServiceClients<ClientType>::GetMarketDataClient() {
-    return **m_marketDataClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::MarketDataClient&
+      WrapperServiceClients<C>::GetMarketDataClient() {
+    return *m_marketDataClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::ChartingClient&
-      WrapperServiceClients<ClientType>::GetChartingClient() {
-    return **m_chartingClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::ChartingClient&
+      WrapperServiceClients<C>::GetChartingClient() {
+    return *m_chartingClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::ComplianceClient&
-      WrapperServiceClients<ClientType>::GetComplianceClient() {
-    return **m_complianceClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::ComplianceClient&
+      WrapperServiceClients<C>::GetComplianceClient() {
+    return *m_complianceClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::OrderExecutionClient&
-      WrapperServiceClients<ClientType>::GetOrderExecutionClient() {
-    return **m_orderExecutionClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::OrderExecutionClient&
+      WrapperServiceClients<C>::GetOrderExecutionClient() {
+    return *m_orderExecutionClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::RiskClient&
-      WrapperServiceClients<ClientType>::GetRiskClient() {
-    return **m_riskClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::RiskClient&
+      WrapperServiceClients<C>::GetRiskClient() {
+    return *m_riskClient;
   }
 
-  template<typename ClientType>
-  typename WrapperServiceClients<ClientType>::TimeClient&
-      WrapperServiceClients<ClientType>::GetTimeClient() {
-    return **m_timeClient;
+  template<typename C>
+  typename WrapperServiceClients<C>::TimeClient&
+      WrapperServiceClients<C>::GetTimeClient() {
+    return *m_timeClient;
   }
 
-  template<typename ClientType>
-  std::unique_ptr<typename WrapperServiceClients<ClientType>::Timer>
-      WrapperServiceClients<ClientType>::BuildTimer(
+  template<typename C>
+  std::unique_ptr<typename WrapperServiceClients<C>::Timer>
+      WrapperServiceClients<C>::BuildTimer(
       boost::posix_time::time_duration expiry) {
     return Beam::Threading::MakeVirtualTimer(m_client->BuildTimer(expiry));
   }
 
-  template<typename ClientType>
-  void WrapperServiceClients<ClientType>::Open() {
-    m_client->Open();
-  }
-
-  template<typename ClientType>
-  void WrapperServiceClients<ClientType>::Close() {
+  template<typename C>
+  void WrapperServiceClients<C>::Close() {
     m_client->Close();
   }
 }

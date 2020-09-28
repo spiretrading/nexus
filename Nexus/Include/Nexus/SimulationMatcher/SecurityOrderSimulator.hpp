@@ -71,7 +71,7 @@ namespace Nexus::OrderExecutionService {
       Beam::RoutineTaskQueue m_tasks;
 
       void SetSessionTimestamps(boost::posix_time::ptime timestamp);
-      OrderStatus FillOrder(PrimitiveOrder& order, Money price);
+      OrderStatus Fill(PrimitiveOrder& order, Money price);
       OrderStatus UpdateOrder(PrimitiveOrder& order);
       void OnBbo(const BboQuote& bboQuote);
       void OnTimeAndSale(const TimeAndSale& timeAndSale);
@@ -88,7 +88,7 @@ namespace Nexus::OrderExecutionService {
     marketDataClient.QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
       snapshot);
     try {
-      m_bboQuote = snapshot->Top();
+      m_bboQuote = snapshot->Pop();
     } catch(const std::exception&) {
       return;
     }
@@ -194,7 +194,7 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename TimeClientType>
-  OrderStatus SecurityOrderSimulator<TimeClientType>::FillOrder(
+  OrderStatus SecurityOrderSimulator<TimeClientType>::Fill(
       PrimitiveOrder& order, Money price) {
     order.With(
       [&] (auto status, auto& reports) {
@@ -226,14 +226,14 @@ namespace Nexus::OrderExecutionService {
         if(order.GetInfo().m_fields.m_type == OrderType::MARKET) {
           auto price = Pick(side, m_bboQuote.m_bid.m_price,
             m_bboQuote.m_ask.m_price);
-          finalStatus = this->FillOrder(order, price);
+          finalStatus = this->Fill(order, price);
         } else {
           if(side == Side::BID && m_bboQuote.m_ask.m_price <=
               order.GetInfo().m_fields.m_price) {
-            finalStatus = this->FillOrder(order, m_bboQuote.m_ask.m_price);
+            finalStatus = this->Fill(order, m_bboQuote.m_ask.m_price);
           } else if(side == Side::ASK && m_bboQuote.m_bid.m_price >=
               order.GetInfo().m_fields.m_price) {
-            finalStatus = this->FillOrder(order, m_bboQuote.m_bid.m_price);
+            finalStatus = this->Fill(order, m_bboQuote.m_bid.m_price);
           }
         }
       });
@@ -273,7 +273,7 @@ namespace Nexus::OrderExecutionService {
         auto& order = **i;
         if(order.GetInfo().m_fields.m_timeInForce.GetType() ==
             TimeInForce::Type::MOC) {
-          FillOrder(order, closingPrice);
+          Fill(order, closingPrice);
           i = m_orders.erase(i);
         } else {
           ++i;

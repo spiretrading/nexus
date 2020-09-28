@@ -14,14 +14,12 @@ using namespace Spire;
 using PriceRange = TimeAndSalesProperties::PriceRange;
 
 TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(
-    TimeAndSalesWindow* window, TimerThreadPool& timer_thread_pool)
-    : m_window(window),
-      m_timer_thread_pool(&timer_thread_pool) {
+    TimeAndSalesWindow* window)
+    : m_window(window) {
   m_window->installEventFilter(this);
   m_window->connect_change_security_signal(
     [=] (const auto& s) { security_changed(s); });
-  m_model = std::make_shared<PeriodicTimeAndSalesModel>(Security(),
-    *m_timer_thread_pool);
+  m_model = std::make_shared<PeriodicTimeAndSalesModel>(Security());
   m_model->set_price(Money(Quantity(20)));
   m_model->set_price_range(PriceRange::AT_ASK);
   m_model->set_period(boost::posix_time::milliseconds(1000));
@@ -89,8 +87,7 @@ void TimeAndSalesTestControllerWindow::security_changed(
   auto price_range = m_model->get_price_range();
   auto period = m_model->get_period();
   auto load_duration = m_model->get_load_duration();
-  m_model = std::make_shared<PeriodicTimeAndSalesModel>(security,
-    *m_timer_thread_pool);
+  m_model = std::make_shared<PeriodicTimeAndSalesModel>(security);
   m_model->set_price(price);
   m_model->set_price_range(price_range);
   m_model->set_period(period);

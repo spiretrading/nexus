@@ -277,7 +277,7 @@ namespace Details {
 
 namespace Details {
   template<typename T>
-  constexpr const T CurrencyIdDefinitions<T>::NONE(0);
+  constexpr const T CurrencyIdDefinitions<T>::NONE;
 }
 }
 

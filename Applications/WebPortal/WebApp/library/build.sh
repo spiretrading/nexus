@@ -26,7 +26,7 @@ else
 fi
 if [ "$config" = "clean" ]; then
   rm -rf library
-  rm -f  mod_time.txt
+  rm -f mod_time.txt
   exit 0
 fi
 if [ "$config" = "reset" ]; then
@@ -64,7 +64,7 @@ else
 fi
 if [ "$UPDATE_NODE" = "1" ]; then
   UPDATE_BUILD=1
-  npm install
+  npm install --no-package-lock
 fi
 if [ ! -d "library" ]; then
   UPDATE_BUILD=1

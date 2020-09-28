@@ -33,14 +33,11 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    testEnvironment.Open();
-    auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
-      Initialize(Ref(testEnvironment)));
+    auto testServiceClients = MakeVirtualServiceClients(
+      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
-    backtesterEnvironment.Open();
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
-    serviceClients.Open();
     auto routines = RoutineTaskQueue();
     auto& marketDataClient = serviceClients.GetMarketDataClient();
     auto query = BuildRealTimeQuery(security);
@@ -86,14 +83,11 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    testEnvironment.Open();
-    auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
-      Initialize(Ref(testEnvironment)));
+    auto testServiceClients = MakeVirtualServiceClients(
+      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
-    backtesterEnvironment.Open();
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
-    serviceClients.Open();
     auto& marketDataClient = serviceClients.GetMarketDataClient();
     auto snapshot = std::make_shared<Queue<SequencedBboQuote>>();
     auto query = SecurityMarketDataQuery();
@@ -102,7 +96,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
     query.SetSnapshotLimit(SnapshotLimit::Unlimited());
     marketDataClient.QueryBboQuotes(query, snapshot);
     auto received = std::vector<SequencedBboQuote>();
-    FlushQueue(snapshot, std::back_inserter(received));
+    Flush(snapshot, std::back_inserter(received));
     REQUIRE(received.size() == 3);
     REQUIRE(received[0]->m_timestamp == startTime - seconds(3));
     REQUIRE(received[1]->m_timestamp == startTime - seconds(2));

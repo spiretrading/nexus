@@ -3,7 +3,7 @@
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/Queues.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -16,16 +16,16 @@ namespace Nexus::OrderExecutionService {
       virtual ~VirtualOrderExecutionClient() = default;
 
       virtual void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) = 0;
+        Beam::ScopedQueueWriter<OrderRecord> queue) = 0;
 
       virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) = 0;
+        Beam::ScopedQueueWriter<SequencedOrder> queue) = 0;
 
       virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) = 0;
+        Beam::ScopedQueueWriter<const Order*> queue) = 0;
 
       virtual void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) = 0;
+        Beam::ScopedQueueWriter<ExecutionReport> queue) = 0;
 
       virtual const Order& Submit(const OrderFields& fields) = 0;
 
@@ -34,47 +34,43 @@ namespace Nexus::OrderExecutionService {
       virtual void Update(OrderId orderId,
         const ExecutionReport& executionReport) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
 
-      //! Constructs a VirtualOrderExecutionClient.
+      /** Constructs a VirtualOrderExecutionClient. */
       VirtualOrderExecutionClient() = default;
   };
 
-  /** Wraps an OrderExecutionClient providing it with a virtual interface.
-      \tparam ClientType The type of OrderExecutionClient to wrap.
+  /**
+   * Wraps an OrderExecutionClient providing it with a virtual interface.
+   * @param <C> The type of OrderExecutionClient to wrap.
    */
-  template<typename ClientType>
+  template<typename C>
   class WrapperOrderExecutionClient : public VirtualOrderExecutionClient {
     public:
 
-      //! The OrderExecutionClient to wrap.
-      using Client = Beam::GetTryDereferenceType<ClientType>;
+      /** The OrderExecutionClient to wrap. */
+      using Client = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a WrapperOrderExecutionClient.
-      /*!
-        \param client The OrderExecutionClient to wrap.
-      */
-      template<typename OrderExecutionClientForward>
-      WrapperOrderExecutionClient(OrderExecutionClientForward&& client);
+      /**
+       * Constructs a WrapperOrderExecutionClient.
+       * @param client The OrderExecutionClient to wrap.
+       */
+      template<typename CF>
+      explicit WrapperOrderExecutionClient(CF&& client);
 
       void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) override;
+        Beam::ScopedQueueWriter<OrderRecord> queue) override;
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue)
-        override;
+        Beam::ScopedQueueWriter<SequencedOrder> queue) override;
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue)
-        override;
+        Beam::ScopedQueueWriter<const Order*> queue) override;
 
       void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
-        override;
+        Beam::ScopedQueueWriter<ExecutionReport> queue) override;
 
       const Order& Submit(const OrderFields& fields) override;
 
@@ -83,18 +79,16 @@ namespace Nexus::OrderExecutionService {
       void Update(OrderId orderId,
         const ExecutionReport& executionReport) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
-      Beam::GetOptionalLocalPtr<ClientType> m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
   };
 
-  //! Wraps an OrderExecutionClient into a VirtualOrderExecutionClient.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps an OrderExecutionClient into a VirtualOrderExecutionClient.
+   * @param client The client to wrap.
+   */
   template<typename OrderExecutionClient>
   std::unique_ptr<VirtualOrderExecutionClient> MakeVirtualOrderExecutionClient(
       OrderExecutionClient&& client) {
@@ -102,64 +96,56 @@ namespace Nexus::OrderExecutionService {
       std::forward<OrderExecutionClient>(client));
   }
 
-  template<typename ClientType>
-  template<typename OrderExecutionClientForward>
-  WrapperOrderExecutionClient<ClientType>::WrapperOrderExecutionClient(
-      OrderExecutionClientForward&& client)
-      : m_client(std::forward<OrderExecutionClientForward>(client)) {}
+  template<typename C>
+  template<typename CF>
+  WrapperOrderExecutionClient<C>::WrapperOrderExecutionClient(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::QueryOrderRecords(
-      const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) {
-    m_client->QueryOrderRecords(query, queue);
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::QueryOrderRecords(
+      const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
+    m_client->QueryOrderRecords(query, std::move(queue));
   }
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::QueryOrderSubmissions(
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::QueryOrderSubmissions(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) {
-    m_client->QueryOrderSubmissions(query, queue);
+      Beam::ScopedQueueWriter<SequencedOrder> queue) {
+    m_client->QueryOrderSubmissions(query, std::move(queue));
   }
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::QueryOrderSubmissions(
-      const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
-    m_client->QueryOrderSubmissions(query, queue);
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::QueryOrderSubmissions(
+      const AccountQuery& query, Beam::ScopedQueueWriter<const Order*> queue) {
+    m_client->QueryOrderSubmissions(query, std::move(queue));
   }
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::QueryExecutionReports(
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::QueryExecutionReports(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
-    m_client->QueryExecutionReports(query, queue);
+      Beam::ScopedQueueWriter<ExecutionReport> queue) {
+    m_client->QueryExecutionReports(query, std::move(queue));
   }
 
-  template<typename ClientType>
-  const Order& WrapperOrderExecutionClient<ClientType>::Submit(
+  template<typename C>
+  const Order& WrapperOrderExecutionClient<C>::Submit(
       const OrderFields& fields) {
     return m_client->Submit(fields);
   }
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::Cancel(const Order& order) {
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::Cancel(const Order& order) {
     m_client->Cancel(order);
   }
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::Update(OrderId orderId,
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::Update(OrderId orderId,
       const ExecutionReport& executionReport) {
     m_client->Update(orderId, executionReport);
   }
 
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::Open() {
-    m_client->Open();
-  }
-
-  template<typename ClientType>
-  void WrapperOrderExecutionClient<ClientType>::Close() {
+  template<typename C>
+  void WrapperOrderExecutionClient<C>::Close() {
     m_client->Close();
   }
 }

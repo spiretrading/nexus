@@ -15,7 +15,7 @@ namespace Nexus::AdministrationService {
     public:
 
       /** Constructs an empty LocalAdministrationDataStore. */
-      LocalAdministrationDataStore() = default;
+      LocalAdministrationDataStore();
 
       ~LocalAdministrationDataStore() override;
 
@@ -89,8 +89,6 @@ namespace Nexus::AdministrationService {
 
       void WithTransaction(const std::function<void ()>& transaction) override;
 
-      void Open() override;
-
       void Close() override;
 
       using AdministrationDataStore::WithTransaction;
@@ -126,6 +124,9 @@ namespace Nexus::AdministrationService {
         AccountModificationRequest::Id startId, int maxCount);
       void Store(const AccountModificationRequest& request);
   };
+
+  inline LocalAdministrationDataStore::LocalAdministrationDataStore()
+    : m_lastMessageId(0) {}
 
   inline LocalAdministrationDataStore::~LocalAdministrationDataStore() {
     Close();
@@ -330,19 +331,8 @@ namespace Nexus::AdministrationService {
     transaction();
   }
 
-  inline void LocalAdministrationDataStore::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_lastMessageId = 0;
-    m_openState.SetOpen();
-  }
-
   inline void LocalAdministrationDataStore::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   inline std::vector<AccountModificationRequest::Id>

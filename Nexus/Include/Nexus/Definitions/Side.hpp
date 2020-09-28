@@ -3,6 +3,7 @@
 #include <cassert>
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
+#include <Beam/Collections/EnumSet.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
@@ -16,6 +17,9 @@ namespace Nexus {
 
     /** Bid side. */
     BID);
+
+  /** Stores a bitset of Sides. */
+  using SideSet = Beam::EnumSet<Side>;
 
   /**
    * Returns a value based on a Side.

@@ -46,34 +46,34 @@ TEST_SUITE("CseFeeHandling") {
       LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
   }
 
-  TEST_CASE("sub_dollar_active") {
+  TEST_CASE("subdollar_active") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-      CseFeeTable::PriceClass::SUB_DOLLAR);
+      CseFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
       LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
   }
 
-  TEST_CASE("sub_dollar_passive") {
+  TEST_CASE("subdollar_passive") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-      CseFeeTable::PriceClass::SUB_DOLLAR);
+      CseFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
       LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
   }
 
-  TEST_CASE("sub_dime_active") {
+  TEST_CASE("subdime_active") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-      CseFeeTable::PriceClass::SUB_DIME);
+      CseFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
       LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
   }
 
-  TEST_CASE("sub_dime_passive") {
+  TEST_CASE("subdime_passive") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-      CseFeeTable::PriceClass::SUB_DIME);
+      CseFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
       LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
   }
@@ -100,7 +100,7 @@ TEST_SUITE("CseFeeHandling") {
       auto calculatedFee = CalculateFee(feeTable, executionReport);
       auto expectedFee = executionReport.m_lastQuantity *
         LookupFee(feeTable, LiquidityFlag::ACTIVE,
-        CseFeeTable::PriceClass::SUB_DIME);
+        CseFeeTable::PriceClass::SUBDIME);
       REQUIRE(calculatedFee == expectedFee);
     }
     {

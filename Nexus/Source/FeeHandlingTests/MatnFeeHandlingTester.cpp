@@ -87,14 +87,14 @@ TEST_SUITE("MatnFeeHandling") {
   TEST_CASE("active_dollar_trade") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
-      MatnFeeTable::PriceClass::SUB_FIVE_DOLLAR);
+      MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
-      MatnFeeTable::PriceClass::SUB_FIVE_DOLLAR);
+      MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestFeeCalculation(feeTable, Money::ONE, 10000, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
@@ -104,48 +104,48 @@ TEST_SUITE("MatnFeeHandling") {
   TEST_CASE("passive_dollar_trade") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
-      MatnFeeTable::PriceClass::SUB_FIVE_DOLLAR);
+      MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
-      MatnFeeTable::PriceClass::SUB_FIVE_DOLLAR);
+      MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestFeeCalculation(feeTable, Money::ONE, 10000, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
-  TEST_CASE("active_sub_dollar_trade") {
+  TEST_CASE("active_subdollar_trade") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
-      MatnFeeTable::PriceClass::SUB_DOLLAR);
+      MatnFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
-      MatnFeeTable::PriceClass::SUB_DOLLAR);
+      MatnFeeTable::PriceClass::SUBDOLLAR);
     TestFeeCalculation(feeTable, Money::CENT, 10000, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
-  TEST_CASE("passive_sub_dollar_trade") {
+  TEST_CASE("passive_subdollar_trade") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
-      MatnFeeTable::PriceClass::SUB_DOLLAR);
+      MatnFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
-      MatnFeeTable::PriceClass::SUB_DOLLAR);
+      MatnFeeTable::PriceClass::SUBDOLLAR);
     TestFeeCalculation(feeTable, Money::CENT, 10000, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
@@ -219,7 +219,7 @@ TEST_SUITE("MatnFeeHandling") {
       auto calculatedFee = CalculateFee(feeTable,
         MatnFeeTable::Classification::DEFAULT, executionReport);
       auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-        MatnFeeTable::GeneralIndex::FEE, MatnFeeTable::PriceClass::SUB_DOLLAR);
+        MatnFeeTable::GeneralIndex::FEE, MatnFeeTable::PriceClass::SUBDOLLAR);
       REQUIRE(calculatedFee == expectedFee);
     }
     {
@@ -232,7 +232,7 @@ TEST_SUITE("MatnFeeHandling") {
         MatnFeeTable::Classification::DEFAULT, executionReport);
       auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
         MatnFeeTable::GeneralIndex::FEE,
-        MatnFeeTable::PriceClass::SUB_FIVE_DOLLAR);
+        MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
       REQUIRE(calculatedFee == expectedFee);
     }
     {

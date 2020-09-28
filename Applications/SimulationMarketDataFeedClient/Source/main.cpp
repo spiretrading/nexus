@@ -18,7 +18,6 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
@@ -42,37 +41,38 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
-using namespace std;
 using namespace TCLAP;
 
 namespace {
-  using BaseMarketDataFeedClient = MarketDataFeedClient<string, LiveTimer,
+  using BaseMarketDataFeedClient = MarketDataFeedClient<std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationMarketDataFeedClient = SimulationMarketDataFeedClient<
     BaseMarketDataFeedClient, LiveNtpTimeClient*, LiveTimer, LiveTimer,
     LiveTimer>;
 
-  vector<Security> ParseSecurities(const YAML::Node& config,
+  std::vector<Security> ParseSecurities(const YAML::Node& config,
       const MarketDatabase& marketDatabase) {
-    vector<Security> securities;
+    auto securities = std::vector<Security>();
     for(auto& item : config) {
-      auto security = ParseSecurity(item.as<string>(), marketDatabase);
+      auto security = ParseSecurity(item.as<std::string>(), marketDatabase);
       securities.push_back(security);
     }
     return securities;
   }
 
-  vector<unique_ptr<ApplicationMarketDataFeedClient>> BuildMockFeedClients(
-      const YAML::Node& config, const MarketDatabase& marketDatabase,
-      const vector<IpAddress>& addresses,
+  std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>
+      BuildMockFeedClients(const YAML::Node& config,
+      const MarketDatabase& marketDatabase,
+      const std::vector<IpAddress>& addresses,
       Ref<ApplicationServiceLocatorClient> serviceLocatorClient,
-      LiveNtpTimeClient* timeClient, Ref<SocketThreadPool> socketThreadPool,
-      Ref<TimerThreadPool> timerThreadPool) {
-    vector<unique_ptr<ApplicationMarketDataFeedClient>> feedClients;
+      LiveNtpTimeClient* timeClient) {
+    auto feedClients =
+      std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
     auto securities = ParseSecurities(GetNode(config, "symbols"),
       marketDatabase);
-    auto feedCount = min<int>(Extract<int>(config, "feeds"), securities.size());
+    auto feedCount = std::min<int>(Extract<int>(config, "feeds"),
+      securities.size());
     auto securitiesPerFeed = securities.size() / feedCount;
     auto bboPeriod = Extract<time_duration>(config, "bbo_period");
     auto marketQuotePeriod = Extract<time_duration>(config,
@@ -81,7 +81,7 @@ namespace {
       "time_and_sales_period");
     auto sampling = Extract<time_duration>(config, "sampling");
     for(auto i = 0; i < feedCount; ++i) {
-      vector<Security> feedSecurities;
+      auto feedSecurities = std::vector<Security>();
       if(i < feedCount - 1) {
         feedSecurities.insert(feedSecurities.end(), securities.begin() +
           i * securitiesPerFeed, securities.begin() +
@@ -92,14 +92,11 @@ namespace {
       }
       auto applicationMarketDataFeed =
         std::make_unique<ApplicationMarketDataFeedClient>(feedSecurities,
-        marketDatabase, Initialize(Initialize(addresses, Ref(socketThreadPool)),
+        marketDatabase, Initialize(Initialize(addresses),
         SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
-          Ref(**serviceLocatorClient)),
-        Initialize(sampling, Ref(timerThreadPool)),
-        Initialize(seconds(10), Ref(timerThreadPool))), timeClient,
-        Initialize(bboPeriod, Ref(timerThreadPool)),
-        Initialize(marketQuotePeriod, Ref(timerThreadPool)),
-        Initialize(timeAndSalesPeriod, Ref(timerThreadPool)));
+          Ref(**serviceLocatorClient)), Initialize(sampling),
+        Initialize(seconds(10))), timeClient, Initialize(bboPeriod),
+        Initialize(marketQuotePeriod), Initialize(timeAndSalesPeriod));
       feedClients.push_back(std::move(applicationMarketDataFeed));
     }
     return feedClients;
@@ -107,101 +104,89 @@ namespace {
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
+  auto configFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "1.0-r" SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ',
+      "1.0-r" SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION
+      "\nCopyright (C) 2020 Spire Trading Inc.");
+    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
   } catch(const ArgException& e) {
-    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
+      std::endl;
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
+      std::endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
-    cerr << "Error logging in: " << e.what() << endl;
+    std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
-  ApplicationDefinitionsClient definitionsClient;
+  auto definitionsClient = ApplicationDefinitionsClient();
   try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    definitionsClient->Open();
+    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the definitions service." << endl;
+    std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
+  auto timeClient = std::unique_ptr<LiveNtpTimeClient>();
   try {
     auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
     if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
+      std::cerr << "No time services available." << std::endl;
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
+    auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
-    timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+    try {
+      timeClient = MakeLiveNtpTimeClient(ntpPool);
+    } catch(const std::exception&) {
+      std::cerr << "Unable to connect to the time service." << std::endl;
+      return -1;
+    }
   } catch(const std::exception& e) {
-    std::cerr << "Unable to initialize NTP client: " << e.what() << endl;
+    std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
     return -1;
   }
-  try {
-    timeClient->Open();
-  } catch(const std::exception&) {
-    cerr << "Unable to connect to the time service." << endl;
-    return -1;
-  }
-  vector<unique_ptr<ApplicationMarketDataFeedClient>> feedClients;
+  auto feedClients =
+    std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
   try {
     auto marketDataServices = serviceLocatorClient->Locate(
       MarketDataService::FEED_SERVICE_NAME);
     if(marketDataServices.empty()) {
-      cerr << "No market data services available." << endl;
+      std::cerr << "No market data services available." << std::endl;
       return -1;
     }
     auto& marketDataService = marketDataServices.front();
-    auto marketDataAddresses = Parse<vector<IpAddress>>(
-      get<string>(marketDataService.GetProperties().At("addresses")));
+    auto marketDataAddresses = Parse<std::vector<IpAddress>>(
+      get<std::string>(marketDataService.GetProperties().At("addresses")));
     feedClients = BuildMockFeedClients(config,
       definitionsClient->LoadMarketDatabase(), marketDataAddresses,
-      Ref(serviceLocatorClient), timeClient.get(), Ref(socketThreadPool),
-      Ref(timerThreadPool));
+      Ref(serviceLocatorClient), timeClient.get());
   } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " << "column " <<
-      (e.mark.column + 1) << ": " << e.msg << endl;
+    std::cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
+      "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;
     return -1;
   } catch(const std::exception& e) {
-    cerr << "Exception caught: " << diagnostic_information(e) << flush;
-    return -1;
-  }
-  try {
-    for(auto& client : feedClients) {
-      client->Open();
-    }
-  } catch(const std::exception& e) {
-    cerr << "Exception caught: " << diagnostic_information(e) << flush;
+    std::cerr << "Exception caught: " << diagnostic_information(e) <<
+      std::flush;
     return -1;
   }
   WaitForKillEvent();

@@ -52,8 +52,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     auto result = std::vector<TimeAndSalesModel::Entry>();
     try {
       while(true) {
-        auto time_and_sale = queue->Top();
-        queue->Pop();
+        auto time_and_sale = queue->Pop();
         result.push_back(Entry{std::move(time_and_sale),
           TimeAndSalesProperties::PriceRange::UNKNOWN});
       }
@@ -98,6 +97,6 @@ void ServicesTimeAndSalesModel::on_time_and_sale(
 
 void ServicesTimeAndSalesModel::on_volume(
     const Nexus::Queries::QueryVariant& volume) {
-  m_volume = boost::get<Quantity>(volume);
+  m_volume = get<Quantity>(volume);
   m_volume_signal(m_volume);
 }

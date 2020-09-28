@@ -24,8 +24,7 @@ export class LoginController extends React.Component<Properties, State> {
     this.state = {
       status: LoginPage.Status.NONE,
       errorMessage: null
-    }
-    this.onSubmit = this.onSubmit.bind(this);
+    };
   }
 
   public render(): JSX.Element {
@@ -33,7 +32,7 @@ export class LoginController extends React.Component<Properties, State> {
       errorMessage={this.state.errorMessage} onSubmit={this.onSubmit}/>;
   }
 
-  private async onSubmit(username: string, password: string) {
+  private onSubmit = async (username: string, password: string) => {
     this.setState({
       status: LoginPage.Status.LOADING,
       errorMessage: null

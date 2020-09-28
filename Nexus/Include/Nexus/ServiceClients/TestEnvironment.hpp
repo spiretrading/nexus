@@ -1,14 +1,18 @@
 #ifndef NEXUS_TEST_ENVIRONMENT_HPP
 #define NEXUS_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
-#include "Beam/Queues/AliasQueue.hpp"
-#include <Beam/Queues/ConverterWriterQueue.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <Beam/RegistryServiceTests/RegistryServiceTestEnvironment.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
+#include <Beam/TimeServiceTests/TestTimeClient.hpp>
+#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/ChartingServiceTests/ChartingServiceTestEnvironment.hpp"
+#include "Nexus/ComplianceTests/ComplianceTestEnvironment.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
@@ -16,219 +20,311 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestEnvironmentException.hpp"
 
 namespace Nexus {
 
-  /*! \class TestEnvironment
-      \brief Maintains the state needed to test a market environment.
-   */
-  class TestEnvironment : private boost::noncopyable {
+  /** Maintains the state needed to test a market environment. */
+  class TestEnvironment {
     public:
 
-      //! Constructs a TestEnvironment.
+      /** Constructs a TestEnvironment using the current system time and
+       *  an empty market datastore.
+       */
       TestEnvironment();
 
-      //! Constructs a TestEnvironment using historical market data.
-      /*!
-        \param historicalDataStore The data store to use for historical market
-               data.
-      */
+      /**
+       * Constructs a TestEnvironment using an empty market datastore.
+       * @param time The time to set the environment to.
+       */
+      TestEnvironment(boost::posix_time::ptime time);
+
+      /**
+       * Constructs a TestEnvironment using historical market data.
+       * @param historicalDataStore The data store to use for historical market
+       *        data.
+       */
       TestEnvironment(std::shared_ptr<
         MarketDataService::VirtualHistoricalDataStore> historicalDataStore);
 
+      /**
+       * Constructs a TestEnvironment.
+       * @param historicalDataStore The data store to use for historical market
+       *        data.
+       * @param time The time to set the environment to.
+       */
+      TestEnvironment(std::shared_ptr<
+        MarketDataService::VirtualHistoricalDataStore> historicalDataStore,
+        boost::posix_time::ptime time);
+
       ~TestEnvironment();
 
-      //! Sets the time.
-      /*!
-        \param time The time to set the environment to.
-      */
+      /**
+       * Sets the time.
+       * @param time The time to set the environment to.
+       */
       void SetTime(boost::posix_time::ptime time);
 
-      //! Advances the time by a certain amount.
-      /*!
-        \param duration The amount of time to advance the environment by.
-      */
+      /**
+       * Advances the time by a certain amount.
+       * @param duration The amount of time to advance the environment by.
+       */
       void AdvanceTime(boost::posix_time::time_duration duration);
 
-      //! Publishes an OrderImbalance.
-      /*!
-        \param market The market to publish to.
-        \param orderImbalance The OrderImbalance to publish.
-      */
+      /**
+       * Publishes an OrderImbalance.
+       * @param market The market to publish to.
+       * @param orderImbalance The OrderImbalance to publish.
+       */
       void Publish(MarketCode market, const OrderImbalance& orderImbalance);
 
-      //! Publishes a BboQuote.
-      /*!
-        \param security The Security to publish to.
-        \param bboQuote The BboQuote to publish.
-      */
+      /**
+       * Publishes a BboQuote.
+       * @param security The Security to publish to.
+       * @param bboQuote The BboQuote to publish.
+       */
       void Publish(const Security& security, const BboQuote& bboQuote);
 
-      //! Publishes a BookQuote.
-      /*!
-        \param security The Security to publish to.
-        \param bookQuote The BookQuote to publish.
-      */
+      /**
+       * Publishes a BookQuote.
+       * @param security The Security to publish to.
+       * @param bookQuote The BookQuote to publish.
+       */
       void Publish(const Security& security, const BookQuote& bookQuote);
 
-      //! Publishes a MarketQuote.
-      /*!
-        \param security The Security to publish to.
-        \param marketQuote The MarketQuote to publish.
-      */
+      /**
+       * Publishes a MarketQuote.
+       * @param security The Security to publish to.
+       * @param marketQuote The MarketQuote to publish.
+       */
       void Publish(const Security& security, const MarketQuote& marketQuote);
 
-      //! Publishes a TimeAndSale.
-      /*!
-        \param security The Security to publish to.
-        \param timeAndSale The TimeAndSale to publish.
-      */
+      /**
+       * Publishes a TimeAndSale.
+       * @param security The Security to publish to.
+       * @param timeAndSale The TimeAndSale to publish.
+       */
       void Publish(const Security& security, const TimeAndSale& timeAndSale);
 
-      //! Updates the price of a BboQuote.
-      /*!
-        \param security The Security to update.
-        \param bidPrice The updated bid price.
-        \param askPrice The updated ask price.
-        \param timestamp The timestamp.
-      */
+      /**
+       * Updates the price of a BboQuote.
+       * @param security The Security to update.
+       * @param bidPrice The updated bid price.
+       * @param askPrice The updated ask price.
+       * @param timestamp The timestamp.
+       */
       void UpdateBboPrice(const Security& security, Money bidPrice,
-        Money askPrice, const boost::posix_time::ptime& timestamp);
+        Money askPrice, boost::posix_time::ptime timestamp);
 
-      //! Updates the price of a BboQuote.
-      /*!
-        \param security The Security to update.
-        \param bidPrice The updated bid price.
-        \param askPrice The updated ask price.
-      */
+      /**
+       * Updates the price of a BboQuote.
+       * @param security The Security to update.
+       * @param bidPrice The updated bid price.
+       * @param askPrice The updated ask price.
+       */
       void UpdateBboPrice(const Security& security, Money bidPrice,
         Money askPrice);
 
-      //! Monitors Orders submitted to this environment.
-      /*!
-        \param queue The Queue to publish submitted Orders to.
-      */
-      void MonitorOrderSubmissions(const std::shared_ptr<
-        Beam::QueueWriter<const OrderExecutionService::Order*>>& queue);
+      /**
+       * Monitors Orders submitted to this environment.
+       * @param queue The Queue to publish submitted Orders to.
+       */
+      void MonitorOrderSubmissions(
+        Beam::ScopedQueueWriter<const OrderExecutionService::Order*> queue);
 
-      //! Updates a submitted order to OrderStatus NEW.
-      /*!
-        \param order The Order to accept.
-      */
-      void AcceptOrder(const OrderExecutionService::Order& order);
+      /**
+       * Updates a submitted order to OrderStatus NEW.
+       * @param order The Order to accept.
+       */
+      void Accept(const OrderExecutionService::Order& order);
 
-      //! Updates a submitted order to OrderStatus REJECTED.
-      /*!
-        \param order The Order to reject.
-      */
-      void RejectOrder(const OrderExecutionService::Order& order);
+      /**
+       * Updates a submitted order to OrderStatus REJECTED.
+       * @param order The Order to reject.
+       */
+      void Reject(const OrderExecutionService::Order& order);
 
-      //! Updates a submitted order to OrderStatus CANCELED.
-      /*!
-        \param order The Order to reject.
-      */
-      void CancelOrder(const OrderExecutionService::Order& order);
+      /**
+       * Updates a submitted order to OrderStatus CANCELED.
+       * @param order The Order to reject.
+       */
+      void Cancel(const OrderExecutionService::Order& order);
 
-      //! Fills an Order.
-      /*!
-        \param order The Order to fill.
-        \param price The price of the fill.
-        \param quantity The Quantity to fill the <i>order</i> for.
-      */
-      void FillOrder(const OrderExecutionService::Order& order, Money price,
+      /**
+       * Fills an Order.
+       * @param order The Order to fill.
+       * @param price The price of the fill.
+       * @param quantity The Quantity to fill the <i>order</i> for.
+       */
+      void Fill(const OrderExecutionService::Order& order, Money price,
         Quantity quantity);
 
-      //! Fills an Order.
-      /*!
-        \param order The Order to fill.
-        \param quantity The Quantity to fill the <i>order</i> for.
-      */
-      void FillOrder(const OrderExecutionService::Order& order,
-        Quantity quantity);
+      /**
+       * Fills an Order.
+       * @param order The Order to fill.
+       * @param quantity The Quantity to fill the <i>order</i> for.
+       */
+      void Fill(const OrderExecutionService::Order& order, Quantity quantity);
 
-      //! Updates an Order.
-      /*!
-        \param order The Order to update.
-        \param executionReport The ExecutionReport to update the <i>order</i>
-               with.
-      */
+      /**
+       * Updates an Order.
+       * @param order The Order to update.
+       * @param executionReport The ExecutionReport to update the <i>order</i>
+       *        with.
+       */
       void Update(const OrderExecutionService::Order& order,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      //! Returns the TimeServiceTestEnvironment.
+      /** Returns the TimeServiceTestEnvironment. */
       Beam::TimeService::Tests::TimeServiceTestEnvironment&
         GetTimeEnvironment();
 
-      //! Returns the ServiceLocatorTestEnvironment.
+      /** Returns the ServiceLocatorTestEnvironment. */
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
         GetServiceLocatorEnvironment();
 
-      //! Returns the UidServiceTestEnvironment.
+      /** Returns the UidServiceTestEnvironment. */
       Beam::UidService::Tests::UidServiceTestEnvironment& GetUidEnvironment();
 
-      //! Returns the DefinitionsServiceTestEnvironment.
+      /** Returns the RegistryServiceTestEnvironment. */
+      Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
+        GetRegistryEnvironment();
+
+      /** Returns the DefinitionsServiceTestEnvironment. */
       DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
         GetDefinitionsEnvironment();
 
-      //! Returns the AdministrationServiceTestEnvironment.
+      /** Returns the AdministrationServiceTestEnvironment. */
       AdministrationService::Tests::AdministrationServiceTestEnvironment&
         GetAdministrationEnvironment();
 
-      //! Returns the MarketDataServiceTestEnvironment.
+      /** Returns the MarketDataServiceTestEnvironment. */
       MarketDataService::Tests::MarketDataServiceTestEnvironment&
         GetMarketDataEnvironment();
 
-      //! Returns the OrderExecutionServiceTestEnvironment.
+      /** Returns the ChartingServiceTestEnvironment. */
+      ChartingService::Tests::ChartingServiceTestEnvironment&
+        GetChartingEnvironment();
+
+      /** Returns the ComplianceTestEnvironment. */
+      Compliance::Tests::ComplianceTestEnvironment&
+        GetComplianceEnvironment();
+
+      /** Returns the OrderExecutionServiceTestEnvironment. */
       OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
         GetOrderExecutionEnvironment();
 
-      void Open();
+      /** Returns the RiskServiceTestEnvironment. */
+      RiskService::Tests::RiskServiceTestEnvironment& GetRiskEnvironment();
 
       void Close();
 
     private:
       Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
+      std::shared_ptr<Beam::TimeService::VirtualTimeClient> m_timeClient;
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
         m_serviceLocatorEnvironment;
       std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         m_serviceLocatorClient;
       Beam::UidService::Tests::UidServiceTestEnvironment m_uidEnvironment;
+      std::shared_ptr<Beam::UidService::VirtualUidClient> m_uidClient;
+      Beam::RegistryService::Tests::RegistryServiceTestEnvironment
+        m_registryEnvironment;
       DefinitionsService::Tests::DefinitionsServiceTestEnvironment
         m_definitionsEnvironment;
       AdministrationService::Tests::AdministrationServiceTestEnvironment
         m_administrationEnvironment;
       std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         m_administrationClient;
-      MarketDataService::Tests::MarketDataServiceTestEnvironment
+      boost::optional<
+        MarketDataService::Tests::MarketDataServiceTestEnvironment>
         m_marketDataEnvironment;
-      OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment
+      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
+        m_marketDataClient;
+      boost::optional<ChartingService::Tests::ChartingServiceTestEnvironment>
+        m_chartingEnvironment;
+      boost::optional<Compliance::Tests::ComplianceTestEnvironment>
+        m_complianceEnvironment;
+      boost::optional<
+        OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
+      std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
+        m_orderExecutionClient;
+      boost::optional<RiskService::Tests::RiskServiceTestEnvironment>
+        m_riskEnvironment;
       Beam::IO::OpenState m_openState;
 
+      TestEnvironment(const TestEnvironment&) = delete;
+      TestEnvironment& operator =(const TestEnvironment&) = delete;
       template<typename Index, typename Value>
       void PublishMarketData(const Index& index, const Value& value);
-      void Shutdown();
   };
 
   inline TestEnvironment::TestEnvironment()
     : TestEnvironment(MarketDataService::MakeVirtualHistoricalDataStore(
         std::make_unique<MarketDataService::LocalHistoricalDataStore>())) {}
 
+  inline TestEnvironment::TestEnvironment(boost::posix_time::ptime time)
+    : TestEnvironment(MarketDataService::MakeVirtualHistoricalDataStore(
+        std::make_unique<MarketDataService::LocalHistoricalDataStore>()),
+        time) {}
+
   inline TestEnvironment::TestEnvironment(
     std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
     historicalDataStore)
-    : m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
-      m_definitionsEnvironment(m_serviceLocatorClient),
-      m_administrationEnvironment(m_serviceLocatorClient),
-      m_administrationClient(m_administrationEnvironment.BuildClient(
-        Beam::Ref(*m_serviceLocatorClient))),
-      m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
-        std::move(historicalDataStore)),
-      m_orderExecutionEnvironment(GetDefaultMarketDatabase(),
-        GetDefaultDestinationDatabase(), m_serviceLocatorClient,
-        m_uidEnvironment.BuildClient(), m_administrationClient) {
-    m_serviceLocatorClient->SetCredentials("root", "");
+    : TestEnvironment(std::move(historicalDataStore),
+        boost::posix_time::second_clock::universal_time()) {}
+
+  inline TestEnvironment::TestEnvironment(
+      std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
+      historicalDataStore, boost::posix_time::ptime time)
+      : m_timeEnvironment(time),
+        m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
+          std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
+          Beam::Ref(m_timeEnvironment)))),
+        m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
+        m_uidClient(m_uidEnvironment.BuildClient()),
+        m_registryEnvironment(m_serviceLocatorClient),
+        m_definitionsEnvironment(m_serviceLocatorClient),
+        m_administrationEnvironment(m_serviceLocatorClient),
+        m_administrationClient(m_administrationEnvironment.BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))) {
+    try {
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
+      m_serviceLocatorClient->Associate(rootAccount,
+        m_administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        m_administrationClient->LoadServicesRootEntry());
+      m_marketDataEnvironment.emplace(m_serviceLocatorClient,
+        m_administrationClient, std::move(historicalDataStore));
+      m_marketDataClient = m_marketDataEnvironment->BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_chartingEnvironment.emplace(m_serviceLocatorClient, m_marketDataClient);
+      m_complianceEnvironment.emplace(m_serviceLocatorClient,
+        m_administrationClient, m_timeClient);
+      auto definitionsClient = m_definitionsEnvironment.BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_orderExecutionEnvironment.emplace(
+        definitionsClient->LoadMarketDatabase(),
+        definitionsClient->LoadDestinationDatabase(), m_serviceLocatorClient,
+        m_uidClient, m_administrationClient);
+      m_orderExecutionClient = m_orderExecutionEnvironment->BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      auto transitionTimerFactory = [=] {
+        return Beam::Threading::MakeVirtualTimer(
+          std::make_unique<Beam::TimeService::Tests::TestTimer>(
+          boost::posix_time::seconds(1), Beam::Ref(m_timeEnvironment)));
+      };
+      m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
+        m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
+        m_timeClient, definitionsClient->LoadExchangeRates(),
+        definitionsClient->LoadMarketDatabase(),
+        definitionsClient->LoadDestinationDatabase());
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
   }
 
   inline TestEnvironment::~TestEnvironment() {
@@ -272,8 +368,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::UpdateBboPrice(const Security& security,
-      Money bidPrice, Money askPrice,
-      const boost::posix_time::ptime& timestamp) {
+      Money bidPrice, Money askPrice, boost::posix_time::ptime timestamp) {
     auto quote = BboQuote(Quote(bidPrice, 100, Side::BID),
       Quote(askPrice, 100, Side::ASK), timestamp);
     Publish(security, quote);
@@ -285,20 +380,19 @@ namespace Nexus {
       boost::posix_time::not_a_date_time);
   }
 
-  inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
-      Beam::QueueWriter<const OrderExecutionService::Order*>>& queue) {
-    std::shared_ptr<Beam::QueueWriter<OrderExecutionService::PrimitiveOrder*>>
-      conversionQueue = Beam::MakeConverterWriterQueue<
-      OrderExecutionService::PrimitiveOrder*>(Beam::MakeWeakQueue(queue),
+  inline void TestEnvironment::MonitorOrderSubmissions(
+      Beam::ScopedQueueWriter<const OrderExecutionService::Order*> queue) {
+    auto conversionQueue = Beam::MakeConverterQueueWriter<
+      OrderExecutionService::PrimitiveOrder*>(std::move(queue),
       Beam::StaticCastConverter<const OrderExecutionService::Order*>());
     auto& driver = static_cast<
       OrderExecutionService::WrapperOrderExecutionDriver<
       OrderExecutionService::Tests::MockOrderExecutionDriver>&>(
       GetOrderExecutionEnvironment().GetDriver()).GetDriver();
-    driver.GetPublisher().Monitor(Beam::MakeAliasQueue(conversionQueue, queue));
+    driver.GetPublisher().Monitor(std::move(conversionQueue));
   }
 
-  inline void TestEnvironment::AcceptOrder(
+  inline void TestEnvironment::Accept(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -306,20 +400,19 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitiveOrder->With(
-      [&] (auto status, auto& executionReports) {
-        if(status != OrderStatus::PENDING_NEW) {
-          BOOST_THROW_EXCEPTION(
-            TestEnvironmentException("Order must be PENDING_NEW."));
-        }
-      });
+    primitiveOrder->With([&] (auto status, auto& executionReports) {
+      if(status != OrderStatus::PENDING_NEW) {
+        BOOST_THROW_EXCEPTION(
+          TestEnvironmentException("Order must be PENDING_NEW."));
+      }
+    });
     OrderExecutionService::Tests::SetOrderStatus(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       OrderStatus::NEW, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::RejectOrder(
+  inline void TestEnvironment::Reject(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -327,20 +420,19 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitiveOrder->With(
-      [&] (auto status, auto& executionReports) {
-        if(IsTerminal(status)) {
-          BOOST_THROW_EXCEPTION(
-            TestEnvironmentException("Order is already TERMINAL."));
-        }
-      });
+    primitiveOrder->With([&] (auto status, auto& executionReports) {
+      if(IsTerminal(status)) {
+        BOOST_THROW_EXCEPTION(
+          TestEnvironmentException("Order is already TERMINAL."));
+      }
+    });
     OrderExecutionService::Tests::SetOrderStatus(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       OrderStatus::REJECTED, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::CancelOrder(
+  inline void TestEnvironment::Cancel(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -348,48 +440,44 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitiveOrder->With(
-      [&] (auto status, auto& executionReports) {
-        if(IsTerminal(status)) {
-          BOOST_THROW_EXCEPTION(
-            TestEnvironmentException("Order is already TERMINAL."));
-        }
-      });
-    OrderExecutionService::Tests::CancelOrder(
+    primitiveOrder->With([&] (auto status, auto& executionReports) {
+      if(IsTerminal(status)) {
+        BOOST_THROW_EXCEPTION(
+          TestEnvironmentException("Order is already TERMINAL."));
+      }
+    });
+    OrderExecutionService::Tests::Cancel(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::FillOrder(
-      const OrderExecutionService::Order& order, Money price,
-      Quantity quantity) {
+  inline void TestEnvironment::Fill(const OrderExecutionService::Order& order,
+      Money price, Quantity quantity) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitiveOrder->With(
-      [&] (auto status, auto& executionReports) {
-        if(IsTerminal(status)) {
-          BOOST_THROW_EXCEPTION(
-            TestEnvironmentException("Order is already TERMINAL."));
-        }
-      });
-    OrderExecutionService::Tests::FillOrder(
+    primitiveOrder->With([&] (auto status, auto& executionReports) {
+      if(IsTerminal(status)) {
+        BOOST_THROW_EXCEPTION(
+          TestEnvironmentException("Order is already TERMINAL."));
+      }
+    });
+    OrderExecutionService::Tests::Fill(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       price, quantity, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::FillOrder(
-      const OrderExecutionService::Order& order, Quantity quantity) {
-    FillOrder(order, order.GetInfo().m_fields.m_price, quantity);
+  inline void TestEnvironment::Fill(const OrderExecutionService::Order& order,
+      Quantity quantity) {
+    Fill(order, order.GetInfo().m_fields.m_price, quantity);
   }
 
-  inline void TestEnvironment::Update(
-      const OrderExecutionService::Order& order,
+  inline void TestEnvironment::Update(const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -397,13 +485,12 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitiveOrder->With(
-      [&] (auto status, auto& executionReports) {
-        if(IsTerminal(status)) {
-          BOOST_THROW_EXCEPTION(
-            TestEnvironmentException("Order is already TERMINAL."));
-        }
-      });
+    primitiveOrder->With([&] (auto status, auto& executionReports) {
+      if(IsTerminal(status)) {
+        BOOST_THROW_EXCEPTION(
+          TestEnvironmentException("Order is already TERMINAL."));
+      }
+    });
     auto revisedExecutionReport = executionReport;
     if(revisedExecutionReport.m_timestamp !=
         boost::posix_time::not_a_date_time) {
@@ -411,13 +498,12 @@ namespace Nexus {
     } else {
       revisedExecutionReport.m_timestamp = m_timeEnvironment.GetTime();
     }
-    primitiveOrder->With(
-      [&] (auto status, auto& reports) {
-        auto& lastReport = reports.back();
-        revisedExecutionReport.m_id = lastReport.m_id;
-        revisedExecutionReport.m_sequence = lastReport.m_sequence + 1;
-        primitiveOrder->Update(revisedExecutionReport);
-      });
+    primitiveOrder->With([&] (auto status, auto& reports) {
+      auto& lastReport = reports.back();
+      revisedExecutionReport.m_id = lastReport.m_id;
+      revisedExecutionReport.m_sequence = lastReport.m_sequence + 1;
+      primitiveOrder->Update(revisedExecutionReport);
+    });
     Beam::Routines::FlushPendingRoutines();
   }
 
@@ -436,6 +522,11 @@ namespace Nexus {
     return m_uidEnvironment;
   }
 
+  inline Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
+      TestEnvironment::GetRegistryEnvironment() {
+    return m_registryEnvironment;
+  }
+
   inline DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
       TestEnvironment::GetDefinitionsEnvironment() {
     return m_definitionsEnvironment;
@@ -448,38 +539,51 @@ namespace Nexus {
 
   inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
       TestEnvironment::GetMarketDataEnvironment() {
-    return m_marketDataEnvironment;
+    return *m_marketDataEnvironment;
+  }
+
+  inline ChartingService::Tests::ChartingServiceTestEnvironment&
+      TestEnvironment::GetChartingEnvironment() {
+    return *m_chartingEnvironment;
+  }
+
+  inline Compliance::Tests::ComplianceTestEnvironment&
+      TestEnvironment::GetComplianceEnvironment() {
+    return *m_complianceEnvironment;
   }
 
   inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
       TestEnvironment::GetOrderExecutionEnvironment() {
-    return m_orderExecutionEnvironment;
+    return *m_orderExecutionEnvironment;
   }
 
-  inline void TestEnvironment::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_timeEnvironment.Open();
-      m_serviceLocatorEnvironment.Open();
-      m_uidEnvironment.Open();
-      m_definitionsEnvironment.Open();
-      m_administrationEnvironment.Open();
-      m_marketDataEnvironment.Open();
-      m_orderExecutionEnvironment.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
+  inline RiskService::Tests::RiskServiceTestEnvironment&
+      TestEnvironment::GetRiskEnvironment() {
+    return *m_riskEnvironment;
   }
 
   inline void TestEnvironment::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    m_riskEnvironment->Close();
+    m_orderExecutionClient->Close();
+    m_orderExecutionEnvironment->Close();
+    m_complianceEnvironment->Close();
+    m_chartingEnvironment->Close();
+    m_marketDataClient->Close();
+    m_marketDataEnvironment->Close();
+    m_administrationClient->Close();
+    m_administrationEnvironment.Close();
+    m_definitionsEnvironment.Close();
+    m_registryEnvironment.Close();
+    m_uidClient->Close();
+    m_uidEnvironment.Close();
+    m_serviceLocatorClient->Close();
+    m_serviceLocatorEnvironment.Close();
+    m_timeClient->Close();
+    m_timeEnvironment.Close();
+    m_openState.Close();
   }
 
   template<typename Index, typename Value>
@@ -495,18 +599,6 @@ namespace Nexus {
       GetMarketDataEnvironment().Publish(index, revisedValue);
     }
     Beam::Routines::FlushPendingRoutines();
-  }
-
-  inline void TestEnvironment::Shutdown() {
-    m_orderExecutionEnvironment.Close();
-    m_marketDataEnvironment.Close();
-    m_administrationEnvironment.Close();
-    m_definitionsEnvironment.Close();
-    m_uidEnvironment.Close();
-    m_serviceLocatorClient.reset();
-    m_serviceLocatorEnvironment.Close();
-    m_timeEnvironment.Close();
-    m_openState.SetClosed();
   }
 }
 

@@ -1,5 +1,7 @@
-#ifndef NEXUS_INTERNALMATCHINGORDEREXECUTIONDRIVER_HPP
-#define NEXUS_INTERNALMATCHINGORDEREXECUTIONDRIVER_HPP
+#ifndef NEXUS_INTERNAL_MATCHING_ORDER_EXECUTION_DRIVER_HPP
+#define NEXUS_INTERNAL_MATCHING_ORDER_EXECUTION_DRIVER_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
@@ -9,8 +11,6 @@
 #include <Beam/Threading/TimedConditionVariable.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -22,77 +22,67 @@
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus {
-namespace InternalMatcher {
+namespace Nexus::InternalMatcher {
 namespace Details {
   inline Money GetOfferPrice(
       const OrderExecutionService::OrderFields& orderFields) {
     if(orderFields.m_type == OrderType::LIMIT) {
       return orderFields.m_price;
-    }
-    if(orderFields.m_side == Side::ASK) {
+    } else if(orderFields.m_side == Side::ASK) {
       return Money::ZERO;
     }
     return std::numeric_limits<Money>::max();
   }
 }
 
-  /*! \class InternalMatchingOrderExecutionDriver
-      \brief A OrderExecutionDriver layer that maintains a complete Order book
-             and attempts to match Orders internally before passing them on.
-      \tparam MatchReportBuilderType The type used to build ExecutionReports
-              for internal matches.
-      \tparam MarketDataClientType The type of MarketDataClient used to price
-              internally matched orders.
-      \tparam TimeClientType The type of TimeClient used for Order timestamps.
-      \tparam UidClientType The type of UidClient used for Order ids.
-      \tparam OrderExecutionDriverType The type of OrderExecutionDriver to pass
-              non-internalized Order submissions to.
+  /**
+   * An OrderExecutionDriver layer that maintains a complete Order book and
+   * attempts to match Orders internally before passing them on.
+   * @param <B> The type used to build ExecutionReports for internal matches.
+   * @param <M> The type of MarketDataClient used to price internally matched
+   *        orders.
+   * @param <T> The type of TimeClient used for Order timestamps.
+   * @param <U> The type of UidClient used for Order ids.
+   * @param <D> The type of OrderExecutionDriver to pass non-internalized Order
+   *        submissions to.
    */
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
+  template<typename B, typename M, typename T, typename U, typename D>
   class InternalMatchingOrderExecutionDriver : private boost::noncopyable {
     public:
 
-      //! The type used to build ExecutionReports for internal matches.
-      using MatchReportBuilder =
-        Beam::GetTryDereferenceType<MatchReportBuilderType>;
+      /** The type used to build ExecutionReports for internal matches. */
+      using MatchReportBuilder = Beam::GetTryDereferenceType<B>;
 
-      //! The type of MarketDataClient used to price internally matched orders.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
+      /**
+       * The type of MarketDataClient used to price internally matched orders.
+       */
+      using MarketDataClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of TimeClient used for Order timestamps.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /** The type of TimeClient used for Order timestamps. */
+      using TimeClient = Beam::GetTryDereferenceType<T>;
 
-      //! The type of UidClient used for Order ids.
-      using UidClient = Beam::GetTryDereferenceType<UidClientType>;
+      /** The type of UidClient used for Order ids. */
+      using UidClient = Beam::GetTryDereferenceType<U>;
 
-      //! The type of OrderExecutionDriver to send the submission to if all
-      //! checks pass.
-      using OrderExecutionDriver =
-        Beam::GetTryDereferenceType<OrderExecutionDriverType>;
+      /**
+       * The type of OrderExecutionDriver to send the submission to if all
+       * checks pass.
+       */
+      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs an InternalMatchingOrderExecutionDriver.
-      /*!
-        \param matchReportBuilder Initializes the MatchReportBuilder.
-        \param marketDataClient Initializes the MarketDataClient.
-        \param timeClient Initializes the TimeClient.
-        \param uidClient Initializes the UidClient.
-        \param orderExecutionDriver Initializes the OrderExecutionDriver.
-        \param timerThreadPool The thread pool used for timeouts.
-      */
-      template<typename MatchReportBuilderForward,
-        typename MarketDataClientForward, typename TimeClientForward,
-        typename UidClientForward, typename OrderExecutionDriverForward>
+      /**
+       * Constructs an InternalMatchingOrderExecutionDriver.
+       * @param matchReportBuilder Initializes the MatchReportBuilder.
+       * @param marketDataClient Initializes the MarketDataClient.
+       * @param timeClient Initializes the TimeClient.
+       * @param uidClient Initializes the UidClient.
+       * @param orderExecutionDriver Initializes the OrderExecutionDriver.
+       */
+      template<typename BF, typename MF, typename TF, typename UF, typename DF>
       InternalMatchingOrderExecutionDriver(
         const Beam::ServiceLocator::DirectoryEntry& rootSessionAccount,
-        MatchReportBuilderForward&& matchReportBuilder,
-        MarketDataClientForward&& marketDataClient,
-        TimeClientForward&& timeClient, UidClientForward&& uidClient,
-        OrderExecutionDriverForward&& orderExecutionDriver,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        BF&& matchReportBuilder, MF&& marketDataClient, TF&& timeClient,
+        UF&& uidClient, DF&& orderExecutionDriver);
 
       ~InternalMatchingOrderExecutionDriver();
 
@@ -109,8 +99,6 @@ namespace Details {
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -126,8 +114,7 @@ namespace Details {
         Beam::Threading::TimedConditionVariable m_isLiveCondition;
         Beam::Threading::TimedConditionVariable m_isTerminalCondition;
 
-        OrderEntry(const OrderExecutionService::OrderInfo& orderInfo,
-          Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        OrderEntry(const OrderExecutionService::OrderInfo& orderInfo);
       };
       struct SecurityEntry {
         std::vector<std::shared_ptr<OrderEntry>> m_asks;
@@ -136,13 +123,11 @@ namespace Details {
 
         SecurityEntry();
       };
-      Beam::GetOptionalLocalPtr<MatchReportBuilderType> m_matchReportBuilder;
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
-      Beam::GetOptionalLocalPtr<UidClientType> m_uidClient;
-      Beam::GetOptionalLocalPtr<OrderExecutionDriverType>
-        m_orderExecutionDriver;
-      Beam::Threading::TimerThreadPool* m_timerThreadPool;
+      Beam::GetOptionalLocalPtr<B> m_matchReportBuilder;
+      Beam::GetOptionalLocalPtr<M> m_marketDataClient;
+      Beam::GetOptionalLocalPtr<T> m_timeClient;
+      Beam::GetOptionalLocalPtr<U> m_uidClient;
+      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
       OrderExecutionService::OrderExecutionSession m_rootSession;
       Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
         OrderExecutionService::OrderId> m_orderIds;
@@ -154,7 +139,6 @@ namespace Details {
       Beam::RoutineTaskQueue m_submissionTasks;
       Beam::RoutineTaskQueue m_executionReportTasks;
 
-      void Shutdown();
       void Submit(const std::shared_ptr<OrderEntry>& orderEntry);
       void SubmitToDriver(
         const Beam::ServiceLocator::DirectoryEntry submissionAccount,
@@ -172,88 +156,57 @@ namespace Details {
         const OrderExecutionService::ExecutionReport& executionReport);
   };
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::OrderEntry::OrderEntry(
-      const OrderExecutionService::OrderInfo& orderInfo,
-      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
-      : m_orderInfo{orderInfo},
-        m_driverOrder{nullptr},
-        m_order{std::make_shared<OrderExecutionService::PrimitiveOrder>(
-          m_orderInfo)},
-        m_isPendingNew{true},
-        m_isMatching{false},
-        m_remainingQuantity{orderInfo.m_fields.m_quantity},
-        m_isLive{false},
-        m_isTerminal{false},
-        m_isLiveCondition{Beam::Ref(timerThreadPool)},
-        m_isTerminalCondition{Beam::Ref(timerThreadPool)} {}
+  template<typename B, typename M, typename T, typename U, typename D>
+  InternalMatchingOrderExecutionDriver<B, M, T, U, D>::OrderEntry::OrderEntry(
+    const OrderExecutionService::OrderInfo& orderInfo)
+    : m_orderInfo(orderInfo),
+      m_driverOrder(nullptr),
+      m_order(std::make_shared<OrderExecutionService::PrimitiveOrder>(
+        m_orderInfo)),
+      m_isPendingNew(true),
+      m_isMatching(false),
+      m_remainingQuantity(orderInfo.m_fields.m_quantity),
+      m_isLive(false),
+      m_isTerminal(false) {}
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::SecurityEntry::SecurityEntry()
-      : m_bboQuote{std::make_shared<Beam::StateQueue<BboQuote>>()} {}
+  template<typename B, typename M, typename T, typename U, typename D>
+  InternalMatchingOrderExecutionDriver<B, M, T, U, D>::
+    SecurityEntry::SecurityEntry()
+    : m_bboQuote(std::make_shared<Beam::StateQueue<BboQuote>>()) {}
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  template<typename MatchReportBuilderForward,
-    typename MarketDataClientForward, typename TimeClientForward,
-    typename UidClientForward, typename OrderExecutionDriverForward>
-  InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::InternalMatchingOrderExecutionDriver(
+  template<typename B, typename M, typename T, typename U, typename D>
+  template<typename BF, typename MF, typename TF, typename UF, typename DF>
+  InternalMatchingOrderExecutionDriver<B, M, T, U, D>::
+      InternalMatchingOrderExecutionDriver(
       const Beam::ServiceLocator::DirectoryEntry& rootSessionAccount,
-      MatchReportBuilderForward&& matchReportBuilder,
-      MarketDataClientForward&& marketDataClient,
-      TimeClientForward&& timeClient, UidClientForward&& uidClient,
-      OrderExecutionDriverForward&& orderExecutionDriver,
-      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
-      : m_matchReportBuilder{std::forward<MatchReportBuilderForward>(
-          matchReportBuilder)},
-        m_marketDataClient{std::forward<MarketDataClientForward>(
-          marketDataClient)},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)},
-        m_uidClient{std::forward<UidClientForward>(uidClient)},
-        m_orderExecutionDriver{std::forward<OrderExecutionDriverForward>(
-          orderExecutionDriver)},
-        m_timerThreadPool{timerThreadPool.Get()} {
+      BF&& matchReportBuilder, MF&& marketDataClient, TF&& timeClient,
+      UF&& uidClient, DF&& orderExecutionDriver)
+      : m_matchReportBuilder(std::forward<BF>(matchReportBuilder)),
+        m_marketDataClient(std::forward<MF>(marketDataClient)),
+        m_timeClient(std::forward<TF>(timeClient)),
+        m_uidClient(std::forward<UF>(uidClient)),
+        m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)) {
     m_rootSession.SetAccount(rootSessionAccount);
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::~InternalMatchingOrderExecutionDriver() {
+  template<typename B, typename M, typename T, typename U, typename D>
+  InternalMatchingOrderExecutionDriver<B, M, T, U, D>::
+      ~InternalMatchingOrderExecutionDriver() {
     Close();
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  const OrderExecutionService::Order& InternalMatchingOrderExecutionDriver<
-      MatchReportBuilderType, MarketDataClientType, TimeClientType,
-      UidClientType, OrderExecutionDriverType>::Recover(
+  template<typename B, typename M, typename T, typename U, typename D>
+  const OrderExecutionService::Order&
+      InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Recover(
       const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
     auto& order = m_orderExecutionDriver->Recover(orderRecord);
     m_orderIds.Insert(order.GetInfo().m_orderId, order.GetInfo().m_orderId);
     return order;
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  const OrderExecutionService::Order& InternalMatchingOrderExecutionDriver<
-      MatchReportBuilderType, MarketDataClientType, TimeClientType,
-      UidClientType, OrderExecutionDriverType>::Submit(
+  template<typename B, typename M, typename T, typename U, typename D>
+  const OrderExecutionService::Order&
+      InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Submit(
       const OrderExecutionService::OrderInfo& orderInfo) {
     auto& fields = orderInfo.m_fields;
     if((fields.m_timeInForce.GetType() != TimeInForce::Type::DAY &&
@@ -266,168 +219,110 @@ namespace Details {
       m_orderIds.Insert(orderInfo.m_orderId, orderInfo.m_orderId);
       return m_orderExecutionDriver->Submit(orderInfo);
     }
-    auto orderEntry = std::make_shared<OrderEntry>(orderInfo,
-      Beam::Ref(*m_timerThreadPool));
-    m_submissionTasks.Push(
-      [=] {
-        Submit(orderEntry);
-      });
+    auto orderEntry = std::make_shared<OrderEntry>(orderInfo);
+    m_submissionTasks.Push([=] {
+      Submit(orderEntry);
+    });
     m_orders.Insert(orderEntry->m_order);
     return *orderEntry->m_order;
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::Cancel(
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
-    m_submissionTasks.Push(
-      [=] {
-        auto driverOrderId = m_orderIds.FindValue(orderId);
-        if(driverOrderId.is_initialized()) {
-          m_orderExecutionDriver->Cancel(session, *driverOrderId);
-        } else {
-          m_orderExecutionDriver->Cancel(session, orderId);
-        }
-      });
+    m_submissionTasks.Push([=] {
+      if(auto driverOrderId = m_orderIds.FindValue(orderId)) {
+        m_orderExecutionDriver->Cancel(session, *driverOrderId);
+      } else {
+        m_orderExecutionDriver->Cancel(session, orderId);
+      }
+    });
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::Update(
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Update(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    m_submissionTasks.Push(
-      [=] {
-        auto driverOrderId = m_orderIds.FindValue(orderId);
-        if(driverOrderId.is_initialized()) {
-          auto sanitizedExecutionReport = executionReport;
-          sanitizedExecutionReport.m_id = *driverOrderId;
-          m_orderExecutionDriver->Update(session, *driverOrderId,
-            sanitizedExecutionReport);
-        } else {
-          m_orderExecutionDriver->Update(session, orderId, executionReport);
-        }
-      });
+    m_submissionTasks.Push([=] {
+      auto driverOrderId = m_orderIds.FindValue(orderId);
+      if(driverOrderId) {
+        auto sanitizedExecutionReport = executionReport;
+        sanitizedExecutionReport.m_id = *driverOrderId;
+        m_orderExecutionDriver->Update(session, *driverOrderId,
+          sanitizedExecutionReport);
+      } else {
+        m_orderExecutionDriver->Update(session, orderId, executionReport);
+      }
+    });
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataClient->Open();
-      m_timeClient->Open();
-      m_uidClient->Open();
-      m_orderExecutionDriver->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::Close() {
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::Shutdown() {
     m_executionReportTasks.Break();
     m_submissionTasks.Break();
+    m_submissionTasks.Wait();
+    m_executionReportTasks.Wait();
     m_orderExecutionDriver->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::Submit(
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Submit(
       const std::shared_ptr<OrderEntry>& orderEntry) {
-    const auto& fields = orderEntry->m_order->GetInfo().m_fields;
-    auto securityEntry = Beam::GetOrInsert(m_securityEntries,
-      fields.m_security,
+    auto& fields = orderEntry->m_order->GetInfo().m_fields;
+    auto securityEntry = Beam::GetOrInsert(m_securityEntries, fields.m_security,
       [&] {
         auto securityEntry = std::make_shared<SecurityEntry>();
         MarketDataService::QueryRealTimeWithSnapshot(fields.m_security,
           *m_marketDataClient, securityEntry->m_bboQuote);
         return securityEntry;
       });
-    auto bboQuote =
-      [&] () -> boost::optional<BboQuote> {
-        try {
-          return securityEntry->m_bboQuote->Top();
-        } catch(const Beam::PipeBrokenException&) {
-          m_securityEntries.erase(fields.m_security);
-          return boost::none;
-        }
-      }();
-    if(!bboQuote.is_initialized()) {
-      orderEntry->m_order->With(
-        [&] (auto status, auto& executionReports) {
-          auto newReport = OrderExecutionService::ExecutionReport::
-            BuildUpdatedReport(executionReports.back(),
-            OrderStatus::REJECTED, m_timeClient->GetTime());
-          orderEntry->m_order->Update(newReport);
-        });
+    auto bboQuote = [&] () -> boost::optional<BboQuote> {
+      try {
+        return securityEntry->m_bboQuote->Peek();
+      } catch(const Beam::PipeBrokenException&) {
+        m_securityEntries.erase(fields.m_security);
+        return boost::none;
+      }
+    }();
+    if(!bboQuote) {
+      orderEntry->m_order->With([&] (auto status, auto& executionReports) {
+        auto newReport = OrderExecutionService::ExecutionReport::
+          BuildUpdatedReport(executionReports.back(), OrderStatus::REJECTED,
+          m_timeClient->GetTime());
+        orderEntry->m_order->Update(newReport);
+      });
       return;
     }
-    std::vector<std::shared_ptr<OrderEntry>>* orderEntries;
-    std::vector<std::shared_ptr<OrderEntry>>* passiveOrderEntries;
-    if(fields.m_side == Side::ASK) {
-      orderEntries = &securityEntry->m_asks;
-      passiveOrderEntries = &securityEntry->m_bids;
-    } else {
-      orderEntries = &securityEntry->m_bids;
-      passiveOrderEntries = &securityEntry->m_asks;
-    }
-    Money bboThresholdPrice;
-    if(fields.m_side == Side::ASK) {
-      bboThresholdPrice = bboQuote->m_bid.m_price;
-    } else {
-      bboThresholdPrice = bboQuote->m_ask.m_price;
-    }
-    std::vector<OrderExecutionService::ExecutionReport> internalMatchReports;
+    auto [orderEntries, passiveOrderEntries, bboThresholdPrice] = [&] {
+      if(fields.m_side == Side::ASK) {
+        return std::tuple(&securityEntry->m_asks, &securityEntry->m_bids,
+          bboQuote->m_bid.m_price);
+      }
+      return std::tuple(&securityEntry->m_bids, &securityEntry->m_asks,
+        bboQuote->m_ask.m_price);
+    }();
+    auto internalMatchReports =
+      std::vector<OrderExecutionService::ExecutionReport>();
     auto matchedQuantityRemaining = fields.m_quantity;
     auto passiveOrderEntryIterator = passiveOrderEntries->begin();
     while(passiveOrderEntryIterator != passiveOrderEntries->end() &&
         matchedQuantityRemaining > 0) {
-      const auto& passiveOrderEntry = *passiveOrderEntryIterator;
-      const auto& orderEntryFields =
+      auto& passiveOrderEntry = *passiveOrderEntryIterator;
+      auto& orderEntryFields =
         passiveOrderEntry->m_driverOrder->GetInfo().m_fields;
       auto fieldsPrice = Details::GetOfferPrice(fields);
       auto orderEntryPrice = Details::GetOfferPrice(orderEntryFields);
       if(OfferComparator(fields.m_side, fieldsPrice, orderEntryPrice) <= 0 &&
           OfferComparator(fields.m_side, orderEntryPrice,
           bboThresholdPrice) >= 0) {
-        bool passiveOrderRemaining;
-        OrderExecutionService::ExecutionReport matchReport;
+        auto passiveOrderRemaining = bool();
+        auto matchReport = OrderExecutionService::ExecutionReport();
         try {
           matchReport = InternalMatch(orderEntry, passiveOrderEntry,
             matchedQuantityRemaining, Beam::Store(passiveOrderRemaining));
@@ -450,21 +345,20 @@ namespace Details {
       }
     }
     if(!internalMatchReports.empty()) {
-      orderEntry->m_order->With(
-        [&] (auto status, auto& executionReports) {
-          orderEntry->m_isPendingNew = false;
-          auto newReport = OrderExecutionService::ExecutionReport::
-            BuildUpdatedReport(executionReports.back(), OrderStatus::NEW,
-            m_timeClient->GetTime());
-          orderEntry->m_order->Update(newReport);
-          auto sequence = newReport.m_sequence;
-          for(auto& executionReport : internalMatchReports) {
-            ++sequence;
-            executionReport.m_timestamp = m_timeClient->GetTime();
-            executionReport.m_sequence = sequence;
-            orderEntry->m_order->Update(executionReport);
-          }
-        });
+      orderEntry->m_order->With([&] (auto status, auto& executionReports) {
+        orderEntry->m_isPendingNew = false;
+        auto newReport = OrderExecutionService::ExecutionReport::
+          BuildUpdatedReport(executionReports.back(), OrderStatus::NEW,
+          m_timeClient->GetTime());
+        orderEntry->m_order->Update(newReport);
+        auto sequence = newReport.m_sequence;
+        for(auto& executionReport : internalMatchReports) {
+          ++sequence;
+          executionReport.m_timestamp = m_timeClient->GetTime();
+          executionReport.m_sequence = sequence;
+          orderEntry->m_order->Update(executionReport);
+        }
+      });
     }
     if(matchedQuantityRemaining != 0) {
       auto insertIterator = std::lower_bound(orderEntries->begin(),
@@ -491,33 +385,27 @@ namespace Details {
       orderEntries->insert(insertIterator, orderEntry);
       auto matchedFields = fields;
       matchedFields.m_quantity = matchedQuantityRemaining;
-      SubmitToDriver(orderEntry->m_orderInfo.m_submissionAccount,
-        matchedFields, orderEntry);
+      SubmitToDriver(orderEntry->m_orderInfo.m_submissionAccount, matchedFields,
+        orderEntry);
     }
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::SubmitToDriver(
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::SubmitToDriver(
       const Beam::ServiceLocator::DirectoryEntry submissionAccount,
       const OrderExecutionService::OrderFields& fields,
       const std::shared_ptr<OrderEntry>& orderEntry) {
-    OrderExecutionService::OrderId driverOrderId;
-    if(orderEntry->m_driverOrder == nullptr) {
-      driverOrderId = orderEntry->m_order->GetInfo().m_orderId;
-    } else {
-      driverOrderId = m_uidClient->LoadNextUid();
-    }
+    auto driverOrderId = [&] {
+      if(orderEntry->m_driverOrder == nullptr) {
+        return orderEntry->m_order->GetInfo().m_orderId;
+      } else {
+        return m_uidClient->LoadNextUid();
+      }
+    }();
     m_orderIds.Update(orderEntry->m_order->GetInfo().m_orderId, driverOrderId);
-    OrderExecutionService::OrderInfo driverOrderInfo;
-    driverOrderInfo.m_fields = fields;
-    driverOrderInfo.m_orderId = driverOrderId;
-    driverOrderInfo.m_submissionAccount = submissionAccount;
-    driverOrderInfo.m_timestamp = m_timeClient->GetTime();
-    driverOrderInfo.m_shortingFlag = orderEntry->m_orderInfo.m_shortingFlag;
+    auto driverOrderInfo = OrderExecutionService::OrderInfo(fields,
+      submissionAccount, driverOrderId, orderEntry->m_orderInfo.m_shortingFlag,
+      m_timeClient->GetTime());
     auto driverOrder = &m_orderExecutionDriver->Submit(driverOrderInfo);
     orderEntry->m_driverOrder = driverOrder;
     orderEntry->m_driverOrder->GetPublisher().Monitor(
@@ -526,15 +414,12 @@ namespace Details {
       std::weak_ptr<OrderEntry>{orderEntry}, std::placeholders::_1)));
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  OrderExecutionService::ExecutionReport InternalMatchingOrderExecutionDriver<
-      MatchReportBuilderType, MarketDataClientType, TimeClientType,
-      UidClientType, OrderExecutionDriverType>::InternalMatch(
+  template<typename B, typename M, typename T, typename U, typename D>
+  OrderExecutionService::ExecutionReport
+      InternalMatchingOrderExecutionDriver<B, M, T, U, D>::InternalMatch(
       const std::shared_ptr<OrderEntry>& activeOrderEntry,
-      const std::shared_ptr<OrderEntry>& passiveOrderEntry,
-      Quantity quantity, Beam::Out<bool> passiveOrderRemaining) {
+      const std::shared_ptr<OrderEntry>& passiveOrderEntry, Quantity quantity,
+      Beam::Out<bool> passiveOrderRemaining) {
     passiveOrderEntry->m_isMatching = true;
     try {
       WaitForLiveOrder(*passiveOrderEntry);
@@ -553,8 +438,8 @@ namespace Details {
     passiveOrderEntry->m_isMatching = false;
     passiveOrderEntry->m_isLive = false;
     passiveOrderEntry->m_isTerminal = false;
-    OrderExecutionService::ExecutionReport passiveMatchReport;
-    OrderExecutionService::ExecutionReport activeMatchReport;
+    auto passiveMatchReport = OrderExecutionService::ExecutionReport();
+    auto activeMatchReport = OrderExecutionService::ExecutionReport();
     passiveMatchReport.m_id = passiveOrderEntry->m_order->GetInfo().m_orderId;
     activeMatchReport.m_id = activeOrderEntry->m_order->GetInfo().m_orderId;
     auto matchedQuantity = std::min(passiveOrderEntry->m_remainingQuantity,
@@ -583,12 +468,11 @@ namespace Details {
     m_matchReportBuilder->Build(passiveOrderEntry->m_order->GetInfo().m_fields,
       activeOrderEntry->m_order->GetInfo().m_fields,
       Beam::Store(passiveMatchReport), Beam::Store(activeMatchReport));
-    passiveOrderEntry->m_order->With(
-      [&] (auto status, auto& executionReports) {
-        passiveMatchReport.m_timestamp = m_timeClient->GetTime();
-        passiveMatchReport.m_sequence = executionReports.back().m_sequence + 1;
-        passiveOrderEntry->m_order->Update(passiveMatchReport);
-      });
+    passiveOrderEntry->m_order->With([&] (auto status, auto& executionReports) {
+      passiveMatchReport.m_timestamp = m_timeClient->GetTime();
+      passiveMatchReport.m_sequence = executionReports.back().m_sequence + 1;
+      passiveOrderEntry->m_order->Update(passiveMatchReport);
+    });
     if(passiveOrderEntry->m_remainingQuantity != 0) {
       auto matchedFields = passiveOrderEntry->m_order->GetInfo().m_fields;
       matchedFields.m_quantity = passiveOrderEntry->m_remainingQuantity;
@@ -598,74 +482,54 @@ namespace Details {
     return activeMatchReport;
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::WaitForLiveOrder(OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isLive,
-      [&] (auto& isLive) {
-        while(!isLive) {
-          orderEntry.m_isLiveCondition.timed_wait(
-            boost::posix_time::seconds(1), orderEntry.m_isLive.GetLock());
-        }
-      });
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::WaitForLiveOrder(
+      OrderEntry& orderEntry) {
+    Beam::Threading::With(orderEntry.m_isLive, [&] (auto& isLive) {
+      while(!isLive) {
+        orderEntry.m_isLiveCondition.timed_wait(boost::posix_time::seconds(1),
+          orderEntry.m_isLive.GetLock());
+      }
+    });
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::WaitForTerminalOrder(OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isTerminal,
-      [&] (auto& isTerminal) {
-        while(!isTerminal) {
-          orderEntry.m_isTerminalCondition.timed_wait(
-            boost::posix_time::seconds(1), orderEntry.m_isTerminal.GetLock());
-        }
-      });
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::
+      WaitForTerminalOrder(OrderEntry& orderEntry) {
+    Beam::Threading::With(orderEntry.m_isTerminal, [&] (auto& isTerminal) {
+      while(!isTerminal) {
+        orderEntry.m_isTerminalCondition.timed_wait(
+          boost::posix_time::seconds(1), orderEntry.m_isTerminal.GetLock());
+      }
+    });
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::SetOrderToLive(OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isLive,
-      [&] (auto& isLive) {
-        if(isLive) {
-          return;
-        }
-        isLive = true;
-        orderEntry.m_isLiveCondition.notify_all();
-      });
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::SetOrderToLive(
+      OrderEntry& orderEntry) {
+    Beam::Threading::With(orderEntry.m_isLive, [&] (auto& isLive) {
+      if(isLive) {
+        return;
+      }
+      isLive = true;
+      orderEntry.m_isLiveCondition.notify_all();
+    });
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::SetOrderToTerminal(OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isTerminal,
-      [&] (auto& isTerminal) {
-        if(isTerminal) {
-          return;
-        }
-        isTerminal = true;
-        orderEntry.m_isTerminalCondition.notify_all();
-      });
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::SetOrderToTerminal(
+      OrderEntry& orderEntry) {
+    Beam::Threading::With(orderEntry.m_isTerminal, [&] (auto& isTerminal) {
+      if(isTerminal) {
+        return;
+      }
+      isTerminal = true;
+      orderEntry.m_isTerminalCondition.notify_all();
+    });
   }
 
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
-  void InternalMatchingOrderExecutionDriver<MatchReportBuilderType,
-      MarketDataClientType, TimeClientType, UidClientType,
-      OrderExecutionDriverType>::OnExecutionReport(
+  template<typename B, typename M, typename T, typename U, typename D>
+  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::OnExecutionReport(
       std::weak_ptr<OrderEntry> weakOrderEntry,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_status == OrderStatus::PENDING_NEW) {
@@ -694,18 +558,16 @@ namespace Details {
     }
     auto updateReport = executionReport;
     updateReport.m_id = orderEntry->m_order->GetInfo().m_orderId;
-    orderEntry->m_order->With(
-      [&] (auto status, auto& executionReports) {
-        updateReport.m_timestamp = executionReport.m_timestamp;
-        updateReport.m_sequence = executionReports.back().m_sequence + 1;
-        orderEntry->m_order->Update(updateReport);
-      });
+    orderEntry->m_order->With([&] (auto status, auto& executionReports) {
+      updateReport.m_timestamp = executionReport.m_timestamp;
+      updateReport.m_sequence = executionReports.back().m_sequence + 1;
+      orderEntry->m_order->Update(updateReport);
+    });
     if(IsTerminal(executionReport.m_status)) {
       orderEntry->m_remainingQuantity = 0;
       SetOrderToTerminal(*orderEntry);
     }
   }
-}
 }
 
 #endif
