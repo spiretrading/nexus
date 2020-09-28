@@ -83,14 +83,6 @@ void SecurityInputLineEdit::focusInEvent(QFocusEvent* event) {
 void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Backspace:
-      //if(m_last_key != Qt::Key_Backspace && m_securities->isVisible() &&
-      //    selectionLength() > 0) {
-      //  m_last_key = static_cast<Qt::Key>(event->key());
-      //  m_is_suggestion_disabled = true;
-      //  m_securities->clear_active_item();
-      //  update();
-      //  return;
-      //}
       if(!text().isEmpty()) {
         m_is_suggestion_disabled = true;
       }
@@ -124,31 +116,6 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
 
 void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
   TextInputWidget::paintEvent(event);
-  //if(!text().isEmpty() && !m_is_suggestion_disabled &&
-  //    m_last_key != Qt::Key_Backspace) {
-  //  auto& item = m_securities->get_value(0);
-  //  if(item.isValid()) {
-  //    auto item_text = m_item_delegate.displayText(item);
-  //    if(item_text.startsWith(text(), Qt::CaseInsensitive) &&
-  //        item_text.length() != text().length()) {
-  //      item_text = item_text.remove(0, text().length());
-  //      auto painter = QPainter(this);
-  //      auto font = QFont("Roboto");
-  //      font.setPixelSize(scale_height(12));
-  //      painter.setFont(font);
-  //      auto metrics = QFontMetrics(font);
-  //      auto highlight_x_pos = metrics.horizontalAdvance(text()) +
-  //        get_padding() + scale_width(3);
-  //      painter.fillRect(highlight_x_pos,
-  //        (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
-  //        metrics.horizontalAdvance(item_text),
-  //        metrics.ascent() + scale_height(4), QColor("#0078D7"));
-  //      painter.setPen(Qt::white);
-  //      painter.drawText(QPoint(highlight_x_pos,
-  //        (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
-  //    }
-  //  }
-  //}
   if(m_is_icon_visible) {
     auto painter = QPainter(this);
     painter.drawImage(width() - ICON_WIDTH() - scale_width(8),
@@ -201,9 +168,8 @@ void SecurityInputLineEdit::on_text_edited() {
         !m_is_suggestion_disabled) {
       auto text_length = text().length();
       setText(m_item_delegate.displayText(suggestion));
-      setSelection(text_length, text().length());
-      //qDebug() << text();
-      //qDebug() << m_last_key;
+      setCursorPosition(text().length());
+      cursorBackward(true, text().length() - text_length);
     }
     if(m_is_suggestion_disabled) {
       m_securities->clear_active_item();
