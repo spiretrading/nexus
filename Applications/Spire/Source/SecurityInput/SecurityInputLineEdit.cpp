@@ -87,7 +87,7 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
       if(m_last_key != Qt::Key_Backspace && m_securities->isVisible()) {
         m_last_key = static_cast<Qt::Key>(event->key());
         m_is_suggestion_disabled = true;
-        m_securities->clear_activated_item();
+        m_securities->clear_active_item();
         update();
         return;
       }
@@ -131,11 +131,11 @@ void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
         auto metrics = QFontMetrics(font);
         auto highlight_x_pos = metrics.horizontalAdvance(text()) +
           get_padding() + scale_width(3);
-        //painter.fillRect(highlight_x_pos,
-        //  (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
-        //  metrics.horizontalAdvance(item_text),
-        //  metrics.ascent() + scale_height(4), QColor("#0078D7"));
-        painter.setPen(QColor("#A0A0A0"));
+        painter.fillRect(highlight_x_pos,
+          (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
+          metrics.horizontalAdvance(item_text),
+          metrics.ascent() + scale_height(4), QColor("#0078D7"));
+        painter.setPen(Qt::white);
         painter.drawText(QPoint(highlight_x_pos,
           (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
       }
@@ -191,7 +191,7 @@ void SecurityInputLineEdit::on_text_edited() {
       m_securities->raise();
     }
     if(m_is_suggestion_disabled) {
-      m_securities->clear_activated_item();
+      m_securities->clear_active_item();
     }
   });
   auto current_security = ParseSecurity(text().toUpper().toStdString());
