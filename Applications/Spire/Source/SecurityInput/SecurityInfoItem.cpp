@@ -1,4 +1,4 @@
-#include "Spire/SecurityInput/SecurityInfoWidget.hpp"
+#include "Spire/SecurityInput/SecurityInfoItem.hpp"
 #include <QHBoxLayout>
 #include <QPainter>
 #include <QVBoxLayout>
@@ -10,8 +10,8 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
-    : DropDownItem(QVariant::fromValue<Security>(info.m_security), (parent)),
+SecurityInfoItem::SecurityInfoItem(SecurityInfo info, QWidget* parent)
+    : DropDownItem(QVariant::fromValue(info.m_security), (parent)),
       m_info(std::move(info)) {
   setFixedHeight(scale_height(40));
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -55,11 +55,11 @@ SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
   layout->addWidget(m_company_name_label);
 }
 
-const SecurityInfo& SecurityInfoWidget::get_info() const {
+const SecurityInfo& SecurityInfoItem::get_info() const {
   return m_info;
 }
 
-void SecurityInfoWidget::paintEvent(QPaintEvent* event) {
+void SecurityInfoItem::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(underMouse() || is_highlighted()) {
     painter.fillRect(rect(), QColor("#F2F2FF"));
@@ -69,11 +69,11 @@ void SecurityInfoWidget::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 }
 
-void SecurityInfoWidget::resizeEvent(QResizeEvent* event) {
+void SecurityInfoItem::resizeEvent(QResizeEvent* event) {
   display_company_name();
 }
 
-void SecurityInfoWidget::display_company_name() {
+void SecurityInfoItem::display_company_name() {
   QFontMetrics metrics(m_company_name_label->font());
   auto shortened_text = metrics.elidedText(
     QString::fromStdString(m_info.m_name), Qt::ElideRight,

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <QKeyEvent>
 #include <QPainter>
-#include "Spire/SecurityInput/SecurityInfoWidget.hpp"
+#include "Spire/SecurityInput/SecurityInfoItem.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -154,8 +154,7 @@ void SecurityInputLineEdit::on_text_edited() {
     auto widget_items = std::vector<DropDownItem*>(completions.size());
     std::transform(completions.begin(), completions.end(),
       widget_items.begin(), [&] (const auto& item) {
-        auto item_widget = new SecurityInfoWidget(item, this);
-        return item_widget;
+        return new SecurityInfoItem(item, this);
       });
     m_securities->set_items(widget_items);
     if(widget_items.empty()) {

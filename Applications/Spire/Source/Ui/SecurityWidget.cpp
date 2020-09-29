@@ -109,7 +109,6 @@ void SecurityWidget::on_security_input_accept(SecurityInputDialog* dialog) {
     delete_later(m_empty_window_label);
     m_securities.push(m_current_security);
     m_current_security = security;
-    activateWindow();
     m_change_security_signal(security);
   }
   dialog->close();

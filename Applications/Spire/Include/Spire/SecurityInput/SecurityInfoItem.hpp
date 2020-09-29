@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_INFO_WIDGET_HPP
-#define SPIRE_SECURITY_INFO_WIDGET_HPP
+#ifndef SPIRE_SECURITY_INFO_ITEM_HPP
+#define SPIRE_SECURITY_INFO_ITEM_HPP
 #include <QLabel>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
@@ -8,15 +8,15 @@
 namespace Spire {
 
   //! A convenience widget to display a security's name and ticker symbol.
-  class SecurityInfoWidget : public DropDownItem {
+  class SecurityInfoItem : public DropDownItem {
     public:
 
-      //! Constructs a SecurityInfoWidget.
+      //! Constructs a SecurityInfoItem.
       /*!
         \param info SecurityInfo to display.
         \param parent Parent to this widget.
       */
-      explicit SecurityInfoWidget(Nexus::SecurityInfo info,
+      explicit SecurityInfoItem(Nexus::SecurityInfo info,
         QWidget* parent = nullptr);
 
       //! Returns the security info represented.

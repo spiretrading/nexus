@@ -79,7 +79,7 @@ bool SecurityInputDialog::eventFilter(QObject* watched, QEvent* event) {
         }
         break;
     }
-  } else if (watched == m_security_list) {
+  } else if(watched == m_security_list) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Escape) {
@@ -135,7 +135,6 @@ void SecurityInputDialog::reject_dialog() {
   disconnect(m_security_line_edit,
     &SecurityInputLineEdit::editingFinished, nullptr, nullptr);
   reject();
-  static_cast<QWidget*>(parent())->activateWindow();
 }
 
 void SecurityInputDialog::set_security(const Security& security) {
