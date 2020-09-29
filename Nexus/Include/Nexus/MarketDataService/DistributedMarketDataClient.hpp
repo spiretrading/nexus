@@ -1,7 +1,6 @@
 #ifndef NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
 #define NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
 #include <unordered_map>
-#include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include "Nexus/Definitions/Country.hpp"
@@ -14,7 +13,7 @@ namespace Nexus::MarketDataService {
    * Implements a MarketDataClient whose servers are distributed among
    * multiple instances.
    */
-  class DistributedMarketDataClient : private boost::noncopyable {
+  class DistributedMarketDataClient {
     public:
 
       /**
@@ -80,6 +79,10 @@ namespace Nexus::MarketDataService {
       VirtualMarketDataClient* FindMarketDataClient(MarketCode market);
       VirtualMarketDataClient* FindMarketDataClient(const Security& security);
       Beam::IO::OpenState m_openState;
+
+      DistributedMarketDataClient(const DistributedMarketDataClient&) = delete;
+      DistributedMarketDataClient& operator =(
+        const DistributedMarketDataClient&) = delete;
   };
 
   inline DistributedMarketDataClient::DistributedMarketDataClient(

@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServices.hpp"
 
@@ -17,7 +16,7 @@ namespace Nexus::DefinitionsService {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class DefinitionsClient : private boost::noncopyable {
+  class DefinitionsClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -67,6 +66,9 @@ namespace Nexus::DefinitionsService {
     private:
       Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       Beam::IO::OpenState m_openState;
+
+      DefinitionsClient(const DefinitionsClient&) = delete;
+      DefinitionsClient& operator =(const DefinitionsClient&) = delete;
   };
 
   template<typename B>
