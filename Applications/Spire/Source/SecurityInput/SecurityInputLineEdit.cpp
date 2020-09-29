@@ -2,10 +2,10 @@
 #include <algorithm>
 #include <QKeyEvent>
 #include <QPainter>
+#include "Spire/SecurityInput/SecurityInfoItem.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -37,28 +37,21 @@ SecurityInputLineEdit::SecurityInputLineEdit(Security security,
 
 SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
     Beam::Ref<SecurityInputModel> model, bool is_icon_visible, QWidget* parent)
-    : QLineEdit(initial_text, parent),
+    : TextInputWidget(initial_text, parent),
       m_model(model.Get()),
-      m_is_icon_visible(is_icon_visible) {
+      m_is_icon_visible(is_icon_visible),
+      m_is_suggestion_disabled(false),
+      m_last_key(Qt::Key_unknown) {
   setText(initial_text);
   parent->installEventFilter(this);
-  setObjectName("SecurityInputLineEdit");
-  setContextMenuPolicy(Qt::NoContextMenu);
-  setStyleSheet(QString(R"(
-    #SecurityInputLineEdit {
-      background-color: #FFFFFF;
-      border: none;
-      font-family: Roboto;
-      font-size: %1px;
-      padding: %2px 0px %2px %3px;
-    })").arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(6)));
-  connect(this, &QLineEdit::textEdited, this,
+  connect(this, &TextInputWidget::textEdited, this,
     &SecurityInputLineEdit::on_text_edited);
-  m_securities = new SecurityInfoListView(this);
-  m_securities->connect_activate_signal(
-    [=] (auto& s) { on_activated(s); });
-  m_securities->connect_commit_signal([=] (auto& s) {
-    on_commit(s);
+  m_securities = new DropDownList({}, false, this);
+  m_securities->findChild<ScrollArea*>()->setFocusProxy(this);
+  m_securities->connect_activated_signal(
+    [=] (auto& s) { on_activated(s.value<Security>()); });
+  m_securities->connect_value_selected_signal([=] (auto& s) {
+    on_commit(s.value<Security>());
   });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
@@ -68,18 +61,9 @@ const Nexus::Security& SecurityInputLineEdit::get_security() const {
   return m_security;
 }
 
-connection SecurityInputLineEdit::connect_commit_signal(
-    const CommitSignal::slot_type& slot) const {
-  return m_commit_signal.connect(slot);
-}
-
 bool SecurityInputLineEdit::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
-    if(event->type() == QEvent::Move) {
-      move_securities_list();
-    } else if(event->type() == QEvent::FocusIn) {
-      setFocus();
-    } else if(event->type() == QEvent::WindowDeactivate &&
+    if(event->type() == QEvent::WindowDeactivate &&
         !m_securities->isActiveWindow()) {
       m_securities->hide();
     }
@@ -87,37 +71,51 @@ bool SecurityInputLineEdit::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Wheel) {
       m_securities->hide();
     }
-   }
-  return QLineEdit::eventFilter(watched, event);
+  }
+  return TextInputWidget::eventFilter(watched, event);
 }
 
-void SecurityInputLineEdit::hideEvent(QHideEvent* event) {
-  m_securities->close();
+void SecurityInputLineEdit::focusInEvent(QFocusEvent* event) {
+  TextInputWidget::focusInEvent(event);
+  setCursorPosition(text().length());
 }
 
 void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Down) {
-    m_securities->activate_next();
-    return;
-  } else if(event->key() == Qt::Key_Up) {
-    m_securities->activate_previous();
-    return;
-  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    auto current_security = ParseSecurity(text().toUpper().toStdString());
-    if(!current_security.GetSymbol().empty()) {
-      on_commit(current_security);
-    } else {
-      on_commit(m_security);
-    }
-    return;
-  } else if(event->key() == Qt::Key_Delete) {
-    on_commit({});
+  switch(event->key()) {
+    case Qt::Key_Backspace:
+      if(!text().isEmpty()) {
+        m_is_suggestion_disabled = true;
+      }
+      if(selectionLength() > 0) {
+        setText(text().remove(selectedText()));
+        m_last_key = static_cast<Qt::Key>(event->key());
+        m_securities->clear_active_item();
+        return;
+      }
+      break;
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+      {
+        auto current_security = ParseSecurity(text().toUpper().toStdString());
+        if(!current_security.GetSymbol().empty()) {
+          on_commit(current_security);
+        } else {
+          on_commit(m_security);
+        }
+        return;
+      }
+    case Qt::Key_Delete:
+      clear();
+      m_securities->hide();
+      m_is_suggestion_disabled = false;
+      return;
   }
-  QLineEdit::keyPressEvent(event);
+  TextInputWidget::keyPressEvent(event);
+  m_last_key = static_cast<Qt::Key>(event->key());
 }
 
 void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
-  QLineEdit::paintEvent(event);
+  TextInputWidget::paintEvent(event);
   if(m_is_icon_visible) {
     auto painter = QPainter(this);
     painter.drawImage(width() - ICON_WIDTH() - scale_width(8),
@@ -125,36 +123,25 @@ void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
   }
 }
 
-void SecurityInputLineEdit::resizeEvent(QResizeEvent* event) {
-  m_securities->setFixedWidth(std::max(width(), scale_width(142)));
-}
-
 void SecurityInputLineEdit::showEvent(QShowEvent* event) {
   on_text_edited();
   m_securities->setFixedWidth(std::max(width(), scale_width(142)));
 }
 
-void SecurityInputLineEdit::move_securities_list() {
-  auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-    geometry().bottomLeft()).x();
-  auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-    frameGeometry().bottomLeft()).y();
-  m_securities->move(x_pos, y_pos + 2);
-}
-
 void SecurityInputLineEdit::on_activated(const Security& security) {
-  auto item_delegate = CustomVariantItemDelegate();
-  setText(item_delegate.displayText(QVariant::fromValue(security), QLocale()));
+  setText(m_item_delegate.displayText(QVariant::fromValue(security)));
   m_security = ParseSecurity(text().toUpper().toStdString());
 }
 
 void SecurityInputLineEdit::on_commit(const Security& security) {
   m_security = security;
   Q_EMIT editingFinished();
-  m_commit_signal(security);
 }
 
 void SecurityInputLineEdit::on_text_edited() {
+  if(text().isEmpty()) {
+    m_is_suggestion_disabled = false;
+  }
   m_completions = m_model->autocomplete(text().toStdString());
   m_completions.then([=] (auto result) {
     auto completions = [&] {
@@ -164,13 +151,27 @@ void SecurityInputLineEdit::on_text_edited() {
         return std::vector<SecurityInfo>();
       }
     }();
-    m_securities->set_list(completions);
-    if(completions.empty()) {
+    auto widget_items = std::vector<DropDownItem*>(completions.size());
+    std::transform(completions.begin(), completions.end(),
+      widget_items.begin(), [&] (const auto& item) {
+        return new SecurityInfoItem(item, this);
+      });
+    m_securities->set_items(widget_items);
+    if(widget_items.empty()) {
       m_securities->hide();
     } else {
-      move_securities_list();
       m_securities->setVisible(true);
       m_securities->raise();
+    }
+    if(auto suggestion = m_securities->get_value(0); suggestion.isValid() &&
+        !m_is_suggestion_disabled) {
+      auto text_length = text().length();
+      setText(m_item_delegate.displayText(suggestion));
+      setCursorPosition(text().length());
+      cursorBackward(true, text().length() - text_length);
+    }
+    if(m_is_suggestion_disabled) {
+      m_securities->clear_active_item();
     }
   });
   auto current_security = ParseSecurity(text().toUpper().toStdString());

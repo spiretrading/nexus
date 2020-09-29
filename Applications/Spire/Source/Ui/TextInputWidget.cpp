@@ -18,7 +18,7 @@ TextInputWidget::TextInputWidget(QString text, QWidget* parent)
     : QLineEdit(std::move(text), parent),
       m_left_padding(0) {
   setContextMenuPolicy(Qt::NoContextMenu);
-  set_default_style();
+  set_style(Style::DEFAULT);
 }
 
 void TextInputWidget::focusInEvent(QFocusEvent* event) {
@@ -63,32 +63,37 @@ void TextInputWidget::paintEvent(QPaintEvent* event) {
   painter.drawText(text_rect, elided_text);
 }
 
-void TextInputWidget::set_cell_style() {
-  m_left_padding = scale_width(5);
-  setStyleSheet(QString(R"(
-    background-color: #FFFFFF;
-    border: none;
-    color: #000000;
-    font-family: Roboto;
-    font-size: %1px;
-    padding-left: %2px;
-  )").arg(scale_height(12)).arg(m_left_padding));
+int TextInputWidget::get_padding() const {
+  return m_left_padding;
 }
 
-void TextInputWidget::set_default_style() {
-  m_left_padding = scale_width(8);
-  setStyleSheet(QString(R"(
-    QLineEdit {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %3px;
-      padding-left: %4px;
-    }
+void TextInputWidget::set_style(Style style) {
+  if(style == Style::CELL) {
+    m_left_padding = scale_width(5);
+    setStyleSheet(QString(R"(
+      QLineEdit {
+        background-color: #FFFFFF;
+        border: none;
+        color: #000000;
+        font-family: Roboto;
+        font-size: %1px;
+        padding-left: %2px;
+      })").arg(scale_height(12)).arg(m_left_padding));
+  } else {
+    m_left_padding = scale_width(8);
+    setStyleSheet(QString(R"(
+      QLineEdit {
+        background-color: #FFFFFF;
+        border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+        color: #000000;
+        font-family: Roboto;
+        font-size: %3px;
+        padding-left: %4px;
+      }
 
-    QLineEdit:focus {
-      border: %1px solid #4B23A0 %2px solid #4B23A0;
-    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-        .arg(m_left_padding));
+      QLineEdit:focus {
+        border: %1px solid #4B23A0 %2px solid #4B23A0;
+      })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
+          .arg(m_left_padding));
+  }
 }

@@ -1,5 +1,6 @@
-#include "Spire/SecurityInput/SecurityInfoWidget.hpp"
+#include "Spire/SecurityInput/SecurityInfoItem.hpp"
 #include <QHBoxLayout>
+#include <QPainter>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -9,10 +10,9 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
-    : QWidget(parent),
-      m_info(std::move(info)),
-      m_is_highlighted(false) {
+SecurityInfoItem::SecurityInfoItem(SecurityInfo info, QWidget* parent)
+    : DropDownItem(QVariant::fromValue(info.m_security), (parent)),
+      m_info(std::move(info)) {
   setFixedHeight(scale_height(40));
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFocusPolicy(Qt::NoFocus);
@@ -53,58 +53,27 @@ SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
   )").arg(scale_height(10)));
   display_company_name();
   layout->addWidget(m_company_name_label);
-  setMouseTracking(true);
 }
 
-const SecurityInfo& SecurityInfoWidget::get_info() const {
+const SecurityInfo& SecurityInfoItem::get_info() const {
   return m_info;
 }
 
-void SecurityInfoWidget::set_highlighted() {
-  if(m_is_highlighted) {
-    return;
+void SecurityInfoItem::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  if(underMouse() || is_highlighted()) {
+    painter.fillRect(rect(), QColor("#F2F2FF"));
+  } else {
+    painter.fillRect(rect(), Qt::white);
   }
-  setStyleSheet("background-color: #F2F2FF;");
-  m_is_highlighted = true;
-  m_highlighted_signal(true);
+  QWidget::paintEvent(event);
 }
 
-void SecurityInfoWidget::remove_highlight() {
-  if(!m_is_highlighted) {
-    return;
-  }
-  setStyleSheet("background-color: transparent;");
-  m_is_highlighted = false;
-  m_highlighted_signal(false);
-}
-
-connection SecurityInfoWidget::connect_highlighted_signal(
-    const HighlightedSignal::slot_type& slot) const {
-  return m_highlighted_signal.connect(slot);
-}
-
-connection SecurityInfoWidget::connect_commit_signal(
-    const CommitSignal::slot_type& slot) const {
-  return m_commit_signal.connect(slot);
-}
-
-void SecurityInfoWidget::enterEvent(QEvent* event) {
-  set_highlighted();
-}
-
-void SecurityInfoWidget::leaveEvent(QEvent* event) {
-  remove_highlight();
-}
-
-void SecurityInfoWidget::mouseReleaseEvent(QMouseEvent* event) {
-  m_commit_signal();
-}
-
-void SecurityInfoWidget::resizeEvent(QResizeEvent* event) {
+void SecurityInfoItem::resizeEvent(QResizeEvent* event) {
   display_company_name();
 }
 
-void SecurityInfoWidget::display_company_name() {
+void SecurityInfoItem::display_company_name() {
   QFontMetrics metrics(m_company_name_label->font());
   auto shortened_text = metrics.elidedText(
     QString::fromStdString(m_info.m_name), Qt::ElideRight,
