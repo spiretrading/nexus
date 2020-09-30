@@ -46,7 +46,7 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
   parent->installEventFilter(this);
   connect(this, &TextInputWidget::textEdited, this,
     &SecurityInputLineEdit::on_text_edited);
-  m_securities = new DropDownList({}, false, this);
+  m_securities = new DropDownMenuList({}, false, this);
   m_securities->findChild<ScrollArea*>()->setFocusProxy(this);
   m_securities->connect_activated_signal(
     [=] (auto& s) { on_activated(s.value<Security>()); });
@@ -151,7 +151,7 @@ void SecurityInputLineEdit::on_text_edited() {
         return std::vector<SecurityInfo>();
       }
     }();
-    auto widget_items = std::vector<DropDownItem*>(completions.size());
+    auto widget_items = std::vector<DropDownMenuItem*>(completions.size());
     std::transform(completions.begin(), completions.end(),
       widget_items.begin(), [&] (const auto& item) {
         return new SecurityInfoItem(item, this);

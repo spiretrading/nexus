@@ -5,7 +5,7 @@
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/DropDownMenuList.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
 namespace Spire {
@@ -50,7 +50,7 @@ namespace Spire {
   
     private:
       SecurityInputModel* m_model;
-      DropDownList* m_securities;
+      DropDownMenuList* m_securities;
       QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
       Nexus::Security m_security;
       bool m_is_icon_visible;

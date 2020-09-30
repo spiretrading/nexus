@@ -11,7 +11,7 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInfoItem::SecurityInfoItem(SecurityInfo info, QWidget* parent)
-    : DropDownItem(QVariant::fromValue(info.m_security), (parent)),
+    : DropDownMenuItem(QVariant::fromValue(info.m_security), (parent)),
       m_info(std::move(info)) {
   setFixedHeight(scale_height(40));
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);

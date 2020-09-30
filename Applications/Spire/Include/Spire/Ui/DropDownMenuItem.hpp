@@ -41,6 +41,9 @@ namespace Spire {
       //! Returns the item's value.
       const QVariant& get_value() const;
 
+      //! Returns true iff the item is highlighted.
+      bool is_highlighted() const;
+
       //! Displays the item's highlight style.
       void set_highlight();
 

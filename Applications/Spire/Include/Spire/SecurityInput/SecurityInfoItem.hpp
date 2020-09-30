@@ -3,12 +3,12 @@
 #include <QLabel>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Ui/DropDownItem.hpp"
+#include "Spire/Ui/DropDownMenuItem.hpp"
 
 namespace Spire {
 
   //! A convenience widget to display a security's name and ticker symbol.
-  class SecurityInfoItem : public DropDownItem {
+  class SecurityInfoItem : public DropDownMenuItem {
     public:
 
       //! Constructs a SecurityInfoItem.

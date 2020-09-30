@@ -6,7 +6,7 @@
 #include <QVBoxLayout>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/DropDownMenuList.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -54,7 +54,7 @@ namespace Spire {
       SecurityInputModel* m_model;
       QVBoxLayout* m_layout;
       SecurityInputLineEdit* m_security_line_edit;
-      DropDownList* m_security_list;
+      DropDownMenuList* m_security_list;
       QString m_initial_text;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
