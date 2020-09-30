@@ -18,9 +18,11 @@ namespace Spire {
 
       //! Constructs a CurrencyComboBox.
       /*!
+        \param database The source currency database.
         \param parent The parent widget.
       */
-      explicit CurrencyComboBox(QWidget* parent = nullptr);
+      explicit CurrencyComboBox(const Nexus::CurrencyDatabase& database,
+        QWidget* parent = nullptr);
 
       //! Connects a slot to the Currency selection signal.
       boost::signals2::connection connect_selected_signal(

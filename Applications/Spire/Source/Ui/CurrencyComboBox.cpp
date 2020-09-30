@@ -7,9 +7,10 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-CurrencyComboBox::CurrencyComboBox(QWidget* parent)
+CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
+    QWidget* parent)
     : QWidget(parent) {
-  auto entries = GetDefaultCurrencyDatabase().GetEntries();
+  auto entries = database.GetEntries();
   auto items = [&] {
     auto currencies = std::vector<QVariant>();
     currencies.reserve(entries.size());
