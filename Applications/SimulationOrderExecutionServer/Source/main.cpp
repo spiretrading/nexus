@@ -9,6 +9,7 @@
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/UidService/ApplicationDefinitions.hpp>
@@ -59,12 +60,12 @@ using namespace Nexus::DefinitionsService;
 using namespace Nexus::InternalMatcher;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlOrderExecutionDataStore<MySql::Connection>;
+  using SqlDataStore = SqlOrderExecutionDataStore<
+    SqlConnection<MySql::Connection>>;
   using ApplicationSimulationOrderExecutionDriver =
     SimulationOrderExecutionDriver<ApplicationMarketDataClient::Client*,
     LiveNtpTimeClient*>;
@@ -89,135 +90,125 @@ namespace {
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   struct OrderExecutionServerConnectionInitializer {
-    string m_serviceName;
+    std::string m_serviceName;
     IpAddress m_interface;
-    vector<IpAddress> m_addresses;
+    std::vector<IpAddress> m_addresses;
 
     void Initialize(const YAML::Node& config);
   };
 
   void OrderExecutionServerConnectionInitializer::Initialize(
       const YAML::Node& config) {
-    m_serviceName = Extract<string>(config, "service",
+    m_serviceName = Extract<std::string>(config, "service",
       OrderExecutionService::SERVICE_NAME);
     m_interface = Extract<IpAddress>(config, "interface");
-    vector<IpAddress> addresses;
+    auto addresses = std::vector<IpAddress>();
     addresses.push_back(m_interface);
-    m_addresses = Extract<vector<IpAddress>>(config, "addresses", addresses);
+    m_addresses = Extract<std::vector<IpAddress>>(config, "addresses",
+      addresses);
   }
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
+  auto configFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "0.9-r" SIMULATION_ORDER_EXECUTION_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ',
+      "0.9-r" SIMULATION_ORDER_EXECUTION_SERVER_VERSION
+      "\nCopyright (C) 2020 Spire Trading Inc.");
+    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
   } catch(const ArgException& e) {
-    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
+      std::endl;
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
+      std::endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address);
   } catch(const std::exception& e) {
-    cerr << "Error logging in: " << e.what() << endl;
+    std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
-  ApplicationUidClient uidClient;
+  auto uidClient = ApplicationUidClient();
   try {
-    uidClient.BuildSession(Ref(*serviceLocatorClient), Ref(socketThreadPool),
-      Ref(timerThreadPool));
-    uidClient->Open();
+    uidClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception& e) {
-    cerr << "Error connecting to the UID service: " << e.what() << endl;
+    std::cerr << "Error connecting to the UID service: " << e.what() <<
+      std::endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
+  auto timeClient = std::unique_ptr<LiveNtpTimeClient>();
   try {
     auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
     if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
+      std::cerr << "No time services available." << std::endl;
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
+    auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
-    timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+    try {
+      timeClient = MakeLiveNtpTimeClient(ntpPool);
+    } catch(const std::exception&) {
+      std::cerr << "NTP service unavailable." << std::endl;
+      return -1;
+    }
   } catch(const  std::exception& e) {
-    cerr << "Unable to initialize NTP client: " << e.what() << endl;
+    std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
     return -1;
   }
+  auto administrationClient = ApplicationAdministrationClient();
   try {
-    timeClient->Open();
-  } catch(const std::exception&) {
-    cerr << "NTP service unavailable." << endl;
-    return -1;
-  }
-  ApplicationAdministrationClient administrationClient;
-  try {
-    administrationClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    administrationClient->Open();
+    administrationClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception& e) {
-    cerr << "Error connecting to the administration service: " << e.what() <<
-      endl;
+    std::cerr << "Error connecting to the administration service: " <<
+      e.what() << std::endl;
     return -1;
   }
-  ApplicationMarketDataClient marketDataClient;
+  auto marketDataClient = ApplicationMarketDataClient();
   try {
-    marketDataClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    marketDataClient->Open();
+    marketDataClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the market data service." << endl;
+    std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
   }
-  ApplicationDefinitionsClient definitionsClient;
+  auto definitionsClient = ApplicationDefinitionsClient();
   try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    definitionsClient->Open();
+    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the definitions service." << endl;
+    std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
-  ApplicationComplianceClient complianceClient;
+  auto complianceClient = ApplicationComplianceClient();
   try {
-    complianceClient.BuildSession(Ref(*serviceLocatorClient),
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    complianceClient->Open();
+    complianceClient.BuildSession(Ref(*serviceLocatorClient));
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the compliance service." << endl;
+    std::cerr << "Unable to connect to the compliance service." << std::endl;
     return -1;
   }
-  ApplicationSimulationOrderExecutionDriver simulationOrderExecutionDriver{
-    marketDataClient.Get(), timeClient.get()};
-  ApplicationInternalMatchingOrderExecutionDriver
-    internalMatchingOrderExecutionDriver{serviceLocatorClient->GetAccount(),
-    Initialize(), marketDataClient.Get(), timeClient.get(), uidClient.Get(),
-    &simulationOrderExecutionDriver, Ref(timerThreadPool)};
-  vector<unique_ptr<OrderSubmissionCheck>> checks;
+  auto simulationOrderExecutionDriver =
+    ApplicationSimulationOrderExecutionDriver(marketDataClient.Get(),
+    timeClient.get());
+  auto internalMatchingOrderExecutionDriver =
+    ApplicationInternalMatchingOrderExecutionDriver(
+    serviceLocatorClient->GetAccount(), Initialize(), marketDataClient.Get(),
+    timeClient.get(), uidClient.Get(), &simulationOrderExecutionDriver);
+  auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
       definitionsClient->LoadMarketDatabase(),
@@ -232,84 +223,79 @@ int main(int argc, const char** argv) {
       administrationClient.Get()));
   } catch(const std::exception& e) {
     std::cerr << "Unable to initialize order submission checks: " << e.what() <<
-      endl;
+      std::endl;
     return -1;
   }
-  ApplicationOrderSubmissionCheckDriver orderSubmissionCheckDriver{
-    &internalMatchingOrderExecutionDriver, std::move(checks)};
-  ComplianceRuleSet<ApplicationComplianceClient::Client*,
-    ApplicationServiceLocatorClient::Client*> complianceRuleSet{
-    complianceClient.Get(), serviceLocatorClient.Get(),
-    [&] (const ComplianceRuleEntry& entry) {
-      return BuildComplianceRule(entry.GetSchema(), *marketDataClient,
-        *definitionsClient, *timeClient);
-    }};
-  ApplicationComplianceCheckOrderExecutionDriver
-    complianceCheckOrderExecutionDriver{&orderSubmissionCheckDriver,
-    timeClient.get(), &complianceRuleSet};
-  vector<MySqlConfig> mySqlConfigs;
+  auto orderSubmissionCheckDriver = ApplicationOrderSubmissionCheckDriver(
+    &internalMatchingOrderExecutionDriver, std::move(checks));
+  auto complianceRuleSet = ComplianceRuleSet(complianceClient.Get(),
+    serviceLocatorClient.Get(), [&] (const auto& entry) {
+    return BuildComplianceRule(entry.GetSchema(), *marketDataClient,
+      *definitionsClient, *timeClient);
+  });
+  auto complianceCheckOrderExecutionDriver =
+    ApplicationComplianceCheckOrderExecutionDriver(&orderSubmissionCheckDriver,
+    timeClient.get(), &complianceRuleSet);
+  auto mySqlConfigs = std::vector<MySqlConfig>();
   try {
     mySqlConfigs = MySqlConfig::ParseReplication(GetNode(config, "data_store"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'data_store': " << e.what() << endl;
+    std::cerr << "Error parsing section 'data_store': " << e.what() <<
+      std::endl;
     return -1;
   }
-  ptime sessionStartTime;
+  auto sessionStartTime = ptime();
   try {
     sessionStartTime = Extract<ptime>(config, "session_start_time", pos_infin);
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'session_start_time': " << e.what() << endl;
+    std::cerr << "Error parsing section 'session_start_time': " << e.what() <<
+      std::endl;
     return -1;
   }
-  OrderExecutionServerConnectionInitializer
-    orderExecutionServerConnectionInitializer;
+  auto orderExecutionServerConnectionInitializer =
+    OrderExecutionServerConnectionInitializer();
   try {
     orderExecutionServerConnectionInitializer.Initialize(
       GetNode(config, "server"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'server': " << e.what() << endl;
+    std::cerr << "Error parsing section 'server': " << e.what() << std::endl;
     return -1;
   }
-  auto accountSource =
-    [&] (unsigned int id) {
-      return serviceLocatorClient->LoadDirectoryEntry(id);
-    };
+  auto accountSource = [&] (unsigned int id) {
+    return serviceLocatorClient->LoadDirectoryEntry(id);
+  };
   auto connectionBuilders = std::vector<SqlDataStore::ConnectionBuilder>();
   for(auto& mySqlConfig : mySqlConfigs) {
-    connectionBuilders.emplace_back(
-      [=] {
-        return MySql::Connection(mySqlConfig.m_address.GetHost(),
-          mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-          mySqlConfig.m_password, mySqlConfig.m_schema);
-      });
+    connectionBuilders.emplace_back([=] {
+      return SqlConnection(MySql::Connection(mySqlConfig.m_address.GetHost(),
+        mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
+        mySqlConfig.m_password, mySqlConfig.m_schema));
+    });
   }
   auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(
     connectionBuilders, accountSource);
-  OrderExecutionServletContainer orderExecutionServer{
-    Initialize(serviceLocatorClient.Get(), Initialize(sessionStartTime,
-    definitionsClient->LoadMarketDatabase(),
-    definitionsClient->LoadDestinationDatabase(), timeClient.get(),
-    serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
-    &complianceCheckOrderExecutionDriver, dataStore.get())),
-    Initialize(orderExecutionServerConnectionInitializer.m_interface,
-    Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
-    Ref(timerThreadPool))};
+  auto orderExecutionServer = optional<OrderExecutionServletContainer>();
   try {
-    orderExecutionServer.Open();
+    orderExecutionServer.emplace(Initialize(serviceLocatorClient.Get(),
+      Initialize(sessionStartTime, definitionsClient->LoadMarketDatabase(),
+      definitionsClient->LoadDestinationDatabase(), timeClient.get(),
+      serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
+      &complianceCheckOrderExecutionDriver, dataStore.get())),
+      Initialize(orderExecutionServerConnectionInitializer.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
   } catch(const std::exception& e) {
-    cerr << "Error opening order server: " << e.what() << endl;
+    std::cerr << "Error opening order server: " << e.what() << std::endl;
     return -1;
   }
   try {
-    JsonObject orderExecutionService;
+    auto orderExecutionService = JsonObject();
     orderExecutionService["addresses"] = lexical_cast<std::string>(
       Stream(orderExecutionServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
       orderExecutionServerConnectionInitializer.m_serviceName,
       orderExecutionService);
   } catch(const std::exception& e) {
-    cerr << "Error registering service: " << e.what() << endl;
+    std::cerr << "Error registering service: " << e.what() << std::endl;
     return -1;
   }
   WaitForKillEvent();

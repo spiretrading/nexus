@@ -29,7 +29,7 @@ if [ "$config" = "" ]; then
   fi
 fi
 if [ "$config" = "clean" ]; then
-  git clean -ffxd -e *Dependencies*
+  git clean -ffxd -e *Dependencies* -e *WebApp*
   if [ -f "Dependencies/cache_files/nexus.txt" ]; then
     rm "Dependencies/cache_files/nexus.txt"
   fi

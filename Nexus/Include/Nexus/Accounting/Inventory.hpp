@@ -1,6 +1,7 @@
 #ifndef NEXUS_INVENTORY_HPP
 #define NEXUS_INVENTORY_HPP
 #include <ostream>
+#include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Position.hpp"
@@ -39,8 +40,36 @@ namespace Nexus::Accounting {
      * Constructs an Inventory.
      * @param key The Key uniquely identifying this Inventory.
      */
-    explicit Inventory(const typename Position::Key& key);
+    explicit Inventory(typename Position::Key key);
+
+    /**
+     * Constructs an Inventory.
+     * @param position The currently held Position.
+     * @param grossProfitAndLoss The Inventory's gross profit and loss.
+     * @param fees The transaction fees.
+     * @param volume The total quantity that was transacted.
+     * @param transactionCount The number of transactions made.
+     */
+    Inventory(Position position, Money grossProfitAndLoss, Money fees,
+      Quantity volume, int transactionCount);
+
+    /** Tests if two inventories are equal. */
+    bool operator ==(const Inventory& inventory) const;
+
+    /** Tests if two inventories are not equal. */
+    bool operator !=(const Inventory& inventory) const;
   };
+
+  /**
+  * Tests if an Inventory is empty, ie. has no position, volume, or
+  * transactions.
+  * @param inventory The inventory to test.
+  * @return <code>true</code> iff the <i>inventory</i> is empty.
+  */
+  template<typename P>
+  bool IsEmpty(const Inventory<P>& inventory) {
+    return inventory == Inventory<P>(inventory.m_position.m_key);
+  }
 
   template<typename P>
   Inventory<P>::Inventory()
@@ -48,10 +77,32 @@ namespace Nexus::Accounting {
       m_transactionCount(0) {}
 
   template<typename P>
-  Inventory<P>::Inventory(const typename P::Key& key)
-    : m_position(key),
+  Inventory<P>::Inventory(typename P::Key key)
+    : m_position(std::move(key)),
       m_volume(0),
       m_transactionCount(0) {}
+
+  template<typename P>
+  Inventory<P>::Inventory(Position position, Money grossProfitAndLoss,
+    Money fees, Quantity volume, int transactionCount)
+    : m_position(std::move(position)),
+      m_grossProfitAndLoss(grossProfitAndLoss),
+      m_fees(fees),
+      m_volume(volume),
+      m_transactionCount(transactionCount) {}
+
+  template<typename P>
+  bool Inventory<P>::operator ==(const Inventory& inventory) const {
+    return m_position == inventory.m_position &&
+      m_grossProfitAndLoss == inventory.m_grossProfitAndLoss &&
+      m_fees == inventory.m_fees && m_volume == inventory.m_volume &&
+      m_transactionCount == inventory.m_transactionCount;
+  }
+
+  template<typename P>
+  bool Inventory<P>::operator !=(const Inventory& inventory) const {
+    return !(*this == inventory);
+  }
 
   template<typename Position>
   std::ostream& operator <<(std::ostream& out,

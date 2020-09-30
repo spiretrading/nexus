@@ -7,7 +7,6 @@
 #include <Beam/Queries/Sequence.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Utilities/HashTuple.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
@@ -21,7 +20,7 @@
 namespace Nexus {
 
   /** Provides historical market data to the backtester. */
-  class BacktesterMarketDataService : private boost::noncopyable {
+  class BacktesterMarketDataService {
     public:
 
       /**
@@ -34,8 +33,8 @@ namespace Nexus {
        *        historicalMarketData.
        */
       BacktesterMarketDataService(
-        Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
-        MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        Beam::Ref<BacktesterEventHandler> eventHandler,
+        Beam::Ref<MarketDataService::Tests::MarketDataServiceTestEnvironment>
         marketDataEnvironment,
         Beam::Ref<MarketDataService::VirtualMarketDataClient> marketDataClient);
 
@@ -84,12 +83,16 @@ namespace Nexus {
       MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       std::unordered_set<std::tuple<boost::variant<Security, MarketCode>,
         MarketDataService::MarketDataType>> m_queries;
+
+      BacktesterMarketDataService(const BacktesterMarketDataService&) = delete;
+      BacktesterMarketDataService& operator =(
+        const BacktesterMarketDataService&) = delete;
   };
 
-  template<typename MarketDataTypeType>
+  template<typename T>
   class MarketDataQueryEvent : public BacktesterEvent {
     public:
-      using MarketDataType = MarketDataTypeType;
+      using MarketDataType = T;
 
       using Query = MarketDataService::GetMarketDataQueryType<
         Beam::Queries::SequencedValue<MarketDataType>>;
@@ -104,10 +107,10 @@ namespace Nexus {
       BacktesterMarketDataService* m_service;
   };
 
-  template<typename MarketDataTypeType>
+  template<typename T>
   class MarketDataLoadEvent : public BacktesterEvent {
     public:
-      using MarketDataType = MarketDataTypeType;
+      using MarketDataType = T;
 
       using Query = MarketDataService::GetMarketDataQueryType<
         Beam::Queries::SequencedValue<MarketDataType>>;
@@ -125,12 +128,12 @@ namespace Nexus {
       BacktesterMarketDataService* m_service;
   };
 
-  template<typename IndexType, typename MarketDataTypeType>
+  template<typename I, typename T>
   class MarketDataEvent : public BacktesterEvent {
     public:
-      using Index = IndexType;
+      using Index = I;
 
-      using MarketDataType = MarketDataTypeType;
+      using MarketDataType = T;
 
       MarketDataEvent(Index index, MarketDataType value,
         boost::posix_time::ptime timestamp,
@@ -145,8 +148,8 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
-    Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
-    MarketDataService::Tests::MarketDataServiceTestEnvironment>
+    Beam::Ref<BacktesterEventHandler> eventHandler,
+    Beam::Ref<MarketDataService::Tests::MarketDataServiceTestEnvironment>
     marketDataEnvironment, Beam::Ref<MarketDataService::VirtualMarketDataClient>
     marketDataClient)
     : m_eventHandler(eventHandler.Get()),
@@ -188,15 +191,15 @@ namespace Nexus {
     m_eventHandler->Add(event);
   }
 
-  template<typename MarketDataTypeType>
-  MarketDataQueryEvent<MarketDataTypeType>::MarketDataQueryEvent(Query query,
+  template<typename T>
+  MarketDataQueryEvent<T>::MarketDataQueryEvent(Query query,
     Beam::Ref<BacktesterMarketDataService> service)
     : BacktesterEvent(boost::posix_time::neg_infin),
       m_query(std::move(query)),
       m_service(service.Get()) {}
 
-  template<typename MarketDataTypeType>
-  void MarketDataQueryEvent<MarketDataTypeType>::Execute() {
+  template<typename T>
+  void MarketDataQueryEvent<T>::Execute() {
     if(m_query.GetRange().GetEnd() != Beam::Queries::Sequence::Last()) {
       return;
     }
@@ -211,18 +214,17 @@ namespace Nexus {
     m_service->m_eventHandler->Add(std::move(event));
   }
 
-  template<typename MarketDataTypeType>
-  MarketDataLoadEvent<MarketDataTypeType>::MarketDataLoadEvent(
-    typename Query::Index index, Beam::Queries::Range::Point startPoint,
-    boost::posix_time::ptime timestamp,
+  template<typename T>
+  MarketDataLoadEvent<T>::MarketDataLoadEvent(typename Query::Index index,
+    Beam::Queries::Range::Point startPoint, boost::posix_time::ptime timestamp,
     Beam::Ref<BacktesterMarketDataService> service)
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
       m_startPoint(startPoint),
       m_service(service.Get()) {}
 
-  template<typename MarketDataTypeType>
-  void MarketDataLoadEvent<MarketDataTypeType>::Execute() {
+  template<typename T>
+  void MarketDataLoadEvent<T>::Execute() {
     const auto QUERY_SIZE = 1000;
     auto endPoint =
       [&] () -> Beam::Queries::Range::Point {
@@ -240,9 +242,9 @@ namespace Nexus {
     auto queue = std::make_shared<Beam::Queue<
       Beam::Queries::SequencedValue<MarketDataType>>>();
     MarketDataService::QueryMarketDataClient(*m_service->m_marketDataClient,
-      query, queue);
+      query, Beam::ScopedQueueWriter(queue));
     auto data = std::vector<Beam::Queries::SequencedValue<MarketDataType>>();
-    Beam::FlushQueue(queue, std::back_inserter(data));
+    Beam::Flush(queue, std::back_inserter(data));
     if(data.empty()) {
       return;
     }
@@ -262,17 +264,17 @@ namespace Nexus {
     m_service->m_eventHandler->Add(std::move(events));
   }
 
-  template<typename IndexType, typename MarketDataTypeType>
-  MarketDataEvent<IndexType, MarketDataTypeType>::MarketDataEvent(Index index,
-    MarketDataType value, boost::posix_time::ptime timestamp,
+  template<typename I, typename T>
+  MarketDataEvent<I, T>::MarketDataEvent(Index index, MarketDataType value,
+    boost::posix_time::ptime timestamp,
     Beam::Ref<BacktesterMarketDataService> service)
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
       m_value(std::move(value)),
       m_service(service.Get()) {}
 
-  template<typename IndexType, typename MarketDataTypeType>
-  void MarketDataEvent<IndexType, MarketDataTypeType>::Execute() {
+  template<typename I, typename T>
+  void MarketDataEvent<I, T>::Execute() {
     m_service->m_marketDataEnvironment->Publish(m_index, m_value);
   }
 }

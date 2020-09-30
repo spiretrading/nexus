@@ -10,7 +10,7 @@ interface Properties {
 }
 
 interface State {
-  model: WebPortal.GroupInfoModel;
+  accounts: WebPortal.AccountEntry[];
 }
 
 /** Displays a sample GroupInfoPage for testing. */
@@ -18,17 +18,20 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      model: new WebPortal.LocalGroupInfoModel([])
+      accounts: []
     };
   }
 
   public render(): JSX.Element {
     return(
       <Router.BrowserRouter>
-        <Router.Route path="/">
-          <WebPortal.GroupInfoController
-            model={this.state.model}
-            displaySize={this.props.displaySize}/>
+        <Router.Route path="/"
+          component={
+            Router.withRouter(() => 
+              <WebPortal.GroupInfoController
+                accounts={this.state.accounts}
+                displaySize={this.props.displaySize}/>
+            )}>
         </Router.Route>
         <div style={TestApp.STYLE.testingComponents}>
           <button onClick={this.clearAccounts}>No Members</button>
@@ -43,7 +46,7 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private clearAccounts = () => {
-    this.setState({model: new WebPortal.LocalGroupInfoModel([])});
+    this.setState({accounts: []});
   }
 
   private addSomeAccounts = () => {
@@ -57,7 +60,7 @@ class TestApp extends React.Component<Properties, State> {
     group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Carl'),
       new Nexus.AccountRoles(2)));
-    this.setState({model: new WebPortal.LocalGroupInfoModel(group)});
+    this.setState({accounts: group});
   }
 
   private addManyAccounts = () => {
@@ -98,7 +101,7 @@ class TestApp extends React.Component<Properties, State> {
     group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(113, 'Doug'), 
       new Nexus.AccountRoles(2)));
-    this.setState({model: new WebPortal.LocalGroupInfoModel(group)});
+    this.setState({accounts: group});
   }
 
   private static STYLE = {

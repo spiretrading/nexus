@@ -30,14 +30,12 @@ namespace {
       m_server.emplace(serverConnection,
         factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot());
       RegisterChartingServices(Store(m_server->GetSlots()));
-      m_server->Open();
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", Ref(*serverConnection));
+            "test", *serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_client.emplace(builder);
-      m_client->Open();
     }
   };
 }

@@ -38,8 +38,6 @@ namespace OrderExecutionService {
 
       void Store(const SequencedAccountExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -97,21 +95,6 @@ namespace OrderExecutionService {
     m_primaryDataStore->Store(executionReport);
     for(auto& dataStore : m_duplicateDataStores) {
       dataStore->Store(executionReport);
-    }
-  }
-
-  inline void ReplicatedOrderExecutionDataStore::Open() {
-    m_primaryDataStore->Open();
-    auto i = m_duplicateDataStores.begin();
-    while(i != m_duplicateDataStores.end()) {
-      try {
-        (*i)->Open();
-        ++i;
-      } catch(const std::exception& e) {
-        std::cerr << "Failed to open replicated data store: " << e.what() <<
-          "\n";
-        i = m_duplicateDataStores.erase(i);
-      }
     }
   }
 

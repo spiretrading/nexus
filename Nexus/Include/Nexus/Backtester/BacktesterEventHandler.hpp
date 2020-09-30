@@ -13,7 +13,6 @@
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/range/iterator_range.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
@@ -21,7 +20,7 @@
 namespace Nexus {
 
   /** Implements an event loop to handle BacktesterEvents. */
-  class BacktesterEventHandler : private boost::noncopyable {
+  class BacktesterEventHandler {
     public:
 
       /**
@@ -61,8 +60,6 @@ namespace Nexus {
        */
       void Add(std::vector<std::shared_ptr<BacktesterEvent>> events);
 
-      void Open();
-
       void Close();
 
     private:
@@ -75,8 +72,10 @@ namespace Nexus {
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      BacktesterEventHandler(const BacktesterEventHandler&) = delete;
+      BacktesterEventHandler& operator =(
+        const BacktesterEventHandler&) = delete;
       void EventLoop();
-      void Shutdown();
   };
 
   inline BacktesterEventHandler::BacktesterEventHandler(
@@ -85,9 +84,18 @@ namespace Nexus {
         boost::posix_time::pos_infin) {}
 
   inline BacktesterEventHandler::BacktesterEventHandler(
-    boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
-    : m_startTime(std::move(startTime)),
-      m_endTime(std::move(endTime)) {}
+      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
+      : m_startTime(std::move(startTime)),
+        m_endTime(std::move(endTime)),
+        m_timeEnvironment(m_startTime) {
+    try {
+      m_eventLoopRoutine = Beam::Routines::Spawn(
+        std::bind(&BacktesterEventHandler::EventLoop, this));
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   inline BacktesterEventHandler::~BacktesterEventHandler() {
     Close();
@@ -138,27 +146,15 @@ namespace Nexus {
     m_eventAvailableCondition.notify_one();
   }
 
-  inline void BacktesterEventHandler::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_timeEnvironment.SetTime(m_startTime);
-      m_timeEnvironment.Open();
-      m_eventLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&BacktesterEventHandler::EventLoop, this));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
   inline void BacktesterEventHandler::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    m_eventAvailableCondition.notify_one();
+    m_eventLoopRoutine.Wait();
+    m_timeEnvironment.Close();
+    m_openState.Close();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void BacktesterEventHandler::EventLoop() {
@@ -184,14 +180,6 @@ namespace Nexus {
       }
       event->Execute();
     }
-  }
-
-  inline void BacktesterEventHandler::Shutdown() {
-    m_eventAvailableCondition.notify_one();
-    m_eventLoopRoutine.Wait();
-    m_timeEnvironment.Close();
-    Beam::Routines::FlushPendingRoutines();
-    m_openState.SetClosed();
   }
 }
 

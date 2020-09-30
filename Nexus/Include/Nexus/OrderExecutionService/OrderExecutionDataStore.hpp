@@ -43,8 +43,6 @@ namespace OrderExecutionService {
     */
     void Store(const SequencedAccountExecutionReport& executionReport);
 
-    void Open();
-
     void Close();
   };
 }

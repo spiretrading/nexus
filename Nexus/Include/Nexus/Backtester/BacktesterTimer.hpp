@@ -1,8 +1,7 @@
 #ifndef NEXUS_BACKTESTER_TIMER_HPP
 #define NEXUS_BACKTESTER_TIMER_HPP
-#include <Beam/Queues/MultiQueueWriter.hpp>
+#include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Threading/Timer.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
@@ -10,7 +9,7 @@
 namespace Nexus {
 
   /** Implements a Timer used by the backtester. */
-  class BacktesterTimer : private boost::noncopyable {
+  class BacktesterTimer {
     public:
 
       /**
@@ -38,7 +37,10 @@ namespace Nexus {
       BacktesterEventHandler* m_eventHandler;
       std::shared_ptr<TimerBacktesterEvent> m_expireEvent;
       std::shared_ptr<TimerBacktesterEvent> m_cancelEvent;
-      Beam::MultiQueueWriter<Beam::Threading::Timer::Result> m_publisher;
+      Beam::QueueWriterPublisher<Beam::Threading::Timer::Result> m_publisher;
+
+      BacktesterTimer(const BacktesterTimer&) = delete;
+      BacktesterTimer& operator =(const BacktesterTimer&) = delete;
   };
 
   /** Represents a Timer event. */

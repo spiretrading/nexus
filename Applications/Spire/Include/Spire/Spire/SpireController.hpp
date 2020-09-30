@@ -13,7 +13,7 @@
 namespace Spire {
 
   //! Controller for the application as a whole.
-  class SpireController : private boost::noncopyable {
+  class SpireController {
     public:
 
       //! Constructs a controller in a state ready to execute a new instance of
@@ -32,12 +32,12 @@ namespace Spire {
         TOOLBAR
       };
       State m_state;
-      std::unique_ptr<Beam::Network::SocketThreadPool> m_socket_thread_pool;
-      std::unique_ptr<Beam::Threading::TimerThreadPool> m_timer_thread_pool;
       std::unique_ptr<LoginController> m_login_controller;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
       std::unique_ptr<ToolbarController> m_toolbar_controller;
 
+      SpireController(const SpireController&) = delete;
+      SpireController& operator =(const SpireController&) = delete;
       std::vector<LoginController::ServerEntry> load_server_entries();
       void on_login(const Definitions& definitions);
   };

@@ -72,10 +72,10 @@ namespace {
         "load_account_roles", LoadAccountRoles, parent, child);
     }
 
-    DirectoryEntry LoadTradingGroupEntry(
+    DirectoryEntry LoadParentTradingGroup(
         const DirectoryEntry& account) override {
       PYBIND11_OVERLOAD_PURE_NAME(DirectoryEntry, VirtualAdministrationClient,
-        "load_trading_group_entry", LoadTradingGroupEntry, account);
+        "load_parent_trading_group", LoadParentTradingGroup, account);
     }
 
     AccountIdentity LoadIdentity(const DirectoryEntry& account) override {
@@ -254,11 +254,6 @@ namespace {
         SendAccountModificationRequestMessage, id, message);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualAdministrationClient, "open",
-        Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualAdministrationClient, "close",
         Close);
@@ -338,8 +333,8 @@ void Nexus::Python::ExportAdministrationClient(pybind11::module& module) {
       static_cast<AccountRoles (VirtualAdministrationClient::*)(
       const DirectoryEntry&, const DirectoryEntry&)>(
       &VirtualAdministrationClient::LoadAccountRoles))
-    .def("load_trading_group_entry",
-      &VirtualAdministrationClient::LoadTradingGroupEntry)
+    .def("load_parent_trading_group",
+      &VirtualAdministrationClient::LoadParentTradingGroup)
     .def("load_identity", &VirtualAdministrationClient::LoadIdentity)
     .def("store_identity", &VirtualAdministrationClient::StoreIdentity)
     .def("load_trading_group", &VirtualAdministrationClient::LoadTradingGroup)
@@ -394,7 +389,6 @@ void Nexus::Python::ExportAdministrationClient(pybind11::module& module) {
     .def("load_message_ids", &VirtualAdministrationClient::LoadMessageIds)
     .def("send_account_modification_request_message",
       &VirtualAdministrationClient::SendAccountModificationRequestMessage)
-    .def("open", &VirtualAdministrationClient::Open)
     .def("close", &VirtualAdministrationClient::Close);
 }
 
@@ -421,9 +415,11 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
       [] (std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
         return std::make_unique<AdministrationServiceTestEnvironment>(
           std::move(serviceLocatorClient));
-      }))
-    .def("open", &AdministrationServiceTestEnvironment::Open,
-      call_guard<GilRelease>())
+      }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (AdministrationServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("close", &AdministrationServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("make_administrator",
@@ -434,7 +430,7 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
           VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakeToPythonAdministrationClient(self.BuildClient(
           Ref(serviceLocatorClient)));
-      });
+      }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportApplicationAdministrationClient(
@@ -454,22 +450,19 @@ void Nexus::Python::ExportApplicationAdministrationClient(
         auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
           [=] () mutable {
             if(delay) {
-              auto delayTimer = LiveTimer(seconds(3),
-                Ref(*GetTimerThreadPool()));
+              auto delayTimer = LiveTimer(seconds(3));
               delayTimer.Start();
               delayTimer.Wait();
             }
             delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses,
-              Ref(*GetSocketThreadPool()));
+            return std::make_unique<TcpSocketChannel>(addresses);
           },
           [=] {
-            return std::make_unique<LiveTimer>(seconds(10),
-              Ref(*GetTimerThreadPool()));
+            return std::make_unique<LiveTimer>(seconds(10));
           });
         return MakeToPythonAdministrationClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportEntitlementModification(pybind11::module& module) {

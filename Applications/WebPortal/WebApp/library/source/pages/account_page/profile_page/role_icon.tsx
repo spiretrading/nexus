@@ -44,10 +44,6 @@ export class RoleIcon extends React.Component<Properties, State> {
     this.state = {
       isMouseTooltipShown: false
     };
-    this.showTooltipMouse = this.showTooltipMouse.bind(this);
-    this.hideToolTipMouse = this.hideToolTipMouse.bind(this);
-    this.onTouch = this.onTouch.bind(this);
-    this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -105,30 +101,30 @@ export class RoleIcon extends React.Component<Properties, State> {
       </div>);
   }
 
-  private showTooltipMouse() {
+  private showTooltipMouse = () => {
     if(!this.state.isMouseTooltipShown && !this.props.isTouchTooltipShown) {
       this.setState({isMouseTooltipShown: true});
     }
   }
 
-  private hideToolTipMouse() {
+  private hideToolTipMouse = () => {
     this.setState({isMouseTooltipShown: false});
   }
 
-  private onClick() {
+  private onClick = () => {
     if(!this.props.readonly && !this.props.isTouchTooltipShown) {
       this.props.onClick();
     }
   }
 
-  private onTouch() {
+  private onTouch = () => {
     if(!this.props.readonly) {
       this.props.onClick();
     }
     this.props.onTouch();
   }
 
-  private getText(role: Nexus.AccountRoles.Role) {
+  private getText = (role: Nexus.AccountRoles.Role) => {
     switch (role) {
       case Nexus.AccountRoles.Role.TRADER:
         return RoleIcon.TRADER_TOOLTIP_TEXT;
@@ -141,7 +137,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     }
   }
 
-  private getSource(role: Nexus.AccountRoles.Role) {
+  private getSource = (role: Nexus.AccountRoles.Role) => {
     switch (role) {
       case Nexus.AccountRoles.Role.TRADER:
         return 'resources/account/trader-';
@@ -157,68 +153,68 @@ export class RoleIcon extends React.Component<Properties, State> {
   private static readonly ANIMATION_STYLE = {
     entering: {
       opacity: 0
-    },
+    } as React.CSSProperties,
     entered: {
       opacity: 1
-    },
+    } as React.CSSProperties,
     exited: {
-      display: 'none' as 'none'
-    }
+      display: 'none'
+    } as React.CSSProperties
   };
   private static readonly STYLE = {
     iconWrapperLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      boxSizing: 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       height: '24px',
       width: '24px',
       padding: '2px',
       outline: 0
-    },
+    } as React.CSSProperties,
     iconWrapperSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      boxSizing: 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       height: '34px',
       width: '34px',
       padding: '7px',
       outline: 0
-    },
+    } as React.CSSProperties,
     clickable: {
       cursor: 'pointer'
-    },
+    } as React.CSSProperties,
     readonly: {
       cursor: 'inherit'
-    },
+    } as React.CSSProperties,
     tooltipAnchor: {
-      position: 'relative' as 'relative',
+      position: 'relative',
       height: 0,
       width: 0
-    },
+    } as React.CSSProperties,
     animationBase: {
       opacity: 0,
       transition: 'opacity 200ms ease-in-out'
-    },
+    } as React.CSSProperties,
     imageTooltip: {
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       font: '400 12px Roboto',
       paddingLeft: '15px',
       paddingRight: '15px',
       height: '22px',
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: '16px',
       left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064',
       tabFocus: 0
-    }
+    } as React.CSSProperties
   };
   private static readonly TIMEOUT_TOOLTIP = {
     enter: 100,

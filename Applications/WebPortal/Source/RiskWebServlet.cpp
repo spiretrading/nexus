@@ -41,10 +41,25 @@ bool RiskWebServlet::PortfolioFilter::IsFiltered(
 }
 
 RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
-  Ref<VirtualServiceClients> serviceClients)
-  : m_sessions(sessions.Get()),
-    m_serviceClients(serviceClients.Get()),
-    m_portfolioModel(Ref(*m_serviceClients)) {}
+    Ref<VirtualServiceClients> serviceClients)
+    : m_sessions(sessions.Get()),
+      m_serviceClients(serviceClients.Get()),
+      m_portfolioModel(Ref(*m_serviceClients)) {
+  try {
+    m_portfolioTimer = m_serviceClients->BuildTimer(seconds(1));
+    m_portfolioTimer->GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
+      std::bind(&RiskWebServlet::OnPortfolioTimerExpired, this,
+      std::placeholders::_1)));
+    m_portfolioModel.GetPublisher().Monitor(
+      m_tasks.GetSlot<PortfolioModel::Entry>(
+      std::bind(&RiskWebServlet::OnPortfolioUpdate, this,
+      std::placeholders::_1)));
+    m_portfolioTimer->Start();
+  } catch(const std::exception&) {
+    Close();
+    BOOST_RETHROW;
+  }
+}
 
 RiskWebServlet::~RiskWebServlet() {
   Close();
@@ -65,39 +80,12 @@ std::vector<HttpUpgradeSlot<RiskWebServlet::WebSocketChannel>>
   return slots;
 }
 
-void RiskWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  try {
-    m_serviceClients->Open();
-    m_portfolioTimer = m_serviceClients->BuildTimer(seconds(1));
-    m_portfolioTimer->GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
-      std::bind(&RiskWebServlet::OnPortfolioTimerExpired, this,
-      std::placeholders::_1)));
-    m_portfolioModel.GetPublisher().Monitor(
-      m_tasks.GetSlot<PortfolioModel::Entry>(
-      std::bind(&RiskWebServlet::OnPortfolioUpdate, this,
-      std::placeholders::_1)));
-    m_portfolioModel.Open();
-    m_portfolioTimer->Start();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
-  }
-  m_openState.SetOpen();
-}
-
 void RiskWebServlet::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
-  Shutdown();
-}
-
-void RiskWebServlet::Shutdown() {
   m_portfolioTimer->Cancel();
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 const DirectoryEntry& RiskWebServlet::FindTradingGroup(
@@ -155,7 +143,6 @@ void RiskWebServlet::OnPortfolioUpgrade(const HttpRequest& request,
     session->GetAccount(), std::move(channel));
   Routines::Spawn(
     [=] {
-      subscriber->m_client.Open();
       while(true) {
         auto frame = subscriber->m_client.Read();
         auto buffer = SharedBuffer();

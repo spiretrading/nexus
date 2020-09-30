@@ -12,7 +12,7 @@ namespace {
     PopulateFeeTable(Store(feeTable.m_generalFeeTable));
     PopulateFeeTable(Store(feeTable.m_etfFeeTable));
     feeTable.m_intraspreadDarkToDarkMaxFee = 1000 * Money::CENT;
-    feeTable.m_intraspreadDarkToDarkSubDollarMaxFee = 2000 * Money::CENT;
+    feeTable.m_intraspreadDarkToDarkSubdollarMaxFee = 2000 * Money::CENT;
     return feeTable;
   }
 }

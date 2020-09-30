@@ -50,10 +50,7 @@ export class RiskPage extends React.Component<Properties, State> {
       comment: '',
       parameters: this.props.parameters,
       isSubmitEnabled: false
-    }
-    this.onCommentChange = this.onCommentChange.bind(this);
-    this.onParametersChange = this.onParametersChange.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
+    };
   }
 
   render() {
@@ -97,15 +94,15 @@ export class RiskPage extends React.Component<Properties, State> {
       </PageWrapper>);
   }
 
-  private onCommentChange(comment: string) {
+  private onCommentChange = (comment: string) => {
     this.setState({isSubmitEnabled: true, comment: comment});
   }
 
-  private onParametersChange(parameters: Nexus.RiskParameters) {
+  private onParametersChange = (parameters: Nexus.RiskParameters) => {
     this.setState({isSubmitEnabled: true, parameters: parameters});
   }
 
-  private onSubmit() {
+  private onSubmit = () => {
     this.props.onSubmit(this.state.comment, this.state.parameters);
   }
 
@@ -115,50 +112,50 @@ export class RiskPage extends React.Component<Properties, State> {
       paddingBottom: '40px',
       paddingLeft: '18px',
       paddingRight: '18px',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       minWidth: '284px',
       flexShrink: 1,
       flexGrow: 1,
       maxWidth: '424px',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
-    },
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    } as React.CSSProperties,
     contentMedium: {
       paddingTop: '30px',
       paddingBottom: '40px',
       paddingLeft: '18px',
       paddingRight: '18px',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '768px',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
-    },
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    } as React.CSSProperties,
     contentLarge: {
       paddingTop: '30px',
       paddingBottom: '40px',
       paddingLeft: '18px',
       paddingRight: '18px',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '1036px',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
-    },
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    } as React.CSSProperties,
     mediumPadding: {
       width: '100%',
       height: '30px'
-    },
+    } as React.CSSProperties,
     lineWrapperAdmin: {
       width: '246px'
-    },
+    } as React.CSSProperties,
     lineWrapper: {
       width: '100%'
-    }
-  }
+    } as React.CSSProperties
+  };
   private static readonly LINE_COLOR = '#E6E6E6';
 }

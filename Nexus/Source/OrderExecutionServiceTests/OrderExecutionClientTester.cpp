@@ -42,11 +42,9 @@ namespace {
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", Ref(*serverConnection));
+            "test", *serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_client.emplace(builder);
-      m_server->Open();
-      m_client->Open();
     }
   };
 }
@@ -91,15 +89,14 @@ TEST_SUITE("OrderExecutionClient") {
     auto pendingNewReportOut = ExecutionReport::BuildInitialReport(
       order.GetInfo().m_orderId, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, pendingNewReportOut);
-    auto pendingNewReportIn = updates->Top();
-    updates->Pop();
+    auto pendingNewReportIn = updates->Pop();
     REQUIRE(pendingNewReportIn.m_status == OrderStatus::PENDING_NEW);
     REQUIRE(pendingNewReportIn.m_id == 1);
     REQUIRE(pendingNewReportIn.m_additionalTags.empty());
     auto newReportOut = ExecutionReport::BuildUpdatedReport(pendingNewReportOut,
       OrderStatus::NEW, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, newReportOut);
-    auto newReportIn = updates->Top();
+    auto newReportIn = updates->Pop();
     REQUIRE(newReportIn.m_status == OrderStatus::NEW);
     REQUIRE(newReportIn.m_id == 1);
     REQUIRE(newReportIn.m_additionalTags.empty());

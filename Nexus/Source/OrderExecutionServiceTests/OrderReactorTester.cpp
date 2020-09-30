@@ -20,9 +20,7 @@ TEST_SUITE("OrderReactor") {
     auto trigger = Trigger();
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto reactor = MakeLimitOrderReactor(
       Ref(serviceClients.GetOrderExecutionClient()), Aspen::none<Security>(),
       Aspen::constant(Side::BID), Aspen::constant(100),
@@ -39,9 +37,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto reactor = MakeLimitOrderReactor(
@@ -54,17 +50,13 @@ TEST_SUITE("OrderReactor") {
     REQUIRE(sentOrder->GetInfo().m_fields.m_side == Side::BID);
     REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 100);
     REQUIRE(sentOrder->GetInfo().m_fields.m_price == Money::ONE);
-    auto receivedOrder = orderSubmissions->Top();
-    orderSubmissions->Pop();
-    commits.Top();
+    auto receivedOrder = orderSubmissions->Pop();
     commits.Pop();
     REQUIRE(reactor.commit(1) == Aspen::State::NONE);
-    environment.AcceptOrder(*receivedOrder);
-    commits.Top();
+    environment.Accept(*receivedOrder);
     commits.Pop();
     REQUIRE(reactor.commit(2) == Aspen::State::NONE);
-    environment.FillOrder(*receivedOrder, 100);
-    commits.Top();
+    environment.Fill(*receivedOrder, 100);
     commits.Pop();
     REQUIRE(reactor.commit(3) == Aspen::State::COMPLETE);
     Trigger::set_trigger(nullptr);
@@ -78,9 +70,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto price = Aspen::Shared<Aspen::Queue<Money>>();
@@ -95,23 +85,17 @@ TEST_SUITE("OrderReactor") {
     REQUIRE(sentOrder->GetInfo().m_fields.m_side == Side::ASK);
     REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 300);
     REQUIRE(sentOrder->GetInfo().m_fields.m_price == Money::CENT);
-    auto receivedOrder = orderSubmissions->Top();
-    orderSubmissions->Pop();
-    commits.Top();
+    auto receivedOrder = orderSubmissions->Pop();
     commits.Pop();
     REQUIRE(reactor.commit(1) == Aspen::State::NONE);
-    environment.AcceptOrder(*receivedOrder);
-    commits.Top();
+    environment.Accept(*receivedOrder);
     commits.Pop();
     REQUIRE(reactor.commit(2) == Aspen::State::NONE);
     price->set_complete(2 * Money::ONE);
-    commits.Top();
     commits.Pop();
     REQUIRE(reactor.commit(3) == Aspen::State::NONE);
-    commits.Top();
     commits.Pop();
-    environment.CancelOrder(*receivedOrder);
-    commits.Top();
+    environment.Cancel(*receivedOrder);
     commits.Pop();
     REQUIRE(reactor.commit(4) == Aspen::State::CONTINUE);
     REQUIRE(reactor.commit(5) == Aspen::State::EVALUATED);
@@ -122,17 +106,13 @@ TEST_SUITE("OrderReactor") {
     REQUIRE(updatedSentOrder->GetInfo().m_fields.m_quantity == 300);
     REQUIRE(updatedSentOrder->GetInfo().m_fields.m_price ==
       2 * Money::ONE);
-    auto updatedReceivedOrder = orderSubmissions->Top();
-    orderSubmissions->Pop();
-    commits.Top();
+    auto updatedReceivedOrder = orderSubmissions->Pop();
     commits.Pop();
     REQUIRE(reactor.commit(6) == Aspen::State::NONE);
-    environment.AcceptOrder(*updatedReceivedOrder);
-    commits.Top();
+    environment.Accept(*updatedReceivedOrder);
     commits.Pop();
     REQUIRE(reactor.commit(7) == Aspen::State::NONE);
-    environment.FillOrder(*updatedReceivedOrder, 300);
-    commits.Top();
+    environment.Fill(*updatedReceivedOrder, 300);
     commits.Pop();
     REQUIRE(reactor.commit(8) == Aspen::State::COMPLETE);
     Trigger::set_trigger(nullptr);
@@ -149,9 +129,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto price = Aspen::Shared<Aspen::Queue<Money>>();
@@ -162,17 +140,13 @@ TEST_SUITE("OrderReactor") {
       Aspen::constant(300), price);
     REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
     auto sentOrder = reactor.eval();
-    auto receivedOrder = orderSubmissions->Top();
-    orderSubmissions->Pop();
-    commits.Top();
+    auto receivedOrder = orderSubmissions->Pop();
     commits.Pop();
     REQUIRE(reactor.commit(1) == Aspen::State::NONE);
-    environment.AcceptOrder(*receivedOrder);
-    commits.Top();
+    environment.Accept(*receivedOrder);
     commits.Pop();
     REQUIRE(reactor.commit(2) == Aspen::State::NONE);
-    environment.RejectOrder(*receivedOrder);
-    commits.Top();
+    environment.Reject(*receivedOrder);
     commits.Pop();
     REQUIRE(reactor.commit(3) == Aspen::State::COMPLETE_EVALUATED);
     REQUIRE_THROWS_AS(reactor.eval(), std::runtime_error);
@@ -187,9 +161,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto quantity = Aspen::Shared<Aspen::Queue<Quantity>>();
@@ -201,9 +173,7 @@ TEST_SUITE("OrderReactor") {
     quantity->push(1200);
     REQUIRE(reactor.commit(1) == Aspen::State::EVALUATED);
     auto sentOrder = reactor.eval();
-    auto receivedOrder = orderSubmissions->Top();
-    orderSubmissions->Pop();
-    commits.Top();
+    auto receivedOrder = orderSubmissions->Pop();
     commits.Pop();
     REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 1200);
     Trigger::set_trigger(nullptr);

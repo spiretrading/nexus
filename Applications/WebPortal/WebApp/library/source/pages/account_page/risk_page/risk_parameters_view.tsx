@@ -35,14 +35,6 @@ export class RiskParametersView extends React.Component<Properties> {
     onChange: () => {}
   }
 
-  constructor(props: Properties) {
-    super(props);
-    this.onCurrencyChange = this.onCurrencyChange.bind(this);
-    this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
-    this.onNetLossChange = this.onNetLossChange.bind(this);
-    this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
-  }
-
   public render(): JSX.Element {
     const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
@@ -64,6 +56,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.buyingPower}
+            min={Nexus.Money.ZERO}
             onChange={this.onBuyingPowerChange}/>
           <Padding size='30px'/>
           <Label text={`Net Loss (${currencySign})`}/>
@@ -71,6 +64,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.netLoss}
+            min={Nexus.Money.ZERO}
             onChange={this.onNetLossChange}/>
           <Padding size='30px'/>
           <Label text='Transition Time'/>
@@ -132,25 +126,25 @@ export class RiskParametersView extends React.Component<Properties> {
       </HBoxLayout>);
   }
 
-  private onCurrencyChange(value: Nexus.Currency) {
+  private onCurrencyChange = (value: Nexus.Currency) => {
     const newParameters = this.props.parameters.clone();
     newParameters.currency = value;
     this.props.onChange(newParameters);
   }
 
-  private onBuyingPowerChange(value: Nexus.Money) {
+  private onBuyingPowerChange = (value: Nexus.Money) => {
     const newParameters = this.props.parameters.clone();
     newParameters.buyingPower = value;
     this.props.onChange(newParameters);
   }
 
-  private onNetLossChange(value: Nexus.Money) {
+  private onNetLossChange = (value: Nexus.Money) => {
     const newParameters = this.props.parameters.clone();
     newParameters.netLoss = value;
     this.props.onChange(newParameters);
   }
 
-  private onTransitionTimeChange(value: number, timeUnit: TimeUnit) {
+  private onTransitionTimeChange = (value: number, timeUnit: TimeUnit) => {
     const timeJSON = this.props.parameters.transitionTime.split();
     const newTimeJSON = (() => {
       switch (timeUnit) {

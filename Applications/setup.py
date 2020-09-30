@@ -91,8 +91,8 @@ def main():
     required=False)
   parser.add_argument('-p', '--password', type=str, help='Password.',
     required=False)
-  parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
-    required=False)
+  parser.add_argument('-ma', '--mysql_address', type=str,
+    help='MySQL address.', required=False)
   parser.add_argument('-mu', '--mysql_username', type=str,
     help='MySQL username.', required=False)
   parser.add_argument('-mp', '--mysql_password', type=str,
@@ -101,11 +101,11 @@ def main():
     required=False)
   arg_vars = vars(parser.parse_args())
   setup_beam(arg_vars)
-  for server in ['AdministrationServer', 'ComplianceServer', 'MarketDataServer',
-      'SimulationOrderExecutionServer']:
+  for server in ['AdministrationServer', 'ComplianceServer',
+      'MarketDataServer', 'RiskServer', 'SimulationOrderExecutionServer']:
     setup_server_with_mysql(server, arg_vars)
-  for server in ['ChartingServer', 'DefinitionsServer', 'MarketDataRelayServer',
-      'ReplayMarketDataFeedClient', 'RiskServer',
+  for server in ['ChartingServer', 'DefinitionsServer',
+      'MarketDataRelayServer', 'ReplayMarketDataFeedClient',
       'SimulationMarketDataFeedClient', 'WebPortal']:
     setup_server(server, arg_vars)
 

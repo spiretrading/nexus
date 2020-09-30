@@ -38,8 +38,6 @@ namespace Nexus::WebPortal {
 
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
-      void Open();
-
       void Close();
 
     private:
@@ -47,7 +45,6 @@ namespace Nexus::WebPortal {
       ServiceClientsBuilder m_serviceClientsBuilder;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       Beam::WebServices::HttpResponse OnLogin(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogout(

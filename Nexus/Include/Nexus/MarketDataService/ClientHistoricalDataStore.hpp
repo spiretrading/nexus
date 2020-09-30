@@ -25,8 +25,8 @@ namespace Nexus::MarketDataService {
        * Constructs a ClientHistoricalDataStore.
        * @param client Initializes the client to wrap.
        */
-      template<typename MarketDataClientForward>
-      ClientHistoricalDataStore(MarketDataClientForward&& client);
+      template<typename CF>
+      ClientHistoricalDataStore(CF&& client);
 
       ~ClientHistoricalDataStore();
 
@@ -72,8 +72,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -84,14 +82,12 @@ namespace Nexus::MarketDataService {
 
       template<typename T, typename Query, typename F>
       std::vector<T> SubmitQuery(const Query& query, F f);
-      void Shutdown();
   };
 
   template<typename C>
-  template<typename MarketDataClientForward>
-  ClientHistoricalDataStore<C>::ClientHistoricalDataStore(
-    MarketDataClientForward&& client)
-    : m_client{std::forward<MarketDataClientForward>(client)} {}
+  template<typename CF>
+  ClientHistoricalDataStore<C>::ClientHistoricalDataStore(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
   template<typename C>
   ClientHistoricalDataStore<C>::~ClientHistoricalDataStore() {
@@ -114,7 +110,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedOrderImbalance> ClientHistoricalDataStore<C>::
       LoadOrderImbalances(const MarketWideDataQuery& query) {
     using MemberType = void (ClientType::*)(const MarketWideDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedOrderImbalance>>&);
+      Beam::ScopedQueueWriter<SequencedOrderImbalance>);
     return SubmitQuery<SequencedOrderImbalance>(query,
       static_cast<MemberType>(&ClientType::QueryOrderImbalances));
   }
@@ -123,7 +119,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedBboQuote> ClientHistoricalDataStore<C>::LoadBboQuotes(
       const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>&);
+      Beam::ScopedQueueWriter<SequencedBboQuote>);
     return SubmitQuery<SequencedBboQuote>(query,
       static_cast<MemberType>(&ClientType::QueryBboQuotes));
   }
@@ -132,7 +128,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedBookQuote> ClientHistoricalDataStore<C>::LoadBookQuotes(
       const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>&);
+      Beam::ScopedQueueWriter<SequencedBookQuote>);
     return SubmitQuery<SequencedBookQuote>(query,
       static_cast<MemberType>(&ClientType::QueryBookQuotes));
   }
@@ -141,7 +137,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedMarketQuote> ClientHistoricalDataStore<C>::
       LoadMarketQuotes(const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>&);
+      Beam::ScopedQueueWriter<SequencedMarketQuote>);
     return SubmitQuery<SequencedMarketQuote>(query,
       static_cast<MemberType>(&ClientType::QueryMarketQuotes));
   }
@@ -150,7 +146,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedTimeAndSale> ClientHistoricalDataStore<C>::
       LoadTimeAndSales(const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>&);
+      Beam::ScopedQueueWriter<SequencedTimeAndSale>);
     return SubmitQuery<SequencedTimeAndSale>(query,
       static_cast<MemberType>(&ClientType::QueryTimeAndSales));
   }
@@ -199,25 +195,8 @@ namespace Nexus::MarketDataService {
     const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {}
 
   template<typename C>
-  void ClientHistoricalDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_client->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename C>
   void ClientHistoricalDataStore<C>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
+    m_openState.Close();
   }
 
   template<typename C>
@@ -233,14 +212,9 @@ namespace Nexus::MarketDataService {
     } else {
       ((*m_client).*f)(query, queue);
     }
-    std::vector<T> matches;
-    Beam::FlushQueue(queue, std::back_inserter(matches));
+    auto matches = std::vector<T>();
+    Beam::Flush(queue, std::back_inserter(matches));
     return matches;
-  }
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Shutdown() {
-    m_openState.SetClosed();
   }
 }
 

@@ -79,6 +79,10 @@ const QVariant& DropDownItem::get_value() const {
   return m_value;
 }
 
+bool DropDownItem::is_highlighted() const {
+  return m_is_highlighted;
+}
+
 void DropDownItem::set_highlight() {
   m_is_highlighted = true;
   update();

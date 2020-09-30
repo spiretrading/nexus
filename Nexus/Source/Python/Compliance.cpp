@@ -70,10 +70,6 @@ namespace {
       throw std::runtime_error("Not implemented.");
     }
 
-    void Open() override  {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualComplianceClient, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualComplianceClient, "close",
         Close);
@@ -97,21 +93,19 @@ void Nexus::Python::ExportApplicationComplianceClient(
       auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
         [=] () mutable {
           if(delay) {
-            auto delayTimer = LiveTimer(seconds(3), Ref(*GetTimerThreadPool()));
+            auto delayTimer = LiveTimer(seconds(3));
             delayTimer.Start();
             delayTimer.Wait();
           }
           delay = true;
-          return std::make_unique<TcpSocketChannel>(addresses,
-            Ref(*GetSocketThreadPool()));
+          return std::make_unique<TcpSocketChannel>(addresses);
         },
-        [=] {
-          return std::make_unique<LiveTimer>(seconds(10),
-            Ref(*GetTimerThreadPool()));
+        [] {
+          return std::make_unique<LiveTimer>(seconds(10));
         });
       return MakeToPythonComplianceClient(std::make_unique<Client>(
         sessionBuilder));
-    }));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportComplianceClient(pybind11::module& module) {
@@ -122,7 +116,6 @@ void Nexus::Python::ExportComplianceClient(pybind11::module& module) {
     .def("update", &VirtualComplianceClient::Update)
     .def("delete", &VirtualComplianceClient::Delete)
     .def("report", &VirtualComplianceClient::Report)
-    .def("open", &VirtualComplianceClient::Open)
     .def("close", &VirtualComplianceClient::Close);
 }
 

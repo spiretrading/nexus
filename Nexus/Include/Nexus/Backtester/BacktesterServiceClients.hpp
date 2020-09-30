@@ -2,28 +2,17 @@
 #define NEXUS_BACKTESTER_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/RegistryService/VirtualRegistryClient.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
-#include <Beam/Threading/VirtualTimer.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Backtester/BacktesterTimeClient.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
-#include "Nexus/ChartingService/VirtualChartingClient.hpp"
-#include "Nexus/Compliance/VirtualComplianceClient.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/RiskService/VirtualRiskClient.hpp"
 
 namespace Nexus {
 
   /** Implements the ServiceClients interface for the purpose of backtesting. */
-  class BacktesterServiceClients : private boost::noncopyable {
+  class BacktesterServiceClients {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::VirtualServiceLocatorClient;
@@ -81,8 +70,6 @@ namespace Nexus {
       std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry);
 
-      void Open();
-
       void Close();
 
     private:
@@ -99,7 +86,9 @@ namespace Nexus {
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
+      BacktesterServiceClients(const BacktesterServiceClients&) = delete;
+      BacktesterServiceClients& operator =(
+        const BacktesterServiceClients&) = delete;
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
@@ -107,6 +96,8 @@ namespace Nexus {
     : m_environment(environment.Get()),
       m_serviceLocatorClient(
         m_environment->GetServiceLocatorEnvironment().BuildClient()),
+      m_registryClient(m_environment->GetRegistryEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
       m_definitionsClient(
         m_environment->GetDefinitionsEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient))),
@@ -118,8 +109,14 @@ namespace Nexus {
         Beam::Ref(m_environment->GetMarketDataService()),
         m_environment->GetMarketDataEnvironment().BuildClient(Beam::Ref(
         *m_serviceLocatorClient))))),
+      m_chartingClient(m_environment->GetChartingEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_complianceClient(m_environment->GetComplianceEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
       m_orderExecutionClient(
         m_environment->GetOrderExecutionEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_riskClient(m_environment->GetRiskEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient))),
       m_timeClient(Beam::TimeService::MakeVirtualTimeClient<
         BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
@@ -186,39 +183,21 @@ namespace Nexus {
       expiry, Beam::Ref(m_environment->GetEventHandler())));
   }
 
-  inline void BacktesterServiceClients::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->SetCredentials("root", "");
-      m_serviceLocatorClient->Open();
-      m_definitionsClient->Open();
-      m_administrationClient->Open();
-      m_marketDataClient->Open();
-      m_orderExecutionClient->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
   inline void BacktesterServiceClients::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void BacktesterServiceClients::Shutdown() {
     m_timeClient->Close();
+    m_riskClient->Close();
     m_orderExecutionClient->Close();
+    m_complianceClient->Close();
+    m_chartingClient->Close();
     m_marketDataClient->Close();
     m_administrationClient->Close();
+    m_definitionsClient->Close();
+    m_registryClient->Close();
     m_serviceLocatorClient->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

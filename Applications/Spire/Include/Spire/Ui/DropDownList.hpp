@@ -51,12 +51,15 @@ namespace Spire {
         bool is_click_activated, QWidget* parent = nullptr);
 
       //! Activates the next item in the list. Activates the first item if no
-      //! item is currently activated.
+      //! item is currently active.
       void activate_next();
 
       //! Activates the previous item in the list. Activates the last item if
-      //! no item is currently activated.
+      //! no item is currently active.
       void activate_previous();
+
+      //! Removes the highlight from the active item.
+      void clear_active_item();
 
       //! Returns the value of the item at the given index.
       /*!

@@ -22,6 +22,7 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefinitionsService;
@@ -67,8 +68,8 @@ namespace {
     }
 
     std::vector<ExchangeRate> LoadExchangeRates() override {
-      PYBIND11_OVERLOAD_PURE_NAME(std::vector<ExchangeRate>, VirtualDefinitionsClient,
-        "load_exchange_rates", LoadExchangeRates);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<ExchangeRate>,
+        VirtualDefinitionsClient, "load_exchange_rates", LoadExchangeRates);
     }
 
     std::vector<Compliance::ComplianceRuleSchema>
@@ -78,8 +79,9 @@ namespace {
         LoadComplianceRuleSchemas);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualDefinitionsClient, "open", Open);
+    TradingSchedule LoadTradingSchedule() override {
+      PYBIND11_OVERLOAD_PURE_NAME(TradingSchedule, VirtualDefinitionsClient,
+        "load_trading_schedule", LoadTradingSchedule);
     }
 
     void Close() override {
@@ -106,22 +108,19 @@ void Nexus::Python::ExportApplicationDefinitionsClient(
         auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
           [=] () mutable {
             if(delay) {
-              auto delayTimer = LiveTimer(seconds(3),
-                Ref(*GetTimerThreadPool()));
+              auto delayTimer = LiveTimer(seconds(3));
               delayTimer.Start();
               delayTimer.Wait();
             }
             delay = true;
-            return std::make_unique<TcpSocketChannel>(addresses,
-              Ref(*GetSocketThreadPool()));
+            return std::make_unique<TcpSocketChannel>(addresses);
           },
-          [=] {
-            return std::make_unique<LiveTimer>(seconds(10),
-              Ref(*GetTimerThreadPool()));
+          [] {
+            return std::make_unique<LiveTimer>(seconds(10));
           });
         return MakeToPythonDefinitionsClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportDefinitionsClient(pybind11::module& module) {
@@ -145,7 +144,8 @@ void Nexus::Python::ExportDefinitionsClient(pybind11::module& module) {
       &VirtualDefinitionsClient::LoadExchangeRates)
     .def("load_compliance_rule_schemas",
       &VirtualDefinitionsClient::LoadComplianceRuleSchemas)
-    .def("open", &VirtualDefinitionsClient::Open)
+    .def("load_trading_schedule",
+      &VirtualDefinitionsClient::LoadTradingSchedule)
     .def("close", &VirtualDefinitionsClient::Close);
 }
 

@@ -43,15 +43,10 @@ namespace Details {
        * Builds the session.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate sessions.
-       * @param socketThreadPool The SocketThreadPool used for the socket
-       *        connection.
-       * @param timerThreadPool The TimerThreadPool used for heartbeats.
        */
       void BuildSession(Beam::Ref<
         Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-        serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
-        socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
-        timerThreadPool);
+        serviceLocatorClient);
 
       /** Returns a reference to the Client. */
       Client& operator *();
@@ -77,16 +72,12 @@ namespace Details {
 
   inline void ApplicationComplianceClient::BuildSession(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
-      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
-      timerThreadPool) {
+      serviceLocatorClient) {
     if(m_client.has_value()) {
       m_client->Close();
       m_client = std::nullopt;
     }
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
-    auto socketThreadPoolHandle = socketThreadPool.Get();
-    auto timerThreadPoolHandle = timerThreadPool.Get();
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, Compliance::SERVICE_NAME);
     auto delay = false;
@@ -95,17 +86,16 @@ namespace Details {
       [=] () mutable {
         if(delay) {
           auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
+            boost::posix_time::seconds(3));
           delayTimer.Start();
           delayTimer.Wait();
         }
         delay = true;
-        return std::make_unique<Beam::Network::TcpSocketChannel>(addresses,
-          Beam::Ref(*socketThreadPoolHandle));
+        return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
-      [=] {
+      [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
-          boost::posix_time::seconds(10), Beam::Ref(*timerThreadPoolHandle));
+          boost::posix_time::seconds(10));
       });
     m_client.emplace(sessionBuilder);
   }

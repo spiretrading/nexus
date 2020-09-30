@@ -4,7 +4,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/thread/lock_types.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
@@ -17,7 +16,7 @@ namespace Nexus {
    * @param <H> The underlying data store to wrap.
    */
   template<typename H>
-  class CutoffHistoricalDataStore : private boost::noncopyable {
+  class CutoffHistoricalDataStore {
     public:
 
       /** The type of underlying data store to wrap. */
@@ -75,8 +74,6 @@ namespace Nexus {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -95,7 +92,9 @@ namespace Nexus {
         m_timeAndSalesCutoffSequences;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
+      CutoffHistoricalDataStore(const CutoffHistoricalDataStore&) = delete;
+      CutoffHistoricalDataStore& operator =(
+        const CutoffHistoricalDataStore&) = delete;
       template<typename Query, typename F>
       std::invoke_result_t<F, const Query&> Load(const Query& query,
         std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
@@ -130,48 +129,43 @@ namespace Nexus {
   std::vector<SequencedOrderImbalance>
       CutoffHistoricalDataStore<H>::LoadOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query) {
-    return Load(query, m_orderImbalanceCutoffSequences,
-      [&] (auto& query) {
-        return m_dataStore->LoadOrderImbalances(query);
-      });
+    return Load(query, m_orderImbalanceCutoffSequences, [&] (auto& query) {
+      return m_dataStore->LoadOrderImbalances(query);
+    });
   }
 
   template<typename H>
   std::vector<SequencedBboQuote> CutoffHistoricalDataStore<H>::LoadBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
-    return Load(query, m_bboQuoteCutoffSequences,
-      [&] (auto& query) {
-        return m_dataStore->LoadBboQuotes(query);
-      });
+    return Load(query, m_bboQuoteCutoffSequences, [&] (auto& query) {
+      return m_dataStore->LoadBboQuotes(query);
+    });
   }
 
   template<typename H>
   std::vector<SequencedBookQuote> CutoffHistoricalDataStore<H>::LoadBookQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
-    return Load(query, m_bookQuoteCutoffSequences,
-      [&] (auto& query) {
-        return m_dataStore->LoadBookQuotes(query);
-      });
+    return Load(query, m_bookQuoteCutoffSequences, [&] (auto& query) {
+      return m_dataStore->LoadBookQuotes(query);
+    });
   }
 
   template<typename H>
   std::vector<SequencedMarketQuote>
       CutoffHistoricalDataStore<H>::LoadMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
-    return Load(query, m_marketQuoteCutoffSequences,
-      [&] (auto& query) {
-        return m_dataStore->LoadMarketQuotes(query);
-      });
+    return Load(query, m_marketQuoteCutoffSequences, [&] (auto& query) {
+      return m_dataStore->LoadMarketQuotes(query);
+    });
   }
 
   template<typename H>
   std::vector<SequencedTimeAndSale>
       CutoffHistoricalDataStore<H>::LoadTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query) {
-    return Load(query, m_timeAndSalesCutoffSequences,
-      [&] (auto& query) {
-        return m_dataStore->LoadTimeAndSales(query);
-      });
+    return Load(query, m_timeAndSalesCutoffSequences, [&] (auto& query) {
+      return m_dataStore->LoadTimeAndSales(query);
+    });
   }
 
   template<typename H>
@@ -240,31 +234,12 @@ namespace Nexus {
   }
 
   template<typename H>
-  void CutoffHistoricalDataStore<H>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename H>
   void CutoffHistoricalDataStore<H>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename H>
-  void CutoffHistoricalDataStore<H>::Shutdown() {
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename H>

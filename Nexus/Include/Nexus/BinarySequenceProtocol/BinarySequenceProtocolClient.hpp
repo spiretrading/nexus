@@ -1,7 +1,6 @@
 #ifndef NEXUS_BINARY_SEQUENCE_PROTOCOL_CLIENT_HPP
 #define NEXUS_BINARY_SEQUENCE_PROTOCOL_CLIENT_HPP
 #include <cstdint>
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -47,8 +46,6 @@ namespace Nexus::BinarySequenceProtocol {
        */
       BinarySequenceProtocolMessage Read(Beam::Out<Sequence> sequenceNumber);
 
-      void Open();
-
       void Close();
 
     private:
@@ -60,14 +57,13 @@ namespace Nexus::BinarySequenceProtocol {
       std::size_t m_remainingSize;
       Sequence m_sequenceNumber;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename C, typename S>
   template<typename CF>
   BinarySequenceProtocolClient<C, S>::BinarySequenceProtocolClient(CF&& channel)
-    : m_channel(std::forward<CF>(channel)) {}
+    : m_channel(std::forward<CF>(channel)),
+      m_sequenceNumber(-1) {}
 
   template<typename C, typename S>
   BinarySequenceProtocolClient<C, S>::~BinarySequenceProtocolClient() {
@@ -76,16 +72,14 @@ namespace Nexus::BinarySequenceProtocol {
 
   template<typename C, typename S>
   BinarySequenceProtocolMessage BinarySequenceProtocolClient<C, S>::Read() {
-    Sequence sequenceNumber;
+    auto sequenceNumber = Sequence();
     return Read(Beam::Store(sequenceNumber));
   }
 
   template<typename C, typename S>
   BinarySequenceProtocolMessage BinarySequenceProtocolClient<C, S>::
       Read(Beam::Out<Sequence> sequenceNumber) {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
-    }
+    m_openState.EnsureOpen();
     if(m_sequenceNumber == -1 ||
         m_sequenceNumber == m_packet.m_sequenceNumber + m_packet.m_count) {
       while(true) {
@@ -113,32 +107,12 @@ namespace Nexus::BinarySequenceProtocol {
   }
 
   template<typename C, typename S>
-  void BinarySequenceProtocolClient<C, S>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_channel->GetConnection().Open();
-      m_sequenceNumber = -1;
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename C, typename S>
   void BinarySequenceProtocolClient<C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename S>
-  void BinarySequenceProtocolClient<C, S>::Shutdown() {
     m_channel->GetConnection().Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 
