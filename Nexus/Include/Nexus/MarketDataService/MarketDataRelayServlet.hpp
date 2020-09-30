@@ -7,6 +7,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
 #include <boost/noncopyable.hpp>
@@ -291,11 +292,15 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
+    auto closeGroup = Beam::Routines::RoutineHandlerGroup();
     for(auto& entry : m_realTimeQueryEntries) {
-      entry->m_tasks.Break();
-      entry->m_tasks.Wait();
-      entry->m_marketDataClient->Close();
+      closeGroup.Spawn([&] {
+        entry->m_tasks.Break();
+        entry->m_tasks.Wait();
+        entry->m_marketDataClient->Close();
+      });
     }
+    closeGroup.Wait();
     m_openState.Close();
   }
 
@@ -327,40 +332,39 @@ namespace Nexus::MarketDataService {
         query.GetFilter());
       result.m_queryId = subscriptions.Initialize(query.GetIndex(),
         request.GetClient(), Beam::Queries::Range::Total(), std::move(filter));
-      realTimeSubscriptions.TestAndSet(query.GetIndex(),
-        [&] {
-          auto& queryEntry = GetRealTimeQueryEntry(query.GetIndex());
-          auto initialValueQuery = Query();
-          initialValueQuery.SetIndex(query.GetIndex());
-          initialValueQuery.SetRange(Beam::Queries::Sequence::First(),
-            Beam::Queries::Sequence::Present());
-          initialValueQuery.SetSnapshotLimit(
-            Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-          auto initialValueQueue =
-            std::make_shared<Beam::Queue<MarketDataType>>();
-          QueryMarketDataClient(*queryEntry.m_marketDataClient,
-            initialValueQuery, Beam::ScopedQueueWriter(initialValueQueue));
-          auto initialValues = std::vector<MarketDataType>();
-          Beam::Flush(initialValueQueue, std::back_inserter(initialValues));
-          auto initialSequence = Beam::Queries::Sequence();
-          if(initialValues.empty()) {
-            initialSequence = Beam::Queries::Sequence::First();
-          } else {
-            initialSequence = Beam::Queries::Increment(
-              initialValues.back().GetSequence());
-          }
-          auto realTimeQuery = Query();
-          realTimeQuery.SetIndex(query.GetIndex());
-          realTimeQuery.SetInterruptionPolicy(
-            Beam::Queries::InterruptionPolicy::RECOVER_DATA);
-          realTimeQuery.SetRange(initialSequence,
-            Beam::Queries::Sequence::Last());
-          QueryMarketDataClient(*queryEntry.m_marketDataClient, realTimeQuery,
-            queryEntry.m_tasks.template GetSlot<MarketDataType>(
-            std::bind(&MarketDataRelayServlet::OnRealTimeUpdate<
-            typename Query::Index, MarketDataType, Subscriptions>, this,
-            query.GetIndex(), std::placeholders::_1, std::ref(subscriptions))));
-        });
+      realTimeSubscriptions.TestAndSet(query.GetIndex(), [&] {
+        auto& queryEntry = GetRealTimeQueryEntry(query.GetIndex());
+        auto initialValueQuery = Query();
+        initialValueQuery.SetIndex(query.GetIndex());
+        initialValueQuery.SetRange(Beam::Queries::Sequence::First(),
+          Beam::Queries::Sequence::Present());
+        initialValueQuery.SetSnapshotLimit(
+          Beam::Queries::SnapshotLimit::FromTail(1));
+        auto initialValueQueue =
+          std::make_shared<Beam::Queue<MarketDataType>>();
+        QueryMarketDataClient(*queryEntry.m_marketDataClient, initialValueQuery,
+          Beam::ScopedQueueWriter(initialValueQueue));
+        auto initialValues = std::vector<MarketDataType>();
+        Beam::Flush(initialValueQueue, std::back_inserter(initialValues));
+        auto initialSequence = Beam::Queries::Sequence();
+        if(initialValues.empty()) {
+          initialSequence = Beam::Queries::Sequence::First();
+        } else {
+          initialSequence = Beam::Queries::Increment(
+            initialValues.back().GetSequence());
+        }
+        auto realTimeQuery = Query();
+        realTimeQuery.SetIndex(query.GetIndex());
+        realTimeQuery.SetInterruptionPolicy(
+          Beam::Queries::InterruptionPolicy::RECOVER_DATA);
+        realTimeQuery.SetRange(initialSequence,
+          Beam::Queries::Sequence::Last());
+        QueryMarketDataClient(*queryEntry.m_marketDataClient, realTimeQuery,
+          queryEntry.m_tasks.template GetSlot<MarketDataType>(
+          std::bind(&MarketDataRelayServlet::OnRealTimeUpdate<
+          typename Query::Index, MarketDataType, Subscriptions>, this,
+          query.GetIndex(), std::placeholders::_1, std::ref(subscriptions))));
+      });
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
       auto snapshotQuery = query;
@@ -376,8 +380,7 @@ namespace Nexus::MarketDataService {
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
-      QueryMarketDataClient(*client, query,
-        Beam::ScopedQueueWriter(queue));
+      QueryMarketDataClient(*client, query, Beam::ScopedQueueWriter(queue));
       Beam::Flush(queue, std::back_inserter(result.m_snapshot));
       request.SetResult(result);
     }
@@ -410,21 +413,19 @@ namespace Nexus::MarketDataService {
       securitySnapshot.m_marketQuotes.clear();
     }
     auto askEndRange = std::remove_if(securitySnapshot.m_askBook.begin(),
-      securitySnapshot.m_askBook.end(),
-      [&] (auto& bookQuote) {
-        return !HasEntitlement(session,
-          EntitlementKey(security.GetMarket(), bookQuote->m_market),
-          MarketDataType::BOOK_QUOTE);
-      });
+      securitySnapshot.m_askBook.end(), [&] (auto& bookQuote) {
+      return !HasEntitlement(session,
+        EntitlementKey(security.GetMarket(), bookQuote->m_market),
+        MarketDataType::BOOK_QUOTE);
+    });
     securitySnapshot.m_askBook.erase(askEndRange,
       securitySnapshot.m_askBook.end());
     auto bidEndRange = std::remove_if(securitySnapshot.m_bidBook.begin(),
-      securitySnapshot.m_bidBook.end(),
-      [&] (auto& bookQuote) {
-        return !HasEntitlement(session,
-          EntitlementKey(security.GetMarket(), bookQuote->m_market),
-          MarketDataType::BOOK_QUOTE);
-      });
+      securitySnapshot.m_bidBook.end(), [&] (auto& bookQuote) {
+      return !HasEntitlement(session,
+        EntitlementKey(security.GetMarket(), bookQuote->m_market),
+        MarketDataType::BOOK_QUOTE);
+    });
     securitySnapshot.m_bidBook.erase(bidEndRange,
       securitySnapshot.m_bidBook.end());
     return securitySnapshot;
@@ -460,12 +461,10 @@ namespace Nexus::MarketDataService {
       const Value& value, Subscriptions& subscriptions) {
     auto indexedValue = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
-    subscriptions.Publish(indexedValue,
-      [&] (auto& clients) {
-        Beam::Services::BroadcastRecordMessage<
-          GetMarketDataMessageType<typename Value::Value>>(
-          clients, indexedValue);
-      });
+    subscriptions.Publish(indexedValue, [&] (auto& clients) {
+      Beam::Services::BroadcastRecordMessage<
+        GetMarketDataMessageType<typename Value::Value>>(clients, indexedValue);
+    });
   }
 
   template<typename C, typename M, typename A>
