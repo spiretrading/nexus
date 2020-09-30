@@ -1,6 +1,6 @@
 #include "Spire/Ui/OrderStatusComboBox.hpp"
+#include <Beam/Collections/EnumIterator.hpp>
 #include <QHBoxLayout>
-#include "Beam/Collections/EnumIterator.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace Beam;
