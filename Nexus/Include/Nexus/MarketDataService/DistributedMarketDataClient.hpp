@@ -181,6 +181,7 @@ namespace Nexus::MarketDataService {
     if(auto marketDataClient = FindMarketDataClient(security)) {
       return marketDataClient->LoadSecuritySnapshot(security);
     }
+    return SecuritySnapshot();
   }
 
   inline SecurityTechnicals DistributedMarketDataClient::
