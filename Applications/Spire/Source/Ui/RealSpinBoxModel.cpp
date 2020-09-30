@@ -11,8 +11,10 @@ namespace {
         QLocale::OmitGroupSeparator, true));
       return locale;
     }();
-    return CustomVariantItemDelegate().displayText(value,
-      locale).toStdString().c_str();
+    static auto item_delegate = CustomVariantItemDelegate();
+    return RealSpinBoxModel::Real(
+      CustomVariantItemDelegate().displayText(value,
+        locale).toStdString().c_str());
   }
 }
 

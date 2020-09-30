@@ -4,10 +4,9 @@
 
 namespace Spire {
   class LocalSecurityInputModel;
-  class SecurityInfoListView;
-  class SecurityInfoWidget;
-  class SecurityInputBox;
+  class SecurityInfoItem;
   class SecurityInputDialog;
+  class SecurityInputLineEdit;
   class SecurityInputModel;
   class ServicesSecurityInputModel;
 }

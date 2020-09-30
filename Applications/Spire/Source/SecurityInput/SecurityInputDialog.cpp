@@ -1,11 +1,9 @@
 #include "Spire/SecurityInput/SecurityInputDialog.hpp"
-#include <QApplication>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QVBoxLayout>
-#include "Spire/SecurityInput/SecurityInfoListView.hpp"
+#include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/DropShadow.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -22,10 +20,10 @@ SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     : QDialog(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
         flags),
       m_model(model.Get()),
+      m_security_line_edit(nullptr),
       m_initial_text(initial_text),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
-  m_shadow = new DropShadow(this);
   m_layout = new QVBoxLayout(this);
   m_layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(8));
@@ -56,17 +54,12 @@ const Security& SecurityInputDialog::get_security() const noexcept {
   return m_security;
 }
 
-void SecurityInputDialog::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::ActivationChange) {
-    if(QApplication::activeWindow() != this) {
-      if(auto c = m_security_input_box->findChild<SecurityInfoListView*>(
-          "SecurityInputLineEdit")) {
-        c->installEventFilter(this);
-        return;
-      }
-      reject();
-    }
+bool SecurityInputDialog::event(QEvent* event) {
+  if(event->type() == QEvent::WindowDeactivate &&
+      !m_security_list->isActiveWindow()) {
+    reject_dialog();
   }
+  return QDialog::event(event);
 }
 
 void SecurityInputDialog::closeEvent(QCloseEvent* event) {
@@ -74,13 +67,23 @@ void SecurityInputDialog::closeEvent(QCloseEvent* event) {
 }
 
 bool SecurityInputDialog::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::ActivationChange) {
-    auto c = static_cast<QWidget*>(watched);
-    if(QApplication::activeWindow() != c) {
-      if(QApplication::activeWindow() == this) {
-        c->removeEventFilter(this);
-      } else {
-        reject();
+  if(watched == m_security_line_edit) {
+    switch(event->type()) {
+      case QEvent::FocusOut:
+        return true;
+      case QEvent::KeyPress:
+        auto e = static_cast<QKeyEvent*>(event);
+        if(e->key() == Qt::Key_Escape) {
+          reject_dialog();
+          return true;
+        }
+        break;
+    }
+  } else if(watched == m_security_list) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Escape) {
+        reject_dialog();
       }
     }
   }
@@ -115,11 +118,23 @@ void SecurityInputDialog::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void SecurityInputDialog::showEvent(QShowEvent* event) {
-  m_security_input_box = new SecurityInputBox(Ref(*m_model), m_initial_text,
-    this);
-  m_security_input_box->connect_commit_signal(
-    [=] (const auto& s) { set_security(s); });
-  m_layout->addWidget(m_security_input_box);
+  m_security_line_edit = new SecurityInputLineEdit(m_initial_text,
+    Ref(*m_model), true, this);
+  m_security_line_edit->setFixedSize(scale(180, 30));
+  connect(m_security_line_edit, &SecurityInputLineEdit::editingFinished,
+    [=] { set_security(m_security_line_edit->get_security()); });
+  m_security_line_edit->installEventFilter(this);
+  m_security_list = m_security_line_edit->findChild<DropDownList*>();
+  m_security_list->installEventFilter(this);
+  m_layout->addWidget(m_security_line_edit);
+  m_security_line_edit->show();
+  m_security_line_edit->setFocus();
+}
+
+void SecurityInputDialog::reject_dialog() {
+  disconnect(m_security_line_edit,
+    &SecurityInputLineEdit::editingFinished, nullptr, nullptr);
+  reject();
 }
 
 void SecurityInputDialog::set_security(const Security& security) {

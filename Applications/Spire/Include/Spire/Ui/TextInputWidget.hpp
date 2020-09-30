@@ -9,14 +9,14 @@ namespace Spire {
   class TextInputWidget : public QLineEdit {
     public:
 
-      //! Represents style types that the TextInputWidget supports;
+      /** The styles available to render the TextInputWidget. */
       enum class Style {
 
-        //! Style used when input is embedded in a table or list.
-        CELL,
+        /** Render using the default style. */
+        DEFAULT,
 
-        //! Style used when input is used in a layout.
-        DEFAULT
+        /** Render using the table cell style. */
+        CELL
       };
 
       //! Constructs a TextInputWidget with the default style.
@@ -32,10 +32,10 @@ namespace Spire {
       */
       explicit TextInputWidget(QString text, QWidget* parent = nullptr);
 
-      //! Returns the left padding of the current style.
+      //! Returns the left text padding.
       int get_padding() const;
 
-      //! Sets the input's style.
+      //! Sets the TextInputWidget's style.
       void set_style(Style style);
 
     protected:
