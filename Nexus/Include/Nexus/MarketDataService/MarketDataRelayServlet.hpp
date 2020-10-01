@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
+#include <functional>
 #include <vector>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -10,7 +11,6 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataClientUtilities.hpp"
@@ -31,7 +31,7 @@ namespace Nexus::MarketDataService {
    * @param A The type of AdministrationClient to use.
    */
   template<typename C, typename M, typename A>
-  class MarketDataRelayServlet : private boost::noncopyable {
+  class MarketDataRelayServlet {
     public:
       using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
@@ -47,7 +47,7 @@ namespace Nexus::MarketDataService {
 
       /** The type of function used to builds MarketDataClients. */
       using MarketDataClientBuilder =
-        typename Beam::ResourcePool<MarketDataClient>::ObjectBuilder;
+        std::function<std::unique_ptr<MarketDataClient> ()>;
 
       /**
        * Constructs a MarketDataRelayServlet.
@@ -106,11 +106,15 @@ namespace Nexus::MarketDataService {
       RealTimeSubscriptionSet<Security> m_marketQuoteRealTimeSubscriptions;
       RealTimeSubscriptionSet<Security> m_timeAndSaleRealTimeSubscriptions;
       EntitlementDatabase m_entitlementDatabase;
-      Beam::ResourcePool<MarketDataClient> m_marketDataClients;
+      Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
+        m_marketDataClients;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::IO::OpenState m_openState;
       std::vector<std::unique_ptr<RealTimeQueryEntry>> m_realTimeQueryEntries;
 
+      MarketDataRelayServlet(const MarketDataRelayServlet&) = delete;
+      MarketDataRelayServlet& operator =(
+        const MarketDataRelayServlet&) = delete;
       template<typename T>
       RealTimeQueryEntry& GetRealTimeQueryEntry(const T& index);
       template<typename Service, typename Query, typename Subscriptions,
@@ -298,6 +302,16 @@ namespace Nexus::MarketDataService {
         entry->m_tasks.Break();
         entry->m_tasks.Wait();
         entry->m_marketDataClient->Close();
+      });
+    }
+    auto pooledClients = std::vector<
+      Beam::ScopedResource<MarketDataClient, MarketDataClientBuilder>>();
+    while(auto client = m_marketDataClients.TryAcquire()) {
+      pooledClients.push_back(std::move(*client));
+    }
+    for(auto& client : pooledClients) {
+      closeGroup.Spawn([&] {
+        client->Close();
       });
     }
     closeGroup.Wait();

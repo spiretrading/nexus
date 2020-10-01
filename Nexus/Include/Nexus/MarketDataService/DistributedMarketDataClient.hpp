@@ -220,21 +220,6 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    auto clients = std::vector<std::shared_ptr<VirtualMarketDataClient>>();
-    for(auto& client :
-        m_countryToMarketDataClients | boost::adaptors::map_values) {
-      clients.push_back(client);
-    }
-    for(auto& client :
-        m_marketToMarketDataClients | boost::adaptors::map_values) {
-      clients.push_back(client);
-    }
-    while(!clients.empty()) {
-      if(clients.back().use_count() == 2) {
-        clients.back()->Close();
-      }
-      clients.pop_back();
-    }
     m_openState.Close();
   }
 
