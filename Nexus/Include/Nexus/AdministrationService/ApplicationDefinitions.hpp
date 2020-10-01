@@ -1,6 +1,5 @@
 #ifndef NEXUS_ADMINISTRATION_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_ADMINISTRATION_APPLICATION_DEFINITIONS_HPP
-#include <optional>
 #include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
@@ -11,31 +10,27 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/throw_exception.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
 namespace Nexus::AdministrationService {
-namespace Details {
-  using AdministrationClientSessionBuilder =
-    Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-    Beam::ServiceLocator::ApplicationServiceLocatorClient::Client,
-    Beam::Services::MessageProtocol<
-    std::unique_ptr<Beam::Network::TcpSocketChannel>,
-    Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-    Beam::Codecs::NullEncoder>, Beam::Threading::LiveTimer>;
-}
 
   /** Encapsulates a standard AdministrationClient used in an application. */
-  class ApplicationAdministrationClient : private boost::noncopyable {
+  class ApplicationAdministrationClient {
     public:
 
+      /** The type used to build client sessions. */
+      using SessionBuilder =
+        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
+        Beam::ServiceLocator::ApplicationServiceLocatorClient::Client,
+        Beam::Services::MessageProtocol<
+        std::unique_ptr<Beam::Network::TcpSocketChannel>,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder>, Beam::Threading::LiveTimer>;
+
       /** Defines the standard AdministrationClient used for applications. */
-      using Client =
-        AdministrationClient<Details::AdministrationClientSessionBuilder>;
+      using Client = AdministrationClient<SessionBuilder>;
 
       /** Constructs an ApplicationAdministrationClient. */
       ApplicationAdministrationClient() = default;
@@ -45,8 +40,9 @@ namespace Details {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate sessions.
        */
-      void BuildSession(Beam::Ref<Beam::ServiceLocator::
-        ApplicationServiceLocatorClient::Client> serviceLocatorClient);
+      void BuildSession(
+        Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
+        serviceLocatorClient);
 
       /** Returns a reference to the Client. */
       Client& operator *();
@@ -67,37 +63,29 @@ namespace Details {
       const Client* Get() const;
 
     private:
-      std::optional<Client> m_client;
+      boost::optional<Client> m_client;
+
+      ApplicationAdministrationClient(
+        const ApplicationAdministrationClient&) = delete;
+      ApplicationAdministrationClient& operator =(
+        const ApplicationAdministrationClient&) = delete;
   };
 
   inline void ApplicationAdministrationClient::BuildSession(
       Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
       serviceLocatorClient) {
-    if(m_client.has_value()) {
-      m_client->Close();
-      m_client = std::nullopt;
-    }
-    auto serviceLocatorClientHandle = serviceLocatorClient.Get();
+    m_client = boost::none;
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
-      *serviceLocatorClientHandle, SERVICE_NAME);
-    auto delay = false;
-    auto sessionBuilder = Details::AdministrationClientSessionBuilder(
-      Beam::Ref(serviceLocatorClient),
-      [=] () mutable {
-        if(delay) {
-          auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3));
-          delayTimer.Start();
-          delayTimer.Wait();
-        }
-        delay = true;
+      *serviceLocatorClient, SERVICE_NAME);
+    auto sessionBuilder = SessionBuilder(Beam::Ref(serviceLocatorClient),
+      [=] {
         return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
           boost::posix_time::seconds(10));
       });
-    m_client.emplace(sessionBuilder);
+    m_client.emplace(std::move(sessionBuilder));
   }
 
   inline ApplicationAdministrationClient::Client&

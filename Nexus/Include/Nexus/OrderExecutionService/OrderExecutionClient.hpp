@@ -11,7 +11,6 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -27,7 +26,7 @@ namespace Nexus::OrderExecutionService {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class OrderExecutionClient : private boost::noncopyable {
+  class OrderExecutionClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -125,6 +124,8 @@ namespace Nexus::OrderExecutionService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_executionReportTasks;
 
+      OrderExecutionClient(const OrderExecutionClient&) = delete;
+      OrderExecutionClient& operator =(const OrderExecutionClient&) = delete;
       std::shared_ptr<PrimitiveOrder> LoadOrder(const OrderRecord& orderRecord);
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void RecoverOrders(ServiceProtocolClient& client);
@@ -136,12 +137,10 @@ namespace Nexus::OrderExecutionService {
   template<typename B>
   template<typename BF>
   OrderExecutionClient<B>::OrderExecutionClient(BF&& clientBuilder)
-      : m_clientHandler(std::forward<BF>(clientBuilder)),
+      : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
+          &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
         m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
         m_executionReportPublisher(Beam::Ref(m_clientHandler)) {
-    m_clientHandler.SetReconnectHandler(
-      std::bind(&OrderExecutionClient::OnReconnect, this,
-      std::placeholders::_1));
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(m_clientHandler.GetSlots()));

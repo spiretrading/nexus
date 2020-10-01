@@ -104,15 +104,8 @@ void Nexus::Python::ExportApplicationDefinitionsClient(
       [] (VirtualServiceLocatorClient& serviceLocatorClient) {
         auto addresses = LocateServiceAddresses(serviceLocatorClient,
           DefinitionsService::SERVICE_NAME);
-        auto delay = false;
         auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
-          [=] () mutable {
-            if(delay) {
-              auto delayTimer = LiveTimer(seconds(3));
-              delayTimer.Start();
-              delayTimer.Wait();
-            }
-            delay = true;
+          [=] {
             return std::make_unique<TcpSocketChannel>(addresses);
           },
           [] {

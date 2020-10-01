@@ -6,7 +6,6 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -21,7 +20,7 @@ namespace Nexus::MarketDataService {
    * @param <D> The type of HistoricalDataStore to query.
    */
   template<typename D>
-  class DataStoreMarketDataClient : private boost::noncopyable {
+  class DataStoreMarketDataClient {
     public:
 
       /** The type of HistoricalDataStore to query. */
@@ -32,7 +31,7 @@ namespace Nexus::MarketDataService {
        * @param dataStore Initializes the HistoricalDataStore.
        */
       template<typename S>
-      DataStoreMarketDataClient(S&& dataStore);
+      explicit DataStoreMarketDataClient(S&& dataStore);
 
       ~DataStoreMarketDataClient();
 
@@ -80,6 +79,10 @@ namespace Nexus::MarketDataService {
     private:
       Beam::GetOptionalLocalPtr<D> m_dataStore;
       Beam::IO::OpenState m_openState;
+
+      DataStoreMarketDataClient(const DataStoreMarketDataClient&) = delete;
+      DataStoreMarketDataClient& operator =(
+        const DataStoreMarketDataClient&) = delete;
   };
 
   template<typename D>

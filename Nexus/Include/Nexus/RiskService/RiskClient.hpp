@@ -6,7 +6,6 @@
 #include <Beam/Queues/TablePublisher.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Utilities/Remote.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
@@ -19,7 +18,7 @@ namespace Nexus::RiskService {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class RiskClient : private boost::noncopyable {
+  class RiskClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -62,6 +61,8 @@ namespace Nexus::RiskService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      RiskClient(const RiskClient&) = delete;
+      RiskClient& operator =(const RiskClient&) = delete;
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void OnInventoryUpdate(ServiceProtocolClient& client,
         const std::vector<InventoryUpdate>& inventories);
@@ -70,9 +71,8 @@ namespace Nexus::RiskService {
   template<typename B>
   template<typename BF>
   RiskClient<B>::RiskClient(BF&& clientBuilder)
-      : m_clientHandler(std::forward<BF>(clientBuilder)) {
-    m_clientHandler.SetReconnectHandler(
-      std::bind(&RiskClient::OnReconnect, this, std::placeholders::_1));
+      : m_clientHandler(std::forward<BF>(clientBuilder),
+          std::bind(&RiskClient::OnReconnect, this, std::placeholders::_1)) {
     RegisterRiskServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterRiskMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<InventoryMessage>(
