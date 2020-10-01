@@ -1,8 +1,12 @@
 #ifndef NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
 #define NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
+#include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <boost/range/adaptor/map.hpp>
+#include <boost/range/join.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -220,6 +224,22 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
+    auto clientCount = std::unordered_map<
+      std::shared_ptr<VirtualMarketDataClient>, int>();
+    for(auto& client : boost::range::join(
+        m_countryToMarketDataClients | boost::adaptors::map_values,
+        m_marketToMarketDataClients | boost::adaptors::map_values)) {
+      ++clientCount[client];
+    }
+    auto closeGroup = Beam::Routines::RoutineHandlerGroup();
+    for(auto& client : clientCount) {
+      if(client.first.use_count() == client.second + 1) {
+        closeGroup.Spawn([client = client.first] {
+          client->Close();
+        });
+      }
+    }
+    closeGroup.Wait();
     m_openState.Close();
   }
 
