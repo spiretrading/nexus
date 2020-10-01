@@ -1,7 +1,7 @@
 #ifndef SPIRE_STATIC_DROP_DOWN_MENU_HPP
 #define SPIRE_STATIC_DROP_DOWN_MENU_HPP
+#include <QLineEdit>
 #include <QTimer>
-#include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownMenuList.hpp"
@@ -9,8 +9,18 @@
 namespace Spire {
 
   //! Represents a DropDownMenu that isn't modified by user interactions.
-  class StaticDropDownMenu : public QWidget {
+  class StaticDropDownMenu : public QLineEdit {
     public:
+
+      //! The styles available to render the StaticDropDownMenu.
+      enum class Style {
+
+        //! Render using the default style.
+        DEFAULT,
+
+        //! Render using the table cell style.
+        CELL
+      };
 
       //! Signals that an item was highlighted using the keyboard.
       /*!
@@ -87,6 +97,12 @@ namespace Spire {
       //! using the down arrow key.
       virtual void set_next_activated(bool is_next_activated);
 
+      //! Sets the menu's style.
+      /*
+        \param style The current style.
+      */
+      void set_style(Style style);
+
       //! Connects a slot to the activated signal.
       virtual boost::signals2::connection connect_activated_signal(
         const ActivatedSignal::slot_type& slot) const;
@@ -116,6 +132,7 @@ namespace Spire {
     private:
       mutable MenuClosedSignal m_menu_closed_signal;
       mutable ValueSelectedSignal m_value_selected_signal;
+      Style m_style;
       QVariant m_current_item;
       QString m_display_text;
       QVariant m_last_activated_item;
@@ -128,6 +145,7 @@ namespace Spire {
       QString m_entered_text;
       QTimer m_input_timer;
       bool m_is_next_activated;
+      bool m_is_current_removable;
 
       void draw_arrow(const QImage& arrow_image, QPainter& painter);
       void draw_background(const QColor& color, QPainter& painter);

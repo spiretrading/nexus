@@ -15,8 +15,7 @@ namespace {
 FilteredDropDownMenu::FilteredDropDownMenu(std::vector<QVariant> items,
     QWidget* parent)
     : TextInputWidget(parent),
-      m_was_click_focused(false),
-      m_last_key(Qt::Key_unknown) {
+      m_was_click_focused(false) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
   connect(this, &QLineEdit::editingFinished, this,
@@ -60,7 +59,6 @@ void FilteredDropDownMenu::focusOutEvent(QFocusEvent* event) {
 }
 
 void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
-  m_last_key = Qt::Key(event->key());
   switch(event->key()) {
     case Qt::Key_Delete:
       setText("");
@@ -114,14 +112,6 @@ void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
 }
 
 const QVariant& FilteredDropDownMenu::get_item() const {
-  return m_current_item;
-}
-
-const QVariant& FilteredDropDownMenu::get_item_or_invalid() const {
-  if(m_last_key == Qt::Key_Delete) {
-    static auto SENTINEL = QVariant();
-    return SENTINEL;
-  }
   return m_current_item;
 }
 
