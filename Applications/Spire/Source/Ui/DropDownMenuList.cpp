@@ -148,15 +148,16 @@ void DropDownMenuList::remove_item(int index) {
   update_height();
 }
 
-bool DropDownMenuList::set_highlight(const QString& text) {
+boost::optional<QVariant> DropDownMenuList::set_highlight(
+    const QString& text) {
   for(auto i = 0; i < item_count(); ++i) {
     if(m_item_delegate.displayText(get_value(i)).startsWith(text,
         Qt::CaseInsensitive)) {
       set_highlight(i);
-      return true;
+      return get_item(i)->get_value();
     }
   }
-  return false;
+  return {};
 }
 
 void DropDownMenuList::set_items(const std::vector<DropDownMenuItem*>& items) {

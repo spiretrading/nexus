@@ -86,9 +86,9 @@ namespace Spire {
       //! text.
       /*!
         \param text The text to match against the item.
-        \return True iff an item was highlighted.
+        \return The highlighted item iff an item was highlighted.
       */
-      bool set_highlight(const QString& text);
+      boost::optional<QVariant> set_highlight(const QString& text);
 
       //! Sets the items to display, overwriting any existing items.
       /*!

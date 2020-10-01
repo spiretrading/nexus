@@ -1,5 +1,6 @@
 #include "Spire/Ui/OrderTypeComboBox.hpp"
 #include <Beam/Collections/EnumIterator.hpp>
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 
@@ -44,6 +45,8 @@ bool OrderTypeComboBox::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Escape) {
       Q_EMIT editingFinished();
+    } else if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+      qApp->sendEvent(this, e);
     }
   }
   return QLineEdit::eventFilter(watched, event);
@@ -57,6 +60,9 @@ void OrderTypeComboBox::showEvent(QShowEvent* event) {
 }
 
 OrderType OrderTypeComboBox::get_order_type() const {
+  if(m_is_cell_widget) {
+    return m_menu->get_current_input_item().value<OrderType>();
+  }
   return m_menu->get_current_item().value<OrderType>();
 }
 

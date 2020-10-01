@@ -90,6 +90,8 @@ namespace Spire {
       */
       virtual void set_items(const std::vector<QVariant>& items);
 
+      virtual QVariant get_current_input_item() const;
+
       //! Returns the currently selected item.
       virtual QVariant get_current_item() const;
 

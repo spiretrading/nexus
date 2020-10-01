@@ -1,4 +1,5 @@
 #include "Spire/Ui/StaticDropDownMenu.hpp"
+#include <boost/optional.hpp>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
@@ -77,6 +78,13 @@ void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
     });
   m_menu_list->set_items(widget_items);
   m_menu_list->setFixedWidth(width());
+}
+
+QVariant StaticDropDownMenu::get_current_input_item() const {
+  if(m_last_activated_item.isValid()) {
+    return m_last_activated_item;
+  }
+  return m_current_item;
 }
 
 QVariant StaticDropDownMenu::get_current_item() const {
@@ -250,8 +258,9 @@ void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
   if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
     m_input_timer.start(INPUT_TIMEOUT_MS);
     m_entered_text.push_back(event->text());
-    if(m_menu_list->set_highlight(m_entered_text)) {
+    if(auto item = m_menu_list->set_highlight(m_entered_text); item) {
       m_menu_list->show();
+      m_last_activated_item = *item;
     } else if(m_entered_text.size() == 1) {
       on_input_timeout();
     }
