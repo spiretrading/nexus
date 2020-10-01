@@ -43,6 +43,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
   installEventFilter(this);
+  set_style(Style::DEFAULT);
 }
 
 int StaticDropDownMenu::item_count() const {
@@ -84,6 +85,10 @@ QVariant StaticDropDownMenu::get_current_item() const {
 
 void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
   m_is_next_activated = is_next_activated;
+}
+
+void StaticDropDownMenu::set_style(Style style) {
+  m_style = style;
 }
 
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
@@ -136,10 +141,12 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(hasFocus() || m_menu_list->isActiveWindow()) {
-    draw_border(QColor("#4B23A0"), painter);
-  } else {
-    draw_border(QColor("#C8C8C8"), painter);
+  if(m_style == Style::DEFAULT) {
+    if(hasFocus() || m_menu_list->isActiveWindow()) {
+      draw_border(QColor("#4B23A0"), painter);
+    } else {
+      draw_border(QColor("#C8C8C8"), painter);
+    }
   }
   if(isEnabled()) {
     draw_background(Qt::white, painter);
