@@ -23,14 +23,12 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
 
 StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
     const QString& display_text, QWidget* parent)
-    : QLineEdit(parent),
+    : QWidget(parent),
       m_display_text(display_text),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
         scale(6, 4))),
-      m_is_next_activated(true),
-      m_is_current_removable(false) {
-  setReadOnly(true);
+      m_is_next_activated(true) {
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
     m_current_item = items.front();
@@ -88,10 +86,6 @@ void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
   m_is_next_activated = is_next_activated;
 }
 
-void StaticDropDownMenu::set_style(Style style) {
-  m_style = style;
-}
-
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
@@ -142,12 +136,10 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(m_style == Style::DEFAULT) {
-    if(hasFocus() || m_menu_list->isActiveWindow()) {
-      draw_border(QColor("#4B23A0"), painter);
-    } else {
-      draw_border(QColor("#C8C8C8"), painter);
-    }
+  if(hasFocus() || m_menu_list->isActiveWindow()) {
+    draw_border(QColor("#4B23A0"), painter);
+  } else {
+    draw_border(QColor("#C8C8C8"), painter);
   }
   if(isEnabled()) {
     draw_background(Qt::white, painter);
@@ -243,7 +235,6 @@ void StaticDropDownMenu::on_item_activated(const QVariant& value) {
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
   m_value_selected_signal(m_current_item);
-  Q_EMIT editingFinished();
   m_last_activated_item = QVariant();
   update();
 }
@@ -257,7 +248,5 @@ void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
     } else if(m_entered_text.size() == 1) {
       on_input_timeout();
     }
-  } else if(event->key() == Qt::Key_Delete) {
-    m_current_item = QVariant();
   }
 }

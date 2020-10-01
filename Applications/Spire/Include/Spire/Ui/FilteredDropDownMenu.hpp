@@ -20,6 +20,10 @@ namespace Spire {
       explicit FilteredDropDownMenu(std::vector<QVariant> items,
         QWidget* parent = nullptr);
 
+      //! Returns the current item or an invalid QVariant if the delete key
+      //! was the last key pressed.
+      const QVariant& get_item_or_invalid() const;
+
       //! Returns the last valid item.
       const QVariant& get_item() const;
 
@@ -49,6 +53,7 @@ namespace Spire {
       QVariant m_current_item;
       QVariant m_last_activated_item;
       bool m_was_click_focused;
+      Qt::Key m_last_key;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_item_activated_connection;
       boost::signals2::scoped_connection m_list_selection_connection;
