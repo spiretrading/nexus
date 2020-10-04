@@ -254,33 +254,27 @@ namespace Nexus::OrderExecutionService {
       const OrderRecord& orderRecord) {
     return m_orders.GetOrInsert(orderRecord.m_info.m_orderId, [&] {
       auto order = std::make_shared<PrimitiveOrder>(orderRecord);
-      m_executionReportTasks.Push([=] {
-        auto& orderEntry = m_orderEntries[orderRecord.m_info.m_orderId];
+      m_executionReportTasks.Push([=, id = orderRecord.m_info.m_orderId] {
+        auto& orderEntry = m_orderEntries[id];
         orderEntry.m_order = order;
-        if(orderEntry.m_writeLog.empty() ||
-            orderEntry.m_writeLog.front().m_sequence != 0) {
+        if(orderEntry.m_writeLog.empty()) {
           return;
         }
-        orderEntry.m_order->With(
-          [&] (auto orderStatus, const auto& executionReports) {
-            if(!executionReports.empty()) {
-              while(!orderEntry.m_writeLog.empty() &&
-                  orderEntry.m_writeLog.front().m_sequence <=
-                  executionReports.back().m_sequence) {
-                orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
-              }
-            }
-            while(!orderEntry.m_writeLog.empty() && (executionReports.empty() ||
-                orderEntry.m_writeLog.front().m_sequence ==
-                executionReports.back().m_sequence + 1)) {
-              orderEntry.m_order->Update(orderEntry.m_writeLog.front());
+        orderEntry.m_order->With([&] (auto status, const auto& reports) {
+          if(!reports.empty()) {
+            while(!orderEntry.m_writeLog.empty() &&
+                orderEntry.m_writeLog.front().m_sequence <=
+                reports.back().m_sequence) {
               orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
             }
-          });
+          }
+          while(!orderEntry.m_writeLog.empty()) {
+            orderEntry.m_order->Update(
+              std::move(orderEntry.m_writeLog.front()));
+            orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
+          }
+        });
       });
-      for(auto& executionReport : orderRecord.m_executionReports) {
-        Publish(executionReport);
-      }
       return order;
     });
   }
@@ -345,36 +339,9 @@ namespace Nexus::OrderExecutionService {
       const ExecutionReport& executionReport) {
     m_executionReportTasks.Push([=] {
       auto& orderEntry = m_orderEntries[executionReport.m_id];
-      auto addToLog = false;
-      if(orderEntry.m_order != nullptr) {
-        orderEntry.m_order->With(
-          [&] (auto orderStatus, const auto& executionReports) {
-            if((executionReports.empty() &&
-                executionReport.m_sequence == 0) ||
-                (!executionReports.empty() && executionReport.m_sequence ==
-                executionReports.back().m_sequence + 1)) {
-              orderEntry.m_order->Update(executionReport);
-              while(!orderEntry.m_writeLog.empty() &&
-                  orderEntry.m_writeLog.front().m_sequence <=
-                  executionReport.m_sequence) {
-                orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
-              }
-              while(!orderEntry.m_writeLog.empty() &&
-                  orderEntry.m_writeLog.front().m_sequence ==
-                  executionReports.back().m_sequence + 1) {
-                orderEntry.m_order->Update(orderEntry.m_writeLog.front());
-                orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
-              }
-            } else if(!executionReports.empty() &&
-                executionReport.m_sequence >
-                executionReports.back().m_sequence) {
-              addToLog = true;
-            }
-          });
+      if(orderEntry.m_order) {
+        orderEntry.m_order->Update(executionReport);
       } else {
-        addToLog = true;
-      }
-      if(addToLog) {
         auto insertIterator = Beam::LinearLowerBound(
           orderEntry.m_writeLog.begin(), orderEntry.m_writeLog.end(),
           executionReport,
