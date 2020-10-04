@@ -261,18 +261,19 @@ namespace Nexus::OrderExecutionService {
           return;
         }
         orderEntry.m_order->With([&] (auto status, const auto& reports) {
+          auto i = std::size_t(0);
           if(!reports.empty()) {
-            while(!orderEntry.m_writeLog.empty() &&
-                orderEntry.m_writeLog.front().m_sequence <=
+            while(i != orderEntry.m_writeLog.size() &&
+                orderEntry.m_writeLog[i].m_sequence <=
                 reports.back().m_sequence) {
-              orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
+              ++i;
             }
           }
-          while(!orderEntry.m_writeLog.empty()) {
-            orderEntry.m_order->Update(
-              std::move(orderEntry.m_writeLog.front()));
-            orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
+          while(i != orderEntry.m_writeLog.size()) {
+            orderEntry.m_order->Update(std::move(orderEntry.m_writeLog[i]));
+            ++i;
           }
+          orderEntry.m_writeLog = {};
         });
       });
       return order;
@@ -293,7 +294,7 @@ namespace Nexus::OrderExecutionService {
       Beam::ServiceLocator::DirectoryEntry, std::vector<OrderId>>();
     m_orders.With([&] (const auto& orders) {
       for(auto& order : orders | boost::adaptors::map_values) {
-        order->With([&] (auto status, const auto& executionReports) {
+        order->With([&] (auto status, const auto& reports) {
           if(!IsTerminal(status)) {
             orderEntries[order->GetInfo().m_fields.m_account].push_back(
               order->GetInfo().m_orderId);
