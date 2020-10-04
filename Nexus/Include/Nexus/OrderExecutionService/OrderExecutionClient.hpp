@@ -263,6 +263,13 @@ namespace Nexus::OrderExecutionService {
         }
         orderEntry.m_order->With(
           [&] (auto orderStatus, const auto& executionReports) {
+            if(!executionReports.empty()) {
+              while(!orderEntry.m_writeLog.empty() &&
+                  orderEntry.m_writeLog.front().m_sequence <=
+                  executionReports.back().m_sequence) {
+                orderEntry.m_writeLog.erase(orderEntry.m_writeLog.begin());
+              }
+            }
             while(!orderEntry.m_writeLog.empty() && (executionReports.empty() ||
                 orderEntry.m_writeLog.front().m_sequence ==
                 executionReports.back().m_sequence + 1)) {

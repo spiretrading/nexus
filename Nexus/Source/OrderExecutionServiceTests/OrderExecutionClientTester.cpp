@@ -10,6 +10,7 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Services::Tests;
@@ -23,13 +24,14 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::Queries;
 
 namespace {
+  const auto TST = Security("TST", DefaultMarkets::NYSE(),
+    DefaultCountries::US());
+
   struct Fixture {
     using TestOrderExecutionClient = OrderExecutionClient<
       TestServiceProtocolClientBuilder>;
-
-    boost::optional<Beam::Services::Tests::TestServiceProtocolServer>
-      m_server;
-    boost::optional<TestOrderExecutionClient> m_client;
+    optional<TestServiceProtocolServer> m_server;
+    optional<TestOrderExecutionClient> m_client;
 
     Fixture() {
       auto serverConnection = std::make_shared<TestServerConnection>();
@@ -44,26 +46,28 @@ namespace {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
             "test", *serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
-      m_client.emplace(builder);
+      m_client.emplace(std::move(builder));
+    }
+
+    void AddQueryOrderSubmissionsSlot() {
+      QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
+        [&] (auto& client, auto& query) {
+          REQUIRE(query.GetIndex() == DirectoryEntry::GetRootAccount());
+          auto result = OrderSubmissionQueryResult();
+          result.m_queryId = -1;
+          return result;
+        });
     }
   };
 }
 
 TEST_SUITE("OrderExecutionClient") {
-  TEST_CASE_FIXTURE(Fixture, "submit_order") {
-    auto security = Security("TST", DefaultMarkets::NYSE(),
-      DefaultCountries::US());
+  TEST_CASE_FIXTURE(Fixture, "submit") {
+    AddQueryOrderSubmissionsSlot();
     auto sentSubmitOrderRequest = false;
     auto orderFields = OrderFields();
     auto serverClient = (TestServiceProtocolServer::ServiceProtocolClient*)(
       nullptr);
-    QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
-      [&] (auto& client, auto& query) {
-        REQUIRE(query.GetIndex() == DirectoryEntry::GetRootAccount());
-        auto result = OrderSubmissionQueryResult();
-        result.m_queryId = -1;
-        return result;
-      });
     NewOrderSingleService::AddSlot(Store(m_server->GetSlots()),
       [&] (auto& client, auto& requestedOrderFields) {
         REQUIRE(requestedOrderFields == orderFields);
@@ -76,7 +80,7 @@ TEST_SUITE("OrderExecutionClient") {
         return order;
       });
     orderFields.m_account = DirectoryEntry::GetRootAccount();
-    orderFields.m_security = security;
+    orderFields.m_security = TST;
     orderFields.m_quantity = 100;
     orderFields.m_price = Money::CENT;
     orderFields.m_side = Side::BID;
@@ -100,5 +104,47 @@ TEST_SUITE("OrderExecutionClient") {
     REQUIRE(newReportIn.m_status == OrderStatus::NEW);
     REQUIRE(newReportIn.m_id == 1);
     REQUIRE(newReportIn.m_additionalTags.empty());
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "submit_write_log") {
+    const auto ORDER_ID = OrderId(17);
+    AddQueryOrderSubmissionsSlot();
+    auto receivedNewOrderToken =
+      Async<TestServiceProtocolServer::ServiceProtocolClient*>();
+    auto orderResponse = Async<SequencedAccountOrderInfo>();
+    NewOrderSingleService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, auto& requestedOrderFields) {
+        receivedNewOrderToken.GetEval().SetResult(&client);
+        return orderResponse.Get();
+      });
+    auto receivedOrder = Async<const Order*>();
+    Spawn([&] {
+      receivedOrder.GetEval().SetResult(&m_client->Submit(
+        OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+        Side::BID, 100, Money::CENT)));
+    });
+    auto serverSideClient = receivedNewOrderToken.Get();
+    auto reportA = ExecutionReport::BuildInitialReport(ORDER_ID,
+      time_from_string("2019-02-06 13:03:12"));
+    SendRecordMessage<OrderUpdateMessage>(*serverSideClient, reportA);
+    auto reportB = ExecutionReport::BuildUpdatedReport(reportA,
+      OrderStatus::NEW, time_from_string("2019-02-06 13:03:13"));
+    SendRecordMessage<OrderUpdateMessage>(*serverSideClient, reportB);
+    auto reportC = ExecutionReport::BuildUpdatedReport(reportB,
+      OrderStatus::FILLED, time_from_string("2019-02-06 13:03:14"));
+    reportC.m_lastQuantity = 100;
+    reportC.m_lastPrice = Money::CENT;
+    SendRecordMessage<OrderUpdateMessage>(*serverSideClient, reportC);
+    auto serverSideOrder = SequencedAccountOrderInfo();
+    serverSideOrder.GetSequence() = Beam::Queries::Sequence(5);
+    serverSideOrder->GetIndex() = DirectoryEntry::GetRootAccount();
+    (*serverSideOrder)->m_orderId = ORDER_ID;
+    orderResponse.GetEval().SetResult(serverSideOrder);
+    auto clientSideOrder = receivedOrder.Get();
+    auto reportQueue = std::make_shared<Queue<ExecutionReport>>();
+    clientSideOrder->GetPublisher().Monitor(reportQueue);
+    REQUIRE(reportQueue->Pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reportQueue->Pop().m_status == OrderStatus::NEW);
+    REQUIRE(reportQueue->Pop().m_status == OrderStatus::FILLED);
   }
 }
