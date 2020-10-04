@@ -96,20 +96,15 @@ namespace Nexus::OrderExecutionService {
       void Close();
 
     private:
-      struct OrderEntry {
-        std::shared_ptr<PrimitiveOrder> m_order;
-        std::vector<ExecutionReport> m_writeLog;
-      };
       template<typename Value, typename Query, typename QueryService,
         typename EndQueryMessage>
       using QueryClientPublisher = Beam::Queries::QueryClientPublisher<Value,
         Query, Queries::EvaluatorTranslator,
-        Beam::Services::ServiceProtocolClientHandler<
-        B>, QueryService, EndQueryMessage>;
+        Beam::Services::ServiceProtocolClientHandler<B>, QueryService,
+        EndQueryMessage>;
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      Beam::Services::ServiceProtocolClientHandler<
-        B> m_clientHandler;
+      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       QueryClientPublisher<OrderRecord, AccountQuery,
         QueryOrderSubmissionsService, EndOrderSubmissionQueryMessage>
         m_orderSubmissionPublisher;
@@ -120,17 +115,19 @@ namespace Nexus::OrderExecutionService {
         m_orders;
       Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_realTimeSubscriptions;
-      std::unordered_map<OrderId, OrderEntry> m_orderEntries;
+      std::atomic_int m_pendingOrders;
+      Beam::SynchronizedVector<ExecutionReport> m_executionReportLog;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_executionReportTasks;
 
       OrderExecutionClient(const OrderExecutionClient&) = delete;
       OrderExecutionClient& operator =(const OrderExecutionClient&) = delete;
+      void DecrementPendingOrders();
       std::shared_ptr<PrimitiveOrder> LoadOrder(const OrderRecord& orderRecord);
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void RecoverOrders(ServiceProtocolClient& client);
       void Publish(const ExecutionReport& executionReport);
-      void OnOrderUpdate(ServiceProtocolClient& sender,
+      void OnExecutionReport(ServiceProtocolClient& sender,
         const ExecutionReport& executionReport);
   };
 
@@ -140,7 +137,8 @@ namespace Nexus::OrderExecutionService {
       : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
           &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
         m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
-        m_executionReportPublisher(Beam::Ref(m_clientHandler)) {
+        m_executionReportPublisher(Beam::Ref(m_clientHandler)),
+        m_pendingOrders(0) {
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -151,7 +149,7 @@ namespace Nexus::OrderExecutionService {
       template AddMessageHandler<ExecutionReportMessage>();
     Beam::Services::AddMessageSlot<OrderUpdateMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&OrderExecutionClient::OnOrderUpdate, this,
+      std::bind(&OrderExecutionClient::OnExecutionReport, this,
       std::placeholders::_1, std::placeholders::_2));
   }
 
@@ -214,12 +212,19 @@ namespace Nexus::OrderExecutionService {
           realTimeSubscriptions.insert(fields.m_account);
         });
     }
-    auto orderInfo = client->template SendRequest<NewOrderSingleService>(
-      fields);
+    ++m_pendingOrders;
+    try {
+      auto orderInfo = client->template SendRequest<NewOrderSingleService>(
+        fields);
+    } catch(const std::exception&) {
+      DecrementPendingOrders();
+      BOOST_RETHROW;
+    }
     auto orderRecord = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(OrderRecord{std::move(**orderInfo), {}},
       orderInfo->GetIndex()), orderInfo.GetSequence());
     auto order = LoadOrder(**orderRecord);
+    DecrementPendingOrders();
     m_orderSubmissionPublisher.Publish(orderRecord);
     return *order;
   }
@@ -250,10 +255,24 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename B>
+  void OrderExecutionClient<B>::DecrementPendingOrders() {
+    if(--m_pendingOrders != 0) {
+      return;
+    }
+    m_executionReportLog.With([&] (auto& log) {
+      if(m_pendingOrders == 0) {
+        log.clear();
+      }
+    });
+  }
+
+  template<typename B>
   std::shared_ptr<PrimitiveOrder> OrderExecutionClient<B>::LoadOrder(
       const OrderRecord& orderRecord) {
     return m_orders.GetOrInsert(orderRecord.m_info.m_orderId, [&] {
       auto order = std::make_shared<PrimitiveOrder>(orderRecord);
+      
+
       m_executionReportTasks.Push([=, id = orderRecord.m_info.m_orderId] {
         auto& orderEntry = m_orderEntries[id];
         orderEntry.m_order = order;
@@ -358,7 +377,7 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename B>
-  void OrderExecutionClient<B>::OnOrderUpdate(ServiceProtocolClient& sender,
+  void OrderExecutionClient<B>::OnExecutionReport(ServiceProtocolClient& sender,
       const ExecutionReport& executionReport) {
     Publish(executionReport);
   }
