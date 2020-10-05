@@ -249,8 +249,8 @@ void StaticDropDownMenu::on_item_activated(const QVariant& value) {
 
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
-  m_value_selected_signal(m_current_item);
   m_last_activated_item = QVariant();
+  m_value_selected_signal(m_current_item);
   update();
 }
 

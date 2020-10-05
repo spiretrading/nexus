@@ -25,6 +25,7 @@ OrderTypeComboBox::OrderTypeComboBox(bool is_cell_widget, QWidget* parent)
     return types;
   }();
   m_menu = new StaticDropDownMenu(items, this);
+  m_menu->findChild<DropDownMenuList*>()->setFocusProxy(m_menu);
   setFocusProxy(m_menu);
   if(m_is_cell_widget) {
     m_menu->set_style(StaticDropDownMenu::Style::CELL);
