@@ -41,11 +41,10 @@ namespace {
         Store(m_server->GetSlots().GetRegistry()));
       RegisterOrderExecutionServices(Store(m_server->GetSlots()));
       RegisterOrderExecutionMessages(Store(m_server->GetSlots()));
-      auto builder = TestServiceProtocolClientBuilder(
-        [=] {
-          return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", *serverConnection);
-        }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
+      auto builder = TestServiceProtocolClientBuilder([=] {
+        return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
+          "test", *serverConnection);
+      }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_client.emplace(std::move(builder));
     }
 
@@ -146,5 +145,83 @@ TEST_SUITE("OrderExecutionClient") {
     REQUIRE(reportQueue->Pop().m_status == OrderStatus::PENDING_NEW);
     REQUIRE(reportQueue->Pop().m_status == OrderStatus::NEW);
     REQUIRE(reportQueue->Pop().m_status == OrderStatus::FILLED);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "submit_and_subscribe_race_condition") {
+    const auto ORDER_ID = OrderId(42);
+    auto expectedReports = std::vector<ExecutionReport>();
+    expectedReports.push_back(ExecutionReport::BuildInitialReport(ORDER_ID,
+      time_from_string("2019-02-06 13:03:12")));
+    expectedReports.push_back(ExecutionReport::BuildUpdatedReport(
+      expectedReports.back(), OrderStatus::NEW,
+      time_from_string("2019-02-06 13:03:12")));
+    expectedReports.push_back(ExecutionReport::BuildUpdatedReport(
+      expectedReports.back(), OrderStatus::CANCELED,
+      time_from_string("2019-02-06 13:03:12")));
+    auto expectedRecord = SequencedOrderRecord(OrderRecord(OrderInfo(
+      OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+      Side::ASK, 300, Money::ONE), ORDER_ID,
+      time_from_string("2019-02-06 13:03:12")), expectedReports),
+      Beam::Queries::Sequence(101));
+    auto receivedQueryToken = Async<void>();
+    auto sendQueryToken = Async<void>();
+    QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, auto& query) {
+        auto result = OrderSubmissionQueryResult();
+        if(query.GetRange() != Range::Historical()) {
+          result.m_queryId = -1;
+          return result;
+        }
+        receivedQueryToken.GetEval().SetResult();
+        result.m_queryId = 10;
+        result.m_snapshot.push_back(expectedRecord);
+        sendQueryToken.Get();
+        return result;
+      });
+    auto receivedNewOrderToken =
+      Async<TestServiceProtocolServer::ServiceProtocolClient*>();
+    auto orderResponse = Async<void>();
+    NewOrderSingleService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, auto& requestedOrderFields) {
+        receivedNewOrderToken.GetEval().SetResult(&client);
+        orderResponse.Get();
+        return SequencedAccountOrderInfo(AccountOrderInfo(
+          expectedRecord->m_info, DirectoryEntry::GetRootAccount()),
+          expectedRecord.GetSequence());
+      });
+    auto receivedOrderToken = Async<const Order*>();
+    Spawn([&] {
+      receivedOrderToken.GetEval().SetResult(&m_client->Submit(
+        expectedRecord->m_info.m_fields));
+    });
+    auto orders = std::make_shared<Queue<const Order*>>();
+    Spawn([&] {
+      auto query = AccountQuery();
+      query.SetIndex(DirectoryEntry::GetRootAccount());
+      query.SetRange(Range::Historical());
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      m_client->QueryOrderSubmissions(query, orders);
+    });
+    sendQueryToken.GetEval().SetResult();
+    auto serverSideClient = receivedNewOrderToken.Get();
+    for(auto& report : expectedReports) {
+      SendRecordMessage<OrderUpdateMessage>(*serverSideClient, report);
+    }
+    auto submittedOrder = orders->Pop();
+    auto executionReports = std::make_shared<Queue<ExecutionReport>>();
+    submittedOrder->GetPublisher().Monitor(executionReports);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::NEW);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::CANCELED);
+    orderResponse.GetEval().SetResult();
+    executionReports = std::make_shared<Queue<ExecutionReport>>();
+    auto receivedOrder = receivedOrderToken.Get();
+    REQUIRE(receivedOrder == submittedOrder);
+    receivedOrder->GetPublisher().Monitor(executionReports);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::NEW);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::CANCELED);
+    orders->Break();
+    REQUIRE(!orders->TryPop());
   }
 }

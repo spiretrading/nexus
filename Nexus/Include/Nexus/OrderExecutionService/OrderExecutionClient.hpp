@@ -1,6 +1,6 @@
 #ifndef NEXUS_ORDER_EXECUTION_CLIENT_HPP
 #define NEXUS_ORDER_EXECUTION_CLIENT_HPP
-#include <vector>
+#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/Connection.hpp>
@@ -115,19 +115,15 @@ namespace Nexus::OrderExecutionService {
         m_orders;
       Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_realTimeSubscriptions;
-      std::atomic_int m_pendingOrders;
       Beam::SynchronizedVector<ExecutionReport> m_executionReportLog;
       Beam::IO::OpenState m_openState;
-      Beam::RoutineTaskQueue m_executionReportTasks;
 
       OrderExecutionClient(const OrderExecutionClient&) = delete;
       OrderExecutionClient& operator =(const OrderExecutionClient&) = delete;
-      void DecrementPendingOrders();
       std::shared_ptr<PrimitiveOrder> LoadOrder(const OrderRecord& orderRecord);
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void RecoverOrders(ServiceProtocolClient& client);
-      void Publish(const ExecutionReport& executionReport);
-      void OnExecutionReport(ServiceProtocolClient& sender,
+      void OnOrderUpdate(ServiceProtocolClient& sender,
         const ExecutionReport& executionReport);
   };
 
@@ -137,8 +133,7 @@ namespace Nexus::OrderExecutionService {
       : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
           &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
         m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
-        m_executionReportPublisher(Beam::Ref(m_clientHandler)),
-        m_pendingOrders(0) {
+        m_executionReportPublisher(Beam::Ref(m_clientHandler)) {
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -149,7 +144,7 @@ namespace Nexus::OrderExecutionService {
       template AddMessageHandler<ExecutionReportMessage>();
     Beam::Services::AddMessageSlot<OrderUpdateMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&OrderExecutionClient::OnExecutionReport, this,
+      std::bind(&OrderExecutionClient::OnOrderUpdate, this,
       std::placeholders::_1, std::placeholders::_2));
   }
 
@@ -167,26 +162,23 @@ namespace Nexus::OrderExecutionService {
   template<typename B>
   void OrderExecutionClient<B>::QueryOrderSubmissions(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
-    auto conversionQueue = Beam::MakeConverterQueueWriter<SequencedOrderRecord>(
-      std::move(queue),
+    m_orderSubmissionPublisher.SubmitQuery(query,
+      Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
       [=] (const auto& orderRecord) {
-        auto sequence = orderRecord.GetSequence();
-        auto order = static_cast<const Order*>(LoadOrder(orderRecord).get());
-        return Beam::Queries::SequencedValue(std::move(order),
-          std::move(sequence));
-      });
-    m_orderSubmissionPublisher.SubmitQuery(query, std::move(conversionQueue));
+        return Beam::Queries::SequencedValue(
+          static_cast<const Order*>(LoadOrder(orderRecord).get()),
+          orderRecord.GetSequence());
+      }));
   }
 
   template<typename B>
   void OrderExecutionClient<B>::QueryOrderSubmissions(const AccountQuery& query,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    auto conversionQueue = Beam::MakeConverterQueueWriter<SequencedOrderRecord>(
-      std::move(queue),
+    m_orderSubmissionPublisher.SubmitQuery(query,
+      Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
       [=] (const auto& orderRecord) {
         return static_cast<const Order*>(LoadOrder(orderRecord).get());
-      });
-    m_orderSubmissionPublisher.SubmitQuery(query, std::move(conversionQueue));
+      }));
   }
 
   template<typename B>
@@ -199,32 +191,24 @@ namespace Nexus::OrderExecutionService {
   const Order& OrderExecutionClient<B>::Submit(const OrderFields& fields) {
     auto client = m_clientHandler.GetClient();
     if(!m_realTimeSubscriptions.Contains(fields.m_account)) {
-      m_realTimeSubscriptions.With(
-        [&] (auto& realTimeSubscriptions) {
-          if(Beam::Contains(realTimeSubscriptions, fields.m_account)) {
-            return;
-          }
-          auto realTimeQuery = AccountQuery();
-          realTimeQuery.SetIndex(fields.m_account);
-          realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
-          client->template SendRequest<QueryOrderSubmissionsService>(
-            realTimeQuery);
-          realTimeSubscriptions.insert(fields.m_account);
-        });
+      m_realTimeSubscriptions.With([&] (auto& realTimeSubscriptions) {
+        if(Beam::Contains(realTimeSubscriptions, fields.m_account)) {
+          return;
+        }
+        auto realTimeQuery = AccountQuery();
+        realTimeQuery.SetIndex(fields.m_account);
+        realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
+        client->template SendRequest<QueryOrderSubmissionsService>(
+          realTimeQuery);
+        realTimeSubscriptions.insert(fields.m_account);
+      });
     }
-    ++m_pendingOrders;
-    try {
-      auto orderInfo = client->template SendRequest<NewOrderSingleService>(
-        fields);
-    } catch(const std::exception&) {
-      DecrementPendingOrders();
-      BOOST_RETHROW;
-    }
+    auto orderInfo = client->template SendRequest<NewOrderSingleService>(
+      fields);
     auto orderRecord = Beam::Queries::SequencedValue(
-      Beam::Queries::IndexedValue(OrderRecord{std::move(**orderInfo), {}},
+      Beam::Queries::IndexedValue(OrderRecord(std::move(**orderInfo), {}),
       orderInfo->GetIndex()), orderInfo.GetSequence());
     auto order = LoadOrder(**orderRecord);
-    DecrementPendingOrders();
     m_orderSubmissionPublisher.Publish(orderRecord);
     return *order;
   }
@@ -248,54 +232,29 @@ namespace Nexus::OrderExecutionService {
     if(m_openState.SetClosing()) {
       return;
     }
-    m_executionReportTasks.Break();
-    m_executionReportTasks.Wait();
     m_clientHandler.Close();
     m_openState.Close();
-  }
-
-  template<typename B>
-  void OrderExecutionClient<B>::DecrementPendingOrders() {
-    if(--m_pendingOrders != 0) {
-      return;
-    }
-    m_executionReportLog.With([&] (auto& log) {
-      if(m_pendingOrders == 0) {
-        log.clear();
-      }
-    });
   }
 
   template<typename B>
   std::shared_ptr<PrimitiveOrder> OrderExecutionClient<B>::LoadOrder(
       const OrderRecord& orderRecord) {
     return m_orders.GetOrInsert(orderRecord.m_info.m_orderId, [&] {
-      auto order = std::make_shared<PrimitiveOrder>(orderRecord);
-      
-
-      m_executionReportTasks.Push([=, id = orderRecord.m_info.m_orderId] {
-        auto& orderEntry = m_orderEntries[id];
-        orderEntry.m_order = order;
-        if(orderEntry.m_writeLog.empty()) {
-          return;
-        }
-        orderEntry.m_order->With([&] (auto status, const auto& reports) {
-          auto i = std::size_t(0);
-          if(!reports.empty()) {
-            while(i != orderEntry.m_writeLog.size() &&
-                orderEntry.m_writeLog[i].m_sequence <=
-                reports.back().m_sequence) {
-              ++i;
-            }
+      auto completeOrderRecord = orderRecord;
+      m_executionReportLog.With([&] (auto& log) {
+        auto i = std::remove_if(log.begin(), log.end(), [&] (auto& report) {
+          if(report.m_id == completeOrderRecord.m_info.m_orderId &&
+              (completeOrderRecord.m_executionReports.empty() ||
+              report.m_sequence ==
+              completeOrderRecord.m_executionReports.back().m_sequence + 1)) {
+            completeOrderRecord.m_executionReports.push_back(std::move(report));
+            return true;
           }
-          while(i != orderEntry.m_writeLog.size()) {
-            orderEntry.m_order->Update(std::move(orderEntry.m_writeLog[i]));
-            ++i;
-          }
-          orderEntry.m_writeLog = {};
+          return false;
         });
+        log.erase(i, log.end());
       });
-      return order;
+      return std::make_shared<PrimitiveOrder>(std::move(completeOrderRecord));
     });
   }
 
@@ -341,45 +300,38 @@ namespace Nexus::OrderExecutionService {
         Beam::Queries::Sequence::Present());
       query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
       query.SetFilter(filter);
-      m_executionReportTasks.Push([=] {
-        auto client = m_clientHandler.GetClient();
-        auto queryResult = client->template SendRequest<
-          QueryOrderSubmissionsService>(query);
-        for(auto& orderRecord : queryResult.m_snapshot) {
+      auto queryResult = client.template SendRequest<
+        QueryOrderSubmissionsService>(query);
+      for(auto& orderRecord : queryResult.m_snapshot) {
+        auto order = m_orders.Get(orderRecord->m_info.m_orderId);
+        order->With([&] (auto status, const auto& reports) {
           for(auto& executionReport : orderRecord->m_executionReports) {
-            Publish(executionReport);
+            if(executionReport.m_sequence > reports.back().m_sequence) {
+              order->Update(executionReport);
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 
   template<typename B>
-  void OrderExecutionClient<B>::Publish(
+  void OrderExecutionClient<B>::OnOrderUpdate(ServiceProtocolClient& sender,
       const ExecutionReport& executionReport) {
-    m_executionReportTasks.Push([=] {
-      auto& orderEntry = m_orderEntries[executionReport.m_id];
-      if(orderEntry.m_order) {
-        orderEntry.m_order->Update(executionReport);
-      } else {
-        auto insertIterator = Beam::LinearLowerBound(
-          orderEntry.m_writeLog.begin(), orderEntry.m_writeLog.end(),
-          executionReport,
+    auto order = m_orders.FindValue(executionReport.m_id);
+    if(order) {
+      (*order)->Update(executionReport);
+    } else {
+      m_executionReportLog.With([&] (auto& log) {
+        auto i = Beam::LinearLowerBound(log.begin(), log.end(), executionReport,
           [] (const auto& lhs, const auto& rhs) {
             return lhs.m_sequence < rhs.m_sequence;
           });
-        if(insertIterator == orderEntry.m_writeLog.end() ||
-            insertIterator->m_sequence != executionReport.m_sequence) {
-          orderEntry.m_writeLog.insert(insertIterator, executionReport);
+        if(i == log.end() || i->m_sequence != executionReport.m_sequence) {
+          log.insert(i, executionReport);
         }
-      }
-    });
-  }
-
-  template<typename B>
-  void OrderExecutionClient<B>::OnExecutionReport(ServiceProtocolClient& sender,
-      const ExecutionReport& executionReport) {
-    Publish(executionReport);
+      });
+    }
   }
 }
 
