@@ -32,6 +32,8 @@ namespace Spire {
       explicit OrderTypeComboBox(bool is_cell_widget,
         QWidget* parent = nullptr);
 
+      Qt::Key get_last_key() const { return m_last_key; }
+
       //! Returns the selected OrderType.
       Nexus::OrderType get_order_type() const;
 

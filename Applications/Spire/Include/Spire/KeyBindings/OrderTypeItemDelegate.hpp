@@ -25,6 +25,9 @@ namespace Spire {
     
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
+
+    private:
+      mutable QVariant m_initial_value;
   };
 }
 

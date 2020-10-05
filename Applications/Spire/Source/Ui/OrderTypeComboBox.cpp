@@ -35,15 +35,16 @@ OrderTypeComboBox::OrderTypeComboBox(bool is_cell_widget, QWidget* parent)
   layout->addWidget(m_menu);
   m_value_connection = m_menu->connect_value_selected_signal(
     [=] (const auto& value) {
-      m_selected_signal(value.value<OrderType>());
       Q_EMIT editingFinished();
+      m_selected_signal(value.value<OrderType>());
     });
 }
 
 bool OrderTypeComboBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Escape) {
+    m_last_key = static_cast<Qt::Key>(e->key());
+    if(e->key() == Qt::Key_Escape || e->key() == Qt::Key_Delete) {
       Q_EMIT editingFinished();
     } else if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
       qApp->sendEvent(this, e);

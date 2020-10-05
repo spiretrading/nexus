@@ -14,6 +14,7 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
   auto editor = new OrderTypeComboBox(true,
     static_cast<QWidget*>(this->parent()));
   editor->set_order_type(index.data().value<OrderType>());
+  m_initial_value = index.data();
   connect(editor, &OrderTypeComboBox::editingFinished,
     this, &OrderTypeItemDelegate::on_editing_finished);
   return editor;
@@ -21,6 +22,14 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
 
 void OrderTypeItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto type = static_cast<OrderTypeComboBox*>(editor)->get_order_type();
-  model->setData(index, QVariant::fromValue(type), Qt::DisplayRole);
+  auto variant = [&] {
+    auto combo_box = static_cast<OrderTypeComboBox*>(editor);
+    if(combo_box->get_last_key() == Qt::Key_Escape) {
+      return m_initial_value;
+    } else if(combo_box->get_last_key() == Qt::Key_Delete) {
+      return QVariant();
+    }
+    return QVariant::fromValue(combo_box->get_order_type());
+  }();
+  model->setData(index, variant, Qt::DisplayRole);
 }
