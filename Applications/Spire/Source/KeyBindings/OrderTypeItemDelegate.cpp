@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/OrderTypeItemDelegate.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Spire/Ui/OrderTypeComboBox.hpp"
+#include "Spire/Ui/ComboBoxEditor.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -11,11 +12,13 @@ OrderTypeItemDelegate::OrderTypeItemDelegate(QWidget* parent)
 
 QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new OrderTypeComboBox(true,
+  auto menu = new StaticDropDownMenu(make_order_type_list(),
     static_cast<QWidget*>(this->parent()));
-  editor->set_order_type(index.data().value<OrderType>());
+  auto editor = new ComboBoxEditor(menu,
+    static_cast<QWidget*>(this->parent()));
+  editor->set_value(index.data());
   m_initial_value = index.data();
-  connect(editor, &OrderTypeComboBox::editingFinished,
+  connect(editor, &ComboBoxEditor::editingFinished,
     this, &OrderTypeItemDelegate::on_editing_finished);
   return editor;
 }
@@ -23,13 +26,13 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
 void OrderTypeItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto variant = [&] {
-    auto combo_box = static_cast<OrderTypeComboBox*>(editor);
+    auto combo_box = static_cast<ComboBoxEditor*>(editor);
     if(combo_box->get_last_key() == Qt::Key_Escape) {
       return m_initial_value;
     } else if(combo_box->get_last_key() == Qt::Key_Delete) {
       return QVariant();
     }
-    return QVariant::fromValue(combo_box->get_order_type());
+    return combo_box->get_value();
   }();
   model->setData(index, variant, Qt::DisplayRole);
 }

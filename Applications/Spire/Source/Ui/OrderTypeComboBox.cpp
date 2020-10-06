@@ -1,10 +1,8 @@
 #include "Spire/Ui/OrderTypeComboBox.hpp"
-#include <Beam/Collections/EnumIterator.hpp>
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 
-using namespace Beam;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -16,15 +14,7 @@ OrderTypeComboBox::OrderTypeComboBox(bool is_cell_widget, QWidget* parent)
     : QLineEdit(parent),
       m_is_cell_widget(is_cell_widget) {
   setReadOnly(true);
-  auto items = [] {
-    auto types = std::vector<QVariant>();
-    types.reserve(OrderType::COUNT);
-    for(auto type : Beam::MakeRange<OrderType>()) {
-      types.push_back(QVariant::fromValue(type));
-    }
-    return types;
-  }();
-  m_menu = new StaticDropDownMenu(items, this);
+  m_menu = new StaticDropDownMenu(make_order_type_list(), this);
   m_menu->findChild<DropDownMenuList*>()->setFocusProxy(m_menu);
   setFocusProxy(m_menu);
   if(m_is_cell_widget) {

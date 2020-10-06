@@ -10,17 +10,7 @@ using namespace Spire;
 MarketComboBox::MarketComboBox(const MarketDatabase& database,
     QWidget* parent)
     : QWidget(parent) {
-  auto entries = database.GetEntries();
-  auto items = [&] {
-    auto markets = std::vector<QVariant>();
-    markets.reserve(entries.size());
-    std::transform(entries.begin(), entries.end(),
-      std::back_inserter(markets), [] (const auto& entry) {
-        return QVariant::fromValue<MarketToken>(entry.m_code);
-      });
-    return markets;
-  }();
-  auto menu = new StaticDropDownMenu(items, this);
+  auto menu = new StaticDropDownMenu(make_market_list(database), this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);

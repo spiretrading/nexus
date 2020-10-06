@@ -5,6 +5,8 @@
 #include <QLineEdit>
 #include <QRect>
 #include <QSize>
+#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -71,6 +73,20 @@ namespace Spire {
     \param parent The parent widget.
   */
   QHeaderView* make_header(QWidget* parent);
+
+  std::vector<QVariant> make_currency_list(
+    const Nexus::CurrencyDatabase& database);
+
+  std::vector<QVariant> make_market_list(
+    const Nexus::MarketDatabase& database);
+
+  std::vector<QVariant> make_order_status_list();
+
+  std::vector<QVariant> make_order_type_list();
+
+  std::vector<QVariant> make_side_list();
+
+  std::vector<QVariant> make_time_in_force_list();
 }
 
 #endif

@@ -10,15 +10,7 @@ using namespace Spire;
 
 OrderStatusComboBox::OrderStatusComboBox(QWidget* parent)
     : QWidget(parent) {
-  auto items = [] {
-    auto statuses = std::vector<QVariant>();
-    statuses.reserve(OrderStatus::COUNT);
-    for(auto status : Beam::MakeRange<OrderStatus>()) {
-      statuses.push_back(QVariant::fromValue(status));
-    }
-    return statuses;
-  }();
-  auto menu = new StaticDropDownMenu(items, this);
+  auto menu = new StaticDropDownMenu(make_order_status_list(), this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);

@@ -8,8 +8,7 @@ using namespace Spire;
 
 SideComboBox::SideComboBox(QWidget* parent)
     : QWidget(parent) {
-  auto menu = new StaticDropDownMenu({QVariant::fromValue<Side>(Side::ASK),
-    QVariant::fromValue<Side>(Side::BID)}, this);
+  auto menu = new StaticDropDownMenu(make_side_list(), this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);

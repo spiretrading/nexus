@@ -10,15 +10,7 @@ using namespace Spire;
 
 TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
     : QWidget(parent) {
-  auto items = [] {
-    auto times = std::vector<QVariant>();
-    times.reserve(TimeInForce::Type::COUNT);
-    for(auto time : Beam::MakeRange<TimeInForce::Type>()) {
-      times.push_back(QVariant::fromValue<TimeInForce>(time));
-    }
-    return times;
-  }();
-  auto menu = new StaticDropDownMenu(items, this);
+  auto menu = new StaticDropDownMenu(make_time_in_force_list(), this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);
