@@ -1,10 +1,7 @@
 #include "Spire/KeyBindings/OrderTypeItemDelegate.hpp"
-#include "Nexus/Definitions/OrderType.hpp"
 #include "Spire/Ui/ComboBoxEditor.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 
-using namespace boost::signals2;
-using namespace Nexus;
 using namespace Spire;
 
 OrderTypeItemDelegate::OrderTypeItemDelegate(QWidget* parent)
@@ -17,7 +14,6 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
   auto editor = new ComboBoxEditor(menu,
     static_cast<QWidget*>(this->parent()));
   editor->set_value(index.data());
-  m_initial_value = index.data();
   connect(editor, &ComboBoxEditor::editingFinished,
     this, &OrderTypeItemDelegate::on_editing_finished);
   return editor;
@@ -28,7 +24,7 @@ void OrderTypeItemDelegate::setModelData(QWidget* editor,
   auto variant = [&] {
     auto combo_box = static_cast<ComboBoxEditor*>(editor);
     if(combo_box->get_last_key() == Qt::Key_Escape) {
-      return m_initial_value;
+      return index.data();
     } else if(combo_box->get_last_key() == Qt::Key_Delete) {
       return QVariant();
     }
