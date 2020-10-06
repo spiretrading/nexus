@@ -1,5 +1,4 @@
 #include "Spire/Ui/TimeInForceComboBox.hpp"
-#include <Beam/Collections/EnumIterator.hpp>
 #include <QHBoxLayout>
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 

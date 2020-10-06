@@ -1,5 +1,4 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
-#include <algorithm>
 #include <QHBoxLayout>
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 
