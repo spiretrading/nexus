@@ -98,6 +98,10 @@ TEST_SUITE("PortfolioController") {
   TEST_CASE_FIXTURE(Fixture, "zero_position_bbo_update") {
     m_environment.Publish(TST, BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), not_a_date_time));
+    auto orderA = PrimitiveOrder({OrderFields::BuildLimitOrder(
+      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
+      Side::BID, "NYSE", 100, Money::ONE), 1,
+      m_serviceClients.GetTimeClient().GetTime()});
     auto orders = std::make_shared<Queue<const Order*>>();
     auto controller = TestPortfolioController(
       Initialize(GetDefaultMarketDatabase()),
@@ -105,10 +109,6 @@ TEST_SUITE("PortfolioController") {
     auto queue = std::make_shared<
       Queue<TestPortfolioController::UpdateEntry>>();
     controller.GetPublisher().Monitor(queue);
-    auto orderA = PrimitiveOrder({OrderFields::BuildLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 100, Money::ONE), 1,
-      m_serviceClients.GetTimeClient().GetTime()});
     Accept(orderA);
     orders->Push(&orderA);
     m_environment.Publish(TST, BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
