@@ -20,18 +20,8 @@ namespace Spire {
       explicit FilteredDropDownMenu(std::vector<QVariant> items,
         QWidget* parent = nullptr);
 
-      //! Returns the current item or an invalid QVariant if the delete key
-      //! was the last key pressed.
-      const QVariant& get_item_or_invalid() const;
-
       //! Returns the last valid item.
       const QVariant& get_item() const;
-
-      //! Sets the current item iff it exists in the list of unfiltered items.
-      /*!
-        \param item The current item.
-      */
-      void set_current_item(const QVariant& item);
 
       //! Sets the items to display, overwriting any existing items.
       /*!

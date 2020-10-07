@@ -117,24 +117,6 @@ const QVariant& FilteredDropDownMenu::get_item() const {
   return m_current_item;
 }
 
-const QVariant& FilteredDropDownMenu::get_item_or_invalid() const {
-  if(m_last_key == Qt::Key_Delete) {
-    static auto SENTINEL = QVariant();
-    return SENTINEL;
-  }
-  return m_current_item;
-}
-
-void FilteredDropDownMenu::set_current_item(const QVariant& item) {
-  for(auto i = 0; i < m_menu_list->item_count(); ++i) {
-    if(m_menu_list->get_value(i) == item) {
-      m_current_item = item;
-      setText(m_item_delegate.displayText(m_current_item));
-      break;
-    }
-  }
-}
-
 void FilteredDropDownMenu::set_items(std::vector<QVariant> items) {
   m_items = std::move(items);
   m_menu_list->set_items(std::move(create_widget_items(m_items)));

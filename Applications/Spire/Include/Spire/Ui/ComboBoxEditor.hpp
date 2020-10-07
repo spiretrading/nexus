@@ -7,15 +7,25 @@ namespace Spire {
 
   //! Represents a combo box editor used in a table cell.
   class ComboBoxEditor : public QLineEdit {
-  
     public:
 
+      //! Constructs a ComboBoxEditor.
+      /*!
+        \param menu The wrapped menu.
+        \param parent The parent widget.
+      */
       ComboBoxEditor(StaticDropDownMenu* menu, QWidget* parent = nullptr);
 
+      //! Returns the last key that was pressed.
       Qt::Key get_last_key() const;
 
+      //! Returns the current value.
       QVariant get_value() const;
 
+      //! Sets the current value.
+      /*
+        \param value The current value.
+      */
       void set_value(const QVariant& value);
 
     protected:

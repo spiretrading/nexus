@@ -74,18 +74,30 @@ namespace Spire {
   */
   QHeaderView* make_header(QWidget* parent);
 
+  //! Returns a list of currencies.
+  /*!
+    \param database The source currency database.
+  */
   std::vector<QVariant> make_currency_list(
     const Nexus::CurrencyDatabase& database);
 
+  //! Returns a list of markets.
+  /*!
+    \param database The source market database.
+  */
   std::vector<QVariant> make_market_list(
     const Nexus::MarketDatabase& database);
 
+  //! Returns a list with all OrderStatus'.
   std::vector<QVariant> make_order_status_list();
 
+  //! Returns a list with all OrderTypes.
   std::vector<QVariant> make_order_type_list();
 
+  //! Returns a list with all Sides.
   std::vector<QVariant> make_side_list();
 
+  //! Returns a list with all TimeInForce values.
   std::vector<QVariant> make_time_in_force_list();
 }
 

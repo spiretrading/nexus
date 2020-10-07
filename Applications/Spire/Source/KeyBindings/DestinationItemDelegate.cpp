@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/DestinationItemDelegate.hpp"
 #include "Nexus/Definitions/Region.hpp"
-#include "Spire/Ui/FilteredDropDownMenu.hpp"
+#include "Spire/Ui/ComboBoxEditor.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -11,26 +12,28 @@ DestinationItemDelegate::DestinationItemDelegate(QWidget* parent)
 
 QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new FilteredDropDownMenu(
-    {"One", "Two", "Three"}, static_cast<QWidget*>(this->parent()));
-  editor->set_current_item(QString::fromStdString(
-    index.data(Qt::DisplayRole).value<Region>().GetName()));
-  editor->set_style(FilteredDropDownMenu::Style::CELL);
-  connect(editor, &FilteredDropDownMenu::editingFinished,
+  auto menu = new StaticDropDownMenu({"One", "Two", "Three"},
+    static_cast<QWidget*>(this->parent()));
+  auto editor = new ComboBoxEditor(menu,
+    static_cast<QWidget*>(this->parent()));
+  editor->set_value(index.data());
+  connect(editor, &ComboBoxEditor::editingFinished,
     this, &DestinationItemDelegate::on_editing_finished);
   return editor;
 }
 
 void DestinationItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto item = static_cast<FilteredDropDownMenu*>(
-    editor)->get_item_or_invalid().value<QString>();
-  auto region = [&] {
-    if(item.isEmpty() && index.data().value<Region>().IsGlobal()) {
-      return Region();
+  auto variant = [&] {
+    auto combo_box = static_cast<ComboBoxEditor*>(editor);
+    if(combo_box->get_last_key() == Qt::Key_Escape) {
+      return index.data();
+    } else if(combo_box->get_last_key() == Qt::Key_Delete) {
+      return QVariant();
     }
-    return Region::Global();
+    auto region = Region(
+      combo_box->get_value().value<QString>().toStdString());
+    return QVariant::fromValue(region);
   }();
-  region.SetName(item.toStdString());
-  model->setData(index, QVariant::fromValue<Region>(region), Qt::DisplayRole);
+  model->setData(index, variant, Qt::DisplayRole);
 }
