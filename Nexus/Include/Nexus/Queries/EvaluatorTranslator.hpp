@@ -1,5 +1,5 @@
-#ifndef NEXUS_EVALUATORTRANSLATOR_HPP
-#define NEXUS_EVALUATORTRANSLATOR_HPP
+#ifndef NEXUS_EVALUATOR_TRANSLATOR_HPP
+#define NEXUS_EVALUATOR_TRANSLATOR_HPP
 #include <memory>
 #include <vector>
 #include <Beam/Collections/SynchronizedSet.hpp>
@@ -14,35 +14,31 @@
 #include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus {
-namespace Queries {
+namespace Nexus::Queries {
 
-  /*! \class EvaluatorTranslator
-      \brief Translates an Expression into an EvaluatorNode.
-   */
+  /** Translates an Expression into an EvaluatorNode. */
   class EvaluatorTranslator :
       public Beam::Queries::EvaluatorTranslator<QueryTypes>,
-      public ExpressionVisitor {
+      protected ExpressionVisitor {
     public:
 
-      //! Constructs an EvaluatorTranslator.
+      /** Constructs an EvaluatorTranslator. */
       EvaluatorTranslator();
 
-      //! Constructs an EvaluatorTranslator maintaining a set of live Orders.
-      /*!
-        \param liveOrders The set of live Orders.
-      */
+      /**
+       * Constructs an EvaluatorTranslator maintaining a set of live Orders.
+       * @param liveOrders The set of live Orders.
+       */
       EvaluatorTranslator(Beam::Ref<
         const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
         liveOrders);
 
-      virtual std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
+      std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
         NewTranslator() const override;
 
-      virtual void Visit(const Beam::Queries::FunctionExpression& expression)
-        override;
-
-      virtual void Visit(
+    protected:
+      void Visit(const Beam::Queries::FunctionExpression& expression) override;
+      void Visit(
         const Beam::Queries::MemberAccessExpression& expression) override;
 
     private:
@@ -60,19 +56,19 @@ namespace Queries {
   };
 
   inline EvaluatorTranslator::EvaluatorTranslator()
-      : m_liveOrders{nullptr} {}
+    : m_liveOrders(nullptr) {}
 
   inline EvaluatorTranslator::EvaluatorTranslator(Beam::Ref<
-      const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-      liveOrders)
-      : m_liveOrders{liveOrders.Get()} {}
+    const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
+    liveOrders)
+    : m_liveOrders(liveOrders.Get()) {}
 
   inline std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
       EvaluatorTranslator::NewTranslator() const {
-    if(m_liveOrders == nullptr) {
-      return std::make_unique<EvaluatorTranslator>();
-    } else {
+    if(m_liveOrders) {
       return std::make_unique<EvaluatorTranslator>(Beam::Ref(*m_liveOrders));
+    } else {
+      return std::make_unique<EvaluatorTranslator>();
     }
   }
 
@@ -83,11 +79,10 @@ namespace Queries {
         BOOST_THROW_EXCEPTION(Beam::Queries::ExpressionTranslationException(
           "Invalid parameters."));
       }
-      const auto& leftExpression = *expression.GetParameters()[0];
-      const auto& rightExpression = *expression.GetParameters()[1];
-      std::function<Beam::Queries::BaseEvaluatorNode*
-        (std::vector<std::unique_ptr<Beam::Queries::BaseEvaluatorNode>>)>
-        translator;
+      auto& leftExpression = *expression.GetParameters()[0];
+      auto& rightExpression = *expression.GetParameters()[1];
+      auto translator = std::function<Beam::Queries::BaseEvaluatorNode* (
+        std::vector<std::unique_ptr<Beam::Queries::BaseEvaluatorNode>>)>();
       try {
         translator = Beam::Instantiate<
           Beam::Queries::FunctionEvaluatorNodeTranslator<
@@ -99,13 +94,13 @@ namespace Queries {
         return;
       }
       leftExpression.Apply(*this);
-      std::vector<std::unique_ptr<Beam::Queries::BaseEvaluatorNode>> parameters;
+      auto parameters =
+        std::vector<std::unique_ptr<Beam::Queries::BaseEvaluatorNode>>();
       parameters.push_back(std::move(GetEvaluator()));
       rightExpression.Apply(*this);
       parameters.push_back(std::move(GetEvaluator()));
-      std::unique_ptr<Beam::Queries::BaseEvaluatorNode> evaluator(
-        translator(std::move(parameters)));
-      SetEvaluator(std::move(evaluator));
+      SetEvaluator(std::unique_ptr<Beam::Queries::BaseEvaluatorNode>(
+        translator(std::move(parameters))));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -115,16 +110,12 @@ namespace Queries {
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetExpression()->GetType() == SecurityType()) {
       TranslateSecurityMemberAccessExpression(expression);
-      return;
     } else if(expression.GetExpression()->GetType() == TimeAndSaleType()) {
       TranslateTimeAndSaleMemberAccessExpression(expression);
-      return;
     } else if(expression.GetExpression()->GetType() == OrderFieldsType()) {
       TranslateOrderFieldsMemberAccessExpression(expression);
-      return;
     } else if(expression.GetExpression()->GetType() == OrderInfoType()) {
       TranslateOrderInfoMemberAccessExpression(expression);
-      return;
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -227,7 +218,7 @@ namespace Queries {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [liveOrders = m_liveOrders] (
             const OrderExecutionService::OrderInfo& orderInfo) {
-          if(liveOrders == nullptr) {
+          if(!liveOrders) {
             return false;
           }
           return liveOrders->Contains(orderInfo.m_orderId);
@@ -236,7 +227,6 @@ namespace Queries {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
   }
-}
 }
 
 #endif

@@ -21,6 +21,7 @@ using namespace Beam::TimeService;
 using namespace Beam::UidService;
 using namespace Beam::UidService::Tests;
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
@@ -83,7 +84,8 @@ namespace {
       m_orderExecutionServiceEnvironment.emplace(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(), serviceLocatorClient,
         m_uidServiceEnvironment.BuildClient(), m_administrationClient,
-        MakeVirtualTimeClient(std::make_unique<FixedTimeClient>()),
+        MakeVirtualTimeClient(std::make_unique<FixedTimeClient>(
+        ptime(date(2020, 5, 12), time_duration(4, 12, 18)))),
         MakeVirtualOrderExecutionDriver(&m_driver));
       m_orders = std::make_shared<Queue<PrimitiveOrder*>>();
       m_driver.GetPublisher().Monitor(m_orders);
@@ -98,9 +100,11 @@ namespace {
         Ref(*serviceLocatorClient)),
         [] {
           return std::make_unique<TriggerTimer>();
-        }, std::make_shared<FixedTimeClient>(), &m_dataStore, exchangeRates,
-        GetDefaultMarketDatabase(), GetDefaultDestinationDatabase())),
-        m_serverConnection, factory<std::unique_ptr<TriggerTimer>>());
+        }, std::make_shared<FixedTimeClient>(
+          ptime(date(2020, 5, 12), time_duration(4, 12, 18))), &m_dataStore,
+        exchangeRates, GetDefaultMarketDatabase(),
+        GetDefaultDestinationDatabase())), m_serverConnection,
+        factory<std::unique_ptr<TriggerTimer>>());
       m_marketDataServiceEnvironment->Publish(TSLA, BboQuote(
         Quote(*Money::FromValue("1.00"), 100, Side::BID),
         Quote(*Money::FromValue("1.01"), 100, Side::ASK),
