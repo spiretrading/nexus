@@ -16,12 +16,12 @@ namespace Spire {
         \param items The list of valid inputs.
         \param parent The parent widget.
       */
-      explicit InputFieldEditor(QString initial_value,
-        std::vector<QString> items, QWidget* parent = nullptr);
+      explicit InputFieldEditor(QVariant initial_value,
+        std::vector<QVariant> items, QWidget* parent = nullptr);
 
       //! Returns the selected item, or the initial item if an invalid input
       //! was entered.
-      const QString& get_item() const;
+      const QVariant& get_item() const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -30,15 +30,17 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
-      QString m_selected_item;
-      QString m_highlighted_item;
-      std::vector<QString> m_items;
+      QVariant m_selected_item;
+      QVariant m_highlighted_item;
+      std::vector<QVariant> m_items;
       DropDownMenuList* m_menu_list;
 
+      std::vector<DropDownMenuItem*> create_widget_items(
+        const std::vector<QVariant>& items, const QString& filter_text);
       void move_menu_list();
-      void on_item_clicked(const QString& item);
-      void on_item_committed(const QString& text);
-      void on_item_highlighted(const QString& item);
+      void on_item_clicked(const QVariant& item);
+      void on_item_committed(const QVariant& text);
+      void on_item_highlighted(const QVariant& item);
       void on_text_edited(const QString& text);
   };
 }

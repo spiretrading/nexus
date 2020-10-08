@@ -10,7 +10,7 @@ using namespace Spire;
 
 namespace {
   auto create_time_in_force_item_list() {
-    static auto list = std::vector<QString>({
+    static auto list = std::vector<QVariant>({
       displayText(TimeInForce(TimeInForce::Type::DAY)),
       displayText(TimeInForce(TimeInForce::Type::FOK)),
       displayText(TimeInForce(TimeInForce::Type::GTC)),
@@ -48,7 +48,7 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
     }
     return QString();
   }();
-  auto editor = new InputFieldEditor(current_data,
+  auto editor = new InputFieldEditor(QVariant::fromValue(current_data),
     create_time_in_force_item_list(), static_cast<QWidget*>(this->parent()));
   connect(editor, &InputFieldEditor::editingFinished,
     this, &TimeInForceItemDelegate::on_editing_finished);
@@ -57,6 +57,7 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
 
 void TimeInForceItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto item = static_cast<InputFieldEditor*>(editor)->get_item().toUpper();
+  auto item = static_cast<InputFieldEditor*>(
+    editor)->get_item().value<QString>().toUpper();
   model->setData(index, get_time_in_force_variant(item), Qt::DisplayRole);
 }

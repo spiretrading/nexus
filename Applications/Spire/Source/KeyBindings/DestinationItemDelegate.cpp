@@ -21,7 +21,8 @@ QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
 
 void DestinationItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto item = static_cast<InputFieldEditor*>(editor)->get_item();
+  auto item = static_cast<InputFieldEditor*>(
+    editor)->get_item().value<QString>();
   auto region = [&] {
     if(item.isEmpty() && !index.data().value<Region>().IsGlobal()) {
       return Region();

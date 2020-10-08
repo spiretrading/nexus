@@ -30,7 +30,8 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
 void SideItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto variant = [&] {
-    auto item = static_cast<InputFieldEditor*>(editor)->get_item().toLower();
+    auto item = static_cast<InputFieldEditor*>(
+      editor)->get_item().value<QString>().toLower();
     if(item == Spire::displayText(Side::BID).toLower()) {
       return QVariant::fromValue<Side>(Side::BID);
     } else if(item == Spire::displayText(Side::ASK).toLower()) {
