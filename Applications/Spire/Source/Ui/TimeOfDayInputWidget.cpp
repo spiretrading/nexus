@@ -4,7 +4,6 @@
 #include <QKeyEvent>
 #include <QRegularExpressionValidator>
 #include "Spire/Ui/ColonWidget.hpp"
-#include "Spire/Ui/DropDownMenu.hpp"
 
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -34,11 +33,11 @@ TimeOfDayInputWidget::TimeOfDayInputWidget(QWidget* parent)
   m_minute_line_edit->installEventFilter(this);
   layout->addWidget(m_minute_line_edit);
   layout->addSpacing(scale_width(8));
-  m_drop_down_menu = new DropDownMenu({tr("AM"), tr("PM")}, this);
+  m_drop_down_menu = new StaticDropDownMenu({tr("AM"), tr("PM")}, this);
   m_drop_down_menu->setFixedSize(scale(54, 26));
   layout->addWidget(m_drop_down_menu);
-  m_drop_down_menu->connect_selected_signal([=] (auto item) {
-    on_drop_down_changed(item);
+  m_drop_down_menu->connect_value_selected_signal([=] (const auto& item) {
+    on_drop_down_changed(item.value<QString>());
   });
   set_unfocused_style();
 }
@@ -50,12 +49,12 @@ void TimeOfDayInputWidget::set_time(const time_duration& duration) {
     if(hour == 0) {
       hour = 12;
     }
-    m_drop_down_menu->set_current_text(tr("AM"));
+    m_drop_down_menu->set_current_item(tr("AM"));
   } else {
     if(hour != 12) {
       hour -= 12;
     }
-    m_drop_down_menu->set_current_text(tr("PM"));
+    m_drop_down_menu->set_current_item(tr("PM"));
   }
   m_hour_line_edit->setText(clamped_value(QString::number(hour), 1, 12));
   m_minute_line_edit->setText(clamped_value(QString::number(minute), 0, 59));
@@ -216,9 +215,10 @@ void TimeOfDayInputWidget::on_time_changed() {
   if(hour_ok && minute_ok) {
     m_last_valid_hour = hour;
     m_last_valid_minute = minute;
-    if(m_drop_down_menu->get_text() == tr("AM") && hour == 12) {
+    if(m_drop_down_menu->get_current_item().value<QString>() == tr("AM") &&
+        hour == 12) {
       hour = 0;
-    } else if(m_drop_down_menu->get_text() == tr("PM")) {
+    } else if(m_drop_down_menu->get_current_item() == tr("PM")) {
       if(hour != 12) {
         hour += 12;
       }

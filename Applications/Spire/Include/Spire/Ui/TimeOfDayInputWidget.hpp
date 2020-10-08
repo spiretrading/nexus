@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -34,7 +35,7 @@ namespace Spire {
       QLineEdit* m_hour_line_edit;
       ColonWidget* m_colon_widget;
       QLineEdit* m_minute_line_edit;
-      DropDownMenu* m_drop_down_menu;
+      StaticDropDownMenu* m_drop_down_menu;
       int m_last_valid_hour;
       int m_last_valid_minute;
 

@@ -16,7 +16,7 @@ namespace Spire {
       */
       using SelectedSignal = Signal<void (Nexus::OrderType type)>;
 
-      //! Constructs a OrderTypeComboBox.
+      //! Constructs an OrderTypeComboBox.
       /*!
         \param parent The parent widget.
       */

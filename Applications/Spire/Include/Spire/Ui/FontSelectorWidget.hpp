@@ -2,7 +2,7 @@
 #define SPIRE_FONT_SELECTOR_WIDGET_HPP
 #include <QFont>
 #include <QWidget>
-#include "Spire/Ui/DropDownMenu.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/FontSelectorButton.hpp"
 #include "Spire/Ui/IntegerSpinBox.hpp"
 
@@ -53,7 +53,7 @@ namespace Spire {
       mutable FontPreviewSignal m_font_preview_signal;
       mutable FontSelectedSignal m_font_selected_signal;
       QFont m_current_font;
-      DropDownMenu* m_font_list;
+      StaticDropDownMenu* m_font_list;
       IntegerSpinBox* m_size_input;
       FontSelectorButton* m_bold_button;
       FontSelectorButton* m_italics_button;
