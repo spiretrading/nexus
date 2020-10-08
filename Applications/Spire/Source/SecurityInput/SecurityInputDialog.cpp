@@ -124,7 +124,7 @@ void SecurityInputDialog::showEvent(QShowEvent* event) {
   connect(m_security_line_edit, &SecurityInputLineEdit::editingFinished,
     [=] { set_security(m_security_line_edit->get_security()); });
   m_security_line_edit->installEventFilter(this);
-  m_security_list = m_security_line_edit->findChild<DropDownList*>();
+  m_security_list = m_security_line_edit->findChild<DropDownMenuList*>();
   m_security_list->installEventFilter(this);
   m_layout->addWidget(m_security_line_edit);
   m_security_line_edit->show();
