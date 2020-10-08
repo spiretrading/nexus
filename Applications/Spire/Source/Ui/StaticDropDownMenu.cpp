@@ -33,7 +33,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   if(!items.empty()) {
     m_current_item = items.front();
   }
-  m_menu_list = new DropDownList({}, true, this);
+  m_menu_list = new DropDownMenuList({}, true, this);
   m_menu_activated_connection = m_menu_list->connect_activated_signal(
     [=] (const auto& value) { on_item_activated(value); });
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
@@ -43,14 +43,24 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
   installEventFilter(this);
+  set_style(Style::DEFAULT);
 }
 
 int StaticDropDownMenu::item_count() const {
   return m_menu_list->item_count();
 }
 
-void StaticDropDownMenu::insert_item(DropDownItem* item) {
+void StaticDropDownMenu::insert_item(DropDownMenuItem* item) {
   m_menu_list->insert_item(item);
+}
+
+void StaticDropDownMenu::set_current_item(const QVariant& item) {
+  for(auto i = 0; i < m_menu_list->item_count(); ++i) {
+    if(m_menu_list->get_value(i) == item) {
+      m_current_item = item;
+      break;
+    }
+  }
 }
 
 void StaticDropDownMenu::remove_item(int index) {
@@ -58,10 +68,10 @@ void StaticDropDownMenu::remove_item(int index) {
 }
 
 void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
-  auto widget_items = std::vector<DropDownItem*>(items.size());
+  auto widget_items = std::vector<DropDownMenuItem*>(items.size());
   std::transform(items.begin(), items.end(), widget_items.begin(),
     [&] (const auto& item) {
-      auto item_widget = new DropDownItem(item, this);
+      auto item_widget = new DropDownMenuItem(item, this);
       item_widget->setFixedHeight(scale_height(20));
       return item_widget;
     });
@@ -75,6 +85,10 @@ QVariant StaticDropDownMenu::get_current_item() const {
 
 void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
   m_is_next_activated = is_next_activated;
+}
+
+void StaticDropDownMenu::set_style(Style style) {
+  m_style = style;
 }
 
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
@@ -99,6 +113,7 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       if(m_last_activated_item.isValid()) {
         on_item_selected(m_last_activated_item);
       }
+      m_menu_closed_signal();
       update();
     }
   } else if(watched == this) {
@@ -126,10 +141,12 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(hasFocus() || m_menu_list->isActiveWindow()) {
-    draw_border(QColor("#4B23A0"), painter);
-  } else {
-    draw_border(QColor("#C8C8C8"), painter);
+  if(m_style == Style::DEFAULT) {
+    if(hasFocus() || m_menu_list->isActiveWindow()) {
+      draw_border(QColor("#4B23A0"), painter);
+    } else {
+      draw_border(QColor("#C8C8C8"), painter);
+    }
   }
   if(isEnabled()) {
     draw_background(Qt::white, painter);
@@ -155,9 +172,24 @@ void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
   m_menu_list->setFixedWidth(width());
 }
 
+connection StaticDropDownMenu::connect_activated_signal(
+    const ActivatedSignal::slot_type& slot) const {
+  return m_menu_list->connect_activated_signal(slot);
+}
+
+connection StaticDropDownMenu::connect_highlighted_signal(
+    const HighlightedSignal::slot_type& slot) const {
+  return m_menu_list->connect_highlighted_signal(slot);
+}
+
 connection StaticDropDownMenu::connect_index_selected_signal(
     const IndexSelectedSignal::slot_type& slot) const {
   return m_menu_list->connect_index_selected_signal(slot);
+}
+
+connection StaticDropDownMenu::connect_menu_closed_signal(
+    const MenuClosedSignal::slot_type& slot) const {
+  return m_menu_closed_signal.connect(slot);
 }
 
 connection StaticDropDownMenu::connect_value_selected_signal(
@@ -209,8 +241,8 @@ void StaticDropDownMenu::on_item_activated(const QVariant& value) {
 
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
-  m_value_selected_signal(m_current_item);
   m_last_activated_item = QVariant();
+  m_value_selected_signal(m_current_item);
   update();
 }
 
@@ -218,8 +250,9 @@ void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
   if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
     m_input_timer.start(INPUT_TIMEOUT_MS);
     m_entered_text.push_back(event->text());
-    if(m_menu_list->set_highlight(m_entered_text)) {
+    if(auto item = m_menu_list->set_highlight(m_entered_text); item) {
       m_menu_list->show();
+      m_last_activated_item = *item;
     } else if(m_entered_text.size() == 1) {
       on_input_timeout();
     }
