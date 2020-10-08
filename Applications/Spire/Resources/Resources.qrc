@@ -68,7 +68,6 @@
         <file>Icons/close-black.svg</file>
         <file>Icons/pre-loader.gif</file>
         <file>Icons/bookview-grey.svg</file>
-        <file>Icons/arrow-up.svg</file>
         <file>Icons/spire-icon-48x48.png</file>
         <file>Icons/blotter-icon-256x256.png</file>
         <file>Icons/book-view-icon-256x256.png</file>
@@ -110,9 +109,12 @@
         <file>Icons/text_effects/underline-hover.svg</file>
         <file>Icons/text_effects/underline-inactive.svg</file>
         <file>Icons/arrow-down-disabled.svg</file>
-        <file>Icons/arrow-down-hover.svg</file>
-        <file>Icons/arrow-up-disabled.svg</file>
-        <file>Icons/arrow-up-hover.svg</file>
         <file>Icons/arrow-down-grey.svg</file>
+        <file>Icons/arrow-down-disabled-padded.svg</file>
+        <file>Icons/arrow-down-hover-padded.svg</file>
+        <file>Icons/arrow-down-padded.svg</file>
+        <file>Icons/arrow-up-disabled-padded.svg</file>
+        <file>Icons/arrow-up-hover-padded.svg</file>
+        <file>Icons/arrow-up-padded.svg</file>
     </qresource>
 </RCC>
