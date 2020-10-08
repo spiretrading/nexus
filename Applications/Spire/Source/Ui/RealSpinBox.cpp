@@ -12,13 +12,12 @@ using namespace Spire;
 namespace {
   const auto SHIFT_STEPS = 10;
   const auto MOUSE_REPEAT_DELAY_MS = 20;
-  const auto DOWN_ARROW_ICON = ":/Icons/arrow-down-padded.svg";
-  const auto DOWN_ARROW_HOVER_ICON = ":/Icons/arrow-down-hover-padded.svg";
-  const auto DOWN_ARROW_DISABLED_ICON =
-    ":/Icons/arrow-down-disabled-padded.svg";
-  const auto UP_ARROW_ICON = ":/Icons/arrow-up-padded.svg";
-  const auto UP_ARROW_HOVER_ICON = ":/Icons/arrow-up-hover-padded.svg";
-  const auto UP_ARROW_DISABLED_ICON = ":/Icons/arrow-up-disabled-padded.svg";
+  const auto DOWN_ARROW_ICON = ":/Icons/arrow-down.svg";
+  const auto DOWN_ARROW_HOVER_ICON = ":/Icons/arrow-down-hover.svg";
+  const auto DOWN_ARROW_DISABLED_ICON = ":/Icons/arrow-down-disabled.svg";
+  const auto UP_ARROW_ICON = ":/Icons/arrow-up.svg";
+  const auto UP_ARROW_HOVER_ICON = ":/Icons/arrow-up-hover.svg";
+  const auto UP_ARROW_DISABLED_ICON = ":/Icons/arrow-up-disabled.svg";
 
   auto ARROW_WIDTH() {
     static auto width = scale_width(8);
