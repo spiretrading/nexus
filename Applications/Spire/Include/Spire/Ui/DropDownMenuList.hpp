@@ -1,80 +1,139 @@
 #ifndef SPIRE_DROP_DOWN_MENU_LIST_HPP
 #define SPIRE_DROP_DOWN_MENU_LIST_HPP
-#include <QWidget>
-#include "Spire/Ui/Ui.hpp"
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
+#include <QVBoxLayout>
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropDownMenuItem.hpp"
+#include "Spire/Ui/DropDownWindow.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 namespace Spire {
 
-  //! The list used by the DropDownMenu.
-  class DropDownMenuList : public QWidget {
+  //! Represents a pop-up drop down list.
+  class DropDownMenuList : public DropDownWindow {
     public:
 
-      //! Signals that an item was highlighted.
+      //! Signals that an item was highlighted using the keyboard.
       /*!
-        \param item The highlighted item.
+        \param value The item's value.
       */
-      using HighlightedSignal = Signal<void (const QString& item)>;
+      using ActivatedSignal = Signal<void (const QVariant& value)>;
 
-      //! Signals that an item was selected from the list.
+      //! Signals that an item was highlighted using the mouse.
       /*!
-        \param item The selected item
+        \param value The item's value.
       */
-      using SelectedSignal = Signal<void (const QString& text)>;
+      using HighlightedSignal = Signal<void (const QVariant& value)>;
 
-      //! Constructs a DropDownMenuList with the specified items.
+      //! Signals that an item was selected.
       /*!
-        \param items The initial items in the list.
-        \param parent The parent to the list.
+        \param index The item's list index.
       */
-      DropDownMenuList(const std::vector<QString>& items,
-        QWidget* parent = nullptr);
+      using IndexSelectedSignal = Signal<void (int index)>;
 
-      //! Clears the items from the list and populates it with the specified
-      //! items.
+      //! Signals that an item was selected.
       /*!
-        \param items The items to display in the menu.
+        \param value The item's value.
       */
-      void set_items(const std::vector<QString>& items);
+      using ValueSelectedSignal = Signal<void (const QVariant& value)>;
 
-      //! Returns the item in the list that follows the item specified.
+      //! Constructs a DropDownMenuList.
       /*!
-        \param text The specified item.
+        \param items The items to display.
+        \param is_click_activated True iff the DropDownMenuList should be shown
+               or hidden in response to parent widget mouse/keyboard activation
+               events.
+        \param parent The parent widget. Used to determine the position of the
+               DropDownMenuList.
       */
-      QString get_next(const QString& text);
+      DropDownMenuList(std::vector<DropDownMenuItem*> items,
+        bool is_click_activated, QWidget* parent = nullptr);
 
-      //! Returns the item in the list that comes before the item specified.
+      //! Activates the next item in the list. Activates the first item if no
+      //! item is currently active.
+      void activate_next();
+
+      //! Activates the previous item in the list. Activates the last item if
+      //! no item is currently active.
+      void activate_previous();
+
+      //! Removes the highlight from the active item.
+      void clear_active_item();
+
+      //! Returns the value of the item at the given index.
       /*!
-        \param text The specified item.
+        \param index The index of the item.
       */
-      QString get_previous(const QString& text);
+      const QVariant& get_value(int index);
 
-      //! Connects a slot to the item highlight signal.
+      //! Appends an item to the list.
+      /*!
+        \param item The item to append to the list.
+      */
+      void insert_item(DropDownMenuItem* item);
+
+      //! Returns the number of items in the list.
+      int item_count() const;
+
+      //! Removes and deletes an item.
+      /*!
+        \param index The index of the item to remove.
+      */
+      void remove_item(int index);
+
+      //! Highlights the first item in the list that starts with the given
+      //! text.
+      /*!
+        \param text The text to match against the item.
+        \return The highlighted item iff an item was highlighted.
+      */
+      boost::optional<QVariant> set_highlight(const QString& text);
+
+      //! Sets the items to display, overwriting any existing items.
+      /*!
+        \param items The new items to display.
+      */
+      void set_items(const std::vector<DropDownMenuItem*>& items);
+
+      //! Connects a slot to the activated signal.
+      boost::signals2::connection connect_activated_signal(
+        const ActivatedSignal::slot_type& slot) const;
+      
+      //! Connects a slot to the highlighted signal.
       boost::signals2::connection connect_highlighted_signal(
         const HighlightedSignal::slot_type& slot) const;
-
-      //! Connects a slot to the item selected signal.
-      boost::signals2::connection connect_selected_signal(
-        const SelectedSignal::slot_type& slot) const;
+      
+      //! Connects a slot to the index selected signal.
+      boost::signals2::connection connect_index_selected_signal(
+        const IndexSelectedSignal::slot_type& slot) const;
+      
+      //! Connects a slot to the value selected signal.
+      boost::signals2::connection connect_value_selected_signal(
+        const ValueSelectedSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* object, QEvent* event) override;
-      void showEvent(QShowEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      mutable ActivatedSignal m_activated_signal;
       mutable HighlightedSignal m_highlighted_signal;
-      mutable SelectedSignal m_selected_signal;
-      DropShadow* m_shadow;
+      mutable IndexSelectedSignal m_index_selected_signal;
+      mutable ValueSelectedSignal m_value_selected_signal;
+      int m_max_displayed_items;
+      QVBoxLayout* m_layout;
       ScrollArea* m_scroll_area;
-      QWidget* m_list_widget;
-      int m_highlight_index;
+      boost::optional<int> m_highlight_index;
+      CustomVariantItemDelegate m_item_delegate;
+      Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 
-      int get_index(const QString& text);
-      void on_select(const QString& text);
-      void focus_next();
-      void focus_previous();
-      void update_highlights(int old_index, int new_index);
-      void update_item_width();
-      void on_horizontal_slider_changed(int value);
+      DropDownMenuItem* get_item(int index);
+      void set_highlight(int index);
+      void scroll_to_highlight();
+      void update_height();
+      void on_item_selected(QVariant value, int index);
+      void on_item_selected(QVariant value, DropDownMenuItem* item);
   };
 }
 
