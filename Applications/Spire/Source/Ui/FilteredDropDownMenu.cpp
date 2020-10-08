@@ -26,7 +26,7 @@ FilteredDropDownMenu::FilteredDropDownMenu(std::vector<QVariant> items,
     m_current_item = items.front();
     setText(m_item_delegate.displayText(m_current_item));
   }
-  m_menu_list = new DropDownList({}, false, this);
+  m_menu_list = new DropDownMenuList({}, false, this);
   m_item_activated_connection = m_menu_list->connect_activated_signal(
     [=] (const auto& value) { on_item_activated(value); });
   m_list_selection_connection = m_menu_list->connect_value_selected_signal(
@@ -120,18 +120,18 @@ void FilteredDropDownMenu::set_items(std::vector<QVariant> items) {
   m_menu_list->setFixedWidth(width());
 }
 
-std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
+std::vector<DropDownMenuItem*> FilteredDropDownMenu::create_widget_items(
     const std::vector<QVariant>& items) {
   return create_widget_items(items, "");
 }
 
-std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
+std::vector<DropDownMenuItem*> FilteredDropDownMenu::create_widget_items(
     const std::vector<QVariant>& items, const QString& filter_text) {
-  auto widget_items = std::vector<DropDownItem*>();
+  auto widget_items = std::vector<DropDownMenuItem*>();
   for(const auto& item : items) {
     if(filter_text.isEmpty() || m_item_delegate.displayText(item).startsWith(
         filter_text, Qt::CaseInsensitive)) {
-      auto item_widget = new DropDownItem(item, this);
+      auto item_widget = new DropDownMenuItem(item, this);
       item_widget->setFixedHeight(scale_height(20));
       widget_items.push_back(item_widget);
     }
@@ -151,7 +151,7 @@ void FilteredDropDownMenu::draw_highlight(const QString& highlight_text) {
   font.setPixelSize(scale_height(12));
   painter.setFont(font);
   auto metrics = QFontMetrics(font);
-  auto highlight_x_pos = metrics.horizontalAdvance(text()) + PADDING() +
+  auto highlight_x_pos = metrics.horizontalAdvance(text()) + get_padding() +
     scale_width(3);
   painter.fillRect(highlight_x_pos,
     (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
