@@ -98,7 +98,8 @@ namespace Spire {
       QString display_string(Real value);
       QStyle::SubControl get_current_control(const QPoint& mouse_pos);
       boost::optional<Real> get_value(const QString& text) const;
-      bool is_valid(const QString& string);
+      bool is_valid_input(const QString& string);
+      bool is_valid_value(const QString& string);
       void set_stylesheet(bool is_up_disabled, bool is_down_disabled);
       void stop_timer(int& timer_id);
       void update_stylesheet();
