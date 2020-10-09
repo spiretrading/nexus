@@ -70,23 +70,36 @@ void UiViewerWindow::add_color_selector_button(int row) {
   m_color_selector_button->connect_color_signal([=] (const auto& color) {
     color_selector_button_value->setText(color.name().toUpper());
   });
-  set_color_button->connect_clicked_signal([=] {
-    auto color = QColor(QString("#%1").arg(set_color_input->text()));
-    if(color.isValid()) {
-      m_color_selector_button->set_color(color);
-    }
+  connect(set_color_input, &TextInputWidget::editingFinished, [=] {
+    on_set_color_button_color(set_color_input->text());
   });
-  create_color_button->connect_clicked_signal([=, row = row] {
-    auto color = QColor(QString("#%1").arg(create_color_input->text()));
-    if(color.isValid()) {
-      m_layout->removeWidget(m_color_selector_button);
-      delete_later(m_color_selector_button);
-      m_color_selector_button = new ColorSelectorButton(QColor(
-        QString("#%1").arg(create_color_input->text())), this);
-      m_color_selector_button->setFixedSize(CONTROL_SIZE());
-      m_layout->addWidget(m_color_selector_button, row, 1, Qt::AlignCenter);
-      update();
-    }
+  set_color_button->connect_clicked_signal([=] {
+    on_set_color_button_color(set_color_input->text());
+  });
+  connect(create_color_input, &TextInputWidget::editingFinished, [=] {
+    on_create_color_button_color(create_color_input->text(), row);
+  });
+  create_color_button->connect_clicked_signal([=] {
+    on_create_color_button_color(set_color_input->text(), row);
   });
   m_layout->addWidget(color_selector_button_value, row, 3, Qt::AlignCenter);
+}
+
+void UiViewerWindow::on_create_color_button_color(const QString& color_hex,
+    int row) {
+  auto color = QColor(QString("#%1").arg(color_hex));
+  if(color.isValid()) {
+    m_layout->removeWidget(m_color_selector_button);
+    delete_later(m_color_selector_button);
+    m_color_selector_button = new ColorSelectorButton(color, this);
+    m_color_selector_button->setFixedSize(CONTROL_SIZE());
+    m_layout->addWidget(m_color_selector_button, row, 1, Qt::AlignCenter);
+  }
+}
+
+void UiViewerWindow::on_set_color_button_color(const QString& color_hex) {
+  auto color = QColor(QString("#%1").arg(color_hex));
+  if(color.isValid()) {
+    m_color_selector_button->set_color(color);
+  }
 }
