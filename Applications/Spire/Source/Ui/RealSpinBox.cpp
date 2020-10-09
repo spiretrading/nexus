@@ -57,6 +57,12 @@ namespace {
       return 11;
     } else if(value.compare(std::int64_t(1000000000000)) == -1) {
       return 12;
+    } else if(value.compare(std::int64_t(10000000000000)) == -1) {
+      return 13;
+    } else if(value.compare(std::int64_t(100000000000000)) == -1) {
+      return 14;
+    } else if(value.compare(std::int64_t(1000000000000000)) == -1) {
+      return 15;
     }
     return std::numeric_limits<int>::quiet_NaN();
   }
