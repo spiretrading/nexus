@@ -29,13 +29,13 @@ namespace {
     using TestPortfolioController = PortfolioController<TestPortfolio,
       VirtualMarketDataClient*>;
 
+    std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
 
     Fixture()
-        : m_environment(
-            ptime(gregorian::date(2000, gregorian::Jan, 1), seconds(0))),
-          m_serviceClients(Ref(m_environment)) {}
+      : m_environment(time_from_string("2000-01-01 00:00:00")),
+        m_serviceClients(Ref(m_environment)) {}
   };
 }
 
@@ -53,39 +53,42 @@ TEST_SUITE("PortfolioController") {
     auto fieldsA = OrderFields::BuildLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 100, Money::CENT);
-    auto orderA = PrimitiveOrder({fieldsA, 1,
-      m_serviceClients.GetTimeClient().GetTime()});
+    auto orderA = std::make_shared<PrimitiveOrder>(OrderInfo(fieldsA, 1,
+      m_serviceClients.GetTimeClient().GetTime()));
+    m_orders.push_back(orderA);
     auto fieldsB = OrderFields::BuildLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 100, 2 * Money::CENT);
     m_environment.AdvanceTime(seconds(1));
-    auto orderB = PrimitiveOrder({fieldsB, 2,
-      m_serviceClients.GetTimeClient().GetTime()});
+    auto orderB = std::make_shared<PrimitiveOrder>(OrderInfo(fieldsB, 2,
+      m_serviceClients.GetTimeClient().GetTime()));
+    m_orders.push_back(orderB);
     auto fieldsC = OrderFields::BuildLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::ASK, "NYSE", 100, 3 * Money::CENT);
     m_environment.AdvanceTime(seconds(1));
-    auto orderC = PrimitiveOrder({fieldsC, 3,
-      m_serviceClients.GetTimeClient().GetTime()});
-    orders->Push(&orderA);
-    orders->Push(&orderB);
-    orders->Push(&orderC);
+    auto orderC = std::make_shared<PrimitiveOrder>(OrderInfo(fieldsC, 3,
+      m_serviceClients.GetTimeClient().GetTime()));
+    m_orders.push_back(orderC);
+    orders->Push(orderA.get());
+    orders->Push(orderB.get());
+    orders->Push(orderC.get());
     auto date = m_serviceClients.GetTimeClient().GetTime().date();
-    Fill(orderA, 100, ptime{date, seconds(1)});
+    Fill(*orderA, 100, ptime{date, seconds(1)});
     {
       auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 100);
       REQUIRE(GetAveragePrice(update.m_securityInventory.m_position) ==
         Money::CENT);
     }
-    Fill(orderC, 100, ptime{date, seconds(2)});
+    Fill(*orderC, 100, ptime{date, seconds(2)});
     {
       auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 0);
       REQUIRE(GetAveragePrice(update.m_securityInventory.m_position) ==
         Money::ZERO);
     }
-    Fill(orderB, 100, ptime{date, seconds(3)});
+    Fill(*orderB, 100, ptime{date, seconds(3)});
     {
       auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 100);
@@ -98,6 +101,11 @@ TEST_SUITE("PortfolioController") {
   TEST_CASE_FIXTURE(Fixture, "zero_position_bbo_update") {
     m_environment.Publish(TST, BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), not_a_date_time));
+    auto orderA = std::make_shared<PrimitiveOrder>(OrderInfo(
+      OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+      DefaultCurrencies::USD(), Side::BID, "NYSE", 100, Money::ONE), 1,
+      m_serviceClients.GetTimeClient().GetTime()));
+    m_orders.push_back(orderA);
     auto orders = std::make_shared<Queue<const Order*>>();
     auto controller = TestPortfolioController(
       Initialize(GetDefaultMarketDatabase()),
@@ -105,27 +113,24 @@ TEST_SUITE("PortfolioController") {
     auto queue = std::make_shared<
       Queue<TestPortfolioController::UpdateEntry>>();
     controller.GetPublisher().Monitor(queue);
-    auto orderA = PrimitiveOrder({OrderFields::BuildLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 100, Money::ONE), 1,
-      m_serviceClients.GetTimeClient().GetTime()});
-    Accept(orderA);
-    orders->Push(&orderA);
+    Accept(*orderA);
+    orders->Push(orderA.get());
     m_environment.Publish(TST, BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
       Quote(2 * Money::ONE, 100, Side::ASK), not_a_date_time));
-    Fill(orderA, 100);
+    Fill(*orderA, 100);
     {
       auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 100);
       REQUIRE(update.m_unrealizedSecurity == 100 * Money::ONE);
     }
-    auto orderB = PrimitiveOrder({OrderFields::BuildLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::ASK, "NYSE", 100, Money::ONE), 2,
-      m_serviceClients.GetTimeClient().GetTime()});
-    Accept(orderB);
-    orders->Push(&orderB);
-    Fill(orderB, 100);
+    auto orderB = std::make_shared<PrimitiveOrder>(OrderInfo(
+      OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+      DefaultCurrencies::USD(), Side::ASK, "NYSE", 100, Money::ONE), 2,
+      m_serviceClients.GetTimeClient().GetTime()));
+    m_orders.push_back(orderB);
+    Accept(*orderB);
+    orders->Push(orderB.get());
+    Fill(*orderB, 100);
     {
       auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 0);
@@ -133,13 +138,14 @@ TEST_SUITE("PortfolioController") {
     }
     m_environment.Publish(TST, BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), not_a_date_time));
-    auto orderC = PrimitiveOrder({OrderFields::BuildLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::ASK, "NYSE", 100, Money::ONE), 2,
-      m_serviceClients.GetTimeClient().GetTime()});
-    Accept(orderC);
-    orders->Push(&orderC);
-    Fill(orderC, 100);
+    auto orderC = std::make_shared<PrimitiveOrder>(OrderInfo(
+      OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+      DefaultCurrencies::USD(), Side::ASK, "NYSE", 100, Money::ONE), 2,
+      m_serviceClients.GetTimeClient().GetTime()));
+    m_orders.push_back(orderC);
+    Accept(*orderC);
+    orders->Push(orderC.get());
+    Fill(*orderC, 100);
     {
       auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == -100);

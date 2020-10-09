@@ -5,7 +5,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
@@ -21,7 +20,7 @@ namespace Nexus::MarketDataService {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class MarketDataClient : private boost::noncopyable {
+  class MarketDataClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -172,20 +171,22 @@ namespace Nexus::MarketDataService {
         m_timeAndSalePublisher;
       Beam::IO::OpenState m_openState;
 
+      MarketDataClient(const MarketDataClient&) = delete;
+      MarketDataClient& operator =(const MarketDataClient&) = delete;
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
   };
 
   template<typename B>
   template<typename ClientBuilderForward>
   MarketDataClient<B>::MarketDataClient(ClientBuilderForward&& clientBuilder)
-      : m_clientHandler(std::forward<ClientBuilderForward>(clientBuilder)),
+      : m_clientHandler(std::forward<ClientBuilderForward>(clientBuilder),
+          std::bind(&MarketDataClient::OnReconnect, this,
+          std::placeholders::_1)),
         m_orderImbalancePublisher(Beam::Ref(m_clientHandler)),
         m_bboQuotePublisher(Beam::Ref(m_clientHandler)),
         m_bookQuotePublisher(Beam::Ref(m_clientHandler)),
         m_marketQuotePublisher(Beam::Ref(m_clientHandler)),
         m_timeAndSalePublisher(Beam::Ref(m_clientHandler)) {
-    m_clientHandler.SetReconnectHandler(
-      std::bind(&MarketDataClient::OnReconnect, this, std::placeholders::_1));
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(m_clientHandler.GetSlots()));

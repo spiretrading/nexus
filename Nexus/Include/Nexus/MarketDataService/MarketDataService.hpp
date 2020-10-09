@@ -28,8 +28,8 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
     class MarketDataRegistryServlet;
   class MarketDataRegistrySession;
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType> class MarketDataRelayServlet;
+  template<typename C, typename M, typename A>
+    class MarketDataRelayServlet;
   class MarketEntry;
   template<typename MarketDataClientType, typename MarketExpressionType,
     typename TimeRangeExpressionType> class MarketOrderImbalanceExpression;

@@ -8,7 +8,6 @@
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceServices.hpp"
@@ -21,7 +20,7 @@ namespace Nexus::Compliance {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class ComplianceClient : private boost::noncopyable {
+  class ComplianceClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -102,6 +101,8 @@ namespace Nexus::Compliance {
         std::shared_ptr<ComplianceQueueEntry>> m_complianceEntryQueues;
       Beam::IO::OpenState m_openState;
 
+      ComplianceClient(const ComplianceClient&) = delete;
+      ComplianceClient& operator =(const ComplianceClient&) = delete;
       void OnComplianceRuleEntry(ServiceProtocolClient& client,
         const ComplianceRuleEntry& entry);
   };
