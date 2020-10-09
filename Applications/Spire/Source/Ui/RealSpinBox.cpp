@@ -58,7 +58,7 @@ namespace {
     } else if(value.compare(std::int64_t(1000000000000)) == -1) {
       return 12;
     }
-    return 0;
+    return std::numeric_limits<int>::quiet_NaN();
   }
 }
 
