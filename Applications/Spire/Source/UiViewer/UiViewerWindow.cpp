@@ -62,7 +62,7 @@ void UiViewerWindow::add_color_selector_button(int row) {
   auto create_color_input = new TextInputWidget(controls_widget);
   create_color_input->setFixedSize(CONTROL_SIZE());
   controls_layout->addWidget(create_color_input, 1, 0);
-  auto create_color_button = create_control_button(tr("Create Button"),
+  auto create_color_button = create_control_button(tr("Replace Button"),
     controls_widget);
   controls_layout->addWidget(create_color_button, 1, 1);
   auto color_selector_button_value = new QLabel(
