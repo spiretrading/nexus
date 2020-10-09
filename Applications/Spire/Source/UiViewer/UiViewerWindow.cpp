@@ -17,7 +17,7 @@ namespace {
     auto button = new FlatButton(label, parent);
     button->setFixedSize(CONTROL_SIZE());
     auto style = button->get_style();
-    style.m_background_color = QColor("#A0A0A0");
+    style.m_background_color = QColor("#F8F8F8");
     style.m_border_color = QColor("#C8C8C8");
     button->set_style(style);
     style.m_border_color = QColor("#4B23A0");
