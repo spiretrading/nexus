@@ -23,6 +23,7 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   set_label(label);
   layout->addWidget(m_label);
+  layout->setContentsMargins({});
   setFocusPolicy(Qt::StrongFocus);
   m_default_style.m_background_color = Qt::white;
   m_default_style.m_border_color = Qt::transparent;
@@ -43,12 +44,6 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
 }
 
 void FlatButton::set_label(const QString& text) {
-  if(text.isEmpty()) {
-    layout()->setContentsMargins(scale_width(2), scale_height(2),
-      scale_width(2), scale_height(2));
-  } else {
-    layout()->setContentsMargins({});
-  }
   m_label->setText(text);
 }
 
@@ -160,23 +155,16 @@ void FlatButton::enable_button() {
 }
 
 QString FlatButton::get_stylesheet_properties(const Style& s) {
-  auto label_border_style = [&] {
-    if(!m_label->text().isEmpty()) {
-      return QString("border: %1px solid %2 %3px solid %2;")
-        .arg(scale_width(1))
-        .arg(s.m_border_color.name(QColor::HexArgb))
-        .arg(scale_height(1));
-    }
-    return QString();
-  }();
   return QString(R"(
     background-color: %1;
+    border: %3px solid %5 %4px solid %5;
     color: %2;
     qproperty-alignment: AlignCenter;
-    %3)")
+    )")
     .arg(s.m_background_color.name(QColor::HexArgb))
     .arg(s.m_text_color.name(QColor::HexArgb))
-    .arg(label_border_style);
+    .arg(scale_width(1)).arg(scale_height(1))
+    .arg(s.m_border_color.name(QColor::HexArgb));
 }
 
 void FlatButton::set_disabled_stylesheet() {

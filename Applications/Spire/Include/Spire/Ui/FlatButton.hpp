@@ -34,17 +34,14 @@ namespace Spire {
 
       //! Constructs the FlatButton.
       /*!
-        \param label The label text. If the label text is empty, the button
-                     is considered a color button and is drawn with white
-                     padding.
+        \param label The label text.
         \param parent The parent widget to the FlatButton.
       */
       explicit FlatButton(const QString& label, QWidget* parent = nullptr);
 
       //! Sets the FlatButton's text.
       /*!
-        \param text The text to set. If the text is empty, the button is
-                    considered a color button and is drawn with white padding.
+        \param text The text to set.
       */
       void set_label(const QString& text);
 
