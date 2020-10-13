@@ -14,7 +14,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      ColorSelectorButtonTestWidget(QWidget* parent = nullptr);
+      explicit ColorSelectorButtonTestWidget(QWidget* parent = nullptr);
 
     private:
       ColorSelectorButton* m_color_selector_button;

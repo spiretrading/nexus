@@ -15,7 +15,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      UiViewerWindow(QWidget* parent = nullptr);
+      explicit UiViewerWindow(QWidget* parent = nullptr);
 
     private:
       QHash<QString, QWidget*> m_widgets;
