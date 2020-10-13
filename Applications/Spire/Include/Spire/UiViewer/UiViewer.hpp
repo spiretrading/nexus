@@ -2,7 +2,8 @@
 #define SPIRE_UI_VIEWER_HPP
 
 namespace Spire {
-  class ColorSelectorButtonTestWindow;
+  class ColorSelectorButtonTestWidget;
+  class FlatButtonTestWidget;
   class UiViewerWindow;
 }
 
