@@ -1,10 +1,7 @@
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include <QFont>
-#include <QGridLayout>
-#include <QLabel>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Spire;
 
@@ -14,25 +11,8 @@ namespace {
     return size;
   }
 
-  auto make_unlabeled_button(QWidget* parent) {
-    auto button = new FlatButton(parent);
-    button->setFixedSize(BUTTON_SIZE());
-    auto style = button->get_style();
-    style.m_background_color = QColor("#4B23A0");
-    style.m_border_color = QColor("#C8C8C8");
-    button->set_style(style);
-    style.m_border_color = QColor("#4B23A0");
-    button->set_hover_style(style);
-    button->set_focus_style(style);
-    auto disabled_style = button->get_disabled_style();
-    disabled_style.m_border_color = QColor("#C8C8C8");
-    disabled_style.m_background_color = QColor("#C8C8C8");
-    button->set_disabled_style(disabled_style);
-    return button;
-  }
-
-  auto make_labeled_button(const QString& text, QWidget* parent) {
-    auto button = new FlatButton(text, parent);
+  auto make_labeled_button(const QString& label, QWidget* parent) {
+    auto button = new FlatButton(label, parent);
     button->setFixedSize(BUTTON_SIZE());
     auto button_style = button->get_style();
     button_style.m_background_color = QColor("#EBEBEB");
@@ -61,30 +41,44 @@ namespace {
 FlatButtonTestWidget::FlatButtonTestWidget(QWidget* parent)
     : QWidget(parent) {
   auto container_widget = new QWidget(this);
-  auto layout = new QGridLayout(container_widget);
-  auto label = new QLabel(this);
-  label->setFocusPolicy(Qt::NoFocus);
-  layout->addWidget(label, 1, 0);
-  auto unlabeled_button = make_unlabeled_button(this);
-  unlabeled_button->connect_clicked_signal([=] {
-    label->setText(tr("Unlabeled pressed."));
+  m_layout = new QGridLayout(container_widget);
+  m_status_label = new QLabel(this);
+  m_status_label->setFocusPolicy(Qt::NoFocus);
+  m_layout->addWidget(m_status_label, 0, 1);
+  set_button(make_labeled_button(tr("FlatButton"), this));
+  m_label_input = new TextInputWidget(this);
+  m_label_input->setFixedSize(BUTTON_SIZE());
+  m_layout->addWidget(m_label_input, 1, 0);
+  connect(m_label_input, &TextInputWidget::editingFinished, [=] {
+    on_create_button();
   });
-  layout->addWidget(unlabeled_button, 0, 0);
-  auto labeled_button = make_labeled_button(tr("Labeled Button"), this);
-  labeled_button->connect_clicked_signal([=] {
-    label->setText(tr("Labeled pressed."));
+  auto create_button = make_labeled_button("Create Button", this);
+  m_layout->addWidget(create_button, 1, 1);
+  create_button->connect_clicked_signal([=] { on_create_button(); });
+  m_disable_check_box = make_check_box(tr("Disable"), this);
+  m_disable_check_box->setChecked(false);
+  m_layout->addWidget(m_disable_check_box, 2, 1);
+  connect(m_disable_check_box, &QCheckBox::stateChanged, [=] (auto state) {
+    m_button->setDisabled(m_disable_check_box->isChecked());
   });
-  layout->addWidget(labeled_button, 0, 1);
-  auto check_box = make_check_box(tr("Disable"), this);
-  check_box->setChecked(false);
-  layout->addWidget(check_box, 1, 1);
-  connect(check_box, &QCheckBox::stateChanged, [=] (auto state) {
-    if(state == Qt::Checked) {
-      unlabeled_button->setDisabled(true);
-      labeled_button->setDisabled(true);
-    } else {
-      unlabeled_button->setEnabled(true);
-      labeled_button->setEnabled(true);
-    }
+  m_pressed_timer = new QTimer(this);
+  m_pressed_timer->setInterval(1000);
+  connect(m_pressed_timer, &QTimer::timeout, [=] {
+    m_status_label->setText("");
   });
+}
+
+void FlatButtonTestWidget::set_button(FlatButton* button) {
+  m_button = button;
+  m_button->connect_clicked_signal([=] {
+    m_status_label->setText(tr("Button pressed."));
+    m_pressed_timer->start();
+  });
+  m_layout->addWidget(m_button, 0, 0);
+}
+
+void FlatButtonTestWidget::on_create_button() {
+  m_disable_check_box->setChecked(false);
+  delete_later(m_button);
+  set_button(make_labeled_button(m_label_input->text(), this));
 }
