@@ -58,6 +58,13 @@ namespace Spire {
   */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
 
+  //! Constructs a Spire-style CheckBox.
+  /*
+    \param label The CheckBox's text label.
+    \param parent The parent widget.
+  */
+  CheckBox* make_check_box(const QString& label, QWidget* parent);
+
   //! Constructs a horizontal Spire-styled table header with fixed size,
   //! immovable, column headers.
   /*

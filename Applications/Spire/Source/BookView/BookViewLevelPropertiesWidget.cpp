@@ -157,29 +157,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] (const auto& font) { update_band_list_font(font); });
   font_layout->addWidget(change_font_widget);
   font_layout->addSpacing(scale_height(48));
-  m_show_grid_lines_check_box = new CheckBox(tr("Show Grid"), this);
-  auto check_box_text_style = QString(R"(
-    color: black;
-    font-family: Roboto;
-    font-size: %1px;
-    outline: none;
-    spacing: %2px;)")
-    .arg(scale_height(12)).arg(scale_width(4));
-  auto check_box_indicator_style = QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    height: %3px;
-    width: %4px;)").arg(scale_height(1))
-    .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
-  auto check_box_checked_style = QString(R"(
-    image: url(:/Icons/check-with-box.svg);)");
-  auto check_box_hover_style = QString(R"(
-    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-    .arg(scale_height(1)).arg(scale_width(1));
-  auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
-  m_show_grid_lines_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
+  m_show_grid_lines_check_box = make_check_box(tr("Show Grid"), this);
   m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
   font_layout->addWidget(m_show_grid_lines_check_box);
   font_layout->addStretch(1);
