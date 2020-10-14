@@ -3,7 +3,10 @@
 
 namespace Spire {
   class ColorSelectorButtonTestWidget;
+  class DecimalSpinBoxTestWidget;
   class FlatButtonTestWidget;
+  class SpinBoxAdapter;
+  class SpinBoxTestWidget;
   class UiViewerWindow;
 }
 
