@@ -222,3 +222,28 @@ void FlatButton::on_style_updated() {
     set_disabled_stylesheet();
   }
 }
+
+FlatButton* Spire::make_flat_button(const QString& label, QWidget* parent) {
+  auto button = new FlatButton(label, parent);
+  auto button_style = button->get_style();
+  button_style.m_background_color = QColor("#EBEBEB");
+  auto button_hover_style = button->get_hover_style();
+  button_hover_style.m_background_color = QColor("#4B23A0");
+  button_hover_style.m_text_color = Qt::white;
+  auto button_focus_style = button->get_focus_style();
+  button_focus_style.m_background_color = QColor("#EBEBEB");
+  button_focus_style.m_border_color = QColor("#4B23A0");
+  auto disabled_style = button->get_disabled_style();
+  disabled_style.m_text_color = QColor("#A0A0A0");
+  disabled_style.m_border_color = QColor("#C8C8C8");
+  disabled_style.m_background_color = QColor("#C8C8C8");
+  auto button_font = QFont();
+  button_font.setFamily("Roboto");
+  button_font.setPixelSize(scale_height(12));
+  button->setFont(button_font);
+  button->set_style(button_style);
+  button->set_disabled_style(disabled_style);
+  button->set_hover_style(button_hover_style);
+  button->set_focus_style(button_focus_style);
+  return button;
+}

@@ -99,6 +99,13 @@ namespace Spire {
       void set_hover_stylesheet();
       void on_style_updated();
   };
+
+  //! Constructs a FlatButton with the default style.
+  /*!
+    \param label The button's label.
+    \param parent The parent widget.
+  */
+  FlatButton* make_flat_button(const QString& label, QWidget* parent);
 }
 
 #endif
