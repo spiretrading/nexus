@@ -1,44 +1,44 @@
 #ifndef SPIRE_DECIMAL_SPIN_BOX_TEST_WIDGET_HPP
 #define SPIRE_DECIMAL_SPIN_BOX_TEST_WIDGET_HPP
-#include <QGridLayout>
-#include <QLabel>
+#include <QHBoxLayout>
 #include "Spire/Ui/DecimalSpinBox.hpp"
-#include "Spire/Ui/StaticDropDownMenu.hpp"
-#include "Spire/Ui/TextInputWidget.hpp"
+#include "Spire/UiViewer/SpinBoxAdapter.hpp"
 
 namespace Spire {
 
-  //! Represents a widget for testing a DecimalSpinBox.
-  class DecimalSpinBoxTestWidget : public QWidget {
+  class DecimalSpinBoxTestWidget : public SpinBoxAdapter {
     public:
 
-      //! Constructs a DecimalSpinBoxTestWidget.
-      /*!
-        \param parent The parent widget.
-      */
       DecimalSpinBoxTestWidget(QWidget* parent = nullptr);
 
-    private:
-      QGridLayout* m_layout;
-      std::shared_ptr<DecimalSpinBoxModel> m_model;
-      DecimalSpinBox* m_spin_box;
-      QLabel* m_value_label;
-      TextInputWidget* m_initial_input;
-      TextInputWidget* m_min_input;
-      TextInputWidget* m_max_input;
-      TextInputWidget* m_increment_input;
-      StaticDropDownMenu* m_modifier_menu;
-      QLabel* m_no_increment_label;
-      QLabel* m_shift_increment_label;
-      QLabel* m_ctrl_increment_label;
-      QLabel* m_ctrl_shift_increment_label;
+      bool reset(const QString& initial, const QString& minimum,
+        const QString& maximum, const QString& increment) override;
 
-      void reset_spin_box();
-      void update_increment_labels();
-      void on_initial_set();
-      void on_min_set();
-      void on_max_set();
-      void on_increment_set();
+      QString get_initial() const override;
+
+      bool set_initial(const QString& initial) override;
+
+      QString get_minimum() const override;
+
+      bool set_minimum(const QString& minimum) override;
+
+      QString get_maximum() const override;
+
+      bool set_maximum(const QString& maximum) override;
+
+      QString get_increment(Qt::KeyboardModifiers modifiers) const override;
+
+      bool set_increment(Qt::KeyboardModifiers modifiers,
+        const QString& increment) override;
+
+      boost::signals2::connection connect_change_signal(
+        const ChangeSignal::slot_type& slot) const override;
+
+    private:
+      mutable ChangeSignal m_change_signal;
+      DecimalSpinBox* m_spin_box;
+      std::shared_ptr<DecimalSpinBoxModel> m_model;
+      QHBoxLayout* m_layout;
   };
 }
 
