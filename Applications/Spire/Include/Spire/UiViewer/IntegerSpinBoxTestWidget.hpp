@@ -14,7 +14,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      IntegerSpinBoxTestWidget(QWidget* parent = nullptr);
+      explicit IntegerSpinBoxTestWidget(QWidget* parent = nullptr);
 
       bool reset(const QString& initial, const QString& minimum,
         const QString& maximum, const QString& increment) override;

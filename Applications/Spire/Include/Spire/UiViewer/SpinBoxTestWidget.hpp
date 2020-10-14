@@ -16,7 +16,8 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      SpinBoxTestWidget(SpinBoxAdapter* spin_box, QWidget* parent = nullptr);
+      explicit SpinBoxTestWidget(SpinBoxAdapter* spin_box,
+        QWidget* parent = nullptr);
 
     private:
       boost::signals2::scoped_connection m_change_connection;
