@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
+#include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 
 using namespace Spire;
 
@@ -28,6 +29,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
       padding: %1px %2px 0px %2px;
     }
 
+    QListWidget:focus {
+      border: 1px solid #4B23A0;
+    }
+
     QListWidget::item {
       padding-top: %5px;
       padding-bottom: %5px;
@@ -42,8 +47,9 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
   m_layout->addWidget(m_widget_list);
-  add_test_widget("ColorSelectorButton",
+  add_test_widget(tr("ColorSelectorButton"),
     new ColorSelectorButtonTestWidget(this));
+  add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
 
