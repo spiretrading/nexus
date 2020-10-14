@@ -6,9 +6,14 @@
 
 namespace Spire {
 
+  //! Represents a widget for interacting with a DecimalSpinBox being tested.
   class DecimalSpinBoxTestWidget : public SpinBoxAdapter {
     public:
 
+      //! Constructs a DecimalSpinBoxTestWidget.
+      /*
+        \param parent The parent widget.
+      */
       DecimalSpinBoxTestWidget(QWidget* parent = nullptr);
 
       bool reset(const QString& initial, const QString& minimum,
