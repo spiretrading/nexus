@@ -19,7 +19,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      SpinBoxAdapter(QWidget* parent = nullptr);
+      explicit SpinBoxAdapter(QWidget* parent = nullptr);
 
       virtual ~SpinBoxAdapter() = default;
 

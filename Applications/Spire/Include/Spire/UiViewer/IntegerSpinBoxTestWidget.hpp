@@ -1,20 +1,20 @@
-#ifndef SPIRE_DECIMAL_SPIN_BOX_TEST_WIDGET_HPP
-#define SPIRE_DECIMAL_SPIN_BOX_TEST_WIDGET_HPP
+#ifndef SPIRE_INTEGER_SPIN_BOX_TEST_WIDGET_HPP
+#define SPIRE_INTEGER_SPIN_BOX_TEST_WIDGET_HPP
 #include <QHBoxLayout>
-#include "Spire/Ui/DecimalSpinBox.hpp"
+#include "Spire/Ui/IntegerSpinBox.hpp"
 #include "Spire/UiViewer/SpinBoxAdapter.hpp"
 
 namespace Spire {
 
-  //! Represents a widget for interacting with a DecimalSpinBox being tested.
-  class DecimalSpinBoxTestWidget : public SpinBoxAdapter {
+  //! Represents a widget for interacting with an IntegerSpinBox being tested.
+  class IntegerSpinBoxTestWidget : public SpinBoxAdapter {
     public:
 
-      //! Constructs a DecimalSpinBoxTestWidget.
+      //! Constructs an IntegerSpinBoxTestWidget.
       /*
         \param parent The parent widget.
       */
-      explicit DecimalSpinBoxTestWidget(QWidget* parent = nullptr);
+      explicit IntegerSpinBoxTestWidget(QWidget* parent = nullptr);
 
       bool reset(const QString& initial, const QString& minimum,
         const QString& maximum, const QString& increment) override;
@@ -41,8 +41,8 @@ namespace Spire {
 
     private:
       mutable ChangeSignal m_change_signal;
-      DecimalSpinBox* m_spin_box;
-      std::shared_ptr<DecimalSpinBoxModel> m_model;
+      IntegerSpinBox* m_spin_box;
+      std::shared_ptr<IntegerSpinBoxModel> m_model;
       QHBoxLayout* m_layout;
   };
 }
