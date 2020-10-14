@@ -65,6 +65,13 @@ namespace Spire {
   */
   CheckBox* make_check_box(const QString& label, QWidget* parent);
 
+  //! Constructs a FlatButton with the default style.
+  /*!
+    \param label The button's label.
+    \param parent The parent widget.
+  */
+  FlatButton* make_flat_button(const QString& label, QWidget* parent);
+
   //! Constructs a horizontal Spire-styled table header with fixed size,
   //! immovable, column headers.
   /*

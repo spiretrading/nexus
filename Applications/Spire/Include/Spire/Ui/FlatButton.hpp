@@ -39,11 +39,11 @@ namespace Spire {
       */
       explicit FlatButton(const QString& label, QWidget* parent = nullptr);
 
-      //! Sets the FlatButton's text.
+      //! Sets the FlatButton's label.
       /*!
-        \param text The text to set.
+        \param label The label to set.
       */
-      void set_label(const QString& text);
+      void set_label(const QString& label);
 
       //! Gets the default button style.
       const Style& get_style() const;

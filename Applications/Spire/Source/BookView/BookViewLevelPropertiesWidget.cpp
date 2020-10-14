@@ -124,23 +124,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_gradient_end_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
-  auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
+  auto apply_gradient_button = make_flat_button(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedSize(BUTTON_SIZE());
-  QFont generic_button_font;
-  generic_button_font.setFamily("Roboto");
-  generic_button_font.setPixelSize(scale_height(12));
-  apply_gradient_button->setFont(generic_button_font);
-  auto generic_button_default_style = apply_gradient_button->get_style();
-  generic_button_default_style.m_background_color = QColor("#EBEBEB");
-  apply_gradient_button->set_style(generic_button_default_style);
-  auto generic_button_hover_style = apply_gradient_button->get_hover_style();
-  generic_button_hover_style.m_background_color = QColor("#4B23A0");
-  generic_button_hover_style.m_text_color = Qt::white;
-  apply_gradient_button->set_hover_style(generic_button_hover_style);
-  auto generic_button_focus_style = apply_gradient_button->get_focus_style();
-  generic_button_focus_style.m_background_color = QColor("#EBEBEB");
-  generic_button_focus_style.m_border_color = QColor("#4B23A0");
-  apply_gradient_button->set_focus_style(generic_button_focus_style);
   apply_gradient_button->connect_clicked_signal(
     [=] { on_gradient_apply_button_clicked(); });
   band_properties_layout->addWidget(apply_gradient_button);

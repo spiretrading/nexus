@@ -43,8 +43,8 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
   set_disabled_style(m_disabled_style);
 }
 
-void FlatButton::set_label(const QString& text) {
-  m_label->setText(text);
+void FlatButton::set_label(const QString& label) {
+  m_label->setText(label);
 }
 
 const Style& FlatButton::get_style() const {
