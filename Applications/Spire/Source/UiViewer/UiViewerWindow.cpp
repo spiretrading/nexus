@@ -4,13 +4,15 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
+#include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
+#include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 
 using namespace Spire;
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
     : Window(parent) {
-  setMinimumSize(scale(500, 300));
+  setMinimumSize(scale(500, 325));
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire-icon-black.svg", ":/Icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
@@ -49,6 +51,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   m_layout->addWidget(m_widget_list);
   add_test_widget(tr("ColorSelectorButton"),
     new ColorSelectorButtonTestWidget(this));
+  add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
+    new DecimalSpinBoxTestWidget(this), this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
