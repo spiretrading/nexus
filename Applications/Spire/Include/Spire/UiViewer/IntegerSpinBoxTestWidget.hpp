@@ -10,7 +10,7 @@ namespace Spire {
   class IntegerSpinBoxTestWidget : public SpinBoxAdapter {
     public:
 
-      //! Constructs a IntegerSpinBoxTestWidget.
+      //! Constructs an IntegerSpinBoxTestWidget.
       /*
         \param parent The parent widget.
       */
