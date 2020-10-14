@@ -81,6 +81,22 @@ DecimalSpinBoxTestWidget::DecimalSpinBoxTestWidget(QWidget* parent)
   reset_button->setFixedHeight(scale_height(26));
   reset_button->connect_clicked_signal([=] { reset_spin_box(); });
   m_layout->addWidget(reset_button, 5, 0, 1, 2);
+  auto no_label = new QLabel(NO_MODIFIER, this);
+  m_layout->addWidget(no_label, 6, 0);
+  m_no_increment_label = new QLabel(this);
+  m_layout->addWidget(m_no_increment_label, 6, 1);
+  auto shift_label = new QLabel(SHIFT_MODIFIER, this);
+  m_layout->addWidget(shift_label, 7, 0);
+  m_shift_increment_label = new QLabel(this);
+  m_layout->addWidget(m_shift_increment_label, 7, 1);
+  auto ctrl_label = new QLabel(CTRL_MODIFIER, this);
+  m_layout->addWidget(ctrl_label, 8, 0);
+  m_ctrl_increment_label = new QLabel(this);
+  m_layout->addWidget(m_ctrl_increment_label, 8, 1);
+  auto shift_ctrl_label = new QLabel(CTRL_SHIFT_MODIFIER, this);
+  m_layout->addWidget(shift_ctrl_label, 9, 0);
+  m_ctrl_shift_increment_label = new QLabel(this);
+  m_layout->addWidget(m_ctrl_shift_increment_label, 9, 1);
   reset_spin_box();
 }
 
@@ -89,7 +105,8 @@ void DecimalSpinBoxTestWidget::reset_spin_box() {
   auto min = get_value(m_min_input->text());
   auto max = get_value(m_max_input->text());
   auto increment = get_value(m_increment_input->text());
-  if(initial && min && max && increment) {
+  if(initial && min && max && increment && min < max && min <= initial &&
+      initial <= max) {
     m_model = std::make_shared<DecimalSpinBoxModel>(*initial, *min, *max,
       *increment);
     delete_later(m_spin_box);
@@ -99,9 +116,22 @@ void DecimalSpinBoxTestWidget::reset_spin_box() {
       m_value_label->setText(QString::number(value));
     });
     m_layout->addWidget(m_spin_box, 0, 0);
+    update_increment_labels();
+    m_spin_box->setFocus();
   } else {
     m_value_label->setText(tr("Failed"));
   }
+}
+
+void DecimalSpinBoxTestWidget::update_increment_labels() {
+  m_no_increment_label->setText(QString::number(m_model->get_increment(
+    Qt::NoModifier)));
+  m_shift_increment_label->setText(QString::number(m_model->get_increment(
+    Qt::ShiftModifier)));
+  m_ctrl_increment_label->setText(QString::number(m_model->get_increment(
+    Qt::ControlModifier)));
+  m_ctrl_shift_increment_label->setText(QString::number(m_model->get_increment(
+    Qt::ControlModifier | Qt::ShiftModifier)));
 }
 
 void DecimalSpinBoxTestWidget::on_initial_set() {
@@ -120,7 +150,7 @@ void DecimalSpinBoxTestWidget::on_min_set() {
 
 void DecimalSpinBoxTestWidget::on_max_set() {
   if(auto max = get_value(m_max_input->text()); max) {
-    m_model->set_minimum(*max);
+    m_model->set_maximum(*max);
     m_value_label->setText("Max set");
   }
 }
@@ -130,5 +160,6 @@ void DecimalSpinBoxTestWidget::on_increment_set() {
     m_model->set_increment(get_modifier(
       m_modifier_menu->get_current_item().value<QString>()), *modifier);
     m_value_label->setText("Increment set");
+    update_increment_labels();
   }
 }

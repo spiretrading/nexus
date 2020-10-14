@@ -28,8 +28,13 @@ namespace Spire {
       TextInputWidget* m_max_input;
       TextInputWidget* m_increment_input;
       StaticDropDownMenu* m_modifier_menu;
+      QLabel* m_no_increment_label;
+      QLabel* m_shift_increment_label;
+      QLabel* m_ctrl_increment_label;
+      QLabel* m_ctrl_shift_increment_label;
 
       void reset_spin_box();
+      void update_increment_labels();
       void on_initial_set();
       void on_min_set();
       void on_max_set();
