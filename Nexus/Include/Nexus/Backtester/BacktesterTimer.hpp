@@ -59,6 +59,8 @@ namespace Nexus {
 
       void Cancel();
 
+      bool IsPassive() const override;
+
       void Execute() override;
 
     private:
@@ -130,13 +132,16 @@ namespace Nexus {
     m_result = Beam::Threading::Timer::Result::NONE;
   }
 
+  inline bool TimerBacktesterEvent::IsPassive() const {
+    return true;
+  }
+
   inline void TimerBacktesterEvent::Execute() {
     if(m_result != Beam::Threading::Timer::Result::NONE) {
       m_timer->m_expireEvent.reset();
       m_timer->m_cancelEvent.reset();
       m_timer->m_publisher.Push(m_result);
     }
-    Complete();
   }
 }
 
