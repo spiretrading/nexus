@@ -46,7 +46,7 @@ DecimalSpinBoxTestWidget::DecimalSpinBoxTestWidget(QWidget* parent)
   auto container_widget = new QWidget(this);
   m_layout = new QGridLayout(container_widget);
   m_value_label = new QLabel(this);
-  m_layout->addWidget(m_value_label, 0, 1);
+  m_layout->addWidget(m_value_label, 0, 1, Qt::AlignCenter);
   auto initial_label = new QLabel(tr("Initial"), this);
   m_layout->addWidget(initial_label, 1, 0);
   m_initial_input = new TextInputWidget("0", this);
