@@ -7,6 +7,7 @@
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 
 using namespace Spire;
@@ -57,6 +58,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
     new IntegerSpinBoxTestWidget(this), this));
+  add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
+    new QuantitySpinBoxTestWidget(this), this));
   m_widget_list->setCurrentRow(0);
 }
 
