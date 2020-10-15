@@ -9,9 +9,14 @@
 
 namespace Spire {
 
+  //! Represents a widget for testing a FontSelectorWidget.
   class FontSelectorTestWidget : public QWidget {
     public:
 
+      //! Constructs a FontSelectorTestWidget.
+      /*!
+        \param parent The parent widget.
+      */
       explicit FontSelectorTestWidget(QWidget* parent = nullptr);
 
     private:
