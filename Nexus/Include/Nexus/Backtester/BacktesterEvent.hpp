@@ -17,6 +17,9 @@ namespace Nexus {
       /** Waits for this event to be executed. */
       void Wait();
 
+      /** Whether this event should trigger an update. */
+      virtual bool IsPassive() const;
+
       /** Executes this event. */
       virtual void Execute() = 0;
 
@@ -32,6 +35,7 @@ namespace Nexus {
       void Complete();
 
     private:
+      friend class BacktesterEventHandler;
       mutable Beam::Threading::Mutex m_mutex;
       bool m_isComplete;
       Beam::Threading::ConditionVariable m_isCompleteCondition;
@@ -50,6 +54,10 @@ namespace Nexus {
     while(!m_isComplete) {
       m_isCompleteCondition.wait(lock);
     }
+  }
+
+  inline bool BacktesterEvent::IsPassive() const {
+    return false;
   }
 
   inline BacktesterEvent::BacktesterEvent(boost::posix_time::ptime timestamp)

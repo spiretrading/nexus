@@ -2,6 +2,7 @@
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Backtester/ActiveBacktesterEvent.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
 
@@ -14,7 +15,7 @@ using namespace Nexus;
 
 TEST_SUITE("BacktesterTimer") {
   TEST_CASE("expiry") {
-    auto startTime = ptime(date{2016, 5, 6}, seconds(0));
+    auto startTime = time_from_string("2016-05-06 00:00:00");
     auto eventHandler = BacktesterEventHandler(startTime);
     auto timer = BacktesterTimer(seconds(1), Ref(eventHandler));
     auto routines = RoutineTaskQueue();
@@ -35,15 +36,17 @@ TEST_SUITE("BacktesterTimer") {
         }
       }));
     timer.Start();
-    auto lock = unique_lock<Mutex>(queryCompleteMutex);
-    while(!testSucceeded.is_initialized()) {
+    eventHandler.Add(std::make_shared<ActiveBacktesterEvent>(
+      time_from_string("2016-05-07 00:00:00")));
+    auto lock = unique_lock(queryCompleteMutex);
+    while(!testSucceeded) {
       testCompleteCondition.wait(lock);
     }
     REQUIRE(*testSucceeded);
   }
 
   TEST_CASE("cancel") {
-    auto startTime = ptime(date(2016, 5, 6), seconds(0));
+    auto startTime = time_from_string("2016-05-06 00:00:00");
     auto eventHandler = BacktesterEventHandler(startTime);
     auto timerA = BacktesterTimer(seconds(1), Ref(eventHandler));
     auto timerB = BacktesterTimer(seconds(2), Ref(eventHandler));
@@ -64,7 +67,7 @@ TEST_SUITE("BacktesterTimer") {
         auto timestamp = eventHandler.GetTime();
         REQUIRE(timestamp == expectedTimestamp);
         REQUIRE(result == Timer::Result::CANCELED);
-        auto lock = lock_guard<Mutex>(queryCompleteMutex);
+        auto lock = lock_guard(queryCompleteMutex);
         testSucceeded = true;
         testCompleteCondition.notify_one();
       }));
@@ -72,9 +75,11 @@ TEST_SUITE("BacktesterTimer") {
       [&] {
         timerB.Start();
         timerA.Start();
+        eventHandler.Add(std::make_shared<ActiveBacktesterEvent>(
+          time_from_string("2016-05-07 00:00:00")));
       });
-    auto lock = unique_lock<Mutex>(queryCompleteMutex);
-    while(!testSucceeded.is_initialized()) {
+    auto lock = unique_lock(queryCompleteMutex);
+    while(!testSucceeded) {
       testCompleteCondition.wait(lock);
     }
     REQUIRE(*testSucceeded);

@@ -1,10 +1,9 @@
 #ifndef NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #define NEXUS_BACKTESTER_EVENT_HANDLER_HPP
+#include <algorithm>
 #include <deque>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/LockRelease.hpp>
@@ -13,7 +12,6 @@
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/range/iterator_range.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
 
@@ -68,6 +66,7 @@ namespace Nexus {
       boost::posix_time::ptime m_endTime;
       Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
+      std::size_t m_activeCount;
       Beam::Threading::ConditionVariable m_eventAvailableCondition;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
@@ -87,6 +86,7 @@ namespace Nexus {
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
       : m_startTime(std::move(startTime)),
         m_endTime(std::move(endTime)),
+        m_activeCount(0),
         m_timeEnvironment(m_startTime) {
     try {
       m_eventLoopRoutine = Beam::Routines::Spawn(
@@ -115,6 +115,7 @@ namespace Nexus {
 
   inline void BacktesterEventHandler::Add(
       std::shared_ptr<BacktesterEvent> event) {
+    auto isActive = !event->IsPassive();
     {
       auto lock = boost::lock_guard(m_mutex);
       auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
@@ -123,8 +124,13 @@ namespace Nexus {
           return lhs->GetTimestamp() < rhs->GetTimestamp();
         });
       m_events.insert(insertIterator, std::move(event));
+      if(isActive) {
+        ++m_activeCount;
+      }
     }
-    m_eventAvailableCondition.notify_one();
+    if(isActive) {
+      m_eventAvailableCondition.notify_one();
+    }
   }
 
   inline void BacktesterEventHandler::Add(
@@ -132,18 +138,25 @@ namespace Nexus {
     if(events.empty()) {
       return;
     }
+    auto isActive = false;
     {
       auto lock = boost::lock_guard(m_mutex);
       for(auto& event : events) {
+        isActive |= !event->IsPassive();
         auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
           event,
           [] (auto& lhs, auto& rhs) {
             return lhs->GetTimestamp() < rhs->GetTimestamp();
           });
+        if(!event->IsPassive()) {
+          ++m_activeCount;
+        }
         m_events.insert(insertIterator, std::move(event));
       }
     }
-    m_eventAvailableCondition.notify_one();
+    if(isActive) {
+      m_eventAvailableCondition.notify_one();
+    }
   }
 
   inline void BacktesterEventHandler::Close() {
@@ -162,23 +175,24 @@ namespace Nexus {
       auto event = std::shared_ptr<BacktesterEvent>();
       {
         auto lock = boost::unique_lock(m_mutex);
-        while(m_openState.IsOpen() && m_events.empty()) {
+        while(m_openState.IsOpen() && m_activeCount == 0) {
           m_eventAvailableCondition.wait(lock);
         }
         if(!m_openState.IsOpen()) {
           return;
         }
-        {
-          auto release = Beam::Threading::Release(lock);
-          Beam::Routines::FlushPendingRoutines();
-        }
-        event = m_events.front();
+        event = std::move(m_events.front());
         m_events.pop_front();
-        if(event->GetTimestamp() != boost::posix_time::neg_infin) {
-          m_timeEnvironment.SetTime(event->GetTimestamp());
+        if(!event->IsPassive()) {
+          --m_activeCount;
         }
       }
+      if(event->GetTimestamp() != boost::posix_time::neg_infin) {
+        m_timeEnvironment.SetTime(event->GetTimestamp());
+      }
       event->Execute();
+      event->Complete();
+      Beam::Routines::FlushPendingRoutines();
     }
   }
 }
