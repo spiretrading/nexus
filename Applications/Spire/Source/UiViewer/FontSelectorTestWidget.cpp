@@ -52,7 +52,7 @@ FontSelectorTestWidget::FontSelectorTestWidget(QWidget* parent)
   on_widget_reset();
 }
 
-QFont FontSelectorTestWidget::get_font() {
+QFont FontSelectorTestWidget::get_font() const {
   auto font = QFont(m_family_list->get_current_item().value<QFont>());
   font.setBold(m_bold_check_box->isChecked());
   font.setItalic(m_italic_check_box->isChecked());

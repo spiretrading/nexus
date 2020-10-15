@@ -30,7 +30,7 @@ namespace Spire {
       CheckBox* m_underline_check_box;
       IntegerSpinBox* m_size_spin_box;
 
-      QFont get_font();
+      QFont get_font() const;
       void update_labels();
       void on_font_set();
       void on_widget_reset();
