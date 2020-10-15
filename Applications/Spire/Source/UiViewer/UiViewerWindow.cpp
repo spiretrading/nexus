@@ -6,6 +6,7 @@
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
+#include "Spire/UiViewer/FontSelectorTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
@@ -15,7 +16,7 @@ using namespace Spire;
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
     : Window(parent) {
-  setMinimumSize(scale(500, 325));
+  setMinimumSize(scale(500, 414));
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire-icon-black.svg", ":/Icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
@@ -57,6 +58,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
     new DecimalSpinBoxTestWidget(this), this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
+  add_test_widget(tr("FontSelectorWidget"), new FontSelectorTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
     new IntegerSpinBoxTestWidget(this), this));
   add_test_widget(tr("MoneySpinBox"), new SpinBoxTestWidget(
