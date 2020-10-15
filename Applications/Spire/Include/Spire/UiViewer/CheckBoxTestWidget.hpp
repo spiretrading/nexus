@@ -15,7 +15,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      CheckBoxTestWidget(QWidget* parent = nullptr);
+      explicit CheckBoxTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
