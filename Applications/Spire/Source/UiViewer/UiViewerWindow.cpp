@@ -3,6 +3,7 @@
 #include <QLabel>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/UiViewer/CheckBoxTestWidget.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
@@ -53,6 +54,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
   m_layout->addWidget(m_widget_list);
+  add_test_widget(tr("CheckBox"), new CheckBoxTestWidget(this));
   add_test_widget(tr("ColorSelectorButton"),
     new ColorSelectorButtonTestWidget(this));
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
