@@ -5,6 +5,8 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/UiViewer/CheckBoxTestWidget.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
+#include "Spire/UiViewer/ComboBoxTestWidget.hpp"
+#include "Spire/UiViewer/CurrencyComboBoxTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
@@ -57,6 +59,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("CheckBox"), new CheckBoxTestWidget(this));
   add_test_widget(tr("ColorSelectorButton"),
     new ColorSelectorButtonTestWidget(this));
+  add_test_widget(tr("CurrencyComboBox"), new ComboBoxTestWidget(
+    new CurrencyComboBoxTestWidget(this), this));
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
     new DecimalSpinBoxTestWidget(this), this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
