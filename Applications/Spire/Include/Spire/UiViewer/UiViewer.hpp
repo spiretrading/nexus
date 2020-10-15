@@ -2,6 +2,7 @@
 #define SPIRE_UI_VIEWER_HPP
 
 namespace Spire {
+  class CheckBoxTestWidget;
   class ColorSelectorButtonTestWidget;
   class DecimalSpinBoxTestWidget;
   class FlatButtonTestWidget;
