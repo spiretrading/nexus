@@ -8,6 +8,7 @@
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
+#include "Spire/UiViewer/IconButtonTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
@@ -61,6 +62,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     new DecimalSpinBoxTestWidget(this), this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
   add_test_widget(tr("FontSelectorWidget"), new FontSelectorTestWidget(this));
+  add_test_widget(tr("IconButton"), new IconButtonTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
     new IntegerSpinBoxTestWidget(this), this));
   add_test_widget(tr("MoneySpinBox"), new SpinBoxTestWidget(
