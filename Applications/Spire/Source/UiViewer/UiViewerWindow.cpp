@@ -12,6 +12,7 @@
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/TextInputTestWidget.hpp"
 
 using namespace Spire;
 
@@ -67,6 +68,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     new MoneySpinBoxTestWidget(this), this));
   add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
     new QuantitySpinBoxTestWidget(this), this));
+  add_test_widget(tr("TextInputWidget"), new TextInputTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
 
