@@ -27,6 +27,10 @@ namespace {
     std::generate_n(std::back_inserter(data), count, generator);
     return data;
   }
+
+  auto to_quantity(Scalar value) {
+    return static_cast<Quantity>(value);
+  }
 }
 
 RangeInputTestWidget::RangeInputTestWidget(QWidget* parent)
@@ -68,23 +72,24 @@ void RangeInputTestWidget::on_reset_button() {
   auto count_ok = false;
   auto count = m_count_input->text().toInt(&count_ok);
   if(min_ok && max_ok && count_ok) {
-    auto min_input_model = std::make_shared<QuantitySpinBoxModel>(min, min,
-      max, Quantity(1));
+    auto range_model = std::make_shared<LocalRangeInputModel>(
+      std::move(generate_data(min, max, count)));
+    auto min_input_model = std::make_shared<QuantitySpinBoxModel>(
+      to_quantity(range_model->get_minimum_value()),
+      to_quantity(range_model->get_minimum_value()),
+      to_quantity(range_model->get_maximum_value()), Quantity(1));
     auto min_input = new QuantitySpinBox(min_input_model, this);
     min_input->setFixedSize(CONTROL_SIZE());
     auto min_widget = new ScalarWidget(min_input,
       &QuantitySpinBox::connect_change_signal, &QuantitySpinBox::set_value);
-    // TODO: fix this ScalarWidget/RangeInputWidget layout issue.
-    min_widget->setFixedSize(CONTROL_SIZE());
-    auto max_input_model = std::make_shared<QuantitySpinBoxModel>(max, min,
-      max, Quantity(1));
+    auto max_input_model = std::make_shared<QuantitySpinBoxModel>(
+      to_quantity(range_model->get_maximum_value()),
+      to_quantity(range_model->get_minimum_value()),
+      to_quantity(range_model->get_maximum_value()), Quantity(1));
     auto max_input = new QuantitySpinBox(max_input_model, this);
     max_input->setFixedSize(CONTROL_SIZE());
     auto max_widget = new ScalarWidget(max_input,
       &QuantitySpinBox::connect_change_signal, &QuantitySpinBox::set_value);
-    max_widget->setFixedSize(CONTROL_SIZE());
-    auto data = generate_data(min, max, count);
-    auto range_model = std::make_shared<LocalRangeInputModel>(data);
     m_range_input = new RangeInputWidget(range_model, min_widget, max_widget,
       Scalar(Quantity(1)), this);
     m_layout->addWidget(m_range_input, 0, 0, 1, 2);
