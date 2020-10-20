@@ -10,6 +10,7 @@ namespace Spire {
   class IntegerSpinBoxTestWidget;
   class MoneySpinBoxTestWidget;
   class QuantitySpinBoxTestWidget;
+  class SecurityInputTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
   class UiViewerWindow;
