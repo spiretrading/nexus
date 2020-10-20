@@ -1,6 +1,7 @@
 #ifndef NEXUS_BACKTESTER_TIMER_HPP
 #define NEXUS_BACKTESTER_TIMER_HPP
 #include <Beam/Queues/QueueWriterPublisher.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
@@ -33,6 +34,7 @@ namespace Nexus {
 
     private:
       friend class TimerBacktesterEvent;
+      mutable Beam::Threading::Mutex m_mutex;
       boost::posix_time::time_duration m_interval;
       BacktesterEventHandler* m_eventHandler;
       std::shared_ptr<TimerBacktesterEvent> m_expireEvent;
@@ -64,6 +66,7 @@ namespace Nexus {
       void Execute() override;
 
     private:
+      mutable Beam::Threading::Mutex m_mutex;
       BacktesterTimer* m_timer;
       Beam::Threading::Timer::Result m_result;
   };
@@ -79,7 +82,8 @@ namespace Nexus {
   }
 
   inline void BacktesterTimer::Start() {
-    if(m_expireEvent != nullptr) {
+    auto lock = boost::lock_guard(m_mutex);
+    if(m_expireEvent) {
       return;
     }
     m_expireEvent = std::make_shared<TimerBacktesterEvent>(*this,
@@ -89,32 +93,36 @@ namespace Nexus {
   }
 
   inline void BacktesterTimer::Cancel() {
-    if(m_expireEvent == nullptr) {
-      return;
-    } else if(m_cancelEvent == nullptr) {
-      m_expireEvent->Cancel();
-      m_cancelEvent = std::make_shared<TimerBacktesterEvent>(*this,
-        boost::posix_time::neg_infin, Beam::Threading::Timer::Result::CANCELED);
-      m_eventHandler->Add(m_cancelEvent);
+    auto cancelEvent = [&] {
+      auto lock = boost::lock_guard(m_mutex);
+      if(m_expireEvent && !m_cancelEvent) {
+        m_expireEvent->Cancel();
+        m_expireEvent = nullptr;
+        m_cancelEvent = std::make_shared<TimerBacktesterEvent>(*this,
+          boost::posix_time::neg_infin,
+          Beam::Threading::Timer::Result::CANCELED);
+        m_eventHandler->Add(m_cancelEvent);
+      }
+      return m_cancelEvent;
+    }();
+    if(cancelEvent) {
+      cancelEvent->Wait();
     }
-    auto cancelEvent = m_cancelEvent;
-    cancelEvent->Wait();
   }
 
   inline void BacktesterTimer::Wait() {
-    if(m_expireEvent == nullptr) {
-      return;
+    auto event = [&] {
+      auto lock = boost::lock_guard(m_mutex);
+      if(m_cancelEvent &&
+          m_cancelEvent->GetTimestamp() <= m_expireEvent->GetTimestamp()) {
+        return m_cancelEvent;
+      } else {
+        return m_expireEvent;
+      }
+    }();
+    if(event) {
+      event->Wait();
     }
-    auto event =
-      [&] {
-        if(m_cancelEvent != nullptr &&
-            m_cancelEvent->GetTimestamp() < m_expireEvent->GetTimestamp()) {
-          return m_cancelEvent;
-        } else {
-          return m_expireEvent;
-        }
-      }();
-    event->Wait();
   }
 
   inline const Beam::Publisher<Beam::Threading::Timer::Result>&
@@ -129,6 +137,7 @@ namespace Nexus {
       m_result(result) {}
 
   inline void TimerBacktesterEvent::Cancel() {
+    auto lock = boost::lock_guard(m_mutex);
     m_result = Beam::Threading::Timer::Result::NONE;
   }
 
@@ -137,9 +146,11 @@ namespace Nexus {
   }
 
   inline void TimerBacktesterEvent::Execute() {
+    auto lock = boost::lock_guard(m_mutex);
     if(m_result != Beam::Threading::Timer::Result::NONE) {
-      m_timer->m_expireEvent.reset();
-      m_timer->m_cancelEvent.reset();
+      auto lock = boost::lock_guard(m_timer->m_mutex);
+      m_timer->m_expireEvent = nullptr;
+      m_timer->m_cancelEvent = nullptr;
       m_timer->m_publisher.Push(m_result);
     }
   }
