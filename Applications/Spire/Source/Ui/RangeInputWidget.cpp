@@ -26,6 +26,7 @@ RangeInputWidget::RangeInputWidget(std::shared_ptr<RangeInputModel> model,
   layout->addWidget(m_min_widget);
   m_slider = new RangeInputSlider(m_model->get_minimum_value(),
     m_model->get_maximum_value(), step, this);
+  m_slider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_slider->connect_min_changed_signal([=] (auto value) {
     on_min_handle_moved(value); });
   m_slider->connect_max_changed_signal([=] (auto value) {
