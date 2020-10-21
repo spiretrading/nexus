@@ -21,8 +21,6 @@ namespace Spire {
       */
       explicit ComboBoxAdapter(QWidget* parent = nullptr);
 
-      virtual ~ComboBoxAdapter() = default;
-
       //! Connects a slot to the value selection signal.
       virtual boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const = 0;
