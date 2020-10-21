@@ -22,8 +22,20 @@ DurationInputTestWidget::DurationInputTestWidget(QWidget* parent)
   m_duration_input = new DurationInputWidget(this);
   m_duration_input->setFixedSize(scale(88, 26));
   m_duration_input->connect_time_signal([=] (const auto& time) {
+    auto minutes_string = [&] {
+      if(time.minutes() < 10) {
+        return QString("0%1").arg(time.minutes());
+      }
+      return QString::number(time.minutes());
+    }();
+    auto seconds_string = [&] {
+      if(time.seconds() < 10) {
+        return QString("0%1").arg(time.seconds());
+      }
+      return QString::number(time.seconds());
+    }();
     m_status_label->setText(QString("%1 : %2 : %3").arg(time.hours()).arg(
-      time.minutes()).arg(time.seconds()));
+      minutes_string).arg(seconds_string));
   });
   layout->addWidget(m_duration_input, 0, 0);
   m_status_label = new QLabel(this);
