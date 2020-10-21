@@ -17,8 +17,8 @@ namespace {
     items.reserve(strings.size());
     std::transform(strings.begin(), strings.end(),
       std::back_inserter(items),
-      [&] (const auto& string) {
-        return QVariant::fromValue(string);
+      [] (auto string) {
+        return QVariant::fromValue(string.replace(" ", ""));
       });
     return items;
   }
