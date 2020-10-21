@@ -12,6 +12,7 @@ namespace Spire {
   class QuantitySpinBoxTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
+  class TimeOfDayTestWidget;
   class UiViewerWindow;
 }
 
