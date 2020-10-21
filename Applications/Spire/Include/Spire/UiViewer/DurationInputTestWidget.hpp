@@ -15,7 +15,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      DurationInputTestWidget(QWidget* parent = nullptr);
+      explicit DurationInputTestWidget(QWidget* parent = nullptr);
 
     private:
       DurationInputWidget* m_duration_input;
