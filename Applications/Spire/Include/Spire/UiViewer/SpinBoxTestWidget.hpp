@@ -14,6 +14,7 @@ namespace Spire {
 
       //! Constructs a SpinBoxTestWidget.
       /*!
+        \param spin_box The spin box to test.
         \param parent The parent widget.
       */
       explicit SpinBoxTestWidget(SpinBoxAdapter* spin_box,
