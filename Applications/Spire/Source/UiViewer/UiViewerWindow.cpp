@@ -6,6 +6,7 @@
 #include "Spire/UiViewer/CheckBoxTestWidget.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/FilteredDropDownMenuTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
@@ -59,6 +60,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     new ColorSelectorButtonTestWidget(this));
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
     new DecimalSpinBoxTestWidget(this), this));
+  add_test_widget(tr("FilteredDropDownMenu"),
+    new FilteredDropDownMenuTestWidget(this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
   add_test_widget(tr("FontSelectorWidget"), new FontSelectorTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
