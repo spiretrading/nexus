@@ -4,6 +4,7 @@
 namespace Spire {
   class CheckBoxTestWidget;
   class ColorSelectorButtonTestWidget;
+  class DateInputTestWidget;
   class DecimalSpinBoxTestWidget;
   class FlatButtonTestWidget;
   class FontSelectorTestWidget;

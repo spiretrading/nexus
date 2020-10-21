@@ -5,6 +5,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/UiViewer/CheckBoxTestWidget.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
+#include "Spire/UiViewer/DateInputTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
@@ -28,6 +29,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   m_widget_list = new QListWidget(this);
   m_widget_list->setSelectionMode(QAbstractItemView::SingleSelection);
   m_widget_list->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+  m_widget_list->setMaximumWidth(scale_width(200));
   m_widget_list->setStyleSheet(QString(R"(
     QListWidget {
       background-color: white;
@@ -57,6 +59,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("CheckBox"), new CheckBoxTestWidget(this));
   add_test_widget(tr("ColorSelectorButton"),
     new ColorSelectorButtonTestWidget(this));
+  add_test_widget(tr("DateInputWidget"), new DateInputTestWidget(this));
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
     new DecimalSpinBoxTestWidget(this), this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
