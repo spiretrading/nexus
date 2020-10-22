@@ -16,6 +16,7 @@
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/RangeInputTestWidget.hpp"
+#include "Spire/UiViewer/ScrollAreaTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 
 using namespace Spire;
@@ -78,6 +79,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
     new QuantitySpinBoxTestWidget(this), this));
   add_test_widget(tr("RangeInputWidget"), new RangeInputTestWidget(this));
+  add_test_widget(tr("ScrollArea"), new ScrollAreaTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
 
