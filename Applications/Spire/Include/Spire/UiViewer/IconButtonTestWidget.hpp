@@ -14,7 +14,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      IconButtonTestWidget(QWidget* parent = nullptr);
+      explicit IconButtonTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
