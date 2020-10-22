@@ -15,7 +15,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      TextInputTestWidget(QWidget* parent = nullptr);
+      explicit TextInputTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
