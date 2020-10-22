@@ -40,7 +40,7 @@ QtPromise<std::vector<SecurityInfo>> LocalSecurityInputModel::autocomplete(
     });
 }
 
-Ref<LocalSecurityInputModel> Spire::get_local_security_input_test_model() {
+LocalSecurityInputModel& Spire::get_local_security_input_test_model() {
   static LocalSecurityInputModel& model = [] () -> LocalSecurityInputModel& {
     auto model = new LocalSecurityInputModel();
     model->add(SecurityInfo(
@@ -66,5 +66,5 @@ Ref<LocalSecurityInputModel> Spire::get_local_security_input_test_model() {
       "Morgan Stanley", "Finance", 100));
     return *model;
   }();
-  return Ref(model);
+  return model;
 }

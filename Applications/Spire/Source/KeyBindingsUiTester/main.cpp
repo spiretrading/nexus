@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
   bindings.set({Qt::Key_Alt, Qt::Key_Escape}, Region::Global(),
     KeyBindings::CancelAction::CLOSEST_ASK);
   auto window = new KeyBindingsWindow(bindings,
-    get_local_security_input_test_model());
+    Ref(get_local_security_input_test_model()));
   window->show();
   application->exec();
 }

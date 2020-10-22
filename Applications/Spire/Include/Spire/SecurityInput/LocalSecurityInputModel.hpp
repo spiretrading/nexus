@@ -27,7 +27,7 @@ namespace Spire {
       rtv::Trie<char, Nexus::SecurityInfo> m_securities;
   };
 
-  Beam::Ref<const LocalSecurityInputModel> get_local_security_input_test_model();
+  LocalSecurityInputModel& get_local_security_input_test_model();
 }
 
 #endif

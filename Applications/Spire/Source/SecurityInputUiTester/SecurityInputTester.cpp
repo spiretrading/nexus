@@ -24,7 +24,7 @@ void SecurityInputTester::showEvent(QShowEvent* event) {
       auto positioned = false;
       while(true) {
         m_dialog = new SecurityInputDialog(
-          get_local_security_input_test_model());
+          Ref(get_local_security_input_test_model()));
         if(!positioned) {
           m_dialog->show();
           move(m_dialog->geometry().topRight().x(),

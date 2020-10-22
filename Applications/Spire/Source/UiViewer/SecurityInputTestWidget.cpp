@@ -41,7 +41,7 @@ SecurityInputTestWidget::SecurityInputTestWidget(QWidget* parent)
 void SecurityInputTestWidget::on_reset_button() {
   delete_later(m_security_input);
   m_security_input = new SecurityInputLineEdit(m_initial_text_input->text(),
-    get_local_security_input_test_model(), m_icon_check_box->isChecked(),
+    Ref(get_local_security_input_test_model()), m_icon_check_box->isChecked(),
     this);
   m_security_input->setFixedSize(CONTROL_SIZE());
   connect(m_security_input, &TextInputWidget::editingFinished,

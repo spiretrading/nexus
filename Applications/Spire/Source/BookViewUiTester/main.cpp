@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Book View UI Tester"));
   initialize_resources();
   auto window = new BookViewWindow(BookViewProperties(),
-    get_local_security_input_test_model());
+    Ref(get_local_security_input_test_model()));
   window->show();
   auto tester = new BookViewTestControllerWindow(window);
   tester->show();

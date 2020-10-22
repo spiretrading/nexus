@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
   auto test_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
-    get_local_security_input_test_model());
+    Ref(get_local_security_input_test_model()));
   auto tester = new TimeAndSalesTestControllerWindow(test_window);
   test_window->show();
   tester->show();
