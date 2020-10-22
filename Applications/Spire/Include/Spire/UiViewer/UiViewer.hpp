@@ -20,6 +20,7 @@ namespace Spire {
   class SecurityInputTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
+  class TextInputTestWidget;
   class UiViewerWindow;
 }
 
