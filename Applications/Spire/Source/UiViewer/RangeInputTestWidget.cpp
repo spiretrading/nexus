@@ -18,8 +18,8 @@ namespace {
   }
 
   auto generate_data(double min, double max, int count) {
-    auto device = std::random_device();
-    auto engine = std::mt19937(device());
+    static auto device = std::random_device();
+    static auto engine = std::mt19937(device());
     auto distribution = std::uniform_real_distribution(min, max);
     auto generator = [&] { return Scalar(Quantity(distribution(engine))); };
     auto data = std::vector<Scalar>();
