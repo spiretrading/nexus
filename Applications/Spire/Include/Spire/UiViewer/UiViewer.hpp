@@ -11,6 +11,7 @@ namespace Spire {
   class DurationInputTestWidget;
   class FlatButtonTestWidget;
   class FontSelectorTestWidget;
+  class IconButtonTestWidget;
   class IntegerSpinBoxTestWidget;
   class MoneySpinBoxTestWidget;
   class QuantitySpinBoxTestWidget;
