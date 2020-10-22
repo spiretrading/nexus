@@ -12,27 +12,6 @@ using namespace Spire;
 SecurityInputTester::SecurityInputTester(QWidget* parent)
     : QListWidget(parent) {
   setFixedSize(scale(100, 250));
-  m_model.add(SecurityInfo(
-    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
-    "Microsoft Corp", "Software", 100));
-  m_model.add(SecurityInfo(
-    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive", 100));
-  m_model.add(SecurityInfo(
-    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Manulife Financial Corporation", "Finance", 100));
-  m_model.add(SecurityInfo(
-    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Methanex Corporation", "", 100));
-  m_model.add(SecurityInfo(
-    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Metro Inc.", "", 100));
-  m_model.add(SecurityInfo(
-    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Monsanto Co.", "", 100));
-  m_model.add(SecurityInfo(
-    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Morgan Stanley", "Finance", 100));
 }
 
 void SecurityInputTester::closeEvent(QCloseEvent* event) {
@@ -44,7 +23,8 @@ void SecurityInputTester::showEvent(QShowEvent* event) {
     [=] {
       auto positioned = false;
       while(true) {
-        m_dialog = new SecurityInputDialog(Ref(m_model));
+        m_dialog = new SecurityInputDialog(
+          get_local_security_input_test_model());
         if(!positioned) {
           m_dialog->show();
           move(m_dialog->geometry().topRight().x(),

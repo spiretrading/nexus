@@ -4,7 +4,6 @@
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityWidget.hpp"
@@ -26,7 +25,6 @@ namespace Spire {
       CheckBox* m_dark_theme_check_box;
       QLabel* m_status_label;
       SecurityWidget* m_security_widget;
-      LocalSecurityInputModel m_model;
       CustomVariantItemDelegate m_item_delegate;
 
       void on_reset_button();

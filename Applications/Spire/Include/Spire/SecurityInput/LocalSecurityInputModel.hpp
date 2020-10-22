@@ -1,6 +1,7 @@
 #ifndef SPIRE_LOCAL_SECURITY_INPUT_MODEL_HPP
 #define SPIRE_LOCAL_SECURITY_INPUT_MODEL_HPP
 #include <Beam/Collections/Trie.hpp>
+#include <Beam/Pointers/Ref.hpp>
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 
@@ -25,6 +26,8 @@ namespace Spire {
     private:
       rtv::Trie<char, Nexus::SecurityInfo> m_securities;
   };
+
+  Beam::Ref<const LocalSecurityInputModel> get_local_security_input_test_model();
 }
 
 #endif

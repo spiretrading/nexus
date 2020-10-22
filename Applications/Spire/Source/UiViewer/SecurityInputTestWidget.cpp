@@ -1,5 +1,6 @@
 #include "Spire/UiViewer/SecurityInputTestWidget.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
@@ -34,34 +35,14 @@ SecurityInputTestWidget::SecurityInputTestWidget(QWidget* parent)
   reset_button->setFixedHeight(scale_height(26));
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
   m_layout->addWidget(reset_button, 3, 0, 1, 2);
-  m_model.add(SecurityInfo(
-    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
-    "Microsoft Corp", "Software", 100));
-  m_model.add(SecurityInfo(
-    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive", 100));
-  m_model.add(SecurityInfo(
-    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Manulife Financial Corporation", "Finance", 100));
-  m_model.add(SecurityInfo(
-    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Methanex Corporation", "", 100));
-  m_model.add(SecurityInfo(
-    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Metro Inc.", "", 100));
-  m_model.add(SecurityInfo(
-    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Monsanto Co.", "", 100));
-  m_model.add(SecurityInfo(
-    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Morgan Stanley", "Finance", 100));
   on_reset_button();
 }
 
 void SecurityInputTestWidget::on_reset_button() {
   delete_later(m_security_input);
   m_security_input = new SecurityInputLineEdit(m_initial_text_input->text(),
-    Ref(m_model), m_icon_check_box->isChecked(), this);
+    get_local_security_input_test_model(), m_icon_check_box->isChecked(),
+    this);
   m_security_input->setFixedSize(CONTROL_SIZE());
   connect(m_security_input, &TextInputWidget::editingFinished,
     [=] {
