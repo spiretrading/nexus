@@ -19,7 +19,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      SecurityWidgetTestWidget(QWidget* parent = nullptr);
+      explicit SecurityWidgetTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
