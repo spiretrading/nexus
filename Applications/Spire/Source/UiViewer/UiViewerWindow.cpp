@@ -15,13 +15,14 @@
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/RangeInputTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 
 using namespace Spire;
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
     : Window(parent) {
-  setMinimumSize(scale(500, 414));
+  setMinimumSize(scale(775, 414));
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire-icon-black.svg", ":/Icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
@@ -76,6 +77,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     new MoneySpinBoxTestWidget(this), this));
   add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
     new QuantitySpinBoxTestWidget(this), this));
+  add_test_widget(tr("RangeInputWidget"), new RangeInputTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
 
