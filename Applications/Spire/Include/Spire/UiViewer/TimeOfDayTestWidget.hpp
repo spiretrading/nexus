@@ -18,11 +18,13 @@ namespace Spire {
       explicit TimeOfDayTestWidget(QWidget* parent = nullptr);
 
     private:
+      QLabel* m_status_label;
       TimeOfDayInputWidget* m_time_input;
       TextInputWidget* m_hour_input;
       TextInputWidget* m_minute_input;
 
       void on_set_button();
+      void on_time_modified(const boost::posix_time::time_duration& time);
   };
 }
 
