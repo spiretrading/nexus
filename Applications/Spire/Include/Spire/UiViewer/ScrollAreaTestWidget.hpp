@@ -9,10 +9,15 @@
 
 namespace Spire {
 
+  //! Represents a widget for testing a ScrollArea.
   class ScrollAreaTestWidget : public QWidget {
     public:
 
-      ScrollAreaTestWidget(QWidget* parent = nullptr);
+      //! Constructs a ScrollAreaTestWidget.
+      /*!
+        \param parent The parent widget.
+      */
+      explicit ScrollAreaTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
