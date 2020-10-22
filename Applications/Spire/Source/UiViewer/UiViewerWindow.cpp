@@ -20,6 +20,7 @@
 #include "Spire/UiViewer/SecurityInputTestWidget.hpp"
 #include "Spire/UiViewer/SecurityWidgetTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/TextInputTestWidget.hpp"
 
 using namespace Spire;
 
@@ -84,6 +85,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("ScrollArea"), new ScrollAreaTestWidget(this));
   add_test_widget(tr("SecurityInput"), new SecurityInputTestWidget(this));
   add_test_widget(tr("SecurityWidget"), new SecurityWidgetTestWidget(this));
+  add_test_widget(tr("TextInputWidget"), new TextInputTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
 
