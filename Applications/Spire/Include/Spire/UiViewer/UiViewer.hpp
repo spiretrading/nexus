@@ -17,6 +17,7 @@ namespace Spire {
   class QuantitySpinBoxTestWidget;
   class RangeInputTestWidget;
   class ScrollAreaTestWidget;
+  class SecurityInputTestWidget;
   class SecurityWidgetTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
