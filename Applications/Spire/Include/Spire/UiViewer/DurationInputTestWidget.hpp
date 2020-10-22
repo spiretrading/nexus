@@ -25,6 +25,7 @@ namespace Spire {
       TextInputWidget* m_second_input;
 
       void on_set_button();
+      void on_time_committed(const boost::posix_time::time_duration& time);
   };
 }
 
