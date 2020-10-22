@@ -5,12 +5,17 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/UiViewer/CheckBoxTestWidget.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
+#include "Spire/UiViewer/ComboBoxTestWidget.hpp"
+#include "Spire/UiViewer/CurrencyComboBoxTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/DurationInputTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
+#include "Spire/UiViewer/IconButtonTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/RangeInputTestWidget.hpp"
 #include "Spire/UiViewer/SecurityInputTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 
@@ -18,7 +23,7 @@ using namespace Spire;
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
     : Window(parent) {
-  setMinimumSize(scale(500, 414));
+  setMinimumSize(scale(775, 414));
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire-icon-black.svg", ":/Icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
@@ -58,16 +63,22 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("CheckBox"), new CheckBoxTestWidget(this));
   add_test_widget(tr("ColorSelectorButton"),
     new ColorSelectorButtonTestWidget(this));
+  add_test_widget(tr("CurrencyComboBox"), new ComboBoxTestWidget(
+    new CurrencyComboBoxTestWidget(this), this));
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
     new DecimalSpinBoxTestWidget(this), this));
+  add_test_widget(tr("DurationInputWidget"),
+    new DurationInputTestWidget(this));
   add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
   add_test_widget(tr("FontSelectorWidget"), new FontSelectorTestWidget(this));
+  add_test_widget(tr("IconButton"), new IconButtonTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
     new IntegerSpinBoxTestWidget(this), this));
   add_test_widget(tr("MoneySpinBox"), new SpinBoxTestWidget(
     new MoneySpinBoxTestWidget(this), this));
   add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
     new QuantitySpinBoxTestWidget(this), this));
+  add_test_widget(tr("RangeInputWidget"), new RangeInputTestWidget(this));
   add_test_widget(tr("SecurityInput"), new SecurityInputTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
