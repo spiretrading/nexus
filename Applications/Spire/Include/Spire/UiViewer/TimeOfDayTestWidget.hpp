@@ -15,7 +15,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      TimeOfDayTestWidget(QWidget* parent = nullptr);
+      explicit TimeOfDayTestWidget(QWidget* parent = nullptr);
 
     private:
       TimeOfDayInputWidget* m_time_input;
