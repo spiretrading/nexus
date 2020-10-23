@@ -23,7 +23,8 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Charting Window Tester"));
   initialize_resources();
-  auto window = new ChartingWindow(Ref(get_local_security_input_test_model()));
+  auto window = new ChartingWindow(
+    Ref(LocalSecurityInputModel::get_test_model()));
   auto test_timer = QTimer();
   window->connect_security_change_signal(
     [=, &test_timer] (const auto& security) {

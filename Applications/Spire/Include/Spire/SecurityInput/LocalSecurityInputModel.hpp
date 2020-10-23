@@ -11,6 +11,9 @@ namespace Spire {
   class LocalSecurityInputModel final : public SecurityInputModel {
     public:
 
+      //! Returns a standard SecurityInputModel suitable for testing purposes.
+      static SecurityInputModel& get_test_model();
+
       //! Constructs an empty local security input model.
       LocalSecurityInputModel();
 
@@ -26,8 +29,6 @@ namespace Spire {
     private:
       rtv::Trie<char, Nexus::SecurityInfo> m_securities;
   };
-
-  LocalSecurityInputModel& get_local_security_input_test_model();
 }
 
 #endif

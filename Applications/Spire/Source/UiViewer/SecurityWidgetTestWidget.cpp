@@ -36,7 +36,7 @@ void SecurityWidgetTestWidget::on_reset_button() {
     return SecurityWidget::Theme::LIGHT;
   }();
   m_security_widget = new SecurityWidget(
-    Ref(get_local_security_input_test_model()), theme, this);
+    Ref(LocalSecurityInputModel::get_test_model()), theme, this);
   m_security_widget->setMinimumHeight(scale_height(300));
   m_security_widget->connect_change_security_signal(
     [=] (const auto& security){
