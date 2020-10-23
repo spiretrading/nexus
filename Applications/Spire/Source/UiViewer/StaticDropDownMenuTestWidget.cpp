@@ -28,7 +28,7 @@ StaticDropDownMenuTestWidget::StaticDropDownMenuTestWidget(QWidget* parent)
     : QWidget(parent),
       m_menu(nullptr) {
   auto container = new QWidget(this);
-  m_layout = new QGridLayout(this);
+  m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
   m_item_input = new QPlainTextEdit(this);
@@ -45,7 +45,6 @@ StaticDropDownMenuTestWidget::StaticDropDownMenuTestWidget(QWidget* parent)
     QPlainTextEdit:focus {
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
-  m_item_input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_layout->addWidget(m_item_input, 1, 0, 6, 2);
   m_label_input = new TextInputWidget(this);
   m_label_input->setPlaceholderText(tr("Fixed Label"));
