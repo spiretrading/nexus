@@ -81,11 +81,11 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     new MoneySpinBoxTestWidget(this), this));
   add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
     new QuantitySpinBoxTestWidget(this), this));
-  add_test_widget(tr("StaticDropDownMenu"),
-    new StaticDropDownMenuTestWidget(this));
   add_test_widget(tr("RangeInputWidget"), new RangeInputTestWidget(this));
   add_test_widget(tr("ScrollArea"), new ScrollAreaTestWidget(this));
   add_test_widget(tr("SecurityInput"), new SecurityInputTestWidget(this));
+  add_test_widget(tr("StaticDropDownMenu"),
+    new StaticDropDownMenuTestWidget(this));
   add_test_widget(tr("TextInputWidget"), new TextInputTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
