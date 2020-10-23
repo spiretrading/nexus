@@ -18,7 +18,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      StaticDropDownMenuTestWidget(QWidget* parent = nullptr);
+      explicit StaticDropDownMenuTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
