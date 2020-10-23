@@ -22,6 +22,7 @@
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/TabTestWidget.hpp"
 #include "Spire/UiViewer/TextInputTestWidget.hpp"
+#include "Spire/UiViewer/TimeOfDayTestWidget.hpp"
 
 using namespace Spire;
 
@@ -88,6 +89,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("SecurityWidget"), new SecurityWidgetTestWidget(this));
   add_test_widget(tr("TabWidget"), new TabTestWidget(this));
   add_test_widget(tr("TextInputWidget"), new TextInputTestWidget(this));
+  add_test_widget(tr("TimeOfDayInputWidget"), new TimeOfDayTestWidget(this));
   m_widget_list->setCurrentRow(0);
 }
 

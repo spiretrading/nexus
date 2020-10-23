@@ -180,6 +180,7 @@ void TimeOfDayInputWidget::set_unfocused_style() {
 void TimeOfDayInputWidget::set_style(const QString& border_hex) {
   m_hour_line_edit->setStyleSheet(QString(R"(
     QLineEdit {
+      background-color: white;
       border-bottom: %2px solid %3;
       border-left: %1px solid %3;
       border-right: none;
@@ -190,6 +191,7 @@ void TimeOfDayInputWidget::set_style(const QString& border_hex) {
         .arg(scale_height(12)));
   m_minute_line_edit->setStyleSheet(QString(R"(
     QLineEdit {
+      background-color: white;
       border-bottom: %2px solid %3;
       border-left: none;
       border-right: %1px solid %3;
