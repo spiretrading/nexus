@@ -15,7 +15,7 @@ namespace Spire {
       explicit CurrencyComboBoxTestWidget(QWidget* parent = nullptr);
 
       boost::signals2::connection connect_selected_signal(
-        const SelectedSignal::slot_type& slot) const;
+        const SelectedSignal::slot_type& slot) const override;
 
     private:
       mutable SelectedSignal m_selected_signal;
