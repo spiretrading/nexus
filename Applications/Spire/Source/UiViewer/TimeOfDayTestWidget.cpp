@@ -46,7 +46,7 @@ void TimeOfDayTestWidget::on_set_button() {
   }
 }
 
-void TimeOfDayTestWidget::on_time_modified(const time_duration& time) {
+void TimeOfDayTestWidget::on_time_modified(time_duration time) {
   auto minute_text = [&] {
     if(time.minutes() < 10) {
       return QString("0%1").arg(QString::number(time.minutes()));

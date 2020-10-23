@@ -24,7 +24,7 @@ namespace Spire {
       TextInputWidget* m_minute_input;
 
       void on_set_button();
-      void on_time_modified(const boost::posix_time::time_duration& time);
+      void on_time_modified(boost::posix_time::time_duration time);
   };
 }
 
