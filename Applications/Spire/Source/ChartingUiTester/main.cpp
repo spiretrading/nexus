@@ -23,29 +23,8 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Charting Window Tester"));
   initialize_resources();
-  LocalSecurityInputModel model;
-  model.add(SecurityInfo(
-    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
-    "Microsoft Corp", "Software", 100));
-  model.add(SecurityInfo(
-    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive", 100));
-  model.add(SecurityInfo(
-    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Manulife Financial Corporation", "Finance", 100));
-  model.add(SecurityInfo(
-    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Methanex Corporation", "", 100));
-  model.add(SecurityInfo(
-    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Metro Inc.", "", 100));
-  model.add(SecurityInfo(
-    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Monsanto Co.", "", 100));
-  model.add(SecurityInfo(
-    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Morgan Stanley", "Finance", 100));
-  auto window = new ChartingWindow(Ref(model));
+  auto window = new ChartingWindow(
+    Ref(LocalSecurityInputModel::get_test_model()));
   auto test_timer = QTimer();
   window->connect_security_change_signal(
     [=, &test_timer] (const auto& security) {
