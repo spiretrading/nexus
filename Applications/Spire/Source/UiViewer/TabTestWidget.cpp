@@ -10,9 +10,9 @@ TabTestWidget::TabTestWidget(QWidget* parent)
   auto layout = new QHBoxLayout(this);
   auto tab_widget = new TabWidget(this);
   layout->addWidget(tab_widget);
-  auto widget1 = new QLabel(tr("Tab 1"), this);
-  widget1->setAlignment(Qt::AlignCenter);
-  widget1->setFocusPolicy(Qt::StrongFocus);
+  auto tab1_label = new QLabel(tr("Tab 1"), this);
+  tab1_label->setAlignment(Qt::AlignCenter);
+  tab1_label->setFocusPolicy(Qt::StrongFocus);
   auto style = QString(R"(
     QLabel {
       background-color: white;
@@ -21,16 +21,16 @@ TabTestWidget::TabTestWidget(QWidget* parent)
     QLabel:focus {
       border: 2px solid #4B23A0;
     })");
-  widget1->setStyleSheet(style);
-  tab_widget->addTab(widget1, tr("Tab 1"));
-  auto widget2 = new QLabel(tr("Tab 2"), this);
-  widget2->setAlignment(Qt::AlignCenter);
-  widget2->setFocusPolicy(Qt::StrongFocus);
-  widget2->setStyleSheet(style);
-  tab_widget->addTab(widget2, tr("Tab 2"));
-  auto widget3 = new QLabel(tr("Tab 3"), this);
-  widget3->setAlignment(Qt::AlignCenter);
-  widget3->setFocusPolicy(Qt::StrongFocus);
-  widget3->setStyleSheet(style);
-  tab_widget->addTab(widget3, tr("Tab 3"));
+  tab1_label->setStyleSheet(style);
+  tab_widget->addTab(tab1_label, tr("Tab 1"));
+  auto tab2_label = new QLabel(tr("Tab 2"), this);
+  tab2_label->setAlignment(Qt::AlignCenter);
+  tab2_label->setFocusPolicy(Qt::StrongFocus);
+  tab2_label->setStyleSheet(style);
+  tab_widget->addTab(tab2_label, tr("Tab 2"));
+  auto tab3_label = new QLabel(tr("Tab 3"), this);
+  tab3_label->setAlignment(Qt::AlignCenter);
+  tab3_label->setFocusPolicy(Qt::StrongFocus);
+  tab3_label->setStyleSheet(style);
+  tab_widget->addTab(tab3_label, tr("Tab 3"));
 }
