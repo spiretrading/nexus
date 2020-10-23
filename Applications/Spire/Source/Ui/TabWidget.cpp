@@ -1,13 +1,11 @@
 #include "Spire/Ui/TabWidget.hpp"
-#include <QKeyEvent>
 #include <QTabBar>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 
 TabWidget::TabWidget(QWidget* parent)
-    : QTabWidget(parent),
-      m_last_focus_was_key(false) {
+    : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
   setStyleSheet(QString(R"(
     QWidget {
@@ -42,30 +40,4 @@ TabWidget::TabWidget(QWidget* parent)
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
-  connect(this, &QTabWidget::tabBarClicked, this,
-    &TabWidget::on_tab_bar_clicked);
-  connect(this, &QTabWidget::currentChanged, this,
-    &TabWidget::on_tab_changed);
-}
-
-void TabWidget::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Left || event->key() == Qt::Key_Right) {
-    m_last_focus_was_key = true;
-  }
-}
-
-void TabWidget::mousePressEvent(QMouseEvent* event) {
-  m_last_focus_was_key = false;
-}
-
-void TabWidget::on_tab_bar_clicked(int index) {
-  if(widget(index) != nullptr) {
-    widget(index)->setFocus();
-  }
-}
-
-void TabWidget::on_tab_changed() {
-  if(m_last_focus_was_key) {
-    tabBar()->setFocus();
-  }
 }

@@ -13,16 +13,6 @@ namespace Spire {
         \param parent The parent widget.
       */
       TabWidget(QWidget* parent = nullptr);
-
-    protected:
-      void keyPressEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-
-    private:
-      bool m_last_focus_was_key;
-
-      void on_tab_bar_clicked(int index);
-      void on_tab_changed();
   };
 }
 
