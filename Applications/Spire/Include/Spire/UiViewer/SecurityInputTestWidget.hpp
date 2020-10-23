@@ -3,7 +3,6 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QWidget>
-#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -24,7 +23,6 @@ namespace Spire {
     private:
       QGridLayout* m_layout;
       QLabel* m_status_label;
-      LocalSecurityInputModel m_model;
       SecurityInputLineEdit* m_security_input;
       TextInputWidget* m_initial_text_input;
       CheckBox* m_icon_check_box;
