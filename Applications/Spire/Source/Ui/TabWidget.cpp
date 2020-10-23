@@ -33,7 +33,8 @@ TabWidget::TabWidget(QWidget* parent)
     }
 
     QTabBar::tab:hover {
-      color: #4B23A0;
+      background-color: #DBDBDB;
+      color: black;
     }
 
     QTabBar::tab:selected {

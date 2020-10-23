@@ -12,7 +12,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      TabTestWidget(QWidget* parent = nullptr);
+      explicit TabTestWidget(QWidget* parent = nullptr);
   };
 }
 
