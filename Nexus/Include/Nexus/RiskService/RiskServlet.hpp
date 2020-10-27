@@ -78,6 +78,8 @@ namespace Nexus::RiskService {
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
 
+      void HandleClientAccepted(ServiceProtocolClient& client);
+
       void HandleClientClosed(ServiceProtocolClient& client);
 
       void Close();
@@ -181,6 +183,22 @@ namespace Nexus::RiskService {
     SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
       std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
       std::placeholders::_1));
+  }
+
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D>
+  void RiskServlet<C, A, M, O, R, T, D>::HandleClientAccepted(
+      ServiceProtocolClient& client) {
+    auto& session = client.GetSession();
+    if(m_administrationClient->CheckAdministrator(session.GetAccount())) {
+      session.AddAllPortfolioGroups();
+    } else {
+      auto groups = m_administrationClient->LoadManagedTradingGroups(
+        session.GetAccount());
+      for(auto& group : groups) {
+        session.AddPortfolioGroup(group);
+      }
+    }
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -348,7 +366,7 @@ namespace Nexus::RiskService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto& session = client.GetSession();
-    if(!m_administrationClient->CheckAdministrator(session.GetAccount())) {
+    if(session.HasGroupPortfolioSubscription(LoadGroup(account))) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
@@ -385,22 +403,8 @@ namespace Nexus::RiskService {
       Beam::Services::RequestToken<ServiceProtocolClient,
       SubscribeRiskPortfolioUpdatesService>& request) {
     auto& session = request.GetSession();
-    auto isAdministrator = m_administrationClient->CheckAdministrator(
-      session.GetAccount());
-    auto groups = std::vector<Beam::ServiceLocator::DirectoryEntry>();
-    if(!isAdministrator) {
-      groups = m_administrationClient->LoadManagedTradingGroups(
-        session.GetAccount());
-    }
-    auto entries = std::vector<RiskInventoryEntry>();
     m_portfolioSubscribers.With([&] (auto& subscribers) {
-      if(isAdministrator) {
-        session.AddAllPortfolioGroups();
-      } else {
-        for(auto& group : groups) {
-          session.AddPortfolioGroup(group);
-        }
-      }
+      auto entries = std::vector<RiskInventoryEntry>();
       subscribers.push_back(&request.GetClient());
       auto queue = std::make_shared<Beam::Queue<RiskInventoryEntry>>();
       m_controller->GetPortfolioPublisher().Monitor(queue);
@@ -410,7 +414,7 @@ namespace Nexus::RiskService {
           entries.push_back(std::move(*entry));
         }
       }
-      request.SetResult(entries);
+      request.SetResult(std::move(entries));
     });
   }
 }
