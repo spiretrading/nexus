@@ -155,7 +155,19 @@ void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
   auto orders = std::make_shared<Queue<const Order*>>();
   orderExecutionPublisher.Monitor(orders);
-  m_portfolioController.emplace(Initialize(m_userProfile->GetMarketDatabase()),
+  auto bookkeeper = [&] {
+    if(!m_isConsolidated) {
+      return SpireBookkeeper();
+    }
+    auto inventory = std::vector<SpireInventory>();
+    inventory.emplace_back(
+      SpirePosition({ParseSecurity("A.TSX"), DefaultCurrencies::CAD()}, 100,
+      1000 * Money::ONE), 2 * Money::ONE, Money::ZERO, 100, 1);
+    return SpireBookkeeper(inventory);
+  }();
+  auto portfolio = SpirePortfolio(m_userProfile->GetMarketDatabase(),
+    std::move(bookkeeper));
+  m_portfolioController.emplace(std::move(portfolio),
     &m_userProfile->GetServiceClients().GetMarketDataClient(),
     std::move(orders));
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));
