@@ -156,16 +156,11 @@ void BlotterModel::InitializeModels() {
   auto orders = std::make_shared<Queue<const Order*>>();
   orderExecutionPublisher.Monitor(orders);
   if(m_isConsolidated) {
-    try {
-      auto snapshot =
-        m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
-        m_executingAccount);
-    } catch(const std::exception& e) {
-      std::cout << e.what() << std::endl;
-    }
-//    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(snapshot,
-//      m_executingAccount, m_userProfile->GetMarketDatabase(),
-//      m_userProfile->GetServiceClients().GetOrderExecutionClient());
+    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(
+      m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
+      m_executingAccount), m_executingAccount,
+      m_userProfile->GetMarketDatabase(),
+      m_userProfile->GetServiceClients().GetOrderExecutionClient());
   }
   auto bookkeeper = [&] {
     if(!m_isConsolidated) {

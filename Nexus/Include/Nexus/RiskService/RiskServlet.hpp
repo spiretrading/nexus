@@ -352,7 +352,8 @@ namespace Nexus::RiskService {
     m_portfolioSubscribers.With([&] (auto& subscribers) {
       for(auto& subscriber : subscribers) {
         auto& session = subscriber->GetSession();
-        if(session.HasGroupPortfolioSubscription(group)) {
+        if(session.GetAccount() == entry.m_key.m_account ||
+            session.HasGroupPortfolioSubscription(group)) {
           Beam::Services::SendRecordMessage<InventoryMessage>(*subscriber,
             inventories);
         }
@@ -366,7 +367,8 @@ namespace Nexus::RiskService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto& session = client.GetSession();
-    if(session.HasGroupPortfolioSubscription(LoadGroup(account))) {
+    if(account != session.GetAccount() &&
+        !session.HasGroupPortfolioSubscription(LoadGroup(account))) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
@@ -409,8 +411,9 @@ namespace Nexus::RiskService {
       auto queue = std::make_shared<Beam::Queue<RiskInventoryEntry>>();
       m_controller->GetPortfolioPublisher().Monitor(queue);
       while(auto entry = queue->TryPop()) {
-        auto group = LoadGroup(entry->m_key.m_account);
-        if(session.HasGroupPortfolioSubscription(group)) {
+        if(session.GetAccount() == entry->m_key.m_account ||
+            session.HasGroupPortfolioSubscription(
+            LoadGroup(entry->m_key.m_account))) {
           entries.push_back(std::move(*entry));
         }
       }
