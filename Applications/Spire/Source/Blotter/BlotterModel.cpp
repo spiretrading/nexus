@@ -1,18 +1,13 @@
 #include "Spire/Blotter/BlotterModel.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/Utilities/DateTime.hpp>
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/CancelOnFillController.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
+using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
-using namespace Beam::TimeService;
-using namespace boost;
-using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 using namespace Spire;
@@ -24,8 +19,7 @@ namespace {
 
 BlotterModel::BlotterModel(const string& name,
     const DirectoryEntry& executingAccount, bool isConsolidated,
-    Ref<UserProfile> userProfile,
-    const BlotterTaskProperties& taskProperties,
+    Ref<UserProfile> userProfile, const BlotterTaskProperties& taskProperties,
     const OrderLogProperties& orderLogProperties)
     : m_name(name),
       m_executingAccount(executingAccount),
@@ -153,23 +147,33 @@ void BlotterModel::Unlink(BlotterModel& blotter) {
 
 void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
-  auto orders = std::make_shared<Queue<const Order*>>();
-  orderExecutionPublisher.Monitor(orders);
-  auto portfolio = [&] {
-    if(m_isConsolidated) {
-      auto [portfolio, sequence, excludedOrders] = BuildPortfolio(
-        m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
-        m_executingAccount), m_executingAccount,
-        m_userProfile->GetMarketDatabase(),
-        m_userProfile->GetServiceClients().GetOrderExecutionClient());
-      return portfolio;
-    } else {
-      return SpirePortfolio(m_userProfile->GetMarketDatabase());
+  if(m_isConsolidated) {
+    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(
+      m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
+      m_executingAccount), m_executingAccount,
+      m_userProfile->GetMarketDatabase(),
+      m_userProfile->GetServiceClients().GetOrderExecutionClient());
+    auto orders = std::make_shared<Queue<const Order*>>();
+    for(auto& order : excludedOrders) {
+      orders->Push(order);
     }
-  }();
-  m_portfolioController.emplace(std::move(portfolio),
-    &m_userProfile->GetServiceClients().GetMarketDataClient(),
-    std::move(orders));
+    auto query = AccountQuery();
+    query.SetIndex(m_executingAccount);
+    query.SetRange(Increment(sequence), Beam::Queries::Sequence::Last());
+    query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+    m_userProfile->GetServiceClients().GetOrderExecutionClient().
+      QueryOrderSubmissions(query, orders);
+    m_portfolioController.emplace(std::move(portfolio),
+      &m_userProfile->GetServiceClients().GetMarketDataClient(),
+      std::move(orders));
+  } else {
+    auto orders = std::make_shared<Queue<const Order*>>();
+    orderExecutionPublisher.Monitor(orders);
+    m_portfolioController.emplace(
+      SpirePortfolio(m_userProfile->GetMarketDatabase()),
+      &m_userProfile->GetServiceClients().GetMarketDataClient(),
+      std::move(orders));
+  }
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));
   m_openPositionsModel.SetPortfolioController(Ref(*m_portfolioController));
   m_profitAndLossModel.SetPortfolioController(Ref(*m_portfolioController));
