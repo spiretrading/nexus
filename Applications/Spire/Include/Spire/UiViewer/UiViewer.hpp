@@ -20,6 +20,7 @@ namespace Spire {
   class ScrollAreaTestWidget;
   class SecurityInputTestWidget;
   class SecurityWidgetTestWidget;
+  class SideComboBoxTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
   class TabTestWidget;
