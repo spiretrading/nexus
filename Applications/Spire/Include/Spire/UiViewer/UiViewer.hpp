@@ -24,6 +24,7 @@ namespace Spire {
   class SpinBoxTestWidget;
   class TabTestWidget;
   class TextInputTestWidget;
+  class TimeInForceComboBoxTestWidget;
   class TimeOfDayTestWidget;
   class UiViewerWindow;
 }
