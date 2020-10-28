@@ -12,8 +12,7 @@ MarketComboBoxTestWidget::MarketComboBoxTestWidget(QWidget* parent)
     : ComboBoxAdapter(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  auto database = GetDefaultMarketDatabase();
-  auto combo_box = new MarketComboBox(database, this);
+  auto combo_box = new MarketComboBox(GetDefaultMarketDatabase(), this);
   layout->addWidget(combo_box);
   combo_box->connect_selected_signal([=] (auto value) {
     m_selected_signal(QVariant::fromValue<MarketToken>(value));
