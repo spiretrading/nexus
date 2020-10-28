@@ -5,6 +5,7 @@
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Ui/Dialog.hpp"
 #include "Spire/Ui/RecentColors.hpp"
+#include "Spire/Ui/TabWidget.hpp"
 
 namespace Spire {
 

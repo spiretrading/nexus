@@ -39,14 +39,13 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   task_keys_label->setFixedHeight(scale_height(30));
   auto tab_label_style = QString(R"(
     font-family: Roboto;
-    font-size: %1px;tab
+    font-size: %1px;
     margin-left: %2px;
   )").arg(scale_height(10)).arg(scale_width(8));
   task_keys_label->setStyleSheet(tab_label_style);
   task_keys_layout->addWidget(task_keys_label);
   m_task_keys_table = new TaskKeyBindingsTableView(
     m_key_bindings.build_order_bindings(), input_model, this);
-  task_keys_widget->setFocusProxy(m_task_keys_table);
   task_keys_layout->addWidget(m_task_keys_table);
   auto cancel_keys_widget = new QWidget(m_tab_widget);
   auto cancel_keys_layout = new QVBoxLayout(cancel_keys_widget);
@@ -59,7 +58,6 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   cancel_keys_layout->addWidget(cancel_keys_label);
   m_cancel_keys_table = new CancelKeyBindingsTableView(
     m_key_bindings.build_cancel_bindings(), this);
-  cancel_keys_widget->setFocusProxy(m_cancel_keys_table);
   cancel_keys_layout->addWidget(m_cancel_keys_table);
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
