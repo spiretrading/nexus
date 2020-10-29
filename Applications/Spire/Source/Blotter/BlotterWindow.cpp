@@ -350,7 +350,8 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
       auto linkAction = new LinkBlotterAction(Ref(*model), &linkMenu);
       linkAction->setText(QString::fromStdString(model->GetName()));
       linkAction->setCheckable(true);
-      linkAction->setEnabled(!m_model->IsConsolidated());
+      linkAction->setEnabled(!m_model->IsConsolidated() &&
+        m_model->GetExecutingAccount() == model->GetExecutingAccount());
       auto isLinked = false;
       for(auto& linkedBlotter : m_model->GetLinkedBlotters()) {
         if(model.get() == linkedBlotter) {
