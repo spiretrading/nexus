@@ -94,7 +94,7 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     m_accountOrderPublisher = MakeSequencePublisherAdaptor(
       std::make_shared<QueueReaderPublisher<const Order*>>(orderQueue));
   } else {
-    m_accountOrderPublisher = 
+    m_accountOrderPublisher =
       std::make_shared<SequencePublisher<const Order*>>();
   }
   m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
