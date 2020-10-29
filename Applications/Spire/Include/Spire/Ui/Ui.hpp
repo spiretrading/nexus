@@ -34,6 +34,7 @@ namespace Spire {
   class ScrollArea;
   class SecurityStack;
   class SecurityWidget;
+  class TabWidget;
   class TitleBar;
   class ToggleButton;
   class TransitionWidget;

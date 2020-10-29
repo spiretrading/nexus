@@ -124,23 +124,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_gradient_end_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
-  auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
+  auto apply_gradient_button = make_flat_button(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedSize(BUTTON_SIZE());
-  QFont generic_button_font;
-  generic_button_font.setFamily("Roboto");
-  generic_button_font.setPixelSize(scale_height(12));
-  apply_gradient_button->setFont(generic_button_font);
-  auto generic_button_default_style = apply_gradient_button->get_style();
-  generic_button_default_style.m_background_color = QColor("#EBEBEB");
-  apply_gradient_button->set_style(generic_button_default_style);
-  auto generic_button_hover_style = apply_gradient_button->get_hover_style();
-  generic_button_hover_style.m_background_color = QColor("#4B23A0");
-  generic_button_hover_style.m_text_color = Qt::white;
-  apply_gradient_button->set_hover_style(generic_button_hover_style);
-  auto generic_button_focus_style = apply_gradient_button->get_focus_style();
-  generic_button_focus_style.m_background_color = QColor("#EBEBEB");
-  generic_button_focus_style.m_border_color = QColor("#4B23A0");
-  apply_gradient_button->set_focus_style(generic_button_focus_style);
   apply_gradient_button->connect_clicked_signal(
     [=] { on_gradient_apply_button_clicked(); });
   band_properties_layout->addWidget(apply_gradient_button);
@@ -157,29 +142,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] (const auto& font) { update_band_list_font(font); });
   font_layout->addWidget(change_font_widget);
   font_layout->addSpacing(scale_height(48));
-  m_show_grid_lines_check_box = new CheckBox(tr("Show Grid"), this);
-  auto check_box_text_style = QString(R"(
-    color: black;
-    font-family: Roboto;
-    font-size: %1px;
-    outline: none;
-    spacing: %2px;)")
-    .arg(scale_height(12)).arg(scale_width(4));
-  auto check_box_indicator_style = QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    height: %3px;
-    width: %4px;)").arg(scale_height(1))
-    .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
-  auto check_box_checked_style = QString(R"(
-    image: url(:/Icons/check-with-box.svg);)");
-  auto check_box_hover_style = QString(R"(
-    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-    .arg(scale_height(1)).arg(scale_width(1));
-  auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
-  m_show_grid_lines_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
+  m_show_grid_lines_check_box = make_check_box(tr("Show Grid"), this);
   m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
   font_layout->addWidget(m_show_grid_lines_check_box);
   font_layout->addStretch(1);

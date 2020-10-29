@@ -2,6 +2,8 @@
 #include <QIcon>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
 

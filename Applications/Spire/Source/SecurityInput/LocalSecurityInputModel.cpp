@@ -2,11 +2,41 @@
 #include <unordered_set>
 #include <boost/algorithm/string/case_conv.hpp>
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
+SecurityInputModel& LocalSecurityInputModel::get_test_model() {
+  static auto model = [] {
+    auto model = std::make_unique<LocalSecurityInputModel>();
+    model->add(SecurityInfo(
+      Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
+      "Microsoft Corp", "Software", 100));
+    model->add(SecurityInfo(
+      Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
+      "Magna International Inc.", "Automotive", 100));
+    model->add(SecurityInfo(
+      Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
+      "Manulife Financial Corporation", "Finance", 100));
+    model->add(SecurityInfo(
+      Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
+      "Methanex Corporation", "", 100));
+    model->add(SecurityInfo(
+      Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
+      "Metro Inc.", "", 100));
+    model->add(SecurityInfo(
+      Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
+      "Monsanto Co.", "", 100));
+    model->add(SecurityInfo(
+      Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
+      "Morgan Stanley", "Finance", 100));
+    return model;
+  }();
+  return *model;
+}
+
 LocalSecurityInputModel::LocalSecurityInputModel()
-    : m_securities('\0') {}
+  : m_securities('\0') {}
 
 void LocalSecurityInputModel::add(SecurityInfo security) {
   auto key = ToString(security.m_security, GetDefaultMarketDatabase());
@@ -33,8 +63,7 @@ QtPromise<std::vector<SecurityInfo>> LocalSecurityInputModel::autocomplete(
     }
     return std::vector<SecurityInfo>(matches.begin(), matches.end());
   }();
-  return QtPromise(
-    [matches = std::move(matches)] {
-      return std::move(matches);
-    });
+  return QtPromise([matches = std::move(matches)] {
+    return std::move(matches);
+  });
 }

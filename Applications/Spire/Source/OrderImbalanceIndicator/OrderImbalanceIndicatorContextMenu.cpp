@@ -176,7 +176,7 @@ void OrderImbalanceIndicatorContextMenu::add_check_box(const QString& text,
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));
   auto focused_style = QString(R"(border-color: #4B23A0;)");
-  auto check_box = new CheckBox(text, this);
+  auto check_box = make_check_box(text, this);
   check_box->setFixedSize(CHECK_BOX_SIZE());
   check_box->setChecked(true);
   check_box->set_stylesheet(text_style, indicator_style, checked_style,

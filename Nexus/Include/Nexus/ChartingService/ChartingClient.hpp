@@ -9,7 +9,6 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/atomic/atomic.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/ChartingService/ChartingService.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
@@ -23,7 +22,7 @@ namespace Nexus::ChartingService {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class ChartingClient : private boost::noncopyable {
+  class ChartingClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -73,7 +72,8 @@ namespace Nexus::ChartingService {
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_queryRoutines;
 
-      void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
+      ChartingClient(const ChartingClient&) = delete;
+      ChartingClient& operator =(const ChartingClient&) = delete;
       void OnSecurityQuery(ServiceProtocolClient& client, int queryId,
         const Queries::SequencedQueryVariant& value);
   };
@@ -83,8 +83,6 @@ namespace Nexus::ChartingService {
   ChartingClient<B>::ChartingClient(BF&& clientBuilder)
       : m_nextQueryId(0),
         m_clientHandler(std::forward<BF>(clientBuilder)) {
-    m_clientHandler.SetReconnectHandler(
-      std::bind(&ChartingClient::OnReconnect, this, std::placeholders::_1));
     Queries::RegisterQueryTypes(Beam::Store(
       m_clientHandler.GetSlots().GetRegistry()));
     RegisterChartingServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -167,10 +165,6 @@ namespace Nexus::ChartingService {
     m_clientHandler.Close();
     m_openState.Close();
   }
-
-  template<typename B>
-  void ChartingClient<B>::OnReconnect(
-    const std::shared_ptr<ServiceProtocolClient>& client) {}
 
   template<typename B>
   void ChartingClient<B>::OnSecurityQuery(ServiceProtocolClient& client,

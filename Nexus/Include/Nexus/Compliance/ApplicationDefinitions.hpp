@@ -1,6 +1,5 @@
 #ifndef NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
-#include <optional>
 #include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
@@ -11,30 +10,27 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/throw_exception.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
 
 namespace Nexus::Compliance {
-namespace Details {
-  using ComplianceClientSessionBuilder =
-    Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-    Beam::ServiceLocator::ApplicationServiceLocatorClient::Client,
-    Beam::Services::MessageProtocol<
-    std::unique_ptr<Beam::Network::TcpSocketChannel>,
-    Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-    Beam::Codecs::NullEncoder>, Beam::Threading::LiveTimer>;
-}
 
   /** Encapsulates a standard ComplianceClient used in an application. */
-  class ApplicationComplianceClient : private boost::noncopyable {
+  class ApplicationComplianceClient {
     public:
 
+      /** The type used to build client sessions. */
+      using SessionBuilder =
+        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
+        Beam::ServiceLocator::ApplicationServiceLocatorClient::Client,
+        Beam::Services::MessageProtocol<
+        std::unique_ptr<Beam::Network::TcpSocketChannel>,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder>, Beam::Threading::LiveTimer>;
+
       /** Defines the standard ComplianceClient used for applications. */
-      using Client = ComplianceClient<Details::ComplianceClientSessionBuilder>;
+      using Client = ComplianceClient<SessionBuilder>;
 
       /** Constructs an ApplicationComplianceClient. */
       ApplicationComplianceClient() = default;
@@ -44,8 +40,8 @@ namespace Details {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate sessions.
        */
-      void BuildSession(Beam::Ref<
-        Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
+      void BuildSession(
+        Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
         serviceLocatorClient);
 
       /** Returns a reference to the Client. */
@@ -67,37 +63,28 @@ namespace Details {
       const Client* Get() const;
 
     private:
-      std::optional<Client> m_client;
+      boost::optional<Client> m_client;
+
+      ApplicationComplianceClient(const ApplicationComplianceClient&) = delete;
+      ApplicationComplianceClient& operator =(
+        const ApplicationComplianceClient&) = delete;
   };
 
   inline void ApplicationComplianceClient::BuildSession(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
       serviceLocatorClient) {
-    if(m_client.has_value()) {
-      m_client->Close();
-      m_client = std::nullopt;
-    }
-    auto serviceLocatorClientHandle = serviceLocatorClient.Get();
+    m_client = boost::none;
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
-      *serviceLocatorClientHandle, Compliance::SERVICE_NAME);
-    auto delay = false;
-    auto sessionBuilder = Details::ComplianceClientSessionBuilder(
-      Beam::Ref(serviceLocatorClient),
-      [=] () mutable {
-        if(delay) {
-          auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3));
-          delayTimer.Start();
-          delayTimer.Wait();
-        }
-        delay = true;
+      *serviceLocatorClient, Compliance::SERVICE_NAME);
+    auto sessionBuilder = SessionBuilder(Beam::Ref(serviceLocatorClient),
+      [=] {
         return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
           boost::posix_time::seconds(10));
       });
-    m_client.emplace(sessionBuilder);
+    m_client.emplace(std::move(sessionBuilder));
   }
 
   inline ApplicationComplianceClient::Client&

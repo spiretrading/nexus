@@ -10,28 +10,6 @@ using namespace Beam;
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  auto create_button(const QString& text, QWidget* parent) {
-    auto button = new FlatButton(text, parent);
-    auto button_style = button->get_style();
-    button_style.m_background_color = QColor("#EBEBEB");
-    auto button_hover_style = button->get_hover_style();
-    button_hover_style.m_background_color = QColor("#4B23A0");
-    button_hover_style.m_text_color = Qt::white;
-    auto button_focus_style = button->get_focus_style();
-    button_focus_style.m_background_color = QColor("#EBEBEB");
-    button_focus_style.m_border_color = QColor("#4B23A0");
-    auto button_font = QFont();
-    button_font.setFamily("Roboto");
-    button_font.setPixelSize(scale_height(12));
-    button->setFont(button_font);
-    button->set_style(button_style);
-    button->set_hover_style(button_hover_style);
-    button->set_focus_style(button_focus_style);
-    return button;
-  }
-}
-
 KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
     Ref<SecurityInputModel> input_model, QWidget* parent)
     : Window(parent),
@@ -96,24 +74,24 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
-  auto restore_button = create_button(tr("Restore Defaults"), this);
+  auto restore_button = make_flat_button(tr("Restore Defaults"), this);
   restore_button->connect_clicked_signal([=] {
     on_restore_button_clicked();
   });
   restore_button->setFixedSize(scale(120, 26));
   button_layout->addWidget(restore_button);
   button_layout->addStretch(1);
-  auto cancel_button = create_button(tr("Cancel"), this);
+  auto cancel_button = make_flat_button(tr("Cancel"), this);
   cancel_button->connect_clicked_signal([=] { close(); });
   cancel_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(cancel_button);
   button_layout->addSpacing(scale_width(8));
-  auto apply_button = create_button(tr("Apply"), this);
+  auto apply_button = make_flat_button(tr("Apply"), this);
   apply_button->connect_clicked_signal(m_apply_signal);
   apply_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(apply_button);
   button_layout->addSpacing(scale_width(8));
-  auto ok_button = create_button(tr("OK"), this);
+  auto ok_button = make_flat_button(tr("OK"), this);
   ok_button->connect_clicked_signal([=] {
     on_ok_button_clicked();
   });

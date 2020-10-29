@@ -10,7 +10,6 @@
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
@@ -26,7 +25,7 @@ namespace Nexus::MarketDataService {
    * @param <H> The type of Timer used for heartbeats.
    */
   template<typename O, typename S, typename P, typename H>
-  class MarketDataFeedClient : private boost::noncopyable {
+  class MarketDataFeedClient {
     public:
 
       /** The type used to represent order ids. */
@@ -181,6 +180,8 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      MarketDataFeedClient(const MarketDataFeedClient&) = delete;
+      MarketDataFeedClient& operator =(const MarketDataFeedClient&) = delete;
       void UpdateBookSampling(const SecurityBookQuote& bookQuote);
       void LockedAddOrder(const Security& security, MarketCode market,
         const std::string& mpid, bool isPrimaryMpid, const OrderId& id,
@@ -246,7 +247,7 @@ namespace Nexus::MarketDataService {
         m_samplingTimer(std::forward<SF>(samplingTimer)) {
     RegisterMarketDataFeedMessages(Beam::Store(m_client.GetSlots()));
     try {
-      Beam::ServiceLocator::OpenAndAuthenticate(authenticator, m_client);
+      Beam::ServiceLocator::Authenticate(authenticator, m_client);
       m_samplingTimer->GetPublisher().Monitor(
         m_tasks.GetSlot<Beam::Threading::Timer::Result>(
         std::bind(&MarketDataFeedClient::OnTimerExpired, this,
