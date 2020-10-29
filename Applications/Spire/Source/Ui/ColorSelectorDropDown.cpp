@@ -233,8 +233,7 @@ void ColorSelectorDropDown::add_recent_color_button(int index,
 void ColorSelectorDropDown::update_recent_colors_layout() {
   while(m_recent_colors_layout->itemAt(0) != nullptr) {
     auto item = m_recent_colors_layout->takeAt(0);
-    auto widget = item->widget();
-    delete_later(widget);
+    item->widget()->deleteLater();
     delete item;
   }
   auto colors = m_recent_colors.get_colors();
