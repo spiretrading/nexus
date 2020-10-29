@@ -33,38 +33,15 @@ namespace {
   }
 
   auto integer_digit_count(RealSpinBox::Real value) {
-    if(value.compare(std::int64_t(10)) == -1) {
-      return 1;
-    } else if(value.compare(std::int64_t(100)) == -1) {
-      return 2;
-    } else if(value.compare(std::int64_t(1000)) == -1) {
-      return 3;
-    } else if(value.compare(std::int64_t(10000)) == -1) {
-      return 4;
-    } else if(value.compare(std::int64_t(100000)) == -1) {
-      return 5;
-    } else if(value.compare(std::int64_t(1000000)) == -1) {
-      return 6;
-    } else if(value.compare(std::int64_t(10000000)) == -1) {
-      return 7;
-    } else if(value.compare(std::int64_t(100000000)) == -1) {
-      return 8;
-    } else if(value.compare(std::int64_t(1000000000)) == -1) {
-      return 9;
-    } else if(value.compare(std::int64_t(10000000000)) == -1) {
-      return 10;
-    } else if(value.compare(std::int64_t(100000000000)) == -1) {
-      return 11;
-    } else if(value.compare(std::int64_t(1000000000000)) == -1) {
-      return 12;
-    } else if(value.compare(std::int64_t(10000000000000)) == -1) {
-      return 13;
-    } else if(value.compare(std::int64_t(100000000000000)) == -1) {
-      return 14;
-    } else if(value.compare(std::int64_t(1000000000000000)) == -1) {
-      return 15;
+    if(value.compare(std::int64_t(0)) == -1) {
+      value *= -1;
     }
-    return std::numeric_limits<int>::quiet_NaN();
+    auto digit_count = 0;
+    while(value.compare(std::int64_t(1)) != -1) {
+      value /= 10;
+      ++digit_count;
+    }
+    return digit_count;
   }
 }
 
@@ -317,7 +294,7 @@ boost::optional<RealSpinBox::Real> RealSpinBox::get_value(
   }
 }
 
-bool RealSpinBox::is_valid_input(const QString& text) {
+bool RealSpinBox::is_valid_input(const QString& text) const {
   if(m_model->get_minimum().compare(Real::zero()) != -1 &&
       text.contains(m_locale.negativeSign())) {
     return false;
@@ -330,7 +307,7 @@ bool RealSpinBox::is_valid_input(const QString& text) {
   return true;
 }
 
-bool RealSpinBox::is_valid_value(const QString& text) {
+bool RealSpinBox::is_valid_value(const QString& text) const {
   if(!text.contains(m_real_regex)) {
     return false;
   }
