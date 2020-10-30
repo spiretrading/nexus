@@ -32,6 +32,7 @@ namespace Spire {
   class TextInputTestWidget;
   class TimeInForceComboBoxTestWidget;
   class TimeOfDayTestWidget;
+  class ToggleButtonTestWidget;
   class TransitionTestWidget;
   class UiViewerWindow;
 }
