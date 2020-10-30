@@ -14,6 +14,9 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit TabWidget(QWidget* parent = nullptr);
+
+    protected:
+      void paintEvent(QPaintEvent* event) override;
   };
 }
 
