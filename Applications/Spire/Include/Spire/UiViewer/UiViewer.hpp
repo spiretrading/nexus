@@ -30,6 +30,7 @@ namespace Spire {
   class TabTestWidget;
   class TextInputTestWidget;
   class TimeOfDayTestWidget;
+  class TransitionTestWidget;
   class UiViewerWindow;
 }
 
