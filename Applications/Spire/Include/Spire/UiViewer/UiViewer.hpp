@@ -7,6 +7,7 @@ namespace Spire {
   class ComboBoxAdapter;
   class ComboBoxTestWidget;
   class CurrencyComboBoxTestWidget;
+  class DateInputTestWidget;
   class DecimalSpinBoxTestWidget;
   class DurationInputTestWidget;
   class FlatButtonTestWidget;
@@ -15,6 +16,8 @@ namespace Spire {
   class IntegerSpinBoxTestWidget;
   class MarketComboBoxTestWidget;
   class MoneySpinBoxTestWidget;
+  class OrderStatusComboBoxTestWidget;
+  class OrderTypeComboBoxTestWidget;
   class QuantitySpinBoxTestWidget;
   class RangeInputTestWidget;
   class ScrollAreaTestWidget;
@@ -22,6 +25,7 @@ namespace Spire {
   class SecurityWidgetTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
+  class StaticDropDownMenuTestWidget;
   class TabTestWidget;
   class TextInputTestWidget;
   class TimeInForceComboBoxTestWidget;

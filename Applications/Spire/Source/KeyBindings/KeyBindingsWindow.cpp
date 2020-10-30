@@ -27,13 +27,8 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
   Window::layout()->addWidget(body);
-  m_tab_widget = new CustomTabWidget(this);
+  m_tab_widget = new TabWidget(this);
   layout->addWidget(m_tab_widget);
-  connect(m_tab_widget, &QTabWidget::currentChanged, this,
-    &KeyBindingsWindow::on_tab_changed);
-  m_tab_widget->tabBar()->installEventFilter(this);
-  connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
-    &KeyBindingsWindow::on_tab_bar_clicked);
   auto task_keys_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(task_keys_widget, tr("Task Keys"));
   auto task_keys_layout = new QVBoxLayout(task_keys_widget);
@@ -98,8 +93,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   ok_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(ok_button);
   button_layout->addSpacing(scale_width(8));
-  m_tab_widget->setCurrentIndex(0);
-  on_tab_bar_clicked(0);
+  m_task_keys_table->setFocus();
 }
 
 const KeyBindings& KeyBindingsWindow::get_key_bindings() const {
@@ -109,21 +103,6 @@ const KeyBindings& KeyBindingsWindow::get_key_bindings() const {
 connection KeyBindingsWindow::connect_apply_signal(
     const ApplySignal::slot_type& slot) const {
   return scoped_connection();
-}
-
-bool KeyBindingsWindow::eventFilter(QObject* watched,
-    QEvent* event) {
-  if(watched == m_tab_widget->tabBar()) {
-    if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Left || e->key() == Qt::Key_Right) {
-        m_last_focus_was_key = true;
-      }
-    } else if(event->type() == QEvent::MouseButtonPress) {
-      m_last_focus_was_key = false;
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void KeyBindingsWindow::on_ok_button_clicked() {
@@ -136,18 +115,4 @@ void KeyBindingsWindow::on_restore_button_clicked() {
   m_task_keys_table->set_key_bindings(default_bindings.build_order_bindings());
   m_cancel_keys_table->set_key_bindings(
     default_bindings.build_cancel_bindings());
-}
-
-void KeyBindingsWindow::on_tab_bar_clicked(int index) {
-  if(index == 0) {
-    m_task_keys_table->setFocus();
-  } else if(index == 1) {
-    m_cancel_keys_table->setFocus();
-  }
-}
-
-void KeyBindingsWindow::on_tab_changed() {
-  if(m_last_focus_was_key) {
-    m_tab_widget->tabBar()->setFocus();
-  }
 }
