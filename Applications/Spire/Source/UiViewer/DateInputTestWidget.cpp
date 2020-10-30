@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/DateInputTestWidget.hpp"
+#include <QDate>
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
@@ -22,6 +23,7 @@ DateInputTestWidget::DateInputTestWidget(QWidget* parent)
   auto container = new QWidget(this);
   m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
+  m_status_label->setMinimumWidth(scale_width(80));
   m_layout->addWidget(m_status_label, 0, 2);
   m_year_input = new TextInputWidget("1970", this);
   m_year_input->setPlaceholderText(tr("Year"));
@@ -55,6 +57,11 @@ void DateInputTestWidget::on_reset_button() {
       delete_later(m_date_input);
       m_date_input = new DateInputWidget(date, this);
       m_date_input->setFixedSize(CONTROL_SIZE());
+      m_date_input->connect_selected_signal([=] (auto date) {
+        auto selected_date = QDate(date.date().year(), date.date().month(),
+          date.date().day());
+        m_status_label->setText(selected_date.toString("MMM d, yyyy"));
+      });
       m_layout->addWidget(m_date_input, 0, 0, 1, 2);
       m_status_label->setText("");
       return;

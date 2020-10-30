@@ -5,6 +5,7 @@
 #include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace boost::gregorian;
 using namespace Spire;
 
@@ -19,6 +20,7 @@ DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
   m_calendar_widget->connect_date_signal([=] (auto date) {
     m_calendar_widget->hide();
     update_label(date);
+    m_selected_signal(ptime(date));
   });
   m_drop_shadow = new DropShadow(true, false, m_calendar_widget);
   m_calendar_widget->hide();
@@ -64,6 +66,11 @@ void DateInputWidget::mousePressEvent(QMouseEvent* event) {
 
 void DateInputWidget::moveEvent(QMoveEvent* event) {
   move_calendar();
+}
+
+connection DateInputWidget::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }
 
 void DateInputWidget::move_calendar() {
