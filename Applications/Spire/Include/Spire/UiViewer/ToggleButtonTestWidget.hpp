@@ -16,7 +16,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      ToggleButtonTestWidget(QWidget* parent = nullptr);
+      explicit ToggleButtonTestWidget(QWidget* parent = nullptr);
 
     private:
       QGridLayout* m_layout;
