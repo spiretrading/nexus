@@ -4,12 +4,12 @@
 
 namespace Spire {
 
-  //! Represents a widget for interacting with a OrderStatusComboBox being
+  //! Represents a widget for interacting with an OrderStatusComboBox being
   //! tested.
   class OrderStatusComboBoxTestWidget : public ComboBoxAdapter {
     public:
 
-      //! Constructs a OrderStatusComboBoxTestWidget.
+      //! Constructs an OrderStatusComboBoxTestWidget.
       /*!
         \param parent The parent widget.
       */
