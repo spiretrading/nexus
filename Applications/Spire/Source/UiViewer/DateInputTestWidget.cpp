@@ -55,7 +55,7 @@ void DateInputTestWidget::on_reset_button() {
       delete_later(m_date_input);
       m_date_input = new DateInputWidget(date, this);
       m_date_input->setFixedSize(CONTROL_SIZE());
-      m_layout->addWidget(m_date_input, 0, 0);
+      m_layout->addWidget(m_date_input, 0, 0, 1, 2);
       m_status_label->setText("");
       return;
     }
