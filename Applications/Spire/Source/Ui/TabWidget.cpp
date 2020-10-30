@@ -1,20 +1,16 @@
-#include "Spire/KeyBindings/CustomTabWidget.hpp"
+#include "Spire/Ui/TabWidget.hpp"
 #include <QPainter>
 #include <QTabBar>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 
-CustomTabWidget::CustomTabWidget(QWidget* parent)
+TabWidget::TabWidget(QWidget* parent)
     : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
   setStyleSheet(QString(R"(
     QWidget {
       outline: none;
-    }
-
-    QTabWidget::tab-bar {
-      left: %7px;
     }
 
     QTabWidget::pane {
@@ -36,18 +32,19 @@ CustomTabWidget::CustomTabWidget(QWidget* parent)
     }
 
     QTabBar::tab:hover {
-      color: #4B23A0;
+      background-color: #DBDBDB;
+      color: black;
     }
 
     QTabBar::tab:selected {
       background-color: #F5F5F5;
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
-        .arg(scale_width(8)));
+        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
 }
 
-void CustomTabWidget::paintEvent(QPaintEvent* event) {
+void TabWidget::paintEvent(QPaintEvent* event) {
+  QTabWidget::paintEvent(event);
   auto painter = QPainter(this);
   painter.setPen(QColor("#E0E0E0"));
   painter.drawLine(tabBar()->width(), tabBar()->height() - scale_height(11),

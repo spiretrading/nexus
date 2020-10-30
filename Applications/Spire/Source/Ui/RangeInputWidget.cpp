@@ -30,7 +30,7 @@ RangeInputWidget::RangeInputWidget(std::shared_ptr<RangeInputModel> model,
     on_min_handle_moved(value); });
   m_slider->connect_max_changed_signal([=] (auto value) {
     on_max_handle_moved(value); });
-  layout->addWidget(m_slider);
+  layout->addWidget(m_slider, 1);
   m_max_widget->connect_change_signal([=] (auto value) {
     on_max_edited(value);
   });

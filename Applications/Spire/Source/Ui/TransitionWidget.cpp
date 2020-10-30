@@ -46,6 +46,6 @@ void TransitionWidget::align() {
 }
 
 void TransitionWidget::on_show_timer() {
-  show();
   align();
+  show();
 }
