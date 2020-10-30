@@ -137,7 +137,7 @@ void RealSpinBox::keyPressEvent(QKeyEvent* event) {
       auto current_text = lineEdit()->text().remove(
         lineEdit()->selectedText());
       current_text.insert(lineEdit()->cursorPosition(), input);
-      if(is_valid_input(current_text.trimmed())) {
+      if(is_well_formed(current_text.trimmed())) {
         QAbstractSpinBox::keyPressEvent(event);
       }
     }
@@ -294,7 +294,7 @@ boost::optional<RealSpinBox::Real> RealSpinBox::get_value(
   }
 }
 
-bool RealSpinBox::is_valid_input(const QString& text) const {
+bool RealSpinBox::is_well_formed(const QString& text) const {
   if(m_model->get_minimum().compare(Real::zero()) != -1 &&
       text.contains(m_locale.negativeSign())) {
     return false;
@@ -307,7 +307,7 @@ bool RealSpinBox::is_valid_input(const QString& text) const {
   return true;
 }
 
-bool RealSpinBox::is_valid_value(const QString& text) const {
+bool RealSpinBox::is_valid(const QString& text) const {
   if(!text.contains(m_real_regex)) {
     return false;
   }
@@ -437,13 +437,13 @@ void RealSpinBox::on_editing_finished() {
 }
 
 void RealSpinBox::on_text_changed(const QString& text) {
-  if(!is_valid_input(text)) {
+  if(!is_well_formed(text)) {
     lineEdit()->blockSignals(true);
     lineEdit()->setText(m_last_valid_text);
     lineEdit()->blockSignals(false);
     return;
   }
-  if(!is_valid_value(text)) {
+  if(!is_valid(text)) {
     return;
   }
   m_last_valid_text = text;
