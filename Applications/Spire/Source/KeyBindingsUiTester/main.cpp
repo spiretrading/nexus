@@ -30,29 +30,8 @@ int main(int argc, char** argv) {
     KeyBindings::CancelAction::FURTHEST_ASK);
   bindings.set({Qt::Key_Alt, Qt::Key_Escape}, Region::Global(),
     KeyBindings::CancelAction::CLOSEST_ASK);
-  auto input_model = LocalSecurityInputModel();
-  input_model.add(SecurityInfo(
-    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
-    "Microsoft Corp", "Software", Quantity(100)));
-  input_model.add(SecurityInfo(
-    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive, probably", Quantity(100)));
-  input_model.add(SecurityInfo(
-    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Manulife Financial Corporation", "Finance", Quantity(100)));
-  input_model.add(SecurityInfo(
-    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Methanex Corporation", "", Quantity(100)));
-  input_model.add(SecurityInfo(
-    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Metro Inc.", "", Quantity(100)));
-  input_model.add(SecurityInfo(
-    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Monsanto Co.", "", Quantity(100)));
-  input_model.add(SecurityInfo(
-    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Morgan Stanley", "Finance", Quantity(100)));
-  auto window = new KeyBindingsWindow(bindings, Ref(input_model));
+  auto window = new KeyBindingsWindow(bindings,
+    Ref(LocalSecurityInputModel::get_test_model()));
   window->show();
   application->exec();
 }
