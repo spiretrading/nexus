@@ -1,4 +1,5 @@
 #include "Spire/Ui/TabWidget.hpp"
+#include <QPainter>
 #include <QTabBar>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -40,4 +41,12 @@ TabWidget::TabWidget(QWidget* parent)
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
+}
+
+void TabWidget::paintEvent(QPaintEvent* event) {
+  QTabWidget::paintEvent(event);
+  auto painter = QPainter(this);
+  painter.setPen(QColor("#E0E0E0"));
+  painter.drawLine(tabBar()->width(), tabBar()->height() - scale_height(11),
+    width(), tabBar()->height() - scale_height(11));
 }

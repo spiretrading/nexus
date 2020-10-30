@@ -15,6 +15,7 @@ namespace Spire {
   class IntegerSpinBoxTestWidget;
   class MarketComboBoxTestWidget;
   class MoneySpinBoxTestWidget;
+  class OrderStatusComboBoxTestWidget;
   class OrderTypeComboBoxTestWidget;
   class QuantitySpinBoxTestWidget;
   class RangeInputTestWidget;
@@ -23,6 +24,7 @@ namespace Spire {
   class SecurityWidgetTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
+  class StaticDropDownMenuTestWidget;
   class TabTestWidget;
   class TextInputTestWidget;
   class TimeOfDayTestWidget;

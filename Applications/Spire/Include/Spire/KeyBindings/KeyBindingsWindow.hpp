@@ -1,9 +1,9 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
-#include "Spire/KeyBindings/CustomTabWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
+#include "Spire/Ui/TabWidget.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -32,21 +32,16 @@ namespace Spire {
       boost::signals2::connection connect_apply_signal(
         const ApplySignal::slot_type& slot) const;
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-
     private:
       KeyBindings m_key_bindings;
       mutable ApplySignal m_apply_signal;
-      CustomTabWidget* m_tab_widget;
+      TabWidget* m_tab_widget;
       bool m_last_focus_was_key;
       TaskKeyBindingsTableView* m_task_keys_table;
       CancelKeyBindingsTableView* m_cancel_keys_table;
 
       void on_ok_button_clicked();
       void on_restore_button_clicked();
-      void on_tab_bar_clicked(int index);
-      void on_tab_changed();
   };
 }
 
