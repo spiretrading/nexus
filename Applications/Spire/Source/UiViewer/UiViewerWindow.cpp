@@ -23,6 +23,7 @@
 #include "Spire/UiViewer/ScrollAreaTestWidget.hpp"
 #include "Spire/UiViewer/SecurityInputTestWidget.hpp"
 #include "Spire/UiViewer/SecurityWidgetTestWidget.hpp"
+#include "Spire/UiViewer/SideComboBoxTestWidget.hpp"
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/StaticDropDownMenuTestWidget.hpp"
 #include "Spire/UiViewer/TabTestWidget.hpp"
@@ -100,6 +101,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("ScrollArea"), new ScrollAreaTestWidget(this));
   add_test_widget(tr("SecurityInput"), new SecurityInputTestWidget(this));
   add_test_widget(tr("SecurityWidget"), new SecurityWidgetTestWidget(this));
+  add_test_widget(tr("SideComboBox"), new ComboBoxTestWidget(
+    new SideComboBoxTestWidget(this), this));
   add_test_widget(tr("StaticDropDownMenu"),
     new StaticDropDownMenuTestWidget(this));
   add_test_widget(tr("TabWidget"), new TabTestWidget(this));
