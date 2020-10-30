@@ -10,6 +10,7 @@ namespace Spire {
   class DateInputTestWidget;
   class DecimalSpinBoxTestWidget;
   class DurationInputTestWidget;
+  class FilteredDropDownMenuTestWidget;
   class FlatButtonTestWidget;
   class FontSelectorTestWidget;
   class IconButtonTestWidget;
