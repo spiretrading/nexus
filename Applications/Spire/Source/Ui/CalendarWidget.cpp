@@ -73,7 +73,8 @@ connection CalendarWidget::connect_date_signal(
 void CalendarWidget::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
   auto painter = QPainter(this);
-  painter.fillRect(0, 0, scale_width(112), scale_height(1), QColor("#4B23A0"));
+  painter.fillRect(0, 0, scale_width(parentWidget()->width()), scale_height(1),
+    QColor("#4B23A0"));
 }
 
 void CalendarWidget::on_date_selected(const date& date) {

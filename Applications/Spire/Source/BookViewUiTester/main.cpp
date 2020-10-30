@@ -17,29 +17,8 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Book View UI Tester"));
   initialize_resources();
-  auto model = LocalSecurityInputModel();
-  model.add(SecurityInfo(
-    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
-    "Microsoft Corp", "Software", 100));
-  model.add(SecurityInfo(
-    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive", 100));
-  model.add(SecurityInfo(
-    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Manulife Financial Corporation", "Finance", 100));
-  model.add(SecurityInfo(
-    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Methanex Corporation", "", 100));
-  model.add(SecurityInfo(
-    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Metro Inc.", "", 100));
-  model.add(SecurityInfo(
-    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Monsanto Co.", "", 100));
-  model.add(SecurityInfo(
-    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Morgan Stanley", "Finance", 100));
-  auto window = new BookViewWindow(BookViewProperties(), Ref(model));
+  auto window = new BookViewWindow(BookViewProperties(),
+    Ref(LocalSecurityInputModel::get_test_model()));
   window->show();
   auto tester = new BookViewTestControllerWindow(window);
   tester->show();

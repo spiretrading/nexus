@@ -1,11 +1,11 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
-#include <QTabWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Ui/Dialog.hpp"
 #include "Spire/Ui/RecentColors.hpp"
+#include "Spire/Ui/TabWidget.hpp"
 
 namespace Spire {
 
@@ -46,20 +46,13 @@ namespace Spire {
       boost::signals2::connection connect_save_default_signal(
         const SaveDefaultSignal::slot_type& slot) const;
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-
     private:
       mutable ApplySignal m_apply_signal;
       mutable ApplyAllSignal m_apply_all_signal;
       mutable SaveDefaultSignal m_save_default_signal;
-      QTabWidget* m_tab_widget;
+      TabWidget* m_tab_widget;
       BookViewLevelPropertiesWidget* m_levels_tab_widget;
       BookViewHighlightPropertiesWidget* m_highlights_tab_widget;
-      bool m_last_focus_was_key;
-
-      void on_tab_bar_clicked(int index);
-      void on_tab_changed();
   };
 }
 
