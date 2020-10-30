@@ -16,6 +16,7 @@ namespace Spire {
   class MarketComboBoxTestWidget;
   class MoneySpinBoxTestWidget;
   class OrderStatusComboBoxTestWidget;
+  class OrderTypeComboBoxTestWidget;
   class QuantitySpinBoxTestWidget;
   class RangeInputTestWidget;
   class ScrollAreaTestWidget;
