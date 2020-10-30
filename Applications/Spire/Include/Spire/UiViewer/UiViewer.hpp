@@ -7,6 +7,7 @@ namespace Spire {
   class ComboBoxAdapter;
   class ComboBoxTestWidget;
   class CurrencyComboBoxTestWidget;
+  class DateInputTestWidget;
   class DecimalSpinBoxTestWidget;
   class DurationInputTestWidget;
   class FlatButtonTestWidget;
