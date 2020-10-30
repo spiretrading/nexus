@@ -28,7 +28,7 @@ FilteredDropDownMenuTestWidget::FilteredDropDownMenuTestWidget(QWidget* parent)
     : QWidget(parent),
       m_menu(nullptr) {
   auto container = new QWidget(this);
-  m_layout = new QGridLayout(this);
+  m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
   m_item_input = new QPlainTextEdit(this);
@@ -55,6 +55,7 @@ FilteredDropDownMenuTestWidget::FilteredDropDownMenuTestWidget(QWidget* parent)
   reset_button->setFixedSize(CONTROL_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
   m_layout->addWidget(reset_button, 7, 1);
+  on_reset_button();
 }
 
 void FilteredDropDownMenuTestWidget::on_set_button() {
