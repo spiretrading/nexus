@@ -31,6 +31,18 @@ namespace {
       return a.compare(b) == -1;
     });
   }
+
+  auto integer_digit_count(RealSpinBox::Real value) {
+    if(value.compare(std::int64_t(0)) == -1) {
+      value *= -1;
+    }
+    auto digit_count = 0;
+    while(value.compare(std::int64_t(1)) != -1) {
+      value /= 10;
+      ++digit_count;
+    }
+    return digit_count;
+  }
 }
 
 RealSpinBox::RealSpinBox(std::shared_ptr<RealSpinBoxModel> model,
@@ -125,7 +137,7 @@ void RealSpinBox::keyPressEvent(QKeyEvent* event) {
       auto current_text = lineEdit()->text().remove(
         lineEdit()->selectedText());
       current_text.insert(lineEdit()->cursorPosition(), input);
-      if(is_valid(current_text.trimmed())) {
+      if(is_well_formed(current_text.trimmed())) {
         QAbstractSpinBox::keyPressEvent(event);
       }
     }
@@ -261,7 +273,7 @@ QString RealSpinBox::display_string(Real value) {
     return QString::fromStdString(value.str(decimal_places,
       std::ios_base::fixed));
   }
-  return QString::fromStdString(value.str(text().length() + 1,
+  return QString::fromStdString(value.str(integer_digit_count(value),
     std::ios_base::dec));
 }
 
@@ -282,7 +294,20 @@ boost::optional<RealSpinBox::Real> RealSpinBox::get_value(
   }
 }
 
-bool RealSpinBox::is_valid(const QString& text) {
+bool RealSpinBox::is_well_formed(const QString& text) const {
+  if(m_model->get_minimum().compare(Real::zero()) != -1 &&
+      text.contains(m_locale.negativeSign())) {
+    return false;
+  }
+  if(auto value = get_value(text)) {
+    if(m_model->get_maximum().compare(*value) == -1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool RealSpinBox::is_valid(const QString& text) const {
   if(!text.contains(m_real_regex)) {
     return false;
   }
@@ -402,17 +427,23 @@ void RealSpinBox::on_editing_finished() {
   if(auto value = get_value(text()); text().isEmpty() || !value) {
     lineEdit()->setText(display_string(m_last_valid_value));
   } else {
-    m_last_valid_value = *value;
+    if(value->compare(m_model->get_minimum()) >= 0 &&
+        value->compare(m_model->get_maximum()) <= 0) {
+      m_last_valid_value = *value;
+    }
     lineEdit()->setText(display_string(m_last_valid_value));
   }
   Q_EMIT editingFinished();
 }
 
 void RealSpinBox::on_text_changed(const QString& text) {
-  if(!is_valid(text)) {
+  if(!is_well_formed(text)) {
     lineEdit()->blockSignals(true);
     lineEdit()->setText(m_last_valid_text);
     lineEdit()->blockSignals(false);
+    return;
+  }
+  if(!is_valid(text)) {
     return;
   }
   m_last_valid_text = text;

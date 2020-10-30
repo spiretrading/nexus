@@ -38,6 +38,7 @@ FlatButtonTestWidget::FlatButtonTestWidget(QWidget* parent)
   });
   m_pressed_timer = new QTimer(this);
   m_pressed_timer->setInterval(1000);
+  m_pressed_timer->setSingleShot(true);
   connect(m_pressed_timer, &QTimer::timeout, [=] {
     m_status_label->setText("");
   });
