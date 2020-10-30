@@ -14,14 +14,14 @@ namespace Spire {
       /*!
         \param date The selected date.
       */
-      using SelectedSignal = Signal<void (boost::posix_time::ptime date)>;
+      using SelectedSignal = Signal<void (boost::gregorian::date date)>;
 
       //! Constructs a DateInputWidget with an initially selected date.
       /*
         \param initial_date The initially selected date.
         \param parent The parent widget.
       */
-      explicit DateInputWidget(const boost::posix_time::ptime& initial_date,
+      explicit DateInputWidget(boost::gregorian::date initial_date,
         QWidget* parent = nullptr);
 
       //! Connects a slot to the date selection signal.

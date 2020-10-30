@@ -4,27 +4,26 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 
-using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace boost::gregorian;
 using namespace Spire;
 
-DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
+DateInputWidget::DateInputWidget(date initial_date, QWidget* parent)
     : QLabel(parent) {
   setFocusPolicy(Qt::StrongFocus);
   setObjectName("dateinputwidget");
   setAlignment(Qt::AlignCenter);
   set_default_style();
-  m_calendar_widget = new CalendarWidget(initial_date.date(), this);
+  m_calendar_widget = new CalendarWidget(initial_date, this);
   m_calendar_widget->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
   m_calendar_widget->connect_date_signal([=] (auto date) {
     m_calendar_widget->hide();
     update_label(date);
-    m_selected_signal(ptime(date));
+    m_selected_signal(date);
   });
   m_drop_shadow = new DropShadow(true, false, m_calendar_widget);
   m_calendar_widget->hide();
-  update_label(initial_date.date());
+  update_label(initial_date);
   window()->installEventFilter(this);
 }
 

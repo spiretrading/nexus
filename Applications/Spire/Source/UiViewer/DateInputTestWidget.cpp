@@ -3,6 +3,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
+using namespace boost::gregorian;
 using namespace Spire;
 
 namespace {
@@ -53,13 +54,12 @@ void DateInputTestWidget::on_reset_button() {
   auto day = m_day_input->text().toUShort(&day_ok);
   try {
     if(year_ok && month_ok && day_ok) {
-      auto date = boost::posix_time::ptime({year, month, day});
+      auto set_date = date(year, month, day);
       delete_later(m_date_input);
-      m_date_input = new DateInputWidget(date, this);
+      m_date_input = new DateInputWidget(set_date, this);
       m_date_input->setFixedSize(CONTROL_SIZE());
       m_date_input->connect_selected_signal([=] (auto date) {
-        auto selected_date = QDate(date.date().year(), date.date().month(),
-          date.date().day());
+        auto selected_date = QDate(date.year(), date.month(), date.day());
         m_status_label->setText(selected_date.toString("MMM d, yyyy"));
       });
       m_layout->addWidget(m_date_input, 0, 0, 1, 2);
