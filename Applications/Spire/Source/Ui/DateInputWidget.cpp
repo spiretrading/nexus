@@ -4,8 +4,8 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 
-using namespace boost::signals2;
 using namespace boost::gregorian;
+using namespace boost::signals2;
 using namespace Spire;
 
 DateInputWidget::DateInputWidget(date initial_date, QWidget* parent)
