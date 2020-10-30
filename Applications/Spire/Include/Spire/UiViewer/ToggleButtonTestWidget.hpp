@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QTimer>
 #include <QWidget>
+#include "Spire/Ui/ToggleButton.hpp"
 
 namespace Spire {
 
@@ -22,6 +23,7 @@ namespace Spire {
       QLabel* m_pressed_label;
       QTimer* m_pressed_timer;
 
+      void add_button(ToggleButton* button, int row);
       void on_button_pressed(int row);
   };
 }

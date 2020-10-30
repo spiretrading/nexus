@@ -1,7 +1,6 @@
 #include "Spire/UiViewer/ToggleButtonTestWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/ToggleButton.hpp"
 
 using namespace Spire;
 
@@ -21,73 +20,28 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     : QWidget(parent) {
   auto container = new QWidget(this);
   m_layout = new QGridLayout(container);
-  auto label1 = new QLabel(tr("Toggle Image"), this);
-  m_layout->addWidget(label1, 0, 0, 1, 3);
-  auto button1 = new ToggleButton(
+  auto default_label = new QLabel(tr("Toggle Image"), this);
+  m_layout->addWidget(default_label, 0, 0, 1, 3);
+  auto default_button = new ToggleButton(
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-green.svg", IMAGE_SIZE()), this);
-  button1->setFixedSize(BUTTON_SIZE());
-  auto toggled_check_box1 = make_check_box(tr("Toggled"), this);
-  button1->connect_clicked_signal([=] {
-    toggled_check_box1->setChecked(!toggled_check_box1->isChecked());
-    on_button_pressed(1);
-  });
-  m_layout->addWidget(button1, 1, 0);
-  auto disable_check_box1 = make_check_box(tr("Disable"), this);
-  connect(disable_check_box1, &CheckBox::stateChanged, [=] (auto state) {
-    button1->setDisabled(disable_check_box1->isChecked());
-  });
-  m_layout->addWidget(disable_check_box1, 1, 2);
-  connect(toggled_check_box1, &CheckBox::stateChanged, [=] (auto state) {
-    button1->set_toggled(toggled_check_box1->isChecked());
-  });
-  m_layout->addWidget(toggled_check_box1, 2, 2);
-  auto label2 = new QLabel(tr("Toggle and Hover Images"), this);
-  m_layout->addWidget(label2, 3, 0, 1, 3);
-  auto button2 = new ToggleButton(
+  add_button(default_button, 1);
+  auto hover_style_label = new QLabel(tr("Toggle and Hover Images"), this);
+  m_layout->addWidget(hover_style_label, 3, 0, 1, 3);
+  auto hover_style_button = new ToggleButton(
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-green.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()), this);
-  button2->setFixedSize(BUTTON_SIZE());
-  auto toggled_check_box2 = make_check_box(tr("Toggled"), this);
-  button2->connect_clicked_signal([=] {
-    toggled_check_box2->setChecked(!toggled_check_box2->isChecked());
-    on_button_pressed(4);
-  });
-  m_layout->addWidget(button2, 4, 0);
-  connect(toggled_check_box2, &CheckBox::stateChanged, [=] (auto state) {
-    button2->set_toggled(toggled_check_box2->isChecked());
-  });
-  m_layout->addWidget(toggled_check_box2, 5, 2);
-  auto disable_check_box2 = make_check_box(tr("Disable"), this);
-  connect(disable_check_box2, &CheckBox::stateChanged, [=] (auto state) {
-    button2->setDisabled(disable_check_box2->isChecked());
-  });
-  m_layout->addWidget(disable_check_box2, 4, 2);
-  auto label3 = new QLabel(
+  add_button(hover_style_button, 4);
+  auto disabled_style_label = new QLabel(
     tr("Default, Hover, and Disabled Images"), this);
-  m_layout->addWidget(label3, 6, 0, 1, 3);
-  auto button3 = new ToggleButton(
+  m_layout->addWidget(disabled_style_label, 6, 0, 1, 3);
+  auto disabled_style_button = new ToggleButton(
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-green.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-grey.svg", IMAGE_SIZE()), this);
-  button3->setFixedSize(BUTTON_SIZE());
-  auto toggled_check_box3 = make_check_box(tr("Toggled"), this);
-  button3->connect_clicked_signal([=] {
-    toggled_check_box3->setChecked(!toggled_check_box3->isChecked());
-    on_button_pressed(7);
-  });
-  m_layout->addWidget(button3, 7, 0);
-  auto disable_check_box3 = make_check_box(tr("Disable"), this);
-  connect(disable_check_box3, &CheckBox::stateChanged, [=] (auto state) {
-    button3->setDisabled(disable_check_box3->isChecked());
-  });
-  m_layout->addWidget(disable_check_box3, 7, 2);
-  connect(toggled_check_box3, &CheckBox::stateChanged, [=] (auto state) {
-    button3->set_toggled(toggled_check_box3->isChecked());
-  });
-  m_layout->addWidget(toggled_check_box3, 8, 2);
+  add_button(disabled_style_button, 7);
   m_pressed_label = new QLabel(tr("Button Pressed"), this);
   m_pressed_label->hide();
   m_pressed_timer = new QTimer(this);
@@ -96,6 +50,25 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
   connect(m_pressed_timer, &QTimer::timeout, [=] {
     m_pressed_label->hide();
   });
+}
+
+void ToggleButtonTestWidget::add_button(ToggleButton* button, int row) {
+  button->setFixedSize(BUTTON_SIZE());
+  auto toggled_check_box = make_check_box(tr("Toggled"), this);
+  button->connect_clicked_signal([=] {
+    toggled_check_box->setChecked(!toggled_check_box->isChecked());
+    on_button_pressed(row);
+  });
+  m_layout->addWidget(button, row, 0);
+  auto disable_check_box = make_check_box(tr("Disable"), this);
+  connect(disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
+    button->setDisabled(disable_check_box->isChecked());
+  });
+  m_layout->addWidget(disable_check_box, row, 2);
+  connect(toggled_check_box, &CheckBox::stateChanged, [=] (auto state) {
+    button->set_toggled(toggled_check_box->isChecked());
+  });
+  m_layout->addWidget(toggled_check_box, row + 1, 2);
 }
 
 void ToggleButtonTestWidget::on_button_pressed(int row) {
