@@ -157,7 +157,7 @@ namespace Nexus::RiskService {
         m_exchangeRates(std::move(exchangeRates)),
         m_markets(std::move(markets)),
         m_destinations(std::move(destinations)),
-        m_accountPublisher(Beam::MakeSequencePublisherAdaptor(std::make_shared<
+        m_accountPublisher(Beam::MakeSequencePublisherAdaptor(std::make_unique<
           Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
           std::move(accounts)))) {
     try {
