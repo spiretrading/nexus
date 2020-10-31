@@ -105,7 +105,8 @@ def main():
     query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
     cursor.execute(query)
     for result in cursor.fetchall():
-      securities.append(nexus.Security(result[0], result[1]))
+      securities.append(nexus.Security(result[0],
+        nexus.CountryCode(int(result[1]))))
   markets = []
   with mysql_connection.cursor() as cursor:
     query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
