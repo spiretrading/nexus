@@ -152,18 +152,17 @@ TEST_SUITE("RiskServlet") {
       Side::BID, 200, Money::ONE));
     auto& receivedBid = *m_orders->Pop();
     Accept(receivedBid);
-    receivedBid.With(
-      [&] (auto status, const auto& executionReports) {
-        auto report = ExecutionReport::BuildUpdatedReport(
-          executionReports.back(), OrderStatus::PARTIALLY_FILLED,
-          executionReports.back().m_timestamp);
-        report.m_executionFee = Money::CENT;
-        report.m_processingFee = Money::CENT;
-        report.m_commission = Money::CENT;
-        report.m_lastQuantity = 100;
-        report.m_lastPrice = Money::ONE;
-        receivedBid.Update(report);
-      });
+    receivedBid.With([&] (auto status, const auto& executionReports) {
+      auto report = ExecutionReport::BuildUpdatedReport(
+        executionReports.back(), OrderStatus::PARTIALLY_FILLED,
+        executionReports.back().m_timestamp);
+      report.m_executionFee = Money::CENT;
+      report.m_processingFee = Money::CENT;
+      report.m_commission = Money::CENT;
+      report.m_lastQuantity = 100;
+      report.m_lastPrice = Money::ONE;
+      receivedBid.Update(report);
+    });
     auto bidMessage = std::static_pointer_cast<TestInventoryMessage>(
       client.m_riskClient->ReadMessage());
     REQUIRE(bidMessage != nullptr);
@@ -183,18 +182,17 @@ TEST_SUITE("RiskServlet") {
       Side::ASK, 200, Money::ONE + Money::CENT));
     auto& receivedAsk = *m_orders->Pop();
     Accept(receivedAsk);
-    receivedAsk.With(
-      [&] (auto status, const auto& executionReports) {
-        auto report = ExecutionReport::BuildUpdatedReport(
-          executionReports.back(), OrderStatus::FILLED,
-          executionReports.back().m_timestamp);
-        report.m_executionFee = Money::CENT;
-        report.m_processingFee = Money::CENT;
-        report.m_commission = Money::CENT;
-        report.m_lastQuantity = 200;
-        report.m_lastPrice = Money::ONE + Money::CENT;
-        receivedAsk.Update(report);
-      });
+    receivedAsk.With([&] (auto status, const auto& executionReports) {
+      auto report = ExecutionReport::BuildUpdatedReport(
+        executionReports.back(), OrderStatus::FILLED,
+        executionReports.back().m_timestamp);
+      report.m_executionFee = Money::CENT;
+      report.m_processingFee = Money::CENT;
+      report.m_commission = Money::CENT;
+      report.m_lastQuantity = 200;
+      report.m_lastPrice = Money::ONE + Money::CENT;
+      receivedAsk.Update(report);
+    });
     auto askMessage = std::static_pointer_cast<TestInventoryMessage>(
       client.m_riskClient->ReadMessage());
     REQUIRE(askMessage != nullptr);
