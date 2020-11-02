@@ -114,5 +114,11 @@
         <file>Icons/arrow-up-disabled.svg</file>
         <file>Icons/arrow-up-hover.svg</file>
         <file>Icons/arrow-down-grey.svg</file>
+        <file>Icons/arrow-down-disabled-padded.svg</file>
+        <file>Icons/arrow-down-hover-padded.svg</file>
+        <file>Icons/arrow-down-padded.svg</file>
+        <file>Icons/arrow-up-disabled-padded.svg</file>
+        <file>Icons/arrow-up-hover-padded.svg</file>
+        <file>Icons/arrow-up-padded.svg</file>
     </qresource>
 </RCC>
