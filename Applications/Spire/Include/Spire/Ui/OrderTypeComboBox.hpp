@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 namespace Spire {
 
@@ -22,6 +23,13 @@ namespace Spire {
       */
       explicit OrderTypeComboBox(QWidget* parent = nullptr);
 
+      explicit OrderTypeComboBox(bool has_cell_style,
+        QWidget* parent = nullptr);
+
+      Nexus::OrderType get_order_type() const;
+
+      void set_order_type(Nexus::OrderType type);
+
       //! Connects a slot to the OrderType selection signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
@@ -29,6 +37,7 @@ namespace Spire {
     private:
       mutable SelectedSignal m_selected_signal;
       boost::signals2::scoped_connection m_value_connection;
+      StaticDropDownMenu* m_menu;
   };
 }
 

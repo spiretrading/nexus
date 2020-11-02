@@ -62,6 +62,14 @@ namespace Spire {
       //! Returns the currently selected item.
       virtual QVariant get_current_item() const;
 
+      //! Sets the current item iff the given item is currently in the menu.
+      /*!
+        \param item The current item.
+      */
+      virtual void set_current_item(const QVariant& item);
+
+      virtual void set_cell_style(bool has_cell_style);
+
       //! True iff the next item should be activated when the list is shown
       //! using the down arrow key.
       virtual void set_next_activated(bool is_next_activated);
@@ -79,6 +87,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable ValueSelectedSignal m_value_selected_signal;
@@ -94,6 +103,7 @@ namespace Spire {
       QString m_entered_text;
       QTimer m_input_timer;
       bool m_is_next_activated;
+      bool m_has_cell_style;
 
       void draw_arrow(const QImage& arrow_image, QPainter& painter);
       void draw_background(const QColor& color, QPainter& painter);

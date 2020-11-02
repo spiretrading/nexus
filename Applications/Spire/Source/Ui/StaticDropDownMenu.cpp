@@ -28,7 +28,8 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
         scale(6, 4))),
-      m_is_next_activated(true) {
+      m_is_next_activated(true),
+      m_has_cell_style(false) {
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
     m_current_item = items.front();
@@ -71,6 +72,19 @@ void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
 
 QVariant StaticDropDownMenu::get_current_item() const {
   return m_current_item;
+}
+
+void StaticDropDownMenu::set_current_item(const QVariant& item) {
+  for(auto i = 0; i < m_menu_list->item_count(); ++i) {
+    if(m_menu_list->get_value(i) == item) {
+      m_current_item = item;
+      break;
+    }
+  }
+}
+
+void StaticDropDownMenu::set_cell_style(bool has_cell_style) {
+  m_has_cell_style = has_cell_style;
 }
 
 void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
@@ -126,10 +140,12 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(hasFocus() || m_menu_list->isActiveWindow()) {
-    draw_border(QColor("#4B23A0"), painter);
-  } else {
-    draw_border(QColor("#C8C8C8"), painter);
+  if(!m_has_cell_style) {
+    if(hasFocus() || m_menu_list->isActiveWindow()) {
+      draw_border(QColor("#4B23A0"), painter);
+    } else {
+      draw_border(QColor("#C8C8C8"), painter);
+    }
   }
   if(isEnabled()) {
     draw_background(Qt::white, painter);
@@ -153,6 +169,13 @@ void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
 
 void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
   m_menu_list->setFixedWidth(width());
+}
+
+void StaticDropDownMenu::showEvent(QShowEvent* event) {
+  if(m_has_cell_style) {
+    m_menu_list->show();
+  }
+  QWidget::showEvent(event);
 }
 
 connection StaticDropDownMenu::connect_index_selected_signal(
