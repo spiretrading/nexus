@@ -48,7 +48,6 @@ namespace Spire {
     private:
       EditorState m_editor_state;
       CustomVariantItemDelegate* m_item_delegate;
-
   };
 }
 

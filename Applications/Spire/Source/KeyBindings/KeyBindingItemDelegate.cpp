@@ -61,31 +61,31 @@ void KeyBindingItemDelegate::on_editing_finished() {
 bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
-      auto editor = static_cast<QWidget*>(watched);
-      m_editor_state = EditorState::ACCEPTED;
-      if(e->key() == Qt::Key_Tab) {
-        Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
-      } else {
-        Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditPreviousItem);
-      }
-      return true;
-    }
-    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-      return false;
-    }
-    if(e->key() == Qt::Key_Delete) {
-      m_editor_state = EditorState::DELETED;
-      auto editor = static_cast<QWidget*>(watched);
-      Q_EMIT commitData(editor);
-      Q_EMIT closeEditor(editor);
-      return true;
-    }
-    if(e->key() == Qt::Key_Escape) {
-      m_editor_state = EditorState::CANCELLED;
-      auto editor = static_cast<QWidget*>(watched);
-      Q_EMIT closeEditor(editor);
-      return true;
+    switch(e->key()) {
+      case Qt::Key_Tab:
+      case Qt::Key_Backtab:
+        auto editor = static_cast<QWidget*>(watched);
+        m_editor_state = EditorState::ACCEPTED;
+        if(e->key() == Qt::Key_Tab) {
+          Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
+        } else {
+          Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditPreviousItem);
+        }
+        return true;
+      case Qt::Key_Enter:
+      case Qt::Key_Return:
+        return false;
+      case Qt::Key_Delete:
+        m_editor_state = EditorState::DELETED;
+        auto editor = static_cast<QWidget*>(watched);
+        Q_EMIT commitData(editor);
+        Q_EMIT closeEditor(editor);
+        return true;
+      case Qt::Key_Escape:
+        m_editor_state = EditorState::CANCELLED;
+        auto editor = static_cast<QWidget*>(watched);
+        Q_EMIT closeEditor(editor);
+        return true;
     }
   }
   return QStyledItemDelegate::eventFilter(watched, event);

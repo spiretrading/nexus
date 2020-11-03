@@ -34,7 +34,7 @@ namespace Spire {
       /*!
         \param type The current OrderType.
       */
-      void set_order_type(Nexus::OrderType type);
+      void set_current_order_type(Nexus::OrderType type);
 
       //! Connects a slot to the OrderType selection signal.
       boost::signals2::connection connect_selected_signal(

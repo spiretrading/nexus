@@ -36,6 +36,6 @@ OrderType OrderTypeComboBox::get_last_order_type() const {
   return get_last_item().value<OrderType>();
 }
 
-void OrderTypeComboBox::set_order_type(Nexus::OrderType type) {
+void OrderTypeComboBox::set_current_order_type(Nexus::OrderType type) {
   set_current_item(QVariant::fromValue(type));
 }
