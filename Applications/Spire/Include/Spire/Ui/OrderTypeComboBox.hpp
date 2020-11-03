@@ -1,6 +1,6 @@
 #ifndef SPIRE_ORDER_TYPE_COMBO_BOX_HPP
 #define SPIRE_ORDER_TYPE_COMBO_BOX_HPP
-#include <QWidget>
+#include <QLineEdit>
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
@@ -8,7 +8,7 @@
 namespace Spire {
 
   //! Represents a combo box for selecting OrderType values.
-  class OrderTypeComboBox : public QWidget {
+  class OrderTypeComboBox : public StaticDropDownMenu {
     public:
 
       //! Signals that an OrderType was selected.
@@ -26,7 +26,9 @@ namespace Spire {
       explicit OrderTypeComboBox(bool has_cell_style,
         QWidget* parent = nullptr);
 
-      Nexus::OrderType get_order_type() const;
+      Nexus::OrderType get_current_order_type() const;
+
+      Nexus::OrderType get_last_order_type() const;
 
       void set_order_type(Nexus::OrderType type);
 
@@ -37,7 +39,6 @@ namespace Spire {
     private:
       mutable SelectedSignal m_selected_signal;
       boost::signals2::scoped_connection m_value_connection;
-      StaticDropDownMenu* m_menu;
   };
 }
 

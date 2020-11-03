@@ -23,13 +23,14 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
 
 StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
     const QString& display_text, QWidget* parent)
-    : QWidget(parent),
+    : QLineEdit(parent),
       m_display_text(display_text),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
         scale(6, 4))),
       m_is_next_activated(true),
       m_has_cell_style(false) {
+  setReadOnly(true);
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
     m_current_item = items.front();
@@ -71,6 +72,13 @@ void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
 }
 
 QVariant StaticDropDownMenu::get_current_item() const {
+  return m_current_item;
+}
+
+QVariant StaticDropDownMenu::get_last_item() const {
+  if(m_last_activated_item.isValid()) {
+    return m_last_activated_item;
+  }
   return m_current_item;
 }
 
@@ -232,8 +240,9 @@ void StaticDropDownMenu::on_item_activated(const QVariant& value) {
 
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
-  m_value_selected_signal(m_current_item);
   m_last_activated_item = QVariant();
+  m_value_selected_signal(m_current_item);
+  Q_EMIT editingFinished();
   update();
 }
 

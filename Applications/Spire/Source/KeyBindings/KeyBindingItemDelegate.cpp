@@ -10,6 +10,7 @@ using namespace Spire;
 
 KeyBindingItemDelegate::KeyBindingItemDelegate(QWidget* parent)
   : QStyledItemDelegate(parent),
+    m_editor_state(EditorState::ACCEPTED),
     m_item_delegate(new CustomVariantItemDelegate(this)) {}
 
 void KeyBindingItemDelegate::paint(QPainter* painter,
@@ -46,8 +47,14 @@ void KeyBindingItemDelegate::updateEditorGeometry(QWidget* editor,
   }
 }
 
+KeyBindingItemDelegate::EditorState
+    KeyBindingItemDelegate::get_editor_state() const {
+  return m_editor_state;
+}
+
 void KeyBindingItemDelegate::on_editing_finished() {
   auto editor = static_cast<QWidget*>(sender());
+  m_editor_state = EditorState::ACCEPTED;
   editor->close();
 }
 
@@ -56,7 +63,7 @@ bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
       auto editor = static_cast<QWidget*>(watched);
-      Q_EMIT commitData(editor);
+      m_editor_state = EditorState::ACCEPTED;
       if(e->key() == Qt::Key_Tab) {
         Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
       } else {
@@ -66,6 +73,19 @@ bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
     }
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
       return false;
+    }
+    if(e->key() == Qt::Key_Delete) {
+      m_editor_state = EditorState::DELETED;
+      auto editor = static_cast<QWidget*>(watched);
+      Q_EMIT commitData(editor);
+      Q_EMIT closeEditor(editor);
+      return true;
+    }
+    if(e->key() == Qt::Key_Escape) {
+      m_editor_state = EditorState::CANCELLED;
+      auto editor = static_cast<QWidget*>(watched);
+      Q_EMIT closeEditor(editor);
+      return true;
     }
   }
   return QStyledItemDelegate::eventFilter(watched, event);

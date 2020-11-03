@@ -1,7 +1,7 @@
 #ifndef SPIRE_STATIC_DROP_DOWN_MENU_HPP
 #define SPIRE_STATIC_DROP_DOWN_MENU_HPP
+#include <QLineEdit>
 #include <QTimer>
-#include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -9,7 +9,7 @@
 namespace Spire {
 
   //! Represents a DropDownMenu that isn't modified by user interactions.
-  class StaticDropDownMenu : public QWidget {
+  class StaticDropDownMenu : public QLineEdit {
     public:
 
       //! Signals that an item was selected.
@@ -61,6 +61,10 @@ namespace Spire {
 
       //! Returns the currently selected item.
       virtual QVariant get_current_item() const;
+
+      //! Returns the previously activated item, or the currently selected item
+      //! if there is no previously activated item.
+      virtual QVariant get_last_item() const;
 
       //! Sets the current item iff the given item is currently in the menu.
       /*!
