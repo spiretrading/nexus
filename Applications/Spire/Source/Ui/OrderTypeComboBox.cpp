@@ -7,9 +7,6 @@ using namespace Nexus;
 using namespace Spire;
 
 OrderTypeComboBox::OrderTypeComboBox(QWidget* parent)
-  : OrderTypeComboBox(false, parent) {}
-
-OrderTypeComboBox::OrderTypeComboBox(bool has_cell_style, QWidget* parent)
     : StaticDropDownMenu({}, parent) {
   auto items = [] {
     auto types = std::vector<QVariant>();
@@ -20,7 +17,6 @@ OrderTypeComboBox::OrderTypeComboBox(bool has_cell_style, QWidget* parent)
     return types;
   }();
   set_items(items);
-  set_cell_style(has_cell_style);
   m_value_connection = connect_value_selected_signal(
     [=] (const auto& value) {
       m_selected_signal(value.value<OrderType>());

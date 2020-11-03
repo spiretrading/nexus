@@ -10,9 +10,9 @@ OrderTypeItemDelegate::OrderTypeItemDelegate(QWidget* parent)
 
 QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new OrderTypeComboBox(true,
-    static_cast<QWidget*>(this->parent()));
+  auto editor = new OrderTypeComboBox(static_cast<QWidget*>(this->parent()));
   editor->set_order_type(index.data().value<OrderType>());
+  editor->set_style(StaticDropDownMenu::Style::CELL);
   connect(editor, &OrderTypeComboBox::editingFinished, this,
     &OrderTypeItemDelegate::on_editing_finished);
   return editor;

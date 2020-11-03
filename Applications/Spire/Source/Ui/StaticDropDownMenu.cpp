@@ -28,8 +28,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
         scale(6, 4))),
-      m_is_next_activated(true),
-      m_has_cell_style(false) {
+      m_is_next_activated(true) {
   setReadOnly(true);
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
@@ -41,10 +40,12 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
+  m_menu_list->findChild<ScrollArea*>()->setFocusProxy(this);
   set_items(items);
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
   installEventFilter(this);
+  set_style(Style::DEFAULT);
 }
 
 int StaticDropDownMenu::item_count() const {
@@ -91,12 +92,12 @@ void StaticDropDownMenu::set_current_item(const QVariant& item) {
   }
 }
 
-void StaticDropDownMenu::set_cell_style(bool has_cell_style) {
-  m_has_cell_style = has_cell_style;
-}
-
 void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
   m_is_next_activated = is_next_activated;
+}
+
+void StaticDropDownMenu::set_style(Style style) {
+  m_style = style;
 }
 
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
@@ -148,7 +149,7 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(!m_has_cell_style) {
+  if(m_style == Style::DEFAULT) {
     if(hasFocus() || m_menu_list->isActiveWindow()) {
       draw_border(QColor("#4B23A0"), painter);
     } else {
@@ -180,7 +181,7 @@ void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
 }
 
 void StaticDropDownMenu::showEvent(QShowEvent* event) {
-  if(m_has_cell_style) {
+  if(m_style == Style::CELL) {
     m_menu_list->show();
   }
   QWidget::showEvent(event);

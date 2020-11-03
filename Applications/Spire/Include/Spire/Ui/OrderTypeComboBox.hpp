@@ -17,19 +17,23 @@ namespace Spire {
       */
       using SelectedSignal = Signal<void (Nexus::OrderType type)>;
 
-      //! Constructs a OrderTypeComboBox.
+      //! Constructs an OrderTypeComboBox.
       /*!
         \param parent The parent widget.
       */
       explicit OrderTypeComboBox(QWidget* parent = nullptr);
 
-      explicit OrderTypeComboBox(bool has_cell_style,
-        QWidget* parent = nullptr);
-
+      //! Returns the currently selected OrderType.
       Nexus::OrderType get_current_order_type() const;
 
+      //! Returns the previously activated OrderType, or the currently selected
+      //! OrderType if there is no currently activated OrderType.
       Nexus::OrderType get_last_order_type() const;
 
+      //! Sets the currently selected OrderType.
+      /*!
+        \param type The current OrderType.
+      */
       void set_order_type(Nexus::OrderType type);
 
       //! Connects a slot to the OrderType selection signal.
