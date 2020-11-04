@@ -73,10 +73,6 @@ void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
 }
 
 QVariant StaticDropDownMenu::get_current_item() const {
-  return m_current_item;
-}
-
-QVariant StaticDropDownMenu::get_last_item() const {
   if(m_last_activated_item.isValid()) {
     return m_last_activated_item;
   }

@@ -26,10 +26,6 @@ namespace Spire {
       //! Returns the currently selected OrderType.
       Nexus::OrderType get_current_order_type() const;
 
-      //! Returns the currently activated OrderType, or the currently selected
-      //! OrderType if there is no currently activated OrderType.
-      Nexus::OrderType get_last_order_type() const;
-
       //! Sets the currently selected OrderType.
       /*!
         \param type The current OrderType.

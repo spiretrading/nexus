@@ -72,10 +72,6 @@ namespace Spire {
       //! Returns the currently selected item.
       virtual QVariant get_current_item() const;
 
-      //! Returns the currently activated item, or the currently selected item
-      //! if there is no currently activated item.
-      virtual QVariant get_last_item() const;
-
       //! Sets the current item iff the given item is currently in the menu.
       /*!
         \param item The current item.

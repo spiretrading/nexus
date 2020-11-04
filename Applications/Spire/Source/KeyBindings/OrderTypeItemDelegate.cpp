@@ -23,7 +23,7 @@ void OrderTypeItemDelegate::setModelData(QWidget* editor,
   auto item = [&] {
     if(get_editor_state() == EditorState::ACCEPTED) {
       return QVariant::fromValue(
-        static_cast<OrderTypeComboBox*>(editor)->get_last_order_type());
+        static_cast<OrderTypeComboBox*>(editor)->get_current_order_type());
     }
     return QVariant();
   }();
