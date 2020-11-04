@@ -53,8 +53,8 @@ KeyBindingItemDelegate::EditorState
 }
 
 void KeyBindingItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
   m_editor_state = EditorState::ACCEPTED;
+  auto editor = static_cast<QWidget*>(sender());
   editor->close();
 }
 
@@ -64,34 +64,34 @@ bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
     switch(e->key()) {
       case Qt::Key_Tab:
       case Qt::Key_Backtab:
+        m_editor_state = EditorState::ACCEPTED;
         {
           auto editor = static_cast<QWidget*>(watched);
-          m_editor_state = EditorState::ACCEPTED;
           if(e->key() == Qt::Key_Tab) {
             Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
           } else {
             Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditPreviousItem);
           }
-          return true;
         }
+        return true;
       case Qt::Key_Enter:
       case Qt::Key_Return:
         return false;
       case Qt::Key_Delete:
+        m_editor_state = EditorState::DELETED;
         {
-          m_editor_state = EditorState::DELETED;
           auto editor = static_cast<QWidget*>(watched);
           Q_EMIT commitData(editor);
           Q_EMIT closeEditor(editor);
-          return true;
         }
+        return true;
       case Qt::Key_Escape:
+        m_editor_state = EditorState::CANCELLED;  
         {
-          m_editor_state = EditorState::CANCELLED;
           auto editor = static_cast<QWidget*>(watched);
           Q_EMIT closeEditor(editor);
-          return true;
         }
+        return true;
     }
   }
   return QStyledItemDelegate::eventFilter(watched, event);
