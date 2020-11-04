@@ -17,6 +17,7 @@ OrderTypeComboBox::OrderTypeComboBox(QWidget* parent)
     return types;
   }();
   set_items(items);
+  set_current_item(items.front());
   m_value_connection = connect_value_selected_signal(
     [=] (const auto& value) {
       m_selected_signal(value.value<OrderType>());

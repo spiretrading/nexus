@@ -11,6 +11,8 @@ ComboBoxTestWidget::ComboBoxTestWidget(ComboBoxAdapter* combo_box,
   auto container_widget = new QWidget(this);
   auto layout = new QGridLayout(container_widget);
   combo_box->setFixedSize(scale(100, 26));
+  combo_box->layout()->itemAt(0)->widget()->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(combo_box, 0, 0);
   auto status_label = new QLabel(this);
   status_label->setMinimumWidth(scale_width(100));
