@@ -21,6 +21,7 @@ MarketComboBox::MarketComboBox(const MarketDatabase& database,
     return markets;
   }();
   auto menu = new StaticDropDownMenu(items, this);
+  menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);

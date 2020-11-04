@@ -19,6 +19,7 @@ TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
     return times;
   }();
   auto menu = new StaticDropDownMenu(items, this);
+  menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);

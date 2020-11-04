@@ -10,6 +10,7 @@ SideComboBox::SideComboBox(QWidget* parent)
     : QWidget(parent) {
   auto menu = new StaticDropDownMenu({QVariant::fromValue<Side>(Side::ASK),
     QVariant::fromValue<Side>(Side::BID)}, this);
+  menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(menu);
