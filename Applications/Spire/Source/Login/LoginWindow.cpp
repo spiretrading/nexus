@@ -40,7 +40,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([=] { window()->close(); });
-  m_exit_button->set_hover_style("background-color: #401D8B;");
+  m_exit_button->set_hover_background_color(QColor("#401D8B"));
   title_bar_layout->addWidget(m_exit_button);
   title_bar_layout->setStretchFactor(m_exit_button, 32);
   body_layout->addLayout(title_bar_layout);

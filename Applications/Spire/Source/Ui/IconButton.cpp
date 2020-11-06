@@ -3,6 +3,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QStyleOption>
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -17,21 +18,21 @@ IconButton::IconButton(QImage icon, QImage hover_icon, QWidget* parent)
 IconButton::IconButton(QImage icon, QImage hover_icon,
     QImage blur_icon, QWidget* parent)
     : QAbstractButton(parent),
+      m_last_focus_reason(Qt::NoFocusReason),
       m_icon(std::move(icon)),
       m_hover_icon(std::move(hover_icon)),
       m_blur_icon(std::move(blur_icon)) {
-  setFocusPolicy(Qt::StrongFocus);
-  setMouseTracking(true);
-  setFixedSize(m_icon.size());
-  show_normal();
+  m_default_background_color.setAlpha(0);
+  m_hover_background_color.setAlpha(0);
+  setAttribute(Qt::WA_Hover);
 }
 
-void IconButton::set_default_style(const QString& stylesheet) {
-  m_default_stylesheet = stylesheet;
+void IconButton::set_default_background_color(const QColor& color) {
+  m_default_background_color = color;
 }
 
-void IconButton::set_hover_style(const QString& stylesheet) {
-  m_hover_stylesheet = stylesheet;
+void IconButton::set_hover_background_color(const QColor& color) {
+  m_hover_background_color = color;
 }
 
 const QImage& IconButton::get_icon() const {
@@ -50,7 +51,6 @@ void IconButton::set_icon(QImage icon, QImage hover_icon, QImage blur_icon) {
   m_icon = std::move(icon);
   m_hover_icon = std::move(hover_icon);
   m_blur_icon = std::move(blur_icon);
-  setFixedSize(m_icon.size());
   update();
 }
 
@@ -60,31 +60,13 @@ connection IconButton::connect_clicked_signal(
 }
 
 void IconButton::focusInEvent(QFocusEvent* event) {
-  if(focusPolicy() & Qt::TabFocus) {
-    switch(m_state) {
-      case State::NORMAL:
-        return show_hovered();
-      case State::BLURRED:
-        return show_hover_blurred();
-    }
-  }
+  m_last_focus_reason = event->reason();
+  QWidget::focusInEvent(event);
 }
 
 void IconButton::focusOutEvent(QFocusEvent* event) {
-  if(focusPolicy() & Qt::TabFocus) {
-    switch(m_state) {
-      case State::HOVERED:
-        return show_normal();
-      case State::HOVER_BLURRED:
-        return show_blurred();
-    }
-  }
-}
-
-void IconButton::hideEvent(QHideEvent* event) {
-  if(m_state == State::HOVERED) {
-    show_normal();
-  }
+  update();
+  QWidget::focusOutEvent(event);
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {
@@ -95,27 +77,6 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
     return;
   }
   event->ignore();
-}
-
-void IconButton::leaveEvent(QEvent* event) {
-  switch(m_state) {
-    case State::HOVERED:
-      return show_normal();
-    case State::HOVER_BLURRED:
-      return show_blurred();
-  }
-}
-
-void IconButton::mouseMoveEvent(QMouseEvent* event) {
-  if(isEnabled() && m_state != State::BLURRED &&
-      m_state != State::HOVER_BLURRED) {
-    switch(m_state) {
-      case State::NORMAL:
-        return show_hovered();
-      case State::BLURRED:
-        return show_hover_blurred();
-    }
-  }
 }
 
 void IconButton::mousePressEvent(QMouseEvent* event) {
@@ -135,61 +96,36 @@ void IconButton::mouseReleaseEvent(QMouseEvent* event) {
 
 void IconButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
-  QStyleOption style_option;
-  style_option.initFrom(this);
-  style()->drawPrimitive(QStyle::PE_Widget, &style_option, &painter, this);
-  if(m_state == State::NORMAL) {
-    painter.drawImage(0, 0, m_icon);
-  } else if(m_state == State::BLURRED) {
-    painter.drawImage(0, 0, m_blur_icon);
+  if(!underMouse()) {
+    painter.fillRect(rect(), m_default_background_color);
   } else {
-    painter.drawImage(0, 0, m_hover_icon);
+    painter.fillRect(rect(), m_hover_background_color);
+  }
+  auto current_icon = get_current_icon();
+  auto icon_size = current_icon.size();
+  auto image_pos = QPoint((width() - icon_size.width()) / 2,
+    (height() - icon_size.height()) / 2);
+  painter.drawImage(image_pos, current_icon);
+  if(hasFocus() && is_last_focus_reason_tab()) {
+    painter.fillRect(image_pos.x(), event->rect().height() - scale_height(2),
+      icon_size.width(), scale_height(2), QColor("#4B23A0"));
   }
 }
 
-bool IconButton::event(QEvent* event) {
-  if(event->type() == QEvent::WindowDeactivate) {
-    switch(m_state) {
-      case State::NORMAL:
-        show_blurred();
-        break;
-      case State::HOVERED:
-        show_blurred();
-        break;
+const QImage& IconButton::get_current_icon() const {
+  if(isEnabled()) {
+    if(underMouse() || (hasFocus() && is_last_focus_reason_tab())) {
+      return m_hover_icon;
+    } else if(!window()->isActiveWindow()) {
+      return m_blur_icon;
     }
-  } else if(event->type() == QEvent::WindowActivate) {
-    switch(m_state) {
-      case State::BLURRED:
-        show_normal();
-        break;
-      case State::HOVER_BLURRED:
-        show_hovered();
-        break;
-    }
+    return m_icon;
   }
-  return QWidget::event(event);
+  // TODO: disabled icon
+  return m_blur_icon;
 }
 
-void IconButton::show_normal() {
-  m_state = State::NORMAL;
-  setStyleSheet(m_default_stylesheet);
-  update();
-}
-
-void IconButton::show_hovered() {
-  m_state = State::HOVERED;
-  setStyleSheet(m_hover_stylesheet);
-  update();
-}
-
-void IconButton::show_blurred() {
-  m_state = State::BLURRED;
-  setStyleSheet(m_default_stylesheet);
-  update();
-}
-
-void IconButton::show_hover_blurred() {
-  m_state = State::HOVER_BLURRED;
-  setStyleSheet(m_hover_stylesheet);
-  update();
+bool IconButton::is_last_focus_reason_tab() const {
+  return m_last_focus_reason == Qt::TabFocusReason ||
+    m_last_focus_reason == Qt::BacktabFocusReason;
 }

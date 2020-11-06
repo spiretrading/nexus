@@ -28,6 +28,7 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
       m_hover_icon(std::move(hover_icon)),
       m_toggle_icon(std::move(toggle_icon)),
       m_disabled_icon(std::move(disable_icon)) {
+  setStyleSheet("background-color: red;");
   setFocusPolicy(Qt::NoFocus);
   m_icon_button.installEventFilter(this);
   auto layout = new QHBoxLayout(this);
@@ -112,18 +113,6 @@ void ToggleButton::keyPressEvent(QKeyEvent* event) {
     return;
   }
   event->ignore();
-}
-
-void ToggleButton::paintEvent(QPaintEvent* event) {
-  if(m_is_focused) {
-    auto painter = QPainter(this);
-    painter.setPen(QColor("#4B23A0"));
-    painter.drawLine(0, event->rect().height() - 2, event->rect().width(),
-      event->rect().height() - 2);
-    painter.drawLine(0, event->rect().height() - 1, event->rect().width(),
-      event->rect().height() - 1);
-  }
-  QWidget::paintEvent(event);
 }
 
 void ToggleButton::resizeEvent(QResizeEvent* event) {

@@ -41,17 +41,17 @@ namespace Spire {
       IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
         QWidget* parent = nullptr);
 
-      //! Sets the default stylesheet for the button.
+      //! Sets the default background color for the button.
       /*!
-        \param stylesheet The default stylesheet.
+        \param color The default background color.
       */
-      void set_default_style(const QString& stylesheet);
+      void set_default_background_color(const QColor& color);
 
-      //! Sets the stylesheet for when the button is hovered.
+      //! Sets the background color for when the button is hovered.
       /*!
-        \param stylesheet The hover stylesheet.
+        \param color The hover background color.
       */
-      void set_hover_style(const QString& stylesheet);
+      void set_hover_background_color(const QColor& color);
 
       //! Returns the icon displayed.
       const QImage& get_icon() const;
@@ -72,34 +72,22 @@ namespace Spire {
     protected:
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void leaveEvent(QEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
-      bool event(QEvent* event) override;
 
     private:
-      enum class State {
-        NORMAL,
-        HOVERED,
-        BLURRED,
-        HOVER_BLURRED
-      };
       mutable ClickedSignal m_clicked_signal;
-      State m_state;
+      Qt::FocusReason m_last_focus_reason;
       QImage m_icon;
       QImage m_hover_icon;
       QImage m_blur_icon;
-      QString m_default_stylesheet;
-      QString m_hover_stylesheet;
+      QColor m_default_background_color;
+      QColor m_hover_background_color;
 
-      void show_normal();
-      void show_hovered();
-      void show_blurred();
-      void show_hover_blurred();
+      const QImage& get_current_icon() const;
+      bool is_last_focus_reason_tab() const;
   };
 }
 

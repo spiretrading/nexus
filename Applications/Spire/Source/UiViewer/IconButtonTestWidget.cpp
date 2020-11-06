@@ -11,8 +11,8 @@ namespace {
     return size;
   }
 
-  auto IMAGE_BOX() {
-    static auto rect = QRect(translate(5, 5), scale(16, 16));
+  auto IMAGE_SIZE() {
+    static auto rect = QSize(scale(16, 16));
     return rect;
   }
 }
@@ -24,9 +24,8 @@ IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
   auto label1 = new QLabel(tr("Default Image"), this);
   m_layout->addWidget(label1, 0, 0, 1, 3);
   auto button1 = new IconButton(
-    imageFromSvg(":/Icons/time-sale-black.svg", BUTTON_SIZE(), IMAGE_BOX()),
-    this);
-  button1->set_hover_style("background-color: #EBEBEB;");
+    imageFromSvg(":/Icons/time-sale-black.svg", IMAGE_SIZE()), this);
+  button1->setToolTip(tr("Tooltip"));
   button1->setFixedSize(BUTTON_SIZE());
   button1->connect_clicked_signal([=] { on_button_pressed(1); });
   m_layout->addWidget(button1, 1, 0);
@@ -38,10 +37,9 @@ IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
   auto label2 = new QLabel(tr("Default and Hover Images"), this);
   m_layout->addWidget(label2, 2, 0, 1, 3);
   auto button2 = new IconButton(
-    imageFromSvg(":/Icons/time-sale-black.svg", BUTTON_SIZE(), IMAGE_BOX()),
-    imageFromSvg(":/Icons/time-sale-purple.svg", BUTTON_SIZE(), IMAGE_BOX()),
-    this);
-  button2->set_hover_style("background-color: #EBEBEB;");
+    imageFromSvg(":/Icons/time-sale-black.svg", IMAGE_SIZE()),
+    imageFromSvg(":/Icons/time-sale-purple.svg", IMAGE_SIZE()), this);
+  button2->setToolTip(tr("Tooltip"));
   button2->setFixedSize(BUTTON_SIZE());
   button2->connect_clicked_signal([=] { on_button_pressed(3); });
   m_layout->addWidget(button2, 3, 0);
@@ -54,11 +52,10 @@ IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
     tr("Default, Hover, and Window Deac. Images"), this);
   m_layout->addWidget(label3, 4, 0, 1, 3);
   auto button3 = new IconButton(
-    imageFromSvg(":/Icons/time-sale-black.svg", BUTTON_SIZE(), IMAGE_BOX()),
-    imageFromSvg(":/Icons/time-sale-purple.svg", BUTTON_SIZE(), IMAGE_BOX()),
-    imageFromSvg(":/Icons/time-sale-grey.svg", BUTTON_SIZE(), IMAGE_BOX()),
-    this);
-  button3->set_hover_style("background-color: #EBEBEB;");
+    imageFromSvg(":/Icons/time-sale-black.svg", IMAGE_SIZE()),
+    imageFromSvg(":/Icons/time-sale-purple.svg", IMAGE_SIZE()),
+    imageFromSvg(":/Icons/time-sale-grey.svg", IMAGE_SIZE()), this);
+  button3->setToolTip(tr("Tooltip"));
   button3->setFixedSize(BUTTON_SIZE());
   button3->connect_clicked_signal([=] { on_button_pressed(5); });
   m_layout->addWidget(button3, 5, 0);
