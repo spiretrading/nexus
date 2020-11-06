@@ -31,12 +31,11 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(352);
-  auto button_size = scale(32, 26);
-  auto button_box = QRect(translate(11, 8), scale(10, 10));
+  auto button_icon_size = scale(10, 10);
   m_exit_button = new IconButton(
-    imageFromSvg(":/Icons/close-purple.svg", button_size, button_box),
-    imageFromSvg(":/Icons/close-red.svg", button_size, button_box), this);
-  m_exit_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    imageFromSvg(":/Icons/close-purple.svg", button_icon_size),
+    imageFromSvg(":/Icons/close-red.svg", button_icon_size), this);
+  m_exit_button->setFixedSize(scale(32, 26));
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([=] { window()->close(); });
