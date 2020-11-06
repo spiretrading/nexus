@@ -2,10 +2,9 @@ import argparse
 import datetime
 import sys
 
-import yaml
-
 import beam
 import nexus
+import yaml
 
 def report_yaml_error(error):
   if hasattr(error, 'problem_mark'):
@@ -38,7 +37,7 @@ def main():
     default='config.yml')
   parser.add_argument('-d', '--date', type=parse_date, help='Date',
     required=True)
-  parser.add_argument('-m', '--destination', type=str, help='Destination',
+  parser.add_argument('-r', '--region', type=str, help='The region to cancel.',
     required=True)
   args = parser.parse_args()
   try:
@@ -50,7 +49,6 @@ def main():
   except yaml.YAMLError as e:
     report_yaml_error(e)
     exit(1)
-  date = beam.time_service.to_utc_time(args.date)
   section = config['service_locator']
   address = parse_ip_address(section['address'])
   username = section['username']
@@ -60,25 +58,34 @@ def main():
     service_clients.get_definitions_client().load_market_database()
   time_zone_database = \
     service_clients.get_definitions_client().load_time_zone_database()
+  countries = service_clients.get_definitions_client().load_country_database()
+  region = nexus.parse_country_code(args.region, countries)
+  if region == nexus.CountryCode.NONE:
+    region = nexus.parse_market_code(args.region, markets)
+    if region != '':
+      region = markets.from_code(region)
+    else:
+      region = nexus.parse_security(args.region, markets)
+  region = nexus.Region(region)
   for account in \
       service_clients.get_service_locator_client().load_all_accounts():
     queue = beam.Queue()
-    nexus.order_execution_service.query_daily_order_submissions(account, date,
-      date, market_database, time_zone_database,
+    nexus.order_execution_service.query_daily_order_submissions(account,
+      args.date, args.date, market_database, time_zone_database,
       service_clients.get_order_execution_client(), queue)
     orders = []
     beam.flush(queue, orders)
     for order in orders:
-      if order.info.fields.destination != args.destination:
-        continue
-      execution_reports = order.get_publisher().get_snapshot()
-      if not nexus.is_terminal(execution_reports[-1].status):
-        cancel_report = \
-          nexus.order_execution_service.ExecutionReport.build_updated_report(
-          execution_reports[-1], nexus.OrderStatus.CANCELED,
-          service_clients.get_time_client().get_time())
-        service_clients.get_order_execution_client().update(order.info.order_id,
-          cancel_report)
+      if nexus.Region(order.info.fields.security) <= region:
+        execution_reports = order.get_publisher().get_snapshot()
+        if not nexus.is_terminal(execution_reports[-1].status):
+          cancel_report = \
+            nexus.order_execution_service.ExecutionReport.build_updated_report(
+            execution_reports[-1], nexus.OrderStatus.CANCELED,
+            service_clients.get_time_client().get_time())
+          cancel_report.text = 'Trading session reset.'
+          service_clients.get_order_execution_client().update(
+            order.info.order_id, cancel_report)
 
 if __name__ == '__main__':
   main()
