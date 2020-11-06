@@ -13,6 +13,16 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  auto BUTTON_ICON_SIZE() {
+    static auto size = scale(20, 20);
+    return size;
+  }
+
+  auto BUTTON_SIZE() {
+    static auto size = scale(20, 28);
+    return size;
+  }
+
   auto ICON_SIZE() {
     static auto icon_size = scale(10, 10);
     return icon_size;
@@ -21,6 +31,16 @@ namespace {
   auto ICON_RECT() {
     static auto icon_rect = QRect(QPoint(0, 0), scale(10, 10));
     return icon_rect;
+  }
+
+  auto create_button(const QString& icon, const QString& hover_icon,
+      const QString& tooltip, QWidget* parent) {
+    auto button = new IconButton(
+      imageFromSvg(icon, BUTTON_ICON_SIZE()),
+      imageFromSvg(hover_icon, BUTTON_ICON_SIZE()), parent);
+    button->setFixedSize(BUTTON_SIZE());
+    button->setToolTip(tooltip);
+    return button;
   }
 }
 
@@ -67,66 +87,39 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  auto window_button_size = scale(20, 20);
-  m_account_button = new IconButton(
-    imageFromSvg(":/Icons/account-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/account-purple.svg", window_button_size), body);
-  m_account_button->setFixedSize(scale(20, 28));
-  m_account_button->setToolTip(tr("Account"));
+  m_account_button = create_button(":/Icons/account-light-purple.svg",
+    ":/Icons/account-purple.svg", tr("Account"), body);
   button_layout->addWidget(m_account_button);
-  m_key_bindings_button = new IconButton(
-    imageFromSvg(":/Icons/key-bindings-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/key-bindings-purple.svg", window_button_size), body);
-  m_key_bindings_button->setFixedSize(scale(20, 28));
-  m_key_bindings_button->setToolTip(tr("Key Bindings"));
+  m_key_bindings_button = create_button(
+    ":/Icons/key-bindings-light-purple.svg", ":/Icons/key-bindings-purple.svg",
+    tr("Key Bindings"), body);
   button_layout->addWidget(m_key_bindings_button);
-  m_canvas_button = new IconButton(
-    imageFromSvg(":/Icons/canvas-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/canvas-purple.svg", window_button_size), body);
-  m_canvas_button->setFixedSize(scale(20, 28));
-  m_canvas_button->setToolTip(tr("Canvas"));
+  m_canvas_button = create_button(":/Icons/canvas-light-purple.svg",
+    ":/Icons/canvas-purple.svg", tr("Canvas"), body);
   button_layout->addWidget(m_canvas_button);
-  m_book_view_button = new IconButton(
-    imageFromSvg(":/Icons/bookview-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/bookview-purple.svg", window_button_size), body);
-  m_book_view_button->setFixedSize(scale(20, 28));
-  m_book_view_button->setToolTip(tr("Book View"));
+  m_book_view_button = create_button(":/Icons/bookview-light-purple.svg",
+    ":/Icons/bookview-purple.svg", tr("Book View"), body);
   m_book_view_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
-  m_time_and_sales_button = new IconButton(
-    imageFromSvg(":/Icons/time-sale-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/time-sale-purple.svg", window_button_size), body);
-  m_time_and_sales_button->setFixedSize(scale(20, 28));
-  m_time_and_sales_button->setToolTip(tr("Time and Sales"));
+  m_time_and_sales_button = create_button(
+    ":/Icons/time-sale-light-purple.svg", ":/Icons/time-sale-purple.svg",
+    tr("Time and Sales"), body);
   m_time_and_sales_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
-  m_chart_button = new IconButton(
-    imageFromSvg(":/Icons/chart-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/chart-purple.svg", window_button_size), body);
-  m_chart_button->setFixedSize(scale(20, 28));
-  m_chart_button->setToolTip(tr("Chart"));
+  m_chart_button = create_button(":/Icons/chart-light-purple.svg",
+    ":/Icons/chart-purple.svg", tr("Chart"), body);
   button_layout->addWidget(m_chart_button);
-  m_dashboard_button = new IconButton(
-    imageFromSvg(":/Icons/dashboard-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/dashboard-purple.svg", window_button_size), body);
-  m_dashboard_button->setFixedSize(scale(20, 28));
-  m_dashboard_button->setToolTip(tr("Dashboard"));
+  m_dashboard_button = create_button(":/Icons/dashboard-light-purple.svg",
+    ":/Icons/dashboard-purple.svg", tr("Dashboard"), body);
   button_layout->addWidget(m_dashboard_button);
-  m_order_imbalances_button = new IconButton(
-    imageFromSvg(":/Icons/order-imbalances-light-purple.svg",
-      window_button_size),
-    imageFromSvg(":/Icons/order-imbalances-purple.svg", window_button_size),
-    body);
-  m_order_imbalances_button->setFixedSize(scale(20, 28));
-  m_order_imbalances_button->setToolTip(tr("Order Imbalances"));
+  m_order_imbalances_button = create_button(
+    ":/Icons/order-imbalances-light-purple.svg",
+    ":/Icons/order-imbalances-purple.svg", tr("Order Imbalances"), body);
   button_layout->addWidget(m_order_imbalances_button);
-  m_blotter_button = new IconButton(
-    imageFromSvg(":/Icons/blotter-light-purple.svg", window_button_size),
-    imageFromSvg(":/Icons/blotter-purple.svg", window_button_size), body);
-  m_blotter_button->setFixedSize(scale(20, 28));
-  m_blotter_button->setToolTip(tr("Blotter"));
+  m_blotter_button = create_button(":/Icons/blotter-light-purple.svg",
+    ":/Icons/blotter-purple.svg", tr("Blotter"), body);
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
   layout->setStretchFactor(button_layout, 28);

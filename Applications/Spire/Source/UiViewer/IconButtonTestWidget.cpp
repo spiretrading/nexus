@@ -12,8 +12,8 @@ namespace {
   }
 
   auto IMAGE_SIZE() {
-    static auto rect = QSize(scale(16, 16));
-    return rect;
+    static auto size = scale(16, 16);
+    return size;
   }
 }
 

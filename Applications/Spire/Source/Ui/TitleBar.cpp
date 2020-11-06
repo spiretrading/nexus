@@ -15,8 +15,35 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  auto BUTTON_ICON_SIZE() {
+    static auto size = scale(10, 10);
+    return size;
+  }
+
+  auto BUTTON_SIZE() {
+    static auto size = scale(26, 26);
+    return size;
+  }
+
   auto ICON_SIZE() {
-    return scale(26, 26);
+    static auto size = scale(26, 26);
+    return size;
+  }
+
+  auto MINIMIZE_ICON_SIZE() {
+    static auto size = scale(10, 2);
+    return size;
+  }
+
+  auto create_button(const QString& icon, const QString& hover_icon,
+      const QString& blur_icon, const QSize& icon_size, QWidget* parent) {
+    auto button = new IconButton(imageFromSvg(icon, icon_size),
+      imageFromSvg(hover_icon, icon_size), imageFromSvg(blur_icon, icon_size),
+      parent);
+    button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+    button->set_hover_background_color("#EBEBEB");
+    button->setFixedSize(BUTTON_SIZE());
+    return button;
   }
 }
 
@@ -35,17 +62,17 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   if(icon.isNull()) {
-    m_default_icon = QImage(scale(10, 10), QImage::Format::Format_ARGB32);
+    m_default_icon = QImage(BUTTON_ICON_SIZE(), QImage::Format::Format_ARGB32);
     m_icon = new IconButton(m_default_icon, this);
   } else if(unfocused_icon.isNull()) {
-    m_default_icon = icon.scaled(scale(10, 10));
+    m_default_icon = icon.scaled(BUTTON_ICON_SIZE());
     m_icon = new IconButton(m_default_icon, this);
   } else {
-    m_default_icon = icon.scaled(scale(10, 10));
-    m_unfocused_icon = unfocused_icon.scaled(scale(10, 10));
+    m_default_icon = icon.scaled(BUTTON_ICON_SIZE());
+    m_unfocused_icon = unfocused_icon.scaled(BUTTON_ICON_SIZE());
     m_icon = new IconButton(m_default_icon, m_unfocused_icon, this);
   }
-  m_icon->setFixedSize(scale(26, 26));
+  m_icon->setFixedSize(ICON_SIZE());
   m_icon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_icon->setEnabled(false);
   layout->addWidget(m_icon);
@@ -55,43 +82,27 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_title_label);
   layout->addSpacerItem(new QSpacerItem(scale_width(8), 10, QSizePolicy::Fixed,
     QSizePolicy::Expanding));
-  m_minimize_button = new IconButton(
-    imageFromSvg(":/Icons/minimize-black.svg", scale(10, 2)),
-    imageFromSvg(":/Icons/minimize-black.svg", scale(10, 2)),
-    imageFromSvg(":/Icons/minimize-grey.svg", scale(10, 2)), this);
-  m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_minimize_button->set_hover_background_color("#EBEBEB");
-  m_minimize_button->setFixedSize(scale(26, 26));
+  m_minimize_button = create_button(":/Icons/minimize-black.svg",
+    ":/Icons/minimize-black.svg", ":/Icons/minimize-grey.svg",
+    MINIMIZE_ICON_SIZE(), this);
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
-  m_maximize_button = new IconButton(
-    imageFromSvg(":/Icons/maximize-black.svg", scale(10, 10)),
-    imageFromSvg(":/Icons/maximize-black.svg", scale(10, 10)),
-    imageFromSvg(":/Icons/maximize-grey.svg", scale(10, 10)), this);
-  m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_maximize_button->set_hover_background_color("#EBEBEB");
-  m_maximize_button->setFixedSize(scale(26, 26));
+  m_maximize_button = create_button(":/Icons/maximize-black.svg",
+    ":/Icons/maximize-black.svg", ":/Icons/maximize-grey.svg",
+    BUTTON_ICON_SIZE(), this);
   m_maximize_button->connect_clicked_signal(
     [=] { on_maximize_button_press(); });
   layout->addWidget(m_maximize_button);
-  m_restore_button = new IconButton(
-    imageFromSvg(":/Icons/unmaximize-black.svg", scale(10, 10)),
-    imageFromSvg(":/Icons/unmaximize-black.svg", scale(10, 10)),
-    imageFromSvg(":/Icons/unmaximize-grey.svg", scale(10, 10)), this);
-  m_restore_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_restore_button->set_hover_background_color("#EBEBEB");
-  m_restore_button->setFixedSize(scale(26, 26));
+  m_restore_button = create_button(":/Icons/unmaximize-black.svg",
+    ":/Icons/unmaximize-black.svg", ":/Icons/unmaximize-grey.svg",
+    BUTTON_ICON_SIZE(), this);
   m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
   m_restore_button->hide();
   layout->addWidget(m_restore_button);
-  m_close_button = new IconButton(
-    imageFromSvg(":/Icons/close-black.svg", scale(10, 10)),
-    imageFromSvg(":/Icons/close-red.svg", scale(10, 10)),
-    imageFromSvg(":/Icons/close-grey.svg", scale(10, 10)), this);
-  m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_close_button->set_hover_background_color("#EBEBEB");
-  m_close_button->setFixedSize(scale(26, 26));
+  m_close_button = create_button(":/Icons/close-black.svg",
+    ":/Icons/close-red.svg", ":/Icons/close-grey.svg",
+    BUTTON_ICON_SIZE(), this);
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
