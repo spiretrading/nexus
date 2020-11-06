@@ -91,10 +91,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
     imageFromSvg(":/Icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
-  m_lock_grid_button->setFixedSize(scale(16, 26));
+  m_lock_grid_button->setFixedSize(scale(16, 22));
   m_lock_grid_button->setToolTip(tr("Lock Grid"));
   m_lock_grid_button->setDisabled(true);
-  button_header_layout->addWidget(m_lock_grid_button);
+  button_header_layout->addWidget(m_lock_grid_button, 0, Qt::AlignBottom);
   button_header_layout->addSpacing(scale_width(10));
   m_auto_scale_button = new ToggleButton(
     imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
@@ -102,14 +102,14 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
     imageFromSvg(":/Icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
-  m_auto_scale_button->setFixedSize(scale(16, 26));
+  m_auto_scale_button->setFixedSize(scale(16, 22));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
   m_auto_scale_button->set_toggled(true);
   m_auto_scale_button->setDisabled(true);
   m_auto_scale_button->connect_clicked_signal([=] {
     on_auto_scale_button_click();
   });
-  button_header_layout->addWidget(m_auto_scale_button);
+  button_header_layout->addWidget(m_auto_scale_button, 0, Qt::AlignBottom);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
   seperator->setFixedSize(scale(1, 16));
@@ -122,13 +122,13 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
     imageFromSvg(":/Icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
-  m_draw_line_button->setFixedSize(scale(16, 26));
+  m_draw_line_button->setFixedSize(scale(16, 22));
   m_draw_line_button->setToolTip(tr("Draw Line"));
   m_draw_line_button->setDisabled(true);
   m_draw_line_button->connect_clicked_signal([=] {
     on_draw_line_button_click();
   });
-  button_header_layout->addWidget(m_draw_line_button);
+  button_header_layout->addWidget(m_draw_line_button, 0, Qt::AlignBottom);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
   m_security_widget = new SecurityWidget(input_model,

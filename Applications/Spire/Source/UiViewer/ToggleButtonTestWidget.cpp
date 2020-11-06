@@ -11,7 +11,7 @@ namespace {
   }
 
   auto BUTTON_SIZE() {
-    static auto size = scale(16, 26);
+    static auto size = scale(16, 22);
     return size;
   }
 }
@@ -25,6 +25,7 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
   auto default_button = new ToggleButton(
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-green.svg", IMAGE_SIZE()), this);
+  default_button->setFixedSize(BUTTON_SIZE());
   add_button(default_button, 1);
   auto hover_style_label = new QLabel(tr("Toggle and Hover Images"), this);
   m_layout->addWidget(hover_style_label, 3, 0, 1, 3);
@@ -32,6 +33,7 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-green.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()), this);
+  hover_style_button->setFixedSize(BUTTON_SIZE());
   add_button(hover_style_button, 4);
   auto disabled_style_label = new QLabel(
     tr("Default, Hover, and Disabled Images"), this);
@@ -41,6 +43,7 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     imageFromSvg(":/Icons/lock-grid-green.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-purple.svg", IMAGE_SIZE()),
     imageFromSvg(":/Icons/lock-grid-grey.svg", IMAGE_SIZE()), this);
+  disabled_style_button->setFixedSize(BUTTON_SIZE());
   add_button(disabled_style_button, 7);
   m_pressed_label = new QLabel(tr("Button Pressed"), this);
   m_pressed_label->hide();

@@ -69,17 +69,10 @@ namespace Spire {
       boost::signals2::connection connect_clicked_signal(
         const ClickedSignal::slot_type& slot) const;
 
-    protected:
-      bool eventFilter(QObject* object, QEvent* event) override;
-      void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
-
     private:
-      IconButton m_icon_button;
+      IconButton* m_icon_button;
+      boost::signals2::scoped_connection m_clicked_connection;
       bool m_is_toggled;
-      bool m_is_focused;
       QImage m_icon;
       QImage m_toggle_icon;
       QImage m_hover_icon;
