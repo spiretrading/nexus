@@ -34,6 +34,15 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_icon_button);
+  setStyleSheet(QString(R"(
+    QToolTip {
+      background-color: white;
+      border: 1px solid #C8C8C8;
+      color: black;
+      font-family: Roboto;
+      font-size: %1px;
+      padding: %2px %3px %2px %3px;
+    })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
 }
 
 void ToggleButton::set_toggled(bool toggled) {

@@ -25,6 +25,15 @@ IconButton::IconButton(QImage icon, QImage hover_icon,
   m_default_background_color.setAlpha(0);
   m_hover_background_color.setAlpha(0);
   setAttribute(Qt::WA_Hover);
+  setStyleSheet(QString(R"(
+    QToolTip {
+      background-color: white;
+      border: 1px solid #C8C8C8;
+      color: black;
+      font-family: Roboto;
+      font-size: %1px;
+      padding: %2px %3px %2px %3px;
+    })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
 }
 
 void IconButton::set_default_background_color(const QColor& color) {
