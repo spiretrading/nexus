@@ -41,6 +41,18 @@ namespace Spire {
       IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
         QWidget* parent = nullptr);
 
+      //! Constructs an IconButton with a default icon, hover icon, and
+      //!  blur icon.
+      /*!
+        \param icon The icon shown when the button is not hovered.
+        \param hover_icon The icon shown when the button is hovered.
+        \param blur_icon The icon shown when the window lacks focus.
+        \param disabled_icon The icon shown when the button is disabled.
+        \param parent The parent QWidget to the IconButton.
+      */
+      IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
+        QImage disabled_icon, QWidget* parent = nullptr);
+
       //! Sets the default background color for the button.
       /*!
         \param color The default background color.
@@ -83,6 +95,7 @@ namespace Spire {
       QImage m_icon;
       QImage m_hover_icon;
       QImage m_blur_icon;
+      QImage m_disabled_icon;
       QColor m_default_background_color;
       QColor m_hover_background_color;
 

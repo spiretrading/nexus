@@ -10,18 +10,23 @@ using namespace boost::signals2;
 using namespace Spire;
 
 IconButton::IconButton(QImage icon, QWidget* parent)
-    : IconButton(icon, icon, parent) {}
+  : IconButton(icon, icon, parent) {}
 
 IconButton::IconButton(QImage icon, QImage hover_icon, QWidget* parent)
-    : IconButton(icon, hover_icon, icon, parent) {}
+  : IconButton(icon, hover_icon, icon, parent) {}
 
 IconButton::IconButton(QImage icon, QImage hover_icon,
-    QImage blur_icon, QWidget* parent)
+  QImage blur_icon, QWidget* parent)
+  : IconButton(icon, hover_icon, blur_icon, blur_icon, parent) {}
+
+IconButton::IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
+    QImage disabled_icon, QWidget* parent)
     : QAbstractButton(parent),
       m_last_focus_reason(Qt::NoFocusReason),
       m_icon(std::move(icon)),
       m_hover_icon(std::move(hover_icon)),
-      m_blur_icon(std::move(blur_icon)) {
+      m_blur_icon(std::move(blur_icon)),
+      m_disabled_icon(std::move(disabled_icon)) {
   m_default_background_color.setAlpha(0);
   m_hover_background_color.setAlpha(0);
   setAttribute(Qt::WA_Hover);
@@ -131,8 +136,7 @@ const QImage& IconButton::get_current_icon() const {
     }
     return m_icon;
   }
-  // TODO: disabled icon
-  return m_blur_icon;
+  return m_disabled_icon;
 }
 
 bool IconButton::is_last_focus_reason_tab() const {
