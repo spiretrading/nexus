@@ -111,7 +111,7 @@ void IconButton::mouseReleaseEvent(QMouseEvent* event) {
 
 void IconButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
-  if(!underMouse()) {
+  if(!underMouse() || !isEnabled()) {
     painter.fillRect(rect(), m_default_background_color);
   } else {
     painter.fillRect(rect(), m_hover_background_color);
