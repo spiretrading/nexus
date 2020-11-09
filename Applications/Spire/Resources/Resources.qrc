@@ -120,5 +120,8 @@
         <file>Icons/arrow-up-disabled-padded.svg</file>
         <file>Icons/arrow-up-hover-padded.svg</file>
         <file>Icons/arrow-up-padded.svg</file>
+        <file>Icons/auto-scale-light-purple.svg</file>
+        <file>Icons/draw-light-purple.svg</file>
+        <file>Icons/lock-grid-light-purple.svg</file>
     </qresource>
 </RCC>

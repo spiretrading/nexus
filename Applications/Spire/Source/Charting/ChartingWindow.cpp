@@ -95,7 +95,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
   m_lock_grid_button = new ToggleButton(
-    imageFromSvg(":/Icons/lock-grid-purple.svg", BUTTON_ICON_SIZE()),
+    imageFromSvg(":/Icons/lock-grid-light-purple.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/lock-grid-green.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/lock-grid-purple.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/lock-grid-grey.svg", BUTTON_ICON_SIZE()),
@@ -106,7 +106,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(m_lock_grid_button, 0, Qt::AlignBottom);
   button_header_layout->addSpacing(scale_width(10));
   m_auto_scale_button = new ToggleButton(
-    imageFromSvg(":/Icons/auto-scale-purple.svg", BUTTON_ICON_SIZE()),
+    imageFromSvg(":/Icons/auto-scale-light-purple.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/auto-scale-green.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/auto-scale-purple.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/auto-scale-grey.svg", BUTTON_ICON_SIZE()),
@@ -126,7 +126,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = new ToggleButton(
-    imageFromSvg(":/Icons/draw-purple.svg", BUTTON_ICON_SIZE()),
+    imageFromSvg(":/Icons/draw-light-purple.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/draw-green.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/draw-purple.svg", BUTTON_ICON_SIZE()),
     imageFromSvg(":/Icons/draw-grey.svg", BUTTON_ICON_SIZE()),
