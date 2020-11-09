@@ -30,6 +30,7 @@ IconButton::IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
   m_default_background_color.setAlpha(0);
   m_hover_background_color.setAlpha(0);
   setAttribute(Qt::WA_Hover);
+  setMouseTracking(true);
   setStyleSheet(QString(R"(
     QToolTip {
       background-color: white;
