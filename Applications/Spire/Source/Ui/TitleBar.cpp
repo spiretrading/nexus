@@ -74,7 +74,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   }
   m_icon->setFixedSize(ICON_SIZE());
   m_icon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_icon->setEnabled(false);
   layout->addWidget(m_icon);
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
@@ -121,19 +120,20 @@ void TitleBar::set_icon(const QImage& icon) {
 
 void TitleBar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   if(icon.isNull()) {
-    m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
+    m_default_icon = QImage(BUTTON_ICON_SIZE(), QImage::Format::Format_ARGB32);
     m_unfocused_icon = unfocused_icon;
     set_icon(m_default_icon, m_unfocused_icon);
     return;
   }
   if(unfocused_icon.isNull()) {
     m_default_icon = icon;
-    m_unfocused_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
+    m_unfocused_icon = QImage(BUTTON_ICON_SIZE(),
+      QImage::Format::Format_ARGB32);
     set_icon(m_default_icon, m_unfocused_icon);
     return;
   }
-  m_default_icon = icon.scaled(ICON_SIZE());
-  m_unfocused_icon = unfocused_icon.scaled(ICON_SIZE());
+  m_default_icon = icon.scaled(BUTTON_ICON_SIZE());
+  m_unfocused_icon = unfocused_icon.scaled(BUTTON_ICON_SIZE());
   m_icon->set_icon(m_default_icon, m_unfocused_icon);
 }
 
