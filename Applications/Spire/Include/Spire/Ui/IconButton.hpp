@@ -31,7 +31,7 @@ namespace Spire {
       IconButton(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
 
       //! Constructs an IconButton with a default icon, hover icon, and
-      //!  blur icon.
+      //! blur icon.
       /*!
         \param icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.
@@ -41,8 +41,8 @@ namespace Spire {
       IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
         QWidget* parent = nullptr);
 
-      //! Constructs an IconButton with a default icon, hover icon, and
-      //!  blur icon.
+      //! Constructs an IconButton with a default icon, hover icon,
+      //! blur icon, and disabled icon.
       /*!
         \param icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.

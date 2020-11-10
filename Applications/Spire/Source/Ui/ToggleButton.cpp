@@ -53,12 +53,12 @@ void ToggleButton::set_toggled(bool toggled) {
 }
 
 void ToggleButton::setEnabled(bool enabled) {
-  set_icons(enabled);
+  update_icons(enabled);
   QWidget::setEnabled(enabled);
 }
 
 void ToggleButton::setDisabled(bool disabled) {
-  set_icons(!disabled);
+  update_icons(!disabled);
   QWidget::setDisabled(disabled);
 }
 
@@ -67,21 +67,21 @@ connection ToggleButton::connect_clicked_signal(
   return m_icon_button->connect_clicked_signal(slot);
 }
 
-void ToggleButton::set_icons(bool enabled) {
-  if(enabled) {
-    if(m_is_toggled) {
-      m_icon_button->set_icon(m_toggle_icon, m_hover_icon);
-    } else {
-      m_icon_button->set_icon(m_icon, m_hover_icon);
-    }
-  }
-}
-
 void ToggleButton::swap_toggle() {
   m_is_toggled = !m_is_toggled;
+  update_icons();
+}
+
+void ToggleButton::update_icons() {
   if(m_is_toggled) {
     m_icon_button->set_icon(m_toggle_icon, m_toggle_icon);
   } else {
     m_icon_button->set_icon(m_icon, m_hover_icon);
+  }
+}
+
+void ToggleButton::update_icons(bool enabled) {
+  if(enabled) {
+    update_icons();
   }
 }

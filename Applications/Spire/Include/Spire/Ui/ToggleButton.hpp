@@ -78,8 +78,9 @@ namespace Spire {
       QImage m_hover_icon;
       QImage m_disabled_icon;
 
-      void set_icons(bool enabled);
       void swap_toggle();
+      void update_icons();
+      void update_icons(bool enabled);
   };
 }
 

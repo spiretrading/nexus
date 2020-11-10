@@ -117,7 +117,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
   } else {
     painter.fillRect(rect(), m_hover_background_color);
   }
-  auto current_icon = get_current_icon();
+  const auto& current_icon = get_current_icon();
   auto icon_size = current_icon.size();
   auto image_pos = QPoint((width() - icon_size.width()) / 2,
     ((height() - icon_size.height()) / 2) + (width() - height()) / 2);
