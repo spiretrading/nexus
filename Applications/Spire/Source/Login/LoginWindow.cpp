@@ -12,6 +12,18 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto BUTTON_SIZE() {
+    static auto size = scale(26, 26);
+    return size;
+  }
+
+  auto ICON_SIZE() {
+    static auto size = scale(10, 10);
+    return size;
+  }
+}
+
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_is_dragging(false) {
@@ -31,11 +43,10 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(352);
-  auto button_icon_size = scale(10, 10);
   m_exit_button = new IconButton(
-    imageFromSvg(":/Icons/close-purple.svg", button_icon_size),
-    imageFromSvg(":/Icons/close-red.svg", button_icon_size), this);
-  m_exit_button->setFixedSize(scale(32, 26));
+    imageFromSvg(":/Icons/close-purple.svg", ICON_SIZE()),
+    imageFromSvg(":/Icons/close-red.svg", ICON_SIZE()), this);
+  m_exit_button->setFixedSize(BUTTON_SIZE());
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([=] { window()->close(); });
