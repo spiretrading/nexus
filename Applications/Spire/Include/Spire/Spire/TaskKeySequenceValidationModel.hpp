@@ -4,6 +4,7 @@
 
 namespace Spire {
 
+  //! Represents a model for validing task key sequences.
   class TaskKeySequenceValidationModel : public KeySequenceValidationModel {
     public:
 

@@ -4,6 +4,7 @@
 
 namespace Spire {
 
+  //! Represents a model for validating cancel key sequences.
   class CancelKeySequenceValidationModel : public KeySequenceValidationModel {
     public:
 

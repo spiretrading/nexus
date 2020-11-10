@@ -6,6 +6,7 @@
 
 namespace Spire {
 
+  //! Represents a model for validating key sequences.
   class KeySequenceValidationModel {
     public:
 
