@@ -8,15 +8,7 @@ namespace Spire {
   class CancelKeySequenceValidationModel : public KeySequenceValidationModel {
     public:
 
-      //! Constructs a CancelKeySequenceValidationModel.
-      CancelKeySequenceValidationModel();
-
-      virtual ~CancelKeySequenceValidationModel() = default;
-
       bool is_valid(const QKeySequence& sequence) const override;
-
-    private:
-      std::vector<ValidKeySequences> m_valid_sequences;
   };
 }
 
