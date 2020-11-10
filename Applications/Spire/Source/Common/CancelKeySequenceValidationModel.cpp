@@ -4,10 +4,9 @@
 using namespace Spire;
 
 namespace {
-  auto MODIFIER_KEYS() {
-    static auto keys = QSet<Qt::Key>({Qt::Key_Alt, Qt::Key_Control,
-      Qt::Key_Shift});
-    return keys;
+  auto is_modifier_key(Qt::Key key) {
+    return key == Qt::Key_Alt || key == Qt::Key_Control ||
+      key == Qt::Key_Shift;
   }
 }
 
@@ -17,7 +16,7 @@ bool CancelKeySequenceValidationModel::is_valid(
     case 1:
       return sequence[0] == Qt::Key_Escape;
     case 2:
-      return MODIFIER_KEYS().contains(Qt::Key(sequence[0])) &&
+      return is_modifier_key(Qt::Key(sequence[0])) &&
         sequence[1] == Qt::Key_Escape;
   }
   return false;
