@@ -7,7 +7,9 @@
 #endif
 
 namespace Spire {
+  class CancelKeySequenceValidationModel;
   class Definitions;
+  class KeySequenceValidationModel;
   class LocalRangeInputModel;
   class LocalTechnicalsModel;
   template<typename T> class QtFuture;
@@ -18,7 +20,9 @@ namespace Spire {
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
+  class TaskKeySequenceValidationModel;
   class TechnicalsModel;
+  class TestKeySequenceValidationModel;
 
   //! Defines the common type of boost signal used throughout Spire.
   template<typename F>
