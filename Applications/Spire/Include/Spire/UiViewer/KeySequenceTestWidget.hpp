@@ -20,6 +20,7 @@ namespace Spire {
       TextInputWidget* m_reset_input;
       TextInputWidget* m_set_input;
 
+      QKeySequence parse_key_sequence(const QString& text);
       void on_reset_button();
       void on_set_button();
   };

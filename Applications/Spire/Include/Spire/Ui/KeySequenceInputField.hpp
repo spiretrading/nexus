@@ -32,8 +32,10 @@ namespace Spire {
       void set_key_sequence(const QKeySequence& sequence);
 
     protected:
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -47,8 +49,9 @@ namespace Spire {
       QKeySequence m_key_sequence;
       std::vector<Qt::Key> m_entered_keys;\
       QFont m_font;
+      bool m_is_last_key_event_release;
 
-      void commit_sequence();
+      void commit_sequence(const QKeySequence& sequence);
       void draw_key(const QString& text, const QSize& text_size,
         const QPoint& pos, QPainter& painter) const;
   };

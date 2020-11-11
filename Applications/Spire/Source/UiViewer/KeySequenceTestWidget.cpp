@@ -11,6 +11,22 @@ namespace {
     static auto size = scale(100, 26);
     return size;
   }
+
+  auto get_key(const QString& text) {
+    auto key_text = text.toLower();
+    if(key_text == "ctrl" || key_text == "control") {
+      return Qt::Key_Control;
+    } else if(key_text == "alt") {
+      return Qt::Key_Alt;
+    } else if(key_text == "shift") {
+      return Qt::Key_Shift;
+    }
+    auto sequence = QKeySequence(key_text);
+    if(sequence.count() != 0) {
+      return Qt::Key(sequence[0]);
+    }
+    return Qt::Key_unknown;
+  }
 }
 
 KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
@@ -27,7 +43,7 @@ KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
   set_button->setFixedSize(INPUT_SIZE());
   set_button->connect_clicked_signal([=] { on_set_button(); });
   m_layout->addWidget(set_button, 1, 1);
-  m_reset_input = new TextInputWidget("ctrl+f1", this);
+  m_reset_input = new TextInputWidget("ctrl,f1", this);
   m_reset_input->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(m_reset_input, 2, 0);
   auto reset_button = make_flat_button(tr("Reset Sequence"), this);
@@ -37,8 +53,26 @@ KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
   on_reset_button();
 }
 
+QKeySequence KeySequenceTestWidget::parse_key_sequence(const QString& text) {
+  auto keys = text.split(",", Qt::SkipEmptyParts);
+  switch(keys.size()) {
+    case 1:
+      return QKeySequence(get_key(keys[0]));
+    case 2:
+      return QKeySequence(get_key(keys[0]), get_key(keys[1]));
+    case 3:
+      return QKeySequence(get_key(keys[0]), get_key(keys[1]),
+        get_key(keys[2]));
+    case 4:
+      return QKeySequence(get_key(keys[0]), get_key(keys[1]), get_key(keys[2]),
+        get_key(keys[3]));
+    default:
+      return QKeySequence();
+  }
+}
+
 void KeySequenceTestWidget::on_reset_button() {
-  if(auto sequence = QKeySequence::fromString(m_reset_input->text());
+  if(auto sequence = parse_key_sequence(m_reset_input->text());
       !sequence.isEmpty()) {
     delete_later(m_input);
     m_input = new KeySequenceInputField(
@@ -53,7 +87,7 @@ void KeySequenceTestWidget::on_reset_button() {
 }
 
 void KeySequenceTestWidget::on_set_button() {
-  if(auto sequence = QKeySequence::fromString(m_set_input->text());
+  if(auto sequence = parse_key_sequence(m_set_input->text());
       !sequence.isEmpty()) {
     m_input->set_key_sequence(sequence);
   }
