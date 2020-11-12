@@ -52,6 +52,7 @@ KeySequenceInputField::KeySequenceInputField(
   setReadOnly(true);
   m_font.setPixelSize(scale_height(12));
   m_font.setStyle(QFont::StyleItalic);
+  installEventFilter(this);
 }
 
 void KeySequenceInputField::add_key(Qt::Key key) {
@@ -69,6 +70,16 @@ void KeySequenceInputField::set_key_sequence(const QKeySequence& sequence) {
   }
 }
 
+bool KeySequenceInputField::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+      //TODO: deal with tab keys
+    }
+  }
+  return QLineEdit::eventFilter(watched, event);
+}
+
 void KeySequenceInputField::focusOutEvent(QFocusEvent* event) {
   m_is_last_key_event_release = false;
   m_state = State::DEFAULT;
@@ -78,20 +89,21 @@ void KeySequenceInputField::focusOutEvent(QFocusEvent* event) {
 
 void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
   m_is_last_key_event_release = false;
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_state == State::DEFAULT) {
-      m_state = State::EDIT;
-    } else {
+  switch(event->key()) {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+      if(m_state == State::DEFAULT) {
+        m_state = State::EDIT;
+      } else {
+        m_state = State::DEFAULT;
+        m_entered_keys.clear();
+      }
+      update();
+      return;
+    case Qt::Key_Delete:
       m_state = State::DEFAULT;
-      m_entered_keys.clear();
-    }
-    update();
-    return;
-  }
-  if(event->key() == Qt::Key_Delete) {
-    m_state = State::DEFAULT;
-    commit_sequence({});
-    return;
+      commit_sequence({});
+      return;
   }
   if(!event->isAutoRepeat()) {
     m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
@@ -101,16 +113,13 @@ void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
 }
 
 void KeySequenceInputField::keyReleaseEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    return;
-  }
-  if(event->key() == Qt::Key_Delete) {
-    m_state = State::DEFAULT;
-    commit_sequence({});
-  }
-  if(m_entered_keys.empty() && (event->key() == Qt::Key_Tab ||
-      event->key() == Qt::Key_Backtab)) {
-    return;
+  switch(event->key()) {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+      return;
+    case Qt::Key_Delete:
+      m_state = State::DEFAULT;
+      commit_sequence({});
   }
   if(!m_is_last_key_event_release) {
     auto key_sequence = make_key_sequence(m_entered_keys);

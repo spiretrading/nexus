@@ -32,6 +32,7 @@ namespace Spire {
       void set_key_sequence(const QKeySequence& sequence);
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
@@ -47,7 +48,7 @@ namespace Spire {
       std::shared_ptr<KeySequenceValidationModel> m_model;
       State m_state;
       QKeySequence m_key_sequence;
-      std::vector<Qt::Key> m_entered_keys;\
+      std::vector<Qt::Key> m_entered_keys;
       QFont m_font;
       bool m_is_last_key_event_release;
 

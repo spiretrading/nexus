@@ -8,9 +8,14 @@
 
 namespace Spire {
 
+  //! Represents a widget for testing a KeySequenceInputField.
   class KeySequenceTestWidget : public QWidget {
     public:
 
+      //! Constructs a KeySequenceTestWidget.
+      /*!
+        \param parent The parent widget.
+      */
       KeySequenceTestWidget(QWidget* parent = nullptr);
 
     private:
