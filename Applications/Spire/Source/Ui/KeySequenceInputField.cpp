@@ -74,7 +74,10 @@ bool KeySequenceInputField::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
-      //TODO: deal with tab keys
+      if(m_state == State::EDIT) {
+        add_key(Qt::Key(e->key()));
+        return true;
+      }
     }
   }
   return QLineEdit::eventFilter(watched, event);
@@ -108,8 +111,6 @@ void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
   if(!event->isAutoRepeat()) {
     m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
   }
-  m_state = State::EDIT;
-  update();
 }
 
 void KeySequenceInputField::keyReleaseEvent(QKeyEvent* event) {
