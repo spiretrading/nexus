@@ -9,7 +9,6 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
@@ -21,6 +20,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionRegistry.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
@@ -39,7 +39,7 @@ namespace Nexus::OrderExecutionService {
    */
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
-  class OrderExecutionServlet : private boost::noncopyable {
+  class OrderExecutionServlet {
     public:
       using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
@@ -122,6 +122,9 @@ namespace Nexus::OrderExecutionService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      OrderExecutionServlet(const OrderExecutionServlet&) = delete;
+      OrderExecutionServlet& operator =(
+        const OrderExecutionServlet&) = delete;
       void RecoverTradingSession();
       void OnExecutionReport(const ExecutionReport& executionReport,
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -260,7 +263,13 @@ namespace Nexus::OrderExecutionService {
         Beam::Queries::Sequence::Last());
       recoveryQuery.SetSnapshotLimit(
         Beam::Queries::SnapshotLimit::Unlimited());
-      auto orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+      auto sessionOrders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+      auto liveOrders = m_dataStore->LoadOrderSubmissions(
+        BuildLiveOrdersQuery(account));
+      auto orders = std::vector<SequencedOrderRecord>();
+      std::set_union(sessionOrders.begin(), sessionOrders.end(),
+        liveOrders.begin(), liveOrders.end(), std::back_inserter(orders),
+        Beam::Queries::SequenceComparator());
       for(auto& orderRecord : orders) {
         auto& syncShortingModel = m_shortingModels.GetOrInsert(
           orderRecord->m_info.m_fields.m_account,
@@ -272,16 +281,15 @@ namespace Nexus::OrderExecutionService {
             shortingModel.Update(executionReport);
           }
         });
-        if(!orderRecord->m_executionReports.empty() &&
-            IsTerminal(orderRecord->m_executionReports.back().m_status)) {
-          continue;
-        }
+        m_liveOrders.Insert(orderRecord->m_info.m_orderId);
         auto order = static_cast<const Order*>(nullptr);
         try {
           order = &m_driver->Recover(Beam::Queries::SequencedValue(
             Beam::Queries::IndexedValue(*orderRecord, account),
             orderRecord.GetSequence()));
         } catch(const std::exception&) {
+          std::cout << "Unable to recover order: " <<
+            orderRecord->m_info.m_orderId << std::endl;
           continue;
         }
         order->GetPublisher().With([&] {

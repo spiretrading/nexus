@@ -474,8 +474,19 @@ void Nexus::Python::ExportPrimitiveOrder(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportStandardQueries(pybind11::module& module) {
+  module.def("build_market_filter", &BuildMarketFilter);
   module.def("build_daily_order_submission_query",
     &BuildDailyOrderSubmissionQuery);
   module.def("query_daily_order_submissions",
     &QueryDailyOrderSubmissions<VirtualOrderExecutionClient>);
+  module.def("build_live_orders_filter", &BuildLiveOrdersFilter);
+  module.def("build_live_orders_query", &BuildLiveOrdersQuery);
+  module.def("query_live_orders",
+    &QueryLiveOrders<VirtualOrderExecutionClient>);
+  module.def("load_live_orders",
+    &LoadLiveOrders<VirtualOrderExecutionClient>);
+  module.def("build_order_id_filter", &BuildOrderIdFilter);
+  module.def("build_order_id_query", &BuildOrderIdQuery);
+  module.def("query_order_ids", &QueryOrderIds<VirtualOrderExecutionClient>);
+  module.def("load_order_ids", &LoadOrderIds<VirtualOrderExecutionClient>);
 }

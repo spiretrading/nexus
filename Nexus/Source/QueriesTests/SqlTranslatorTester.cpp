@@ -32,13 +32,11 @@ TEST_SUITE("SqlTranslator") {
   }
 
   TEST_CASE("query_order_ids") {
-    auto account = DirectoryEntry::MakeAccount(112, "trader314");
     auto ids = std::vector<OrderId>();
     ids.push_back(13);
     ids.push_back(31);
-    auto expression = BuildOrderSubmissionExpression(account, ids);
-    auto translator = Nexus::Queries::SqlTranslator("submissions",
-      expression);
+    auto expression = BuildOrderIdFilter(ids);
+    auto translator = Nexus::Queries::SqlTranslator("submissions", expression);
     auto translation = translator.Build();
     auto query = std::string();
     translation.append_query(query);
