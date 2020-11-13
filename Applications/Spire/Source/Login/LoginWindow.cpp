@@ -44,8 +44,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(352);
   m_exit_button = new IconButton(
-    imageFromSvg(":/Icons/close-purple.svg", ICON_SIZE()),
-    imageFromSvg(":/Icons/close-red.svg", ICON_SIZE()), this);
+    imageFromSvg(":/Icons/close-purple.svg", ICON_SIZE()), this);
   m_exit_button->setFixedSize(BUTTON_SIZE());
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);

@@ -21,8 +21,7 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
     QImage disable_icon, QWidget* parent)
     : QWidget(parent),
       m_is_toggled(false),
-      m_icon_button(new IconButton(icon, hover_icon, icon, disable_icon,
-        parent)),
+      m_icon_button(new IconButton(icon, parent)),
       m_icon(std::move(icon)),
       m_hover_icon(std::move(hover_icon)),
       m_toggle_icon(std::move(toggle_icon)),
@@ -74,9 +73,9 @@ void ToggleButton::swap_toggle() {
 
 void ToggleButton::update_icons() {
   if(m_is_toggled) {
-    m_icon_button->set_icon(m_toggle_icon, m_toggle_icon);
+    //m_icon_button->set_icon(m_toggle_icon, m_toggle_icon);
   } else {
-    m_icon_button->set_icon(m_icon, m_hover_icon);
+    //m_icon_button->set_icon(m_icon, m_hover_icon);
   }
 }
 

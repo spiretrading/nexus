@@ -30,8 +30,8 @@ Window::Window(QWidget* parent)
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
-  m_title_bar = new TitleBar(this);
-  set_svg_icon(":/Icons/spire-icon-black.svg", ":/Icons/spire-icon-grey.svg");
+  m_title_bar = new TitleBar(imageFromSvg(":/Icons/spire-icon-grey.svg",
+    ICON_SIZE()), this);
   installEventFilter(m_title_bar);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
@@ -44,19 +44,19 @@ void Window::set_icon(const QImage& icon) {
   m_title_bar->set_icon(icon);
 }
 
-void Window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
-  m_title_bar->set_icon(icon, unfocused_icon);
-}
+//void Window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
+//  m_title_bar->set_icon(icon, unfocused_icon);
+//}
 
 void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
 }
 
-void Window::set_svg_icon(const QString& icon_path,
-    const QString& unfocused_icon_path) {
-  set_icon(make_svg_window_icon(icon_path),
-    make_svg_window_icon(unfocused_icon_path));
-}
+//void Window::set_svg_icon(const QString& icon_path,
+//    const QString& unfocused_icon_path) {
+//  set_icon(make_svg_window_icon(icon_path),
+//    make_svg_window_icon(unfocused_icon_path));
+//}
 
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {

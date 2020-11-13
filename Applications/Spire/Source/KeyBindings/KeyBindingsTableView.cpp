@@ -16,8 +16,7 @@ namespace {
   auto create_delete_button(QWidget* parent) {
     auto close_icon_size = scale(8, 8);
     auto button = new IconButton(
-      imageFromSvg(":/Icons/close-purple.svg", close_icon_size),
-      imageFromSvg(":/Icons/close-red.svg", close_icon_size), parent);
+      imageFromSvg(":/Icons/close-purple.svg", close_icon_size), parent);
     button->setFixedSize(scale(16, 16));
     return button;
   }

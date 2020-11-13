@@ -22,36 +22,13 @@ namespace Spire {
       */
       explicit IconButton(QImage icon, QWidget* parent = nullptr);
 
-      //! Constructs an IconButton with a default icon and a hover icon.
-      /*!
-        \param icon The icon shown when the button is not hovered.
-        \param hover_icon The icon shown when the button is hovered.
-        \param parent The parent QWidget to the IconButton.
-      */
-      IconButton(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
+      void set_icon(const QImage& icon);
 
-      //! Constructs an IconButton with a default icon, hover icon, and
-      //! blur icon.
-      /*!
-        \param icon The icon shown when the button is not hovered.
-        \param hover_icon The icon shown when the button is hovered.
-        \param blur_icon The icon shown when the window lacks focus.
-        \param parent The parent QWidget to the IconButton.
-      */
-      IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
-        QWidget* parent = nullptr);
+      void set_blur_color(const QColor& color);
 
-      //! Constructs an IconButton with a default icon, hover icon,
-      //! blur icon, and disabled icon.
-      /*!
-        \param icon The icon shown when the button is not hovered.
-        \param hover_icon The icon shown when the button is hovered.
-        \param blur_icon The icon shown when the window lacks focus.
-        \param disabled_icon The icon shown when the button is disabled.
-        \param parent The parent QWidget to the IconButton.
-      */
-      IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
-        QImage disabled_icon, QWidget* parent = nullptr);
+      void set_default_color(const QColor& color);
+
+      void set_hover_color(const QColor& color);
 
       //! Sets the default background color for the button.
       /*!
@@ -64,18 +41,6 @@ namespace Spire {
         \param color The hover background color.
       */
       void set_hover_background_color(const QColor& color);
-
-      //! Returns the icon displayed.
-      const QImage& get_icon() const;
-
-      //! Sets the icon to display.
-      void set_icon(QImage icon);
-
-      //! Sets the icons to display.
-      void set_icon(QImage icon, QImage hover_icon);
-
-      //! Sets the icons to display.
-      void set_icon(QImage icon, QImage hover_icon, QImage blur_icon);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
@@ -93,13 +58,14 @@ namespace Spire {
       mutable ClickedSignal m_clicked_signal;
       Qt::FocusReason m_last_focus_reason;
       QImage m_icon;
-      QImage m_hover_icon;
-      QImage m_blur_icon;
-      QImage m_disabled_icon;
+      QColor m_default_color;
+      QColor m_hover_color;
+      QColor m_disabled_color;
+      QColor m_blur_color;
       QColor m_default_background_color;
       QColor m_hover_background_color;
 
-      const QImage& get_current_icon() const;
+      const QColor& get_current_icon_color() const;
       bool is_last_focus_reason_tab() const;
   };
 }

@@ -35,9 +35,7 @@ namespace {
 
   auto create_button(const QString& icon, const QString& hover_icon,
       const QString& tooltip, QWidget* parent) {
-    auto button = new IconButton(
-      imageFromSvg(icon, BUTTON_ICON_SIZE()),
-      imageFromSvg(hover_icon, BUTTON_ICON_SIZE()), parent);
+    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
     return button;
@@ -49,8 +47,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     : Window(parent),
       m_model(model.Get()) {
   set_fixed_body_size(scale(308, 72));
-  set_svg_icon(":/Icons/spire-icon-black.svg",
-    ":/Icons/spire-icon-grey.svg");
+  set_svg_icon(":/Icons/spire-icon-black.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));

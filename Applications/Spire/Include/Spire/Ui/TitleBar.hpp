@@ -14,7 +14,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      explicit TitleBar(QWidget* parent = nullptr);
+      //explicit TitleBar(QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
@@ -29,8 +29,8 @@ namespace Spire {
         \param unfocused_icon The icon to display when the window lacks focus.
         \param parent The parent widget.
       */
-      TitleBar(const QImage& icon, const QImage& unfocused_icon,
-        QWidget* parent = nullptr);
+      //TitleBar(const QImage& icon, const QImage& unfocused_icon,
+      //  QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*!
@@ -43,7 +43,7 @@ namespace Spire {
         \param icon The icon to display when the window has focus.
         \param icon The icon to display when the window lacks focus.
       */
-      void set_icon(const QImage& icon, const QImage& unfocused_icon);
+      //void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
       //! Returns the title text QLabel.
       QLabel* get_title_label() const;
@@ -54,9 +54,8 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      IconButton* m_icon;
-      QImage m_default_icon;
-      QImage m_unfocused_icon;
+      IconButton* m_icon_button;
+      QImage m_icon;
       QLabel* m_title_label;
       IconButton* m_minimize_button;
       IconButton* m_maximize_button;

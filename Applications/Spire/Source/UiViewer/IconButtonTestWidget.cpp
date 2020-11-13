@@ -10,11 +10,6 @@ namespace {
     static auto size = scale(26, 26);
     return size;
   }
-
-  auto IMAGE_SIZE() {
-    static auto size = scale(16, 16);
-    return size;
-  }
 }
 
 IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
@@ -24,7 +19,7 @@ IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
   auto label1 = new QLabel(tr("Default Image"), this);
   m_layout->addWidget(label1, 0, 0, 1, 3);
   auto button1 = new IconButton(
-    imageFromSvg(":/Icons/time-sale-black.svg", IMAGE_SIZE()), this);
+    imageFromSvg(":/Icons/demo.svg", BUTTON_SIZE()), this);
   button1->setToolTip(tr("Tooltip"));
   button1->setFixedSize(BUTTON_SIZE());
   button1->connect_clicked_signal([=] { on_button_pressed(1); });
@@ -37,8 +32,7 @@ IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
   auto label2 = new QLabel(tr("Default and Hover Images"), this);
   m_layout->addWidget(label2, 2, 0, 1, 3);
   auto button2 = new IconButton(
-    imageFromSvg(":/Icons/time-sale-black.svg", IMAGE_SIZE()),
-    imageFromSvg(":/Icons/time-sale-purple.svg", IMAGE_SIZE()), this);
+    imageFromSvg(":/Icons/demo.svg", BUTTON_SIZE()), this);
   button2->setToolTip(tr("Tooltip"));
   button2->setFixedSize(BUTTON_SIZE());
   button2->connect_clicked_signal([=] { on_button_pressed(3); });
@@ -52,9 +46,7 @@ IconButtonTestWidget::IconButtonTestWidget(QWidget* parent)
     tr("Default, Hover, and Window Deac. Images"), this);
   m_layout->addWidget(label3, 4, 0, 1, 3);
   auto button3 = new IconButton(
-    imageFromSvg(":/Icons/time-sale-black.svg", IMAGE_SIZE()),
-    imageFromSvg(":/Icons/time-sale-purple.svg", IMAGE_SIZE()),
-    imageFromSvg(":/Icons/time-sale-grey.svg", IMAGE_SIZE()), this);
+    imageFromSvg(":/Icons/demo.svg", BUTTON_SIZE()), this);
   button3->setToolTip(tr("Tooltip"));
   button3->setFixedSize(BUTTON_SIZE());
   button3->connect_clicked_signal([=] { on_button_pressed(5); });

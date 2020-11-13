@@ -123,5 +123,10 @@
         <file>Icons/auto-scale-light-purple.svg</file>
         <file>Icons/draw-light-purple.svg</file>
         <file>Icons/lock-grid-light-purple.svg</file>
+        <file>Icons/demo.svg</file>
+        <file>Icons/close.svg</file>
+        <file>Icons/maximize.svg</file>
+        <file>Icons/minimize.svg</file>
+        <file>Icons/restore.svg</file>
     </qresource>
 </RCC>

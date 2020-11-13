@@ -10,23 +10,13 @@ using namespace boost::signals2;
 using namespace Spire;
 
 IconButton::IconButton(QImage icon, QWidget* parent)
-  : IconButton(icon, icon, parent) {}
-
-IconButton::IconButton(QImage icon, QImage hover_icon, QWidget* parent)
-  : IconButton(icon, hover_icon, icon, parent) {}
-
-IconButton::IconButton(QImage icon, QImage hover_icon,
-  QImage blur_icon, QWidget* parent)
-  : IconButton(icon, hover_icon, blur_icon, blur_icon, parent) {}
-
-IconButton::IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
-    QImage disabled_icon, QWidget* parent)
     : QAbstractButton(parent),
       m_last_focus_reason(Qt::NoFocusReason),
       m_icon(std::move(icon)),
-      m_hover_icon(std::move(hover_icon)),
-      m_blur_icon(std::move(blur_icon)),
-      m_disabled_icon(std::move(disabled_icon)) {
+      m_default_color("#7F5EEC"),
+      m_hover_color("#4B23A0"),
+      m_disabled_color("#D0D0D0"),
+      m_blur_color(m_default_color) {
   m_default_background_color.setAlpha(0);
   m_hover_background_color.setAlpha(0);
   setAttribute(Qt::WA_Hover);
@@ -42,31 +32,29 @@ IconButton::IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
     })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
 }
 
+void IconButton::set_icon(const QImage& icon) {
+  m_icon = icon;
+  update();
+}
+
+void IconButton::set_blur_color(const QColor& color) {
+  m_blur_color = color;
+}
+
+void IconButton::set_default_color(const QColor& color) {
+  m_default_color = color;
+}
+
+void IconButton::set_hover_color(const QColor& color) {
+  m_hover_color = color;
+}
+
 void IconButton::set_default_background_color(const QColor& color) {
   m_default_background_color = color;
 }
 
 void IconButton::set_hover_background_color(const QColor& color) {
   m_hover_background_color = color;
-}
-
-const QImage& IconButton::get_icon() const {
-  return m_icon;
-}
-
-void IconButton::set_icon(QImage icon) {
-  set_icon(icon, icon);
-}
-
-void IconButton::set_icon(QImage icon, QImage hover_icon) {
-  set_icon(icon, hover_icon, icon);
-}
-
-void IconButton::set_icon(QImage icon, QImage hover_icon, QImage blur_icon) {
-  m_icon = std::move(icon);
-  m_hover_icon = std::move(hover_icon);
-  m_blur_icon = std::move(blur_icon);
-  update();
 }
 
 connection IconButton::connect_clicked_signal(
@@ -117,27 +105,31 @@ void IconButton::paintEvent(QPaintEvent* event) {
   } else {
     painter.fillRect(rect(), m_hover_background_color);
   }
-  const auto& current_icon = get_current_icon();
-  auto icon_size = current_icon.size();
-  auto image_pos = QPoint((width() - icon_size.width()) / 2,
-    ((height() - icon_size.height()) / 2) + (width() - height()) / 2);
-  painter.drawImage(image_pos, current_icon);
+  auto icon = QPixmap::fromImage(m_icon);
+  auto image_painter = QPainter(&icon);
+  image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+  image_painter.fillRect(icon.rect(), get_current_icon_color());
+  painter.drawPixmap(0, 0, icon);
   if(hasFocus() && is_last_focus_reason_tab()) {
-    painter.fillRect(image_pos.x(), event->rect().height() - scale_height(2),
-      icon_size.width(), scale_height(2), QColor("#4B23A0"));
+    painter.setPen("#4B23A0");
+    auto path = QPainterPath();
+    path.addRoundedRect(0, 0, width() -1 , height() - 1, scale_width(3),
+      scale_height(3));
+    painter.setPen({QColor("#4B23A0"), static_cast<qreal>(scale_width(1))});
+    painter.drawPath(path);
   }
 }
 
-const QImage& IconButton::get_current_icon() const {
+const QColor& IconButton::get_current_icon_color() const {
   if(isEnabled()) {
     if(underMouse() || (hasFocus() && is_last_focus_reason_tab())) {
-      return m_hover_icon;
+      return m_hover_color;
     } else if(!window()->isActiveWindow()) {
-      return m_blur_icon;
+      return m_blur_color;
     }
-    return m_icon;
+    return m_default_color;
   }
-  return m_disabled_icon;
+  return m_disabled_color;
 }
 
 bool IconButton::is_last_focus_reason_tab() const {
