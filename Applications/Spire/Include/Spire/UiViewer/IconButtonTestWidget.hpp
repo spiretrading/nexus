@@ -20,8 +20,6 @@ namespace Spire {
       QGridLayout* m_layout;
       QLabel* m_pressed_label;
       QTimer* m_pressed_timer;
-
-      void on_button_pressed(int row);
   };
 }
 

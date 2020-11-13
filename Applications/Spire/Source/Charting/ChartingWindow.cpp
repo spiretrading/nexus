@@ -50,8 +50,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_is_chart_auto_scaled(true) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
-  set_svg_icon(":/Icons/chart-black.svg",
-    ":/Icons/chart-grey.svg");
+  set_svg_icon(":/Icons/chart-black.svg");
   setWindowIcon(QIcon(":/Icons/chart-icon-256x256.png"));
   setWindowTitle(tr("Chart"));
   auto body = new QWidget(this);

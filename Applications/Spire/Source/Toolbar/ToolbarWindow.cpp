@@ -13,11 +13,6 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  auto BUTTON_ICON_SIZE() {
-    static auto size = scale(20, 20);
-    return size;
-  }
-
   auto BUTTON_SIZE() {
     static auto size = scale(20, 28);
     return size;

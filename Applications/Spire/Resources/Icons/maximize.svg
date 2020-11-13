@@ -6,6 +6,6 @@
 	.st0{fill:none;}
 	.st1{fill:#333333;}
 </style>
-<rect class="st0" width="32" height="26"/>
-<path class="st1" d="M10,7v12h12V7H10z M20,17h-8V9h8V17z"/>
+<rect y="0" class="st0" width="32" height="26"/>
+<path class="st1" d="M12,9v8h8V9H12z M19,16h-6v-6h6V16z"/>
 </svg>

@@ -19,8 +19,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setWindowIcon(QIcon(":/Icons/key-bindings-icon-256x256.png"));
   setWindowTitle(tr("Key Bindings"));
-  set_svg_icon(":/Icons/key-bindings-black.svg",
-    ":/Icons/key-bindings-grey.svg");
+  set_svg_icon(":/Icons/key-bindings-black.svg");
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(body);

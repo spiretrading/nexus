@@ -113,8 +113,8 @@ void IconButton::paintEvent(QPaintEvent* event) {
   if(hasFocus() && is_last_focus_reason_tab()) {
     painter.setPen("#4B23A0");
     auto path = QPainterPath();
-    path.addRoundedRect(0, 0, width() -1 , height() - 1, scale_width(3),
-      scale_height(3));
+    path.addRoundedRect(0, 0, width() -1 , height() - 1, scale_width(2),
+      scale_height(2));
     painter.setPen({QColor("#4B23A0"), static_cast<qreal>(scale_width(1))});
     painter.drawPath(path);
   }

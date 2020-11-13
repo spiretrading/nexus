@@ -35,7 +35,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   setMinimumSize(scale(220, 280));
   resize_body(scale(220, 410));
   setWindowTitle(tr("Book View"));
-  set_svg_icon(":/Icons/bookview-black.svg", ":/Icons/bookview-grey.svg");
+  set_svg_icon(":/Icons/bookview-black.svg");
   setWindowIcon(QIcon(":/Icons/book-view-icon-256x256.png"));
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);

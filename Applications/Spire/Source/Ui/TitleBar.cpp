@@ -16,7 +16,7 @@ using namespace Spire;
 
 namespace {
   auto BUTTON_SIZE() {
-    static auto size = scale(26, 26);
+    static auto size = scale(32, 26);
     return size;
   }
 
@@ -26,6 +26,7 @@ namespace {
     button->set_default_color("#333333");
     button->set_hover_color("#333333");
     button->set_hover_background_color("#EBEBEB");
+    button->set_blur_color("#D0D0D0");
     button->setFixedSize(BUTTON_SIZE());
     return button;
   }
