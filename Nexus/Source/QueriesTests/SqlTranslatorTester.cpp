@@ -43,6 +43,6 @@ TEST_SUITE("SqlTranslator") {
     auto query = std::string();
     translation.append_query(query);
     REQUIRE(query ==
-      "((submissions.order_id == 13) or (submissions.order == 31))");
+      "((submissions.order_id = 13) OR (submissions.order_id = 31))");
   }
 }
