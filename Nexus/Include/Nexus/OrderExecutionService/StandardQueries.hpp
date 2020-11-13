@@ -138,11 +138,11 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Builds a query to retrieve Orders by their id.
+   * Builds an Expression to retrieve Orders by their id.
    * @param account The account to query.
    * @param ids The order ids to query.
    */
-  inline AccountQuery BuildOrderSubmissionQuery(
+  inline auto BuildOrderSubmissionExpression(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<OrderId>& ids) {
     auto info = Beam::Queries::ParameterExpression(0,
@@ -155,12 +155,22 @@ namespace Nexus::OrderExecutionService {
         return Beam::Queries::MakeEqualsExpression(field,
           Beam::Queries::ConstantExpression(Beam::Queries::NativeValue(id)));
       });
+    return Beam::Queries::MakeOrExpression(clauses.begin(), clauses.end());
+  }
+
+  /**
+   * Builds a query to retrieve Orders by their id.
+   * @param account The account to query.
+   * @param ids The order ids to query.
+   */
+  inline AccountQuery BuildOrderSubmissionQuery(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const std::vector<OrderId>& ids) {
     auto query = AccountQuery();
     query.SetIndex(account);
     query.SetRange(Beam::Queries::Range::Historical());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    query.SetFilter(Beam::Queries::MakeOrExpression(
-      clauses.begin(), clauses.end()));
+    query.SetFilter(BuildOrderSubmissionExpression(account, ids));
     return query;
   }
 

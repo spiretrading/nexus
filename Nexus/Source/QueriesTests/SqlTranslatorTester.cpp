@@ -1,10 +1,13 @@
 #include <Beam/Queries/StandardValues.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Queries/SqlTranslator.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::ServiceLocator;
 using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Queries;
 
 TEST_SUITE("SqlTranslator") {
@@ -26,5 +29,20 @@ TEST_SUITE("SqlTranslator") {
     auto query = std::string();
     translation.append_query(query);
     REQUIRE(query == "(\"XTSX\" = market)");
+  }
+
+  TEST_CASE("query_order_ids") {
+    auto account = DirectoryEntry::MakeAccount(112, "trader314");
+    auto ids = std::vector<OrderId>();
+    ids.push_back(13);
+    ids.push_back(31);
+    auto expression = BuildOrderSubmissionExpression(account, ids);
+    auto translator = Nexus::Queries::SqlTranslator("submissions",
+      expression);
+    auto translation = translator.Build();
+    auto query = std::string();
+    translation.append_query(query);
+    REQUIRE(query ==
+      "((submissions.order_id == 13) or (submissions.order == 31))");
   }
 }
