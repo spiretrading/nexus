@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDERINFO_HPP
-#define NEXUS_ORDERINFO_HPP
+#ifndef NEXUS_ORDER_INFO_HPP
+#define NEXUS_ORDER_INFO_HPP
 #include <ostream>
 #include <tuple>
 #include <vector>
@@ -11,73 +11,71 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \struct OrderInfo
-      \brief Stores details about an Order submission.
-   */
+  /** Stores details about an Order submission. */
   struct OrderInfo {
 
-    //! The OrderFields used in the submission.
+    /** The OrderFields used in the submission. */
     OrderFields m_fields;
 
-    //! The account that submitted the Order.
+    /** The account that submitted the Order. */
     Beam::ServiceLocator::DirectoryEntry m_submissionAccount;
 
-    //! The Order's id.
+    /** The Order's id. */
     OrderId m_orderId;
 
-    //! Whether the Order is a short sale.
+    /** Whether the Order is a short sale. */
     bool m_shortingFlag;
 
-    //! The Order's timestamp.
+    /** The Order's timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs an empty OrderInfo.
+    /** Constructs an empty OrderInfo. */
     OrderInfo();
 
-    //! Constructs an OrderInfo.
-    /*!
-      \param fields The OrderFields used in the submission.
-      \param submissionAccount The account that submitted the Order.
-      \param orderId The Order's id.
-      \param shortingFlag Whether the Order is a short sale.
-      \param timestamp The Order's timestamp.
-    */
+    /**
+     * Constructs an OrderInfo.
+     * @param fields The OrderFields used in the submission.
+     * @param submissionAccount The account that submitted the Order.
+     * @param orderId The Order's id.
+     * @param shortingFlag Whether the Order is a short sale.
+     * @param timestamp The Order's timestamp.
+     */
     OrderInfo(OrderFields fields,
       Beam::ServiceLocator::DirectoryEntry submissionAccount, OrderId orderId,
       bool shortingFlag, boost::posix_time::ptime timestamp);
 
-    //! Constructs an OrderInfo whose submission account is the same as the
-    //! account that the Order is assigned to.
-    /*!
-      \param fields The OrderFields used in the submission.
-      \param orderId The Order's id.
-      \param shortingFlag Whether the Order is a short sale.
-      \param timestamp The Order's timestamp.
-    */
+    /**
+     * Constructs an OrderInfo whose submission account is the same as the
+     * account that the Order is assigned to.
+     * @param fields The OrderFields used in the submission.
+     * @param orderId The Order's id.
+     * @param shortingFlag Whether the Order is a short sale.
+     * @param timestamp The Order's timestamp.
+     */
     OrderInfo(OrderFields fields, OrderId orderId, bool shortingFlag,
       boost::posix_time::ptime timestamp);
 
-    //! Constructs an OrderInfo whose submission account is the same as the
-    //! account that the Order is assigned to and whose shorting flag is false.
-    /*!
-      \param fields The OrderFields used in the submission.
-      \param orderId The Order's id.
-      \param shortingFlag Whether the Order is a short sale.
-      \param timestamp The Order's timestamp.
-    */
+    /**
+     * Constructs an OrderInfo whose submission account is the same as the
+     * account that the Order is assigned to and whose shorting flag is false.
+     * @param fields The OrderFields used in the submission.
+     * @param orderId The Order's id.
+     * @param shortingFlag Whether the Order is a short sale.
+     * @param timestamp The Order's timestamp.
+     */
     OrderInfo(OrderFields fields, OrderId orderId,
       boost::posix_time::ptime timestamp);
   };
 
-  //! Tests if two OrderInfos are equal.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff <code>lhs</code> is equal to <code>rhs</code>.
-  */
+  /**
+   * Tests if two OrderInfos are equal.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff <code>lhs</code> is equal to
+   *         <code>rhs</code>.
+   */
   inline bool operator ==(const OrderInfo& lhs, const OrderInfo& rhs) {
     return std::tie(lhs.m_fields, lhs.m_submissionAccount, lhs.m_orderId,
       lhs.m_shortingFlag, lhs.m_timestamp) == std::tie(rhs.m_fields,
@@ -85,12 +83,12 @@ namespace OrderExecutionService {
       rhs.m_timestamp);
   }
 
-  //! Tests if two OrderInfos are not equal.
-  /*!
-    \param lhs The left hand side of the inequality.
-    \param rhs The right hand side of the inequality.
-    \return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
-  */
+  /**
+   * Tests if two OrderInfos are not equal.
+   * @param lhs The left hand side of the inequality.
+   * @param rhs The right hand side of the inequality.
+   * @return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
+   */
   inline bool operator !=(const OrderInfo& lhs, const OrderInfo& rhs) {
     return !(lhs == rhs);
   }
@@ -102,38 +100,32 @@ namespace OrderExecutionService {
   }
 
   inline OrderInfo::OrderInfo()
-      : m_orderId{static_cast<OrderId>(-1)},
-        m_shortingFlag{false} {}
+    : m_orderId(static_cast<OrderId>(-1)),
+      m_shortingFlag(false) {}
 
   inline OrderInfo::OrderInfo(OrderFields fields,
-      Beam::ServiceLocator::DirectoryEntry submissionAccount, OrderId orderId,
-      bool shortingFlag, boost::posix_time::ptime timestamp)
-      : m_fields{std::move(fields)},
-        m_submissionAccount{std::move(submissionAccount)},
-        m_orderId{orderId},
-        m_shortingFlag{shortingFlag},
-        m_timestamp{timestamp} {}
+    Beam::ServiceLocator::DirectoryEntry submissionAccount, OrderId orderId,
+    bool shortingFlag, boost::posix_time::ptime timestamp)
+    : m_fields(std::move(fields)),
+      m_submissionAccount(std::move(submissionAccount)),
+      m_orderId(orderId),
+      m_shortingFlag(shortingFlag),
+      m_timestamp(timestamp) {}
 
   inline OrderInfo::OrderInfo(OrderFields fields, OrderId orderId,
-      bool shortingFlag, boost::posix_time::ptime timestamp)
-      : m_fields{std::move(fields)},
-        m_submissionAccount{m_fields.m_account},
-        m_orderId{orderId},
-        m_shortingFlag{shortingFlag},
-        m_timestamp{timestamp} {}
+    bool shortingFlag, boost::posix_time::ptime timestamp)
+    : m_fields(std::move(fields)),
+      m_submissionAccount(m_fields.m_account),
+      m_orderId(orderId),
+      m_shortingFlag(shortingFlag),
+      m_timestamp(timestamp) {}
 
   inline OrderInfo::OrderInfo(OrderFields fields, OrderId orderId,
-      boost::posix_time::ptime timestamp)
-      : m_fields{std::move(fields)},
-        m_submissionAccount{m_fields.m_account},
-        m_orderId{orderId},
-        m_shortingFlag{false},
-        m_timestamp{timestamp} {}
-}
+    boost::posix_time::ptime timestamp)
+    : OrderInfo(fields, orderId, false, timestamp) {}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::OrderExecutionService::OrderInfo> {
     template<typename Shuttler>
@@ -146,7 +138,6 @@ namespace Serialization {
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };
-}
 }
 
 #endif

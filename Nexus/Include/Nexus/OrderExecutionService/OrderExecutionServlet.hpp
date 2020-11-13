@@ -333,6 +333,9 @@ namespace Nexus::OrderExecutionService {
                 clients, executionReport);
             });
         });
+      if(IsTerminal(executionReport.m_status)) {
+        m_liveOrders.Erase(executionReport.m_id);
+      }
     } catch(const std::exception&) {
       std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
       std::cout << "\taccount: " << Beam::Serialization::ToJson(account) <<
