@@ -19,7 +19,8 @@ namespace {
   }
 
   auto make_svg_window_icon(const QString& icon_path) {
-    return imageFromSvg(icon_path, scale(10, 10));
+    return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
+      scale(10, 10)));
   }
 }
 

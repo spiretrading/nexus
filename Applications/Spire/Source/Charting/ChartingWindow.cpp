@@ -29,14 +29,18 @@ using namespace Spire;
 namespace {
   const auto ZOOM_FACTOR = 1.1;
 
-  auto BUTTON_ICON_SIZE() {
-    static auto size = scale(16, 16);
+  auto BUTTON_SIZE() {
+    static auto size = scale(26, 26);
     return size;
   }
 
-  auto BUTTON_SIZE() {
-    static auto size = scale(16, 22);
-    return size;
+  auto create_button(const QString& icon, const QString& tooltip,
+      QWidget* parent) {
+    auto button = new ToggleButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    button->setFixedSize(BUTTON_SIZE());
+    button->setToolTip(tooltip);
+    button->setDisabled(true);
+    return button;
   }
 }
 
@@ -50,8 +54,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_is_chart_auto_scaled(true) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
-  set_svg_icon(":/Icons/chart-black.svg");
-  setWindowIcon(QIcon(":/Icons/chart-icon-256x256.png"));
+  set_svg_icon(":/Icons/chart.svg");
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/chart.png"));
   setWindowTitle(tr("Chart"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #FFFFFF;");
@@ -93,50 +97,29 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_period_dropdown->setFixedSize(scale(80, 26));
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
-  m_lock_grid_button = new ToggleButton(
-    imageFromSvg(":/Icons/lock-grid-light-purple.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/lock-grid-green.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/lock-grid-purple.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/lock-grid-grey.svg", BUTTON_ICON_SIZE()),
+  m_lock_grid_button = create_button(":/Icons/lock-grid.svg", tr("Lock Grid"),
     m_button_header_widget);
-  m_lock_grid_button->setFixedSize(BUTTON_SIZE());
-  m_lock_grid_button->setToolTip(tr("Lock Grid"));
-  m_lock_grid_button->setDisabled(true);
-  button_header_layout->addWidget(m_lock_grid_button, 0, Qt::AlignBottom);
+  button_header_layout->addWidget(m_lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
-  m_auto_scale_button = new ToggleButton(
-    imageFromSvg(":/Icons/auto-scale-light-purple.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/auto-scale-green.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/auto-scale-purple.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/auto-scale-grey.svg", BUTTON_ICON_SIZE()),
-    m_button_header_widget);
-  m_auto_scale_button->setFixedSize(BUTTON_SIZE());
-  m_auto_scale_button->setToolTip(tr("Auto Scale"));
-  m_auto_scale_button->set_toggled(true);
+  m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
+    tr("Auto Scale"), m_button_header_widget);
   m_auto_scale_button->setDisabled(true);
   m_auto_scale_button->connect_clicked_signal([=] {
     on_auto_scale_button_click();
   });
-  button_header_layout->addWidget(m_auto_scale_button, 0, Qt::AlignBottom);
+  button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
   seperator->setFixedSize(scale(1, 16));
   seperator->setStyleSheet("background-color: #D0D0D0;");
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
-  m_draw_line_button = new ToggleButton(
-    imageFromSvg(":/Icons/draw-light-purple.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/draw-green.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/draw-purple.svg", BUTTON_ICON_SIZE()),
-    imageFromSvg(":/Icons/draw-grey.svg", BUTTON_ICON_SIZE()),
+  m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),
     m_button_header_widget);
-  m_draw_line_button->setFixedSize(BUTTON_SIZE());
-  m_draw_line_button->setToolTip(tr("Draw Line"));
-  m_draw_line_button->setDisabled(true);
   m_draw_line_button->connect_clicked_signal([=] {
     on_draw_line_button_click();
   });
-  button_header_layout->addWidget(m_draw_line_button, 0, Qt::AlignBottom);
+  button_header_layout->addWidget(m_draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
   m_security_widget = new SecurityWidget(input_model,

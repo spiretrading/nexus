@@ -42,8 +42,8 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     : Window(parent),
       m_model(model.Get()) {
   set_fixed_body_size(scale(308, 76));
-  set_svg_icon(":/Icons/spire-icon-black.svg");
-  setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
+  set_svg_icon(":/Icons/spire.svg");
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));
   auto body = new QWidget(this);
@@ -79,32 +79,37 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  m_account_button = create_button(":/Icons/account.svg", tr("Account"), body);
+  m_account_button = create_button(":/Icons/toolbar_icons/account.svg",
+    tr("Account"), body);
   button_layout->addWidget(m_account_button);
-  m_key_bindings_button = create_button(":/Icons/key-bindings.svg",
-    tr("Key Bindings"), body);
+  m_key_bindings_button = create_button(
+    ":/Icons/toolbar_icons/key-bindings.svg", tr("Key Bindings"), body);
   button_layout->addWidget(m_key_bindings_button);
-  m_canvas_button = create_button(":/Icons/canvas.svg", tr("Canvas"), body);
+  m_canvas_button = create_button(":/Icons/toolbar_icons/canvas.svg",
+    tr("Canvas"), body);
   button_layout->addWidget(m_canvas_button);
-  m_book_view_button = create_button(":/Icons/bookview.svg",
+  m_book_view_button = create_button(":/Icons/toolbar_icons/bookview.svg",
     tr("Book View"), body);
   m_book_view_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
-  m_time_and_sales_button = create_button(":/Icons/time-sales.svg",
-    tr("Time and Sales"), body);
+  m_time_and_sales_button = create_button(
+    ":/Icons/toolbar_icons/time-sales.svg", tr("Time and Sales"), body);
   m_time_and_sales_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
-  m_chart_button = create_button(":/Icons/chart.svg", tr("Chart"), body);
+  m_chart_button = create_button(":/Icons/toolbar_icons/chart.svg",
+    tr("Chart"), body);
   button_layout->addWidget(m_chart_button);
-  m_dashboard_button = create_button(":/Icons/dashboard.svg", tr("Dashboard"),
-    body);
+  m_dashboard_button = create_button(":/Icons/toolbar_icons/dashboard.svg",
+    tr("Dashboard"), body);
   button_layout->addWidget(m_dashboard_button);
-  m_order_imbalances_button = create_button(":/Icons/imbalance-indicator.svg",
-    tr("Order Imbalances"), body);
+  m_order_imbalances_button = create_button(
+    ":/Icons/toolbar_icons/imbalance-indicator.svg", tr("Order Imbalances"),
+    body);
   button_layout->addWidget(m_order_imbalances_button);
-  m_blotter_button = create_button(":/Icons/blotter.svg", tr("Blotter"), body);
+  m_blotter_button = create_button(":/Icons/toolbar_icons/blotter.svg",
+    tr("Blotter"), body);
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
   layout->setStretchFactor(button_layout, 26);
@@ -131,13 +136,13 @@ void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
   switch(e.m_type) {
     case RecentlyClosedModel::Type::BOOK_VIEW: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/Icons/bookview-black.svg"), ICON_SIZE(),
+        imageFromSvg(QString(":/Icons/bookview.svg"), ICON_SIZE(),
           ICON_RECT()));
       break;
     }
     case RecentlyClosedModel::Type::TIME_AND_SALE: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+        imageFromSvg(QString(":/Icons/time-sales.svg"), ICON_SIZE(),
           ICON_RECT()));
       break;
     }

@@ -16,9 +16,9 @@ IconButton::IconButton(QImage icon, QWidget* parent)
       m_default_color("#7F5EEC"),
       m_hover_color("#4B23A0"),
       m_disabled_color("#D0D0D0"),
+      m_hover_background_color("#E3E3E3"),
       m_blur_color(m_default_color) {
   m_default_background_color.setAlpha(0);
-  m_hover_background_color.setAlpha(0);
   setAttribute(Qt::WA_Hover);
   setMouseTracking(true);
   setStyleSheet(QString(R"(
@@ -39,22 +39,27 @@ void IconButton::set_icon(const QImage& icon) {
 
 void IconButton::set_blur_color(const QColor& color) {
   m_blur_color = color;
+  update();
 }
 
 void IconButton::set_default_color(const QColor& color) {
   m_default_color = color;
+  update();
 }
 
 void IconButton::set_hover_color(const QColor& color) {
   m_hover_color = color;
+  update();
 }
 
 void IconButton::set_default_background_color(const QColor& color) {
   m_default_background_color = color;
+  update();
 }
 
 void IconButton::set_hover_background_color(const QColor& color) {
   m_hover_background_color = color;
+  update();
 }
 
 connection IconButton::connect_clicked_signal(
@@ -113,8 +118,8 @@ void IconButton::paintEvent(QPaintEvent* event) {
   if(hasFocus() && is_last_focus_reason_tab()) {
     painter.setPen("#4B23A0");
     auto path = QPainterPath();
-    path.addRoundedRect(0, 0, width() -1 , height() - 1, scale_width(2),
-      scale_height(2));
+    path.addRoundedRect(0, 0, width() -1 , height() - 1, scale_width(1),
+      scale_height(1));
     painter.setPen({QColor("#4B23A0"), static_cast<qreal>(scale_width(1))});
     painter.drawPath(path);
   }

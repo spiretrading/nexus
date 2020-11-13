@@ -10,22 +10,10 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QWidget* parent)
-    : ToggleButton(icon, toggle_icon, icon, parent) {}
-
-ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
-    QWidget* parent)
-    : ToggleButton(icon, toggle_icon, hover_icon, icon, parent) {}
-
-ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
-    QImage disable_icon, QWidget* parent)
+ToggleButton::ToggleButton(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_is_toggled(false),
-      m_icon_button(new IconButton(icon, parent)),
-      m_icon(std::move(icon)),
-      m_hover_icon(std::move(hover_icon)),
-      m_toggle_icon(std::move(toggle_icon)),
-      m_disabled_icon(std::move(disable_icon)) {
+      m_icon_button(new IconButton(std::move(icon), parent)) {
   setFocusProxy(m_icon_button);
   m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
@@ -73,9 +61,11 @@ void ToggleButton::swap_toggle() {
 
 void ToggleButton::update_icons() {
   if(m_is_toggled) {
-    //m_icon_button->set_icon(m_toggle_icon, m_toggle_icon);
+    m_icon_button->set_default_color("#1FD37A");
+    m_icon_button->set_hover_color("#1FD37A");
   } else {
-    //m_icon_button->set_icon(m_icon, m_hover_icon);
+    m_icon_button->set_default_color("#7F5EEC");
+    m_icon_button->set_hover_color("#4B23A0");
   }
 }
 

@@ -30,15 +30,6 @@
         <file>Icons/pre-loader.gif</file>
         <file>Icons/arrow-up.svg</file>
         <file>Icons/spire-icon-48x48.png</file>
-        <file>Icons/blotter-icon-256x256.png</file>
-        <file>Icons/book-view-icon-256x256.png</file>
-        <file>Icons/canvas-icon-256x256.png</file>
-        <file>Icons/chart-icon-256x256.png</file>
-        <file>Icons/dashboard-icon-256x256.png</file>
-        <file>Icons/imbalance-icon-256x256.png</file>
-        <file>Icons/key-bindings-icon-256x256.png</file>
-        <file>Icons/spire-icon-256x256.png</file>
-        <file>Icons/time-sales-icon-256x256.png</file>
         <file>Icons/arrow-right-black.svg</file>
         <file>Icons/arrow-right-white.svg</file>
         <file>Icons/color-check.svg</file>
@@ -73,14 +64,34 @@
         <file>Icons/maximize.svg</file>
         <file>Icons/minimize.svg</file>
         <file>Icons/restore.svg</file>
+        <file>Icons/imbalance-indicator.svg</file>
+        <file>Icons/toolbar_icons/account.svg</file>
+        <file>Icons/toolbar_icons/blotter.svg</file>
+        <file>Icons/toolbar_icons/bookview.svg</file>
+        <file>Icons/toolbar_icons/canvas.svg</file>
+        <file>Icons/toolbar_icons/chart.svg</file>
+        <file>Icons/toolbar_icons/dashboard.svg</file>
+        <file>Icons/toolbar_icons/imbalance-indicator.svg</file>
+        <file>Icons/toolbar_icons/key-bindings.svg</file>
+        <file>Icons/toolbar_icons/time-sales.svg</file>
         <file>Icons/account.svg</file>
         <file>Icons/blotter.svg</file>
         <file>Icons/bookview.svg</file>
         <file>Icons/canvas.svg</file>
         <file>Icons/chart.svg</file>
         <file>Icons/dashboard.svg</file>
-        <file>Icons/imbalance-indicator.svg</file>
         <file>Icons/key-bindings.svg</file>
         <file>Icons/time-sales.svg</file>
+        <file>Icons/taskbar_icons/account.png</file>
+        <file>Icons/taskbar_icons/blotter.png</file>
+        <file>Icons/taskbar_icons/bookview.png</file>
+        <file>Icons/taskbar_icons/canvas.png</file>
+        <file>Icons/taskbar_icons/chart.png</file>
+        <file>Icons/taskbar_icons/dashboard.png</file>
+        <file>Icons/taskbar_icons/imbalance-indicator.png</file>
+        <file>Icons/taskbar_icons/key-bindings.png</file>
+        <file>Icons/taskbar_icons/spire.png</file>
+        <file>Icons/taskbar_icons/time-sales.png</file>
+        <file>Icons/spire.svg</file>
     </qresource>
 </RCC>

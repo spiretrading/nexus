@@ -25,7 +25,6 @@ namespace {
     button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     button->set_default_color("#333333");
     button->set_hover_color("#333333");
-    button->set_hover_background_color("#EBEBEB");
     button->set_blur_color("#D0D0D0");
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -43,7 +42,8 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
   m_icon_button->set_default_color("#333333");
   m_icon_button->set_hover_color("#333333");
   m_icon_button->set_blur_color("#D0D0D0");
-  m_icon_button->setFixedSize(BUTTON_SIZE());
+  m_icon_button->set_hover_background_color(Qt::transparent);
+  m_icon_button->setFixedSize(scale(26, 26));
   m_icon_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   layout->addWidget(m_icon_button);
   m_title_label = new QLabel("", this);

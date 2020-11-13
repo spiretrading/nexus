@@ -17,9 +17,9 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
       m_last_focus_was_key(false) {
   set_fixed_body_size(scale(871, 442));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  setWindowIcon(QIcon(":/Icons/key-bindings-icon-256x256.png"));
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setWindowTitle(tr("Key Bindings"));
-  set_svg_icon(":/Icons/key-bindings-black.svg");
+  set_svg_icon(":/Icons/key-bindings.svg");
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(body);
