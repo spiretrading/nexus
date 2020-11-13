@@ -73,5 +73,14 @@
         <file>Icons/maximize.svg</file>
         <file>Icons/minimize.svg</file>
         <file>Icons/restore.svg</file>
+        <file>Icons/account.svg</file>
+        <file>Icons/blotter.svg</file>
+        <file>Icons/bookview.svg</file>
+        <file>Icons/canvas.svg</file>
+        <file>Icons/chart.svg</file>
+        <file>Icons/dashboard.svg</file>
+        <file>Icons/imbalance-indicator.svg</file>
+        <file>Icons/key-bindings.svg</file>
+        <file>Icons/time-sales.svg</file>
     </qresource>
 </RCC>

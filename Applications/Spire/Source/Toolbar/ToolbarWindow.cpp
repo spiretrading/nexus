@@ -14,7 +14,7 @@ using namespace Spire;
 
 namespace {
   auto BUTTON_SIZE() {
-    static auto size = scale(20, 28);
+    static auto size = scale(26, 26);
     return size;
   }
 
@@ -28,8 +28,8 @@ namespace {
     return icon_rect;
   }
 
-  auto create_button(const QString& icon, const QString& hover_icon,
-      const QString& tooltip, QWidget* parent) {
+  auto create_button(const QString& icon, const QString& tooltip,
+      QWidget* parent) {
     auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
@@ -41,7 +41,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
       m_model(model.Get()) {
-  set_fixed_body_size(scale(308, 72));
+  set_fixed_body_size(scale(308, 76));
   set_svg_icon(":/Icons/spire-icon-black.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
@@ -79,42 +79,36 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  m_account_button = create_button(":/Icons/account-light-purple.svg",
-    ":/Icons/account-purple.svg", tr("Account"), body);
+  m_account_button = create_button(":/Icons/account.svg", tr("Account"), body);
   button_layout->addWidget(m_account_button);
-  m_key_bindings_button = create_button(
-    ":/Icons/key-bindings-light-purple.svg", ":/Icons/key-bindings-purple.svg",
+  m_key_bindings_button = create_button(":/Icons/key-bindings.svg",
     tr("Key Bindings"), body);
   button_layout->addWidget(m_key_bindings_button);
-  m_canvas_button = create_button(":/Icons/canvas-light-purple.svg",
-    ":/Icons/canvas-purple.svg", tr("Canvas"), body);
+  m_canvas_button = create_button(":/Icons/canvas.svg", tr("Canvas"), body);
   button_layout->addWidget(m_canvas_button);
-  m_book_view_button = create_button(":/Icons/bookview-light-purple.svg",
-    ":/Icons/bookview-purple.svg", tr("Book View"), body);
+  m_book_view_button = create_button(":/Icons/bookview.svg",
+    tr("Book View"), body);
   m_book_view_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
-  m_time_and_sales_button = create_button(
-    ":/Icons/time-sale-light-purple.svg", ":/Icons/time-sale-purple.svg",
+  m_time_and_sales_button = create_button(":/Icons/time-sales.svg",
     tr("Time and Sales"), body);
   m_time_and_sales_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
-  m_chart_button = create_button(":/Icons/chart-light-purple.svg",
-    ":/Icons/chart-purple.svg", tr("Chart"), body);
+  m_chart_button = create_button(":/Icons/chart.svg", tr("Chart"), body);
   button_layout->addWidget(m_chart_button);
-  m_dashboard_button = create_button(":/Icons/dashboard-light-purple.svg",
-    ":/Icons/dashboard-purple.svg", tr("Dashboard"), body);
+  m_dashboard_button = create_button(":/Icons/dashboard.svg", tr("Dashboard"),
+    body);
   button_layout->addWidget(m_dashboard_button);
-  m_order_imbalances_button = create_button(
-    ":/Icons/order-imbalances-light-purple.svg",
-    ":/Icons/order-imbalances-purple.svg", tr("Order Imbalances"), body);
+  m_order_imbalances_button = create_button(":/Icons/imbalance-indicator.svg",
+    tr("Order Imbalances"), body);
   button_layout->addWidget(m_order_imbalances_button);
-  m_blotter_button = create_button(":/Icons/blotter-light-purple.svg",
-    ":/Icons/blotter-purple.svg", tr("Blotter"), body);
+  m_blotter_button = create_button(":/Icons/blotter.svg", tr("Blotter"), body);
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
-  layout->setStretchFactor(button_layout, 28);
+  layout->setStretchFactor(button_layout, 26);
+  layout->addStretch(8);
   Window::layout()->addWidget(body);
   m_entry_added_connection = m_model->connect_entry_added_signal(
     [=] (auto& e) {entry_added(e);});
