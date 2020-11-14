@@ -138,7 +138,8 @@ namespace Nexus::OrderExecutionService {
         m_submissionDataStore("submissions", GetOrderInfoRow(), GetAccountRow(),
           Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
-          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Queries::SqlConnectionOption::NONE),
         m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
           GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)) {
     m_liveOrdersRow = Viper::Row<OrderId>().
