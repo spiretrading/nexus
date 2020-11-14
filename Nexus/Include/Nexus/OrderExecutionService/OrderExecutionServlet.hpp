@@ -293,7 +293,7 @@ namespace Nexus::OrderExecutionService {
           continue;
         }
         order->GetPublisher().With([&] {
-          auto existingExecutionReports = 
+          auto existingExecutionReports =
             boost::optional<std::vector<ExecutionReport>>();
           order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
             std::bind(&OrderExecutionServlet::OnExecutionReport, this,
