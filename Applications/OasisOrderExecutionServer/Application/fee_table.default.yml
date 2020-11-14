@@ -48,7 +48,7 @@ ca_equities:
        [0.0000, 0.0006, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
        [0.0000, 0.0006, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
 
-    intraspread_dark_to_dark_sub_dollar_max: 5.00
+    intraspread_dark_to_dark_subdollar_max: 5.00
     intraspread_dark_to_dark_max: 10.00
 
   # CHI-X fees are based on http://business.nasdaq.com/trade/Canadian-Equities/Trading/Pricing
@@ -197,7 +197,7 @@ ca_equities:
        [-0.0002, 0.0004]]
 
     odd_lot: 0.0002
-    tsx_venture_sub_dime_cap: 1000.00
+    tsx_venture_subdime_cap: 1000.00
     designated_securities_path: "./pure_designated_securities.yml"
 
   # TMX Select fees based on http://www.tsx.com/trading/tmx-select/fee-schedule
@@ -267,7 +267,7 @@ hk_equities:
 
 # Fees charged for Japanese markets.
 jp_equities:
-  spire_fee: 125
+  spire_fee: 13
   brokerage_fee: 0.00025
 
 # The fees charged for U.S. equity markets.
@@ -287,7 +287,7 @@ us_equities:
     fee_table:
       [0.00280, -0.00160, 0.00280, -0.00160, 0.00100, 0.00085, 0.00300]
 
-    sub_dollar_table:
+    subdollar_table:
       [0.00250,  0.00000, 0.00250,  0.00000, 0.00300, 0.00250, 0.00300]
 
   # ARCA fees based on https://www.nyse.com/markets/nyse-arca/trading-info#Fees
@@ -306,7 +306,7 @@ us_equities:
     # Table is structured as follows:
     #   Routed   Auction   Active   Passive
     #      X        X         X         X
-    sub_dollar_table:
+    subdollar_table:
       [0.0030, 0.0010, 0.0030, 0.0000]
 
     # Fee for orders routed to other markets.
@@ -569,7 +569,7 @@ us_equities:
        [0.00145,  0.00145],
        [0.00000, -0.00340]]
 
-    sub_dollar_table: [0.0030, 0.0000]
+    subdollar_table: [0.0030, 0.0000]
 
   # NYSE fees based on https://www.nyse.com/publicdocs/nyse/markets/nyse/NYSE_Price_List.pdf
   nyse:
@@ -590,5 +590,5 @@ us_equities:
        [0.00110,  0.0011],
        [0.00000,  0.0003]]
 
-    sub_dollar_table: [0.0030, 0.0000]
+    subdollar_table: [0.0030, 0.0000]
 ...
