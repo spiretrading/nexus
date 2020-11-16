@@ -60,13 +60,15 @@ void ToggleButton::swap_toggle() {
 }
 
 void ToggleButton::update_icons() {
+  auto button_style = m_icon_button->get_style();
   if(m_is_toggled) {
-    m_icon_button->set_default_color("#1FD37A");
-    m_icon_button->set_hover_color("#1FD37A");
+    button_style.m_default_color = "#1FD37A";
+    button_style.m_hover_color = "#1FD37A";
   } else {
-    m_icon_button->set_default_color("#7F5EEC");
-    m_icon_button->set_hover_color("#4B23A0");
+    button_style.m_default_color = "#7F5EEC";
+    button_style.m_hover_color = "#4B23A0";
   }
+  m_icon_button->set_style(button_style);
 }
 
 void ToggleButton::update_icons(bool enabled) {

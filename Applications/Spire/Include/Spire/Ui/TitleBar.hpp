@@ -1,5 +1,6 @@
 #ifndef SPIRE_TITLE_BAR_HPP
 #define SPIRE_TITLE_BAR_HPP
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
@@ -32,8 +33,8 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      QHBoxLayout* m_layout;
       IconButton* m_icon_button;
-      QImage m_icon;
       QLabel* m_title_label;
       IconButton* m_minimize_button;
       IconButton* m_maximize_button;

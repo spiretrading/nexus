@@ -12,6 +12,31 @@ namespace Spire {
   class IconButton : public QAbstractButton {
     public:
 
+      //! Represents the style options for an IconButton.
+      struct Style {
+
+        //! The icon's color when the parent window lacks focus.
+        QColor m_blur_color;
+
+        //! The icon's default color.
+        QColor m_default_color;
+
+        //! The icon's disabled color.
+        QColor m_disabled_color;
+
+        //! The icon's hover color.
+        QColor m_hover_color;
+
+        //! The button's default background color.
+        QColor m_default_background_color;
+
+        //! The button's hover background color.
+        QColor m_hover_background_color;
+
+        //! Constructs a Style with the default style.
+        Style();
+      };
+
       //! Signal type for the clicked signal.
       using ClickedSignal = Signal<void ()>;
 
@@ -22,41 +47,14 @@ namespace Spire {
       */
       explicit IconButton(QImage icon, QWidget* parent = nullptr);
 
-      //! Sets the icon to display.
-      /*!
-        \param icon The icon image.
-      */
-      void set_icon(const QImage& icon);
+      //! Returns the button's style.
+      const Style& get_style() const;
 
-      //! Sets the icon's color when the window lacks focus.
+      //! Sets the button's style.
       /*!
-        \param color The blur color.
+        \param style The button's style.
       */
-      void set_blur_color(const QColor& color);
-
-      //! Sets the icon's default color.
-      /*!
-        \param color The default color.
-      */
-      void set_default_color(const QColor& color);
-
-      //! Sets the icon's hover color.
-      /*!
-        \param color The hover color.
-      */
-      void set_hover_color(const QColor& color);
-
-      //! Sets the default background color for the button.
-      /*!
-        \param color The default background color.
-      */
-      void set_default_background_color(const QColor& color);
-
-      //! Sets the background color for when the button is hovered.
-      /*!
-        \param color The hover background color.
-      */
-      void set_hover_background_color(const QColor& color);
+      void set_style(const Style& style);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
@@ -74,12 +72,7 @@ namespace Spire {
       mutable ClickedSignal m_clicked_signal;
       Qt::FocusReason m_last_focus_reason;
       QImage m_icon;
-      QColor m_default_color;
-      QColor m_hover_color;
-      QColor m_disabled_color;
-      QColor m_blur_color;
-      QColor m_default_background_color;
-      QColor m_hover_background_color;
+      Style m_style;
 
       const QColor& get_current_icon_color() const;
       bool is_last_focus_reason_tab() const;

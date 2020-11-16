@@ -1,12 +1,12 @@
 #include "Spire/Ui/TitleBar.hpp"
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #ifdef Q_OS_WIN
   #include <qt_windows.h>
 #endif
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -22,9 +22,11 @@ namespace {
 
   auto apply_button_style(IconButton* button) {
     button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-    button->set_default_color("#333333");
-    button->set_hover_color("#333333");
-    button->set_blur_color("#D0D0D0");
+    auto button_style = button->get_style();
+    button_style.m_default_color = "#333333";
+    button_style.m_hover_color = "#333333";
+    button_style.m_blur_color = "#D0D0D0";
+    button->set_style(button_style);
     button->setFixedSize(BUTTON_SIZE());
   }
 
@@ -36,45 +38,50 @@ namespace {
 }
 
 TitleBar::TitleBar(const QImage& icon, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_icon_button(nullptr) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  m_icon_button = new IconButton(m_icon, this);
-  apply_button_style(m_icon_button);
-  m_icon_button->setFixedSize(scale(26, 26));
-  m_icon_button->set_hover_background_color(Qt::transparent);
-  layout->addWidget(m_icon_button);
+  m_layout = new QHBoxLayout(this);
+  m_layout->setContentsMargins({});
+  m_layout->setSpacing(0);
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
   set_title_text_stylesheet(QColor("#000000"));
-  layout->addWidget(m_title_label);
-  layout->addSpacerItem(new QSpacerItem(scale_width(8), 10, QSizePolicy::Fixed,
+  m_layout->addWidget(m_title_label);
+  m_layout->addSpacerItem(new QSpacerItem(scale_width(8), 10, QSizePolicy::Fixed,
     QSizePolicy::Expanding));
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
-  layout->addWidget(m_minimize_button);
+  m_layout->addWidget(m_minimize_button);
   m_maximize_button = create_button(":/Icons/maximize.svg", this);
   m_maximize_button->connect_clicked_signal(
     [=] { on_maximize_button_press(); });
-  layout->addWidget(m_maximize_button);
+  m_layout->addWidget(m_maximize_button);
   m_restore_button = create_button(":/Icons/restore.svg", this);
   m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
   m_restore_button->hide();
-  layout->addWidget(m_restore_button);
+  m_layout->addWidget(m_restore_button);
   m_close_button = create_button(":/Icons/close.svg", this);
-  m_close_button->set_hover_color("#E63F44");
+  auto close_button_style = m_close_button->get_style();
+  close_button_style.m_hover_color = "#E63F44";
+  m_close_button->set_style(close_button_style);
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
-  layout->addWidget(m_close_button);
+  m_layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto& title) {on_window_title_change(title);});
 }
 
 void TitleBar::set_icon(const QImage& icon) {
-  m_icon_button->set_icon(icon);
+  delete_later(m_icon_button);
+  m_icon_button = new IconButton(icon, this);
+  apply_button_style(m_icon_button);
+  m_icon_button->setFixedSize(scale(26, 26));
+  auto icon_button_style = m_icon_button->get_style();
+  icon_button_style.m_hover_background_color = Qt::transparent;
+  m_icon_button->set_style(icon_button_style);
+  m_layout->insertWidget(0, m_icon_button);
 }
 
 QLabel* TitleBar::get_title_label() const {
@@ -92,10 +99,14 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
       set_title_text_stylesheet(QColor("#A0A0A0"));
-      m_icon_button->set_hover_color("#D0D0D0");
+      auto icon_button_style = m_icon_button->get_style();
+      icon_button_style.m_hover_color = "#D0D0D0";
+      m_icon_button->set_style(icon_button_style);
     } else if(event->type() == QEvent::WindowActivate) {
       set_title_text_stylesheet(QColor("#000000"));
-      m_icon_button->set_hover_color("#333333");
+      auto icon_button_style = m_icon_button->get_style();
+      icon_button_style.m_hover_color = "#333333";
+      m_icon_button->set_style(icon_button_style);
     } else if(event->type() == QEvent::WindowStateChange) {
       if(window()->isMaximized()) {
         m_maximize_button->hide();

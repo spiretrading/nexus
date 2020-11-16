@@ -9,16 +9,19 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-IconButton::IconButton(QImage icon, QWidget* parent)
-    : QAbstractButton(parent),
-      m_last_focus_reason(Qt::NoFocusReason),
-      m_icon(std::move(icon)),
-      m_default_color("#7F5EEC"),
+IconButton::Style::Style()
+    : m_default_color("#7F5EEC"),
       m_hover_color("#4B23A0"),
       m_disabled_color("#D0D0D0"),
       m_hover_background_color("#E3E3E3"),
       m_blur_color(m_default_color) {
   m_default_background_color.setAlpha(0);
+}
+
+IconButton::IconButton(QImage icon, QWidget* parent)
+    : QAbstractButton(parent),
+      m_last_focus_reason(Qt::NoFocusReason),
+      m_icon(std::move(icon)) {
   setAttribute(Qt::WA_Hover);
   setMouseTracking(true);
   setStyleSheet(QString(R"(
@@ -32,33 +35,12 @@ IconButton::IconButton(QImage icon, QWidget* parent)
     })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
 }
 
-void IconButton::set_icon(const QImage& icon) {
-  m_icon = icon;
-  update();
+const IconButton::Style& IconButton::get_style() const {
+  return m_style;
 }
 
-void IconButton::set_blur_color(const QColor& color) {
-  m_blur_color = color;
-  update();
-}
-
-void IconButton::set_default_color(const QColor& color) {
-  m_default_color = color;
-  update();
-}
-
-void IconButton::set_hover_color(const QColor& color) {
-  m_hover_color = color;
-  update();
-}
-
-void IconButton::set_default_background_color(const QColor& color) {
-  m_default_background_color = color;
-  update();
-}
-
-void IconButton::set_hover_background_color(const QColor& color) {
-  m_hover_background_color = color;
+void IconButton::set_style(const Style& style) {
+  m_style = style;
   update();
 }
 
@@ -106,9 +88,9 @@ void IconButton::mouseReleaseEvent(QMouseEvent* event) {
 void IconButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   if(!underMouse() || !isEnabled()) {
-    painter.fillRect(rect(), m_default_background_color);
+    painter.fillRect(rect(), m_style.m_default_background_color);
   } else {
-    painter.fillRect(rect(), m_hover_background_color);
+    painter.fillRect(rect(), m_style.m_hover_background_color);
   }
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
@@ -128,13 +110,13 @@ void IconButton::paintEvent(QPaintEvent* event) {
 const QColor& IconButton::get_current_icon_color() const {
   if(isEnabled()) {
     if(underMouse() || (hasFocus() && is_last_focus_reason_tab())) {
-      return m_hover_color;
+      return m_style.m_hover_color;
     } else if(!window()->isActiveWindow()) {
-      return m_blur_color;
+      return m_style.m_blur_color;
     }
-    return m_default_color;
+    return m_style.m_default_color;
   }
-  return m_disabled_color;
+  return m_style.m_disabled_color;
 }
 
 bool IconButton::is_last_focus_reason_tab() const {
