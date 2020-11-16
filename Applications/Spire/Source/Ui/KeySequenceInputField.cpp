@@ -48,6 +48,7 @@ KeySequenceInputField::KeySequenceInputField(
       m_model(std::move(model)),
       m_state(State::DEFAULT),
       m_font("Roboto"),
+      m_last_pressed_key(Qt::Key_unknown),
       m_is_last_key_event_release(false) {
   setReadOnly(true);
   m_font.setPixelSize(scale_height(12));
@@ -85,6 +86,7 @@ bool KeySequenceInputField::eventFilter(QObject* watched, QEvent* event) {
 
 void KeySequenceInputField::focusOutEvent(QFocusEvent* event) {
   m_is_last_key_event_release = false;
+  m_last_pressed_key = Qt::Key_unknown;
   m_state = State::DEFAULT;
   m_entered_keys.clear();
   QLineEdit::focusOutEvent(event);
@@ -92,6 +94,7 @@ void KeySequenceInputField::focusOutEvent(QFocusEvent* event) {
 
 void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
   m_is_last_key_event_release = false;
+  m_last_pressed_key = Qt::Key(event->key());
   switch(event->key()) {
     case Qt::Key_Enter:
     case Qt::Key_Return:
@@ -122,7 +125,7 @@ void KeySequenceInputField::keyReleaseEvent(QKeyEvent* event) {
       m_state = State::DEFAULT;
       commit_sequence({});
   }
-  if(!m_is_last_key_event_release) {
+  if(!m_is_last_key_event_release && (m_last_pressed_key != Qt::Key_unknown)) {
     auto key_sequence = make_key_sequence(m_entered_keys);
     if(m_model->is_valid(key_sequence)) {
       commit_sequence(key_sequence);
@@ -132,6 +135,7 @@ void KeySequenceInputField::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void KeySequenceInputField::mousePressEvent(QMouseEvent* event) {
+  m_last_pressed_key = Qt::Key_unknown;
   if(event->button() == Qt::LeftButton) {
     m_entered_keys.clear();
     m_state = State::EDIT;

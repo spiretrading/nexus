@@ -50,6 +50,7 @@ namespace Spire {
       QKeySequence m_key_sequence;
       std::vector<Qt::Key> m_entered_keys;
       QFont m_font;
+      Qt::Key m_last_pressed_key;
       bool m_is_last_key_event_release;
 
       void commit_sequence(const QKeySequence& sequence);
