@@ -40,7 +40,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->addStretch(352);
   m_exit_button = new IconButton(imageFromSvg(":/Icons/close.svg",
     BUTTON_SIZE()), this);
-  m_exit_button->set_default_color("#BAB3D9");
+  m_exit_button->set_default_color("#E2E0FF");
   m_exit_button->set_hover_color("#E63F45");
   m_exit_button->set_blur_color("#BAB3D9");
   m_exit_button->set_hover_background_color(QColor("#321471"));
