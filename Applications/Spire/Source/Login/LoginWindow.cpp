@@ -14,12 +14,7 @@ using namespace Spire;
 
 namespace {
   auto BUTTON_SIZE() {
-    static auto size = scale(26, 26);
-    return size;
-  }
-
-  auto ICON_SIZE() {
-    static auto size = scale(10, 10);
+    static auto size = scale(32, 26);
     return size;
   }
 }
@@ -27,7 +22,7 @@ namespace {
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_is_dragging(false) {
-  setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   setFixedSize(scale(396, 358));
   m_shadow = new DropShadow(this);
   setObjectName("LoginWindow");
@@ -43,13 +38,16 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(352);
-  m_exit_button = new IconButton(
-    imageFromSvg(":/Icons/close-purple.svg", ICON_SIZE()), this);
+  m_exit_button = new IconButton(imageFromSvg(":/Icons/close.svg",
+    BUTTON_SIZE()), this);
+  m_exit_button->set_default_color("#BAB3D9");
+  m_exit_button->set_hover_color("#E63F45");
+  m_exit_button->set_blur_color("#BAB3D9");
+  m_exit_button->set_hover_background_color(QColor("#321471"));
   m_exit_button->setFixedSize(BUTTON_SIZE());
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([=] { window()->close(); });
-  m_exit_button->set_hover_background_color(QColor("#401D8B"));
   title_bar_layout->addWidget(m_exit_button);
   title_bar_layout->setStretchFactor(m_exit_button, 32);
   body_layout->addLayout(title_bar_layout);
