@@ -91,8 +91,10 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
       set_title_text_stylesheet(QColor("#A0A0A0"));
+      m_icon_button->set_hover_color("#D0D0D0");
     } else if(event->type() == QEvent::WindowActivate) {
       set_title_text_stylesheet(QColor("#000000"));
+      m_icon_button->set_hover_color("#333333");
     } else if(event->type() == QEvent::WindowStateChange) {
       if(window()->isMaximized()) {
         m_maximize_button->hide();
