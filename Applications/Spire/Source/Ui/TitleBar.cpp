@@ -44,6 +44,7 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
   layout->setSpacing(0);
   m_icon_button = new IconButton(m_icon, this);
   apply_button_style(m_icon_button);
+  m_icon_button->setFixedSize(scale(26, 26));
   m_icon_button->set_hover_background_color(Qt::transparent);
   layout->addWidget(m_icon_button);
   m_title_label = new QLabel("", this);
