@@ -45,19 +45,9 @@ void Window::set_icon(const QImage& icon) {
   m_title_bar->set_icon(icon);
 }
 
-//void Window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
-//  m_title_bar->set_icon(icon, unfocused_icon);
-//}
-
 void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
 }
-
-//void Window::set_svg_icon(const QString& icon_path,
-//    const QString& unfocused_icon_path) {
-//  set_icon(make_svg_window_icon(icon_path),
-//    make_svg_window_icon(unfocused_icon_path));
-//}
 
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
