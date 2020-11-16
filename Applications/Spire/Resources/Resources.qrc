@@ -93,5 +93,8 @@
         <file>Icons/taskbar_icons/spire.png</file>
         <file>Icons/taskbar_icons/time-sales.png</file>
         <file>Icons/spire.svg</file>
+        <file>Icons/auto-scale.svg</file>
+        <file>Icons/draw.svg</file>
+        <file>Icons/lock-grid.svg</file>
     </qresource>
 </RCC>

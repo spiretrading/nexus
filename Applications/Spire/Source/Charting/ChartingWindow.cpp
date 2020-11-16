@@ -96,11 +96,11 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     {tr("second"), tr("minute"), tr("hour")}, m_button_header_widget);
   m_period_dropdown->setFixedSize(scale(80, 26));
   button_header_layout->addWidget(m_period_dropdown);
-  button_header_layout->addSpacing(scale_width(18));
+  button_header_layout->addSpacing(scale_width(10));
   m_lock_grid_button = create_button(":/Icons/lock-grid.svg", tr("Lock Grid"),
     m_button_header_widget);
   button_header_layout->addWidget(m_lock_grid_button);
-  button_header_layout->addSpacing(scale_width(10));
+  button_header_layout->addSpacing(scale_width(2));
   m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
     tr("Auto Scale"), m_button_header_widget);
   m_auto_scale_button->setDisabled(true);
