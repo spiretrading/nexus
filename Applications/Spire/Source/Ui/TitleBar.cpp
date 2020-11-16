@@ -20,13 +20,17 @@ namespace {
     return size;
   }
 
-  auto create_button(const QString& icon, QWidget* parent) {
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+  auto apply_button_style(IconButton* button) {
     button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     button->set_default_color("#333333");
     button->set_hover_color("#333333");
     button->set_blur_color("#D0D0D0");
     button->setFixedSize(BUTTON_SIZE());
+  }
+
+  auto create_button(const QString& icon, QWidget* parent) {
+    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    apply_button_style(button);
     return button;
   }
 }
@@ -39,12 +43,8 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_icon_button = new IconButton(m_icon, this);
-  m_icon_button->set_default_color("#333333");
-  m_icon_button->set_hover_color("#333333");
-  m_icon_button->set_blur_color("#D0D0D0");
+  apply_button_style(m_icon_button);
   m_icon_button->set_hover_background_color(Qt::transparent);
-  m_icon_button->setFixedSize(scale(26, 26));
-  m_icon_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   layout->addWidget(m_icon_button);
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);

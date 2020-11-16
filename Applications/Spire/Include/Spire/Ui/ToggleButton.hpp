@@ -26,13 +26,13 @@ namespace Spire {
       */
       void set_toggled(bool toggled);
 
-      //! Sets the status of the button, and applies the appropriate icons.
+      //! Sets the status of the button, and applies the appropriate style.
       /*!
         \param enabled Enables the button if true, disables it otherwise.
       */
       void setEnabled(bool enabled);
 
-      //! Sets the status of the button, and applies the appropriate icons.
+      //! Sets the status of the button, and applies the appropriate style.
       /*!
         \param disabled Disables the button if true, enables it otherwise.
       */

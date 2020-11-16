@@ -22,12 +22,28 @@ namespace Spire {
       */
       explicit IconButton(QImage icon, QWidget* parent = nullptr);
 
+      //! Sets the icon to display.
+      /*!
+        \param icon The icon image.
+      */
       void set_icon(const QImage& icon);
 
+      //! Sets the icon's color when the window lacks focus.
+      /*!
+        \param color The blur color.
+      */
       void set_blur_color(const QColor& color);
 
+      //! Sets the icon's default color.
+      /*!
+        \param color The default color.
+      */
       void set_default_color(const QColor& color);
 
+      //! Sets the icon's hover color.
+      /*!
+        \param color The hover color.
+      */
       void set_hover_color(const QColor& color);
 
       //! Sets the default background color for the button.
