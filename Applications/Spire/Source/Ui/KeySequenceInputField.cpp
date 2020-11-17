@@ -40,6 +40,37 @@ namespace {
         return QKeySequence();
     }
   }
+
+
+  QKeySequence sort_key_sequence(const QKeySequence& sequence) {
+    auto modifier_list = std::vector<Qt::Key>();
+    auto function_list = std::vector<Qt::Key>();
+    for(auto i = 0; i < sequence.count(); ++i) {
+      auto key = Qt::Key(sequence[i]);
+      if(key == Qt::Key_Control || key == Qt::Key_Alt ||
+          key == Qt::Key_Shift) {
+        modifier_list.push_back(key);
+      } else {
+        function_list.push_back(key);
+      }
+    }
+    if(modifier_list.empty()) {
+      return make_key_sequence(function_list);
+    } else if(modifier_list.size() > 1) {
+      std::sort(modifier_list.begin(), modifier_list.end(),
+        [] (auto key1, auto key2) {
+          if(key1 == Qt::Key_Control) {
+            return true;
+          } else if(key2 == Qt::Key_Control) {
+            return false;
+          }
+          return key1 == Qt::Key_Alt;
+        });
+    }
+    modifier_list.insert(modifier_list.end(), function_list.begin(),
+      function_list.end());
+    return make_key_sequence(modifier_list);
+  }
 }
 
 KeySequenceInputField::KeySequenceInputField(
@@ -117,6 +148,9 @@ void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
 }
 
 void KeySequenceInputField::keyReleaseEvent(QKeyEvent* event) {
+  if(event->isAutoRepeat()) {
+    return;
+  }
   switch(event->key()) {
     case Qt::Key_Enter:
     case Qt::Key_Return:
@@ -163,10 +197,9 @@ void KeySequenceInputField::paintEvent(QPaintEvent* event) {
       painter.setFont(font);
       auto metrics = QFontMetrics(font);
       for(auto i = 0; i < m_key_sequence.count(); ++i) {
-        auto text = get_key_text(static_cast<Qt::Key>(m_key_sequence[i]));
-        auto text_size = QSize(metrics.horizontalAdvance(text),
-          metrics.height());
-        draw_key(text, text_size, pos, painter);
+        auto text_size = QSize(metrics.horizontalAdvance(
+          get_key_text(Qt::Key(m_key_sequence[i]))), metrics.height());
+        draw_key(Qt::Key(m_key_sequence[i]), text_size, pos, painter);
         pos.setX(pos.x() + TEXT_PADDING() * 2 + text_size.width() +
           scale_width(4));
       }
@@ -179,23 +212,28 @@ void KeySequenceInputField::paintEvent(QPaintEvent* event) {
 }
 
 void KeySequenceInputField::commit_sequence(const QKeySequence& sequence) {
-  m_key_sequence = sequence;
+  m_key_sequence = sort_key_sequence(sequence);
   m_entered_keys.clear();
   m_state = State::DEFAULT;
   update();
   Q_EMIT editingFinished();
 }
 
-void KeySequenceInputField::draw_key(const QString& text,
-    const QSize& text_size, const QPoint& pos, QPainter& painter) const {
+void KeySequenceInputField::draw_key(Qt::Key key, const QSize& text_size,
+    const QPoint& pos, QPainter& painter) const {
   auto path = QPainterPath();
   path.addRoundedRect(QRectF(pos.x(), pos.y() - scale_height(18) -
     scale_height(2) - 1, text_size.width() + TEXT_PADDING() * 2,
-    scale_height(18)), scale_width(2), scale_height(2));
-  painter.setPen({QColor("#E2C899"), static_cast<qreal>(scale_width(1))});
-  painter.fillPath(path, QColor("#FFEDCD"));
+    scale_height(18)), scale_width(1), scale_height(1));
+  if(key == Qt::Key_Control || key == Qt::Key_Alt || key == Qt::Key_Shift) {
+    painter.setPen({QColor("#4495FF"), static_cast<qreal>(scale_width(1))});
+    painter.fillPath(path, QColor("#4495FF"));
+  } else {
+    painter.setPen({QColor("#684BC7"), static_cast<qreal>(scale_width(1))});
+    painter.fillPath(path, QColor("#684BC7"));
+  }
   painter.drawPath(path);
-  painter.setPen(Qt::black);
+  painter.setPen(Qt::white);
   painter.drawText(pos.x() + TEXT_PADDING(),
-    pos.y() - (text_size.height() / 2), text);
+    pos.y() - (text_size.height() / 2), get_key_text(key));
 }

@@ -54,7 +54,7 @@ namespace Spire {
       bool m_is_last_key_event_release;
 
       void commit_sequence(const QKeySequence& sequence);
-      void draw_key(const QString& text, const QSize& text_size,
+      void draw_key(Qt::Key key, const QSize& text_size,
         const QPoint& pos, QPainter& painter) const;
   };
 };
