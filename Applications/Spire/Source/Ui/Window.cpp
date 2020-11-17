@@ -31,7 +31,7 @@ Window::Window(QWidget* parent)
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
-  m_title_bar = new TitleBar(imageFromSvg(":/Icons/spire-icon-grey.svg",
+  m_title_bar = new TitleBar(imageFromSvg(":/Icons/spire.svg",
     ICON_SIZE()), this);
   installEventFilter(m_title_bar);
   auto layout = new QVBoxLayout(this);

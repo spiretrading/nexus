@@ -43,13 +43,14 @@ namespace Spire {
         const ClickedSignal::slot_type& slot) const;
 
     private:
+      QImage m_icon;
       IconButton* m_icon_button;
       boost::signals2::scoped_connection m_clicked_connection;
       bool m_is_toggled;
 
       void swap_toggle();
-      void update_icons();
-      void update_icons(bool enabled);
+      void update_button();
+      void update_button(bool enabled);
   };
 }
 

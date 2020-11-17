@@ -20,31 +20,33 @@ namespace {
     return size;
   }
 
-  auto apply_button_style(IconButton* button) {
-    button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-    auto button_style = button->get_style();
-    button_style.m_default_color = "#333333";
-    button_style.m_hover_color = "#333333";
-    button_style.m_blur_color = "#D0D0D0";
-    button->set_style(button_style);
-    button->setFixedSize(BUTTON_SIZE());
+  auto BUTTON_STYLE() {
+    static auto style = IconButton::Style();
+    style.m_default_color = "#333333";
+    style.m_hover_color = "#333333";
+    style.m_blur_color = "#D0D0D0";
+    return style;
   }
 
   auto create_button(const QString& icon, QWidget* parent) {
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
-    apply_button_style(button);
+    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()),
+      BUTTON_STYLE(), parent);
+    button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+    button->setFixedSize(BUTTON_SIZE());
     return button;
   }
 }
 
 TitleBar::TitleBar(const QImage& icon, QWidget* parent)
     : QWidget(parent),
+      m_icon(icon),
       m_icon_button(nullptr) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   m_layout = new QHBoxLayout(this);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
+  set_icon(m_icon);
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
   set_title_text_stylesheet(QColor("#000000"));
@@ -63,10 +65,12 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
   m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
   m_restore_button->hide();
   m_layout->addWidget(m_restore_button);
-  m_close_button = create_button(":/Icons/close.svg", this);
-  auto close_button_style = m_close_button->get_style();
+  auto close_button_style = BUTTON_STYLE();
   close_button_style.m_hover_color = "#E63F44";
-  m_close_button->set_style(close_button_style);
+  m_close_button = new IconButton(imageFromSvg(":/Icons/close.svg",
+    BUTTON_SIZE()), close_button_style, parent);
+  m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+  m_close_button->setFixedSize(BUTTON_SIZE());
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   m_layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
@@ -74,13 +78,18 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
 }
 
 void TitleBar::set_icon(const QImage& icon) {
+  m_icon = icon;
+  set_icon(icon, "#333333");
+}
+
+void TitleBar::set_icon(const QImage& icon, const QColor& hover_color) {
   delete_later(m_icon_button);
-  m_icon_button = new IconButton(icon, this);
-  apply_button_style(m_icon_button);
-  m_icon_button->setFixedSize(scale(26, 26));
-  auto icon_button_style = m_icon_button->get_style();
+  auto icon_button_style = BUTTON_STYLE();
+  icon_button_style.m_hover_color = hover_color;
   icon_button_style.m_hover_background_color = Qt::transparent;
-  m_icon_button->set_style(icon_button_style);
+  m_icon_button = new IconButton(icon, icon_button_style, this);
+  m_icon_button->setFixedSize(scale(26, 26));
+  m_icon_button->setFocusPolicy(Qt::NoFocus);
   m_layout->insertWidget(0, m_icon_button);
 }
 
@@ -99,14 +108,10 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
       set_title_text_stylesheet(QColor("#A0A0A0"));
-      auto icon_button_style = m_icon_button->get_style();
-      icon_button_style.m_hover_color = "#D0D0D0";
-      m_icon_button->set_style(icon_button_style);
+      set_icon(m_icon, "#D0D0D0");
     } else if(event->type() == QEvent::WindowActivate) {
       set_title_text_stylesheet(QColor("#000000"));
-      auto icon_button_style = m_icon_button->get_style();
-      icon_button_style.m_hover_color = "#333333";
-      m_icon_button->set_style(icon_button_style);
+      set_icon(m_icon, "#333333");
     } else if(event->type() == QEvent::WindowStateChange) {
       if(window()->isMaximized()) {
         m_maximize_button->hide();

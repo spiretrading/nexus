@@ -38,14 +38,13 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(352);
-  m_exit_button = new IconButton(imageFromSvg(":/Icons/close.svg",
-    BUTTON_SIZE()), this);
-  auto exit_button_style = m_exit_button->get_style();
+  auto exit_button_style = IconButton::Style();
   exit_button_style.m_default_color = "#E2E0FF";
   exit_button_style.m_hover_color = "#E63F45";
   exit_button_style.m_blur_color = "#BAB3D9";
   exit_button_style.m_hover_background_color = "#321471";
-  m_exit_button->set_style(exit_button_style);
+  m_exit_button = new IconButton(imageFromSvg(":/Icons/close.svg",
+    BUTTON_SIZE()), exit_button_style, this);
   m_exit_button->setFixedSize(BUTTON_SIZE());
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);

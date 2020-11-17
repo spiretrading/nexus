@@ -34,6 +34,7 @@ namespace Spire {
 
     private:
       QHBoxLayout* m_layout;
+      QImage m_icon;
       IconButton* m_icon_button;
       QLabel* m_title_label;
       IconButton* m_minimize_button;
@@ -46,6 +47,7 @@ namespace Spire {
       void on_maximize_button_press();
       void on_restore_button_press();
       void on_close_button_press();
+      void set_icon(const QImage& icon, const QColor& hover_color);
       void set_title_text_stylesheet(const QColor& font_color);
   };
 }

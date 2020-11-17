@@ -40,21 +40,20 @@ namespace Spire {
       //! Signal type for the clicked signal.
       using ClickedSignal = Signal<void ()>;
 
-      //! Constructs an IconButton.
+      //! Constructs an IconButton with the default Style.
       /*!
         \param icon The icon to show.
-        \param parent The parent QWidget to the IconButton.
+        \param parent The parent widget.
       */
       explicit IconButton(QImage icon, QWidget* parent = nullptr);
 
-      //! Returns the button's style.
-      const Style& get_style() const;
-
-      //! Sets the button's style.
+      //! Constructs an IconButton with a custom style.
       /*!
+        \param icon The icon to show.
         \param style The button's style.
+        \param parent The parent widget.
       */
-      void set_style(const Style& style);
+      IconButton(QImage icon, Style style, QWidget* parent = nullptr);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(

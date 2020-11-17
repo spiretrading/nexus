@@ -19,9 +19,13 @@ IconButton::Style::Style()
 }
 
 IconButton::IconButton(QImage icon, QWidget* parent)
+  : IconButton(icon, {}, parent) {}
+
+IconButton::IconButton(QImage icon, Style style, QWidget* parent)
     : QAbstractButton(parent),
       m_last_focus_reason(Qt::NoFocusReason),
-      m_icon(std::move(icon)) {
+      m_icon(std::move(icon)),
+      m_style(std::move(style)) {
   setAttribute(Qt::WA_Hover);
   setMouseTracking(true);
   setStyleSheet(QString(R"(
@@ -33,15 +37,6 @@ IconButton::IconButton(QImage icon, QWidget* parent)
       font-size: %1px;
       padding: %2px %3px %2px %3px;
     })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
-}
-
-const IconButton::Style& IconButton::get_style() const {
-  return m_style;
-}
-
-void IconButton::set_style(const Style& style) {
-  m_style = style;
-  update();
 }
 
 connection IconButton::connect_clicked_signal(

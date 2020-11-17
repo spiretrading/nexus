@@ -6,22 +6,19 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
 ToggleButton::ToggleButton(QImage icon, QWidget* parent)
     : QWidget(parent),
-      m_is_toggled(false),
-      m_icon_button(new IconButton(std::move(icon), parent)) {
-  setFocusProxy(m_icon_button);
-  m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
-    swap_toggle();
-  });
+      m_icon(std::move(icon)),
+      m_icon_button(nullptr),
+      m_is_toggled(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(m_icon_button);
+  update_button();
   setStyleSheet(QString(R"(
     QToolTip {
       background-color: white;
@@ -40,12 +37,12 @@ void ToggleButton::set_toggled(bool toggled) {
 }
 
 void ToggleButton::setEnabled(bool enabled) {
-  update_icons(enabled);
+  update_button(enabled);
   QWidget::setEnabled(enabled);
 }
 
 void ToggleButton::setDisabled(bool disabled) {
-  update_icons(!disabled);
+  update_button(!disabled);
   QWidget::setDisabled(disabled);
 }
 
@@ -56,23 +53,33 @@ connection ToggleButton::connect_clicked_signal(
 
 void ToggleButton::swap_toggle() {
   m_is_toggled = !m_is_toggled;
-  update_icons();
+  update_button();
 }
 
-void ToggleButton::update_icons() {
-  auto button_style = m_icon_button->get_style();
-  if(m_is_toggled) {
-    button_style.m_default_color = "#1FD37A";
-    button_style.m_hover_color = "#1FD37A";
-  } else {
-    button_style.m_default_color = "#7F5EEC";
-    button_style.m_hover_color = "#4B23A0";
-  }
-  m_icon_button->set_style(button_style);
+void ToggleButton::update_button() {
+  delete_later(m_icon_button);
+  auto style = [&] {
+    auto style = IconButton::Style();
+    if(m_is_toggled) {
+      style.m_default_color = "#1FD37A";
+      style.m_hover_color = "#1FD37A";
+    } else {
+      style.m_default_color = "#7F5EEC";
+      style.m_hover_color = "#4B23A0";
+    }
+    return style;
+  }();
+  m_icon_button = new IconButton(m_icon, style, this);
+  m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
+    swap_toggle();
+  });
+  setFocusProxy(m_icon_button);
+  m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  layout()->addWidget(m_icon_button);
 }
 
-void ToggleButton::update_icons(bool enabled) {
+void ToggleButton::update_button(bool enabled) {
   if(enabled) {
-    update_icons();
+    update_button();
   }
 }
