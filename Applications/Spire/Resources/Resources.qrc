@@ -18,88 +18,27 @@
         <file>Fonts/Roboto/Roboto-Regular.ttf</file>
         <file>Fonts/Roboto/Roboto-Thin.ttf</file>
         <file>Fonts/Roboto/Roboto-ThinItalic.ttf</file>
-        <file>Icons/close-purple.svg</file>
-        <file>Icons/close-red.svg</file>
         <file>Icons/logo.gif</file>
-        <file>Icons/account-light-purple.svg</file>
-        <file>Icons/account-purple.svg</file>
         <file>Icons/arrow-down.svg</file>
-        <file>Icons/blotter-black.svg</file>
-        <file>Icons/blotter-light-purple.svg</file>
-        <file>Icons/blotter-purple.svg</file>
-        <file>Icons/bookview-black.svg</file>
-        <file>Icons/bookview-light-purple.svg</file>
-        <file>Icons/bookview-purple.svg</file>
-        <file>Icons/canvas-black.svg</file>
-        <file>Icons/canvas-light-purple.svg</file>
-        <file>Icons/canvas-purple.svg</file>
-        <file>Icons/chart-black.svg</file>
-        <file>Icons/chart-light-purple.svg</file>
-        <file>Icons/chart-purple.svg</file>
-        <file>Icons/close-grey.svg</file>
-        <file>Icons/dashboard-black.svg</file>
-        <file>Icons/dashboard-light-purple.svg</file>
-        <file>Icons/dashboard-purple.svg</file>
-        <file>Icons/key-bindings-black.svg</file>
-        <file>Icons/key-bindings-light-purple.svg</file>
-        <file>Icons/key-bindings-purple.svg</file>
-        <file>Icons/minimize-black.svg</file>
-        <file>Icons/minimize-grey.svg</file>
-        <file>Icons/order-imbalances-black.svg</file>
-        <file>Icons/order-imbalances-light-purple.svg</file>
-        <file>Icons/order-imbalances-purple.svg</file>
-        <file>Icons/time-sale-black.svg</file>
-        <file>Icons/time-sale-light-purple.svg</file>
-        <file>Icons/time-sale-purple.svg</file>
-        <file>Icons/maximize-black.svg</file>
-        <file>Icons/maximize-grey.svg</file>
-        <file>Icons/unmaximize-black.svg</file>
-        <file>Icons/unmaximize-grey.svg</file>
-        <file>Icons/spire-icon-black.svg</file>
-        <file>Icons/spire-icon-grey.svg</file>
         <file>Icons/search.svg</file>
         <file>Icons/36.png</file>
         <file>Icons/124.png</file>
         <file>Icons/840.png</file>
-        <file>Icons/time-sale-grey.svg</file>
         <file>Icons/check.svg</file>
         <file>Icons/check-with-box.svg</file>
         <file>Icons/column-border.png</file>
-        <file>Icons/close-black.svg</file>
         <file>Icons/pre-loader.gif</file>
-        <file>Icons/bookview-grey.svg</file>
         <file>Icons/arrow-up.svg</file>
         <file>Icons/spire-icon-48x48.png</file>
-        <file>Icons/blotter-icon-256x256.png</file>
-        <file>Icons/book-view-icon-256x256.png</file>
-        <file>Icons/canvas-icon-256x256.png</file>
-        <file>Icons/chart-icon-256x256.png</file>
-        <file>Icons/dashboard-icon-256x256.png</file>
-        <file>Icons/imbalance-icon-256x256.png</file>
-        <file>Icons/key-bindings-icon-256x256.png</file>
-        <file>Icons/spire-icon-256x256.png</file>
-        <file>Icons/time-sales-icon-256x256.png</file>
-        <file>Icons/chart-grey.svg</file>
         <file>Icons/arrow-right-black.svg</file>
         <file>Icons/arrow-right-white.svg</file>
-        <file>Icons/auto-scale-green.svg</file>
-        <file>Icons/auto-scale-grey.svg</file>
-        <file>Icons/auto-scale-purple.svg</file>
         <file>Icons/color-check.svg</file>
-        <file>Icons/draw-green.svg</file>
-        <file>Icons/draw-grey.svg</file>
-        <file>Icons/draw-purple.svg</file>
-        <file>Icons/lock-grid-green.svg</file>
-        <file>Icons/lock-grid-grey.svg</file>
-        <file>Icons/lock-grid-purple.svg</file>
-        <file>Icons/chart-cursor.svg</file>
         <file>Icons/color-picker-cursor.svg</file>
         <file>Icons/color-picker-display.png</file>
         <file>Icons/finger-cursor.svg</file>
         <file>Icons/slash-texture.svg</file>
         <file>Icons/arrow-left.svg</file>
         <file>Icons/arrow-right.svg</file>
-        <file>Icons/key-bindings-grey.svg</file>
         <file>Icons/text_effects/bold-active.svg</file>
         <file>Icons/text_effects/bold-hover.svg</file>
         <file>Icons/text_effects/bold-inactive.svg</file>
@@ -120,5 +59,42 @@
         <file>Icons/arrow-up-disabled-padded.svg</file>
         <file>Icons/arrow-up-hover-padded.svg</file>
         <file>Icons/arrow-up-padded.svg</file>
+        <file>Icons/demo.svg</file>
+        <file>Icons/close.svg</file>
+        <file>Icons/maximize.svg</file>
+        <file>Icons/minimize.svg</file>
+        <file>Icons/restore.svg</file>
+        <file>Icons/imbalance-indicator.svg</file>
+        <file>Icons/toolbar_icons/account.svg</file>
+        <file>Icons/toolbar_icons/blotter.svg</file>
+        <file>Icons/toolbar_icons/bookview.svg</file>
+        <file>Icons/toolbar_icons/canvas.svg</file>
+        <file>Icons/toolbar_icons/chart.svg</file>
+        <file>Icons/toolbar_icons/dashboard.svg</file>
+        <file>Icons/toolbar_icons/imbalance-indicator.svg</file>
+        <file>Icons/toolbar_icons/key-bindings.svg</file>
+        <file>Icons/toolbar_icons/time-sales.svg</file>
+        <file>Icons/account.svg</file>
+        <file>Icons/blotter.svg</file>
+        <file>Icons/bookview.svg</file>
+        <file>Icons/canvas.svg</file>
+        <file>Icons/chart.svg</file>
+        <file>Icons/dashboard.svg</file>
+        <file>Icons/key-bindings.svg</file>
+        <file>Icons/time-sales.svg</file>
+        <file>Icons/taskbar_icons/account.png</file>
+        <file>Icons/taskbar_icons/blotter.png</file>
+        <file>Icons/taskbar_icons/bookview.png</file>
+        <file>Icons/taskbar_icons/canvas.png</file>
+        <file>Icons/taskbar_icons/chart.png</file>
+        <file>Icons/taskbar_icons/dashboard.png</file>
+        <file>Icons/taskbar_icons/imbalance-indicator.png</file>
+        <file>Icons/taskbar_icons/key-bindings.png</file>
+        <file>Icons/taskbar_icons/spire.png</file>
+        <file>Icons/taskbar_icons/time-sales.png</file>
+        <file>Icons/spire.svg</file>
+        <file>Icons/auto-scale.svg</file>
+        <file>Icons/draw.svg</file>
+        <file>Icons/lock-grid.svg</file>
     </qresource>
 </RCC>

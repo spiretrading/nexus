@@ -24,8 +24,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
   set_fixed_body_size(scale(482, 272));
-  set_svg_icon(":/Icons/time-sale-black.svg",
-    ":/Icons/time-sale-grey.svg");
+  set_svg_icon(":/Icons/time-sale-black.svg");
   setWindowTitle(tr("Properties"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
