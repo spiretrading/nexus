@@ -20,11 +20,14 @@ namespace {
     return size;
   }
 
-  auto BUTTON_STYLE() {
-    static auto style = IconButton::Style();
-    style.m_default_color = "#333333";
-    style.m_hover_color = "#333333";
-    style.m_blur_color = "#D0D0D0";
+  const auto& BUTTON_STYLE() {
+    static auto style = [] {
+      auto style = IconButton::Style();
+      style.m_default_color = "#333333";
+      style.m_hover_color = "#333333";
+      style.m_blur_color = "#D0D0D0";
+      return style;
+    }();
     return style;
   }
 

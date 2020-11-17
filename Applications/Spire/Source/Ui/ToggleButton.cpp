@@ -58,17 +58,14 @@ void ToggleButton::swap_toggle() {
 
 void ToggleButton::update_button() {
   delete_later(m_icon_button);
-  auto style = [&] {
-    auto style = IconButton::Style();
-    if(m_is_toggled) {
-      style.m_default_color = "#1FD37A";
-      style.m_hover_color = "#1FD37A";
-    } else {
-      style.m_default_color = "#7F5EEC";
-      style.m_hover_color = "#4B23A0";
-    }
-    return style;
-  }();
+  auto style = IconButton::Style();
+  if(m_is_toggled) {
+    style.m_default_color = "#1FD37A";
+    style.m_hover_color = "#1FD37A";
+  } else {
+    style.m_default_color = "#7F5EEC";
+    style.m_hover_color = "#4B23A0";
+  }
   m_icon_button = new IconButton(m_icon, style, this);
   m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
     swap_toggle();
