@@ -18,7 +18,7 @@ namespace Spire {
         \param icon The button's icon.
         \param parent The parent QWidget to the ToggleButton.
       */
-      ToggleButton(QImage icon, QWidget* parent = nullptr);
+      explicit ToggleButton(QImage icon, QWidget* parent = nullptr);
 
       //! Sets the toggled state of the button.
       /*!
