@@ -11,6 +11,30 @@ namespace {
     return padding;
   }
 
+  auto get_key_color(Qt::Key key, bool is_enabled) {
+    switch(key) {
+      case Qt::Key_Alt:
+        if(is_enabled) {
+          return QColor("#C6A600");
+        }
+        return QColor("#E3D68F");
+      case Qt::Key_Control:
+        if(is_enabled) {
+          return QColor("#00B395");
+        }
+        return QColor("#A6E4DA");
+      case Qt::Key_Shift:
+        if(is_enabled) {
+          return QColor("#4495FF");
+        }
+        return QColor("#B0D2FF");
+    }
+    if(is_enabled) {
+      return QColor("#684BC7");
+    }
+    return QColor("#C0B3E9");
+  }
+
   auto get_key_text(Qt::Key key) {
     switch(key) {
       case Qt::Key_Shift:
@@ -105,9 +129,19 @@ void KeySequenceInputField::set_key_sequence(const QKeySequence& sequence) {
 bool KeySequenceInputField::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+    if((e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) &&
+        !e->isAutoRepeat()) {
       if(m_state == State::EDIT) {
         add_key(Qt::Key(e->key()));
+        return true;
+      }
+    }
+  } else if(event->type() == QEvent::KeyRelease) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+      if(m_state == State::EDIT && !e->isAutoRepeat()) {
+        commit_sequence(make_key_sequence(m_entered_keys));
+        m_is_last_key_event_release = true;
         return true;
       }
     }
@@ -225,13 +259,9 @@ void KeySequenceInputField::draw_key(Qt::Key key, const QSize& text_size,
   path.addRoundedRect(QRectF(pos.x(), pos.y() - scale_height(15) -
     scale_height(4) - 1, text_size.width() + TEXT_PADDING() * 2,
     scale_height(15)), scale_width(1), scale_height(1));
-  if(key == Qt::Key_Control || key == Qt::Key_Alt || key == Qt::Key_Shift) {
-    painter.setPen({QColor("#4495FF"), static_cast<qreal>(scale_width(1))});
-    painter.fillPath(path, QColor("#4495FF"));
-  } else {
-    painter.setPen({QColor("#684BC7"), static_cast<qreal>(scale_width(1))});
-    painter.fillPath(path, QColor("#684BC7"));
-  }
+  auto key_color = get_key_color(key, isEnabled());
+  painter.setPen({key_color, static_cast<qreal>(scale_width(1))});
+  painter.fillPath(path, key_color);
   painter.drawPath(path);
   painter.setPen(Qt::white);
   painter.drawText(pos.x() + TEXT_PADDING(),

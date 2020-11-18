@@ -2,6 +2,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Spire/TestKeySequenceValidationModel.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
@@ -27,6 +28,32 @@ namespace {
     }
     return Qt::Key_unknown;
   }
+
+  auto get_key_sequence_text(const QKeySequence sequence) {
+    auto string = QString();
+    for(auto i = 0; i < sequence.count(); ++i) {
+      switch(Qt::Key(sequence[i])) {
+        case Qt::Key_Shift:
+          string.append(QObject::tr("Shift + "));
+          break;
+        case Qt::Key_Alt:
+          string.append(QObject::tr("Alt + "));
+          break;
+        case Qt::Key_Control:
+          string.append(QObject::tr("Ctrl + "));
+          break;
+        case Qt::Key_unknown:
+          string.append(QObject::tr("Na + "));
+          break;
+        default:
+          string.append(QKeySequence(sequence[i]).toString() +
+            QObject::tr(" + "));
+          break;
+      }
+    }
+    string.remove(string.length() - 3, 3);
+    return string;
+  }
 }
 
 KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
@@ -36,20 +63,25 @@ KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
   m_layout = new QGridLayout(container_widget);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
+  auto disable_check_box = make_check_box(tr("Disable"), this);
+  connect(disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
+    m_input->setDisabled(disable_check_box->isChecked());
+  });
+  m_layout->addWidget(disable_check_box, 1, 1);
   m_set_input = new TextInputWidget(this);
   m_set_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(m_set_input, 1, 0);
+  m_layout->addWidget(m_set_input, 2, 0);
   auto set_button = make_flat_button(tr("Set Sequence"), this);
   set_button->setFixedSize(INPUT_SIZE());
   set_button->connect_clicked_signal([=] { on_set_button(); });
-  m_layout->addWidget(set_button, 1, 1);
+  m_layout->addWidget(set_button, 2, 1);
   m_reset_input = new TextInputWidget("ctrl,f1", this);
   m_reset_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(m_reset_input, 2, 0);
+  m_layout->addWidget(m_reset_input, 3, 0);
   auto reset_button = make_flat_button(tr("Reset Sequence"), this);
   reset_button->setFixedSize(INPUT_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 2, 1);
+  m_layout->addWidget(reset_button, 3, 1);
   on_reset_button();
 }
 
@@ -80,7 +112,8 @@ void KeySequenceTestWidget::on_reset_button() {
     m_input->setFixedSize(scale(130, 26));
     m_layout->addWidget(m_input, 0, 0);
     connect(m_input, &KeySequenceInputField::editingFinished, [=] {
-      m_status_label->setText(m_input->get_key_sequence().toString());
+      m_status_label->setText(get_key_sequence_text(
+        m_input->get_key_sequence()));
     });
     m_input->set_key_sequence(sequence);
   }
