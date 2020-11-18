@@ -158,6 +158,9 @@ void KeySequenceInputField::focusOutEvent(QFocusEvent* event) {
 }
 
 void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
+  if(event->isAutoRepeat()) {
+    return;
+  }
   m_is_last_key_event_release = false;
   m_last_pressed_key = Qt::Key(event->key());
   switch(event->key()) {
@@ -176,9 +179,7 @@ void KeySequenceInputField::keyPressEvent(QKeyEvent* event) {
       commit_sequence({});
       return;
   }
-  if(!event->isAutoRepeat()) {
-    m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
-  }
+  m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
 }
 
 void KeySequenceInputField::keyReleaseEvent(QKeyEvent* event) {
