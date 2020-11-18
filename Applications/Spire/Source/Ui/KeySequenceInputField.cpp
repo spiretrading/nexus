@@ -7,7 +7,7 @@ using namespace Spire;
 
 namespace {
   const auto& TEXT_PADDING() {
-    static auto padding = scale_width(5);
+    static auto padding = scale_width(4);
     return padding;
   }
 
@@ -222,9 +222,9 @@ void KeySequenceInputField::commit_sequence(const QKeySequence& sequence) {
 void KeySequenceInputField::draw_key(Qt::Key key, const QSize& text_size,
     const QPoint& pos, QPainter& painter) const {
   auto path = QPainterPath();
-  path.addRoundedRect(QRectF(pos.x(), pos.y() - scale_height(18) -
-    scale_height(2) - 1, text_size.width() + TEXT_PADDING() * 2,
-    scale_height(18)), scale_width(1), scale_height(1));
+  path.addRoundedRect(QRectF(pos.x(), pos.y() - scale_height(15) -
+    scale_height(4) - 1, text_size.width() + TEXT_PADDING() * 2,
+    scale_height(15)), scale_width(1), scale_height(1));
   if(key == Qt::Key_Control || key == Qt::Key_Alt || key == Qt::Key_Shift) {
     painter.setPen({QColor("#4495FF"), static_cast<qreal>(scale_width(1))});
     painter.fillPath(path, QColor("#4495FF"));
