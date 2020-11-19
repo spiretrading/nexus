@@ -30,29 +30,29 @@ namespace {
   }
 
   auto get_key_sequence_text(const QKeySequence sequence) {
-    auto string = QString();
+    auto text = QString();
     for(auto i = 0; i < sequence.count(); ++i) {
       switch(Qt::Key(sequence[i])) {
         case Qt::Key_Shift:
-          string.append(QObject::tr("Shift + "));
+          text.append(QObject::tr("Shift + "));
           break;
         case Qt::Key_Alt:
-          string.append(QObject::tr("Alt + "));
+          text.append(QObject::tr("Alt + "));
           break;
         case Qt::Key_Control:
-          string.append(QObject::tr("Ctrl + "));
+          text.append(QObject::tr("Ctrl + "));
           break;
         case Qt::Key_unknown:
-          string.append(QObject::tr("Na + "));
+          text.append(QObject::tr("Na + "));
           break;
         default:
-          string.append(QKeySequence(sequence[i]).toString() +
+          text.append(QKeySequence(sequence[i]).toString() +
             QObject::tr(" + "));
           break;
       }
     }
-    string.remove(string.length() - 3, 3);
-    return string;
+    text.remove(text.length() - 3, 3);
+    return text;
   }
 }
 

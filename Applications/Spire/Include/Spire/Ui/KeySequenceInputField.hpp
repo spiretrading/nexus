@@ -1,5 +1,6 @@
 #ifndef SPIRE_KEY_SEQUENCE_INPUT_FIELD_HPP
 #define SPIRE_KEY_SEQUENCE_INPUT_FIELD_HPP
+#include <memory>
 #include <QKeySequence>
 #include <QLineEdit>
 #include <QPainter>
@@ -7,7 +8,7 @@
 
 namespace Spire {
 
-  //! Reprents an input for key sequences.
+  //! Represents an input for key sequences.
   class KeySequenceInputField : public QLineEdit {
     public:
 
@@ -16,14 +17,9 @@ namespace Spire {
         \param model The associated validation model.
         \param parent The parent widget.
       */
-      KeySequenceInputField(std::shared_ptr<KeySequenceValidationModel> model,
+      explicit KeySequenceInputField(
+        std::shared_ptr<KeySequenceValidationModel> model,
         QWidget* parent = nullptr);
-
-      //! Adds a key to the list of unvalidated input keys.
-      /*
-        \param key The key to add.
-      */
-      void add_key(Qt::Key key);
 
       //! Returns the last valid inputted key sequence.
       const QKeySequence& get_key_sequence() const;
@@ -49,7 +45,6 @@ namespace Spire {
       State m_state;
       QKeySequence m_key_sequence;
       std::vector<Qt::Key> m_entered_keys;
-      QFont m_font;
       Qt::Key m_last_pressed_key;
       bool m_is_last_key_event_release;
 

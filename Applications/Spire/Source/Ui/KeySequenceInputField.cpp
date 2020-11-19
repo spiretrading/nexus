@@ -6,6 +6,16 @@
 using namespace Spire;
 
 namespace {
+  const auto& FONT() {
+    static auto font = [&] {
+      auto font = QFont("Roboto");
+      font.setPixelSize(scale_height(12));
+      font.setStyle(QFont::StyleItalic);
+      return font;
+    }();
+    return font;
+  }
+
   const auto& TEXT_PADDING() {
     static auto padding = scale_width(4);
     return padding;
@@ -102,18 +112,11 @@ KeySequenceInputField::KeySequenceInputField(
     : QLineEdit(parent),
       m_model(std::move(model)),
       m_state(State::DEFAULT),
-      m_font("Roboto"),
       m_last_pressed_key(Qt::Key_unknown),
       m_is_last_key_event_release(false) {
   setReadOnly(true);
   setAttribute(Qt::WA_Hover);
-  m_font.setPixelSize(scale_height(12));
-  m_font.setStyle(QFont::StyleItalic);
   installEventFilter(this);
-}
-
-void KeySequenceInputField::add_key(Qt::Key key) {
-  m_entered_keys.push_back(key);
 }
 
 const QKeySequence& KeySequenceInputField::get_key_sequence() const {
@@ -133,7 +136,7 @@ bool KeySequenceInputField::eventFilter(QObject* watched, QEvent* event) {
     if((e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) &&
         !e->isAutoRepeat()) {
       if(m_state == State::EDIT) {
-        add_key(Qt::Key(e->key()));
+        m_entered_keys.push_back(Qt::Key(e->key()));
         return true;
       }
     }
@@ -241,7 +244,7 @@ void KeySequenceInputField::paintEvent(QPaintEvent* event) {
       }
     }
   } else {
-    painter.setFont(m_font);
+    painter.setFont(FONT());
     painter.setPen(Qt::black);
     painter.drawText(scale_width(8), scale_height(16), tr("Enter Keys"));
   }
