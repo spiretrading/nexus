@@ -12,16 +12,6 @@ namespace Spire {
   class StaticDropDownMenu : public QLineEdit {
     public:
 
-      //! The styles available to render the StaticDropDownMenu.
-      enum class Style {
-
-        //! Render using the default style.
-        DEFAULT,
-
-        //! Render using the table cell style.
-        CELL
-      };
-
       //! Signals that an item was selected.
       /*!
         \param index The index of the selected item.
@@ -78,15 +68,16 @@ namespace Spire {
       */
       virtual void set_current_item(const QVariant& item);
 
+      //! Sets if the list should be shown when the menu is shown.
+      /*!
+        \param is_list_shown_with_menu True iff the list should be shown when
+          the menu is shown.
+      */
+      virtual void set_list_shown_with_menu(bool is_list_shown_with_menu);
+
       //! True iff the next item should be activated when the list is shown
       //! using the down arrow key.
       virtual void set_next_activated(bool is_next_activated);
-
-      //! Sets the StaticDropDownMenu's style.
-      /*!
-        \param style The menu's style.
-      */
-      void set_style(Style style);
 
       //! Connects a slot to the index selected signal.
       virtual boost::signals2::connection connect_index_selected_signal(
@@ -108,7 +99,6 @@ namespace Spire {
       QVariant m_current_item;
       QString m_display_text;
       QVariant m_last_activated_item;
-      Style m_style;
       QImage m_dropdown_image;
       QImage m_disabled_dropdown_image;
       DropDownList* m_menu_list;
@@ -117,6 +107,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_menu_activated_connection;
       QString m_entered_text;
       QTimer m_input_timer;
+      bool m_is_list_shown_with_menu;
       bool m_is_next_activated;
 
       void draw_arrow(const QImage& arrow_image, QPainter& painter);

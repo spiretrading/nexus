@@ -12,7 +12,7 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new OrderTypeComboBox(static_cast<QWidget*>(this->parent()));
   editor->set_current_order_type(index.data().value<OrderType>());
-  editor->set_style(StaticDropDownMenu::Style::CELL);
+  editor->set_list_shown_with_menu(true);
   connect(editor, &OrderTypeComboBox::editingFinished, this,
     &OrderTypeItemDelegate::on_editing_finished);
   return editor;

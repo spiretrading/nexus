@@ -9,16 +9,33 @@ using namespace Spire;
 namespace {
   const auto BORDER_SIZE = 1;
   const auto HORIZONTAL_MARGIN = 2;
+
+  auto PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
 }
 
 TextInputWidget::TextInputWidget(QWidget* parent)
   : TextInputWidget({}, parent) {}
 
 TextInputWidget::TextInputWidget(QString text, QWidget* parent)
-    : QLineEdit(std::move(text), parent),
-      m_left_padding(0) {
+    : QLineEdit(std::move(text), parent) {
   setContextMenuPolicy(Qt::NoContextMenu);
-  set_style(Style::DEFAULT);
+  setStyleSheet(QString(R"(
+    QLineEdit {
+      background-color: #FFFFFF;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %3px;
+      padding-left: %4px;
+    }
+
+    QLineEdit:focus {
+      border: %1px solid #4B23A0 %2px solid #4B23A0;
+    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
+        .arg(PADDING()));
 }
 
 void TextInputWidget::focusInEvent(QFocusEvent* event) {
@@ -57,43 +74,8 @@ void TextInputWidget::paintEvent(QPaintEvent* event) {
   auto elided_text = metrics.elidedText(text(), Qt::ElideRight,
     width() - scale_width(16));
   painter.setPen(Qt::black);
-  auto text_rect = QRect(m_left_padding + BORDER_SIZE + HORIZONTAL_MARGIN,
+  auto text_rect = QRect(PADDING() + BORDER_SIZE + HORIZONTAL_MARGIN,
     BORDER_SIZE + ((height() - BORDER_SIZE - metrics.height()) / 2),
     width() - (2 * BORDER_SIZE) - (2 * HORIZONTAL_MARGIN), metrics.height());
   painter.drawText(text_rect, elided_text);
-}
-
-int TextInputWidget::get_padding() const {
-  return m_left_padding;
-}
-
-void TextInputWidget::set_style(Style style) {
-  if(style == Style::CELL) {
-    m_left_padding = scale_width(5);
-    setStyleSheet(QString(R"(
-      QLineEdit {
-        background-color: #FFFFFF;
-        border: none;
-        color: #000000;
-        font-family: Roboto;
-        font-size: %1px;
-        padding-left: %2px;
-      })").arg(scale_height(12)).arg(m_left_padding));
-  } else {
-    m_left_padding = scale_width(8);
-    setStyleSheet(QString(R"(
-      QLineEdit {
-        background-color: #FFFFFF;
-        border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-        color: #000000;
-        font-family: Roboto;
-        font-size: %3px;
-        padding-left: %4px;
-      }
-
-      QLineEdit:focus {
-        border: %1px solid #4B23A0 %2px solid #4B23A0;
-      })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-          .arg(m_left_padding));
-  }
 }

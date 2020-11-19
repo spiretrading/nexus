@@ -34,12 +34,13 @@ void KeyBindingItemDelegate::setEditorData(QWidget* editor,
 void KeyBindingItemDelegate::updateEditorGeometry(QWidget* editor,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   if(index.row() == 0) {
-    auto rect = option.rect.translated(0, 1);
+    auto rect = option.rect.translated(-1, 0);
     editor->move(rect.topLeft());
-    editor->resize(rect.width(), rect.height() - 1);
+    editor->resize(rect.width() + 2, rect.height() + 1);
   } else {
-    editor->move(option.rect.topLeft());
-    editor->resize(option.rect.size());
+    auto rect = option.rect.translated(-1, -1);
+    editor->move(rect.topLeft());
+    editor->resize({rect.width() + 2, rect.height() + 2});
   }
   auto table = reinterpret_cast<QTableView*>(parent());
   if(table->horizontalHeader()->visualIndex(index.column()) == 0) {

@@ -28,6 +28,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
         scale(6, 4))),
+      m_is_list_shown_with_menu(false),
       m_is_next_activated(true) {
   setReadOnly(true);
   setFocusPolicy(Qt::StrongFocus);
@@ -45,7 +46,6 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
   installEventFilter(this);
-  set_style(Style::DEFAULT);
 }
 
 int StaticDropDownMenu::item_count() const {
@@ -88,12 +88,12 @@ void StaticDropDownMenu::set_current_item(const QVariant& item) {
   }
 }
 
-void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
-  m_is_next_activated = is_next_activated;
+void StaticDropDownMenu::set_list_shown_with_menu(bool is_list_shown) {
+  m_is_list_shown_with_menu = is_list_shown;
 }
 
-void StaticDropDownMenu::set_style(Style style) {
-  m_style = style;
+void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
+  m_is_next_activated = is_next_activated;
 }
 
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
@@ -145,12 +145,10 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(m_style == Style::DEFAULT) {
-    if(hasFocus() || m_menu_list->isActiveWindow()) {
-      draw_border(QColor("#4B23A0"), painter);
-    } else {
-      draw_border(QColor("#C8C8C8"), painter);
-    }
+  if(hasFocus() || m_menu_list->isActiveWindow()) {
+    draw_border(QColor("#4B23A0"), painter);
+  } else {
+    draw_border(QColor("#C8C8C8"), painter);
   }
   if(isEnabled()) {
     draw_background(Qt::white, painter);
@@ -177,7 +175,7 @@ void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
 }
 
 void StaticDropDownMenu::showEvent(QShowEvent* event) {
-  if(m_style == Style::CELL) {
+  if(m_is_list_shown_with_menu) {
     m_menu_list->show();
   }
   QWidget::showEvent(event);
