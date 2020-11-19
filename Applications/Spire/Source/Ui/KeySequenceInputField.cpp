@@ -106,6 +106,7 @@ KeySequenceInputField::KeySequenceInputField(
       m_last_pressed_key(Qt::Key_unknown),
       m_is_last_key_event_release(false) {
   setReadOnly(true);
+  setAttribute(Qt::WA_Hover);
   m_font.setPixelSize(scale_height(12));
   m_font.setStyle(QFont::StyleItalic);
   installEventFilter(this);
@@ -215,7 +216,7 @@ void KeySequenceInputField::mousePressEvent(QMouseEvent* event) {
 void KeySequenceInputField::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.fillRect(0, scale_height(1), width(), height(), Qt::white);
-  if(hasFocus() || underMouse()) {
+  if(hasFocus() || (underMouse() && isEnabled())) {
     painter.setPen("#4B23A0");
     painter.drawRect(0, 0, width() - 1, height() - 1);
   } else {
