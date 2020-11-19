@@ -15,6 +15,7 @@
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
 #include "Spire/UiViewer/IconButtonTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/KeySequenceTestWidget.hpp"
 #include "Spire/UiViewer/MarketComboBoxTestWidget.hpp"
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/OrderStatusComboBoxTestWidget.hpp"
@@ -93,6 +94,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("IconButton"), new IconButtonTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
     new IntegerSpinBoxTestWidget(this), this));
+  add_test_widget(tr("KeySequenceTestWidget"),
+    new KeySequenceTestWidget(this));
   add_test_widget(tr("MarketComboBox"), new ComboBoxTestWidget(
     new MarketComboBoxTestWidget(this)));
   add_test_widget(tr("MoneySpinBox"), new SpinBoxTestWidget(
