@@ -3,7 +3,6 @@
 #include <string>
 
 namespace Nexus::DefinitionsService {
-  class ApplicationDefinitionsClient;
   template<typename B> class DefinitionsClient;
   template<typename C> class DefinitionsServlet;
   class DefinitionsSession;

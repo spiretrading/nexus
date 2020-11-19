@@ -16,7 +16,7 @@
 namespace Nexus {
 
   /** Implements the ServiceClients interface using live application clients. */
-  class ApplicationServiceClients : private boost::noncopyable {
+  class ApplicationServiceClients {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::ApplicationServiceLocatorClient::Client;
@@ -105,34 +105,30 @@ namespace Nexus {
 
   inline ApplicationServiceClients::ApplicationServiceClients(
       std::string username, std::string password,
-      const Beam::Network::IpAddress& address) {
-    try {
-      m_serviceLocatorClient.BuildSession(std::move(username),
-        std::move(password), address);
-      m_registryClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_administrationClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_definitionsClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_marketDataClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_chartingClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_complianceClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_orderExecutionClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_riskClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      auto timeServices = m_serviceLocatorClient->Locate(
-        Beam::TimeService::SERVICE_NAME);
-      if(timeServices.empty()) {
-        BOOST_THROW_EXCEPTION(
-          Beam::IO::ConnectException("No time services available."));
-      }
-      auto& timeService = timeServices.front();
-      auto ntpPool = Beam::Parsers::Parse<
-        std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
-        timeService.GetProperties().At("addresses")));
-      m_timeClient = Beam::TimeService::MakeLiveNtpTimeClient(ntpPool);
-    } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
-    }
-  }
+      const Beam::Network::IpAddress& address)
+      : m_serviceLocatorClient(std::move(username), std::move(password),
+          address),
+        m_registryClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_administrationClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_definitionsClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_marketDataClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_chartingClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_complianceClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_orderExecutionClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_riskClient(Beam::Ref(*m_serviceLocatorClient)),
+        m_timeClient([&] {
+          auto timeServices = m_serviceLocatorClient->Locate(
+            Beam::TimeService::SERVICE_NAME);
+          if(timeServices.empty()) {
+            BOOST_THROW_EXCEPTION(
+              Beam::IO::ConnectException("No time services available."));
+          }
+          auto& timeService = timeServices.front();
+          auto ntpPool = Beam::Parsers::Parse<
+            std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
+            timeService.GetProperties().At("addresses")));
+          return Beam::TimeService::MakeLiveNtpTimeClient(ntpPool);
+        }()) {}
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
     Close();

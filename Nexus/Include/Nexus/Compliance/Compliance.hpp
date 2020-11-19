@@ -4,7 +4,6 @@
 #include <string>
 
 namespace Nexus::Compliance {
-  class ApplicationComplianceClient;
   template<typename C> class BuyingPowerComplianceRule;
   template<typename D> class CachedComplianceRuleDataStore;
   template<typename C> class CancelRestrictionPeriodComplianceRule;

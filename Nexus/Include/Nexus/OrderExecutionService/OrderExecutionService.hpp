@@ -7,7 +7,6 @@
 
 namespace Nexus::OrderExecutionService {
   class AccountOrderSubmissionEntry;
-  class ApplicationOrderExecutionClient;
   template<typename MarketDataClientType> class BoardLotCheck;
   template<typename AdministrationClientType, typename MarketDataClientType>
     class BuyingPowerCheck;
@@ -53,7 +52,7 @@ namespace Nexus::OrderExecutionService {
   template<typename DataStoreType> class WrapperOrderExecutionDataStore;
   template<typename DriverType> class WrapperOrderExecutionDriver;
 
-  // Standard name for the order execution service.
+  /** Standard name for the order execution service. */
   inline const std::string SERVICE_NAME = "order_execution_service";
 }
 

@@ -9,7 +9,6 @@ namespace Nexus::AdministrationService {
   class AdministrationDataStore;
   template<typename C, typename S, typename D> class AdministrationServlet;
   class AdministrationSession;
-  class ApplicationAdministrationClient;
   template<typename D> class CachedAdministrationDataStore;
   class EntitlementModification;
   class LocalAdministrationDataStore;
@@ -20,7 +19,7 @@ namespace Nexus::AdministrationService {
   class VirtualAdministrationClient;
   template<typename C> class WrapperAdministrationClient;
 
-  // Standard name for the administration service.
+  /** Standard name for the administration service. */
   inline const std::string SERVICE_NAME = "administration_service";
 }
 
