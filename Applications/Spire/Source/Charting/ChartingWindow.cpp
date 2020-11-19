@@ -28,6 +28,20 @@ using namespace Spire;
 
 namespace {
   const auto ZOOM_FACTOR = 1.1;
+
+  auto BUTTON_SIZE() {
+    static auto size = scale(26, 26);
+    return size;
+  }
+
+  auto create_button(const QString& icon, const QString& tooltip,
+      QWidget* parent) {
+    auto button = new ToggleButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    button->setFixedSize(BUTTON_SIZE());
+    button->setToolTip(tooltip);
+    button->setDisabled(true);
+    return button;
+  }
 }
 
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
@@ -40,9 +54,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_is_chart_auto_scaled(true) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
-  set_svg_icon(":/Icons/chart-black.svg",
-    ":/Icons/chart-grey.svg");
-  setWindowIcon(QIcon(":/Icons/chart-icon-256x256.png"));
+  set_svg_icon(":/Icons/chart.svg");
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/chart.png"));
   setWindowTitle(tr("Chart"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #FFFFFF;");
@@ -83,28 +96,13 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     {tr("second"), tr("minute"), tr("hour")}, m_button_header_widget);
   m_period_dropdown->setFixedSize(scale(80, 26));
   button_header_layout->addWidget(m_period_dropdown);
-  button_header_layout->addSpacing(scale_width(18));
-  auto button_image_size = scale(16, 16);
-  m_lock_grid_button = new ToggleButton(
-    imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
-    imageFromSvg(":/Icons/lock-grid-green.svg", button_image_size),
-    imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
-    imageFromSvg(":/Icons/lock-grid-grey.svg", button_image_size),
-    m_button_header_widget);
-  m_lock_grid_button->setFixedSize(scale(16, 26));
-  m_lock_grid_button->setToolTip(tr("Lock Grid"));
-  m_lock_grid_button->setDisabled(true);
-  button_header_layout->addWidget(m_lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
-  m_auto_scale_button = new ToggleButton(
-    imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
-    imageFromSvg(":/Icons/auto-scale-green.svg", button_image_size),
-    imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
-    imageFromSvg(":/Icons/auto-scale-grey.svg", button_image_size),
+  m_lock_grid_button = create_button(":/Icons/lock-grid.svg", tr("Lock Grid"),
     m_button_header_widget);
-  m_auto_scale_button->setFixedSize(scale(16, 26));
-  m_auto_scale_button->setToolTip(tr("Auto Scale"));
-  m_auto_scale_button->set_toggled(true);
+  button_header_layout->addWidget(m_lock_grid_button);
+  button_header_layout->addSpacing(scale_width(2));
+  m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
+    tr("Auto Scale"), m_button_header_widget);
   m_auto_scale_button->setDisabled(true);
   m_auto_scale_button->connect_clicked_signal([=] {
     on_auto_scale_button_click();
@@ -116,15 +114,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   seperator->setStyleSheet("background-color: #D0D0D0;");
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
-  m_draw_line_button = new ToggleButton(
-    imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
-    imageFromSvg(":/Icons/draw-green.svg", button_image_size),
-    imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
-    imageFromSvg(":/Icons/draw-grey.svg", button_image_size),
+  m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),
     m_button_header_widget);
-  m_draw_line_button->setFixedSize(scale(16, 26));
-  m_draw_line_button->setToolTip(tr("Draw Line"));
-  m_draw_line_button->setDisabled(true);
   m_draw_line_button->connect_clicked_signal([=] {
     on_draw_line_button_click();
   });

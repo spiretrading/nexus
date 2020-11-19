@@ -26,21 +26,21 @@ TabWidget::TabWidget(QWidget* parent)
       width: %5px;
     }
 
-    QTabBar::tab:focus {
-      border: %6px solid #4B23A0;
-      padding: -%6px 0px 0px -%6px;
-    }
-
     QTabBar::tab:hover {
       background-color: #DBDBDB;
       color: black;
     }
 
     QTabBar::tab:selected {
-      background-color: #F5F5F5;
-      color: #4B23A0;
+      background-color: #8C8C8C;
+      color: white;
+    }
+
+    QTabBar::tab:focus {
+      background-color: #4B23A0;
+      color: white;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
+        .arg(scale_width(2)).arg(scale_width(80)));
 }
 
 void TabWidget::paintEvent(QPaintEvent* event) {

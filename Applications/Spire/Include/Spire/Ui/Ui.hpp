@@ -23,6 +23,7 @@ namespace Spire {
   class FlatButton;
   class IconButton;
   class IntegerSpinBox;
+  class KeySequenceInputField;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;

@@ -15,6 +15,7 @@
 #include "Spire/UiViewer/FontSelectorTestWidget.hpp"
 #include "Spire/UiViewer/IconButtonTestWidget.hpp"
 #include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/KeySequenceTestWidget.hpp"
 #include "Spire/UiViewer/MarketComboBoxTestWidget.hpp"
 #include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
 #include "Spire/UiViewer/OrderStatusComboBoxTestWidget.hpp"
@@ -40,8 +41,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     : Window(parent) {
   setMinimumSize(scale(775, 432));
   setWindowTitle(tr("UI Viewer"));
-  set_svg_icon(":/Icons/spire-icon-black.svg", ":/Icons/spire-icon-grey.svg");
-  setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
+  set_svg_icon(":/Icons/spire.svg");
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5");
   layout()->addWidget(body);
@@ -93,6 +94,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("IconButton"), new IconButtonTestWidget(this));
   add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
     new IntegerSpinBoxTestWidget(this), this));
+  add_test_widget(tr("KeySequenceTestWidget"),
+    new KeySequenceTestWidget(this));
   add_test_widget(tr("MarketComboBox"), new ComboBoxTestWidget(
     new MarketComboBoxTestWidget(this)));
   add_test_widget(tr("MoneySpinBox"), new SpinBoxTestWidget(

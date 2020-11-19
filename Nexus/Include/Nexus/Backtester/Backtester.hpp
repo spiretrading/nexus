@@ -2,6 +2,7 @@
 #define NEXUS_BACKTESTER_HPP
 
 namespace Nexus {
+  class ActiveBacktesterEvent;
   class BacktesterEnvironment;
   class BacktesterEvent;
   class BacktesterEventHandler;
