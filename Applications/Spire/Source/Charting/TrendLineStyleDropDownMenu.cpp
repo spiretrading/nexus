@@ -36,7 +36,7 @@ connection TrendLineStyleDropDownMenu::connect_style_signal(
 
 void TrendLineStyleDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(hasFocus()) {
+  if(hasFocus() || underMouse()) {
     painter.fillRect(event->rect(), QColor("#4B23A0"));
   } else {
     painter.fillRect(event->rect(), QColor("#C8C8C8"));
