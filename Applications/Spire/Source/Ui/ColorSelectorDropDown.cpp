@@ -213,17 +213,12 @@ void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
     m_original_color = m_current_color;
     update_recent_colors_layout();
   }
+  QWidget::hideEvent(event);
 }
 
-void ColorSelectorDropDown::keyPressEvent(QKeyEvent* event) {
-  switch(event->key()) {
-    case Qt::Key_Left:
-      focusPreviousChild();
-      break;
-    case Qt::Key_Right:
-      focusNextChild();
-      break;
-  }
+void ColorSelectorDropDown::showEvent(QShowEvent* event) {
+  m_hex_input->setFocus();
+  QWidget::showEvent(event);
 }
 
 void ColorSelectorDropDown::add_basic_color_button(int x, int y,
