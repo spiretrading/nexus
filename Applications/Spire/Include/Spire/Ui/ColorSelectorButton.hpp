@@ -21,7 +21,7 @@ namespace Spire {
         \param current_color The current color to display in the button.
         \param parent The parent widget.
       */
-      ColorSelectorButton(const QColor& current_color,
+      explicit ColorSelectorButton(const QColor& current_color,
         QWidget* parent = nullptr);
 
       //! Returns the current color.
