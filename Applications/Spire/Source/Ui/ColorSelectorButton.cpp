@@ -13,9 +13,10 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   setFocusPolicy(Qt::StrongFocus);
   setAttribute(Qt::WA_Hover);
   m_selector_widget = new ColorSelectorDropDown(current_color, this);
-  m_selector_widget->connect_color_signal([=] (const auto& color) {
-    on_color_selected(color);
-  });
+  m_color_connection = m_selector_widget->connect_color_signal(
+    [=] (const auto& color) {
+      on_color_selected(color);
+    });
   m_selector_widget->installEventFilter(this);
   auto dropdown = new DropDownWindow(true, this);
   dropdown->initialize_widget(m_selector_widget);
