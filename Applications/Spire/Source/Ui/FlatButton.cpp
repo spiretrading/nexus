@@ -126,6 +126,7 @@ void FlatButton::keyPressEvent(QKeyEvent* event) {
       m_clicked_signal();
     }
   }
+  QWidget::keyPressEvent(event);
 }
 
 void FlatButton::mousePressEvent(QMouseEvent* event) {

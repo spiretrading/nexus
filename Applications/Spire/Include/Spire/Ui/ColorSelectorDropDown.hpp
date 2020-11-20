@@ -43,6 +43,7 @@ namespace Spire {
       void childEvent(QChildEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void hideEvent(QHideEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable ColorSignal m_color_signal;

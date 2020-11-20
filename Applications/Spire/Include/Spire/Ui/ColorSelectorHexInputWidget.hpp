@@ -28,15 +28,20 @@ namespace Spire {
       */
       void set_color(const QColor& color);
 
-      //! Connects a slot to the color signal.
-      boost::signals2::connection connect_color_signal(
+      //! Connects a slot to the color modified signal.
+      boost::signals2::connection connect_modified_signal(
+        const ColorSignal::slot_type& slot) const;
+
+      //! Connects a slot to the color selection signal.
+      boost::signals2::connection connect_selected_signal(
         const ColorSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      mutable ColorSignal m_color_signal;
+      mutable ColorSignal m_modified_signal;
+      mutable ColorSignal m_selected_signal;
       TextInputWidget* m_text_input;
       QString m_color_name;
 
