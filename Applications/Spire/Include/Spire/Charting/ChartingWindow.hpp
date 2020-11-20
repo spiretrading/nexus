@@ -60,6 +60,8 @@ namespace Spire {
       ToggleButton* m_lock_grid_button;
       ToggleButton* m_auto_scale_button;
       ToggleButton* m_draw_line_button;
+      boost::signals2::scoped_connection m_auto_scale_button_connection;
+      boost::signals2::scoped_connection m_draw_button_connection;
       bool m_is_chart_auto_scaled;
       TrendLineEditor* m_trend_line_editor_widget;
       QWidget* m_security_widget_container;

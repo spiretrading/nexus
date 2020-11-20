@@ -3,12 +3,12 @@
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/DropDownItem.hpp"
 
 namespace Spire {
 
   //! Represents a style item in a StyleDropDownMenu.
-  class StyleDropDownMenuItem : public QWidget {
+  class StyleDropDownMenuItem : public DropDownItem {
     public:
 
       //! Signals that a user selected a trend line style.
@@ -28,32 +28,11 @@ namespace Spire {
       //! Returns the style represented by this item.
       TrendLineStyle get_style() const;
 
-      //! Sets the item's highlighted status.
-      void set_highlight();
-
-      //! Removes the item's highlighted status.
-      void remove_highlight();
-
-      //! Calls the provided slot when the selected signal is triggered.
-      /*!
-        \param slot The slot to call.
-      */
-      boost::signals2::connection connect_selected_signal(
-        const SelectedSignal::slot_type& slot) const;
-
     protected:
-      void keyPressEvent(QKeyEvent* event) override;
-      void leaveEvent(QEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
-      mutable SelectedSignal m_selected_signal;
       TrendLineStyle m_style;
-      bool m_is_highlighted;
-      int m_line_length;
-      int m_padding;
   };
 }
 

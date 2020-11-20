@@ -14,7 +14,6 @@ namespace Spire {
   class ColorPicker;
   class DropDownColorPicker;
   class StyleDropDownMenuItem;
-  class StyleDropDownMenuList;
   struct TrendLine;
   class TrendLineEditor;
   class TrendLineModel;

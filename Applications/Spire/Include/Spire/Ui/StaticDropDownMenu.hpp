@@ -41,6 +41,8 @@ namespace Spire {
       StaticDropDownMenu(std::vector<QVariant> items,
         const QString& display_text, QWidget* parent = nullptr);
 
+      virtual ~StaticDropDownMenu() = default;
+
       //! Returns the number of items in the list.
       virtual int item_count() const;
 
