@@ -61,6 +61,7 @@ namespace Spire {
       void add_recent_color_button(int index, const QColor& color);
       void update_recent_colors_layout();
       void on_color_button_clicked(const QColor& color);
+      void on_color_hex_updated(const QColor& color);
       void on_color_selected(const QColor& color);
       void on_recent_colors_changed();
   };
