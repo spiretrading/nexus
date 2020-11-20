@@ -1,6 +1,5 @@
 #ifndef NEXUS_CHARTING_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_CHARTING_APPLICATION_DEFINITIONS_HPP
-#include <optional>
 #include <string>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
@@ -15,31 +14,28 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/throw_exception.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/ChartingService.hpp"
 
 namespace Nexus::ChartingService {
-namespace Details {
-  using ChartingClientSessionBuilder =
-    Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-    Beam::ServiceLocator::ApplicationServiceLocatorClient::Client,
-    Beam::Services::MessageProtocol<
-    std::unique_ptr<Beam::Network::TcpSocketChannel>,
-    Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-    Beam::Codecs::SizeDeclarativeEncoder<Beam::Codecs::ZLibEncoder>>,
-    Beam::Threading::LiveTimer>;
-}
 
   /** Encapsulates a standard ChartingClient used in an application. */
-  class ApplicationChartingClient : private boost::noncopyable {
+  class ApplicationChartingClient {
     public:
 
+      /** The type used to build client sessions. */
+      using SessionBuilder =
+        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
+        Beam::ServiceLocator::ApplicationServiceLocatorClient::Client,
+        Beam::Services::MessageProtocol<
+        std::unique_ptr<Beam::Network::TcpSocketChannel>,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::SizeDeclarativeEncoder<Beam::Codecs::ZLibEncoder>>,
+        Beam::Threading::LiveTimer>;
+
       /** Defines the standard ChartingClient used for applications. */
-      using Client = ChartingClient<Details::ChartingClientSessionBuilder>;
+      using Client = ChartingClient<SessionBuilder>;
 
       /** Constructs an ApplicationChartingClient. */
       ApplicationChartingClient() = default;
@@ -49,8 +45,9 @@ namespace Details {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate sessions.
        */
-      void BuildSession(Beam::Ref<Beam::ServiceLocator::
-        ApplicationServiceLocatorClient::Client> serviceLocatorClient);
+      void BuildSession(
+        Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
+        serviceLocatorClient);
 
       /** Returns a reference to the Client. */
       Client& operator *();
@@ -71,37 +68,28 @@ namespace Details {
       const Client* Get() const;
 
     private:
-      std::optional<Client> m_client;
+      boost::optional<Client> m_client;
+
+      ApplicationChartingClient(const ApplicationChartingClient&) = delete;
+      ApplicationChartingClient& operator =(
+        const ApplicationChartingClient&) = delete;
   };
 
   inline void ApplicationChartingClient::BuildSession(
       Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
       serviceLocatorClient) {
-    if(m_client) {
-      m_client->Close();
-      m_client = std::nullopt;
-    }
-    auto serviceLocatorClientHandle = serviceLocatorClient.Get();
+    m_client = boost::none;
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
-      *serviceLocatorClientHandle, SERVICE_NAME);
-    auto delay = false;
-    auto sessionBuilder = Details::ChartingClientSessionBuilder(
-      Beam::Ref(serviceLocatorClient),
+      *serviceLocatorClient, SERVICE_NAME);
+    auto sessionBuilder = SessionBuilder(Beam::Ref(serviceLocatorClient),
       [=] () mutable {
-        if(delay) {
-          auto delayTimer = Beam::Threading::LiveTimer(
-            boost::posix_time::seconds(3));
-          delayTimer.Start();
-          delayTimer.Wait();
-        }
-        delay = true;
         return std::make_unique<Beam::Network::TcpSocketChannel>(addresses);
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
           boost::posix_time::seconds(10));
       });
-    m_client.emplace(sessionBuilder);
+    m_client.emplace(std::move(sessionBuilder));
   }
 
   inline ApplicationChartingClient::Client&

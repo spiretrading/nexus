@@ -14,11 +14,11 @@ using namespace Spire;
 
 namespace {
   auto create_delete_button(QWidget* parent) {
-    auto button_size = scale(16, 16);
-    auto close_box = QRect(QPoint(4, 4), scale(8, 8));
-    return new IconButton(
-      imageFromSvg(":/Icons/close-purple.svg", button_size, close_box),
-      imageFromSvg(":/Icons/close-red.svg", button_size, close_box), parent);
+    auto close_icon_size = scale(8, 8);
+    auto button = new IconButton(
+      imageFromSvg(":/Icons/close-purple.svg", close_icon_size), parent);
+    button->setFixedSize(scale(16, 16));
+    return button;
   }
 
   auto DELETE_ROW_LAYOUT_WIDTH() {

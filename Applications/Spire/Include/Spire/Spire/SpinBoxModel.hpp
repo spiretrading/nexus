@@ -88,7 +88,7 @@ namespace Spire {
   }
 
   template<typename T>
-  void set_initial(T initial) {
+  void SpinBoxModel<T>::set_initial(T initial) {
     m_initial = initial;
   }
 

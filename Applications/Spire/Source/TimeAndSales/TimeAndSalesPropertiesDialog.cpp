@@ -24,8 +24,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
   set_fixed_body_size(scale(482, 272));
-  set_svg_icon(":/Icons/time-sale-black.svg",
-    ":/Icons/time-sale-grey.svg");
+  set_svg_icon(":/Icons/time-sale-black.svg");
   setWindowTitle(tr("Properties"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
@@ -110,30 +109,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(1);
-  m_show_grid_check_box = new CheckBox(tr("Show Grid"), this);
-  auto check_box_text_style = QString(R"(
-    color: black;
-    font-family: Roboto;
-    font-size: %1px;
-    outline: none;
-    spacing: %2px;)")
-    .arg(scale_height(12)).arg(scale_width(4));
-  auto check_box_indicator_style = QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    height: %3px;
-    width: %4px;)").arg(scale_height(1))
-    .arg(scale_width(1)).arg(scale_height(14)).arg(scale_width(14));
-  auto check_box_checked_style = QString(R"(
-    image: url(:/Icons/check-with-box.svg);)");
-  auto check_box_hover_style = QString(R"(
-    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-    .arg(scale_height(1)).arg(scale_width(1));
-  auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
-  m_show_grid_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
-  m_show_grid_check_box->setFixedHeight(scale_height(16));
+  m_show_grid_check_box = make_check_box(tr("Show Grid"), this);
   color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
   auto font_layout = new QVBoxLayout();

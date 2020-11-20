@@ -45,6 +45,13 @@ namespace Spire {
       void set_hover_stylesheet();
       void set_focused_stylesheet();
   };
+
+  //! Constructs a Spire-style CheckBox.
+  /*
+    \param label The CheckBox's text label.
+    \param parent The parent widget.
+  */
+  CheckBox* make_check_box(const QString& label, QWidget* parent);
 }
 
 #endif

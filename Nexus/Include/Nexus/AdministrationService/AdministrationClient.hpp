@@ -9,7 +9,6 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
@@ -34,7 +33,7 @@ namespace Nexus::AdministrationService {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class AdministrationClient : private boost::noncopyable {
+  class AdministrationClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -45,7 +44,7 @@ namespace Nexus::AdministrationService {
        * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
        */
       template<typename BF>
-      AdministrationClient(BF&& clientBuilder);
+      explicit AdministrationClient(BF&& clientBuilder);
 
       ~AdministrationClient();
 
@@ -342,6 +341,8 @@ namespace Nexus::AdministrationService {
         std::shared_ptr<RiskStatePublisher>> m_riskStatePublishers;
       Beam::RoutineTaskQueue m_tasks;
 
+      AdministrationClient(const AdministrationClient&) = delete;
+      AdministrationClient& operator =(const AdministrationClient&) = delete;
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void RecoverRiskParameters(ServiceProtocolClient& client);
       void RecoverRiskState(ServiceProtocolClient& client);
@@ -371,10 +372,9 @@ namespace Nexus::AdministrationService {
   template<typename B>
   template<typename BF>
   AdministrationClient<B>::AdministrationClient(BF&& clientBuilder)
-      : m_clientHandler(std::forward<BF>(clientBuilder)) {
-    m_clientHandler.SetReconnectHandler(
-      std::bind(&AdministrationClient::OnReconnect, this,
-      std::placeholders::_1));
+      : m_clientHandler(std::forward<BF>(clientBuilder),
+          std::bind(&AdministrationClient::OnReconnect, this,
+          std::placeholders::_1)) {
     RegisterAdministrationServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterAdministrationMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<RiskParametersMessage>(
