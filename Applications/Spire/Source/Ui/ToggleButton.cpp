@@ -37,18 +37,18 @@ void ToggleButton::set_toggled(bool toggled) {
 }
 
 void ToggleButton::setEnabled(bool enabled) {
-  update_button(enabled);
   QWidget::setEnabled(enabled);
+  update_button(enabled);
 }
 
 void ToggleButton::setDisabled(bool disabled) {
-  update_button(!disabled);
   QWidget::setDisabled(disabled);
+  update_button(!disabled);
 }
 
 connection ToggleButton::connect_clicked_signal(
     const ClickedSignal::slot_type& slot) const {
-  return m_icon_button->connect_clicked_signal(slot);
+  return m_clicked_signal.connect(slot);
 }
 
 void ToggleButton::swap_toggle() {
@@ -69,6 +69,7 @@ void ToggleButton::update_button() {
   m_icon_button = new IconButton(m_icon, style, this);
   m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
     swap_toggle();
+    m_clicked_signal();
   });
   setFocusProxy(m_icon_button);
   m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
