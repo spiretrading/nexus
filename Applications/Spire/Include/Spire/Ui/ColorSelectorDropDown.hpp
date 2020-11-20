@@ -6,7 +6,6 @@
 #include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
 #include "Spire/Ui/ColorSelectorHueSlider.hpp"
 #include "Spire/Ui/ColorSelectorValueSlider.hpp"
-#include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -56,7 +55,6 @@ namespace Spire {
       ColorSelectorValueSlider* m_color_value_slider;
       ColorSelectorHueSlider* m_color_hue_slider;
       ColorSelectorHexInputWidget* m_hex_input;
-      DropShadow* m_drop_shadow;
 
       void add_basic_color_button(int x, int y, const QColor& color);
       void add_recent_color_button(int index, const QColor& color);
