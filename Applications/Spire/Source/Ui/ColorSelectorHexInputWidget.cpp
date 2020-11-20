@@ -73,9 +73,10 @@ connection ColorSelectorHexInputWidget::connect_selected_signal(
 
 bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
     QEvent* event) {
-  if(watched == m_text_input && event->type() == QEvent::KeyPress) {
+  if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
+        e->key() == Qt::Key_Space) {
       auto text = m_text_input->text();
       if(text.length() == 6 || text.length() == 3) {
         auto color = QColor();
@@ -90,6 +91,12 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
         m_text_input->setText(m_color_name);
       }
       return true;
+    }
+  } else if(event->type() == QEvent::FocusOut) {
+    auto color = QColor();
+    color.setNamedColor(QString("#%1").arg(m_text_input->text()));
+    if(!color.isValid()) {
+      m_text_input->setText(m_color_name);
     }
   }
   return QWidget::eventFilter(watched, event);
