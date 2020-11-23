@@ -14,7 +14,7 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
       m_color(QColor("#FFCA19")),
       m_line_style(TrendLineStyle::SOLID) {
   parent->installEventFilter(this);
-  setFixedSize(scale(216, 34));
+  setFixedSize(scale(216, 36));
   setStyleSheet("background-color: #F5F5F5");
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(8),
@@ -30,11 +30,11 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   auto color_button = new ColorSelectorButton(QColor("#FFCA19"), this);
   color_button->connect_color_signal(
     [=] (auto color) { on_color_change(color); });
-  color_button->setFixedSize(scale(70, 18));
+  color_button->setFixedSize(scale(70, 20));
   layout->addWidget(color_button);
   layout->addStretch(8);
   auto style_dropdown = new TrendLineStyleDropDownMenu(this);
-  style_dropdown->setFixedSize(scale(70, 18));
+  style_dropdown->setFixedSize(scale(70, 20));
   style_dropdown->connect_style_signal(
     [=] (auto style) { on_style_change(style); });
   layout->addWidget(style_dropdown);
