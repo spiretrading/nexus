@@ -103,6 +103,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(2));
   m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
     tr("Auto Scale"), m_button_header_widget);
+  m_auto_scale_button->set_toggled(true);
   m_auto_scale_button_connection = m_auto_scale_button->connect_clicked_signal(
     [=] {
       on_auto_scale_button_click();
