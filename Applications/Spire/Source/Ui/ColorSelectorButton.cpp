@@ -21,6 +21,7 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   auto dropdown = new DropDownWindow(true, this);
   dropdown->initialize_widget(m_selector_widget);
   set_color(current_color);
+  installEventFilter(this);
 }
 
 const QColor& ColorSelectorButton::get_color() const {
@@ -43,6 +44,13 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Show) {
       m_selector_widget->activateWindow();
       m_selector_widget->setFocus();
+    }
+  } else if(watched == this) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Down) {
+        return true;
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
