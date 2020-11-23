@@ -62,9 +62,11 @@ void ToggleButton::update_button() {
   if(m_is_toggled) {
     style.m_default_color = "#1FD37A";
     style.m_hover_color = "#1FD37A";
+    style.m_blur_color = "#1FD37A";
   } else {
     style.m_default_color = "#7F5EEC";
     style.m_hover_color = "#4B23A0";
+    style.m_blur_color = "#7F5EEC";
   }
   m_icon_button = new IconButton(m_icon, style, this);
   m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
