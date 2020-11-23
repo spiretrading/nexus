@@ -93,8 +93,7 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
       return true;
     }
   } else if(event->type() == QEvent::FocusOut) {
-    auto color = QColor();
-    color.setNamedColor(QString("#%1").arg(m_text_input->text()));
+    auto color = QColor(QString("#%1").arg(m_text_input->text()));
     if(!color.isValid()) {
       m_text_input->setText(m_color_name);
     }
@@ -103,8 +102,7 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
 }
 
 void ColorSelectorHexInputWidget::on_text_changed(const QString& text) {
-  auto color = QColor();
-  color.setNamedColor(QString("#%1").arg(m_text_input->text()));
+  auto color = QColor(QString("#%1").arg(m_text_input->text()));
   if(color.isValid()) {
     m_modified_signal(color);
   }
