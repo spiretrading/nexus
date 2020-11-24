@@ -96,5 +96,6 @@
         <file>Icons/auto-scale.svg</file>
         <file>Icons/draw.svg</file>
         <file>Icons/lock-grid.svg</file>
+        <file>Icons/chart-cursor.svg</file>
     </qresource>
 </RCC>

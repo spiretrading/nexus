@@ -103,10 +103,11 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(2));
   m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
     tr("Auto Scale"), m_button_header_widget);
-  m_auto_scale_button->setDisabled(true);
-  m_auto_scale_button->connect_clicked_signal([=] {
-    on_auto_scale_button_click();
-  });
+  m_auto_scale_button->set_toggled(true);
+  m_auto_scale_button_connection = m_auto_scale_button->connect_clicked_signal(
+    [=] {
+      on_auto_scale_button_click();
+    });
   button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -116,7 +117,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),
     m_button_header_widget);
-  m_draw_line_button->connect_clicked_signal([=] {
+  m_draw_button_connection = m_draw_line_button->connect_clicked_signal([=] {
     on_draw_line_button_click();
   });
   button_header_layout->addWidget(m_draw_line_button);
