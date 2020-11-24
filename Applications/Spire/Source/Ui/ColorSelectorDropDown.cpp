@@ -130,7 +130,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_color_value_slider->setFixedSize(SLIDER_WIDTH(), scale_height(48));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     m_hex_input->set_color(color);
-    on_color_selected(color);
+    on_color_changed(color);
   });
   color_picker_layout->addWidget(m_color_value_slider);
   m_color_hue_slider = new ColorSelectorHueSlider(m_current_color, this);
@@ -138,7 +138,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_hue(color.hue());
     m_hex_input->set_color(color);
-    on_color_selected(color);
+    on_color_changed(color);
   });
   color_picker_layout->addWidget(m_color_hue_slider);
   m_hex_input = new ColorSelectorHexInputWidget(m_current_color, this);
@@ -146,12 +146,12 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_changed_connection = m_hex_input->connect_changed_signal(
     [=] (const auto& color) {
       on_color_hex_updated(color);
-      m_changed_signal(color);
+      on_color_changed(color);
     });
   m_selected_connection = m_hex_input->connect_selected_signal(
     [=] (const auto& color) {
       on_color_hex_updated(color);
-      on_color_selected(color);
+      m_selected_signal(color);
     });
   m_hex_input->setFocusPolicy(Qt::StrongFocus);
   color_picker_layout->addWidget(m_hex_input);
@@ -196,7 +196,7 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
         e->key() == Qt::Key_Space) {
-      on_color_selected(m_current_color);
+      m_selected_signal(m_current_color);
       window()->hide();
     } else if(e->key() == Qt::Key_Escape) {
       window()->hide();
@@ -204,7 +204,7 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   } else if(event->type() == QEvent::MouseButtonDblClick) {
     auto e = static_cast<QMouseEvent*>(event);
     if(e->button() == Qt::LeftButton) {
-      on_color_selected(m_current_color);
+      m_selected_signal(m_current_color);
       window()->hide();
       return true;
     }
@@ -263,7 +263,7 @@ void ColorSelectorDropDown::update_recent_colors_layout() {
 
 void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
   set_color(color);
-  on_color_selected(color);
+  on_color_changed(color);
 }
 
 void ColorSelectorDropDown::on_color_hex_updated(const QColor& color) {
@@ -271,10 +271,10 @@ void ColorSelectorDropDown::on_color_hex_updated(const QColor& color) {
   m_color_hue_slider->set_color(color);
 }
 
-void ColorSelectorDropDown::on_color_selected(const QColor& color) {
+void ColorSelectorDropDown::on_color_changed(const QColor& color) {
   m_current_color = color;
   m_hex_input->setFocus();
-  m_selected_signal(color);
+  m_changed_signal(color);
 }
 
 void ColorSelectorDropDown::on_recent_colors_changed() {
