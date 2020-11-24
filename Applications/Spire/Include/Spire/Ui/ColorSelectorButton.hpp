@@ -45,7 +45,8 @@ namespace Spire {
       mutable ColorSignal m_color_signal;
       QColor m_current_color;
       ColorSelectorDropDown* m_selector_widget;
-      boost::signals2::scoped_connection m_color_connection;
+      boost::signals2::scoped_connection m_change_connection;
+      boost::signals2::scoped_connection m_selected_connection;
 
       void on_color_selected(const QColor& color);
   };

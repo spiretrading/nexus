@@ -61,9 +61,9 @@ void ColorSelectorHexInputWidget::set_color(const QColor& color) {
   }
 }
 
-connection ColorSelectorHexInputWidget::connect_modified_signal(
+connection ColorSelectorHexInputWidget::connect_changed_signal(
     const ColorSignal::slot_type& slot) const {
-  return m_modified_signal.connect(slot);
+  return m_changed_signal.connect(slot);
 }
 
 connection ColorSelectorHexInputWidget::connect_selected_signal(
@@ -82,11 +82,11 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
         auto color = QColor();
         color.setNamedColor(QString("#%1").arg(m_text_input->text()));
         m_color_name = color_name(color);
-        m_selected_signal(color);
         if(text.length() == 3) {
           m_text_input->setText(m_color_name);
         }
         m_text_input->clearFocus();
+        m_selected_signal(color);
       } else {
         m_text_input->setText(m_color_name);
       }
@@ -103,8 +103,8 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
 
 void ColorSelectorHexInputWidget::on_text_changed(const QString& text) {
   auto color = QColor(QString("#%1").arg(m_text_input->text()));
-  if(color.isValid()) {
-    m_modified_signal(color);
-  }
   m_text_input->setText(text.toUpper());
+  if(color.isValid()) {
+    m_changed_signal(color);
+  }
 }

@@ -13,15 +13,19 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   setFocusPolicy(Qt::StrongFocus);
   setAttribute(Qt::WA_Hover);
   m_selector_widget = new ColorSelectorDropDown(current_color, this);
-  m_color_connection = m_selector_widget->connect_color_signal(
+  m_change_connection = m_selector_widget->connect_changed_signal(
     [=] (const auto& color) {
       on_color_selected(color);
+    });
+  m_selected_connection = m_selector_widget->connect_selected_signal(
+    [=] (const auto& color) {
+      on_color_selected(color);
+      m_selector_widget->window()->close();
     });
   m_selector_widget->installEventFilter(this);
   auto dropdown = new DropDownWindow(true, this);
   dropdown->initialize_widget(m_selector_widget);
   set_color(current_color);
-  installEventFilter(this);
 }
 
 const QColor& ColorSelectorButton::get_color() const {
@@ -44,13 +48,6 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Show) {
       m_selector_widget->activateWindow();
       m_selector_widget->setFocus();
-    }
-  } else if(watched == this) {
-    if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Down) {
-        return true;
-      }
     }
   }
   return QWidget::eventFilter(watched, event);
