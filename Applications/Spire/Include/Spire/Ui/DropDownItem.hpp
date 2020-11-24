@@ -38,8 +38,6 @@ namespace Spire {
       */
       DropDownItem(QVariant value, QImage icon, QWidget* parent = nullptr);
 
-      virtual ~DropDownItem() = default;
-
       //! Returns the item's value.
       virtual const QVariant& get_value() const;
 
