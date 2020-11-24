@@ -21,7 +21,7 @@ namespace Spire {
         \param current_color The current color to display in the button.
         \param parent The parent widget.
       */
-      ColorSelectorButton(const QColor& current_color,
+      explicit ColorSelectorButton(const QColor& current_color,
         QWidget* parent = nullptr);
 
       //! Returns the current color.
@@ -39,18 +39,15 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
       mutable ColorSignal m_color_signal;
       QColor m_current_color;
-      ColorSelectorDropDown* m_dropdown;
+      ColorSelectorDropDown* m_selector_widget;
+      boost::signals2::scoped_connection m_change_connection;
+      boost::signals2::scoped_connection m_selected_connection;
 
-      void hide_dropdown();
-      void move_color_dropdown();
       void on_color_selected(const QColor& color);
   };
 }

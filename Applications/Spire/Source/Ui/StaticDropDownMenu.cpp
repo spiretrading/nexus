@@ -31,6 +31,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_is_list_shown_with_menu(false),
       m_is_next_activated(true) {
   setReadOnly(true);
+  setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
     m_current_item = items.front();
@@ -145,7 +146,7 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(hasFocus() || m_menu_list->isActiveWindow()) {
+  if(hasFocus() || underMouse() || m_menu_list->isActiveWindow()) {
     draw_border(QColor("#4B23A0"), painter);
   } else {
     draw_border(QColor("#C8C8C8"), painter);

@@ -121,11 +121,13 @@ void FlatButton::focusOutEvent(QFocusEvent* event) {
 }
 
 void FlatButton::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
+      event->key() == Qt::Key_Space) {
     if(m_clickable) {
       m_clicked_signal();
     }
   }
+  QWidget::keyPressEvent(event);
 }
 
 void FlatButton::mousePressEvent(QMouseEvent* event) {
@@ -155,21 +157,30 @@ void FlatButton::enable_button() {
 }
 
 QString FlatButton::get_stylesheet_properties(const Style& s) {
+  auto [margin, border_color] = [&] {
+    if(m_label->text().isEmpty()) {
+      return std::pair(2, QColor(Qt::transparent));
+    }
+    return std::pair(0, s.m_border_color);
+  }();
   return QString(R"(
     background-color: %1;
     border: %3px solid %5 %4px solid %5;
     color: %2;
+    margin: %6px;
     qproperty-alignment: AlignCenter;
     )")
     .arg(s.m_background_color.name(QColor::HexArgb))
     .arg(s.m_text_color.name(QColor::HexArgb))
     .arg(scale_width(1)).arg(scale_height(1))
-    .arg(s.m_border_color.name(QColor::HexArgb));
+    .arg(border_color.name(QColor::HexArgb))
+    .arg(margin);
 }
 
 void FlatButton::set_disabled_stylesheet() {
   setStyleSheet(QString(R"(
     #flat_button {
+      background-color: white;
       border: %1px solid %2 %3px solid %2;
     })")
     .arg(scale_height(1))
