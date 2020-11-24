@@ -61,35 +61,50 @@ void ColorSelectorHexInputWidget::set_color(const QColor& color) {
   }
 }
 
-connection ColorSelectorHexInputWidget::connect_color_signal(
+connection ColorSelectorHexInputWidget::connect_changed_signal(
     const ColorSignal::slot_type& slot) const {
-  return m_color_signal.connect(slot);
+  return m_changed_signal.connect(slot);
+}
+
+connection ColorSelectorHexInputWidget::connect_selected_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }
 
 bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
     QEvent* event) {
-  if(watched == m_text_input && event->type() == QEvent::KeyPress) {
+  if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
+        e->key() == Qt::Key_Space) {
       auto text = m_text_input->text();
       if(text.length() == 6 || text.length() == 3) {
         auto color = QColor();
         color.setNamedColor(QString("#%1").arg(m_text_input->text()));
         m_color_name = color_name(color);
-        m_color_signal(color);
         if(text.length() == 3) {
           m_text_input->setText(m_color_name);
         }
         m_text_input->clearFocus();
+        m_selected_signal(color);
       } else {
         m_text_input->setText(m_color_name);
       }
       return true;
+    }
+  } else if(event->type() == QEvent::FocusOut) {
+    auto color = QColor(QString("#%1").arg(m_text_input->text()));
+    if(!color.isValid()) {
+      m_text_input->setText(m_color_name);
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void ColorSelectorHexInputWidget::on_text_changed(const QString& text) {
+  auto color = QColor(QString("#%1").arg(m_text_input->text()));
   m_text_input->setText(text.toUpper());
+  if(color.isValid()) {
+    m_changed_signal(color);
+  }
 }

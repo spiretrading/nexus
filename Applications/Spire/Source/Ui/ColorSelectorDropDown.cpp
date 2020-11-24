@@ -130,7 +130,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_color_value_slider->setFixedSize(SLIDER_WIDTH(), scale_height(48));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     m_hex_input->set_color(color);
-    on_color_selected(color);
+    on_color_changed(color);
   });
   color_picker_layout->addWidget(m_color_value_slider);
   m_color_hue_slider = new ColorSelectorHueSlider(m_current_color, this);
@@ -138,17 +138,21 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_hue(color.hue());
     m_hex_input->set_color(color);
-    on_color_selected(color);
+    on_color_changed(color);
   });
   color_picker_layout->addWidget(m_color_hue_slider);
   m_hex_input = new ColorSelectorHexInputWidget(m_current_color, this);
   m_hex_input->setFixedSize(scale(122, 26));
-  m_hex_input->connect_color_signal([=] (const auto& color) {
-    m_color_value_slider->set_color(color);
-    m_color_hue_slider->set_color(color);
-    on_color_selected(color);
-    window()->hide();
-  });
+  m_changed_connection = m_hex_input->connect_changed_signal(
+    [=] (const auto& color) {
+      on_color_hex_updated(color);
+      on_color_changed(color);
+    });
+  m_selected_connection = m_hex_input->connect_selected_signal(
+    [=] (const auto& color) {
+      on_color_hex_updated(color);
+      m_selected_signal(color);
+    });
   m_hex_input->setFocusPolicy(Qt::StrongFocus);
   color_picker_layout->addWidget(m_hex_input);
   color_picker_layout->addStretch(1);
@@ -171,9 +175,14 @@ void ColorSelectorDropDown::set_color(const QColor& color) {
   m_hex_input->set_color(color);
 }
 
-connection ColorSelectorDropDown::connect_color_signal(
+connection ColorSelectorDropDown::connect_changed_signal(
     const ColorSignal::slot_type& slot) const {
-  return m_color_signal.connect(slot);
+  return m_changed_signal.connect(slot);
+}
+
+connection ColorSelectorDropDown::connect_selected_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }
 
 void ColorSelectorDropDown::childEvent(QChildEvent* event) {
@@ -187,7 +196,7 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
         e->key() == Qt::Key_Space) {
-      on_color_selected(m_current_color);
+      m_selected_signal(m_current_color);
       window()->hide();
     } else if(e->key() == Qt::Key_Escape) {
       window()->hide();
@@ -195,7 +204,7 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   } else if(event->type() == QEvent::MouseButtonDblClick) {
     auto e = static_cast<QMouseEvent*>(event);
     if(e->button() == Qt::LeftButton) {
-      on_color_selected(m_current_color);
+      m_selected_signal(m_current_color);
       window()->hide();
       return true;
     }
@@ -209,15 +218,22 @@ void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
     m_original_color = m_current_color;
     update_recent_colors_layout();
   }
+  QWidget::hideEvent(event);
+}
+
+void ColorSelectorDropDown::showEvent(QShowEvent* event) {
+  m_hex_input->setFocus();
+  QWidget::showEvent(event);
 }
 
 void ColorSelectorDropDown::add_basic_color_button(int x, int y,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->setFocusPolicy(Qt::TabFocus);
-  button->connect_clicked_signal([=] {
-    on_color_button_clicked(color);
-  });
+  m_button_clicked_connections.AddConnection(button->connect_clicked_signal(
+    [=] {
+      on_color_button_clicked(color);
+    }));
   m_basic_colors_layout->addWidget(button, x, y);
 }
 
@@ -225,15 +241,17 @@ void ColorSelectorDropDown::add_recent_color_button(int index,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->setFocusPolicy(Qt::TabFocus);
-  button->connect_clicked_signal([=] {
-    on_color_button_clicked(color);
-  });
+  m_button_clicked_connections.AddConnection(button->connect_clicked_signal(
+    [=] {
+      on_color_button_clicked(color);
+    }));
   m_recent_colors_layout->insertWidget(index, button);
 }
 
 void ColorSelectorDropDown::update_recent_colors_layout() {
   while(m_recent_colors_layout->itemAt(0) != nullptr) {
     auto item = m_recent_colors_layout->takeAt(0);
+    m_button_clicked_connections.Disconnect(item->widget());
     item->widget()->deleteLater();
     delete item;
   }
@@ -245,13 +263,18 @@ void ColorSelectorDropDown::update_recent_colors_layout() {
 
 void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
   set_color(color);
-  on_color_selected(color);
+  on_color_changed(color);
 }
 
-void ColorSelectorDropDown::on_color_selected(const QColor& color) {
+void ColorSelectorDropDown::on_color_hex_updated(const QColor& color) {
+  m_color_value_slider->set_color(color);
+  m_color_hue_slider->set_color(color);
+}
+
+void ColorSelectorDropDown::on_color_changed(const QColor& color) {
   m_current_color = color;
   m_hex_input->setFocus();
-  m_color_signal(color);
+  m_changed_signal(color);
 }
 
 void ColorSelectorDropDown::on_recent_colors_changed() {
