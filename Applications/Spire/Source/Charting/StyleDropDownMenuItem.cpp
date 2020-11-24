@@ -22,11 +22,6 @@ StyleDropDownMenuItem::StyleDropDownMenuItem(TrendLineStyle style,
   : DropDownItem(QVariant::fromValue(style), parent),
     m_style(style) {}
 
-// TODO: still required?
-TrendLineStyle StyleDropDownMenuItem::get_style() const {
-  return m_style;
-}
-
 void StyleDropDownMenuItem::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(underMouse() || is_highlighted()) {

@@ -25,9 +25,6 @@ namespace Spire {
       explicit StyleDropDownMenuItem(TrendLineStyle style,
         QWidget* parent = nullptr);
 
-      //! Returns the style represented by this item.
-      TrendLineStyle get_style() const;
-
     protected:
       void paintEvent(QPaintEvent* event) override;
 

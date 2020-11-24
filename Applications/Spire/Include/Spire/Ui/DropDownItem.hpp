@@ -39,23 +39,23 @@ namespace Spire {
       DropDownItem(QVariant value, QImage icon, QWidget* parent = nullptr);
 
       //! Returns the item's value.
-      virtual const QVariant& get_value() const;
+      const QVariant& get_value() const;
 
       //! Returns true iff the item is highlighted.
-      virtual bool is_highlighted() const;
+      bool is_highlighted() const;
 
       //! Displays the item's highlight style.
-      virtual void set_highlight();
+      void set_highlight();
 
       //! Removes the item's highlight style.
-      virtual void reset_highlight();
+      void reset_highlight();
 
       //! Connects a slot to the highlighted signal.
-      virtual boost::signals2::connection connect_highlighted_signal(
+      boost::signals2::connection connect_highlighted_signal(
         const HighlightedSignal::slot_type& slot) const;
       
       //! Connects a slot to the selected signal.
-      virtual boost::signals2::connection connect_selected_signal(
+      boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
     protected:
