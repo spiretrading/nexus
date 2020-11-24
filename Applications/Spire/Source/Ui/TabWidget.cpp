@@ -31,16 +31,16 @@ TabWidget::TabWidget(QWidget* parent)
       color: white;
     }
 
-    QTabBar::tab:hover {
-      background-color: #4B23A0;
-      color: white;
-    }
-
     QTabBar::tab:focus {
       background-color: #EBEBEB;
       border: %6px solid #4B23A0;
       color: black;
       padding: -%6px 0px 0px -%6px;
+    }
+
+    QTabBar::tab:hover {
+      background-color: #4B23A0;
+      color: white;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
 }
