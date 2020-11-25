@@ -72,7 +72,7 @@ namespace Nexus::MarketDataService {
       Predicate&& servicePredicate,
       const std::string& service = RELAY_SERVICE_NAME) {
     return SessionBuilder(Beam::Ref(serviceLocatorClient),
-      [servicePredicate = std::forward<Predicate>(servicePredicate), =] {
+      [=, servicePredicate = std::forward<Predicate>(servicePredicate)] {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
           Beam::ServiceLocator::LocateServiceAddresses(*serviceLocatorClient,
           service, servicePredicate));

@@ -1,5 +1,3 @@
-#include <fstream>
-#include <iostream>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
 #include <Beam/Codecs/ZLibDecoder.hpp>
@@ -14,7 +12,6 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
-#include <Beam/Utilities/Streamable.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
@@ -41,7 +38,6 @@ using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
-using namespace TCLAP;
 
 namespace {
   using IncomingMarketDataClientSessionBuilder =
@@ -60,193 +56,122 @@ namespace {
   using BaseMarketDataRelayServlet = MarketDataRelayServlet<
     MarketDataRelayServletContainer, IncomingMarketDataClient,
     ApplicationAdministrationClient::Client*>;
-
-  struct MarketDataRelayServerConnectionInitializer {
-    std::string m_serviceName;
-    IpAddress m_interface;
-    std::vector<IpAddress> m_addresses;
-
-    void Initialize(const YAML::Node& config);
-  };
-
-  void MarketDataRelayServerConnectionInitializer::Initialize(
-      const YAML::Node& config) {
-    m_serviceName = Extract<std::string>(config, "service",
-      MarketDataService::RELAY_SERVICE_NAME);
-    m_interface = Extract<IpAddress>(config, "interface");
-    auto addresses = std::vector<IpAddress>();
-    addresses.push_back(m_interface);
-    m_addresses = Extract<std::vector<IpAddress>>(config, "addresses",
-      addresses);
-  }
 }
 
 int main(int argc, const char** argv) {
-  auto configFile = std::string();
   try {
-    auto cmd = CmdLine("", ' ', "0.9-r" MARKET_DATA_RELAY_SERVER_VERSION
+    auto config = ParseCommandLine(argc, argv,
+      "1.0-r" MARKET_DATA_RELAY_SERVER_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
-      false, "config.yml", "path");
-    cmd.add(configArg);
-    cmd.parse(argc, argv);
-    configFile = configArg.getValue();
-  } catch(const ArgException& e) {
-    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
-      std::endl;
-    return -1;
-  }
-  auto config = Require(LoadFile, configFile);
-  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
-  try {
-    serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
+    auto serviceConfig = TryOrNest([&] {
+      return ServiceConfiguration::Parse(GetNode(config, "server"),
+        MarketDataService::RELAY_SERVICE_NAME);
+    }, std::runtime_error("Error parsing section 'server'."));
+    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-  } catch(const std::exception& e) {
-    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
-      std::endl;
-    return -1;
-  }
-  auto serviceLocatorClient = ApplicationServiceLocatorClient();
-  try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address);
-  } catch(const std::exception& e) {
-    std::cerr << "Error logging in: " << e.what() << std::endl;
-    return -1;
-  }
-  auto definitionsClient = ApplicationDefinitionsClient();
-  try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
-  } catch(const std::exception&) {
-    std::cerr << "Unable to connect to the definitions service." << std::endl;
-    return -1;
-  }
-  auto administrationClient = ApplicationAdministrationClient();
-  try {
-    administrationClient.BuildSession(Ref(*serviceLocatorClient));
-  } catch(const std::exception&) {
-    std::cerr << "Unable to connect to the administration service." <<
-      std::endl;
-    return -1;
-  }
-  auto marketDatabase = definitionsClient->LoadMarketDatabase();
-  auto marketDataClientBuilder = [&] {
-    const auto SENTINEL = CountryCode::NONE;
-    auto availableCountries = std::unordered_set<CountryCode>();
-    auto lastCountries = std::vector<CountryCode>();
-    auto servicePredicate = [&] (const auto& entry) {
-      if(availableCountries.find(SENTINEL) != availableCountries.end() ||
-          !lastCountries.empty()) {
-        return false;
-      }
-      auto countriesNode = entry.GetProperties().Get("countries");
-      if(!countriesNode) {
-        availableCountries.insert(SENTINEL);
-        return true;
-      }
-      if(auto countriesList = get<std::vector<JsonValue>>(&*countriesNode)) {
-        auto countries = std::vector<CountryCode>();
-        for(auto& countryValue : *countriesList) {
-          if(auto country = get<double>(&countryValue)) {
-            countries.emplace_back(static_cast<std::uint16_t>(*country));
-          } else {
-            return false;
-          }
+    auto definitionsClient = TryOrNest([&] {
+      return ApplicationDefinitionsClient(Ref(*serviceLocatorClient));
+    }, std::runtime_error("Unable to connect to the definitions service."));
+    auto administrationClient = TryOrNest([&] {
+      return ApplicationAdministrationClient(Ref(*serviceLocatorClient));
+    }, std::runtime_error("Unable to connect to the administration service."));
+    auto marketDatabase = TryOrNest([&] {
+      return definitionsClient->LoadMarketDatabase();
+    }, std::runtime_error("Unable to load market database."));
+    auto marketDataClientBuilder = [&] {
+      const auto SENTINEL = CountryCode::NONE;
+      auto availableCountries = std::unordered_set<CountryCode>();
+      auto lastCountries = std::vector<CountryCode>();
+      auto servicePredicate = [&] (const auto& entry) {
+        if(availableCountries.find(SENTINEL) != availableCountries.end() ||
+            !lastCountries.empty()) {
+          return false;
         }
-        for(auto& country : countries) {
-          if(availableCountries.find(country) != availableCountries.end()) {
-            return false;
-          }
+        auto countriesNode = entry.GetProperties().Get("countries");
+        if(!countriesNode) {
+          availableCountries.insert(SENTINEL);
+          return true;
         }
-        lastCountries = std::move(countries);
-        availableCountries.insert(lastCountries.begin(), lastCountries.end());
-        return true;
-      } else {
-        return false;
+        if(auto countriesList = get<std::vector<JsonValue>>(&*countriesNode)) {
+          auto countries = std::vector<CountryCode>();
+          for(auto& countryValue : *countriesList) {
+            if(auto country = get<double>(&countryValue)) {
+              countries.emplace_back(static_cast<std::uint16_t>(*country));
+            } else {
+              return false;
+            }
+          }
+          for(auto& country : countries) {
+            if(availableCountries.find(country) != availableCountries.end()) {
+              return false;
+            }
+          }
+          lastCountries = std::move(countries);
+          availableCountries.insert(lastCountries.begin(), lastCountries.end());
+          return true;
+        } else {
+          return false;
+        }
+      };
+      auto countryToMarketDataClients = std::unordered_map<
+        CountryCode, std::shared_ptr<VirtualMarketDataClient>>();
+      auto marketToMarketDataClients = std::unordered_map<
+        MarketCode, std::shared_ptr<VirtualMarketDataClient>>();
+      while(availableCountries.find(SENTINEL) == availableCountries.end()) {
+        try {
+          auto incomingMarketDataClient = MakeVirtualMarketDataClient(
+            std::make_unique<MarketDataClient<
+            IncomingMarketDataClientSessionBuilder>>(
+            BuildBasicMarketDataClientSessionBuilder<
+            IncomingMarketDataClientSessionBuilder>(Ref(*serviceLocatorClient),
+            servicePredicate, REGISTRY_SERVICE_NAME)));
+          if(lastCountries.empty()) {
+            return incomingMarketDataClient;
+          }
+          auto client = std::shared_ptr<VirtualMarketDataClient>(
+            std::move(incomingMarketDataClient));
+          for(auto& country : lastCountries) {
+            countryToMarketDataClients[country] = client;
+            for(auto& market : marketDatabase.FromCountry(country)) {
+              marketToMarketDataClients[market.m_code] = client;
+            }
+          }
+          lastCountries.clear();
+        } catch(const std::exception&) {
+          if(countryToMarketDataClients.empty()) {
+            throw;
+          }
+          break;
+        }
       }
+      return MakeVirtualMarketDataClient(
+        std::make_unique<DistributedMarketDataClient>(
+        std::move(countryToMarketDataClients),
+        std::move(marketToMarketDataClients)));
     };
-    auto countryToMarketDataClients = std::unordered_map<
-      CountryCode, std::shared_ptr<VirtualMarketDataClient>>();
-    auto marketToMarketDataClients = std::unordered_map<
-      MarketCode, std::shared_ptr<VirtualMarketDataClient>>();
-    while(availableCountries.find(SENTINEL) == availableCountries.end()) {
-      try {
-        auto incomingMarketDataClient = MakeVirtualMarketDataClient(
-          std::make_unique<MarketDataClient<
-          IncomingMarketDataClientSessionBuilder>>(
-          BuildBasicMarketDataClientSessionBuilder<
-          IncomingMarketDataClientSessionBuilder>(Ref(*serviceLocatorClient),
-          servicePredicate, REGISTRY_SERVICE_NAME)));
-        if(lastCountries.empty()) {
-          return incomingMarketDataClient;
-        }
-        auto client = std::shared_ptr<VirtualMarketDataClient>(
-          std::move(incomingMarketDataClient));
-        for(auto& country : lastCountries) {
-          countryToMarketDataClients[country] = client;
-          for(auto& market : marketDatabase.FromCountry(country)) {
-            marketToMarketDataClients[market.m_code] = client;
-          }
-        }
-        lastCountries.clear();
-      } catch(const std::exception&) {
-        if(countryToMarketDataClients.empty()) {
-          throw;
-        }
-        break;
-      }
-    }
-    return MakeVirtualMarketDataClient(
-      std::make_unique<DistributedMarketDataClient>(
-      std::move(countryToMarketDataClients),
-      std::move(marketToMarketDataClients)));
-  };
-  auto baseRegistryServlet = optional<BaseMarketDataRelayServlet>();
-  try {
-    auto entitlements = administrationClient->LoadEntitlements();
-    auto clientTimeout = Extract<time_duration>(config, "connection_timeout",
-      milliseconds{500});
-    auto minConnections = static_cast<std::size_t>(Extract<int>(config,
-      "min_connections", thread::hardware_concurrency()));
-    auto maxConnections = static_cast<std::size_t>(Extract<int>(config,
-      "max_connections", 10 * minConnections));
-    baseRegistryServlet.emplace(entitlements, clientTimeout,
-      marketDataClientBuilder, minConnections, maxConnections,
-      &*administrationClient);
-  } catch(const std::exception& e) {
-    std::cerr << "Error initializing registry servlet: " << e.what() <<
-      std::endl;
+    auto baseRegistryServlet = TryOrNest([&] {
+      auto entitlements = administrationClient->LoadEntitlements();
+      auto clientTimeout = Extract<time_duration>(config, "connection_timeout",
+        milliseconds{500});
+      auto minConnections = static_cast<std::size_t>(Extract<int>(config,
+        "min_connections", thread::hardware_concurrency()));
+      auto maxConnections = static_cast<std::size_t>(Extract<int>(config,
+        "max_connections", 10 * minConnections));
+      return BaseMarketDataRelayServlet(entitlements, clientTimeout,
+        marketDataClientBuilder, minConnections, maxConnections,
+        &*administrationClient);
+    }, std::runtime_error("Error opening base relay server."));
+    auto server = TryOrNest([&] {
+      return MarketDataRelayServletContainer(Initialize(
+        serviceLocatorClient.Get(), &baseRegistryServlet),
+        Initialize(serviceConfig.m_interface),
+        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
+    }, std::runtime_error("Error opening relay server."));
+    Register(*serviceLocatorClient, serviceConfig);
+    WaitForKillEvent();
+  } catch(...) {
+    ReportCurrentException();
     return -1;
   }
-  auto serverConnectionInitializer =
-    MarketDataRelayServerConnectionInitializer();
-  try {
-    serverConnectionInitializer.Initialize(GetNode(config, "server"));
-  } catch(const std::exception& e) {
-    std::cerr << "Error parsing section 'server': " << e.what() << std::endl;
-    return -1;
-  }
-  auto server = optional<MarketDataRelayServletContainer>();
-  try {
-    server.emplace(Initialize(serviceLocatorClient.Get(),
-      baseRegistryServlet.get_ptr()),
-      Initialize(serverConnectionInitializer.m_interface),
-      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-  } catch(const std::exception& e) {
-    std::cerr << "Error opening server: " << e.what() << std::endl;
-    return -1;
-  }
-  try {
-    auto service = JsonObject();
-    service["addresses"] = lexical_cast<std::string>(Stream(
-      serverConnectionInitializer.m_addresses));
-    serviceLocatorClient->Register(serverConnectionInitializer.m_serviceName,
-      service);
-  } catch(const std::exception& e) {
-    std::cerr << "Error registering service: " << e.what() << std::endl;
-    return -1;
-  }
-  WaitForKillEvent();
   return 0;
 }
