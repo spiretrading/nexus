@@ -31,7 +31,7 @@ namespace {
   };
 
   Configuration Configuration::Parse(const YAML::Node& node) {
-    TryOrNest([&] {
+    return TryOrNest([&] {
       auto config = Configuration();
       config.m_interface = Extract<IpAddress>(node, "interface");
       auto addresses = std::vector<IpAddress>();
