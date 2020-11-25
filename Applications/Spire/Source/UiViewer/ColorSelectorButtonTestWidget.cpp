@@ -59,7 +59,6 @@ void ColorSelectorButtonTestWidget::on_create_color_button_color(
 
 void ColorSelectorButtonTestWidget::on_set_color_button_color(
     const QString& color_hex) {
-
   auto color = QColor(QString("#%1").arg(color_hex));
   if(color.isValid()) {
     m_color_selector_button->set_color(color);
