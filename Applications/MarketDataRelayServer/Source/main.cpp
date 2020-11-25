@@ -15,7 +15,6 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
-#include <tclap/CmdLine.h>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
@@ -69,15 +68,11 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-    auto definitionsClient = TryOrNest([&] {
-      return ApplicationDefinitionsClient(Ref(*serviceLocatorClient));
-    }, std::runtime_error("Unable to connect to the definitions service."));
-    auto administrationClient = TryOrNest([&] {
-      return ApplicationAdministrationClient(Ref(*serviceLocatorClient));
-    }, std::runtime_error("Unable to connect to the administration service."));
-    auto marketDatabase = TryOrNest([&] {
-      return definitionsClient->LoadMarketDatabase();
-    }, std::runtime_error("Unable to load market database."));
+    auto definitionsClient = ApplicationDefinitionsClient(
+      Ref(*serviceLocatorClient));
+    auto administrationClient = ApplicationAdministrationClient(
+      Ref(*serviceLocatorClient));
+    auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto marketDataClientBuilder = [&] {
       const auto SENTINEL = CountryCode::NONE;
       auto availableCountries = std::unordered_set<CountryCode>();
@@ -149,24 +144,20 @@ int main(int argc, const char** argv) {
         std::move(countryToMarketDataClients),
         std::move(marketToMarketDataClients)));
     };
-    auto baseRegistryServlet = TryOrNest([&] {
-      auto entitlements = administrationClient->LoadEntitlements();
-      auto clientTimeout = Extract<time_duration>(config, "connection_timeout",
-        milliseconds{500});
-      auto minConnections = static_cast<std::size_t>(Extract<int>(config,
-        "min_connections", thread::hardware_concurrency()));
-      auto maxConnections = static_cast<std::size_t>(Extract<int>(config,
-        "max_connections", 10 * minConnections));
-      return BaseMarketDataRelayServlet(entitlements, clientTimeout,
-        marketDataClientBuilder, minConnections, maxConnections,
-        &*administrationClient);
-    }, std::runtime_error("Error opening base relay server."));
-    auto server = TryOrNest([&] {
-      return MarketDataRelayServletContainer(Initialize(
-        serviceLocatorClient.Get(), &baseRegistryServlet),
-        Initialize(serviceConfig.m_interface),
-        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    }, std::runtime_error("Error opening relay server."));
+    auto entitlements = administrationClient->LoadEntitlements();
+    auto clientTimeout = Extract<time_duration>(config, "connection_timeout",
+      milliseconds(500));
+    auto minConnections = static_cast<std::size_t>(Extract<int>(config,
+      "min_connections", thread::hardware_concurrency()));
+    auto maxConnections = static_cast<std::size_t>(Extract<int>(config,
+      "max_connections", 10 * minConnections));
+    auto baseRegistryServlet = BaseMarketDataRelayServlet(entitlements,
+      clientTimeout, marketDataClientBuilder, minConnections, maxConnections,
+      &*administrationClient);
+    auto server = MarketDataRelayServletContainer(Initialize(
+      serviceLocatorClient.Get(), &baseRegistryServlet),
+      Initialize(serviceConfig.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();
   } catch(...) {

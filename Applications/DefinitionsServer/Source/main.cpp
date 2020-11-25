@@ -40,7 +40,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Compliance;
 using namespace Nexus::DefinitionsService;
-using namespace TCLAP;
 
 namespace {
   using DefinitionsServletContainer =
@@ -50,15 +49,17 @@ namespace {
     std::shared_ptr<LiveTimer>>;
 
   std::vector<ExchangeRate> ParseExchangeRates(const YAML::Node& config) {
-    auto exchangeRates = std::vector<ExchangeRate>();
-    for(auto& entry : config) {
-      auto symbol = Extract<std::string>(entry, "symbol");
-      auto pair = ParseCurrencyPair(symbol);
-      auto rate = Extract<rational<int>>(entry, "rate");
-      auto exchangeRate = ExchangeRate(pair, rate);
-      exchangeRates.push_back(exchangeRate);
-    }
-    return exchangeRates;
+    return TryOrNest([&] {
+      auto exchangeRates = std::vector<ExchangeRate>();
+      for(auto& entry : config) {
+        auto symbol = Extract<std::string>(entry, "symbol");
+        auto pair = ParseCurrencyPair(symbol);
+        auto rate = Extract<rational<int>>(entry, "rate");
+        auto exchangeRate = ExchangeRate(pair, rate);
+        exchangeRates.push_back(exchangeRate);
+      }
+      return exchangeRates;
+    }, std::runtime_error("Failed to parse exchange rates."));
   }
 }
 
@@ -99,38 +100,28 @@ int main(int argc, const char** argv) {
       stream << file.rdbuf();
       return stream.str();
     }();
-    auto countryDatabase = TryOrNest([&] {
-      return ParseCountryDatabase(GetNode(
-        Require(LoadFile, Extract<std::string>(
-          config, "countries", "countries.yml")), "countries"));
-    }, std::runtime_error("Error parsing country database."));
-    auto currencyDatabase = TryOrNest([&] {
-      return ParseCurrencyDatabase(GetNode(
-        Require(LoadFile, Extract<std::string>(
-          config, "currencies", "currencies.yml")), "currencies"));
-    }, std::runtime_error("Error parsing currency database."));
-    auto marketDatabase = TryOrNest([&] {
-      return ParseMarketDatabase(GetNode(Require(LoadFile, Extract<std::string>(
-        config, "markets", "markets.yml")), "markets"), countryDatabase,
-        currencyDatabase);
-    }, std::runtime_error("Error parsing market database."));
-    auto destinationDatabase = TryOrNest([&] {
-      return ParseDestinationDatabase(Require(LoadFile, Extract<std::string>(
-        config, "destinations", "destinations.yml")), marketDatabase);
-    }, std::runtime_error("Error parsing desintation database."));
-    auto exchangeRates = TryOrNest([&] {
-      return ParseExchangeRates(GetNode(config, "exchange_rates"));
-    }, std::runtime_error("Error parsing section 'exchange_rates'."));
-    auto definitionsServer = TryOrNest([&] {
-      return DefinitionsServletContainer(Initialize(serviceLocatorClient.Get(),
-        Initialize(minimumSpireClientVersion, organizationName,
-          timeZoneDatabase, std::move(countryDatabase),
-          std::move(currencyDatabase), std::move(marketDatabase),
-          std::move(destinationDatabase), std::move(exchangeRates),
-          std::move(complianceRuleSchemas))),
-        Initialize(serviceConfig.m_interface),
-        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    }, std::runtime_error("Error opening server."));
+    auto countryDatabase = ParseCountryDatabase(
+      GetNode(Require(LoadFile, Extract<std::string>(config, "countries",
+      "countries.yml")), "countries"));
+    auto currencyDatabase = ParseCurrencyDatabase(GetNode(
+      Require(LoadFile, Extract<std::string>(config, "currencies",
+      "currencies.yml")), "currencies"));
+    auto marketDatabase = ParseMarketDatabase(GetNode(
+      Require(LoadFile, Extract<std::string>(config, "markets", "markets.yml")),
+      "markets"), countryDatabase, currencyDatabase);
+    auto destinationDatabase = ParseDestinationDatabase(
+      Require(LoadFile, Extract<std::string>(config, "destinations",
+      "destinations.yml")), marketDatabase);
+    auto exchangeRates = ParseExchangeRates(GetNode(config, "exchange_rates"));
+    auto definitionsServer = DefinitionsServletContainer(
+      Initialize(serviceLocatorClient.Get(),
+      Initialize(std::move(minimumSpireClientVersion),
+      std::move(organizationName), std::move(timeZoneDatabase),
+      std::move(countryDatabase), std::move(currencyDatabase),
+      std::move(marketDatabase), std::move(destinationDatabase),
+      std::move(exchangeRates), std::move(complianceRuleSchemas))),
+      Initialize(serviceConfig.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     TryOrNest([&] {
       auto ntpPool = Extract<std::vector<IpAddress>>(config, "ntp_pool");
       auto ntpService = JsonObject();

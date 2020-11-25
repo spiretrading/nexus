@@ -58,25 +58,21 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-    auto administrationClient = TryOrNest([&] {
-      return ApplicationAdministrationClient(Ref(*serviceLocatorClient));
-    }, std::runtime_error("Unable to connect to the administration service."));
-    auto timeClient = TryOrNest([&] {
-      return MakeLiveNtpTimeClientFromServiceLocator(*serviceLocatorClient);
-    }, std::runtime_error("Unable to access NTP server."));
+    auto administrationClient = ApplicationAdministrationClient(
+      Ref(*serviceLocatorClient));
+    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
+      *serviceLocatorClient);
     auto mySqlConfig = TryOrNest([&] {
       return MySqlConfig::Parse(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto server = TryOrNest([&] {
-      return ComplianceServletContainer(Initialize(serviceLocatorClient.Get(),
-        Initialize(serviceLocatorClient.Get(), administrationClient.Get(),
-          Initialize(Initialize(MakeSqlConnection(MySql::Connection(
-            mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-            mySqlConfig.m_username, mySqlConfig.m_password,
-            mySqlConfig.m_schema)))), timeClient.get())),
-        Initialize(serviceConfig.m_interface),
-        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    }, std::runtime_error("Error opening server."));
+    auto server = ComplianceServletContainer(
+      Initialize(serviceLocatorClient.Get(),
+      Initialize(serviceLocatorClient.Get(), administrationClient.Get(),
+      Initialize(Initialize(MakeSqlConnection(MySql::Connection(
+      mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
+      mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema)))),
+      timeClient.get())), Initialize(serviceConfig.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();
   } catch(...) {

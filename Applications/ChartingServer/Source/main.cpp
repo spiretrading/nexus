@@ -52,15 +52,13 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-    auto marketDataClient = TryOrNest([&] {
-      return ApplicationMarketDataClient(Ref(*serviceLocatorClient));
-    }, std::runtime_error("Unable to connect to the market data service."));
-    auto chartingServer = TryOrNest([&] {
-      return ChartingServletContainer(Initialize(serviceLocatorClient.Get(),
-        Initialize(marketDataClient.Get())),
-        Initialize(serviceConfig.m_interface),
-        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    }, std::runtime_error("Error opening server"));
+    auto marketDataClient = ApplicationMarketDataClient(
+      Ref(*serviceLocatorClient));
+    auto chartingServer = ChartingServletContainer(
+      Initialize(serviceLocatorClient.Get(),
+      Initialize(marketDataClient.Get())),
+      Initialize(serviceConfig.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();
   } catch(...) {
