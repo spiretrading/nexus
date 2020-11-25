@@ -132,9 +132,9 @@ void SecurityInputDialog::showEvent(QShowEvent* event) {
 }
 
 void SecurityInputDialog::reject_dialog() {
+  m_security_line_edit->findChild<DropDownList*>()->hide();
   disconnect(m_security_line_edit,
     &SecurityInputLineEdit::editingFinished, nullptr, nullptr);
-  m_security_line_edit->close();
   reject();
 }
 
