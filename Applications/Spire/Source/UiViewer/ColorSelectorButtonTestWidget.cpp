@@ -10,19 +10,6 @@ namespace {
     static auto size = scale(100, 26);
     return size;
   }
-
-  auto create_control_button(const QString& label, QWidget* parent) {
-    auto button = new FlatButton(label, parent);
-    button->setFixedSize(INPUT_SIZE());
-    auto style = button->get_style();
-    style.m_background_color = QColor("#F8F8F8");
-    style.m_border_color = QColor("#C8C8C8");
-    button->set_style(style);
-    style.m_border_color = QColor("#4B23A0");
-    button->set_hover_style(style);
-    button->set_focus_style(style);
-    return button;
-  }
 }
 
 ColorSelectorButtonTestWidget::ColorSelectorButtonTestWidget(QWidget* parent)
@@ -39,29 +26,23 @@ ColorSelectorButtonTestWidget::ColorSelectorButtonTestWidget(QWidget* parent)
   auto set_color_input = new TextInputWidget(this);
   set_color_input->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(set_color_input, 1, 0);
-  auto set_color_button = create_control_button(tr("Set Color"), this);
+  auto set_color_button = make_flat_button(tr("Set Color"), this);
   set_color_button->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(set_color_button, 1, 1);
   auto create_color_input = new TextInputWidget(this);
   create_color_input->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(create_color_input, 2, 0);
-  auto create_color_button = create_control_button(tr("Replace Button"), this);
+  auto create_color_button = make_flat_button(tr("Replace Button"), this);
   create_color_button->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(create_color_button, 2, 1);
   m_color_selector_button->connect_color_signal([=] (const auto& color) {
     color_selector_button_value->setText(color.name().toUpper());
   });
-  connect(set_color_input, &TextInputWidget::editingFinished, [=] {
-    on_set_color_button_color(set_color_input->text());
-  });
   set_color_button->connect_clicked_signal([=] {
     on_set_color_button_color(set_color_input->text());
   });
-  connect(create_color_input, &TextInputWidget::editingFinished, [=] {
-    on_create_color_button_color(create_color_input->text());
-  });
   create_color_button->connect_clicked_signal([=] {
-    on_create_color_button_color(set_color_input->text());
+    on_create_color_button_color(create_color_input->text());
   });
 }
 
@@ -78,6 +59,7 @@ void ColorSelectorButtonTestWidget::on_create_color_button_color(
 
 void ColorSelectorButtonTestWidget::on_set_color_button_color(
     const QString& color_hex) {
+
   auto color = QColor(QString("#%1").arg(color_hex));
   if(color.isValid()) {
     m_color_selector_button->set_color(color);
