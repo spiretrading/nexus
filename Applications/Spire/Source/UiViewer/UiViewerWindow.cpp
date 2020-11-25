@@ -56,7 +56,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
       background-color: white;
       border: 1px solid #A0A0A0;
       outline: none;
-      padding: %1px %2px 0px %2px;
+      padding: %1px 0px %1px %2px;
     }
 
     QListWidget:focus {
@@ -64,6 +64,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     }
 
     QListWidget::item {
+      margin-right: %2px;
       padding-top: %5px;
       padding-bottom: %5px;
     }
@@ -71,9 +72,32 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
     QListWidget::item:selected {
       border: %3px solid #4B23A0 %4px solid #4B23A0;
       color: #000000;
+      padding-left: -%4px;
+    }
+
+    QScrollBar::vertical {
+      border: none;
+      width: %6px;
+    }
+
+    QScrollBar::handle {
+      background-color: #C8C8C8;
+    }
+
+    QScrollBar::handle:vertical {
+      min-height: %7px;
+    }
+
+    QScrollBar::add-line, QScrollBar::sub-line,
+    QScrollBar::add-page, QScrollBar::sub-page {
+      background: none;
+      border: none;
+      height: 0px;
+      width: 0px;
     })").arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(3)));
+        .arg(scale_height(3)).arg(scale_width(13))
+        .arg(scale_height(60)));
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
   m_layout->addWidget(m_widget_list);
