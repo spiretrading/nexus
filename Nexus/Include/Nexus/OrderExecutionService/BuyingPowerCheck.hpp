@@ -160,7 +160,16 @@ namespace OrderExecutionService {
       const Order& order) {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(
       order.GetInfo().m_fields.m_account);
-    auto price = GetExpectedPrice(order.GetInfo().m_fields);
+    auto price = [&] {
+      try {
+        return GetExpectedPrice(order.GetInfo().m_fields);
+      } catch(const std::exception&) {
+        if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
+          return order.GetInfo().m_fields.m_price;
+        }
+        return Money::ZERO;
+      }
+    }();
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerModel,
       [&] (auto& buyingPowerModel) {
         if(buyingPowerModel.HasOrder(order.GetInfo().m_orderId)) {

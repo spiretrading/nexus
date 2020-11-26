@@ -69,6 +69,7 @@ int main(int argc, const char** argv) {
       std::move(serviceClientsBuilder), Ref(*serviceClients)),
       Initialize(serviceConfig.m_interface));
     WaitForKillEvent();
+    serviceClients->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

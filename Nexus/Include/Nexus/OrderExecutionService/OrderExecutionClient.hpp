@@ -233,6 +233,8 @@ namespace Nexus::OrderExecutionService {
       return;
     }
     m_clientHandler.Close();
+    m_orderSubmissionPublisher.Break();
+    m_executionReportPublisher.Break();
     m_openState.Close();
   }
 

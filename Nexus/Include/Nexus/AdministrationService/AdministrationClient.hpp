@@ -699,6 +699,8 @@ namespace Nexus::AdministrationService {
     m_tasks.Break();
     m_tasks.Wait();
     m_clientHandler.Close();
+    m_riskStatePublishers.Clear();
+    m_riskParameterPublishers.Clear();
     m_openState.Close();
   }
 

@@ -308,6 +308,11 @@ namespace Nexus::MarketDataService {
       return;
     }
     m_clientHandler.Close();
+    m_orderImbalancePublisher.Break();
+    m_bboQuotePublisher.Break();
+    m_bookQuotePublisher.Break();
+    m_marketQuotePublisher.Break();
+    m_timeAndSalePublisher.Break();
     m_openState.Close();
   }
 

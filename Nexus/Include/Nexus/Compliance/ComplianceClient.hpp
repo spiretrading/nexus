@@ -186,14 +186,7 @@ namespace Nexus::Compliance {
       return;
     }
     m_clientHandler.Close();
-    m_complianceEntryQueues.With([&] (auto& entries) {
-      for(auto& entry : entries | boost::adaptors::map_values) {
-        for(auto& queue : entry->m_queues) {
-          queue.Break();
-        }
-      }
-      entries.clear();
-    });
+    m_complianceEntryQueues.Clear();
     m_openState.Close();
   }
 
