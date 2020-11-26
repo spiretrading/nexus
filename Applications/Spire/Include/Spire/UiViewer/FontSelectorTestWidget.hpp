@@ -1,5 +1,6 @@
 #ifndef SPIRE_FONT_SELECTOR_TEST_WIDGET_HPP
 #define SPIRE_FONT_SELECTOR_TEST_WIDGET_HPP
+#include <functional>
 #include <QGridLayout>
 #include <QLabel>
 #include "Spire/Ui/CheckBox.hpp"
@@ -29,6 +30,7 @@ namespace Spire {
       CheckBox* m_italic_check_box;
       CheckBox* m_underline_check_box;
       IntegerSpinBox* m_size_spin_box;
+      std::function<void()> m_reset_tab_order;
 
       QFont get_font() const;
       void update_labels();

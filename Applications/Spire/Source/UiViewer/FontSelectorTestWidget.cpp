@@ -49,6 +49,15 @@ FontSelectorTestWidget::FontSelectorTestWidget(QWidget* parent)
   reset_button->setFixedSize(CONTROL_SIZE());
   reset_button->connect_clicked_signal([=] { on_widget_reset(); });
   m_layout->addWidget(reset_button, 10, 1);
+  m_reset_tab_order = [=] {
+    setTabOrder(m_font_selector->findChild<IntegerSpinBox*>(), m_family_list);
+    setTabOrder(m_family_list, m_size_spin_box);
+    setTabOrder(m_size_spin_box, m_bold_check_box);
+    setTabOrder(m_bold_check_box, m_italic_check_box);
+    setTabOrder(m_italic_check_box, m_underline_check_box);
+    setTabOrder(m_underline_check_box, set_button);
+    setTabOrder(set_button, reset_button);
+  };
   on_widget_reset();
 }
 
@@ -84,5 +93,5 @@ void FontSelectorTestWidget::on_widget_reset() {
   });
   m_layout->addWidget(m_font_selector, 3, 0, 1, 2);
   update_labels();
-  setTabOrder(m_font_selector, m_family_list);
+  m_reset_tab_order();
 }
