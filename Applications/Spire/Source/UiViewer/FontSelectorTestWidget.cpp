@@ -84,4 +84,5 @@ void FontSelectorTestWidget::on_widget_reset() {
   });
   m_layout->addWidget(m_font_selector, 3, 0, 1, 2);
   update_labels();
+  setTabOrder(m_font_selector, m_family_list);
 }

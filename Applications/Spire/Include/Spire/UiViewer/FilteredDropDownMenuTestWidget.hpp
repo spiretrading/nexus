@@ -1,5 +1,6 @@
 #ifndef SPIRE_FILTERED_DROP_DOWN_MENU_TEST_WIDGET_HPP
 #define SPIRE_FILTERED_DROP_DOWN_MENU_TEST_WIDGET_HPP
+#include <functional>
 #include <QGridLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -24,6 +25,7 @@ namespace Spire {
       QLabel* m_status_label;
       QPlainTextEdit* m_item_input;
 
+      std::function<void()> m_reset_sort_order;
       void on_set_button();
       void on_reset_button();
   };

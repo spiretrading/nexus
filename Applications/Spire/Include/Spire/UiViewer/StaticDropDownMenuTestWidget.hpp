@@ -1,5 +1,6 @@
 #ifndef SPIRE_STATIC_DROP_DOWN_MENU_TEST_WIDGET_HPP
 #define SPIRE_STATIC_DROP_DOWN_MENU_TEST_WIDGET_HPP
+#include <functional>
 #include <QGridLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -29,6 +30,7 @@ namespace Spire {
       TextInputWidget* m_insert_item_input;
       TextInputWidget* m_index_input;
       CheckBox* m_next_item_check_box;
+      std::function<void()> m_reset_tab_order;
 
       void on_insert_button();
       void on_set_button();

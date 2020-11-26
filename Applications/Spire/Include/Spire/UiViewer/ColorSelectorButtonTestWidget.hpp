@@ -1,5 +1,6 @@
 #ifndef SPIRE_COLOR_SELECTOR_BUTTON_TEST_WIDGET_HPP
 #define SPIRE_COLOR_SELECTOR_BUTTON_TEST_WIDGET_HPP
+#include <functional>
 #include <QGridLayout>
 #include <QWidget>
 #include "Spire/Ui/ColorSelectorButton.hpp"
@@ -19,6 +20,7 @@ namespace Spire {
     private:
       ColorSelectorButton* m_color_selector_button;
       QGridLayout* m_layout;
+      std::function<void()> m_set_tab_order;
 
       void on_create_color_button_color(const QString& color);
       void on_set_color_button_color(const QString& color_hex);

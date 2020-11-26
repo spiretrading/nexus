@@ -1,5 +1,6 @@
 #ifndef SPIRE_KEY_SEQUENCE_TEST_WIDGET_HPP
 #define SPIRE_KEY_SEQUENCE_TEST_WIDGET_HPP
+#include <functional>
 #include <QGridLayout>
 #include <QLabel>
 #include <QWidget>
@@ -24,6 +25,7 @@ namespace Spire {
       KeySequenceInputField* m_input;
       TextInputWidget* m_reset_input;
       TextInputWidget* m_set_input;
+      std::function<void()> m_reset_tab_order;
 
       QKeySequence parse_key_sequence(const QString& text);
       void on_reset_button();

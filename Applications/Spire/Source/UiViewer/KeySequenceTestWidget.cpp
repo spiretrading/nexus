@@ -82,6 +82,13 @@ KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
   reset_button->setFixedSize(INPUT_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
   m_layout->addWidget(reset_button, 3, 1);
+  m_reset_tab_order = [=] {
+    setTabOrder(m_input, disable_check_box);
+    setTabOrder(disable_check_box, m_set_input);
+    setTabOrder(m_set_input, set_button);
+    setTabOrder(set_button, m_reset_input);
+    setTabOrder(m_reset_input, reset_button);
+  };
   on_reset_button();
 }
 
@@ -116,6 +123,7 @@ void KeySequenceTestWidget::on_reset_button() {
         m_input->get_key_sequence()));
     });
     m_input->set_key_sequence(sequence);
+    m_reset_tab_order();
   }
 }
 

@@ -78,6 +78,17 @@ StaticDropDownMenuTestWidget::StaticDropDownMenuTestWidget(QWidget* parent)
     m_menu->set_next_activated(m_next_item_check_box->isChecked());
   });
   m_layout->addWidget(m_next_item_check_box, 11, 0);
+  m_reset_tab_order = [=] {
+    setTabOrder(m_menu, m_item_input);
+    setTabOrder(m_item_input, m_label_input);
+    setTabOrder(m_label_input, set_button);
+    setTabOrder(set_button, reset_button);
+    setTabOrder(reset_button, m_insert_item_input);
+    setTabOrder(m_insert_item_input, insert_item_button);
+    setTabOrder(insert_item_button, m_index_input);
+    setTabOrder(m_index_input, remove_item_button);
+    setTabOrder(remove_item_button, m_next_item_check_box);
+  };
   on_reset_button();
 }
 
@@ -109,4 +120,5 @@ void StaticDropDownMenuTestWidget::on_reset_button() {
     m_status_label->setText(item.toString());
   });
   m_layout->addWidget(m_menu, 0, 0);
+  m_reset_tab_order();
 }

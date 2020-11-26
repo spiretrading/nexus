@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QWidget>
 #include "Spire/Ui/DateInputWidget.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
 namespace Spire {
@@ -25,6 +26,7 @@ namespace Spire {
       TextInputWidget* m_year_input;
       TextInputWidget* m_month_input;
       TextInputWidget* m_day_input;
+      FlatButton* m_reset_button;
 
       void on_reset_button();
   };

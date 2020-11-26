@@ -3,6 +3,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
 namespace Spire {
@@ -22,6 +23,7 @@ namespace Spire {
       CheckBox* m_check_box;
       QLabel* m_status_label;
       TextInputWidget* m_label_input;
+      FlatButton* m_reset_button;
 
       void on_reset_button();
   };

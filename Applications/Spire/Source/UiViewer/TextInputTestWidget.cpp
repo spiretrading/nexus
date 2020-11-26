@@ -36,6 +36,12 @@ TextInputTestWidget::TextInputTestWidget(QWidget* parent)
   reset_button->setFixedSize(WIDGET_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
   m_layout->addWidget(reset_button, 2, 1);
+  m_reset_tab_order = [=] {
+    setTabOrder(m_text_input, m_set_text_input);
+    setTabOrder(m_set_text_input, m_disable_check_box);
+    setTabOrder(m_disable_check_box, set_text_button);
+    setTabOrder(set_text_button, reset_button);
+  };
   on_reset_button();
 }
 
@@ -48,6 +54,7 @@ void TextInputTestWidget::on_reset_button() {
   });
   m_disable_check_box->setChecked(false);
   m_layout->addWidget(m_text_input, 0, 0);
+  m_reset_tab_order();
 }
 
 void TextInputTestWidget::on_set_text_button() {

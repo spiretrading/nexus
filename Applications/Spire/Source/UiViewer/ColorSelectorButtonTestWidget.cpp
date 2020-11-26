@@ -44,6 +44,13 @@ ColorSelectorButtonTestWidget::ColorSelectorButtonTestWidget(QWidget* parent)
   create_color_button->connect_clicked_signal([=] {
     on_create_color_button_color(create_color_input->text());
   });
+  m_set_tab_order = [=] () {
+    setTabOrder(m_color_selector_button, set_color_input);
+    setTabOrder(set_color_input, set_color_button);
+    setTabOrder(set_color_button, create_color_input);
+    setTabOrder(create_color_input, create_color_button);
+  };
+  m_set_tab_order();
 }
 
 void ColorSelectorButtonTestWidget::on_create_color_button_color(
@@ -54,6 +61,7 @@ void ColorSelectorButtonTestWidget::on_create_color_button_color(
     m_color_selector_button = new ColorSelectorButton(color, this);
     m_color_selector_button->setFixedSize(INPUT_SIZE());
     m_layout->addWidget(m_color_selector_button, 0, 0);
+    m_set_tab_order();
   }
 }
 
