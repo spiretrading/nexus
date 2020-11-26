@@ -104,7 +104,7 @@ void SpinBoxTestWidget::reset_spin_box() {
     });
     m_spin_box->setFocus();
     m_value_label->setText(tr("Reset Successful"));
-    setTabOrder(m_spin_box, m_initial_input);
+    setTabOrder(m_spin_box->focusProxy(), m_initial_input);
     setTabOrder(m_initial_input, m_min_input);
     setTabOrder(m_min_input, m_max_input);
     setTabOrder(m_max_input, m_modifier_menu);
