@@ -350,7 +350,7 @@ void RealSpinBox::set_stylesheet(bool is_up_disabled, bool is_down_disabled) {
       padding-left: %4px;
     }
 
-    QAbstractSpinBox:focus {
+    QAbstractSpinBox:focus, QAbstractSpinBox:hover {
       border: %1px solid #4B23A0;
     }
 
