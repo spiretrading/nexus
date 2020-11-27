@@ -9,7 +9,8 @@ namespace Spire {
   class KeyBindingItemDelegate : public QStyledItemDelegate {
     public:
 
-      //! Represents the state of the delegate's editor.
+      //! Represents the state of the delegate's editor when the editor was
+      //! closed.
       enum class EditorState {
 
         //! The editor's input value has been accepted.

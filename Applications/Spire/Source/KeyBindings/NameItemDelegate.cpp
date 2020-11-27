@@ -45,6 +45,11 @@ void NameItemDelegate::setEditorData(QWidget *editor,
 
 void NameItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto text = static_cast<QLineEdit*>(editor)->text().trimmed();
+  auto text = [&] {
+    if(get_editor_state() == EditorState::ACCEPTED) {
+      return QVariant(static_cast<TextInputWidget*>(editor)->text().trimmed());
+    }
+    return QVariant();
+  }();
   model->setData(index, text, Qt::DisplayRole);
 }

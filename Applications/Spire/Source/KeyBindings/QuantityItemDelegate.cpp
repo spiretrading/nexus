@@ -16,17 +16,22 @@ QWidget* QuantityItemDelegate::createEditor(QWidget* parent,
   auto editor = new QuantityInputEditor(
     static_cast<int>(index.data().value<Quantity>()),
     static_cast<QWidget*>(this->parent()));
-  connect(editor, &QLineEdit::editingFinished,
+  connect(editor, &TextInputWidget::editingFinished,
     this, &QuantityItemDelegate::on_editing_finished);
   return editor;
 }
 
 void QuantityItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto ok = false;
-  auto value = static_cast<QLineEdit*>(editor)->text().toInt(&ok);
-  if(ok) {
-    model->setData(index, QVariant::fromValue<Quantity>(value),
-      Qt::DisplayRole);
-  }
+  auto quantity = [&] {
+    if(get_editor_state() == EditorState::ACCEPTED) {
+      auto ok = false;
+      auto value = static_cast<TextInputWidget*>(editor)->text().toInt(&ok);
+      if(ok) {
+        return QVariant::fromValue<Quantity>(value);
+      }
+    }
+    return QVariant();
+  }();
+  model->setData(index, quantity, Qt::DisplayRole);
 }

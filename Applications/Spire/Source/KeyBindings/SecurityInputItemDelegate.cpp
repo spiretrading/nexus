@@ -24,7 +24,12 @@ QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
 
 void SecurityInputItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto line_edit = static_cast<SecurityInputLineEdit*>(editor);
-  model->setData(index,
-    QVariant::fromValue<Security>(line_edit->get_security()), Qt::DisplayRole);
+  auto security = [&] {
+    if(get_editor_state() == EditorState::ACCEPTED) {
+      return QVariant::fromValue(
+        static_cast<SecurityInputLineEdit*>(editor)->get_security());
+    }
+    return QVariant();
+  }();
+  model->setData(index, security, Qt::DisplayRole);
 }
