@@ -3,18 +3,13 @@
 #include <QWidget>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 namespace Spire {
 
   //! Represents a combo box for selecting Markets.
-  class MarketComboBox : public QWidget {
+  class MarketComboBox : public QLineEdit {
     public:
-
-      //! Signals that a Market was selected.
-      /*!
-        \param market The MarketCode of the selected Market.
-      */
-      using SelectedSignal = Signal<void (Nexus::MarketCode market)>;
 
       //! Constructs a MarketComboBox.
       /*!
@@ -24,12 +19,14 @@ namespace Spire {
       explicit MarketComboBox(const Nexus::MarketDatabase& database,
         QWidget* parent = nullptr);
 
-      //! Connects a slot to the Market selection signal.
-      boost::signals2::connection connect_selected_signal(
-        const SelectedSignal::slot_type& slot) const;
+      //! Returns the MarketCode of the current Market.
+      Nexus::MarketCode get_market() const;
+
+      //! Sets the MarketCode of the current Market.
+      void set_market(Nexus::MarketCode market);
 
     private:
-      mutable SelectedSignal m_selected_signal;
+      StaticDropDownMenu* m_menu;
       boost::signals2::scoped_connection m_value_connection;
   };
 }

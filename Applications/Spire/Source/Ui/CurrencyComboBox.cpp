@@ -1,7 +1,6 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include <algorithm>
 #include <QHBoxLayout>
-#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -9,7 +8,8 @@ using namespace Spire;
 
 CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
     QWidget* parent)
-    : QWidget(parent) {
+    : QLineEdit(parent) {
+  setReadOnly(true);
   auto entries = database.GetEntries();
   auto items = [&] {
     auto currencies = std::vector<QVariant>();
@@ -20,15 +20,19 @@ CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
       });
     return currencies;
   }();
-  auto menu = new StaticDropDownMenu(items, this);
+  m_menu = new StaticDropDownMenu(items, this);
+  //m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(menu);
-  m_value_connection = menu->connect_value_selected_signal(
-    [=] (const auto& value) { m_selected_signal(value.value<CurrencyId>()); });
+  layout->addWidget(m_menu);
+  m_value_connection = m_menu->connect_value_selected_signal(
+    [=] (const auto& value) { Q_EMIT editingFinished(); });
 }
 
-connection CurrencyComboBox::connect_selected_signal(
-    const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
+CurrencyId CurrencyComboBox::get_currency() const {
+  return m_menu->get_current_item().value<CurrencyId>();
+}
+
+void CurrencyComboBox::set_currency(CurrencyId currency) {
+  m_menu->set_current_item(QVariant::fromValue(currency));
 }

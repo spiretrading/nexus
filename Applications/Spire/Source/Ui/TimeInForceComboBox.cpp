@@ -1,7 +1,6 @@
 #include "Spire/Ui/TimeInForceComboBox.hpp"
 #include <Beam/Collections/EnumIterator.hpp>
 #include <QHBoxLayout>
-#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -9,7 +8,8 @@ using namespace Nexus;
 using namespace Spire;
 
 TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
-    : QWidget(parent) {
+    : QLineEdit(parent) {
+  setReadOnly(true);
   auto items = [] {
     auto times = std::vector<QVariant>();
     times.reserve(TimeInForce::Type::COUNT);
@@ -18,17 +18,18 @@ TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
     }
     return times;
   }();
-  auto menu = new StaticDropDownMenu(items, this);
+  m_menu = new StaticDropDownMenu(items, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(menu);
-  m_value_connection = menu->connect_value_selected_signal(
-    [=] (const auto& value) {
-      m_selected_signal(value.value<TimeInForce>());
-    });
+  layout->addWidget(m_menu);
+  m_value_connection = m_menu->connect_value_selected_signal(
+    [=] (const auto& value) { Q_EMIT editingFinished(); });
 }
 
-connection TimeInForceComboBox::connect_selected_signal(
-    const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
+TimeInForce TimeInForceComboBox::get_time_in_force() const {
+  return m_menu->get_current_item().value<TimeInForce>();
+}
+
+void TimeInForceComboBox::set_time_in_force(TimeInForce time) {
+  m_menu->set_current_item(QVariant::fromValue(time));
 }

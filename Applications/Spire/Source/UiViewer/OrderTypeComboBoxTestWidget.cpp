@@ -12,9 +12,10 @@ OrderTypeComboBoxTestWidget::OrderTypeComboBoxTestWidget(QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   auto combo_box = new OrderTypeComboBox(this);
+  combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(combo_box);
-  combo_box->connect_selected_signal([=] (auto value) {
-    m_selected_signal(QVariant::fromValue(value));
+  connect(combo_box, &OrderTypeComboBox::editingFinished, [=] {
+    m_selected_signal(QVariant::fromValue(combo_box->get_order_type()));
   });
 }
 
