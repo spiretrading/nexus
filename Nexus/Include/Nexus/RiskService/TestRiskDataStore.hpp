@@ -1,6 +1,5 @@
 #ifndef NEXUS_TEST_RISK_DATA_STORE_HPP
 #define NEXUS_TEST_RISK_DATA_STORE_HPP
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Routines/Async.hpp>
