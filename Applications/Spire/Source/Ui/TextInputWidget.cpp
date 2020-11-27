@@ -17,6 +17,7 @@ TextInputWidget::TextInputWidget(QWidget* parent)
 TextInputWidget::TextInputWidget(QString text, QWidget* parent)
     : QLineEdit(std::move(text), parent),
       m_left_padding(0) {
+  setAttribute(Qt::WA_Hover);
   setContextMenuPolicy(Qt::NoContextMenu);
   set_style(Style::DEFAULT);
 }
@@ -49,7 +50,11 @@ void TextInputWidget::paintEvent(QPaintEvent* event) {
   }
   auto painter = QPainter(this);
   painter.fillRect(rect(), Qt::white);
-  painter.setPen(QColor("#C8C8C8"));
+  if(underMouse() && isEnabled()) {
+    painter.setPen(QColor("#4B23A0"));
+  } else {
+    painter.setPen(QColor("#C8C8C8"));
+  }
   painter.drawRect(0, 0, width() - 1, height() - 1);
   auto font = QFont("Roboto");
   font.setPixelSize(scale_height(12));
