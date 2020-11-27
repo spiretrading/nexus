@@ -50,7 +50,7 @@ void TextInputWidget::paintEvent(QPaintEvent* event) {
   }
   auto painter = QPainter(this);
   painter.fillRect(rect(), Qt::white);
-  if(underMouse()) {
+  if(underMouse() && isEnabled()) {
     painter.setPen(QColor("#4B23A0"));
   } else {
     painter.setPen(QColor("#C8C8C8"));
