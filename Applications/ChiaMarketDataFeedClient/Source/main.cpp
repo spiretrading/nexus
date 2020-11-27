@@ -92,12 +92,12 @@ int main(int argc, const char** argv) {
       Ref(*serviceLocatorClient), samplingTime, DefaultCountries::AU());
     auto host = Extract<IpAddress>(config, "host");
     auto interface = Extract<IpAddress>(config, "interface");
+    auto options = MulticastSocketOptions();
+    options.m_receiveBufferSize = Extract<int>(config, "receive_buffer",
+      DEFAULT_RECEIVE_BUFFER_SIZE);
+    options.m_maxDatagramSize = Extract<int>(config, "mtu",
+      options.m_maxDatagramSize);
     auto multicastSocketChannel = TryOrNest([&] {
-      auto options = MulticastSocketOptions();
-      options.m_receiveBufferSize = Extract<int>(config, "receive_buffer",
-        DEFAULT_RECEIVE_BUFFER_SIZE);
-      options.m_maxDatagramSize = Extract<int>(config, "mtu",
-        options.m_maxDatagramSize);
       return MulticastSocketChannel(host, interface, options);
     }, std::runtime_error("Unable to join CHIA multicast group."));
     auto [retransmissionHost, retransmissionUsername, retransmissionPassword] =

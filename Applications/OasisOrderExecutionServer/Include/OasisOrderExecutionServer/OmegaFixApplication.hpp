@@ -14,16 +14,16 @@
 
 namespace Nexus::OasisOrderExecutionService {
 
-  /* Implements a FIX Application using the Omega ATS. */
+  /** Implements a FIX Application using the Omega ATS. */
   class OmegaFixApplication : public FixUtilities::FixApplication,
       public FIX::MessageCracker {
     public:
 
-      //! Constructs an OmegaFixApplication.
-      /*!
-        \param timeClient The TimeClient used for timestamps.
-        \param marketDataClient The MarketDataClient used to determine the BBO.
-      */
+      /**
+       * Constructs an OmegaFixApplication.
+       * @param timeClient The TimeClient used for timestamps.
+       * @param marketDataClient The MarketDataClient used to determine the BBO.
+       */
       OmegaFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient,
         Beam::Ref<MarketDataService::ApplicationMarketDataClient::Client>

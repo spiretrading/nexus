@@ -32,7 +32,7 @@ namespace Nexus::MarketDataService {
        * @param channel The channel receiving the packets to parse.
        */
       template<typename CF>
-      HkexProtocolClient(CF&& channel);
+      explicit HkexProtocolClient(CF&& channel);
 
       ~HkexProtocolClient();
 

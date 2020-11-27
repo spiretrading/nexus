@@ -2,6 +2,7 @@
 #define NEXUS_JPX_FLEX_MARKET_DATA_FEED_CLIENT_HPP
 #include <utility>
 #include <vector>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -68,6 +69,9 @@ namespace Nexus::MarketDataService {
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
       Beam::IO::OpenState m_openState;
 
+      JpxFlexMarketDataFeedClient(const JpxFlexMarketDataFeedClient&) = delete;
+      JpxFlexMarketDataFeedClient& operator =(
+        const JpxFlexMarketDataFeedClient&) = delete;
       boost::posix_time::ptime ParseTimestamp(Beam::Out<const char*> source);
       Security ParseSecurity(const JpxFlexPacket& packet);
       Money ParsePrice(Beam::Out<const char*> source);
@@ -84,11 +88,16 @@ namespace Nexus::MarketDataService {
   template<typename C, typename P>
   template<typename MF, typename PF>
   JpxFlexMarketDataFeedClient<C, P>::JpxFlexMarketDataFeedClient(
-    JpxFlexConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_protocolClient(std::forward<PF>(protocolClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {}
+      JpxFlexConfiguration config, MF&& marketDataFeedClient,
+      PF&& protocolClient)
+      try : m_config(std::move(config)),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_protocolClient(std::forward<PF>(protocolClient)),
+            m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the JPX Flex client."));
+  }
 
   template<typename C, typename P>
   JpxFlexMarketDataFeedClient<C, P>::~JpxFlexMarketDataFeedClient() {
@@ -185,16 +194,15 @@ namespace Nexus::MarketDataService {
     source += 3;
     auto volume = ParseQuantity(Beam::Store(source));
     auto timestamp = ParseTimestamp(Beam::Store(source));
-    auto& entry = Beam::GetOrInsert(m_securityEntries, security,
-      [] {
-        return SecurityEntry();
-      });
+    auto& entry = Beam::GetOrInsert(m_securityEntries, security, [] {
+      return SecurityEntry();
+    });
     if(entry.m_volume == 0) {
       entry.m_volume = volume;
     } else {
       entry.m_tradeQuantity = volume - entry.m_volume;
       entry.m_volume = volume;
-      if(entry.m_tradePrice.is_initialized()) {
+      if(entry.m_tradePrice) {
         PublishTimeAndSale(security, entry, timestamp);
       }
     }
@@ -208,16 +216,15 @@ namespace Nexus::MarketDataService {
     source += 3;
     auto turnover = ParseQuantity(Beam::Store(source)) * Money::ONE;
     auto timestamp = ParseTimestamp(Beam::Store(source));
-    auto& entry = Beam::GetOrInsert(m_securityEntries, security,
-      [] {
-        return SecurityEntry();
-      });
+    auto& entry = Beam::GetOrInsert(m_securityEntries, security, [] {
+      return SecurityEntry();
+    });
     if(entry.m_turnover == Money::ZERO) {
       entry.m_turnover = turnover;
     } else {
       entry.m_tradePrice = turnover - entry.m_turnover;
       entry.m_turnover = turnover;
-      if(entry.m_tradeQuantity.is_initialized()) {
+      if(entry.m_tradeQuantity) {
         PublishTimeAndSale(security, entry, timestamp);
       }
     }
@@ -237,20 +244,18 @@ namespace Nexus::MarketDataService {
     }
     source += 2;
     auto quantity = ParseQuantity(Beam::Store(source));
-    auto& entry = Beam::GetOrInsert(m_securityEntries, security,
-      [] {
-        return SecurityEntry();
-      });
+    auto& entry = Beam::GetOrInsert(m_securityEntries, security, [] {
+      return SecurityEntry();
+    });
     auto& levels = Pick(side, entry.m_asks, entry.m_bids);
     auto positionIterator = std::lower_bound(levels.begin(),
-      levels.end(), price,
-      [&] (const PriceLevel& lhs, Money rhs) {
-        if(side == Side::ASK) {
-          return lhs.m_price < rhs;
-        } else {
-          return lhs.m_price > rhs;
-        }
-      });
+        levels.end(), price, [&] (const PriceLevel& lhs, Money rhs) {
+      if(side == Side::ASK) {
+        return lhs.m_price < rhs;
+      } else {
+        return lhs.m_price > rhs;
+      }
+    });
     if(positionIterator == levels.end() ||
         positionIterator->m_price != price) {
       if(quantity == 0) {
@@ -314,8 +319,8 @@ namespace Nexus::MarketDataService {
 
   template<typename C, typename P>
   void JpxFlexMarketDataFeedClient<C, P>::ReadLoop() {
-    auto lastSequence = std::uint32_t{0};
-    auto sequence = std::uint32_t{0};
+    auto lastSequence = std::uint32_t(0);
+    auto sequence = std::uint32_t(0);
     while(true) {
       try {
         auto message = m_protocolClient->Read(Beam::Store(sequence));

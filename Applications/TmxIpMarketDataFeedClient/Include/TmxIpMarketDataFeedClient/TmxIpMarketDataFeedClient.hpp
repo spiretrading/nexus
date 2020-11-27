@@ -1,10 +1,10 @@
 #ifndef NEXUS_TMX_IP_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_TMX_IP_MARKET_DATA_FEED_CLIENT_HPP
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -21,7 +21,7 @@ namespace Nexus::MarketDataService {
    * @param <T> The type of TimeClient used for timestamps.
    */
   template<typename M, typename S, typename T>
-  class TmxIpMarketDataFeedClient : private boost::noncopyable {
+  class TmxIpMarketDataFeedClient {
     public:
 
       /**
@@ -63,6 +63,9 @@ namespace Nexus::MarketDataService {
         Money price);
       static std::int64_t RoundToBoardLotPortion(std::int64_t quantity,
         Money price);
+      TmxIpMarketDataFeedClient(const TmxIpMarketDataFeedClient&) = delete;
+      TmxIpMarketDataFeedClient& operator =(
+        const TmxIpMarketDataFeedClient&) = delete;
       boost::optional<boost::posix_time::ptime> GetTimestamp(
         const StampProtocol::StampMessage& message, int index);
       std::string GetOrderId(const boost::optional<std::string>& symbol,
@@ -90,14 +93,18 @@ namespace Nexus::MarketDataService {
   template<typename M, typename S, typename T>
   template<typename MF, typename SF, typename TF>
   TmxIpMarketDataFeedClient<M, S, T>::TmxIpMarketDataFeedClient(
-    TmxIpConfiguration config, MF&& marketDataFeedClient,
-    SF&& serviceAccessClient, TF&& timeClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
-      m_timeClient(std::forward<TF>(timeClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn(
-        std::bind(&TmxIpMarketDataFeedClient::ReadLoop, this))) {}
+      TmxIpConfiguration config, MF&& marketDataFeedClient,
+      SF&& serviceAccessClient, TF&& timeClient)
+      try : m_config(std::move(config)),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
+            m_timeClient(std::forward<TF>(timeClient)),
+            m_readLoopRoutine(Beam::Routines::Spawn(
+              std::bind(&TmxIpMarketDataFeedClient::ReadLoop, this))) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the TMX IP client."));
+  }
 
   template<typename M, typename S, typename T>
   TmxIpMarketDataFeedClient<M, S, T>::~TmxIpMarketDataFeedClient() {
@@ -144,7 +151,7 @@ namespace Nexus::MarketDataService {
   boost::optional<boost::posix_time::ptime> TmxIpMarketDataFeedClient<M, S, T>::
       GetTimestamp(const StampProtocol::StampMessage& message, int index) {
     auto timestamp = message.GetBusinessField<boost::posix_time::ptime>(index);
-    if(timestamp.is_initialized()) {
+    if(timestamp) {
       *timestamp += m_config.m_timeOffset;
     }
     return timestamp;
@@ -155,12 +162,12 @@ namespace Nexus::MarketDataService {
       const boost::optional<std::string>& symbol,
       const boost::optional<std::string>& brokerNumber,
       const std::string& orderNumber) {
-    std::string result;
-    if(symbol.is_initialized()) {
+    auto result = std::string();
+    if(symbol) {
       result = *symbol;
       result += '-';
     }
-    if(m_config.m_useBrokerNumberAsKey && brokerNumber.is_initialized()) {
+    if(m_config.m_useBrokerNumberAsKey && brokerNumber) {
       if(brokerNumber->size() == 1) {
         result += '0';
         result += '0';
@@ -178,28 +185,28 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleQuote(
       const StampProtocol::StampMessage& message) {
     auto symbol = message.GetBusinessField<std::string>(55);
-    if(!symbol.is_initialized()) {
+    if(!symbol) {
       return;
     }
     auto bidPrice = message.GetBusinessField<Money>(196, 0);
-    if(!bidPrice.is_initialized()) {
+    if(!bidPrice) {
       return;
     }
     auto bidVolume = message.GetBusinessField<std::int64_t>(64, 0);
-    if(!bidVolume.is_initialized()) {
+    if(!bidVolume) {
       return;
     }
     auto askPrice = message.GetBusinessField<Money>(196, 1);
-    if(!askPrice.is_initialized()) {
+    if(!askPrice) {
       return;
     }
     auto askVolume = message.GetBusinessField<std::int64_t>(64, 1);
-    if(!askVolume.is_initialized()) {
+    if(!askVolume) {
       return;
     }
     if(m_config.m_market == DefaultMarkets::CSE()) {
       auto bidExchangeId = message.GetBusinessField<std::string>(247, 0);
-      if(!bidExchangeId.is_initialized() || *bidExchangeId != "CNQ") {
+      if(!bidExchangeId || *bidExchangeId != "CNQ") {
         return;
       }
     }
@@ -216,30 +223,30 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleLastSaleTradeReport(
       const StampProtocol::StampMessage& message) {
     auto businessAction = message.GetBusinessField<std::string>(5);
-    if(!businessAction.is_initialized()) {
+    if(!businessAction) {
       return;
     }
     if(*businessAction == "Cancelled") {
       return;
     }
     auto timestamp = GetTimestamp(message, 57);
-    if(!timestamp.is_initialized()) {
+    if(!timestamp) {
       return;
     }
     auto symbol = message.GetBusinessField<std::string>(55);
-    if(!symbol.is_initialized()) {
+    if(!symbol) {
       return;
     }
     auto price = message.GetBusinessField<Money>(41);
-    if(!price.is_initialized()) {
+    if(!price) {
       return;
     }
     auto volume = message.GetBusinessField<std::int64_t>(64);
-    if(!volume.is_initialized()) {
+    if(!volume) {
       return;
     }
     auto exchangeId = message.GetBusinessField<std::string>(247);
-    if(!exchangeId.is_initialized()) {
+    if(!exchangeId) {
       return;
     }
     auto security = Security(std::move(*symbol), m_config.m_market,
@@ -262,15 +269,15 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleBookedOrder(
       const StampProtocol::StampMessage& message) {
     auto nonResidentFlag = message.GetBusinessField<std::string>(168);
-    if(nonResidentFlag.is_initialized() && *nonResidentFlag == "Y") {
+    if(nonResidentFlag && *nonResidentFlag == "Y") {
       return;
     }
     auto settlementTerms = message.GetBusinessField<std::string>(53);
-    if(settlementTerms.is_initialized()) {
+    if(settlementTerms) {
       return;
     }
     auto symbol = message.GetBusinessField<std::string>(55);
-    if(!symbol.is_initialized()) {
+    if(!symbol) {
       return;
     }
     auto orderNumber = [&] {
@@ -278,14 +285,14 @@ namespace Nexus::MarketDataService {
         return message.GetBusinessField<std::string>(40);
       } else {
         auto aqnTag = message.GetBusinessField<std::string>(636);
-        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+        if(!aqnTag || *aqnTag != "AQN") {
           return message.GetBusinessField<std::string>(40);
         } else {
           return message.GetBusinessField<std::string>(196);
         }
       }
     }();
-    if(!orderNumber.is_initialized()) {
+    if(!orderNumber) {
       return;
     }
     auto mpid = std::string();
@@ -296,7 +303,7 @@ namespace Nexus::MarketDataService {
         isPrimaryMpid = true;
       } else {
         auto mpidField = message.GetBusinessField<std::string>(636);
-        if(!mpidField.is_initialized() || mpidField->empty()) {
+        if(!mpidField || mpidField->empty()) {
           mpid = m_config.m_defaultMpid;
           isPrimaryMpid = true;
         } else {
@@ -307,7 +314,7 @@ namespace Nexus::MarketDataService {
       }
     } else {
       auto mpidField = message.GetBusinessField<std::string>(70);
-      if(!mpidField.is_initialized() || mpidField->empty()) {
+      if(!mpidField || mpidField->empty()) {
         mpid = m_config.m_defaultMpid;
         isPrimaryMpid = true;
       } else {
@@ -323,27 +330,26 @@ namespace Nexus::MarketDataService {
       return;
     }
     auto price = message.GetBusinessField<Money>(196);
-    if(!price.is_initialized()) {
+    if(!price) {
       return;
     }
     auto quantity = message.GetBusinessField<std::int64_t>(64);
-    if(!quantity.is_initialized()) {
+    if(!quantity) {
       return;
     }
     auto side = message.GetBusinessField<Side>(5);
-    if(!side.is_initialized()) {
+    if(!side) {
       return;
     }
     auto timestamp = GetTimestamp(message, 57);
-    if(!timestamp.is_initialized()) {
+    if(!timestamp) {
       return;
     }
     auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
     if(m_config.m_market == DefaultMarkets::OMGA() ||
         m_config.m_market == DefaultMarkets::LYNX()) {
-      auto modificationId = message.GetBusinessField<std::string>(11);
-      if(modificationId.is_initialized()) {
+      if(auto modificationId = message.GetBusinessField<std::string>(11)) {
         auto previousId = GetOrderId(symbol, brokerNumber, *modificationId);
         m_marketDataFeedClient->DeleteOrder(previousId, *timestamp);
       }
@@ -365,20 +371,20 @@ namespace Nexus::MarketDataService {
         return message.GetBusinessField<std::string>(40);
       } else {
         auto aqnTag = message.GetBusinessField<std::string>(636);
-        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+        if(!aqnTag || *aqnTag != "AQN") {
           return message.GetBusinessField<std::string>(40);
         } else {
           return message.GetBusinessField<std::string>(196);
         }
       }
     }();
-    if(!orderNumber.is_initialized()) {
+    if(!orderNumber) {
       return;
     }
     auto symbol = message.GetBusinessField<std::string>(55);
     auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto timestamp = GetTimestamp(message, 57);
-    if(!timestamp.is_initialized()) {
+    if(!timestamp) {
       return;
     }
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
@@ -389,17 +395,17 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandlePriceAssignedOrder(
       const StampProtocol::StampMessage& message) {
     auto price = message.GetBusinessField<Money>(196);
-    if(!price.is_initialized()) {
+    if(!price) {
       return;
     }
     auto orderNumber = message.GetBusinessField<std::string>(40);
-    if(!orderNumber.is_initialized()) {
+    if(!orderNumber) {
       return;
     }
     auto symbol = message.GetBusinessField<std::string>(55);
     auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto timestamp = GetTimestamp(message, 57);
-    if(!timestamp.is_initialized()) {
+    if(!timestamp) {
       return;
     }
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
@@ -411,7 +417,7 @@ namespace Nexus::MarketDataService {
       HandleOrderOrCancelConfirmationReport(
       const StampProtocol::StampMessage& message) {
     auto confirmationType = message.GetBusinessField<std::string>(16);
-    if(!confirmationType.is_initialized()) {
+    if(!confirmationType) {
       return;
     }
     if(*confirmationType == "Booked") {
@@ -427,15 +433,15 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleOrderTradeReport(
       const StampProtocol::StampMessage& message) {
     auto timestamp = GetTimestamp(message, 57);
-    if(!timestamp.is_initialized()) {
+    if(!timestamp) {
       return;
     }
     auto volume = message.GetBusinessField<std::int64_t>(64);
-    if(!volume.is_initialized()) {
+    if(!volume) {
       return;
     }
     auto price = message.GetBusinessField<Money>(41);
-    if(!price.is_initialized()) {
+    if(!price) {
       return;
     }
     auto symbol = message.GetBusinessField<std::string>(55);
@@ -445,17 +451,17 @@ namespace Nexus::MarketDataService {
         return message.GetBusinessField<std::string>(40, 0);
       } else {
         auto aqnTag = message.GetBusinessField<std::string>(636);
-        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+        if(!aqnTag || *aqnTag != "AQN") {
           return message.GetBusinessField<std::string>(40, 0);
         } else {
           return message.GetBusinessField<std::string>(196);
         }
       }
     }();
-    if(bidOrderNumber.is_initialized()) {
+    if(bidOrderNumber) {
       auto bidOrderId = GetOrderId(symbol, bidBrokerNumber, *bidOrderNumber);
       auto displayVolume = message.GetBusinessField<std::int64_t>(150, 0);
-      if(displayVolume.is_initialized()) {
+      if(displayVolume) {
         *displayVolume = GetBoardLotPortion(*displayVolume, *price);
         m_marketDataFeedClient->ModifyOrderSize(bidOrderId, *displayVolume,
           *timestamp);
@@ -471,17 +477,16 @@ namespace Nexus::MarketDataService {
         return message.GetBusinessField<std::string>(40, 1);
       } else {
         auto aqnTag = message.GetBusinessField<std::string>(636);
-        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+        if(!aqnTag || *aqnTag != "AQN") {
           return message.GetBusinessField<std::string>(40, 1);
         } else {
           return message.GetBusinessField<std::string>(196);
         }
       }
     }();
-    if(askOrderNumber.is_initialized()) {
+    if(askOrderNumber) {
       auto askOrderId = GetOrderId(symbol, askBrokerNumber, *askOrderNumber);
-      auto displayVolume = message.GetBusinessField<std::int64_t>(150, 1);
-      if(displayVolume.is_initialized()) {
+      if(auto displayVolume = message.GetBusinessField<std::int64_t>(150, 1)) {
         *displayVolume = GetBoardLotPortion(*displayVolume, *price);
         m_marketDataFeedClient->ModifyOrderSize(askOrderId, *displayVolume,
           *timestamp);
@@ -497,23 +502,23 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleImbalanceStatus(
       const StampProtocol::StampMessage& message) {
     auto timestamp = GetTimestamp(message, 57);
-    if(!timestamp.is_initialized()) {
+    if(!timestamp) {
       return;
     }
     auto exchangeId = message.GetBusinessField<std::string>(247);
-    if(!exchangeId.is_initialized()) {
+    if(!exchangeId) {
       return;
     }
     auto symbol = message.GetBusinessField<std::string>(55);
-    if(!symbol.is_initialized()) {
+    if(!symbol) {
       return;
     }
     auto imbalanceSide = message.GetBusinessField<Side>(492);
-    if(!imbalanceSide.is_initialized() || *imbalanceSide == Side::NONE) {
+    if(!imbalanceSide || *imbalanceSide == Side::NONE) {
       return;
     }
     auto imbalanceVolume = message.GetBusinessField<std::int64_t>(493);
-    if(!imbalanceVolume.is_initialized()) {
+    if(!imbalanceVolume) {
       return;
     }
     auto security = Security(std::move(*symbol), m_config.m_market,
@@ -537,7 +542,7 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleMbxMessage(
       const StampProtocol::StampMessage& message) {
     auto businessAction = message.GetBusinessField<std::string>(55);
-    if(!businessAction.is_initialized()) {
+    if(!businessAction) {
       return;
     }
     if(*businessAction == "AssignCOP") {
@@ -551,7 +556,7 @@ namespace Nexus::MarketDataService {
   void TmxIpMarketDataFeedClient<M, S, T>::HandleSymbolInfo(
       const StampProtocol::StampMessage& message) {
     auto symbol = message.GetBusinessField<std::string>(55);
-    if(!symbol.is_initialized()) {
+    if(!symbol) {
       return;
     }
     auto listingMarket = message.GetBusinessField<std::string>(554);
@@ -596,8 +601,6 @@ namespace Nexus::MarketDataService {
       auto message = std::optional<StampProtocol::StampMessage>();
       try {
         message.emplace(m_serviceAccessClient->Read());
-      } catch(const Beam::IO::NotConnectedException&) {
-        break;
       } catch(const Beam::IO::EndOfFileException&) {
         break;
       }
@@ -608,7 +611,7 @@ namespace Nexus::MarketDataService {
       }
       auto businessClass = message->GetBusinessField<std::string>(
         BUSINESS_CLASS_FIELD_ID);
-      if(!businessClass.is_initialized()) {
+      if(!businessClass) {
         continue;
       }
       if(*businessClass == "OrderCancelResp") {

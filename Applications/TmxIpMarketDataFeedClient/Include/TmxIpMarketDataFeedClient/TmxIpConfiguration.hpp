@@ -2,6 +2,7 @@
 #define NEXUS_TMX_IP_CONFIGURATION_HPP
 #include <string>
 #include <unordered_map>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Market.hpp"
 
