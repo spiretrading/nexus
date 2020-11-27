@@ -104,31 +104,19 @@ namespace Nexus {
   };
 
   inline ApplicationServiceClients::ApplicationServiceClients(
-      std::string username, std::string password,
-      const Beam::Network::IpAddress& address)
-      : m_serviceLocatorClient(std::move(username), std::move(password),
-          address),
-        m_registryClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_administrationClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_definitionsClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_marketDataClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_chartingClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_complianceClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_orderExecutionClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_riskClient(Beam::Ref(*m_serviceLocatorClient)),
-        m_timeClient([&] {
-          auto timeServices = m_serviceLocatorClient->Locate(
-            Beam::TimeService::SERVICE_NAME);
-          if(timeServices.empty()) {
-            BOOST_THROW_EXCEPTION(
-              Beam::IO::ConnectException("No time services available."));
-          }
-          auto& timeService = timeServices.front();
-          auto ntpPool = Beam::Parsers::Parse<
-            std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
-            timeService.GetProperties().At("addresses")));
-          return Beam::TimeService::MakeLiveNtpTimeClient(ntpPool);
-        }()) {}
+    std::string username, std::string password,
+    const Beam::Network::IpAddress& address)
+    : m_serviceLocatorClient(std::move(username), std::move(password), address),
+      m_registryClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_administrationClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_definitionsClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_marketDataClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_chartingClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_complianceClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_orderExecutionClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_riskClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_timeClient(Beam::TimeService::MakeLiveNtpTimeClientFromServiceLocator(
+        *m_serviceLocatorClient)) {}
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
     Close();

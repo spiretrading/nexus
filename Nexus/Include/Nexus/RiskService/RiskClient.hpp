@@ -6,6 +6,7 @@
 #include <Beam/Queues/TablePublisher.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Utilities/Remote.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
@@ -71,8 +72,9 @@ namespace Nexus::RiskService {
   template<typename B>
   template<typename BF>
   RiskClient<B>::RiskClient(BF&& clientBuilder)
-      : m_clientHandler(std::forward<BF>(clientBuilder),
-          std::bind(&RiskClient::OnReconnect, this, std::placeholders::_1)) {
+      try : m_clientHandler(std::forward<BF>(clientBuilder),
+              std::bind(&RiskClient::OnReconnect, this,
+              std::placeholders::_1)) {
     RegisterRiskServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterRiskMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<InventoryMessage>(
@@ -88,7 +90,8 @@ namespace Nexus::RiskService {
           entries = client->template SendRequest<
             SubscribeRiskPortfolioUpdatesService>();
         } catch(const std::exception&) {
-          m_publisher->Break(std::current_exception());
+          m_publisher->Break(Beam::Services::MakeNestedServiceException(
+            "Failed to subscribe to portfolio updates."));
           return;
         }
         for(auto& entry : entries) {
@@ -100,6 +103,9 @@ namespace Nexus::RiskService {
         }
       });
     });
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to connect to the risk server."));
   }
 
   template<typename B>
@@ -110,14 +116,20 @@ namespace Nexus::RiskService {
   template<typename B>
   InventorySnapshot RiskClient<B>::LoadInventorySnapshot(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadInventorySnapshotService>(account);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadInventorySnapshotService>(
+        account);
+    }, "Failed to load inventory snapshot: " +
+      boost::lexical_cast<std::string>(account));
   }
 
   template<typename B>
   void RiskClient<B>::Reset(const Region& region) {
-    auto client = m_clientHandler.GetClient();
-    client->template SendRequest<ResetRegionService>(region);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      client->template SendRequest<ResetRegionService>(region);
+    }, "Failed to reset region.");
   }
 
   template<typename B>
@@ -134,6 +146,9 @@ namespace Nexus::RiskService {
     m_tasks.Break();
     m_tasks.Wait();
     m_clientHandler.Close();
+    if(m_publisher.IsAvailable()) {
+      m_publisher->Break();
+    }
     m_openState.Close();
   }
 
@@ -149,7 +164,8 @@ namespace Nexus::RiskService {
         entries = client->template SendRequest<
           SubscribeRiskPortfolioUpdatesService>();
       } catch(const std::exception&) {
-        m_publisher->Break(std::current_exception());
+        m_publisher->Break(Beam::Services::MakeNestedServiceException(
+          "Unable to recover risk portfolio updates."));
         return;
       }
       if(auto snapshot = m_publisher->GetSnapshot()) {

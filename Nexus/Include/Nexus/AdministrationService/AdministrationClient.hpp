@@ -2,6 +2,7 @@
 #define NEXUS_ADMINISTRATION_CLIENT_HPP
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -10,6 +11,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Utilities/Streamable.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
