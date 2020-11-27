@@ -21,7 +21,6 @@ CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
     return currencies;
   }();
   m_menu = new StaticDropDownMenu(items, this);
-  //m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
