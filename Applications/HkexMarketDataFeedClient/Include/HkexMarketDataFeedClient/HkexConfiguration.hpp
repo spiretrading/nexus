@@ -1,5 +1,6 @@
 #ifndef NEXUS_HKEX_CONFIGURATION_HPP
 #define NEXUS_HKEX_CONFIGURATION_HPP
+#include <string>
 #include "Nexus/Definitions/Market.hpp"
 
 namespace Nexus::MarketDataService {

@@ -50,8 +50,6 @@ namespace Nexus::MarketDataService {
 
       ~ChiaMarketDataFeedClient();
 
-      void Open();
-
       void Close();
 
     private:

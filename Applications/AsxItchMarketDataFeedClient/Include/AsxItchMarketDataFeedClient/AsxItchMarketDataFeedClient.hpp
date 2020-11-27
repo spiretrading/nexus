@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <Beam/IO/ConnectException.hpp>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -10,7 +11,7 @@
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/Endian.hpp>
-#include <boost/noncopyable.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "AsxItchMarketDataFeedClient/AsxItchConfiguration.hpp"
 #include "Nexus/Definitions/Currency.hpp"
@@ -71,7 +72,7 @@ namespace Nexus::MarketDataService {
    * @param <G> The type of client connecting to Glimpse.
    */
   template<typename M, typename I, typename G>
-  class AsxItchMarketDataFeedClient : private boost::noncopyable {
+  class AsxItchMarketDataFeedClient {
     public:
 
       /**
@@ -128,6 +129,9 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      AsxItchMarketDataFeedClient(const AsxItchMarketDataFeedClient&) = delete;
+      AsxItchMarketDataFeedClient& operator =(
+        const AsxItchMarketDataFeedClient&) = delete;
       boost::posix_time::ptime ParseTimestamp(Beam::Out<const char*> cursor);
       std::uint8_t ParseChar(Beam::Out<const char*> cursor);
       std::uint8_t ParseInt8(Beam::Out<const char*> cursor);

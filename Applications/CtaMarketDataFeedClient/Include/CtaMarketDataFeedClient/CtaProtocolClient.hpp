@@ -2,9 +2,11 @@
 #define NEXUS_CTA_PROTOCOL_CLIENT_HPP
 #include <cstdint>
 #include <Beam/IO/ConnectException.hpp>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "CtaMarketDataFeedClient/CtaMessage.hpp"
 
 namespace Nexus::MarketDataService {

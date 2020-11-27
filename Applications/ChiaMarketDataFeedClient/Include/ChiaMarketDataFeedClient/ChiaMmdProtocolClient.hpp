@@ -2,10 +2,11 @@
 #define NEXUS_CHIA_MMD_PROTOCOL_CLIENT_HPP
 #include <deque>
 #include <functional>
-#include <Beam/IO/NotConnectedException.hpp>
+#include <Beam/IO/ConnectException.hpp>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
-#include <boost/noncopyable.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
 #include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMessage.hpp"
@@ -20,7 +21,7 @@ namespace Nexus::MarketDataService {
    * @param <R> The type of Channel used for retransmissions.
    */
   template<typename C, typename R>
-  class ChiaMmdProtocolClient : private boost::noncopyable {
+  class ChiaMmdProtocolClient {
     public:
 
       /** The type of Channel receiving data. */
@@ -64,6 +65,9 @@ namespace Nexus::MarketDataService {
       std::deque<Beam::IO::SharedBuffer> m_pendingMessageBuffers;
       Beam::IO::SharedBuffer m_messageBuffer;
       Beam::IO::OpenState m_openState;
+
+      ChiaMmdProtocolClient(const ChiaMmdProtocolClient&) = delete;
+      ChiaMmdProtocolClient& operator =(const ChiaMmdProtocolClient&) = delete;
   };
 
   template<typename C, typename R>

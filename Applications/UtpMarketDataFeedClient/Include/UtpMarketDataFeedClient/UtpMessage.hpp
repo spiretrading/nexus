@@ -1,5 +1,5 @@
-#ifndef NEXUS_UTPMESSAGE_HPP
-#define NEXUS_UTPMESSAGE_HPP
+#ifndef NEXUS_UTP_MESSAGE_HPP
+#define NEXUS_UTP_MESSAGE_HPP
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -8,48 +8,45 @@
 #include <Beam/Utilities/Endian.hpp>
 #include <boost/throw_exception.hpp>
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \struct UtpMessage
-      \brief Stores a single message from a UTP service.
-   */
+  /** Stores a single message from a UTP service. */
   struct UtpMessage {
 
-    //! The message category.
+    /** The message category. */
     std::uint8_t m_category;
 
-    //! The message type.
+    /** The message type. */
     std::uint8_t m_type;
 
-    //! The market center originator ID.
+    /** The market center originator ID. */
     std::uint8_t m_marketCenterOriginatorId;
 
-    //! The sub market center ID.
+    /** The sub market center ID. */
     std::uint8_t m_subMarketCenterId;
 
-    //! The SIP timestamp.
+    /** The SIP timestamp. */
     std::uint64_t m_sipTimestamp;
 
-    //! The participant timestamp.
+    /** The participant timestamp. */
     std::uint64_t m_participantTimestamp;
 
-    //! The participant token.
+    /** The participant token. */
     std::uint64_t m_participantToken;
 
-    //! The size of the payload;
+    /** The size of the payload/ */
     int m_dataLength;
 
-    //! The payload data.
+    /** The payload data. */
     const char* m_data;
 
-    //! Parses a UtpMessage from a Buffer.
-    /*!
-      \param data A pointer to the first byte in the packet to parse, this
-                  pointer will be modified to point to the end of the message.
-      \param size The number of bytes remaining in the packet.
-      \return The UtpMessage represented by the <i>buffer</i>.
-    */
+    /**
+     * Parses a UtpMessage from a Buffer.
+     * @param data A pointer to the first byte in the packet to parse, this
+     *             pointer will be modified to point to the end of the message.
+     * @param size The number of bytes remaining in the packet.
+     * @return The UtpMessage represented by the <i>buffer</i>.
+     */
     static UtpMessage Parse(Beam::Out<const char*> data, std::uint16_t size);
   };
 
@@ -59,8 +56,8 @@ namespace MarketDataService {
     if(size < HEADER_LENGTH) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Buffer too short."));
     }
-    UtpMessage message;
-    const char* token = *data;
+    auto message = UtpMessage();
+    auto token = *data;
     message.m_category = Beam::FromBigEndian(*token);
     ++token;
     message.m_type = Beam::FromBigEndian(*token);
@@ -83,7 +80,6 @@ namespace MarketDataService {
     *data += size;
     return message;
   }
-}
 }
 
 #endif

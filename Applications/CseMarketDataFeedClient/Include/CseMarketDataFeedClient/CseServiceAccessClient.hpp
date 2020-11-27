@@ -5,9 +5,11 @@
 #include <functional>
 #include <vector>
 #include <Beam/IO/ConnectException.hpp>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/StampProtocol/StampMessage.hpp"
 #include "Nexus/StampProtocol/StampPacket.hpp"

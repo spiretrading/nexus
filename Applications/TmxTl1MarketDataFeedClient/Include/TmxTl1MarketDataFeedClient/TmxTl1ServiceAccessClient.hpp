@@ -5,10 +5,12 @@
 #include <functional>
 #include <vector>
 #include <Beam/IO/ConnectException.hpp>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/StampProtocol/StampPacket.hpp"
 
@@ -30,7 +32,7 @@ namespace Nexus::MarketDataService {
        * @param channel The Channel receiving the market data feed.
        */
       template<typename CF>
-      TmxTl1ServiceAccessClient(CF&& channel);
+      explicit TmxTl1ServiceAccessClient(CF&& channel);
 
       ~TmxTl1ServiceAccessClient();
 

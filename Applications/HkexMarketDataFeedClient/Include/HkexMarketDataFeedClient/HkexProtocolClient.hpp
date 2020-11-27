@@ -4,6 +4,7 @@
 #include <utility>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Channel.hpp>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/Dereference.hpp>
