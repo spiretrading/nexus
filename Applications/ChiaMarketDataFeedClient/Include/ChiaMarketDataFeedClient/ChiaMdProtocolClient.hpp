@@ -1,10 +1,11 @@
 #ifndef NEXUS_CHIA_MD_PROTOCOL_CLIENT_HPP
 #define NEXUS_CHIA_MD_PROTOCOL_CLIENT_HPP
 #include <string>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <boost/noncopyable.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
 #include "ChiaMarketDataFeedClient/ChiaMessage.hpp"
 
@@ -15,7 +16,7 @@ namespace Nexus::MarketDataService {
    * @param <C> The type of Channel receiving data.
    */
   template<typename C>
-  class ChiaMdProtocolClient : private boost::noncopyable {
+  class ChiaMdProtocolClient {
     public:
 
       /** The type of Channel receiving data. */
@@ -74,6 +75,9 @@ namespace Nexus::MarketDataService {
       Beam::IO::SharedBuffer m_buffer;
       Beam::IO::OpenState m_openState;
 
+      ChiaMdProtocolClient(const ChiaMdProtocolClient&) = delete;
+      ChiaMdProtocolClient& operator =(
+        const ChiaMdProtocolClient&) = delete;
       Beam::IO::SharedBuffer ReadBuffer();
       void Append(const std::string& value, int size,
         Beam::Out<Beam::IO::SharedBuffer> buffer);
@@ -95,11 +99,11 @@ namespace Nexus::MarketDataService {
   ChiaMdProtocolClient<C>::ChiaMdProtocolClient(CF&& channel,
       std::string username, std::string password, std::string session,
       std::uint32_t sequence)
-      : m_channel(std::forward<CF>(channel)),
-        m_username(std::move(username)),
-        m_password(std::move(password)),
-        m_session(std::move(session)),
-        m_sequence(sequence) {
+      try : m_channel(std::forward<CF>(channel)),
+            m_username(std::move(username)),
+            m_password(std::move(password)),
+            m_session(std::move(session)),
+            m_sequence(sequence) {
     constexpr auto USERNAME_LENGTH = 6;
     constexpr auto PASSWORD_LENGTH = 10;
     constexpr auto SESSION_LENGTH = 10;
@@ -126,6 +130,9 @@ namespace Nexus::MarketDataService {
       Close();
       BOOST_RETHROW;
     }
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Unable to initialize the CHIA MD protocol client."));
   }
 
   template<typename C>
@@ -142,16 +149,18 @@ namespace Nexus::MarketDataService {
   template<typename C>
   ChiaMessage ChiaMdProtocolClient<C>::Read(
       Beam::Out<std::uint32_t> sequenceNumber) {
-    while(true) {
-      m_message = ReadBuffer();
-      if(!m_message.IsEmpty() && m_message.GetData()[0] == 'S') {
-        auto message = ChiaMessage::Parse(m_message.GetData() + 1,
-          m_message.GetSize() - 2);
-        *sequenceNumber = m_nextSequence;
-        ++m_nextSequence;
-        return message;
+    return Beam::TryOrNest([&] {
+      while(true) {
+        m_message = ReadBuffer();
+        if(!m_message.IsEmpty() && m_message.GetData()[0] == 'S') {
+          auto message = ChiaMessage::Parse(m_message.GetData() + 1,
+            m_message.GetSize() - 2);
+          *sequenceNumber = m_nextSequence;
+          ++m_nextSequence;
+          return message;
+        }
       }
-    }
+    }, Beam::IO::IOException("Unable to read CHIA message."));
   }
 
   template<typename C>

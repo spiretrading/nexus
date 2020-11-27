@@ -1,10 +1,10 @@
 #ifndef NEXUS_CSE_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_CSE_MARKET_DATA_FEED_CLIENT_HPP
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -21,7 +21,7 @@ namespace Nexus::MarketDataService {
    * @param <T> The type of TimeClient used for timestamps.
    */
   template<typename M, typename S, typename T>
-  class CseMarketDataFeedClient : private boost::noncopyable {
+  class CseMarketDataFeedClient {
     public:
 
       /**
@@ -53,13 +53,15 @@ namespace Nexus::MarketDataService {
 
     private:
       CseConfiguration m_config;
-      Beam::GetOptionalLocalPtr<M>
-        m_marketDataFeedClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
       Beam::GetOptionalLocalPtr<S> m_serviceAccessClient;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      CseMarketDataFeedClient(const CseMarketDataFeedClient&) = delete;
+      CseMarketDataFeedClient& operator =(
+        const CseMarketDataFeedClient&) = delete;
       static Quantity GetBoardLotPortion(Quantity quantity, Money price);
       static Quantity RoundToBoardLotPortion(Quantity quantity, Money price);
       boost::optional<boost::posix_time::ptime> GetTimestamp(
@@ -84,14 +86,18 @@ namespace Nexus::MarketDataService {
   template<typename M, typename S, typename T>
   template<typename MF, typename SF, typename TF>
   CseMarketDataFeedClient<M, S, T>::CseMarketDataFeedClient(
-    CseConfiguration config, MF&& marketDataFeedClient,
-    SF&& serviceAccessClient, TF&& timeClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
-      m_timeClient(std::forward<TF>(timeClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn(
-        std::bind(&CseMarketDataFeedClient::ReadLoop, this))) {}
+      CseConfiguration config, MF&& marketDataFeedClient,
+      SF&& serviceAccessClient, TF&& timeClient)
+      try : m_config(std::move(config)),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
+            m_timeClient(std::forward<TF>(timeClient)),
+            m_readLoopRoutine(Beam::Routines::Spawn(
+              std::bind(&CseMarketDataFeedClient::ReadLoop, this))) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the CSE market data feed client."));
+  }
 
   template<typename M, typename S, typename T>
   CseMarketDataFeedClient<M, S, T>::~CseMarketDataFeedClient() {
@@ -138,7 +144,7 @@ namespace Nexus::MarketDataService {
   boost::optional<boost::posix_time::ptime> CseMarketDataFeedClient<M, S, T>::
       GetTimestamp(const StampProtocol::StampMessage& message, int index) {
     auto timestamp = message.GetBusinessField<boost::posix_time::ptime>(index);
-    if(timestamp.is_initialized()) {
+    if(timestamp) {
       *timestamp += m_config.m_timeOffset;
     }
     return timestamp;
@@ -154,7 +160,7 @@ namespace Nexus::MarketDataService {
       result = *symbol;
       result += '-';
     }
-    if(brokerNumber.is_initialized()) {
+    if(brokerNumber) {
       if(brokerNumber->size() == 1) {
         result += '0';
         result += '0';
@@ -423,8 +429,6 @@ namespace Nexus::MarketDataService {
       auto message = std::optional<StampProtocol::StampMessage>();
       try {
         message.emplace(m_serviceAccessClient->Read());
-      } catch(const Beam::IO::NotConnectedException&) {
-        break;
       } catch(const Beam::IO::EndOfFileException&) {
         break;
       }

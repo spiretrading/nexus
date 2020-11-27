@@ -4,10 +4,10 @@
 #include <deque>
 #include <functional>
 #include <vector>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/StampProtocol/StampMessage.hpp"
 #include "Nexus/StampProtocol/StampPacket.hpp"
@@ -38,7 +38,7 @@ namespace Nexus::MarketDataService {
    * @param <S> The type of Channel used to receive retransmission messages.
    */
   template<typename F, typename C, typename S>
-  class CseServiceAccessClient : private boost::noncopyable {
+  class CseServiceAccessClient {
     public:
 
       /** The type of channel receiving the market data feed. */
@@ -98,6 +98,9 @@ namespace Nexus::MarketDataService {
       std::deque<BufferEntry> m_pendingBuffers;
       Beam::IO::OpenState m_openState;
 
+      CseServiceAccessClient(const CseServiceAccessClient&) = delete;
+      CseServiceAccessClient& operator =(
+        const CseServiceAccessClient&) = delete;
       template<typename Buffer>
       static void BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
         std::size_t startSequenceNumber, std::size_t endSequenceNumber);
@@ -124,17 +127,21 @@ namespace Nexus::MarketDataService {
   template<typename F, typename C, typename S>
   template<typename FF, typename SF>
   CseServiceAccessClient<F, C, S>::CseServiceAccessClient(
-    CseServiceAccessConfiguration config, FF&& feedChannel,
-    RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-    SF&& retransmissionServerChannel)
-    : m_config(std::move(config)),
-      m_feedChannel(std::forward<F>(feedChannel)),
-      m_retransmissionClientChannelBuilder(
-        std::move(retransmissionClientChannelBuilder)),
-      m_retransmissionServerChannel(std::forward<SF>(
-        retransmissionServerChannel)),
-      m_retransmissionCount(0),
-      m_sequenceNumber(0) {}
+      CseServiceAccessConfiguration config, FF&& feedChannel,
+      RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
+      SF&& retransmissionServerChannel)
+      try : m_config(std::move(config)),
+            m_feedChannel(std::forward<F>(feedChannel)),
+            m_retransmissionClientChannelBuilder(
+              std::move(retransmissionClientChannelBuilder)),
+            m_retransmissionServerChannel(std::forward<SF>(
+              retransmissionServerChannel)),
+            m_retransmissionCount(0),
+            m_sequenceNumber(0) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the CSE service access client."));
+  }
 
   template<typename F, typename C, typename S>
   CseServiceAccessClient<F, C, S>::~CseServiceAccessClient() {
@@ -144,82 +151,82 @@ namespace Nexus::MarketDataService {
   template<typename F, typename C, typename S>
   StampProtocol::StampMessage CseServiceAccessClient<F, C, S>::Read() {
     static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
-    m_openState.EnsureOpen();
-    auto packet = StampProtocol::StampPacket();
-    if(m_config.m_enableRetransmission) {
-      auto retransmissionBuffer =
-        typename RetransmissionServerChannel::Reader::Buffer();
-      while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
-        retransmissionBuffer.Reset();
-        m_retransmissionServerChannel->GetReader().Read(
-          Beam::Store(retransmissionBuffer));
+    return Beam::TryOrNest([&] {
+      auto packet = StampProtocol::StampPacket();
+      if(m_config.m_enableRetransmission) {
+        auto retransmissionBuffer = Beam::IO::SharedBuffer();
+        while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
+          retransmissionBuffer.Reset();
+          m_retransmissionServerChannel->GetReader().Read(
+            Beam::Store(retransmissionBuffer));
+        }
       }
-    }
-    auto bufferIndex = std::size_t(0);
-    while(true) {
-      if(m_buffers.size() <= bufferIndex) {
-        m_buffers.emplace_back();
-      }
-      auto& buffer = m_buffers[bufferIndex];
-      buffer.Reset();
-      if(m_pendingBuffers.empty()) {
-        m_feedChannel->GetReader().Read(Beam::Store(buffer));
-      } else {
-        buffer = std::move(m_pendingBuffers.front().m_buffer);
-        m_pendingBuffers.pop_front();
-      }
-      auto packet = StampProtocol::StampPacket::Parse(buffer.GetData(),
-        buffer.GetSize());
-      if(packet.m_header.m_messageType == HEARTBEAT_MESSAGE_TYPE) {
-        continue;
-      }
-      if(m_sequenceNumber == 0) {
-        if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::STAND_ALONE ||
-            packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::SPANNING) {
-          m_sequenceNumber = packet.m_header.m_sequenceNumber;
+      auto bufferIndex = std::size_t(0);
+      while(true) {
+        if(m_buffers.size() <= bufferIndex) {
+          m_buffers.emplace_back();
+        }
+        auto& buffer = m_buffers[bufferIndex];
+        buffer.Reset();
+        if(m_pendingBuffers.empty()) {
+          m_feedChannel->GetReader().Read(Beam::Store(buffer));
         } else {
+          buffer = std::move(m_pendingBuffers.front().m_buffer);
+          m_pendingBuffers.pop_front();
+        }
+        auto packet = StampProtocol::StampPacket::Parse(buffer.GetData(),
+          buffer.GetSize());
+        if(packet.m_header.m_messageType == HEARTBEAT_MESSAGE_TYPE) {
           continue;
         }
-      } else if(packet.m_header.m_sequenceNumber == m_sequenceNumber + 1) {
-        ++m_sequenceNumber;
-      } else if(packet.m_header.m_sequenceNumber <= m_sequenceNumber) {
-        continue;
-      } else {
-        std::cout << "Dropped packets: " << m_sequenceNumber + 1 << " - " <<
-          packet.m_header.m_sequenceNumber - 1 << std::endl;
-        AddPendingBuffer(buffer, packet.m_header.m_sequenceNumber);
-        if(m_config.m_enableRetransmission) {
-          try {
-            Retransmit(m_sequenceNumber + 1,
-              packet.m_header.m_sequenceNumber - 1);
-          } catch(const std::exception&) {
+        if(m_sequenceNumber == 0) {
+          if(packet.m_header.m_continuationIndicator ==
+              StampProtocol::ContinuationIndicator::STAND_ALONE ||
+              packet.m_header.m_continuationIndicator ==
+              StampProtocol::ContinuationIndicator::SPANNING) {
+            m_sequenceNumber = packet.m_header.m_sequenceNumber;
+          } else {
+            continue;
+          }
+        } else if(packet.m_header.m_sequenceNumber == m_sequenceNumber + 1) {
+          ++m_sequenceNumber;
+        } else if(packet.m_header.m_sequenceNumber <= m_sequenceNumber) {
+          continue;
+        } else {
+          std::cout << "Dropped packets: " << m_sequenceNumber + 1 << " - " <<
+            packet.m_header.m_sequenceNumber - 1 << std::endl;
+          AddPendingBuffer(buffer, packet.m_header.m_sequenceNumber);
+          if(m_config.m_enableRetransmission) {
+            try {
+              Retransmit(m_sequenceNumber + 1,
+                packet.m_header.m_sequenceNumber - 1);
+            } catch(const std::exception&) {
+              m_sequenceNumber = 0;
+              bufferIndex = 0;
+            }
+          } else {
             m_sequenceNumber = 0;
             bufferIndex = 0;
           }
-        } else {
-          m_sequenceNumber = 0;
+          continue;
+        }
+        if(packet.m_header.m_continuationIndicator ==
+            StampProtocol::ContinuationIndicator::STAND_ALONE) {
+          auto message = StampProtocol::StampMessage(packet.m_header,
+            packet.m_message, packet.m_messageSize);
+          return message;
+        } else if(packet.m_header.m_continuationIndicator ==
+            StampProtocol::ContinuationIndicator::SPANNING) {
+          bufferIndex = 1;
+        } else if(packet.m_header.m_continuationIndicator ==
+            StampProtocol::ContinuationIndicator::SPANNING_CONTINUATION) {
+          ++bufferIndex;
+        } else if(packet.m_header.m_continuationIndicator ==
+            StampProtocol::ContinuationIndicator::CONTINUATION) {
           bufferIndex = 0;
         }
-        continue;
       }
-      if(packet.m_header.m_continuationIndicator ==
-          StampProtocol::ContinuationIndicator::STAND_ALONE) {
-        auto message = StampProtocol::StampMessage(packet.m_header,
-          packet.m_message, packet.m_messageSize);
-        return message;
-      } else if(packet.m_header.m_continuationIndicator ==
-          StampProtocol::ContinuationIndicator::SPANNING) {
-        bufferIndex = 1;
-      } else if(packet.m_header.m_continuationIndicator ==
-          StampProtocol::ContinuationIndicator::SPANNING_CONTINUATION) {
-        ++bufferIndex;
-      } else if(packet.m_header.m_continuationIndicator ==
-          StampProtocol::ContinuationIndicator::CONTINUATION) {
-        bufferIndex = 0;
-      }
-    }
+    }, Beam::IO::IOException("Unable to read CSE message."));
   }
 
   template<typename F, typename C, typename S>
@@ -284,8 +291,7 @@ namespace Nexus::MarketDataService {
     m_retransmissionClientChannelBuilder(
       Beam::Store(retransmissionClientChannel));
     retransmissionClientChannel->GetWriter().Write(retransmissionRequestBuffer);
-    auto retransmissionResponseBuffer =
-      typename RetransmissionClientChannel::Reader::Buffer();
+    auto retransmissionResponseBuffer = Beam::IO::SharedBuffer();
     while(retransmissionResponseBuffer.GetSize() <
         RETRANSMISSION_RESPONSE_SIZE) {
       retransmissionClientChannel->GetReader().Read(
@@ -302,8 +308,7 @@ namespace Nexus::MarketDataService {
   void CseServiceAccessClient<F, C, S>::ReadRetransmissionResponse(
       std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     auto packet = StampProtocol::StampPacket();
-    auto retransmissionBuffer =
-      typename RetransmissionServerChannel::Reader::Buffer();
+    auto retransmissionBuffer = Beam::IO::SharedBuffer();
     while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
       retransmissionBuffer.Reset();
       m_retransmissionServerChannel->GetReader().Read(

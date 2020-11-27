@@ -3,31 +3,28 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \struct CseConfiguration
-      \brief Stores the configuration of a CSE data feed.
-   */
+  /** Stores the configuration of a CSE data feed. */
   struct CseConfiguration {
 
-    //! Whether to log messages.
+    /** Whether to log messages. */
     bool m_isLoggingMessages;
 
-    //! Whether to treat trade messages as a time and sale.
+    /** Whether to treat trade messages as a time and sale. */
     bool m_isTimeAndSaleFeed;
 
-    //! The difference in time between the data provider's time and UTC.
+    /** The difference in time between the data provider's time and UTC. */
     boost::posix_time::time_duration m_timeOffset;
 
-    //! The set of Securities listed on the market.
+    /** The set of Securities listed on the market. */
     std::unordered_set<std::string> m_securities;
 
-    //! Maps native MPIDs.
+    /** Maps native MPIDs. */
     std::unordered_map<std::string, std::string> m_mpidMappings;
   };
-}
 }
 
 #endif

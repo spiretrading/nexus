@@ -2,6 +2,7 @@
 #define NEXUS_ASX_ITCH_MARKET_DATA_FEED_CLIENT_HPP
 #include <cstdint>
 #include <string>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -162,17 +163,21 @@ namespace Nexus::MarketDataService {
   template<typename M, typename I, typename G>
   template<typename MF, typename IF, typename GF>
   AsxItchMarketDataFeedClient<M, I, G>::AsxItchMarketDataFeedClient(
-    const AsxItchConfiguration& config,
-    Beam::Ref<CurrencyDatabase> currencyDatabase, MF&& marketDataFeedClient,
-    IF&& itchClient, GF&& glimpseClient)
-    : m_config(config),
-      m_currencyDatabase(currencyDatabase.Get()),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_itchClient(std::forward<IF>(itchClient)),
-      m_glimpseClient(std::forward<GF>(glimpseClient)),
-      m_lastTimePoint(boost::posix_time::not_a_date_time),
-      m_readLoopRoutine(Beam::Routines::Spawn(
-        std::bind(&AsxItchMarketDataFeedClient::ReadLoop, this))) {}
+      const AsxItchConfiguration& config,
+      Beam::Ref<CurrencyDatabase> currencyDatabase, MF&& marketDataFeedClient,
+      IF&& itchClient, GF&& glimpseClient)
+      try : m_config(config),
+            m_currencyDatabase(currencyDatabase.Get()),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_itchClient(std::forward<IF>(itchClient)),
+            m_glimpseClient(std::forward<GF>(glimpseClient)),
+            m_lastTimePoint(boost::posix_time::not_a_date_time),
+            m_readLoopRoutine(Beam::Routines::Spawn(
+              std::bind(&AsxItchMarketDataFeedClient::ReadLoop, this))) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the ASX ITCH market data feed client."));
+  }
 
   template<typename M, typename I, typename G>
   AsxItchMarketDataFeedClient<M, I, G>::~AsxItchMarketDataFeedClient() {
@@ -650,8 +655,6 @@ namespace Nexus::MarketDataService {
       auto packet = SoupBinTcp::SoupBinTcpPacket();
       try {
         packet = m_glimpseClient->Read();
-      } catch(Beam::IO::NotConnectedException&) {
-        break;
       } catch(Beam::IO::EndOfFileException&) {
         break;
       }
@@ -687,8 +690,6 @@ namespace Nexus::MarketDataService {
         }
         lastSequenceNumber = sequenceNumber;
         Dispatch(message);
-      } catch(Beam::IO::NotConnectedException&) {
-        break;
       } catch(Beam::IO::EndOfFileException&) {
         break;
       }

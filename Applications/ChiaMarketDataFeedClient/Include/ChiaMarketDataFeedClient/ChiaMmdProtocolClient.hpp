@@ -69,13 +69,18 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R>
   template<typename CF>
   ChiaMmdProtocolClient<C, R>::ChiaMmdProtocolClient(CF&& channel,
-    std::string username, std::string password,
-    RetransmissionChannelFactory retransmissionChannelFactory)
-    : m_client(std::forward<CF>(channel)),
-      m_username(std::move(username)),
-      m_password(std::move(password)),
-      m_retransmissionChannelFactory(std::move(retransmissionChannelFactory)),
-      m_sequenceNumber(0) {}
+      std::string username, std::string password,
+      RetransmissionChannelFactory retransmissionChannelFactory)
+      try : m_client(std::forward<CF>(channel)),
+            m_username(std::move(username)),
+            m_password(std::move(password)),
+            m_retransmissionChannelFactory(
+              std::move(retransmissionChannelFactory)),
+            m_sequenceNumber(0) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Unable to initialize the CHIA MMD protocol client."));
+  }
 
   template<typename C, typename R>
   ChiaMmdProtocolClient<C, R>::~ChiaMmdProtocolClient() {
@@ -84,54 +89,55 @@ namespace Nexus::MarketDataService {
 
   template<typename C, typename R>
   ChiaMessage ChiaMmdProtocolClient<C, R>::Read() {
-    m_openState.EnsureOpen();
-    if(!m_pendingMessageBuffers.empty()) {
-      m_messageBuffer = m_pendingMessageBuffers.front();
-      m_pendingMessageBuffers.pop_front();
-      ++m_sequenceNumber;
-      auto message = ChiaMessage::Parse(m_messageBuffer.GetData(),
-        m_messageBuffer.GetSize());
-      return message;
-    }
-    while(true) {
-      auto sequenceNumber = std::uint32_t();
-      auto protocolMessage = m_client.Read(Beam::Store(sequenceNumber));
-      if(sequenceNumber <= m_sequenceNumber) {
-        continue;
+    return Beam::TryOrNest([&] {
+      if(!m_pendingMessageBuffers.empty()) {
+        m_messageBuffer = m_pendingMessageBuffers.front();
+        m_pendingMessageBuffers.pop_front();
+        ++m_sequenceNumber;
+        auto message = ChiaMessage::Parse(m_messageBuffer.GetData(),
+          m_messageBuffer.GetSize());
+        return message;
       }
-      if(m_sequenceNumber != 0 &&
-          sequenceNumber > m_sequenceNumber + 1) {
-        auto retransmissionChannel = m_retransmissionChannelFactory();
-        if(retransmissionChannel != nullptr) {
-          try {
-            auto retransmissionClient = ChiaMdProtocolClient<
-              std::unique_ptr<RetransmissionChannel>>(
-              std::move(retransmissionChannel), m_username, m_password, "",
-              m_sequenceNumber + 1);
-            auto retransmissionSequence = std::uint32_t(0);
-            while(retransmissionSequence < sequenceNumber) {
-              auto buffer = retransmissionClient.ReadBuffer(
-                Beam::Store(retransmissionSequence));
-              if(retransmissionSequence == (m_sequenceNumber + 1) +
-                  m_pendingMessageBuffers.size()) {
-                m_pendingMessageBuffers.push_back(std::move(buffer));
-              }
-            }
-          } catch(const std::exception&) {
-            std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
-          }
-          if(!m_pendingMessageBuffers.empty()) {
-            return Read();
-          }
+      while(true) {
+        auto sequenceNumber = std::uint32_t();
+        auto protocolMessage = m_client.Read(Beam::Store(sequenceNumber));
+        if(sequenceNumber <= m_sequenceNumber) {
+          continue;
         }
-        std::cout << "Packets dropped: " << (m_sequenceNumber + 1) <<
-          " - " << (sequenceNumber - 1) << std::endl;
+        if(m_sequenceNumber != 0 &&
+            sequenceNumber > m_sequenceNumber + 1) {
+          auto retransmissionChannel = m_retransmissionChannelFactory();
+          if(retransmissionChannel != nullptr) {
+            try {
+              auto retransmissionClient = ChiaMdProtocolClient<
+                std::unique_ptr<RetransmissionChannel>>(
+                std::move(retransmissionChannel), m_username, m_password, "",
+                m_sequenceNumber + 1);
+              auto retransmissionSequence = std::uint32_t(0);
+              while(retransmissionSequence < sequenceNumber) {
+                auto buffer = retransmissionClient.ReadBuffer(
+                  Beam::Store(retransmissionSequence));
+                if(retransmissionSequence == (m_sequenceNumber + 1) +
+                    m_pendingMessageBuffers.size()) {
+                  m_pendingMessageBuffers.push_back(std::move(buffer));
+                }
+              }
+            } catch(const std::exception&) {
+              std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+            }
+            if(!m_pendingMessageBuffers.empty()) {
+              return Read();
+            }
+          }
+          std::cout << "Packets dropped: " << (m_sequenceNumber + 1) <<
+            " - " << (sequenceNumber - 1) << std::endl;
+        }
+        m_sequenceNumber = sequenceNumber;
+        auto message = ChiaMessage::Parse(protocolMessage.m_data,
+          protocolMessage.m_length);
+        return message;
       }
-      m_sequenceNumber = sequenceNumber;
-      auto message = ChiaMessage::Parse(protocolMessage.m_data,
-        protocolMessage.m_length);
-      return message;
-    }
+    }, Beam::IO::IOException("Unable to read CHIA message."));
   }
 
   template<typename C, typename R>

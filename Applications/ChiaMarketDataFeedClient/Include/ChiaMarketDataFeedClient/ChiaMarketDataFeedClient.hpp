@@ -3,13 +3,13 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMessage.hpp"
@@ -27,7 +27,7 @@ namespace Nexus::MarketDataService {
    * @param <P> The type of client receiving CHIA messages.
    */
   template<typename M, typename P>
-  class ChiaMarketDataFeedClient : private boost::noncopyable {
+  class ChiaMarketDataFeedClient {
     public:
 
       /**
@@ -69,6 +69,9 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      ChiaMarketDataFeedClient(const ChiaMarketDataFeedClient&) = delete;
+      ChiaMarketDataFeedClient& operator =(
+        const ChiaMarketDataFeedClient&) = delete;
       boost::posix_time::ptime ParseTimestamp(
         boost::posix_time::time_duration timestamp);
       void HandleAddOrderMessage(bool isLongForm, const ChiaMessage& message);
@@ -90,12 +93,16 @@ namespace Nexus::MarketDataService {
   template<typename M, typename P>
   template<typename MF, typename PF>
   ChiaMarketDataFeedClient<M, P>::ChiaMarketDataFeedClient(
-    ChiaConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_protocolClient(std::forward<PF>(protocolClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn(
-        std::bind(&ChiaMarketDataFeedClient::ReadLoop, this))) {}
+      ChiaConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
+      try : m_config(std::move(config)),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_protocolClient(std::forward<PF>(protocolClient)),
+            m_readLoopRoutine(Beam::Routines::Spawn(
+              std::bind(&ChiaMarketDataFeedClient::ReadLoop, this))) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Unable to initialize the CHIA market data feed client."));
+  }
 
   template<typename M, typename P>
   ChiaMarketDataFeedClient<M, P>::~ChiaMarketDataFeedClient() {

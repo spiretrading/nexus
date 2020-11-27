@@ -1,39 +1,37 @@
-#ifndef NEXUS_CHIACONFIGURATION_HPP
-#define NEXUS_CHIACONFIGURATION_HPP
+#ifndef NEXUS_CHIA_CONFIGURATION_HPP
+#define NEXUS_CHIA_CONFIGURATION_HPP
 #include <string>
 #include "Nexus/Definitions/Market.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \struct ChiaConfiguration
-      \brief Stores the configuration for a CHIA market data parser.
-   */
+  /** Stores the configuration for a CHIA market data parser. */
   struct ChiaConfiguration {
 
-    //! Whether to log messages.
+    /** Whether to log messages. */
     bool m_isLoggingMessages;
 
-    //! The market's CountryCode.
+    /** The market's CountryCode. */
     CountryCode m_country;
 
-    //! The market on which the Security is listed.
+    /** The market on which the Security is listed. */
     MarketCode m_primaryMarket;
 
-    //! The Market disseminating the data.
+    /** The Market disseminating the data. */
     MarketCode m_disseminatingMarket;
 
-    //! The MPID to display.
+    /** The MPID to display. */
     std::string m_mpid;
 
-    //! The time used as the origin of market data messages disseminated by
-    //! market data server.
+    /**
+     * The time used as the origin of market data messages disseminated by
+     * market data server.
+     */
     boost::posix_time::ptime m_timeOrigin;
 
-    //! Whether trades should be treated as a time and sale.
+    /** Whether trades should be treated as a time and sale. */
     bool m_isTimeAndSaleFeed;
   };
-}
 }
 
 #endif
