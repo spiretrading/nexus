@@ -14,7 +14,6 @@ QWidget* NameItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new TextInputWidget(index.data().toString(),
     static_cast<QWidget*>(this->parent()));
-  editor->set_style(TextInputWidget::Style::CELL);
   connect(editor, &TextInputWidget::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
   return editor;

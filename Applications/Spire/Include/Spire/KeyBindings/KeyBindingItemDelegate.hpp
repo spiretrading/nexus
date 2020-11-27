@@ -9,6 +9,19 @@ namespace Spire {
   class KeyBindingItemDelegate : public QStyledItemDelegate {
     public:
 
+      //! Represents the state of the delegate's editor.
+      enum class EditorState {
+
+        //! The editor's input value has been accepted.
+        ACCEPTED,
+
+        //! The editor has been closed without submitting a value.
+        CANCELLED,
+
+        //! The editor has been closed and the cell's value should be deleted.
+        DELETED
+      };
+
       //! Constructs a KeyBindingsItemDelegate.
       /*
         \param parent The parent widget.
@@ -25,11 +38,15 @@ namespace Spire {
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
+      //! Returns the state of the delegate's editor.
+      EditorState get_editor_state() const;
+
     protected:
       void on_editing_finished();
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      EditorState m_editor_state;
       CustomVariantItemDelegate* m_item_delegate;
   };
 }

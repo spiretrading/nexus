@@ -17,7 +17,6 @@ QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
   auto editor = new SecurityInputLineEdit(index.data().value<Security>(),
     Ref<SecurityInputModel>(*m_model), false,
     static_cast<QWidget*>(this->parent()));
-  editor->set_style(TextInputWidget::Style::CELL);
   connect(editor, &SecurityInputLineEdit::editingFinished, this,
     &SecurityInputItemDelegate::on_editing_finished);
   return editor;
