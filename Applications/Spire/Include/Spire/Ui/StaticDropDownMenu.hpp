@@ -42,10 +42,10 @@ namespace Spire {
         const QString& display_text, QWidget* parent = nullptr);
 
       //! Returns the number of items in the list.
-      virtual int item_count() const;
+      int item_count() const;
 
       //! Appends an item to the list.
-      virtual void insert_item(DropDownItem* item);
+      void insert_item(DropDownItem* item);
 
       //! Removes and deletes the item at the given index.
       /*!
@@ -57,34 +57,34 @@ namespace Spire {
       /*!
         \param items The items to display.
       */
-      virtual void set_items(const std::vector<QVariant>& items);
+      void set_items(const std::vector<QVariant>& items);
 
       //! Returns the currently selected item.
-      virtual QVariant get_current_item() const;
+      QVariant get_current_item() const;
 
       //! Sets the current item iff the given item is currently in the menu.
       /*!
         \param item The current item.
       */
-      virtual void set_current_item(const QVariant& item);
+      void set_current_item(const QVariant& item);
 
       //! Sets if the list should be shown when the menu is shown.
       /*!
         \param is_list_shown_with_menu True iff the list should be shown when
           the menu is shown.
       */
-      virtual void set_list_shown_with_menu(bool is_list_shown_with_menu);
+      void set_list_shown_with_menu(bool is_list_shown_with_menu);
 
       //! True iff the next item should be activated when the list is shown
       //! using the down arrow key.
-      virtual void set_next_activated(bool is_next_activated);
+      void set_next_activated(bool is_next_activated);
 
       //! Connects a slot to the index selected signal.
-      virtual boost::signals2::connection connect_index_selected_signal(
+      boost::signals2::connection connect_index_selected_signal(
         const IndexSelectedSignal::slot_type& slot) const;
 
       //! Connects a slot to the value selected signal.
-      virtual boost::signals2::connection connect_value_selected_signal(
+      boost::signals2::connection connect_value_selected_signal(
         const ValueSelectedSignal::slot_type& slot) const;
 
     protected:
