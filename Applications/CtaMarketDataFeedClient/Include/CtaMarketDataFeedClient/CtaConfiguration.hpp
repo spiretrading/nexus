@@ -16,7 +16,7 @@ namespace Nexus::MarketDataService {
     bool m_isLoggingMessages;
 
     /** The Country of origin. */
-    Nexus::CountryCode m_country;
+    CountryCode m_country;
 
     /** Maps single character codes to MarketCodes. */
     std::array<MarketCode, 128> m_marketCodes;

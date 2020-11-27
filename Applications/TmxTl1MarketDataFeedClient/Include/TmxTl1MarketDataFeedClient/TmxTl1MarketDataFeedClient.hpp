@@ -1,10 +1,10 @@
 #ifndef NEXUS_TMX_TL1_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_TMX_TL1_MARKET_DATA_FEED_CLIENT_HPP
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -20,7 +20,7 @@ namespace Nexus::MarketDataService {
    * @param S The type of service access client receiving messages.
    */
   template<typename M, typename S>
-  class TmxTl1MarketDataFeedClient : private boost::noncopyable {
+  class TmxTl1MarketDataFeedClient {
     public:
 
       /**
@@ -53,6 +53,9 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      TmxTl1MarketDataFeedClient(const TmxTl1MarketDataFeedClient&) = delete;
+      TmxTl1MarketDataFeedClient& operator =(
+        const TmxTl1MarketDataFeedClient&) = delete;
       boost::optional<Money> ParseMoney(const char* token, int integralSize,
         int fractionalSize);
       boost::optional<int> ParseQuantity(const char* token, int size);
@@ -65,13 +68,17 @@ namespace Nexus::MarketDataService {
   template<typename M, typename S>
   template<typename MF, typename SF>
   TmxTl1MarketDataFeedClient<M, S>::TmxTl1MarketDataFeedClient(
-    TmxTl1Configuration config, MF&& marketDataFeedClient,
-    SF&& serviceAccessClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn(
-        std::bind(&TmxTl1MarketDataFeedClient::ReadLoop, this))) {}
+      TmxTl1Configuration config, MF&& marketDataFeedClient,
+      SF&& serviceAccessClient)
+      try : m_config(std::move(config)),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
+            m_readLoopRoutine(Beam::Routines::Spawn(
+              std::bind(&TmxTl1MarketDataFeedClient::ReadLoop, this))) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the TMX TL1 market data feed client."));
+  }
 
   template<typename M, typename S>
   TmxTl1MarketDataFeedClient<M, S>::~TmxTl1MarketDataFeedClient() {
@@ -215,8 +222,6 @@ namespace Nexus::MarketDataService {
       auto message = std::optional<StampProtocol::StampPacket>();
       try {
         message.emplace(m_serviceAccessClient->Read());
-      } catch(const Beam::IO::NotConnectedException&) {
-        break;
       } catch(const Beam::IO::EndOfFileException&) {
         break;
       }
