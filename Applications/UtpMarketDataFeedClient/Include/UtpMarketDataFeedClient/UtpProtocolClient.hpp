@@ -65,7 +65,7 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   UtpMessage UtpProtocolClient<C>::Read() {
-    Beam::TryOrNest([&] {
+    return Beam::TryOrNest([&] {
       auto sequenceNumber = std::uint64_t();
       auto moldMessage = m_moldClient.Read(Beam::Store(sequenceNumber));
       if(m_sequenceNumber != -1 && sequenceNumber > m_sequenceNumber + 1) {
