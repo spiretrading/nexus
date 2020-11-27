@@ -12,10 +12,9 @@ TimeInForceComboBoxTestWidget::TimeInForceComboBoxTestWidget(QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   auto combo_box = new TimeInForceComboBox(this);
-  combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(combo_box);
-  connect(combo_box, &TimeInForceComboBox::editingFinished, [=] {
-    m_selected_signal(QVariant::fromValue(combo_box->get_time_in_force()));
+  combo_box->connect_selected_signal([=] (auto value) {
+    m_selected_signal(QVariant::fromValue(value));
   });
 }
 

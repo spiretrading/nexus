@@ -8,8 +8,7 @@ using namespace Nexus;
 using namespace Spire;
 
 OrderTypeComboBox::OrderTypeComboBox(QWidget* parent)
-    : QLineEdit(parent) {
-  setReadOnly(true);
+    : QWidget(parent) {
   auto items = [] {
     auto types = std::vector<QVariant>();
     types.reserve(OrderType::COUNT);
@@ -23,7 +22,9 @@ OrderTypeComboBox::OrderTypeComboBox(QWidget* parent)
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
   m_value_connection = m_menu->connect_value_selected_signal(
-    [=] (const auto& value) { Q_EMIT editingFinished(); });
+    [=] (const auto& value) {
+      m_selected_signal(value.value<OrderType>());
+    });
 }
 
 OrderType OrderTypeComboBox::get_order_type() const {
@@ -32,4 +33,9 @@ OrderType OrderTypeComboBox::get_order_type() const {
 
 void OrderTypeComboBox::set_order_type(Nexus::OrderType type) {
   m_menu->set_current_item(QVariant::fromValue(type));
+}
+
+connection OrderTypeComboBox::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }

@@ -8,8 +8,14 @@
 namespace Spire {
 
   //! Represents a combo box for selecting Markets.
-  class MarketComboBox : public QLineEdit {
+  class MarketComboBox : public QWidget {
     public:
+
+      //! Signals that a Market was selected.
+      /*!
+        \param market The MarketCode of the selected Market.
+      */
+      using SelectedSignal = Signal<void (Nexus::MarketCode market)>;
 
       //! Constructs a MarketComboBox.
       /*!
@@ -25,7 +31,12 @@ namespace Spire {
       //! Sets the MarketCode of the current Market.
       void set_market(Nexus::MarketCode market);
 
+      //! Connects a slot to the Market selection signal.
+      boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const;
+
     private:
+      mutable SelectedSignal m_selected_signal;
       StaticDropDownMenu* m_menu;
       boost::signals2::scoped_connection m_value_connection;
   };

@@ -12,10 +12,9 @@ SideComboBoxTestWidget::SideComboBoxTestWidget(QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   auto combo_box = new SideComboBox(this);
-  combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(combo_box);
-  connect(combo_box, &SideComboBox::editingFinished, [=] {
-    m_selected_signal(QVariant::fromValue(combo_box->get_side()));
+  combo_box->connect_selected_signal([=] (auto value) {
+    m_selected_signal(QVariant::fromValue(value));
   });
 }
 

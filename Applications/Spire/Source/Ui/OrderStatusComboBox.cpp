@@ -8,8 +8,7 @@ using namespace Nexus;
 using namespace Spire;
 
 OrderStatusComboBox::OrderStatusComboBox(QWidget* parent)
-    : QLineEdit(parent) {
-  setReadOnly(true);
+    : QWidget(parent) {
   auto items = [] {
     auto statuses = std::vector<QVariant>();
     statuses.reserve(OrderStatus::COUNT);
@@ -23,7 +22,9 @@ OrderStatusComboBox::OrderStatusComboBox(QWidget* parent)
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
   m_value_connection = m_menu->connect_value_selected_signal(
-    [=] (const auto& value) { Q_EMIT editingFinished(); });
+    [=] (const auto& value) {
+      m_selected_signal(value.value<OrderStatus>());
+    });
 }
 
 OrderStatus OrderStatusComboBox::get_order_status() const {
@@ -32,4 +33,9 @@ OrderStatus OrderStatusComboBox::get_order_status() const {
 
 void OrderStatusComboBox::set_order_status(OrderStatus status) {
   m_menu->set_current_item(QVariant::fromValue(status));
+}
+
+connection OrderStatusComboBox::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }

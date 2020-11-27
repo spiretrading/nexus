@@ -8,8 +8,7 @@ using namespace Spire;
 
 CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
     QWidget* parent)
-    : QLineEdit(parent) {
-  setReadOnly(true);
+    : QWidget(parent) {
   auto entries = database.GetEntries();
   auto items = [&] {
     auto currencies = std::vector<QVariant>();
@@ -25,7 +24,7 @@ CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
   m_value_connection = m_menu->connect_value_selected_signal(
-    [=] (const auto& value) { Q_EMIT editingFinished(); });
+    [=] (const auto& value) { m_selected_signal(value.value<CurrencyId>()); });
 }
 
 CurrencyId CurrencyComboBox::get_currency() const {
@@ -34,4 +33,9 @@ CurrencyId CurrencyComboBox::get_currency() const {
 
 void CurrencyComboBox::set_currency(CurrencyId currency) {
   m_menu->set_current_item(QVariant::fromValue(currency));
+}
+
+connection CurrencyComboBox::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }

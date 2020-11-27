@@ -15,10 +15,9 @@ CurrencyComboBoxTestWidget::CurrencyComboBoxTestWidget(QWidget* parent)
   layout->setContentsMargins({});
   auto database = GetDefaultCurrencyDatabase();
   auto combo_box = new CurrencyComboBox(database, this);
-  combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(combo_box);
-  connect(combo_box, &CurrencyComboBox::editingFinished, [=] {
-    m_selected_signal(QVariant::fromValue(combo_box->get_currency()));
+  combo_box->connect_selected_signal([=] (auto value) {
+    m_selected_signal(QVariant::fromValue(value));
   });
 }
 

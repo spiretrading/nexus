@@ -8,8 +8,7 @@ using namespace Nexus;
 using namespace Spire;
 
 TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
-    : QLineEdit(parent) {
-  setReadOnly(true);
+    : QWidget(parent) {
   auto items = [] {
     auto times = std::vector<QVariant>();
     times.reserve(TimeInForce::Type::COUNT);
@@ -23,7 +22,9 @@ TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
   m_value_connection = m_menu->connect_value_selected_signal(
-    [=] (const auto& value) { Q_EMIT editingFinished(); });
+    [=] (const auto& value) {
+      m_selected_signal(value.value<TimeInForce>());
+    });
 }
 
 TimeInForce TimeInForceComboBox::get_time_in_force() const {
@@ -32,4 +33,9 @@ TimeInForce TimeInForceComboBox::get_time_in_force() const {
 
 void TimeInForceComboBox::set_time_in_force(TimeInForce time) {
   m_menu->set_current_item(QVariant::fromValue(time));
+}
+
+connection TimeInForceComboBox::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }

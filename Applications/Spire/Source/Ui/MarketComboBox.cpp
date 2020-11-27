@@ -8,8 +8,7 @@ using namespace Spire;
 
 MarketComboBox::MarketComboBox(const MarketDatabase& database,
     QWidget* parent)
-    : QLineEdit(parent) {
-  setReadOnly(true);
+    : QWidget(parent) {
   auto entries = database.GetEntries();
   auto items = [&] {
     auto markets = std::vector<QVariant>();
@@ -25,7 +24,9 @@ MarketComboBox::MarketComboBox(const MarketDatabase& database,
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
   m_value_connection = m_menu->connect_value_selected_signal(
-    [=] (const auto& value) { Q_EMIT editingFinished(); });
+    [=] (const auto& value) {
+      m_selected_signal(value.value<MarketToken>().m_code);
+    });
 }
 
 MarketCode MarketComboBox::get_market() const {
@@ -34,4 +35,9 @@ MarketCode MarketComboBox::get_market() const {
 
 void MarketComboBox::set_market(MarketCode market) {
   m_menu->set_current_item(QVariant::fromValue<MarketToken>(market));
+}
+
+connection MarketComboBox::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }
