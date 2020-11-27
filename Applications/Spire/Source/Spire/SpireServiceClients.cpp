@@ -1,6 +1,7 @@
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include <stdexcept>
 #include <Beam/IO/ConnectException.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
@@ -74,8 +75,7 @@ SpireServiceClients::SpireServiceClients(
     m_serviceLocatorClient{MakeVirtualServiceLocatorClient(
       &**m_applicationServiceLocatorClient)} {
   try {
-    auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>();
-    definitionsClient->BuildSession(
+    auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     auto minimumVersion = (*definitionsClient)->LoadMinimumSpireClientVersion();
     if(minimumVersion > string{SPIRE_VERSION}) {
@@ -92,8 +92,7 @@ SpireServiceClients::SpireServiceClients(
       "Unable to connect to the definitions service."});
   }
   try {
-    auto registryClient = std::make_unique<ApplicationRegistryClient>();
-    registryClient->BuildSession(
+    auto registryClient = std::make_unique<ApplicationRegistryClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_registryClient = MakeVirtualRegistryClient(ByPassPtr(
       std::move(registryClient)));
@@ -103,8 +102,7 @@ SpireServiceClients::SpireServiceClients(
   }
   try {
     auto administrationClient =
-      std::make_unique<ApplicationAdministrationClient>();
-    administrationClient->BuildSession(
+      std::make_unique<ApplicationAdministrationClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_administrationClient = MakeVirtualAdministrationClient(ByPassPtr(
       std::move(administrationClient)));
@@ -113,8 +111,7 @@ SpireServiceClients::SpireServiceClients(
       "Unable to connect to the administration service."});
   }
   try {
-    auto marketDataClient = std::make_unique<ApplicationMarketDataClient>();
-    marketDataClient->BuildSession(
+    auto marketDataClient = std::make_unique<ApplicationMarketDataClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_marketDataClient = MakeVirtualMarketDataClient(ByPassPtr(
       std::move(marketDataClient)));
@@ -123,8 +120,7 @@ SpireServiceClients::SpireServiceClients(
       "Unable to connect to the market data service."});
   }
   try {
-    auto chartingClient = std::make_unique<ApplicationChartingClient>();
-    chartingClient->BuildSession(
+    auto chartingClient = std::make_unique<ApplicationChartingClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_chartingClient = MakeVirtualChartingClient(ByPassPtr(
       std::move(chartingClient)));
@@ -133,8 +129,7 @@ SpireServiceClients::SpireServiceClients(
       "Unable to connect to the charting service."});
   }
   try {
-    auto complianceClient = std::make_unique<ApplicationComplianceClient>();
-    complianceClient->BuildSession(
+    auto complianceClient = std::make_unique<ApplicationComplianceClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_complianceClient = MakeVirtualComplianceClient(ByPassPtr(
       std::move(complianceClient)));
@@ -159,8 +154,7 @@ SpireServiceClients::SpireServiceClients(
   }
   try {
     auto orderExecutionClient =
-      std::make_unique<ApplicationOrderExecutionClient>();
-    orderExecutionClient->BuildSession(
+      std::make_unique<ApplicationOrderExecutionClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_orderExecutionClient = MakeVirtualOrderExecutionClient(ByPassPtr(
       std::move(orderExecutionClient)));
@@ -169,8 +163,7 @@ SpireServiceClients::SpireServiceClients(
       "Unable to connect to the order execution service."});
   }
   try {
-    auto riskClient = std::make_unique<ApplicationRiskClient>();
-    riskClient->BuildSession(
+    auto riskClient = std::make_unique<ApplicationRiskClient>(
       Ref(*(m_applicationServiceLocatorClient->Get())));
     m_riskClient = MakeVirtualRiskClient(ByPassPtr(std::move(riskClient)));
   } catch(const std::exception&) {

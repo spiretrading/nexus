@@ -3,7 +3,6 @@
 #include <string>
 
 namespace Nexus::ChartingService {
-  class ApplicationChartingClient;
   template<typename B> class ChartingClient;
   template<typename C, typename M> class ChartingServlet;
   class SecurityChartingQuery;

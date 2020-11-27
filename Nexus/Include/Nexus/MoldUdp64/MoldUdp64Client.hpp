@@ -1,12 +1,13 @@
 #ifndef NEXUS_MOLD_UDP_64_CLIENT_HPP
 #define NEXUS_MOLD_UDP_64_CLIENT_HPP
 #include <cstdint>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/throw_exception.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "Nexus/MoldUdp64/MoldUdp64Message.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
 
@@ -17,7 +18,7 @@ namespace Nexus::MoldUdp64 {
    * @param <C> The type of Channel connected to the MoldUdp64 server.
    */
   template<typename C>
-  class MoldUdp64Client : private boost::noncopyable {
+  class MoldUdp64Client {
     public:
 
       /** The type of Channel connected to the MoldUdp64 server. */
@@ -28,7 +29,7 @@ namespace Nexus::MoldUdp64 {
        * @param channel The Channel to connect to the MoldUdp64 server
        */
       template<typename CF>
-      MoldUdp64Client(CF&& channel);
+      explicit MoldUdp64Client(CF&& channel);
 
       ~MoldUdp64Client();
 
@@ -44,21 +45,27 @@ namespace Nexus::MoldUdp64 {
       void Close();
 
     private:
-      using Buffer = typename Channel::Reader::Buffer;
       Beam::GetOptionalLocalPtr<C> m_channel;
-      Buffer m_buffer;
+      Beam::IO::SharedBuffer m_buffer;
       MoldUdp64Packet m_packet;
       const char* m_source;
       std::size_t m_remainingSize;
       std::uint64_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
+
+      MoldUdp64Client(const MoldUdp64Client&) = delete;
+      MoldUdp64Client& operator =(const MoldUdp64Client&) = delete;
   };
 
   template<typename C>
   template<typename CF>
   MoldUdp64Client<C>::MoldUdp64Client(CF&& channel)
-    : m_channel(std::forward<C>(channel)),
-      m_sequenceNumber(-1) {}
+    try : m_channel(std::forward<C>(channel)),
+          m_sequenceNumber(-1) {
+    } catch(const std::exception&) {
+      std::throw_with_nested(Beam::IO::ConnectException(
+        "MoldUDP64 client failed to connect."));
+    }
 
   template<typename C>
   MoldUdp64Client<C>::~MoldUdp64Client() {
@@ -74,14 +81,15 @@ namespace Nexus::MoldUdp64 {
   template<typename C>
   MoldUdp64Message MoldUdp64Client<C>::Read(
       Beam::Out<std::uint64_t> sequenceNumber) {
-    m_openState.EnsureOpen();
     if(m_sequenceNumber == -1 ||
         m_sequenceNumber == m_packet.m_sequenceNumber + m_packet.m_count) {
       while(true) {
         m_buffer.Reset();
-        m_channel->GetReader().Read(Beam::Store(m_buffer));
-        m_packet = MoldUdp64Packet::Parse(
-          m_buffer.GetData(), m_buffer.GetSize());
+        Beam::TryOrNest([&] {
+          m_channel->GetReader().Read(Beam::Store(m_buffer));
+          m_packet = MoldUdp64Packet::Parse(
+            m_buffer.GetData(), m_buffer.GetSize());
+        }, Beam::IO::IOException("Failed to read MoldUDP64 packet."));
         if(m_packet.m_count != 0) {
           m_sequenceNumber = m_packet.m_sequenceNumber;
           m_source = m_packet.m_payload;
@@ -90,7 +98,9 @@ namespace Nexus::MoldUdp64 {
         }
       }
     }
-    auto message = MoldUdp64Message::Parse(m_source, m_remainingSize);
+    auto message = Beam::TryOrNest([&] {
+      return MoldUdp64Message::Parse(m_source, m_remainingSize);
+    }, Beam::IO::IOException("Failed to read MoldUDP64 packet."));
     auto messageSize = message.m_length + sizeof(message.m_length);
     m_remainingSize -= messageSize;
     m_source += messageSize;

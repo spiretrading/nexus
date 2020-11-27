@@ -8,6 +8,7 @@
 #include <vector>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/hash.hpp>
@@ -164,13 +165,16 @@ namespace Details {
    */
   inline CountryDatabase::Entry ParseCountryDatabaseEntry(
       const YAML::Node& node) {
-    auto entry = CountryDatabase::Entry();
-    entry.m_name = Beam::Extract<std::string>(node, "name");
-    entry.m_twoLetterCode = Beam::Extract<std::string>(node, "two_letter_code");
-    entry.m_threeLetterCode = Beam::Extract<std::string>(node,
-      "three_letter_code");
-    entry.m_code = Beam::Extract<CountryCode>(node, "code");
-    return entry;
+    return Beam::TryOrNest([&] {
+      auto entry = CountryDatabase::Entry();
+      entry.m_name = Beam::Extract<std::string>(node, "name");
+      entry.m_twoLetterCode = Beam::Extract<std::string>(node,
+        "two_letter_code");
+      entry.m_threeLetterCode = Beam::Extract<std::string>(node,
+        "three_letter_code");
+      entry.m_code = Beam::Extract<CountryCode>(node, "code");
+      return entry;
+    }, std::runtime_error("Failed to parse country database entry."));
   }
 
   /**
@@ -179,11 +183,13 @@ namespace Details {
    * @return The CountryDatabase represented by the <i>node</i>.
    */
   inline CountryDatabase ParseCountryDatabase(const YAML::Node& node) {
-    auto database = CountryDatabase();
-    for(auto& entryNode : node) {
-      database.Add(ParseCountryDatabaseEntry(entryNode));
-    }
-    return database;
+    return Beam::TryOrNest([&] {
+      auto database = CountryDatabase();
+      for(auto& entryNode : node) {
+        database.Add(ParseCountryDatabaseEntry(entryNode));
+      }
+      return database;
+    }, std::runtime_error("Failed to parse country database."));
   }
 
   inline std::ostream& operator <<(std::ostream& out, CountryCode code) {

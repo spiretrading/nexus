@@ -6,6 +6,7 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
@@ -172,24 +173,26 @@ namespace Nexus {
   inline MarketDatabase::Entry ParseMarketDatabaseEntry(const YAML::Node& node,
       const CountryDatabase& countryDatabase,
       const CurrencyDatabase& currencyDatabase) {
-    auto entry = MarketDatabase::Entry();
-    entry.m_code = Beam::Extract<std::string>(node, "code");
-    entry.m_countryCode = ParseCountryCode(
-      Beam::Extract<std::string>(node, "country_code"), countryDatabase);
-    if(entry.m_countryCode == CountryCode::NONE) {
-      BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-        "Invalid country code.", node.Mark()));
-    }
-    entry.m_timeZone = Beam::Extract<std::string>(node, "time_zone");
-    entry.m_currency = ParseCurrency(
-      Beam::Extract<std::string>(node, "currency"), currencyDatabase);
-    if(entry.m_currency == CurrencyId::NONE) {
-      BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid currency.",
-        node.Mark()));
-    }
-    entry.m_description = Beam::Extract<std::string>(node, "description");
-    entry.m_displayName = Beam::Extract<std::string>(node, "display_name");
-    return entry;
+    return Beam::TryOrNest([&] {
+      auto entry = MarketDatabase::Entry();
+      entry.m_code = Beam::Extract<std::string>(node, "code");
+      entry.m_countryCode = ParseCountryCode(
+        Beam::Extract<std::string>(node, "country_code"), countryDatabase);
+      if(entry.m_countryCode == CountryCode::NONE) {
+        BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
+          "Invalid country code.", node.Mark()));
+      }
+      entry.m_timeZone = Beam::Extract<std::string>(node, "time_zone");
+      entry.m_currency = ParseCurrency(
+        Beam::Extract<std::string>(node, "currency"), currencyDatabase);
+      if(entry.m_currency == CurrencyId::NONE) {
+        BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid currency.",
+          node.Mark()));
+      }
+      entry.m_description = Beam::Extract<std::string>(node, "description");
+      entry.m_displayName = Beam::Extract<std::string>(node, "display_name");
+      return entry;
+    }, std::runtime_error("Failed to parse market database entry."));
   }
 
   /**
@@ -202,12 +205,14 @@ namespace Nexus {
   inline MarketDatabase ParseMarketDatabase(const YAML::Node& node,
       const CountryDatabase& countryDatabase,
       const CurrencyDatabase& currencyDatabase) {
-    auto marketDatabase = MarketDatabase();
-    for(auto& node : node) {
-      marketDatabase.Add(ParseMarketDatabaseEntry(node, countryDatabase,
-        currencyDatabase));
-    }
-    return marketDatabase;
+    return Beam::TryOrNest([&] {
+      auto marketDatabase = MarketDatabase();
+      for(auto& node : node) {
+        marketDatabase.Add(ParseMarketDatabaseEntry(node, countryDatabase,
+          currencyDatabase));
+      }
+      return marketDatabase;
+    }, std::runtime_error("Failed to parse market database."));
   }
 
   /**

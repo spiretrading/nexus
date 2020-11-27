@@ -4,15 +4,14 @@
 #include <string>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/Timer.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/throw_exception.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "Nexus/SoupBinTcp/HeartbeatPackets.hpp"
 #include "Nexus/SoupBinTcp/LoginPackets.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcp.hpp"
@@ -26,7 +25,7 @@ namespace Nexus::SoupBinTcp {
    * @param <T> The type of Timer used for heartbeats.
    */
   template<typename C, typename T>
-  class SoupBinTcpClient : private boost::noncopyable {
+  class SoupBinTcpClient {
     public:
 
       /** The Channel connected to the SoupBinTCP server. */
@@ -70,13 +69,15 @@ namespace Nexus::SoupBinTcp {
     private:
       Beam::GetOptionalLocalPtr<C> m_channel;
       Beam::GetOptionalLocalPtr<T> m_timer;
-      typename Channel::Reader::Buffer m_buffer;
+      Beam::IO::SharedBuffer m_buffer;
       std::string m_session;
       std::uint64_t m_sequenceNumber;
       Beam::Routines::RoutineHandler m_heartbeatLoop;
       std::shared_ptr<Beam::Queue<Beam::Threading::Timer::Result>> m_timerQueue;
       Beam::IO::OpenState m_openState;
 
+      SoupBinTcpClient(const SoupBinTcpClient&) = delete;
+      SoupBinTcpClient& operator =(const SoupBinTcpClient&) = delete;
       void HeartbeatLoop();
   };
 
@@ -92,10 +93,10 @@ namespace Nexus::SoupBinTcp {
   SoupBinTcpClient<C, T>::SoupBinTcpClient(const std::string& username,
       const std::string& password, const std::string& session,
       std::uint64_t sequenceNumber, CF&& channel, TF&& timer)
-      : m_channel(std::forward<CF>(channel)),
-        m_timer(std::forward<TF>(timer)),
-        m_timerQueue(
-          std::make_shared<Beam::Queue<Beam::Threading::Timer::Result>>()) {
+      try : m_channel(std::forward<CF>(channel)),
+            m_timer(std::forward<TF>(timer)),
+            m_timerQueue(
+              std::make_shared<Beam::Queue<Beam::Threading::Timer::Result>>()) {
     m_timer->GetPublisher().Monitor(m_timerQueue);
     try {
       BuildLoginRequestPacket(username, password, session, sequenceNumber,
@@ -134,13 +135,17 @@ namespace Nexus::SoupBinTcp {
       Close();
       BOOST_RETHROW;
     }
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "SoupBinTCP client failed to connect."));
   }
 
   template<typename C, typename T>
   SoupBinTcpPacket SoupBinTcpClient<C, T>::Read() {
-    m_openState.EnsureOpen();
     m_buffer.Reset();
-    return ReadPacket(m_channel->GetReader(), Beam::Store(m_buffer));
+    return Beam::TryOrNest([&] {
+      return ReadPacket(m_channel->GetReader(), Beam::Store(m_buffer));
+    }, Beam::IO::IOException("Failed to read SoupBinTCP packet."));
   }
 
   template<typename C, typename T>

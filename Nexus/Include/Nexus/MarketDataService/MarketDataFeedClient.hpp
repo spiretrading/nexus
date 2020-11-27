@@ -62,9 +62,9 @@ namespace Nexus::MarketDataService {
 
       /**
        * Adds or updates a SecurityInfo.
-       * @param securityInfo The SecurityInfo to add or update.
+       * @param info The SecurityInfo to add or update.
        */
-      void Add(const SecurityInfo& securityInfo);
+      void Add(const SecurityInfo& info);
 
       /**
        * Publishes an OrderImbalance.
@@ -205,25 +205,28 @@ namespace Nexus::MarketDataService {
   boost::optional<Beam::ServiceLocator::ServiceEntry>
       FindMarketDataFeedService(CountryCode country,
       ServiceLocatorClient& serviceLocatorClient) {
-    auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
-    for(auto& entry : services) {
-      auto& properties = entry.GetProperties();
-      auto countriesProperty = properties.Get("countries");
-      if(!countriesProperty) {
-        return entry;
-      } else if(auto countriesList = boost::get<std::vector<Beam::JsonValue>>(
-          &*countriesProperty)) {
-        for(auto countryEntry : *countriesList) {
-          if(auto value = boost::get<double>(&countryEntry)) {
-            if(static_cast<CountryCode>(static_cast<std::uint16_t>(*value)) ==
-                country) {
-              return entry;
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
+      for(auto& entry : services) {
+        auto& properties = entry.GetProperties();
+        auto countriesProperty = properties.Get("countries");
+        if(!countriesProperty) {
+          return boost::make_optional(entry);
+        } else if(auto countriesList = boost::get<std::vector<Beam::JsonValue>>(
+            &*countriesProperty)) {
+          for(auto countryEntry : *countriesList) {
+            if(auto value = boost::get<double>(&countryEntry)) {
+              if(static_cast<CountryCode>(static_cast<std::uint16_t>(*value)) ==
+                  country) {
+                return boost::make_optional(entry);
+              }
             }
           }
         }
       }
-    }
-    return boost::none;
+      return boost::optional<Beam::ServiceLocator::ServiceEntry>();
+    }, "Failed to find market data feed service: " +
+      boost::lexical_cast<std::string>(country));
   }
 
   template<typename O, typename S, typename P, typename H>
@@ -243,8 +246,9 @@ namespace Nexus::MarketDataService {
   MarketDataFeedClient<O, S, P, H>::MarketDataFeedClient(CF&& channel,
       const Authenticator& authenticator, SF&& samplingTimer,
       HF&& heartbeatTimer)
-      : m_client(std::forward<CF>(channel), std::forward<HF>(heartbeatTimer)),
-        m_samplingTimer(std::forward<SF>(samplingTimer)) {
+      try : m_client(std::forward<CF>(channel),
+              std::forward<HF>(heartbeatTimer)),
+            m_samplingTimer(std::forward<SF>(samplingTimer)) {
     RegisterMarketDataFeedMessages(Beam::Store(m_client.GetSlots()));
     try {
       Beam::ServiceLocator::Authenticate(authenticator, m_client);
@@ -257,6 +261,9 @@ namespace Nexus::MarketDataService {
       Close();
       BOOST_RETHROW;
     }
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to connect to the market data feed server."));
   }
 
   template<typename O, typename S, typename P, typename H>
@@ -265,9 +272,11 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Add(const SecurityInfo& securityInfo) {
-    Beam::Services::SendRecordMessage<SetSecurityInfoMessage>(m_client,
-      securityInfo);
+  void MarketDataFeedClient<O, S, P, H>::Add(const SecurityInfo& info) {
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      Beam::Services::SendRecordMessage<SetSecurityInfoMessage>(m_client, info);
+    }, "Failed to add security info: " +
+      boost::lexical_cast<std::string>(info));
   }
 
   template<typename O, typename S, typename P, typename H>
