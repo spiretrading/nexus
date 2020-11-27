@@ -1,10 +1,10 @@
 #ifndef NEXUS_CTA_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_CTA_MARKET_DATA_FEED_CLIENT_HPP
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -20,7 +20,7 @@ namespace Nexus::MarketDataService {
    * @param <P> The type of client receiving messages.
    */
   template<typename M, typename P>
-  class CtaMarketDataFeedClient : private boost::noncopyable {
+  class CtaMarketDataFeedClient {
     public:
 
       /**
@@ -47,12 +47,14 @@ namespace Nexus::MarketDataService {
 
     private:
       CtaConfiguration m_config;
-      Beam::GetOptionalLocalPtr<M>
-        m_marketDataFeedClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
       Beam::GetOptionalLocalPtr<P> m_protocolClient;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      CtaMarketDataFeedClient(const CtaMarketDataFeedClient&) = delete;
+      CtaMarketDataFeedClient& operator =(
+        const CtaMarketDataFeedClient&) = delete;
       char ParseChar(Beam::Out<const char*> cursor);
       std::string ParseAlphanumeric(std::size_t size,
         Beam::Out<const char*> cursor);
@@ -78,11 +80,15 @@ namespace Nexus::MarketDataService {
   template<typename MF, typename PF>
   CtaMarketDataFeedClient<M, P>::CtaMarketDataFeedClient(
     CtaConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_protocolClient(std::forward<PF>(protocolClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn(
-        std::bind(&CtaMarketDataFeedClient::ReadLoop, this))) {}
+    try : m_config(std::move(config)),
+          m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+          m_protocolClient(std::forward<PF>(protocolClient)),
+          m_readLoopRoutine(Beam::Routines::Spawn(
+            std::bind(&CtaMarketDataFeedClient::ReadLoop, this))) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the CTA market data feed client."));
+  }
 
   template<typename M, typename P>
   CtaMarketDataFeedClient<M, P>::~CtaMarketDataFeedClient() {
@@ -249,7 +255,7 @@ namespace Nexus::MarketDataService {
     auto price = ParseMoney(SHORT_FORM, Beam::Store(token));
     auto size = ParseNumeric<std::uint16_t>(Beam::Store(token));
     *cursor = token;
-    return Quote{price, size, side};
+    return Quote(price, size, side);
   }
 
   template<typename M, typename P>
@@ -263,7 +269,7 @@ namespace Nexus::MarketDataService {
     auto size = ParseNumeric<std::uint32_t>(Beam::Store(token));
     token += sizeof(std::uint32_t);
     *cursor = token;
-    return Quote{price, size, side};
+    return Quote(price, size, side);
   }
 
   template<typename M, typename P>
@@ -287,7 +293,7 @@ namespace Nexus::MarketDataService {
     if(nationalBboIndicator == 'G') {
       auto bboQuote = BboQuote(bid, ask, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+        SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'T') {
       auto bboBid = HandleShortNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
@@ -295,7 +301,7 @@ namespace Nexus::MarketDataService {
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+        SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'U') {
       auto bboBid = HandleLongNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
@@ -303,12 +309,12 @@ namespace Nexus::MarketDataService {
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+        SecurityBboQuote(bboQuote, security));
     }
     auto marketQuote = MarketQuote(market, bid, ask,
       message.m_header.m_timestamp);
     m_marketDataFeedClient->PublishMarketQuote(
-      SecurityMarketQuote{marketQuote, security});
+      SecurityMarketQuote(marketQuote, security));
   }
 
   template<typename M, typename P>
@@ -346,7 +352,7 @@ namespace Nexus::MarketDataService {
     if(nationalBboIndicator == 'G') {
       auto bboQuote = BboQuote(bid, ask, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+        SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'T') {
       auto bboBid = HandleShortNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
@@ -354,7 +360,7 @@ namespace Nexus::MarketDataService {
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+        SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'U') {
       auto bboBid = HandleLongNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
@@ -367,7 +373,7 @@ namespace Nexus::MarketDataService {
     auto marketQuote = MarketQuote(market, bid, ask,
       message.m_header.m_timestamp);
     m_marketDataFeedClient->PublishMarketQuote(
-      SecurityMarketQuote{marketQuote, security});
+      SecurityMarketQuote(marketQuote, security));
   }
 
   template<typename M, typename P>
@@ -389,7 +395,7 @@ namespace Nexus::MarketDataService {
       quantity, condition, market.GetData());
     auto security = Security(symbol, primaryMarket, m_config.m_country);
     m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale{timeAndSale, security});
+      SecurityTimeAndSale(timeAndSale, security));
   }
 
   template<typename M, typename P>
@@ -419,7 +425,7 @@ namespace Nexus::MarketDataService {
       quantity, condition, market.GetData());
     auto security = Security(symbol, primaryMarket, m_config.m_country);
     m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale{timeAndSale, security});
+      SecurityTimeAndSale(timeAndSale, security));
   }
 
   template<typename M, typename P>

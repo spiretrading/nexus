@@ -2,6 +2,7 @@
 #define NEXUS_HKEX_PROTOCOL_CLIENT_HPP
 #include <cstdint>
 #include <utility>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -9,6 +10,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "HkexMarketDataFeedClient/HkexMessage.hpp"
 #include "HkexMarketDataFeedClient/HkexPacket.hpp"
 
@@ -29,8 +31,8 @@ namespace Nexus::MarketDataService {
        * Constructs a HkexProtocolClient.
        * @param channel The channel receiving the packets to parse.
        */
-      template<typename ChannelForward>
-      HkexProtocolClient(ChannelForward&& channel);
+      template<typename CF>
+      HkexProtocolClient(CF&& channel);
 
       ~HkexProtocolClient();
 
@@ -54,14 +56,21 @@ namespace Nexus::MarketDataService {
       HkexPacket m_packet;
       const char* m_source;
       std::size_t m_remainingSize;
+
+      HkexProtocolClient(const HkexProtocolClient&) = delete;
+      HkexProtocolClient& operator =(const HkexProtocolClient&) = delete;
   };
 
   template<typename C>
-  template<typename ChannelForward>
-  HkexProtocolClient<C>::HkexProtocolClient(ChannelForward&& channel)
-    : m_channel(std::forward<ChannelForward>(channel)),
-      m_sequenceNumber(-1),
-      m_remainingSize(0) {}
+  template<typename CF>
+  HkexProtocolClient<C>::HkexProtocolClient(CF&& channel)
+    try : m_channel(std::forward<CF>(channel)),
+          m_sequenceNumber(-1),
+          m_remainingSize(0) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the HKEX protocol client."));
+  }
 
   template<typename C>
   HkexProtocolClient<C>::~HkexProtocolClient() {
@@ -77,26 +86,28 @@ namespace Nexus::MarketDataService {
   template<typename C>
   HkexMessage HkexProtocolClient<C>::Read(
       Beam::Out<std::uint32_t> sequenceNumber) {
-    if(m_sequenceNumber == -1 ||
-        m_sequenceNumber == m_packet.m_sequenceNumber + m_packet.m_count) {
-      while(true) {
-        m_buffer.Reset();
-        m_channel->GetReader().Read(Beam::Store(m_buffer));
-        m_packet = HkexPacket::Parse(m_buffer.GetData(), m_buffer.GetSize());
-        if(m_packet.m_count != 0) {
-          m_sequenceNumber = m_packet.m_sequenceNumber;
-          m_source = m_packet.m_payload;
-          m_remainingSize = m_buffer.GetSize() - HkexPacket::HEADER_LENGTH;
-          break;
+    return Beam::TryOrNest([&] {
+      if(m_sequenceNumber == -1 ||
+          m_sequenceNumber == m_packet.m_sequenceNumber + m_packet.m_count) {
+        while(true) {
+          m_buffer.Reset();
+          m_channel->GetReader().Read(Beam::Store(m_buffer));
+          m_packet = HkexPacket::Parse(m_buffer.GetData(), m_buffer.GetSize());
+          if(m_packet.m_count != 0) {
+            m_sequenceNumber = m_packet.m_sequenceNumber;
+            m_source = m_packet.m_payload;
+            m_remainingSize = m_buffer.GetSize() - HkexPacket::HEADER_LENGTH;
+            break;
+          }
         }
       }
-    }
-    auto message = HkexMessage::Parse(&m_packet, m_source, m_remainingSize);
-    m_remainingSize -= message.m_size;
-    m_source += message.m_size;
-    *sequenceNumber = m_sequenceNumber;
-    ++m_sequenceNumber;
-    return message;
+      auto message = HkexMessage::Parse(&m_packet, m_source, m_remainingSize);
+      m_remainingSize -= message.m_size;
+      m_source += message.m_size;
+      *sequenceNumber = m_sequenceNumber;
+      ++m_sequenceNumber;
+      return message;
+    }, Beam::IO::IOException("Failed to read HKEX message."));
   }
 
   template<typename C>

@@ -13,17 +13,15 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "AsxItchMarketDataFeedClient/AsxItchMarketDataFeedClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpClient.hpp"
-#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
-#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;

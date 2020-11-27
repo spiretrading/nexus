@@ -2,6 +2,7 @@
 #define NEXUS_HKEX_MARKET_DATA_FEED_CLIENT_HPP
 #include <iostream>
 #include <unordered_map>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -67,6 +68,9 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      HkexMarketDataFeedClient(const HkexMarketDataFeedClient&) = delete;
+      HkexMarketDataFeedClient& operator =(
+        const HkexMarketDataFeedClient&) = delete;
       Entry& GetEntry(const Security& security);
       Security ParseSecurity(Beam::Out<const char*> cursor) const;
       Money ParsePrice(Beam::Out<const char*> cursor) const;
@@ -87,11 +91,15 @@ namespace Nexus::MarketDataService {
   template<typename C, typename P>
   template<typename MF, typename PF>
   HkexMarketDataFeedClient<C, P>::HkexMarketDataFeedClient(
-    HkexConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
-    : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-      m_protocolClient(std::forward<PF>(protocolClient)),
-      m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {}
+      HkexConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
+      try : m_config(std::move(config)),
+            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+            m_protocolClient(std::forward<PF>(protocolClient)),
+            m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the HKEX market data feed client."));
+  }
 
   template<typename C, typename P>
   HkexMarketDataFeedClient<C, P>::~HkexMarketDataFeedClient() {

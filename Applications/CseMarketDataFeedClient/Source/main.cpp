@@ -1,11 +1,4 @@
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
 #include <unordered_map>
-#include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
-#include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
-#include <Beam/Codecs/ZLibDecoder.hpp>
-#include <Beam/Codecs/ZLibEncoder.hpp>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
@@ -13,8 +6,6 @@
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
@@ -22,8 +13,6 @@
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/functional/factory.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/throw_exception.hpp>
 #include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
 #include "CseMarketDataFeedClient/CseServiceAccessClient.hpp"
@@ -34,9 +23,7 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Network;
-using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace boost;
@@ -55,6 +42,7 @@ namespace {
   using ApplicationCseMarketDataFeedClient = CseMarketDataFeedClient<
     ApplicationMarketDataFeedClient::Client*,
     ApplicationCseServiceAccessClient*, LiveNtpTimeClient*>;
+
   static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
 
   std::vector<SecurityInfo> ParseSecurityInfoList(const std::string& path) {
@@ -97,7 +85,7 @@ namespace {
         "Eastern_Time");
       auto timeZone = timeZones.time_zone_from_region(configTimezone);
       if(timeZone == nullptr) {
-        BOOST_THROW_EXCEPTION(std::runtime_error{"Time zone not found."});
+        BOOST_THROW_EXCEPTION(std::runtime_error("Time zone not found."));
       }
       auto cseConfig = CseConfiguration();
       cseConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",

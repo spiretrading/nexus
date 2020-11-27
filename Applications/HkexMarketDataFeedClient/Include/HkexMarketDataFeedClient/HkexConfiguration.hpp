@@ -3,10 +3,17 @@
 #include "Nexus/Definitions/Market.hpp"
 
 namespace Nexus::MarketDataService {
+
+  /** Stores configuration for a single HKEX feed. */
   struct HkexConfiguration {
+
+    /** Whether to log all packets. */
     bool m_enableLogging;
+
+    /** The market to associate the updates with. */
     MarketDatabase::Entry m_market;
-    MarketCode m_disseminatingMarket;
+
+    /** The MPID to use for HKEX. */
     std::string m_mpid;
   };
 }

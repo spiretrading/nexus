@@ -79,7 +79,6 @@ namespace Nexus::MarketDataService {
       void HandleOrderOrCancelConfirmationReport(
         const StampProtocol::StampMessage& message);
       void HandleOrderTradeReport(const StampProtocol::StampMessage& message);
-      void HandleImbalanceStatus(const StampProtocol::StampMessage& message);
       void ReadLoop();
   };
 

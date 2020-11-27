@@ -1,10 +1,10 @@
 #ifndef NEXUS_CTA_PROTOCOL_CLIENT_HPP
 #define NEXUS_CTA_PROTOCOL_CLIENT_HPP
 #include <cstdint>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <boost/noncopyable.hpp>
 #include "CtaMarketDataFeedClient/CtaMessage.hpp"
 
 namespace Nexus::MarketDataService {
@@ -14,7 +14,7 @@ namespace Nexus::MarketDataService {
    * @param <C> The type of Channel connected to the server.
    */
   template<typename C>
-  class CtaProtocolClient : private boost::noncopyable {
+  class CtaProtocolClient {
     public:
 
       /** The type of Channel connected to the server. */
@@ -25,7 +25,7 @@ namespace Nexus::MarketDataService {
        * @param channel The Channel to connect to the server
        */
       template<typename CF>
-      CtaProtocolClient(CF&& channel);
+      explicit CtaProtocolClient(CF&& channel);
 
       ~CtaProtocolClient();
 
@@ -38,24 +38,29 @@ namespace Nexus::MarketDataService {
       void Close();
 
     private:
-      using Buffer = typename Channel::Reader::Buffer;
       Beam::GetOptionalLocalPtr<C> m_channel;
-      Buffer m_buffer;
+      Beam::IO::SharedBuffer m_buffer;
       const char* m_token;
       CtaBlock m_block;
       std::uint8_t m_blockIndex;
       std::uint32_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
+
+      CtaProtocolClient(const CtaProtocolClient&) = delete;
+      CtaProtocolClient& operator =(const CtaProtocolClient&) = delete;
   };
 
   template<typename C>
   template<typename CF>
   CtaProtocolClient<C>::CtaProtocolClient(CF&& channel)
-      : m_channel(std::forward<C>(channel)),
-        m_token(m_buffer.GetData()),
-        m_blockIndex(0),
-        m_sequenceNumber(-1) {
+      try : m_channel(std::forward<C>(channel)),
+            m_token(m_buffer.GetData()),
+            m_blockIndex(0),
+            m_sequenceNumber(-1) {
     m_block.m_header.m_messageCount = 0;
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to initialize the CTA protocol client."));
   }
 
   template<typename C>
@@ -65,35 +70,36 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   CtaMessage CtaProtocolClient<C>::Read() {
-    m_openState.EnsureOpen();
-    while(m_blockIndex == m_block.m_header.m_messageCount) {
-      m_buffer.Reset();
-      m_channel->GetReader().Read(Beam::Store(m_buffer));
-      auto blockToken = m_buffer.GetData();
-      m_block = CtaBlock::Parse(Beam::Store(blockToken),
-        static_cast<std::uint16_t>(m_buffer.GetSize()));
-      m_blockIndex = 0;
-      m_token = m_block.m_messages;
-      if(m_sequenceNumber == -1 || m_block.m_header.m_sequenceNumber ==
-          m_sequenceNumber + 1) {
-        m_sequenceNumber = m_block.m_header.m_sequenceNumber;
-      } else if(m_block.m_header.m_sequenceNumber > m_sequenceNumber + 1) {
-        std::cout << "Packets dropped: " << (m_sequenceNumber + 1) << " - " <<
-          (m_block.m_header.m_sequenceNumber - 1) << std::endl;
-        m_sequenceNumber = m_block.m_header.m_sequenceNumber;
+    return Beam::TryOrNest([&] {
+      while(m_blockIndex == m_block.m_header.m_messageCount) {
+        m_buffer.Reset();
+        m_channel->GetReader().Read(Beam::Store(m_buffer));
+        auto blockToken = m_buffer.GetData();
+        m_block = CtaBlock::Parse(Beam::Store(blockToken),
+          static_cast<std::uint16_t>(m_buffer.GetSize()));
+        m_blockIndex = 0;
+        m_token = m_block.m_messages;
+        if(m_sequenceNumber == -1 || m_block.m_header.m_sequenceNumber ==
+            m_sequenceNumber + 1) {
+          m_sequenceNumber = m_block.m_header.m_sequenceNumber;
+        } else if(m_block.m_header.m_sequenceNumber > m_sequenceNumber + 1) {
+          std::cout << "Packets dropped: " << (m_sequenceNumber + 1) << " - " <<
+            (m_block.m_header.m_sequenceNumber - 1) << std::endl;
+          m_sequenceNumber = m_block.m_header.m_sequenceNumber;
+        }
       }
-    }
-    auto remainingSize = static_cast<std::uint16_t>(
-      (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
-    try {
-      auto message = CtaMessage::Parse(m_block, Beam::Store(m_token),
-        remainingSize);
-      ++m_blockIndex;
-      return message;
-    } catch(const std::exception&) {
-      m_blockIndex = m_block.m_header.m_messageCount;
-      throw;
-    }
+      auto remainingSize = static_cast<std::uint16_t>(
+        (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
+      try {
+        auto message = CtaMessage::Parse(m_block, Beam::Store(m_token),
+          remainingSize);
+        ++m_blockIndex;
+        return message;
+      } catch(const std::exception&) {
+        m_blockIndex = m_block.m_header.m_messageCount;
+        throw;
+      }
+    }, Beam::IO::IOException("Failed to read CTA message."));
   }
 
   template<typename C>

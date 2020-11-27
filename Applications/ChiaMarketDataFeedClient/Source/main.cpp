@@ -4,7 +4,6 @@
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
-#include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
@@ -12,6 +11,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/optional/optional.hpp>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
@@ -24,7 +24,6 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace boost;
@@ -101,18 +100,16 @@ int main(int argc, const char** argv) {
         options.m_maxDatagramSize);
       return MulticastSocketChannel(host, interface, options);
     }, std::runtime_error("Unable to join CHIA multicast group."));
-    auto retransmissionHost = optional<IpAddress>();
-    auto retransmissionUsername = std::string();
-    auto retransmissionPassword = std::string();
-    TryOrNest([&] {
-      if(config["retransmission_host"]) {
-        retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
-        retransmissionUsername = Extract<std::string>(config,
-          "retransmission_username");
-        retransmissionPassword = Extract<std::string>(config,
-          "retransmission_password");
-      }
-    }, std::runtime_error("Error parsing section 'retransmission_host'."));
+    auto [retransmissionHost, retransmissionUsername, retransmissionPassword] =
+      [&] {
+        if(config["retransmission_host"]) {
+          return std::tuple(
+            make_optional(Extract<IpAddress>(config, "retransmission_host")),
+            Extract<std::string>(config, "retransmission_username"),
+            Extract<std::string>(config, "retransmission_password"));
+        }
+        return std::tuple(optional<IpAddress>(), std::string(), std::string());
+      }();
     auto feedChannel = ApplicationFeedChannel(&multicastSocketChannel,
       &multicastSocketChannel.GetReader());
     auto protocolClient = ApplicationProtocolClient(&feedChannel,
