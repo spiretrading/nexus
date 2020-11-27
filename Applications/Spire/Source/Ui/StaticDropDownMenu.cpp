@@ -28,6 +28,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
         scale(6, 4))),
+      m_is_list_shown_with_menu(false),
       m_is_next_activated(true) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
@@ -40,6 +41,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
+  m_menu_list->findChild<ScrollArea*>()->setFocusProxy(this);
   set_items(items);
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
@@ -71,7 +73,23 @@ void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
 }
 
 QVariant StaticDropDownMenu::get_current_item() const {
+  if(m_last_activated_item.isValid()) {
+    return m_last_activated_item;
+  }
   return m_current_item;
+}
+
+void StaticDropDownMenu::set_current_item(const QVariant& item) {
+  for(auto i = 0; i < m_menu_list->item_count(); ++i) {
+    if(m_menu_list->get_value(i) == item) {
+      m_current_item = item;
+      break;
+    }
+  }
+}
+
+void StaticDropDownMenu::set_list_shown_with_menu(bool is_list_shown) {
+  m_is_list_shown_with_menu = is_list_shown;
 }
 
 void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
@@ -156,6 +174,13 @@ void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
   m_menu_list->setFixedWidth(width());
 }
 
+void StaticDropDownMenu::showEvent(QShowEvent* event) {
+  if(m_is_list_shown_with_menu) {
+    m_menu_list->show();
+  }
+  QWidget::showEvent(event);
+}
+
 connection StaticDropDownMenu::connect_index_selected_signal(
     const IndexSelectedSignal::slot_type& slot) const {
   return m_menu_list->connect_index_selected_signal(slot);
@@ -210,8 +235,8 @@ void StaticDropDownMenu::on_item_activated(const QVariant& value) {
 
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
-  m_value_selected_signal(m_current_item);
   m_last_activated_item = QVariant();
+  m_value_selected_signal(m_current_item);
   update();
 }
 

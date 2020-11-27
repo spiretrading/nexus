@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 namespace Spire {
 
@@ -22,12 +23,19 @@ namespace Spire {
       */
       explicit OrderTypeComboBox(QWidget* parent = nullptr);
 
+      //! Returns the current OrderType.
+      Nexus::OrderType get_order_type() const;
+
+      //! Sets the current OrderType.
+      void set_order_type(Nexus::OrderType type);
+
       //! Connects a slot to the OrderType selection signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
     private:
       mutable SelectedSignal m_selected_signal;
+      StaticDropDownMenu* m_menu;
       boost::signals2::scoped_connection m_value_connection;
   };
 }
