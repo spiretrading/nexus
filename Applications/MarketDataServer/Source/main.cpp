@@ -50,10 +50,10 @@ namespace {
   using SqlDataStore = SqlHistoricalDataStore<SqlConnection<MySql::Connection>>;
   using RegistryServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaMarketDataRegistryServlet<
-    MarketDataRegistry*, SessionCachedHistoricalDataStore<
-    AsyncHistoricalDataStore<SqlDataStore*>*>,
-    ApplicationAdministrationClient::Client*>,
-    ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
+      MarketDataRegistry*, SessionCachedHistoricalDataStore<
+        AsyncHistoricalDataStore<SqlDataStore*>*>,
+      ApplicationAdministrationClient::Client*>,
+      ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
     std::shared_ptr<LiveTimer>>;
   using BaseRegistryServlet = MarketDataRegistryServlet<
@@ -62,8 +62,8 @@ namespace {
     ApplicationAdministrationClient::Client*>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
-    MetaMarketDataFeedServlet<BaseRegistryServlet*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      MetaMarketDataFeedServlet<BaseRegistryServlet*>,
+      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
     std::shared_ptr<LiveTimer>>;
 
@@ -96,9 +96,9 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto administrationClient = ApplicationAdministrationClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto countryDatabase = definitionsClient->LoadCountryDatabase();
     auto registryServiceConfig = TryOrNest([&] {
       return ServiceConfiguration::Parse(GetNode(config, "registry_server"),

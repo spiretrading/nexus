@@ -53,9 +53,9 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'service_locator'."));
     auto serviceClients = MakeVirtualServiceClients(
       std::make_unique<ApplicationServiceClients>(
-      serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address));
+        serviceLocatorClientConfig.m_username,
+        serviceLocatorClientConfig.m_password,
+        serviceLocatorClientConfig.m_address));
     auto serviceConfig = TryOrNest([&] {
       return Configuration::Parse(GetNode(config, "server"));
     }, std::runtime_error("Error parsing section 'server'."));
@@ -63,7 +63,7 @@ int main(int argc, const char** argv) {
       [&] (const std::string& username, const std::string& password) {
         return MakeVirtualServiceClients(
           std::make_unique<ApplicationServiceClients>(username, password,
-          serviceLocatorClientConfig.m_address));
+            serviceLocatorClientConfig.m_address));
       };
     auto server = WebPortalServletContainer(Initialize(
       std::move(serviceClientsBuilder), Ref(*serviceClients)),

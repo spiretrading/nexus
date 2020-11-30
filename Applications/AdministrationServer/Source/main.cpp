@@ -39,10 +39,10 @@ using namespace Viper;
 namespace {
   using AdministrationServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaAdministrationServlet<
-    ApplicationServiceLocatorClient::Client*, CachedAdministrationDataStore<
-    SqlAdministrationDataStore<SqlConnection<MySql::Connection>>>>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
+      ApplicationServiceLocatorClient::Client*, CachedAdministrationDataStore<
+        SqlAdministrationDataStore<SqlConnection<MySql::Connection>>>>,
+      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   EntitlementDatabase ParseEntitlements(const YAML::Node& config,
       const CurrencyDatabase& currencies,
@@ -108,20 +108,20 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto entitlements = ParseEntitlements(GetNode(config, "entitlements"),
       definitionsClient->LoadCurrencyDatabase(), serviceLocatorClient);
     auto accountSource =
       [&] (unsigned int id) {
         return serviceLocatorClient->LoadDirectoryEntry(id);
       };
-    auto server = AdministrationServletContainer(
-      Initialize(serviceLocatorClient.Get(),
-      Initialize(serviceLocatorClient.Get(), entitlements,
-      Initialize(Initialize(MakeSqlConnection(MySql::Connection(
-      mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-      mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema)),
-      accountSource)))), Initialize(serviceConfig.m_interface),
+    auto server = AdministrationServletContainer(Initialize(
+      serviceLocatorClient.Get(), Initialize(serviceLocatorClient.Get(),
+        entitlements, Initialize(Initialize(MakeSqlConnection(MySql::Connection(
+          mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
+          mySqlConfig.m_username, mySqlConfig.m_password,
+          mySqlConfig.m_schema)), accountSource)))),
+      Initialize(serviceConfig.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();

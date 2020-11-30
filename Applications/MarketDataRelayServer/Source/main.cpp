@@ -41,15 +41,14 @@ using namespace Nexus::MarketDataService;
 namespace {
   using IncomingMarketDataClientSessionBuilder =
     AuthenticatedServiceProtocolClientBuilder<
-    ApplicationServiceLocatorClient::Client, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+      ApplicationServiceLocatorClient::Client*, MessageProtocol<
+        std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
+        NullEncoder>, LiveTimer>;
   using IncomingMarketDataClient = std::shared_ptr<VirtualMarketDataClient>;
-  using MarketDataRelayServletContainer =
-    ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaMarketDataRelayServlet<IncomingMarketDataClient,
-    ApplicationAdministrationClient::Client*>,
-    ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
+  using MarketDataRelayServletContainer = ServiceProtocolServletContainer<
+    MetaAuthenticationServletAdapter<MetaMarketDataRelayServlet<
+      IncomingMarketDataClient, ApplicationAdministrationClient::Client*>,
+      ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>,
     SizeDeclarativeEncoder<ZLibEncoder>, std::shared_ptr<LiveTimer>>;
   using BaseMarketDataRelayServlet = MarketDataRelayServlet<
@@ -69,9 +68,9 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto administrationClient = ApplicationAdministrationClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto marketDataClientBuilder = [&] {
       const auto SENTINEL = CountryCode::NONE;
@@ -116,10 +115,11 @@ int main(int argc, const char** argv) {
         try {
           auto incomingMarketDataClient = MakeVirtualMarketDataClient(
             std::make_unique<MarketDataClient<
-            IncomingMarketDataClientSessionBuilder>>(
-            BuildBasicMarketDataClientSessionBuilder<
-            IncomingMarketDataClientSessionBuilder>(Ref(*serviceLocatorClient),
-            servicePredicate, REGISTRY_SERVICE_NAME)));
+              IncomingMarketDataClientSessionBuilder>>(
+                BuildBasicMarketDataClientSessionBuilder<
+                  IncomingMarketDataClientSessionBuilder>(
+                    serviceLocatorClient.Get(), servicePredicate,
+                    REGISTRY_SERVICE_NAME)));
           if(lastCountries.empty()) {
             return incomingMarketDataClient;
           }
@@ -141,8 +141,8 @@ int main(int argc, const char** argv) {
       }
       return MakeVirtualMarketDataClient(
         std::make_unique<DistributedMarketDataClient>(
-        std::move(countryToMarketDataClients),
-        std::move(marketToMarketDataClients)));
+          std::move(countryToMarketDataClients),
+          std::move(marketToMarketDataClients)));
     };
     auto entitlements = administrationClient->LoadEntitlements();
     auto clientTimeout = Extract<time_duration>(config, "connection_timeout",

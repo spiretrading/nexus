@@ -421,7 +421,7 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
     .def("make_administrator",
       &AdministrationServiceTestEnvironment::MakeAdministrator,
       call_guard<GilRelease>())
-    .def("build_client",
+    .def("make_client",
       [] (AdministrationServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
         return MakeToPythonAdministrationClient(self.MakeClient(

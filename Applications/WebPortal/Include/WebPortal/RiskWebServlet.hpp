@@ -70,12 +70,12 @@ namespace Nexus::WebPortal {
       };
       VirtualServiceClients* m_serviceClients;
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      std::unique_ptr<Beam::Threading::VirtualTimer> m_portfolioTimer;
       std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
         m_portfolioEntries;
       std::unordered_set<PortfolioModel::Entry> m_updatedPortfolioEntries;
       std::vector<std::shared_ptr<PortfolioSubscriber>> m_porfolioSubscribers;
       PortfolioModel m_portfolioModel;
+      Beam::Threading::TimerBox m_portfolioTimer;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
         Beam::ServiceLocator::DirectoryEntry> m_traderGroups;
       Beam::IO::OpenState m_openState;

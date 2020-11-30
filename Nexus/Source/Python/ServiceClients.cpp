@@ -70,7 +70,7 @@ namespace {
     }
 
     std::unique_ptr<Timer> BuildTimer(time_duration expiry) override {
-      return MakeVirtualTimer(BuildPythonTimer(expiry));
+      return std::make_unique<Timer>(BuildPythonTimer(expiry));
     }
 
     void Close() override {

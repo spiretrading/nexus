@@ -193,7 +193,7 @@ void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
     .def("__del__", [] (RiskServiceTestEnvironment& self) {
       self.Close();
     }, call_guard<GilRelease>())
-    .def("build_client",
+    .def("make_client",
       [] (RiskServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
         return MakeToPythonRiskClient(self.MakeClient(serviceLocatorClient));

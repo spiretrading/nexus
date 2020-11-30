@@ -62,9 +62,6 @@ namespace Nexus::MarketDataService {
   class ApplicationMarketDataFeedClient {
     public:
 
-      /** The type used to build client sessions. */
-      using SessionBuilder = Beam::Services::DefaultSessionBuilder<>;
-
       /** Defines the standard MarketDataFeedClient used for applications. */
       using Client = MarketDataFeedClient<std::string,
         Beam::Threading::LiveTimer, Beam::Services::MessageProtocol<
@@ -81,8 +78,8 @@ namespace Nexus::MarketDataService {
        * @param country The country to publish market data for, used to
        *        determine which market data registry server to connect to.
        */
-      ApplicationMarketDataFeedClient(
-        SessionBuilder::ServiceLocatorClient serviceLocatorClient,
+      template<typename ServiceLocatorClient>
+      ApplicationMarketDataFeedClient(ServiceLocatorClient serviceLocatorClient,
         boost::posix_time::time_duration samplingTime,
         CountryCode country);
 
@@ -126,11 +123,14 @@ namespace Nexus::MarketDataService {
       typename SessionBuilder::ServiceLocatorClient serviceLocatorClient,
       Predicate&& servicePredicate,
       const std::string& service = RELAY_SERVICE_NAME) {
-    return SessionBuilder(serviceLocatorClient,
-      [=, servicePredicate = std::forward<Predicate>(servicePredicate)] {
+    auto clientBox = Beam::ServiceLocator::ServiceLocatorClientBox(
+      &Beam::FullyDereference(serviceLocatorClient));
+    return SessionBuilder(std::move(serviceLocatorClient),
+      [=, servicePredicate = std::forward<Predicate>(servicePredicate)]
+          () mutable {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::ServiceLocator::LocateServiceAddresses(serviceLocatorClient,
-          service, servicePredicate));
+          Beam::ServiceLocator::LocateServiceAddresses(clientBox, service,
+            servicePredicate));
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
@@ -148,11 +148,13 @@ namespace Nexus::MarketDataService {
       BuildMarketDataClientSessionBuilder(
       ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
         serviceLocatorClient, const std::string& service = RELAY_SERVICE_NAME) {
-    return ApplicationMarketDataClient::SessionBuilder(serviceLocatorClient,
-      [=] {
+    auto clientBox = Beam::ServiceLocator::ServiceLocatorClientBox(
+      &Beam::FullyDereference(serviceLocatorClient));
+    return ApplicationMarketDataClient::SessionBuilder(
+      std::move(serviceLocatorClient),
+      [=] () mutable {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::ServiceLocator::LocateServiceAddresses(serviceLocatorClient,
-          service));
+          Beam::ServiceLocator::LocateServiceAddresses(clientBox, service));
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
@@ -194,8 +196,9 @@ namespace Nexus::MarketDataService {
     return &m_client;
   }
 
+  template<typename ServiceLocatorClient>
   inline ApplicationMarketDataFeedClient::ApplicationMarketDataFeedClient(
-      SessionBuilder::ServiceLocatorClient serviceLocatorClient,
+      ServiceLocatorClient serviceLocatorClient,
       boost::posix_time::time_duration samplingTime,
       CountryCode country)
       try : m_client([&] {
@@ -211,7 +214,7 @@ namespace Nexus::MarketDataService {
                     "addresses")));
               return Client(Beam::Initialize(addresses),
                 Beam::ServiceLocator::SessionAuthenticator(
-                  serviceLocatorClient),
+                  std::move(serviceLocatorClient)),
                 Beam::Initialize(samplingTime),
                 Beam::Initialize(boost::posix_time::seconds(10)));
             }()) {

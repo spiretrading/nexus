@@ -107,16 +107,16 @@ namespace Nexus {
     std::string username, std::string password,
     const Beam::Network::IpAddress& address)
     : m_serviceLocatorClient(std::move(username), std::move(password), address),
-      m_registryClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_administrationClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_definitionsClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_marketDataClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_chartingClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_complianceClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_orderExecutionClient(Beam::Ref(*m_serviceLocatorClient)),
-      m_riskClient(Beam::Ref(*m_serviceLocatorClient)),
+      m_registryClient(m_serviceLocatorClient.Get()),
+      m_administrationClient(m_serviceLocatorClient.Get()),
+      m_definitionsClient(m_serviceLocatorClient.Get()),
+      m_marketDataClient(m_serviceLocatorClient.Get()),
+      m_chartingClient(m_serviceLocatorClient.Get()),
+      m_complianceClient(m_serviceLocatorClient.Get()),
+      m_orderExecutionClient(m_serviceLocatorClient.Get()),
+      m_riskClient(m_serviceLocatorClient.Get()),
       m_timeClient(Beam::TimeService::MakeLiveNtpTimeClientFromServiceLocator(
-        m_serviceLocatorClient)) {}
+        *m_serviceLocatorClient)) {}
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
     Close();

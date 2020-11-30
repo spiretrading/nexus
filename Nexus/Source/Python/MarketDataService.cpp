@@ -637,7 +637,7 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const TimeAndSale&)>(
       &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
-    .def("build_client",
+    .def("make_client",
       [] (MarketDataServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
         return MakeToPythonMarketDataClient(self.MakeClient(

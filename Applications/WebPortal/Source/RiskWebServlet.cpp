@@ -44,17 +44,17 @@ RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
     Ref<VirtualServiceClients> serviceClients)
     : m_sessions(sessions.Get()),
       m_serviceClients(serviceClients.Get()),
-      m_portfolioModel(Ref(*m_serviceClients)) {
+      m_portfolioModel(Ref(*m_serviceClients)),
+      m_portfolioTimer(m_serviceClients->BuildTimer(seconds(1))) {
   try {
-    m_portfolioTimer = m_serviceClients->BuildTimer(seconds(1));
-    m_portfolioTimer->GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
+    m_portfolioTimer.GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
       std::bind(&RiskWebServlet::OnPortfolioTimerExpired, this,
       std::placeholders::_1)));
     m_portfolioModel.GetPublisher().Monitor(
       m_tasks.GetSlot<PortfolioModel::Entry>(
       std::bind(&RiskWebServlet::OnPortfolioUpdate, this,
       std::placeholders::_1)));
-    m_portfolioTimer->Start();
+    m_portfolioTimer.Start();
   } catch(const std::exception&) {
     Close();
     BOOST_RETHROW;
@@ -84,7 +84,7 @@ void RiskWebServlet::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
-  m_portfolioTimer->Cancel();
+  m_portfolioTimer.Cancel();
   m_openState.Close();
 }
 
@@ -319,5 +319,5 @@ void RiskWebServlet::OnPortfolioTimerExpired(Timer::Result result) {
       i = m_porfolioSubscribers.erase(i);
     }
   }
-  m_portfolioTimer->Start();
+  m_portfolioTimer.Start();
 }

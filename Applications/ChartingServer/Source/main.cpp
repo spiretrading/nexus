@@ -34,9 +34,9 @@ using namespace Nexus::ChartingService;
 using namespace Nexus::MarketDataService;
 
 namespace {
-  using ChartingServletContainer =
-    ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaChartingServlet<ApplicationMarketDataClient::Client*>,
+  using ChartingServletContainer = ServiceProtocolServletContainer<
+    MetaAuthenticationServletAdapter<MetaChartingServlet<
+      ApplicationMarketDataClient::Client*>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
     std::shared_ptr<LiveTimer>>;
@@ -53,10 +53,9 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto marketDataClient = ApplicationMarketDataClient(
-      Ref(*serviceLocatorClient));
-    auto chartingServer = ChartingServletContainer(
-      Initialize(serviceLocatorClient.Get(),
-      Initialize(marketDataClient.Get())),
+      serviceLocatorClient.Get());
+    auto chartingServer = ChartingServletContainer(Initialize(
+      serviceLocatorClient.Get(), Initialize(marketDataClient.Get())),
       Initialize(serviceConfig.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);

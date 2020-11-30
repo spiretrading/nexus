@@ -280,7 +280,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
       return_value_policy::reference_internal)
     .def("close", &OrderExecutionServiceTestEnvironment::Close,
       call_guard<GilRelease>())
-    .def("build_client",
+    .def("make_client",
       [] (OrderExecutionServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
         return MakeToPythonOrderExecutionClient(

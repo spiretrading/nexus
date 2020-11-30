@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Python/ToPythonRegistryClient.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
@@ -94,14 +95,15 @@ namespace Python {
 
     private:
       std::unique_ptr<Client> m_client;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+      boost::optional<ServiceLocatorClient> m_serviceLocatorClient;
+      boost::optional<RegistryClient> m_registryClient;
       std::unique_ptr<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
-      std::unique_ptr<TimeClient> m_timeClient;
+      boost::optional<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
   };
 
@@ -118,32 +120,33 @@ namespace Python {
   ToPythonServiceClients<C>::ToPythonServiceClients(
     std::unique_ptr<Client> client)
     : m_client(std::move(client)),
-      m_serviceLocatorClient(
-        Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
-        Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
-        &m_client->GetServiceLocatorClient()))),
+      m_serviceLocatorClient(Beam::ServiceLocator::ToPythonServiceLocatorClient<
+        Beam::ServiceLocator::ServiceLocatorClientBox>(
+          &m_client->GetServiceLocatorClient())),
+      m_registryClient(Beam::RegistryService::ToPythonRegistryClient<
+        Beam::RegistryService::RegistryClientBox>(
+          &m_client->GetRegistryClient())),
       m_administrationClient(
         AdministrationService::MakeToPythonAdministrationClient(
-        AdministrationService::MakeVirtualAdministrationClient(
-        &m_client->GetAdministrationClient()))),
+          AdministrationService::MakeVirtualAdministrationClient(
+            &m_client->GetAdministrationClient()))),
       m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
         DefinitionsService::MakeVirtualDefinitionsClient(
-        &m_client->GetDefinitionsClient()))),
+          &m_client->GetDefinitionsClient()))),
       m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
         MarketDataService::MakeVirtualMarketDataClient(
-        &m_client->GetMarketDataClient()))),
+          &m_client->GetMarketDataClient()))),
       m_complianceClient(Compliance::MakeToPythonComplianceClient(
         Compliance::MakeVirtualComplianceClient(
-        &m_client->GetComplianceClient()))),
+          &m_client->GetComplianceClient()))),
       m_orderExecutionClient(
         OrderExecutionService::MakeToPythonOrderExecutionClient(
-        OrderExecutionService::MakeVirtualOrderExecutionClient(
-        &m_client->GetOrderExecutionClient()))),
+          OrderExecutionService::MakeVirtualOrderExecutionClient(
+            &m_client->GetOrderExecutionClient()))),
       m_riskClient(RiskService::MakeToPythonRiskClient(
         RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()))),
-      m_timeClient(Beam::TimeService::MakeToPythonTimeClient(
-        Beam::TimeService::MakeVirtualTimeClient(
-        &m_client->GetTimeClient()))) {}
+      m_timeClient(Beam::TimeService::ToPythonTimeClient<
+        Beam::TimeService::TimeClientBox>(&m_client->GetTimeClient())) {}
 
   template<typename C>
   ToPythonServiceClients<C>::~ToPythonServiceClients() {
@@ -156,6 +159,7 @@ namespace Python {
     m_marketDataClient.reset();
     m_definitionsClient.reset();
     m_administrationClient.reset();
+    m_registryClient.reset();
     m_serviceLocatorClient.reset();
     m_client.reset();
   }
@@ -169,7 +173,7 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::RegistryClient&
       ToPythonServiceClients<C>::GetRegistryClient() {
-    throw std::runtime_error{"Not implemented"};
+    return *m_registryClient;
   }
 
   template<typename C>
@@ -225,7 +229,9 @@ namespace Python {
       ToPythonServiceClients<C>::BuildTimer(
       boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
-    return Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry));
+    return std::make_unique<Timer>(std::in_place_type<
+      Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>>,
+      Beam::Threading::TimerBox(m_client->BuildTimer(expiry)));
   }
 
   template<typename C>
@@ -241,6 +247,7 @@ namespace Python {
     m_marketDataClient->Close();
     m_definitionsClient->Close();
     m_administrationClient->Close();
+    m_registryClient->Close();
     m_serviceLocatorClient->Close();
     m_client->Close();
     m_openState.Close();

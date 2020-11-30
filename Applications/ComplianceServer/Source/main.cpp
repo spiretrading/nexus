@@ -40,10 +40,10 @@ using namespace Viper;
 namespace {
   using ComplianceServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaComplianceServlet<
-    ApplicationServiceLocatorClient::Client*,
-    ApplicationAdministrationClient::Client*, CachedComplianceRuleDataStore<
-    SqlComplianceRuleDataStore<SqlConnection<MySql::Connection>>>,
-    LiveNtpTimeClient*>, ApplicationServiceLocatorClient::Client*>,
+      ApplicationServiceLocatorClient::Client*,
+      ApplicationAdministrationClient::Client*, CachedComplianceRuleDataStore<
+        SqlComplianceRuleDataStore<SqlConnection<MySql::Connection>>>,
+      LiveNtpTimeClient*>, ApplicationServiceLocatorClient::Client*>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
     std::shared_ptr<LiveTimer>>;
 }
@@ -59,18 +59,18 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto administrationClient = ApplicationAdministrationClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
       *serviceLocatorClient);
     auto mySqlConfig = TryOrNest([&] {
       return MySqlConfig::Parse(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto server = ComplianceServletContainer(
-      Initialize(serviceLocatorClient.Get(),
-      Initialize(serviceLocatorClient.Get(), administrationClient.Get(),
-      Initialize(Initialize(MakeSqlConnection(MySql::Connection(
-      mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-      mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema)))),
+    auto server = ComplianceServletContainer(Initialize(
+      serviceLocatorClient.Get(), Initialize(serviceLocatorClient.Get(),
+        administrationClient.Get(), Initialize(Initialize(MakeSqlConnection(
+          MySql::Connection(mySqlConfig.m_address.GetHost(),
+            mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
+            mySqlConfig.m_password, mySqlConfig.m_schema)))),
       timeClient.get())), Initialize(serviceConfig.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
