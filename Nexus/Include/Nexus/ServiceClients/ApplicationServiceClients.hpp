@@ -116,7 +116,7 @@ namespace Nexus {
       m_orderExecutionClient(Beam::Ref(*m_serviceLocatorClient)),
       m_riskClient(Beam::Ref(*m_serviceLocatorClient)),
       m_timeClient(Beam::TimeService::MakeLiveNtpTimeClientFromServiceLocator(
-        *m_serviceLocatorClient)) {}
+        m_serviceLocatorClient)) {}
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
     Close();

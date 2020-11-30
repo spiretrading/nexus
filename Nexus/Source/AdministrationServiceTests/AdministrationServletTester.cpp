@@ -21,8 +21,8 @@ using namespace Nexus::MarketDataService;
 namespace {
   struct Fixture {
     using ServletContainer = TestServiceProtocolServletContainer<
-      MetaAdministrationServlet<VirtualServiceLocatorClient*,
-      LocalAdministrationDataStore*>>;
+      MetaAdministrationServlet<ServiceLocatorClientBox,
+        LocalAdministrationDataStore*>>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     LocalAdministrationDataStore m_dataStore;

@@ -39,17 +39,20 @@ namespace {
 
   using TestServletContainer = TestAuthenticatedServiceProtocolServletContainer<
     MetaRiskServlet<VirtualAdministrationClient*,
-    std::unique_ptr<VirtualMarketDataClient>,
-    std::unique_ptr<VirtualOrderExecutionClient>, TriggerTimer,
-    std::shared_ptr<FixedTimeClient>, LocalRiskDataStore*>>;
+      std::unique_ptr<VirtualMarketDataClient>,
+      std::unique_ptr<VirtualOrderExecutionClient>, TriggerTimer,
+      std::shared_ptr<FixedTimeClient>, LocalRiskDataStore*>>;
 
   using TestInventoryMessage = RecordMessage<InventoryMessage,
     TestServiceProtocolClient>;
 
   struct Client {
-    std::unique_ptr<VirtualServiceLocatorClient> m_serviceLocatorClient;
+    ServiceLocatorClientBox m_serviceLocatorClient;
     std::unique_ptr<VirtualOrderExecutionClient> m_orderExecutionClient;
     std::unique_ptr<TestServiceProtocolClient> m_riskClient;
+
+    Client(ServiceLocatorClientBox serviceLocatorClient)
+      : m_serviceLocatorClient(std::move(serviceLocatorClient)) {}
   };
 
   struct Fixture {
@@ -71,21 +74,19 @@ namespace {
     Fixture()
         : m_accounts(std::make_shared<Queue<DirectoryEntry>>()),
           m_serverConnection(std::make_shared<TestServerConnection>()) {
-      auto serviceLocatorClient =
-        std::shared_ptr(m_serviceLocatorEnvironment.BuildClient());
+      auto serviceLocatorClient = m_serviceLocatorEnvironment.MakeClient();
       m_administrationServiceEnvironment.emplace(serviceLocatorClient);
       m_administrationServiceEnvironment->MakeAdministrator(
         DirectoryEntry::GetRootAccount());
       m_administrationClient = std::shared_ptr(
-        m_administrationServiceEnvironment->BuildClient(
-        Ref(*serviceLocatorClient)));
+        m_administrationServiceEnvironment->MakeClient(serviceLocatorClient));
       m_marketDataServiceEnvironment.emplace(serviceLocatorClient,
         m_administrationClient);
       m_orderExecutionServiceEnvironment.emplace(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(), serviceLocatorClient,
-        m_uidServiceEnvironment.BuildClient(), m_administrationClient,
-        MakeVirtualTimeClient(std::make_unique<FixedTimeClient>(
-        ptime(date(2020, 5, 12), time_duration(4, 12, 18)))),
+        m_uidServiceEnvironment.MakeClient(), m_administrationClient,
+        TimeClientBox(std::in_place_type<FixedTimeClient>,
+          ptime(date(2020, 5, 12), time_duration(4, 12, 18))),
         MakeVirtualOrderExecutionDriver(&m_driver));
       m_orders = std::make_shared<Queue<PrimitiveOrder*>>();
       m_driver.GetPublisher().Monitor(m_orders);
@@ -94,16 +95,13 @@ namespace {
         DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
       m_container.emplace(Initialize(serviceLocatorClient,
         Initialize(m_accounts, &*m_administrationClient,
-        m_marketDataServiceEnvironment->BuildClient(
-        Ref(*serviceLocatorClient)),
-        m_orderExecutionServiceEnvironment->BuildClient(
-        Ref(*serviceLocatorClient)),
-        [] {
-          return std::make_unique<TriggerTimer>();
-        }, std::make_shared<FixedTimeClient>(
-          ptime(date(2020, 5, 12), time_duration(4, 12, 18))), &m_dataStore,
-        exchangeRates, GetDefaultMarketDatabase(),
-        GetDefaultDestinationDatabase())), m_serverConnection,
+          m_marketDataServiceEnvironment->MakeClient(serviceLocatorClient),
+          m_orderExecutionServiceEnvironment->MakeClient(serviceLocatorClient),
+          factory<std::unique_ptr<TriggerTimer>>(),
+          std::make_shared<FixedTimeClient>(
+            ptime(date(2020, 5, 12), time_duration(4, 12, 18))), &m_dataStore,
+          exchangeRates, GetDefaultMarketDatabase(),
+          GetDefaultDestinationDatabase())), m_serverConnection,
         factory<std::unique_ptr<TriggerTimer>>());
       m_marketDataServiceEnvironment->Publish(TSLA, BboQuote(
         Quote(*Money::FromValue("1.00"), 100, Side::BID),
@@ -122,18 +120,16 @@ namespace {
         RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
         RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(1)));
       m_administrationClient->StoreRiskState(account, RiskState::Type::ACTIVE);
-      auto client = Client();
-      client.m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient(
-        name, "1234");
+      auto client = Client(m_serviceLocatorEnvironment.MakeClient(
+        name, "1234"));
       client.m_orderExecutionClient =
-        m_orderExecutionServiceEnvironment->BuildClient(
-        Ref(*client.m_serviceLocatorClient));
+        m_orderExecutionServiceEnvironment->MakeClient(
+        client.m_serviceLocatorClient);
       client.m_riskClient = std::make_unique<TestServiceProtocolClient>(
         Initialize("test", *m_serverConnection), Initialize());
       RegisterRiskServices(Store(client.m_riskClient->GetSlots()));
       RegisterRiskMessages(Store(client.m_riskClient->GetSlots()));
-      auto authenticator = SessionAuthenticator(
-        Ref(*client.m_serviceLocatorClient));
+      auto authenticator = SessionAuthenticator(client.m_serviceLocatorClient);
       authenticator(*client.m_riskClient);
       return client;
     }
@@ -144,10 +140,10 @@ TEST_SUITE("RiskServlet") {
   TEST_CASE_FIXTURE(Fixture, "reset_region") {
     auto client = MakeClient("simba");
     m_administrationServiceEnvironment->MakeAdministrator(
-      client.m_serviceLocatorClient->GetAccount());
+      client.m_serviceLocatorClient.GetAccount());
     auto subscriptionResponse =
       client.m_riskClient->SendRequest<SubscribeRiskPortfolioUpdatesService>();
-    m_accounts->Push(client.m_serviceLocatorClient->GetAccount());
+    m_accounts->Push(client.m_serviceLocatorClient.GetAccount());
     client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
       Side::BID, 200, Money::ONE));
     auto& receivedBid = *m_orders->Pop();
@@ -168,7 +164,7 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(bidMessage != nullptr);
     REQUIRE(bidMessage->GetRecord().inventories.size() == 1);
     REQUIRE(bidMessage->GetRecord().inventories[0].account ==
-      client.m_serviceLocatorClient->GetAccount());
+      client.m_serviceLocatorClient.GetAccount());
     auto bidInventory = bidMessage->GetRecord().inventories[0].inventory;
     REQUIRE(bidInventory.m_position.m_key ==
       RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
@@ -198,7 +194,7 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(askMessage != nullptr);
     REQUIRE(askMessage->GetRecord().inventories.size() == 1);
     REQUIRE(askMessage->GetRecord().inventories[0].account ==
-      client.m_serviceLocatorClient->GetAccount());
+      client.m_serviceLocatorClient.GetAccount());
     auto askInventory = askMessage->GetRecord().inventories[0].inventory;
     REQUIRE(askInventory.m_position.m_key ==
       RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
@@ -215,7 +211,7 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(resetMessage != nullptr);
     REQUIRE(resetMessage->GetRecord().inventories.size() == 1);
     REQUIRE(resetMessage->GetRecord().inventories[0].account ==
-      client.m_serviceLocatorClient->GetAccount());
+      client.m_serviceLocatorClient.GetAccount());
     auto resetInventory = resetMessage->GetRecord().inventories[0].inventory;
     REQUIRE(resetInventory.m_position.m_key ==
       RiskPosition::Key(XIU, DefaultCurrencies::CAD()));

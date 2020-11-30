@@ -43,19 +43,16 @@ namespace {
   struct Fixture {
     using TestServletContainer =
       TestAuthenticatedServiceProtocolServletContainer<
-      MetaOrderExecutionServlet<IncrementalTimeClient,
-      std::shared_ptr<VirtualServiceLocatorClient>,
-      std::unique_ptr<VirtualUidClient>,
-      std::unique_ptr<VirtualAdministrationClient>,
-      std::shared_ptr<MockOrderExecutionDriver>,
-      std::shared_ptr<LocalOrderExecutionDataStore>>>;
-
+        MetaOrderExecutionServlet<IncrementalTimeClient,
+          ServiceLocatorClientBox, UidClientBox,
+          std::unique_ptr<VirtualAdministrationClient>,
+          std::shared_ptr<MockOrderExecutionDriver>,
+          std::shared_ptr<LocalOrderExecutionDataStore>>>;
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     UidServiceTestEnvironment m_uidServiceEnvironment;
     optional<AdministrationServiceTestEnvironment>
       m_administrationServiceEnvironment;
-    std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      m_clientServiceLocatorClient;
+    optional<ServiceLocatorClientBox> m_clientServiceLocatorClient;
     std::shared_ptr<MockOrderExecutionDriver> m_driver;
     std::shared_ptr<LocalOrderExecutionDataStore> m_dataStore;
     optional<TestServletContainer> m_container;
@@ -79,30 +76,28 @@ namespace {
       auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
         "client", "", DirectoryEntry::GetStarDirectory());
       m_administrationServiceEnvironment.emplace(
-        m_serviceLocatorEnvironment.BuildClient("administration_service", ""));
-      auto servletServiceLocatorClient =
-        std::shared_ptr(m_serviceLocatorEnvironment.BuildClient(
-        "order_execution_service", ""));
+        m_serviceLocatorEnvironment.MakeClient("administration_service", ""));
+      auto servletServiceLocatorClient = m_serviceLocatorEnvironment.MakeClient(
+        "order_execution_service", "");
       m_driver = std::make_shared<MockOrderExecutionDriver>();
       m_dataStore = std::make_shared<LocalOrderExecutionDataStore>();
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(servletServiceLocatorClient,
         Initialize(pos_infin, GetDefaultMarketDatabase(),
-        GetDefaultDestinationDatabase(), Initialize(),
-        servletServiceLocatorClient, m_uidServiceEnvironment.BuildClient(),
-        m_administrationServiceEnvironment->BuildClient(
-        Ref(*servletServiceLocatorClient)), m_driver, m_dataStore)),
-        serverConnection, factory<std::unique_ptr<TriggerTimer>>());
+          GetDefaultDestinationDatabase(), Initialize(),
+          servletServiceLocatorClient, m_uidServiceEnvironment.MakeClient(),
+          m_administrationServiceEnvironment->MakeClient(
+            servletServiceLocatorClient), m_driver, m_dataStore)),
+          serverConnection, factory<std::unique_ptr<TriggerTimer>>());
       m_clientProtocol.emplace(Initialize("test", *serverConnection),
         Initialize());
       Nexus::Queries::RegisterQueryTypes(
         Store(m_clientProtocol->GetSlots().GetRegistry()));
       RegisterOrderExecutionServices(Store(m_clientProtocol->GetSlots()));
       RegisterOrderExecutionMessages(Store(m_clientProtocol->GetSlots()));
-      m_clientServiceLocatorClient = m_serviceLocatorEnvironment.BuildClient(
-        "client", "");
-      auto authenticator = SessionAuthenticator(
-        Ref(*m_clientServiceLocatorClient));
+      m_clientServiceLocatorClient.emplace(
+        m_serviceLocatorEnvironment.MakeClient("client", ""));
+      auto authenticator = SessionAuthenticator(*m_clientServiceLocatorClient);
       authenticator(*m_clientProtocol);
       m_clientProtocol->SpawnMessageHandler();
       auto orderSubmissionQuery = AccountQuery();

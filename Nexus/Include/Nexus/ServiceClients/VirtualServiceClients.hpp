@@ -1,9 +1,9 @@
 #ifndef NEXUS_VIRTUAL_SERVICE_CLIENTS_HPP
 #define NEXUS_VIRTUAL_SERVICE_CLIENTS_HPP
-#include <Beam/RegistryService/VirtualRegistryClient.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
-#include <Beam/Threading/VirtualTimer.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/RegistryService/RegistryClientBox.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
+#include <Beam/Threading/TimerBox.hpp>
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
@@ -18,9 +18,9 @@ namespace Nexus {
   class VirtualServiceClients {
     public:
       using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
+        Beam::ServiceLocator::ServiceLocatorClientBox;
 
-      using RegistryClient = Beam::RegistryService::VirtualRegistryClient;
+      using RegistryClient = Beam::RegistryService::RegistryClientBox;
 
       using AdministrationClient =
         AdministrationService::VirtualAdministrationClient;
@@ -38,9 +38,9 @@ namespace Nexus {
 
       using RiskClient = RiskService::VirtualRiskClient;
 
-      using TimeClient = Beam::TimeService::VirtualTimeClient;
+      using TimeClient = Beam::TimeService::TimeClientBox;
 
-      using Timer = Beam::Threading::VirtualTimer;
+      using Timer = Beam::Threading::TimerBox;
 
       virtual ~VirtualServiceClients() = default;
 
@@ -124,8 +124,8 @@ namespace Nexus {
 
     private:
       Beam::GetOptionalLocalPtr<C> m_client;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
-      std::unique_ptr<RegistryClient> m_registryClient;
+      ServiceLocatorClient m_serviceLocatorClient;
+      RegistryClient m_registryClient;
       std::unique_ptr<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
@@ -133,7 +133,7 @@ namespace Nexus {
       std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
-      std::unique_ptr<TimeClient> m_timeClient;
+      TimeClient m_timeClient;
   };
 
   /**
@@ -152,11 +152,8 @@ namespace Nexus {
   template<typename CF>
   WrapperServiceClients<C>::WrapperServiceClients(CF&& client)
     : m_client(std::forward<CF>(client)),
-      m_serviceLocatorClient(
-        Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
-          &m_client->GetServiceLocatorClient())),
-      m_registryClient(Beam::RegistryService::MakeVirtualRegistryClient(
-        &m_client->GetRegistryClient())),
+      m_serviceLocatorClient(&m_client->GetServiceLocatorClient()),
+      m_registryClient(&m_client->GetRegistryClient()),
       m_administrationClient(
         AdministrationService::MakeVirtualAdministrationClient(
           &m_client->GetAdministrationClient())),
@@ -173,19 +170,18 @@ namespace Nexus {
           &m_client->GetOrderExecutionClient())),
       m_riskClient(RiskService::MakeVirtualRiskClient(
         &m_client->GetRiskClient())),
-      m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
-        &m_client->GetTimeClient())) {}
+      m_timeClient(&m_client->GetTimeClient()) {}
 
   template<typename C>
   typename WrapperServiceClients<C>::ServiceLocatorClient&
       WrapperServiceClients<C>::GetServiceLocatorClient() {
-    return *m_serviceLocatorClient;
+    return m_serviceLocatorClient;
   }
 
   template<typename C>
   typename WrapperServiceClients<C>::RegistryClient&
       WrapperServiceClients<C>::GetRegistryClient() {
-    return *m_registryClient;
+    return m_registryClient;
   }
 
   template<typename C>
@@ -233,14 +229,15 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::TimeClient&
       WrapperServiceClients<C>::GetTimeClient() {
-    return *m_timeClient;
+    return m_timeClient;
   }
 
   template<typename C>
   std::unique_ptr<typename WrapperServiceClients<C>::Timer>
       WrapperServiceClients<C>::BuildTimer(
       boost::posix_time::time_duration expiry) {
-    return Beam::Threading::MakeVirtualTimer(m_client->BuildTimer(expiry));
+    return std::make_unique<Beam::Threading::TimerBox>(
+      m_client->BuildTimer(expiry));
   }
 
   template<typename C>

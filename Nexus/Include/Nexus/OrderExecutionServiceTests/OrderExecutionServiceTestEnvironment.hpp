@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDEREXECUTIONSERVICETESTENVIRONMENT_HPP
-#define NEXUS_ORDEREXECUTIONSERVICETESTENVIRONMENT_HPP
+#ifndef NEXUS_ORDER_EXECUTION_SERVICE_TEST_ENVIRONMENT_HPP
+#define NEXUS_ORDER_EXECUTION_SERVICE_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -13,10 +13,9 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
@@ -30,64 +29,60 @@
 
 namespace Nexus::OrderExecutionService::Tests {
 
-  /*! \class OrderExecutionServiceTestEnvironment
-      \brief Wraps most components needed to run an instance of the
-             OrderExecutionService with helper functions.
+  /**
+   * Wraps most components needed to run an instance of the
+   * OrderExecutionService with helper functions.
    */
-  class OrderExecutionServiceTestEnvironment : private boost::noncopyable {
+  class OrderExecutionServiceTestEnvironment {
     public:
 
-      //! Constructs an OrderExecutionServiceTestEnvironment.
-      /*!
-        \param marketDatabase The MarketDatabase to use.
-        \param destinationDatabase The DestinationDatabase to use.
-        \param serviceLocatorClient The ServiceLocatorClient to use.
-        \param uidClient The UidClient to use.
-        \param administrationClient The AdministrationClient to use.
-      */
+      /**
+       * Constructs an OrderExecutionServiceTestEnvironment.
+       * @param marketDatabase The MarketDatabase to use.
+       * @param destinationDatabase The DestinationDatabase to use.
+       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       * @param uidClient The UidClient to use.
+       * @param administrationClient The AdministrationClient to use.
+       */
       OrderExecutionServiceTestEnvironment(MarketDatabase marketDatabase,
         DestinationDatabase destinationDatabase,
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
-        std::shared_ptr<Beam::UidService::VirtualUidClient> uidClient,
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+        Beam::UidService::UidClientBox uidClient,
         std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         administrationClient);
 
-      //! Constructs an OrderExecutionServiceTestEnvironment.
-      /*!
-        \param marketDatabase The MarketDatabase to use.
-        \param destinationDatabase The DestinationDatabase to use.
-        \param serviceLocatorClient The ServiceLocatorClient to use.
-        \param uidClient The UidClient to use.
-        \param administrationClient The AdministrationClient to use.
-        \param timeClient The TimeClient to use.
-        \param driver The OrderExecutionDriver to use.
-      */
+      /**
+       * Constructs an OrderExecutionServiceTestEnvironment.
+       * @param marketDatabase The MarketDatabase to use.
+       * @param destinationDatabase The DestinationDatabase to use.
+       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       * @param uidClient The UidClient to use.
+       * @param administrationClient The AdministrationClient to use.
+       * @param timeClient The TimeClient to use.
+       * @param driver The OrderExecutionDriver to use.
+       */
       OrderExecutionServiceTestEnvironment(MarketDatabase marketDatabase,
         DestinationDatabase destinationDatabase,
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
-        std::shared_ptr<Beam::UidService::VirtualUidClient> uidClient,
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+        Beam::UidService::UidClientBox uidClient,
         std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         administrationClient,
-        std::shared_ptr<Beam::TimeService::VirtualTimeClient> timeClient,
+        Beam::TimeService::TimeClientBox timeClient,
         std::unique_ptr<VirtualOrderExecutionDriver> driver);
 
       ~OrderExecutionServiceTestEnvironment();
 
-      //! Returns the driver used to manage submitted Orders.
+      /** Returns the driver used to manage submitted Orders. */
       VirtualOrderExecutionDriver& GetDriver();
 
-      //! Builds a new OrderExecutionClient.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate the OrderExecutionClient.
-      */
-      std::unique_ptr<VirtualOrderExecutionClient> BuildClient(
-        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+      /**
+       * Builds a new OrderExecutionClient.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate the OrderExecutionClient.
+       */
+      std::unique_ptr<VirtualOrderExecutionClient> MakeClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
-      //! Closes the servlet.
       void Close();
 
     private:
@@ -95,66 +90,67 @@ namespace Nexus::OrderExecutionService::Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-      using UidClient = Beam::UidService::VirtualUidClient;
       using AdministrationClient =
         AdministrationService::VirtualAdministrationClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaOrderExecutionServlet<
-        std::shared_ptr<Beam::TimeService::VirtualTimeClient>,
-        std::shared_ptr<ServiceLocatorClient>, std::shared_ptr<UidClient>,
-        std::shared_ptr<AdministrationClient>, VirtualOrderExecutionDriver*,
-        LocalOrderExecutionDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
-        ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+            MetaOrderExecutionServlet<Beam::TimeService::TimeClientBox,
+              Beam::ServiceLocator::ServiceLocatorClientBox,
+              Beam::UidService::UidClientBox,
+              std::shared_ptr<AdministrationClient>,
+              VirtualOrderExecutionDriver*, LocalOrderExecutionDataStore*>,
+            Beam::ServiceLocator::ServiceLocatorClientBox>,
+          ServerConnection*,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder,
+          std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+          Beam::ServiceLocator::ServiceLocatorClientBox,
+          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
+            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+            Beam::Codecs::NullEncoder>,
+          Beam::Threading::TriggerTimer>;
       LocalOrderExecutionDataStore m_dataStore;
       std::unique_ptr<VirtualOrderExecutionDriver> m_driver;
       ServerConnection m_serverConnection;
       ServiceProtocolServletContainer m_container;
+
+      OrderExecutionServiceTestEnvironment(
+        const OrderExecutionServiceTestEnvironment&) = delete;
+      OrderExecutionServiceTestEnvironment& operator =(
+        const OrderExecutionServiceTestEnvironment&) = delete;
   };
 
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(MarketDatabase marketDatabase,
-    DestinationDatabase destinationDatabase,
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient,
-    std::shared_ptr<Beam::UidService::VirtualUidClient> uidClient,
-    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-    administrationClient)
+      DestinationDatabase destinationDatabase,
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+      Beam::UidService::UidClientBox uidClient,
+      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+      administrationClient)
     : OrderExecutionServiceTestEnvironment(std::move(marketDatabase),
         std::move(destinationDatabase), std::move(serviceLocatorClient),
         std::move(uidClient), std::move(administrationClient),
-        Beam::TimeService::MakeVirtualTimeClient<
-        Beam::TimeService::IncrementalTimeClient>(Beam::Initialize()),
+        Beam::TimeService::TimeClientBox(
+          std::in_place_type<Beam::TimeService::IncrementalTimeClient>),
         MakeVirtualOrderExecutionDriver<MockOrderExecutionDriver>(
-        Beam::Initialize())) {}
+          Beam::Initialize())) {}
 
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(MarketDatabase marketDatabase,
-    DestinationDatabase destinationDatabase,
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient,
-    std::shared_ptr<Beam::UidService::VirtualUidClient> uidClient,
-    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-    administrationClient,
-    std::shared_ptr<Beam::TimeService::VirtualTimeClient> timeClient,
-    std::unique_ptr<VirtualOrderExecutionDriver> driver)
+      DestinationDatabase destinationDatabase,
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+      Beam::UidService::UidClientBox uidClient,
+      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+      administrationClient, Beam::TimeService::TimeClientBox timeClient,
+      std::unique_ptr<VirtualOrderExecutionDriver> driver)
     : m_driver(std::move(driver)),
-      m_container(Beam::Initialize(serviceLocatorClient,
-        Beam::Initialize(boost::posix_time::pos_infin,
-        std::move(marketDatabase), std::move(destinationDatabase),
-        std::move(timeClient), serviceLocatorClient, std::move(uidClient),
+      m_container(Beam::Initialize(serviceLocatorClient, Beam::Initialize(
+        boost::posix_time::pos_infin, std::move(marketDatabase),
+        std::move(destinationDatabase), std::move(timeClient),
+        serviceLocatorClient, std::move(uidClient),
         std::move(administrationClient), &*m_driver, &m_dataStore)),
         &m_serverConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
@@ -170,20 +166,16 @@ namespace Nexus::OrderExecutionService::Tests {
   }
 
   inline std::unique_ptr<VirtualOrderExecutionClient>
-      OrderExecutionServiceTestEnvironment::BuildClient(
-      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient) {
-    ServiceProtocolClientBuilder builder{Beam::Ref(serviceLocatorClient),
-      [=] {
-        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_order_execution_client", m_serverConnection);
-      },
-      [] {
-        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      }};
+      OrderExecutionServiceTestEnvironment::MakeClient(
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
     return MakeVirtualOrderExecutionClient(
       std::make_unique<OrderExecutionClient<ServiceProtocolClientBuilder>>(
-      builder));
+        ServiceProtocolClientBuilder(serviceLocatorClient,
+          std::bind(boost::factory<
+            std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+            "test_order_execution_client", std::ref(m_serverConnection)),
+          boost::factory<
+            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
   }
 
   inline void OrderExecutionServiceTestEnvironment::Close() {

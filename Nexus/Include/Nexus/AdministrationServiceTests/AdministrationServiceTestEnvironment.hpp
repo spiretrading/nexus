@@ -35,8 +35,7 @@ namespace Nexus::AdministrationService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient to use.
        */
       AdministrationServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       /**
        * Constructs an AdministrationServiceTestEnvironment.
@@ -44,8 +43,7 @@ namespace Nexus::AdministrationService::Tests {
        * @param entitlements The entitlement database to use.
        */
       AdministrationServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         MarketDataService::EntitlementDatabase entitlements);
 
       ~AdministrationServiceTestEnvironment();
@@ -62,9 +60,8 @@ namespace Nexus::AdministrationService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the AdministrationClient.
        */
-      std::unique_ptr<VirtualAdministrationClient> BuildClient(
-        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+      std::unique_ptr<VirtualAdministrationClient> MakeClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
 
@@ -73,30 +70,31 @@ namespace Nexus::AdministrationService::Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaAdministrationServlet<std::shared_ptr<ServiceLocatorClient>,
-        LocalAdministrationDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
-        ServerConnection*, Beam::Serialization::BinarySender<
-        Beam::IO::SharedBuffer>, Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+            MetaAdministrationServlet<
+              Beam::ServiceLocator::ServiceLocatorClientBox,
+              LocalAdministrationDataStore*>,
+            Beam::ServiceLocator::ServiceLocatorClientBox>,
+          ServerConnection*,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder,
+          std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        m_serviceLocatorClient;
+        Beam::ServiceLocator::ServiceLocatorClientBox,
+        Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder>,
+        Beam::Threading::TriggerTimer>;
+      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
       LocalAdministrationDataStore m_dataStore;
       ServerConnection m_serverConnection;
       ServiceProtocolServletContainer m_container;
 
       static MarketDataService::EntitlementDatabase MakeDefaultEntitlements(
-        ServiceLocatorClient& client);
+        Beam::ServiceLocator::ServiceLocatorClientBox& client);
       AdministrationServiceTestEnvironment(
         const AdministrationServiceTestEnvironment&) = delete;
       AdministrationServiceTestEnvironment& operator =(
@@ -105,15 +103,14 @@ namespace Nexus::AdministrationService::Tests {
 
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient)
-    : AdministrationServiceTestEnvironment(serviceLocatorClient,
-        MakeDefaultEntitlements(*serviceLocatorClient)) {}
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient)
+    : AdministrationServiceTestEnvironment(std::move(serviceLocatorClient),
+        MakeDefaultEntitlements(serviceLocatorClient)) {}
 
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient, MarketDataService::EntitlementDatabase entitlements)
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+      MarketDataService::EntitlementDatabase entitlements)
     : m_serviceLocatorClient(std::move(serviceLocatorClient)),
       m_container(Beam::Initialize(m_serviceLocatorClient, Beam::Initialize(
         m_serviceLocatorClient, std::move(entitlements), &m_dataStore)),
@@ -127,27 +124,23 @@ namespace Nexus::AdministrationService::Tests {
 
   inline void AdministrationServiceTestEnvironment::MakeAdministrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto administrators = m_serviceLocatorClient->LoadDirectoryEntry(
+    auto administrators = m_serviceLocatorClient.LoadDirectoryEntry(
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
       "administrators");
-    m_serviceLocatorClient->Associate(account, administrators);
+    m_serviceLocatorClient.Associate(account, administrators);
   }
 
   inline std::unique_ptr<VirtualAdministrationClient>
-      AdministrationServiceTestEnvironment::BuildClient(
-      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient) {
-    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [=] {
-        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_administration_client", m_serverConnection);
-      },
-      [] {
-        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      });
+      AdministrationServiceTestEnvironment::MakeClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
     return MakeVirtualAdministrationClient(
       std::make_unique<AdministrationClient<ServiceProtocolClientBuilder>>(
-      builder));
+        ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+          std::bind(boost::factory<std::unique_ptr<
+            ServiceProtocolClientBuilder::Channel>>(),
+            "test_administration_client", std::ref(m_serverConnection)),
+          boost::factory<
+            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
   }
 
   inline void AdministrationServiceTestEnvironment::Close() {
@@ -156,7 +149,7 @@ namespace Nexus::AdministrationService::Tests {
 
   inline MarketDataService::EntitlementDatabase
       AdministrationServiceTestEnvironment::MakeDefaultEntitlements(
-      ServiceLocatorClient& client) {
+      Beam::ServiceLocator::ServiceLocatorClientBox& client) {
     auto entitlementsDirectory = client.MakeDirectory("entitlements",
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
     auto globalEntitlementGroup = client.MakeDirectory("global",
@@ -174,19 +167,19 @@ namespace Nexus::AdministrationService::Tests {
     for(auto& market : markets) {
       globalEntitlement.m_applicability[
         MarketDataService::EntitlementKey(market)].Set(
-        MarketDataService::MarketDataType::TIME_AND_SALE);
+          MarketDataService::MarketDataType::TIME_AND_SALE);
       globalEntitlement.m_applicability[
         MarketDataService::EntitlementKey(market)].Set(
-        MarketDataService::MarketDataType::BOOK_QUOTE);
+          MarketDataService::MarketDataType::BOOK_QUOTE);
       globalEntitlement.m_applicability[
         MarketDataService::EntitlementKey(market)].Set(
-        MarketDataService::MarketDataType::MARKET_QUOTE);
+          MarketDataService::MarketDataType::MARKET_QUOTE);
       globalEntitlement.m_applicability[
         MarketDataService::EntitlementKey(market)].Set(
-        MarketDataService::MarketDataType::BBO_QUOTE);
+          MarketDataService::MarketDataType::BBO_QUOTE);
       globalEntitlement.m_applicability[
         MarketDataService::EntitlementKey(market)].Set(
-        MarketDataService::MarketDataType::ORDER_IMBALANCE);
+          MarketDataService::MarketDataType::ORDER_IMBALANCE);
     }
     auto entitlements = MarketDataService::EntitlementDatabase();
     entitlements.Add(globalEntitlement);

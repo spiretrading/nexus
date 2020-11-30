@@ -30,13 +30,13 @@ namespace {
   const auto TST = Security("TST", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
 
-  //! No special condition.
+  /** No special condition. */
   const auto NONE = 0;
 
-  //! The order being matched was prematurely interrupted.
+  /** The order being matched was prematurely interrupted. */
   const auto INTERRUPTED = 1;
 
-  //! The order being matches is part of a multi-internal match.
+  /** The order being matches is part of a multi-internal match. */
   const auto MULTIPLE_INTERNAL_MATCHES = 2;
 
   struct OrderEntry {
@@ -56,23 +56,22 @@ namespace {
   struct Fixture {
     using TestInternalMatchingOrderExecutionDriver =
       InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
-      VirtualMarketDataClient*, VirtualTimeClient*,
-      std::unique_ptr<VirtualUidClient>, VirtualOrderExecutionDriver*>;
-
+        VirtualMarketDataClient*, TimeClientBox, UidClientBox,
+        VirtualOrderExecutionDriver*>;
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
-    std::unique_ptr<VirtualUidClient> m_uidClient;
+    UidClientBox m_uidClient;
     std::shared_ptr<Queue<const Order*>> m_mockDriverMonitor;
     TestInternalMatchingOrderExecutionDriver m_orderExecutionDriver;
 
     Fixture()
         : m_serviceClients(Ref(m_environment)),
-          m_uidClient(m_environment.GetUidEnvironment().BuildClient()),
+          m_uidClient(m_environment.GetUidEnvironment().MakeClient()),
           m_mockDriverMonitor(std::make_shared<Queue<const Order*>>()),
           m_orderExecutionDriver(DirectoryEntry::GetRootAccount(),
             Initialize(), &m_serviceClients.GetMarketDataClient(),
             &m_serviceClients.GetTimeClient(),
-            m_environment.GetUidEnvironment().BuildClient(),
+            m_environment.GetUidEnvironment().MakeClient(),
             &m_environment.GetOrderExecutionEnvironment().GetDriver()) {
       m_environment.MonitorOrderSubmissions(m_mockDriverMonitor);
     }
@@ -93,7 +92,7 @@ namespace {
       auto orderEntry = OrderEntry();
       orderEntry.m_fields = fields;
       orderEntry.m_remainingQuantity = fields.m_quantity;
-      auto orderInfo = OrderInfo(fields, m_uidClient->LoadNextUid(),
+      auto orderInfo = OrderInfo(fields, m_uidClient.LoadNextUid(),
         second_clock::universal_time());
       orderEntry.m_order = &m_orderExecutionDriver.Submit(orderInfo);
       orderEntry.m_executionReportQueue =

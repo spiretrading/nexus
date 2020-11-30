@@ -4,8 +4,7 @@
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
@@ -94,17 +93,16 @@ namespace {
 void Nexus::Python::ExportApplicationDefinitionsClient(
     pybind11::module& module) {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
-    VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+    ServiceLocatorClientBox, MessageProtocol<std::unique_ptr<TcpSocketChannel>,
+      BinarySender<SharedBuffer>, NullEncoder>, LiveTimer>;
   using Client = DefinitionsClient<SessionBuilder>;
   class_<ToPythonDefinitionsClient<Client>, VirtualDefinitionsClient>(module,
       "ApplicationDefinitionsClient")
     .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
+      [] (ServiceLocatorClientBox serviceLocatorClient) {
         auto addresses = LocateServiceAddresses(serviceLocatorClient,
           DefinitionsService::SERVICE_NAME);
-        auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+        auto sessionBuilder = SessionBuilder(serviceLocatorClient,
           [=] {
             return std::make_unique<TcpSocketChannel>(addresses);
           },

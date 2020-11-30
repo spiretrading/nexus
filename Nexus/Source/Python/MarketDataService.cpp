@@ -9,8 +9,7 @@
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
@@ -334,47 +333,44 @@ namespace {
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
 
   auto MakePythonMarketDataFeedClient(
-      VirtualServiceLocatorClient& serviceLocatorClient,
-      time_duration sampling) {
+      ServiceLocatorClientBox serviceLocatorClient, time_duration sampling) {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       MarketDataService::FEED_SERVICE_NAME);
     return MakeToPythonMarketDataFeedClient(
       std::make_unique<PythonMarketDataFeedClient>(Initialize(addresses),
-      SessionAuthenticator<VirtualServiceLocatorClient>(
-      Ref(serviceLocatorClient)), Initialize(sampling),
-      Initialize(seconds(10))));
+        SessionAuthenticator(serviceLocatorClient), Initialize(sampling),
+        Initialize(seconds(10))));
   }
 
   auto MakePythonMarketDataFeedClient(
-      VirtualServiceLocatorClient& serviceLocatorClient, CountryCode country,
+      ServiceLocatorClientBox serviceLocatorClient, CountryCode country,
       time_duration sampling) {
     auto service = FindMarketDataFeedService(country, serviceLocatorClient);
-    if(!service.is_initialized()) {
+    if(!service) {
       return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
     }
     auto addresses = Parse<std::vector<IpAddress>>(get<std::string>(
       service->GetProperties().At("addresses")));
     return MakeToPythonMarketDataFeedClient(
       std::make_unique<PythonMarketDataFeedClient>(Initialize(addresses),
-      SessionAuthenticator<VirtualServiceLocatorClient>(
-      Ref(serviceLocatorClient)), Initialize(sampling),
-      Initialize(seconds(10))));
+        SessionAuthenticator(serviceLocatorClient), Initialize(sampling),
+        Initialize(seconds(10))));
   }
 }
 
 void Nexus::Python::ExportApplicationMarketDataClient(
     pybind11::module& module) {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
-    VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
-    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+    ServiceLocatorClientBox, MessageProtocol<std::unique_ptr<TcpSocketChannel>,
+      BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>>,
+    LiveTimer>;
   using Client = MarketDataClient<SessionBuilder>;
   class_<ToPythonMarketDataClient<Client>, VirtualMarketDataClient>(
       module, "ApplicationMarketDataClient")
-    .def(init([] (VirtualServiceLocatorClient& serviceLocatorClient) {
+    .def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
       auto addresses = LocateServiceAddresses(serviceLocatorClient,
         MarketDataService::RELAY_SERVICE_NAME);
-      auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+      auto sessionBuilder = SessionBuilder(serviceLocatorClient,
         [=] {
           return std::make_unique<TcpSocketChannel>(addresses);
         },
@@ -390,27 +386,26 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(
     pybind11::module& module) {
   using Client = MarketDataFeedClient<std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
-    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+      SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   class_<ToPythonMarketDataFeedClient<Client>, VirtualMarketDataFeedClient>(
       module, "ApplicationMarketDataFeedClient")
     .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient,
-          CountryCode country, time_duration sampling) {
+      [] (ServiceLocatorClientBox serviceLocatorClient, CountryCode country,
+          time_duration sampling) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, country,
           sampling);
       }), call_guard<GilRelease>())
     .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient,
-          CountryCode country) {
+      [] (ServiceLocatorClientBox serviceLocatorClient, CountryCode country) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, country,
           milliseconds(10));
       }), call_guard<GilRelease>())
     .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient,
+      [] (ServiceLocatorClientBox serviceLocatorClient,
           time_duration sampling) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
       }), call_guard<GilRelease>())
-    .def(init([] (VirtualServiceLocatorClient& serviceLocatorClient) {
+    .def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
       return MakePythonMarketDataFeedClient(serviceLocatorClient,
         milliseconds(10));
     }), call_guard<GilRelease>());
@@ -616,8 +611,7 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
   class_<MarketDataServiceTestEnvironment>(module,
       "MarketDataServiceTestEnvironment")
     .def(init(
-      [] (const std::shared_ptr<VirtualServiceLocatorClient>&
-          serviceLocatorClient,
+      [] (ServiceLocatorClientBox serviceLocatorClient,
           const std::shared_ptr<VirtualAdministrationClient>&
           administrationClient) {
         return std::make_unique<MarketDataServiceTestEnvironment>(
@@ -645,9 +639,9 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
       &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>())
     .def("build_client",
       [] (MarketDataServiceTestEnvironment& self,
-          VirtualServiceLocatorClient& serviceLocatorClient) {
-        return MakeToPythonMarketDataClient(self.BuildClient(
-          Ref(serviceLocatorClient)));
+          ServiceLocatorClientBox serviceLocatorClient) {
+        return MakeToPythonMarketDataClient(self.MakeClient(
+          serviceLocatorClient));
       }, call_guard<GilRelease>());
 }
 

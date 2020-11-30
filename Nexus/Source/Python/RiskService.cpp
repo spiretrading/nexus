@@ -80,16 +80,15 @@ namespace {
 
 void Nexus::Python::ExportApplicationRiskClient(pybind11::module& module) {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
-    VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+    ServiceLocatorClientBox, MessageProtocol<std::unique_ptr<TcpSocketChannel>,
+      BinarySender<SharedBuffer>, NullEncoder>, LiveTimer>;
   using Client = RiskClient<SessionBuilder>;
   class_<ToPythonRiskClient<Client>, VirtualRiskClient>(module,
       "ApplicationRiskClient")
-    .def(init([] (VirtualServiceLocatorClient& serviceLocatorClient) {
+    .def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
       auto addresses = LocateServiceAddresses(serviceLocatorClient,
         RiskService::SERVICE_NAME);
-      auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+      auto sessionBuilder = SessionBuilder(serviceLocatorClient,
         [=] {
           return std::make_unique<TcpSocketChannel>(addresses);
         },
@@ -174,17 +173,15 @@ void Nexus::Python::ExportRiskService(pybind11::module& module) {
 
 void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
   class_<RiskServiceTestEnvironment>(module, "RiskServiceTestEnvironment")
-    .def(init([] (
-          std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
+    .def(init([] (ServiceLocatorClientBox serviceLocatorClient,
           std::shared_ptr<VirtualAdministrationClient> administrationClient,
           std::shared_ptr<VirtualMarketDataClient> marketDataClient,
           std::shared_ptr<VirtualOrderExecutionClient> orderExecutionClient,
-          std::function<std::shared_ptr<VirtualTimer> ()>
-          transitionTimerFactory, std::shared_ptr<VirtualTimeClient> timeClient,
-          std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
-          DestinationDatabase destinations) {
+          std::function<std::shared_ptr<TimerBox> ()> transitionTimerFactory,
+          TimeClientBox timeClient, std::vector<ExchangeRate> exchangeRates,
+          MarketDatabase markets, DestinationDatabase destinations) {
         auto adaptedTransitionTimerFactory = [=] {
-          return MakeVirtualTimer(transitionTimerFactory());
+          return std::make_unique<TimerBox>(transitionTimerFactory());
         };
         return std::make_unique<RiskServiceTestEnvironment>(
           std::move(serviceLocatorClient), std::move(administrationClient),
@@ -198,9 +195,8 @@ void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
     }, call_guard<GilRelease>())
     .def("build_client",
       [] (RiskServiceTestEnvironment& self,
-          VirtualServiceLocatorClient& serviceLocatorClient) {
-        return MakeToPythonRiskClient(self.BuildClient(
-          Ref(serviceLocatorClient)));
+          ServiceLocatorClientBox serviceLocatorClient) {
+        return MakeToPythonRiskClient(self.MakeClient(serviceLocatorClient));
       }, call_guard<GilRelease>())
     .def("close", &RiskServiceTestEnvironment::Close, call_guard<GilRelease>());
 }

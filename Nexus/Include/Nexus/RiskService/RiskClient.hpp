@@ -4,7 +4,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/TablePublisher.hpp>
-#include <Beam/Services/ServiceProtocolClient.hpp>
+#include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/mutex.hpp>

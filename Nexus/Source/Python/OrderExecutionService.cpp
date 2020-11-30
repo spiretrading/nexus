@@ -5,8 +5,7 @@
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
@@ -106,17 +105,16 @@ namespace {
 void Nexus::Python::ExportApplicationOrderExecutionClient(
     pybind11::module& module) {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
-    VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+    ServiceLocatorClientBox, MessageProtocol<std::unique_ptr<TcpSocketChannel>,
+      BinarySender<SharedBuffer>, NullEncoder>, LiveTimer>;
   using Client = OrderExecutionClient<SessionBuilder>;
   class_<ToPythonOrderExecutionClient<Client>, VirtualOrderExecutionClient>(
       module, "ApplicationOrderExecutionClient")
     .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
+      [] (ServiceLocatorClientBox serviceLocatorClient) {
         auto addresses = LocateServiceAddresses(serviceLocatorClient,
           OrderExecutionService::SERVICE_NAME);
-        auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+        auto sessionBuilder = SessionBuilder(serviceLocatorClient,
           [=] {
             return std::make_unique<TcpSocketChannel>(addresses);
           },
@@ -272,8 +270,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
   class_<OrderExecutionServiceTestEnvironment>(module,
       "OrderExecutionServiceTestEnvironment")
     .def(init<const MarketDatabase&, const DestinationDatabase&,
-      std::shared_ptr<VirtualServiceLocatorClient>,
-      std::shared_ptr<VirtualUidClient>,
+      ServiceLocatorClientBox, UidClientBox,
       std::shared_ptr<VirtualAdministrationClient>>(), call_guard<GilRelease>())
     .def("__del__",
       [] (OrderExecutionServiceTestEnvironment& self) {
@@ -285,9 +282,9 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
       call_guard<GilRelease>())
     .def("build_client",
       [] (OrderExecutionServiceTestEnvironment& self,
-          VirtualServiceLocatorClient& serviceLocatorClient) {
+          ServiceLocatorClientBox serviceLocatorClient) {
         return MakeToPythonOrderExecutionClient(
-          self.BuildClient(Ref(serviceLocatorClient)));
+          self.MakeClient(serviceLocatorClient));
       }, call_guard<GilRelease>());
 }
 

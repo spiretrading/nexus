@@ -411,11 +411,7 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
     pybind11::module& module) {
   class_<AdministrationServiceTestEnvironment>(module,
       "AdministrationServiceTestEnvironment")
-    .def(init(
-      [] (std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
-        return std::make_unique<AdministrationServiceTestEnvironment>(
-          std::move(serviceLocatorClient));
-      }), call_guard<GilRelease>())
+    .def(init<ServiceLocatorClientBox>(), call_guard<GilRelease>())
     .def("__del__",
       [] (AdministrationServiceTestEnvironment& self) {
         self.Close();
@@ -427,26 +423,25 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
       call_guard<GilRelease>())
     .def("build_client",
       [] (AdministrationServiceTestEnvironment& self,
-          VirtualServiceLocatorClient& serviceLocatorClient) {
-        return MakeToPythonAdministrationClient(self.BuildClient(
-          Ref(serviceLocatorClient)));
+          ServiceLocatorClientBox serviceLocatorClient) {
+        return MakeToPythonAdministrationClient(self.MakeClient(
+          serviceLocatorClient));
       }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportApplicationAdministrationClient(
     pybind11::module& module) {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
-    VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+    ServiceLocatorClientBox, MessageProtocol<std::unique_ptr<TcpSocketChannel>,
+      BinarySender<SharedBuffer>, NullEncoder>, LiveTimer>;
   using Client = AdministrationClient<SessionBuilder>;
   class_<ToPythonAdministrationClient<Client>, VirtualAdministrationClient>(
       module, "ApplicationAdministrationClient")
     .def(init(
-      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
+      [] (ServiceLocatorClientBox serviceLocatorClient) {
         auto addresses = LocateServiceAddresses(serviceLocatorClient,
           AdministrationService::SERVICE_NAME);
-        auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+        auto sessionBuilder = SessionBuilder(serviceLocatorClient,
           [=] {
             return std::make_unique<TcpSocketChannel>(addresses);
           },

@@ -43,8 +43,7 @@ namespace Nexus::MarketDataService::Tests {
        * @param administrationClient The AdministrationClient to use.
        */
       MarketDataServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         administrationClient);
 
@@ -55,8 +54,7 @@ namespace Nexus::MarketDataService::Tests {
        * @param dataStore The data store containing market data to test with.
        */
       MarketDataServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         administrationClient,
         std::shared_ptr<VirtualHistoricalDataStore> dataStore);
@@ -109,18 +107,16 @@ namespace Nexus::MarketDataService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the MarketDataClient.
        */
-      std::unique_ptr<VirtualMarketDataClient> BuildClient(
-        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+      std::unique_ptr<VirtualMarketDataClient> MakeClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       /**
        * Builds a new MarketDataFeedClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the MarketDataFeedClient.
        */
-      std::unique_ptr<VirtualMarketDataFeedClient> BuildFeedClient(
-        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+      std::unique_ptr<VirtualMarketDataFeedClient> MakeFeedClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
 
@@ -131,39 +127,43 @@ namespace Nexus::MarketDataService::Tests {
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
       using AdministrationClient =
         AdministrationService::VirtualAdministrationClient;
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaMarketDataRegistryServlet<MarketDataRegistry*,
-        VirtualHistoricalDataStore*, std::shared_ptr<AdministrationClient>>,
-        ServiceLocatorClient*, Beam::NativePointerPolicy>, ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+            MetaMarketDataRegistryServlet<MarketDataRegistry*,
+              VirtualHistoricalDataStore*,
+              std::shared_ptr<AdministrationClient>>,
+            Beam::ServiceLocator::ServiceLocatorClientBox,
+            Beam::NativePointerPolicy>,
+          ServerConnection*,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder,
+          std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using BaseRegistryServlet = MarketDataRegistryServlet<
         ServiceProtocolServletContainer, MarketDataRegistry*,
         VirtualHistoricalDataStore*, std::shared_ptr<AdministrationClient>>;
       using RegistryServlet =
         Beam::ServiceLocator::AuthenticationServletAdapter<
-        ServiceProtocolServletContainer, BaseRegistryServlet*,
-        ServiceLocatorClient*>;
+          ServiceProtocolServletContainer, BaseRegistryServlet*,
+          Beam::ServiceLocator::ServiceLocatorClientBox>;
       using FeedServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaMarketDataFeedServlet<BaseRegistryServlet*>, ServiceLocatorClient*>,
-        ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+            MetaMarketDataFeedServlet<BaseRegistryServlet*>,
+            Beam::ServiceLocator::ServiceLocatorClientBox>,
+          ServerConnection*,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder,
+          std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-      std::shared_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+          Beam::ServiceLocator::ServiceLocatorClientBox,
+          Beam::Services::MessageProtocol<
+            std::unique_ptr<ClientChannel>,
+            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+            Beam::Codecs::NullEncoder>,
+          Beam::Threading::TriggerTimer>;
+      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
       std::shared_ptr<AdministrationClient> m_administrationClient;
       MarketDataRegistry m_registry;
       ServerConnection m_serverConnection;
@@ -177,8 +177,7 @@ namespace Nexus::MarketDataService::Tests {
   };
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient,
+    Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
     std::shared_ptr<AdministrationService::VirtualAdministrationClient>
     administrationClient)
     : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
@@ -186,18 +185,17 @@ namespace Nexus::MarketDataService::Tests {
         std::make_unique<LocalHistoricalDataStore>())) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient,
+    Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
     std::shared_ptr<AdministrationService::VirtualAdministrationClient>
     administrationClient, std::shared_ptr<VirtualHistoricalDataStore> dataStore)
     : m_serviceLocatorClient(std::move(serviceLocatorClient)),
       m_administrationClient(std::move(administrationClient)),
       m_dataStore(std::move(dataStore)),
       m_registryServlet(m_administrationClient, &m_registry, &*m_dataStore),
-      m_container(Beam::Initialize(m_serviceLocatorClient.get(),
+      m_container(Beam::Initialize(m_serviceLocatorClient,
         &m_registryServlet), &m_serverConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
-      m_feedContainer(Beam::Initialize(m_serviceLocatorClient.get(),
+      m_feedContainer(Beam::Initialize(m_serviceLocatorClient,
         &m_registryServlet), &m_feedServerConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
@@ -246,34 +244,31 @@ namespace Nexus::MarketDataService::Tests {
   }
 
   inline std::unique_ptr<VirtualMarketDataClient>
-      MarketDataServiceTestEnvironment::BuildClient(
-      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient) {
-    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [=] {
-        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_market_data_client", m_serverConnection);
-      },
-      [] {
-        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      });
+      MarketDataServiceTestEnvironment::MakeClient(
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
     return MakeVirtualMarketDataClient(
       std::make_unique<MarketDataClient<ServiceProtocolClientBuilder>>(
-      builder));
+        ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+          std::bind(boost::factory<
+            std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+            "test_market_data_client", std::ref(m_serverConnection)),
+        boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
   }
 
   inline std::unique_ptr<VirtualMarketDataFeedClient>
-      MarketDataServiceTestEnvironment::BuildFeedClient(
-      Beam::Ref<ServiceLocatorClient> serviceLocatorClient) {
+      MarketDataServiceTestEnvironment::MakeFeedClient(
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
     using Client = MarketDataService::MarketDataFeedClient<std::string,
       Beam::Threading::TriggerTimer*, Beam::Services::MessageProtocol<
-      ClientChannel, Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-      Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-    auto client = std::make_unique<Client>(Beam::Initialize(
-      "test_market_data_feed_client", m_feedServerConnection),
-      Beam::ServiceLocator::SessionAuthenticator<ServiceLocatorClient>(
-      Beam::Ref(serviceLocatorClient)), &m_samplingTimer, Beam::Initialize());
-    return MakeVirtualMarketDataFeedClient(std::move(client));
+        ClientChannel,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder>,
+      Beam::Threading::TriggerTimer>;
+    return MakeVirtualMarketDataFeedClient(std::make_unique<Client>(
+      Beam::Initialize("test_market_data_feed_client", m_feedServerConnection),
+      Beam::ServiceLocator::SessionAuthenticator(serviceLocatorClient),
+      &m_samplingTimer, Beam::Initialize()));
   }
 
   inline void MarketDataServiceTestEnvironment::Close() {
