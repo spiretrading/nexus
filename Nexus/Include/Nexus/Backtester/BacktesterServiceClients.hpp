@@ -22,7 +22,7 @@ namespace Nexus {
       using AdministrationClient =
         AdministrationService::AdministrationClientBox;
 
-      using DefinitionsClient = DefinitionsService::VirtualDefinitionsClient;
+      using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
 
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
@@ -76,7 +76,7 @@ namespace Nexus {
       BacktesterEnvironment* m_environment;
       ServiceLocatorClient m_serviceLocatorClient;
       RegistryClient m_registryClient;
-      std::unique_ptr<DefinitionsClient> m_definitionsClient;
+      DefinitionsClient m_definitionsClient;
       AdministrationClient m_administrationClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       ChartingClient m_chartingClient;
@@ -142,7 +142,7 @@ namespace Nexus {
 
   inline BacktesterServiceClients::DefinitionsClient&
       BacktesterServiceClients::GetDefinitionsClient() {
-    return *m_definitionsClient;
+    return m_definitionsClient;
   }
 
   inline BacktesterServiceClients::MarketDataClient&
@@ -193,7 +193,7 @@ namespace Nexus {
     m_chartingClient.Close();
     m_marketDataClient->Close();
     m_administrationClient.Close();
-    m_definitionsClient->Close();
+    m_definitionsClient.Close();
     m_registryClient.Close();
     m_serviceLocatorClient.Close();
     m_openState.Close();

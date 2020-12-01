@@ -7,7 +7,7 @@
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
@@ -25,7 +25,7 @@ namespace Nexus {
       using AdministrationClient =
         AdministrationService::AdministrationClientBox;
 
-      using DefinitionsClient = DefinitionsService::VirtualDefinitionsClient;
+      using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
 
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
@@ -127,7 +127,7 @@ namespace Nexus {
       ServiceLocatorClient m_serviceLocatorClient;
       RegistryClient m_registryClient;
       AdministrationClient m_administrationClient;
-      std::unique_ptr<DefinitionsClient> m_definitionsClient;
+      DefinitionsClient m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
@@ -155,8 +155,7 @@ namespace Nexus {
       m_serviceLocatorClient(&m_client->GetServiceLocatorClient()),
       m_registryClient(&m_client->GetRegistryClient()),
       m_administrationClient(&m_client->GetAdministrationClient()),
-      m_definitionsClient(DefinitionsService::MakeVirtualDefinitionsClient(
-        &m_client->GetDefinitionsClient())),
+      m_definitionsClient(&m_client->GetDefinitionsClient()),
       m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
         &m_client->GetMarketDataClient())),
       m_chartingClient(&m_client->GetChartingClient()),
@@ -189,7 +188,7 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::DefinitionsClient&
       WrapperServiceClients<C>::GetDefinitionsClient() {
-    return *m_definitionsClient;
+    return m_definitionsClient;
   }
 
   template<typename C>

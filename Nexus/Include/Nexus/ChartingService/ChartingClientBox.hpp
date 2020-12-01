@@ -2,9 +2,6 @@
 #define NEXUS_CHARTING_CLIENT_BOX_HPP
 #include <memory>
 #include <type_traits>
-#include <vector>
-#include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/ServiceLocator/ServiceLocator.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>

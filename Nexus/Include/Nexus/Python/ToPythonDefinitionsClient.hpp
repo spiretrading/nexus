@@ -1,8 +1,13 @@
 #ifndef NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
 #define NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
+#include <memory>
+#include <type_traits>
+#include <utility>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Utilities/TypeList.hpp>
+#include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 
 namespace Nexus::DefinitionsService {
 
@@ -11,7 +16,7 @@ namespace Nexus::DefinitionsService {
    * @param <C> The type of DefinitionsClient to wrap.
    */
   template<typename C>
-  class ToPythonDefinitionsClient final : public VirtualDefinitionsClient {
+  class ToPythonDefinitionsClient {
     public:
 
       /** The type of DefinitionsClient to wrap. */
@@ -19,59 +24,76 @@ namespace Nexus::DefinitionsService {
 
       /**
        * Constructs a ToPythonDefinitionsClient.
-       * @param client The DefinitionsClient to wrap.
+       * @param args The arguments to forward to the Client's constructor.
        */
-      ToPythonDefinitionsClient(std::unique_ptr<Client> client);
+      template<typename... Args, typename =
+        Beam::disable_copy_constructor_t<ToPythonDefinitionsClient, Args...>>
+      ToPythonDefinitionsClient(Args&&... args);
 
-      ~ToPythonDefinitionsClient() override;
+      ~ToPythonDefinitionsClient();
 
-      std::string LoadMinimumSpireClientVersion() override;
+      /** Returns the wrapped client. */
+      const Client& GetClient() const;
 
-      std::string LoadOrganizationName() override;
+      /** Returns the wrapped client. */
+      Client& GetClient();
 
-      CountryDatabase LoadCountryDatabase() override;
+      std::string LoadMinimumSpireClientVersion();
 
-      boost::local_time::tz_database LoadTimeZoneDatabase() override;
+      std::string LoadOrganizationName();
 
-      CurrencyDatabase LoadCurrencyDatabase() override;
+      CountryDatabase LoadCountryDatabase();
 
-      DestinationDatabase LoadDestinationDatabase() override;
+      boost::local_time::tz_database LoadTimeZoneDatabase();
 
-      MarketDatabase LoadMarketDatabase() override;
+      CurrencyDatabase LoadCurrencyDatabase();
 
-      std::vector<ExchangeRate> LoadExchangeRates() override;
+      DestinationDatabase LoadDestinationDatabase();
 
-      std::vector<Compliance::ComplianceRuleSchema>
-        LoadComplianceRuleSchemas() override;
+      MarketDatabase LoadMarketDatabase();
 
-      TradingSchedule LoadTradingSchedule() override;
+      std::vector<ExchangeRate> LoadExchangeRates();
 
-      void Close() override;
+      std::vector<Compliance::ComplianceRuleSchema> LoadComplianceRuleSchemas();
+
+      TradingSchedule LoadTradingSchedule();
+
+      void Close();
 
     private:
-      std::unique_ptr<Client> m_client;
+      boost::optional<Client> m_client;
+
+      ToPythonDefinitionsClient(const ToPythonDefinitionsClient&) = delete;
+      ToPythonDefinitionsClient& operator =(
+        const ToPythonDefinitionsClient&) = delete;
   };
 
-  /**
-   * Makes a ToPythonDefinitionsClient.
-   * @param client The DefinitionsClient to wrap.
-   */
   template<typename Client>
-  auto MakeToPythonDefinitionsClient(std::unique_ptr<Client> client) {
-    return std::make_unique<ToPythonDefinitionsClient<Client>>(
-      std::move(client));
-  }
+  ToPythonDefinitionsClient(Client&&) ->
+    ToPythonDefinitionsClient<std::decay_t<Client>>;
 
   template<typename C>
-  ToPythonDefinitionsClient<C>::ToPythonDefinitionsClient(
-    std::unique_ptr<Client> client)
-    : m_client(std::move(client)) {}
+  template<typename... Args, typename>
+  ToPythonDefinitionsClient<C>::ToPythonDefinitionsClient(Args&&... args)
+    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
+        std::forward<Args>(args)...) {}
 
   template<typename C>
   ToPythonDefinitionsClient<C>::~ToPythonDefinitionsClient() {
-    Close();
     auto release = Beam::Python::GilRelease();
     m_client.reset();
+  }
+
+  template<typename C>
+  const typename ToPythonDefinitionsClient<C>::Client&
+      ToPythonDefinitionsClient<C>::GetClient() const {
+    return *m_client;
+  }
+
+  template<typename C>
+  typename ToPythonDefinitionsClient<C>::Client&
+      ToPythonDefinitionsClient<C>::GetClient() {
+    return *m_client;
   }
 
   template<typename C>

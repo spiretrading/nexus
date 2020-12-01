@@ -125,6 +125,6 @@ void Nexus::Python::ExportComplianceTestEnvironment(module& module) {
       [] (ComplianceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
         return ToPythonComplianceClient(self.MakeClient(
-          serviceLocatorClient));
+          std::move(serviceLocatorClient)));
       }, call_guard<GilRelease>());
 }

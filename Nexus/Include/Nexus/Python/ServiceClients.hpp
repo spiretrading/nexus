@@ -7,13 +7,13 @@
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/Python/DefinitionsClient.hpp"
 #include "Nexus/Python/MarketDataClient.hpp"
 #include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/RiskClient.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
 #include "Nexus/Python/ToPythonComplianceClient.hpp"
+#include "Nexus/Python/ToPythonDefinitionsClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -99,7 +99,7 @@ namespace Python {
       boost::optional<ServiceLocatorClient> m_serviceLocatorClient;
       boost::optional<RegistryClient> m_registryClient;
       boost::optional<AdministrationClient> m_administrationClient;
-      std::unique_ptr<DefinitionsClient> m_definitionsClient;
+      boost::optional<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       boost::optional<ChartingClient> m_chartingClient;
       boost::optional<ComplianceClient> m_complianceClient;
@@ -134,9 +134,10 @@ namespace Python {
         std::in_place_type<AdministrationService::ToPythonAdministrationClient<
           AdministrationService::AdministrationClientBox>>,
           &m_client->GetAdministrationClient()),
-      m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
-        DefinitionsService::MakeVirtualDefinitionsClient(
-          &m_client->GetDefinitionsClient()))),
+      m_definitionsClient(boost::in_place_init,
+        std::in_place_type<DefinitionsService::ToPythonDefinitionsClient<
+          DefinitionsService::DefinitionsClientBox>>,
+          &m_client->GetDefinitionsClient()),
       m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
         MarketDataService::MakeVirtualMarketDataClient(
           &m_client->GetMarketDataClient()))),

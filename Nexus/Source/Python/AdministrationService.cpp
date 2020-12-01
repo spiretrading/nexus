@@ -117,7 +117,7 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(module& module) {
       [] (AdministrationServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
         return ToPythonAdministrationClient(self.MakeClient(
-          serviceLocatorClient));
+          std::move(serviceLocatorClient)));
       }, call_guard<GilRelease>());
 }
 

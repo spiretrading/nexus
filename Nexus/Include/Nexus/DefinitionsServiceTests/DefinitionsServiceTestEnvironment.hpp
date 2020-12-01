@@ -20,8 +20,8 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTests.hpp"
 
 namespace Nexus::DefinitionsService::Tests {
@@ -44,7 +44,7 @@ namespace Nexus::DefinitionsService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the DefinitionsClient.
        */
-      std::unique_ptr<VirtualDefinitionsClient> MakeClient(
+      DefinitionsClientBox MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
@@ -95,17 +95,16 @@ namespace Nexus::DefinitionsService::Tests {
     Close();
   }
 
-  inline std::unique_ptr<VirtualDefinitionsClient>
-      DefinitionsServiceTestEnvironment::MakeClient(
+  inline DefinitionsClientBox DefinitionsServiceTestEnvironment::MakeClient(
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MakeVirtualDefinitionsClient(std::make_unique<DefinitionsClient<
-      ServiceProtocolClientBuilder>>(ServiceProtocolClientBuilder(
-        Beam::Ref(serviceLocatorClient),
+    return DefinitionsClientBox(std::in_place_type<DefinitionsClient<
+      ServiceProtocolClientBuilder>>, ServiceProtocolClientBuilder(
+        serviceLocatorClient,
         std::bind(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_definitions_client", std::ref(m_serverConnection)),
         boost::factory<
-          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void DefinitionsServiceTestEnvironment::Close() {

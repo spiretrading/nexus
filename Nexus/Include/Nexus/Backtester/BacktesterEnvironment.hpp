@@ -179,8 +179,8 @@ namespace Nexus {
       auto definitionsClient = m_definitionsEnvironment.MakeClient(
         m_serviceLocatorClient);
       m_orderExecutionEnvironment.emplace(
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase(), m_serviceLocatorClient,
+        definitionsClient.LoadMarketDatabase(),
+        definitionsClient.LoadDestinationDatabase(), m_serviceLocatorClient,
         m_uidClient, m_administrationClient, m_timeClient,
         OrderExecutionService::MakeVirtualOrderExecutionDriver(
           std::make_unique<
@@ -195,9 +195,9 @@ namespace Nexus {
         std::in_place_type<Beam::Threading::TriggerTimer>);
       m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
         m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
-        m_timeClient, definitionsClient->LoadExchangeRates(),
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase());
+        m_timeClient, definitionsClient.LoadExchangeRates(),
+        definitionsClient.LoadMarketDatabase(),
+        definitionsClient.LoadDestinationDatabase());
       auto rootAccount = m_serviceLocatorClient.GetAccount();
       m_serviceLocatorClient.Associate(rootAccount,
         m_administrationClient.LoadAdministratorsRootEntry());

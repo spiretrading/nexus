@@ -10,7 +10,7 @@
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
@@ -29,7 +29,7 @@ namespace Nexus {
       using AdministrationClient =
         AdministrationService::AdministrationClientBox;
 
-      using DefinitionsClient = DefinitionsService::VirtualDefinitionsClient;
+      using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
 
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
@@ -92,7 +92,7 @@ namespace Nexus {
       TestEnvironment* m_environment;
       ServiceLocatorClient m_serviceLocatorClient;
       RegistryClient m_registryClient;
-      std::unique_ptr<DefinitionsClient> m_definitionsClient;
+      DefinitionsClient m_definitionsClient;
       AdministrationClient m_administrationClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       ChartingClient m_chartingClient;
@@ -158,7 +158,7 @@ namespace Nexus {
 
   inline TestServiceClients::DefinitionsClient&
       TestServiceClients::GetDefinitionsClient() {
-    return *m_definitionsClient;
+    return m_definitionsClient;
   }
 
   inline TestServiceClients::MarketDataClient&
@@ -207,7 +207,7 @@ namespace Nexus {
     m_chartingClient.Close();
     m_marketDataClient->Close();
     m_administrationClient.Close();
-    m_definitionsClient->Close();
+    m_definitionsClient.Close();
     m_registryClient.Close();
     m_serviceLocatorClient.Close();
     m_openState.Close();

@@ -64,7 +64,8 @@ void Nexus::Python::ExportChartingServiceTestEnvironment(module& module) {
     def("make_client",
       [] (ChartingServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonChartingClient(self.MakeClient(serviceLocatorClient));
+        return ToPythonChartingClient(self.MakeClient(
+          std::move(serviceLocatorClient)));
       }, call_guard<GilRelease>());
 }
 

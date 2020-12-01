@@ -305,8 +305,8 @@ namespace Nexus {
       auto definitionsClient = m_definitionsEnvironment.MakeClient(
         m_serviceLocatorClient);
       m_orderExecutionEnvironment.emplace(
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase(), m_serviceLocatorClient,
+        definitionsClient.LoadMarketDatabase(),
+        definitionsClient.LoadDestinationDatabase(), m_serviceLocatorClient,
         m_uidClient, m_administrationClient);
       m_orderExecutionClient = m_orderExecutionEnvironment->MakeClient(
         m_serviceLocatorClient);
@@ -317,9 +317,9 @@ namespace Nexus {
       };
       m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
         m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
-        m_timeClient, definitionsClient->LoadExchangeRates(),
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase());
+        m_timeClient, definitionsClient.LoadExchangeRates(),
+        definitionsClient.LoadMarketDatabase(),
+        definitionsClient.LoadDestinationDatabase());
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;
