@@ -8,6 +8,7 @@ using namespace pybind11;
 PYBIND11_MODULE(_nexus, module) {
   ExportAccounting(module);
   ExportAdministrationService(module);
+  ExportChartingService(module);
   ExportCompliance(module);
   ExportDefinitions(module);
   ExportDefinitionsService(module);

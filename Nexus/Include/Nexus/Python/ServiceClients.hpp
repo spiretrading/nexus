@@ -13,6 +13,7 @@
 #include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/RiskClient.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
+#include "Nexus/Python/ToPythonChartingClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -100,6 +101,7 @@ namespace Python {
       boost::optional<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
+      boost::optional<ChartingClient> m_chartingClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
@@ -138,6 +140,9 @@ namespace Python {
       m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
         MarketDataService::MakeVirtualMarketDataClient(
           &m_client->GetMarketDataClient()))),
+      m_chartingClient(boost::in_place_init,
+        std::in_place_type<ChartingService::ToPythonChartingClient<
+          ChartingService::ChartingClientBox>>, &m_client->GetChartingClient()),
       m_complianceClient(Compliance::MakeToPythonComplianceClient(
         Compliance::MakeVirtualComplianceClient(
           &m_client->GetComplianceClient()))),
@@ -158,6 +163,7 @@ namespace Python {
     m_riskClient.reset();
     m_orderExecutionClient.reset();
     m_complianceClient.reset();
+    m_chartingClient.reset();
     m_marketDataClient.reset();
     m_definitionsClient.reset();
     m_administrationClient.reset();
@@ -199,7 +205,7 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::ChartingClient&
       ToPythonServiceClients<C>::GetChartingClient() {
-    throw std::runtime_error("Not implemented");
+    return *m_chartingClient;
   }
 
   template<typename C>
@@ -246,6 +252,7 @@ namespace Python {
     m_riskClient->Close();
     m_orderExecutionClient->Close();
     m_complianceClient->Close();
+    m_chartingClient->Close();
     m_marketDataClient->Close();
     m_definitionsClient->Close();
     m_administrationClient->Close();

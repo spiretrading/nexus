@@ -19,7 +19,7 @@ namespace Nexus::MarketDataService {
     public:
 
       /** The type used to build client sessions. */
-      using SessionBuilder = Beam::Services::ZlibSessionBuilder<>;
+      using SessionBuilder = Beam::Services::ZLibSessionBuilder<>;
 
       /** Defines the standard MarketDataClient used for applications. */
       using Client = MarketDataClient<SessionBuilder>;

@@ -26,7 +26,7 @@ namespace Nexus {
 
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
-      using ChartingClient = ChartingService::VirtualChartingClient;
+      using ChartingClient = ChartingService::ChartingClientBox;
 
       using ComplianceClient = Compliance::VirtualComplianceClient;
 
@@ -79,7 +79,7 @@ namespace Nexus {
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       AdministrationClient m_administrationClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
-      std::unique_ptr<ChartingClient> m_chartingClient;
+      ChartingClient m_chartingClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
@@ -152,7 +152,7 @@ namespace Nexus {
 
   inline BacktesterServiceClients::ChartingClient&
       BacktesterServiceClients::GetChartingClient() {
-    return *m_chartingClient;
+    return m_chartingClient;
   }
 
   inline BacktesterServiceClients::ComplianceClient&
@@ -190,7 +190,7 @@ namespace Nexus {
     m_riskClient->Close();
     m_orderExecutionClient->Close();
     m_complianceClient->Close();
-    m_chartingClient->Close();
+    m_chartingClient.Close();
     m_marketDataClient->Close();
     m_administrationClient.Close();
     m_definitionsClient->Close();

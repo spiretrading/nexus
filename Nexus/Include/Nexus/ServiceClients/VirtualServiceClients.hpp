@@ -5,7 +5,7 @@
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
-#include "Nexus/ChartingService/VirtualChartingClient.hpp"
+#include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -29,7 +29,7 @@ namespace Nexus {
 
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
-      using ChartingClient = ChartingService::VirtualChartingClient;
+      using ChartingClient = ChartingService::ChartingClientBox;
 
       using ComplianceClient = Compliance::VirtualComplianceClient;
 
@@ -129,7 +129,7 @@ namespace Nexus {
       AdministrationClient m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
-      std::unique_ptr<ChartingClient> m_chartingClient;
+      ChartingClient m_chartingClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
@@ -159,8 +159,7 @@ namespace Nexus {
         &m_client->GetDefinitionsClient())),
       m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
         &m_client->GetMarketDataClient())),
-      m_chartingClient(ChartingService::MakeVirtualChartingClient(
-        &m_client->GetChartingClient())),
+      m_chartingClient(&m_client->GetChartingClient()),
       m_complianceClient(Compliance::MakeVirtualComplianceClient(
         &m_client->GetComplianceClient())),
       m_orderExecutionClient(
@@ -203,7 +202,7 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::ChartingClient&
       WrapperServiceClients<C>::GetChartingClient() {
-    return *m_chartingClient;
+    return m_chartingClient;
   }
 
   template<typename C>

@@ -12,8 +12,8 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
+#include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/ChartingService/ChartingServlet.hpp"
-#include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTests.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
@@ -43,7 +43,7 @@ namespace Nexus::ChartingService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the ChartingClient.
        */
-      std::unique_ptr<VirtualChartingClient> MakeClient(
+      ChartingClientBox MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
@@ -91,17 +91,16 @@ namespace Nexus::ChartingService::Tests {
     Close();
   }
 
-  inline std::unique_ptr<VirtualChartingClient>
-      ChartingServiceTestEnvironment::MakeClient(
+  inline ChartingClientBox ChartingServiceTestEnvironment::MakeClient(
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MakeVirtualChartingClient(
-      std::make_unique<ChartingClient<ServiceProtocolClientBuilder>>(
-        ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-          std::bind(boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
-            "test_charting_client", std::ref(m_serverConnection)),
-          boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
+    return ChartingClientBox(std::in_place_type<
+      ChartingClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+        std::bind(boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+          "test_charting_client", std::ref(m_serverConnection)),
+        boost::factory<
+        std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void ChartingServiceTestEnvironment::Close() {
