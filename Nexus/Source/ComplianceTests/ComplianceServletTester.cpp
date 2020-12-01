@@ -1,7 +1,6 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
@@ -28,9 +27,8 @@ namespace {
     using TestComplianceRuleSet = ComplianceRuleSet<
       LocalComplianceRuleDataStore*, ServiceLocatorClientBox>;
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
-      MetaComplianceServlet<ServiceLocatorClientBox,
-      std::unique_ptr<VirtualAdministrationClient>, TestComplianceRuleSet*,
-      IncrementalTimeClient>>;
+      MetaComplianceServlet<ServiceLocatorClientBox, AdministrationClientBox,
+        TestComplianceRuleSet*, IncrementalTimeClient>>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     ServiceLocatorClientBox m_serviceLocatorClient;

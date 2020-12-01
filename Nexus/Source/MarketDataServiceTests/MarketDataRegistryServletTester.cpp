@@ -3,7 +3,7 @@
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
@@ -32,8 +32,7 @@ namespace {
     using TestServletContainer =
       TestAuthenticatedServiceProtocolServletContainer<
         MetaMarketDataRegistryServlet<MarketDataRegistry*,
-          LocalHistoricalDataStore,
-          std::unique_ptr<VirtualAdministrationClient>>,
+          LocalHistoricalDataStore, AdministrationClientBox>,
         NativePointerPolicy>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;

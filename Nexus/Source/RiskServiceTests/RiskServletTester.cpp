@@ -38,7 +38,7 @@ namespace {
   auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
 
   using TestServletContainer = TestAuthenticatedServiceProtocolServletContainer<
-    MetaRiskServlet<VirtualAdministrationClient*,
+    MetaRiskServlet<AdministrationClientBox,
       std::unique_ptr<VirtualMarketDataClient>,
       std::unique_ptr<VirtualOrderExecutionClient>, TriggerTimer,
       std::shared_ptr<FixedTimeClient>, LocalRiskDataStore*>>;
@@ -69,7 +69,7 @@ namespace {
     LocalRiskDataStore m_dataStore;
     std::shared_ptr<TestServerConnection> m_serverConnection;
     optional<TestServletContainer> m_container;
-    std::shared_ptr<VirtualAdministrationClient> m_administrationClient;
+    optional<AdministrationClientBox> m_administrationClient;
 
     Fixture()
         : m_accounts(std::make_shared<Queue<DirectoryEntry>>()),
@@ -78,13 +78,13 @@ namespace {
       m_administrationServiceEnvironment.emplace(serviceLocatorClient);
       m_administrationServiceEnvironment->MakeAdministrator(
         DirectoryEntry::GetRootAccount());
-      m_administrationClient = std::shared_ptr(
+      m_administrationClient.emplace(
         m_administrationServiceEnvironment->MakeClient(serviceLocatorClient));
       m_marketDataServiceEnvironment.emplace(serviceLocatorClient,
-        m_administrationClient);
+        *m_administrationClient);
       m_orderExecutionServiceEnvironment.emplace(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(), serviceLocatorClient,
-        m_uidServiceEnvironment.MakeClient(), m_administrationClient,
+        m_uidServiceEnvironment.MakeClient(), *m_administrationClient,
         TimeClientBox(std::in_place_type<FixedTimeClient>,
           ptime(date(2020, 5, 12), time_duration(4, 12, 18))),
         MakeVirtualOrderExecutionDriver(&m_driver));
@@ -94,7 +94,7 @@ namespace {
       exchangeRates.push_back(ExchangeRate(CurrencyPair(
         DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
       m_container.emplace(Initialize(serviceLocatorClient,
-        Initialize(m_accounts, &*m_administrationClient,
+        Initialize(m_accounts, *m_administrationClient,
           m_marketDataServiceEnvironment->MakeClient(serviceLocatorClient),
           m_orderExecutionServiceEnvironment->MakeClient(serviceLocatorClient),
           factory<std::unique_ptr<TriggerTimer>>(),
@@ -118,13 +118,13 @@ namespace {
         "1234", DirectoryEntry::GetStarDirectory());
       m_administrationClient->StoreRiskParameters(account,
         RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
-        RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(1)));
+          RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(1)));
       m_administrationClient->StoreRiskState(account, RiskState::Type::ACTIVE);
       auto client = Client(m_serviceLocatorEnvironment.MakeClient(
         name, "1234"));
       client.m_orderExecutionClient =
         m_orderExecutionServiceEnvironment->MakeClient(
-        client.m_serviceLocatorClient);
+          client.m_serviceLocatorClient);
       client.m_riskClient = std::make_unique<TestServiceProtocolClient>(
         Initialize("test", *m_serverConnection), Initialize());
       RegisterRiskServices(Store(client.m_riskClient->GetSlots()));

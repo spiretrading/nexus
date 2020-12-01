@@ -7,12 +7,12 @@
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/Python/AdministrationClient.hpp"
 #include "Nexus/Python/ComplianceClient.hpp"
 #include "Nexus/Python/DefinitionsClient.hpp"
 #include "Nexus/Python/MarketDataClient.hpp"
 #include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/RiskClient.hpp"
+#include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -97,7 +97,7 @@ namespace Python {
       std::unique_ptr<Client> m_client;
       boost::optional<ServiceLocatorClient> m_serviceLocatorClient;
       boost::optional<RegistryClient> m_registryClient;
-      std::unique_ptr<AdministrationClient> m_administrationClient;
+      boost::optional<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
@@ -120,16 +120,18 @@ namespace Python {
   ToPythonServiceClients<C>::ToPythonServiceClients(
     std::unique_ptr<Client> client)
     : m_client(std::move(client)),
-      m_serviceLocatorClient(Beam::ServiceLocator::ToPythonServiceLocatorClient<
-        Beam::ServiceLocator::ServiceLocatorClientBox>(
-          &m_client->GetServiceLocatorClient())),
-      m_registryClient(Beam::RegistryService::ToPythonRegistryClient<
-        Beam::RegistryService::RegistryClientBox>(
-          &m_client->GetRegistryClient())),
-      m_administrationClient(
-        AdministrationService::MakeToPythonAdministrationClient(
-          AdministrationService::MakeVirtualAdministrationClient(
-            &m_client->GetAdministrationClient()))),
+      m_serviceLocatorClient(boost::in_place_init,
+        std::in_place_type<Beam::ServiceLocator::ToPythonServiceLocatorClient<
+          Beam::ServiceLocator::ServiceLocatorClientBox>>,
+          &m_client->GetServiceLocatorClient()),
+      m_registryClient(boost::in_place_init,
+        std::in_place_type<Beam::RegistryService::ToPythonRegistryClient<
+          Beam::RegistryService::RegistryClientBox>>,
+          &m_client->GetRegistryClient()),
+      m_administrationClient(boost::in_place_init,
+        std::in_place_type<AdministrationService::ToPythonAdministrationClient<
+          AdministrationService::AdministrationClientBox>>,
+          &m_client->GetAdministrationClient()),
       m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
         DefinitionsService::MakeVirtualDefinitionsClient(
           &m_client->GetDefinitionsClient()))),

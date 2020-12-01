@@ -44,8 +44,7 @@ namespace {
     using TestServletContainer =
       TestAuthenticatedServiceProtocolServletContainer<
         MetaOrderExecutionServlet<IncrementalTimeClient,
-          ServiceLocatorClientBox, UidClientBox,
-          std::unique_ptr<VirtualAdministrationClient>,
+          ServiceLocatorClientBox, UidClientBox, AdministrationClientBox,
           std::shared_ptr<MockOrderExecutionDriver>,
           std::shared_ptr<LocalOrderExecutionDataStore>>>;
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;

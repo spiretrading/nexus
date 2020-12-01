@@ -20,7 +20,7 @@ namespace Nexus {
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
 
       using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
+        AdministrationService::AdministrationClientBox;
 
       using DefinitionsClient = DefinitionsService::VirtualDefinitionsClient;
 
@@ -77,7 +77,7 @@ namespace Nexus {
       ServiceLocatorClient m_serviceLocatorClient;
       RegistryClient m_registryClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
-      std::unique_ptr<AdministrationClient> m_administrationClient;
+      AdministrationClient m_administrationClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<ChartingClient> m_chartingClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
@@ -137,7 +137,7 @@ namespace Nexus {
 
   inline BacktesterServiceClients::AdministrationClient&
       BacktesterServiceClients::GetAdministrationClient() {
-    return *m_administrationClient;
+    return m_administrationClient;
   }
 
   inline BacktesterServiceClients::DefinitionsClient&
@@ -192,7 +192,7 @@ namespace Nexus {
     m_complianceClient->Close();
     m_chartingClient->Close();
     m_marketDataClient->Close();
-    m_administrationClient->Close();
+    m_administrationClient.Close();
     m_definitionsClient->Close();
     m_registryClient.Close();
     m_serviceLocatorClient.Close();

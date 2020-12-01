@@ -16,8 +16,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
@@ -34,7 +33,7 @@ namespace Nexus::MarketDataService::Tests {
    * Wraps most components needed to run an instance of the MarketDataService
    * with helper functions.
    */
-  class MarketDataServiceTestEnvironment : private boost::noncopyable {
+  class MarketDataServiceTestEnvironment {
     public:
 
       /**
@@ -44,8 +43,7 @@ namespace Nexus::MarketDataService::Tests {
        */
       MarketDataServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient);
+        AdministrationService::AdministrationClientBox administrationClient);
 
       /**
        * Constructs an MarketDataServiceTestEnvironment.
@@ -55,8 +53,7 @@ namespace Nexus::MarketDataService::Tests {
        */
       MarketDataServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient,
+        AdministrationService::AdministrationClientBox administrationClient,
         std::shared_ptr<VirtualHistoricalDataStore> dataStore);
 
       ~MarketDataServiceTestEnvironment();
@@ -125,14 +122,12 @@ namespace Nexus::MarketDataService::Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-      using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaMarketDataRegistryServlet<MarketDataRegistry*,
               VirtualHistoricalDataStore*,
-              std::shared_ptr<AdministrationClient>>,
+              AdministrationService::AdministrationClientBox>,
             Beam::ServiceLocator::ServiceLocatorClientBox,
             Beam::NativePointerPolicy>,
           ServerConnection*,
@@ -141,7 +136,8 @@ namespace Nexus::MarketDataService::Tests {
           std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using BaseRegistryServlet = MarketDataRegistryServlet<
         ServiceProtocolServletContainer, MarketDataRegistry*,
-        VirtualHistoricalDataStore*, std::shared_ptr<AdministrationClient>>;
+        VirtualHistoricalDataStore*,
+        AdministrationService::AdministrationClientBox>;
       using RegistryServlet =
         Beam::ServiceLocator::AuthenticationServletAdapter<
           ServiceProtocolServletContainer, BaseRegistryServlet*,
@@ -164,7 +160,7 @@ namespace Nexus::MarketDataService::Tests {
             Beam::Codecs::NullEncoder>,
           Beam::Threading::TriggerTimer>;
       Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
-      std::shared_ptr<AdministrationClient> m_administrationClient;
+      AdministrationService::AdministrationClientBox m_administrationClient;
       MarketDataRegistry m_registry;
       ServerConnection m_serverConnection;
       std::shared_ptr<VirtualHistoricalDataStore> m_dataStore;
@@ -178,16 +174,15 @@ namespace Nexus::MarketDataService::Tests {
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-    administrationClient)
+    AdministrationService::AdministrationClientBox administrationClient)
     : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
         std::move(administrationClient), MakeVirtualHistoricalDataStore(
         std::make_unique<LocalHistoricalDataStore>())) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-    administrationClient, std::shared_ptr<VirtualHistoricalDataStore> dataStore)
+    AdministrationService::AdministrationClientBox administrationClient,
+    std::shared_ptr<VirtualHistoricalDataStore> dataStore)
     : m_serviceLocatorClient(std::move(serviceLocatorClient)),
       m_administrationClient(std::move(administrationClient)),
       m_dataStore(std::move(dataStore)),

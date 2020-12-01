@@ -174,7 +174,7 @@ void Nexus::Python::ExportRiskService(pybind11::module& module) {
 void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
   class_<RiskServiceTestEnvironment>(module, "RiskServiceTestEnvironment")
     .def(init([] (ServiceLocatorClientBox serviceLocatorClient,
-          std::shared_ptr<VirtualAdministrationClient> administrationClient,
+          AdministrationClientBox administrationClient,
           std::shared_ptr<VirtualMarketDataClient> marketDataClient,
           std::shared_ptr<VirtualOrderExecutionClient> orderExecutionClient,
           std::function<std::shared_ptr<TimerBox> ()> transitionTimerFactory,

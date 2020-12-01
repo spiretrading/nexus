@@ -48,8 +48,7 @@ namespace Nexus::OrderExecutionService::Tests {
         DestinationDatabase destinationDatabase,
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         Beam::UidService::UidClientBox uidClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient);
+        AdministrationService::AdministrationClientBox administrationClient);
 
       /**
        * Constructs an OrderExecutionServiceTestEnvironment.
@@ -65,8 +64,7 @@ namespace Nexus::OrderExecutionService::Tests {
         DestinationDatabase destinationDatabase,
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         Beam::UidService::UidClientBox uidClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient,
+        AdministrationService::AdministrationClientBox administrationClient,
         Beam::TimeService::TimeClientBox timeClient,
         std::unique_ptr<VirtualOrderExecutionDriver> driver);
 
@@ -90,15 +88,13 @@ namespace Nexus::OrderExecutionService::Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-      using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaOrderExecutionServlet<Beam::TimeService::TimeClientBox,
               Beam::ServiceLocator::ServiceLocatorClientBox,
               Beam::UidService::UidClientBox,
-              std::shared_ptr<AdministrationClient>,
+              AdministrationService::AdministrationClientBox,
               VirtualOrderExecutionDriver*, LocalOrderExecutionDataStore*>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
@@ -128,8 +124,7 @@ namespace Nexus::OrderExecutionService::Tests {
       DestinationDatabase destinationDatabase,
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
       Beam::UidService::UidClientBox uidClient,
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient)
+      AdministrationService::AdministrationClientBox administrationClient)
     : OrderExecutionServiceTestEnvironment(std::move(marketDatabase),
         std::move(destinationDatabase), std::move(serviceLocatorClient),
         std::move(uidClient), std::move(administrationClient),
@@ -143,8 +138,8 @@ namespace Nexus::OrderExecutionService::Tests {
       DestinationDatabase destinationDatabase,
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
       Beam::UidService::UidClientBox uidClient,
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient, Beam::TimeService::TimeClientBox timeClient,
+      AdministrationService::AdministrationClientBox administrationClient,
+      Beam::TimeService::TimeClientBox timeClient,
       std::unique_ptr<VirtualOrderExecutionDriver> driver)
     : m_driver(std::move(driver)),
       m_container(Beam::Initialize(serviceLocatorClient, Beam::Initialize(

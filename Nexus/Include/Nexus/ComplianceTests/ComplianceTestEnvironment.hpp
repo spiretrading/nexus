@@ -12,7 +12,7 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
@@ -36,8 +36,7 @@ namespace Nexus::Compliance::Tests {
        */
       ComplianceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient,
+        AdministrationService::AdministrationClientBox administrationClient,
         Beam::TimeService::TimeClientBox timeClient);
 
       ~ComplianceTestEnvironment();
@@ -61,8 +60,7 @@ namespace Nexus::Compliance::Tests {
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaComplianceServlet<Beam::ServiceLocator::ServiceLocatorClientBox,
-              std::shared_ptr<
-                AdministrationService::VirtualAdministrationClient>,
+              AdministrationService::AdministrationClientBox,
               LocalComplianceRuleDataStore*, Beam::TimeService::TimeClientBox>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
@@ -87,8 +85,8 @@ namespace Nexus::Compliance::Tests {
 
   inline ComplianceTestEnvironment::ComplianceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-    administrationClient, Beam::TimeService::TimeClientBox timeClient)
+    AdministrationService::AdministrationClientBox administrationClient,
+    Beam::TimeService::TimeClientBox timeClient)
     : m_container(Beam::Initialize(serviceLocatorClient, Beam::Initialize(
         serviceLocatorClient, std::move(administrationClient), &m_dataStore,
         std::move(timeClient))), &m_serverConnection,

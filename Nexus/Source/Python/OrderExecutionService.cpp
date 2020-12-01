@@ -270,8 +270,8 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
   class_<OrderExecutionServiceTestEnvironment>(module,
       "OrderExecutionServiceTestEnvironment")
     .def(init<const MarketDatabase&, const DestinationDatabase&,
-      ServiceLocatorClientBox, UidClientBox,
-      std::shared_ptr<VirtualAdministrationClient>>(), call_guard<GilRelease>())
+      ServiceLocatorClientBox, UidClientBox, AdministrationClientBox>(),
+      call_guard<GilRelease>())
     .def("__del__",
       [] (OrderExecutionServiceTestEnvironment& self) {
         self.Close();

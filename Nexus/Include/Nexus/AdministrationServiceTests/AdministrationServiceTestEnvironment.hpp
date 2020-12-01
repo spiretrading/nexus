@@ -12,11 +12,10 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
@@ -60,7 +59,7 @@ namespace Nexus::AdministrationService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the AdministrationClient.
        */
-      std::unique_ptr<VirtualAdministrationClient> MakeClient(
+      AdministrationClientBox MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
@@ -130,17 +129,17 @@ namespace Nexus::AdministrationService::Tests {
     m_serviceLocatorClient.Associate(account, administrators);
   }
 
-  inline std::unique_ptr<VirtualAdministrationClient>
+  inline AdministrationClientBox
       AdministrationServiceTestEnvironment::MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MakeVirtualAdministrationClient(
-      std::make_unique<AdministrationClient<ServiceProtocolClientBuilder>>(
+    return AdministrationClientBox(std::in_place_type<
+      AdministrationClient<ServiceProtocolClientBuilder>>,
         ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
           std::bind(boost::factory<std::unique_ptr<
             ServiceProtocolClientBuilder::Channel>>(),
             "test_administration_client", std::ref(m_serverConnection)),
           boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
+            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void AdministrationServiceTestEnvironment::Close() {

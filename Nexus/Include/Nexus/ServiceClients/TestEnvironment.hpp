@@ -235,8 +235,7 @@ namespace Nexus {
         m_definitionsEnvironment;
       AdministrationService::Tests::AdministrationServiceTestEnvironment
         m_administrationEnvironment;
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        m_administrationClient;
+      AdministrationService::AdministrationClientBox m_administrationClient;
       boost::optional<
         MarketDataService::Tests::MarketDataServiceTestEnvironment>
         m_marketDataEnvironment;
@@ -293,9 +292,9 @@ namespace Nexus {
     try {
       auto rootAccount = m_serviceLocatorClient.GetAccount();
       m_serviceLocatorClient.Associate(rootAccount,
-        m_administrationClient->LoadAdministratorsRootEntry());
+        m_administrationClient.LoadAdministratorsRootEntry());
       m_serviceLocatorClient.Associate(rootAccount,
-        m_administrationClient->LoadServicesRootEntry());
+        m_administrationClient.LoadServicesRootEntry());
       m_marketDataEnvironment.emplace(m_serviceLocatorClient,
         m_administrationClient, std::move(historicalDataStore));
       m_marketDataClient = m_marketDataEnvironment->MakeClient(
@@ -573,7 +572,7 @@ namespace Nexus {
     m_chartingEnvironment->Close();
     m_marketDataClient->Close();
     m_marketDataEnvironment->Close();
-    m_administrationClient->Close();
+    m_administrationClient.Close();
     m_administrationEnvironment.Close();
     m_definitionsEnvironment.Close();
     m_registryEnvironment.Close();

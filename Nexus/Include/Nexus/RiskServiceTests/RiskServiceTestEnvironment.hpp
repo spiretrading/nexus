@@ -15,8 +15,7 @@
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/optional/optional.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
@@ -48,8 +47,7 @@ namespace Nexus::RiskService::Tests {
        */
       RiskServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient,
+        AdministrationService::AdministrationClientBox administrationClient,
         std::shared_ptr<MarketDataService::VirtualMarketDataClient>
         marketDataClient,
         std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
@@ -79,9 +77,7 @@ namespace Nexus::RiskService::Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaRiskServlet<
-              std::shared_ptr<
-                AdministrationService::VirtualAdministrationClient>,
+            MetaRiskServlet<AdministrationService::AdministrationClientBox,
               std::shared_ptr<MarketDataService::VirtualMarketDataClient>,
               std::shared_ptr<
                 OrderExecutionService::VirtualOrderExecutionClient>,
@@ -109,9 +105,9 @@ namespace Nexus::RiskService::Tests {
 
   inline RiskServiceTestEnvironment::RiskServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient, std::shared_ptr<
-        MarketDataService::VirtualMarketDataClient> marketDataClient,
+      AdministrationService::AdministrationClientBox administrationClient,
+      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
+        marketDataClient,
       std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
       orderExecutionClient,
       std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>

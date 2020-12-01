@@ -4,7 +4,7 @@
 #include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -23,7 +23,7 @@ namespace Nexus {
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
 
       using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
+        AdministrationService::AdministrationClientBox;
 
       using DefinitionsClient = DefinitionsService::VirtualDefinitionsClient;
 
@@ -126,7 +126,7 @@ namespace Nexus {
       Beam::GetOptionalLocalPtr<C> m_client;
       ServiceLocatorClient m_serviceLocatorClient;
       RegistryClient m_registryClient;
-      std::unique_ptr<AdministrationClient> m_administrationClient;
+      AdministrationClient m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<ChartingClient> m_chartingClient;
@@ -154,9 +154,7 @@ namespace Nexus {
     : m_client(std::forward<CF>(client)),
       m_serviceLocatorClient(&m_client->GetServiceLocatorClient()),
       m_registryClient(&m_client->GetRegistryClient()),
-      m_administrationClient(
-        AdministrationService::MakeVirtualAdministrationClient(
-          &m_client->GetAdministrationClient())),
+      m_administrationClient(&m_client->GetAdministrationClient()),
       m_definitionsClient(DefinitionsService::MakeVirtualDefinitionsClient(
         &m_client->GetDefinitionsClient())),
       m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
@@ -187,7 +185,7 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::AdministrationClient&
       WrapperServiceClients<C>::GetAdministrationClient() {
-    return *m_administrationClient;
+    return m_administrationClient;
   }
 
   template<typename C>
@@ -235,7 +233,7 @@ namespace Nexus {
   template<typename C>
   std::unique_ptr<typename WrapperServiceClients<C>::Timer>
       WrapperServiceClients<C>::BuildTimer(
-      boost::posix_time::time_duration expiry) {
+        boost::posix_time::time_duration expiry) {
     return std::make_unique<Beam::Threading::TimerBox>(
       m_client->BuildTimer(expiry));
   }

@@ -612,10 +612,9 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
       "MarketDataServiceTestEnvironment")
     .def(init(
       [] (ServiceLocatorClientBox serviceLocatorClient,
-          const std::shared_ptr<VirtualAdministrationClient>&
-          administrationClient) {
+          AdministrationClientBox administrationClient) {
         return std::make_unique<MarketDataServiceTestEnvironment>(
-          serviceLocatorClient, administrationClient);
+          std::move(serviceLocatorClient), std::move(administrationClient));
       }), call_guard<GilRelease>())
     .def("__del__", [] (MarketDataServiceTestEnvironment& self) {
       self.Close();
