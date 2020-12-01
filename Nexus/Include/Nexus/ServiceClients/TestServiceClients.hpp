@@ -9,7 +9,7 @@
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
-#include "Nexus/Compliance/VirtualComplianceClient.hpp"
+#include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -35,7 +35,7 @@ namespace Nexus {
 
       using ChartingClient = ChartingService::ChartingClientBox;
 
-      using ComplianceClient = Compliance::VirtualComplianceClient;
+      using ComplianceClient = Compliance::ComplianceClientBox;
 
       using OrderExecutionClient =
         OrderExecutionService::VirtualOrderExecutionClient;
@@ -96,7 +96,7 @@ namespace Nexus {
       AdministrationClient m_administrationClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       ChartingClient m_chartingClient;
-      std::unique_ptr<ComplianceClient> m_complianceClient;
+      ComplianceClient m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       TimeClient m_timeClient;
@@ -173,7 +173,7 @@ namespace Nexus {
 
   inline TestServiceClients::ComplianceClient&
       TestServiceClients::GetComplianceClient() {
-    return *m_complianceClient;
+    return m_complianceClient;
   }
 
   inline TestServiceClients::OrderExecutionClient&
@@ -203,7 +203,7 @@ namespace Nexus {
     m_timeClient.Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
-    m_complianceClient->Close();
+    m_complianceClient.Close();
     m_chartingClient.Close();
     m_marketDataClient->Close();
     m_administrationClient.Close();

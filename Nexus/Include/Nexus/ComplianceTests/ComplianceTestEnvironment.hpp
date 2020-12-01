@@ -14,9 +14,9 @@
 #include <boost/functional/factory.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
+#include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
-#include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/ComplianceTests/ComplianceTests.hpp"
 
 namespace Nexus::Compliance::Tests {
@@ -46,7 +46,7 @@ namespace Nexus::Compliance::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the ComplianceClient.
        */
-      std::unique_ptr<VirtualComplianceClient> MakeClient(
+      ComplianceClientBox MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
@@ -96,17 +96,16 @@ namespace Nexus::Compliance::Tests {
     Close();
   }
 
-  inline std::unique_ptr<VirtualComplianceClient>
-      ComplianceTestEnvironment::MakeClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MakeVirtualComplianceClient(
-      std::make_unique<ComplianceClient<ServiceProtocolClientBuilder>>(
-        ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-          std::bind(boost::factory<std::unique_ptr<
-            ServiceProtocolClientBuilder::Channel>>(), "test_compliance_client",
-            std::ref(m_serverConnection)),
-          boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
+  inline ComplianceClientBox ComplianceTestEnvironment::MakeClient(
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
+    return ComplianceClientBox(
+      std::in_place_type<ComplianceClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+        std::bind(boost::factory<std::unique_ptr<
+          ServiceProtocolClientBuilder::Channel>>(), "test_compliance_client",
+          std::ref(m_serverConnection)),
+        boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void ComplianceTestEnvironment::Close() {

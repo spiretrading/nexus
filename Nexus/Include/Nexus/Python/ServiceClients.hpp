@@ -7,13 +7,13 @@
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/Python/ComplianceClient.hpp"
 #include "Nexus/Python/DefinitionsClient.hpp"
 #include "Nexus/Python/MarketDataClient.hpp"
 #include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/RiskClient.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
+#include "Nexus/Python/ToPythonComplianceClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -102,7 +102,7 @@ namespace Python {
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       boost::optional<ChartingClient> m_chartingClient;
-      std::unique_ptr<ComplianceClient> m_complianceClient;
+      boost::optional<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       boost::optional<TimeClient> m_timeClient;
@@ -143,9 +143,9 @@ namespace Python {
       m_chartingClient(boost::in_place_init,
         std::in_place_type<ChartingService::ToPythonChartingClient<
           ChartingService::ChartingClientBox>>, &m_client->GetChartingClient()),
-      m_complianceClient(Compliance::MakeToPythonComplianceClient(
-        Compliance::MakeVirtualComplianceClient(
-          &m_client->GetComplianceClient()))),
+      m_complianceClient(boost::in_place_init,
+        std::in_place_type<Compliance::ToPythonComplianceClient<
+          Compliance::ComplianceClientBox>>, &m_client->GetComplianceClient()),
       m_orderExecutionClient(
         OrderExecutionService::MakeToPythonOrderExecutionClient(
           OrderExecutionService::MakeVirtualOrderExecutionClient(

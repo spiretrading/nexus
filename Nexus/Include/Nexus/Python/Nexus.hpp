@@ -5,7 +5,6 @@
 #include "Nexus/Python/Backtester.hpp"
 #include "Nexus/Python/ChartingService.hpp"
 #include "Nexus/Python/Compliance.hpp"
-#include "Nexus/Python/ComplianceClient.hpp"
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsClient.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
@@ -20,5 +19,6 @@
 #include "Nexus/Python/ServiceClients.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
+#include "Nexus/Python/ToPythonComplianceClient.hpp"
 
 #endif

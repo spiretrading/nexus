@@ -6,7 +6,7 @@
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
-#include "Nexus/Compliance/VirtualComplianceClient.hpp"
+#include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -31,7 +31,7 @@ namespace Nexus {
 
       using ChartingClient = ChartingService::ChartingClientBox;
 
-      using ComplianceClient = Compliance::VirtualComplianceClient;
+      using ComplianceClient = Compliance::ComplianceClientBox;
 
       using OrderExecutionClient =
         OrderExecutionService::VirtualOrderExecutionClient;
@@ -130,7 +130,7 @@ namespace Nexus {
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       ChartingClient m_chartingClient;
-      std::unique_ptr<ComplianceClient> m_complianceClient;
+      ComplianceClient m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       TimeClient m_timeClient;
@@ -160,8 +160,7 @@ namespace Nexus {
       m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
         &m_client->GetMarketDataClient())),
       m_chartingClient(&m_client->GetChartingClient()),
-      m_complianceClient(Compliance::MakeVirtualComplianceClient(
-        &m_client->GetComplianceClient())),
+      m_complianceClient(&m_client->GetComplianceClient()),
       m_orderExecutionClient(
         OrderExecutionService::MakeVirtualOrderExecutionClient(
           &m_client->GetOrderExecutionClient())),
@@ -208,7 +207,7 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::ComplianceClient&
       WrapperServiceClients<C>::GetComplianceClient() {
-    return *m_complianceClient;
+    return m_complianceClient;
   }
 
   template<typename C>
