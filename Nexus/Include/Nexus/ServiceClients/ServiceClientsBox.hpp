@@ -228,16 +228,16 @@ namespace Nexus {
   ServiceClientsBox::WrappedServiceClients<C>::WrappedServiceClients(
     Args&&... args)
     : m_clients(std::forward<Args>(args)...),
-      m_serviceLocatorClient(&m_client->GetServiceLocatorClient()),
-      m_registryClient(&m_client->GetRegistryClient()),
-      m_administrationClient(&m_client->GetAdministrationClient()),
-      m_definitionsClient(&m_client->GetDefinitionsClient()),
-      m_marketDataClient(&m_client->GetMarketDataClient()),
-      m_chartingClient(&m_client->GetChartingClient()),
-      m_complianceClient(&m_client->GetComplianceClient()),
-      m_orderExecutionClient(&m_client->GetOrderExecutionClient()),
-      m_riskClient(&m_client->GetRiskClient()),
-      m_timeClient(&m_client->GetTimeClient()) {}
+      m_serviceLocatorClient(&m_clients->GetServiceLocatorClient()),
+      m_registryClient(&m_clients->GetRegistryClient()),
+      m_administrationClient(&m_clients->GetAdministrationClient()),
+      m_definitionsClient(&m_clients->GetDefinitionsClient()),
+      m_marketDataClient(&m_clients->GetMarketDataClient()),
+      m_chartingClient(&m_clients->GetChartingClient()),
+      m_complianceClient(&m_clients->GetComplianceClient()),
+      m_orderExecutionClient(&m_clients->GetOrderExecutionClient()),
+      m_riskClient(&m_clients->GetRiskClient()),
+      m_timeClient(&m_clients->GetTimeClient()) {}
 
   template<typename C>
   ServiceClientsBox::ServiceLocatorClient&
