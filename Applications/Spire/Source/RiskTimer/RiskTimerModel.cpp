@@ -1,5 +1,4 @@
 #include "Spire/RiskTimer/RiskTimerModel.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;

@@ -1,5 +1,4 @@
 #include "Spire/BookView/BookViewPanel.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"

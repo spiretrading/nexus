@@ -4,7 +4,7 @@
 #include "Nexus/Accounting/PortfolioController.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Spire {
@@ -15,7 +15,7 @@ namespace Spire {
     SpireInventory>;
   using SpirePortfolio = Nexus::Accounting::Portfolio<SpireBookkeeper>;
   using SpirePortfolioController = Nexus::Accounting::PortfolioController<
-    SpirePortfolio, Nexus::MarketDataService::VirtualMarketDataClient*>;
+    SpirePortfolio, Nexus::MarketDataService::MarketDataClientBox>;
   class UserProfile;
 }
 

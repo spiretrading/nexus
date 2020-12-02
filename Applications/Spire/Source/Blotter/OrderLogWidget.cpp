@@ -1,6 +1,5 @@
 #include "Spire/Blotter/OrderLogWidget.hpp"
 #include <QKeyEvent>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Blotter/OrderLogPropertiesDialog.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"

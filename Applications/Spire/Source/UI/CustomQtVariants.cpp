@@ -3,7 +3,6 @@
 #include <boost/lexical_cast.hpp>
 #include <QDateTime>
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;

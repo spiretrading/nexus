@@ -1,7 +1,7 @@
 #ifndef SPIRE_REGISTRYCATALOGENTRY_HPP
 #define SPIRE_REGISTRYCATALOGENTRY_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/RegistryService/RegistryService.hpp>
+#include <Beam/RegistryService/RegistryClientBox.hpp>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Catalog/PersistentCatalogEntry.hpp"
 
@@ -23,8 +23,7 @@ namespace Spire {
         \param registryClient The RegistryClient used to save this CatalogEntry.
       */
       RegistryCatalogEntry(bool isReadOnly, const std::string& path,
-        Beam::Ref<Beam::RegistryService::VirtualRegistryClient>
-        registryClient);
+        Beam::RegistryService::RegistryClientBox registryClient);
 
       //! Constructs a RegistryCatalogEntry.
       /*!
@@ -37,8 +36,8 @@ namespace Spire {
       */
       RegistryCatalogEntry(const std::string& name, const std::string& iconPath,
         const std::string& description, const CanvasNode& node,
-        const std::string& path, Beam::Ref<
-        Beam::RegistryService::VirtualRegistryClient> registryClient);
+        const std::string& path,
+        Beam::RegistryService::RegistryClientBox registryClient);
 
       //! Constructs a RegistryCatalogEntry.
       /*!
@@ -52,8 +51,8 @@ namespace Spire {
       */
       RegistryCatalogEntry(const std::string& name, const std::string& iconPath,
         const std::string& description, const CanvasNode& node,
-        const boost::uuids::uuid& uid, const std::string& path, Beam::Ref<
-        Beam::RegistryService::VirtualRegistryClient> registryClient);
+        const boost::uuids::uuid& uid, const std::string& path,
+        Beam::RegistryService::RegistryClientBox registryClient);
 
       virtual void Save() const;
 
@@ -89,7 +88,7 @@ namespace Spire {
       std::string m_description;
       std::unique_ptr<CanvasNode> m_node;
       std::string m_path;
-      Beam::RegistryService::VirtualRegistryClient* m_registryClient;
+      mutable Beam::RegistryService::RegistryClientBox m_registryClient;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);

@@ -1,7 +1,6 @@
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include <QItemDelegate>
 #include <QMessageBox>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
 #include "Spire/AccountViewer/AccountViewItem.hpp"

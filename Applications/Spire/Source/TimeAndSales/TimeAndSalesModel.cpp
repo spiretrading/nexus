@@ -1,6 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include <QCoreApplication>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 

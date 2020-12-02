@@ -14,7 +14,6 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -196,10 +195,9 @@ int main(int argc, char* argv[]) {
   if(loginResultCode == QDialog::Rejected) {
     return -1;
   }
-  auto serviceClients = std::unique_ptr<VirtualServiceClients>();
+  auto serviceClients = boost::optional<ServiceClientsBox>();
   try {
-    serviceClients = MakeVirtualServiceClients(
-      std::make_unique<SpireServiceClients>(
+    serviceClients.emplace(std::make_unique<SpireServiceClients>(
       loginDialog.GetServiceLocatorClient()));
   } catch(const std::exception& e) {
     QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
@@ -219,7 +217,7 @@ int main(int argc, char* argv[]) {
     serviceClients->GetDefinitionsClient().LoadMarketDatabase(),
     serviceClients->GetDefinitionsClient().LoadDestinationDatabase(),
     serviceClients->GetAdministrationClient().LoadEntitlements(),
-    Ref(*serviceClients)};
+    *serviceClients};
   try {
     userProfile.CreateProfilePath();
   } catch(std::exception&) {

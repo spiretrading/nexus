@@ -4,7 +4,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Beam/Pointers/Ref.hpp>
 #include <Beam/Threading/Threading.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include "Nexus/Definitions/Country.hpp"
@@ -14,7 +13,7 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
-#include "Nexus/ServiceClients/ServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -62,8 +61,7 @@ namespace Spire {
         const Nexus::MarketDatabase& marketDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
         const Nexus::MarketDataService::EntitlementDatabase&
-          entitlementDatabase,
-        Beam::Ref<Nexus::VirtualServiceClients> serviceClients);
+          entitlementDatabase, Nexus::ServiceClientsBox serviceClients);
 
       ~UserProfile();
 
@@ -100,7 +98,7 @@ namespace Spire {
         GetEntitlementDatabase() const;
 
       //! Returns the set of clients connected to Spire services.
-      Nexus::VirtualServiceClients& GetServiceClients() const;
+      Nexus::ServiceClientsBox& GetServiceClients() const;
 
       //! Creates the profile path.
       void CreateProfilePath() const;
@@ -251,7 +249,7 @@ namespace Spire {
       Nexus::MarketDatabase m_marketDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;
       Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
-      mutable Nexus::VirtualServiceClients* m_serviceClients;
+      mutable Nexus::ServiceClientsBox m_serviceClients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;

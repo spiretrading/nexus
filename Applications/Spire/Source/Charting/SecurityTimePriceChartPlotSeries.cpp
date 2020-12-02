@@ -1,5 +1,4 @@
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
 #include "Spire/UI/UserProfile.hpp"

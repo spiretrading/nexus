@@ -51,6 +51,10 @@ namespace Nexus::OrderExecutionService {
   };
 
   template<typename C, typename S>
+  OrderCancellationReactor(C&&, S) ->
+    OrderCancellationReactor<std::decay_t<C>, S>;
+
+  template<typename C, typename S>
   template<typename CF>
   OrderCancellationReactor<C, S>::OrderCancellationReactor(CF&& client,
     Series series)

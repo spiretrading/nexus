@@ -6,7 +6,6 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <QMessageBox>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/OrderTaskView.hpp"

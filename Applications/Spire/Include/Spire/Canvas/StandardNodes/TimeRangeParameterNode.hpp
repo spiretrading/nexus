@@ -47,7 +47,7 @@ namespace Spire {
         \return The time range as a query.
       */
       Beam::Queries::Range GetTimeRangeQuery(
-        Beam::TimeService::VirtualTimeClient& timeClient) const;
+        Beam::TimeService::TimeClientBox& timeClient) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 

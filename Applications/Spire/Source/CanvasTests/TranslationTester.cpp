@@ -3,7 +3,6 @@
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include "Spire/Canvas/ControlNodes/UntilNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
@@ -29,16 +28,16 @@ using namespace Spire;
 namespace {
   struct Environment {
     TestEnvironment m_environment;
-    std::unique_ptr<VirtualServiceClients> m_serviceClients;
+    ServiceClientsBox m_serviceClients;
     UserProfile m_userProfile;
 
     Environment()
-      : m_serviceClients(MakeVirtualServiceClients(
-          std::make_unique<TestServiceClients>(Ref(m_environment)))),
+      : m_serviceClients(std::in_place_type<TestServiceClients>,
+          Ref(m_environment)),
         m_userProfile("", false, false, GetDefaultCountryDatabase(),
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-          EntitlementDatabase(), Ref(*m_serviceClients)) {}
+          EntitlementDatabase(), m_serviceClients) {}
   };
 
   const auto TEST_SECURITY = ParseSecurity("TST.TSX");

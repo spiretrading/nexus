@@ -1,6 +1,5 @@
 #include "Spire/Dashboard/BboSizeDashboardCellBuilder.hpp"
 #include <Beam/Queues/ConverterQueueReader.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/UI/UserProfile.hpp"
 

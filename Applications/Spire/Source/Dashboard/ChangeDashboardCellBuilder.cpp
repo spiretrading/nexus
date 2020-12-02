@@ -1,5 +1,4 @@
 #include "Spire/Dashboard/ChangeDashboardCellBuilder.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/UI/UserProfile.hpp"

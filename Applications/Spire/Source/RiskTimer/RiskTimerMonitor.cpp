@@ -1,5 +1,4 @@
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/RiskTimer/RiskTimerModel.hpp"
 #include "Spire/RiskTimer/RiskTimerDialog.hpp"
 #include "Spire/UI/UserProfile.hpp"

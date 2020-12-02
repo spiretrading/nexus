@@ -1,6 +1,5 @@
 #include "Spire/AccountViewer/DirectoryItem.hpp"
 #include <QIcon>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/ManagerItem.hpp"
 #include "Spire/AccountViewer/TraderItem.hpp"
 #include "Spire/UI/UserProfile.hpp"

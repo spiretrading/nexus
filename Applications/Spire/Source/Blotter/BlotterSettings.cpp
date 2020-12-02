@@ -9,7 +9,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
 #include <QMessageBox>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"

@@ -1,20 +1,19 @@
 #ifndef SPIRE_SERVICE_CLIENTS_HPP
 #define SPIRE_SERVICE_CLIENTS_HPP
 #include <memory>
-#include <Beam/Network/Network.hpp>
-#include <Beam/Pointers/Ref.hpp>
-#include <Beam/RegistryService/RegistryService.hpp>
-#include <Beam/ServiceLocator/ServiceLocator.hpp>
-#include <Beam/Threading/Threading.hpp>
-#include <Beam/TimeService/TimeService.hpp>
+#include <Beam/RegistryService/RegistryClientBox.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
+#include <Beam/Threading/TimerBox.hpp>
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
-#include "Nexus/ChartingService/ChartingService.hpp"
-#include "Nexus/Compliance/Compliance.hpp"
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
+#include "Nexus/ChartingService/ChartingClientBox.hpp"
+#include "Nexus/Compliance/ComplianceClientBox.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
+#include "Nexus/RiskService/RiskClientBox.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -35,41 +34,38 @@ namespace Spire {
       ~SpireServiceClients();
 
       //! Returns the ServiceLocatorClient.
-      Beam::ServiceLocator::VirtualServiceLocatorClient&
-        GetServiceLocatorClient() const;
+      Beam::ServiceLocator::ServiceLocatorClientBox& GetServiceLocatorClient();
 
       //! Returns the RegistryClient.
-      Beam::RegistryService::VirtualRegistryClient& GetRegistryClient() const;
+      Beam::RegistryService::RegistryClientBox& GetRegistryClient();
 
       //! Returns the AdministrationClient.
-      Nexus::AdministrationService::VirtualAdministrationClient&
-        GetAdministrationClient() const;
+      Nexus::AdministrationService::AdministrationClientBox&
+        GetAdministrationClient();
 
       //! Returns the DefinitionsClient.
-      Nexus::DefinitionsService::VirtualDefinitionsClient&
-        GetDefinitionsClient() const;
+      Nexus::DefinitionsService::DefinitionsClientBox& GetDefinitionsClient();
 
       //! Returns the MarketDataClient.
-      Nexus::MarketDataService::VirtualMarketDataClient&
-        GetMarketDataClient() const;
+      Nexus::MarketDataService::MarketDataClientBox& GetMarketDataClient();
 
       //! Returns the ChartingClient.
-      Nexus::ChartingService::VirtualChartingClient& GetChartingClient() const;
+      Nexus::ChartingService::ChartingClientBox& GetChartingClient();
 
       //! Returns the ComplianceClient.
-      Nexus::Compliance::VirtualComplianceClient& GetComplianceClient() const;
+      Nexus::Compliance::ComplianceClientBox& GetComplianceClient();
 
       //! Returns the OrderExecutionClient.
-      Nexus::OrderExecutionService::VirtualOrderExecutionClient&
-        GetOrderExecutionClient() const;
+      Nexus::OrderExecutionService::OrderExecutionClientBox&
+        GetOrderExecutionClient();
 
       //! Returns the RiskClient.
-      Nexus::RiskService::VirtualRiskClient& GetRiskClient() const;
+      Nexus::RiskService::RiskClientBox& GetRiskClient();
 
       //! Returns the TimeClient.
-      Beam::TimeService::VirtualTimeClient& GetTimeClient() const;
+      Beam::TimeService::TimeClientBox& GetTimeClient();
 
-      std::unique_ptr<Beam::Threading::VirtualTimer> BuildTimer(
+      std::unique_ptr<Beam::Threading::TimerBox> BuildTimer(
         boost::posix_time::time_duration expiry);
 
       //! Closes all the clients.
@@ -78,24 +74,18 @@ namespace Spire {
     private:
       std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
         m_applicationServiceLocatorClient;
-      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        m_serviceLocatorClient;
-      std::unique_ptr<Nexus::DefinitionsService::VirtualDefinitionsClient>
-        m_definitionsClient;
-      std::unique_ptr<Beam::RegistryService::VirtualRegistryClient>
-        m_registryClient;
-      std::unique_ptr<Nexus::AdministrationService::VirtualAdministrationClient>
+      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
+      Nexus::DefinitionsService::DefinitionsClientBox m_definitionsClient;
+      Beam::RegistryService::RegistryClientBox m_registryClient;
+      Nexus::AdministrationService::AdministrationClientBox
         m_administrationClient;
-      std::unique_ptr<Nexus::ChartingService::VirtualChartingClient>
-        m_chartingClient;
-      std::unique_ptr<Nexus::Compliance::VirtualComplianceClient>
-        m_complianceClient;
-      std::unique_ptr<Nexus::MarketDataService::VirtualMarketDataClient>
-        m_marketDataClient;
-      std::unique_ptr<Nexus::OrderExecutionService::VirtualOrderExecutionClient>
+      Nexus::ChartingService::ChartingClientBox m_chartingClient;
+      Nexus::Compliance::ComplianceClientBox m_complianceClient;
+      Nexus::MarketDataService::MarketDataClientBox m_marketDataClient;
+      Nexus::OrderExecutionService::OrderExecutionClientBox
         m_orderExecutionClient;
-      std::unique_ptr<Nexus::RiskService::VirtualRiskClient> m_riskClient;
-      std::unique_ptr<Beam::TimeService::VirtualTimeClient> m_timeClient;
+      Nexus::RiskService::RiskClientBox m_riskClient;
+      Beam::TimeService::TimeClientBox m_timeClient;
   };
 }
 
