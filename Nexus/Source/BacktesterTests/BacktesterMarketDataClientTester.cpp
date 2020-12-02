@@ -3,8 +3,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -33,10 +33,9 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    auto testServiceClients = MakeVirtualServiceClients(
-      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
-      Ref(*testServiceClients));
+      ServiceClientsBox(std::in_place_type<TestServiceClients>,
+        Ref(testEnvironment)));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
     auto routines = RoutineTaskQueue();
     auto& marketDataClient = serviceClients.GetMarketDataClient();
@@ -83,10 +82,9 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    auto testServiceClients = MakeVirtualServiceClients(
-      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
-      Ref(*testServiceClients));
+      ServiceClientsBox(std::in_place_type<TestServiceClients>,
+        Ref(testEnvironment)));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
     auto& marketDataClient = serviceClients.GetMarketDataClient();
     auto snapshot = std::make_shared<Queue<SequencedBboQuote>>();

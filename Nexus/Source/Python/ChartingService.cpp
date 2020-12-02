@@ -69,10 +69,4 @@ void Nexus::Python::ExportChartingServiceTestEnvironment(module& module) {
       }, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportSecurityChartingQuery(module& module) {
-  class_<SecurityChartingQuery, BasicQuery<Security>, ExpressionQuery>(module,
-    "SecurityChartingQuery").
-    def_property("market_data_type",
-      &SecurityChartingQuery::GetMarketDataType,
-      &SecurityChartingQuery::SetMarketDataType);
-}
+void Nexus::Python::ExportSecurityChartingQuery(module& module) {}

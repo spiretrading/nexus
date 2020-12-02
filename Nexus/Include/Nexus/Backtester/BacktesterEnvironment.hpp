@@ -19,7 +19,7 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 
 namespace Nexus {
@@ -35,7 +35,7 @@ namespace Nexus {
        *        data source.
        */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
-        Beam::Ref<VirtualServiceClients> serviceClients);
+        ServiceClientsBox serviceClients);
 
       /**
        * Constructs a BacktesterEnvironment.
@@ -45,8 +45,7 @@ namespace Nexus {
        *        data source.
        */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
-        boost::posix_time::ptime endTime,
-        Beam::Ref<VirtualServiceClients> serviceClients);
+        boost::posix_time::ptime endTime, ServiceClientsBox serviceClients);
 
       ~BacktesterEnvironment();
 
@@ -102,7 +101,7 @@ namespace Nexus {
       void Close();
 
     private:
-      VirtualServiceClients* m_serviceClients;
+      ServiceClientsBox m_serviceClients;
       BacktesterEventHandler m_eventHandler;
       Beam::TimeService::TimeClientBox m_timeClient;
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
@@ -138,15 +137,14 @@ namespace Nexus {
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-    boost::posix_time::ptime startTime,
-    Beam::Ref<VirtualServiceClients> serviceClients)
+    boost::posix_time::ptime startTime, ServiceClientsBox serviceClients)
     : BacktesterEnvironment(startTime, boost::posix_time::pos_infin,
-        Beam::Ref(serviceClients)) {}
+        std::move(serviceClients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-      Beam::Ref<VirtualServiceClients> serviceClients)
-      : m_serviceClients(serviceClients.Get()),
+      ServiceClientsBox serviceClients)
+      : m_serviceClients(std::move(serviceClients)),
         m_eventHandler(startTime, endTime),
         m_timeClient(std::in_place_type<BacktesterTimeClient>,
           Beam::Ref(m_eventHandler)),
@@ -162,11 +160,11 @@ namespace Nexus {
             std::make_unique<BacktesterHistoricalDataStore<
               MarketDataService::ClientHistoricalDataStore<
                 MarketDataService::MarketDataClientBox>>>(
-                  &m_serviceClients->GetMarketDataClient(),
+                  m_serviceClients.GetMarketDataClient(),
                   m_eventHandler.GetStartTime()))),
         m_marketDataService(Beam::Ref(m_eventHandler),
           Beam::Ref(m_marketDataEnvironment),
-          m_serviceClients->GetMarketDataClient()),
+          m_serviceClients.GetMarketDataClient()),
         m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
           Beam::Ref(m_marketDataService), m_marketDataEnvironment.MakeClient(
             m_serviceLocatorClient))),
