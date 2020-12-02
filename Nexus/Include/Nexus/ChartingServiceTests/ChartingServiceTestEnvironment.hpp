@@ -15,7 +15,7 @@
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/ChartingService/ChartingServlet.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTests.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 
 namespace Nexus::ChartingService::Tests {
 
@@ -33,8 +33,7 @@ namespace Nexus::ChartingService::Tests {
        */
       ChartingServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-        marketDataClient);
+        MarketDataService::MarketDataClientBox marketDataClient);
 
       ~ChartingServiceTestEnvironment();
 
@@ -56,8 +55,7 @@ namespace Nexus::ChartingService::Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaChartingServlet<std::shared_ptr<
-              MarketDataService::VirtualMarketDataClient>>,
+            MetaChartingServlet<MarketDataService::MarketDataClientBox>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
           Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
@@ -81,8 +79,7 @@ namespace Nexus::ChartingService::Tests {
 
   inline ChartingServiceTestEnvironment::ChartingServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-    marketDataClient)
+    MarketDataService::MarketDataClientBox marketDataClient)
     : m_container(Beam::Initialize(std::move(serviceLocatorClient),
         Beam::Initialize(std::move(marketDataClient))), &m_serverConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
@@ -100,7 +97,7 @@ namespace Nexus::ChartingService::Tests {
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_charting_client", std::ref(m_serverConnection)),
         boost::factory<
-        std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void ChartingServiceTestEnvironment::Close() {

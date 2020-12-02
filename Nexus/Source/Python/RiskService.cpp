@@ -118,7 +118,7 @@ void Nexus::Python::ExportMySqlRiskDataStore(pybind11::module& module) {
         std::string password, std::string database) {
       return MakeToPythonRiskDataStore(std::make_unique<SqlRiskDataStore<
         SqlConnection<Viper::MySql::Connection>>>(MakeSqlConnection(
-        Viper::MySql::Connection(host, port, username, password, database))));
+          Viper::MySql::Connection(host, port, username, password, database))));
     }), call_guard<GilRelease>());
 }
 
@@ -175,7 +175,7 @@ void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
   class_<RiskServiceTestEnvironment>(module, "RiskServiceTestEnvironment")
     .def(init([] (ServiceLocatorClientBox serviceLocatorClient,
           AdministrationClientBox administrationClient,
-          std::shared_ptr<VirtualMarketDataClient> marketDataClient,
+          MarketDataClientBox marketDataClient,
           std::shared_ptr<VirtualOrderExecutionClient> orderExecutionClient,
           std::function<std::shared_ptr<TimerBox> ()> transitionTimerFactory,
           TimeClientBox timeClient, std::vector<ExchangeRate> exchangeRates,
@@ -223,11 +223,11 @@ void Nexus::Python::ExportSqliteRiskDataStore(pybind11::module& module) {
   class_<ToPythonRiskDataStore<
       SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>,
       VirtualRiskDataStore, std::shared_ptr<ToPythonRiskDataStore<
-      SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>>>(module,
-      "SqliteRiskDataStore")
+        SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>>>(module,
+          "SqliteRiskDataStore")
     .def(init([] (std::string path) {
       return MakeToPythonRiskDataStore(std::make_unique<
         SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>(
-        MakeSqlConnection(Viper::Sqlite3::Connection(path))));
+          MakeSqlConnection(Viper::Sqlite3::Connection(path))));
     }), call_guard<GilRelease>());
 }

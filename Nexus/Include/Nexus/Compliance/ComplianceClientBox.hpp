@@ -19,8 +19,7 @@ namespace Nexus::Compliance {
     public:
 
       /**
-       * Constructs an ComplianceClientBox of a specified type using
-       * emplacement.
+       * Constructs a ComplianceClientBox of a specified type using emplacement.
        * @param <T> The type of compliance client to emplace.
        * @param args The arguments to pass to the emplaced compliance client.
        */

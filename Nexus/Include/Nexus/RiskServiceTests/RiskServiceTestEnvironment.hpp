@@ -16,7 +16,7 @@
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskClient.hpp"
@@ -48,12 +48,11 @@ namespace Nexus::RiskService::Tests {
       RiskServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         AdministrationService::AdministrationClientBox administrationClient,
-        std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-        marketDataClient,
+        MarketDataService::MarketDataClientBox marketDataClient,
         std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
-        orderExecutionClient,
+          orderExecutionClient,
         std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
-        transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
+          transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
         std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
         DestinationDatabase destinations);
 
@@ -78,7 +77,7 @@ namespace Nexus::RiskService::Tests {
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaRiskServlet<AdministrationService::AdministrationClientBox,
-              std::shared_ptr<MarketDataService::VirtualMarketDataClient>,
+              MarketDataService::MarketDataClientBox,
               std::shared_ptr<
                 OrderExecutionService::VirtualOrderExecutionClient>,
               Beam::Threading::TimerBox,
@@ -106,12 +105,11 @@ namespace Nexus::RiskService::Tests {
   inline RiskServiceTestEnvironment::RiskServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
       AdministrationService::AdministrationClientBox administrationClient,
-      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-        marketDataClient,
+      MarketDataService::MarketDataClientBox marketDataClient,
       std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
-      orderExecutionClient,
+        orderExecutionClient,
       std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
-      transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
+        transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
       std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
       DestinationDatabase destinations) {
     auto accounts = std::make_shared<

@@ -18,7 +18,7 @@ namespace Nexus::ChartingService {
     public:
 
       /**
-       * Constructs an ChartingClientBox of a specified type using emplacement.
+       * Constructs a ChartingClientBox of a specified type using emplacement.
        * @param <T> The type of charting client to emplace.
        * @param args The arguments to pass to the emplaced charting client.
        */

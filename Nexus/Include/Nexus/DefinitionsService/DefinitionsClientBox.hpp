@@ -20,7 +20,7 @@ namespace Nexus::DefinitionsService {
     public:
 
       /**
-       * Constructs an DefinitionsClientBox of a specified type using
+       * Constructs a DefinitionsClientBox of a specified type using
        * emplacement.
        * @param <T> The type of definitions client to emplace.
        * @param args The arguments to pass to the emplaced definitions client.

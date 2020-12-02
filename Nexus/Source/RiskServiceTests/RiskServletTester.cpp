@@ -4,9 +4,9 @@
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
@@ -38,8 +38,7 @@ namespace {
   auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
 
   using TestServletContainer = TestAuthenticatedServiceProtocolServletContainer<
-    MetaRiskServlet<AdministrationClientBox,
-      std::unique_ptr<VirtualMarketDataClient>,
+    MetaRiskServlet<AdministrationClientBox, MarketDataClientBox,
       std::unique_ptr<VirtualOrderExecutionClient>, TriggerTimer,
       std::shared_ptr<FixedTimeClient>, LocalRiskDataStore*>>;
 

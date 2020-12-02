@@ -24,7 +24,7 @@ namespace Nexus {
 
       using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
 
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
+      using MarketDataClient = MarketDataService::MarketDataClientBox;
 
       using ChartingClient = ChartingService::ChartingClientBox;
 
@@ -78,7 +78,7 @@ namespace Nexus {
       RegistryClient m_registryClient;
       DefinitionsClient m_definitionsClient;
       AdministrationClient m_administrationClient;
-      std::unique_ptr<MarketDataClient> m_marketDataClient;
+      MarketDataClient m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
@@ -104,11 +104,10 @@ namespace Nexus {
       m_administrationClient(
         m_environment->GetAdministrationEnvironment().MakeClient(
           m_serviceLocatorClient)),
-      m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
-        std::make_unique<BacktesterMarketDataClient>(
-          Beam::Ref(m_environment->GetMarketDataService()),
-          m_environment->GetMarketDataEnvironment().MakeClient(
-            m_serviceLocatorClient)))),
+      m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
+        Beam::Ref(m_environment->GetMarketDataService()),
+        m_environment->GetMarketDataEnvironment().MakeClient(
+          m_serviceLocatorClient))),
       m_chartingClient(m_environment->GetChartingEnvironment().MakeClient(
         m_serviceLocatorClient)),
       m_complianceClient(m_environment->GetComplianceEnvironment().MakeClient(
@@ -147,7 +146,7 @@ namespace Nexus {
 
   inline BacktesterServiceClients::MarketDataClient&
       BacktesterServiceClients::GetMarketDataClient() {
-    return *m_marketDataClient;
+    return m_marketDataClient;
   }
 
   inline BacktesterServiceClients::ChartingClient&
@@ -191,7 +190,7 @@ namespace Nexus {
     m_orderExecutionClient->Close();
     m_complianceClient.Close();
     m_chartingClient.Close();
-    m_marketDataClient->Close();
+    m_marketDataClient.Close();
     m_administrationClient.Close();
     m_definitionsClient.Close();
     m_registryClient.Close();

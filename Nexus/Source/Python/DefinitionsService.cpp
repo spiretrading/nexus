@@ -32,7 +32,7 @@ void Nexus::Python::ExportApplicationDefinitionsClient(
       return std::make_shared<PythonApplicationDefinitionsClient>(
         MakeDefaultSessionBuilder(std::move(serviceLocatorClient),
           DefinitionsService::SERVICE_NAME));
-    }), call_guard<GilRelease>());
+    }));
 }
 
 void Nexus::Python::ExportDefinitionsService(pybind11::module& module) {

@@ -21,7 +21,7 @@ namespace {
 
   struct Fixture {
     using TestBuyingPowerCheck = BuyingPowerCheck<AdministrationClientBox,
-      VirtualMarketDataClient*>;
+      MarketDataClientBox>;
     TestEnvironment m_environment;
     std::shared_ptr<Queue<const Order*>> m_orderSubmissions;
     TestServiceClients m_serviceClients;

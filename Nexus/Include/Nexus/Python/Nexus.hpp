@@ -8,8 +8,6 @@
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
 #include "Nexus/Python/FeeHandling.hpp"
-#include "Nexus/Python/MarketDataClient.hpp"
-#include "Nexus/Python/MarketDataFeedClient.hpp"
 #include "Nexus/Python/MarketDataService.hpp"
 #include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/OrderExecutionService.hpp"
@@ -20,5 +18,7 @@
 #include "Nexus/Python/ToPythonChartingClient.hpp"
 #include "Nexus/Python/ToPythonComplianceClient.hpp"
 #include "Nexus/Python/ToPythonDefinitionsClient.hpp"
+#include "Nexus/Python/ToPythonMarketDataClient.hpp"
+#include "Nexus/Python/ToPythonMarketDataFeedClient.hpp"
 
 #endif

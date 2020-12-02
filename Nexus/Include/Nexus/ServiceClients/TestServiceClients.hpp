@@ -11,7 +11,7 @@
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
@@ -31,7 +31,7 @@ namespace Nexus {
 
       using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
 
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
+      using MarketDataClient = MarketDataService::MarketDataClientBox;
 
       using ChartingClient = ChartingService::ChartingClientBox;
 
@@ -94,7 +94,7 @@ namespace Nexus {
       RegistryClient m_registryClient;
       DefinitionsClient m_definitionsClient;
       AdministrationClient m_administrationClient;
-      std::unique_ptr<MarketDataClient> m_marketDataClient;
+      MarketDataClient m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
@@ -163,7 +163,7 @@ namespace Nexus {
 
   inline TestServiceClients::MarketDataClient&
       TestServiceClients::GetMarketDataClient() {
-    return *m_marketDataClient;
+    return m_marketDataClient;
   }
 
   inline TestServiceClients::ChartingClient&
@@ -205,7 +205,7 @@ namespace Nexus {
     m_orderExecutionClient->Close();
     m_complianceClient.Close();
     m_chartingClient.Close();
-    m_marketDataClient->Close();
+    m_marketDataClient.Close();
     m_administrationClient.Close();
     m_definitionsClient.Close();
     m_registryClient.Close();

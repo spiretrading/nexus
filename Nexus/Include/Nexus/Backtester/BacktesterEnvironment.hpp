@@ -120,8 +120,7 @@ namespace Nexus {
       MarketDataService::Tests::MarketDataServiceTestEnvironment
         m_marketDataEnvironment;
       BacktesterMarketDataService m_marketDataService;
-      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-        m_marketDataClient;
+      MarketDataService::MarketDataClientBox m_marketDataClient;
       ChartingService::Tests::ChartingServiceTestEnvironment
         m_chartingEnvironment;
       Compliance::Tests::ComplianceTestEnvironment m_complianceEnvironment;
@@ -162,16 +161,15 @@ namespace Nexus {
           MarketDataService::MakeVirtualHistoricalDataStore(
             std::make_unique<BacktesterHistoricalDataStore<
               MarketDataService::ClientHistoricalDataStore<
-              MarketDataService::VirtualMarketDataClient*>>>(
-                &m_serviceClients->GetMarketDataClient(),
-                m_eventHandler.GetStartTime()))),
+                MarketDataService::MarketDataClientBox>>>(
+                  &m_serviceClients->GetMarketDataClient(),
+                  m_eventHandler.GetStartTime()))),
         m_marketDataService(Beam::Ref(m_eventHandler),
           Beam::Ref(m_marketDataEnvironment),
-          Beam::Ref(m_serviceClients->GetMarketDataClient())),
-        m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
-          std::make_unique<BacktesterMarketDataClient>(
-            Beam::Ref(m_marketDataService), m_marketDataEnvironment.MakeClient(
-              m_serviceLocatorClient)))),
+          m_serviceClients->GetMarketDataClient()),
+        m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
+          Beam::Ref(m_marketDataService), m_marketDataEnvironment.MakeClient(
+            m_serviceLocatorClient))),
         m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
         m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
           m_timeClient) {
@@ -185,7 +183,7 @@ namespace Nexus {
         OrderExecutionService::MakeVirtualOrderExecutionDriver(
           std::make_unique<
             OrderExecutionService::SimulationOrderExecutionDriver<
-              std::shared_ptr<MarketDataService::VirtualMarketDataClient>,
+              MarketDataService::MarketDataClientBox,
               Beam::TimeService::TimeClientBox>>(
                 m_marketDataClient, m_timeClient)));
       m_orderExecutionClient = m_orderExecutionEnvironment->MakeClient(
@@ -291,7 +289,7 @@ namespace Nexus {
     m_orderExecutionEnvironment->Close();
     m_complianceEnvironment.Close();
     m_chartingEnvironment.Close();
-    m_marketDataClient->Close();
+    m_marketDataClient.Close();
     m_marketDataEnvironment.Close();
     m_administrationClient.Close();
     m_administrationEnvironment.Close();

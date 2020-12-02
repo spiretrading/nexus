@@ -8,7 +8,7 @@
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 
@@ -27,7 +27,7 @@ namespace Nexus {
 
       using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
 
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
+      using MarketDataClient = MarketDataService::MarketDataClientBox;
 
       using ChartingClient = ChartingService::ChartingClientBox;
 
@@ -128,7 +128,7 @@ namespace Nexus {
       RegistryClient m_registryClient;
       AdministrationClient m_administrationClient;
       DefinitionsClient m_definitionsClient;
-      std::unique_ptr<MarketDataClient> m_marketDataClient;
+      MarketDataClient m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
@@ -156,8 +156,7 @@ namespace Nexus {
       m_registryClient(&m_client->GetRegistryClient()),
       m_administrationClient(&m_client->GetAdministrationClient()),
       m_definitionsClient(&m_client->GetDefinitionsClient()),
-      m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
-        &m_client->GetMarketDataClient())),
+      m_marketDataClient(&m_client->GetMarketDataClient()),
       m_chartingClient(&m_client->GetChartingClient()),
       m_complianceClient(&m_client->GetComplianceClient()),
       m_orderExecutionClient(
@@ -194,7 +193,7 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::MarketDataClient&
       WrapperServiceClients<C>::GetMarketDataClient() {
-    return *m_marketDataClient;
+    return m_marketDataClient;
   }
 
   template<typename C>

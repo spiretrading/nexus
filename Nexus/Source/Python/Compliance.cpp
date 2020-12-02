@@ -42,7 +42,7 @@ void Nexus::Python::ExportApplicationComplianceClient(module& module) {
       return std::make_shared<PythonApplicationComplianceClient>(
         MakeDefaultSessionBuilder(std::move(serviceLocatorClient),
           Compliance::SERVICE_NAME));
-    }), call_guard<GilRelease>());
+    }));
 }
 
 void Nexus::Python::ExportCompliance(module& module) {

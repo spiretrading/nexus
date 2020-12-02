@@ -130,7 +130,7 @@ void Nexus::Python::ExportApplicationAdministrationClient(module& module) {
       return std::make_shared<PythonApplicationAdministrationClient>(
         MakeDefaultSessionBuilder(std::move(serviceLocatorClient),
           AdministrationService::SERVICE_NAME));
-    }), call_guard<GilRelease>());
+    }));
 }
 
 void Nexus::Python::ExportEntitlementModification(pybind11::module& module) {

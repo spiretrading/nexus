@@ -239,7 +239,7 @@ namespace Nexus {
       boost::optional<
         MarketDataService::Tests::MarketDataServiceTestEnvironment>
         m_marketDataEnvironment;
-      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
+      boost::optional<MarketDataService::MarketDataClientBox>
         m_marketDataClient;
       boost::optional<ChartingService::Tests::ChartingServiceTestEnvironment>
         m_chartingEnvironment;
@@ -297,9 +297,10 @@ namespace Nexus {
         m_administrationClient.LoadServicesRootEntry());
       m_marketDataEnvironment.emplace(m_serviceLocatorClient,
         m_administrationClient, std::move(historicalDataStore));
-      m_marketDataClient = m_marketDataEnvironment->MakeClient(
-        m_serviceLocatorClient);
-      m_chartingEnvironment.emplace(m_serviceLocatorClient, m_marketDataClient);
+      m_marketDataClient.emplace(m_marketDataEnvironment->MakeClient(
+        m_serviceLocatorClient));
+      m_chartingEnvironment.emplace(m_serviceLocatorClient,
+        *m_marketDataClient);
       m_complianceEnvironment.emplace(m_serviceLocatorClient,
         m_administrationClient, m_timeClient);
       auto definitionsClient = m_definitionsEnvironment.MakeClient(
@@ -316,7 +317,7 @@ namespace Nexus {
             boost::posix_time::seconds(1), Beam::Ref(m_timeEnvironment)));
       };
       m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
-        m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
+        *m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
         m_timeClient, definitionsClient.LoadExchangeRates(),
         definitionsClient.LoadMarketDatabase(),
         definitionsClient.LoadDestinationDatabase());

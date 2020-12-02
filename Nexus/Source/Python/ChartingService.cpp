@@ -35,7 +35,7 @@ void Nexus::Python::ExportApplicationChartingClient(module& module) {
       return std::make_shared<PythonApplicationChartingClient>(
         MakeSessionBuilder<ZLibSessionBuilder<ServiceLocatorClientBox>>(
           std::move(serviceLocatorClient), ChartingService::SERVICE_NAME));
-    }), call_guard<GilRelease>());
+    }));
 }
 
 void Nexus::Python::ExportChartingService(module& module) {
@@ -53,8 +53,8 @@ void Nexus::Python::ExportChartingService(module& module) {
 void Nexus::Python::ExportChartingServiceTestEnvironment(module& module) {
   class_<ChartingServiceTestEnvironment>(module,
     "ChartingServiceTestEnvironment").
-    def(init<ServiceLocatorClientBox,
-      std::shared_ptr<VirtualMarketDataClient>>(), call_guard<GilRelease>()).
+    def(init<ServiceLocatorClientBox, MarketDataClientBox>(),
+      call_guard<GilRelease>()).
     def("__del__",
       [] (ChartingServiceTestEnvironment& self) {
         self.Close();

@@ -56,7 +56,7 @@ namespace {
   struct Fixture {
     using TestInternalMatchingOrderExecutionDriver =
       InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
-        VirtualMarketDataClient*, TimeClientBox, UidClientBox,
+        MarketDataClientBox, TimeClientBox, UidClientBox,
         VirtualOrderExecutionDriver*>;
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
@@ -69,7 +69,7 @@ namespace {
           m_uidClient(m_environment.GetUidEnvironment().MakeClient()),
           m_mockDriverMonitor(std::make_shared<Queue<const Order*>>()),
           m_orderExecutionDriver(DirectoryEntry::GetRootAccount(),
-            Initialize(), &m_serviceClients.GetMarketDataClient(),
+            Initialize(), m_serviceClients.GetMarketDataClient(),
             &m_serviceClients.GetTimeClient(),
             m_environment.GetUidEnvironment().MakeClient(),
             &m_environment.GetOrderExecutionEnvironment().GetDriver()) {
