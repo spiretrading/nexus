@@ -51,25 +51,24 @@ int main(int argc, const char** argv) {
       return ServiceLocatorClientConfig::Parse(
         GetNode(config, "service_locator"));
     }, std::runtime_error("Error parsing section 'service_locator'."));
-    auto serviceClients = MakeVirtualServiceClients(
-      std::make_unique<ApplicationServiceClients>(
-        serviceLocatorClientConfig.m_username,
-        serviceLocatorClientConfig.m_password,
-        serviceLocatorClientConfig.m_address));
+    auto serviceClients = ServiceClientsBox(
+      std::in_place_type<ApplicationServiceClients>,
+      serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address);
     auto serviceConfig = TryOrNest([&] {
       return Configuration::Parse(GetNode(config, "server"));
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceClientsBuilder =
       [&] (const std::string& username, const std::string& password) {
-        return MakeVirtualServiceClients(
-          std::make_unique<ApplicationServiceClients>(username, password,
-            serviceLocatorClientConfig.m_address));
+        return ServiceClientsBox(std::in_place_type<ApplicationServiceClients>,
+          username, password, serviceLocatorClientConfig.m_address);
       };
     auto server = WebPortalServletContainer(Initialize(
-      std::move(serviceClientsBuilder), Ref(*serviceClients)),
+      std::move(serviceClientsBuilder), serviceClients),
       Initialize(serviceConfig.m_interface));
     WaitForKillEvent();
-    serviceClients->Close();
+    serviceClients.Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

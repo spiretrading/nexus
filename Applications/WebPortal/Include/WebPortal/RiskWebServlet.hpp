@@ -11,11 +11,10 @@
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 #include "WebPortal/PortfolioModel.hpp"
@@ -23,7 +22,7 @@
 namespace Nexus::WebPortal {
 
   /** Provides a web interface to the RiskService. */
-  class RiskWebServlet : private boost::noncopyable {
+  class RiskWebServlet {
     public:
 
       /** The type of WebSocketChannel used. */
@@ -37,7 +36,7 @@ namespace Nexus::WebPortal {
        */
       RiskWebServlet(Beam::Ref<
         Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        Beam::Ref<VirtualServiceClients> serviceClients);
+        ServiceClientsBox serviceClients);
 
       ~RiskWebServlet();
 
@@ -68,7 +67,7 @@ namespace Nexus::WebPortal {
         PortfolioSubscriber(Beam::ServiceLocator::DirectoryEntry account,
           std::unique_ptr<WebSocketChannel> channel);
       };
-      VirtualServiceClients* m_serviceClients;
+      ServiceClientsBox m_serviceClients;
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
         m_portfolioEntries;
@@ -81,6 +80,8 @@ namespace Nexus::WebPortal {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      RiskWebServlet(const RiskWebServlet&) = delete;
+      RiskWebServlet& operator =(const RiskWebServlet&) = delete;
       const Beam::ServiceLocator::DirectoryEntry& FindTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& trader);
       void SendPortfolioEntry(const PortfolioModel::Entry& entry,

@@ -41,19 +41,19 @@ bool RiskWebServlet::PortfolioFilter::IsFiltered(
 }
 
 RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
-    Ref<VirtualServiceClients> serviceClients)
+    ServiceClientsBox serviceClients)
     : m_sessions(sessions.Get()),
-      m_serviceClients(serviceClients.Get()),
-      m_portfolioModel(Ref(*m_serviceClients)),
-      m_portfolioTimer(m_serviceClients->BuildTimer(seconds(1))) {
+      m_serviceClients(std::move(serviceClients)),
+      m_portfolioModel(m_serviceClients),
+      m_portfolioTimer(m_serviceClients.BuildTimer(seconds(1))) {
   try {
     m_portfolioTimer.GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
       std::bind(&RiskWebServlet::OnPortfolioTimerExpired, this,
-      std::placeholders::_1)));
+        std::placeholders::_1)));
     m_portfolioModel.GetPublisher().Monitor(
       m_tasks.GetSlot<PortfolioModel::Entry>(
-      std::bind(&RiskWebServlet::OnPortfolioUpdate, this,
-      std::placeholders::_1)));
+        std::bind(&RiskWebServlet::OnPortfolioUpdate, this,
+          std::placeholders::_1)));
     m_portfolioTimer.Start();
   } catch(const std::exception&) {
     Close();
@@ -75,8 +75,8 @@ std::vector<HttpUpgradeSlot<RiskWebServlet::WebSocketChannel>>
   auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
   slots.emplace_back(MatchesPath(HttpMethod::GET,
     "/api/risk_service/portfolio"), std::bind(
-    &RiskWebServlet::OnPortfolioUpgrade, this, std::placeholders::_1,
-    std::placeholders::_2));
+      &RiskWebServlet::OnPortfolioUpgrade, this, std::placeholders::_1,
+      std::placeholders::_2));
   return slots;
 }
 
@@ -95,17 +95,17 @@ const DirectoryEntry& RiskWebServlet::FindTradingGroup(
     return groupIterator->second;
   }
   auto groups =
-    m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
-    m_serviceClients->GetServiceLocatorClient().GetAccount());
+    m_serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
+      m_serviceClients.GetServiceLocatorClient().GetAccount());
   for(auto& group : groups) {
     auto tradingGroup =
-      m_serviceClients->GetAdministrationClient().LoadTradingGroup(group);
+      m_serviceClients.GetAdministrationClient().LoadTradingGroup(group);
     if(std::find(tradingGroup.GetManagers().begin(),
         tradingGroup.GetManagers().end(), trader) !=
         tradingGroup.GetManagers().end() ||
         std::find(tradingGroup.GetTraders().begin(),
-        tradingGroup.GetTraders().end(), trader) !=
-        tradingGroup.GetTraders().end()) {
+          tradingGroup.GetTraders().end(), trader) !=
+          tradingGroup.GetTraders().end()) {
       m_traderGroups.insert(std::make_pair(trader, tradingGroup.GetEntry()));
       return FindTradingGroup(trader);
     }
@@ -182,17 +182,17 @@ void RiskWebServlet::OnPortfolioRequest(
   m_tasks.Push(
     [=] {
       auto groups =
-        m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+        m_serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
         subscriber->m_account);
       std::move(groups.begin(), groups.end(), std::inserter(
         subscriber->m_filter.m_groups, subscriber->m_filter.m_groups.end()));
       auto currencyDatabase =
-        m_serviceClients->GetDefinitionsClient().LoadCurrencyDatabase();
+        m_serviceClients.GetDefinitionsClient().LoadCurrencyDatabase();
       for(auto& currency : currencyDatabase.GetEntries()) {
         subscriber->m_filter.m_currencies.insert(currency.m_id);
       }
       auto marketDatabase =
-        m_serviceClients->GetDefinitionsClient().LoadMarketDatabase();
+        m_serviceClients.GetDefinitionsClient().LoadMarketDatabase();
       for(auto& market : marketDatabase.GetEntries()) {
         subscriber->m_filter.m_markets.insert(market.m_code);
       }
@@ -242,7 +242,7 @@ void RiskWebServlet::OnPortfolioFilterRequest(
     return;
   }
   auto managedGroupsList =
-    m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+    m_serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
     subscriber->m_account);
   std::sort(parameters.m_groups.begin(), parameters.m_groups.end());
   std::unordered_set<DirectoryEntry> managedGroups;
