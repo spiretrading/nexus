@@ -304,7 +304,7 @@ namespace Nexus {
       ServiceClientsBox::WrappedServiceClients<C>::BuildTimer(
         boost::posix_time::time_duration expiry) {
     return std::make_unique<Beam::Threading::TimerBox>(
-      m_client->BuildTimer(expiry));
+      m_clients->BuildTimer(expiry));
   }
 
   template<typename C>
