@@ -33,7 +33,7 @@ namespace Nexus {
       using OrderExecutionClient =
         OrderExecutionService::OrderExecutionClientBox;
 
-      using RiskClient = RiskService::VirtualRiskClient;
+      using RiskClient = RiskService::RiskClientBox;
 
       using TimeClient = Beam::TimeService::TimeClientBox;
 
@@ -82,7 +82,7 @@ namespace Nexus {
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
       OrderExecutionClient m_orderExecutionClient;
-      std::unique_ptr<RiskClient> m_riskClient;
+      RiskClient m_riskClient;
       TimeClient m_timeClient;
       Beam::IO::OpenState m_openState;
 
@@ -166,7 +166,7 @@ namespace Nexus {
 
   inline BacktesterServiceClients::RiskClient&
       BacktesterServiceClients::GetRiskClient() {
-    return *m_riskClient;
+    return m_riskClient;
   }
 
   inline BacktesterServiceClients::TimeClient&
@@ -176,7 +176,7 @@ namespace Nexus {
 
   inline std::unique_ptr<BacktesterServiceClients::Timer>
       BacktesterServiceClients::BuildTimer(
-      boost::posix_time::time_duration expiry) {
+        boost::posix_time::time_duration expiry) {
     return std::make_unique<Timer>(std::in_place_type<BacktesterTimer>, expiry,
       Beam::Ref(m_environment->GetEventHandler()));
   }
@@ -186,7 +186,7 @@ namespace Nexus {
       return;
     }
     m_timeClient.Close();
-    m_riskClient->Close();
+    m_riskClient.Close();
     m_orderExecutionClient.Close();
     m_complianceClient.Close();
     m_chartingClient.Close();

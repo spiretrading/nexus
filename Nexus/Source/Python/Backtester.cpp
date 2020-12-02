@@ -50,13 +50,13 @@ namespace {
   };
 }
 
-void Nexus::Python::ExportBacktester(pybind11::module& module) {
+void Nexus::Python::ExportBacktester(module& module) {
   ExportBacktesterEnvironment(module);
   ExportBacktesterEventHandler(module);
   ExportBacktesterServiceClients(module);
 }
 
-void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
+void Nexus::Python::ExportBacktesterEnvironment(module& module) {
   class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>>(module,
       "BacktesterEnvironment")
     .def(init(
@@ -116,7 +116,7 @@ void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
     .def("close", &BacktesterEnvironment::Close, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
+void Nexus::Python::ExportBacktesterEventHandler(module& module) {
   class_<BacktesterEventHandler>(module, "BacktesterEventHandler")
     .def(init<ptime>(), call_guard<GilRelease>())
     .def(init<ptime, ptime>(), call_guard<GilRelease>())
@@ -139,7 +139,7 @@ void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
     .def("close", &BacktesterEventHandler::Close, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {
+void Nexus::Python::ExportBacktesterServiceClients(module& module) {
   class_<ToPythonServiceClients<BacktesterServiceClients>,
       std::shared_ptr<ToPythonServiceClients<BacktesterServiceClients>>,
       VirtualServiceClients>(module, "BacktesterServiceClients")

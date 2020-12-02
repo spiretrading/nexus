@@ -225,7 +225,7 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(module& module) {
     }));
 }
 
-void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
+void Nexus::Python::ExportHistoricalDataStore(module& module) {
   class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore,
       std::shared_ptr<VirtualHistoricalDataStore>>(module,
       "HistoricalDataStore").
@@ -271,7 +271,7 @@ void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
     def("close", &VirtualHistoricalDataStore::Close);
 }
 
-void Nexus::Python::ExportMarketDataReactors(pybind11::module& module) {
+void Nexus::Python::ExportMarketDataReactors(module& module) {
   auto aspenModule = pybind11::module::import("aspen");
   Aspen::export_box<SecurityMarketDataQuery>(aspenModule,
     "SecurityMarketDataQuery");
@@ -342,7 +342,7 @@ void Nexus::Python::ExportMarketDataReactors(pybind11::module& module) {
     });
 }
 
-void Nexus::Python::ExportMarketDataService(pybind11::module& module) {
+void Nexus::Python::ExportMarketDataService(module& module) {
   auto submodule = module.def_submodule("market_data_service");
   ExportHistoricalDataStore(submodule);
   marketDataClientBox = std::make_unique<class_<MarketDataClientBox>>(
@@ -365,8 +365,7 @@ void Nexus::Python::ExportMarketDataService(pybind11::module& module) {
   ExportMarketDataServiceTestEnvironment(testModule);
 }
 
-void Nexus::Python::ExportMarketDataServiceTestEnvironment(
-    pybind11::module& module) {
+void Nexus::Python::ExportMarketDataServiceTestEnvironment(module& module) {
   class_<MarketDataServiceTestEnvironment>(module,
       "MarketDataServiceTestEnvironment").
     def(init(
@@ -403,7 +402,7 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
       }, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
+void Nexus::Python::ExportMySqlHistoricalDataStore(module& module) {
   using PythonHistoricalDataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::MySql::Connection>>>;
   class_<PythonHistoricalDataStore, VirtualHistoricalDataStore,
@@ -420,7 +419,7 @@ void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
     }), call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
+void Nexus::Python::ExportSecuritySnapshot(module& module) {
   class_<SecuritySnapshot>(module, "SecuritySnapshot")
     .def(init())
     .def(init<const Security&>())
@@ -433,7 +432,7 @@ void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
     .def_readwrite("bid_book", &SecuritySnapshot::m_bidBook);
 }
 
-void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
+void Nexus::Python::ExportSqliteHistoricalDataStore(module& module) {
   using PythonHistoricalDataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
   class_<PythonHistoricalDataStore, VirtualHistoricalDataStore,

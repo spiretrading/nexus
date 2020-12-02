@@ -22,8 +22,7 @@ class_<DefinitionsClientBox>& Nexus::Python::GetExportedDefinitionsClientBox() {
   return *definitionsClientBox;
 }
 
-void Nexus::Python::ExportApplicationDefinitionsClient(
-    pybind11::module& module) {
+void Nexus::Python::ExportApplicationDefinitionsClient(module& module) {
   using PythonApplicationDefinitionsClient = ToPythonDefinitionsClient<
     DefinitionsClient<DefaultSessionBuilder<ServiceLocatorClientBox>>>;
   ExportDefinitionsClient<PythonApplicationDefinitionsClient>(module,
@@ -35,7 +34,7 @@ void Nexus::Python::ExportApplicationDefinitionsClient(
     }));
 }
 
-void Nexus::Python::ExportDefinitionsService(pybind11::module& module) {
+void Nexus::Python::ExportDefinitionsService(module& module) {
   auto submodule = module.def_submodule("definitions_service");
   definitionsClientBox = std::make_unique<class_<DefinitionsClientBox>>(
     ExportDefinitionsClient<DefinitionsClientBox>(submodule,

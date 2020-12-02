@@ -20,5 +20,6 @@
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
 #include "Nexus/Python/ToPythonMarketDataFeedClient.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
+#include "Nexus/Python/ToPythonRiskClient.hpp"
 
 #endif

@@ -22,7 +22,7 @@ using namespace pybind11;
 
 namespace {
   template<typename IndexType>
-  void ExportKey(pybind11::object& module, const std::string& name) {
+  void ExportKey(object& module, const std::string& name) {
     class_<Accounting::Details::Key<IndexType>>(module, name.c_str())
       .def(init())
       .def(init<IndexType, CurrencyId>())
@@ -43,7 +43,7 @@ namespace {
   }
 }
 
-void Nexus::Python::ExportBuyingPowerModel(pybind11::module& module) {
+void Nexus::Python::ExportBuyingPowerModel(module& module) {
   auto outer = class_<BuyingPowerModel>(module, "BuyingPowerModel")
     .def(init())
     .def("has_order", &BuyingPowerModel::HasOrder)
@@ -52,7 +52,7 @@ void Nexus::Python::ExportBuyingPowerModel(pybind11::module& module) {
     .def("update", &BuyingPowerModel::Update);
 }
 
-void Nexus::Python::ExportAccounting(pybind11::module& module) {
+void Nexus::Python::ExportAccounting(module& module) {
   auto submodule = module.def_submodule("accounting");
   ExportBuyingPowerModel(submodule);
   ExportPositionOrderBook(submodule);
@@ -63,7 +63,7 @@ void Nexus::Python::ExportAccounting(pybind11::module& module) {
   ExportTrueAveragePortfolio(submodule);
 }
 
-void Nexus::Python::ExportPositionOrderBook(pybind11::module& module) {
+void Nexus::Python::ExportPositionOrderBook(module& module) {
   auto outer = class_<PositionOrderBook>(module, "PositionOrderBook")
     .def(init())
     .def_property_readonly("live_orders", &PositionOrderBook::GetLiveOrders)
@@ -80,7 +80,7 @@ void Nexus::Python::ExportPositionOrderBook(pybind11::module& module) {
     .def_readwrite("quantity", &PositionOrderBook::PositionEntry::m_quantity);
 }
 
-void Nexus::Python::ExportPosition(pybind11::module& module) {
+void Nexus::Python::ExportPosition(module& module) {
   auto outer = class_<Position<Security>>(module, "Position")
     .def(init())
     .def(init<Position<Security>::Key>())
@@ -97,7 +97,7 @@ void Nexus::Python::ExportPosition(pybind11::module& module) {
   module.def("side", &Accounting::GetSide<Security>);
 }
 
-void Nexus::Python::ExportSecurityInventory(pybind11::module& module) {
+void Nexus::Python::ExportSecurityInventory(module& module) {
   using Inventory = Accounting::Inventory<Position<Security>>;
   class_<Inventory>(module, "SecurityInventory")
     .def(init())
@@ -114,7 +114,7 @@ void Nexus::Python::ExportSecurityInventory(pybind11::module& module) {
     .def(self != self);
 }
 
-void Nexus::Python::ExportTrueAverageBookkeeper(pybind11::module& module) {
+void Nexus::Python::ExportTrueAverageBookkeeper(module& module) {
   ExportView<std::pair<
     const TrueAverageBookkeeper<Inventory<Position<Security>>>::Key,
     TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(module,
@@ -134,8 +134,7 @@ void Nexus::Python::ExportTrueAverageBookkeeper(pybind11::module& module) {
       Inventory<Position<Security>>>::GetTotal);
 }
 
-void Nexus::Python::ExportTrueAverageBookkeeperReactor(
-    pybind11::module& module) {
+void Nexus::Python::ExportTrueAverageBookkeeperReactor(module& module) {
   module.def("TrueAverageBookkeeperReactor",
     [] (SharedBox<const Order*> orders) {
       return to_object(BookkeeperReactor<
@@ -144,7 +143,7 @@ void Nexus::Python::ExportTrueAverageBookkeeperReactor(
     });
 }
 
-void Nexus::Python::ExportTrueAveragePortfolio(pybind11::module& module) {
+void Nexus::Python::ExportTrueAveragePortfolio(module& module) {
   using Inventory = Accounting::Inventory<Position<Security>>;
   using Portfolio = Accounting::Portfolio<TrueAverageBookkeeper<Inventory>>;
   auto outer = class_<Portfolio>(module, "TrueAveragePortfolio")

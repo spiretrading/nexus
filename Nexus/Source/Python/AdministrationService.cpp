@@ -133,7 +133,7 @@ void Nexus::Python::ExportApplicationAdministrationClient(module& module) {
     }));
 }
 
-void Nexus::Python::ExportEntitlementModification(pybind11::module& module) {
+void Nexus::Python::ExportEntitlementModification(module& module) {
   class_<EntitlementModification>(module, "EntitlementModification").
     def(init()).
     def(init<std::vector<DirectoryEntry>>()).
@@ -142,7 +142,7 @@ void Nexus::Python::ExportEntitlementModification(pybind11::module& module) {
       &EntitlementModification::GetEntitlements);
 }
 
-void Nexus::Python::ExportMessage(pybind11::module& module) {
+void Nexus::Python::ExportMessage(module& module) {
   auto outer = class_<AdministrationService::Message>(module, "Message").
     def(init()).
     def(init<AdministrationService::Message::Id, DirectoryEntry, ptime,
@@ -171,7 +171,7 @@ void Nexus::Python::ExportMessage(pybind11::module& module) {
     def(self != self);
 }
 
-void Nexus::Python::ExportTradingGroup(pybind11::module& module) {
+void Nexus::Python::ExportTradingGroup(module& module) {
   class_<TradingGroup>(module, "TradingGroup").
     def(init()).
     def(init<const DirectoryEntry&, const DirectoryEntry&,

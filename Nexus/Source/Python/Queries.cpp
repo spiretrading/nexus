@@ -10,7 +10,7 @@ using namespace Nexus;
 using namespace Nexus::Queries;
 using namespace pybind11;
 
-void Nexus::Python::ExportDataType(pybind11::module& module) {
+void Nexus::Python::ExportDataType(module& module) {
   ExportNativeDataType<QuantityType>(module, "QuantityType");
   ExportNativeDataType<MoneyType>(module, "MoneyType");
   ExportNativeDataType<SecurityType>(module, "SecurityType");
@@ -23,13 +23,13 @@ void Nexus::Python::ExportDataType(pybind11::module& module) {
   ExportNativeDataType<OrderInfoType>(module, "OrderInfoType");
 }
 
-void Nexus::Python::ExportQueries(pybind11::module& module) {
+void Nexus::Python::ExportQueries(module& module) {
   auto submodule = module.def_submodule("queries");
   ExportDataType(submodule);
   ExportValue(submodule);
 }
 
-void Nexus::Python::ExportValue(pybind11::module& module) {
+void Nexus::Python::ExportValue(module& module) {
   ExportNativeValue<QuantityValue>(module, "QuantityValue");
   ExportNativeValue<MoneyValue>(module, "MoneyValue");
   ExportNativeValue<SecurityValue>(module, "SecurityValue");

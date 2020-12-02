@@ -125,7 +125,7 @@ void Nexus::Python::ExportOrderCancellationReactor(module& module) {
     def(init<OrderExecutionClientBox, Aspen::SharedBox<const Order*>>());
 }
 
-void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
+void Nexus::Python::ExportOrderExecutionService(module& module) {
   auto submodule = module.def_submodule("order_execution_service");
   ExportExecutionReport(submodule);
   ExportOrder(submodule);
@@ -178,8 +178,7 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
     call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
-    pybind11::module& module) {
+void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(module& module) {
   class_<OrderExecutionServiceTestEnvironment>(module,
       "OrderExecutionServiceTestEnvironment").
     def(init<const MarketDatabase&, const DestinationDatabase&,
@@ -201,7 +200,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
       }, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportOrderFields(pybind11::module& module) {
+void Nexus::Python::ExportOrderFields(module& module) {
   class_<OrderFields>(module, "OrderFields").
     def(init()).
     def(init<const OrderFields&>()).
@@ -262,7 +261,7 @@ void Nexus::Python::ExportOrderFields(pybind11::module& module) {
   module.def("has_field", &HasField);
 }
 
-void Nexus::Python::ExportOrderInfo(pybind11::module& module) {
+void Nexus::Python::ExportOrderInfo(module& module) {
   class_<OrderInfo>(module, "OrderInfo").
     def(init()).
     def(init<OrderFields, DirectoryEntry, OrderId, bool, ptime>()).
@@ -279,7 +278,7 @@ void Nexus::Python::ExportOrderInfo(pybind11::module& module) {
     def(self != self);
 }
 
-void Nexus::Python::ExportOrderReactor(pybind11::module& module) {
+void Nexus::Python::ExportOrderReactor(module& module) {
   auto aspenModule = pybind11::module::import("aspen");
   Aspen::export_box<CurrencyId>(aspenModule, "CurrencyId");
   Aspen::export_box<OrderType>(aspenModule, "OrderType");
@@ -352,7 +351,7 @@ void Nexus::Python::ExportOrderReactor(pybind11::module& module) {
     });
 }
 
-void Nexus::Python::ExportOrderRecord(pybind11::module& module) {
+void Nexus::Python::ExportOrderRecord(module& module) {
   class_<OrderRecord>(module, "OrderRecord").
     def(init()).
     def(init<OrderInfo, std::vector<ExecutionReport>>()).
@@ -366,12 +365,12 @@ void Nexus::Python::ExportOrderRecord(pybind11::module& module) {
   ExportQueueSuite<SequencedOrderRecord>(module, "SequencedOrderRecord");
 }
 
-void Nexus::Python::ExportOrderWrapperReactor(pybind11::module& module) {
+void Nexus::Python::ExportOrderWrapperReactor(module& module) {
   Aspen::export_reactor<OrderWrapperReactor>(module, "OrderWrapperReactor").
     def(init<Ref<const Order>>());
 }
 
-void Nexus::Python::ExportPrimitiveOrder(pybind11::module& module) {
+void Nexus::Python::ExportPrimitiveOrder(module& module) {
   class_<PrimitiveOrder, Order>(module, "PrimitiveOrder").
     def(init<OrderInfo>()).
     def(init<OrderRecord>()).
@@ -383,7 +382,7 @@ void Nexus::Python::ExportPrimitiveOrder(pybind11::module& module) {
   ExportPublisher<PrimitiveOrder*>(module, "PrimitiveOrderPublisher");
 }
 
-void Nexus::Python::ExportStandardQueries(pybind11::module& module) {
+void Nexus::Python::ExportStandardQueries(module& module) {
   module.def("build_market_filter", &BuildMarketFilter);
   module.def("build_daily_order_submission_query",
     &BuildDailyOrderSubmissionQuery);

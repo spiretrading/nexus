@@ -21,7 +21,7 @@
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskClient.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
-#include "Nexus/RiskService/VirtualRiskClient.hpp"
+#include "Nexus/RiskService/RiskClientBox.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTests.hpp"
 
 namespace Nexus::RiskService::Tests {
@@ -62,7 +62,7 @@ namespace Nexus::RiskService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the RiskClient.
        */
-      std::unique_ptr<VirtualRiskClient> MakeClient(
+      RiskClientBox MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
@@ -132,17 +132,16 @@ namespace Nexus::RiskService::Tests {
     Close();
   }
 
-  inline std::unique_ptr<VirtualRiskClient>
-      RiskServiceTestEnvironment::MakeClient(
+  inline RiskClientBox RiskServiceTestEnvironment::MakeClient(
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MakeVirtualRiskClient(
-      std::make_unique<RiskClient<ServiceProtocolClientBuilder>>(
-        ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-          std::bind(boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
-            "test_risk_client", std::ref(m_serverConnection)),
-          boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
+    return RiskClientBox(
+      std::in_place_type<RiskClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+        std::bind(boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+          "test_risk_client", std::ref(m_serverConnection)),
+        boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void RiskServiceTestEnvironment::Close() {
