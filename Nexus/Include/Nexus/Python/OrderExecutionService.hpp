@@ -115,7 +115,8 @@ namespace Nexus::Python {
           &Client::QueryOrderSubmissions)).
       def("query_order_submissions", static_cast<void (Client::*)(
         const OrderExecutionService::AccountQuery&,
-        ScopedQueueWriter<const Order*>)>(&Client::QueryOrderSubmissions)).
+        Beam::ScopedQueueWriter<const OrderExecutionService::Order*>)>(
+          &Client::QueryOrderSubmissions)).
       def("query_execution_reports", &Client::QueryExecutionReports).
       def("submit", &Client::Submit,
         pybind11::return_value_policy::reference_internal).
