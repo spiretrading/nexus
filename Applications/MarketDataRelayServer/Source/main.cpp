@@ -44,7 +44,7 @@ namespace {
       ApplicationServiceLocatorClient::Client*, MessageProtocol<
         std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
         NullEncoder>, LiveTimer>;
-  using IncomingMarketDataClient = std::shared_ptr<VirtualMarketDataClient>;
+  using IncomingMarketDataClient = std::shared_ptr<MarketDataClientBox>;
   using MarketDataRelayServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaMarketDataRelayServlet<
       IncomingMarketDataClient, ApplicationAdministrationClient::Client*>,
@@ -108,27 +108,27 @@ int main(int argc, const char** argv) {
         }
       };
       auto countryToMarketDataClients = std::unordered_map<
-        CountryCode, std::shared_ptr<VirtualMarketDataClient>>();
+        CountryCode, std::shared_ptr<MarketDataClientBox>>();
       auto marketToMarketDataClients = std::unordered_map<
-        MarketCode, std::shared_ptr<VirtualMarketDataClient>>();
+        MarketCode, std::shared_ptr<MarketDataClientBox>>();
       while(availableCountries.find(SENTINEL) == availableCountries.end()) {
         try {
-          auto incomingMarketDataClient = MakeVirtualMarketDataClient(
-            std::make_unique<MarketDataClient<
-              IncomingMarketDataClientSessionBuilder>>(
-                BuildBasicMarketDataClientSessionBuilder<
-                  IncomingMarketDataClientSessionBuilder>(
-                    serviceLocatorClient.Get(), servicePredicate,
-                    REGISTRY_SERVICE_NAME)));
+          auto incomingMarketDataClient = std::make_shared<MarketDataClientBox>(
+            std::in_place_type<
+              MarketDataClient<IncomingMarketDataClientSessionBuilder>>,
+            BuildBasicMarketDataClientSessionBuilder<
+              IncomingMarketDataClientSessionBuilder>(
+                serviceLocatorClient.Get(), servicePredicate,
+                REGISTRY_SERVICE_NAME));
           if(lastCountries.empty()) {
-            return incomingMarketDataClient;
+            return std::make_unique<MarketDataClientBox>(
+              incomingMarketDataClient);
           }
-          auto client = std::shared_ptr<VirtualMarketDataClient>(
-            std::move(incomingMarketDataClient));
           for(auto& country : lastCountries) {
-            countryToMarketDataClients[country] = client;
+            countryToMarketDataClients[country] = incomingMarketDataClient;
             for(auto& market : marketDatabase.FromCountry(country)) {
-              marketToMarketDataClients[market.m_code] = client;
+              marketToMarketDataClients[market.m_code] =
+                incomingMarketDataClient;
             }
           }
           lastCountries.clear();
@@ -139,10 +139,10 @@ int main(int argc, const char** argv) {
           break;
         }
       }
-      return MakeVirtualMarketDataClient(
-        std::make_unique<DistributedMarketDataClient>(
-          std::move(countryToMarketDataClients),
-          std::move(marketToMarketDataClients)));
+      return std::make_unique<MarketDataClientBox>(
+        std::in_place_type<DistributedMarketDataClient>,
+        std::move(countryToMarketDataClients),
+        std::move(marketToMarketDataClients));
     };
     auto entitlements = administrationClient->LoadEntitlements();
     auto clientTimeout = Extract<time_duration>(config, "connection_timeout",
@@ -153,7 +153,7 @@ int main(int argc, const char** argv) {
       "max_connections", 10 * minConnections));
     auto baseRegistryServlet = BaseMarketDataRelayServlet(entitlements,
       clientTimeout, marketDataClientBuilder, minConnections, maxConnections,
-      &*administrationClient);
+      administrationClient.Get());
     auto server = MarketDataRelayServletContainer(Initialize(
       serviceLocatorClient.Get(), &baseRegistryServlet),
       Initialize(serviceConfig.m_interface),
