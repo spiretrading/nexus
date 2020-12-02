@@ -27,6 +27,8 @@ void Nexus::Python::ExportQueries(module& module) {
   auto submodule = module.def_submodule("queries");
   ExportDataType(submodule);
   ExportValue(submodule);
+  ExportIndexedQuery<Security>(submodule, "SecurityIndexedQuery");
+  ExportBasicQuery<Security>(submodule, "SecurityQuery");
 }
 
 void Nexus::Python::ExportValue(module& module) {
