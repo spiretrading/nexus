@@ -31,7 +31,7 @@ namespace Nexus {
       using ComplianceClient = Compliance::ComplianceClientBox;
 
       using OrderExecutionClient =
-        OrderExecutionService::VirtualOrderExecutionClient;
+        OrderExecutionService::OrderExecutionClientBox;
 
       using RiskClient = RiskService::VirtualRiskClient;
 
@@ -81,7 +81,7 @@ namespace Nexus {
       MarketDataClient m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
-      std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
+      OrderExecutionClient m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       TimeClient m_timeClient;
       Beam::IO::OpenState m_openState;
@@ -161,7 +161,7 @@ namespace Nexus {
 
   inline BacktesterServiceClients::OrderExecutionClient&
       BacktesterServiceClients::GetOrderExecutionClient() {
-    return *m_orderExecutionClient;
+    return m_orderExecutionClient;
   }
 
   inline BacktesterServiceClients::RiskClient&
@@ -187,7 +187,7 @@ namespace Nexus {
     }
     m_timeClient.Close();
     m_riskClient->Close();
-    m_orderExecutionClient->Close();
+    m_orderExecutionClient.Close();
     m_complianceClient.Close();
     m_chartingClient.Close();
     m_marketDataClient.Close();

@@ -17,7 +17,7 @@
 #include <boost/functional/factory.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskClient.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
@@ -49,8 +49,7 @@ namespace Nexus::RiskService::Tests {
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         AdministrationService::AdministrationClientBox administrationClient,
         MarketDataService::MarketDataClientBox marketDataClient,
-        std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
-          orderExecutionClient,
+        OrderExecutionService::OrderExecutionClientBox orderExecutionClient,
         std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
           transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
         std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
@@ -78,8 +77,7 @@ namespace Nexus::RiskService::Tests {
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaRiskServlet<AdministrationService::AdministrationClientBox,
               MarketDataService::MarketDataClientBox,
-              std::shared_ptr<
-                OrderExecutionService::VirtualOrderExecutionClient>,
+              OrderExecutionService::OrderExecutionClientBox,
               Beam::Threading::TimerBox,
               Beam::TimeService::TimeClientBox, LocalRiskDataStore*>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
@@ -106,8 +104,7 @@ namespace Nexus::RiskService::Tests {
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
       AdministrationService::AdministrationClientBox administrationClient,
       MarketDataService::MarketDataClientBox marketDataClient,
-      std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
-        orderExecutionClient,
+      OrderExecutionService::OrderExecutionClientBox orderExecutionClient,
       std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
         transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
       std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,

@@ -1,8 +1,13 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
+#include <memory>
+#include <type_traits>
+#include <utility>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Utilities/TypeList.hpp>
+#include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 
 namespace Nexus::OrderExecutionService {
 
@@ -11,66 +16,84 @@ namespace Nexus::OrderExecutionService {
    * @param <C> The type of OrderExecutionClient to wrap.
    */
   template<typename C>
-  class ToPythonOrderExecutionClient final :
-      public VirtualOrderExecutionClient {
+  class ToPythonOrderExecutionClient {
     public:
 
-      /** The type of OrderExecutionClient to wrap. */
+      /** The type of client to wrap. */
       using Client = C;
 
       /**
        * Constructs a ToPythonOrderExecutionClient.
-       * @param client The OrderExecutionClient to wrap.
+       * @param args The arguments to forward to the Client's constructor.
        */
-      ToPythonOrderExecutionClient(std::unique_ptr<Client> client);
+      template<typename... Args, typename =
+        Beam::disable_copy_constructor_t<ToPythonOrderExecutionClient, Args...>>
+      ToPythonOrderExecutionClient(Args&&... args);
 
-      ~ToPythonOrderExecutionClient() override;
+      ~ToPythonOrderExecutionClient();
+
+      /** Returns the wrapped client. */
+      const Client& GetClient() const;
+
+      /** Returns the wrapped client. */
+      Client& GetClient();
 
       void QueryOrderRecords(const AccountQuery& query,
-        Beam::ScopedQueueWriter<OrderRecord> queue) override;
+        Beam::ScopedQueueWriter<OrderRecord> queue);
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        Beam::ScopedQueueWriter<SequencedOrder> queue) override;
+        Beam::ScopedQueueWriter<SequencedOrder> queue);
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        Beam::ScopedQueueWriter<const Order*> queue) override;
+        Beam::ScopedQueueWriter<const Order*> queue);
 
       void QueryExecutionReports(const AccountQuery& query,
-        Beam::ScopedQueueWriter<ExecutionReport> queue) override;
+        Beam::ScopedQueueWriter<ExecutionReport> queue);
 
-      const Order& Submit(const OrderFields& fields) override;
+      const Order& Submit(const OrderFields& fields);
 
-      void Cancel(const Order& order) override;
+      void Cancel(const Order& order);
 
       void Update(OrderId orderId,
-        const ExecutionReport& executionReport) override;
+        const ExecutionReport& executionReport);
 
-      void Close() override;
+      void Close();
 
     private:
-      std::unique_ptr<Client> m_client;
+      boost::optional<Client> m_client;
+
+      ToPythonOrderExecutionClient(
+        const ToPythonOrderExecutionClient&) = delete;
+      ToPythonOrderExecutionClient& operator =(
+        const ToPythonOrderExecutionClient&) = delete;
   };
 
-  /**
-   * Makes a ToPythonOrderExecutionClient.
-   * @param client The OrderExecutionClient to wrap.
-   */
   template<typename Client>
-  auto MakeToPythonOrderExecutionClient(std::unique_ptr<Client> client) {
-    return std::make_unique<ToPythonOrderExecutionClient<Client>>(
-      std::move(client));
-  }
+  ToPythonOrderExecutionClient(Client&&) ->
+    ToPythonOrderExecutionClient<std::decay_t<Client>>;
 
   template<typename C>
-  ToPythonOrderExecutionClient<C>::ToPythonOrderExecutionClient(
-    std::unique_ptr<Client> client)
-    : m_client(std::move(client)) {}
+  template<typename... Args, typename>
+  ToPythonOrderExecutionClient<C>::ToPythonOrderExecutionClient(Args&&... args)
+    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
+        std::forward<Args>(args)...) {}
 
   template<typename C>
   ToPythonOrderExecutionClient<C>::~ToPythonOrderExecutionClient() {
-    Close();
     auto release = Beam::Python::GilRelease();
     m_client.reset();
+  }
+
+  template<typename C>
+  const typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::GetClient() const {
+    return *m_client;
+  }
+
+  template<typename C>
+  typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::GetClient() {
+    return *m_client;
   }
 
   template<typename C>

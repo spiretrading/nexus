@@ -232,7 +232,7 @@ void Nexus::Python::ExportVirtualServiceClients(pybind11::module& module) {
     .def("get_time_client", &VirtualServiceClients::GetTimeClient,
       return_value_policy::reference_internal)
     .def("build_timer",
-      [] (VirtualServiceClients& serviceClients, const time_duration& expiry) {
+      [] (VirtualServiceClients& serviceClients, time_duration expiry) {
         return std::shared_ptr(serviceClients.BuildTimer(expiry));
       })
     .def("close", &VirtualServiceClients::Close);

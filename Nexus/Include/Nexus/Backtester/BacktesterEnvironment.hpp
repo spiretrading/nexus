@@ -127,7 +127,7 @@ namespace Nexus {
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
-      std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
+      boost::optional<OrderExecutionService::OrderExecutionClientBox>
         m_orderExecutionClient;
       boost::optional<RiskService::Tests::RiskServiceTestEnvironment>
         m_riskEnvironment;
@@ -186,13 +186,13 @@ namespace Nexus {
               MarketDataService::MarketDataClientBox,
               Beam::TimeService::TimeClientBox>>(
                 m_marketDataClient, m_timeClient)));
-      m_orderExecutionClient = m_orderExecutionEnvironment->MakeClient(
-        m_serviceLocatorClient);
+      m_orderExecutionClient.emplace(m_orderExecutionEnvironment->MakeClient(
+        m_serviceLocatorClient));
       auto transitionTimerFactory = std::bind(
         boost::factory<std::unique_ptr<Beam::Threading::TimerBox>>(),
         std::in_place_type<Beam::Threading::TriggerTimer>);
       m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
-        m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
+        m_marketDataClient, *m_orderExecutionClient, transitionTimerFactory,
         m_timeClient, definitionsClient.LoadExchangeRates(),
         definitionsClient.LoadMarketDatabase(),
         definitionsClient.LoadDestinationDatabase());

@@ -9,7 +9,7 @@
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 
 namespace Nexus {
@@ -34,7 +34,7 @@ namespace Nexus {
       using ComplianceClient = Compliance::ComplianceClientBox;
 
       using OrderExecutionClient =
-        OrderExecutionService::VirtualOrderExecutionClient;
+        OrderExecutionService::OrderExecutionClientBox;
 
       using RiskClient = RiskService::VirtualRiskClient;
 
@@ -131,7 +131,7 @@ namespace Nexus {
       MarketDataClient m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
-      std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
+      OrderExecutionClient m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       TimeClient m_timeClient;
   };
@@ -159,9 +159,7 @@ namespace Nexus {
       m_marketDataClient(&m_client->GetMarketDataClient()),
       m_chartingClient(&m_client->GetChartingClient()),
       m_complianceClient(&m_client->GetComplianceClient()),
-      m_orderExecutionClient(
-        OrderExecutionService::MakeVirtualOrderExecutionClient(
-          &m_client->GetOrderExecutionClient())),
+      m_orderExecutionClient(&m_client->GetOrderExecutionClient()),
       m_riskClient(RiskService::MakeVirtualRiskClient(
         &m_client->GetRiskClient())),
       m_timeClient(&m_client->GetTimeClient()) {}
@@ -211,7 +209,7 @@ namespace Nexus {
   template<typename C>
   typename WrapperServiceClients<C>::OrderExecutionClient&
       WrapperServiceClients<C>::GetOrderExecutionClient() {
-    return *m_orderExecutionClient;
+    return m_orderExecutionClient;
   }
 
   template<typename C>

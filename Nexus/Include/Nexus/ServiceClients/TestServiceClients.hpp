@@ -12,7 +12,7 @@
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 
@@ -38,7 +38,7 @@ namespace Nexus {
       using ComplianceClient = Compliance::ComplianceClientBox;
 
       using OrderExecutionClient =
-        OrderExecutionService::VirtualOrderExecutionClient;
+        OrderExecutionService::OrderExecutionClientBox;
 
       using RiskClient = RiskService::VirtualRiskClient;
 
@@ -97,7 +97,7 @@ namespace Nexus {
       MarketDataClient m_marketDataClient;
       ChartingClient m_chartingClient;
       ComplianceClient m_complianceClient;
-      std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
+      OrderExecutionClient m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       TimeClient m_timeClient;
       Beam::IO::OpenState m_openState;
@@ -178,7 +178,7 @@ namespace Nexus {
 
   inline TestServiceClients::OrderExecutionClient&
       TestServiceClients::GetOrderExecutionClient() {
-    return *m_orderExecutionClient;
+    return m_orderExecutionClient;
   }
 
   inline TestServiceClients::RiskClient& TestServiceClients::GetRiskClient() {
@@ -202,7 +202,7 @@ namespace Nexus {
     }
     m_timeClient.Close();
     m_riskClient->Close();
-    m_orderExecutionClient->Close();
+    m_orderExecutionClient.Close();
     m_complianceClient.Close();
     m_chartingClient.Close();
     m_marketDataClient.Close();

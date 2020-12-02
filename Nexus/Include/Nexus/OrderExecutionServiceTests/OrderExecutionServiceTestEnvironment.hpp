@@ -19,10 +19,10 @@
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
+#include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServlet.hpp"
-#include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp"
@@ -78,7 +78,7 @@ namespace Nexus::OrderExecutionService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the OrderExecutionClient.
        */
-      std::unique_ptr<VirtualOrderExecutionClient> MakeClient(
+      OrderExecutionClientBox MakeClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
@@ -160,17 +160,17 @@ namespace Nexus::OrderExecutionService::Tests {
     return *m_driver;
   }
 
-  inline std::unique_ptr<VirtualOrderExecutionClient>
+  inline OrderExecutionClientBox
       OrderExecutionServiceTestEnvironment::MakeClient(
-      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MakeVirtualOrderExecutionClient(
-      std::make_unique<OrderExecutionClient<ServiceProtocolClientBuilder>>(
-        ServiceProtocolClientBuilder(serviceLocatorClient,
-          std::bind(boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
-            "test_order_execution_client", std::ref(m_serverConnection)),
-          boost::factory<
-            std::unique_ptr<ServiceProtocolClientBuilder::Timer>>())));
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
+    return OrderExecutionClientBox(
+      std::in_place_type<OrderExecutionClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(serviceLocatorClient,
+        std::bind(boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+          "test_order_execution_client", std::ref(m_serverConnection)),
+        boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void OrderExecutionServiceTestEnvironment::Close() {

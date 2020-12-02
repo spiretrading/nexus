@@ -7,13 +7,13 @@
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/RiskClient.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
 #include "Nexus/Python/ToPythonComplianceClient.hpp"
 #include "Nexus/Python/ToPythonDefinitionsClient.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
+#include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -103,7 +103,7 @@ namespace Python {
       boost::optional<MarketDataClient> m_marketDataClient;
       boost::optional<ChartingClient> m_chartingClient;
       boost::optional<ComplianceClient> m_complianceClient;
-      std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
+      boost::optional<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<RiskClient> m_riskClient;
       boost::optional<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
@@ -148,10 +148,11 @@ namespace Python {
       m_complianceClient(boost::in_place_init,
         std::in_place_type<Compliance::ToPythonComplianceClient<
           Compliance::ComplianceClientBox>>, &m_client->GetComplianceClient()),
-      m_orderExecutionClient(
-        OrderExecutionService::MakeToPythonOrderExecutionClient(
-          OrderExecutionService::MakeVirtualOrderExecutionClient(
-            &m_client->GetOrderExecutionClient()))),
+      m_orderExecutionClient(boost::in_place_init,
+        std::in_place_type<
+          OrderExecutionService::ToPythonOrderExecutionClient<
+            OrderExecutionService::OrderExecutionClientBox>>,
+        &m_client->GetOrderExecutionClient()),
       m_riskClient(RiskService::MakeToPythonRiskClient(
         RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()))),
       m_timeClient(Beam::TimeService::ToPythonTimeClient<

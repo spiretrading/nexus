@@ -1,8 +1,16 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_SERVICE_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_SERVICE_HPP
+#include <type_traits>
 #include <pybind11/pybind11.h>
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
+#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported OrderExecutionClientBox. */
+  NEXUS_EXPORT_DLL pybind11::class_<
+    OrderExecutionService::OrderExecutionClientBox>&
+      GetExportedOrderExecutionClientBox();
 
   /**
    * Exports the ApplicationOrderExecutionClient class.
@@ -33,12 +41,6 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void ExportOrderCancellationReactor(pybind11::module& module);
-
-  /**
-   * Exports the OrderExecutionClient class.
-   * @param module The module to export to.
-   */
-  void ExportOrderExecutionClient(pybind11::module& module);
 
   /**
    * Exports the OrderExecutionService namespace.
@@ -93,6 +95,42 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void ExportStandardQueries(pybind11::module& module);
+
+  /**
+   * Exports a OrderExecutionClient class.
+   * @param <Client> The type of OrderExecutionClient to export.
+   * @param module The module to export to.
+   * @param name The name of the class.
+   * @return The exported OrderExecutionClient.
+   */
+  template<typename Client>
+  auto ExportOrderExecutionClient(pybind11::module& module,
+      const std::string& name) {
+    auto client = pybind11::class_<Client, std::shared_ptr<Client>>(module,
+      name.c_str()).
+      def("query_order_records", &Client::QueryOrderRecords).
+      def("query_sequenced_order_submissions", static_cast<void (Client::*)(
+        const OrderExecutionService::AccountQuery&,
+        Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrder>)>(
+          &Client::QueryOrderSubmissions)).
+      def("query_order_submissions", static_cast<void (Client::*)(
+        const OrderExecutionService::AccountQuery&,
+        ScopedQueueWriter<const Order*>)>(&Client::QueryOrderSubmissions)).
+      def("query_execution_reports", &Client::QueryExecutionReports).
+      def("submit", &Client::Submit,
+        pybind11::return_value_policy::reference_internal).
+      def("cancel", &Client::Cancel).
+      def("update", &Client::Update).
+      def("close", &Client::Close);
+    if constexpr(!std::is_same_v<Client,
+        OrderExecutionService::OrderExecutionClientBox>) {
+      pybind11::implicitly_convertible<Client,
+        OrderExecutionService::OrderExecutionClientBox>();
+      GetExportedOrderExecutionClientBox().def(
+        pybind11::init<std::shared_ptr<Client>>());
+    }
+    return client;
+  }
 }
 
 #endif

@@ -39,15 +39,15 @@ namespace {
 
   using TestServletContainer = TestAuthenticatedServiceProtocolServletContainer<
     MetaRiskServlet<AdministrationClientBox, MarketDataClientBox,
-      std::unique_ptr<VirtualOrderExecutionClient>, TriggerTimer,
-      std::shared_ptr<FixedTimeClient>, LocalRiskDataStore*>>;
+      OrderExecutionClientBox, TriggerTimer, std::shared_ptr<FixedTimeClient>,
+      LocalRiskDataStore*>>;
 
   using TestInventoryMessage = RecordMessage<InventoryMessage,
     TestServiceProtocolClient>;
 
   struct Client {
     ServiceLocatorClientBox m_serviceLocatorClient;
-    std::unique_ptr<VirtualOrderExecutionClient> m_orderExecutionClient;
+    optional<OrderExecutionClientBox> m_orderExecutionClient;
     std::unique_ptr<TestServiceProtocolClient> m_riskClient;
 
     Client(ServiceLocatorClientBox serviceLocatorClient)
@@ -121,9 +121,9 @@ namespace {
       m_administrationClient->StoreRiskState(account, RiskState::Type::ACTIVE);
       auto client = Client(m_serviceLocatorEnvironment.MakeClient(
         name, "1234"));
-      client.m_orderExecutionClient =
+      client.m_orderExecutionClient.emplace(
         m_orderExecutionServiceEnvironment->MakeClient(
-          client.m_serviceLocatorClient);
+          client.m_serviceLocatorClient));
       client.m_riskClient = std::make_unique<TestServiceProtocolClient>(
         Initialize("test", *m_serverConnection), Initialize());
       RegisterRiskServices(Store(client.m_riskClient->GetSlots()));

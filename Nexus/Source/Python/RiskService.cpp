@@ -176,7 +176,7 @@ void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
     .def(init([] (ServiceLocatorClientBox serviceLocatorClient,
           AdministrationClientBox administrationClient,
           MarketDataClientBox marketDataClient,
-          std::shared_ptr<VirtualOrderExecutionClient> orderExecutionClient,
+          OrderExecutionClientBox orderExecutionClient,
           std::function<std::shared_ptr<TimerBox> ()> transitionTimerFactory,
           TimeClientBox timeClient, std::vector<ExchangeRate> exchangeRates,
           MarketDatabase markets, DestinationDatabase destinations) {
@@ -196,7 +196,8 @@ void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
     .def("make_client",
       [] (RiskServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
-        return MakeToPythonRiskClient(self.MakeClient(serviceLocatorClient));
+        return MakeToPythonRiskClient(self.MakeClient(
+          std::move(serviceLocatorClient)));
       }, call_guard<GilRelease>())
     .def("close", &RiskServiceTestEnvironment::Close, call_guard<GilRelease>());
 }

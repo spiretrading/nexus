@@ -1,5 +1,5 @@
-#ifndef NEXUS_BOARDLOTCHECK_HPP
-#define NEXUS_BOARDLOTCHECK_HPP
+#ifndef NEXUS_BOARD_LOT_CHECK_HPP
+#define NEXUS_BOARD_LOT_CHECK_HPP
 #include <memory>
 #include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
@@ -14,33 +14,32 @@
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class BoardLotCheck
-      \brief Validates an Order's board lot size.
-      \tparam MarketDataClientType The type of MarketDataClient used to
-              determine the price of a Security.
+  /**
+   * Validates an Order's board lot size.
+   * @param <C> The type of MarketDataClient used to determine the price of a
+   *        Security.
    */
-  template<typename MarketDataClientType>
+  template<typename C>
   class BoardLotCheck : public OrderSubmissionCheck {
     public:
 
-      //! The type of MarketDataClient used to price Orders for buying power
-      //! checks.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
+      /**
+       * The type of MarketDataClient used to price Orders for buying power
+       * checks.
+       */
+      using MarketDataClient = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a BoardLotCheck.
-      /*!
-        \param marketDataClient Initializes the MarketDataClient.
-      */
-      template<typename MarketDataClientForward>
-      BoardLotCheck(MarketDataClientForward&& marketDataClient,
-        const MarketDatabase& marketDatabase,
+      /**
+       * Constructs a BoardLotCheck.
+       * @param marketDataClient Initializes the MarketDataClient.
+       */
+      template<typename CF>
+      BoardLotCheck(CF&& marketDataClient, const MarketDatabase& marketDatabase,
         const boost::local_time::tz_database& timeZoneDatabase);
 
-      virtual void Submit(const OrderInfo& orderInfo);
+      void Submit(const OrderInfo& orderInfo) override;
 
     private:
       struct ClosingEntry {
@@ -49,23 +48,23 @@ namespace OrderExecutionService {
 
         ClosingEntry();
       };
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
+      Beam::GetOptionalLocalPtr<C> m_marketDataClient;
       MarketDatabase m_marketDatabase;
       boost::local_time::tz_database m_timeZoneDatabase;
       Beam::SynchronizedUnorderedMap<Security,
         Beam::Threading::Sync<ClosingEntry, Beam::Threading::Mutex>>
-        m_closingEntries;
+          m_closingEntries;
       Beam::SynchronizedUnorderedMap<Security,
         std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
 
       Money LoadPrice(const Security& security,
-        const boost::posix_time::ptime& timestamp);
+        boost::posix_time::ptime timestamp);
   };
 
-  template<typename MarketDataClientType>
-  BoardLotCheck<MarketDataClientType>::ClosingEntry::ClosingEntry()
-      : m_lastUpdate{boost::posix_time::neg_infin},
-        m_closingPrice{Money::ZERO} {}
+  template<typename C>
+  BoardLotCheck<C>::ClosingEntry::ClosingEntry()
+    : m_lastUpdate(boost::posix_time::neg_infin),
+      m_closingPrice(Money::ZERO) {}
 
   template<typename MarketDataClient>
   auto MakeBoardLotCheck(MarketDataClient&& marketDataClient,
@@ -76,19 +75,17 @@ namespace OrderExecutionService {
       timeZoneDatabase);
   }
 
-  template<typename MarketDataClientType>
-  template<typename MarketDataClientForward>
-  BoardLotCheck<MarketDataClientType>::BoardLotCheck(
-      MarketDataClientForward&& marketDataClient,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase)
-      : m_marketDataClient{std::forward<MarketDataClientForward>(
-          marketDataClient)},
-        m_marketDatabase{marketDatabase},
-        m_timeZoneDatabase{timeZoneDatabase} {}
+  template<typename C>
+  template<typename CF>
+  BoardLotCheck<C>::BoardLotCheck(CF&& marketDataClient,
+    const MarketDatabase& marketDatabase,
+    const boost::local_time::tz_database& timeZoneDatabase)
+    : m_marketDataClient(std::forward<CF>(marketDataClient)),
+      m_marketDatabase(marketDatabase),
+      m_timeZoneDatabase(timeZoneDatabase) {}
 
-  template<typename MarketDataClientType>
-  void BoardLotCheck<MarketDataClientType>::Submit(const OrderInfo& orderInfo) {
+  template<typename C>
+  void BoardLotCheck<C>::Submit(const OrderInfo& orderInfo) {
     if(orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSX() &&
         orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSXV()) {
       return;
@@ -97,25 +94,25 @@ namespace OrderExecutionService {
       orderInfo.m_timestamp);
     if(currentPrice < 10 * Money::CENT) {
       if(orderInfo.m_fields.m_quantity % 1000 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-          "Quantity must be a multiple of 1000."});
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+          "Quantity must be a multiple of 1000."));
       }
     } else if(currentPrice < Money::ONE) {
       if(orderInfo.m_fields.m_quantity % 500 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-          "Quantity must be a multiple of 500."});
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+          "Quantity must be a multiple of 500."));
       }
     } else {
       if(orderInfo.m_fields.m_quantity % 100 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-          "Quantity must be a multiple of 100."});
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+          "Quantity must be a multiple of 100."));
       }
     }
   }
 
-  template<typename MarketDataClientType>
-  Money BoardLotCheck<MarketDataClientType>::LoadPrice(const Security& security,
-      const boost::posix_time::ptime& timestamp) {
+  template<typename C>
+  Money BoardLotCheck<C>::LoadPrice(const Security& security,
+      boost::posix_time::ptime timestamp) {
     auto& closingEntry = m_closingEntries.Get(security);
     auto closingPrice = Beam::Threading::With(closingEntry,
       [&] (ClosingEntry& entry) {
@@ -129,22 +126,20 @@ namespace OrderExecutionService {
     if(closingPrice != Money::ZERO) {
       return closingPrice;
     }
-    auto publisher = m_bboQuotes.GetOrInsert(security,
-      [&] {
-        auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        MarketDataService::QueryRealTimeWithSnapshot(security,
-          *m_marketDataClient, publisher);
-        return publisher;
-      });
+    auto publisher = m_bboQuotes.GetOrInsert(security, [&] {
+      auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
+      MarketDataService::QueryRealTimeWithSnapshot(security,
+        *m_marketDataClient, publisher);
+      return publisher;
+    });
     try {
       return publisher->Peek().m_bid.m_price;
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
-      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-        "No BBO quote available."});
+      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+        "No BBO quote available."));
     }
   }
-}
 }
 
 #endif
