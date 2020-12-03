@@ -7,7 +7,6 @@
 #include <boost/range/adaptor/map.hpp>
 #include <QCoreApplication>
 #include "Nexus/Definitions/QuoteConversions.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"

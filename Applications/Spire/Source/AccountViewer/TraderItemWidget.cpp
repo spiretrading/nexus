@@ -1,5 +1,4 @@
 #include "Spire/AccountViewer/TraderItemWidget.hpp"
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"

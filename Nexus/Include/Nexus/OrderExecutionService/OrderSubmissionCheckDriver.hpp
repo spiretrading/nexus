@@ -4,7 +4,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
@@ -18,7 +17,7 @@ namespace Nexus::OrderExecutionService {
    *        all checks pass.
    */
   template<typename D>
-  class OrderSubmissionCheckDriver : private boost::noncopyable {
+  class OrderSubmissionCheckDriver {
     public:
 
       /**
@@ -37,7 +36,7 @@ namespace Nexus::OrderExecutionService {
       template<typename DF>
       OrderSubmissionCheckDriver(DF&& orderExecutionDriver,
         std::vector<std::unique_ptr<OrderSubmissionCheck>>
-        orderSubmissionChecks);
+          orderSubmissionChecks);
 
       ~OrderSubmissionCheckDriver();
 
@@ -53,11 +52,14 @@ namespace Nexus::OrderExecutionService {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<D>
-        m_orderExecutionDriver;
+      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
       Beam::Threading::Sync<std::vector<std::unique_ptr<Order>>> m_orders;
       std::vector<std::unique_ptr<OrderSubmissionCheck>> m_checks;
       Beam::IO::OpenState m_openState;
+
+      OrderSubmissionCheckDriver(const OrderSubmissionCheckDriver&) = delete;
+      OrderSubmissionCheckDriver& operator =(
+        const OrderSubmissionCheckDriver&) = delete;
   };
 
   template<typename D>

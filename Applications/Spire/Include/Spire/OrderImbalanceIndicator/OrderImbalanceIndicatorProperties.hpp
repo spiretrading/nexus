@@ -55,7 +55,7 @@ namespace Spire {
       \param timeClient The time client used to compute times from offsets.
     */
     Beam::Queries::Range GetTimeRange(
-      Beam::TimeService::VirtualTimeClient& timeClient) const;
+      Beam::TimeService::TimeClientBox& timeClient) const;
   };
 }
 

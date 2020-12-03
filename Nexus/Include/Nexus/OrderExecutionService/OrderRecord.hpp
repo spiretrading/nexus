@@ -32,23 +32,24 @@ namespace Nexus::OrderExecutionService {
     OrderRecord(OrderInfo info, std::vector<ExecutionReport> executionReports);
   };
 
-  //! Tests if two OrderRecords are equal.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff <code>lhs</code> is equal to <code>rhs</code>.
-  */
+  /**
+   * Tests if two OrderRecords are equal.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff <code>lhs</code> is equal to
+   *         <code>rhs</code>.
+   */
   inline bool operator ==(const OrderRecord& lhs, const OrderRecord& rhs) {
     return std::tie(lhs.m_info, lhs.m_executionReports) ==
       std::tie(rhs.m_info, rhs.m_executionReports);
   }
 
-  //! Tests if two OrderRecords are not equal.
-  /*!
-    \param lhs The left hand side of the inequality.
-    \param rhs The right hand side of the inequality.
-    \return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
-  */
+  /**
+   * Tests if two OrderRecords are not equal.
+   * @param lhs The left hand side of the inequality.
+   * @param rhs The right hand side of the inequality.
+   * @return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
+   */
   inline bool operator !=(const OrderRecord& lhs, const OrderRecord& rhs) {
     return !(lhs == rhs);
   }

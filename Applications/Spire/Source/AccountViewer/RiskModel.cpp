@@ -1,5 +1,4 @@
 #include "Spire/AccountViewer/RiskModel.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;

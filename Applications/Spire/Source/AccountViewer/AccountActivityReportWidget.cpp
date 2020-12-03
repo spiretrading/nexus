@@ -3,7 +3,6 @@
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_AccountActivityReportWidget.h"

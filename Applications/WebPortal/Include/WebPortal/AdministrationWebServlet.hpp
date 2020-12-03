@@ -4,14 +4,13 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
   /** Provides a web interface to the AdministrationService. */
-  class AdministrationWebServlet : private boost::noncopyable {
+  class AdministrationWebServlet {
     public:
 
       /**
@@ -31,6 +30,9 @@ namespace Nexus::WebPortal {
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
+      AdministrationWebServlet(const AdministrationWebServlet&) = delete;
+      AdministrationWebServlet& operator =(
+        const AdministrationWebServlet&) = delete;
       Beam::WebServices::HttpResponse OnLoadAccountsByRoles(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAdministratorsRootEntry(

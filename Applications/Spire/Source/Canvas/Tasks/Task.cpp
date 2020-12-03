@@ -1,7 +1,6 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
 #include <Beam/Reactors/PublisherReactor.hpp>
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"

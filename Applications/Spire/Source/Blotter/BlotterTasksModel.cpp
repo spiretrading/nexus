@@ -4,7 +4,6 @@
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"

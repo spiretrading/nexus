@@ -2,7 +2,6 @@
 #include <QCoreApplication>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"

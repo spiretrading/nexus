@@ -8,11 +8,10 @@ using namespace Nexus::WebPortal;
 WebPortalSession::WebPortalSession(std::string id)
   : AuthenticatedSession(std::move(id)) {}
 
-VirtualServiceClients& WebPortalSession::GetServiceClients() {
+ServiceClientsBox& WebPortalSession::GetServiceClients() {
   return *m_serviceClients;
 }
 
-void WebPortalSession::SetServiceClients(
-    std::unique_ptr<VirtualServiceClients> serviceClients) {
-  m_serviceClients = std::move(serviceClients);
+void WebPortalSession::SetServiceClients(ServiceClientsBox serviceClients) {
+  m_serviceClients.emplace(std::move(serviceClients));
 }

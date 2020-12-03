@@ -2,7 +2,6 @@
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/ProfitAndLossWidget.hpp"
 #include "Spire/UI/CollapsibleWidget.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"

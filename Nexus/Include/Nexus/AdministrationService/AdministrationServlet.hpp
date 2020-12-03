@@ -5,7 +5,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

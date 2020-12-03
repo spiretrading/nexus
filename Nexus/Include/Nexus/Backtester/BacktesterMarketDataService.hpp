@@ -10,11 +10,11 @@
 #include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataClientUtilities.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
@@ -36,7 +36,7 @@ namespace Nexus {
         Beam::Ref<BacktesterEventHandler> eventHandler,
         Beam::Ref<MarketDataService::Tests::MarketDataServiceTestEnvironment>
         marketDataEnvironment,
-        Beam::Ref<MarketDataService::VirtualMarketDataClient> marketDataClient);
+        MarketDataService::MarketDataClientBox marketDataClient);
 
       /**
        * Submits a query for OrderImbalances.
@@ -80,7 +80,7 @@ namespace Nexus {
       BacktesterEventHandler* m_eventHandler;
       MarketDataService::Tests::MarketDataServiceTestEnvironment*
         m_marketDataEnvironment;
-      MarketDataService::VirtualMarketDataClient* m_marketDataClient;
+      MarketDataService::MarketDataClientBox m_marketDataClient;
       std::unordered_set<std::tuple<boost::variant<Security, MarketCode>,
         MarketDataService::MarketDataType>> m_queries;
 
@@ -150,11 +150,11 @@ namespace Nexus {
   inline BacktesterMarketDataService::BacktesterMarketDataService(
     Beam::Ref<BacktesterEventHandler> eventHandler,
     Beam::Ref<MarketDataService::Tests::MarketDataServiceTestEnvironment>
-    marketDataEnvironment, Beam::Ref<MarketDataService::VirtualMarketDataClient>
-    marketDataClient)
+      marketDataEnvironment,
+    MarketDataService::MarketDataClientBox marketDataClient)
     : m_eventHandler(eventHandler.Get()),
       m_marketDataEnvironment(marketDataEnvironment.Get()),
-      m_marketDataClient(marketDataClient.Get()) {}
+      m_marketDataClient(std::move(marketDataClient)) {}
 
   inline void BacktesterMarketDataService::QueryOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query) {
@@ -241,7 +241,7 @@ namespace Nexus {
       QUERY_SIZE);
     auto queue = std::make_shared<Beam::Queue<
       Beam::Queries::SequencedValue<MarketDataType>>>();
-    MarketDataService::QueryMarketDataClient(*m_service->m_marketDataClient,
+    MarketDataService::QueryMarketDataClient(m_service->m_marketDataClient,
       query, Beam::ScopedQueueWriter(queue));
     auto data = std::vector<Beam::Queries::SequencedValue<MarketDataType>>();
     Beam::Flush(queue, std::back_inserter(data));
@@ -255,7 +255,8 @@ namespace Nexus {
         Beam::Queries::GetTimestamp(value.GetValue()));
       events.push_back(std::make_shared<
         MarketDataEvent<typename Query::Index, MarketDataType>>(
-        query.GetIndex(), std::move(value), timestamp, Beam::Ref(*m_service)));
+          query.GetIndex(), std::move(value), timestamp,
+          Beam::Ref(*m_service)));
     }
     auto reloadEvent = std::make_shared<MarketDataLoadEvent>(m_index,
       Beam::Queries::Increment(data.back().GetSequence()),

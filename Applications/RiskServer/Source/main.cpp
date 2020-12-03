@@ -51,11 +51,11 @@ namespace {
     SqlConnection<MySql::Connection>>;
   using RiskServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
-    MetaRiskServlet<ApplicationAdministrationClient::Client*,
-    ApplicationMarketDataClient::Client*,
-    ApplicationOrderExecutionClient::Client*, LiveTimer,
-    std::unique_ptr<LiveNtpTimeClient>, ApplicationDataStore*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      MetaRiskServlet<ApplicationAdministrationClient::Client*,
+        ApplicationMarketDataClient::Client*,
+        ApplicationOrderExecutionClient::Client*, LiveTimer,
+        std::unique_ptr<LiveNtpTimeClient>, ApplicationDataStore*>,
+      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 }
 
@@ -70,13 +70,13 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto administrationClient = ApplicationAdministrationClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto marketDataClient = ApplicationMarketDataClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto orderExecutionClient = ApplicationOrderExecutionClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
       *serviceLocatorClient);
     auto mySqlConfig = TryOrNest([&] {
@@ -92,18 +92,18 @@ int main(int argc, const char** argv) {
     serviceLocatorClient->MonitorAccounts(accounts);
     auto riskServer = RiskServletContainer(Initialize(
       serviceLocatorClient.Get(), Initialize(
-      MakeConverterQueueReader(MakeFilteredQueueReader(std::move(accounts),
-      [] (const auto& update) {
-        return update.m_type == AccountUpdate::Type::ADDED;
-      }),
-      [] (const auto& update) {
-        return update.m_account;
-      }), administrationClient.Get(), marketDataClient.Get(),
-      orderExecutionClient.Get(),
-      [] {
-        return std::make_unique<LiveTimer>(seconds(1));
-      }, std::move(timeClient), &dataStore, std::move(exchangeRates),
-      std::move(markets), std::move(destinations))),
+        MakeConverterQueueReader(MakeFilteredQueueReader(std::move(accounts),
+          [] (const auto& update) {
+            return update.m_type == AccountUpdate::Type::ADDED;
+          }),
+          [] (const auto& update) {
+            return update.m_account;
+          }), administrationClient.Get(), marketDataClient.Get(),
+        orderExecutionClient.Get(),
+        [] {
+          return std::make_unique<LiveTimer>(seconds(1));
+        }, std::move(timeClient), &dataStore, std::move(exchangeRates),
+        std::move(markets), std::move(destinations))),
       Initialize(serviceConfig.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);

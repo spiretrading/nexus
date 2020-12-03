@@ -2,7 +2,7 @@
 #define NEXUS_ORDER_CANCELLATION_REACTOR_HPP
 #include <atomic>
 #include <Aspen/Aspen.hpp>
-#include <Beam/Pointers/Ref.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -21,7 +21,7 @@ namespace Nexus::OrderExecutionService {
       using Type = const Order*;
 
       /** The type of OrderExecutionClient used to cancel the orders. */
-      using OrderExecutionClient = C;
+      using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
 
       /** The type series producing the orders to cancel. */
       using Series = S;
@@ -33,15 +33,15 @@ namespace Nexus::OrderExecutionService {
        * @param client The OrderExecutionClient used to cancel the order.
        * @param series Produces the series of orders to cancel upon completion.
        */
-      OrderCancellationReactor(Beam::Ref<OrderExecutionClient> client,
-        Series series);
+      template<typename CF>
+      OrderCancellationReactor(CF&& client, Series series);
 
       Aspen::State commit(int sequence) noexcept;
 
       const Order* eval() const noexcept(is_noexcept);
 
     private:
-      OrderExecutionClient* m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
       Series m_series;
       bool m_is_series_complete;
       std::vector<const Order*> m_orders;
@@ -51,9 +51,14 @@ namespace Nexus::OrderExecutionService {
   };
 
   template<typename C, typename S>
-  OrderCancellationReactor<C, S>::OrderCancellationReactor(
-    Beam::Ref<OrderExecutionClient> client, Series series)
-    : m_client(client.Get()),
+  OrderCancellationReactor(C&&, S) ->
+    OrderCancellationReactor<std::decay_t<C>, S>;
+
+  template<typename C, typename S>
+  template<typename CF>
+  OrderCancellationReactor<C, S>::OrderCancellationReactor(CF&& client,
+    Series series)
+    : m_client(std::forward<CF>(client)),
       m_series(std::move(series)),
       m_is_series_complete(false),
       m_cancel_count(std::make_unique<std::atomic_int>(0)),

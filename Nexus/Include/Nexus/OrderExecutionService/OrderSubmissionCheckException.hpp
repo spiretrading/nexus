@@ -1,33 +1,15 @@
-#ifndef NEXUS_ORDERSUBMISSIONCHECKEXCEPTION_HPP
-#define NEXUS_ORDERSUBMISSIONCHECKEXCEPTION_HPP
+#ifndef NEXUS_ORDER_SUBMISSION_CHECK_EXCEPTION_HPP
+#define NEXUS_ORDER_SUBMISSION_CHECK_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class OrderSubmissionCheckException
-      \brief Exception to indicate that an Order submission is invalid.
-   */
+  /** Exception to indicate that an Order submission is invalid. */
   class OrderSubmissionCheckException : public Beam::IO::IOException {
     public:
-
-      //! Constructs a OrderSubmissionCheckException.
-      /*!
-        \param message A message describing the error.
-      */
-      OrderSubmissionCheckException(const std::string& message);
-
-      virtual ~OrderSubmissionCheckException() throw();
+      using Beam::IO::IOException::IOException;
   };
-
-  inline OrderSubmissionCheckException::OrderSubmissionCheckException(
-      const std::string& message)
-      : Beam::IO::IOException(message) {}
-
-  inline OrderSubmissionCheckException::~OrderSubmissionCheckException()
-      throw() {}
-}
 }
 
 #endif

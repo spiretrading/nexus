@@ -13,10 +13,10 @@ namespace Nexus::WebPortal {
   class PortfolioModel;
   class WebPortalServlet;
   class WebPortalSession;
-  using WebPosition = Nexus::Accounting::Position<Nexus::Security>;
-  using WebInventory = Nexus::Accounting::Inventory<WebPosition>;
-  using WebBookkeeper = Nexus::Accounting::TrueAverageBookkeeper<WebInventory>;
-  using WebPortfolio = Nexus::Accounting::Portfolio<WebBookkeeper>;
+  using WebPosition = Accounting::Position<Nexus::Security>;
+  using WebInventory = Accounting::Inventory<WebPosition>;
+  using WebBookkeeper = Accounting::TrueAverageBookkeeper<WebInventory>;
+  using WebPortfolio = Accounting::Portfolio<WebBookkeeper>;
 }
 
 #endif

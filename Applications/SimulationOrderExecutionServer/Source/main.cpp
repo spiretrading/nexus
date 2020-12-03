@@ -63,24 +63,26 @@ namespace {
     SqlConnection<MySql::Connection>>;
   using ApplicationSimulationOrderExecutionDriver =
     SimulationOrderExecutionDriver<ApplicationMarketDataClient::Client*,
-    LiveNtpTimeClient*>;
+      LiveNtpTimeClient*>;
   using ApplicationInternalMatchingOrderExecutionDriver =
     InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
-    ApplicationMarketDataClient::Client*, LiveNtpTimeClient*,
-    ApplicationUidClient::Client*, ApplicationSimulationOrderExecutionDriver*>;
+      ApplicationMarketDataClient::Client*, LiveNtpTimeClient*,
+      ApplicationUidClient::Client*,
+      ApplicationSimulationOrderExecutionDriver*>;
   using ApplicationOrderSubmissionCheckDriver = OrderSubmissionCheckDriver<
     ApplicationInternalMatchingOrderExecutionDriver*>;
   using ApplicationComplianceCheckOrderExecutionDriver =
     ComplianceCheckOrderExecutionDriver<ApplicationOrderSubmissionCheckDriver*,
-    LiveNtpTimeClient*, ComplianceRuleSet<ApplicationComplianceClient::Client*,
-    ApplicationServiceLocatorClient::Client*>*>;
+      LiveNtpTimeClient*,
+      ComplianceRuleSet<ApplicationComplianceClient::Client*,
+      ApplicationServiceLocatorClient::Client*>*>;
   using ApplicationOrderExecutionDriver =
     ApplicationComplianceCheckOrderExecutionDriver;
   using OrderExecutionServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaOrderExecutionServlet<
-    LiveNtpTimeClient*, ApplicationServiceLocatorClient::Client*,
-    ApplicationUidClient::Client*, ApplicationAdministrationClient::Client*,
-    ApplicationOrderExecutionDriver*, ReplicatedOrderExecutionDataStore*>,
+      LiveNtpTimeClient*, ApplicationServiceLocatorClient::Client*,
+      ApplicationUidClient::Client*, ApplicationAdministrationClient::Client*,
+      ApplicationOrderExecutionDriver*, ReplicatedOrderExecutionDataStore*>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 }
@@ -96,24 +98,25 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-    auto uidClient = ApplicationUidClient(Ref(*serviceLocatorClient));
+    auto uidClient = ApplicationUidClient(serviceLocatorClient.Get());
     auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
       *serviceLocatorClient);
     auto administrationClient = ApplicationAdministrationClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto marketDataClient = ApplicationMarketDataClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto complianceClient = ApplicationComplianceClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto simulationOrderExecutionDriver =
       ApplicationSimulationOrderExecutionDriver(marketDataClient.Get(),
-      timeClient.get());
+        timeClient.get());
     auto internalMatchingOrderExecutionDriver =
       ApplicationInternalMatchingOrderExecutionDriver(
-      serviceLocatorClient->GetAccount(), Initialize(), marketDataClient.Get(),
-      timeClient.get(), uidClient.Get(), &simulationOrderExecutionDriver);
+        serviceLocatorClient->GetAccount(), Initialize(),
+        marketDataClient.Get(), timeClient.get(), uidClient.Get(),
+        &simulationOrderExecutionDriver);
     auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
     TryOrNest([&] {
       checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
@@ -121,12 +124,12 @@ int main(int argc, const char** argv) {
         definitionsClient->LoadTimeZoneDatabase()));
       checks.emplace_back(std::make_unique<
         BuyingPowerCheck<ApplicationAdministrationClient::Client*,
-        ApplicationMarketDataClient::Client*>>(
-        definitionsClient->LoadExchangeRates(), administrationClient.Get(),
-        marketDataClient.Get()));
+          ApplicationMarketDataClient::Client*>>(
+            definitionsClient->LoadExchangeRates(), administrationClient.Get(),
+            marketDataClient.Get()));
       checks.emplace_back(std::make_unique<
         RiskStateCheck<ApplicationAdministrationClient::Client*>>(
-        administrationClient.Get()));
+          administrationClient.Get()));
     }, std::runtime_error("Unable to initialize order submission checks"));
     auto orderSubmissionCheckDriver = ApplicationOrderSubmissionCheckDriver(
       &internalMatchingOrderExecutionDriver, std::move(checks));
@@ -137,7 +140,7 @@ int main(int argc, const char** argv) {
       });
     auto complianceCheckOrderExecutionDriver =
       ApplicationComplianceCheckOrderExecutionDriver(
-      &orderSubmissionCheckDriver, timeClient.get(), &complianceRuleSet);
+        &orderSubmissionCheckDriver, timeClient.get(), &complianceRuleSet);
     auto mySqlConfigs = TryOrNest([&] {
       return MySqlConfig::ParseReplication(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
@@ -158,10 +161,10 @@ int main(int argc, const char** argv) {
       connectionBuilders, accountSource);
     auto orderExecutionServer = OrderExecutionServletContainer(
       Initialize(serviceLocatorClient.Get(), Initialize(
-      sessionStartTime, definitionsClient->LoadMarketDatabase(),
-      definitionsClient->LoadDestinationDatabase(), timeClient.get(),
-      serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
-      &complianceCheckOrderExecutionDriver, dataStore.get())),
+        sessionStartTime, definitionsClient->LoadMarketDatabase(),
+        definitionsClient->LoadDestinationDatabase(), timeClient.get(),
+        serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
+        &complianceCheckOrderExecutionDriver, dataStore.get())),
       Initialize(serviceConfig.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);

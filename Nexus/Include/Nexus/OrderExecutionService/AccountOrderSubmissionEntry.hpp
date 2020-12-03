@@ -1,77 +1,72 @@
-#ifndef NEXUS_ACCOUNTORDERSUBMISSIONENTRY_HPP
-#define NEXUS_ACCOUNTORDERSUBMISSIONENTRY_HPP
+#ifndef NEXUS_ACCOUNT_ORDER_SUBMISSION_ENTRY_HPP
+#define NEXUS_ACCOUNT_ORDER_SUBMISSION_ENTRY_HPP
+#include <atomic>
+#include <utility>
 #include <Beam/Queries/Sequence.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <boost/atomic/atomic.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class AccountOrderSubmissionEntry
-      \brief Keeps and updates a registry of Order submissions.
-   */
-  class AccountOrderSubmissionEntry : private boost::noncopyable {
+  /** Keeps and updates a registry of Order submissions. */
+  class AccountOrderSubmissionEntry {
     public:
 
-      /*! \struct InitialSequences
-          \brief Stores the next Sequence to use.
-       */
+      /** Stores the next Sequence to use. */
       struct InitialSequences {
 
-        //! The next Sequence to use for an OrderInfo.
+        /** The next Sequence to use for an OrderInfo. */
         Beam::Queries::Sequence m_nextOrderInfoSequence;
 
-        //! The next Sequence to use for an ExecutionReport.
+        /** The next Sequence to use for an ExecutionReport. */
         Beam::Queries::Sequence m_nextExecutionReportSequence;
       };
 
-      //! Constructs an AccountOrderSubmissionEntry.
-      /*!
-        \param account The account.
-        \param initialSequences The initial Sequences to use.
-      */
-      AccountOrderSubmissionEntry(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const InitialSequences& initialSequences);
+      /**
+       * Constructs an AccountOrderSubmissionEntry.
+       * @param account The account.
+       * @param initialSequences The initial Sequences to use.
+       */
+      AccountOrderSubmissionEntry(Beam::ServiceLocator::DirectoryEntry account,
+        InitialSequences initialSequences);
 
-      //! Publishes an OrderInfo.
-      /*!
-        \param orderInfo The OrderInfo to publish.
-      */
+      /**
+       * Publishes an OrderInfo.
+       * @param orderInfo The OrderInfo to publish.
+       */
       SequencedAccountOrderInfo Publish(const OrderInfo& orderInfo);
 
-      //! Publishes an ExecutionReport.
-      /*!
-        \param executionReport The ExecutionReport to publish.
-      */
+      /**
+       * Publishes an ExecutionReport.
+       * @param executionReport The ExecutionReport to publish.
+       */
       SequencedAccountExecutionReport Publish(
         const ExecutionReport& executionReport);
 
     private:
       Beam::ServiceLocator::DirectoryEntry m_account;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_orderSequence;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_executionReportSequence;
+      std::atomic<Beam::Queries::Sequence::Ordinal> m_orderSequence;
+      std::atomic<Beam::Queries::Sequence::Ordinal> m_executionReportSequence;
+
+      AccountOrderSubmissionEntry(const AccountOrderSubmissionEntry&) = delete;
+      AccountOrderSubmissionEntry& operator =(
+        const AccountOrderSubmissionEntry&) = delete;
   };
 
-  //! Returns the InitialSequences for a AccountOrderSubmissionEntry.
-  /*!
-    \param dataStore The DataStore to load the InitialSequences from.
-    \param account The account to load the InitialSequences for.
-    \return The set of InitialSequences for the specified <i>account</i>.
-  */
+  /**
+   * Returns the InitialSequences for a AccountOrderSubmissionEntry.
+   * @param dataStore The DataStore to load the InitialSequences from.
+   * @param account The account to load the InitialSequences for.
+   * @return The set of InitialSequences for the specified <i>account</i>.
+   */
   template<typename DataStore>
   AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
       DataStore& dataStore,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    AccountQuery query;
-    query.SetIndex(account);
-    query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    AccountOrderSubmissionEntry::InitialSequences initialSequences;
+    auto query = Beam::Queries::BuildLatestQuery(account);
+    auto initialSequences = AccountOrderSubmissionEntry::InitialSequences();
     {
       auto results = dataStore.LoadOrderSubmissions(query);
       if(results.empty()) {
@@ -96,13 +91,12 @@ namespace OrderExecutionService {
   }
 
   inline AccountOrderSubmissionEntry::AccountOrderSubmissionEntry(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const InitialSequences& initialSequences)
-      : m_account(account),
-        m_orderSequence(
-          initialSequences.m_nextOrderInfoSequence.GetOrdinal()),
-        m_executionReportSequence(
-          initialSequences.m_nextExecutionReportSequence.GetOrdinal()) {}
+    Beam::ServiceLocator::DirectoryEntry account,
+    InitialSequences initialSequences)
+    : m_account(std::move(account)),
+      m_orderSequence(initialSequences.m_nextOrderInfoSequence.GetOrdinal()),
+      m_executionReportSequence(
+        initialSequences.m_nextExecutionReportSequence.GetOrdinal()) {}
 
   inline SequencedAccountOrderInfo AccountOrderSubmissionEntry::Publish(
       const OrderInfo& orderInfo) {
@@ -121,7 +115,6 @@ namespace OrderExecutionService {
       Beam::Queries::Sequence(sequence));
     return sequencedExecutionReport;
   }
-}
 }
 
 #endif

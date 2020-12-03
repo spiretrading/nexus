@@ -6,15 +6,16 @@ using namespace Nexus::Python;
 using namespace pybind11;
 
 PYBIND11_MODULE(_nexus, module) {
+  ExportQueries(module);
   ExportAccounting(module);
   ExportAdministrationService(module);
+  ExportChartingService(module);
   ExportCompliance(module);
   ExportDefinitions(module);
   ExportDefinitionsService(module);
   ExportFeeHandling(module);
   ExportMarketDataService(module);
   ExportOrderExecutionService(module);
-  ExportQueries(module);
   ExportRiskService(module);
   ExportServiceClients(module);
   ExportBacktester(module);

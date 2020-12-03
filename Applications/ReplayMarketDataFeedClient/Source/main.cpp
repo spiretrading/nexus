@@ -47,7 +47,7 @@ namespace {
     SqlConnection<Sqlite3::Connection>>;
   using BaseMarketDataFeedClient = MarketDataFeedClient<std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
-    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+      SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationMarketDataFeedClient = ReplayMarketDataFeedClient<
     BaseMarketDataFeedClient, SqlDataStore*, LiveNtpTimeClient*, LiveTimer>;
 
@@ -72,7 +72,7 @@ namespace {
   auto BuildReplayClients(const YAML::Node& config,
       std::vector<Security> securities, SqlDataStore* dataStore,
       const std::vector<IpAddress>& addresses,
-      Ref<ApplicationServiceLocatorClient> serviceLocatorClient,
+      ApplicationServiceLocatorClient& serviceLocatorClient,
       LiveNtpTimeClient* timeClient) {
     return TryOrNest([&] {
       auto sampling = Extract<time_duration>(config, "sampling");
@@ -94,10 +94,10 @@ namespace {
           std::min(securities.begin() + (i + 1) * chunks, securities.end()));
         replayClients.emplace_back(std::make_unique<
           ApplicationMarketDataFeedClient>(std::move(securitySubset), startTime,
-          Initialize(Initialize(addresses),
-          SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
-          Ref(**serviceLocatorClient)), Initialize(sampling),
-          Initialize(seconds(10))), dataStore, timeClient, timerBuilder));
+            Initialize(Initialize(addresses),
+              SessionAuthenticator(serviceLocatorClient.Get()),
+              Initialize(sampling), Initialize(seconds(10))), dataStore,
+            timeClient, timerBuilder));
       }
       return replayClients;
     }, std::runtime_error("Failed to build replay clients."));
@@ -112,7 +112,7 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
       *serviceLocatorClient);
     auto dataStorePath = Extract<std::string>(config, "data_store");
@@ -131,7 +131,7 @@ int main(int argc, const char** argv) {
     auto marketDataAddresses = Parse<std::vector<IpAddress>>(
       get<std::string>(marketDataService.GetProperties().At("addresses")));
     auto feedClients = BuildReplayClients(config, securities,
-      &historicalDataStore, marketDataAddresses, Ref(serviceLocatorClient),
+      &historicalDataStore, marketDataAddresses, serviceLocatorClient,
       timeClient.get());
     WaitForKillEvent();
   } catch(...) {

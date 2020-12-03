@@ -7,7 +7,6 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <QMessageBox>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/UI/UISerialization.hpp"
@@ -18,6 +17,7 @@ using namespace Beam::IO;
 using namespace Beam::Queries;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
+using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -112,7 +112,7 @@ bool OrderImbalanceIndicatorProperties::IsFiltered(MarketCode market) const {
 }
 
 Beam::Queries::Range OrderImbalanceIndicatorProperties::GetTimeRange(
-    Beam::TimeService::VirtualTimeClient& timeClient) const {
+    TimeClientBox& timeClient) const {
   Beam::Queries::Range::Point start;
   if(m_startTime.m_offset.is_initialized()) {
     start = timeClient.GetTime() - *m_startTime.m_offset;

@@ -141,8 +141,8 @@ namespace Details {
           \param orders The Orders to cancel.
         */
         static void HandleCancel(const CancelBinding& cancelBinding,
-          Nexus::OrderExecutionService::VirtualOrderExecutionClient&
-          orderExecutionClient,
+          Nexus::OrderExecutionService::OrderExecutionClientBox&
+            orderExecutionClient,
           Beam::Out<std::vector<OrderLogModel::OrderEntry>> orders);
 
         //! Describes the type of cancel performed by this binding.

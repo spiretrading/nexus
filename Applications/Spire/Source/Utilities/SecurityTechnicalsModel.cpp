@@ -1,5 +1,4 @@
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 #include "Spire/UI/UserProfile.hpp"
 

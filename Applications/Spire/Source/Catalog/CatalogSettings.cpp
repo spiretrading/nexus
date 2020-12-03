@@ -8,7 +8,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleUuid.hpp>
 #include <QMessageBox>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Catalog/BuiltInCatalogEntry.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
@@ -97,7 +96,7 @@ namespace {
     }
   }
 
-  void LoadRemoteCatalogEntries(VirtualRegistryClient& registryClient,
+  void LoadRemoteCatalogEntries(RegistryClientBox& registryClient,
       CatalogSettings& settings) {
     RegistryEntry libraryDirectory = RegistryService::LoadOrCreateDirectory(
       registryClient, CatalogSettings::GetCatalogLibraryRegistryPath(),
@@ -116,8 +115,7 @@ namespace {
         receiver.SetSource(Ref(buffer));
         std::unique_ptr<RegistryCatalogEntry> entry =
           std::make_unique<RegistryCatalogEntry>(settings.HasRegistryAccess(),
-          CatalogSettings::GetCatalogLibraryRegistryPath(),
-          Ref(registryClient));
+          CatalogSettings::GetCatalogLibraryRegistryPath(), registryClient);
         receiver.Shuttle(*entry);
         settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
           std::move(entry)));
@@ -126,7 +124,7 @@ namespace {
   }
 
   void CreateDefaultCatalog(CatalogSettings& settings,
-      VirtualRegistryClient& registryClient) {
+      RegistryClientBox& registryClient) {
     CreateValuesTab(settings);
     CreateTasksTab(settings);
     CreateKeyBindingsTab(settings);
@@ -134,7 +132,7 @@ namespace {
   }
 
   void LoadCatalogTabs(const path& catalogDirectoryPath,
-      CatalogSettings& settings, VirtualRegistryClient& registryClient) {
+      CatalogSettings& settings, RegistryClientBox& registryClient) {
     path catalogTabPath = catalogDirectoryPath / "tabs.list";
     if(!exists(catalogTabPath)) {
       CreateDefaultCatalog(settings, registryClient);

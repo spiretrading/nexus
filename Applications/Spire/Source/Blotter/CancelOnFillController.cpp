@@ -1,5 +1,4 @@
 #include "Spire/Blotter/CancelOnFillController.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
 #include "Spire/UI/UserProfile.hpp"
 

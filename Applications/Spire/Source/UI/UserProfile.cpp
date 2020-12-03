@@ -1,6 +1,5 @@
 #include "Spire/UI/UserProfile.hpp"
 #include <QStandardPaths>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
@@ -26,7 +25,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
-    Ref<VirtualServiceClients> serviceClients)
+    ServiceClientsBox serviceClients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
@@ -36,7 +35,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
       m_marketDatabase(marketDatabase),
       m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
-      m_serviceClients(serviceClients.Get()),
+      m_serviceClients(std::move(serviceClients)),
       m_profilePath(path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
@@ -89,8 +88,8 @@ const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
 }
 
-VirtualServiceClients& UserProfile::GetServiceClients() const {
-  return *m_serviceClients;
+ServiceClientsBox& UserProfile::GetServiceClients() const {
+  return m_serviceClients;
 }
 
 void UserProfile::CreateProfilePath() const {

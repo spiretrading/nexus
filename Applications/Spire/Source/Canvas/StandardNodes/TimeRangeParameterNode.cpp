@@ -1,5 +1,5 @@
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 
@@ -53,7 +53,7 @@ unique_ptr<TimeRangeParameterNode> TimeRangeParameterNode::SetTimeRange(
 }
 
 Range TimeRangeParameterNode::GetTimeRangeQuery(
-    VirtualTimeClient& timeClient) const {
+    TimeClientBox& timeClient) const {
   Range::Point start;
   if(m_startTime.m_offset.is_initialized()) {
     start = timeClient.GetTime() - *m_startTime.m_offset;

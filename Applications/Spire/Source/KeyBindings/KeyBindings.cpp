@@ -8,7 +8,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QMessageBox>
 #include <QKeyEvent>
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/UI/UISerialization.hpp"
@@ -379,7 +378,7 @@ void KeyBindings::CancelBinding::HandleCancel(
 
 void KeyBindings::CancelBinding::HandleCancel(
     const CancelBinding& cancelBinding,
-    VirtualOrderExecutionClient& orderExecutionClient,
+    OrderExecutionClientBox& orderExecutionClient,
     Out<vector<OrderLogModel::OrderEntry>> orders) {
   if(orders->empty()) {
     return;

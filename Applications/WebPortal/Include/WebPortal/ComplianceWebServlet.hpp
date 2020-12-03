@@ -4,14 +4,13 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
   /** Provides a web interface to the ComplianceService. */
-  class ComplianceWebServlet : private boost::noncopyable {
+  class ComplianceWebServlet {
     public:
 
       /**
@@ -31,6 +30,8 @@ namespace Nexus::WebPortal {
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
+      ComplianceWebServlet(const ComplianceWebServlet&) = delete;
+      ComplianceWebServlet& operator =(const ComplianceWebServlet&) = delete;
       Beam::WebServices::HttpResponse OnLoadDirectoryEntryComplianceRuleEntry(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnAddComplianceRuleEntry(

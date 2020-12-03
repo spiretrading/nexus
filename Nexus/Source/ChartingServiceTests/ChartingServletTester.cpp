@@ -15,12 +15,13 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::ChartingService;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::TechnicalAnalysis;
 
 namespace {
   struct Fixture {
     using ServletContainer = TestServiceProtocolServletContainer<
-      MetaChartingServlet<MarketDataService::VirtualMarketDataClient*>>;
+      MetaChartingServlet<MarketDataClientBox>>;
 
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
@@ -31,7 +32,7 @@ namespace {
     Fixture()
         : m_serviceClients(Ref(m_environment)) {
       auto serverConnection = std::make_shared<TestServerConnection>();
-      m_container.emplace(Initialize(&m_serviceClients.GetMarketDataClient()),
+      m_container.emplace(Initialize(m_serviceClients.GetMarketDataClient()),
         serverConnection, factory<std::unique_ptr<TriggerTimer>>());
       m_clientProtocol.emplace(Initialize("test", *serverConnection),
         Initialize());
@@ -59,7 +60,7 @@ TEST_SUITE("ChartingServlet") {
     }
     auto result = m_clientProtocol->SendRequest<
       LoadSecurityTimePriceSeriesService>(security, startTime, endTime,
-      interval);
+        interval);
     REQUIRE(result.series == expectedSeries);
   }
 }

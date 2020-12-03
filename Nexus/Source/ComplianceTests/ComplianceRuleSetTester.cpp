@@ -25,28 +25,23 @@ namespace {
     using TestComplianceClient = ComplianceClient<
       TestServiceProtocolClientBuilder>;
     using TestComplianceRuleSet = ComplianceRuleSet<TestComplianceClient*,
-      std::unique_ptr<VirtualServiceLocatorClient>>;
-
+      ServiceLocatorClientBox>;
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
-    boost::optional<TestServiceProtocolServer> m_server;
-    boost::optional<TestComplianceClient> m_complianceClient;
-    boost::optional<TestComplianceRuleSet> m_complianceRuleSet;
+    optional<TestServiceProtocolServer> m_server;
+    optional<TestComplianceClient> m_complianceClient;
+    optional<TestComplianceRuleSet> m_complianceRuleSet;
 
     Fixture() {
-      auto serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
+      auto serviceLocatorClient = m_serviceLocatorEnvironment.MakeClient();
       auto serverConnection = std::make_shared<TestServerConnection>();
-      auto builder = TestServiceProtocolClientBuilder(
-        [=] {
-          return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", *serverConnection);
-        }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
-      m_complianceClient.emplace(builder);
+      m_complianceClient.emplace(TestServiceProtocolClientBuilder(std::bind(
+        factory<std::unique_ptr<TestServiceProtocolClientBuilder::Channel>>(),
+        "test", std::ref(*serverConnection)),
+        factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>()));
       m_complianceRuleSet.emplace(&*m_complianceClient,
         std::move(serviceLocatorClient),
-        [] (const auto& entry) {
-          return std::make_unique<SymbolRestrictionComplianceRule>(
-            std::vector<ComplianceParameter>());
-        });
+        std::bind(factory<std::unique_ptr<SymbolRestrictionComplianceRule>>(),
+          std::vector<ComplianceParameter>()));
     }
   };
 

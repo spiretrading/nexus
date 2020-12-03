@@ -27,7 +27,7 @@ namespace {
     using TestPortfolio = Portfolio<TrueAverageBookkeeper<Inventory<
       Position<Security>>>>;
     using TestPortfolioController = PortfolioController<TestPortfolio,
-      VirtualMarketDataClient*>;
+      MarketDataClientBox>;
 
     std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
     TestEnvironment m_environment;
@@ -168,7 +168,7 @@ TEST_SUITE("PortfolioController") {
     auto orders = std::make_shared<Queue<const Order*>>();
     auto controller = TestPortfolioController(Initialize(
       GetDefaultMarketDatabase(), TestPortfolio::Bookkeeper(inventories)),
-      &m_serviceClients.GetMarketDataClient(), orders);
+      m_serviceClients.GetMarketDataClient(), orders);
     auto queue = std::make_shared<
       Queue<TestPortfolioController::UpdateEntry>>();
     controller.GetPublisher().Monitor(queue);
@@ -188,7 +188,7 @@ TEST_SUITE("PortfolioController") {
     auto orders = std::make_shared<Queue<const Order*>>();
     auto controller = TestPortfolioController(Initialize(
       GetDefaultMarketDatabase(), TestPortfolio::Bookkeeper(inventories)),
-      &m_serviceClients.GetMarketDataClient(), orders);
+      m_serviceClients.GetMarketDataClient(), orders);
     auto queue = std::make_shared<
       Queue<TestPortfolioController::UpdateEntry>>();
     controller.GetPublisher().Monitor(queue);

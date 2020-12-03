@@ -11,8 +11,7 @@
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "WebPortal/AdministrationWebServlet.hpp"
 #include "WebPortal/ComplianceWebServlet.hpp"
 #include "WebPortal/DefinitionsWebServlet.hpp"
@@ -25,7 +24,7 @@
 namespace Nexus::WebPortal {
 
   /** Implements a web servlet for Spire client services. */
-  class WebPortalServlet : private boost::noncopyable {
+  class WebPortalServlet {
     public:
 
       /** The type of WebSocketChannel used. */
@@ -40,7 +39,7 @@ namespace Nexus::WebPortal {
        */
       WebPortalServlet(
         ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
-        Beam::Ref<VirtualServiceClients> serviceClients);
+        ServiceClientsBox serviceClients);
 
       ~WebPortalServlet();
 
@@ -65,6 +64,8 @@ namespace Nexus::WebPortal {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      WebPortalServlet(const WebPortalServlet&) = delete;
+      WebPortalServlet& operator =(const WebPortalServlet&) = delete;
       Beam::WebServices::HttpResponse OnIndex(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnServeFile(

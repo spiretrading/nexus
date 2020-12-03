@@ -3,7 +3,7 @@
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
@@ -31,9 +31,9 @@ namespace {
   struct Fixture {
     using TestServletContainer =
       TestAuthenticatedServiceProtocolServletContainer<
-      MetaMarketDataRegistryServlet<MarketDataRegistry*,
-      LocalHistoricalDataStore, std::unique_ptr<VirtualAdministrationClient>>,
-      NativePointerPolicy>;
+        MetaMarketDataRegistryServlet<MarketDataRegistry*,
+          LocalHistoricalDataStore, AdministrationClientBox>,
+        NativePointerPolicy>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     AdministrationServiceTestEnvironment m_administrationEnvironment;
@@ -44,11 +44,11 @@ namespace {
 
     Fixture()
         : m_administrationEnvironment(
-            m_serviceLocatorEnvironment.BuildClient(), BuildEntitlements()) {
+            m_serviceLocatorEnvironment.MakeClient(), BuildEntitlements()) {
       auto servletServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      m_registryServlet.emplace(m_administrationEnvironment.BuildClient(
-        Ref(*servletServiceLocatorClient)), &m_registry, Initialize());
+        m_serviceLocatorEnvironment.MakeClient();
+      m_registryServlet.emplace(m_administrationEnvironment.MakeClient(
+        servletServiceLocatorClient), &m_registry, Initialize());
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
         &*m_registryServlet), serverConnection,
@@ -60,9 +60,8 @@ namespace {
       RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
       RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
       auto clientServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient("client", "");
-      auto authenticator = SessionAuthenticator(
-        Ref(*clientServiceLocatorClient));
+        m_serviceLocatorEnvironment.MakeClient("client", "");
+      auto authenticator = SessionAuthenticator(clientServiceLocatorClient);
       authenticator(*m_clientProtocol);
     }
 

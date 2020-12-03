@@ -3,8 +3,6 @@
   #undef slots
 #endif
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/RegistryService/RegistryClient.hpp>
-#include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Utilities/NotSupportedException.hpp>
@@ -35,14 +33,14 @@ const string& RegistryCatalogEntry::GetRegistrySourceValue() {
 }
 
 RegistryCatalogEntry::RegistryCatalogEntry(bool isReadOnly,
-    const string& path, Ref<VirtualRegistryClient> registryClient)
+    const string& path, RegistryClientBox registryClient)
     : m_isReadOnly(isReadOnly),
       m_path(path),
-      m_registryClient(registryClient.Get()) {}
+      m_registryClient(std::move(registryClient)) {}
 
 RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
     const string& iconPath, const string& description, const CanvasNode& node,
-    const string& path, Ref<VirtualRegistryClient> registryClient)
+    const string& path, RegistryClientBox registryClient)
     : PersistentCatalogEntry(GenerateUid()),
       m_isReadOnly(false),
       m_name(name),
@@ -50,7 +48,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
       m_icon(QString::fromStdString(iconPath)),
       m_description(description),
       m_path(path),
-      m_registryClient(registryClient.Get()) {
+      m_registryClient(std::move(registryClient)) {
   CanvasNodeBuilder builder(node);
   stringstream ss;
   ss << GetUid();
@@ -62,8 +60,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
 
 RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
     const string& iconPath, const string& description, const CanvasNode& node,
-    const uuid& uid, const string& path,
-    Ref<VirtualRegistryClient> registryClient)
+    const uuid& uid, const string& path, RegistryClientBox registryClient)
     : PersistentCatalogEntry(uid),
       m_isReadOnly(false),
       m_name(name),
@@ -71,7 +68,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
       m_icon(QString::fromStdString(iconPath)),
       m_description(description),
       m_path(path),
-      m_registryClient(registryClient.Get()) {
+      m_registryClient(std::move(registryClient)) {
   CanvasNodeBuilder builder(node);
   stringstream ss;
   ss << GetUid();
@@ -83,7 +80,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
 
 void RegistryCatalogEntry::Save() const {
   string path = m_path + "/" + GetName();
-  RegistryEntry directory = LoadOrCreateDirectory(*m_registryClient, m_path,
+  RegistryEntry directory = LoadOrCreateDirectory(m_registryClient, m_path,
     RegistryEntry::GetRoot());
   SharedBuffer buffer;
   TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -91,15 +88,15 @@ void RegistryCatalogEntry::Save() const {
   auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
   sender.SetSink(Ref(buffer));
   sender.Shuttle(*this);
-  m_registryClient->Store(GetName(), buffer, directory);
+  m_registryClient.Store(GetName(), buffer, directory);
 }
 
 void RegistryCatalogEntry::Delete() const {
   try {
     string path = m_path + "/" + GetName();
-    RegistryEntry entry = m_registryClient->LoadPath(
+    RegistryEntry entry = m_registryClient.LoadPath(
       RegistryEntry::GetRoot(), path);
-    m_registryClient->Delete(entry);
+    m_registryClient.Delete(entry);
   } catch(std::exception&) {}
 }
 
@@ -115,7 +112,7 @@ unique_ptr<CatalogEntry> RegistryCatalogEntry::SetName(
   }
   unique_ptr<CatalogEntry> entry = std::make_unique<RegistryCatalogEntry>(name,
     GetIconPath(), GetDescription(), GetNode(), GetUid(), m_path,
-    Ref(*m_registryClient));
+    m_registryClient);
   return entry;
 }
 
@@ -131,7 +128,7 @@ unique_ptr<CatalogEntry> RegistryCatalogEntry::SetIconPath(
   }
   unique_ptr<CatalogEntry> entry = std::make_unique<RegistryCatalogEntry>(
     GetName(), iconPath, GetDescription(), GetNode(), GetUid(), m_path,
-    Ref(*m_registryClient));
+    m_registryClient);
   return entry;
 }
 
@@ -155,7 +152,7 @@ unique_ptr<CatalogEntry> RegistryCatalogEntry::SetNode(
   }
   unique_ptr<CatalogEntry> entry = std::make_unique<RegistryCatalogEntry>(
     GetName(), GetIconPath(), GetDescription(), node, GetUid(), m_path,
-    Ref(*m_registryClient));
+    m_registryClient);
   return entry;
 }
 

@@ -1,30 +1,26 @@
-#ifndef NEXUS_REPLICATEDORDEREXECUTIONDATASTORE_HPP
-#define NEXUS_REPLICATEDORDEREXECUTIONDATASTORE_HPP
+#ifndef NEXUS_REPLICATED_ORDER_EXECUTION_DATA_STORE_HPP
+#define NEXUS_REPLICATED_ORDER_EXECUTION_DATA_STORE_HPP
 #include <iostream>
 #include <vector>
 #include <boost/atomic/atomic.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class ReplicatedOrderExecutionDataStore
-      \brief Duplicates an OrderExecutionDataStore across multiple instances.
-   */
-  class ReplicatedOrderExecutionDataStore : private boost::noncopyable {
+  /** Duplicates an OrderExecutionDataStore across multiple instances. */
+  class ReplicatedOrderExecutionDataStore {
     public:
 
-      //! Constructs an empty ReplicatedOrderExecutionDataStore.
-      /*!
-        \param primaryDataStore The primary data store to access.
-        \param duplicateDataStores The data stores to replicate the primary to.
-      */
+      /**
+       * Constructs an empty ReplicatedOrderExecutionDataStore.
+       * @param primaryDataStore The primary data store to access.
+       * @param duplicateDataStores The data stores to replicate the primary to.
+       */
       ReplicatedOrderExecutionDataStore(
         std::unique_ptr<VirtualOrderExecutionDataStore> primaryDataStore,
         std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
-        duplicateDataStores);
+          duplicateDataStores);
 
       ~ReplicatedOrderExecutionDataStore();
 
@@ -45,15 +41,20 @@ namespace OrderExecutionService {
       std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
         m_duplicateDataStores;
       boost::atomic<std::size_t> m_nextDataStore;
+
+      ReplicatedOrderExecutionDataStore(
+        const ReplicatedOrderExecutionDataStore&) = delete;
+      ReplicatedOrderExecutionDataStore& operator =(
+        const ReplicatedOrderExecutionDataStore&) = delete;
   };
 
   inline ReplicatedOrderExecutionDataStore::ReplicatedOrderExecutionDataStore(
-      std::unique_ptr<VirtualOrderExecutionDataStore> primaryDataStore,
-      std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
+    std::unique_ptr<VirtualOrderExecutionDataStore> primaryDataStore,
+    std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
       duplicateDataStores)
-      : m_primaryDataStore{std::move(primaryDataStore)},
-        m_duplicateDataStores(std::move(duplicateDataStores)),
-        m_nextDataStore{0} {}
+    : m_primaryDataStore{std::move(primaryDataStore)},
+      m_duplicateDataStores(std::move(duplicateDataStores)),
+      m_nextDataStore(0) {}
 
   inline ReplicatedOrderExecutionDataStore::
       ~ReplicatedOrderExecutionDataStore() {
@@ -104,7 +105,6 @@ namespace OrderExecutionService {
     }
     m_primaryDataStore->Close();
   }
-}
 }
 
 #endif

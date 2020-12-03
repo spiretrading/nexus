@@ -42,11 +42,10 @@ using namespace Nexus::Compliance;
 using namespace Nexus::DefinitionsService;
 
 namespace {
-  using DefinitionsServletContainer =
-    ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaDefinitionsServlet, ApplicationServiceLocatorClient::Client*>,
-    TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
-    std::shared_ptr<LiveTimer>>;
+  using DefinitionsServletContainer = ServiceProtocolServletContainer<
+    MetaAuthenticationServletAdapter<MetaDefinitionsServlet,
+      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   std::vector<ExchangeRate> ParseExchangeRates(const YAML::Node& config) {
     return TryOrNest([&] {
@@ -102,24 +101,24 @@ int main(int argc, const char** argv) {
     }();
     auto countryDatabase = ParseCountryDatabase(
       GetNode(Require(LoadFile, Extract<std::string>(config, "countries",
-      "countries.yml")), "countries"));
+        "countries.yml")), "countries"));
     auto currencyDatabase = ParseCurrencyDatabase(GetNode(
       Require(LoadFile, Extract<std::string>(config, "currencies",
-      "currencies.yml")), "currencies"));
+        "currencies.yml")), "currencies"));
     auto marketDatabase = ParseMarketDatabase(GetNode(
       Require(LoadFile, Extract<std::string>(config, "markets", "markets.yml")),
-      "markets"), countryDatabase, currencyDatabase);
+        "markets"), countryDatabase, currencyDatabase);
     auto destinationDatabase = ParseDestinationDatabase(
       Require(LoadFile, Extract<std::string>(config, "destinations",
-      "destinations.yml")), marketDatabase);
+        "destinations.yml")), marketDatabase);
     auto exchangeRates = ParseExchangeRates(GetNode(config, "exchange_rates"));
-    auto definitionsServer = DefinitionsServletContainer(
-      Initialize(serviceLocatorClient.Get(),
-      Initialize(std::move(minimumSpireClientVersion),
-      std::move(organizationName), std::move(timeZoneDatabase),
-      std::move(countryDatabase), std::move(currencyDatabase),
-      std::move(marketDatabase), std::move(destinationDatabase),
-      std::move(exchangeRates), std::move(complianceRuleSchemas))),
+    auto definitionsServer = DefinitionsServletContainer(Initialize(
+      serviceLocatorClient.Get(), Initialize(
+        std::move(minimumSpireClientVersion), std::move(organizationName),
+        std::move(timeZoneDatabase), std::move(countryDatabase),
+        std::move(currencyDatabase), std::move(marketDatabase),
+        std::move(destinationDatabase), std::move(exchangeRates),
+        std::move(complianceRuleSchemas))),
       Initialize(serviceConfig.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     TryOrNest([&] {

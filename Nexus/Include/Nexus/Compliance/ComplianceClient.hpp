@@ -5,7 +5,7 @@
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/QueueWriterPublisher.hpp>
-#include <Beam/Services/ServiceProtocolClient.hpp>
+#include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/functional/factory.hpp>

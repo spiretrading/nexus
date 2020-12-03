@@ -36,7 +36,7 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace pybind11;
 
-void Nexus::Python::ExportAmexFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportAmexFeeTable(module& module) {
   auto outer = class_<AmexFeeTable>(module, "AmexFeeTable")
     .def_readwrite("fee_table", &AmexFeeTable::m_feeTable)
     .def_readwrite("subdollar_table", &AmexFeeTable::m_subdollarTable);
@@ -59,7 +59,7 @@ void Nexus::Python::ExportAmexFeeTable(pybind11::module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportArcaFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportArcaFeeTable(module& module) {
   auto outer = class_<ArcaFeeTable>(module, "ArcaFeeTable")
     .def_readwrite("fee_table", &ArcaFeeTable::m_feeTable)
     .def_readwrite("subdollar_table", &ArcaFeeTable::m_subdollarTable)
@@ -96,7 +96,7 @@ void Nexus::Python::ExportArcaFeeTable(pybind11::module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportAsxtFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportAsxtFeeTable(module& module) {
   auto outer = class_<AsxtFeeTable>(module, "AsxtFeeTable")
     .def(init())
     .def(init<const AsxtFeeTable&>())
@@ -123,7 +123,7 @@ void Nexus::Python::ExportAsxtFeeTable(pybind11::module& module) {
     &CalculateFee));
 }
 
-void Nexus::Python::ExportBatsFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportBatsFeeTable(module& module) {
   class_<BatsFeeTable>(module, "BatsFeeTable")
     .def(init())
     .def(init<const BatsFeeTable&>())
@@ -136,7 +136,7 @@ void Nexus::Python::ExportBatsFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportBatyFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportBatyFeeTable(module& module) {
   class_<BatyFeeTable>(module, "BatyFeeTable")
     .def(init())
     .def(init<const BatyFeeTable&>())
@@ -149,7 +149,7 @@ void Nexus::Python::ExportBatyFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportChicFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportChicFeeTable(module& module) {
   auto outer = class_<ChicFeeTable>(module, "ChicFeeTable")
     .def(init())
     .def(init<const ChicFeeTable&>())
@@ -174,7 +174,7 @@ void Nexus::Python::ExportChicFeeTable(pybind11::module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportConsolidatedTmxFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportConsolidatedTmxFeeTable(module& module) {
   auto outer = class_<ConsolidatedTmxFeeTable>(module,
       "ConsolidatedTmxFeeTable")
     .def(init())
@@ -210,7 +210,7 @@ void Nexus::Python::ExportConsolidatedTmxFeeTable(pybind11::module& module) {
     const Order&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportConsolidatedUsFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportConsolidatedUsFeeTable(module& module) {
   class_<ConsolidatedUsFeeTable>(module, "ConsolidatedUsFeeTable")
     .def(init())
     .def(init<const ConsolidatedUsFeeTable&>())
@@ -233,7 +233,7 @@ void Nexus::Python::ExportConsolidatedUsFeeTable(pybind11::module& module) {
     &CalculateFee));
 }
 
-void Nexus::Python::ExportCseFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportCseFeeTable(module& module) {
   auto outer = class_<CseFeeTable>(module, "CseFeeTable")
     .def(init())
     .def(init<const CseFeeTable&>())
@@ -250,7 +250,7 @@ void Nexus::Python::ExportCseFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportEdgaFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportEdgaFeeTable(module& module) {
   class_<EdgaFeeTable>(module, "EdgaFeeTable")
     .def(init())
     .def(init<const EdgaFeeTable&>())
@@ -263,7 +263,7 @@ void Nexus::Python::ExportEdgaFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportEdgxFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportEdgxFeeTable(module& module) {
   class_<EdgxFeeTable>(module, "EdgxFeeTable")
     .def(init())
     .def(init<const EdgxFeeTable&>())
@@ -276,7 +276,7 @@ void Nexus::Python::ExportEdgxFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportFeeHandling(pybind11::module& module) {
+void Nexus::Python::ExportFeeHandling(module& module) {
   ExportAmexFeeTable(module);
   ExportArcaFeeTable(module);
   ExportAsxtFeeTable(module);
@@ -304,7 +304,7 @@ void Nexus::Python::ExportFeeHandling(pybind11::module& module) {
   ExportXcx2FeeTable(module);
 }
 
-void Nexus::Python::ExportHkexFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportHkexFeeTable(module& module) {
   class_<HkexFeeTable>(module, "HkexFeeTable")
     .def(init())
     .def(init<const HkexFeeTable&>())
@@ -323,7 +323,7 @@ void Nexus::Python::ExportHkexFeeTable(pybind11::module& module) {
     &CalculateFee));
 }
 
-void Nexus::Python::ExportJpxFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportJpxFeeTable(module& module) {
   class_<JpxFeeTable>(module, "JpxFeeTable")
     .def(init())
     .def(init<const JpxFeeTable&>())
@@ -335,7 +335,7 @@ void Nexus::Python::ExportJpxFeeTable(pybind11::module& module) {
     &CalculateFee));
 }
 
-void Nexus::Python::ExportLiquidityFlag(pybind11::module& module) {
+void Nexus::Python::ExportLiquidityFlag(module& module) {
   enum_<LiquidityFlag>(module, "LiquidityFlag")
     .value("NONE", LiquidityFlag::NONE)
     .value("ACTIVE", LiquidityFlag::ACTIVE)
@@ -343,7 +343,7 @@ void Nexus::Python::ExportLiquidityFlag(pybind11::module& module) {
     .def("__str__", &lexical_cast<std::string, LiquidityFlag>);
 }
 
-void Nexus::Python::ExportLynxFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportLynxFeeTable(module& module) {
   auto outer = class_<LynxFeeTable>(module, "LynxFeeTable")
     .def(init())
     .def(init<const LynxFeeTable&>())
@@ -359,7 +359,7 @@ void Nexus::Python::ExportLynxFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportMatnFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportMatnFeeTable(module& module) {
   auto outer = class_<MatnFeeTable>(module, "MatnFeeTable")
     .def(init())
     .def(init<const MatnFeeTable&>())
@@ -392,7 +392,7 @@ void Nexus::Python::ExportMatnFeeTable(pybind11::module& module) {
     MatnFeeTable::Classification, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportNeoeFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportNeoeFeeTable(module& module) {
   auto outer = class_<NeoeFeeTable>(module, "NeoeFeeTable")
     .def(init())
     .def(init<const NeoeFeeTable&>())
@@ -414,7 +414,7 @@ void Nexus::Python::ExportNeoeFeeTable(pybind11::module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportNexFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportNexFeeTable(module& module) {
   auto outer = class_<NexFeeTable>(module, "NexFeeTable")
     .def(init())
     .def(init<const NexFeeTable&>())
@@ -424,7 +424,7 @@ void Nexus::Python::ExportNexFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportNsdqFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportNsdqFeeTable(module& module) {
   auto outer = class_<NsdqFeeTable>(module, "NsdqFeeTable")
     .def(init())
     .def(init<const NsdqFeeTable&>())
@@ -445,7 +445,7 @@ void Nexus::Python::ExportNsdqFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportNyseFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportNyseFeeTable(module& module) {
   auto outer = class_<NyseFeeTable>(module, "NyseFeeTable")
     .def(init())
     .def(init<const NyseFeeTable&>())
@@ -468,7 +468,7 @@ void Nexus::Python::ExportNyseFeeTable(pybind11::module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportOmgaFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportOmgaFeeTable(module& module) {
   auto outer = class_<OmgaFeeTable>(module, "OmgaFeeTable")
     .def(init())
     .def(init<const OmgaFeeTable&>())
@@ -495,7 +495,7 @@ void Nexus::Python::ExportOmgaFeeTable(pybind11::module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportPureFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportPureFeeTable(module& module) {
   class_<PureFeeTable>(module, "PureFeeTable")
     .def(init<const PureFeeTable&>());
   module.def("parse_pure_fee_table", &ParsePureFeeTable);
@@ -503,7 +503,7 @@ void Nexus::Python::ExportPureFeeTable(pybind11::module& module) {
     const Security&, const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportTsxFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportTsxFeeTable(module& module) {
   auto outer = class_<TsxFeeTable>(module, "TsxFeeTable")
     .def(init())
     .def(init<const TsxFeeTable&>())
@@ -546,7 +546,7 @@ void Nexus::Python::ExportTsxFeeTable(pybind11::module& module) {
     &CalculateFee));
 }
 
-void Nexus::Python::ExportXatsFeeTable(pybind11::module& module) {
+void Nexus::Python::ExportXatsFeeTable(module& module) {
   auto outer = class_<XatsFeeTable>(module, "XatsFeeTable")
     .def(init())
     .def(init<const XatsFeeTable&>())
@@ -580,7 +580,7 @@ void Nexus::Python::ExportXatsFeeTable(pybind11::module& module) {
     const ExecutionReport&)>(&CalculateFee));
 }
 
-void Nexus::Python::ExportXcx2FeeTable(pybind11::module& module) {
+void Nexus::Python::ExportXcx2FeeTable(module& module) {
   auto outer = class_<Xcx2FeeTable>(module, "Xcx2FeeTable")
     .def(init())
     .def(init<const Xcx2FeeTable&>())

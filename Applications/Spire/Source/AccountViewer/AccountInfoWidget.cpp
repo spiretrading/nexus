@@ -1,6 +1,5 @@
 #include "Spire/AccountViewer/AccountInfoWidget.hpp"
 #include <QMessageBox>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"

@@ -48,7 +48,7 @@ namespace {
   }
 }
 
-void Nexus::Python::ExportBboQuote(pybind11::module& module) {
+void Nexus::Python::ExportBboQuote(module& module) {
   class_<BboQuote>(module, "BboQuote")
     .def(init())
     .def(init<const Quote&, const Quote&, const ptime&>())
@@ -63,7 +63,7 @@ void Nexus::Python::ExportBboQuote(pybind11::module& module) {
   ExportQueueSuite<SequencedBboQuote>(module, "SequencedBboQuote");
 }
 
-void Nexus::Python::ExportBookQuote(pybind11::module& module) {
+void Nexus::Python::ExportBookQuote(module& module) {
   class_<BookQuote>(module, "BookQuote")
     .def(init())
     .def(init<std::string, bool, MarketCode, const Quote&, const ptime&>())
@@ -81,7 +81,7 @@ void Nexus::Python::ExportBookQuote(pybind11::module& module) {
   module.def("book_quote_listing_comparator", &BookQuoteListingComparator);
 }
 
-void Nexus::Python::ExportCountry(pybind11::module& module) {
+void Nexus::Python::ExportCountry(module& module) {
   class_<CountryCode>(module, "CountryCode")
     .def(init())
     .def(init<int>())
@@ -117,7 +117,7 @@ void Nexus::Python::ExportCountry(pybind11::module& module) {
       &CountryDatabase::Entry::m_threeLetterCode);
 }
 
-void Nexus::Python::ExportCurrency(pybind11::module& module) {
+void Nexus::Python::ExportCurrency(module& module) {
   class_<CurrencyId>(module, "CurrencyId")
     .def(init())
     .def(init<int>())
@@ -149,7 +149,7 @@ void Nexus::Python::ExportCurrency(pybind11::module& module) {
     CurrencyId (*)(const std::string&)>(&ParseCurrency));
 }
 
-void Nexus::Python::ExportCurrencyPair(pybind11::module& module) {
+void Nexus::Python::ExportCurrencyPair(module& module) {
   class_<CurrencyPair>(module, "CurrencyPair")
     .def(init())
     .def(init<CurrencyId, CurrencyId>())
@@ -168,7 +168,7 @@ void Nexus::Python::ExportCurrencyPair(pybind11::module& module) {
     static_cast<CurrencyPair (*)(const CurrencyPair&)>(&Invert));
 }
 
-void Nexus::Python::ExportDefaultCountries(pybind11::module& module) {
+void Nexus::Python::ExportDefaultCountries(module& module) {
   auto submodule = module.def_submodule("default_countries");
   submodule.add_object("AU", cast(DefaultCountries::AU()));
   submodule.add_object("BR", cast(DefaultCountries::BR()));
@@ -179,7 +179,7 @@ void Nexus::Python::ExportDefaultCountries(pybind11::module& module) {
   submodule.add_object("US", cast(DefaultCountries::US()));
 }
 
-void Nexus::Python::ExportDefaultCurrencies(pybind11::module& module) {
+void Nexus::Python::ExportDefaultCurrencies(module& module) {
   auto submodule = module.def_submodule("default_currencies");
   submodule.add_object("AUD", cast(DefaultCurrencies::AUD()));
   submodule.add_object("CAD", cast(DefaultCurrencies::CAD()));
@@ -189,7 +189,7 @@ void Nexus::Python::ExportDefaultCurrencies(pybind11::module& module) {
   submodule.add_object("XBT", cast(DefaultCurrencies::XBT()));
 }
 
-void Nexus::Python::ExportDefaultDestinations(pybind11::module& module) {
+void Nexus::Python::ExportDefaultDestinations(module& module) {
   auto submodule = module.def_submodule("default_destinations");
   submodule.add_object("MOE", cast(DefaultDestinations::MOE()));
   submodule.add_object("ASXT", cast(DefaultDestinations::ASXT()));
@@ -213,7 +213,7 @@ void Nexus::Python::ExportDefaultDestinations(pybind11::module& module) {
   submodule.add_object("TSE", cast(DefaultDestinations::TSE()));
 }
 
-void Nexus::Python::ExportDefaultMarkets(pybind11::module& module) {
+void Nexus::Python::ExportDefaultMarkets(module& module) {
   auto submodule = module.def_submodule("default_markets");
   submodule.add_object("HKEX", cast(DefaultMarkets::HKEX()));
   submodule.add_object("ASX", cast(DefaultMarkets::ASX()));
@@ -250,7 +250,7 @@ void Nexus::Python::ExportDefaultMarkets(pybind11::module& module) {
   submodule.add_object("CHIJ", cast(DefaultMarkets::CHIJ()));
 }
 
-void Nexus::Python::ExportDefinitions(pybind11::module& module) {
+void Nexus::Python::ExportDefinitions(module& module) {
   ExportBboQuote(module);
   ExportBookQuote(module);
   ExportCountry(module);
@@ -282,7 +282,7 @@ void Nexus::Python::ExportDefinitions(pybind11::module& module) {
   ExportTradingSchedule(module);
 }
 
-void Nexus::Python::ExportDestination(pybind11::module& module) {
+void Nexus::Python::ExportDestination(module& module) {
   auto outer = class_<DestinationDatabase>(module, "DestinationDatabase")
     .def(init())
     .def(init<const DestinationDatabase&>())
@@ -313,7 +313,7 @@ void Nexus::Python::ExportDestination(pybind11::module& module) {
     .def_readwrite("description", &DestinationDatabase::Entry::m_description);
 }
 
-void Nexus::Python::ExportExchangeRate(pybind11::module& module) {
+void Nexus::Python::ExportExchangeRate(module& module) {
   class_<ExchangeRate>(module, "ExchangeRate")
     .def(init())
     .def(init<const CurrencyPair&, const rational<int>&>())
@@ -325,7 +325,7 @@ void Nexus::Python::ExportExchangeRate(pybind11::module& module) {
   module.def("convert", &Convert);
 }
 
-void Nexus::Python::ExportExchangeRateTable(pybind11::module& module) {
+void Nexus::Python::ExportExchangeRateTable(module& module) {
   class_<ExchangeRateTable>(module, "ExchangeRateTable")
     .def(init())
     .def("find", &ExchangeRateTable::Find)
@@ -333,7 +333,7 @@ void Nexus::Python::ExportExchangeRateTable(pybind11::module& module) {
     .def("add", &ExchangeRateTable::Add);
 }
 
-void Nexus::Python::ExportMarket(pybind11::module& module) {
+void Nexus::Python::ExportMarket(module& module) {
   auto outer = class_<MarketDatabase>(module, "MarketDatabase")
     .def(init())
     .def(init<const MarketDatabase&>())
@@ -362,7 +362,7 @@ void Nexus::Python::ExportMarket(pybind11::module& module) {
   module.def("parse_market_entry", &ParseMarketEntry);
 }
 
-void Nexus::Python::ExportMarketQuote(pybind11::module& module) {
+void Nexus::Python::ExportMarketQuote(module& module) {
   class_<MarketQuote>(module, "MarketQuote")
     .def(init())
     .def(init<MarketCode, const Quote&, const Quote&, const ptime&>())
@@ -378,7 +378,7 @@ void Nexus::Python::ExportMarketQuote(pybind11::module& module) {
   ExportQueueSuite<SequencedMarketQuote>(module, "SequencedMarketQuote");
 }
 
-void Nexus::Python::ExportMoney(pybind11::module& module) {
+void Nexus::Python::ExportMoney(module& module) {
   class_<Money>(module, "Money")
     .def(init())
     .def(init<const Money&>())
@@ -430,7 +430,7 @@ void Nexus::Python::ExportMoney(pybind11::module& module) {
   module.def("round", static_cast<Money (*)(Money, int)>(&Round));
 }
 
-void Nexus::Python::ExportOrderImbalance(pybind11::module& module) {
+void Nexus::Python::ExportOrderImbalance(module& module) {
   class_<OrderImbalance>(module, "OrderImbalance")
     .def(init())
     .def(init<Security, Side, Quantity, Money, const ptime&>())
@@ -447,7 +447,7 @@ void Nexus::Python::ExportOrderImbalance(pybind11::module& module) {
   ExportQueueSuite<SequencedOrderImbalance>(module, "SequencedOrderImbalance");
 }
 
-void Nexus::Python::ExportOrderStatus(pybind11::module& module) {
+void Nexus::Python::ExportOrderStatus(module& module) {
   enum_<OrderStatus::Type>(module, "OrderStatus")
     .value("NONE", OrderStatus::NONE)
     .value("PENDING_NEW", OrderStatus::PENDING_NEW)
@@ -465,7 +465,7 @@ void Nexus::Python::ExportOrderStatus(pybind11::module& module) {
   module.def("is_terminal", &IsTerminal);
 }
 
-void Nexus::Python::ExportOrderType(pybind11::module& module) {
+void Nexus::Python::ExportOrderType(module& module) {
   enum_<OrderType::Type>(module, "OrderType")
     .value("NONE", OrderType::NONE)
     .value("MARKET", OrderType::MARKET)
@@ -474,7 +474,7 @@ void Nexus::Python::ExportOrderType(pybind11::module& module) {
     .value("STOP", OrderType::STOP);
 }
 
-void Nexus::Python::ExportQuantity(pybind11::module& module) {
+void Nexus::Python::ExportQuantity(module& module) {
   class_<Quantity>(module, "Quantity")
     .def(init())
     .def(init<int>())
@@ -563,7 +563,7 @@ void Nexus::Python::ExportQuantity(pybind11::module& module) {
   module.def("round", static_cast<Quantity (*)(Quantity, int)>(&Round));
 }
 
-void Nexus::Python::ExportQuote(pybind11::module& module) {
+void Nexus::Python::ExportQuote(module& module) {
   class_<Quote>(module, "Quote")
     .def(init())
     .def(init<Money, Quantity, Side>())
@@ -576,7 +576,7 @@ void Nexus::Python::ExportQuote(pybind11::module& module) {
     .def(self != self);
 }
 
-void Nexus::Python::ExportRegion(pybind11::module& module) {
+void Nexus::Python::ExportRegion(module& module) {
   class_<Region>(module, "Region")
     .def_property_readonly_static("GLOBAL",
       static_cast<Region (*)()>(&Region::Global))
@@ -602,7 +602,7 @@ void Nexus::Python::ExportRegion(pybind11::module& module) {
     .def(self > self);
 }
 
-void Nexus::Python::ExportSecurity(pybind11::module& module) {
+void Nexus::Python::ExportSecurity(module& module) {
   class_<Security>(module, "Security")
     .def(init())
     .def(init<const std::string&, MarketCode, CountryCode>())
@@ -626,7 +626,7 @@ void Nexus::Python::ExportSecurity(pybind11::module& module) {
     static_cast<Security (*)(const std::string&)>(&ParseSecurity));
 }
 
-void Nexus::Python::ExportSecurityInfo(pybind11::module& module) {
+void Nexus::Python::ExportSecurityInfo(module& module) {
   class_<SecurityInfo>(module, "SecurityInfo")
     .def(init())
     .def(init<const SecurityInfo&>())
@@ -644,7 +644,7 @@ void Nexus::Python::ExportSecurityInfo(pybind11::module& module) {
     .def("__str__", &lexical_cast<std::string, SecurityInfo>);
 }
 
-void Nexus::Python::ExportSecurityTechnicals(pybind11::module& module) {
+void Nexus::Python::ExportSecurityTechnicals(module& module) {
   class_<SecurityTechnicals>(module, "SecurityTechnicals")
     .def(init())
     .def(init<const SecurityTechnicals&>())
@@ -653,7 +653,7 @@ void Nexus::Python::ExportSecurityTechnicals(pybind11::module& module) {
     .def_readwrite("low", &SecurityTechnicals::m_low);
 }
 
-void Nexus::Python::ExportSide(pybind11::module& module) {
+void Nexus::Python::ExportSide(module& module) {
   enum_<Side::Type>(module, "Side")
     .value("NONE", Side::NONE)
     .value("ASK", Side::ASK)
@@ -667,7 +667,7 @@ void Nexus::Python::ExportSide(pybind11::module& module) {
   module.def("get_opposite", &GetOpposite);
 }
 
-void Nexus::Python::ExportTag(pybind11::module& module) {
+void Nexus::Python::ExportTag(module& module) {
   class_<Tag>(module, "Tag")
     .def(init())
     .def(init<int, const Tag::Type&>())
@@ -678,7 +678,7 @@ void Nexus::Python::ExportTag(pybind11::module& module) {
     .def(self == self);
 }
 
-void Nexus::Python::ExportTimeAndSale(pybind11::module& module) {
+void Nexus::Python::ExportTimeAndSale(module& module) {
   auto outer = class_<TimeAndSale>(module, "TimeAndSale")
     .def(init())
     .def(init<const ptime&, Money, Quantity, TimeAndSale::Condition,
@@ -711,7 +711,7 @@ void Nexus::Python::ExportTimeAndSale(pybind11::module& module) {
   ExportQueueSuite<SequencedTimeAndSale>(module, "SequencedTimeAndSale");
 }
 
-void Nexus::Python::ExportTimeInForce(pybind11::module& module) {
+void Nexus::Python::ExportTimeInForce(module& module) {
   auto outer = class_<TimeInForce>(module, "TimeInForce")
     .def(init())
     .def(init<TimeInForce::Type>())
@@ -734,7 +734,7 @@ void Nexus::Python::ExportTimeInForce(pybind11::module& module) {
     .value("GTD", TimeInForce::Type::GTD);
 }
 
-void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
+void Nexus::Python::ExportTradingSchedule(module& module) {
   auto outer = class_<TradingSchedule>(module, "TradingSchedule")
     .def(init<std::vector<TradingSchedule::Rule>>())
     .def("find", [] (TradingSchedule& self, date date, MarketCode market) {

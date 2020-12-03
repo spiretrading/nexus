@@ -27,7 +27,6 @@
 #include "Nexus/Parsers/QuantityParser.hpp"
 #include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
@@ -1088,10 +1087,10 @@ namespace {
     template<>
     static Translation Template<const Order*>(Aspen::Box<bool> condition,
         const Translation& series, CanvasNodeTranslationContext& context) {
-      return OrderCancellationReactor(Ref(
-        context.GetUserProfile().GetServiceClients().GetOrderExecutionClient()),
+      return OrderCancellationReactor(
+        context.GetUserProfile().GetServiceClients().GetOrderExecutionClient(),
         Aspen::until(std::move(condition),
-        series.Extract<Aspen::Box<const Order*>>()));
+          series.Extract<Aspen::Box<const Order*>>()));
     }
 
     using SupportedTypes = NativeTypes;

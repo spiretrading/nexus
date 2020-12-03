@@ -8,21 +8,20 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
-#include <Beam/Threading/VirtualTimer.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/Threading/TimerBox.hpp>
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/optional/optional.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskClient.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
-#include "Nexus/RiskService/VirtualRiskClient.hpp"
+#include "Nexus/RiskService/RiskClientBox.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTests.hpp"
 
 namespace Nexus::RiskService::Tests {
@@ -47,17 +46,12 @@ namespace Nexus::RiskService::Tests {
        * @param destinations The destination database used to flatten positions.
        */
       RiskServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient,
-        std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-        marketDataClient,
-        std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
-        orderExecutionClient,
-        std::function<std::unique_ptr<Beam::Threading::VirtualTimer> ()>
-        transitionTimerFactory,
-        std::shared_ptr<Beam::TimeService::VirtualTimeClient> timeClient,
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+        AdministrationService::AdministrationClientBox administrationClient,
+        MarketDataService::MarketDataClientBox marketDataClient,
+        OrderExecutionService::OrderExecutionClientBox orderExecutionClient,
+        std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
+          transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
         std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
         DestinationDatabase destinations);
 
@@ -68,11 +62,9 @@ namespace Nexus::RiskService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the RiskClient.
        */
-      std::unique_ptr<VirtualRiskClient> BuildClient(
-        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+      RiskClientBox MakeClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
-      /** Closes the servlet. */
       void Close();
 
     private:
@@ -80,28 +72,25 @@ namespace Nexus::RiskService::Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-      using UidClient = Beam::UidService::VirtualUidClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<MetaRiskServlet<
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>,
-        std::shared_ptr<MarketDataService::VirtualMarketDataClient>,
-        std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>,
-        Beam::Threading::VirtualTimer,
-        std::shared_ptr<Beam::TimeService::VirtualTimeClient>,
-        LocalRiskDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
-        ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+            MetaRiskServlet<AdministrationService::AdministrationClientBox,
+              MarketDataService::MarketDataClientBox,
+              OrderExecutionService::OrderExecutionClientBox,
+              Beam::Threading::TimerBox,
+              Beam::TimeService::TimeClientBox, LocalRiskDataStore*>,
+            Beam::ServiceLocator::ServiceLocatorClientBox>,
+          ServerConnection*,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder,
+          std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+          Beam::ServiceLocator::ServiceLocatorClientBox,
+          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
+            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+            Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
       LocalRiskDataStore m_dataStore;
       ServerConnection m_serverConnection;
       boost::optional<ServiceProtocolServletContainer> m_container;
@@ -112,20 +101,17 @@ namespace Nexus::RiskService::Tests {
   };
 
   inline RiskServiceTestEnvironment::RiskServiceTestEnvironment(
-      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient, std::shared_ptr<
-      AdministrationService::VirtualAdministrationClient> administrationClient,
-      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-      marketDataClient, std::shared_ptr<
-      OrderExecutionService::VirtualOrderExecutionClient> orderExecutionClient,
-      std::function<std::unique_ptr<Beam::Threading::VirtualTimer> ()>
-      transitionTimerFactory, std::shared_ptr<
-      Beam::TimeService::VirtualTimeClient> timeClient,
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
+      AdministrationService::AdministrationClientBox administrationClient,
+      MarketDataService::MarketDataClientBox marketDataClient,
+      OrderExecutionService::OrderExecutionClientBox orderExecutionClient,
+      std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
+        transitionTimerFactory, Beam::TimeService::TimeClientBox timeClient,
       std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
       DestinationDatabase destinations) {
     auto accounts = std::make_shared<
       Beam::Queue<Beam::ServiceLocator::AccountUpdate>>();
-    serviceLocatorClient->MonitorAccounts(accounts);
+    serviceLocatorClient.MonitorAccounts(accounts);
     m_container.emplace(Beam::Initialize(serviceLocatorClient,
       Beam::Initialize(Beam::MakeConverterQueueReader(
         Beam::MakeFilteredQueueReader(std::move(accounts),
@@ -146,20 +132,16 @@ namespace Nexus::RiskService::Tests {
     Close();
   }
 
-  inline std::unique_ptr<VirtualRiskClient>
-      RiskServiceTestEnvironment::BuildClient(
-      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient) {
-    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [=] {
-        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_risk_client", m_serverConnection);
-      },
-      [] {
-        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      });
-    return MakeVirtualRiskClient(
-      std::make_unique<RiskClient<ServiceProtocolClientBuilder>>(builder));
+  inline RiskClientBox RiskServiceTestEnvironment::MakeClient(
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
+    return RiskClientBox(
+      std::in_place_type<RiskClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+        std::bind(boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+          "test_risk_client", std::ref(m_serverConnection)),
+        boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void RiskServiceTestEnvironment::Close() {

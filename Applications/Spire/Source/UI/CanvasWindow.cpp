@@ -7,7 +7,6 @@
 #include <QMessageBox>
 #include <QStatusBar>
 #include <QToolBar>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
@@ -627,7 +626,7 @@ void CanvasWindow::OnSaveToRegistryAction() {
     newEntry = std::make_unique<RegistryCatalogEntry>(entryName,
       ":/icons/scroll2.png", "", saveNode,
       CatalogSettings::GetCatalogLibraryRegistryPath(),
-      Ref(m_userProfile->GetServiceClients().GetRegistryClient()));
+      m_userProfile->GetServiceClients().GetRegistryClient());
   } else {
     if(oldEntry->IsReadOnly()) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),

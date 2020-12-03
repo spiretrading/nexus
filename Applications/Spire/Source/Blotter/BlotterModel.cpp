@@ -1,6 +1,5 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/CancelOnFillController.hpp"
 #include "Spire/UI/UserProfile.hpp"
 

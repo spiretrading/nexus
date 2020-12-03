@@ -4,14 +4,13 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
   /** Provides a web interface to the DefinitionsService. */
-  class DefinitionsWebServlet : private boost::noncopyable {
+  class DefinitionsWebServlet {
     public:
 
       /**
@@ -31,6 +30,8 @@ namespace Nexus::WebPortal {
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
+      DefinitionsWebServlet(const DefinitionsWebServlet&) = delete;
+      DefinitionsWebServlet& operator =(const DefinitionsWebServlet&) = delete;
       Beam::WebServices::HttpResponse OnLoadOrganizationName(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadComplianceRuleSchemas(

@@ -1,5 +1,4 @@
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
