@@ -71,12 +71,12 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
       *serviceLocatorClient);
     auto samplingTime = Extract<time_duration>(config, "sampling");
     auto marketDataFeedClient = ApplicationMarketDataFeedClient(
-      Ref(*serviceLocatorClient), samplingTime, DefaultCountries::JP());
+      serviceLocatorClient.Get(), samplingTime, DefaultCountries::JP());
     auto host = Extract<IpAddress>(config, "host");
     auto interface = Extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();

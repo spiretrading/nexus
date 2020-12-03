@@ -211,17 +211,17 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-    auto uidClient = ApplicationUidClient(Ref(*serviceLocatorClient));
+    auto uidClient = ApplicationUidClient(serviceLocatorClient.Get());
     auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
       *serviceLocatorClient);
     auto administrationClient = ApplicationAdministrationClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto definitionsClient = ApplicationDefinitionsClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto complianceClient = ApplicationComplianceClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto marketDataClient = ApplicationMarketDataClient(
-      Ref(*serviceLocatorClient));
+      serviceLocatorClient.Get());
     auto fixApplicationEntries = LoadFixApplications(Ref(*timeClient),
       Ref(marketDataClient));
     auto fixOrderExecutionDriver = ApplicationFixOrderExecutionDriver(
