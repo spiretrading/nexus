@@ -87,7 +87,9 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void BoardLotCheck<C>::Submit(const OrderInfo& orderInfo) {
     if(orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSX() &&
-        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSXV()) {
+        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSXV() &&
+        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::NEOE() &&
+        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::CSE()) {
       return;
     }
     auto currentPrice = LoadPrice(orderInfo.m_fields.m_security,

@@ -4300,6 +4300,8 @@ namespace {
     PopulateEdgaOrders(nasdaqOrderTypes);
     PopulateEdgxOrders(nasdaqOrderTypes);
     PopulateNasdaqOrders(nasdaqOrderTypes);
+    auto& neoeOrderTypes = orderTypes[DefaultMarkets::NEOE()];
+    PopulateNeoeOrders(neoeOrderTypes);
     auto& nyseOrderTypes = orderTypes[DefaultMarkets::NYSE()];
     PopulateArcaOrders(nyseOrderTypes);
     PopulateBatsOrders(nyseOrderTypes);
@@ -4348,7 +4350,12 @@ SimplifiedKeyBindingsDialog::SimplifiedKeyBindingsDialog(
   m_ui->setupUi(this);
   m_ui->m_interactionsWidget->Initialize(Ref(*m_userProfile));
   m_orderTypes = SetupOrderTypes();
-  for(const auto& market : m_userProfile->GetMarketDatabase().GetEntries()) {
+  auto entries = m_userProfile->GetMarketDatabase().GetEntries();
+  std::sort(entries.begin(), entries.end(),
+    [&] (const auto& left, const auto& right) {
+      return left.m_displayName < right.m_displayName;
+    });
+  for(const auto& market : entries) {
     if(m_orderTypes.find(market.m_code) != m_orderTypes.end()) {
       m_ui->m_taskMarketComboBox->addItem(
         QString::fromStdString(market.m_displayName));
