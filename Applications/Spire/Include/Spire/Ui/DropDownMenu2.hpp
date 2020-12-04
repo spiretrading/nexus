@@ -10,6 +10,7 @@
 
 namespace Spire {
 
+  //! Represents a Spire-styled drop down menu.
   class DropDownMenu2 : public DropDownWindow {
     public:
 

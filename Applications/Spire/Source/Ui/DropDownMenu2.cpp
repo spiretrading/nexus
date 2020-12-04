@@ -13,21 +13,21 @@ using namespace Spire;
 namespace {
   const auto BORDER_PADDING = 2;
 
-  void adjust_current(DropDownMenu2& menu, int step) {
-    if(menu.count() == 0 || step == 0) {
+  void adjust_current_index(DropDownMenu2& menu, int amount) {
+    if(menu.count() == 0 || amount == 0) {
       return;
     }
     auto last_index = menu.count() - 1;
     auto index = [&] {
       auto index = menu.get_current();
       if(!index) {
-        if(step > 0) {
+        if(amount > 0) {
           return 0;
         } else {
           return last_index;
         }
       }
-      *index += step;
+      *index += amount;
       if(index > last_index) {
         return 0;
       } else if(index < 0) {
@@ -222,11 +222,11 @@ void DropDownMenu2::on_item_selected(const QVariant& value,
 }
 
 void Spire::decrement_current(DropDownMenu2& menu) {
-  adjust_current(menu, -1);
+  adjust_current_index(menu, -1);
 }
 
 void Spire::increment_current(DropDownMenu2& menu) {
-  adjust_current(menu, 1);
+  adjust_current_index(menu, 1);
 }
 
 void Spire::set_current(DropDownMenu2& menu, const QString& text) {

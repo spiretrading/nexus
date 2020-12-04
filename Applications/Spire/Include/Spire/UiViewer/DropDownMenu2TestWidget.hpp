@@ -4,9 +4,14 @@
 
 namespace Spire {
 
+  //! Represents a widget for testing a DropDownMenu.
   class DropDownMenu2TestWidget : public QWidget {
     public:
 
+      //! Constructs a DropDownMenu2TestWidget.
+      /*!
+        \param parent The parent widget.
+      */
       explicit DropDownMenu2TestWidget(QWidget* parent = nullptr);
   };
 }
