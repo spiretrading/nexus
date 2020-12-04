@@ -205,11 +205,9 @@ void DropDownMenu2::set_items(const std::vector<DropDownItem*>& items) {
   for(auto& item : items) {
     m_layout->addWidget(item);
     m_item_hovered_connections.AddConnection(item->connect_highlighted_signal(
-      [=] (const auto& value) {
-        m_hovered_signal(value); }));
+      [=] (const auto& value) { m_hovered_signal(item->get_value()); }));
     m_item_selected_connections.AddConnection(item->connect_selected_signal(
-      [=] (const auto& value) {
-        on_item_selected(item->get_value(), item); }));
+      [=] (const auto& value) { on_item_selected(item->get_value(), item); }));
   }
   if(m_layout->count() > 0) {
     update_height();
