@@ -23,6 +23,7 @@ CALL:configure Applications\HkexMarketDataFeedClient %*
 CALL:configure Applications\JpxFlexMarketDataFeedClient %*
 CALL:configure Applications\MarketDataRelayServer %*
 CALL:configure Applications\MarketDataServer %*
+CALL:configure Applications\NeoeMarketDataFeedClient %*
 CALL:configure Applications\OasisOrderExecutionServer %*
 CALL:configure Applications\ReplayMarketDataFeedClient %*
 CALL:configure Applications\RiskServer %*
