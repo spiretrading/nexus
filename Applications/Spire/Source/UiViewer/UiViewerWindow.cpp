@@ -9,6 +9,7 @@
 #include "Spire/UiViewer/CurrencyComboBoxTestWidget.hpp"
 #include "Spire/UiViewer/DateInputTestWidget.hpp"
 #include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
+#include "Spire/UiViewer/DropDownMenu2TestWidget.hpp"
 #include "Spire/UiViewer/DurationInputTestWidget.hpp"
 #include "Spire/UiViewer/FilteredDropDownMenuTestWidget.hpp"
 #include "Spire/UiViewer/FlatButtonTestWidget.hpp"
@@ -109,6 +110,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add_test_widget(tr("DateInputWidget"), new DateInputTestWidget(this));
   add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
     new DecimalSpinBoxTestWidget(this), this));
+  add_test_widget(tr("DropDownMenu2"),
+    new DropDownMenu2TestWidget(this));
   add_test_widget(tr("DurationInputWidget"),
     new DurationInputTestWidget(this));
   add_test_widget(tr("FilteredDropDownMenu"),
