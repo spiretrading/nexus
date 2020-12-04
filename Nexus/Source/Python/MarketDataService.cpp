@@ -200,8 +200,7 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(module& module) {
       SessionAuthenticator(std::move(serviceLocatorClient)),
       Initialize(sampling), Initialize(seconds(10)));
   };
-  class_<PythonApplicationMarketDataFeedClient,
-    std::shared_ptr<PythonApplicationMarketDataFeedClient>>(module,
+  ExportMarketDataFeedClient<PythonApplicationMarketDataFeedClient>(module,
       "ApplicationMarketDataFeedClient").
     def(init(
       [] (ServiceLocatorClientBox serviceLocatorClient, time_duration sampling,
