@@ -12,6 +12,31 @@ using namespace Spire;
 
 namespace {
   const auto BORDER_PADDING = 2;
+
+  void adjust_current(DropDownMenu2& menu, int step) {
+    if(menu.count() == 0 || step == 0) {
+      return;
+    }
+    auto last_index = menu.count() - 1;
+    auto index = [&] {
+      auto index = menu.get_current();
+      if(!index) {
+        if(step > 0) {
+          return 0;
+        } else {
+          return last_index;
+        }
+      }
+      *index += step;
+      if(index > last_index) {
+        return 0;
+      } else if(index < 0) {
+        return last_index;
+      }
+      return *index;
+    }();
+    menu.set_current(index);
+  }
 }
 
 DropDownMenu2::DropDownMenu2(std::vector<DropDownItem*> items,
@@ -28,7 +53,21 @@ DropDownMenu2::DropDownMenu2(std::vector<DropDownItem*> items,
   m_layout->setSpacing(0);
   m_scroll_area->setWidget(main_widget);
   initialize_widget(m_scroll_area);
-  set_items(items);
+  for(auto& item : items) {
+    m_layout->addWidget(item);
+    m_item_hovered_connections.AddConnection(item->connect_highlighted_signal(
+      [=] (const auto& value) { m_hovered_signal(item->get_value()); }));
+    m_item_selected_connections.AddConnection(item->connect_selected_signal(
+      [=] (const auto& value) { on_item_selected(item->get_value(), item); }));
+  }
+  if(m_layout->count() > 0) {
+    update_height();
+    static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
+    m_selected_index = 0;
+    m_current_index = 0;
+    m_selected_signal(get_value(*m_selected_index));
+    m_current_signal(get_value(*m_current_index));
+  }
   parent->installEventFilter(this);
 }
 
@@ -39,13 +78,13 @@ bool DropDownMenu2::eventFilter(QObject* watched, QEvent* event) {
       switch(e->key()) {
         case Qt::Key_Down:
           if(isVisible()) {
-            increment_current();
+            increment_current(*this);
             return true;
           }
           break;
         case Qt::Key_Up:
           if(isVisible()) {
-            decrement_current();
+            decrement_current(*this);
             return true;
           }
           break;
@@ -72,7 +111,7 @@ void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Down:
       if(isVisible()) {
-        increment_current();
+        increment_current(*this);
       }
       break;
     case Qt::Key_Enter:
@@ -87,7 +126,7 @@ void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
       break;
     case Qt::Key_Up:
       if(isVisible()) {
-        decrement_current();
+        decrement_current(*this);
       }
       break;
   }
@@ -114,40 +153,6 @@ connection DropDownMenu2::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
-void DropDownMenu2::increment_current() {
-  if(m_layout->count() == 0) {
-    return;
-  }
-  if(!m_current_index) {
-    set_current_index(0);
-    return;
-  }
-  auto next_index = [&] {
-    auto index = *m_current_index + 1;
-    if(index > m_layout->count() - 1) {
-      return 0;
-    }
-    return index;
-  }();
-  set_current_index(next_index);
-}
-
-const QVariant& DropDownMenu2::get_current_item() const {
-  if(m_selected_index) {
-    return get_value(*m_selected_index);
-  }
-  static auto SENTINEL = QVariant();
-  return SENTINEL;
-}
-
-boost::optional<int> DropDownMenu2::get_selected_index() const {
-  return m_selected_index;
-}
-
-int DropDownMenu2::item_count() const {
-  return m_layout->count();
-}
-
 const QVariant& DropDownMenu2::get_value(int index) const {
   if(m_layout->count() - 1 < index) {
     static auto SENTINEL = QVariant();
@@ -156,98 +161,14 @@ const QVariant& DropDownMenu2::get_value(int index) const {
   return get_item(index)->get_value();
 }
 
-void DropDownMenu2::insert_item(DropDownItem* item) {
-  m_item_hovered_connections.AddConnection(item->connect_highlighted_signal(
-    [=] (const auto& value) { m_hovered_signal(item->get_value()); }));
-  m_item_selected_connections.AddConnection(item->connect_selected_signal(
-    [=] (const auto& value) { on_item_selected(item->get_value(), item); }));
-  m_layout->insertWidget(m_layout->count(), item);
-  update_height();
+boost::optional<int> DropDownMenu2::get_current() const {
+  return m_current_index;
 }
 
-void DropDownMenu2::remove_item(int index) {
-  if(index > m_layout->count() - 1) {
+void DropDownMenu2::set_current(int index) {
+  if(index >= count()) {
     return;
   }
-  auto layout_item = m_layout->takeAt(index);
-  m_item_selected_connections.Disconnect(layout_item->widget());
-  delete layout_item->widget();
-  delete layout_item;
-  if(index == m_current_index) {
-    m_current_index = none;
-    m_current_signal({});
-  }
-  if(index == m_selected_index) {
-    m_selected_index = none;
-    m_selected_signal({});
-  }
-  update_height();
-}
-
-bool DropDownMenu2::set_current_item(const QString& text) {
-  for(auto i = 0; i < item_count(); ++i) {
-    if(m_item_delegate.displayText(get_value(i)).startsWith(text,
-        Qt::CaseInsensitive)) {
-      set_current_index(i);
-      return true;
-    }
-  }
-  return false;
-}
-
-void DropDownMenu2::set_items(const std::vector<DropDownItem*>& items) {
-  while(auto item = m_layout->takeAt(0)) {
-    delete item->widget();
-    delete item;
-  }
-  m_item_hovered_connections.DisconnectAll();
-  m_item_selected_connections.DisconnectAll();
-  for(auto& item : items) {
-    m_layout->addWidget(item);
-    m_item_hovered_connections.AddConnection(item->connect_highlighted_signal(
-      [=] (const auto& value) { m_hovered_signal(item->get_value()); }));
-    m_item_selected_connections.AddConnection(item->connect_selected_signal(
-      [=] (const auto& value) { on_item_selected(item->get_value(), item); }));
-  }
-  if(m_layout->count() > 0) {
-    update_height();
-    static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
-    m_selected_index = 0;
-    m_current_index = 0;
-    m_selected_signal(get_value(*m_selected_index));
-    m_current_signal(get_value(*m_current_index));
-  } else {
-    m_selected_index = none;
-    m_current_index = none;
-    m_selected_signal({});
-    m_current_signal({});
-    hide();
-  }
-}
-
-void DropDownMenu2::decrement_current() {
-  if(m_layout->count() == 0) {
-    return;
-  }
-  if(!m_current_index) {
-    set_current_index(m_layout->count() - 1);
-    return;
-  }
-  auto previous_index = [&] {
-    auto index = *m_current_index - 1;
-    if(index < 0) {
-      return m_layout->count() - 1;
-    }
-    return index;
-  }();
-  set_current_index(previous_index);
-}
-
-DropDownItem* DropDownMenu2::get_item(int index) const {
-  return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
-}
-
-void DropDownMenu2::set_current_index(int index) {
   if(m_current_index) {
     get_item(*m_current_index)->reset_highlight();
   }
@@ -256,6 +177,18 @@ void DropDownMenu2::set_current_index(int index) {
   highlighted_widget->set_highlight();
   scroll_to_current_index();
   m_current_signal(highlighted_widget->get_value());
+}
+
+boost::optional<int> DropDownMenu2::get_selected() const {
+  return m_selected_index;
+}
+
+int DropDownMenu2::count() const {
+  return m_layout->count();
+}
+
+DropDownItem* DropDownMenu2::get_item(int index) const {
+  return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
 }
 
 void DropDownMenu2::scroll_to_current_index() {
@@ -286,4 +219,23 @@ void DropDownMenu2::on_item_selected(const QVariant& value, int index) {
 void DropDownMenu2::on_item_selected(const QVariant& value,
     DropDownItem* item) {
   on_item_selected(value, m_layout->indexOf(item));
+}
+
+void Spire::decrement_current(DropDownMenu2& menu) {
+  adjust_current(menu, -1);
+}
+
+void Spire::increment_current(DropDownMenu2& menu) {
+  adjust_current(menu, 1);
+}
+
+void Spire::set_current(DropDownMenu2& menu, const QString& text) {
+  static const auto item_delegate = CustomVariantItemDelegate();
+  for(auto i = 0; i < menu.count(); ++i) {
+    if(item_delegate.displayText(menu.get_value(i)).startsWith(text,
+        Qt::CaseInsensitive)) {
+      menu.set_current(i);
+      break;
+    }
+  }
 }

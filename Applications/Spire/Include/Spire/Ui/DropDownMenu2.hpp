@@ -42,51 +42,29 @@ namespace Spire {
       */
       explicit DropDownMenu2(std::vector<DropDownItem*> items,
         QWidget* parent = nullptr);
-  
-      //! Increments the index of the current item iff the menu is not empty.
-      void increment_current();
 
-      //! Returns the current item.
-      const QVariant& get_current_item() const;
-
-      //! Returns the index of the currently selected item iff the menu is not
-      //! empty.
-      boost::optional<int> get_selected_index() const;
-  
-      //! Returns the number of items in the menu.
-      int item_count() const;
-
-      //! Returns the value of the item at the given index.
+      //! Returns the item's value at the given index, or an invalid QVariant
+      //! if the index is invalid.
       /*!
-        \param index The index of the item.
+        \param index The index;
       */
       const QVariant& get_value(int index) const;
 
-      //! Appends an item to the menu.
+      //! Returns the current index, or none if there is no current index.
+      boost::optional<int> get_current() const;
+  
+      //! Sets the index of the current item iff the given index is valid.
       /*!
-        \param item The item to append to the menu.
+        \param index The current index.
       */
-      void insert_item(DropDownItem* item);
+      void set_current(int index);
 
-      //! Removes and deletes an item.
-      /*!
-        \param index The index of the item to remove.
-      */
-      void remove_item(int index);
-
-      //! Sets the current item as the first item in the menu that starts with
-      //! the given text.
-      /*!
-        \param text The text to match against the item.
-        \return True iff a match was found.
-      */
-      bool set_current_item(const QString& text);
-
-      //! Sets the items to display, overwriting any existing items.
-      /*!
-        \param items The new items to display.
-      */
-      void set_items(const std::vector<DropDownItem*>& items);
+      //! Returns the index of the selected item, or none if there is no
+      //! selected item.
+      boost::optional<int> get_selected() const;
+  
+      //! Returns the number of items in the menu.
+      int count() const;
 
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
@@ -119,18 +97,35 @@ namespace Spire {
       ScrollArea* m_scroll_area;
       boost::optional<int> m_selected_index;
       boost::optional<int> m_current_index;
-      CustomVariantItemDelegate m_item_delegate;
       Beam::SignalHandling::ConnectionGroup m_item_hovered_connections;
       Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 
-      void decrement_current();
       DropDownItem* get_item(int index) const;
-      void set_current_index(int index);
       void scroll_to_current_index();
       void update_height();
       void on_item_selected(const QVariant& value, int index);
       void on_item_selected(const QVariant& value, DropDownItem* item);
   };
+
+  //! Decrements the current index of the given DropDownMenu.
+  /*!
+    \param menu The DropDownMenu.
+  */
+  void decrement_current(DropDownMenu2& menu);
+
+  //! Increments the current index of the given DropDownMenu.
+  /*!
+    \param menu The DropDownMenu.
+  */
+  void increment_current(DropDownMenu2& menu);
+
+  //! Sets the current item in the given DropDownMenu as the first item in the
+  //! menu that starts with the given text, iff there is a match.
+  /*!
+    \param menu The DropDownMenu.
+    \param text The text to match against the item.
+  */
+  void set_current(DropDownMenu2& menu, const QString& text);
 }
 
 #endif
