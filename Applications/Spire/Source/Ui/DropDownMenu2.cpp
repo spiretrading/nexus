@@ -173,9 +173,13 @@ void DropDownMenu2::remove_item(int index) {
   m_item_selected_connections.Disconnect(layout_item->widget());
   delete layout_item->widget();
   delete layout_item;
-  // TODO: what happens when the selected item is removed?
   if(index == m_current_index) {
     m_current_index = none;
+    m_current_signal({});
+  }
+  if(index == m_selected_index) {
+    m_selected_index = none;
+    m_selected_signal({});
   }
   update_height();
 }
@@ -201,18 +205,24 @@ void DropDownMenu2::set_items(const std::vector<DropDownItem*>& items) {
   for(auto& item : items) {
     m_layout->addWidget(item);
     m_item_hovered_connections.AddConnection(item->connect_highlighted_signal(
-      [=] (const auto& value) { m_hovered_signal(item->get_value()); }));
+      [=] (const auto& value) {
+        m_hovered_signal(value); }));
     m_item_selected_connections.AddConnection(item->connect_selected_signal(
-      [=] (const auto& value) { on_item_selected(item->get_value(), item); }));
+      [=] (const auto& value) {
+        on_item_selected(item->get_value(), item); }));
   }
   if(m_layout->count() > 0) {
     update_height();
     static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
     m_selected_index = 0;
     m_current_index = 0;
+    m_selected_signal(get_value(*m_selected_index));
+    m_current_signal(get_value(*m_current_index));
   } else {
     m_selected_index = none;
     m_current_index = none;
+    m_selected_signal({});
+    m_current_signal({});
     hide();
   }
 }
@@ -271,6 +281,7 @@ void DropDownMenu2::on_item_selected(const QVariant& value, int index) {
   hide();
   m_current_index = index;
   m_selected_index = index;
+  m_current_signal(value);
   m_selected_signal(value);
 }
 

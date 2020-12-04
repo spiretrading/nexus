@@ -67,7 +67,7 @@ void DropDownItem::paintEvent(QPaintEvent* event) {
 
 connection DropDownItem::connect_highlighted_signal(
     const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
+  return m_highlighted_signal.connect(slot);
 }
 
 connection DropDownItem::connect_selected_signal(

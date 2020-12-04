@@ -38,4 +38,17 @@ DropDownMenu2TestWidget::DropDownMenu2TestWidget(QWidget* parent)
     create_item("BA", this), create_item("BB", this), create_item("BC", this),
     create_item("CA", this), create_item("CB", this), create_item("CC", this)},
     label);
+  auto status_label = new QLabel(this);
+  status_label->setFixedSize(scale(100, 26));
+  layout->addWidget(status_label);
+  menu->connect_closed_signal([=] { status_label->setText("Closed"); });
+  menu->connect_current_signal([=] (const auto& item) {
+    status_label->setText(QString("Current: %1").arg(item.toString()));
+  });
+  menu->connect_hovered_signal([=] (const auto& item) {
+    status_label->setText(QString("Hovered: %1").arg(item.toString()));
+  });
+  menu->connect_selected_signal([=] (const auto& item) {
+    status_label->setText(QString("Selected: %1").arg(item.toString()));
+  });
 }
