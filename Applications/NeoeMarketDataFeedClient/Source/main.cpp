@@ -14,8 +14,8 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
-#include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
-#include "CseMarketDataFeedClient/CseServiceAccessClient.hpp"
+#include "NeoeMarketDataFeedClient/NeoeMarketDataFeedClient.hpp"
+#include "NeoeMarketDataFeedClient/NeoeServiceAccessClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
@@ -36,12 +36,12 @@ namespace {
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
   using ApplicationRetransmissionServerChannel = UdpSocketChannel;
-  using ApplicationCseServiceAccessClient = CseServiceAccessClient<
+  using ApplicationNeoeServiceAccessClient = NeoeServiceAccessClient<
     ApplicationFeedChannel*, TcpSocketChannel,
     ApplicationRetransmissionServerChannel>;
-  using ApplicationCseMarketDataFeedClient = CseMarketDataFeedClient<
+  using ApplicationNeoeMarketDataFeedClient = NeoeMarketDataFeedClient<
     ApplicationMarketDataFeedClient::Client*,
-    ApplicationCseServiceAccessClient*, LiveNtpTimeClient*>;
+    ApplicationNeoeServiceAccessClient*, LiveNtpTimeClient*>;
 
   static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
 
@@ -55,7 +55,7 @@ namespace {
         auto boardLot = Extract<Quantity>(node, "board_lot");
         auto info = SecurityInfo();
         info.m_name = name;
-        info.m_security = Security(symbol, DefaultMarkets::CSE(),
+        info.m_security = Security(symbol, DefaultMarkets::NEOE(),
           DefaultCountries::CA());
         info.m_boardLot = boardLot;
         securities.push_back(std::move(info));
@@ -77,7 +77,7 @@ namespace {
     }, std::runtime_error("Unable to parse MPID mappings."));
   }
 
-  CseConfiguration ParseConfiguration(const YAML::Node& config,
+  NeoeConfiguration ParseConfiguration(const YAML::Node& config,
       const MarketDatabase& marketDatabase, const ptime& currentDate,
       const local_time::tz_database& timeZones) {
     return TryOrNest([&] {
@@ -87,24 +87,24 @@ namespace {
       if(timeZone == nullptr) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Time zone not found."));
       }
-      auto cseConfig = CseConfiguration();
-      cseConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
+      auto neoeConfig = NeoeConfiguration();
+      neoeConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
         false);
-      cseConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
-      cseConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
+      neoeConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
+      neoeConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
         false);
       if(auto mpidMappings = config["mpid_mappings"]) {
-        cseConfig.m_mpidMappings = LoadMpidMappings(mpidMappings);
+        neoeConfig.m_mpidMappings = LoadMpidMappings(mpidMappings);
       }
-      return cseConfig;
-    }, std::runtime_error("Unable to parse CSE configuration."));
+      return neoeConfig;
+    }, std::runtime_error("Unable to parse NEOE configuration."));
   }
 }
 
 int main(int argc, const char** argv) {
   try {
     auto config = ParseCommandLine(argc, argv,
-      "1.0-r" CSE_MARKET_DATA_FEED_CLIENT_VERSION
+      "1.0-r" NEOE_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
@@ -124,7 +124,7 @@ int main(int argc, const char** argv) {
       options.m_maxDatagramSize);
     auto multicastSocketChannel = TryOrNest([&] {
       return MulticastSocketChannel(host, interface, options);
-    }, std::runtime_error("Unable to join CSE multicast group."));
+    }, std::runtime_error("Unable to join NEOE multicast group."));
     auto feedChannel = ApplicationFeedChannel(&multicastSocketChannel,
       &multicastSocketChannel.GetReader());
     auto retransmissionClientAddress = Extract<IpAddress>(config,
@@ -135,7 +135,7 @@ int main(int argc, const char** argv) {
       [=] (Out<std::optional<TcpSocketChannel>> channel) {
         channel->emplace(retransmissionClientAddress);
       };
-    auto serviceAccessConfig = CseServiceAccessConfiguration();
+    auto serviceAccessConfig = NeoeServiceAccessConfiguration();
     serviceAccessConfig.m_enableRetransmission = Extract<bool>(
       config, "enable_retransmission", false);
     serviceAccessConfig.m_maxRetransmissionCount = Extract<int>(
@@ -144,18 +144,18 @@ int main(int argc, const char** argv) {
       config, "retransmission_block_size", 20000);
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    auto cseConfig = ParseConfiguration(config, marketDatabase,
+    auto neoeConfig = ParseConfiguration(config, marketDatabase,
       timeClient->GetTime(), timeZones);
     auto symbolList = Extract<std::string>(config, "symbol_list");
     auto securities = ParseSecurityInfoList(symbolList);
     for(auto& security : securities) {
-      cseConfig.m_securities.insert(security.m_security.GetSymbol());
+      neoeConfig.m_securities.insert(security.m_security.GetSymbol());
     }
-    auto serviceAccessClient = ApplicationCseServiceAccessClient(
+    auto serviceAccessClient = ApplicationNeoeServiceAccessClient(
       serviceAccessConfig, &feedChannel, retransmissionClientChannelBuilder,
       Initialize(retransmissionServerAddress,
       IpAddress("0.0.0.0", retransmissionServerAddress.GetPort())));
-    auto feedClient = ApplicationCseMarketDataFeedClient(cseConfig,
+    auto feedClient = ApplicationNeoeMarketDataFeedClient(neoeConfig,
       marketDataFeedClient.Get(), &serviceAccessClient, timeClient.get());
     WaitForKillEvent();
   } catch(...) {

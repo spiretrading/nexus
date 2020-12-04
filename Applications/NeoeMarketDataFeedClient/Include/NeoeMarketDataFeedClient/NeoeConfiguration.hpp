@@ -1,5 +1,5 @@
-#ifndef NEXUS_CSE_CONFIGURATION_HPP
-#define NEXUS_CSE_CONFIGURATION_HPP
+#ifndef NEXUS_NEOE_CONFIGURATION_HPP
+#define NEXUS_NEOE_CONFIGURATION_HPP
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -7,8 +7,8 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Stores the configuration of a CSE data feed. */
-  struct CseConfiguration {
+  /** Stores the configuration of a NEOE data feed. */
+  struct NeoeConfiguration {
 
     /** Whether to log messages. */
     bool m_isLoggingMessages;

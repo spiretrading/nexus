@@ -1,5 +1,5 @@
-#ifndef NEXUS_CSE_MARKET_DATA_FEED_CLIENT_HPP
-#define NEXUS_CSE_MARKET_DATA_FEED_CLIENT_HPP
+#ifndef NEXUS_NEOE_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_NEOE_MARKET_DATA_FEED_CLIENT_HPP
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -8,20 +8,20 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "CseMarketDataFeedClient/CseConfiguration.hpp"
-#include "CseMarketDataFeedClient/CseServiceAccessClient.hpp"
+#include "NeoeMarketDataFeedClient/NeoeConfiguration.hpp"
+#include "NeoeMarketDataFeedClient/NeoeServiceAccessClient.hpp"
 
 namespace Nexus::MarketDataService {
 
   /**
-   * Parses packets from the CSE data feed.
+   * Parses packets from the NEOE data feed.
    * @param <M> The type of MarketDataFeedClient used to update the
    *        MarketDataServer.
    * @param <S> The type of service access client receiving messages.
    * @param <T> The type of TimeClient used for timestamps.
    */
   template<typename M, typename S, typename T>
-  class CseMarketDataFeedClient {
+  class NeoeMarketDataFeedClient {
     public:
 
       /**
@@ -36,7 +36,7 @@ namespace Nexus::MarketDataService {
       using TimeClient = Beam::GetTryDereferenceType<T>;
 
       /**
-       * Constructs a CseMarketDataFeedClient.
+       * Constructs a NeoeMarketDataFeedClient.
        * @param config The configuration to use.
        * @param marketDataFeedClient Initializes the MarketDataFeedClient.
        * @param serviceAccessClient The service access client receiving
@@ -44,24 +44,24 @@ namespace Nexus::MarketDataService {
        * @param timeClient The TimeClient used for timestamps.
        */
       template<typename MF, typename SF, typename TF>
-      CseMarketDataFeedClient(CseConfiguration config,
+      NeoeMarketDataFeedClient(NeoeConfiguration config,
         MF&& marketDataFeedClient, SF&& serviceAccessClient, TF&& timeClient);
 
-      ~CseMarketDataFeedClient();
+      ~NeoeMarketDataFeedClient();
 
       void Close();
 
     private:
-      CseConfiguration m_config;
+      NeoeConfiguration m_config;
       Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
       Beam::GetOptionalLocalPtr<S> m_serviceAccessClient;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      CseMarketDataFeedClient(const CseMarketDataFeedClient&) = delete;
-      CseMarketDataFeedClient& operator =(
-        const CseMarketDataFeedClient&) = delete;
+      NeoeMarketDataFeedClient(const NeoeMarketDataFeedClient&) = delete;
+      NeoeMarketDataFeedClient& operator =(
+        const NeoeMarketDataFeedClient&) = delete;
       static Quantity GetBoardLotPortion(Quantity quantity, Money price);
       static Quantity RoundToBoardLotPortion(Quantity quantity, Money price);
       boost::optional<boost::posix_time::ptime> GetTimestamp(
@@ -84,27 +84,27 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename S, typename T>
   template<typename MF, typename SF, typename TF>
-  CseMarketDataFeedClient<M, S, T>::CseMarketDataFeedClient(
-      CseConfiguration config, MF&& marketDataFeedClient,
+  NeoeMarketDataFeedClient<M, S, T>::NeoeMarketDataFeedClient(
+      NeoeConfiguration config, MF&& marketDataFeedClient,
       SF&& serviceAccessClient, TF&& timeClient)
       try : m_config(std::move(config)),
             m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
             m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
             m_timeClient(std::forward<TF>(timeClient)),
             m_readLoopRoutine(Beam::Routines::Spawn(
-              std::bind(&CseMarketDataFeedClient::ReadLoop, this))) {
+              std::bind(&NeoeMarketDataFeedClient::ReadLoop, this))) {
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
-      "Failed to initialize the CSE market data feed client."));
+      "Failed to initialize the NEOE market data feed client."));
   }
 
   template<typename M, typename S, typename T>
-  CseMarketDataFeedClient<M, S, T>::~CseMarketDataFeedClient() {
+  NeoeMarketDataFeedClient<M, S, T>::~NeoeMarketDataFeedClient() {
     Close();
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::Close() {
+  void NeoeMarketDataFeedClient<M, S, T>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
@@ -116,7 +116,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  Quantity CseMarketDataFeedClient<M, S, T>::GetBoardLotPortion(
+  Quantity NeoeMarketDataFeedClient<M, S, T>::GetBoardLotPortion(
       Quantity quantity, Money price) {
     if(price < 10 * Money::CENT) {
       return quantity - (quantity % 1000);
@@ -128,7 +128,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  Quantity CseMarketDataFeedClient<M, S, T>::RoundToBoardLotPortion(
+  Quantity NeoeMarketDataFeedClient<M, S, T>::RoundToBoardLotPortion(
       Quantity quantity, Money price) {
     if(price < 10 * Money::CENT) {
       return quantity + 1000 - (quantity % 1000);
@@ -140,7 +140,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  boost::optional<boost::posix_time::ptime> CseMarketDataFeedClient<M, S, T>::
+  boost::optional<boost::posix_time::ptime> NeoeMarketDataFeedClient<M, S, T>::
       GetTimestamp(const StampProtocol::StampMessage& message, int index) {
     auto timestamp = message.GetBusinessField<boost::posix_time::ptime>(index);
     if(timestamp) {
@@ -150,7 +150,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  std::string CseMarketDataFeedClient<M, S, T>::GetOrderId(
+  std::string NeoeMarketDataFeedClient<M, S, T>::GetOrderId(
       const boost::optional<std::string>& symbol,
       const boost::optional<std::string>& brokerNumber,
       const std::string& orderNumber) {
@@ -174,7 +174,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleQuote(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleQuote(
       const StampProtocol::StampMessage& message) {
     auto symbol = message.GetBusinessField<std::string>(55);
     if(!symbol ||
@@ -197,7 +197,7 @@ namespace Nexus::MarketDataService {
     if(!askVolume) {
       return;
     }
-    auto security = Security(std::move(*symbol), DefaultMarkets::CSE(),
+    auto security = Security(std::move(*symbol), DefaultMarkets::NEOE(),
       DefaultCountries::CA());
     auto bid = Quote(*bidPrice, *bidVolume, Side::BID);
     auto ask = Quote(*askPrice, *askVolume, Side::ASK);
@@ -207,7 +207,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleLastSaleTradeReport(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleLastSaleTradeReport(
       const StampProtocol::StampMessage& message) {
     auto businessAction = message.GetBusinessField<std::string>(5);
     if(!businessAction) {
@@ -237,7 +237,7 @@ namespace Nexus::MarketDataService {
     if(!exchangeId) {
       return;
     }
-    auto security = Security(std::move(*symbol), DefaultMarkets::CSE(),
+    auto security = Security(std::move(*symbol), DefaultMarkets::NEOE(),
       DefaultCountries::CA());
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
@@ -248,13 +248,13 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleOrderInfo(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleOrderInfo(
       const StampProtocol::StampMessage& message) {
     HandleBookedOrder(message);
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleBookedOrder(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleBookedOrder(
       const StampProtocol::StampMessage& message) {
     auto nonResidentFlag = message.GetBusinessField<std::string>(168);
     if(nonResidentFlag && *nonResidentFlag == "Y") {
@@ -300,15 +300,15 @@ namespace Nexus::MarketDataService {
     }
     auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
-    auto security = Security(std::move(*symbol), DefaultMarkets::CSE(),
+    auto security = Security(std::move(*symbol), DefaultMarkets::NEOE(),
       DefaultCountries::CA());
     *quantity = GetBoardLotPortion(*quantity, *price);
-    m_marketDataFeedClient->AddOrder(security, DefaultMarkets::CSE(), mpid,
+    m_marketDataFeedClient->AddOrder(security, DefaultMarkets::NEOE(), mpid,
       false, orderId, *side, *price, *quantity, *timestamp);
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleCancelledOrder(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleCancelledOrder(
       const StampProtocol::StampMessage& message) {
     auto orderNumber = message.GetBusinessField<std::string>(40);
     if(!orderNumber) {
@@ -329,7 +329,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandlePriceAssignedOrder(
+  void NeoeMarketDataFeedClient<M, S, T>::HandlePriceAssignedOrder(
       const StampProtocol::StampMessage& message) {
     auto price = message.GetBusinessField<Money>(196);
     if(!price) {
@@ -354,7 +354,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleOrderOrCancelConfirmationReport(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleOrderOrCancelConfirmationReport(
       const StampProtocol::StampMessage& message) {
     auto confirmationType = message.GetBusinessField<std::string>(16);
     if(!confirmationType) {
@@ -370,7 +370,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::HandleOrderTradeReport(
+  void NeoeMarketDataFeedClient<M, S, T>::HandleOrderTradeReport(
       const StampProtocol::StampMessage& message) {
     auto timestamp = GetTimestamp(message, 57);
     if(!timestamp) {
@@ -422,7 +422,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void CseMarketDataFeedClient<M, S, T>::ReadLoop() {
+  void NeoeMarketDataFeedClient<M, S, T>::ReadLoop() {
     static constexpr auto BUSINESS_CLASS_FIELD_ID = 6;
     while(true) {
       auto message = std::optional<StampProtocol::StampMessage>();

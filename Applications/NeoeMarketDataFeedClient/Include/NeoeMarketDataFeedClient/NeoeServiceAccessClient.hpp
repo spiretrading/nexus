@@ -1,5 +1,5 @@
-#ifndef NEXUS_CSE_SERVICE_ACCESS_CLIENT_HPP
-#define NEXUS_CSE_SERVICE_ACCESS_CLIENT_HPP
+#ifndef NEXUS_NEOE_SERVICE_ACCESS_CLIENT_HPP
+#define NEXUS_NEOE_SERVICE_ACCESS_CLIENT_HPP
 #include <cstdint>
 #include <deque>
 #include <functional>
@@ -13,12 +13,12 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/StampProtocol/StampMessage.hpp"
 #include "Nexus/StampProtocol/StampPacket.hpp"
-#include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
+#include "NeoeMarketDataFeedClient/NeoeMarketDataFeedClient.hpp"
 
 namespace Nexus::MarketDataService {
 
-  /** Stores the configuration used for a CseServiceAccessClient. */
-  struct CseServiceAccessConfiguration {
+  /** Stores the configuration used for a NeoeServiceAccessClient. */
+  struct NeoeServiceAccessConfiguration {
 
     /** Whether retransmission is enabled. */
     bool m_enableRetransmission;
@@ -29,18 +29,18 @@ namespace Nexus::MarketDataService {
     /** The size of the largest possible retransmission block. */
     std::size_t m_maxRetransmissionBlock;
 
-    /** Constructs a CseServiceAccessConfiguration with default values. */
-    CseServiceAccessConfiguration();
+    /** Constructs a NeoeServiceAccessConfiguration with default values. */
+    NeoeServiceAccessConfiguration();
   };
 
   /**
-   * Produces StampMessages received from a CSE data feed.
+   * Produces StampMessages received from a NEOE data feed.
    * @param <F> The type of Channel receiving the market data feed.
    * @param <C> The type of Channel used to send retransmission requests.
    * @param <S> The type of Channel used to receive retransmission messages.
    */
   template<typename F, typename C, typename S>
-  class CseServiceAccessClient {
+  class NeoeServiceAccessClient {
     public:
 
       /** The type of channel receiving the market data feed. */
@@ -61,7 +61,7 @@ namespace Nexus::MarketDataService {
         Beam::Out<std::optional<RetransmissionClientChannel>> channel)>;
 
       /**
-       * Constructs a CseServiceAccessClient.
+       * Constructs a NeoeServiceAccessClient.
        * @param config The configuration to use.
        * @param feedChannel The Channel receiving the market data feed.
        * @param retransmissionClientChannelBuilder Builds instances of the
@@ -70,12 +70,12 @@ namespace Nexus::MarketDataService {
        *        messages.
        */
       template<typename FF, typename SF>
-      CseServiceAccessClient(CseServiceAccessConfiguration config,
+      NeoeServiceAccessClient(NeoeServiceAccessConfiguration config,
         FF&& feedChannel,
         RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
         SF&& retransmissionServerChannel);
 
-      ~CseServiceAccessClient();
+      ~NeoeServiceAccessClient();
 
       /** Reads the next message from the feed. */
       StampProtocol::StampMessage Read();
@@ -90,7 +90,7 @@ namespace Nexus::MarketDataService {
 
         BufferEntry(FeedBuffer buffer, std::uint32_t sequenceNumber);
       };
-      CseServiceAccessConfiguration m_config;
+      NeoeServiceAccessConfiguration m_config;
       Beam::GetOptionalLocalPtr<F> m_feedChannel;
       RetransmissionClientChannelBuilder m_retransmissionClientChannelBuilder;
       Beam::GetOptionalLocalPtr<S> m_retransmissionServerChannel;
@@ -100,9 +100,9 @@ namespace Nexus::MarketDataService {
       std::deque<BufferEntry> m_pendingBuffers;
       Beam::IO::OpenState m_openState;
 
-      CseServiceAccessClient(const CseServiceAccessClient&) = delete;
-      CseServiceAccessClient& operator =(
-        const CseServiceAccessClient&) = delete;
+      NeoeServiceAccessClient(const NeoeServiceAccessClient&) = delete;
+      NeoeServiceAccessClient& operator =(
+        const NeoeServiceAccessClient&) = delete;
       template<typename Buffer>
       static void BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
         std::size_t startSequenceNumber, std::size_t endSequenceNumber);
@@ -115,21 +115,21 @@ namespace Nexus::MarketDataService {
         std::size_t endSequenceNumber);
   };
 
-  inline CseServiceAccessConfiguration::CseServiceAccessConfiguration()
+  inline NeoeServiceAccessConfiguration::NeoeServiceAccessConfiguration()
     : m_enableRetransmission(false),
       m_maxRetransmissionCount(100),
       m_maxRetransmissionBlock(20000) {}
 
   template<typename F, typename C, typename S>
-  CseServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(FeedBuffer buffer,
+  NeoeServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(FeedBuffer buffer,
     std::uint32_t sequenceNumber)
     : m_buffer(std::move(buffer)),
       m_sequenceNumber(sequenceNumber) {}
 
   template<typename F, typename C, typename S>
   template<typename FF, typename SF>
-  CseServiceAccessClient<F, C, S>::CseServiceAccessClient(
-      CseServiceAccessConfiguration config, FF&& feedChannel,
+  NeoeServiceAccessClient<F, C, S>::NeoeServiceAccessClient(
+      NeoeServiceAccessConfiguration config, FF&& feedChannel,
       RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
       SF&& retransmissionServerChannel)
       try : m_config(std::move(config)),
@@ -142,16 +142,16 @@ namespace Nexus::MarketDataService {
             m_sequenceNumber(0) {
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
-      "Failed to initialize the CSE service access client."));
+      "Failed to initialize the NEOE service access client."));
   }
 
   template<typename F, typename C, typename S>
-  CseServiceAccessClient<F, C, S>::~CseServiceAccessClient() {
+  NeoeServiceAccessClient<F, C, S>::~NeoeServiceAccessClient() {
     Close();
   }
 
   template<typename F, typename C, typename S>
-  StampProtocol::StampMessage CseServiceAccessClient<F, C, S>::Read() {
+  StampProtocol::StampMessage NeoeServiceAccessClient<F, C, S>::Read() {
     static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
     return Beam::TryOrNest([&] {
       auto packet = StampProtocol::StampPacket();
@@ -228,11 +228,11 @@ namespace Nexus::MarketDataService {
           bufferIndex = 0;
         }
       }
-    }, Beam::IO::IOException("Unable to read CSE message."));
+    }, Beam::IO::IOException("Unable to read NEOE message."));
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::Close() {
+  void NeoeServiceAccessClient<F, C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
@@ -246,7 +246,7 @@ namespace Nexus::MarketDataService {
 
   template<typename F, typename C, typename S>
   template<typename Buffer>
-  void CseServiceAccessClient<F, C, S>::BuildRetransmissionRequestBuffer(
+  void NeoeServiceAccessClient<F, C, S>::BuildRetransmissionRequestBuffer(
       Beam::Out<Buffer> buffer, std::size_t startSequenceNumber,
       std::size_t endSequenceNumber) {
     static constexpr auto SEQUENCE_NUMBER_SIZE = std::size_t(9);
@@ -266,7 +266,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::AddPendingBuffer(FeedBuffer buffer,
+  void NeoeServiceAccessClient<F, C, S>::AddPendingBuffer(FeedBuffer buffer,
       std::size_t sequenceNumber) {
     auto entry = BufferEntry(std::move(buffer), sequenceNumber);
     auto pendingBufferIterator = std::lower_bound(m_pendingBuffers.begin(),
@@ -281,7 +281,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::SendRetransmissionRequest(
+  void NeoeServiceAccessClient<F, C, S>::SendRetransmissionRequest(
       std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     static constexpr auto RETRANSMISSION_RESPONSE_SIZE = std::size_t(151);
     auto retransmissionRequestBuffer =
@@ -307,7 +307,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::ReadRetransmissionResponse(
+  void NeoeServiceAccessClient<F, C, S>::ReadRetransmissionResponse(
       std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     auto packet = StampProtocol::StampPacket();
     auto retransmissionBuffer = Beam::IO::SharedBuffer();
@@ -328,7 +328,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::Retransmit(
+  void NeoeServiceAccessClient<F, C, S>::Retransmit(
       std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     while(startSequenceNumber <= endSequenceNumber) {
       if(m_retransmissionCount > m_config.m_maxRetransmissionCount) {
