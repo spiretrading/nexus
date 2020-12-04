@@ -51,7 +51,7 @@ const Order& AsxFixApplication::Submit(const OrderInfo& info) {
       if(info.m_fields.m_destination == DefaultDestinations::ASXT()) {
         newOrderSingle->set(FIX::ExDestination{"BESTMKT"});
       } else if(info.m_fields.m_destination == DefaultDestinations::CXA()) {
-        newOrderSingle->set(FIX::ExDestination{"CXA"});
+        newOrderSingle->set(FIX::ExDestination{"BESTMKT2"});
       } else {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException{
           "Invalid destination."});
