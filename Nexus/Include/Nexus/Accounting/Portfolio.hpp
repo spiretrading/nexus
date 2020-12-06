@@ -302,7 +302,7 @@ namespace Nexus::Accounting {
       : m_marketDatabase(std::move(marketDatabase)),
         m_bookkeeper(std::move(bookkeeper)) {
     for(auto& inventory : m_bookkeeper.GetInventoryRange()) {
-      GetSecurityEntry(inventory.first.m_index);
+      GetSecurityEntry(inventory.m_position.m_key.m_index);
     }
   }
 

@@ -2,9 +2,22 @@
 #define NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/View.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 
 namespace Nexus::Accounting {
+namespace Details {
+  template<typename T>
+  struct ValueAccessor {
+    using value_type = const typename T::second_type;
+    using result_type = const value_type&;
+
+    template<typename U>
+    result_type operator ()(const U& value) const {
+      return value.second;
+    }
+  };
+}
 
   /**
    * Implements a Bookkeeper using true average bookkeeping.
@@ -35,11 +48,9 @@ namespace Nexus::Accounting {
 
       const Inventory& GetTotal(CurrencyId currency) const;
 
-      Beam::View<const std::pair<const Key, Inventory>>
-        GetInventoryRange() const;
+      Beam::View<const Inventory> GetInventoryRange() const;
 
-      Beam::View<const std::pair<const CurrencyId, Inventory>>
-        GetTotalsRange() const;
+      Beam::View<const Inventory> GetTotalsRange() const;
 
     private:
       std::unordered_map<Key, Inventory> m_inventories;
@@ -162,18 +173,22 @@ namespace Nexus::Accounting {
   }
 
   template<typename I>
-  Beam::View<const std::pair<
-      const typename TrueAverageBookkeeper<I>::Key,
-      typename TrueAverageBookkeeper<I>::Inventory>>
+  Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
       TrueAverageBookkeeper<I>::GetInventoryRange() const {
-    return Beam::View(m_inventories.begin(), m_inventories.end());
+    using Accessor = Details::ValueAccessor<std::pair<const Key, Inventory>>;
+    return Beam::View(
+      boost::make_transform_iterator(m_inventories.begin(), Accessor()),
+      boost::make_transform_iterator(m_inventories.end(), Accessor()));
   }
 
   template<typename I>
-  Beam::View<const std::pair<const CurrencyId,
-      typename TrueAverageBookkeeper<I>::Inventory>>
+  Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
       TrueAverageBookkeeper<I>::GetTotalsRange() const {
-    return Beam::View(m_totals.begin(), m_totals.end());
+    using Accessor = Details::ValueAccessor<
+      std::pair<const CurrencyId, Inventory>>;
+    return Beam::View(
+      boost::make_transform_iterator(m_totals.begin(), Accessor()),
+      boost::make_transform_iterator(m_totals.end(), Accessor()));
   }
 
   template<typename I>
