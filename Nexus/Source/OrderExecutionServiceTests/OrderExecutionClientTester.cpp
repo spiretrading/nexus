@@ -61,6 +61,36 @@ namespace {
 }
 
 TEST_SUITE("OrderExecutionClient") {
+  TEST_CASE_FIXTURE(Fixture, "load_order") {
+    auto serverClient = (TestServiceProtocolServer::ServiceProtocolClient*)(
+      nullptr);
+    LoadOrderByIdService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, auto id) -> optional<SequencedOrderRecord> {
+        serverClient = &client;
+        if(id == 10) {
+          auto record = OrderRecord(OrderInfo(OrderFields::BuildLimitOrder(
+            TST, Side::BID, 100, Money::CENT), id,
+            time_from_string("2020-10-04 13:01:12")), {});
+          return SequencedValue(record, Beam::Queries::Sequence(id));
+        } else if(id == 20) {
+          throw ServiceRequestException("Internal server error.");
+        }
+        return none;
+      });
+    auto order = m_client->LoadOrder(10);
+    REQUIRE(order.is_initialized());
+    REQUIRE(order->GetInfo().m_fields.m_price == Money::CENT);
+    REQUIRE_THROWS(m_client->LoadOrder(20));
+    auto emptyOrder = m_client->LoadOrder(30);
+    REQUIRE(!emptyOrder);
+    auto pendingNewReportOut = ExecutionReport::BuildInitialReport(
+      order->GetInfo().m_orderId, microsec_clock::universal_time());
+    SendRecordMessage<OrderUpdateMessage>(*serverClient, pendingNewReportOut);
+    auto executionReports = std::make_shared<Queue<ExecutionReport>>();
+    order->GetPublisher().Monitor(executionReports);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
+  }
+
   TEST_CASE_FIXTURE(Fixture, "submit") {
     AddQueryOrderSubmissionsSlot();
     auto sentSubmitOrderRequest = false;

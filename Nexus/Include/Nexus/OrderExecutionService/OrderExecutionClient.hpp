@@ -43,6 +43,9 @@ namespace Nexus::OrderExecutionService {
 
       ~OrderExecutionClient();
 
+      /** Loads an Order by its id. */
+      boost::optional<const Order&> LoadOrder(OrderId id);
+
       /**
        * Submits a query for OrderRecords.
        * @param query The query to submit.
@@ -156,6 +159,18 @@ namespace Nexus::OrderExecutionService {
   template<typename B>
   OrderExecutionClient<B>::~OrderExecutionClient() {
     Close();
+  }
+
+  template<typename B>
+  boost::optional<const Order&> OrderExecutionClient<B>::LoadOrder(OrderId id) {
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      if(auto order = client->template SendRequest<LoadOrderByIdService>(id)) {
+        return boost::optional<const Order&>(
+          *static_cast<const Order*>(LoadOrder(*order).get()));
+      }
+      return boost::optional<const Order&>();
+    }, "Failed to load order: " + boost::lexical_cast<std::string>(id));
   }
 
   template<typename B>

@@ -108,6 +108,14 @@ namespace Nexus::Python {
       const std::string& name) {
     auto client = pybind11::class_<Client, std::shared_ptr<Client>>(module,
       name.c_str()).
+      def("load_order", [] (Client& self, OrderId id) ->
+          const OrderExecutionService::Order* {
+        auto order = self.LoadOrder(id);
+        if(!order) {
+          return nullptr;
+        }
+        return &*order;
+      }, pybind11::return_value_policy::reference_internal).
       def("query_order_records", &Client::QueryOrderRecords).
       def("query_sequenced_order_submissions", static_cast<void (Client::*)(
         const OrderExecutionService::AccountQuery&,

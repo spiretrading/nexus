@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_EXECUTION_SERVICES_HPP
 #include <Beam/Queries/QueryResult.hpp>
 #include <Beam/Services/Service.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
@@ -28,6 +29,14 @@ namespace Nexus::OrderExecutionService {
      */
     (UpdateOrderService, "Nexus.OrderExecutionService.UpdateOrderService",
       void, OrderId, order_id, ExecutionReport, execution_report),
+
+    /**
+     * Loads an Order from its id.
+     * @param id The id of the Order to load.
+     * @return The SequencedOrderRecord with the specified id.
+     */
+    (LoadOrderByIdService, "Nexus.OrderExecutionService.LoadOrderByIdService",
+      boost::optional<SequencedOrderRecord>, OrderId, id),
 
     /**
      * Submits a query for an account's Order submissions.
