@@ -49,7 +49,7 @@ namespace Nexus::OrderExecutionService {
        * Constructs a MySqlOrderExecutionDataStore.
        * @param connectionBuilder The callable used to build SQL connections.
        */
-      SqlOrderExecutionDataStore(ConnectionBuilder connectionBuilder);
+      explicit SqlOrderExecutionDataStore(ConnectionBuilder connectionBuilder);
 
       ~SqlOrderExecutionDataStore();
 
