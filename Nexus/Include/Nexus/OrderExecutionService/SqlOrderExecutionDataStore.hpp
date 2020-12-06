@@ -54,6 +54,8 @@ namespace Nexus::OrderExecutionService {
 
       ~SqlOrderExecutionDataStore();
 
+      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
 
@@ -89,6 +91,8 @@ namespace Nexus::OrderExecutionService {
         m_executionReportDataStore;
       Viper::Row<OrderId> m_liveOrdersRow;
       Beam::IO::OpenState m_openState;
+
+      SequencedOrderRecord LoadRecord(SequencedOrderInfo info);
   };
 
   /**
@@ -175,6 +179,16 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C>
+  boost::optional<SequencedOrderRecord>
+      SqlOrderExecutionDataStore<C>::LoadOrder(OrderId id) {
+    auto orders = m_submissionDataStore.Load(Viper::sym("order_id") == id);
+    if(orders.empty()) {
+      return boost::none;
+    }
+    return LoadRecord(orders.front());
+  }
+
+  template<typename C>
   std::vector<SequencedOrderRecord> SqlOrderExecutionDataStore<C>::
       LoadOrderSubmissions(const AccountQuery& query) {
     auto orderInfo = [&] {
@@ -186,19 +200,7 @@ namespace Nexus::OrderExecutionService {
     }();
     auto orderRecords = std::vector<SequencedOrderRecord>();
     for(auto& order : orderInfo) {
-      order->m_fields.m_account = m_accountEntries.Load(
-        order->m_fields.m_account.m_id);
-      order->m_submissionAccount = m_accountEntries.Load(
-        order->m_submissionAccount.m_id);
-      auto sequencedExecutionReports = m_executionReportDataStore.Load(
-        Viper::sym("order_id") == order->m_orderId);
-      auto executionReports = std::vector<ExecutionReport>();
-      for(auto& executionReport : sequencedExecutionReports) {
-        executionReports.push_back(std::move(*executionReport));
-      }
-      orderRecords.push_back(Beam::Queries::SequencedValue(
-        OrderRecord(std::move(*order), std::move(executionReports)),
-        order.GetSequence()));
+      orderRecords.push_back(LoadRecord(std::move(order)));
     }
     return orderRecords;
   }
@@ -277,6 +279,23 @@ namespace Nexus::OrderExecutionService {
     m_writerPool.Close();
     m_readerPool.Close();
     m_openState.Close();
+  }
+
+  template<typename C>
+  SequencedOrderRecord SqlOrderExecutionDataStore<C>::LoadRecord(
+      SequencedOrderInfo info) {
+    info->m_fields.m_account = m_accountEntries.Load(
+      info->m_fields.m_account.m_id);
+    info->m_submissionAccount = m_accountEntries.Load(
+      info->m_submissionAccount.m_id);
+    auto sequencedExecutionReports = m_executionReportDataStore.Load(
+      Viper::sym("order_id") == info->m_orderId);
+    auto executionReports = std::vector<ExecutionReport>();
+    for(auto& executionReport : sequencedExecutionReports) {
+      executionReports.push_back(std::move(*executionReport));
+    }
+    return Beam::Queries::SequencedValue(OrderRecord(std::move(*info),
+      std::move(executionReports)), order.GetSequence());
   }
 }
 

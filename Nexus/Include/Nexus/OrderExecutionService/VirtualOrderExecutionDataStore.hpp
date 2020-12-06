@@ -4,6 +4,7 @@
 #include <utility>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
@@ -13,6 +14,8 @@ namespace Nexus::OrderExecutionService {
   class VirtualOrderExecutionDataStore {
     public:
       virtual ~VirtualOrderExecutionDataStore() = default;
+
+      virtual boost::optional<SequencedOrderRecord> LoadOrder(OrderId id) = 0;
 
       virtual std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query) = 0;
@@ -60,6 +63,8 @@ namespace Nexus::OrderExecutionService {
 
       ~WrapperOrderExecutionDataStore() override;
 
+      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id) override;
+
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query) override;
 
@@ -98,6 +103,12 @@ namespace Nexus::OrderExecutionService {
   template<typename D>
   WrapperOrderExecutionDataStore<D>::~WrapperOrderExecutionDataStore() {
     Close();
+  }
+
+  template<typename D>
+  boost::optional<SequencedOrderRecord>
+      WrapperOrderExecutionDataStore<D>::LoadOrder(OrderId id) {
+    return m_dataStore->LoadOrder(id);
   }
 
   template<typename D>

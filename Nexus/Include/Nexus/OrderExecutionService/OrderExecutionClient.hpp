@@ -165,9 +165,9 @@ namespace Nexus::OrderExecutionService {
   boost::optional<const Order&> OrderExecutionClient<B>::LoadOrder(OrderId id) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_clientHandler.GetClient();
-      if(auto order = client->template SendRequest<LoadOrderByIdService>(id)) {
+      if(auto record = client->template SendRequest<LoadOrderByIdService>(id)) {
         return boost::optional<const Order&>(
-          *static_cast<const Order*>(LoadOrder(*order).get()));
+          *static_cast<const Order*>(LoadOrder(*record).get()));
       }
       return boost::optional<const Order&>();
     }, "Failed to load order: " + boost::lexical_cast<std::string>(id));

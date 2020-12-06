@@ -13,6 +13,13 @@ namespace Nexus::OrderExecutionService {
   struct OrderExecutionDataStore : Beam::Concept<OrderExecutionDataStore> {
 
     /**
+     * Loads an OrderRecord from its id.
+     * @param id The Order id to load.
+     * @return The OrderRecord with the given <i>id</i> if it exists.
+     */
+    boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+
+    /**
      * Executes an Order submission query.
      * @param query The search query to execute.
      * @return The list of SequencedOrderRecords satisfying the <i>query</i>.
