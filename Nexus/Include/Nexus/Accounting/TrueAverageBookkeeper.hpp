@@ -1,6 +1,6 @@
 #ifndef NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
 #define NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
-#include <unordered_map>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/View.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 
@@ -35,13 +35,15 @@ namespace Nexus::Accounting {
 
       const Inventory& GetTotal(CurrencyId currency) const;
 
-      Beam::View<std::pair<const Key, Inventory>> GetInventoryRange() const;
+      Beam::View<const std::pair<const Key, Inventory>>
+        GetInventoryRange() const;
 
-      Beam::View<std::pair<const CurrencyId, Inventory>> GetTotalsRange() const;
+      Beam::View<const std::pair<const CurrencyId, Inventory>>
+        GetTotalsRange() const;
 
     private:
-      mutable std::unordered_map<Key, Inventory> m_inventories;
-      mutable std::unordered_map<CurrencyId, Inventory> m_totals;
+      std::unordered_map<Key, Inventory> m_inventories;
+      std::unordered_map<CurrencyId, Inventory> m_totals;
 
       Inventory& InternalGetTotal(CurrencyId currency);
   };
@@ -132,8 +134,12 @@ namespace Nexus::Accounting {
     auto key = Key(index, currency);
     auto inventoryIterator = m_inventories.find(key);
     if(inventoryIterator == m_inventories.end()) {
-      inventoryIterator = m_inventories.insert(
-        std::pair(key, Inventory(key))).first;
+      static auto emptyInventories = Beam::SynchronizedUnorderedMap<
+        Key, Inventory>();
+      return emptyInventories.GetOrInsert(key,
+        [&] {
+          return Inventory(key);
+        });
     }
     return inventoryIterator->second;
   }
@@ -143,14 +149,20 @@ namespace Nexus::Accounting {
       TrueAverageBookkeeper<I>::GetTotal(CurrencyId currency) const {
     auto totalsIterator = m_totals.find(currency);
     if(totalsIterator == m_totals.end()) {
-      totalsIterator = m_totals.insert(std::pair(currency, Inventory())).first;
-      totalsIterator->second.m_position.m_key.m_currency = currency;
+      static auto emptyTotals = Beam::SynchronizedUnorderedMap<
+        CurrencyId, Inventory>();
+      return emptyTotals.GetOrInsert(currency,
+        [&] {
+          auto totals = Inventory();
+          totals.m_position.m_key.m_currency = currency;
+          return totals;
+        });
     }
     return totalsIterator->second;
   }
 
   template<typename I>
-  Beam::View<std::pair<
+  Beam::View<const std::pair<
       const typename TrueAverageBookkeeper<I>::Key,
       typename TrueAverageBookkeeper<I>::Inventory>>
       TrueAverageBookkeeper<I>::GetInventoryRange() const {
@@ -158,7 +170,7 @@ namespace Nexus::Accounting {
   }
 
   template<typename I>
-  Beam::View<std::pair<const CurrencyId,
+  Beam::View<const std::pair<const CurrencyId,
       typename TrueAverageBookkeeper<I>::Inventory>>
       TrueAverageBookkeeper<I>::GetTotalsRange() const {
     return Beam::View(m_totals.begin(), m_totals.end());

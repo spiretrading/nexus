@@ -87,8 +87,8 @@ namespace Nexus::RiskService {
     private:
       using ConsolidatedRiskController =
         RiskService::ConsolidatedRiskController<AdministrationClient*,
-        MarketDataClient*, OrderExecutionClient*, TransitionTimer, TimeClient*,
-        RiskDataStore*>;
+          MarketDataClient*, OrderExecutionClient*, TransitionTimer,
+          TimeClient*, RiskDataStore*>;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
@@ -159,7 +159,7 @@ namespace Nexus::RiskService {
         m_destinations(std::move(destinations)),
         m_accountPublisher(Beam::MakeSequencePublisherAdaptor(std::make_unique<
           Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
-          std::move(accounts)))) {
+            std::move(accounts)))) {
     try {
       BuildController();
     } catch(const std::exception&) {
@@ -182,7 +182,7 @@ namespace Nexus::RiskService {
       std::placeholders::_2));
     SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
       std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
-      std::placeholders::_1));
+        std::placeholders::_1));
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -232,10 +232,10 @@ namespace Nexus::RiskService {
       m_destinations);
     m_controller->GetRiskStatePublisher().Monitor(
       m_tasks.GetSlot<RiskStateEntry>(std::bind(&RiskServlet::OnRiskState, this,
-      std::placeholders::_1)));
+        std::placeholders::_1)));
     m_controller->GetPortfolioPublisher().Monitor(
       m_tasks.GetSlot<RiskInventoryEntry>(std::bind(&RiskServlet::OnPortfolio,
-      this, std::placeholders::_1)));
+        this, std::placeholders::_1)));
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -258,8 +258,8 @@ namespace Nexus::RiskService {
     std::sort(reports.begin(), reports.end(), [] (auto& left, auto& right) {
       return std::tie(left.m_executionReport.m_timestamp,
         left.m_executionReport.m_id, left.m_executionReport.m_sequence) <
-        std::tie(right.m_executionReport.m_timestamp,
-        right.m_executionReport.m_id, right.m_executionReport.m_sequence);
+          std::tie(right.m_executionReport.m_timestamp,
+            right.m_executionReport.m_id, right.m_executionReport.m_sequence);
     });
     auto basePortfolio = portfolio;
     for(auto& report : reports) {
@@ -269,7 +269,7 @@ namespace Nexus::RiskService {
     auto updatedSnapshot = InventorySnapshot();
     auto resetInventories = std::vector<InventoryUpdate>();
     for(auto& inventoryPair : portfolio.GetBookkeeper().GetInventoryRange()) {
-      auto& inventory = inventoryPair.second;
+      auto inventory = inventoryPair.second;
       auto& baseInventory = basePortfolio.GetBookkeeper().GetInventory(
         inventory.m_position.m_key.m_index,
         inventory.m_position.m_key.m_currency);

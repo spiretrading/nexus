@@ -267,6 +267,9 @@ namespace Nexus::Accounting {
       auto update = typename Portfolio<B>::UpdateEntry();
       update.m_securityInventory = portfolio.GetBookkeeper().GetInventory(
         security, securityEntry.m_valuation.m_currency);
+      if(IsEmpty(update.m_securityInventory)) {
+        continue;
+      }
       update.m_unrealizedSecurity = securityEntry.m_unrealized;
       update.m_currencyInventory = portfolio.GetBookkeeper().GetTotal(
         securityEntry.m_valuation.m_currency);
