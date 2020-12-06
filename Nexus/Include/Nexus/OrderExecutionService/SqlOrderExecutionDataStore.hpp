@@ -8,7 +8,6 @@
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStoreException.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -23,7 +22,7 @@ namespace Nexus::OrderExecutionService {
    * @param <C> The type of SQL connection to use.
    */
   template<typename C>
-  class SqlOrderExecutionDataStore : private boost::noncopyable {
+  class SqlOrderExecutionDataStore {
     public:
 
       /** The type of SQL connection. */
@@ -92,6 +91,9 @@ namespace Nexus::OrderExecutionService {
       Viper::Row<OrderId> m_liveOrdersRow;
       Beam::IO::OpenState m_openState;
 
+      SqlOrderExecutionDataStore(const SqlOrderExecutionDataStore&) = delete;
+      SqlOrderExecutionDataStore& operator =(
+        const SqlOrderExecutionDataStore&) = delete;
       SequencedOrderRecord LoadRecord(SequencedOrderInfo info);
   };
 
@@ -185,7 +187,7 @@ namespace Nexus::OrderExecutionService {
     if(orders.empty()) {
       return boost::none;
     }
-    return LoadRecord(orders.front());
+    return LoadRecord(std::move(orders.front()));
   }
 
   template<typename C>
@@ -294,8 +296,9 @@ namespace Nexus::OrderExecutionService {
     for(auto& executionReport : sequencedExecutionReports) {
       executionReports.push_back(std::move(*executionReport));
     }
+    auto sequence = info.GetSequence();
     return Beam::Queries::SequencedValue(OrderRecord(std::move(*info),
-      std::move(executionReports)), order.GetSequence());
+      std::move(executionReports)), sequence);
   }
 }
 
