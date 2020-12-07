@@ -59,22 +59,37 @@ bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     switch(e->key()) {
       case Qt::Key_Down:
-        m_menu->show();
+        if(!m_menu->isVisible()) {
+          if(auto selected_index = m_menu->get_selected(); selected_index) {
+            m_menu->set_current(*selected_index);
+          }
+          m_menu->show();
+        }
         increment_current(*m_menu);
         return true;
       case Qt::Key_Up:
-        if(isVisible()) {
+        if(m_menu->isVisible()) {
           decrement_current(*m_menu);
         }
         break;
       case Qt::Key_Enter:
       case Qt::Key_Return:
         if(m_menu->isVisible() && m_menu->get_current()) {
-          m_status_label->setText(QString("Selected: %1").arg(
-            m_menu->get_value((*m_menu->get_current())).toString()));
-          m_menu->hide();
+          m_menu->select_current_index();
         }
         break;
+      case Qt::Key_Escape:
+        m_menu->hide();
+        break;
+      case Qt::Key_Space:
+        // TODO: Select?
+        break;
+    }
+  } else if(event->type() == QEvent::MouseButtonPress) {
+    auto e = static_cast<QMouseEvent*>(event);
+    if(e->button() == Qt::LeftButton) {
+      m_menu->setVisible(!m_menu->isVisible());
+      return true;
     }
   }
   return QWidget::eventFilter(watched, event);

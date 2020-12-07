@@ -1,6 +1,5 @@
 #include "Spire/Ui/DropDownMenu2.hpp"
 #include <QFocusEvent>
-#include <QKeyEvent>
 #include <QScrollBar>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -41,97 +40,93 @@ namespace {
 
 DropDownMenu2::DropDownMenu2(std::vector<DropDownItem*> items,
     QWidget* parent)
-    : DropDownWindow(true, parent),
+    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
       m_selected_index(0),
       m_max_displayed_items(5) {
+  setAttribute(Qt::WA_ShowWithoutActivating);
+  m_shadow = new DropShadow(true, false, this);
+  setObjectName("DropDownMenu");
+  setStyleSheet(R"(
+    #DropDownMenu {
+      background-color: #C8C8C8;
+    })");
+  auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins(scale_width(1), 0, scale_width(1),
+    scale_height(1));
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setWidgetResizable(true);
   auto body = new QWidget(m_scroll_area);
-  m_layout = new QVBoxLayout(body);
-  m_layout->setContentsMargins({});
-  m_layout->setSpacing(0);
+  m_list_layout = new QVBoxLayout(body);
+  m_list_layout->setContentsMargins({});
+  m_list_layout->setSpacing(0);
   m_scroll_area->setWidget(body);
-  initialize_widget(m_scroll_area);
   for(auto& item : items) {
-    m_layout->addWidget(item);
+    m_list_layout->addWidget(item);
     m_item_hovered_connections.AddConnection(item->connect_highlighted_signal(
       [=] (const auto& value) { m_hovered_signal(item->get_value()); }));
     m_item_selected_connections.AddConnection(item->connect_selected_signal(
       [=] (const auto& value) { on_item_selected(item->get_value(), item); }));
   }
-  if(m_layout->count() > 0) {
+  if(m_list_layout->count() > 0) {
     update_height();
-    static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
+    static_cast<DropDownItem*>(
+      m_list_layout->itemAt(0)->widget())->set_highlight();
     m_selected_index = 0;
     m_current_index = 0;
     m_selected_signal(get_value(*m_selected_index));
     m_current_signal(get_value(*m_current_index));
   }
   parent->installEventFilter(this);
+  parent->window()->installEventFilter(this);
+  hide();
+}
+
+bool DropDownMenu2::event(QEvent* event) {
+  if(event->type() == QEvent::WindowDeactivate &&
+      focusWidget() != nullptr && !isAncestorOf(focusWidget())) {
+    hide();
+  }
+  return QWidget::event(event);
 }
 
 bool DropDownMenu2::eventFilter(QObject* watched, QEvent* event) {
   if(watched == parent()) {
-    if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      switch(e->key()) {
-        case Qt::Key_Down:
-          if(isVisible()) {
-            increment_current(*this);
-            return true;
-          }
-          break;
-        case Qt::Key_Up:
-          if(isVisible()) {
-            decrement_current(*this);
-            return true;
-          }
-          break;
-        case Qt::Key_Enter:
-        case Qt::Key_Return:
-          if(isVisible() && m_current_index) {
-            on_item_selected(get_item(*m_current_index)->get_value(),
-              *m_current_index);
-            return true;
-          }
-          break;
+    switch(event->type()) {
+      case QEvent::Move:
+        move_to_parent();
+        break;
+      case QEvent::FocusOut:
+        if(!isActiveWindow()) {
+          hide();
+        }
+        break;
+      case QEvent::Resize:
+        setFixedWidth(parentWidget()->width());
+        break;
+    }
+  } else if(watched == parentWidget()->window()) {
+    if(event->type() == QEvent::WindowDeactivate && !isActiveWindow()) {
+      hide();
+    } else if(event->type() == QEvent::Move) {
+      move_to_parent();
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      auto e = static_cast<QMouseEvent*>(event);
+      if(e->button() == Qt::LeftButton) {
+        hide();
       }
     }
   }
-  return DropDownWindow::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
 }
 
 void DropDownMenu2::hideEvent(QHideEvent* event) {
-  m_current_index = none;
-  m_current_signal({});
-  DropDownWindow::hideEvent(event);
-}
-
-void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
-  switch(event->key()) {
-    case Qt::Key_Down:
-      if(isVisible()) {
-        increment_current(*this);
-      }
-      break;
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
-      if(m_current_index) {
-        on_item_selected(get_item(*m_current_index)->get_value(),
-          *m_current_index);
-      }
-      break;
-    case Qt::Key_Escape:
-      hide();
-      break;
-    case Qt::Key_Up:
-      if(isVisible()) {
-        decrement_current(*this);
-      }
-      break;
+  if(m_current_index) {
+    get_item(*m_current_index)->reset_highlight();
+    m_current_index = none;
   }
-  DropDownWindow::keyPressEvent(event);
+  m_current_signal({});
+  QWidget::hideEvent(event);
 }
 
 connection DropDownMenu2::connect_current_signal(
@@ -150,7 +145,7 @@ connection DropDownMenu2::connect_selected_signal(
 }
 
 const QVariant& DropDownMenu2::get_value(int index) const {
-  if(m_layout->count() - 1 < index) {
+  if(m_list_layout->count() - 1 < index) {
     static auto SENTINEL = QVariant();
     return SENTINEL;
   }
@@ -179,16 +174,29 @@ boost::optional<int> DropDownMenu2::get_selected() const {
   return m_selected_index;
 }
 
+void DropDownMenu2::select_current_index() {
+  if(m_current_index) {
+    on_item_selected(get_value(*m_current_index), *m_current_index);
+  }
+}
+
 int DropDownMenu2::count() const {
-  return m_layout->count();
+  return m_list_layout->count();
 }
 
 DropDownItem* DropDownMenu2::get_item(int index) const {
-  return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
+  return static_cast<DropDownItem*>(m_list_layout->itemAt(index)->widget());
+}
+
+void DropDownMenu2::move_to_parent() {
+  auto pos = parentWidget()->mapToGlobal(
+    QPoint(0, parentWidget()->height()));
+  move(pos);
+  raise();
 }
 
 void DropDownMenu2::scroll_to_current_index() {
-  if(m_current_index != m_layout->count() - 1) {
+  if(m_current_index != m_list_layout->count() - 1) {
     m_scroll_area->ensureWidgetVisible(get_item(*m_current_index), 0, 0);
   } else {
     m_scroll_area->verticalScrollBar()->setValue(
@@ -197,11 +205,12 @@ void DropDownMenu2::scroll_to_current_index() {
 }
 
 void DropDownMenu2::update_height() {
-  if(m_layout->count() == 0) {
+  if(m_list_layout->count() == 0) {
     return;
   }
-  setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *
-    m_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
+  setFixedHeight(std::min(m_max_displayed_items, m_list_layout->count()) *
+    m_list_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
+  m_scroll_area->setFixedHeight(height() - 1);
 }
 
 void DropDownMenu2::on_item_selected(const QVariant& value, int index) {
@@ -214,7 +223,7 @@ void DropDownMenu2::on_item_selected(const QVariant& value, int index) {
 
 void DropDownMenu2::on_item_selected(const QVariant& value,
     DropDownItem* item) {
-  on_item_selected(value, m_layout->indexOf(item));
+  on_item_selected(value, m_list_layout->indexOf(item));
 }
 
 void Spire::decrement_current(DropDownMenu2& menu) {

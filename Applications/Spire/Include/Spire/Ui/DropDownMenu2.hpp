@@ -2,16 +2,17 @@
 #define SPIRE_DROP_DOWN_MENU_2_HPP
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <QVBoxLayout>
+#include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownItem.hpp"
-#include "Spire/Ui/DropDownWindow.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
 namespace Spire {
 
   //! Represents a Spire-styled drop down menu.
-  class DropDownMenu2 : public DropDownWindow {
+  class DropDownMenu2 : public QWidget {
     public:
   
       //! Signals that the current item has changed.
@@ -60,6 +61,9 @@ namespace Spire {
       //! Returns the index of the selected item, or none if there is no
       //! selected item.
       boost::optional<int> get_selected() const;
+
+      //! Selects the current index iff the current index is valid.
+      void select_current_index();
   
       //! Returns the number of items in the menu.
       int count() const;
@@ -77,16 +81,17 @@ namespace Spire {
         const SelectedSignal::slot_type& slot) const;
 
     protected:
+      bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void hideEvent(QHideEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable CurrentSignal m_current_signal;
       mutable HoveredSignal m_hovered_signal;
       mutable SelectedSignal m_selected_signal;
       int m_max_displayed_items;
-      QVBoxLayout* m_layout;
+      DropShadow* m_shadow;
+      QVBoxLayout* m_list_layout;
       ScrollArea* m_scroll_area;
       boost::optional<int> m_selected_index;
       boost::optional<int> m_current_index;
@@ -94,6 +99,7 @@ namespace Spire {
       Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 
       DropDownItem* get_item(int index) const;
+      void move_to_parent();
       void scroll_to_current_index();
       void update_height();
       void on_item_selected(const QVariant& value, int index);
