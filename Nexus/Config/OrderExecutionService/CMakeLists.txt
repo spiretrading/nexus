@@ -9,8 +9,8 @@ set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(OrderExecutionServiceTests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
-  debug ${SQLITE3_LIBRARY_DEBUG_PATH}
-  optimized ${SQLITE3_LIBRARY_OPTIMIZED_PATH})
+  debug ${SQLITE_LIBRARY_DEBUG_PATH}
+  optimized ${SQLITE_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)
   target_link_libraries(OrderExecutionServiceTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}

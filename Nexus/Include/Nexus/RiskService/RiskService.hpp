@@ -22,7 +22,6 @@ namespace Nexus::RiskService {
   struct RiskStateUpdate;
   template<typename O> class RiskTransitionModel;
   template<typename C> class SqlRiskDataStore;
-  class TestRiskDataStore;
   class VirtualRiskDataStore;
   template<typename D> class WrapperRiskDataStore;
 

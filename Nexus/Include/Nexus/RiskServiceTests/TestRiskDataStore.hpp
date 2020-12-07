@@ -5,8 +5,9 @@
 #include <Beam/Routines/Async.hpp>
 #include <boost/variant.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
+#include "Nexus/RiskServiceTests/RiskServiceTests.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus::RiskService::Tests {
 
   /** Implements a RiskDataStore for testing purposes. */
   class TestRiskDataStore {

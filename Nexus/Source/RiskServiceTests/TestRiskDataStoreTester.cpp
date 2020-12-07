@@ -1,6 +1,6 @@
 #include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/RiskService/TestRiskDataStore.hpp"
+#include "Nexus/RiskServiceTests/TestRiskDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -10,6 +10,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
+using namespace Nexus::RiskService::Tests;
 
 TEST_SUITE("TestRiskDataStore") {
   TEST_CASE("open_close") {
