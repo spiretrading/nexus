@@ -1,8 +1,7 @@
 #include "Spire/UiViewer/DropDownMenu2TestWidget.hpp"
 #include <QHBoxLayout>
-#include <QLabel>
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/DropDownMenu2.hpp"
 
 using namespace Spire;
 
@@ -33,22 +32,50 @@ DropDownMenu2TestWidget::DropDownMenu2TestWidget(QWidget* parent)
       border: 1px solid #4B23A0;
     }})").arg(scale_width(5)));
   layout->addWidget(label);
-  auto menu = new DropDownMenu2({
+  m_menu = new DropDownMenu2({
     create_item("AA", this), create_item("AB", this), create_item("AC", this),
     create_item("BA", this), create_item("BB", this), create_item("BC", this),
     create_item("CA", this), create_item("CB", this), create_item("CC", this)},
     label);
-  auto status_label = new QLabel(this);
-  status_label->setFixedSize(scale(100, 26));
-  layout->addWidget(status_label);
-  menu->connect_closed_signal([=] { status_label->setText("Closed"); });
-  menu->connect_current_signal([=] (const auto& item) {
-    status_label->setText(QString("Current: %1").arg(item.toString()));
+  m_status_label = new QLabel(this);
+  m_status_label->setFixedSize(scale(100, 26));
+  layout->addWidget(m_status_label);
+  m_menu->connect_current_signal([=] (const auto& item) {
+    if(item.isValid()) {
+      m_status_label->setText(QString("Current: %1").arg(item.toString()));
+    }
   });
-  menu->connect_hovered_signal([=] (const auto& item) {
-    status_label->setText(QString("Hovered: %1").arg(item.toString()));
+  m_menu->connect_hovered_signal([=] (const auto& item) {
+    m_status_label->setText(QString("Hovered: %1").arg(item.toString()));
   });
-  menu->connect_selected_signal([=] (const auto& item) {
-    status_label->setText(QString("Selected: %1").arg(item.toString()));
+  m_menu->connect_selected_signal([=] (const auto& item) {
+    m_status_label->setText(QString("Selected: %1").arg(item.toString()));
   });
+  label->installEventFilter(this);
+}
+
+bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    switch(e->key()) {
+      case Qt::Key_Down:
+        m_menu->show();
+        increment_current(*m_menu);
+        return true;
+      case Qt::Key_Up:
+        if(isVisible()) {
+          decrement_current(*m_menu);
+        }
+        break;
+      case Qt::Key_Enter:
+      case Qt::Key_Return:
+        if(m_menu->isVisible() && m_menu->get_current()) {
+          m_status_label->setText(QString("Selected: %1").arg(
+            m_menu->get_value((*m_menu->get_current())).toString()));
+          m_menu->hide();
+        }
+        break;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }

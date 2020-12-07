@@ -1,6 +1,8 @@
 #ifndef SPIRE_DROP_DOWN_MENU_2_TEST_WIDGET_HPP
 #define SPIRE_DROP_DOWN_MENU_2_TEST_WIDGET_HPP
+#include <QLabel>
 #include <QWidget>
+#include "Spire/Ui/DropDownMenu2.hpp"
 
 namespace Spire {
 
@@ -13,6 +15,13 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit DropDownMenu2TestWidget(QWidget* parent = nullptr);
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
+    private:
+      DropDownMenu2* m_menu;
+      QLabel* m_status_label;
   };
 }
 

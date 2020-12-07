@@ -47,11 +47,11 @@ DropDownMenu2::DropDownMenu2(std::vector<DropDownItem*> items,
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setWidgetResizable(true);
-  auto main_widget = new QWidget(this);
-  m_layout = new QVBoxLayout(main_widget);
+  auto body = new QWidget(m_scroll_area);
+  m_layout = new QVBoxLayout(body);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
-  m_scroll_area->setWidget(main_widget);
+  m_scroll_area->setWidget(body);
   initialize_widget(m_scroll_area);
   for(auto& item : items) {
     m_layout->addWidget(item);
@@ -103,7 +103,8 @@ bool DropDownMenu2::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void DropDownMenu2::hideEvent(QHideEvent* event) {
-  m_closed_signal();
+  m_current_index = none;
+  m_current_signal({});
   DropDownWindow::hideEvent(event);
 }
 
@@ -131,11 +132,6 @@ void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
       break;
   }
   DropDownWindow::keyPressEvent(event);
-}
-
-connection DropDownMenu2::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
 }
 
 connection DropDownMenu2::connect_current_signal(

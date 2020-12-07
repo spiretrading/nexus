@@ -13,9 +13,6 @@ namespace Spire {
   //! Represents a Spire-styled drop down menu.
   class DropDownMenu2 : public DropDownWindow {
     public:
-
-      //! Signals that the menu was closed.
-      using ClosedSignal = Signal<void ()>;
   
       //! Signals that the current item has changed.
       /*!
@@ -66,10 +63,6 @@ namespace Spire {
   
       //! Returns the number of items in the menu.
       int count() const;
-
-      //! Connects a slot to the closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
   
       //! Connects a slot to the current changed signal.
       boost::signals2::connection connect_current_signal(
@@ -89,7 +82,6 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       mutable CurrentSignal m_current_signal;
       mutable HoveredSignal m_hovered_signal;
       mutable SelectedSignal m_selected_signal;
