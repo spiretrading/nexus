@@ -10,7 +10,10 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  const auto BORDER_PADDING = 2;
+  auto BORDER_PADDING() {
+    static auto padding = 2 * scale_width(1);
+    return padding;
+  }
 
   void adjust_current_index(DropDownMenu2& menu, int amount) {
     if(menu.count() == 0 || amount == 0) {
@@ -210,7 +213,7 @@ void DropDownMenu2::update_height() {
     return;
   }
   setFixedHeight(std::min(m_max_displayed_items, m_list_layout->count()) *
-    m_list_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
+    m_list_layout->itemAt(0)->widget()->height() + BORDER_PADDING());
   m_scroll_area->setFixedHeight(height() - 1);
 }
 
