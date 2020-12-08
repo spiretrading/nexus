@@ -10,6 +10,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  const auto MAX_DISPLAYED_ITEMS = 5;
+
   auto BORDER_PADDING() {
     static auto padding = 2 * scale_width(1);
     return padding;
@@ -21,21 +23,18 @@ namespace {
     }
     auto last_index = menu.get_count() - 1;
     auto index = [&] {
-      auto index = menu.get_current();
-      if(!index) {
-        if(amount > 0) {
+      if(auto index = menu.get_current()) {
+        *index += amount;
+        if(index > last_index) {
           return 0;
-        } else {
+        } else if(index < 0) {
           return last_index;
         }
-      }
-      *index += amount;
-      if(index > last_index) {
+        return *index;
+      } else if(amount > 0) {
         return 0;
-      } else if(index < 0) {
-        return last_index;
       }
-      return *index;
+      return last_index;
     }();
     menu.set_current(index);
   }
@@ -44,8 +43,7 @@ namespace {
 DropDownMenu2::DropDownMenu2(std::vector<DropDownMenuItem2*> items,
     QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
-      m_selected_index(0),
-      m_max_displayed_items(5) {
+      m_selected_index(0) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_shadow = new DropShadow(true, false, this);
   setObjectName("DropDownMenu");
@@ -78,32 +76,10 @@ DropDownMenu2::DropDownMenu2(std::vector<DropDownMenuItem2*> items,
       m_list_layout->itemAt(0)->widget())->set_highlighted();
     m_selected_index = 0;
     m_current_index = 0;
-    m_selected_signal(get_value(*m_selected_index));
-    m_current_signal(get_value(*m_current_index));
   }
-  hide();
-}
-
-connection DropDownMenu2::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
-}
-
-connection DropDownMenu2::connect_hovered_signal(
-    const HoveredSignal::slot_type& slot) const {
-  return m_hovered_signal.connect(slot);
-}
-
-connection DropDownMenu2::connect_selected_signal(
-    const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
 }
 
 const QVariant& DropDownMenu2::get_value(int index) const {
-  if(m_list_layout->count() - 1 < index) {
-    static auto SENTINEL = QVariant();
-    return SENTINEL;
-  }
   return get_item(index)->get_value();
 }
 
@@ -112,9 +88,6 @@ boost::optional<int> DropDownMenu2::get_current() const {
 }
 
 void DropDownMenu2::set_current(int index) {
-  if(index >= get_count()) {
-    return;
-  }
   if(m_current_index) {
     get_item(*m_current_index)->reset_highlighted();
   }
@@ -130,13 +103,26 @@ boost::optional<int> DropDownMenu2::get_selected() const {
 }
 
 void DropDownMenu2::set_selected(int index) {
-  if(index < get_count()) {
-    on_item_selected(get_value(index), index);
-  }
+  on_item_selected(get_value(index), index);
 }
 
 int DropDownMenu2::get_count() const {
   return m_list_layout->count();
+}
+
+connection DropDownMenu2::connect_current_signal(
+    const CurrentSignal::slot_type& slot) const {
+  return m_current_signal.connect(slot);
+}
+
+connection DropDownMenu2::connect_hovered_signal(
+    const HoveredSignal::slot_type& slot) const {
+  return m_hovered_signal.connect(slot);
+}
+
+connection DropDownMenu2::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }
 
 DropDownMenuItem2* DropDownMenu2::get_item(int index) const {
@@ -157,15 +143,15 @@ void DropDownMenu2::update_height() {
   if(m_list_layout->count() == 0) {
     return;
   }
-  setFixedHeight(std::min(m_max_displayed_items, m_list_layout->count()) *
+  setFixedHeight(std::min(MAX_DISPLAYED_ITEMS, m_list_layout->count()) *
     m_list_layout->itemAt(0)->widget()->height() + BORDER_PADDING());
   m_scroll_area->setFixedHeight(height() - 1);
 }
 
 void DropDownMenu2::on_item_selected(const QVariant& value, int index) {
-  hide();
   m_current_index = index;
   m_selected_index = index;
+  hide();
   m_current_signal(value);
   m_selected_signal(value);
 }

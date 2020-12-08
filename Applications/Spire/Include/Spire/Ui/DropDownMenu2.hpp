@@ -52,7 +52,7 @@ namespace Spire {
       //! Returns the current index, or none if there is no current index.
       boost::optional<int> get_current() const;
   
-      //! Sets the index of the current item iff the given index is valid.
+      //! Sets the index of the current item.
       /*!
         \param index The current index.
       */
@@ -62,7 +62,7 @@ namespace Spire {
       //! selected item.
       boost::optional<int> get_selected() const;
 
-      //! Sets the selected index iff the given index is valid.
+      //! Sets the selected index.
       /*!
         \param index The selected index.
       */
@@ -87,7 +87,6 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       mutable HoveredSignal m_hovered_signal;
       mutable SelectedSignal m_selected_signal;
-      int m_max_displayed_items;
       DropShadow* m_shadow;
       QVBoxLayout* m_list_layout;
       ScrollArea* m_scroll_area;

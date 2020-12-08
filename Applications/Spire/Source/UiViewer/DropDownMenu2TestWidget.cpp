@@ -52,6 +52,7 @@ DropDownMenu2TestWidget::DropDownMenu2TestWidget(QWidget* parent)
   m_menu->connect_selected_signal([=] (const auto& item) {
     m_status_label->setText(QString("Selected: %1").arg(item.toString()));
   });
+  m_menu->hide();
   label->installEventFilter(this);
   window()->installEventFilter(this);
 }

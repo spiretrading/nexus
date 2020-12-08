@@ -42,9 +42,9 @@ namespace Spire {
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
-      QVariant m_value;
       mutable HoveredSignal m_hovered_signal;
       mutable SelectedSignal m_selected_signal;
+      QVariant m_value;
       bool m_is_highlighted;
   };
 }
