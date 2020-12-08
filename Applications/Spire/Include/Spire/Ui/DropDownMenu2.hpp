@@ -5,7 +5,7 @@
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DropDownItem.hpp"
+#include "Spire/Ui/DropDownMenuItem2.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
@@ -39,7 +39,7 @@ namespace Spire {
         \param parent The parent widget. Used to determine the position of the
                DropDownMenu.
       */
-      explicit DropDownMenu2(std::vector<DropDownItem*> items,
+      explicit DropDownMenu2(std::vector<DropDownMenuItem2*> items,
         QWidget* parent = nullptr);
 
       //! Returns the item's value at the given index, or an invalid QVariant
@@ -69,7 +69,7 @@ namespace Spire {
       void set_selected(int index);
   
       //! Returns the number of items in the menu.
-      int count() const;
+      int get_count() const;
   
       //! Connects a slot to the current changed signal.
       boost::signals2::connection connect_current_signal(
@@ -82,11 +82,6 @@ namespace Spire {
       //! Connects a slot to the selected signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
-
-    protected:
-      bool event(QEvent* event) override;
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
 
     private:
       mutable CurrentSignal m_current_signal;
@@ -101,12 +96,11 @@ namespace Spire {
       Beam::SignalHandling::ConnectionGroup m_item_hovered_connections;
       Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 
-      DropDownItem* get_item(int index) const;
-      void move_to_parent();
+      DropDownMenuItem2* get_item(int index) const;
       void scroll_to_current_index();
       void update_height();
       void on_item_selected(const QVariant& value, int index);
-      void on_item_selected(const QVariant& value, DropDownItem* item);
+      void on_item_selected(const QVariant& value, DropDownMenuItem2* item);
   };
 
   //! Decrements the current index of the given DropDownMenu.

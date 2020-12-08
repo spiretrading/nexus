@@ -22,6 +22,8 @@ namespace Spire {
     private:
       DropDownMenu2* m_menu;
       QLabel* m_status_label;
+
+      void move_menu();
   };
 }
 
