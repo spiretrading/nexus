@@ -7,7 +7,6 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -24,7 +23,7 @@ namespace Nexus::OrderExecutionService {
    * @param T The type of TimeClient used for Order timestamps.
    */
   template<typename C, typename T>
-  class SimulationOrderExecutionDriver : private boost::noncopyable {
+  class SimulationOrderExecutionDriver {
     public:
 
       /** The type of MarketDataClient to use. */
@@ -69,6 +68,10 @@ namespace Nexus::OrderExecutionService {
         m_securityOrderSimulators;
       Beam::IO::OpenState m_openState;
 
+      SimulationOrderExecutionDriver(
+        const SimulationOrderExecutionDriver&) = delete;
+      SimulationOrderExecutionDriver& operator =(
+        const SimulationOrderExecutionDriver&) = delete;
       SecurityOrderSimulator& LoadSimulator(const Security& security);
   };
 

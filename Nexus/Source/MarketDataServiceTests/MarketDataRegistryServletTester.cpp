@@ -40,7 +40,7 @@ namespace {
     MarketDataRegistry m_registry;
     boost::optional<TestServletContainer::Servlet::Servlet> m_registryServlet;
     boost::optional<TestServletContainer> m_container;
-    boost::optional<TestServiceProtocolClient> m_clientProtocol;
+    boost::optional<TestServiceProtocolClient> m_protocolClient;
 
     Fixture()
         : m_administrationEnvironment(
@@ -53,16 +53,16 @@ namespace {
       m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
         &*m_registryServlet), serverConnection,
         factory<std::unique_ptr<TriggerTimer>>());
-      m_clientProtocol.emplace(Initialize("test", *serverConnection),
+      m_protocolClient.emplace(Initialize("test", *serverConnection),
         Initialize());
       Nexus::Queries::RegisterQueryTypes(
-        Store(m_clientProtocol->GetSlots().GetRegistry()));
-      RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
-      RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
+        Store(m_protocolClient->GetSlots().GetRegistry()));
+      RegisterMarketDataRegistryServices(Store(m_protocolClient->GetSlots()));
+      RegisterMarketDataRegistryMessages(Store(m_protocolClient->GetSlots()));
       auto clientServiceLocatorClient =
         m_serviceLocatorEnvironment.MakeClient("client", "");
       auto authenticator = SessionAuthenticator(clientServiceLocatorClient);
-      authenticator(*m_clientProtocol);
+      authenticator(*m_protocolClient);
     }
 
     EntitlementDatabase BuildEntitlements() {
@@ -119,7 +119,7 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto query = SecurityMarketDataQuery();
     query.SetIndex(GetTsxTestSecurity());
     query.SetRange(Range::RealTime());
-    auto snapshot = m_clientProtocol->SendRequest<QueryBookQuotesService>(
+    auto snapshot = m_protocolClient->SendRequest<QueryBookQuotesService>(
       query);
     auto bookQuote = SecurityBookQuote(
       BookQuote("CHIC", false, DefaultMarkets::CHIC(),

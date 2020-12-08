@@ -38,6 +38,8 @@ namespace Nexus::OrderExecutionService {
       /** Returns the wrapped client. */
       Client& GetClient();
 
+      boost::optional<const Order&> LoadOrder(OrderId id);
+
       void QueryOrderRecords(const AccountQuery& query,
         Beam::ScopedQueueWriter<OrderRecord> queue);
 
@@ -94,6 +96,13 @@ namespace Nexus::OrderExecutionService {
   typename ToPythonOrderExecutionClient<C>::Client&
       ToPythonOrderExecutionClient<C>::GetClient() {
     return *m_client;
+  }
+
+  template<typename C>
+  boost::optional<const Order&> ToPythonOrderExecutionClient<C>::LoadOrder(
+      OrderId id) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->LoadOrder(id);
   }
 
   template<typename C>

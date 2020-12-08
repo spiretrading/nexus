@@ -39,6 +39,8 @@ namespace Nexus::OrderExecutionService {
       explicit OrderExecutionClientBox(
         const std::unique_ptr<OrderExecutionClientBox>& client);
 
+      boost::optional<const Order&> LoadOrder(OrderId id);
+
       void QueryOrderRecords(const AccountQuery& query,
         Beam::ScopedQueueWriter<OrderRecord> queue);
 
@@ -62,6 +64,7 @@ namespace Nexus::OrderExecutionService {
     private:
       struct VirtualOrderExecutionClient {
         virtual ~VirtualOrderExecutionClient() = default;
+        virtual boost::optional<const Order&> LoadOrder(OrderId id) = 0;
         virtual void QueryOrderRecords(const AccountQuery& query,
           Beam::ScopedQueueWriter<OrderRecord> queue) = 0;
         virtual void QueryOrderSubmissions(const AccountQuery& query,
@@ -83,6 +86,7 @@ namespace Nexus::OrderExecutionService {
 
         template<typename... Args>
         WrappedOrderExecutionClient(Args&&... args);
+        boost::optional<const Order&> LoadOrder(OrderId id) override;
         void QueryOrderRecords(const AccountQuery& query,
           Beam::ScopedQueueWriter<OrderRecord> queue) override;
         void QueryOrderSubmissions(const AccountQuery& query,
@@ -122,6 +126,11 @@ namespace Nexus::OrderExecutionService {
   inline OrderExecutionClientBox::OrderExecutionClientBox(
     const std::unique_ptr<OrderExecutionClientBox>& client)
     : OrderExecutionClientBox(*client) {}
+
+  inline boost::optional<const Order&> OrderExecutionClientBox::LoadOrder(
+      OrderId id) {
+    return m_client->LoadOrder(id);
+  }
 
   inline void OrderExecutionClientBox::QueryOrderRecords(
       const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
@@ -168,6 +177,13 @@ namespace Nexus::OrderExecutionService {
   OrderExecutionClientBox::WrappedOrderExecutionClient<C>::
     WrappedOrderExecutionClient(Args&&... args)
     : m_client(std::forward<Args>(args)...) {}
+
+  template<typename C>
+  boost::optional<const Order&>
+      OrderExecutionClientBox::WrappedOrderExecutionClient<C>::LoadOrder(
+        OrderId id) {
+    return m_client->LoadOrder(id);
+  }
 
   template<typename C>
   void OrderExecutionClientBox::WrappedOrderExecutionClient<C>::

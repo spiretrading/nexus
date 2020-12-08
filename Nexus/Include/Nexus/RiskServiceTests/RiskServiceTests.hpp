@@ -3,6 +3,7 @@
 
 namespace Nexus::RiskService::Tests {
   class RiskServiceTestEnvironment;
+  class TestRiskDataStore;
 }
 
 #endif

@@ -20,6 +20,7 @@ namespace Nexus::OrderExecutionService {
   template<typename B> class OrderExecutionClient;
   class OrderExecutionClientBox;
   struct OrderExecutionDataStore;
+  class OrderExecutionDataStoreBox;
   class OrderExecutionDataStoreException;
   using OrderExecutionPublisher = Beam::SnapshotPublisher<const Order*,
     std::vector<const Order*>>;
@@ -41,9 +42,7 @@ namespace Nexus::OrderExecutionService {
   class PrimitiveOrder;
   template<typename AdministrationClientType> class RiskStateCheck;
   template<typename C> class SqlOrderExecutionDataStore;
-  class VirtualOrderExecutionDataStore;
   class VirtualOrderExecutionDriver;
-  template<typename DataStoreType> class WrapperOrderExecutionDataStore;
   template<typename DriverType> class WrapperOrderExecutionDriver;
 
   /** Standard name for the order execution service. */

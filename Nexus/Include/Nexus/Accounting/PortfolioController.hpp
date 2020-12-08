@@ -88,14 +88,14 @@ namespace Nexus::Accounting {
         }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
     m_publisher.With([&] {
       for(auto& inventory : m_portfolio->GetBookkeeper().GetInventoryRange()) {
-        Subscribe(inventory.first.m_index);
+        Subscribe(inventory.m_position.m_key.m_index);
       }
       auto snapshot = boost::optional<
         std::vector<OrderExecutionService::ExecutionReportEntry>>();
       m_executionReportPublisher.Monitor(
         m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
-        std::bind(&PortfolioController::OnExecutionReport, this,
-        std::placeholders::_1)), Beam::Store(snapshot));
+          std::bind(&PortfolioController::OnExecutionReport, this,
+            std::placeholders::_1)), Beam::Store(snapshot));
       if(snapshot) {
         for(auto& report : *snapshot) {
           OnExecutionReport(report);
@@ -124,7 +124,7 @@ namespace Nexus::Accounting {
       }
       m_marketDataClient->QueryBboQuotes(Beam::Queries::BuildRealTimeQuery(
         security), m_tasks.GetSlot<BboQuote>(std::bind(
-        &PortfolioController::OnBbo, this, security, std::placeholders::_1)));
+          &PortfolioController::OnBbo, this, security, std::placeholders::_1)));
       m_securities.insert(security);
     }
   }
@@ -146,7 +146,7 @@ namespace Nexus::Accounting {
       securityEntry.m_valuation.m_currency);
     auto unrealizedCurrencyIterator =
       m_portfolio->GetUnrealizedProfitAndLosses().find(
-      securityEntry.m_valuation.m_currency);
+        securityEntry.m_valuation.m_currency);
     if(unrealizedCurrencyIterator ==
         m_portfolio->GetUnrealizedProfitAndLosses().end()) {
       update.m_unrealizedCurrency = Money::ZERO;
