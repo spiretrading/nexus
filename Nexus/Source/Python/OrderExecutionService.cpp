@@ -454,7 +454,7 @@ void Nexus::Python::ExportSqliteOrderExecutionDataStore(module& module) {
     SqlConnection<Viper::Sqlite3::Connection>>;
   using DataStore = ToPythonOrderExecutionDataStore<SqlDataStore>;
   ExportOrderExecutionDataStore<DataStore>(module,
-    "MySqlOrderExecutionDataStore").
+    "SqliteOrderExecutionDataStore").
     def(init([] (std::string path) {
       return std::make_shared<DataStore>([=] {
         return SqlConnection(Viper::Sqlite3::Connection(path));

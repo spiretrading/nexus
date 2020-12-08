@@ -56,7 +56,8 @@ if(UNIX)
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH})
+    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
+    dl)
 endif()
 if(WIN32)
   target_link_libraries(Python shlwapi)

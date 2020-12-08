@@ -132,7 +132,7 @@ namespace Nexus::Python {
       const std::string& name) {
     auto client = pybind11::class_<Client, std::shared_ptr<Client>>(module,
       name.c_str()).
-      def("load_order", [] (Client& self, OrderId id) ->
+      def("load_order", [] (Client& self, OrderExecutionService::OrderId id) ->
           const OrderExecutionService::Order* {
         auto order = self.LoadOrder(id);
         if(!order) {
@@ -183,8 +183,8 @@ namespace Nexus::Python {
           DataStore::*)(const OrderExecutionService::AccountQuery&)>(
             &DataStore::LoadOrderSubmissions)).
       def("load_execution_reports", static_cast<
-        std::vector<SequencedExecutionReport> (DataStore::*)(
-          const OrderExecutionService::AccountQuery&)>(
+        std::vector<OrderExecutionService::SequencedExecutionReport> (
+          DataStore::*)(const OrderExecutionService::AccountQuery&)>(
             &DataStore::LoadExecutionReports)).
       def("store", static_cast<void (DataStore::*)(
         const OrderExecutionService::SequencedAccountOrderInfo&)>(
