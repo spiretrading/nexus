@@ -82,7 +82,9 @@ bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
         m_menu->hide();
         break;
       case Qt::Key_Space:
-        // TODO: Select?
+        if(m_menu->isVisible() && m_menu->get_current()) {
+          m_menu->select_current_index();
+        }
         break;
     }
   } else if(event->type() == QEvent::MouseButtonPress) {

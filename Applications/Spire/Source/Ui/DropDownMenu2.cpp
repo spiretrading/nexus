@@ -56,6 +56,7 @@ DropDownMenu2::DropDownMenu2(std::vector<DropDownItem*> items,
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setWidgetResizable(true);
+  layout->addWidget(m_scroll_area);
   auto body = new QWidget(m_scroll_area);
   m_list_layout = new QVBoxLayout(body);
   m_list_layout->setContentsMargins({});
