@@ -39,7 +39,7 @@ namespace Nexus::OrderExecutionService {
       /** Returns the wrapped data store. */
       DataStore& GetDataStore();
 
-      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -97,7 +97,7 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename D>
-  boost::optional<SequencedOrderRecord>
+  boost::optional<SequencedAccountOrderRecord>
       ToPythonOrderExecutionDataStore<D>::LoadOrder(OrderId id) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadOrder(id);

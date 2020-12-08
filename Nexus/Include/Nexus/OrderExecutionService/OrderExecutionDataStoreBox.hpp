@@ -39,7 +39,7 @@ namespace Nexus::OrderExecutionService {
       explicit OrderExecutionDataStoreBox(
         const std::unique_ptr<OrderExecutionDataStoreBox>& dataStore);
 
-      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -61,7 +61,8 @@ namespace Nexus::OrderExecutionService {
     private:
       struct VirtualOrderExecutionDataStore {
         virtual ~VirtualOrderExecutionDataStore() = default;
-        virtual boost::optional<SequencedOrderRecord> LoadOrder(OrderId id) = 0;
+        virtual boost::optional<SequencedAccountOrderRecord> LoadOrder(
+          OrderId id) = 0;
         virtual std::vector<SequencedOrderRecord> LoadOrderSubmissions(
           const AccountQuery& query) = 0;
         virtual std::vector<SequencedExecutionReport> LoadExecutionReports(
@@ -83,7 +84,8 @@ namespace Nexus::OrderExecutionService {
 
         template<typename... Args>
         WrappedOrderExecutionDataStore(Args&&... args);
-        boost::optional<SequencedOrderRecord> LoadOrder(OrderId id) override;
+        boost::optional<SequencedAccountOrderRecord> LoadOrder(
+          OrderId id) override;
         std::vector<SequencedOrderRecord> LoadOrderSubmissions(
           const AccountQuery& query) override;
         std::vector<SequencedExecutionReport> LoadExecutionReports(
@@ -123,7 +125,7 @@ namespace Nexus::OrderExecutionService {
     const std::unique_ptr<OrderExecutionDataStoreBox>& dataStore)
     : OrderExecutionDataStoreBox(*dataStore) {}
 
-  inline boost::optional<SequencedOrderRecord>
+  inline boost::optional<SequencedAccountOrderRecord>
       OrderExecutionDataStoreBox::LoadOrder(OrderId id) {
     return m_dataStore->LoadOrder(id);
   }
@@ -171,7 +173,7 @@ namespace Nexus::OrderExecutionService {
     : m_dataStore(std::forward<Args>(args)...) {}
 
   template<typename D>
-  boost::optional<SequencedOrderRecord>
+  boost::optional<SequencedAccountOrderRecord>
       OrderExecutionDataStoreBox::WrappedOrderExecutionDataStore<D>::LoadOrder(
         OrderId id) {
     return m_dataStore->LoadOrder(id);

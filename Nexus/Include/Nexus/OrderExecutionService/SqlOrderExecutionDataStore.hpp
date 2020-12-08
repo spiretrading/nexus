@@ -53,7 +53,7 @@ namespace Nexus::OrderExecutionService {
 
       ~SqlOrderExecutionDataStore();
 
-      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -180,13 +180,16 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C>
-  boost::optional<SequencedOrderRecord>
+  boost::optional<SequencedAccountOrderRecord>
       SqlOrderExecutionDataStore<C>::LoadOrder(OrderId id) {
     auto orders = m_submissionDataStore.Load(Viper::sym("order_id") == id);
     if(orders.empty()) {
       return boost::none;
     }
-    return LoadRecord(std::move(orders.front()));
+    auto record = LoadRecord(std::move(orders.front()));
+    return Beam::Queries::SequencedValue(Beam::Queries::IndexedValue(
+      std::move(*record), record->m_info.m_fields.m_account),
+      record.GetSequence());
   }
 
   template<typename C>

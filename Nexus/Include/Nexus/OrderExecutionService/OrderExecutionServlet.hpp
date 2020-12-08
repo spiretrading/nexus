@@ -361,22 +361,21 @@ namespace Nexus::OrderExecutionService {
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::OnLoadOrderByIdRequest(
-    Beam::Services::RequestToken<ServiceProtocolClient, LoadOrderByIdService>& 
-      request, OrderId id) {
+      Beam::Services::RequestToken<ServiceProtocolClient, LoadOrderByIdService>& 
+        request, OrderId id) {
     auto& session = request.GetSession();
     auto order = m_dataStore->LoadOrder(id);
-    if(!order || !session.HasOrderExecutionPermission(
-        (*order)->m_info.m_fields.m_account)) {
+    if(!order || !session.HasOrderExecutionPermission((*order)->GetIndex())) {
       request.SetResult(boost::none);
       return;
     }
-    if(!(*order)->m_executionReports.empty() &&
-        IsTerminal((*order)->m_executionReports.back().m_status)) {
+    if(!(**order)->m_executionReports.empty() &&
+        IsTerminal((**order)->m_executionReports.back().m_status)) {
       request.SetResult(std::move(order));
       return;
     }
     auto query = AccountQuery();
-    query.SetIndex((*order)->m_info.m_fields.m_account);
+    query.SetIndex((*order)->GetIndex());
     query.SetRange(order->GetSequence(), order->GetSequence());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
     auto executionReportResult = ExecutionReportQueryResult();
@@ -386,7 +385,7 @@ namespace Nexus::OrderExecutionService {
     order = m_dataStore->LoadOrder(id);
     m_orderSubscriptions.Commit(query.GetIndex(),
       std::move(executionReportResult), [&] (auto executionReportResult) {
-        auto& executionReports = (*order)->m_executionReports;
+        auto& executionReports = (**order)->m_executionReports;
         for(auto& executionReport : executionReportResult.m_snapshot) {
           if(executionReport->m_id != id) {
             continue;

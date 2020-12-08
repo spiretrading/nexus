@@ -84,7 +84,7 @@ TEST_SUITE("OrderExecutionDataStore") {
     auto loadedRecord = dataStore.LoadOrder(100);
     REQUIRE(loadedRecord.is_initialized());
     REQUIRE(loadedRecord->GetSequence() == Beam::Queries::Sequence(234));
-    REQUIRE((*loadedRecord)->m_executionReports ==
+    REQUIRE((**loadedRecord)->m_executionReports ==
       records.front()->m_executionReports);
   }
 }

@@ -46,7 +46,8 @@ namespace Nexus::OrderExecutionService::Tests {
         const OrderId* m_id;
 
         /** The OrderRecord to return to the caller. */
-        Beam::Routines::Eval<boost::optional<SequencedOrderRecord>> m_result;
+        Beam::Routines::Eval<boost::optional<SequencedAccountOrderRecord>>
+          m_result;
       };
 
       /** Stores a call to the LoadOrderSubmissions method. */
@@ -122,7 +123,7 @@ namespace Nexus::OrderExecutionService::Tests {
       /** Returns an object publishing pending operations. */
       const Beam::Publisher<std::shared_ptr<Operation>>& GetPublisher() const;
 
-      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -175,7 +176,8 @@ namespace Nexus::OrderExecutionService::Tests {
       m_mode(mode) {}
 
   inline TestOrderExecutionDataStore::~TestOrderExecutionDataStore() {
-    m_openState.Close();
+    SetMode(Mode::UNSUPERVISED);
+    Close();
   }
 
   inline int TestOrderExecutionDataStore::GetSequence() const {
@@ -197,11 +199,11 @@ namespace Nexus::OrderExecutionService::Tests {
     return m_publisher;
   }
 
-  inline boost::optional<SequencedOrderRecord>
+  inline boost::optional<SequencedAccountOrderRecord>
       TestOrderExecutionDataStore::LoadOrder(OrderId id) {
     m_openState.EnsureOpen();
     auto result =
-      Beam::Routines::Async<boost::optional<SequencedOrderRecord>>();
+      Beam::Routines::Async<boost::optional<SequencedAccountOrderRecord>>();
     auto operation = std::make_shared<LoadOrderOperation>();
     operation->m_sequence = ++m_sequence;
     operation->m_id = &id;
@@ -304,6 +306,7 @@ namespace Nexus::OrderExecutionService::Tests {
       }
     }
     result.Get();
+    m_openState.Close();
   }
 }
 

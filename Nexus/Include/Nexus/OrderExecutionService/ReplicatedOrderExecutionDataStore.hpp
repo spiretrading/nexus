@@ -23,7 +23,7 @@ namespace Nexus::OrderExecutionService {
 
       ~ReplicatedOrderExecutionDataStore();
 
-      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -60,7 +60,7 @@ namespace Nexus::OrderExecutionService {
     Close();
   }
 
-  inline boost::optional<SequencedOrderRecord>
+  inline boost::optional<SequencedAccountOrderRecord>
       ReplicatedOrderExecutionDataStore::LoadOrder(OrderId id) {
     if(m_duplicateDataStores.empty()) {
       return m_primaryDataStore.LoadOrder(id);

@@ -33,10 +33,10 @@ namespace Nexus::OrderExecutionService {
     /**
      * Loads an Order from its id.
      * @param id The id of the Order to load.
-     * @return The SequencedOrderRecord with the specified id.
+     * @return The SequencedAccountOrderRecord with the specified id.
      */
     (LoadOrderByIdService, "Nexus.OrderExecutionService.LoadOrderByIdService",
-      boost::optional<SequencedOrderRecord>, OrderId, id),
+      boost::optional<SequencedAccountOrderRecord>, OrderId, id),
 
     /**
      * Submits a query for an account's Order submissions.

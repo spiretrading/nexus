@@ -23,7 +23,7 @@ namespace Nexus::OrderExecutionService {
       /** Returns all the ExecutionReports stored. */
       std::vector<SequencedAccountExecutionReport> LoadExecutionReports() const;
 
-      boost::optional<SequencedOrderRecord> LoadOrder(OrderId id);
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -49,7 +49,8 @@ namespace Nexus::OrderExecutionService {
       Beam::SynchronizedUnorderedSet<OrderId> m_liveOrders;
       DataStore<OrderInfo> m_orderSubmissionDataStore;
       DataStore<ExecutionReport> m_executionReportDataStore;
-      Beam::SynchronizedUnorderedMap<OrderId, SequencedOrderInfo> m_orders;
+      Beam::SynchronizedUnorderedMap<OrderId, SequencedAccountOrderInfo>
+        m_orders;
       mutable Beam::SynchronizedUnorderedMap<
         OrderId, Beam::SynchronizedVector<ExecutionReport>> m_executionReports;
   };
@@ -76,15 +77,15 @@ namespace Nexus::OrderExecutionService {
     return m_executionReportDataStore.LoadAll();
   }
 
-  inline boost::optional<SequencedOrderRecord>
+  inline boost::optional<SequencedAccountOrderRecord>
       LocalOrderExecutionDataStore::LoadOrder(OrderId id) {
     auto info = m_orders.FindValue(id);
     if(!info) {
       return boost::none;
     }
-    return Beam::Queries::SequencedValue(
-      OrderRecord(**info, m_executionReports.Get(id).Acquire()),
-      info->GetSequence());
+    return Beam::Queries::SequencedValue(Beam::Queries::IndexedValue(
+      OrderRecord(***info, m_executionReports.Get(id).Acquire()),
+      (*info)->GetIndex()), info->GetSequence());
   }
 
   inline std::vector<SequencedOrderRecord>
@@ -109,8 +110,7 @@ namespace Nexus::OrderExecutionService {
   inline void LocalOrderExecutionDataStore::Store(
       const SequencedAccountOrderInfo& orderInfo) {
     m_orderSubmissionDataStore.Store(orderInfo);
-    m_orders.Insert((*orderInfo)->m_orderId,
-      Beam::Queries::SequencedValue(**orderInfo, orderInfo.GetSequence()));
+    m_orders.Insert((*orderInfo)->m_orderId, orderInfo);
     m_liveOrders.Insert((*orderInfo)->m_orderId);
   }
 
@@ -119,8 +119,7 @@ namespace Nexus::OrderExecutionService {
     m_orderSubmissionDataStore.Store(orderInfo);
     for(auto& info : orderInfo) {
       m_liveOrders.Insert((*info)->m_orderId);
-      m_orders.Insert((*info)->m_orderId,
-        Beam::Queries::SequencedValue(**info, info.GetSequence()));
+      m_orders.Insert((*info)->m_orderId, info);
     }
   }
 

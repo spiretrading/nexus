@@ -43,22 +43,10 @@ namespace {
     using Return = typename ReturnEval::Type;
     auto receiver = Async<Return>();
     Spawn([&] {
-      try {
-        if constexpr(std::is_same_v<Return, void>) {
-          std::apply([&] (auto&&... args) {
-            (dataStore.*method)(std::forward<decltype(args)>(args)...);
-          }, std::move(inputs));
-          receiver.GetEval().SetResult();
-        } else {
-          receiver.GetEval().SetResult(
-            std::apply([&] (auto&&... args) -> decltype(auto) {
-              return (dataStore.*method)(std::forward<decltype(args)>(args)...);
-            }, std::move(inputs)));
-        }
-      } catch(const std::exception&) {
-        receiver.GetEval().SetException(std::current_exception());
-      }
-    });
+      return std::apply([&] (auto&&... args) -> decltype(auto) {
+        return (dataStore.*method)(std::forward<decltype(args)>(args)...);
+      }, std::move(inputs));
+    }, receiver.GetEval());
     auto operation = std::dynamic_pointer_cast<Operation>(operations.Pop());
     REQUIRE(operation);
     std::apply([&] (auto&&... args) {
@@ -76,20 +64,10 @@ TEST_SUITE("TestOrderExecutionDataStore") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "load_order") {
-    auto record = SequencedValue(OrderRecord(OrderInfo(
+    auto record = SequencedValue(IndexedValue(OrderRecord(OrderInfo(
       OrderFields::BuildLimitOrder(SECURITY, Side::BID, 230, Money::ONE), 100,
         time_from_string("2020-04-27 22:01:16")), {}),
-      Beam::Queries::Sequence(200));
-    TestReifiedMethod<TestOrderExecutionDataStore::LoadOrderOperation>(
-      m_dataStore, &TestOrderExecutionDataStore::LoadOrder, *m_operations,
-      std::tuple(OrderId(100)), std::tuple(record));
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "load_order") {
-    auto record = SequencedValue(OrderRecord(OrderInfo(
-      OrderFields::BuildLimitOrder(SECURITY, Side::BID, 230, Money::ONE), 100,
-        time_from_string("2020-04-27 22:01:16")), {}),
-      Beam::Queries::Sequence(200));
+      ACCOUNT), Beam::Queries::Sequence(200));
     TestReifiedMethod<TestOrderExecutionDataStore::LoadOrderOperation>(
       m_dataStore, &TestOrderExecutionDataStore::LoadOrder, *m_operations,
       std::tuple(OrderId(100)), std::tuple(record));

@@ -47,27 +47,28 @@ namespace {
         MetaOrderExecutionServlet<IncrementalTimeClient,
           ServiceLocatorClientBox, UidClientBox, AdministrationClientBox,
           std::shared_ptr<MockOrderExecutionDriver>,
-          std::shared_ptr<LocalOrderExecutionDataStore>>>;
+          std::shared_ptr<TestOrderExecutionDataStore>>>;
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     UidServiceTestEnvironment m_uidServiceEnvironment;
     optional<AdministrationServiceTestEnvironment>
       m_administrationServiceEnvironment;
     optional<ServiceLocatorClientBox> m_clientServiceLocatorClient;
     std::shared_ptr<MockOrderExecutionDriver> m_driver;
-    std::shared_ptr<LocalOrderExecutionDataStore> m_dataStore;
+    std::shared_ptr<LocalOrderExecutionDataStore> m_baseDataStore;
+    std::shared_ptr<TestOrderExecutionDataStore> m_dataStore;
     optional<TestServletContainer> m_container;
     optional<TestServiceProtocolClient> m_clientProtocol;
 
     Fixture() {
       auto servicesDirectory =
         m_serviceLocatorEnvironment.GetRoot().MakeDirectory("services",
-        DirectoryEntry::GetStarDirectory());
+          DirectoryEntry::GetStarDirectory());
       auto administratorsDirectory =
         m_serviceLocatorEnvironment.GetRoot().MakeDirectory("administrators",
-        DirectoryEntry::GetStarDirectory());
+          DirectoryEntry::GetStarDirectory());
       auto administrationAccount =
         m_serviceLocatorEnvironment.GetRoot().MakeAccount(
-        "administration_service", "", servicesDirectory);
+          "administration_service", "", servicesDirectory);
       m_serviceLocatorEnvironment.GetRoot().StorePermissions(
         administrationAccount, DirectoryEntry::GetStarDirectory(),
         Permissions(~0));
@@ -80,7 +81,9 @@ namespace {
       auto servletServiceLocatorClient = m_serviceLocatorEnvironment.MakeClient(
         "order_execution_service", "");
       m_driver = std::make_shared<MockOrderExecutionDriver>();
-      m_dataStore = std::make_shared<LocalOrderExecutionDataStore>();
+      m_baseDataStore = std::make_shared<LocalOrderExecutionDataStore>();
+      m_dataStore = std::make_shared<TestOrderExecutionDataStore>(
+        OrderExecutionDataStoreBox(m_baseDataStore));
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(servletServiceLocatorClient,
         Initialize(pos_infin, GetDefaultMarketDatabase(),
@@ -111,37 +114,34 @@ namespace {
 
 TEST_SUITE("OrderExecutionServlet") {
   TEST_CASE_FIXTURE(Fixture, "new_order_single") {
+    auto clientReportAsync = Async<ExecutionReport>();
+    AddMessageSlot<OrderUpdateMessage>(Store(m_clientProtocol->GetSlots()),
+      [&] (auto& client, auto& report) {
+        clientReportAsync.GetEval().SetResult(report);
+      });
     auto orderFields = OrderFields::BuildLimitOrder(
       m_clientServiceLocatorClient->GetAccount(), TST,
       DefaultCurrencies::USD(), Side::BID, "TEST", 100, Money::CENT);
-    auto report = ExecutionReport();
-    auto messageAsync = Async<void>();
-    AddMessageSlot<OrderUpdateMessage>(Store(m_clientProtocol->GetSlots()),
-      [&] (auto& client, auto& receivedReport) {
-        report = receivedReport;
-        messageAsync.GetEval().SetResult();
-      });
-    auto newOrder = m_clientProtocol->SendRequest<NewOrderSingleService>(
-      orderFields);
+    m_clientProtocol->SendRequest<NewOrderSingleService>(orderFields);
     auto driverMonitor = std::make_shared<Queue<PrimitiveOrder*>>();
     m_driver->GetPublisher().Monitor(driverMonitor);
-    auto receivedOrder = driverMonitor->Pop();
-    messageAsync.Get();
-    messageAsync.Reset();
-    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
-    auto receivedOrderReport = ExecutionReport();
-    receivedOrderReport.m_id = receivedOrder->GetInfo().m_orderId;
-    receivedOrderReport = ExecutionReport::BuildUpdatedReport(report,
+    auto serverOrder = driverMonitor->Pop();
+    auto clientInitialReport = clientReportAsync.Get();
+    clientReportAsync.Reset();
+    REQUIRE(clientInitialReport.m_status == OrderStatus::PENDING_NEW);
+    auto serverNewReport = ExecutionReport();
+    serverNewReport.m_id = serverOrder->GetInfo().m_orderId;
+    serverNewReport = ExecutionReport::BuildUpdatedReport(clientInitialReport,
       OrderStatus::NEW, microsec_clock::universal_time());
-    receivedOrder->Update(receivedOrderReport);
-    messageAsync.Get();
-    messageAsync.Reset();
-    REQUIRE(report.m_status == OrderStatus::NEW);
-    receivedOrderReport = ExecutionReport::BuildUpdatedReport(report,
-      OrderStatus::EXPIRED, microsec_clock::universal_time());
-    receivedOrder->Update(receivedOrderReport);
-    messageAsync.Get();
-    REQUIRE(report.m_status == OrderStatus::EXPIRED);
+    serverOrder->Update(serverNewReport);
+    auto clientNewReport = clientReportAsync.Get();
+    clientReportAsync.Reset();
+    REQUIRE(clientNewReport.m_status == OrderStatus::NEW);
+    auto serverExpiredReport = ExecutionReport::BuildUpdatedReport(
+      clientNewReport, OrderStatus::EXPIRED, microsec_clock::universal_time());
+    serverOrder->Update(serverExpiredReport);
+    auto clientExpiredReport = clientReportAsync.Get();
+    REQUIRE(clientExpiredReport.m_status == OrderStatus::EXPIRED);
   }
 
   TEST_CASE_FIXTURE(Fixture, "query_order_ids") {
@@ -179,5 +179,80 @@ TEST_SUITE("OrderExecutionServlet") {
     REQUIRE(snapshot.m_snapshot.size() == 2);
     REQUIRE(snapshot.m_snapshot[0]->m_info.m_orderId == 12);
     REQUIRE(snapshot.m_snapshot[1]->m_info.m_orderId == 36);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "load_order_without_permission") {
+    auto account = DirectoryEntry::MakeAccount(599, "sephi");
+    auto orderA = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+      Money::ONE), 12, time_from_string("2020-03-12 16:06:12"));
+    m_dataStore->Store(SequencedValue(IndexedValue(orderA, account),
+      Beam::Queries::Sequence(44)));
+    auto order = m_clientProtocol->SendRequest<LoadOrderByIdService>(12);
+    REQUIRE(!order);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "load_order_with_permission") {
+    auto account = m_clientServiceLocatorClient->GetAccount();
+    auto orderA = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+      Money::ONE), 12, time_from_string("2020-03-12 16:06:12"));
+    m_dataStore->Store(SequencedValue(IndexedValue(orderA, account),
+      Beam::Queries::Sequence(44)));
+    auto order = m_clientProtocol->SendRequest<LoadOrderByIdService>(12);
+    REQUIRE(order.has_value());
+    REQUIRE((*order)->GetValue().m_info == orderA);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "load_order_with_updates") {
+    auto reportAsync = Async<ExecutionReport>();
+    AddMessageSlot<OrderUpdateMessage>(Store(m_clientProtocol->GetSlots()),
+      [&] (auto& client, auto& report) {
+        reportAsync.GetEval().SetResult(report);
+      });
+    auto orderFields = OrderFields::BuildLimitOrder(TST,
+      DefaultCurrencies::USD(), Side::BID, "TEST", 100, Money::CENT);
+    auto newOrder = m_clientProtocol->SendRequest<NewOrderSingleService>(
+      orderFields);
+    auto driverMonitor = std::make_shared<Queue<PrimitiveOrder*>>();
+    m_driver->GetPublisher().Monitor(driverMonitor);
+    auto receivedOrder = driverMonitor->Pop();
+    auto initialReport = reportAsync.Get();
+    REQUIRE(initialReport.m_status == OrderStatus::PENDING_NEW);
+    m_dataStore->SetMode(TestOrderExecutionDataStore::Mode::SUPERVISED);
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestOrderExecutionDataStore::Operation>>>();
+    m_dataStore->GetPublisher().Monitor(operations);
+    auto orderId = (*newOrder)->m_orderId;
+    auto loadResult = Async<optional<SequencedAccountOrderRecord>>();
+    Spawn([&] {
+      return m_clientProtocol->SendRequest<LoadOrderByIdService>(orderId);
+    }, loadResult.GetEval());
+    auto loadOperation = std::dynamic_pointer_cast<
+      TestOrderExecutionDataStore::LoadOrderOperation>(operations->Pop());
+    REQUIRE(loadOperation);
+    REQUIRE(*loadOperation->m_id == orderId);
+    auto account = m_clientServiceLocatorClient->GetAccount();
+    auto initialLoadResult = SequencedValue(IndexedValue(OrderRecord(OrderInfo(
+      orderFields, account, orderId, false,
+      time_from_string("2016-11-30 08:11:53")), std::vector{initialReport}),
+      account), Beam::Queries::Sequence(417));
+    loadOperation->m_result.SetResult(initialLoadResult);
+    auto reloadOperation = std::dynamic_pointer_cast<
+      TestOrderExecutionDataStore::LoadOrderOperation>(operations->Pop());
+    REQUIRE(reloadOperation);
+    REQUIRE(*reloadOperation->m_id == orderId);
+    auto newReport = ExecutionReport::BuildUpdatedReport(initialReport,
+      OrderStatus::NEW, time_from_string("2016-11-30 08:11:54"));
+    receivedOrder->Update(newReport);
+    auto storeOperation = std::dynamic_pointer_cast<
+      TestOrderExecutionDataStore::StoreExecutionReportOperation>(
+        operations->Pop());
+    REQUIRE(storeOperation);
+    REQUIRE((**storeOperation->m_executionReport)->m_status ==
+      OrderStatus::NEW);
+    storeOperation->m_result.SetResult();
+    reloadOperation->m_result.SetResult(initialLoadResult);
+    auto receivedRecord = loadResult.Get();
+    REQUIRE((**receivedRecord)->m_executionReports.size() == 2);
+    m_dataStore->SetMode(TestOrderExecutionDataStore::Mode::UNSUPERVISED);
   }
 }

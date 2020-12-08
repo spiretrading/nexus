@@ -24,6 +24,7 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::Queries;
 
 namespace {
+  const auto ACCOUNT = DirectoryEntry::MakeAccount(416, "tester");
   const auto TST = Security("TST", DefaultMarkets::NYSE(),
     DefaultCountries::US());
 
@@ -65,13 +66,14 @@ TEST_SUITE("OrderExecutionClient") {
     auto serverClient = (TestServiceProtocolServer::ServiceProtocolClient*)(
       nullptr);
     LoadOrderByIdService::AddSlot(Store(m_server->GetSlots()),
-      [&] (auto& client, auto id) -> optional<SequencedOrderRecord> {
+      [&] (auto& client, auto id) -> optional<SequencedAccountOrderRecord> {
         serverClient = &client;
         if(id == 10) {
           auto record = OrderRecord(OrderInfo(OrderFields::BuildLimitOrder(
             TST, Side::BID, 100, Money::CENT), id,
             time_from_string("2020-10-04 13:01:12")), {});
-          return SequencedValue(record, Beam::Queries::Sequence(id));
+          return SequencedValue(IndexedValue(record, ACCOUNT),
+            Beam::Queries::Sequence(id));
         } else if(id == 20) {
           throw ServiceRequestException("Internal server error.");
         }

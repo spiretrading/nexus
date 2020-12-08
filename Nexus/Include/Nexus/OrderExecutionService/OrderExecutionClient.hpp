@@ -167,7 +167,7 @@ namespace Nexus::OrderExecutionService {
       auto client = m_clientHandler.GetClient();
       if(auto record = client->template SendRequest<LoadOrderByIdService>(id)) {
         return boost::optional<const Order&>(
-          *static_cast<const Order*>(LoadOrder(*record).get()));
+          *static_cast<const Order*>(LoadOrder(**record).get()));
       }
       return boost::optional<const Order&>();
     }, "Failed to load order: " + boost::lexical_cast<std::string>(id));
