@@ -257,6 +257,7 @@ namespace Python {
     m_registryClient.reset();
     m_serviceLocatorClient.reset();
     m_clients.reset();
+    m_openState.Close();
   }
 
   template<typename C>
