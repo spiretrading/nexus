@@ -32,7 +32,7 @@
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/RiskStateCheck.hpp"
 #include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
-#include "SimulationOrderExecutionServer/SimulationOrderExecutionDriver.hpp"
+#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 #include "Version.hpp"
 
 using namespace Beam;

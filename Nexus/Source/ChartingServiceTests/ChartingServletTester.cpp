@@ -27,16 +27,16 @@ namespace {
     TestServiceClients m_serviceClients;
     boost::optional<ServletContainer> m_container;
     boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
-      m_clientProtocol;
+      m_protocolClient;
 
     Fixture()
         : m_serviceClients(Ref(m_environment)) {
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(m_serviceClients.GetMarketDataClient()),
         serverConnection, factory<std::unique_ptr<TriggerTimer>>());
-      m_clientProtocol.emplace(Initialize("test", *serverConnection),
+      m_protocolClient.emplace(Initialize("test", *serverConnection),
         Initialize());
-      RegisterChartingServices(Store(m_clientProtocol->GetSlots()));
+      RegisterChartingServices(Store(m_protocolClient->GetSlots()));
     }
   };
 }
@@ -58,7 +58,7 @@ TEST_SUITE("ChartingServlet") {
       expectedSeries.emplace_back(timestamp, timestamp + interval, price, price,
         price, price);
     }
-    auto result = m_clientProtocol->SendRequest<
+    auto result = m_protocolClient->SendRequest<
       LoadSecurityTimePriceSeriesService>(security, startTime, endTime,
         interval);
     REQUIRE(result.series == expectedSeries);
