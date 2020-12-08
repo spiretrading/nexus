@@ -178,9 +178,9 @@ boost::optional<int> DropDownMenu2::get_selected() const {
   return m_selected_index;
 }
 
-void DropDownMenu2::select_current_index() {
-  if(m_current_index) {
-    on_item_selected(get_value(*m_current_index), *m_current_index);
+void DropDownMenu2::set_selected(int index) {
+  if(index < count()) {
+    on_item_selected(get_value(index), index);
   }
 }
 

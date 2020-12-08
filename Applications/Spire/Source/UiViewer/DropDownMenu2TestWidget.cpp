@@ -75,7 +75,7 @@ bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
       case Qt::Key_Enter:
       case Qt::Key_Return:
         if(m_menu->isVisible() && m_menu->get_current()) {
-          m_menu->select_current_index();
+          m_menu->set_selected(*m_menu->get_current());
         }
         break;
       case Qt::Key_Escape:
@@ -83,7 +83,7 @@ bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
         break;
       case Qt::Key_Space:
         if(m_menu->isVisible() && m_menu->get_current()) {
-          m_menu->select_current_index();
+          m_menu->set_selected(*m_menu->get_current());
         }
         break;
     }

@@ -62,8 +62,11 @@ namespace Spire {
       //! selected item.
       boost::optional<int> get_selected() const;
 
-      //! Selects the current index iff the current index is valid.
-      void select_current_index();
+      //! Sets the selected index iff the given index is valid.
+      /*!
+        \param index The selected index.
+      */
+      void set_selected(int index);
   
       //! Returns the number of items in the menu.
       int count() const;
