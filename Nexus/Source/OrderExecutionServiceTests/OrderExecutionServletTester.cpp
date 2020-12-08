@@ -14,6 +14,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionServlet.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp"
+#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

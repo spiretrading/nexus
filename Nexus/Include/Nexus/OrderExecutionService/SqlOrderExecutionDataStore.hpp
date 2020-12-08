@@ -110,15 +110,14 @@ namespace Nexus::OrderExecutionService {
       const typename SqlOrderExecutionDataStore<
       Connection>::AccountSourceFunction& accountSourceFunction) {
     auto& primaryConnectionBuilder = connectionBuilders.front();
-    auto primary = MakeVirtualOrderExecutionDataStore(
-      std::make_unique<SqlOrderExecutionDataStore<Connection>>(
-      primaryConnectionBuilder, accountSourceFunction));
-    auto duplicateDataStores =
-      std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>();
+    auto primary = OrderExecutionDataStoreBox(
+      std::in_place_type<SqlOrderExecutionDataStore<Connection>>,
+      primaryConnectionBuilder, accountSourceFunction);
+    auto duplicateDataStores = std::vector<OrderExecutionDataStoreBox>();
     for(auto i = std::size_t(1); i < connectionBuilders.size(); ++i) {
-      auto duplicate = MakeVirtualOrderExecutionDataStore(
-        std::make_unique<SqlOrderExecutionDataStore<Connection>>(
-        connectionBuilders[i], accountSourceFunction));
+      auto duplicate = OrderExecutionDataStoreBox(
+        std::in_place_type<SqlOrderExecutionDataStore<Connection>>,
+        connectionBuilders[i], accountSourceFunction);
       duplicateDataStores.push_back(std::move(duplicate));
     }
     auto dataStore = std::make_unique<ReplicatedOrderExecutionDataStore>(

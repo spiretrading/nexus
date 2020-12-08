@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/atomic/atomic.hpp>
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionDataStore.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDataStoreBox.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OrderExecutionService {
@@ -18,9 +18,8 @@ namespace Nexus::OrderExecutionService {
        * @param duplicateDataStores The data stores to replicate the primary to.
        */
       ReplicatedOrderExecutionDataStore(
-        std::unique_ptr<VirtualOrderExecutionDataStore> primaryDataStore,
-        std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
-          duplicateDataStores);
+        OrderExecutionDataStoreBox primaryDataStore,
+        std::vector<OrderExecutionDataStoreBox> duplicateDataStores);
 
       ~ReplicatedOrderExecutionDataStore();
 
@@ -39,9 +38,8 @@ namespace Nexus::OrderExecutionService {
       void Close();
 
     private:
-      std::unique_ptr<VirtualOrderExecutionDataStore> m_primaryDataStore;
-      std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
-        m_duplicateDataStores;
+      OrderExecutionDataStoreBox m_primaryDataStore;
+      std::vector<OrderExecutionDataStoreBox> m_duplicateDataStores;
       boost::atomic<std::size_t> m_nextDataStore;
 
       ReplicatedOrderExecutionDataStore(
@@ -51,10 +49,9 @@ namespace Nexus::OrderExecutionService {
   };
 
   inline ReplicatedOrderExecutionDataStore::ReplicatedOrderExecutionDataStore(
-    std::unique_ptr<VirtualOrderExecutionDataStore> primaryDataStore,
-    std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>
-      duplicateDataStores)
-    : m_primaryDataStore{std::move(primaryDataStore)},
+    OrderExecutionDataStoreBox primaryDataStore,
+    std::vector<OrderExecutionDataStoreBox> duplicateDataStores)
+    : m_primaryDataStore(std::move(primaryDataStore)),
       m_duplicateDataStores(std::move(duplicateDataStores)),
       m_nextDataStore(0) {}
 
@@ -66,56 +63,56 @@ namespace Nexus::OrderExecutionService {
   inline boost::optional<SequencedOrderRecord>
       ReplicatedOrderExecutionDataStore::LoadOrder(OrderId id) {
     if(m_duplicateDataStores.empty()) {
-      return m_primaryDataStore->LoadOrder(id);
+      return m_primaryDataStore.LoadOrder(id);
     }
     auto index = ++m_nextDataStore;
     index = index % m_duplicateDataStores.size();
-    return m_duplicateDataStores[index]->LoadOrder(id);
+    return m_duplicateDataStores[index].LoadOrder(id);
   }
 
   inline std::vector<SequencedOrderRecord>
       ReplicatedOrderExecutionDataStore::LoadOrderSubmissions(
       const AccountQuery& query) {
     if(m_duplicateDataStores.empty()) {
-      return m_primaryDataStore->LoadOrderSubmissions(query);
+      return m_primaryDataStore.LoadOrderSubmissions(query);
     }
     auto index = ++m_nextDataStore;
     index = index % m_duplicateDataStores.size();
-    return m_duplicateDataStores[index]->LoadOrderSubmissions(query);
+    return m_duplicateDataStores[index].LoadOrderSubmissions(query);
   }
 
   inline std::vector<SequencedExecutionReport>
       ReplicatedOrderExecutionDataStore::LoadExecutionReports(
       const AccountQuery& query) {
     if(m_duplicateDataStores.empty()) {
-      return m_primaryDataStore->LoadExecutionReports(query);
+      return m_primaryDataStore.LoadExecutionReports(query);
     }
     auto index = ++m_nextDataStore;
     index = index % m_duplicateDataStores.size();
-    return m_duplicateDataStores[index]->LoadExecutionReports(query);
+    return m_duplicateDataStores[index].LoadExecutionReports(query);
   }
 
   inline void ReplicatedOrderExecutionDataStore::Store(
       const SequencedAccountOrderInfo& orderInfo) {
-    m_primaryDataStore->Store(orderInfo);
+    m_primaryDataStore.Store(orderInfo);
     for(auto& dataStore : m_duplicateDataStores) {
-      dataStore->Store(orderInfo);
+      dataStore.Store(orderInfo);
     }
   }
 
   inline void ReplicatedOrderExecutionDataStore::Store(
       const SequencedAccountExecutionReport& executionReport) {
-    m_primaryDataStore->Store(executionReport);
+    m_primaryDataStore.Store(executionReport);
     for(auto& dataStore : m_duplicateDataStores) {
-      dataStore->Store(executionReport);
+      dataStore.Store(executionReport);
     }
   }
 
   inline void ReplicatedOrderExecutionDataStore::Close() {
     for(auto& dataStore : m_duplicateDataStores) {
-      dataStore->Close();
+      dataStore.Close();
     }
-    m_primaryDataStore->Close();
+    m_primaryDataStore.Close();
   }
 }
 

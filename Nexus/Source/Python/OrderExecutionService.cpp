@@ -1,11 +1,15 @@
 #include "Nexus/Python/OrderExecutionService.hpp"
 #include <Aspen/Python/Box.hpp>
 #include <Beam/Python/Beam.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
+#include <Viper/MySql/Connection.hpp>
+#include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
+#include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
@@ -14,11 +18,13 @@
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
+#include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
+#include "Nexus/Python/ToPythonOrderExecutionDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
@@ -38,11 +44,18 @@ using namespace pybind11;
 namespace {
   auto orderExecutionClientBox =
     std::unique_ptr<class_<OrderExecutionClientBox>>();
+  auto orderExecutionDataStoreBox =
+    std::unique_ptr<class_<OrderExecutionDataStoreBox>>();
 }
 
 class_<OrderExecutionClientBox>&
     Nexus::Python::GetExportedOrderExecutionClientBox() {
   return *orderExecutionClientBox;
+}
+
+class_<OrderExecutionDataStoreBox>&
+    Nexus::Python::GetExportedOrderExecutionDataStoreBox() {
+  return *orderExecutionDataStoreBox;
 }
 
 void Nexus::Python::ExportApplicationOrderExecutionClient(module& module) {
@@ -87,6 +100,20 @@ void Nexus::Python::ExportExecutionReport(module& module) {
     "ExecutionReport");
 }
 
+void Nexus::Python::ExportLocalOrderExecutionDataStore(module& module) {
+  ExportOrderExecutionDataStore<LocalOrderExecutionDataStore>(module,
+    "LocalOrderExecutionDataStore").
+    def(init()).
+    def("load_order_submissions", static_cast<
+      std::vector<SequencedAccountOrderRecord> (
+        LocalOrderExecutionDataStore::*)() const>(
+          &LocalOrderExecutionDataStore::LoadOrderSubmissions)).
+    def("load_execution_reports", static_cast<
+      std::vector<SequencedAccountExecutionReport> (
+        LocalOrderExecutionDataStore::*)() const>(
+          &LocalOrderExecutionDataStore::LoadExecutionReports));
+}
+
 void Nexus::Python::ExportMockOrderExecutionDriver(module& module) {
   class_<MockOrderExecutionDriver>(module, "MockOrderExecutionDriver").
     def(init()).
@@ -104,6 +131,21 @@ void Nexus::Python::ExportMockOrderExecutionDriver(module& module) {
     def("cancel", &MockOrderExecutionDriver::Cancel, call_guard<GilRelease>()).
     def("update", &MockOrderExecutionDriver::Update, call_guard<GilRelease>()).
     def("close", &MockOrderExecutionDriver::Close, call_guard<GilRelease>());
+}
+
+void Nexus::Python::ExportMySqlOrderExecutionDataStore(module& module) {
+  using SqlDataStore = SqlOrderExecutionDataStore<
+    SqlConnection<Viper::MySql::Connection>>;
+  using DataStore = ToPythonOrderExecutionDataStore<SqlDataStore>;
+  ExportOrderExecutionDataStore<DataStore>(module,
+    "MySqlOrderExecutionDataStore").
+    def(init([] (std::string host, unsigned int port, std::string username,
+        std::string password, std::string database) {
+      return std::make_shared<DataStore>([=] {
+        return SqlConnection(Viper::MySql::Connection(host, port, username,
+          password, database));
+      });
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportOrder(module& module) {
@@ -134,7 +176,15 @@ void Nexus::Python::ExportOrderExecutionService(module& module) {
       "OrderExecutionClient"));
   ExportOrderExecutionClient<ToPythonOrderExecutionClient<
     OrderExecutionClientBox>>(submodule, "OrderExecutionClientBox");
+  orderExecutionDataStoreBox =
+    std::make_unique<class_<OrderExecutionDataStoreBox>>(
+      ExportOrderExecutionDataStore<OrderExecutionDataStoreBox>(submodule,
+        "OrderExecutionDataStore"));
+  ExportOrderExecutionDataStore<ToPythonOrderExecutionDataStore<
+    OrderExecutionDataStoreBox>>(submodule, "OrderExecutionDataStoreBox");
   ExportApplicationOrderExecutionClient(submodule);
+  ExportLocalOrderExecutionDataStore(submodule);
+  ExportMySqlOrderExecutionDataStore(submodule);
   ExportOrderFields(submodule);
   ExportOrderInfo(submodule);
   ExportOrderCancellationReactor(submodule);
@@ -142,6 +192,7 @@ void Nexus::Python::ExportOrderExecutionService(module& module) {
   ExportOrderRecord(submodule);
   ExportPrimitiveOrder(submodule);
   ExportStandardQueries(submodule);
+  ExportSqliteOrderExecutionDataStore(submodule);
   ExportOrderWrapperReactor(submodule);
   auto testModule = submodule.def_submodule("tests");
   ExportOrderExecutionServiceTestEnvironment(testModule);
@@ -396,4 +447,17 @@ void Nexus::Python::ExportStandardQueries(module& module) {
   module.def("build_order_id_query", &BuildOrderIdQuery);
   module.def("query_order_ids", &QueryOrderIds<OrderExecutionClientBox>);
   module.def("load_order_ids", &LoadOrderIds<OrderExecutionClientBox>);
+}
+
+void Nexus::Python::ExportSqliteOrderExecutionDataStore(module& module) {
+  using SqlDataStore = SqlOrderExecutionDataStore<
+    SqlConnection<Viper::Sqlite3::Connection>>;
+  using DataStore = ToPythonOrderExecutionDataStore<SqlDataStore>;
+  ExportOrderExecutionDataStore<DataStore>(module,
+    "MySqlOrderExecutionDataStore").
+    def(init([] (std::string path) {
+      return std::make_shared<DataStore>([=] {
+        return SqlConnection(Viper::Sqlite3::Connection(path));
+      });
+    }), call_guard<GilRelease>());
 }

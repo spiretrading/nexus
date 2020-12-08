@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <pybind11/pybind11.h>
 #include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDataStoreBox.hpp"
 #include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
@@ -11,6 +12,11 @@ namespace Nexus::Python {
   NEXUS_EXPORT_DLL pybind11::class_<
     OrderExecutionService::OrderExecutionClientBox>&
       GetExportedOrderExecutionClientBox();
+
+  /** Returns the exported OrderExecutionDataStoreBox. */
+  NEXUS_EXPORT_DLL pybind11::class_<
+    OrderExecutionService::OrderExecutionDataStoreBox>&
+      GetExportedOrderExecutionDataStoreBox();
 
   /**
    * Exports the ApplicationOrderExecutionClient class.
@@ -25,10 +31,22 @@ namespace Nexus::Python {
   void ExportExecutionReport(pybind11::module& module);
 
   /**
+   * Exports the LocalOrderExecutionDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportLocalOrderExecutionDataStore(pybind11::module& module);
+
+  /**
    * Exports the MockOrderExecutionDriver class.
    * @param module The module to export to.
    */
   void ExportMockOrderExecutionDriver(pybind11::module& module);
+
+  /**
+   * Exports the MySqlOrderExecutionDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportMySqlOrderExecutionDataStore(pybind11::module& module);
 
   /**
    * Exports the Order class.
@@ -97,7 +115,13 @@ namespace Nexus::Python {
   void ExportStandardQueries(pybind11::module& module);
 
   /**
-   * Exports a OrderExecutionClient class.
+   * Exports the SqliteOrderExecutionDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportSqliteOrderExecutionDataStore(pybind11::module& module);
+
+  /**
+   * Exports an OrderExecutionClient class.
    * @param <Client> The type of OrderExecutionClient to export.
    * @param module The module to export to.
    * @param name The name of the class.
@@ -139,6 +163,51 @@ namespace Nexus::Python {
         pybind11::init<std::shared_ptr<Client>>());
     }
     return client;
+  }
+
+  /**
+   * Exports an OrderExecutionDataStore class.
+   * @param <DataStore> The type of OrderExecutionDataStore to export.
+   * @param module The module to export to.
+   * @param name The name of the class.
+   * @return The exported OrderExecutionDataStore.
+   */
+  template<typename DataStore>
+  auto ExportOrderExecutionDataStore(pybind11::module& module,
+      const std::string& name) {
+    auto dataStore = pybind11::class_<DataStore, std::shared_ptr<DataStore>>(
+      module, name.c_str()).
+      def("load_order", &DataStore::LoadOrder).
+      def("load_order_submissions", static_cast<
+        std::vector<OrderExecutionService::SequencedOrderRecord> (
+          DataStore::*)(const OrderExecutionService::AccountQuery&)>(
+            &DataStore::LoadOrderSubmissions)).
+      def("load_execution_reports", static_cast<
+        std::vector<SequencedExecutionReport> (DataStore::*)(
+          const OrderExecutionService::AccountQuery&)>(
+            &DataStore::LoadExecutionReports)).
+      def("store", static_cast<void (DataStore::*)(
+        const OrderExecutionService::SequencedAccountOrderInfo&)>(
+          &DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<OrderExecutionService::SequencedAccountOrderInfo>&)>(
+          &DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const OrderExecutionService::SequencedAccountExecutionReport&)>(
+          &DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<
+          OrderExecutionService::SequencedAccountExecutionReport>&)>(
+            &DataStore::Store)).
+      def("close", &DataStore::Close);
+    if constexpr(!std::is_same_v<DataStore,
+        OrderExecutionService::OrderExecutionDataStoreBox>) {
+      pybind11::implicitly_convertible<DataStore,
+        OrderExecutionService::OrderExecutionDataStoreBox>();
+      GetExportedOrderExecutionDataStoreBox().def(
+        pybind11::init<std::shared_ptr<DataStore>>());
+    }
+    return dataStore;
   }
 }
 

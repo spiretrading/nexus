@@ -1,5 +1,6 @@
 #include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDataStore.hpp"
 
 using namespace Beam;
@@ -23,7 +24,10 @@ namespace {
       TestOrderExecutionDataStore::Operation>>> m_operations;
 
     Fixture()
-        : m_operations(std::make_shared<Queue<
+        : m_dataStore(OrderExecutionDataStoreBox(
+            std::in_place_type<LocalOrderExecutionDataStore>),
+            TestOrderExecutionDataStore::Mode::SUPERVISED),
+          m_operations(std::make_shared<Queue<
             std::shared_ptr<TestOrderExecutionDataStore::Operation>>>()) {
       m_dataStore.GetPublisher().Monitor(m_operations);
     }
@@ -55,8 +59,7 @@ namespace {
         receiver.GetEval().SetException(std::current_exception());
       }
     });
-    auto baseOperation = operations.Pop();
-    auto operation = get<Operation>(&*baseOperation);
+    auto operation = std::dynamic_pointer_cast<Operation>(operations.Pop());
     REQUIRE(operation);
     std::apply([&] (auto&&... args) {
       operation->m_result.SetResult(std::forward<decltype(args)...>(args)...);
