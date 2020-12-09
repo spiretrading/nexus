@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include <QMessageBox>
 #include <QStandardPaths>
 #include "Spire/Login/LoginController.hpp"
@@ -28,9 +28,8 @@ void SpireController::open() {
   }
   auto service_clients_factory =
     [=] (const auto& username, const auto& password, const auto& address) {
-      return MakeVirtualServiceClients(
-        std::make_unique<ApplicationServiceClients>(username, password,
-        address));
+      return ServiceClientsBox(std::in_place_type<ApplicationServiceClients>,
+        username, password, address);
     };
   auto server_entries = load_server_entries();
   if(server_entries.empty()) {
@@ -94,10 +93,9 @@ std::vector<LoginController::ServerEntry>
 }
 
 void SpireController::on_login(const Definitions& definitions) {
-  m_service_clients = std::move(m_login_controller->get_service_clients());
-  m_login_controller.reset();
   m_toolbar_controller = std::make_unique<ToolbarController>(definitions,
-    Ref(*m_service_clients));
+    m_login_controller->get_service_clients());
+  m_login_controller.reset();
   m_toolbar_controller->open();
   m_state = State::TOOLBAR;
 }

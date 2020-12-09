@@ -3,7 +3,7 @@
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
@@ -31,39 +31,38 @@ namespace {
   struct Fixture {
     using TestServletContainer =
       TestAuthenticatedServiceProtocolServletContainer<
-      MetaMarketDataRegistryServlet<MarketDataRegistry*,
-      LocalHistoricalDataStore, std::unique_ptr<VirtualAdministrationClient>>,
-      NativePointerPolicy>;
+        MetaMarketDataRegistryServlet<MarketDataRegistry*,
+          LocalHistoricalDataStore, AdministrationClientBox>,
+        NativePointerPolicy>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     AdministrationServiceTestEnvironment m_administrationEnvironment;
     MarketDataRegistry m_registry;
     boost::optional<TestServletContainer::Servlet::Servlet> m_registryServlet;
     boost::optional<TestServletContainer> m_container;
-    boost::optional<TestServiceProtocolClient> m_clientProtocol;
+    boost::optional<TestServiceProtocolClient> m_protocolClient;
 
     Fixture()
         : m_administrationEnvironment(
-            m_serviceLocatorEnvironment.BuildClient(), BuildEntitlements()) {
+            m_serviceLocatorEnvironment.MakeClient(), BuildEntitlements()) {
       auto servletServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      m_registryServlet.emplace(m_administrationEnvironment.BuildClient(
-        Ref(*servletServiceLocatorClient)), &m_registry, Initialize());
+        m_serviceLocatorEnvironment.MakeClient();
+      m_registryServlet.emplace(m_administrationEnvironment.MakeClient(
+        servletServiceLocatorClient), &m_registry, Initialize());
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
         &*m_registryServlet), serverConnection,
         factory<std::unique_ptr<TriggerTimer>>());
-      m_clientProtocol.emplace(Initialize("test", *serverConnection),
+      m_protocolClient.emplace(Initialize("test", *serverConnection),
         Initialize());
       Nexus::Queries::RegisterQueryTypes(
-        Store(m_clientProtocol->GetSlots().GetRegistry()));
-      RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
-      RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
+        Store(m_protocolClient->GetSlots().GetRegistry()));
+      RegisterMarketDataRegistryServices(Store(m_protocolClient->GetSlots()));
+      RegisterMarketDataRegistryMessages(Store(m_protocolClient->GetSlots()));
       auto clientServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient("client", "");
-      auto authenticator = SessionAuthenticator(
-        Ref(*clientServiceLocatorClient));
-      authenticator(*m_clientProtocol);
+        m_serviceLocatorEnvironment.MakeClient("client", "");
+      auto authenticator = SessionAuthenticator(clientServiceLocatorClient);
+      authenticator(*m_protocolClient);
     }
 
     EntitlementDatabase BuildEntitlements() {
@@ -120,7 +119,7 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto query = SecurityMarketDataQuery();
     query.SetIndex(GetTsxTestSecurity());
     query.SetRange(Range::RealTime());
-    auto snapshot = m_clientProtocol->SendRequest<QueryBookQuotesService>(
+    auto snapshot = m_protocolClient->SendRequest<QueryBookQuotesService>(
       query);
     auto bookQuote = SecurityBookQuote(
       BookQuote("CHIC", false, DefaultMarkets::CHIC(),

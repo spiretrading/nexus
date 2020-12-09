@@ -1,12 +1,9 @@
-#include <fstream>
-#include <iostream>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServletContainer.hpp>
-#include <tclap/CmdLine.h>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "WebPortal/WebPortalServlet.hpp"
 #include "Version.hpp"
@@ -21,86 +18,60 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::WebPortal;
-using namespace TCLAP;
 
 namespace {
   using WebPortalServletContainer = HttpServletContainer<WebPortalServlet,
     TcpServerSocket>;
 
-  struct ServerConnectionInitializer {
+  struct Configuration {
     IpAddress m_interface;
     std::vector<IpAddress> m_addresses;
 
-    void Initialize(const YAML::Node& config);
+    static Configuration Parse(const YAML::Node& config);
   };
 
-  void ServerConnectionInitializer::Initialize(const YAML::Node& config) {
-    m_interface = Extract<IpAddress>(config, "interface");
-    auto addresses = std::vector<IpAddress>();
-    addresses.push_back(m_interface);
-    m_addresses = Extract<std::vector<IpAddress>>(config, "addresses",
-      addresses);
+  Configuration Configuration::Parse(const YAML::Node& node) {
+    return TryOrNest([&] {
+      auto config = Configuration();
+      config.m_interface = Extract<IpAddress>(node, "interface");
+      auto addresses = std::vector<IpAddress>();
+      addresses.push_back(config.m_interface);
+      config.m_addresses = Extract<std::vector<IpAddress>>(node, "addresses",
+        addresses);
+      return config;
+    }, std::runtime_error("Failed to parse configuration."));
   }
 }
 
 int main(int argc, const char** argv) {
-  auto configFile = std::string();
   try {
-    auto cmd = CmdLine("", ' ', "0.9-r" WEB_PORTAL_VERSION
+    auto config = ParseCommandLine(argc, argv, "0.9-r" WEB_PORTAL_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
-      false, "config.yml", "path");
-    cmd.add(configArg);
-    cmd.parse(argc, argv);
-    configFile = configArg.getValue();
-  } catch(const ArgException& e) {
-    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
-      std::endl;
-    return -1;
-  }
-  auto config = Require(LoadFile, configFile);
-  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
-  try {
-    serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
-      GetNode(config, "service_locator"));
-  } catch(const std::exception& e) {
-    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
-      std::endl;
-    return -1;
-  }
-  auto serviceClients = std::unique_ptr<VirtualServiceClients>();
-  try {
-    serviceClients = MakeVirtualServiceClients(
-      std::make_unique<ApplicationServiceClients>(
+    auto serviceLocatorClientConfig = TryOrNest([&] {
+      return ServiceLocatorClientConfig::Parse(
+        GetNode(config, "service_locator"));
+    }, std::runtime_error("Error parsing section 'service_locator'."));
+    auto serviceClients = ServiceClientsBox(
+      std::in_place_type<ApplicationServiceClients>,
       serviceLocatorClientConfig.m_username,
       serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address));
-  } catch(const std::exception& e) {
-    std::cerr << "Error logging in: " << e.what() << std::endl;
+      serviceLocatorClientConfig.m_address);
+    auto serviceConfig = TryOrNest([&] {
+      return Configuration::Parse(GetNode(config, "server"));
+    }, std::runtime_error("Error parsing section 'server'."));
+    auto serviceClientsBuilder =
+      [&] (const std::string& username, const std::string& password) {
+        return ServiceClientsBox(std::in_place_type<ApplicationServiceClients>,
+          username, password, serviceLocatorClientConfig.m_address);
+      };
+    auto server = WebPortalServletContainer(Initialize(
+      std::move(serviceClientsBuilder), serviceClients),
+      Initialize(serviceConfig.m_interface));
+    WaitForKillEvent();
+    serviceClients.Close();
+  } catch(...) {
+    ReportCurrentException();
     return -1;
   }
-  auto serverConnectionInitializer = ServerConnectionInitializer();
-  try {
-    serverConnectionInitializer.Initialize(GetNode(config, "server"));
-  } catch(const std::exception& e) {
-    std::cerr << "Error parsing section 'server': " << e.what() << std::endl;
-    return -1;
-  }
-  auto serviceClientsBuilder =
-    [&] (const std::string& username, const std::string& password) {
-      return MakeVirtualServiceClients(
-        std::make_unique<ApplicationServiceClients>(username, password,
-        serviceLocatorClientConfig.m_address));
-    };
-  auto server = optional<WebPortalServletContainer>();
-  try {
-    server.emplace(Initialize(std::move(serviceClientsBuilder),
-      Ref(*serviceClients)),
-      Initialize(serverConnectionInitializer.m_interface));
-  } catch(const std::exception& e) {
-    std::cerr << "Error opening server: " << e.what() << std::endl;
-    return -1;
-  }
-  WaitForKillEvent();
   return 0;
 }

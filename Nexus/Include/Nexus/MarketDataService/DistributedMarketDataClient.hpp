@@ -8,8 +8,8 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include "Nexus/Definitions/Country.hpp"
+#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -26,11 +26,11 @@ namespace Nexus::MarketDataService {
        *        MarketDataClients.
        * @param marketToMarketDataClients Maps MarketCodes to MarketDataClients.
        */
-      DistributedMarketDataClient(std::unordered_map<
-        CountryCode, std::shared_ptr<VirtualMarketDataClient>>
-        countryToMarketDataClients, std::unordered_map<
-        MarketCode, std::shared_ptr<VirtualMarketDataClient>>
-        marketToMarketDataClients);
+      DistributedMarketDataClient(
+        std::unordered_map<CountryCode, std::shared_ptr<MarketDataClientBox>>
+          countryToMarketDataClients,
+        std::unordered_map<MarketCode, std::shared_ptr<MarketDataClientBox>>
+          marketToMarketDataClients);
 
       ~DistributedMarketDataClient();
 
@@ -76,12 +76,12 @@ namespace Nexus::MarketDataService {
       void Close();
 
     private:
-      std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
+      std::unordered_map<CountryCode, std::shared_ptr<MarketDataClientBox>>
         m_countryToMarketDataClients;
-      std::unordered_map<MarketCode, std::shared_ptr<VirtualMarketDataClient>>
+      std::unordered_map<MarketCode, std::shared_ptr<MarketDataClientBox>>
         m_marketToMarketDataClients;
-      VirtualMarketDataClient* FindMarketDataClient(MarketCode market);
-      VirtualMarketDataClient* FindMarketDataClient(const Security& security);
+      MarketDataClientBox* FindMarketDataClient(MarketCode market);
+      MarketDataClientBox* FindMarketDataClient(const Security& security);
       Beam::IO::OpenState m_openState;
 
       DistributedMarketDataClient(const DistributedMarketDataClient&) = delete;
@@ -90,9 +90,10 @@ namespace Nexus::MarketDataService {
   };
 
   inline DistributedMarketDataClient::DistributedMarketDataClient(
-    std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
-    countryToMarketDataClients, std::unordered_map<MarketCode,
-    std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
+    std::unordered_map<CountryCode, std::shared_ptr<MarketDataClientBox>>
+      countryToMarketDataClients,
+    std::unordered_map<MarketCode, std::shared_ptr<MarketDataClientBox>>
+      marketToMarketDataClients)
     : m_countryToMarketDataClients(std::move(countryToMarketDataClients)),
       m_marketToMarketDataClients(std::move(marketToMarketDataClients)) {}
 
@@ -207,8 +208,7 @@ namespace Nexus::MarketDataService {
   inline std::vector<SecurityInfo> DistributedMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     auto securityInfos = std::vector<SecurityInfo>();
-    auto clients =
-      std::unordered_set<std::shared_ptr<VirtualMarketDataClient>>();
+    auto clients = std::unordered_set<std::shared_ptr<MarketDataClientBox>>();
     for(auto& client :
         m_countryToMarketDataClients | boost::adaptors::map_values) {
       clients.insert(client);
@@ -224,8 +224,8 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    auto clientCount = std::unordered_map<
-      std::shared_ptr<VirtualMarketDataClient>, int>();
+    auto clientCount =
+      std::unordered_map<std::shared_ptr<MarketDataClientBox>, int>();
     for(auto& client : boost::range::join(
         m_countryToMarketDataClients | boost::adaptors::map_values,
         m_marketToMarketDataClients | boost::adaptors::map_values)) {
@@ -243,8 +243,8 @@ namespace Nexus::MarketDataService {
     m_openState.Close();
   }
 
-  inline VirtualMarketDataClient* DistributedMarketDataClient::
-      FindMarketDataClient(MarketCode market) {
+  inline MarketDataClientBox* DistributedMarketDataClient::FindMarketDataClient(
+      MarketCode market) {
     auto marketDataClientIterator = m_marketToMarketDataClients.find(market);
     if(marketDataClientIterator == m_marketToMarketDataClients.end()) {
       return nullptr;
@@ -252,8 +252,8 @@ namespace Nexus::MarketDataService {
     return marketDataClientIterator->second.get();
   }
 
-  inline VirtualMarketDataClient* DistributedMarketDataClient::
-      FindMarketDataClient(const Security& security) {
+  inline MarketDataClientBox* DistributedMarketDataClient::FindMarketDataClient(
+      const Security& security) {
     auto marketDataClientIterator = m_countryToMarketDataClients.find(
       security.GetCountry());
     if(marketDataClientIterator == m_countryToMarketDataClients.end()) {

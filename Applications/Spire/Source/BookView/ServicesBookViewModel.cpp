@@ -14,11 +14,11 @@ using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 ServicesBookViewModel::ServicesBookViewModel(Security security,
-    Definitions definitions, Ref<VirtualServiceClients> clients)
-    : m_local_model(std::move(security), definitions),
-      m_definitions(std::move(definitions)),
-      m_clients(clients.Get()),
-      m_loader(std::make_shared<CallOnce<Mutex>>()) {}
+  Definitions definitions, ServiceClientsBox clients)
+  : m_local_model(std::move(security), definitions),
+    m_definitions(std::move(definitions)),
+    m_clients(std::move(clients)),
+    m_loader(std::make_shared<CallOnce<Mutex>>()) {}
 
 const Security& ServicesBookViewModel::get_security() const {
   return m_local_model.get_security();
@@ -89,29 +89,29 @@ QtPromise<void> ServicesBookViewModel::load() {
     loader->Call([&] {
       auto query = BuildCurrentQuery(security);
       query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-      clients->GetMarketDataClient().QueryBboQuotes(query, std::move(bbo_slot));
-      QueryRealTimeBookQuotesWithSnapshot(clients->GetMarketDataClient(),
+      clients.GetMarketDataClient().QueryBboQuotes(query, std::move(bbo_slot));
+      QueryRealTimeBookQuotesWithSnapshot(clients.GetMarketDataClient(),
         security, std::move(book_quote_slot), InterruptionPolicy::BREAK_QUERY);
-      QueryRealTimeMarketQuotesWithSnapshot(clients->GetMarketDataClient(),
+      QueryRealTimeMarketQuotesWithSnapshot(clients.GetMarketDataClient(),
         security, std::move(market_quote_slot),
         InterruptionPolicy::BREAK_QUERY);
-      QueryDailyVolume(clients->GetChartingClient(), security,
-        clients->GetTimeClient().GetTime(), pos_infin,
+      QueryDailyVolume(clients.GetChartingClient(), security,
+        clients.GetTimeClient().GetTime(), pos_infin,
         definitions.get_market_database(),
         definitions.get_time_zone_database(), std::move(volume_slot));
-      QueryDailyHigh(clients->GetChartingClient(), security,
-        clients->GetTimeClient().GetTime(), pos_infin,
+      QueryDailyHigh(clients.GetChartingClient(), security,
+        clients.GetTimeClient().GetTime(), pos_infin,
         definitions.get_market_database(),
         definitions.get_time_zone_database(), std::move(high_slot));
-      QueryDailyLow(clients->GetChartingClient(), security,
-        clients->GetTimeClient().GetTime(), pos_infin,
+      QueryDailyLow(clients.GetChartingClient(), security,
+        clients.GetTimeClient().GetTime(), pos_infin,
         definitions.get_market_database(),
         definitions.get_time_zone_database(), std::move(low_slot));
-      QueryOpen(clients->GetMarketDataClient(), security,
-        clients->GetTimeClient().GetTime(), definitions.get_market_database(),
+      QueryOpen(clients.GetMarketDataClient(), security,
+        clients.GetTimeClient().GetTime(), definitions.get_market_database(),
         definitions.get_time_zone_database(), "", std::move(open_slot));
-      auto close = LoadPreviousClose(clients->GetMarketDataClient(), security,
-        clients->GetTimeClient().GetTime(),
+      auto close = LoadPreviousClose(clients.GetMarketDataClient(), security,
+        clients.GetTimeClient().GetTime(),
         definitions.get_market_database(),
         definitions.get_time_zone_database(), "");
       if(close) {
@@ -171,7 +171,7 @@ void ServicesBookViewModel::on_book_quote(const BookQuote& quote) {
 void ServicesBookViewModel::on_book_quote_interruption(
     const std::exception_ptr& e) {
   m_local_model.clear_book_quotes();
-  QueryRealTimeBookQuotesWithSnapshot(m_clients->GetMarketDataClient(),
+  QueryRealTimeBookQuotesWithSnapshot(m_clients.GetMarketDataClient(),
     m_local_model.get_security(), m_event_handler.get_slot<BookQuote>(
     [=] (const auto& quote) { on_book_quote(quote); },
     [=] (const auto& e) { on_book_quote_interruption(e); }),
@@ -185,7 +185,7 @@ void ServicesBookViewModel::on_market_quote(const MarketQuote& quote) {
 void ServicesBookViewModel::on_market_quote_interruption(
     const std::exception_ptr& e) {
   m_local_model.clear_market_quotes();
-  QueryRealTimeMarketQuotesWithSnapshot(m_clients->GetMarketDataClient(),
+  QueryRealTimeMarketQuotesWithSnapshot(m_clients.GetMarketDataClient(),
     m_local_model.get_security(), m_event_handler.get_slot<MarketQuote>(
     [=] (const auto& quote) { on_market_quote(quote); },
     [=] (const auto& e) { on_market_quote_interruption(e); }),

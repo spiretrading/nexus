@@ -4,7 +4,7 @@
 #include <QLineEdit>
 #include <QStyleOption>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/RealSpinBoxModel.hpp"
+#include "Spire/Ui/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

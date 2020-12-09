@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <random>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/LocalRangeInputModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/LocalRangeInputModel.hpp"
 #include "Spire/Ui/QuantitySpinBox.hpp"
 #include "Spire/Ui/ScalarWidget.hpp"
 

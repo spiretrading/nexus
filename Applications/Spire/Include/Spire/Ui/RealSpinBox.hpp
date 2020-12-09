@@ -5,7 +5,7 @@
 #include <QLocale>
 #include <QRegularExpression>
 #include <QStyle>
-#include "Spire/Spire/RealSpinBoxModel.hpp"
+#include "Spire/Ui/RealSpinBoxModel.hpp"
 
 namespace Spire {
 

@@ -6,7 +6,7 @@ namespace Nexus {
   class TestEnvironment;
   class TestEnvironmentException;
   class TestServiceClients;
-  class VirtualServiceClients;
+  class ServiceClientsBox;
 }
 
 #endif

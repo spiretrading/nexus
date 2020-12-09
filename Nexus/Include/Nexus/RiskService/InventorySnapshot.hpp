@@ -50,7 +50,7 @@ namespace Nexus::RiskService {
       const InventorySnapshot& snapshot,
       const Beam::ServiceLocator::DirectoryEntry& account,
       MarketDatabase markets, OrderExecutionClient& client) {
-    auto excludedOrders = OrderExecutionService::LoadOrderSubmissions(account,
+    auto excludedOrders = OrderExecutionService::LoadOrderIds(account,
       snapshot.m_excludedOrders, client);
     auto trailingOrderQuery = OrderExecutionService::AccountQuery();
     trailingOrderQuery.SetIndex(account);

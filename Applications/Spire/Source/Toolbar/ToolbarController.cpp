@@ -1,5 +1,5 @@
 #include "Spire/Toolbar/ToolbarController.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/BookView/BookViewController.hpp"
 #include "Spire/SecurityInput/ServicesSecurityInputModel.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -41,12 +41,12 @@ struct ToolbarController::Controller final : ToolbarController::BaseController {
 };
 
 ToolbarController::ToolbarController(Definitions definitions,
-    Ref<VirtualServiceClients> service_clients)
-    : m_definitions(std::move(definitions)),
-      m_service_clients(service_clients.Get()),
-      m_security_input_model(std::make_unique<ServicesSecurityInputModel>(
-        Ref(m_service_clients->GetMarketDataClient()))),
-      m_toolbar_window(nullptr) {}
+  ServiceClientsBox service_clients)
+  : m_definitions(std::move(definitions)),
+    m_service_clients(std::move(service_clients)),
+    m_security_input_model(std::make_unique<ServicesSecurityInputModel>(
+      m_service_clients.GetMarketDataClient())),
+    m_toolbar_window(nullptr) {}
 
 ToolbarController::~ToolbarController() {
   close();
@@ -57,7 +57,7 @@ void ToolbarController::open() {
     return;
   }
   m_toolbar_window = new ToolbarWindow(Ref(m_model),
-    m_service_clients->GetServiceLocatorClient().GetAccount());
+    m_service_clients.GetServiceLocatorClient().GetAccount());
   m_toolbar_window->connect_open_signal(
     [=] (auto window) { on_open_window(window); });
   // TODO
@@ -85,10 +85,10 @@ void ToolbarController::on_open_window(RecentlyClosedModel::Type window) {
     [&] () -> std::unique_ptr<BaseController> {
       if(window == RecentlyClosedModel::Type::BOOK_VIEW) {
         return std::make_unique<Controller<BookViewController>>(
-          m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
+          m_definitions, Ref(*m_security_input_model), m_service_clients);
       } else {
         return std::make_unique<Controller<TimeAndSalesController>>(
-          m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
+          m_definitions, Ref(*m_security_input_model), m_service_clients);
       }
     }();
   if(controller == nullptr) {

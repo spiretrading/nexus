@@ -1,4 +1,4 @@
-#include "Spire/Spire/RealSpinBoxModel.hpp"
+#include "Spire/Ui/RealSpinBoxModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;

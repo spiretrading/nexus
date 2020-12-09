@@ -1,6 +1,6 @@
 #include "Spire/Login/LoginController.hpp"
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Login/LoginWindow.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -14,15 +14,15 @@ using namespace Nexus;
 using namespace Spire;
 
 LoginController::LoginController(std::vector<ServerEntry> servers,
-    ServiceClientsFactory service_clients_factory)
-    : m_servers(std::move(servers)),
-      m_service_clients_factory(std::move(service_clients_factory)),
-      m_login_window(nullptr) {}
+  ServiceClientsFactory service_clients_factory)
+  : m_servers(std::move(servers)),
+    m_service_clients_factory(std::move(service_clients_factory)),
+    m_login_window(nullptr) {}
 
 LoginController::~LoginController() = default;
 
-std::unique_ptr<VirtualServiceClients>& LoginController::get_service_clients() {
-  return m_service_clients;
+ServiceClientsBox LoginController::get_service_clients() {
+  return *m_service_clients;
 }
 
 void LoginController::open() {
@@ -40,11 +40,10 @@ connection LoginController::connect_logged_in_signal(
 
 void LoginController::on_login(const std::string& username,
     const std::string& password) {
-  m_login_promise = QtPromise(
-    [=] {
-      return m_service_clients_factory(username, password,
-        m_servers.front().m_address);
-    }, LaunchPolicy::ASYNC);
+  m_login_promise = QtPromise([=] {
+    return m_service_clients_factory(username, password,
+      m_servers.front().m_address);
+  }, LaunchPolicy::ASYNC);
   m_login_promise.then(
     [=] (auto&& result) { on_login_promise(std::move(result)); });
 }
@@ -55,9 +54,9 @@ void LoginController::on_cancel() {
 }
 
 void LoginController::on_login_promise(
-    Expect<std::unique_ptr<VirtualServiceClients>> service_clients) {
+    Expect<ServiceClientsBox> service_clients) {
   try {
-    m_service_clients = std::move(service_clients.Get());
+    m_service_clients.emplace(std::move(service_clients.Get()));
     m_login_window->close();
     delete_later(m_login_window);
     auto definitions = Definitions(

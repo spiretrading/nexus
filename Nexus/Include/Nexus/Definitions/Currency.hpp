@@ -8,6 +8,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Definitions.hpp"
@@ -153,11 +154,13 @@ namespace Details {
    */
   inline CurrencyDatabase::Entry ParseCurrencyDatabaseEntry(
       const YAML::Node& node) {
-    auto entry = CurrencyDatabase::Entry();
-    entry.m_id = CurrencyId(Beam::Extract<int>(node, "id"));
-    entry.m_code = Beam::Extract<std::string>(node, "code");
-    entry.m_sign = Beam::Extract<std::string>(node, "sign");
-    return entry;
+    return Beam::TryOrNest([&] {
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(Beam::Extract<int>(node, "id"));
+      entry.m_code = Beam::Extract<std::string>(node, "code");
+      entry.m_sign = Beam::Extract<std::string>(node, "sign");
+      return entry;
+    }, std::runtime_error("Failed to parse currency database entry."));
   }
 
   /**
@@ -166,11 +169,13 @@ namespace Details {
    * @return The CurrencyDatabase represented by the <i>node</i>.
    */
   inline CurrencyDatabase ParseCurrencyDatabase(const YAML::Node& node) {
-    auto database = CurrencyDatabase();
-    for(auto& entryNode : node) {
-      database.Add(ParseCurrencyDatabaseEntry(entryNode));
-    }
-    return database;
+    return Beam::TryOrNest([&] {
+      auto database = CurrencyDatabase();
+      for(auto& entryNode : node) {
+        database.Add(ParseCurrencyDatabaseEntry(entryNode));
+      }
+      return database;
+    }, std::runtime_error("Failed to parse currency database."));
   }
 
   inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {

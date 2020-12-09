@@ -23,16 +23,16 @@ using namespace Nexus::OrderExecutionService;
 
 namespace {
   struct Fixture {
-    using TestBoardLotCheck = BoardLotCheck<VirtualMarketDataClient*>;
+    using TestBoardLotCheck = BoardLotCheck<MarketDataClientBox>;
 
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
     TestBoardLotCheck m_check;
 
     Fixture()
-        : m_serviceClients(Ref(m_environment)),
-          m_check(&m_serviceClients.GetMarketDataClient(),
-            GetDefaultMarketDatabase(), GetDefaultTimeZoneDatabase()) {}
+      : m_serviceClients(Ref(m_environment)),
+        m_check(&m_serviceClients.GetMarketDataClient(),
+          GetDefaultMarketDatabase(), GetDefaultTimeZoneDatabase()) {}
   };
 }
 

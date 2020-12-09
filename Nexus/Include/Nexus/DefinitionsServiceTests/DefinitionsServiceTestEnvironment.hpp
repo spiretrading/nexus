@@ -14,21 +14,20 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTests.hpp"
 
 namespace Nexus::DefinitionsService::Tests {
 
   /** Provides DefinitionsService related classes for testing purposes. */
-  class DefinitionsServiceTestEnvironment : private boost::noncopyable {
+  class DefinitionsServiceTestEnvironment {
     public:
 
       /**
@@ -36,8 +35,7 @@ namespace Nexus::DefinitionsService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient to use.
        */
       DefinitionsServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       ~DefinitionsServiceTestEnvironment();
 
@@ -46,9 +44,8 @@ namespace Nexus::DefinitionsService::Tests {
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the DefinitionsClient.
        */
-      std::unique_ptr<VirtualDefinitionsClient> BuildClient(
-        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+      DefinitionsClientBox MakeClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       void Close();
 
@@ -57,35 +54,39 @@ namespace Nexus::DefinitionsService::Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaDefinitionsServlet, std::shared_ptr<ServiceLocatorClient>>,
-        ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+            MetaDefinitionsServlet,
+            Beam::ServiceLocator::ServiceLocatorClientBox>,
+          ServerConnection*,
+          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::Codecs::NullEncoder,
+          std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+          Beam::ServiceLocator::ServiceLocatorClientBox,
+          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
+            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+            Beam::Codecs::NullEncoder>,
+          Beam::Threading::TriggerTimer>;
       ServerConnection m_serverConnection;
       ServiceProtocolServletContainer m_container;
+
+      DefinitionsServiceTestEnvironment(
+        const DefinitionsServiceTestEnvironment&) = delete;
+      DefinitionsServiceTestEnvironment& operator =(
+        const DefinitionsServiceTestEnvironment&) = delete;
   };
 
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient)
+    Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient)
     : m_container(Beam::Initialize(std::move(serviceLocatorClient),
         Beam::Initialize("1", "Spire Trading Inc.", GetDefaultTimeZoneTable(),
-        GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
-        GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-        std::vector<ExchangeRate>(),
-        std::vector<Compliance::ComplianceRuleSchema>())),
+          GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
+          GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
+          std::vector<ExchangeRate>(),
+          std::vector<Compliance::ComplianceRuleSchema>())),
         &m_serverConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
@@ -94,20 +95,16 @@ namespace Nexus::DefinitionsService::Tests {
     Close();
   }
 
-  inline std::unique_ptr<VirtualDefinitionsClient>
-      DefinitionsServiceTestEnvironment::BuildClient(
-      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient) {
-    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [=] {
-        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_definitions_client", m_serverConnection);
-      },
-      [] {
-        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      });
-    return MakeVirtualDefinitionsClient(std::make_unique<DefinitionsClient<
-      ServiceProtocolClientBuilder>>(builder));
+  inline DefinitionsClientBox DefinitionsServiceTestEnvironment::MakeClient(
+      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
+    return DefinitionsClientBox(std::in_place_type<DefinitionsClient<
+      ServiceProtocolClientBuilder>>, ServiceProtocolClientBuilder(
+        serviceLocatorClient,
+        std::bind(boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
+          "test_definitions_client", std::ref(m_serverConnection)),
+        boost::factory<
+          std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
   inline void DefinitionsServiceTestEnvironment::Close() {

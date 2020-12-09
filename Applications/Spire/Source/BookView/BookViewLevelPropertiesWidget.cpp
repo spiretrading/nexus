@@ -6,12 +6,12 @@
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/SpinBoxModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
-#include "Spire/Ui/ScrollArea.hpp"
 #include "Spire/Ui/IntegerSpinBox.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
+#include "Spire/Ui/SpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

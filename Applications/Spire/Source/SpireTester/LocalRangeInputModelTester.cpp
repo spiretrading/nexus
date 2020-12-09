@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
-#include "Spire/Spire/LocalRangeInputModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/LocalRangeInputModel.hpp"
 
 using namespace Spire;
 

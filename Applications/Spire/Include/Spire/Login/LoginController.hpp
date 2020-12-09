@@ -4,8 +4,8 @@
 #include <memory>
 #include <string>
 #include <Beam/Network/IpAddress.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/ServiceClients.hpp"
+#include <boost/optional/optional.hpp>
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Login/Login.hpp"
 #include "Spire/Spire/Definitions.hpp"
 #include "Spire/Spire/QtPromise.hpp"
@@ -13,7 +13,7 @@
 namespace Spire {
 
   //! Allows the user to login to Spire.
-  class LoginController : private boost::noncopyable {
+  class LoginController {
     public:
 
       //! Specifies a server to connect to.
@@ -39,8 +39,7 @@ namespace Spire {
         \param address The IpAddress to connect to.
         \return The service clients used to login to Spire.
       */
-      using ServiceClientsFactory = std::function<
-        std::unique_ptr<Nexus::VirtualServiceClients>(
+      using ServiceClientsFactory = std::function<Nexus::ServiceClientsBox (
         const std::string& username, const std::string& password,
         const Beam::Network::IpAddress& address)>;
 
@@ -57,7 +56,7 @@ namespace Spire {
       ~LoginController();
 
       //! Returns the service clients that logged in.
-      std::unique_ptr<Nexus::VirtualServiceClients>& get_service_clients();
+      Nexus::ServiceClientsBox get_service_clients();
 
       //! Launches the login window.
       void open();
@@ -71,13 +70,15 @@ namespace Spire {
       std::vector<ServerEntry> m_servers;
       ServiceClientsFactory m_service_clients_factory;
       LoginWindow* m_login_window;
-      QtPromise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
-      std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
+      QtPromise<Nexus::ServiceClientsBox> m_login_promise;
+      boost::optional<Nexus::ServiceClientsBox> m_service_clients;
 
+      LoginController(const LoginController&) = delete;
+      LoginController& operator =(const LoginController&) = delete;
       void on_login(const std::string& username, const std::string& password);
       void on_cancel();
-      void on_login_promise(Beam::Expect<
-        std::unique_ptr<Nexus::VirtualServiceClients>> service_clients);
+      void on_login_promise(
+        Beam::Expect<Nexus::ServiceClientsBox> service_clients);
   };
 }
 
