@@ -1,5 +1,6 @@
 #ifndef NEXUS_ORDER_EXECUTION_SERVLET_HPP
 #define NEXUS_ORDER_EXECUTION_SERVLET_HPP
+#include <iostream>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -9,7 +10,6 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
@@ -21,6 +21,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionRegistry.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
@@ -39,7 +40,7 @@ namespace Nexus::OrderExecutionService {
    */
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
-  class OrderExecutionServlet : private boost::noncopyable {
+  class OrderExecutionServlet {
     public:
       using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
@@ -122,10 +123,15 @@ namespace Nexus::OrderExecutionService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      OrderExecutionServlet(const OrderExecutionServlet&) = delete;
+      OrderExecutionServlet& operator =(
+        const OrderExecutionServlet&) = delete;
       void RecoverTradingSession();
       void OnExecutionReport(const ExecutionReport& executionReport,
         const Beam::ServiceLocator::DirectoryEntry& account,
         SyncShortingModel& shortingModel);
+      void OnLoadOrderByIdRequest(Beam::Services::RequestToken<
+        ServiceProtocolClient, LoadOrderByIdService>& request, OrderId id);
       void OnQueryOrderSubmissionsRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderSubmissionsService>& request,
         const AccountQuery& query);
@@ -187,6 +193,9 @@ namespace Nexus::OrderExecutionService {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(slots));
     RegisterOrderExecutionMessages(Beam::Store(slots));
+    LoadOrderByIdService::AddRequestSlot(Beam::Store(slots), std::bind(
+      &OrderExecutionServlet::OnLoadOrderByIdRequest, this,
+      std::placeholders::_1, std::placeholders::_2));
     QueryOrderSubmissionsService::AddRequestSlot(Beam::Store(slots), std::bind(
       &OrderExecutionServlet::OnQueryOrderSubmissionsRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -260,7 +269,13 @@ namespace Nexus::OrderExecutionService {
         Beam::Queries::Sequence::Last());
       recoveryQuery.SetSnapshotLimit(
         Beam::Queries::SnapshotLimit::Unlimited());
-      auto orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+      auto sessionOrders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+      auto liveOrders = m_dataStore->LoadOrderSubmissions(
+        BuildLiveOrdersQuery(account));
+      auto orders = std::vector<SequencedOrderRecord>();
+      std::set_union(sessionOrders.begin(), sessionOrders.end(),
+        liveOrders.begin(), liveOrders.end(), std::back_inserter(orders),
+        Beam::Queries::SequenceComparator());
       for(auto& orderRecord : orders) {
         auto& syncShortingModel = m_shortingModels.GetOrInsert(
           orderRecord->m_info.m_fields.m_account,
@@ -272,25 +287,24 @@ namespace Nexus::OrderExecutionService {
             shortingModel.Update(executionReport);
           }
         });
-        if(!orderRecord->m_executionReports.empty() &&
-            IsTerminal(orderRecord->m_executionReports.back().m_status)) {
-          continue;
-        }
+        m_liveOrders.Insert(orderRecord->m_info.m_orderId);
         auto order = static_cast<const Order*>(nullptr);
         try {
           order = &m_driver->Recover(Beam::Queries::SequencedValue(
             Beam::Queries::IndexedValue(*orderRecord, account),
             orderRecord.GetSequence()));
         } catch(const std::exception&) {
+          std::cout << "Unable to recover order: " <<
+            orderRecord->m_info.m_orderId << std::endl;
           continue;
         }
         order->GetPublisher().With([&] {
-          auto existingExecutionReports = 
+          auto existingExecutionReports =
             boost::optional<std::vector<ExecutionReport>>();
           order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
             std::bind(&OrderExecutionServlet::OnExecutionReport, this,
-            std::placeholders::_1, order->GetInfo().m_fields.m_account,
-            std::ref(*syncShortingModel))),
+              std::placeholders::_1, order->GetInfo().m_fields.m_account,
+              std::ref(*syncShortingModel))),
             Beam::Store(existingExecutionReports));
           if(existingExecutionReports) {
             existingExecutionReports->erase(existingExecutionReports->begin(),
@@ -324,8 +338,8 @@ namespace Nexus::OrderExecutionService {
         [&] (auto& executionReport) {
           m_dataStore->Store(executionReport);
           m_orderSubscriptions.Publish(executionReport, [&] (auto& clients) {
-            Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(
-              clients, **executionReport);
+            Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(clients,
+              **executionReport);
           });
           m_executionReportSubscriptions.Publish(executionReport,
             [&] (auto& clients) {
@@ -333,6 +347,9 @@ namespace Nexus::OrderExecutionService {
                 clients, executionReport);
             });
         });
+      if(IsTerminal(executionReport.m_status)) {
+        m_liveOrders.Erase(executionReport.m_id);
+      }
     } catch(const std::exception&) {
       std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
       std::cout << "\taccount: " << Beam::Serialization::ToJson(account) <<
@@ -343,10 +360,56 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnLoadOrderByIdRequest(
+      Beam::Services::RequestToken<ServiceProtocolClient, LoadOrderByIdService>& 
+        request, OrderId id) {
+    auto& session = request.GetSession();
+    auto order = m_dataStore->LoadOrder(id);
+    if(!order || !session.HasOrderExecutionPermission((*order)->GetIndex())) {
+      request.SetResult(boost::none);
+      return;
+    }
+    if(!(**order)->m_executionReports.empty() &&
+        IsTerminal((**order)->m_executionReports.back().m_status)) {
+      request.SetResult(std::move(order));
+      return;
+    }
+    auto query = AccountQuery();
+    query.SetIndex((*order)->GetIndex());
+    query.SetRange(order->GetSequence(), order->GetSequence());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+    auto executionReportResult = ExecutionReportQueryResult();
+    executionReportResult.m_queryId = m_orderSubscriptions.Initialize(
+      query.GetIndex(), request.GetClient(), Beam::Queries::Range::Total(),
+      Beam::Queries::Translate(Beam::Queries::ConstantExpression(true)));
+    order = m_dataStore->LoadOrder(id);
+    m_orderSubscriptions.Commit(query.GetIndex(),
+      std::move(executionReportResult), [&] (auto executionReportResult) {
+        auto& executionReports = (**order)->m_executionReports;
+        for(auto& executionReport : executionReportResult.m_snapshot) {
+          if(executionReport->m_id != id) {
+            continue;
+          }
+          auto insertionPoint = std::lower_bound(executionReports.begin(),
+            executionReports.end(), *executionReport,
+            [] (auto& lhs, auto& rhs) {
+              return lhs.m_sequence < rhs.m_sequence;
+            });
+          if(insertionPoint == executionReports.end() ||
+              insertionPoint->m_sequence != executionReport->m_sequence) {
+            executionReports.insert(insertionPoint, *executionReport);
+          }
+        }
+        request.SetResult(std::move(order));
+      });
+  }
+
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       OnQueryOrderSubmissionsRequest(Beam::Services::RequestToken<
-      ServiceProtocolClient, QueryOrderSubmissionsService>& request,
-      const AccountQuery& query) {
+        ServiceProtocolClient, QueryOrderSubmissionsService>& request,
+        const AccountQuery& query) {
     auto& session = request.GetSession();
     auto revisedQuery = std::move(query);
     if(revisedQuery.GetIndex().m_type ==
@@ -379,8 +442,8 @@ namespace Nexus::OrderExecutionService {
               auto submissionIterator = std::find_if(
                 submissionResult.m_snapshot.begin(),
                 submissionResult.m_snapshot.end(), [&] (auto& orderRecord) {
-                return orderRecord->m_info.m_orderId == executionReport->m_id;
-              });
+                  return orderRecord->m_info.m_orderId == executionReport->m_id;
+                });
               if(submissionIterator == submissionResult.m_snapshot.end()) {
                 continue;
               }

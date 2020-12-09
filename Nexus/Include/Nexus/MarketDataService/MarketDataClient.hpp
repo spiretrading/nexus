@@ -1,10 +1,12 @@
 #ifndef NEXUS_MARKET_DATA_CLIENT_HPP
 #define NEXUS_MARKET_DATA_CLIENT_HPP
 #include <vector>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
@@ -30,8 +32,8 @@ namespace Nexus::MarketDataService {
        * Constructs a MarketDataClient.
        * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
        */
-      template<typename ClientBuilderForward>
-      explicit MarketDataClient(ClientBuilderForward&& clientBuilder);
+      template<typename BF>
+      explicit MarketDataClient(BF&& clientBuilder);
 
       ~MarketDataClient();
 
@@ -177,16 +179,16 @@ namespace Nexus::MarketDataService {
   };
 
   template<typename B>
-  template<typename ClientBuilderForward>
-  MarketDataClient<B>::MarketDataClient(ClientBuilderForward&& clientBuilder)
-      : m_clientHandler(std::forward<ClientBuilderForward>(clientBuilder),
-          std::bind(&MarketDataClient::OnReconnect, this,
-          std::placeholders::_1)),
-        m_orderImbalancePublisher(Beam::Ref(m_clientHandler)),
-        m_bboQuotePublisher(Beam::Ref(m_clientHandler)),
-        m_bookQuotePublisher(Beam::Ref(m_clientHandler)),
-        m_marketQuotePublisher(Beam::Ref(m_clientHandler)),
-        m_timeAndSalePublisher(Beam::Ref(m_clientHandler)) {
+  template<typename BF>
+  MarketDataClient<B>::MarketDataClient(BF&& clientBuilder)
+      try : m_clientHandler(std::forward<BF>(clientBuilder),
+              std::bind(&MarketDataClient::OnReconnect, this,
+              std::placeholders::_1)),
+            m_orderImbalancePublisher(Beam::Ref(m_clientHandler)),
+            m_bboQuotePublisher(Beam::Ref(m_clientHandler)),
+            m_bookQuotePublisher(Beam::Ref(m_clientHandler)),
+            m_marketQuotePublisher(Beam::Ref(m_clientHandler)),
+            m_timeAndSalePublisher(Beam::Ref(m_clientHandler)) {
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -197,6 +199,9 @@ namespace Nexus::MarketDataService {
     m_bookQuotePublisher.template AddMessageHandler<BookQuoteMessage>();
     m_marketQuotePublisher.template AddMessageHandler<MarketQuoteMessage>();
     m_timeAndSalePublisher.template AddMessageHandler<TimeAndSaleMessage>();
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to connect to the market data server."));
   }
 
   template<typename B>
@@ -275,31 +280,43 @@ namespace Nexus::MarketDataService {
   template<typename B>
   SecuritySnapshot MarketDataClient<B>::LoadSecuritySnapshot(
       const Security& security) {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadSecuritySnapshotService>(security);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadSecuritySnapshotService>(
+        security);
+    }, "Failed to load security snapshot: " +
+      boost::lexical_cast<std::string>(security));
   }
 
   template<typename B>
   SecurityTechnicals MarketDataClient<B>::LoadSecurityTechnicals(
       const Security& security) {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadSecurityTechnicalsService>(
-      security);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadSecurityTechnicalsService>(
+        security);
+    }, "Failed to load security technicals: " +
+      boost::lexical_cast<std::string>(security));
   }
 
   template<typename B>
   boost::optional<SecurityInfo> MarketDataClient<B>::LoadSecurityInfo(
       const Security& security) {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadSecurityInfoService>(security);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadSecurityInfoService>(security);
+    }, "Failed to load security info: " +
+      boost::lexical_cast<std::string>(security));
   }
 
   template<typename B>
   std::vector<SecurityInfo> MarketDataClient<B>::LoadSecurityInfoFromPrefix(
       const std::string& prefix) {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadSecurityInfoFromPrefixService>(
-      prefix);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadSecurityInfoFromPrefixService>(
+        prefix);
+    }, "Failed to load security info from prefix: \"" + prefix + "\"");
   }
 
   template<typename B>
@@ -308,6 +325,11 @@ namespace Nexus::MarketDataService {
       return;
     }
     m_clientHandler.Close();
+    m_orderImbalancePublisher.Break();
+    m_bboQuotePublisher.Break();
+    m_bookQuotePublisher.Break();
+    m_marketQuotePublisher.Break();
+    m_timeAndSalePublisher.Break();
     m_openState.Close();
   }
 

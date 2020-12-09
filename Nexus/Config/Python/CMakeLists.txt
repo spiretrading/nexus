@@ -10,6 +10,7 @@ set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME _nexus)
 add_definitions(-DASPEN_USE_DLL)
 add_definitions(-DBEAM_USE_DLL)
+add_definitions(-DNEXUS_BUILD_DLL)
 add_definitions(-DBEAM_ENABLE_STACK_PRINT)
 if(MSVC)
   add_definitions(-DHAVE_SNPRINTF)
@@ -55,7 +56,8 @@ if(UNIX)
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH})
+    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
+    dl)
 endif()
 if(WIN32)
   target_link_libraries(Python shlwapi)

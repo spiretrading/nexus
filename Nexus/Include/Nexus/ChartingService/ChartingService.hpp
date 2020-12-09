@@ -3,15 +3,13 @@
 #include <string>
 
 namespace Nexus::ChartingService {
-  class ApplicationChartingClient;
   template<typename B> class ChartingClient;
+  class ChartingClientBox;
   template<typename C, typename M> class ChartingServlet;
   class SecurityChartingQuery;
-  class VirtualChartingClient;
-  template<typename C> class WrapperChartingClient;
 
   /** Standard name for the charting service. */
-  inline const std::string SERVICE_NAME = "charting_service";
+  inline const auto SERVICE_NAME = std::string("charting_service");
 }
 
 #endif

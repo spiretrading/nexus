@@ -2,6 +2,7 @@
 #define NEXUS_CHARTING_CLIENT_HPP
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/SequencedValuePublisher.hpp>
@@ -9,6 +10,7 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/atomic/atomic.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/ChartingService/ChartingService.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
@@ -81,8 +83,8 @@ namespace Nexus::ChartingService {
   template<typename B>
   template<typename BF>
   ChartingClient<B>::ChartingClient(BF&& clientBuilder)
-      : m_nextQueryId(0),
-        m_clientHandler(std::forward<BF>(clientBuilder)) {
+      try : m_nextQueryId(0),
+            m_clientHandler(std::forward<BF>(clientBuilder)) {
     Queries::RegisterQueryTypes(Beam::Store(
       m_clientHandler.GetSlots().GetRegistry()));
     RegisterChartingServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -91,6 +93,9 @@ namespace Nexus::ChartingService {
       Beam::Store(m_clientHandler.GetSlots()), std::bind(
       &ChartingClient::OnSecurityQuery, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to connect to the charting server."));
   }
 
   template<typename B>
@@ -102,48 +107,46 @@ namespace Nexus::ChartingService {
   void ChartingClient<B>::QuerySecurity(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      m_queryRoutines.Spawn(
-        [=, queue = std::move(queue)] () mutable {
-          auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-            query.GetFilter());
-          auto conversionQueue = Beam::MakeConverterQueueWriter<
-            Queries::SequencedQueryVariant>(std::move(queue),
-            [] (const auto& value) {
-              return *value;
-            });
-          auto publisher = std::make_shared<SecurityChartingPublisher>(query,
-            std::move(filter), std::move(conversionQueue));
-          auto id = ++m_nextQueryId;
-          try {
-            publisher->BeginSnapshot();
-            m_securityChartingPublishers.Insert(id, publisher);
-            auto client = m_clientHandler.GetClient();
-            auto queryResult =
-              client->template SendRequest<QuerySecurityService>(query, id);
-            publisher->PushSnapshot(queryResult.m_snapshot.begin(),
-              queryResult.m_snapshot.end());
-            publisher->EndSnapshot(queryResult.m_queryId);
-          } catch(const std::exception&) {
-            publisher->Break();
-            m_securityChartingPublishers.Erase(id);
-          }
-        });
+      m_queryRoutines.Spawn([=, queue = std::move(queue)] () mutable {
+        auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
+          query.GetFilter());
+        auto conversionQueue = Beam::MakeConverterQueueWriter<
+          Queries::SequencedQueryVariant>(std::move(queue),
+          [] (const auto& value) {
+            return *value;
+          });
+        auto publisher = std::make_shared<SecurityChartingPublisher>(query,
+          std::move(filter), std::move(conversionQueue));
+        auto id = ++m_nextQueryId;
+        try {
+          publisher->BeginSnapshot();
+          m_securityChartingPublishers.Insert(id, publisher);
+          auto client = m_clientHandler.GetClient();
+          auto queryResult = client->template SendRequest<QuerySecurityService>(
+            query, id);
+          publisher->PushSnapshot(queryResult.m_snapshot.begin(),
+            queryResult.m_snapshot.end());
+          publisher->EndSnapshot(queryResult.m_queryId);
+        } catch(const std::exception&) {
+          publisher->Break();
+          m_securityChartingPublishers.Erase(id);
+        }
+      });
     } else {
-      m_queryRoutines.Spawn(
-        [=, queue = std::move(queue)] () mutable {
-          try {
-            auto client = m_clientHandler.GetClient();
-            auto id = ++m_nextQueryId;
-            auto queryResult =
-              client->template SendRequest<QuerySecurityService>(query, id);
-            for(auto& value : queryResult.m_snapshot) {
-              queue.Push(std::move(value));
-            }
-            queue.Break();
-          } catch(const std::exception&) {
-            queue.Break(std::current_exception());
+      m_queryRoutines.Spawn([=, queue = std::move(queue)] () mutable {
+        try {
+          auto client = m_clientHandler.GetClient();
+          auto id = ++m_nextQueryId;
+          auto queryResult = client->template SendRequest<QuerySecurityService>(
+            query, id);
+          for(auto& value : queryResult.m_snapshot) {
+            queue.Push(std::move(value));
           }
-        });
+          queue.Break();
+        } catch(const std::exception&) {
+          queue.Break(std::current_exception());
+        }
+      });
     }
   }
 
@@ -152,9 +155,15 @@ namespace Nexus::ChartingService {
       const Security& security, boost::posix_time::ptime startTime,
       boost::posix_time::ptime endTime,
       boost::posix_time::time_duration interval) {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadSecurityTimePriceSeriesService>(
-      security, startTime, endTime, interval);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadSecurityTimePriceSeriesService>(
+        security, startTime, endTime, interval);
+    }, "Failed to load time price series: " +
+      boost::lexical_cast<std::string>(security) + ", " +
+      boost::lexical_cast<std::string>(startTime) + ", " +
+      boost::lexical_cast<std::string>(endTime) + ", " +
+      boost::lexical_cast<std::string>(interval));
   }
 
   template<typename B>
@@ -163,6 +172,7 @@ namespace Nexus::ChartingService {
       return;
     }
     m_clientHandler.Close();
+    m_securityChartingPublishers.Clear();
     m_openState.Close();
   }
 
@@ -170,7 +180,7 @@ namespace Nexus::ChartingService {
   void ChartingClient<B>::OnSecurityQuery(ServiceProtocolClient& client,
       int queryId, const Queries::SequencedQueryVariant& value) {
     auto checkPublisher = m_securityChartingPublishers.FindValue(queryId);
-    if(!checkPublisher.is_initialized()) {
+    if(!checkPublisher) {
       return;
     }
     auto& publisher = *checkPublisher;

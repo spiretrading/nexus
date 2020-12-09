@@ -1,31 +1,29 @@
-#ifndef NEXUS_LOCALORDEREXECUTIONDATASTORE_HPP
-#define NEXUS_LOCALORDEREXECUTIONDATASTORE_HPP
+#ifndef NEXUS_LOCAL_ORDER_EXECUTION_DATA_STORE_HPP
+#define NEXUS_LOCAL_ORDER_EXECUTION_DATA_STORE_HPP
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Queries/LocalDataStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class LocalOrderExecutionDataStore
-      \brief Stores an in memory database of Order execution data.
-   */
-  class LocalOrderExecutionDataStore : private boost::noncopyable {
+  /** Stores an in memory database of Order execution data. */
+  class LocalOrderExecutionDataStore {
     public:
 
-      //! Constructs an empty LocalOrderExecutionDataStore.
+      /** Constructs an empty LocalOrderExecutionDataStore. */
       LocalOrderExecutionDataStore();
 
-      //! Returns all Order submissions stored.
+      /** Returns all Order submissions stored. */
       std::vector<SequencedAccountOrderRecord> LoadOrderSubmissions() const;
 
-      //! Returns all the ExecutionReports stored.
+      /** Returns all the ExecutionReports stored. */
       std::vector<SequencedAccountExecutionReport> LoadExecutionReports() const;
+
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -51,20 +49,22 @@ namespace OrderExecutionService {
       Beam::SynchronizedUnorderedSet<OrderId> m_liveOrders;
       DataStore<OrderInfo> m_orderSubmissionDataStore;
       DataStore<ExecutionReport> m_executionReportDataStore;
+      Beam::SynchronizedUnorderedMap<OrderId, SequencedAccountOrderInfo>
+        m_orders;
       mutable Beam::SynchronizedUnorderedMap<
         OrderId, Beam::SynchronizedVector<ExecutionReport>> m_executionReports;
   };
 
   inline LocalOrderExecutionDataStore::LocalOrderExecutionDataStore()
-      : m_orderSubmissionDataStore{Beam::Ref(m_liveOrders)} {}
+    : m_orderSubmissionDataStore(Beam::Ref(m_liveOrders)) {}
 
-  inline std::vector<SequencedAccountOrderRecord> LocalOrderExecutionDataStore::
-      LoadOrderSubmissions() const {
+  inline std::vector<SequencedAccountOrderRecord>
+      LocalOrderExecutionDataStore::LoadOrderSubmissions() const {
     auto submissions = m_orderSubmissionDataStore.LoadAll();
-    std::vector<SequencedAccountOrderRecord> orderRecords;
+    auto orderRecords = std::vector<SequencedAccountOrderRecord>();
     for(auto& submission : submissions) {
-      OrderRecord orderRecord{*submission,
-        m_executionReports.Get((*submission)->m_orderId).Acquire()};
+      auto orderRecord = OrderRecord(*submission,
+        m_executionReports.Get((*submission)->m_orderId).Acquire());
       orderRecords.emplace_back(
         Beam::Queries::IndexedValue(orderRecord, submission->GetIndex()),
         submission.GetSequence());
@@ -77,14 +77,25 @@ namespace OrderExecutionService {
     return m_executionReportDataStore.LoadAll();
   }
 
+  inline boost::optional<SequencedAccountOrderRecord>
+      LocalOrderExecutionDataStore::LoadOrder(OrderId id) {
+    auto info = m_orders.FindValue(id);
+    if(!info) {
+      return boost::none;
+    }
+    return Beam::Queries::SequencedValue(Beam::Queries::IndexedValue(
+      OrderRecord(***info, m_executionReports.Get(id).Acquire()),
+      (*info)->GetIndex()), info->GetSequence());
+  }
+
   inline std::vector<SequencedOrderRecord>
       LocalOrderExecutionDataStore::LoadOrderSubmissions(
-      const AccountQuery& query) {
+        const AccountQuery& query) {
     auto submissions = m_orderSubmissionDataStore.Load(query);
-    std::vector<SequencedOrderRecord> orderRecords;
+    auto orderRecords = std::vector<SequencedOrderRecord>();
     for(auto& submission : submissions) {
-      OrderRecord orderRecord{*submission,
-        m_executionReports.Get(submission->m_orderId).Acquire()};
+      auto orderRecord = OrderRecord(*submission,
+        m_executionReports.Get(submission->m_orderId).Acquire());
       orderRecords.emplace_back(orderRecord, submission.GetSequence());
     }
     return orderRecords;
@@ -92,13 +103,14 @@ namespace OrderExecutionService {
 
   inline std::vector<SequencedExecutionReport>
       LocalOrderExecutionDataStore::LoadExecutionReports(
-      const AccountQuery& query) {
+        const AccountQuery& query) {
     return m_executionReportDataStore.Load(query);
   }
 
   inline void LocalOrderExecutionDataStore::Store(
       const SequencedAccountOrderInfo& orderInfo) {
     m_orderSubmissionDataStore.Store(orderInfo);
+    m_orders.Insert((*orderInfo)->m_orderId, orderInfo);
     m_liveOrders.Insert((*orderInfo)->m_orderId);
   }
 
@@ -107,6 +119,7 @@ namespace OrderExecutionService {
     m_orderSubmissionDataStore.Store(orderInfo);
     for(auto& info : orderInfo) {
       m_liveOrders.Insert((*info)->m_orderId);
+      m_orders.Insert((*info)->m_orderId, info);
     }
   }
 
@@ -114,7 +127,7 @@ namespace OrderExecutionService {
       const SequencedAccountExecutionReport& executionReport) {
     m_executionReportDataStore.Store(executionReport);
     m_executionReports.Get((*executionReport)->m_id).With(
-      [&] (std::vector<ExecutionReport>& executionReports) {
+      [&] (auto& executionReports) {
         if(executionReports.empty() || (*executionReport)->m_sequence >
             executionReports.back().m_sequence) {
           executionReports.push_back(**executionReport);
@@ -122,7 +135,7 @@ namespace OrderExecutionService {
         }
         auto insertionPoint = Beam::LinearLowerBound(executionReports.begin(),
           executionReports.end(), **executionReport,
-          [] (const ExecutionReport& lhs, const ExecutionReport& rhs) {
+          [] (const auto& lhs, const auto& rhs) {
             return lhs.m_sequence < rhs.m_sequence;
           });
         if(insertionPoint->m_sequence == (*executionReport)->m_sequence) {
@@ -143,7 +156,6 @@ namespace OrderExecutionService {
   }
 
   inline void LocalOrderExecutionDataStore::Close() {}
-}
 }
 
 #endif

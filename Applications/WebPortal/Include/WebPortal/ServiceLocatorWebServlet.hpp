@@ -2,17 +2,15 @@
 #define NEXUS_SERVICE_LOCATOR_WEB_SERVLET_HPP
 #include <functional>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
   /** Provides a web interface to the ServiceLocator. */
-  class ServiceLocatorWebServlet : private boost::noncopyable {
+  class ServiceLocatorWebServlet {
     public:
 
       /**
@@ -20,8 +18,7 @@ namespace Nexus::WebPortal {
        * @param username The username to login with.
        * @param password The username's password.
        */
-      using ServiceClientsBuilder = std::function<
-        std::unique_ptr<VirtualServiceClients> (
+      using ServiceClientsBuilder = std::function<ServiceClientsBox (
         const std::string& username, const std::string& password)>;
 
       /**
@@ -45,6 +42,9 @@ namespace Nexus::WebPortal {
       ServiceClientsBuilder m_serviceClientsBuilder;
       Beam::IO::OpenState m_openState;
 
+      ServiceLocatorWebServlet(const ServiceLocatorWebServlet&) = delete;
+      ServiceLocatorWebServlet& operator =(
+        const ServiceLocatorWebServlet&) = delete;
       Beam::WebServices::HttpResponse OnLogin(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogout(

@@ -1,6 +1,5 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <QDateTime>
 #include "Nexus/Definitions/SecuritySet.hpp"
 
@@ -65,10 +64,10 @@ namespace {
 }
 
 MarketToken::MarketToken(MarketCode code)
-    : m_code(code) {}
+  : m_code(code) {}
 
 PositionSideToken::PositionSideToken(Side side)
-    : m_side(side) {}
+  : m_side(side) {}
 
 QString PositionSideToken::to_string() const {
   if(m_side == Side::BID) {

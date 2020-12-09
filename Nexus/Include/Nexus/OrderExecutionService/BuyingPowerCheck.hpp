@@ -1,5 +1,5 @@
-#ifndef NEXUS_BUYINGPOWERCHECK_HPP
-#define NEXUS_BUYINGPOWERCHECK_HPP
+#ifndef NEXUS_BUYING_POWER_CHECK_HPP
+#define NEXUS_BUYING_POWER_CHECK_HPP
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
@@ -17,48 +17,42 @@
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class BuyingPowerCheck
-      \brief Performs a buying power check on an Order submission.
-      \tparam AdministrationClientType The type of AdministrationClient used to
-              get the RiskParameters.
-      \tparam MarketDataClientType The type of MarketDataClient used to price
-              Orders for buying power checks.
+  /**
+   * Performs a buying power check on an Order submission.
+   * @param <A> The type of AdministrationClient used to get the RiskParameters.
+   * @param <M> The type of MarketDataClient used to price Orders for buying
+   *        power checks.
    */
-  template<typename AdministrationClientType, typename MarketDataClientType>
+  template<typename A, typename M>
   class BuyingPowerCheck : public OrderSubmissionCheck {
     public:
 
-      //! The type of AdministrationClient used to get the RiskParameters.
-      using AdministrationClient =
-        Beam::GetTryDereferenceType<AdministrationClientType>;
+      /** The type of AdministrationClient used to get the RiskParameters. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The type of MarketDataClient used to price Orders for buying power
-      //! checks.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
+      /**
+       * The type of MarketDataClient used to price Orders for buying power
+       * checks.
+       */
+      using MarketDataClient = Beam::GetTryDereferenceType<M>;
 
-      //! Constructs a BuyingPowerCheck.
-      /*!
-        \param exchangeRates The list of ExchangeRates.
-        \param administrationClient Initializes the AdministrationClient.
-        \param marketDataClient Initializes the MarketDataClient.
-      */
-      template<typename AdministrationClientForward,
-        typename MarketDataClientForward>
+      /**
+       * Constructs a BuyingPowerCheck.
+       * @param exchangeRates The list of ExchangeRates.
+       * @param administrationClient Initializes the AdministrationClient.
+       * @param marketDataClient Initializes the MarketDataClient.
+       */
+      template<typename AF, typename MF>
       BuyingPowerCheck(const std::vector<ExchangeRate>& exchangeRates,
-        AdministrationClientForward&& administrationClient,
-        MarketDataClientForward&& marketDataClient);
+        AF&& administrationClient, MF&& marketDataClient);
 
-      virtual ~BuyingPowerCheck() = default;
+      void Submit(const OrderInfo& orderInfo) override;
 
-      virtual void Submit(const OrderInfo& orderInfo);
+      void Add(const Order& order) override;
 
-      virtual void Add(const Order& order);
-
-      virtual void Reject(const OrderInfo& orderInfo);
+      void Reject(const OrderInfo& orderInfo) override;
 
     private:
       struct BuyingPowerEntry {
@@ -71,9 +65,8 @@ namespace OrderExecutionService {
         BuyingPowerEntry();
       };
       ExchangeRateTable m_exchangeRates;
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<BuyingPowerEntry>> m_buyingPowerEntries;
       Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<
@@ -85,31 +78,25 @@ namespace OrderExecutionService {
         const Beam::ServiceLocator::DirectoryEntry& account);
   };
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::
-      BuyingPowerEntry::BuyingPowerEntry()
-      : m_riskParametersQueue(std::make_shared<Beam::StateQueue<
-          RiskService::RiskParameters>>()) {}
+  template<typename A, typename M>
+  BuyingPowerCheck<A, M>::BuyingPowerEntry::BuyingPowerEntry()
+    : m_riskParametersQueue(
+        std::make_shared<Beam::StateQueue<RiskService::RiskParameters>>()) {}
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  template<typename AdministrationClientForward,
-    typename MarketDataClientForward>
-  BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::
-      BuyingPowerCheck(const std::vector<ExchangeRate>& exchangeRates,
-      AdministrationClientForward&& administrationClient,
-      MarketDataClientForward&& marketDataClient)
-      : m_administrationClient{std::forward<AdministrationClientForward>(
-          administrationClient)},
-        m_marketDataClient{std::forward<MarketDataClientForward>(
-          marketDataClient)} {
+  template<typename A, typename M>
+  template<typename AF, typename MF>
+  BuyingPowerCheck<A, M>::BuyingPowerCheck(
+      const std::vector<ExchangeRate>& exchangeRates, AF&& administrationClient,
+      MF&& marketDataClient)
+      : m_administrationClient(std::forward<AF>(administrationClient)),
+        m_marketDataClient(std::forward<MF>(marketDataClient)) {
     for(auto& exchangeRate : exchangeRates) {
       m_exchangeRates.Add(exchangeRate);
     }
   }
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  void BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::Submit(
-      const OrderInfo& orderInfo) {
+  template<typename A, typename M>
+  void BuyingPowerCheck<A, M>::Submit(const OrderInfo& orderInfo) {
     auto& fields = orderInfo.m_fields;
     auto price = GetExpectedPrice(fields);
     auto& buyingPowerEntry = LoadBuyingPowerEntry(fields.m_account);
@@ -120,8 +107,8 @@ namespace OrderExecutionService {
           if(report->m_lastQuantity != 0) {
             auto currency = buyingPowerEntry.m_currencies.Find(report->m_id);
             if(!currency) {
-              BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-                "Currency not recognized."});
+              BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+                "Currency not recognized."));
             }
             report->m_lastPrice = m_exchangeRates.Convert(report->m_lastPrice,
               *currency, riskParameters.m_currency);
@@ -130,15 +117,15 @@ namespace OrderExecutionService {
         }
         auto convertedFields = fields;
         convertedFields.m_currency = riskParameters.m_currency;
-        Money convertedPrice;
+        auto convertedPrice = Money();
         try {
           convertedFields.m_price = m_exchangeRates.Convert(fields.m_price,
             fields.m_currency, riskParameters.m_currency);
           convertedPrice = m_exchangeRates.Convert(price, fields.m_currency,
             riskParameters.m_currency);
         } catch(const CurrencyPairNotFoundException&) {
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-            "Currency not recognized."});
+          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+            "Currency not recognized."));
         }
         buyingPowerEntry.m_currencies.Insert(orderInfo.m_orderId,
           fields.m_currency);
@@ -149,18 +136,26 @@ namespace OrderExecutionService {
           report.m_id = orderInfo.m_orderId;
           report.m_status = OrderStatus::REJECTED;
           buyingPowerModel.Update(report);
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-            "Order exceeds available buying power."});
+          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+            "Order exceeds available buying power."));
         }
       });
   }
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  void BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::Add(
-      const Order& order) {
+  template<typename A, typename M>
+  void BuyingPowerCheck<A, M>::Add(const Order& order) {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(
       order.GetInfo().m_fields.m_account);
-    auto price = GetExpectedPrice(order.GetInfo().m_fields);
+    auto price = [&] {
+      try {
+        return GetExpectedPrice(order.GetInfo().m_fields);
+      } catch(const std::exception&) {
+        if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
+          return order.GetInfo().m_fields.m_price;
+        }
+        return Money::ZERO;
+      }
+    }();
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerModel,
       [&] (auto& buyingPowerModel) {
         if(buyingPowerModel.HasOrder(order.GetInfo().m_orderId)) {
@@ -171,7 +166,7 @@ namespace OrderExecutionService {
         auto convertedFields = order.GetInfo().m_fields;
         convertedFields.m_currency =
           buyingPowerEntry.m_riskParametersQueue->Peek().m_currency;
-        Money convertedPrice;
+        auto convertedPrice = Money();
         try {
           convertedFields.m_price = m_exchangeRates.Convert(
             order.GetInfo().m_fields.m_price,
@@ -179,8 +174,8 @@ namespace OrderExecutionService {
           convertedPrice = m_exchangeRates.Convert(price,
             order.GetInfo().m_fields.m_currency, convertedFields.m_currency);
         } catch(const CurrencyPairNotFoundException&) {
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-            "Currency not recognized."});
+          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+            "Currency not recognized."));
         }
         buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
@@ -189,79 +184,70 @@ namespace OrderExecutionService {
       buyingPowerEntry.m_executionReportQueue.GetWriter());
   }
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  void BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::Reject(
-      const OrderInfo& orderInfo) {
+  template<typename A, typename M>
+  void BuyingPowerCheck<A, M>::Reject(const OrderInfo& orderInfo) {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(orderInfo.m_fields.m_account);
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerModel,
       [&] (auto& buyingPowerModel) {
         if(!buyingPowerModel.HasOrder(orderInfo.m_orderId)) {
           return;
         }
-        ExecutionReport report;
+        auto report = ExecutionReport();
         report.m_id = orderInfo.m_orderId;
         report.m_status = OrderStatus::REJECTED;
         buyingPowerModel.Update(report);
       });
   }
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  BboQuote BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::
-      LoadBboQuote(const Security& security) {
-    auto publisher = m_bboQuotes.GetOrInsert(security,
-      [&] {
-        auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        MarketDataService::QueryRealTimeWithSnapshot(security,
-          *m_marketDataClient, publisher);
-        return publisher;
-      });
+  template<typename A, typename M>
+  BboQuote BuyingPowerCheck<A, M>::LoadBboQuote(const Security& security) {
+    auto publisher = m_bboQuotes.GetOrInsert(security, [&] {
+      auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
+      MarketDataService::QueryRealTimeWithSnapshot(security,
+        *m_marketDataClient, publisher);
+      return publisher;
+    });
     try {
       return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
-      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
-        "No BBO quote available."});
+      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+        "No BBO quote available."));
     }
   }
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  Money BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::
-      GetExpectedPrice(const OrderFields& orderFields) {
+  template<typename A, typename M>
+  Money BuyingPowerCheck<A, M>::GetExpectedPrice(
+      const OrderFields& orderFields) {
     auto bbo = LoadBboQuote(orderFields.m_security);
     if(orderFields.m_type == OrderType::LIMIT) {
       if(orderFields.m_price <= Money::ZERO) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{"Invalid price."});
-      }
-      if(orderFields.m_side == Side::ASK) {
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException("Invalid price."));
+      } else if(orderFields.m_side == Side::ASK) {
         return std::max(bbo.m_bid.m_price, orderFields.m_price);
       } else {
         return std::min(bbo.m_ask.m_price, orderFields.m_price);
       }
+    } else if(orderFields.m_side == Side::ASK) {
+      return bbo.m_bid.m_price;
     } else {
-      if(orderFields.m_side == Side::ASK) {
-        return bbo.m_bid.m_price;
-      } else {
-        return bbo.m_ask.m_price;
-      }
+      return bbo.m_ask.m_price;
     }
   }
 
-  template<typename AdministrationClientType, typename MarketDataClientType>
-  typename BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::
-      BuyingPowerEntry& BuyingPowerCheck<AdministrationClientType,
-      MarketDataClientType>::LoadBuyingPowerEntry(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto& entry = *m_buyingPowerEntries.GetOrInsert(account,
-      [&] {
-        auto entry = std::make_shared<BuyingPowerEntry>();
-        m_administrationClient->GetRiskParametersPublisher(account).Monitor(
-          entry->m_riskParametersQueue);
-        return entry;
-      });
+  template<typename A, typename M>
+  typename BuyingPowerCheck<A, M>::BuyingPowerEntry&
+      BuyingPowerCheck<A,M>::LoadBuyingPowerEntry(
+        const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& entry = *m_buyingPowerEntries.GetOrInsert(account, [&] {
+      auto entry = std::make_shared<BuyingPowerEntry>();
+      m_administrationClient->GetRiskParametersPublisher(account).Monitor(
+        entry->m_riskParametersQueue);
+      return entry;
+    });
     entry.m_riskParametersQueue->Peek();
     return entry;
   }
-}
 }
 
 #endif

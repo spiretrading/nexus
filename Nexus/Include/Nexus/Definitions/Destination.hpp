@@ -6,6 +6,7 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Market.hpp"
@@ -118,21 +119,23 @@ namespace Nexus {
    */
   inline DestinationDatabase::Entry ParseDestinationDatabaseEntry(
       const YAML::Node& node, const MarketDatabase& database) {
-    auto entry = DestinationDatabase::Entry();
-    entry.m_id = Beam::Extract<std::string>(node, "id");
-    auto names = Beam::Extract<std::vector<std::string>>(node, "markets");
-    auto codes = std::vector<MarketCode>();
-    for(auto& name : names) {
-      auto code = ParseMarketCode(name, database);
-      if(code == MarketCode()) {
-        BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          node.Mark()));
+    return Beam::TryOrNest([&] {
+      auto entry = DestinationDatabase::Entry();
+      entry.m_id = Beam::Extract<std::string>(node, "id");
+      auto names = Beam::Extract<std::vector<std::string>>(node, "markets");
+      auto codes = std::vector<MarketCode>();
+      for(auto& name : names) {
+        auto code = ParseMarketCode(name, database);
+        if(code == MarketCode()) {
+          BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
+            node.Mark()));
+        }
+        codes.push_back(code);
       }
-      codes.push_back(code);
-    }
-    entry.m_markets = codes;
-    entry.m_description = Beam::Extract<std::string>(node, "description");
-    return entry;
+      entry.m_markets = codes;
+      entry.m_description = Beam::Extract<std::string>(node, "description");
+      return entry;
+    }, std::runtime_error("Failed to parse destination database entry."));
   }
 
   /**
@@ -143,29 +146,31 @@ namespace Nexus {
    */
   inline DestinationDatabase ParseDestinationDatabase(const YAML::Node& node,
       const MarketDatabase& database) {
-    auto destinationDatabase = DestinationDatabase();
-    for(auto node : Beam::GetNode(node, "destinations")) {
-      auto entry = ParseDestinationDatabaseEntry(node, database);
-      destinationDatabase.Add(entry);
-    }
-    for(auto node : Beam::GetNode(node, "preferred_destinations")) {
-      auto market = ParseMarketCode(Beam::Extract<std::string>(node, "market"),
-        database);
-      if(market == MarketCode()) {
-        BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          node.Mark()));
+    return Beam::TryOrNest([&] {
+      auto destinationDatabase = DestinationDatabase();
+      for(auto node : Beam::GetNode(node, "destinations")) {
+        auto entry = ParseDestinationDatabaseEntry(node, database);
+        destinationDatabase.Add(entry);
       }
-      auto destination = Beam::Extract<std::string>(node, "destination");
-      if(destinationDatabase.FromId(destination).m_id.empty()) {
-        BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-          "Invalid destination.", node.Mark()));
+      for(auto node : Beam::GetNode(node, "preferred_destinations")) {
+        auto market = ParseMarketCode(
+          Beam::Extract<std::string>(node, "market"), database);
+        if(market == MarketCode()) {
+          BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
+            node.Mark()));
+        }
+        auto destination = Beam::Extract<std::string>(node, "destination");
+        if(destinationDatabase.FromId(destination).m_id.empty()) {
+          BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
+            "Invalid destination.", node.Mark()));
+        }
+        destinationDatabase.SetPreferredDesintation(market, destination);
       }
-      destinationDatabase.SetPreferredDesintation(market, destination);
-    }
-    auto manualOrderEntry = ParseDestinationDatabaseEntry(
-      Beam::GetNode(node, "manual_order_entry"), database);
-    destinationDatabase.SetManualOrderEntryDestination(manualOrderEntry);
-    return destinationDatabase;
+      auto manualOrderEntry = ParseDestinationDatabaseEntry(
+        Beam::GetNode(node, "manual_order_entry"), database);
+      destinationDatabase.SetManualOrderEntryDestination(manualOrderEntry);
+      return destinationDatabase;
+    }, std::runtime_error("Failed to parse destination database."));
   }
 
   /**

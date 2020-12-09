@@ -1,5 +1,5 @@
-#ifndef NEXUS_SOUPBINTCPPACKET_HPP
-#define NEXUS_SOUPBINTCPPACKET_HPP
+#ifndef NEXUS_SOUP_BIN_TCP_PACKET_HPP
+#define NEXUS_SOUP_BIN_TCP_PACKET_HPP
 #include <cstdint>
 #include <Beam/IO/Reader.hpp>
 #include <Beam/Pointers/Out.hpp>
@@ -8,30 +8,27 @@
 #include "Nexus/SoupBinTcp/SoupBinTcp.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpParserException.hpp"
 
-namespace Nexus {
-namespace SoupBinTcp {
+namespace Nexus::SoupBinTcp {
 
-  /*! \struct SoupBinTcpPacket
-      \brief Stores a logical SoupBinTCP packet.
-   */
+  /** Stores a logical SoupBinTCP packet. */
   struct SoupBinTcpPacket {
 
-    //! The number of bytes in the packet, excluding the length field.
+    /** The number of bytes in the packet, excluding the length field. */
     std::uint16_t m_length;
 
-    //! The type of packet.
+    /** The type of packet. */
     std::uint8_t m_type;
 
-    //! The payload.
+    /** The payload. */
     const char* m_payload;
   };
 
-  //! Appends an alphanumeric value to a SoupBinTcpPacket.
-  /*!
-    \param value The value to append.
-    \param length The length of the field.
-    \param buffer The Buffer to append the <i>value</i> to.
-  */
+  /**
+   * Appends an alphanumeric value to a SoupBinTcpPacket.
+   * @param value The value to append.
+   * @param length The length of the field.
+   * @param buffer The Buffer to append the <i>value</i> to.
+   */
   template<typename Buffer>
   void Append(const std::string& value, std::size_t length,
       Beam::Out<Buffer> buffer) {
@@ -45,15 +42,15 @@ namespace SoupBinTcp {
     }
   }
 
-  //! Reads a logical packet from a Reader.
-  /*!
-    \param reader The Reader to read the logical packet from.
-    \param payloadBuffer The Buffer used to store the payload.
-    \return The logical packet read from the <i>reader</i>.
-  */
+  /**
+   * Reads a logical packet from a Reader.
+   * @param reader The Reader to read the logical packet from.
+   * @param payloadBuffer The Buffer used to store the payload.
+   * @return The logical packet read from the <i>reader</i>.
+   */
   template<typename Reader, typename Buffer>
   SoupBinTcpPacket ReadPacket(Reader& reader, Beam::Out<Buffer> buffer) {
-    SoupBinTcpPacket packet;
+    auto packet = SoupBinTcpPacket();
     Beam::IO::ReadExactSize(reader, reinterpret_cast<char*>(&packet.m_length),
       sizeof(packet.m_length));
     packet.m_length = Beam::FromBigEndian(packet.m_length);
@@ -64,7 +61,6 @@ namespace SoupBinTcp {
     packet.m_payload = buffer->GetData();
     return packet;
   }
-}
 }
 
 #endif

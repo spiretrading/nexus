@@ -15,7 +15,8 @@ namespace Nexus {
        * Constructs a BacktesterTimeClient.
        * @param environment The event handler this client belongs to.
        */
-      BacktesterTimeClient(Beam::Ref<BacktesterEventHandler> eventHandler);
+      explicit BacktesterTimeClient(
+        Beam::Ref<BacktesterEventHandler> eventHandler);
 
       ~BacktesterTimeClient();
 

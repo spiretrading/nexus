@@ -1,10 +1,9 @@
 #ifndef SPIRE_SERVICES_BOOK_VIEW_MODEL_HPP
 #define SPIRE_SERVICES_BOOK_VIEW_MODEL_HPP
 #include <memory>
-#include <Beam/Pointers/Ref.hpp>
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/LocalBookViewModel.hpp"
@@ -24,8 +23,7 @@ namespace Spire {
         \param clients The service clients to query for market data.
       */
       ServicesBookViewModel(Nexus::Security security,
-        Definitions definitions,
-        Beam::Ref<Nexus::VirtualServiceClients> clients);
+        Definitions definitions, Nexus::ServiceClientsBox clients);
 
       const Nexus::Security& get_security() const override;
 
@@ -73,7 +71,7 @@ namespace Spire {
     private:
       LocalBookViewModel m_local_model;
       Definitions m_definitions;
-      Nexus::VirtualServiceClients* m_clients;
+      Nexus::ServiceClientsBox m_clients;
       std::shared_ptr<Beam::Threading::CallOnce<Beam::Threading::Mutex>>
         m_loader;
       EventHandler m_event_handler;

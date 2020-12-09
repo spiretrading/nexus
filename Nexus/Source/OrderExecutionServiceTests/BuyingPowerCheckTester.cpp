@@ -20,9 +20,8 @@ namespace {
   auto TST = Security("TST", DefaultMarkets::NYSE(), DefaultCountries::US());
 
   struct Fixture {
-    using TestBuyingPowerCheck = BuyingPowerCheck<VirtualAdministrationClient*,
-      VirtualMarketDataClient*>;
-
+    using TestBuyingPowerCheck = BuyingPowerCheck<AdministrationClientBox,
+      MarketDataClientBox>;
     TestEnvironment m_environment;
     std::shared_ptr<Queue<const Order*>> m_orderSubmissions;
     TestServiceClients m_serviceClients;
@@ -32,8 +31,8 @@ namespace {
     Fixture()
         : m_orderSubmissions(std::make_shared<Queue<const Order*>>()),
           m_serviceClients(Ref(m_environment)),
-          m_buyingPowerCheck(std::vector<ExchangeRate>{},
-            &m_serviceClients.GetAdministrationClient(),
+          m_buyingPowerCheck(std::vector<ExchangeRate>(),
+            m_serviceClients.GetAdministrationClient(),
             &m_serviceClients.GetMarketDataClient()) {
       m_environment.MonitorOrderSubmissions(m_orderSubmissions);
       m_environment.UpdateBboPrice(TST, Money::ONE, Money::ONE + Money::CENT);

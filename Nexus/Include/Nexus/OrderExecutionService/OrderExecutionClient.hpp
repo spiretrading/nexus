@@ -3,6 +3,7 @@
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
@@ -11,6 +12,7 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -40,6 +42,9 @@ namespace Nexus::OrderExecutionService {
       explicit OrderExecutionClient(BF&& clientBuilder);
 
       ~OrderExecutionClient();
+
+      /** Loads an Order by its id. */
+      boost::optional<const Order&> LoadOrder(OrderId id);
 
       /**
        * Submits a query for OrderRecords.
@@ -130,10 +135,10 @@ namespace Nexus::OrderExecutionService {
   template<typename B>
   template<typename BF>
   OrderExecutionClient<B>::OrderExecutionClient(BF&& clientBuilder)
-      : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
-          &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
-        m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
-        m_executionReportPublisher(Beam::Ref(m_clientHandler)) {
+      try : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
+              &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
+            m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
+            m_executionReportPublisher(Beam::Ref(m_clientHandler)) {
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -146,11 +151,26 @@ namespace Nexus::OrderExecutionService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&OrderExecutionClient::OnOrderUpdate, this,
       std::placeholders::_1, std::placeholders::_2));
+  } catch(const std::exception&) {
+    std::throw_with_nested(Beam::IO::ConnectException(
+      "Failed to connect to the order execution server."));
   }
 
   template<typename B>
   OrderExecutionClient<B>::~OrderExecutionClient() {
     Close();
+  }
+
+  template<typename B>
+  boost::optional<const Order&> OrderExecutionClient<B>::LoadOrder(OrderId id) {
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      if(auto record = client->template SendRequest<LoadOrderByIdService>(id)) {
+        return boost::optional<const Order&>(
+          *static_cast<const Order*>(LoadOrder(**record).get()));
+      }
+      return boost::optional<const Order&>();
+    }, "Failed to load order: " + boost::lexical_cast<std::string>(id));
   }
 
   template<typename B>
@@ -189,42 +209,48 @@ namespace Nexus::OrderExecutionService {
 
   template<typename B>
   const Order& OrderExecutionClient<B>::Submit(const OrderFields& fields) {
-    auto client = m_clientHandler.GetClient();
-    if(!m_realTimeSubscriptions.Contains(fields.m_account)) {
-      m_realTimeSubscriptions.With([&] (auto& realTimeSubscriptions) {
-        if(Beam::Contains(realTimeSubscriptions, fields.m_account)) {
-          return;
-        }
-        auto realTimeQuery = AccountQuery();
-        realTimeQuery.SetIndex(fields.m_account);
-        realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
-        client->template SendRequest<QueryOrderSubmissionsService>(
-          realTimeQuery);
-        realTimeSubscriptions.insert(fields.m_account);
-      });
-    }
-    auto orderInfo = client->template SendRequest<NewOrderSingleService>(
-      fields);
-    auto orderRecord = Beam::Queries::SequencedValue(
-      Beam::Queries::IndexedValue(OrderRecord(std::move(**orderInfo), {}),
-      orderInfo->GetIndex()), orderInfo.GetSequence());
-    auto order = LoadOrder(**orderRecord);
-    m_orderSubmissionPublisher.Publish(orderRecord);
-    return *order;
+    return Beam::Services::ServiceOrThrowWithNested([&] () -> decltype(auto) {
+      auto client = m_clientHandler.GetClient();
+      if(!m_realTimeSubscriptions.Contains(fields.m_account)) {
+        m_realTimeSubscriptions.With([&] (auto& realTimeSubscriptions) {
+          if(Beam::Contains(realTimeSubscriptions, fields.m_account)) {
+            return;
+          }
+          client->template SendRequest<QueryOrderSubmissionsService>(
+            Beam::Queries::BuildRealTimeQuery(fields.m_account));
+          realTimeSubscriptions.insert(fields.m_account);
+        });
+      }
+      auto orderInfo = client->template SendRequest<NewOrderSingleService>(
+        fields);
+      auto orderRecord = Beam::Queries::SequencedValue(
+        Beam::Queries::IndexedValue(OrderRecord(std::move(**orderInfo), {}),
+        orderInfo->GetIndex()), orderInfo.GetSequence());
+      auto order = LoadOrder(**orderRecord);
+      m_orderSubmissionPublisher.Publish(orderRecord);
+      return *order;
+    }, "Failed to submit order: " + boost::lexical_cast<std::string>(fields));
   }
 
   template<typename B>
   void OrderExecutionClient<B>::Cancel(const Order& order) {
-    auto client = m_clientHandler.GetClient();
-    Beam::Services::SendRecordMessage<CancelOrderMessage>(*client,
-      order.GetInfo().m_orderId);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      Beam::Services::SendRecordMessage<CancelOrderMessage>(*client,
+        order.GetInfo().m_orderId);
+    }, "Failed to cancel order: " +
+      boost::lexical_cast<std::string>(order.GetInfo().m_orderId));
   }
 
   template<typename B>
   void OrderExecutionClient<B>::Update(OrderId orderId,
       const ExecutionReport& executionReport) {
-    auto client = m_clientHandler.GetClient();
-    client->template SendRequest<UpdateOrderService>(orderId, executionReport);
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      client->template SendRequest<UpdateOrderService>(orderId,
+        executionReport);
+    }, "Failed to update order: " + boost::lexical_cast<std::string>(orderId) +
+      ", " + boost::lexical_cast<std::string>(executionReport));
   }
 
   template<typename B>
@@ -233,6 +259,8 @@ namespace Nexus::OrderExecutionService {
       return;
     }
     m_clientHandler.Close();
+    m_orderSubmissionPublisher.Break();
+    m_executionReportPublisher.Break();
     m_openState.Close();
   }
 

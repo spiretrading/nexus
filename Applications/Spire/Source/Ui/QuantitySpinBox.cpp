@@ -1,6 +1,6 @@
 #include "Spire/Ui/QuantitySpinBox.hpp"
 #include <QHBoxLayout>
-#include "Spire/Spire/RealSpinBoxModel.hpp"
+#include "Spire/Ui/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;

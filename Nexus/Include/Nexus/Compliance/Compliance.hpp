@@ -4,7 +4,6 @@
 #include <string>
 
 namespace Nexus::Compliance {
-  class ApplicationComplianceClient;
   template<typename C> class BuyingPowerComplianceRule;
   template<typename D> class CachedComplianceRuleDataStore;
   template<typename C> class CancelRestrictionPeriodComplianceRule;
@@ -12,6 +11,7 @@ namespace Nexus::Compliance {
   template<typename D, typename C, typename S>
     class ComplianceCheckOrderExecutionDriver;
   template<typename B> class ComplianceClient;
+  class ComplianceClientBox;
   struct ComplianceParameter;
   class ComplianceRule;
   struct ComplianceRuleDataStore;
@@ -37,10 +37,9 @@ namespace Nexus::Compliance {
   template<typename C> class SqlComplianceRuleDataStore;
   template<typename C> class SubmissionRestrictionPeriodComplianceRule;
   template<typename C> class TimeFilterComplianceRule;
-  class VirtualComplianceClient;
 
   /** Standard name for the compliance service. */
-  inline const std::string SERVICE_NAME = "compliance_service";
+  inline const auto SERVICE_NAME = std::string("compliance_service");
 }
 
 #endif

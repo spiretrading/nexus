@@ -6,7 +6,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Ui/SpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

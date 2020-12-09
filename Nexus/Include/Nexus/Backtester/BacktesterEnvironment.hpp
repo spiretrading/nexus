@@ -19,7 +19,7 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 
 namespace Nexus {
@@ -35,7 +35,7 @@ namespace Nexus {
        *        data source.
        */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
-        Beam::Ref<VirtualServiceClients> serviceClients);
+        ServiceClientsBox serviceClients);
 
       /**
        * Constructs a BacktesterEnvironment.
@@ -45,8 +45,7 @@ namespace Nexus {
        *        data source.
        */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
-        boost::posix_time::ptime endTime,
-        Beam::Ref<VirtualServiceClients> serviceClients);
+        boost::posix_time::ptime endTime, ServiceClientsBox serviceClients);
 
       ~BacktesterEnvironment();
 
@@ -102,35 +101,32 @@ namespace Nexus {
       void Close();
 
     private:
-      VirtualServiceClients* m_serviceClients;
+      ServiceClientsBox m_serviceClients;
       BacktesterEventHandler m_eventHandler;
-      std::shared_ptr<Beam::TimeService::VirtualTimeClient> m_timeClient;
+      Beam::TimeService::TimeClientBox m_timeClient;
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
         m_serviceLocatorEnvironment;
-      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        m_serviceLocatorClient;
+      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
       Beam::UidService::Tests::UidServiceTestEnvironment m_uidEnvironment;
-      std::shared_ptr<Beam::UidService::VirtualUidClient> m_uidClient;
+      Beam::UidService::UidClientBox m_uidClient;
       Beam::RegistryService::Tests::RegistryServiceTestEnvironment
         m_registryEnvironment;
       DefinitionsService::Tests::DefinitionsServiceTestEnvironment
         m_definitionsEnvironment;
       AdministrationService::Tests::AdministrationServiceTestEnvironment
         m_administrationEnvironment;
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        m_administrationClient;
+      AdministrationService::AdministrationClientBox m_administrationClient;
       MarketDataService::Tests::MarketDataServiceTestEnvironment
         m_marketDataEnvironment;
       BacktesterMarketDataService m_marketDataService;
-      std::shared_ptr<MarketDataService::VirtualMarketDataClient>
-        m_marketDataClient;
+      MarketDataService::MarketDataClientBox m_marketDataClient;
       ChartingService::Tests::ChartingServiceTestEnvironment
         m_chartingEnvironment;
       Compliance::Tests::ComplianceTestEnvironment m_complianceEnvironment;
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
-      std::shared_ptr<OrderExecutionService::VirtualOrderExecutionClient>
+      boost::optional<OrderExecutionService::OrderExecutionClientBox>
         m_orderExecutionClient;
       boost::optional<RiskService::Tests::RiskServiceTestEnvironment>
         m_riskEnvironment;
@@ -141,71 +137,68 @@ namespace Nexus {
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-    boost::posix_time::ptime startTime,
-    Beam::Ref<VirtualServiceClients> serviceClients)
+    boost::posix_time::ptime startTime, ServiceClientsBox serviceClients)
     : BacktesterEnvironment(startTime, boost::posix_time::pos_infin,
-        Beam::Ref(serviceClients)) {}
+        std::move(serviceClients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-      Beam::Ref<VirtualServiceClients> serviceClients)
-      : m_serviceClients(serviceClients.Get()),
+      ServiceClientsBox serviceClients)
+      : m_serviceClients(std::move(serviceClients)),
         m_eventHandler(startTime, endTime),
-        m_timeClient(
-          Beam::TimeService::MakeVirtualTimeClient<BacktesterTimeClient>(
-          Beam::Initialize(Beam::Ref(m_eventHandler)))),
-        m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
-        m_uidClient(m_uidEnvironment.BuildClient()),
+        m_timeClient(std::in_place_type<BacktesterTimeClient>,
+          Beam::Ref(m_eventHandler)),
+        m_serviceLocatorClient(m_serviceLocatorEnvironment.MakeClient()),
+        m_uidClient(m_uidEnvironment.MakeClient()),
         m_registryEnvironment(m_serviceLocatorClient),
         m_definitionsEnvironment(m_serviceLocatorClient),
         m_administrationEnvironment(m_serviceLocatorClient),
-        m_administrationClient(m_administrationEnvironment.BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))),
+        m_administrationClient(m_administrationEnvironment.MakeClient(
+          m_serviceLocatorClient)),
         m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
           MarketDataService::MakeVirtualHistoricalDataStore(
-          std::make_unique<BacktesterHistoricalDataStore<
-          MarketDataService::ClientHistoricalDataStore<
-          MarketDataService::VirtualMarketDataClient*>>>(
-          &m_serviceClients->GetMarketDataClient(),
-          m_eventHandler.GetStartTime()))),
+            std::make_unique<BacktesterHistoricalDataStore<
+              MarketDataService::ClientHistoricalDataStore<
+                MarketDataService::MarketDataClientBox>>>(
+                  m_serviceClients.GetMarketDataClient(),
+                  m_eventHandler.GetStartTime()))),
         m_marketDataService(Beam::Ref(m_eventHandler),
           Beam::Ref(m_marketDataEnvironment),
-          Beam::Ref(m_serviceClients->GetMarketDataClient())),
-        m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
-          std::make_unique<BacktesterMarketDataClient>(
-          Beam::Ref(m_marketDataService), m_marketDataEnvironment.BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))))),
+          m_serviceClients.GetMarketDataClient()),
+        m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
+          Beam::Ref(m_marketDataService), m_marketDataEnvironment.MakeClient(
+            m_serviceLocatorClient))),
         m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
         m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
           m_timeClient) {
     try {
-      auto definitionsClient = m_definitionsEnvironment.BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
+      auto definitionsClient = m_definitionsEnvironment.MakeClient(
+        m_serviceLocatorClient);
       m_orderExecutionEnvironment.emplace(
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase(), m_serviceLocatorClient,
+        definitionsClient.LoadMarketDatabase(),
+        definitionsClient.LoadDestinationDatabase(), m_serviceLocatorClient,
         m_uidClient, m_administrationClient, m_timeClient,
         OrderExecutionService::MakeVirtualOrderExecutionDriver(
-        std::make_unique<OrderExecutionService::SimulationOrderExecutionDriver<
-        std::shared_ptr<MarketDataService::VirtualMarketDataClient>,
-        std::shared_ptr<Beam::TimeService::VirtualTimeClient>>>(
-        m_marketDataClient, m_timeClient)));
-      m_orderExecutionClient = m_orderExecutionEnvironment->BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
-      auto transitionTimerFactory = [=] {
-        return Beam::Threading::MakeVirtualTimer(
-          std::make_unique<Beam::Threading::TriggerTimer>());
-      };
+          std::make_unique<
+            OrderExecutionService::SimulationOrderExecutionDriver<
+              MarketDataService::MarketDataClientBox,
+              Beam::TimeService::TimeClientBox>>(
+                m_marketDataClient, m_timeClient)));
+      m_orderExecutionClient.emplace(m_orderExecutionEnvironment->MakeClient(
+        m_serviceLocatorClient));
+      auto transitionTimerFactory = std::bind(
+        boost::factory<std::unique_ptr<Beam::Threading::TimerBox>>(),
+        std::in_place_type<Beam::Threading::TriggerTimer>);
       m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
-        m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
-        m_timeClient, definitionsClient->LoadExchangeRates(),
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase());
-      auto rootAccount = m_serviceLocatorClient->GetAccount();
-      m_serviceLocatorClient->Associate(rootAccount,
-        m_administrationClient->LoadAdministratorsRootEntry());
-      m_serviceLocatorClient->Associate(rootAccount,
-        m_administrationClient->LoadServicesRootEntry());
+        m_marketDataClient, *m_orderExecutionClient, transitionTimerFactory,
+        m_timeClient, definitionsClient.LoadExchangeRates(),
+        definitionsClient.LoadMarketDatabase(),
+        definitionsClient.LoadDestinationDatabase());
+      auto rootAccount = m_serviceLocatorClient.GetAccount();
+      m_serviceLocatorClient.Associate(rootAccount,
+        m_administrationClient.LoadAdministratorsRootEntry());
+      m_serviceLocatorClient.Associate(rootAccount,
+        m_administrationClient.LoadServicesRootEntry());
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;
@@ -294,17 +287,17 @@ namespace Nexus {
     m_orderExecutionEnvironment->Close();
     m_complianceEnvironment.Close();
     m_chartingEnvironment.Close();
-    m_marketDataClient->Close();
+    m_marketDataClient.Close();
     m_marketDataEnvironment.Close();
-    m_administrationClient->Close();
+    m_administrationClient.Close();
     m_administrationEnvironment.Close();
     m_definitionsEnvironment.Close();
     m_registryEnvironment.Close();
-    m_uidClient->Close();
+    m_uidClient.Close();
     m_uidEnvironment.Close();
-    m_serviceLocatorClient->Close();
+    m_serviceLocatorClient.Close();
     m_serviceLocatorEnvironment.Close();
-    m_timeClient->Close();
+    m_timeClient.Close();
     m_eventHandler.Close();
     m_openState.Close();
   }

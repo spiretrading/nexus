@@ -2,22 +2,21 @@
 #define WEB_PORTAL_PORTFOLIO_MODEL_HPP
 #include <memory>
 #include <unordered_map>
-#include <boost/noncopyable.hpp>
-#include <boost/optional/optional.hpp>
 #include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "WebPortal/WebPortal.hpp"
 
 namespace Nexus::WebPortal {
 
   /** Publishes updates for positions held by trading accounts. */
-  class PortfolioModel : private boost::noncopyable {
+  class PortfolioModel {
     public:
 
       /** Represents a single position. */
@@ -54,7 +53,7 @@ namespace Nexus::WebPortal {
        * Constructs a PortfolioModel.
        * @param serviceClients The ServiceClients used to query for positions.
        */
-      explicit PortfolioModel(Beam::Ref<VirtualServiceClients> serviceClients);
+      explicit PortfolioModel(ServiceClientsBox serviceClients);
 
       ~PortfolioModel();
 
@@ -64,7 +63,7 @@ namespace Nexus::WebPortal {
       void Close();
 
     private:
-      VirtualServiceClients* m_serviceClients;
+      ServiceClientsBox m_serviceClients;
       std::unordered_map<RiskService::RiskPortfolioKey, std::shared_ptr<Entry>>
         m_entries;
       std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>
@@ -73,6 +72,8 @@ namespace Nexus::WebPortal {
       std::unordered_map<Security, Accounting::SecurityValuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
+      PortfolioModel(const PortfolioModel&) = delete;
+      PortfolioModel& operator =(const PortfolioModel&) = delete;
       void OnRiskPortfolioInventoryUpdate(
         const RiskService::RiskInventoryEntry& inventory);
       void OnBboQuote(const Security& security,

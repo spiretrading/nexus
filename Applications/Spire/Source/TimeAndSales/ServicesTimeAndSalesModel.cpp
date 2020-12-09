@@ -13,19 +13,19 @@ using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 ServicesTimeAndSalesModel::ServicesTimeAndSalesModel(Security security,
-    const Definitions& definitions, Ref<VirtualServiceClients> clients)
+    const Definitions& definitions, ServiceClientsBox clients)
     : m_security(std::move(security)),
-      m_clients(clients.Get()) {
+      m_clients(std::move(clients)) {
   auto query = BuildRealTimeQuery(m_security);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_clients->GetMarketDataClient().QueryBboQuotes(query,
+  m_clients.GetMarketDataClient().QueryBboQuotes(query,
     m_event_handler.get_slot<SequencedBboQuote>(
     [=] (const auto& bbo) { on_bbo(bbo); }));
-  m_clients->GetMarketDataClient().QueryTimeAndSales(query,
+  m_clients.GetMarketDataClient().QueryTimeAndSales(query,
     m_event_handler.get_slot<SequencedTimeAndSale>(
     [=] (const auto& time_and_sale) { on_time_and_sale(time_and_sale); }));
-  QueryDailyVolume(m_clients->GetChartingClient(), m_security,
-    m_clients->GetTimeClient().GetTime(), pos_infin,
+  QueryDailyVolume(m_clients.GetChartingClient(), m_security,
+    m_clients.GetTimeClient().GetTime(), pos_infin,
     definitions.get_market_database(), definitions.get_time_zone_database(),
     m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
     [=] (const auto& volume) { on_volume(volume); }));
@@ -42,24 +42,25 @@ Quantity ServicesTimeAndSalesModel::get_volume() const {
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     ServicesTimeAndSalesModel::load_snapshot(Beam::Queries::Sequence last,
     int count) {
-  return QtPromise([last, count, security = m_security, clients = m_clients] {
-    auto query = SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(Beam::Queries::Sequence::First(), last);
-    query.SetSnapshotLimit(SnapshotLimit::FromTail(count));
-    auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
-    clients->GetMarketDataClient().QueryTimeAndSales(query, queue);
-    auto result = std::vector<TimeAndSalesModel::Entry>();
-    try {
-      while(true) {
-        auto time_and_sale = queue->Pop();
-        result.push_back(Entry{std::move(time_and_sale),
-          TimeAndSalesProperties::PriceRange::UNKNOWN});
+  return QtPromise(
+    [last, count, security = m_security, clients = m_clients] () mutable {
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(security);
+      query.SetRange(Beam::Queries::Sequence::First(), last);
+      query.SetSnapshotLimit(SnapshotLimit::FromTail(count));
+      auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
+      clients.GetMarketDataClient().QueryTimeAndSales(query, queue);
+      auto result = std::vector<TimeAndSalesModel::Entry>();
+      try {
+        while(true) {
+          auto time_and_sale = queue->Pop();
+          result.push_back(Entry{std::move(time_and_sale),
+            TimeAndSalesProperties::PriceRange::UNKNOWN});
+        }
+      } catch(const PipeBrokenException&) {
       }
-    } catch(const PipeBrokenException&) {
-    }
-    return result;
-  }, LaunchPolicy::ASYNC);
+      return result;
+    }, LaunchPolicy::ASYNC);
 }
 
 connection ServicesTimeAndSalesModel::connect_time_and_sale_signal(

@@ -1,12 +1,13 @@
 #ifndef NEXUS_WEB_PORTAL_SESSION_HPP
 #define NEXUS_WEB_PORTAL_SESSION_HPP
-#include <boost/thread/mutex.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/WebServices/AuthenticatedSession.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include <boost/optional/optional.hpp>
+#include <boost/thread/mutex.hpp>
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "WebPortal/WebPortal.hpp"
 
 namespace Nexus::WebPortal {
@@ -24,14 +25,13 @@ namespace Nexus::WebPortal {
       /**
        * Returns the ServiceClients used by this session.
        */
-      VirtualServiceClients& GetServiceClients();
+      ServiceClientsBox& GetServiceClients();
 
       /**
        * Sets the ServiceClients to use for this session.
        * @param serviceClients The ServiceClients to use.
        */
-      void SetServiceClients(
-        std::unique_ptr<VirtualServiceClients> serviceClients);
+      void SetServiceClients(ServiceClientsBox serviceClients);
 
       /**
        * Shuttles the parameters from this client.
@@ -54,7 +54,7 @@ namespace Nexus::WebPortal {
       mutable boost::mutex m_mutex;
       Beam::Serialization::JsonReceiver<Beam::IO::SharedBuffer> m_receiver;
       Beam::Serialization::JsonSender<Beam::IO::SharedBuffer> m_sender;
-      std::unique_ptr<VirtualServiceClients> m_serviceClients;
+      boost::optional<ServiceClientsBox> m_serviceClients;
   };
 
   template<typename T>
