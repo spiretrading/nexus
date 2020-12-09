@@ -1,4 +1,5 @@
 #include "Spire/Ui/DropDownMenuItem2.hpp"
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -14,6 +15,16 @@ DropDownMenuItem2::DropDownMenuItem2(QVariant value, QWidget* parent)
 
 void DropDownMenuItem2::enterEvent(QEvent* event) {
   m_hovered_signal();
+}
+
+void DropDownMenuItem2::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+    case Qt::Key_Space:
+      m_selected_signal();
+      break;
+  }
 }
 
 void DropDownMenuItem2::mousePressEvent(QMouseEvent* event) {

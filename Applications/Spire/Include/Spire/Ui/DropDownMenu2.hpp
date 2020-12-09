@@ -83,6 +83,9 @@ namespace Spire {
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       mutable CurrentSignal m_current_signal;
       mutable HoveredSignal m_hovered_signal;

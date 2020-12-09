@@ -79,6 +79,25 @@ DropDownMenu2::DropDownMenu2(std::vector<DropDownMenuItem2*> items,
   }
 }
 
+void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Down:
+      increment_current(*this);
+      break;
+    case Qt::Key_Up:
+      decrement_current(*this);
+      break;
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+    case Qt::Key_Space:
+      on_item_selected(get_value(*m_current_index), *m_current_index);
+      break;
+    case Qt::Key_Escape:
+      hide();
+      break;
+  }
+}
+
 const QVariant& DropDownMenu2::get_value(int index) const {
   return get_item(index)->get_value();
 }

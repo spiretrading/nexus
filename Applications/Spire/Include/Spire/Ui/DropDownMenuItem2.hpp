@@ -39,6 +39,7 @@ namespace Spire {
     protected:
       explicit DropDownMenuItem2(QVariant value, QWidget* parent = nullptr);
       void enterEvent(QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
 
     private:

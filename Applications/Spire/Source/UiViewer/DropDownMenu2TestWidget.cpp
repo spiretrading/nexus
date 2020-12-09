@@ -118,6 +118,7 @@ bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Resize) {
       m_menu->setFixedWidth(m_menu->parentWidget()->width());
     } else if(event->type() == QEvent::WindowDeactivate &&
+        !m_menu->parentWidget()->hasFocus() &&
         !m_menu->isAncestorOf(focusWidget())) {
       m_menu->hide();
     }
