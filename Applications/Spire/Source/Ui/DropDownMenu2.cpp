@@ -95,10 +95,10 @@ void DropDownMenu2::set_current(int index) {
     get_item(*m_current_index)->reset_highlighted();
   }
   m_current_index = index;
-  auto highlighted_widget = get_item(*m_current_index);
-  highlighted_widget->set_highlighted();
+  auto highlighted_item = get_item(*m_current_index);
+  highlighted_item->set_highlighted();
   scroll_to_current_index();
-  m_current_signal(highlighted_widget->get_value());
+  m_current_signal(highlighted_item->get_value());
 }
 
 optional<int> DropDownMenu2::get_selected() const {
@@ -129,26 +129,22 @@ connection DropDownMenu2::connect_selected_signal(
 }
 
 void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
-  if(event == m_current_item_key_event) {
-    event->accept();
-  } else {
+  if(event != m_current_item_key_event) {
     switch(event->key()) {
       case Qt::Key_Escape:
-        event->accept();
         hide();
         break;
       case Qt::Key_Up:
-        event->accept();
         decrement_current(*this);
         break;
       case Qt::Key_Down:
-        event->accept();
         increment_current(*this);
         break;
       default:
-        if(auto current_item = get_current()) {
+        if(auto current_index = get_current()) {
           m_current_item_key_event = event;
-          QCoreApplication::sendEvent(get_item(*current_item), event);
+          QCoreApplication::sendEvent(get_item(*current_index), event);
+          m_current_item_key_event = nullptr;
           break;
         }
     }

@@ -15,15 +15,6 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit DropDownMenu2TestWidget(QWidget* parent = nullptr);
-
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-
-    private:
-      DropDownMenu2* m_menu;
-
-      void move_menu();
-      void toggle_menu_visibility();
   };
 }
 

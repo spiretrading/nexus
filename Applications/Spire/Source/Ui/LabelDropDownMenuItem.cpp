@@ -32,12 +32,12 @@ LabelDropDownMenuItem::LabelDropDownMenuItem(QVariant value, QWidget* parent)
 
 void LabelDropDownMenuItem::enterEvent(QEvent* event) {
   update();
-  QWidget::enterEvent(event);
+  DropDownMenuItem2::enterEvent(event);
 }
 
 void LabelDropDownMenuItem::leaveEvent(QEvent* event) {
   update();
-  QWidget::leaveEvent(event);
+  DropDownMenuItem2::leaveEvent(event);
 }
 
 void LabelDropDownMenuItem::paintEvent(QPaintEvent* event) {
@@ -53,6 +53,5 @@ void LabelDropDownMenuItem::paintEvent(QPaintEvent* event) {
     width() - RIGHT_PADDING());
   painter.setFont(FONT());
   painter.drawText(LEFT_PADDING(), metrics.height(), shortened_text);
-  event->accept();
-  QWidget::paintEvent(event);
+  DropDownMenuItem2::paintEvent(event);
 }

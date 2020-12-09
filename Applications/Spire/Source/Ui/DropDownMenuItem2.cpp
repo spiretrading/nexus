@@ -44,7 +44,6 @@ DropDownMenuItem2::DropDownMenuItem2(QVariant value, QWidget* parent)
 void DropDownMenuItem2::enterEvent(QEvent* event) {
   event->accept();
   m_hovered_signal();
-  QWidget::enterEvent(event);
 }
 
 void DropDownMenuItem2::keyPressEvent(QKeyEvent* event) {
@@ -54,6 +53,8 @@ void DropDownMenuItem2::keyPressEvent(QKeyEvent* event) {
       event->accept();
       m_selected_signal();
       break;
+    default:
+      event->ignore();
   }
   if(!event->isAccepted()) {
     QWidget::keyPressEvent(event);
@@ -64,6 +65,10 @@ void DropDownMenuItem2::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     event->accept();
     m_selected_signal();
+  } else {
+    event->ignore();
   }
-  QWidget::mousePressEvent(event);
+  if(!event->isAccepted()) {
+    QWidget::mousePressEvent(event);
+  }
 }
