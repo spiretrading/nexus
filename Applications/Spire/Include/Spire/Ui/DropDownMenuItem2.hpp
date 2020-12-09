@@ -6,14 +6,14 @@
 
 namespace Spire {
 
-  //! Represents an item in a DropDownMenu.
+  //! Base class for a single selectable item displayed in a DropDownMenu.
   class DropDownMenuItem2 : public QWidget {
     public:
 
-      //! Signals that the item was hovered.
+      //! Signals that this item was hovered.
       using HoveredSignal = Signal<void ()>;
 
-      //! Signals that the item was selected.
+      //! Signals that this item was selected.
       using SelectedSignal = Signal<void ()>;
 
       //! Returns the item's value.
@@ -37,6 +37,12 @@ namespace Spire {
         const SelectedSignal::slot_type& slot) const;
 
     protected:
+
+      /**
+       * Constructs a DropDownMenuItem representing a given value.
+       * @param value The value to represent.
+       * @param parent The parent widget.
+       */
       explicit DropDownMenuItem2(QVariant value, QWidget* parent = nullptr);
       void enterEvent(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;

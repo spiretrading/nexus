@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/DropDownMenu2TestWidget.hpp"
+#include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -38,89 +39,46 @@ DropDownMenu2TestWidget::DropDownMenu2TestWidget(QWidget* parent)
     create_item("BA", this), create_item("BB", this), create_item("BC", this),
     create_item("CA", this), create_item("CB", this), create_item("CC", this)},
     label);
-  m_status_label = new QLabel(this);
-  m_status_label->setFixedSize(scale(100, 26));
-  layout->addWidget(m_status_label);
+  auto status_label = new QLabel(this);
+  status_label->setFixedSize(scale(100, 26));
+  layout->addWidget(status_label);
   m_menu->connect_current_signal([=] (const auto& item) {
     if(item.isValid()) {
-      m_status_label->setText(QString("Current: %1").arg(item.toString()));
+      status_label->setText(QString("Current: %1").arg(item.toString()));
     }
   });
   m_menu->connect_hovered_signal([=] (const auto& item) {
-    m_status_label->setText(QString("Hovered: %1").arg(item.toString()));
+    status_label->setText(QString("Hovered: %1").arg(item.toString()));
   });
   m_menu->connect_selected_signal([=] (const auto& item) {
-    m_status_label->setText(QString("Selected: %1").arg(item.toString()));
+    status_label->setText(QString("Selected: %1").arg(item.toString()));
   });
-  m_menu->hide();
   label->installEventFilter(this);
   window()->installEventFilter(this);
 }
 
 bool DropDownMenu2TestWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
-    if(event->type() == QEvent::WindowDeactivate &&
-        !m_menu->isActiveWindow()) {
+    if(event->type() == QEvent::WindowDeactivate && !m_menu->isActiveWindow()) {
       m_menu->hide();
     } else if(event->type() == QEvent::Move) {
       move_menu();
-    } else if(event->type() == QEvent::MouseButtonPress) {
-      auto e = static_cast<QMouseEvent*>(event);
-      if(e->button() == Qt::LeftButton) {
-        m_menu->hide();
-      }
     }
   } else {
     if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      switch(e->key()) {
-        case Qt::Key_Down:
-          if(!m_menu->isVisible()) {
-            if(auto selected_index = m_menu->get_selected(); selected_index) {
-              m_menu->set_current(*selected_index);
-            }
-            m_menu->show();
-          }
-          increment_current(*m_menu);
-          return true;
-        case Qt::Key_Up:
-          if(m_menu->isVisible()) {
-            decrement_current(*m_menu);
-          }
-          break;
-        case Qt::Key_Enter:
-        case Qt::Key_Return:
-          if(m_menu->isVisible() && m_menu->get_current()) {
-            m_menu->set_selected(*m_menu->get_current());
-          }
-          break;
-        case Qt::Key_Escape:
-          m_menu->hide();
-          break;
-        case Qt::Key_Space:
-          if(m_menu->isVisible() && m_menu->get_current()) {
-            m_menu->set_selected(*m_menu->get_current());
-          }
-          break;
+      auto& keyEvent = static_cast<QKeyEvent&>(*event);
+      if(keyEvent.key() == Qt::Key_Space) {
+        toggle_menu_visibility();
+        keyEvent.accept();
+      } else if(m_menu->isVisible()) {
+        QCoreApplication::sendEvent(m_menu, &keyEvent);
       }
     } else if(event->type() == QEvent::MouseButtonPress) {
-      auto e = static_cast<QMouseEvent*>(event);
-      if(e->button() == Qt::LeftButton) {
-        m_menu->setVisible(!m_menu->isVisible());
-        return true;
+      auto& mouseEvent = static_cast<QMouseEvent&>(*event);
+      if(mouseEvent.button() == Qt::LeftButton) {
+        toggle_menu_visibility();
+        mouseEvent.accept();
       }
-    } else if(event->type() == QEvent::Move) {
-      move_menu();
-    } else if(event->type() == QEvent::FocusOut) {
-      if(!m_menu->isActiveWindow()) {
-        m_menu->hide();
-      }
-    } else if(event->type() == QEvent::Resize) {
-      m_menu->setFixedWidth(m_menu->parentWidget()->width());
-    } else if(event->type() == QEvent::WindowDeactivate &&
-        !m_menu->parentWidget()->hasFocus() &&
-        !m_menu->isAncestorOf(focusWidget())) {
-      m_menu->hide();
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -130,5 +88,12 @@ void DropDownMenu2TestWidget::move_menu() {
   auto pos = m_menu->parentWidget()->mapToGlobal(
     QPoint(0, m_menu->parentWidget()->height()));
   m_menu->move(pos);
-  m_menu->raise();
+}
+
+void DropDownMenu2TestWidget::toggle_menu_visibility() {
+  m_menu->setVisible(!m_menu->isVisible());
+  if(m_menu->isVisible()) {
+    move_menu();
+    m_menu->setFixedWidth(m_menu->parentWidget()->width());
+  }
 }

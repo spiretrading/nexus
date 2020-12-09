@@ -4,7 +4,8 @@
 
 namespace Spire {
 
-  //! Represents a DropDownMenuItem with a text label.
+  //! Implements a DropDownMenuItem displaying the text representation of its
+  //! value.
   class LabelDropDownMenuItem : public DropDownMenuItem2 {
     public:
 
@@ -17,6 +18,8 @@ namespace Spire {
         QWidget* parent = nullptr);
 
     protected:
+      void enterEvent(QEvent* event) override;
+      void leaveEvent(QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
   };
 }

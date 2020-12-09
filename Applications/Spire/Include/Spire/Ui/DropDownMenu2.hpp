@@ -90,11 +90,11 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       mutable HoveredSignal m_hovered_signal;
       mutable SelectedSignal m_selected_signal;
-      DropShadow* m_shadow;
       QVBoxLayout* m_list_layout;
       ScrollArea* m_scroll_area;
       boost::optional<int> m_selected_index;
       boost::optional<int> m_current_index;
+      QKeyEvent* m_current_item_key_event;
       Beam::SignalHandling::ConnectionGroup m_item_hovered_connections;
       Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 

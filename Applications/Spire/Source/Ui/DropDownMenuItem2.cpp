@@ -6,33 +6,6 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-DropDownMenuItem2::DropDownMenuItem2(QVariant value, QWidget* parent)
-    : QWidget(parent),
-      m_value(std::move(value)),
-      m_is_highlighted(false) {
-  setAttribute(Qt::WA_Hover);
-}
-
-void DropDownMenuItem2::enterEvent(QEvent* event) {
-  m_hovered_signal();
-}
-
-void DropDownMenuItem2::keyPressEvent(QKeyEvent* event) {
-  switch(event->key()) {
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
-    case Qt::Key_Space:
-      m_selected_signal();
-      break;
-  }
-}
-
-void DropDownMenuItem2::mousePressEvent(QMouseEvent* event) {
-  if(event->button() == Qt::LeftButton) {
-    m_selected_signal();
-  }
-}
-
 const QVariant& DropDownMenuItem2::get_value() const {
   return m_value;
 }
@@ -59,4 +32,38 @@ connection DropDownMenuItem2::connect_hovered_signal(
 connection DropDownMenuItem2::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
+}
+
+DropDownMenuItem2::DropDownMenuItem2(QVariant value, QWidget* parent)
+    : QWidget(parent),
+      m_value(std::move(value)),
+      m_is_highlighted(false) {
+  setAttribute(Qt::WA_Hover);
+}
+
+void DropDownMenuItem2::enterEvent(QEvent* event) {
+  event->accept();
+  m_hovered_signal();
+  QWidget::enterEvent(event);
+}
+
+void DropDownMenuItem2::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+      event->accept();
+      m_selected_signal();
+      break;
+  }
+  if(!event->isAccepted()) {
+    QWidget::keyPressEvent(event);
+  }
+}
+
+void DropDownMenuItem2::mousePressEvent(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton) {
+    event->accept();
+    m_selected_signal();
+  }
+  QWidget::mousePressEvent(event);
 }
