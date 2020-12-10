@@ -119,7 +119,7 @@ namespace Details {
       const OrderExecutionService::Order& Submit(
         const OrderExecutionService::OrderInfo& orderInfo,
         const FIX::SenderCompID& senderCompId,
-        const FIX::TargetCompID targetCompId, F f);
+        const FIX::TargetCompID targetCompId, F&& f);
 
       /**
        * Submits a OrderCancelRequest message.
@@ -133,9 +133,9 @@ namespace Details {
       template<typename F>
       void Cancel(const OrderExecutionService::OrderExecutionSession& session,
         OrderExecutionService::OrderId orderId,
-        const boost::posix_time::ptime& timestamp,
+        boost::posix_time::ptime timestamp,
         const FIX::SenderCompID& senderCompId,
-        const FIX::TargetCompID targetCompId, F f);
+        const FIX::TargetCompID targetCompId, F&& f);
 
       /**
        * Updates an Order based on a FIX ExecutionReport message.
@@ -147,7 +147,7 @@ namespace Details {
        */
       template<typename E, typename F>
       void Update(const E& message, const FIX::SessionID& sessionId,
-        const boost::posix_time::ptime& timestamp, F f);
+        boost::posix_time::ptime timestamp, F&& f);
 
       /**
        * Updates an Order based on an ExecutionReport.
@@ -159,7 +159,7 @@ namespace Details {
       void Update(const OrderExecutionService::OrderExecutionSession& session,
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport,
-        const boost::posix_time::ptime& timestamp);
+        boost::posix_time::ptime timestamp);
 
     private:
       using FixExecutionReport = std::variant<FIX42::ExecutionReport,
@@ -170,7 +170,7 @@ namespace Details {
           Beam::Out<OrderExecutionService::ExecutionReport>)> m_callback;
 
         template<typename F>
-        RecoveredExecutionReport(FixExecutionReport message, F callback);
+        RecoveredExecutionReport(FixExecutionReport message, F&& callback);
       };
       Beam::Threading::Sync<std::unordered_map<OrderExecutionService::OrderId,
         std::shared_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
@@ -186,16 +186,16 @@ namespace Details {
         const OrderExecutionService::OrderInfo& orderInfo,
         const std::string& reason);
       template<typename E, typename F>
-      void Update(const E& message, const boost::posix_time::ptime& timestamp,
+      void Update(const E& message, boost::posix_time::ptime timestamp,
         const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
-        F f);
+        F&& f);
   };
 
   template<typename F>
   FixOrderLog::RecoveredExecutionReport::RecoveredExecutionReport(
-    FixExecutionReport message, F callback)
+    FixExecutionReport message, F&& callback)
     : m_message(std::move(message)),
-      m_callback(std::move(callback)) {}
+      m_callback(std::forward<F>(callback)) {}
 
   template<typename E>
   boost::optional<OrderExecutionService::OrderId> FixOrderLog::GetOrderId(
@@ -249,7 +249,7 @@ namespace Details {
     auto lastPxField = FIX::LastPx();
     message.get(lastPxField);
     auto lastPxFieldValue = Money::FromValue(lastPxField.getString());
-    if(lastPxFieldValue.is_initialized()) {
+    if(lastPxFieldValue) {
       *lastPrice = *lastPxFieldValue;
     } else {
       *lastQuantity = 0;
@@ -259,14 +259,13 @@ namespace Details {
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::FindOrder(OrderExecutionService::OrderId id) const {
-    return Beam::Threading::With(m_orders,
-      [&] (const auto& orders) {
-        auto orderIterator = orders.find(id);
-        if(orderIterator == orders.end()) {
-          return std::shared_ptr<OrderExecutionService::PrimitiveOrder>();
-        }
-        return orderIterator->second;
-      });
+    return Beam::Threading::With(m_orders, [&] (const auto& orders) {
+      auto orderIterator = orders.find(id);
+      if(orderIterator == orders.end()) {
+        return std::shared_ptr<OrderExecutionService::PrimitiveOrder>();
+      }
+      return orderIterator->second;
+    });
   }
 
   inline const OrderExecutionService::Order& FixOrderLog::Recover(
@@ -282,32 +281,32 @@ namespace Details {
     }
     auto side = GetSide((*orderRecord)->m_info.m_fields.m_side,
       (*orderRecord)->m_info.m_shortingFlag);
-    if(!side.is_initialized()) {
-      BOOST_THROW_EXCEPTION(
-        OrderExecutionService::OrderUnrecoverableException());
+    if(!side) {
+      BOOST_THROW_EXCEPTION(OrderExecutionService::OrderUnrecoverableException(
+        "FIX order record missing a side: " + boost::lexical_cast<std::string>(
+          (*orderRecord)->m_info.m_orderId));
     }
     auto order = AddOrder(**orderRecord, *side);
     auto recoveredExecutionReports = m_recoveredExecutionReports.Find(
       (*orderRecord)->m_info.m_orderId);
-    if(recoveredExecutionReports.is_initialized()) {
+    if(recoveredExecutionReports) {
       recoveredExecutionReports->ForEach(
         [&] (const auto& recoveredExecutionReport) {
           auto fixTimestamp = FIX::UtcTimeStamp();
-          std::visit(
-            [&] (auto& message) {
-              if(message.isSetField(FIX::FIELD::TransactTime)) {
-                auto transactionTime = FIX::TransactTime();
-                message.get(transactionTime);
-                fixTimestamp = static_cast<FIX::UtcTimeStamp>(transactionTime);
-              } else {
-                auto sendingTime = FIX::SendingTime();
-                message.getHeader().get(sendingTime);
-                fixTimestamp = static_cast<FIX::UtcTimeStamp>(sendingTime);
-              }
-              auto timestamp = GetTimestamp(fixTimestamp);
-              Update(message, timestamp, order,
-                recoveredExecutionReport.m_callback);
-            }, recoveredExecutionReport.m_message);
+          std::visit([&] (auto& message) {
+            if(message.isSetField(FIX::FIELD::TransactTime)) {
+              auto transactionTime = FIX::TransactTime();
+              message.get(transactionTime);
+              fixTimestamp = static_cast<FIX::UtcTimeStamp>(transactionTime);
+            } else {
+              auto sendingTime = FIX::SendingTime();
+              message.getHeader().get(sendingTime);
+              fixTimestamp = static_cast<FIX::UtcTimeStamp>(sendingTime);
+            }
+            auto timestamp = GetTimestamp(fixTimestamp);
+            Update(message, timestamp, order,
+              recoveredExecutionReport.m_callback);
+          }, recoveredExecutionReport.m_message);
         });
     }
     return *order;
@@ -317,13 +316,13 @@ namespace Details {
   const OrderExecutionService::Order& FixOrderLog::Submit(
       const OrderExecutionService::OrderInfo& orderInfo,
       const FIX::SenderCompID& senderCompId,
-      const FIX::TargetCompID targetCompId, F f) {
+      const FIX::TargetCompID targetCompId, F&& f) {
     auto ordType = GetOrderType(orderInfo.m_fields.m_type);
-    if(!ordType.is_initialized()) {
+    if(!ordType) {
       return *Reject(orderInfo, "Invalid order type.");
     }
     auto side = GetSide(orderInfo.m_fields.m_side, orderInfo.m_shortingFlag);
-    if(!side.is_initialized()) {
+    if(!side) {
       return *Reject(orderInfo, "Invalid side.");
     }
     auto newOrderSingle = typename Details::FixNewOrderSingle<F>::type();
@@ -341,7 +340,7 @@ namespace Details {
       static_cast<FIX::QTY>(orderInfo.m_fields.m_quantity)));
     auto timeInForceType = GetTimeInForceType(
       orderInfo.m_fields.m_timeInForce.GetType());
-    if(!timeInForceType.is_initialized()) {
+    if(!timeInForceType) {
       return *Reject(orderInfo, "Invalid time in force.");
     }
     newOrderSingle.set(*timeInForceType);
@@ -354,7 +353,7 @@ namespace Details {
     AddAdditionalTags(orderInfo.m_fields.m_additionalFields,
       Beam::Store(newOrderSingle));
     try {
-      f(Beam::Store(newOrderSingle));
+      std::forward<F>(f)(Beam::Store(newOrderSingle));
     } catch(const std::exception& e) {
       return *Reject(orderInfo, e.what());
     }
@@ -367,11 +366,10 @@ namespace Details {
   void FixOrderLog::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
-      const boost::posix_time::ptime& timestamp,
-      const FIX::SenderCompID& senderCompId,
-      const FIX::TargetCompID targetCompId, F f) {
+      boost::posix_time::ptime timestamp, const FIX::SenderCompID& senderCompId,
+      const FIX::TargetCompID targetCompId, F&& f) {
     auto order = std::dynamic_pointer_cast<FixOrder>(FindOrder(orderId));
-    if(order == nullptr) {
+    if(!order) {
       return;
     }
     auto origClOrdID = FIX::OrigClOrdID(
@@ -390,20 +388,18 @@ namespace Details {
     auto orderQty = FIX::OrderQty(
       static_cast<FIX::QTY>(order->GetInfo().m_fields.m_quantity));
     orderCancelRequest.set(orderQty);
-    f(static_cast<const OrderExecutionService::Order&>(*order),
+    std::forward<F>(f)(static_cast<const OrderExecutionService::Order&>(*order),
       Beam::Store(orderCancelRequest));
-    auto sendMessage = false;
-    order->With(
-      [&] (auto status, const auto& reports) {
-        if(IsTerminal(status) || reports.empty()) {
-          return;
-        }
-        auto pendingCancelReport =
-          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+    auto sendMessage = order->With([&] (auto status, const auto& reports) {
+      if(IsTerminal(status) || reports.empty()) {
+        return false;
+      }
+      auto pendingCancelReport =
+        OrderExecutionService::ExecutionReport::BuildUpdatedReport(
           reports.back(), OrderStatus::PENDING_CANCEL, timestamp);
-        order->Update(pendingCancelReport);
-        sendMessage = true;
-      });
+      order->Update(pendingCancelReport);
+      return true;
+    });
     if(sendMessage) {
       FIX::Session::sendToTarget(orderCancelRequest, senderCompId,
         targetCompId);
@@ -412,62 +408,57 @@ namespace Details {
 
   template<typename E, typename F>
   void FixOrderLog::Update(const E& message, const FIX::SessionID& sessionId,
-      const boost::posix_time::ptime& timestamp, F f) {
+      boost::posix_time::ptime timestamp, F&& f) {
     auto orderId = GetOrderId(message);
-    if(!orderId.is_initialized()) {
+    if(!orderId) {
       return;
     }
 
     // TODO: Turn this into a transaction to avoid possible race condition.
-    auto order = FindOrder(*orderId);
-    if(order == nullptr) {
+    if(auto order = FindOrder(*orderId)) {
+      Update(message, timestamp, order, std::forward<F>(f));
+    } else {
       auto recoveredExecutionReport = RecoveredExecutionReport(message,
-        std::move(f));
+        std::forward<F>(f));
       m_recoveredExecutionReports.Get(*orderId).PushBack(
         recoveredExecutionReport);
-    } else {
-      Update(message, timestamp, order, std::move(f));
     }
   }
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::AddOrder(const OrderExecutionService::OrderInfo& info,
-      FIX::Side side) {
+        FIX::Side side) {
     auto order = std::make_shared<FixOrder>(info, side);
-    Beam::Threading::With(m_orders,
-      [&] (auto& orders) {
-        orders.insert(std::make_pair(info.m_orderId, order));
-      });
+    Beam::Threading::With(m_orders, [&] (auto& orders) {
+      orders.insert(std::make_pair(info.m_orderId, order));
+    });
     return order;
   }
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::AddOrder(
-      const OrderExecutionService::OrderRecord& orderRecord, FIX::Side side) {
+        const OrderExecutionService::OrderRecord& orderRecord, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(orderRecord, side);
-    Beam::Threading::With(m_orders,
-      [&] (auto& orders) {
-        orders.insert(std::make_pair(orderRecord.m_info.m_orderId, order));
-      });
+    Beam::Threading::With(m_orders, [&] (auto& orders) {
+      orders.insert(std::make_pair(orderRecord.m_info.m_orderId, order));
+    });
     return order;
   }
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::Reject(const OrderExecutionService::OrderInfo& info,
-      const std::string& reason) {
+        const std::string& reason) {
     auto order = std::shared_ptr(BuildRejectedOrder(info, reason));
-    Beam::Threading::With(m_orders,
-      [&] (auto& orders) {
-        orders.insert(std::make_pair(info.m_orderId, order));
-      });
+    Beam::Threading::With(m_orders, [&] (auto& orders) {
+      orders.insert(std::make_pair(info.m_orderId, order));
+    });
     return order;
   }
 
   template<typename E, typename F>
-  void FixOrderLog::Update(const E& message,
-      const boost::posix_time::ptime& timestamp,
+  void FixOrderLog::Update(const E& message, boost::posix_time::ptime timestamp,
       const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
-      F f) {
+      F&& f) {
     if constexpr(std::is_same_v<E, FIX42::ExecutionReport>) {
       auto execTransType = FIX::ExecTransType();
       message.get(execTransType);
@@ -479,8 +470,7 @@ namespace Details {
     auto ordStatus = FIX::OrdStatus();
     message.get(ordStatus);
     auto orderStatus = GetOrderStatus(ordStatus);
-    if(!orderStatus.is_initialized() ||
-        *orderStatus == OrderStatus::PENDING_NEW) {
+    if(!orderStatus || *orderStatus == OrderStatus::PENDING_NEW) {
       return;
     }
     auto isPendingCancel = *orderStatus == OrderStatus::PENDING_CANCEL;
@@ -494,78 +484,76 @@ namespace Details {
     if(message.isSet(text)) {
       message.get(text);
     }
-    order->With(
-      [&] (auto status, const auto& reports) {
-        if(reports.empty() || IsTerminal(reports.back().m_status)) {
-          std::cout << "Stale Report: " << message.toString() << std::endl;
-          return;
+    order->With([&] (auto status, const auto& reports) {
+      if(reports.empty() || IsTerminal(reports.back().m_status)) {
+        std::cout << "Stale Report: " << message.toString() << std::endl;
+        return;
+      }
+      if(isPendingCancel) {
+        auto filledQuantity = lastQuantity;
+        for(auto& report : reports) {
+          filledQuantity += report.m_lastQuantity;
         }
-        if(isPendingCancel) {
-          auto filledQuantity = lastQuantity;
-          for(auto& report : reports) {
-            filledQuantity += report.m_lastQuantity;
-          }
-          if(filledQuantity >= order->GetInfo().m_fields.m_quantity) {
-            orderStatus = OrderStatus::FILLED;
-          } else {
-            orderStatus = OrderStatus::PARTIALLY_FILLED;
-          }
+        if(filledQuantity >= order->GetInfo().m_fields.m_quantity) {
+          orderStatus = OrderStatus::FILLED;
+        } else {
+          orderStatus = OrderStatus::PARTIALLY_FILLED;
         }
-        auto updatedReport =
-          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+      }
+      auto updatedReport =
+        OrderExecutionService::ExecutionReport::BuildUpdatedReport(
           reports.back(), *orderStatus, timestamp);
-        updatedReport.m_lastQuantity = lastQuantity;
-        updatedReport.m_lastPrice = lastPrice;
-        updatedReport.m_text = text.getString();
-        f(static_cast<const OrderExecutionService::Order&>(*order),
-          Beam::Store(updatedReport));
-        order->Update(updatedReport);
-      });
+      updatedReport.m_lastQuantity = lastQuantity;
+      updatedReport.m_lastPrice = lastPrice;
+      updatedReport.m_text = text.getString();
+      std::forward<F>(f)(
+        static_cast<const OrderExecutionService::Order&>(*order),
+        Beam::Store(updatedReport));
+      order->Update(updatedReport);
+    });
   }
 
   inline void FixOrderLog::Update(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport,
-      const boost::posix_time::ptime& timestamp) {
+      boost::posix_time::ptime timestamp) {
     auto order = std::dynamic_pointer_cast<FixOrder>(FindOrder(orderId));
-    if(order == nullptr) {
+    if(!order) {
       return;
     }
-    auto updatedTimestamp =
-      [&] {
-        if(executionReport.m_timestamp.is_special()) {
-          return timestamp;
-        } else {
-          return executionReport.m_timestamp;
+    auto updatedTimestamp = [&] {
+      if(executionReport.m_timestamp.is_special()) {
+        return timestamp;
+      } else {
+        return executionReport.m_timestamp;
+      }
+    }();
+    order->With([&] (auto status, const auto& executionReports) {
+      if(IsTerminal(status) || executionReports.empty()) {
+        return;
+      }
+      auto updatedExecutionReport = executionReport;
+      updatedExecutionReport.m_sequence =
+        executionReports.back().m_sequence + 1;
+      updatedExecutionReport.m_timestamp = updatedTimestamp;
+      if(executionReport.m_lastQuantity != 0) {
+        auto filledQuantity = Quantity(0);
+        for(auto& executionReport : executionReports) {
+          filledQuantity += executionReport.m_lastQuantity;
         }
-      }();
-    order->With(
-      [&] (auto status, const auto& executionReports) {
-        if(IsTerminal(status) || executionReports.empty()) {
-          return;
-        }
-        auto updatedExecutionReport = executionReport;
-        updatedExecutionReport.m_sequence =
-          executionReports.back().m_sequence + 1;
-        updatedExecutionReport.m_timestamp = updatedTimestamp;
-        if(executionReport.m_lastQuantity != 0) {
-          auto filledQuantity = Quantity(0);
-          for(auto& executionReport : executionReports) {
-            filledQuantity += executionReport.m_lastQuantity;
-          }
-          updatedExecutionReport.m_lastQuantity =
-            std::max<Quantity>(0, std::min(executionReport.m_lastQuantity,
+        updatedExecutionReport.m_lastQuantity = std::max<Quantity>(
+          0, std::min(executionReport.m_lastQuantity,
             order->GetInfo().m_fields.m_quantity - filledQuantity));
-          if(filledQuantity + updatedExecutionReport.m_lastQuantity >=
-              order->GetInfo().m_fields.m_quantity) {
-            updatedExecutionReport.m_status = OrderStatus::FILLED;
-          } else {
-            updatedExecutionReport.m_status = OrderStatus::PARTIALLY_FILLED;
-          }
+        if(filledQuantity + updatedExecutionReport.m_lastQuantity >=
+            order->GetInfo().m_fields.m_quantity) {
+          updatedExecutionReport.m_status = OrderStatus::FILLED;
+        } else {
+          updatedExecutionReport.m_status = OrderStatus::PARTIALLY_FILLED;
         }
-        order->Update(updatedExecutionReport);
-      });
+      }
+      order->Update(updatedExecutionReport);
+    });
   }
 }
 

@@ -10,6 +10,7 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/functional/factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
@@ -294,9 +295,14 @@ namespace Nexus::OrderExecutionService {
             Beam::Queries::IndexedValue(*orderRecord, account),
             orderRecord.GetSequence()));
         } catch(const std::exception&) {
-          std::cout << "Unable to recover order: " <<
-            orderRecord->m_info.m_orderId << std::endl;
-          continue;
+          try {
+            std::throw_with_nested(std::runtime_error(
+              "Unable to recover order: " + boost::lexical_cast<std::string>(
+                orderRecord->m_info.m_orderId)));
+          } catch(const std::exception&) {
+            std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+            continue;
+          }
         }
         order->GetPublisher().With([&] {
           auto existingExecutionReports =

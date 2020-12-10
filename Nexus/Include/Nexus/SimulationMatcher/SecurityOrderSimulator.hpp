@@ -158,7 +158,11 @@ namespace Nexus::OrderExecutionService {
           return;
         }
         auto updatedReport = executionReport;
-        updatedReport.m_sequence = executionReports.back().m_sequence + 1;
+        if(executionReports.empty()) {
+          updatedReport.m_sequence = 0;
+        } else {
+          updatedReport.m_sequence = executionReports.back().m_sequence + 1;
+        }
         if(updatedReport.m_timestamp.is_special()) {
           updatedReport.m_timestamp = m_timeClient->GetTime();
         }

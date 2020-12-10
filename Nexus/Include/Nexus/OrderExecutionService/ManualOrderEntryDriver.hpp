@@ -62,10 +62,8 @@ namespace Nexus::OrderExecutionService {
 
     private:
       std::string m_destinationName;
-      Beam::GetOptionalLocalPtr<D>
-        m_orderExecutionDriver;
-      Beam::GetOptionalLocalPtr<A>
-        m_administrationClient;
+      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::SynchronizedVector<std::unique_ptr<Order>> m_orders;
       Beam::SynchronizedUnorderedSet<OrderId> m_orderIds;
       Beam::IO::OpenState m_openState;
