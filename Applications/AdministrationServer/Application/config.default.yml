@@ -56,6 +56,13 @@ entitlements:
       - market: XASX
         source: CHIA
         messages: [TAS, BOOK]
+  - name: Aequitas NEO Exchange
+    price: 0.00
+    currency: CAD
+    group: neoe
+    applicability:
+      - source: NEOE
+        messages: [BBO, MQT, BOOK, TAS, IMB]
   - name: CSE
     price: 0.00
     currency: CAD
