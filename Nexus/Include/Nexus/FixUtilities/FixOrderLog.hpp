@@ -284,7 +284,7 @@ namespace Details {
     if(!side) {
       BOOST_THROW_EXCEPTION(OrderExecutionService::OrderUnrecoverableException(
         "FIX order record missing a side: " + boost::lexical_cast<std::string>(
-          (*orderRecord)->m_info.m_orderId));
+          (*orderRecord)->m_info.m_orderId)));
     }
     auto order = AddOrder(**orderRecord, *side);
     auto recoveredExecutionReports = m_recoveredExecutionReports.Find(
