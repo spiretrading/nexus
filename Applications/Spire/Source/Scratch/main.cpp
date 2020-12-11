@@ -66,6 +66,15 @@ class ScrollBarStyle : public QProxyStyle {
       return QProxyStyle::pixelMetric(metric, opt, widget);
     }
 
+    int styleHint(QStyle::StyleHint hint, const QStyleOption *option = nullptr,
+        const QWidget *widget = nullptr,
+        QStyleHintReturn *returnData = nullptr) const override {
+      if(hint == QStyle::SH_ScrollBar_ContextMenu) {
+        return 0;
+      }
+      return QProxyStyle::styleHint(hint, option, widget, returnData);
+    }
+
     QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt,
         SubControl sc, const QWidget *widget) const override {
       switch(sc) {
