@@ -31,6 +31,8 @@ def parse_ip_address(source):
     int(source[separator + 1 :]))
 
 def parse_region(service_clients, region):
+  if region == '*':
+    return nexus.Region.GLOBAL
   market_database = \
     service_clients.get_definitions_client().load_market_database()
   countries = service_clients.get_definitions_client().load_country_database()
