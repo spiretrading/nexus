@@ -84,6 +84,7 @@ int main(int argc, const char** argv) {
       std::move(feedConfiguration), marketDataFeedClient.Get(),
       &protocolClient);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

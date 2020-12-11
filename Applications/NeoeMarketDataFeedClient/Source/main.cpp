@@ -158,6 +158,7 @@ int main(int argc, const char** argv) {
     auto feedClient = ApplicationNeoeMarketDataFeedClient(neoeConfig,
       marketDataFeedClient.Get(), &serviceAccessClient, timeClient.get());
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

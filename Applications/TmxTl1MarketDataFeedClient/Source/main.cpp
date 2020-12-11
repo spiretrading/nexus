@@ -112,6 +112,7 @@ int main(int argc, const char** argv) {
     auto feedClient = ApplicationTmxTl1MarketDataFeedClient(tmxTl1Config,
       marketDataFeedClient.Get(), &serviceAccessClient);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

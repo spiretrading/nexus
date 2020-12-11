@@ -144,6 +144,7 @@ int main(int argc, const char** argv) {
     auto feedClient = ApplicationTmxIpMarketDataFeedClient(tmxIpConfig,
       marketDataFeedClient.Get(), &serviceAccessClient, timeClient.get());
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

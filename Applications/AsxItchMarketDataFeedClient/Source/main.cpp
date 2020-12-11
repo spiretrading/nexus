@@ -105,6 +105,7 @@ int main(int argc, const char** argv) {
       Ref(currencyDatabase), marketDataFeedClient.Get(), &moldClient,
       &glimpseClient);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

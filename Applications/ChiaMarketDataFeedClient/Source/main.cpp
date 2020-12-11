@@ -127,6 +127,7 @@ int main(int argc, const char** argv) {
     auto feedClient = ApplicationChiaMarketDataFeedClient(feedConfiguration,
       marketDataFeedClient.Get(), &protocolClient);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

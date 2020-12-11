@@ -158,6 +158,7 @@ int main(int argc, const char** argv) {
     auto feedClient = ApplicationCseMarketDataFeedClient(cseConfig,
       marketDataFeedClient.Get(), &serviceAccessClient, timeClient.get());
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;
