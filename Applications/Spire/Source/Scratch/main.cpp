@@ -69,32 +69,52 @@ class ScrollBarStyle : public QProxyStyle {
     QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt,
         SubControl sc, const QWidget *widget) const override {
       switch(sc) {
-        case SC_ScrollBarAddLine:
         case SC_ScrollBarAddPage:
-        case SC_ScrollBarFirst:
-        case SC_ScrollBarLast:
-        case SC_ScrollBarSubLine:
+          {
+            auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
+            if(scroll_bar->orientation() == Qt::Horizontal) {
+              auto slider_right_pos = get_horizontal_slider_position(
+                scroll_bar) + m_minimum_horizontal_handle_width;
+              return {slider_right_pos, 0,
+                scroll_bar->width() - slider_right_pos,
+                m_horizontal_handle_height};
+            } else {
+              auto slider_bottom_pos = get_vertical_slider_position(
+                scroll_bar) + m_minimum_vertical_handle_height;
+              return {0, slider_bottom_pos, m_vertical_handle_width,
+                scroll_bar->height() - slider_bottom_pos};
+            }
+          }
         case SC_ScrollBarSubPage:
-          return {};
+          {
+            auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
+            if(scroll_bar->orientation() == Qt::Horizontal) {
+              auto slider_pos = get_horizontal_slider_position(scroll_bar);
+              return {0, 0, slider_pos,
+                slider_pos + m_minimum_horizontal_handle_width};
+            } else {
+              return {0, 0, m_vertical_handle_width,
+                get_vertical_slider_position(scroll_bar)};
+            }
+          }
         case SC_ScrollBarGroove:
           return widget->rect();
         case SC_ScrollBarSlider:
           {
             auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
             if(scroll_bar->orientation() == Qt::Horizontal) {
-              auto slider_pos = sliderPositionFromValue(scroll_bar->minimum(),
-                scroll_bar->maximum(), scroll_bar->value(),
-                scroll_bar->width() - m_minimum_horizontal_handle_width);
-              return QRect(slider_pos, 0, m_minimum_horizontal_handle_width,
-                m_horizontal_handle_height);
+              return QRect(get_horizontal_slider_position(scroll_bar), 0,
+                m_minimum_horizontal_handle_width, m_horizontal_handle_height);
             } else {
-              auto slider_pos = sliderPositionFromValue(scroll_bar->minimum(),
-                scroll_bar->maximum(), scroll_bar->value(),
-                scroll_bar->height() - m_minimum_vertical_handle_height);
-              return QRect(0, slider_pos, m_vertical_handle_width,
-                m_minimum_vertical_handle_height);
+              return QRect(0, get_vertical_slider_position(scroll_bar),
+                m_vertical_handle_width, m_minimum_vertical_handle_height);
             }
           }
+        case SC_ScrollBarAddLine:
+        case SC_ScrollBarFirst:
+        case SC_ScrollBarLast:
+        case SC_ScrollBarSubLine:
+          return {};
       }
       return QProxyStyle::subControlRect(cc, opt, sc, widget);
     }
@@ -104,6 +124,18 @@ class ScrollBarStyle : public QProxyStyle {
     int m_minimum_horizontal_handle_width;
     int m_vertical_handle_width;
     int m_minimum_vertical_handle_height;
+
+    int get_horizontal_slider_position(const QScrollBar* scroll_bar) const {
+      return sliderPositionFromValue(scroll_bar->minimum(),
+        scroll_bar->maximum(), scroll_bar->value(),
+        scroll_bar->width() - m_minimum_horizontal_handle_width);
+    }
+
+    int get_vertical_slider_position(const QScrollBar* scroll_bar) const {
+      return sliderPositionFromValue(scroll_bar->minimum(),
+        scroll_bar->maximum(), scroll_bar->value(),
+        scroll_bar->height() - m_minimum_vertical_handle_height);
+    }
 };
 
 int main(int argc, char** argv) {
@@ -121,10 +153,9 @@ int main(int argc, char** argv) {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 red, stop:1 blue);
     font-size: 100px;)");
   l->setFixedSize(10000, 10000);
-  w->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  //w->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   w->verticalScrollBar()->setFixedWidth(13);
   w->setWidget(l);
-  //w->verticalScrollBar()->setStyle(new SBStyle(w->verticalScrollBar()->style()));
   w->resize(400, 300);
   w->show();
   return application->exec();
