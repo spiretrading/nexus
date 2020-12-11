@@ -27,7 +27,6 @@ for directory in $services; do
   pushd $directory/Application > /dev/null
   ./stop_server.sh
   popd > /dev/null
-  sleep 1
 done
 for directory in $feeds; do
   pushd $directory/Application > /dev/null
