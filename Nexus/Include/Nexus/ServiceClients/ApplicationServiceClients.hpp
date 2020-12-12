@@ -183,6 +183,7 @@ namespace Nexus {
       return;
     }
     m_timeClient->Close();
+    m_serviceLocatorClient->Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
     m_complianceClient->Close();
@@ -191,7 +192,6 @@ namespace Nexus {
     m_definitionsClient->Close();
     m_administrationClient->Close();
     m_registryClient->Close();
-    m_serviceLocatorClient->Close();
     m_openState.Close();
   }
 }
