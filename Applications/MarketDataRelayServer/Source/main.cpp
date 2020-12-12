@@ -54,6 +54,25 @@ namespace {
   using BaseMarketDataRelayServlet = MarketDataRelayServlet<
     MarketDataRelayServletContainer, IncomingMarketDataClient,
     ApplicationAdministrationClient::Client*>;
+
+  std::unordered_set<CountryCode> ExtractCountries(const JsonObject& node,
+      const CountryDatabase& countryDatabase) {
+    auto countries = std::unordered_set<CountryCode>();
+    if(auto countriesNode = node.Get("countries")) {
+      if(auto countryList = get<std::vector<JsonValue>>(&*countriesNode)) {
+        for(auto& countryValue : *countryList) {
+          if(auto country = get<double>(&countryValue)) {
+            countries.insert(CountryCode(static_cast<std::uint16_t>(*country)));
+          }
+        }
+      }
+    } else {
+      for(auto entry : countryDatabase.GetEntries()) {
+        countries.insert(entry.m_code);
+      }
+    }
+    return countries;
+  }
 }
 
 int main(int argc, const char** argv) {
@@ -71,72 +90,42 @@ int main(int argc, const char** argv) {
       serviceLocatorClient.Get());
     auto administrationClient = ApplicationAdministrationClient(
       serviceLocatorClient.Get());
+    auto countryDatabase = definitionsClient->LoadCountryDatabase();
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto marketDataClientBuilder = [&] {
-      const auto SENTINEL = CountryCode::NONE;
-      auto availableCountries = std::unordered_set<CountryCode>();
-      auto lastCountries = std::vector<CountryCode>();
-      auto servicePredicate = [&] (const auto& entry) {
-        if(availableCountries.find(SENTINEL) != availableCountries.end() ||
-            !lastCountries.empty()) {
-          return false;
-        }
-        auto countriesNode = entry.GetProperties().Get("countries");
-        if(!countriesNode) {
-          availableCountries.insert(SENTINEL);
-          return true;
-        }
-        if(auto countriesList = get<std::vector<JsonValue>>(&*countriesNode)) {
-          auto countries = std::vector<CountryCode>();
-          for(auto& countryValue : *countriesList) {
-            if(auto country = get<double>(&countryValue)) {
-              countries.emplace_back(static_cast<std::uint16_t>(*country));
-            } else {
-              return false;
-            }
-          }
-          for(auto& country : countries) {
-            if(availableCountries.find(country) != availableCountries.end()) {
-              return false;
-            }
-          }
-          lastCountries = std::move(countries);
-          availableCountries.insert(lastCountries.begin(), lastCountries.end());
-          return true;
-        } else {
-          return false;
-        }
-      };
+      auto entries = serviceLocatorClient->Locate(REGISTRY_SERVICE_NAME);
+      if(entries.empty()) {
+        BOOST_THROW_EXCEPTION(ConnectException(
+          "No " + REGISTRY_SERVICE_NAME + " services available."));
+      }
       auto countryToMarketDataClients = std::unordered_map<
         CountryCode, std::shared_ptr<MarketDataClientBox>>();
       auto marketToMarketDataClients = std::unordered_map<
         MarketCode, std::shared_ptr<MarketDataClientBox>>();
-      while(availableCountries.find(SENTINEL) == availableCountries.end()) {
-        try {
-          auto incomingMarketDataClient = std::make_shared<MarketDataClientBox>(
-            std::in_place_type<
-              MarketDataClient<IncomingMarketDataClientSessionBuilder>>,
-            BuildBasicMarketDataClientSessionBuilder<
-              IncomingMarketDataClientSessionBuilder>(
-                serviceLocatorClient.Get(), servicePredicate,
-                REGISTRY_SERVICE_NAME));
-          if(lastCountries.empty()) {
-            return std::make_unique<MarketDataClientBox>(
-              incomingMarketDataClient);
+      for(auto& entry : entries) {
+        auto countries = ExtractCountries(entry.GetProperties(),
+          countryDatabase);
+        auto marketDataClient = std::make_shared<MarketDataClientBox>(
+          std::in_place_type<
+            MarketDataClient<IncomingMarketDataClientSessionBuilder>>,
+          BuildBasicMarketDataClientSessionBuilder<
+            IncomingMarketDataClientSessionBuilder>(serviceLocatorClient.Get(),
+              [=] (const auto& candidateEntry) {
+                auto candidateCountries = ExtractCountries(
+                  candidateEntry.GetProperties(), countryDatabase);
+                return countries.size() <= candidateCountries.size() &&
+                  std::all_of(countries.begin(), countries.end(),
+                    [&] (auto country) {
+                      return candidateCountries.count(country) == 1;
+                    });
+              }, REGISTRY_SERVICE_NAME));
+        for(auto country : countries) {
+          countryToMarketDataClients.insert(std::pair(country,
+            marketDataClient));
+          for(auto& market : marketDatabase.FromCountry(country)) {
+            marketToMarketDataClients.insert(std::pair(market.m_code,
+              marketDataClient));
           }
-          for(auto& country : lastCountries) {
-            countryToMarketDataClients[country] = incomingMarketDataClient;
-            for(auto& market : marketDatabase.FromCountry(country)) {
-              marketToMarketDataClients[market.m_code] =
-                incomingMarketDataClient;
-            }
-          }
-          lastCountries.clear();
-        } catch(const std::exception&) {
-          if(countryToMarketDataClients.empty()) {
-            throw;
-          }
-          break;
         }
       }
       return std::make_unique<MarketDataClientBox>(
