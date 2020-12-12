@@ -120,6 +120,7 @@ namespace Nexus::Python {
       def("load_security_snapshot", &Client::LoadSecuritySnapshot).
       def("load_security_technicals", &Client::LoadSecurityTechnicals).
       def("load_security_info", &Client::LoadSecurityInfo).
+      def("query_security_info", &Client::QuerySecurityInfo).
       def("load_security_info_from_prefix",
         &Client::LoadSecurityInfoFromPrefix).
       def("close", &Client::Close);

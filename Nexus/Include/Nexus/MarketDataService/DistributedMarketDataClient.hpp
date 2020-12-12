@@ -70,6 +70,9 @@ namespace Nexus::MarketDataService {
 
       boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
+      std::vector<SecurityInfo> QuerySecurityInfo(
+        const SecurityInfoQuery& query);
+
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
@@ -203,6 +206,23 @@ namespace Nexus::MarketDataService {
       return marketDataClient->LoadSecurityInfo(security);
     }
     return boost::none;
+  }
+
+  inline std::vector<SecurityInfo> DistributedMarketDataClient::
+      QuerySecurityInfo(const SecurityInfoQuery& query) {
+    auto client = [&] {
+      if(!m_countryToMarketDataClients.empty()) {
+        return m_countryToMarketDataClients.begin()->second;
+      }
+      if(m_marketToMarketDataClients.empty()) {
+        return std::shared_ptr<MarketDataClientBox>();
+      }
+      return m_marketToMarketDataClients.begin()->second;
+    }();
+    if(client) {
+      return client->QuerySecurityInfo(query);
+    }
+    return {};
   }
 
   inline std::vector<SecurityInfo> DistributedMarketDataClient::

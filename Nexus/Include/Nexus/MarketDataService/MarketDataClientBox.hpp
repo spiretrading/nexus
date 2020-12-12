@@ -83,6 +83,9 @@ namespace Nexus::MarketDataService {
 
       boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
+      std::vector<SecurityInfo> QuerySecurityInfo(
+        const SecurityInfoQuery& query);
+
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
@@ -117,6 +120,8 @@ namespace Nexus::MarketDataService {
           const Security& security) = 0;
         virtual boost::optional<SecurityInfo> LoadSecurityInfo(
           const Security& security) = 0;
+        virtual std::vector<SecurityInfo> QuerySecurityInfo(
+          const SecurityInfoQuery& query) = 0;
         virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
           const std::string& prefix) = 0;
         virtual void Close() = 0;
@@ -153,6 +158,8 @@ namespace Nexus::MarketDataService {
           const Security& security) override;
         boost::optional<SecurityInfo> LoadSecurityInfo(
           const Security& security) override;
+        std::vector<SecurityInfo> QuerySecurityInfo(
+          const SecurityInfoQuery& query) override;
         std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
           const std::string& prefix) override;
         void Close() override;
@@ -368,6 +375,11 @@ namespace Nexus::MarketDataService {
     return m_client->LoadSecurityInfo(security);
   }
 
+  inline std::vector<SecurityInfo> MarketDataClientBox::QuerySecurityInfo(
+      const SecurityInfoQuery& query) {
+    return m_client->QuerySecurityInfo(query);
+  }
+
   inline std::vector<SecurityInfo> MarketDataClientBox::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     return m_client->LoadSecurityInfoFromPrefix(prefix);
@@ -454,21 +466,27 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  SecuritySnapshot MarketDataClientBox::WrappedMarketDataClient<C>::LoadSecuritySnapshot(
-      const Security& security) {
+  SecuritySnapshot MarketDataClientBox::WrappedMarketDataClient<C>::
+      LoadSecuritySnapshot(const Security& security) {
     return m_client->LoadSecuritySnapshot(security);
   }
 
   template<typename C>
-  SecurityTechnicals MarketDataClientBox::WrappedMarketDataClient<C>::LoadSecurityTechnicals(
-      const Security& security) {
+  SecurityTechnicals MarketDataClientBox::WrappedMarketDataClient<C>::
+      LoadSecurityTechnicals(const Security& security) {
     return m_client->LoadSecurityTechnicals(security);
   }
 
   template<typename C>
-  boost::optional<SecurityInfo> MarketDataClientBox::WrappedMarketDataClient<C>::LoadSecurityInfo(
-      const Security& security) {
+  boost::optional<SecurityInfo> MarketDataClientBox::WrappedMarketDataClient<
+      C>::LoadSecurityInfo(const Security& security) {
     return m_client->LoadSecurityInfo(security);
+  }
+
+  template<typename C>
+  std::vector<SecurityInfo> MarketDataClientBox::WrappedMarketDataClient<C>::
+      QuerySecurityInfo(const SecurityInfoQuery& query) {
+    return m_client->QuerySecurityInfo(query);
   }
 
   template<typename C>
