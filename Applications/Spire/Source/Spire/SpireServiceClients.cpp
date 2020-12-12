@@ -150,6 +150,7 @@ std::unique_ptr<TimerBox> SpireServiceClients::BuildTimer(
 
 void SpireServiceClients::Close() {
   m_timeClient.Close();
+  m_serviceLocatorClient.Close();
   m_riskClient.Close();
   m_orderExecutionClient.Close();
   m_marketDataClient.Close();
@@ -158,5 +159,4 @@ void SpireServiceClients::Close() {
   m_administrationClient.Close();
   m_registryClient.Close();
   m_definitionsClient.Close();
-  m_serviceLocatorClient.Close();
 }
