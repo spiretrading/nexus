@@ -258,12 +258,10 @@ void Nexus::Python::ExportMySqlHistoricalDataStore(module& module) {
       "MySqlHistoricalDataStore").
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
-      return std::make_shared<PythonHistoricalDataStore>(
-        SqlHistoricalDataStore<SqlConnection<Viper::MySql::Connection>>(
-          [=] {
-            return SqlConnection(Viper::MySql::Connection(host, port, username,
-              password, database));
-          }));
+      return std::make_shared<PythonHistoricalDataStore>([=] {
+        return SqlConnection(Viper::MySql::Connection(host, port, username,
+          password, database));
+      });
     }), call_guard<GilRelease>());
 }
 
@@ -286,10 +284,8 @@ void Nexus::Python::ExportSqliteHistoricalDataStore(module& module) {
   ExportHistoricalDataStore<PythonHistoricalDataStore>(module,
       "SqliteHistoricalDataStore").
     def(init([] (std::string path) {
-      return std::make_shared<PythonHistoricalDataStore>(
-        SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>(
-          [=] {
-            return SqlConnection(Viper::Sqlite3::Connection(path));
-          }));
+      return std::make_shared<PythonHistoricalDataStore>([=] {
+        return SqlConnection(Viper::Sqlite3::Connection(path));
+      });
     }), call_guard<GilRelease>());
 }

@@ -27,7 +27,7 @@ namespace Nexus::MarketDataService {
        * @param args The arguments to forward to the DataStore's constructor.
        */
       template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonChartingClient, Args...>>
+        Beam::disable_copy_constructor_t<ToPythonHistoricalDataStore, Args...>>
       ToPythonHistoricalDataStore(Args&&... args);
 
       ~ToPythonHistoricalDataStore();
@@ -103,7 +103,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   ToPythonHistoricalDataStore<D>::~ToPythonHistoricalDataStore() {
     auto release = Beam::Python::GilRelease();
-    m_client.reset();
+    m_dataStore.reset();
   }
 
   template<typename D>
