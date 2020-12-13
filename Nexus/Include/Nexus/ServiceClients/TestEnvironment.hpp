@@ -46,8 +46,8 @@ namespace Nexus {
        * @param historicalDataStore The data store to use for historical market
        *        data.
        */
-      TestEnvironment(std::shared_ptr<
-        MarketDataService::VirtualHistoricalDataStore> historicalDataStore);
+      TestEnvironment(
+        MarketDataService::HistoricalDataStoreBox historicalDataStore);
 
       /**
        * Constructs a TestEnvironment.
@@ -55,8 +55,8 @@ namespace Nexus {
        *        data.
        * @param time The time to set the environment to.
        */
-      TestEnvironment(std::shared_ptr<
-        MarketDataService::VirtualHistoricalDataStore> historicalDataStore,
+      TestEnvironment(
+        MarketDataService::HistoricalDataStoreBox historicalDataStore,
         boost::posix_time::ptime time);
 
       ~TestEnvironment();
@@ -261,23 +261,22 @@ namespace Nexus {
   };
 
   inline TestEnvironment::TestEnvironment()
-    : TestEnvironment(MarketDataService::MakeVirtualHistoricalDataStore(
-        std::make_unique<MarketDataService::LocalHistoricalDataStore>())) {}
+    : TestEnvironment(MarketDataService::HistoricalDataStoreBox(
+        std::in_place_type<MarketDataService::LocalHistoricalDataStore>)) {}
 
   inline TestEnvironment::TestEnvironment(boost::posix_time::ptime time)
-    : TestEnvironment(MarketDataService::MakeVirtualHistoricalDataStore(
-        std::make_unique<MarketDataService::LocalHistoricalDataStore>()),
+    : TestEnvironment(MarketDataService::HistoricalDataStoreBox(
+        std::in_place_type<MarketDataService::LocalHistoricalDataStore>),
         time) {}
 
   inline TestEnvironment::TestEnvironment(
-    std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
-    historicalDataStore)
+    MarketDataService::HistoricalDataStoreBox historicalDataStore)
     : TestEnvironment(std::move(historicalDataStore),
         boost::posix_time::second_clock::universal_time()) {}
 
   inline TestEnvironment::TestEnvironment(
-      std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
-      historicalDataStore, boost::posix_time::ptime time)
+      MarketDataService::HistoricalDataStoreBox historicalDataStore,
+      boost::posix_time::ptime time)
       : m_timeEnvironment(time),
         m_timeClient(std::in_place_type<
           Beam::TimeService::Tests::TestTimeClient>,

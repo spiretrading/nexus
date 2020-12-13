@@ -156,12 +156,12 @@ namespace Nexus {
         m_administrationClient(m_administrationEnvironment.MakeClient(
           m_serviceLocatorClient)),
         m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
-          MarketDataService::MakeVirtualHistoricalDataStore(
-            std::make_unique<BacktesterHistoricalDataStore<
+          MarketDataService::HistoricalDataStoreBox(
+            std::in_place_type<BacktesterHistoricalDataStore<
               MarketDataService::ClientHistoricalDataStore<
-                MarketDataService::MarketDataClientBox>>>(
-                  m_serviceClients.GetMarketDataClient(),
-                  m_eventHandler.GetStartTime()))),
+                MarketDataService::MarketDataClientBox>>>,
+            m_serviceClients.GetMarketDataClient(),
+            m_eventHandler.GetStartTime())),
         m_marketDataService(Beam::Ref(m_eventHandler),
           Beam::Ref(m_marketDataEnvironment),
           m_serviceClients.GetMarketDataClient()),

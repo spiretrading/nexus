@@ -4,7 +4,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
@@ -15,7 +14,7 @@ namespace Nexus::MarketDataService {
    * @param <C> The type of MarketDataClient to wrap.
    */
   template<typename C>
-  class ClientHistoricalDataStore : private boost::noncopyable {
+  class ClientHistoricalDataStore {
     public:
 
       /** The type of MarketDataClient to wrap. */
@@ -80,6 +79,9 @@ namespace Nexus::MarketDataService {
       Beam::GetOptionalLocalPtr<C> m_client;
       Beam::IO::OpenState m_openState;
 
+      ClientHistoricalDataStore(const ClientHistoricalDataStore&) = delete;
+      ClientHistoricalDataStore& operator =(
+        const ClientHistoricalDataStore&) = delete;
       template<typename T, typename Query, typename F>
       std::vector<T> SubmitQuery(const Query& query, F f);
   };
