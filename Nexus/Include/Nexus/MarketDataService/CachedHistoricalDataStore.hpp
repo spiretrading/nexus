@@ -3,7 +3,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/CachedDataStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -15,7 +14,7 @@ namespace Nexus::MarketDataService {
    * @param <D> The underlying data store to cache.
    */
   template<typename D>
-  class CachedHistoricalDataStore : private boost::noncopyable {
+  class CachedHistoricalDataStore {
     public:
 
       /** The type of HistoricalDataStore to cache. */
@@ -87,6 +86,10 @@ namespace Nexus::MarketDataService {
       DataStore<MarketQuote> m_marketQuoteDataStore;
       DataStore<TimeAndSale> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
+
+      CachedHistoricalDataStore(const CachedHistoricalDataStore&) = delete;
+      CachedHistoricalDataStore& operator =(
+        const CachedHistoricalDataStore&) = delete;
   };
 
   template<typename D>
