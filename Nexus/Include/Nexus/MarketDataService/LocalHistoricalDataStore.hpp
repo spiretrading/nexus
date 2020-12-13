@@ -2,7 +2,6 @@
 #define NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queries/LocalDataStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -10,7 +9,7 @@
 namespace Nexus::MarketDataService {
 
   /** Stores historical market data in memory. */
-  class LocalHistoricalDataStore : private boost::noncopyable {
+  class LocalHistoricalDataStore {
     public:
 
       /** Constructs a LocalHistoricalDataStore. */
@@ -85,12 +84,15 @@ namespace Nexus::MarketDataService {
       DataStore<MarketQuote, SecurityMarketDataQuery> m_marketQuoteDataStore;
       DataStore<BookQuote, SecurityMarketDataQuery> m_bookQuoteDataStore;
       DataStore<TimeAndSale, SecurityMarketDataQuery> m_timeAndSaleDataStore;
+
+      LocalHistoricalDataStore(const LocalHistoricalDataStore&) = delete;
+      LocalHistoricalDataStore& operator =(
+        const LocalHistoricalDataStore&) = delete;
   };
 
   inline boost::optional<SecurityInfo> LocalHistoricalDataStore::
       LoadSecurityInfo(const Security& security) {
-    auto info = m_securityInfo.Find(security);
-    if(info.is_initialized()) {
+    if(auto info = m_securityInfo.Find(security)) {
       return *info;
     }
     return boost::none;
@@ -124,12 +126,11 @@ namespace Nexus::MarketDataService {
   inline std::vector<SecurityInfo> LocalHistoricalDataStore::
       LoadAllSecurityInfo() {
     auto result = std::vector<SecurityInfo>();
-    m_securityInfo.With(
-      [&] (const auto& securityInfo) {
-        for(auto& entry : securityInfo) {
-          result.push_back(entry.second);
-        }
-      });
+    m_securityInfo.With([&] (auto& securityInfo) {
+      for(auto& entry : securityInfo) {
+        result.push_back(entry.second);
+      }
+    });
     return result;
   }
 
