@@ -105,6 +105,7 @@ namespace Nexus::MarketDataService {
       RealTimeSubscriptionSet<Security> m_bookQuoteRealTimeSubscriptions;
       RealTimeSubscriptionSet<Security> m_marketQuoteRealTimeSubscriptions;
       RealTimeSubscriptionSet<Security> m_timeAndSaleRealTimeSubscriptions;
+      Beam::SynchronizedUnorderedSet<Security> m_primarySecurities;
       EntitlementDatabase m_entitlementDatabase;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_marketDataClients;
@@ -342,6 +343,25 @@ namespace Nexus::MarketDataService {
       return;
     }
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
+      if constexpr(std::is_same_v<typename Query::Index, Security>) {
+        if(query.GetIndex().GetMarket().IsEmpty()) {
+          request.SetResult(result);
+          return;
+        }
+        if(!m_primarySecurities.Contains(query.GetIndex())) {
+          auto client = m_marketDataClients.Acquire();
+          auto infoQuery = SecurityInfoQuery();
+          infoQuery.SetIndex(query.GetIndex());
+          infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+          auto infoResult = client->QuerySecurityInfo(query);
+          if(!infoResult.empty() && infoResult.front().m_security.GetMarket() !=
+              query.GetIndex().GetMarket()) {
+            request.SetResult(result);
+            return;
+          }
+          m_primarySecurities.Insert(query.GetIndex());
+        }
+      }
       auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
         query.GetFilter());
       result.m_queryId = subscriptions.Initialize(query.GetIndex(),
@@ -375,9 +395,10 @@ namespace Nexus::MarketDataService {
           Beam::Queries::Sequence::Last());
         QueryMarketDataClient(*queryEntry.m_marketDataClient, realTimeQuery,
           queryEntry.m_tasks.template GetSlot<MarketDataType>(
-          std::bind(&MarketDataRelayServlet::OnRealTimeUpdate<
-          typename Query::Index, MarketDataType, Subscriptions>, this,
-          query.GetIndex(), std::placeholders::_1, std::ref(subscriptions))));
+            std::bind(&MarketDataRelayServlet::OnRealTimeUpdate<
+              typename Query::Index, MarketDataType, Subscriptions>, this,
+              query.GetIndex(), std::placeholders::_1,
+              std::ref(subscriptions))));
       });
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
@@ -463,7 +484,7 @@ namespace Nexus::MarketDataService {
   template<typename C, typename M, typename A>
   std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
       OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
-      const std::string& prefix) {
+        const std::string& prefix) {
     auto marketDataClient = m_marketDataClients.Acquire();
     return marketDataClient->LoadSecurityInfoFromPrefix(prefix);
   }
@@ -472,7 +493,7 @@ namespace Nexus::MarketDataService {
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<C, M, A>::OnRealTimeUpdate(const Index& index,
-      const Value& value, Subscriptions& subscriptions) {
+        const Value& value, Subscriptions& subscriptions) {
     auto indexedValue = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
     subscriptions.Publish(indexedValue, [&] (auto& clients) {
@@ -485,7 +506,7 @@ namespace Nexus::MarketDataService {
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<C, M, A>::OnRealTimeUpdate(const Index& index,
-      const Value& value, Subscriptions& subscriptions) {
+        const Value& value, Subscriptions& subscriptions) {
     auto key = EntitlementKey{index.GetMarket(), value.GetValue().m_market};
     auto indexedValue = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
@@ -497,7 +518,7 @@ namespace Nexus::MarketDataService {
       [&] (auto& clients) {
         Beam::Services::BroadcastRecordMessage<
           GetMarketDataMessageType<typename Value::Value>>(
-          clients, indexedValue);
+            clients, indexedValue);
       });
   }
 }
