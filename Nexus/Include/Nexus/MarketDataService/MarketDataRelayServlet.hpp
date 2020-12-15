@@ -353,7 +353,7 @@ namespace Nexus::MarketDataService {
           auto infoQuery = SecurityInfoQuery();
           infoQuery.SetIndex(query.GetIndex());
           infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-          auto infoResult = client->QuerySecurityInfo(query);
+          auto infoResult = client->QuerySecurityInfo(infoQuery);
           if(!infoResult.empty() && infoResult.front().m_security.GetMarket() !=
               query.GetIndex().GetMarket()) {
             request.SetResult(result);
