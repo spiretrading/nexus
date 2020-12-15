@@ -88,7 +88,6 @@ namespace Nexus::Python {
     auto dataStore = pybind11::class_<DataStore, std::shared_ptr<DataStore>>(
         module, name.c_str()).
       def("load_security_info", &DataStore::LoadSecurityInfo).
-      def("load_all_security_info", &DataStore::LoadAllSecurityInfo).
       def("load_order_imbalances", &DataStore::LoadOrderImbalances).
       def("load_bbo_quotes", &DataStore::LoadBboQuotes).
       def("load_book_quotes", &DataStore::LoadBookQuotes).
@@ -176,7 +175,6 @@ namespace Nexus::Python {
         Beam::ScopedQueueWriter<TimeAndSale>)>(&Client::QueryTimeAndSales)).
       def("load_security_snapshot", &Client::LoadSecuritySnapshot).
       def("load_security_technicals", &Client::LoadSecurityTechnicals).
-      def("load_security_info", &Client::LoadSecurityInfo).
       def("query_security_info", &Client::QuerySecurityInfo).
       def("load_security_info_from_prefix",
         &Client::LoadSecurityInfoFromPrefix).

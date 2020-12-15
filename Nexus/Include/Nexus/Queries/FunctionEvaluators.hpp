@@ -1,12 +1,11 @@
-#ifndef NEXUS_FUNCTIONEVALUATORS_HPP
-#define NEXUS_FUNCTIONEVALUATORS_HPP
+#ifndef NEXUS_FUNCTION_EVALUATORS_HPP
+#define NEXUS_FUNCTION_EVALUATORS_HPP
 #include <Beam/Queries/FunctionEvaluatorNode.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Queries/Queries.hpp"
 
-namespace Nexus {
-namespace Queries {
+namespace Nexus::Queries {
   struct AdditionExpressionTranslator {
     template<typename T0, typename T1>
     struct Operation {
@@ -19,7 +18,6 @@ namespace Queries {
       boost::mpl::vector<Quantity, Quantity>,
       boost::mpl::vector<Money, Money>>;
   };
-}
 }
 
 #endif

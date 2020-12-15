@@ -84,19 +84,12 @@ namespace Nexus::MarketDataService {
       SecurityTechnicals, Security, security),
 
     /**
-     * Loads the SecurityInfo for a specified Security.
-     * @param query The query to submit.
-     * @return The SecurityInfo for the specified <i>security</i>.
-     */
-    (LoadSecurityInfoService, "Nexus.MarketDataService.LoadSecurityInfoService",
-      boost::optional<SecurityInfo>, Security, security),
-
-    /**
      * Queries for all SecurityInfo objects that are within a region.
      * @param security The Security whose SecurityInfo is to be loaded.
      * @return The list of SecurityInfo objects that match the <i>query</i>.
      */
-    (QuerySecurityInfoService, "Nexus.MarketDataService.QuerySecurityInfoService",
+    (QuerySecurityInfoService,
+      "Nexus.MarketDataService.QuerySecurityInfoService",
       std::vector<SecurityInfo>, SecurityInfoQuery, query),
 
     /**

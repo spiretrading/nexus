@@ -29,11 +29,11 @@ namespace Nexus::Queries {
       public ExpressionVisitor {
     public:
 
-      //! Constructs an SqlTranslator.
-      /*!
-        \param parameter The parameter/table name.
-        \param expression The Expression to translate.
-      */
+      /**
+       * Constructs an SqlTranslator.
+       * @param parameter The parameter/table name.
+       * @param expression The Expression to translate.
+       */
       SqlTranslator(std::string parameter,
         Beam::Queries::Expression expression);
 
@@ -45,6 +45,8 @@ namespace Nexus::Queries {
     private:
       void TranslateSecurityMemberAccessExpression(
         const Beam::Queries::MemberAccessExpression& expression);
+      void TranslateSecurityInfoMemberAccessExpression(
+        const Beam::Queries::MemberAccessExpression& expression);
       void TranslateTimeAndSaleMemberAccessExpression(
         const Beam::Queries::MemberAccessExpression& expression);
       void TranslateOrderFieldsMemberAccessExpression(
@@ -53,12 +55,12 @@ namespace Nexus::Queries {
         const Beam::Queries::MemberAccessExpression& expression);
   };
 
-  //! Translates an Expression into an SQL query.
-  /*!
-    \param parameter The parameter/table name.
-    \param expression The Expression to translate.
-    \return The SQL query representing the <i>expression</i>.
-  */
+  /**
+   * Translates an Expression into an SQL query.
+   * @param parameter The parameter/table name.
+   * @param expression The Expression to translate.
+   * @return The SQL query representing the <i>expression</i>.
+   */
   inline auto BuildSqlQuery(std::string parameter,
       Beam::Queries::Expression expression) {
     return Beam::Queries::BuildSqlQuery<SqlTranslator>(std::move(parameter),
@@ -66,9 +68,9 @@ namespace Nexus::Queries {
   }
 
   inline SqlTranslator::SqlTranslator(std::string parameter,
-      Beam::Queries::Expression expression)
-      : Beam::Queries::SqlTranslator(std::move(parameter),
-          std::move(expression)) {}
+    Beam::Queries::Expression expression)
+    : Beam::Queries::SqlTranslator(std::move(parameter),
+        std::move(expression)) {}
 
   inline void SqlTranslator::Visit(
       const Beam::Queries::ConstantExpression& expression) {
@@ -86,6 +88,8 @@ namespace Nexus::Queries {
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetExpression()->GetType() == SecurityType()) {
       TranslateSecurityMemberAccessExpression(expression);
+    } else if(expression.GetExpression()->GetType() == SecurityInfoType()) {
+      TranslateSecurityInfoMemberAccessExpression(expression);
     } else if(expression.GetExpression()->GetType() == TimeAndSaleType()) {
       TranslateTimeAndSaleMemberAccessExpression(expression);
     } else if(expression.GetExpression()->GetType() == OrderFieldsType()) {
@@ -99,11 +103,26 @@ namespace Nexus::Queries {
 
   inline void SqlTranslator::TranslateSecurityMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-    expression.GetExpression()->Apply(*this);
-    auto term = GetTranslation();
-    if(expression.GetName() == "symbol" ||
-        expression.GetName() == "market" ||
+    if(expression.GetName() == "symbol" || expression.GetName() == "market" ||
         expression.GetName() == "country") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
+      GetTranslation() = Viper::access(term, expression.GetName());
+    } else {
+      Beam::Queries::SqlTranslator::Visit(expression);
+    }
+  }
+
+  inline void SqlTranslator::TranslateSecurityInfoMemberAccessExpression(
+      const Beam::Queries::MemberAccessExpression& expression) {
+    if(expression.GetName() == "security") {
+      expression.GetExpression()->Apply(*this);
+      GetTranslation() = Viper::sym("");
+    } else if(expression.GetName() == "name" ||
+        expression.GetName() == "sector" ||
+        expression.GetName() == "board_lot") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
       GetTranslation() = Viper::access(term, expression.GetName());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
@@ -112,13 +131,14 @@ namespace Nexus::Queries {
 
   inline void SqlTranslator::TranslateTimeAndSaleMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-    expression.GetExpression()->Apply(*this);
-    auto term = GetTranslation();
-    if(expression.GetName() == "timestamp" ||
-        expression.GetName() == "price" ||
+    if(expression.GetName() == "timestamp" || expression.GetName() == "price" ||
         expression.GetName() == "size") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
       GetTranslation() = Viper::access(term, expression.GetName());
     } else if(expression.GetName() == "market_center") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
       GetTranslation() = Viper::access(term, "market");
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
@@ -127,9 +147,8 @@ namespace Nexus::Queries {
 
   inline void SqlTranslator::TranslateOrderFieldsMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-    expression.GetExpression()->Apply(*this);
-    auto term = GetTranslation();
     if(expression.GetName() == "security") {
+      expression.GetExpression()->Apply(*this);
       GetTranslation() = Viper::sym("");
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
@@ -139,15 +158,14 @@ namespace Nexus::Queries {
   inline void SqlTranslator::TranslateOrderInfoMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetName() == "fields") {
+      expression.GetExpression()->Apply(*this);
       GetTranslation() = Viper::sym("");
-      return;
-    }
-    expression.GetExpression()->Apply(*this);
-    auto term = GetTranslation();
-    if(expression.GetName() == "order_id" ||
+    } else if(expression.GetName() == "order_id" ||
         expression.GetName() == "shorting_flag" ||
         expression.GetName() == "timestamp" ||
         expression.GetName() == "is_live") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
       GetTranslation() = Viper::access(term, expression.GetName());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);

@@ -38,9 +38,8 @@ namespace Nexus::MarketDataService {
       /** Returns the wrapped data store. */
       DataStore& GetDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -119,23 +118,16 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  boost::optional<SecurityInfo> ToPythonHistoricalDataStore<D>::
-      LoadSecurityInfo(const Security& security) {
+  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename D>
-  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::
-      LoadAllSecurityInfo() {
-    auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadAllSecurityInfo();
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename D>
   std::vector<SequencedOrderImbalance>
       ToPythonHistoricalDataStore<D>::LoadOrderImbalances(
-      const MarketWideDataQuery& query) {
+        const MarketWideDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadOrderImbalances(query);
   }
@@ -150,7 +142,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SequencedBookQuote>
       ToPythonHistoricalDataStore<D>::LoadBookQuotes(
-      const SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadBookQuotes(query);
   }
@@ -158,7 +150,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SequencedMarketQuote>
       ToPythonHistoricalDataStore<D>::LoadMarketQuotes(
-      const SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadMarketQuotes(query);
   }
@@ -166,7 +158,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SequencedTimeAndSale>
       ToPythonHistoricalDataStore<D>::LoadTimeAndSales(
-      const SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadTimeAndSales(query);
   }

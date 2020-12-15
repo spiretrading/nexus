@@ -81,8 +81,6 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
       std::vector<SecurityInfo> QuerySecurityInfo(
         const SecurityInfoQuery& query);
 
@@ -117,8 +115,6 @@ namespace Nexus::MarketDataService {
         virtual SecuritySnapshot LoadSecuritySnapshot(
           const Security& security) = 0;
         virtual SecurityTechnicals LoadSecurityTechnicals(
-          const Security& security) = 0;
-        virtual boost::optional<SecurityInfo> LoadSecurityInfo(
           const Security& security) = 0;
         virtual std::vector<SecurityInfo> QuerySecurityInfo(
           const SecurityInfoQuery& query) = 0;
@@ -155,8 +151,6 @@ namespace Nexus::MarketDataService {
           Beam::ScopedQueueWriter<TimeAndSale> queue) override;
         SecuritySnapshot LoadSecuritySnapshot(const Security& security) override;
         SecurityTechnicals LoadSecurityTechnicals(
-          const Security& security) override;
-        boost::optional<SecurityInfo> LoadSecurityInfo(
           const Security& security) override;
         std::vector<SecurityInfo> QuerySecurityInfo(
           const SecurityInfoQuery& query) override;
@@ -370,11 +364,6 @@ namespace Nexus::MarketDataService {
     return m_client->LoadSecurityTechnicals(security);
   }
 
-  inline boost::optional<SecurityInfo> MarketDataClientBox::LoadSecurityInfo(
-      const Security& security) {
-    return m_client->LoadSecurityInfo(security);
-  }
-
   inline std::vector<SecurityInfo> MarketDataClientBox::QuerySecurityInfo(
       const SecurityInfoQuery& query) {
     return m_client->QuerySecurityInfo(query);
@@ -475,12 +464,6 @@ namespace Nexus::MarketDataService {
   SecurityTechnicals MarketDataClientBox::WrappedMarketDataClient<C>::
       LoadSecurityTechnicals(const Security& security) {
     return m_client->LoadSecurityTechnicals(security);
-  }
-
-  template<typename C>
-  boost::optional<SecurityInfo> MarketDataClientBox::WrappedMarketDataClient<
-      C>::LoadSecurityInfo(const Security& security) {
-    return m_client->LoadSecurityInfo(security);
   }
 
   template<typename C>

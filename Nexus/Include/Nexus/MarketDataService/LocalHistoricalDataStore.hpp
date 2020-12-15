@@ -1,6 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
-#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/AnyIterator.hpp>
+#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Queries/LocalDataStore.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -30,9 +31,8 @@ namespace Nexus::MarketDataService {
       /** Returns all the TimeAndSales stored. */
       std::vector<SequencedSecurityTimeAndSale> LoadTimeAndSales();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -78,7 +78,7 @@ namespace Nexus::MarketDataService {
       template<typename T, typename Query>
       using DataStore = Beam::Queries::LocalDataStore<Query, T,
         Queries::EvaluatorTranslator>;
-      Beam::SynchronizedUnorderedMap<Security, SecurityInfo> m_securityInfo;
+      Beam::SynchronizedVector<SecurityInfo> m_securityInfo;
       DataStore<OrderImbalance, MarketWideDataQuery> m_orderImbalanceDataStore;
       DataStore<BboQuote, SecurityMarketDataQuery> m_bboQuoteDataStore;
       DataStore<MarketQuote, SecurityMarketDataQuery> m_marketQuoteDataStore;
@@ -89,14 +89,6 @@ namespace Nexus::MarketDataService {
       LocalHistoricalDataStore& operator =(
         const LocalHistoricalDataStore&) = delete;
   };
-
-  inline boost::optional<SecurityInfo> LocalHistoricalDataStore::
-      LoadSecurityInfo(const Security& security) {
-    if(auto info = m_securityInfo.Find(security)) {
-      return *info;
-    }
-    return boost::none;
-  }
 
   inline std::vector<SequencedMarketOrderImbalance> LocalHistoricalDataStore::
       LoadOrderImbalances() {
@@ -123,15 +115,45 @@ namespace Nexus::MarketDataService {
     return m_timeAndSaleDataStore.LoadAll();
   }
 
-  inline std::vector<SecurityInfo> LocalHistoricalDataStore::
-      LoadAllSecurityInfo() {
-    auto result = std::vector<SecurityInfo>();
-    m_securityInfo.With([&] (auto& securityInfo) {
-      for(auto& entry : securityInfo) {
-        result.push_back(entry.second);
+  inline std::vector<SecurityInfo> LocalHistoricalDataStore::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
+    auto evaluator =
+      Beam::Queries::Translate<Nexus::Queries::EvaluatorTranslator>(
+        query.GetFilter());
+    return m_securityInfo.With([&] (auto& securityInfo) {
+      auto matches = std::vector<SecurityInfo>();
+      auto [begin, end] = [&] {
+        if(query.GetSnapshotLimit().GetType() ==
+            Beam::Queries::SnapshotLimit::Type::HEAD) {
+          return std::tuple(Beam::AnyIterator(securityInfo.begin()),
+            Beam::AnyIterator(securityInfo.end()));
+        }
+        return std::tuple(Beam::AnyIterator(securityInfo.rbegin()),
+          Beam::AnyIterator(securityInfo.rend()));
+      }();
+      if(auto anchor = query.GetAnchor()) {
+        while(begin != end && begin->m_security != *anchor) {
+          ++begin;
+        }
+        if(begin != end) {
+          ++begin;
+        }
       }
+      while(begin != end && static_cast<int>(matches.size()) <
+          query.GetSnapshotLimit().GetSize()) {
+        auto& info = *begin;
+        if(info.m_security <= query.GetIndex() &&
+            Beam::Queries::TestFilter(*evaluator, info)) {
+          matches.push_back(info);
+        }
+        ++begin;
+      }
+      if(query.GetSnapshotLimit().GetType() ==
+          Beam::Queries::SnapshotLimit::Type::TAIL) {
+        std::reverse(matches.begin(), matches.end());
+      }
+      return matches;
     });
-    return result;
   }
 
   inline std::vector<SequencedOrderImbalance> LocalHistoricalDataStore::
@@ -160,7 +182,17 @@ namespace Nexus::MarketDataService {
   }
 
   inline void LocalHistoricalDataStore::Store(const SecurityInfo& info) {
-    m_securityInfo.Insert(info.m_security, info);
+    m_securityInfo.With([&] (auto& securityInfo) {
+      auto i = std::lower_bound(securityInfo.begin(), securityInfo.end(), info,
+        [&] (const auto& left, const auto& right) {
+          return left.m_security < right.m_security;
+        });
+      if(i == securityInfo.end() || i->m_security != info.m_security) {
+        securityInfo.insert(i, info);
+      } else {
+        *i = info;
+      }
+    });
   }
 
   inline void LocalHistoricalDataStore::Store(

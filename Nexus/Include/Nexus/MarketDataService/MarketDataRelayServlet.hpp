@@ -131,8 +131,6 @@ namespace Nexus::MarketDataService {
         const Security& security);
       SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
         const Security& security);
-      boost::optional<SecurityInfo> OnLoadSecurityInfo(
-        ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
       template<typename Index, typename Value, typename Subscriptions>
@@ -252,9 +250,6 @@ namespace Nexus::MarketDataService {
     LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityInfoService::AddSlot(Store(slots), std::bind(
-      &MarketDataRelayServlet::OnLoadSecurityInfo, this, std::placeholders::_1,
-      std::placeholders::_2));
     LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -450,14 +445,6 @@ namespace Nexus::MarketDataService {
       ServiceProtocolClient& client, const Security& security) {
     auto marketDataClient = m_marketDataClients.Acquire();
     return marketDataClient->LoadSecurityTechnicals(security);
-  }
-
-  template<typename C, typename M, typename A>
-  boost::optional<SecurityInfo> MarketDataRelayServlet<C, M, A>::
-      OnLoadSecurityInfo(ServiceProtocolClient& client,
-      const Security& security) {
-    auto marketDataClient = m_marketDataClients.Acquire();
-    return marketDataClient->LoadSecurityInfo(security);
   }
 
   template<typename C, typename M, typename A>

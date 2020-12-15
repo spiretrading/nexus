@@ -8,7 +8,7 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 
 namespace {
-  const auto TEST_SECURITY = Security("TST", DefaultMarkets::NASDAQ(),
+  const auto SECURITY_A = Security("TST", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
 }
 
@@ -16,7 +16,7 @@ TEST_SUITE("MarketEntry") {
   TEST_CASE("publish_order_imbalance") {
     auto initialSequences = MarketEntry::InitialSequences();
     auto entry = MarketEntry(DefaultMarkets::NASDAQ(), initialSequences);
-    auto orderImbalanceA = OrderImbalance(TEST_SECURITY, Side::BID, 1000,
+    auto orderImbalanceA = OrderImbalance(SECURITY_A, Side::BID, 1000,
       Money::ONE, second_clock::universal_time());
     auto sequencedOrderImbalanceA = entry.PublishOrderImbalance(
       orderImbalanceA, 0);
@@ -26,7 +26,7 @@ TEST_SUITE("MarketEntry") {
     REQUIRE((*sequencedOrderImbalanceA)->GetIndex() ==
       DefaultMarkets::NASDAQ());
     REQUIRE(orderImbalanceA == **sequencedOrderImbalanceA);
-    auto orderImbalanceB = OrderImbalance(TEST_SECURITY, Side::ASK, 2000,
+    auto orderImbalanceB = OrderImbalance(SECURITY_A, Side::ASK, 2000,
       Money::CENT, second_clock::universal_time());
     auto sequencedOrderImbalanceB = entry.PublishOrderImbalance(orderImbalanceB,
       0);

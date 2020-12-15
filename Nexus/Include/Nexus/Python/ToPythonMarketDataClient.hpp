@@ -72,8 +72,6 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
       std::vector<SecurityInfo> QuerySecurityInfo(
         const SecurityInfoQuery& query);
 
@@ -210,13 +208,6 @@ namespace Nexus::MarketDataService {
       LoadSecurityTechnicals(const Security& security) {
     auto release = Beam::Python::GilRelease();
     return m_client->LoadSecurityTechnicals(security);
-  }
-
-  template<typename C>
-  boost::optional<SecurityInfo> ToPythonMarketDataClient<C>::LoadSecurityInfo(
-      const Security& security) {
-    auto release = Beam::Python::GilRelease();
-    return m_client->LoadSecurityInfo(security);
   }
 
   template<typename C>

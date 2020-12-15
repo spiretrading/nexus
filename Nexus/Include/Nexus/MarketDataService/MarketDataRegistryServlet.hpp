@@ -126,8 +126,6 @@ namespace Nexus::MarketDataService {
         const Security& security);
       SecurityTechnicals OnLoadSecurityTechnicals(
         ServiceProtocolClient& client, const Security& security);
-      boost::optional<SecurityInfo> OnLoadSecurityInfo(
-        ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
   };
@@ -149,7 +147,10 @@ namespace Nexus::MarketDataService {
         m_registry(std::forward<RF>(registry)),
         m_dataStore(std::forward<DF>(dataStore)) {
     try {
-      auto securityInfo = m_dataStore->LoadAllSecurityInfo();
+      auto query = SecurityInfoQuery();
+      query.SetIndex(Region::Global());
+      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+      auto securityInfo = m_dataStore->LoadSecurityInfo(query);
       for(auto& entry : securityInfo) {
         m_registry->Add(entry);
       }
@@ -292,9 +293,6 @@ namespace Nexus::MarketDataService {
     LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityInfoService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnLoadSecurityInfo, this,
-      std::placeholders::_1, std::placeholders::_2));
     LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecurityInfoFromPrefix, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -343,7 +341,8 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryOrderImbalances(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryOrderImbalancesService>& request, const MarketWideDataQuery& query) {
+        QueryOrderImbalancesService>& request,
+      const MarketWideDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex(),
         MarketDataType::ORDER_IMBALANCE)) {
@@ -373,7 +372,7 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryBboQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
+        QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
         MarketDataType::BBO_QUOTE)) {
@@ -402,7 +401,8 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryBookQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryBookQuotesService>& request, const SecurityMarketDataQuery& query) {
+        QueryBookQuotesService>& request,
+      const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
         MarketDataType::BOOK_QUOTE)) {
@@ -431,7 +431,7 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryMarketQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryMarketQuotesService>& request,
+        QueryMarketQuotesService>& request,
       const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
@@ -461,7 +461,7 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryTimeAndSales(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryTimeAndSalesService>& request,
+        QueryTimeAndSalesService>& request,
       const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
@@ -491,7 +491,7 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   SecuritySnapshot MarketDataRegistryServlet<C, R, D, A>::
       OnLoadSecuritySnapshot(ServiceProtocolClient& client,
-      const Security& security) {
+        const Security& security) {
     auto& session = client.GetSession();
     auto securitySnapshot = m_registry->FindSnapshot(security);
     if(!securitySnapshot.is_initialized()) {
@@ -533,7 +533,7 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
       OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-      const Security& security) {
+        const Security& security) {
     if(auto securityTechnicals = m_registry->FindSecurityTechnicals(security)) {
       return *securityTechnicals;
     }
@@ -541,16 +541,9 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename R, typename D, typename A>
-  boost::optional<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecurityInfo(ServiceProtocolClient& client,
-      const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename C, typename R, typename D, typename A>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
       OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
-      const std::string& prefix) {
+        const std::string& prefix) {
     return m_registry->SearchSecurityInfo(prefix);
   }
 }

@@ -69,8 +69,6 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
       std::vector<SecurityInfo> QuerySecurityInfo(
         const SecurityInfoQuery& query);
 
@@ -211,15 +209,9 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  boost::optional<SecurityInfo> DataStoreMarketDataClient<D>::LoadSecurityInfo(
-      const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename D>
   std::vector<SecurityInfo> DataStoreMarketDataClient<D>::QuerySecurityInfo(
       const SecurityInfoQuery& query) {
-    return m_dataStore->QuerySecurityInfo(query);
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename D>
