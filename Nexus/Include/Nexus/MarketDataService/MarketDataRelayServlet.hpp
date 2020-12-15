@@ -131,16 +131,18 @@ namespace Nexus::MarketDataService {
         const Security& security);
       SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
         const Security& security);
+      std::vector<SecurityInfo> OnQuerySecurityInfo(
+        ServiceProtocolClient& client, const SecurityInfoQuery& query);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
       template<typename Index, typename Value, typename Subscriptions>
       std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
         OnRealTimeUpdate(const Index& index, const Value& value,
-        Subscriptions& subscriptions);
+          Subscriptions& subscriptions);
       template<typename Index, typename Value, typename Subscriptions>
       std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
         OnRealTimeUpdate(const Index& index, const Value& value,
-        Subscriptions& subscriptions);
+          Subscriptions& subscriptions);
   };
 
   template<typename M, typename A>
@@ -186,28 +188,28 @@ namespace Nexus::MarketDataService {
     RegisterMarketDataRegistryMessages(Beam::Store(slots));
     QueryOrderImbalancesService::AddRequestSlot(Store(slots),
       std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-      QueryOrderImbalancesService, MarketWideDataQuery,
-      MarketSubscriptions<OrderImbalance>, RealTimeSubscriptionSet<MarketCode>>,
-      this, std::placeholders::_1, std::placeholders::_2,
-      std::ref(m_orderImbalanceSubscriptions),
-      std::ref(m_orderImbalanceRealTimeSubscriptions)));
+        QueryOrderImbalancesService, MarketWideDataQuery,
+        MarketSubscriptions<OrderImbalance>,
+        RealTimeSubscriptionSet<MarketCode>>, this, std::placeholders::_1,
+        std::placeholders::_2, std::ref(m_orderImbalanceSubscriptions),
+        std::ref(m_orderImbalanceRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
       std::bind(&MarketDataRelayServlet::OnEndQuery<
-      MarketSubscriptions<OrderImbalance>>, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3,
-      std::ref(m_orderImbalanceSubscriptions)));
+        MarketSubscriptions<OrderImbalance>>, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3,
+        std::ref(m_orderImbalanceSubscriptions)));
     QueryBboQuotesService::AddRequestSlot(Store(slots),
       std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-      QueryBboQuotesService, SecurityMarketDataQuery,
-      SecuritySubscriptions<BboQuote>, RealTimeSubscriptionSet<Security>>, this,
-      std::placeholders::_1, std::placeholders::_2,
-      std::ref(m_bboQuoteSubscriptions),
-      std::ref(m_bboQuoteRealTimeSubscriptions)));
+        QueryBboQuotesService, SecurityMarketDataQuery,
+        SecuritySubscriptions<BboQuote>, RealTimeSubscriptionSet<Security>>,
+        this, std::placeholders::_1, std::placeholders::_2,
+        std::ref(m_bboQuoteSubscriptions),
+        std::ref(m_bboQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRelayServlet::OnEndQuery<
-      SecuritySubscriptions<BboQuote>>, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3,
-      std::ref(m_bboQuoteSubscriptions)));
+        SecuritySubscriptions<BboQuote>>, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3,
+        std::ref(m_bboQuoteSubscriptions)));
     QueryBookQuotesService::AddRequestSlot(Store(slots),
       std::bind(&MarketDataRelayServlet::HandleQueryRequest<
       QueryBookQuotesService, SecurityMarketDataQuery,
@@ -250,6 +252,9 @@ namespace Nexus::MarketDataService {
     LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
+    QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::OnQuerySecurityInfo, this, std::placeholders::_1,
+      std::placeholders::_2));
     LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -445,6 +450,14 @@ namespace Nexus::MarketDataService {
       ServiceProtocolClient& client, const Security& security) {
     auto marketDataClient = m_marketDataClients.Acquire();
     return marketDataClient->LoadSecurityTechnicals(security);
+  }
+
+  template<typename C, typename M, typename A>
+  std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
+      OnQuerySecurityInfo(ServiceProtocolClient& client,
+        const SecurityInfoQuery& query) {
+    auto marketDataClient = m_marketDataClients.Acquire();
+    return marketDataClient->QuerySecurityInfo(query);
   }
 
   template<typename C, typename M, typename A>

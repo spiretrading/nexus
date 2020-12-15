@@ -24,9 +24,8 @@ using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::MarketDataService;
 
 namespace {
-  auto GetTsxTestSecurity() {
-    return Security("ABX", DefaultMarkets::TSX(), DefaultCountries::CA());
-  }
+  const auto SECURITY_A =
+    Security("ABX", DefaultMarkets::TSX(), DefaultCountries::CA());
 
   struct Fixture {
     using TestServletContainer =
@@ -117,14 +116,26 @@ namespace {
 TEST_SUITE("MarketDataRegistryServlet") {
   TEST_CASE_FIXTURE(Fixture, "market_and_source_entitlement") {
     auto query = SecurityMarketDataQuery();
-    query.SetIndex(GetTsxTestSecurity());
+    query.SetIndex(SECURITY_A);
     query.SetRange(Range::RealTime());
     auto snapshot = m_protocolClient->SendRequest<QueryBookQuotesService>(
       query);
     auto bookQuote = SecurityBookQuote(
       BookQuote("CHIC", false, DefaultMarkets::CHIC(),
-      Quote(Money::ONE, 100, Side::BID), second_clock::universal_time()),
-      GetTsxTestSecurity());
+        Quote(Money::ONE, 100, Side::BID), second_clock::universal_time()),
+      SECURITY_A);
     m_registryServlet->UpdateBookQuote(bookQuote, 1);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "query_security_info") {
+    auto query = SecurityInfoQuery();
+    query.SetIndex(Region::Global());
+    query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+    auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
+    m_registryServlet->Add(info);
+    auto result = m_protocolClient->SendRequest<QuerySecurityInfoService>(
+      query);
+    REQUIRE(result.size() == 1);
+    REQUIRE(result[0] == info);
   }
 }

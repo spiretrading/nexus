@@ -22,7 +22,7 @@ if(UNIX)
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
+    dl pthread rt)
 endif()
 add_custom_command(TARGET MarketDataServiceTests
   POST_BUILD COMMAND MarketDataServiceTests)
