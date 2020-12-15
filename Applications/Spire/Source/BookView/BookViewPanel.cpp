@@ -24,7 +24,6 @@ namespace {
 BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_BookViewPanel>()),
-      m_boardLot(1),
       m_topRow(-1),
       m_currentRow(-1) {
   m_slotHandler.emplace();
@@ -47,7 +46,6 @@ void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, Side side) {
   m_userProfile = userProfile.Get();
   m_itemDelegate.emplace(Ref(*m_userProfile));
-  m_boardLot = 1;
   SetProperties(properties);
   m_side = side;
   DisconnectModel();
@@ -92,8 +90,8 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   m_ui->m_bboSeparatorLabel->setText(tr("N/A"));
   m_ui->m_bboPriceLabel->clear();
   m_ui->m_bboQuantityLabel->clear();
-  unique_ptr<BookViewModel> newModel = std::make_unique<BookViewModel>(
-    Ref(*m_userProfile), m_properties, security, m_side);
+  auto newModel = std::make_unique<BookViewModel>(Ref(*m_userProfile),
+    m_properties, security, m_side);
   m_ui->m_bookView->setModel(newModel.get());
   m_model.swap(newModel);
   m_ui->m_bookView->setModel(m_model.get());
@@ -101,24 +99,15 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
     m_ui->m_bookView->setColumnWidth(i, widths[i]);
   }
   ConnectModel();
-  m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
   if(m_security == Security()) {
-    m_boardLot = 1;
     return;
   }
-  m_boardLot = [&] {
-    auto boardLot = m_model->GetSecurityInfo().m_boardLot;
-    if(boardLot <= 1) {
-      return Quantity(1);
-    }
-    return boardLot;
-  }();
   auto bboQuery = BuildCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_slotHandler->GetSlot<BboQuote>(
-    std::bind(&BookViewPanel::OnBbo, this, security, std::placeholders::_1)));
+      std::bind(&BookViewPanel::OnBbo, this, security, std::placeholders::_1)));
 }
 
 void BookViewPanel::resizeEvent(QResizeEvent* event) {
@@ -173,7 +162,7 @@ void BookViewPanel::OnBbo(const Security& security, const BboQuote& bbo) {
   if(m_bestQuote.m_size == 0) {
     quantity = 0;
   } else {
-    quantity = std::max<Quantity>(1, m_bestQuote.m_size / m_boardLot);
+    quantity = std::max<Quantity>(1, Floor(m_bestQuote.m_size / 100, 0));
   }
   m_ui->m_bboQuantityLabel->setText(QString::number(
     static_cast<int>(quantity)));

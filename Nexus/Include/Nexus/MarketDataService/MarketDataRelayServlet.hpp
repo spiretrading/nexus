@@ -212,40 +212,40 @@ namespace Nexus::MarketDataService {
         std::ref(m_bboQuoteSubscriptions)));
     QueryBookQuotesService::AddRequestSlot(Store(slots),
       std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-      QueryBookQuotesService, SecurityMarketDataQuery,
-      SecuritySubscriptions<BookQuote>, RealTimeSubscriptionSet<Security>>,
-      this, std::placeholders::_1, std::placeholders::_2,
-      std::ref(m_bookQuoteSubscriptions),
-      std::ref(m_bookQuoteRealTimeSubscriptions)));
+        QueryBookQuotesService, SecurityMarketDataQuery,
+        SecuritySubscriptions<BookQuote>, RealTimeSubscriptionSet<Security>>,
+        this, std::placeholders::_1, std::placeholders::_2,
+        std::ref(m_bookQuoteSubscriptions),
+        std::ref(m_bookQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRelayServlet::OnEndQuery<
-      SecuritySubscriptions<BookQuote>>, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3,
-      std::ref(m_bookQuoteSubscriptions)));
+        SecuritySubscriptions<BookQuote>>, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3,
+        std::ref(m_bookQuoteSubscriptions)));
     QueryMarketQuotesService::AddRequestSlot(Store(slots),
       std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-      QueryMarketQuotesService, SecurityMarketDataQuery,
-      SecuritySubscriptions<MarketQuote>, RealTimeSubscriptionSet<Security>>,
-      this, std::placeholders::_1, std::placeholders::_2,
-      std::ref(m_marketQuoteSubscriptions),
-      std::ref(m_marketQuoteRealTimeSubscriptions)));
+        QueryMarketQuotesService, SecurityMarketDataQuery,
+        SecuritySubscriptions<MarketQuote>, RealTimeSubscriptionSet<Security>>,
+        this, std::placeholders::_1, std::placeholders::_2,
+        std::ref(m_marketQuoteSubscriptions),
+        std::ref(m_marketQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndMarketQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRelayServlet::OnEndQuery<
-      SecuritySubscriptions<MarketQuote>>, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3,
-      std::ref(m_marketQuoteSubscriptions)));
+        SecuritySubscriptions<MarketQuote>>, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3,
+        std::ref(m_marketQuoteSubscriptions)));
     QueryTimeAndSalesService::AddRequestSlot(Store(slots),
       std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-      QueryTimeAndSalesService, SecurityMarketDataQuery,
-      SecuritySubscriptions<TimeAndSale>, RealTimeSubscriptionSet<Security>>,
-      this, std::placeholders::_1, std::placeholders::_2,
-      std::ref(m_timeAndSaleSubscriptions),
-      std::ref(m_timeAndSaleRealTimeSubscriptions)));
+        QueryTimeAndSalesService, SecurityMarketDataQuery,
+        SecuritySubscriptions<TimeAndSale>, RealTimeSubscriptionSet<Security>>,
+        this, std::placeholders::_1, std::placeholders::_2,
+        std::ref(m_timeAndSaleSubscriptions),
+        std::ref(m_timeAndSaleRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
       std::bind(&MarketDataRelayServlet::OnEndQuery<
-      SecuritySubscriptions<TimeAndSale>>, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3,
-      std::ref(m_timeAndSaleSubscriptions)));
+        SecuritySubscriptions<TimeAndSale>>, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3,
+        std::ref(m_timeAndSaleSubscriptions)));
     LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecuritySnapshot, this,
       std::placeholders::_1, std::placeholders::_2));
