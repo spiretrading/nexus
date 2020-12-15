@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_SECURITY_MARKET_DATA_QUERY_HPP
 #define NEXUS_MARKET_DATA_SECURITY_MARKET_DATA_QUERY_HPP
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/BasicQuery.hpp>
 #include <Beam/Queries/IndexedValue.hpp>
 #include <Beam/Queries/SequencedValue.hpp>
@@ -45,30 +46,32 @@ namespace MarketDataService {
    * @param queue The Queue to write to.
    */
   template<typename MarketDataClient>
-  void QueryRealTimeWithSnapshot(Security security, MarketDataClient& client,
+  void QueryRealTimeWithSnapshot(Security security, MarketDataClient&& client,
       Beam::ScopedQueueWriter<BboQuote> queue) {
-    Beam::Routines::Spawn([=, &client, queue = std::move(queue)] () mutable {
-      auto snapshotQueue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
-      client.QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
-        snapshotQueue);
-      auto snapshot = SequencedBboQuote();
-      try {
-        snapshot = snapshotQueue->Pop();
-        queue.Push(std::move(*snapshot));
-      } catch(const Beam::PipeBrokenException&) {
-        return;
-      }
-      auto continuationQuery = SecurityMarketDataQuery();
-      continuationQuery.SetIndex(std::move(security));
-      continuationQuery.SetRange(
-        Beam::Queries::Increment(snapshot.GetSequence()),
-        Beam::Queries::Sequence::Last());
-      continuationQuery.SetSnapshotLimit(
-        Beam::Queries::SnapshotLimit::Unlimited());
-      continuationQuery.SetInterruptionPolicy(
-        Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
-      client.QueryBboQuotes(continuationQuery, std::move(queue));
-    });
+    Beam::Routines::Spawn(
+      [=, client = Beam::CapturePtr<MarketDataClient>(client),
+          queue = std::move(queue)] () mutable {
+        auto snapshotQueue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
+        client->QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
+          snapshotQueue);
+        auto snapshot = SequencedBboQuote();
+        try {
+          snapshot = snapshotQueue->Pop();
+          queue.Push(std::move(*snapshot));
+        } catch(const Beam::PipeBrokenException&) {
+          return;
+        }
+        auto continuationQuery = SecurityMarketDataQuery();
+        continuationQuery.SetIndex(std::move(security));
+        continuationQuery.SetRange(
+          Beam::Queries::Increment(snapshot.GetSequence()),
+          Beam::Queries::Sequence::Last());
+        continuationQuery.SetSnapshotLimit(
+          Beam::Queries::SnapshotLimit::Unlimited());
+        continuationQuery.SetInterruptionPolicy(
+          Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
+        client->QueryBboQuotes(continuationQuery, std::move(queue));
+      });
   }
 }
 }

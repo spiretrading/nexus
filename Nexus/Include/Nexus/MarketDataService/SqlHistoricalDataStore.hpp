@@ -6,7 +6,6 @@
 #include <Beam/Queries/SqlDataStore.hpp>
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
@@ -21,7 +20,7 @@ namespace Nexus::MarketDataService {
    * @param <C> The type of SQL connection.
    */
   template<typename C>
-  class SqlHistoricalDataStore : private boost::noncopyable {
+  class SqlHistoricalDataStore {
     public:
 
       /** The type of SQL connection. */
@@ -98,6 +97,10 @@ namespace Nexus::MarketDataService {
       DataStore<Viper::Row<TimeAndSale>, Viper::Row<Security>>
         m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
+
+      SqlHistoricalDataStore(const SqlHistoricalDataStore&) = delete;
+      SqlHistoricalDataStore& operator =(
+        const SqlHistoricalDataStore&) = delete;
   };
 
   template<typename C>
@@ -148,7 +151,7 @@ namespace Nexus::MarketDataService {
         Viper::sym("symbol") == security.GetSymbol() &&
         Viper::sym("country") == security.GetCountry(), &info));
     }
-    if(info.has_value()) {
+    if(info) {
       return std::move(*info);
     }
     return boost::none;

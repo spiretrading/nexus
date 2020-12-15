@@ -64,7 +64,7 @@ namespace Nexus::OrderExecutionService {
      * @param timestamp The timestamp.
      */
     static ExecutionReport BuildInitialReport(OrderId id,
-      const boost::posix_time::ptime& timestamp);
+      boost::posix_time::ptime timestamp);
 
     /**
      * Builds a new ExecutionReport updating the OrderStatus of a previous
@@ -74,7 +74,7 @@ namespace Nexus::OrderExecutionService {
      * @param timestamp The timestamp.
      */
     static ExecutionReport BuildUpdatedReport(const ExecutionReport& report,
-      OrderStatus status, const boost::posix_time::ptime& timestamp);
+      OrderStatus status, boost::posix_time::ptime timestamp);
   };
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -142,7 +142,7 @@ namespace Nexus::OrderExecutionService {
       m_lastQuantity(0) {}
 
   inline ExecutionReport ExecutionReport::BuildInitialReport(OrderId id,
-      const boost::posix_time::ptime& timestamp) {
+      boost::posix_time::ptime timestamp) {
     auto report = ExecutionReport();
     report.m_id = id;
     report.m_timestamp = timestamp;
@@ -158,17 +158,12 @@ namespace Nexus::OrderExecutionService {
 
   inline ExecutionReport ExecutionReport::BuildUpdatedReport(
       const ExecutionReport& report, OrderStatus status,
-      const boost::posix_time::ptime& timestamp) {
-    auto updatedReport = report;
+      boost::posix_time::ptime timestamp) {
+    auto updatedReport = ExecutionReport();
+    updatedReport.m_id = report.m_id;
     updatedReport.m_timestamp = timestamp;
     updatedReport.m_sequence = report.m_sequence + 1;
     updatedReport.m_status = status;
-    updatedReport.m_lastQuantity = 0;
-    updatedReport.m_lastPrice = Money::ZERO;
-    updatedReport.m_executionFee = Money::ZERO;
-    updatedReport.m_processingFee = Money::ZERO;
-    updatedReport.m_commission = Money::ZERO;
-    updatedReport.m_additionalTags.clear();
     return updatedReport;
   }
 }
