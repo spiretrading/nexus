@@ -181,7 +181,8 @@ void ScrollArea::update_scrollbar_position(QScrollBar* scroll_bar, int delta,
 }
 
 void ScrollArea::set_scroll_bar_style(int handle_size) {
-  m_scroll_bar_style->set_horizontal_slider_height(scale_height(handle_size));
-  m_scroll_bar_style->set_vertical_slider_width(scale_width(handle_size));
+  m_scroll_bar_style->set_horizontal_scroll_bar_height(scale_height(
+    handle_size));
+  m_scroll_bar_style->set_vertical_scroll_bar_width(scale_width(handle_size));
   update();
 }

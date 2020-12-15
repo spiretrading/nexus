@@ -5,8 +5,6 @@
 
 using namespace Spire;
 
-#include "Spire/Ui/ScrollArea.hpp"
-
 namespace {
   auto MINIMUM_HORIZONAL_HANDLE_WIDTH() {
     static auto width = scale_width(60);
@@ -118,11 +116,11 @@ QRect ScrollBarStyle::subControlRect(ComplexControl control,
   return QProxyStyle::subControlRect(control, option, sub_control, widget);
 }
 
-void ScrollBarStyle::set_horizontal_slider_height(int height) {
+void ScrollBarStyle::set_horizontal_scroll_bar_height(int height) {
   m_horizontal_handle_height = height;
 }
 
-void ScrollBarStyle::set_vertical_slider_width(int width) {
+void ScrollBarStyle::set_vertical_scroll_bar_width(int width) {
   m_vertical_handle_width = width;
 }
 

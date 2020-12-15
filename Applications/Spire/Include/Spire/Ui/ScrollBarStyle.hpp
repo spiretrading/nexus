@@ -5,14 +5,28 @@
 
 namespace Spire {
 
+  //! Represents a Spire style for QScrollBars.
   class ScrollBarStyle : public QProxyStyle {
     public:
 
+      //! Constructs a ScrollBarStyle.
+      /*!
+        \param parent The parent widget. A shared style will be destroyed
+                      when the given parent widget is destroyed.
+      */
       explicit ScrollBarStyle(QWidget* parent);
 
-      void set_horizontal_slider_height(int height);
+      //! Sets the height of horizontal scroll bars.
+      /*!
+        \param height The horizontal scroll bars' height.
+      */
+      void set_horizontal_scroll_bar_height(int height);
 
-      void set_vertical_slider_width(int width);
+      //! Sets the width of vertical scroll bars.
+      /*!
+        \param width The vertical scroll bars' width.
+      */
+      void set_vertical_scroll_bar_width(int width);
 
       void drawComplexControl(QStyle::ComplexControl control,
         const QStyleOptionComplex* option, QPainter* painter,
