@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
 #include <unordered_map>
 #include <vector>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/ParameterExpression.hpp>
@@ -95,54 +96,47 @@ namespace Nexus::OrderExecutionService {
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      OrderExecutionClient& orderExecutionClient,
+      OrderExecutionClient&& orderExecutionClient,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    struct MarketEntry {
-      boost::posix_time::ptime m_endDate;
-      std::shared_ptr<Beam::Queue<SequencedOrder>> m_queue;
-    };
-    auto entries = std::vector<MarketEntry>();
-    auto marketTimeZones =
-      std::unordered_map<std::string, std::vector<MarketCode>>();
-    for(auto& market : marketDatabase.GetEntries()) {
-      marketTimeZones[market.m_timeZone].push_back(market.m_code);
-    }
-    for(auto& marketTimeZone : marketTimeZones) {
-      auto marketStartDate = MarketDateToUtc(marketTimeZone.second.front(),
-        startTime, marketDatabase, timeZoneDatabase);
-      auto marketEndDate = MarketDateToUtc(marketTimeZone.second.front(),
-        endTime, marketDatabase, timeZoneDatabase) +
-        boost::gregorian::days(1);
-      auto marketExpressions = std::vector<Beam::Queries::Expression>();
-      for(auto& market : marketTimeZone.second) {
-        marketExpressions.push_back(BuildMarketFilter(market));
+    Beam::Routines::Spawn([=, queue = std::move(queue), orderExecutionClient =
+        Beam::CapturePtr<OrderExecutionClient>(
+          orderExecutionClient)] () mutable {
+      auto marketTimeZones =
+        std::unordered_map<std::string, std::vector<MarketCode>>();
+      for(auto& market : marketDatabase.GetEntries()) {
+        marketTimeZones[market.m_timeZone].push_back(market.m_code);
       }
-      auto marketFilter = Beam::Queries::MakeOrExpression(
-        marketExpressions.begin(), marketExpressions.end());
-      auto dailyOrderSubmissionQuery = AccountQuery();
-      dailyOrderSubmissionQuery.SetIndex(account);
-      dailyOrderSubmissionQuery.SetRange(marketStartDate, marketEndDate);
-      dailyOrderSubmissionQuery.SetFilter(marketFilter);
-      dailyOrderSubmissionQuery.SetSnapshotLimit(
-        Beam::Queries::SnapshotLimit::Unlimited());
-      auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
-      orderExecutionClient.QueryOrderSubmissions(dailyOrderSubmissionQuery,
-        snapshotQueue);
-      entries.push_back({marketEndDate, std::move(snapshotQueue)});
-    }
-    Beam::Routines::Spawn(
-      [entries = std::move(entries), queue = std::move(queue)] () mutable {
-        for(auto& entry : entries) {
-          try {
-            while(true) {
-              auto value = entry.m_queue->Pop();
-              if(value.GetValue()->GetInfo().m_timestamp < entry.m_endDate) {
-                queue.Push(std::move(value.GetValue()));
-              }
-            }
-          } catch(const std::exception&) {}
+      for(auto& marketTimeZone : marketTimeZones) {
+        auto marketStartDate = MarketDateToUtc(marketTimeZone.second.front(),
+          startTime, marketDatabase, timeZoneDatabase);
+        auto marketEndDate = MarketDateToUtc(marketTimeZone.second.front(),
+          endTime, marketDatabase, timeZoneDatabase) +
+          boost::gregorian::days(1);
+        auto marketExpressions = std::vector<Beam::Queries::Expression>();
+        for(auto& market : marketTimeZone.second) {
+          marketExpressions.push_back(BuildMarketFilter(market));
         }
-      });
+        auto marketFilter = Beam::Queries::MakeOrExpression(
+          marketExpressions.begin(), marketExpressions.end());
+        auto dailyOrderSubmissionQuery = AccountQuery();
+        dailyOrderSubmissionQuery.SetIndex(account);
+        dailyOrderSubmissionQuery.SetRange(marketStartDate, marketEndDate);
+        dailyOrderSubmissionQuery.SetFilter(marketFilter);
+        dailyOrderSubmissionQuery.SetSnapshotLimit(
+          Beam::Queries::SnapshotLimit::Unlimited());
+        auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
+        orderExecutionClient->QueryOrderSubmissions(dailyOrderSubmissionQuery,
+          snapshotQueue);
+        try {
+          while(true) {
+            auto value = snapshotQueue->Pop();
+            if(value.GetValue()->GetInfo().m_timestamp < marketEndDate) {
+              queue.Push(std::move(value.GetValue()));
+            }
+          }
+        } catch(const std::exception&) {}
+      }
+    });
   }
 
   /** Builds a Query Expression to filter an account's live Orders. */
