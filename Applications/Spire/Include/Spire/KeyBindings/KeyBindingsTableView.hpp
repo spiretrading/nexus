@@ -87,6 +87,7 @@ namespace Spire {
       QModelIndex get_next_editable_index(const QModelIndex& index) const;
       QModelIndex get_previous_editable_index(const QModelIndex& index) const;
       void scroll_to_index(const QModelIndex& index);
+      void set_current_index(const QModelIndex& index);
       void update_delete_buttons(int selected_index);
       void on_column_selection_changed(const QModelIndex &current,
         const QModelIndex &previous);

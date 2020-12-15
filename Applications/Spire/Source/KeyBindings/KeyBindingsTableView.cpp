@@ -196,20 +196,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         }
         return QModelIndex();
       }();
-      m_is_default_cell_selected = false;
-      m_is_editing_cell = false;
-      auto is_editor_open = m_table->isPersistentEditorOpen(
-        m_table->currentIndex());
-      m_table->setCurrentIndex(current_index);
-      scroll_to_index(current_index);
-      auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-      table_model->set_focus_highlight(current_index);
-      if(!is_editor_open) {
-        if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
-          edit_cell(current_index);
-        }
-      }
-      update();
+      set_current_index(current_index);
       return true;
     } else if(e->key() == Qt::Key_Delete) {
       m_table->model()->setData(m_table->currentIndex(), QVariant(),
@@ -333,6 +320,16 @@ void KeyBindingsTableView::scroll_to_index(const QModelIndex& index) {
   }
 }
 
+void KeyBindingsTableView::set_current_index(const QModelIndex& index) {
+  m_is_default_cell_selected = false;
+  m_is_editing_cell = false;
+  m_table->setCurrentIndex(index);
+  scroll_to_index(index);
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->set_focus_highlight(index);
+  update();
+}
+
 void KeyBindingsTableView::update_delete_buttons(int selected_index) {
   while(auto item = m_delete_buttons_layout->takeAt(selected_index)) {
     delete item->widget();
@@ -365,7 +362,7 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 
 void KeyBindingsTableView::on_editor_closed(const QWidget* editor,
     QAbstractItemDelegate::EndEditHint hint) {
-  auto edit_index = [&] {
+  auto next_index = [&] {
     if(hint == QAbstractItemDelegate::EditNextItem) {
       return get_next_editable_index(m_table->currentIndex());
     } else if(hint == QAbstractItemDelegate::EditPreviousItem) {
@@ -373,8 +370,8 @@ void KeyBindingsTableView::on_editor_closed(const QWidget* editor,
     }
     return QModelIndex();
   }();
-  if(edit_index.isValid()) {
-    edit_cell(edit_index);
+  if(next_index.isValid()) {
+    set_current_index(next_index);
   }
 }
 
