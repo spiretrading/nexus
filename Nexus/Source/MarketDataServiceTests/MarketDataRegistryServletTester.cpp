@@ -98,7 +98,11 @@ namespace {
       tsxEntitlements.m_groupEntry = tsxEntitlementGroup;
       auto tsxKey = EntitlementKey(DefaultMarkets::TSX(),
         DefaultMarkets::TSX());
+      tsxEntitlements.m_applicability[tsxKey].Set(MarketDataType::BBO_QUOTE);
       tsxEntitlements.m_applicability[tsxKey].Set(MarketDataType::BOOK_QUOTE);
+      auto tsxvKey = EntitlementKey(DefaultMarkets::TSXV(),
+        DefaultMarkets::TSXV());
+      tsxEntitlements.m_applicability[tsxvKey].Set(MarketDataType::BBO_QUOTE);
       auto chicTsxKey = EntitlementKey(DefaultMarkets::TSX(),
         DefaultMarkets::CHIC());
       tsxEntitlements.m_applicability[chicTsxKey].Set(
@@ -137,5 +141,74 @@ TEST_SUITE("MarketDataRegistryServlet") {
       query);
     REQUIRE(result.size() == 1);
     REQUIRE(result[0] == info);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "security_market_query") {
+    auto bboQuote = SecurityBboQuote(BboQuote(Quote(Money::ONE, 100, Side::BID),
+      Quote(Money::ONE, 100, Side::ASK), second_clock::universal_time()),
+      SECURITY_A);
+    m_registryServlet->PublishBboQuote(bboQuote, 1);
+    SUBCASE("Mismatched market.") {
+      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
+      m_registryServlet->Add(info);
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::TSXV(),
+        DefaultCountries::CA()));
+      query.SetRange(Range::Historical());
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
+        query);
+      REQUIRE(snapshot.m_queryId == -1);
+      REQUIRE(snapshot.m_snapshot.empty());
+    }
+    SUBCASE("Mismatched country.") {
+      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
+      m_registryServlet->Add(info);
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::TSX(),
+        DefaultCountries::US()));
+      query.SetRange(Range::Historical());
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
+        query);
+      REQUIRE(snapshot.m_queryId == -1);
+      REQUIRE(snapshot.m_snapshot.empty());
+    }
+    SUBCASE("Mismatched market and country.") {
+      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
+      m_registryServlet->Add(info);
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::NYSE(),
+        DefaultCountries::US()));
+      query.SetRange(Range::Historical());
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
+        query);
+      REQUIRE(snapshot.m_queryId == -1);
+      REQUIRE(snapshot.m_snapshot.empty());
+    }
+    SUBCASE("Missing info record.") {
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::TSXV(),
+        DefaultCountries::CA()));
+      query.SetRange(Range::Historical());
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
+        query);
+      REQUIRE(snapshot.m_snapshot.size() == 1);
+      REQUIRE(*snapshot.m_snapshot[0] == *bboQuote);
+    }
+    SUBCASE("Proper query.") {
+      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
+      m_registryServlet->Add(info);
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(SECURITY_A);
+      query.SetRange(Range::Historical());
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
+        query);
+      REQUIRE(snapshot.m_snapshot.size() == 1);
+      REQUIRE(*snapshot.m_snapshot[0] == *bboQuote);
+    }
   }
 }
