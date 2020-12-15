@@ -5,6 +5,8 @@
 
 using namespace Spire;
 
+#include "Spire/Ui/ScrollArea.hpp"
+
 namespace {
   auto MINIMUM_HORIZONAL_HANDLE_WIDTH() {
     static auto width = scale_width(60);
@@ -17,13 +19,10 @@ namespace {
   }
 }
 
-// TODO: constructor parameters; lifetime?
-ScrollBarStyle::ScrollBarStyle(QStyle* style = nullptr,
-    QWidget* parent = nullptr)
-    : QProxyStyle(style),
-      m_horizontal_handle_height(scale_height(13)),
+ScrollBarStyle::ScrollBarStyle(QWidget* parent)
+    : m_horizontal_handle_height(scale_height(13)),
       m_vertical_handle_width(scale_width(13)) {
-  //setParent(parent);
+  setParent(parent);
 }
 
 void ScrollBarStyle::drawComplexControl(QStyle::ComplexControl control,
@@ -53,11 +52,12 @@ void ScrollBarStyle::drawControl(QStyle::ControlElement element,
 int ScrollBarStyle::pixelMetric(PixelMetric metric,
     const QStyleOption* option, const QWidget* widget) const {
   if(metric == PM_ScrollBarExtent) {
-    auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
-    if(scroll_bar->orientation() == Qt::Horizontal) {
-      return m_horizontal_handle_height;
-    } else {
-      return m_vertical_handle_width;
+    if(auto scroll_bar = qobject_cast<const QScrollBar*>(widget); scroll_bar) {
+      if(scroll_bar->orientation() == Qt::Horizontal) {
+        return m_horizontal_handle_height;
+      } else {
+        return m_vertical_handle_width;
+      }
     }
   }
   return QProxyStyle::pixelMetric(metric, option, widget);
@@ -75,53 +75,45 @@ int ScrollBarStyle::styleHint(QStyle::StyleHint hint,
 QRect ScrollBarStyle::subControlRect(ComplexControl control,
     const QStyleOptionComplex* option, SubControl sub_control,
     const QWidget* widget) const {
-  switch(sub_control) {
-    case SC_ScrollBarAddPage:
-      {
-        auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
-        if(scroll_bar->orientation() == Qt::Horizontal) {
-          auto slider_right_pos = get_horizontal_slider_position(
-            scroll_bar) + MINIMUM_HORIZONAL_HANDLE_WIDTH();
-          return {slider_right_pos, 0,
-            scroll_bar->width() - slider_right_pos,
-            m_horizontal_handle_height};
-        } else {
-          auto slider_bottom_pos = get_vertical_slider_position(
-            scroll_bar) + MINIMUM_VERTICAL_HANDLE_HEIGHT();
-          return {0, slider_bottom_pos, m_vertical_handle_width,
-            scroll_bar->height() - slider_bottom_pos};
-        }
-      }
-    case SC_ScrollBarSubPage:
-      {
-        auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
-        if(scroll_bar->orientation() == Qt::Horizontal) {
-          auto slider_pos = get_horizontal_slider_position(scroll_bar);
-          return {0, 0, slider_pos,
-            slider_pos + MINIMUM_HORIZONAL_HANDLE_WIDTH()};
-        } else {
+  if(control == CC_ScrollBar) {
+    if(auto scroll_bar = qobject_cast<const QScrollBar*>(widget); scroll_bar) {
+      switch(sub_control) {
+        case SC_ScrollBarAddPage:
+          if(scroll_bar->orientation() == Qt::Horizontal) {
+            auto slider_right_pos = get_horizontal_slider_position(
+              scroll_bar) + get_handle_size(scroll_bar);
+            return {slider_right_pos, 0,
+              scroll_bar->width() - slider_right_pos,
+              m_horizontal_handle_height};
+          } else {
+            auto slider_bottom_pos = get_vertical_slider_position(
+              scroll_bar) + get_handle_size(scroll_bar);
+            return {0, slider_bottom_pos, m_vertical_handle_width,
+              scroll_bar->height() - slider_bottom_pos};
+          }
+        case SC_ScrollBarSubPage:
+          if(scroll_bar->orientation() == Qt::Horizontal) {
+            return {0, 0, get_horizontal_slider_position(scroll_bar),
+              m_horizontal_handle_height};
+          }
           return {0, 0, m_vertical_handle_width,
             get_vertical_slider_position(scroll_bar)};
-        }
+        case SC_ScrollBarGroove:
+          return widget->rect();
+        case SC_ScrollBarSlider:
+          if(scroll_bar->orientation() == Qt::Horizontal) {
+            return {get_horizontal_slider_position(scroll_bar), 0,
+              get_handle_size(scroll_bar), scroll_bar->height()};
+          }
+          return {0, get_vertical_slider_position(scroll_bar),
+            scroll_bar->width(), get_handle_size(scroll_bar)};
+        case SC_ScrollBarAddLine:
+        case SC_ScrollBarFirst:
+        case SC_ScrollBarLast:
+        case SC_ScrollBarSubLine:
+          return {};
       }
-    case SC_ScrollBarGroove:
-      return widget->rect();
-    case SC_ScrollBarSlider:
-      {
-        auto scroll_bar = qobject_cast<const QScrollBar*>(widget);
-        if(scroll_bar->orientation() == Qt::Horizontal) {
-          return QRect(get_horizontal_slider_position(scroll_bar), 0,
-            MINIMUM_HORIZONAL_HANDLE_WIDTH(), m_horizontal_handle_height);
-        } else {
-          return QRect(0, get_vertical_slider_position(scroll_bar),
-            m_vertical_handle_width, MINIMUM_VERTICAL_HANDLE_HEIGHT());
-        }
-      }
-    case SC_ScrollBarAddLine:
-    case SC_ScrollBarFirst:
-    case SC_ScrollBarLast:
-    case SC_ScrollBarSubLine:
-      return {};
+    }
   }
   return QProxyStyle::subControlRect(control, option, sub_control, widget);
 }
@@ -134,16 +126,29 @@ void ScrollBarStyle::set_vertical_slider_width(int width) {
   m_vertical_handle_width = width;
 }
 
+int ScrollBarStyle::get_handle_size(const QScrollBar* scroll_bar) const {
+  if(scroll_bar->orientation() == Qt::Horizontal) {
+    auto slider_size = (scroll_bar->pageStep() * scroll_bar->width()) /
+      (scroll_bar->maximum() - scroll_bar->minimum() + scroll_bar->pageStep());
+    return std::min(std::max(MINIMUM_HORIZONAL_HANDLE_WIDTH(), slider_size),
+      scroll_bar->width());
+  }
+  auto slider_size = (scroll_bar->pageStep() * scroll_bar->height()) /
+    (scroll_bar->maximum() - scroll_bar->minimum() + scroll_bar->pageStep());
+  return std::min(std::max(MINIMUM_VERTICAL_HANDLE_HEIGHT(), slider_size),
+    scroll_bar->height());
+}
+
 int ScrollBarStyle::get_horizontal_slider_position(
     const QScrollBar* scroll_bar) const {
   return sliderPositionFromValue(scroll_bar->minimum(),
     scroll_bar->maximum(), scroll_bar->value(),
-    scroll_bar->width() - MINIMUM_HORIZONAL_HANDLE_WIDTH());
+    scroll_bar->width() - get_handle_size(scroll_bar));
 }
 
 int ScrollBarStyle::get_vertical_slider_position(
     const QScrollBar* scroll_bar) const {
   return sliderPositionFromValue(scroll_bar->minimum(),
     scroll_bar->maximum(), scroll_bar->value(),
-    scroll_bar->height() - MINIMUM_VERTICAL_HANDLE_HEIGHT());
+    scroll_bar->height() - get_handle_size(scroll_bar));
 }

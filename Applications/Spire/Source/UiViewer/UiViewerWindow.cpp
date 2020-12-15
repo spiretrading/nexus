@@ -3,6 +3,7 @@
 #include <QLabel>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/ScrollBarStyle.hpp"
 #include "Spire/UiViewer/CheckBoxTestWidget.hpp"
 #include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
 #include "Spire/UiViewer/ComboBoxTestWidget.hpp"
@@ -44,7 +45,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   auto body = new QWidget(this);
-  body->setStyleSheet("background-color: #F5F5F5");
+  body->setObjectName("ui_viewer_body");
+  body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
   layout()->addWidget(body);
   m_layout = new QHBoxLayout(body);
   m_widget_list = new QListWidget(this);
@@ -73,31 +75,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
       border: %3px solid #4B23A0 %4px solid #4B23A0;
       color: #000000;
       padding-left: -%4px;
-    }
-
-    QScrollBar::vertical {
-      border: none;
-      width: %6px;
-    }
-
-    QScrollBar::handle {
-      background-color: #C8C8C8;
-    }
-
-    QScrollBar::handle:vertical {
-      min-height: %7px;
-    }
-
-    QScrollBar::add-line, QScrollBar::sub-line,
-    QScrollBar::add-page, QScrollBar::sub-page {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
     })").arg(scale_height(4)).arg(scale_width(4))
-        .arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(3)).arg(scale_width(13))
-        .arg(scale_height(60)));
+      .arg(scale_height(1)).arg(scale_width(1))
+      .arg(scale_height(3)));
+  m_widget_list->verticalScrollBar()->setStyle(new ScrollBarStyle(this));
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
   m_layout->addWidget(m_widget_list);

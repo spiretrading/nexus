@@ -8,7 +8,7 @@ namespace Spire {
   class ScrollBarStyle : public QProxyStyle {
     public:
 
-      ScrollBarStyle(QStyle* style = nullptr, QWidget* parent = nullptr);
+      explicit ScrollBarStyle(QWidget* parent);
 
       void set_horizontal_slider_height(int height);
 
@@ -37,6 +37,7 @@ namespace Spire {
       int m_horizontal_handle_height;
       int m_vertical_handle_width;
 
+      int get_handle_size(const QScrollBar* scroll_bar) const;
       int get_horizontal_slider_position(const QScrollBar* scroll_bar) const;
       int get_vertical_slider_position(const QScrollBar* scroll_bar) const;
   };

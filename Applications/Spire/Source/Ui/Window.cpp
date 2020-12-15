@@ -31,6 +31,7 @@ Window::Window(QWidget* parent)
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
+  setObjectName("spire_window");
   m_title_bar = new TitleBar(imageFromSvg(":/Icons/spire.svg",
     ICON_SIZE()), this);
   installEventFilter(m_title_bar);
@@ -52,9 +53,9 @@ void Window::set_svg_icon(const QString& icon_path) {
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
-      setStyleSheet("background-color: #A0A0A0;");
+      setStyleSheet("#spire_window { background-color: #A0A0A0; }");
     } else {
-      setStyleSheet("background-color: #C8C8C8;");
+      setStyleSheet("#spire_window { background-color: #C8C8C8; }");
     }
   }
 }

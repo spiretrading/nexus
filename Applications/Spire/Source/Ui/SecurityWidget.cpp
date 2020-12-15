@@ -15,13 +15,14 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
       m_input_model(input_model.Get()),
       m_empty_window_label(nullptr),
       m_overlay_widget(nullptr) {
+  setObjectName("security_widget");
   setFocusPolicy(Qt::ClickFocus);
   auto empty_label_font_color = QColor();
   if(theme == Theme::DARK) {
-    setStyleSheet("background-color: #25212E;");
+    setStyleSheet("#security_widget { background-color: #25212E; }");
     empty_label_font_color = Qt::white;
   } else {
-    setStyleSheet("background-color: #FFFFFF;");
+    setStyleSheet("#security_widget { background-color: #FFFFFF; }");
     empty_label_font_color = Qt::black;
   }
   m_layout = new QVBoxLayout(this);
@@ -29,11 +30,13 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
   m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
-    color: %3;
-    font-family: Roboto;
-    font-size: %1px;
-    padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16))
-    .arg(empty_label_font_color.name()));
+    QLabel {
+      color: %3;
+      font-family: Roboto;
+      font-size: %1px;
+      padding-top: %2px;
+    })").arg(scale_height(12)).arg(scale_height(16))
+        .arg(empty_label_font_color.name()));
   m_layout->addWidget(m_empty_window_label);
 }
 
@@ -93,7 +96,7 @@ void SecurityWidget::show_overlay_widget() {
   auto p = static_cast<QWidget*>(parent());
   m_overlay_widget = new QLabel(p);
   m_overlay_widget->setStyleSheet(
-    "background-color: rgba(245, 245, 245, 153);");
+    "QLabel { background-color: rgba(245, 245, 245, 153); }");
   m_overlay_widget->resize(p->size());
   m_overlay_widget->move(0, 0);
   m_overlay_widget->show();
