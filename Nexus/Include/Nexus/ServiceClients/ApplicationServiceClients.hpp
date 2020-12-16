@@ -16,7 +16,7 @@
 namespace Nexus {
 
   /** Implements the ServiceClients interface using live application clients. */
-  class ApplicationServiceClients : private boost::noncopyable {
+  class ApplicationServiceClients {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::ApplicationServiceLocatorClient::Client;
@@ -104,35 +104,19 @@ namespace Nexus {
   };
 
   inline ApplicationServiceClients::ApplicationServiceClients(
-      std::string username, std::string password,
-      const Beam::Network::IpAddress& address) {
-    try {
-      m_serviceLocatorClient.BuildSession(std::move(username),
-        std::move(password), address);
-      m_registryClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_administrationClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_definitionsClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_marketDataClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_chartingClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_complianceClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_orderExecutionClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      m_riskClient.BuildSession(Beam::Ref(*m_serviceLocatorClient));
-      auto timeServices = m_serviceLocatorClient->Locate(
-        Beam::TimeService::SERVICE_NAME);
-      if(timeServices.empty()) {
-        BOOST_THROW_EXCEPTION(
-          Beam::IO::ConnectException("No time services available."));
-      }
-      auto& timeService = timeServices.front();
-      auto ntpPool = Beam::Parsers::Parse<
-        std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
-        timeService.GetProperties().At("addresses")));
-      m_timeClient = Beam::TimeService::MakeLiveNtpTimeClient(ntpPool);
-    } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
-    }
-  }
+    std::string username, std::string password,
+    const Beam::Network::IpAddress& address)
+    : m_serviceLocatorClient(std::move(username), std::move(password), address),
+      m_registryClient(m_serviceLocatorClient.Get()),
+      m_administrationClient(m_serviceLocatorClient.Get()),
+      m_definitionsClient(m_serviceLocatorClient.Get()),
+      m_marketDataClient(m_serviceLocatorClient.Get()),
+      m_chartingClient(m_serviceLocatorClient.Get()),
+      m_complianceClient(m_serviceLocatorClient.Get()),
+      m_orderExecutionClient(m_serviceLocatorClient.Get()),
+      m_riskClient(m_serviceLocatorClient.Get()),
+      m_timeClient(Beam::TimeService::MakeLiveNtpTimeClientFromServiceLocator(
+        *m_serviceLocatorClient)) {}
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
     Close();
@@ -199,6 +183,7 @@ namespace Nexus {
       return;
     }
     m_timeClient->Close();
+    m_serviceLocatorClient->Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
     m_complianceClient->Close();
@@ -207,7 +192,6 @@ namespace Nexus {
     m_definitionsClient->Close();
     m_administrationClient->Close();
     m_registryClient->Close();
-    m_serviceLocatorClient->Close();
     m_openState.Close();
   }
 }

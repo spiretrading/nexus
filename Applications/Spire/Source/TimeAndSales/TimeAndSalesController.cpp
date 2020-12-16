@@ -11,12 +11,12 @@ using namespace Nexus;
 using namespace Spire;
 
 TimeAndSalesController::TimeAndSalesController(Definitions definitions,
-    Ref<SecurityInputModel> security_input_model,
-    Ref<VirtualServiceClients> service_clients)
-    : m_definitions(std::move(definitions)),
-      m_security_input_model(security_input_model.Get()),
-      m_service_clients(service_clients.Get()),
-      m_window(nullptr) {}
+  Ref<SecurityInputModel> security_input_model,
+  ServiceClientsBox service_clients)
+  : m_definitions(std::move(definitions)),
+    m_security_input_model(security_input_model.Get()),
+    m_service_clients(std::move(service_clients)),
+    m_window(nullptr) {}
 
 TimeAndSalesController::~TimeAndSalesController() {
   close();
@@ -50,7 +50,7 @@ connection TimeAndSalesController::connect_closed_signal(
 
 void TimeAndSalesController::on_change_security(const Security& security) {
   auto model = std::make_shared<ServicesTimeAndSalesModel>(security,
-    m_definitions, Ref(*m_service_clients));
+    m_definitions, m_service_clients);
   m_window->set_model(model);
 }
 

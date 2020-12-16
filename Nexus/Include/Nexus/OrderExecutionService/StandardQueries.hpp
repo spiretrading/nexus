@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
 #include <unordered_map>
 #include <vector>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/ParameterExpression.hpp>
@@ -95,10 +96,11 @@ namespace Nexus::OrderExecutionService {
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      OrderExecutionClient& orderExecutionClient,
+      OrderExecutionClient&& orderExecutionClient,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    Beam::Routines::Spawn([=, queue = std::move(queue),
-        &orderExecutionClient] () mutable {
+    Beam::Routines::Spawn([=, queue = std::move(queue), orderExecutionClient =
+        Beam::CapturePtr<OrderExecutionClient>(
+          orderExecutionClient)] () mutable {
       auto marketTimeZones =
         std::unordered_map<std::string, std::vector<MarketCode>>();
       for(auto& market : marketDatabase.GetEntries()) {
@@ -123,7 +125,7 @@ namespace Nexus::OrderExecutionService {
         dailyOrderSubmissionQuery.SetSnapshotLimit(
           Beam::Queries::SnapshotLimit::Unlimited());
         auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
-        orderExecutionClient.QueryOrderSubmissions(dailyOrderSubmissionQuery,
+        orderExecutionClient->QueryOrderSubmissions(dailyOrderSubmissionQuery,
           snapshotQueue);
         try {
           while(true) {
@@ -137,14 +139,63 @@ namespace Nexus::OrderExecutionService {
     });
   }
 
+  /** Builds a Query Expression to filter an account's live Orders. */
+  inline auto BuildLiveOrdersFilter() {
+    auto info = Beam::Queries::ParameterExpression(0,
+      Nexus::Queries::OrderInfoType());
+    return Beam::Queries::MemberAccessExpression("is_live",
+      Beam::Queries::NativeDataType<bool>(), info);
+  }
+
   /**
-   * Builds a query to retrieve Orders by their id.
+   * Builds a query to retrieve all of an account's live Orders.
    * @param account The account to query.
-   * @param ids The order ids to query.
    */
-  inline AccountQuery BuildOrderSubmissionQuery(
+  inline AccountQuery BuildLiveOrdersQuery(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto query = AccountQuery();
+    query.SetIndex(account);
+    query.SetRange(Beam::Queries::Range::Historical());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    query.SetFilter(BuildLiveOrdersFilter());
+    return query;
+  }
+
+  /**
+   * Queries an account's live Orders.
+   * @param account The account to query.
+   * @param orderExecutionClient The OrderExecutionClient to query.
+   * @param queue The Queue to write to.
+   */
+  template<typename OrderExecutionClient>
+  void QueryLiveOrders(const Beam::ServiceLocator::DirectoryEntry& account,
+      OrderExecutionClient& orderExecutionClient,
+      Beam::ScopedQueueWriter<const Order*> queue) {
+    orderExecutionClient.QueryOrderSubmissions(BuildLiveOrdersQuery(account),
+      std::move(queue));
+  }
+
+  /**
+   * Loads an account's live Orders.
+   * @param account The account to query.
+   * @param orderExecutionClient The OrderExecutionClient to query.
+   */
+  template<typename OrderExecutionClient>
+  std::vector<const Order*> LoadLiveOrders(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::vector<OrderId>& ids) {
+      OrderExecutionClient& orderExecutionClient) {
+    auto queue = std::make_shared<Beam::Queue<const Order*>>();
+    QueryLiveOrders(account, orderExecutionClient, queue);
+    auto orders = std::vector<const Order*>();
+    Beam::Flush(queue, std::back_inserter(orders));
+    return orders;
+  }
+
+  /**
+   * Builds a Query Expression to filter Orders by id.
+   * @param ids The order ids to filter.
+   */
+  inline auto BuildOrderIdFilter(const std::vector<OrderId>& ids) {
     auto info = Beam::Queries::ParameterExpression(0,
       Nexus::Queries::OrderInfoType());
     auto field = Beam::Queries::MemberAccessExpression("order_id",
@@ -155,30 +206,39 @@ namespace Nexus::OrderExecutionService {
         return Beam::Queries::MakeEqualsExpression(field,
           Beam::Queries::ConstantExpression(Beam::Queries::NativeValue(id)));
       });
-    auto query = AccountQuery();
-    query.SetIndex(account);
-    query.SetRange(Beam::Queries::Range::Historical());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    query.SetFilter(Beam::Queries::MakeOrExpression(
-      clauses.begin(), clauses.end()));
-    return query;
+    return Beam::Queries::MakeOrExpression(clauses.begin(), clauses.end());
   }
 
   /**
    * Builds a query to retrieve Orders by their id.
    * @param account The account to query.
    * @param ids The order ids to query.
+   */
+  inline AccountQuery BuildOrderIdQuery(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const std::vector<OrderId>& ids) {
+    auto query = AccountQuery();
+    query.SetIndex(account);
+    query.SetRange(Beam::Queries::Range::Historical());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    query.SetFilter(BuildOrderIdFilter(ids));
+    return query;
+  }
+
+  /**
+   * Queries for Orders by their id.
+   * @param account The account to query.
+   * @param ids The order ids to query.
    * @param orderExecutionClient The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
   template<typename OrderExecutionClient>
-  void QueryOrderSubmissions(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+  void QueryOrderIds(const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<OrderId>& ids,
       OrderExecutionClient& orderExecutionClient,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    auto query = BuildOrderSubmissionQuery(account, ids);
-    orderExecutionClient.QueryOrderSubmissions(query, std::move(queue));
+    orderExecutionClient.QueryOrderSubmissions(BuildOrderIdQuery(account, ids),
+      std::move(queue));
   }
 
   /**
@@ -188,12 +248,12 @@ namespace Nexus::OrderExecutionService {
    * @param orderExecutionClient The OrderExecutionClient to query.
    */
   template<typename OrderExecutionClient>
-  std::vector<const Order*> LoadOrderSubmissions(
+  std::vector<const Order*> LoadOrderIds(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<OrderId>& ids,
       OrderExecutionClient& orderExecutionClient) {
     auto queue = std::make_shared<Beam::Queue<const Order*>>();
-    QueryOrderSubmissions(account, ids, orderExecutionClient, queue);
+    QueryOrderIds(account, ids, orderExecutionClient, queue);
     auto orders = std::vector<const Order*>();
     Beam::Flush(queue, std::back_inserter(orders));
     return orders;

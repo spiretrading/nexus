@@ -1,9 +1,7 @@
 #ifndef SPIRE_TOOLBAR_CONTROLLER_HPP
 #define SPIRE_TOOLBAR_CONTROLLER_HPP
 #include <memory>
-#include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/ServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/Definitions.hpp"
 #include "Spire/Toolbar/RecentlyClosedModel.hpp"
@@ -12,7 +10,7 @@
 namespace Spire {
 
   //! Launches the main application windows.
-  class ToolbarController : private boost::noncopyable {
+  class ToolbarController {
     public:
 
       //! Signals that this toolbar and all its windows have closed.
@@ -24,7 +22,7 @@ namespace Spire {
         \param service_clients The service clients logged into Spire.
       */
       ToolbarController(Definitions definitions,
-        Beam::Ref<Nexus::VirtualServiceClients> service_clients);
+        Nexus::ServiceClientsBox service_clients);
 
       ~ToolbarController();
 
@@ -43,12 +41,14 @@ namespace Spire {
       template<typename> struct Controller;
       mutable ClosedSignal m_closed_signal;
       Definitions m_definitions;
-      Nexus::VirtualServiceClients* m_service_clients;
+      Nexus::ServiceClientsBox m_service_clients;
       RecentlyClosedModel m_model;
       std::unique_ptr<SecurityInputModel> m_security_input_model;
       ToolbarWindow* m_toolbar_window;
       std::vector<std::unique_ptr<BaseController>> m_controllers;
 
+      ToolbarController(const ToolbarController&) = delete;
+      ToolbarController& operator =(const ToolbarController&) = delete;
       void on_open_window(RecentlyClosedModel::Type window);
       void on_closed();
       void on_controller_closed(const BaseController& controller);

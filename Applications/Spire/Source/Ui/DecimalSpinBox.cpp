@@ -1,7 +1,7 @@
 #include "Spire/Ui/DecimalSpinBox.hpp"
 #include <QHBoxLayout>
-#include "Spire/Spire/RealSpinBoxModel.hpp"
-#include "Spire/Spire/SpinBoxModel.hpp"
+#include "Spire/Ui/RealSpinBoxModel.hpp"
+#include "Spire/Ui/SpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

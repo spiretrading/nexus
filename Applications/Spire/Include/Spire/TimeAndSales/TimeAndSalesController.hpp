@@ -1,9 +1,7 @@
 #ifndef SPIRE_TIME_AND_SALES_CONTROLLER_HPP
 #define SPIRE_TIME_AND_SALES_CONTROLLER_HPP
 #include <memory>
-#include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/Definitions.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
@@ -11,7 +9,7 @@
 namespace Spire {
 
   //! Manages a time and sales window.
-  class TimeAndSalesController : private boost::noncopyable {
+  class TimeAndSalesController {
     public:
 
       //! Signals that the window closed.
@@ -25,7 +23,7 @@ namespace Spire {
       */
       TimeAndSalesController(Definitions definitions,
         Beam::Ref<SecurityInputModel> security_input_model,
-        Beam::Ref<Nexus::VirtualServiceClients> service_clients);
+        Nexus::ServiceClientsBox service_clients);
 
       ~TimeAndSalesController();
 
@@ -43,9 +41,12 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       Definitions m_definitions;
       SecurityInputModel* m_security_input_model;
-      Nexus::VirtualServiceClients* m_service_clients;
+      Nexus::ServiceClientsBox m_service_clients;
       TimeAndSalesWindow* m_window;
 
+      TimeAndSalesController(const TimeAndSalesController&) = delete;
+      TimeAndSalesController& operator =(
+        const TimeAndSalesController&) = delete;
       void on_change_security(const Nexus::Security& security);
       void on_closed();
   };

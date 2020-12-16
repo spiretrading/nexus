@@ -14,12 +14,12 @@ using namespace Nexus::Accounting;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
-  const auto TEST_SECURITY = Security("TST", DefaultMarkets::NASDAQ(),
+  const auto SECURITY_A = Security("TST", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
 
   auto BuildOrderFields(Side side, Quantity quantity, Money price) {
     return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
-      TEST_SECURITY, DefaultCurrencies::USD(), side, "NYSE", quantity, price);
+      SECURITY_A, DefaultCurrencies::USD(), side, "NYSE", quantity, price);
   }
 
   auto AddOrder(OrderId id, const OrderFields& fields,

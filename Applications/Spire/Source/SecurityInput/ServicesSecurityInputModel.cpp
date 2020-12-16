@@ -6,17 +6,16 @@ using namespace Nexus::MarketDataService;
 using namespace Spire;
 
 ServicesSecurityInputModel::ServicesSecurityInputModel(
-    Ref<VirtualMarketDataClient> client)
-    : m_client(client.Get()) {}
+  MarketDataClientBox client)
+  : m_client(std::move(client)) {}
 
 QtPromise<std::vector<SecurityInfo>> ServicesSecurityInputModel::autocomplete(
     const std::string& query) {
-  return QtPromise(
-    [=, client = m_client] {
-      try {
-        return client->LoadSecurityInfoFromPrefix(query);
-      } catch(const std::exception&) {
-        return std::vector<SecurityInfo>();
-      }
-    }, LaunchPolicy::ASYNC);
+  return QtPromise([=, client = m_client] () mutable {
+    try {
+      return client.LoadSecurityInfoFromPrefix(query);
+    } catch(const std::exception&) {
+      return std::vector<SecurityInfo>();
+    }
+  }, LaunchPolicy::ASYNC);
 }

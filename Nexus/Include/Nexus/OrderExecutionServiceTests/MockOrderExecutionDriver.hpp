@@ -142,7 +142,8 @@ namespace Tests {
     order->With(
       [&] (OrderStatus orderStatus,
           const std::vector<ExecutionReport>& executionReports) {
-        if(IsTerminal(orderStatus)) {
+        if(IsTerminal(orderStatus) || executionReports.empty() &&
+            executionReport.m_status != OrderStatus::PENDING_NEW) {
           return;
         }
         auto updatedReport = executionReport;

@@ -4,7 +4,7 @@
 #include <QLineEdit>
 #include <QStyleOption>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/RealSpinBoxModel.hpp"
+#include "Spire/Ui/RealSpinBoxModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -350,7 +350,7 @@ void RealSpinBox::set_stylesheet(bool is_up_disabled, bool is_down_disabled) {
       padding-left: %4px;
     }
 
-    QAbstractSpinBox:focus {
+    QAbstractSpinBox:focus, QAbstractSpinBox:hover {
       border: %1px solid #4B23A0;
     }
 

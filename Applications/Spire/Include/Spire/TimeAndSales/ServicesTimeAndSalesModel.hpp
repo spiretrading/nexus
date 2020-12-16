@@ -1,7 +1,6 @@
 #ifndef SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
-#include <Beam/Pointers/Ref.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/Spire/EventHandler.hpp"
@@ -19,8 +18,7 @@ namespace Spire {
         \param clients The service clients to query for market data.
       */
       ServicesTimeAndSalesModel(Nexus::Security security,
-        const Definitions& definitions,
-        Beam::Ref<Nexus::VirtualServiceClients> clients);
+        const Definitions& definitions, Nexus::ServiceClientsBox clients);
 
       const Nexus::Security& get_security() const override;
 
@@ -39,7 +37,7 @@ namespace Spire {
       mutable TimeAndSaleSignal m_time_and_sale_signal;
       mutable VolumeSignal m_volume_signal;
       Nexus::Security m_security;
-      Nexus::VirtualServiceClients* m_clients;
+      Nexus::ServiceClientsBox m_clients;
       Nexus::SequencedBboQuote m_bbo;
       Nexus::Quantity m_volume;
       EventHandler m_event_handler;

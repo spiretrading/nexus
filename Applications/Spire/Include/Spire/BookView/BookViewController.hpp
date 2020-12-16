@@ -2,8 +2,7 @@
 #define SPIRE_BOOK_VIEW_CONTROLLER_HPP
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/Definitions.hpp"
@@ -11,7 +10,7 @@
 namespace Spire {
 
   //! Manages a BookViewWindow.
-  class BookViewController : private boost::noncopyable {
+  class BookViewController {
     public:
 
       //! Signals that the window closed.
@@ -25,7 +24,7 @@ namespace Spire {
       */
       BookViewController(Definitions definitions,
         Beam::Ref<SecurityInputModel> security_input_model,
-        Beam::Ref<Nexus::VirtualServiceClients> service_clients);
+        Nexus::ServiceClientsBox service_clients);
 
       ~BookViewController();
 
@@ -43,10 +42,12 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       Definitions m_definitions;
       SecurityInputModel* m_security_input_model;
-      Nexus::VirtualServiceClients* m_service_clients;
+      Nexus::ServiceClientsBox m_service_clients;
       BookViewWindow* m_window;
       boost::signals2::scoped_connection m_security_change_connection;
 
+      BookViewController(const BookViewController&) = delete;
+      BookViewController& operator =(const BookViewController&) = delete;
       void on_change_security(const Nexus::Security& security);
       void on_closed();
   };

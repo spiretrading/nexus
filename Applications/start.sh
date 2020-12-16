@@ -18,7 +18,7 @@ for directory in $services; do
   ./stop_server.sh
   ./start_server.sh
   popd > /dev/null
-  sleep 1
+  sleep 3
 done
 
 pushd AdministrationServer/Application > /dev/null

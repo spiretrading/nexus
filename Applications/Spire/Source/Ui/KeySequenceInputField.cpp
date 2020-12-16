@@ -1,7 +1,7 @@
 #include "Spire/Ui/KeySequenceInputField.hpp"
 #include <QKeyEvent>
+#include "Spire/KeyBindings/KeySequenceValidationModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/KeySequenceValidationModel.hpp"
 
 using namespace Spire;
 

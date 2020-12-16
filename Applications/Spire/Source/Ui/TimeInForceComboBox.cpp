@@ -1,7 +1,6 @@
 #include "Spire/Ui/TimeInForceComboBox.hpp"
 #include <Beam/Collections/EnumIterator.hpp>
 #include <QHBoxLayout>
-#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -18,14 +17,22 @@ TimeInForceComboBox::TimeInForceComboBox(QWidget* parent)
     }
     return times;
   }();
-  auto menu = new StaticDropDownMenu(items, this);
+  m_menu = new StaticDropDownMenu(items, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(menu);
-  m_value_connection = menu->connect_value_selected_signal(
+  layout->addWidget(m_menu);
+  m_value_connection = m_menu->connect_value_selected_signal(
     [=] (const auto& value) {
       m_selected_signal(value.value<TimeInForce>());
     });
+}
+
+TimeInForce TimeInForceComboBox::get_time_in_force() const {
+  return m_menu->get_current_item().value<TimeInForce>();
+}
+
+void TimeInForceComboBox::set_time_in_force(TimeInForce time) {
+  m_menu->set_current_item(QVariant::fromValue(time));
 }
 
 connection TimeInForceComboBox::connect_selected_signal(

@@ -1,5 +1,5 @@
-#ifndef NEXUS_ACCOUNTQUERY_HPP
-#define NEXUS_ACCOUNTQUERY_HPP
+#ifndef NEXUS_ACCOUNT_QUERY_HPP
+#define NEXUS_ACCOUNT_QUERY_HPP
 #include <Beam/Queries/BasicQuery.hpp>
 #include <Beam/Queries/IndexedValue.hpp>
 #include <Beam/Queries/Range.hpp>
@@ -10,8 +10,7 @@
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
   using SequencedOrder = Beam::Queries::SequencedValue<const Order*>;
   using SequencedOrderInfo = Beam::Queries::SequencedValue<OrderInfo>;
   using SequencedOrderRecord = Beam::Queries::SequencedValue<OrderRecord>;
@@ -30,14 +29,12 @@ namespace OrderExecutionService {
   using SequencedAccountExecutionReport = Beam::Queries::SequencedValue<
     AccountExecutionReport>;
 
-  //! Defines the type of query used to receive Order submissions.
+  /** Defines the type of query used to receive Order submissions. */
   using AccountQuery =
     Beam::Queries::BasicQuery<Beam::ServiceLocator::DirectoryEntry>;
 }
-}
 
-namespace Beam {
-namespace Queries {
+namespace Beam::Queries {
   template<>
   struct TimestampAccessor<Nexus::OrderExecutionService::OrderRecord> {
     const boost::posix_time::ptime& operator ()(
@@ -50,7 +47,6 @@ namespace Queries {
       return value.m_info.m_timestamp;
     }
   };
-}
 }
 
 #endif

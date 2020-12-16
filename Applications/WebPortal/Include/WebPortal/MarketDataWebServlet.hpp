@@ -4,14 +4,13 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
   /** Provides a web interface to the MarketDataService. */
-  class MarketDataWebServlet : private boost::noncopyable {
+  class MarketDataWebServlet {
     public:
 
       /**
@@ -32,6 +31,8 @@ namespace Nexus::WebPortal {
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
+      MarketDataWebServlet(const MarketDataWebServlet&) = delete;
+      MarketDataWebServlet& operator =(const MarketDataWebServlet&) = delete;
       Beam::WebServices::HttpResponse OnLoadSecurityInfoFromPrefix(
         const Beam::WebServices::HttpRequest& request);
   };

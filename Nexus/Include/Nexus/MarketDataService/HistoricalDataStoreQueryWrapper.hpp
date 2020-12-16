@@ -27,8 +27,8 @@ namespace Nexus::MarketDataService {
       using IndexedValue = Beam::Queries::SequencedValue<
         Beam::Queries::IndexedValue<Value, Index>>;
 
-      template<typename DataStoreForward>
-      BaseHistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore);
+      template<typename DF>
+      explicit BaseHistoricalDataStoreQueryWrapper(DF&& dataStore);
 
       virtual ~BaseHistoricalDataStoreQueryWrapper();
 
@@ -45,13 +45,12 @@ namespace Nexus::MarketDataService {
   template<typename D>
   class HistoricalDataStoreQueryWrapper<OrderImbalance, D> :
       public BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
-      OrderImbalance, MarketCode, D> {
+        OrderImbalance, MarketCode, D> {
     public:
-      template<typename DataStoreForward>
-      HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
+      template<typename DF>
+      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
         : BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
-            OrderImbalance, MarketCode, D>(
-            std::forward<DataStoreForward>(dataStore)) {}
+            OrderImbalance, MarketCode, D>(std::forward<DF>(dataStore)) {}
 
       std::vector<SequencedOrderImbalance> Load(
           const MarketWideDataQuery& query) {
@@ -62,12 +61,12 @@ namespace Nexus::MarketDataService {
   template<typename D>
   class HistoricalDataStoreQueryWrapper<BboQuote, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      BboQuote, Security, D> {
+        BboQuote, Security, D> {
     public:
-      template<typename DataStoreForward>
-      HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
+      template<typename DF>
+      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
         : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BboQuote,
-            Security, D>(std::forward<DataStoreForward>(dataStore)) {}
+            Security, D>(std::forward<DF>(dataStore)) {}
 
       std::vector<SequencedBboQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -78,13 +77,12 @@ namespace Nexus::MarketDataService {
   template<typename D>
   class HistoricalDataStoreQueryWrapper<BookQuote, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      BookQuote, Security, D> {
+        BookQuote, Security, D> {
     public:
-      template<typename DataStoreForward>
-      HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
+      template<typename DF>
+      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
         : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-            BookQuote, Security, D>(
-            std::forward<DataStoreForward>(dataStore)) {}
+            BookQuote, Security, D>(std::forward<DF>(dataStore)) {}
 
       std::vector<SequencedBookQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -95,13 +93,12 @@ namespace Nexus::MarketDataService {
   template<typename D>
   class HistoricalDataStoreQueryWrapper<MarketQuote, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      MarketQuote, Security, D> {
+        MarketQuote, Security, D> {
     public:
-      template<typename DataStoreForward>
-      HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
+      template<typename DF>
+      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
         : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-            MarketQuote, Security, D>(
-            std::forward<DataStoreForward>(dataStore)) {}
+            MarketQuote, Security, D>(std::forward<DF>(dataStore)) {}
 
       std::vector<SequencedMarketQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -112,13 +109,12 @@ namespace Nexus::MarketDataService {
   template<typename D>
   class HistoricalDataStoreQueryWrapper<TimeAndSale, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      TimeAndSale, Security, D> {
+        TimeAndSale, Security, D> {
     public:
-      template<typename DataStoreForward>
-      HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
+      template<typename DF>
+      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
         : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-            TimeAndSale, Security, D>(
-            std::forward<DataStoreForward>(dataStore)) {}
+            TimeAndSale, Security, D>(std::forward<DF>(dataStore)) {}
 
       std::vector<SequencedTimeAndSale> Load(
           const SecurityMarketDataQuery& query) {
@@ -127,10 +123,10 @@ namespace Nexus::MarketDataService {
   };
 
   template<typename Q, typename V, typename I, typename D>
-  template<typename DataStoreForward>
+  template<typename DF>
   BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::
-    BaseHistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
-    : m_dataStore(std::forward<DataStoreForward>(dataStore)) {}
+    BaseHistoricalDataStoreQueryWrapper(DF&& dataStore)
+    : m_dataStore(std::forward<DF>(dataStore)) {}
 
   template<typename Q, typename V, typename I, typename D>
   BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::

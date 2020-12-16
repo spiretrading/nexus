@@ -48,8 +48,8 @@ namespace TechnicalAnalysis {
         marketCenter = "CNQ";
       } else if(security.GetMarket() == DefaultMarkets::HKEX()) {
         marketCenter = "HKEX";
-      } else if(security.GetMarket() == DefaultMarkets::ASX()) {
-        marketCenter = "ASX";
+      } else if(security.GetMarket() == DefaultMarkets::NEOE()) {
+        marketCenter = "AQL";
       } else if(!security.GetMarket().IsEmpty()) {
         marketCenter = security.GetMarket().GetData();
       }
@@ -165,8 +165,8 @@ namespace TechnicalAnalysis {
         marketCenter = "CNQ";
       } else if(security.GetMarket() == DefaultMarkets::HKEX()) {
         marketCenter = "HKEX";
-      } else if(security.GetMarket() == DefaultMarkets::ASX()) {
-        marketCenter = "ASX";
+      } else if(security.GetMarket() == DefaultMarkets::NEOE()) {
+        marketCenter = "AQL";
       } else if(!security.GetMarket().IsEmpty()) {
         marketCenter = security.GetMarket().GetData();
       }

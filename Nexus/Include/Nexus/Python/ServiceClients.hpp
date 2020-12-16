@@ -1,21 +1,129 @@
 #ifndef NEXUS_PYTHON_SERVICE_CLIENTS_HPP
 #define NEXUS_PYTHON_SERVICE_CLIENTS_HPP
+#include <memory>
+#include <type_traits>
+#include <utility>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Python/ToPythonRegistryClient.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
+#include <Beam/Utilities/TypeList.hpp>
+#include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/Python/AdministrationClient.hpp"
-#include "Nexus/Python/ComplianceClient.hpp"
-#include "Nexus/Python/DefinitionsClient.hpp"
-#include "Nexus/Python/MarketDataClient.hpp"
-#include "Nexus/Python/OrderExecutionClient.hpp"
-#include "Nexus/Python/RiskClient.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/Python/DllExport.hpp"
+#include "Nexus/Python/ToPythonAdministrationClient.hpp"
+#include "Nexus/Python/ToPythonChartingClient.hpp"
+#include "Nexus/Python/ToPythonComplianceClient.hpp"
+#include "Nexus/Python/ToPythonDefinitionsClient.hpp"
+#include "Nexus/Python/ToPythonMarketDataClient.hpp"
+#include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
+#include "Nexus/Python/ToPythonRiskClient.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 
 namespace Nexus {
+
+  /**
+   * Wraps a ServiceClients instance for use within Python.
+   * @param <C> The type of ServiceClients to wrap.
+   */
+  template<typename C>
+  class ToPythonServiceClients {
+    public:
+      using ServiceLocatorClient =
+        Beam::ServiceLocator::ServiceLocatorClientBox;
+
+      using RegistryClient = Beam::RegistryService::RegistryClientBox;
+
+      using AdministrationClient =
+        AdministrationService::AdministrationClientBox;
+
+      using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
+
+      using MarketDataClient = MarketDataService::MarketDataClientBox;
+
+      using ChartingClient = ChartingService::ChartingClientBox;
+
+      using ComplianceClient = Compliance::ComplianceClientBox;
+
+      using OrderExecutionClient =
+        OrderExecutionService::OrderExecutionClientBox;
+
+      using RiskClient = RiskService::RiskClientBox;
+
+      using TimeClient = Beam::TimeService::TimeClientBox;
+
+      using Timer = Beam::Threading::TimerBox;
+
+      /** The type of ServiceClients to wrap. */
+      using Clients = C;
+
+      /**
+       * Constructs a ToPythonServiceClients.
+       * @param args The arguments to forward to the constructor.
+       */
+      template<typename... Args, typename =
+        Beam::disable_copy_constructor_t<ToPythonServiceClients, Args...>>
+      ToPythonServiceClients(Args&&... args);
+
+      ~ToPythonServiceClients();
+
+      /** Returns the wrapped clients. */
+      const Clients& GetClients() const;
+
+      /** Returns the wrapped clients. */
+      Clients& GetClients();
+
+      ServiceLocatorClient& GetServiceLocatorClient();
+
+      RegistryClient& GetRegistryClient();
+
+      AdministrationClient& GetAdministrationClient();
+
+      DefinitionsClient& GetDefinitionsClient();
+
+      MarketDataClient& GetMarketDataClient();
+
+      ChartingClient& GetChartingClient();
+
+      ComplianceClient& GetComplianceClient();
+
+      OrderExecutionClient& GetOrderExecutionClient();
+
+      RiskClient& GetRiskClient();
+
+      TimeClient& GetTimeClient();
+
+      std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration expiry);
+
+      void Close();
+
+    private:
+      boost::optional<Clients> m_clients;
+      boost::optional<ServiceLocatorClient> m_serviceLocatorClient;
+      boost::optional<RegistryClient> m_registryClient;
+      boost::optional<AdministrationClient> m_administrationClient;
+      boost::optional<DefinitionsClient> m_definitionsClient;
+      boost::optional<MarketDataClient> m_marketDataClient;
+      boost::optional<ChartingClient> m_chartingClient;
+      boost::optional<ComplianceClient> m_complianceClient;
+      boost::optional<OrderExecutionClient> m_orderExecutionClient;
+      boost::optional<RiskClient> m_riskClient;
+      boost::optional<TimeClient> m_timeClient;
+      Beam::IO::OpenState m_openState;
+
+      ToPythonServiceClients(const ToPythonServiceClients&) = delete;
+      ToPythonServiceClients& operator =(
+        const ToPythonServiceClients&) = delete;
+  };
+
 namespace Python {
+
+  /** Returns the exported ServiceClientsBox. */
+  NEXUS_EXPORT_DLL pybind11::class_<ServiceClientsBox>&
+    GetExportedServiceClientsBox();
 
   /**
    * Exports the ApplicationServiceClients class.
@@ -42,122 +150,126 @@ namespace Python {
   void ExportTestServiceClients(pybind11::module& module);
 
   /**
-   * Exports the VirtualServiceClients class.
+   * Exports a ServiceClients class.
+   * @param <Clients> The type of ServiceClients to export.
    * @param module The module to export to.
+   * @param name The name of the class.
+   * @return The exported ServiceClients.
    */
-  void ExportVirtualServiceClients(pybind11::module& module);
+  template<typename Clients>
+  auto ExportServiceClients(pybind11::module& module,
+      const std::string& name) {
+    auto clients = pybind11::class_<Clients, std::shared_ptr<Clients>>(module,
+      name.c_str()).
+      def("get_service_locator_client", &Clients::GetServiceLocatorClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_registry_client", &Clients::GetRegistryClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_administration_client", &Clients::GetAdministrationClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_definitions_client", &Clients::GetDefinitionsClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_market_data_client", &Clients::GetMarketDataClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_charting_client", &Clients::GetChartingClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_compliance_client", &Clients::GetComplianceClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_order_execution_client", &Clients::GetOrderExecutionClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_risk_client", &Clients::GetRiskClient,
+        pybind11::return_value_policy::reference_internal).
+      def("get_time_client", &Clients::GetTimeClient,
+        pybind11::return_value_policy::reference_internal).
+      def("build_timer",
+        [] (Clients& serviceClients, boost::posix_time::time_duration expiry) {
+          return std::shared_ptr(serviceClients.BuildTimer(expiry));
+        }).
+      def("close", &Clients::Close);
+    if constexpr(!std::is_same_v<Clients, ServiceClientsBox>) {
+      pybind11::implicitly_convertible<Clients, ServiceClientsBox>();
+      GetExportedServiceClientsBox().def(
+        pybind11::init<std::shared_ptr<Clients>>());
+    }
+    return clients;
+  }
 }
 
-  /**
-   * Wraps a ServiceClients instance for use within Python.
-   * @param <C> The type of ServiceClients to wrap.
-   */
-  template<typename C>
-  class ToPythonServiceClients : public VirtualServiceClients {
-    public:
-
-      /** The type of ServiceClients to wrap. */
-      using Client = C;
-
-      /**
-       * Constructs a ToPythonServiceClients instance.
-       * @param client The ServiceClients to wrap.
-       */
-      ToPythonServiceClients(std::unique_ptr<Client> client);
-
-      ~ToPythonServiceClients() override;
-
-      ServiceLocatorClient& GetServiceLocatorClient() override;
-
-      RegistryClient& GetRegistryClient() override;
-
-      AdministrationClient& GetAdministrationClient() override;
-
-      DefinitionsClient& GetDefinitionsClient() override;
-
-      MarketDataClient& GetMarketDataClient() override;
-
-      ChartingClient& GetChartingClient() override;
-
-      ComplianceClient& GetComplianceClient() override;
-
-      OrderExecutionClient& GetOrderExecutionClient() override;
-
-      RiskClient& GetRiskClient() override;
-
-      TimeClient& GetTimeClient() override;
-
-      std::unique_ptr<Timer> BuildTimer(
-        boost::posix_time::time_duration expiry) override;
-
-      void Close() override;
-
-    private:
-      std::unique_ptr<Client> m_client;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
-      std::unique_ptr<AdministrationClient> m_administrationClient;
-      std::unique_ptr<DefinitionsClient> m_definitionsClient;
-      std::unique_ptr<MarketDataClient> m_marketDataClient;
-      std::unique_ptr<ComplianceClient> m_complianceClient;
-      std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
-      std::unique_ptr<RiskClient> m_riskClient;
-      std::unique_ptr<TimeClient> m_timeClient;
-      Beam::IO::OpenState m_openState;
-  };
-
-  /**
-   * Builds a ToPythonServiceClients instance.
-   * @param client The ServiceClients instance to wrap.
-   */
-  template<typename Client>
-  auto MakeToPythonServiceClients(std::unique_ptr<Client> client) {
-    return std::make_shared<ToPythonServiceClients<Client>>(std::move(client));
-  }
+  template<typename Clients>
+  ToPythonServiceClients(Clients&&) ->
+    ToPythonServiceClients<std::decay_t<Clients>>;
 
   template<typename C>
-  ToPythonServiceClients<C>::ToPythonServiceClients(
-    std::unique_ptr<Client> client)
-    : m_client(std::move(client)),
-      m_serviceLocatorClient(
-        Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
-        Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
-        &m_client->GetServiceLocatorClient()))),
-      m_administrationClient(
-        AdministrationService::MakeToPythonAdministrationClient(
-        AdministrationService::MakeVirtualAdministrationClient(
-        &m_client->GetAdministrationClient()))),
-      m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
-        DefinitionsService::MakeVirtualDefinitionsClient(
-        &m_client->GetDefinitionsClient()))),
-      m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
-        MarketDataService::MakeVirtualMarketDataClient(
-        &m_client->GetMarketDataClient()))),
-      m_complianceClient(Compliance::MakeToPythonComplianceClient(
-        Compliance::MakeVirtualComplianceClient(
-        &m_client->GetComplianceClient()))),
-      m_orderExecutionClient(
-        OrderExecutionService::MakeToPythonOrderExecutionClient(
-        OrderExecutionService::MakeVirtualOrderExecutionClient(
-        &m_client->GetOrderExecutionClient()))),
-      m_riskClient(RiskService::MakeToPythonRiskClient(
-        RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()))),
-      m_timeClient(Beam::TimeService::MakeToPythonTimeClient(
-        Beam::TimeService::MakeVirtualTimeClient(
-        &m_client->GetTimeClient()))) {}
+  template<typename... Args, typename>
+  ToPythonServiceClients<C>::ToPythonServiceClients(Args&&... args)
+    : m_clients((Beam::Python::GilRelease(), boost::in_place_init),
+        std::forward<Args>(args)...),
+      m_serviceLocatorClient(boost::in_place_init,
+        std::in_place_type<Beam::ServiceLocator::ToPythonServiceLocatorClient<
+          Beam::ServiceLocator::ServiceLocatorClientBox>>,
+          &m_clients->GetServiceLocatorClient()),
+      m_registryClient(boost::in_place_init,
+        std::in_place_type<Beam::RegistryService::ToPythonRegistryClient<
+          Beam::RegistryService::RegistryClientBox>>,
+          &m_clients->GetRegistryClient()),
+      m_administrationClient(boost::in_place_init,
+        std::in_place_type<AdministrationService::ToPythonAdministrationClient<
+          AdministrationService::AdministrationClientBox>>,
+          &m_clients->GetAdministrationClient()),
+      m_definitionsClient(boost::in_place_init,
+        std::in_place_type<DefinitionsService::ToPythonDefinitionsClient<
+          DefinitionsService::DefinitionsClientBox>>,
+          &m_clients->GetDefinitionsClient()),
+      m_marketDataClient(boost::in_place_init,
+        std::in_place_type<MarketDataService::ToPythonMarketDataClient<
+          MarketDataService::MarketDataClientBox>>,
+          &m_clients->GetMarketDataClient()),
+      m_chartingClient(boost::in_place_init,
+        std::in_place_type<ChartingService::ToPythonChartingClient<
+          ChartingService::ChartingClientBox>>,
+        &m_clients->GetChartingClient()),
+      m_complianceClient(boost::in_place_init,
+        std::in_place_type<Compliance::ToPythonComplianceClient<
+          Compliance::ComplianceClientBox>>, &m_clients->GetComplianceClient()),
+      m_orderExecutionClient(boost::in_place_init,
+        std::in_place_type<
+          OrderExecutionService::ToPythonOrderExecutionClient<
+            OrderExecutionService::OrderExecutionClientBox>>,
+        &m_clients->GetOrderExecutionClient()),
+      m_riskClient(boost::in_place_init,
+        std::in_place_type<
+          RiskService::ToPythonRiskClient<RiskService::RiskClientBox>>,
+        &m_clients->GetRiskClient()),
+      m_timeClient(Beam::TimeService::ToPythonTimeClient<
+        Beam::TimeService::TimeClientBox>(&m_clients->GetTimeClient())) {}
 
   template<typename C>
   ToPythonServiceClients<C>::~ToPythonServiceClients() {
-    Close();
     auto release = Beam::Python::GilRelease();
     m_timeClient.reset();
     m_riskClient.reset();
     m_orderExecutionClient.reset();
     m_complianceClient.reset();
+    m_chartingClient.reset();
     m_marketDataClient.reset();
     m_definitionsClient.reset();
     m_administrationClient.reset();
+    m_registryClient.reset();
     m_serviceLocatorClient.reset();
-    m_client.reset();
+    m_clients.reset();
+    m_openState.Close();
+  }
+
+  template<typename C>
+  const typename ToPythonServiceClients<C>::Clients&
+      ToPythonServiceClients<C>::GetClients() const {
+    return *m_clients;
+  }
+
+  template<typename C>
+  typename ToPythonServiceClients<C>::Clients&
+      ToPythonServiceClients<C>::GetClients() {
+    return *m_clients;
   }
 
   template<typename C>
@@ -169,7 +281,7 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::RegistryClient&
       ToPythonServiceClients<C>::GetRegistryClient() {
-    throw std::runtime_error{"Not implemented"};
+    return *m_registryClient;
   }
 
   template<typename C>
@@ -193,7 +305,7 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::ChartingClient&
       ToPythonServiceClients<C>::GetChartingClient() {
-    throw std::runtime_error("Not implemented");
+    return *m_chartingClient;
   }
 
   template<typename C>
@@ -225,7 +337,9 @@ namespace Python {
       ToPythonServiceClients<C>::BuildTimer(
       boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
-    return Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry));
+    return std::make_unique<Timer>(std::in_place_type<
+      Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>>,
+      Beam::Threading::TimerBox(m_clients->BuildTimer(expiry)));
   }
 
   template<typename C>
@@ -235,14 +349,16 @@ namespace Python {
       return;
     }
     m_timeClient->Close();
+    m_serviceLocatorClient->Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
     m_complianceClient->Close();
+    m_chartingClient->Close();
     m_marketDataClient->Close();
     m_definitionsClient->Close();
     m_administrationClient->Close();
-    m_serviceLocatorClient->Close();
-    m_client->Close();
+    m_registryClient->Close();
+    m_clients->Close();
     m_openState.Close();
   }
 }

@@ -14,13 +14,12 @@ using namespace Nexus::MarketDataService;
 TEST_SUITE("BacktesterServiceClients") {
   TEST_CASE("test_timer") {
     auto localDataStore = LocalHistoricalDataStore();
-    auto testEnvironment = TestEnvironment(MakeVirtualHistoricalDataStore(
-      &localDataStore));
-    auto testServiceClients = MakeVirtualServiceClients(
-      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
+    auto testEnvironment = TestEnvironment(
+      HistoricalDataStoreBox(&localDataStore));
     auto startTime = time_from_string("2016-05-03 13:35:00");
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
-      Ref(*testServiceClients));
+      ServiceClientsBox(std::in_place_type<TestServiceClients>,
+        Ref(testEnvironment)));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
     auto timer = serviceClients.BuildTimer(seconds(21));
     REQUIRE(serviceClients.GetTimeClient().GetTime() == startTime);

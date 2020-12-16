@@ -1,7 +1,4 @@
 #include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string_view>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
 #include <Beam/Codecs/ZLibDecoder.hpp>
@@ -20,8 +17,6 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/lexical_cast.hpp>
-#include <tclap/CmdLine.h>
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
@@ -45,7 +40,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
-using namespace TCLAP;
 using namespace Viper;
 
 namespace {
@@ -53,147 +47,97 @@ namespace {
     SqlConnection<Sqlite3::Connection>>;
   using BaseMarketDataFeedClient = MarketDataFeedClient<std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
-    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+      SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationMarketDataFeedClient = ReplayMarketDataFeedClient<
     BaseMarketDataFeedClient, SqlDataStore*, LiveNtpTimeClient*, LiveTimer>;
 
   auto ParseSecurities(const std::string& path,
       const MarketDatabase& marketDatabase) {
-    auto config = Require(LoadFile, path);
-    auto securitiesNode = GetNode(config, "securities");
-    auto securities = std::vector<Security>();
-    for(auto item : securitiesNode) {
-      auto symbol = GetNode(item, "symbol");
-      securities.push_back(ParseSecurity(symbol.as<std::string>(),
-        marketDatabase));
-    }
-    return securities;
+    return TryOrNest([&] {
+      auto config = Require(LoadFile, path);
+      auto securitiesNode = GetNode(config, "securities");
+      auto securities = std::vector<Security>();
+      for(auto item : securitiesNode) {
+        auto symbol = GetNode(item, "symbol").as<std::string>();
+        auto security = ParseSecurity(symbol, marketDatabase);
+        if(security == Security()) {
+          throw std::runtime_error("Invalid security: " + symbol);
+        }
+        securities.push_back(security);
+      }
+      return securities;
+    }, std::runtime_error("Failed to parse securities."));
   }
 
   auto BuildReplayClients(const YAML::Node& config,
       std::vector<Security> securities, SqlDataStore* dataStore,
       const std::vector<IpAddress>& addresses,
-      Ref<ApplicationServiceLocatorClient> serviceLocatorClient,
+      ApplicationServiceLocatorClient& serviceLocatorClient,
       LiveNtpTimeClient* timeClient) {
-    auto sampling = Extract<time_duration>(config, "sampling");
-    auto startTime = Extract<ptime>(config, "start_time");
-    auto clientCount = Extract<int>(config, "client_count");
-    auto chunks = static_cast<int>(securities.size()) / clientCount;
-    if(securities.size() % clientCount != 0) {
-      ++chunks;
-    }
-    auto timerBuilder = [=] (auto duration) {
-      return std::make_unique<LiveTimer>(duration);
-    };
-    auto replayClients =
-      std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-    for(auto i = 0; i < clientCount; ++i) {
-      auto securitySubset = std::vector<Security>();
-      securitySubset.insert(securitySubset.end(),
-        std::min(securities.begin() + i * chunks, securities.end()),
-        std::min(securities.begin() + (i + 1) * chunks, securities.end()));
-      replayClients.emplace_back(std::make_unique<
-        ApplicationMarketDataFeedClient>(std::move(securitySubset), startTime,
-        Initialize(Initialize(addresses),
-        SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
-        Ref(**serviceLocatorClient)), Initialize(sampling),
-        Initialize(seconds(10))), dataStore, timeClient, timerBuilder));
-    }
-    return replayClients;
+    return TryOrNest([&] {
+      auto sampling = Extract<time_duration>(config, "sampling");
+      auto startTime = Extract<ptime>(config, "start_time");
+      auto clientCount = Extract<int>(config, "client_count");
+      auto chunks = static_cast<int>(securities.size()) / clientCount;
+      if(securities.size() % clientCount != 0) {
+        ++chunks;
+      }
+      auto timerBuilder = [=] (auto duration) {
+        return std::make_unique<LiveTimer>(duration);
+      };
+      auto replayClients =
+        std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
+      for(auto i = 0; i < clientCount; ++i) {
+        auto securitySubset = std::vector<Security>();
+        securitySubset.insert(securitySubset.end(),
+          std::min(securities.begin() + i * chunks, securities.end()),
+          std::min(securities.begin() + (i + 1) * chunks, securities.end()));
+        replayClients.emplace_back(std::make_unique<
+          ApplicationMarketDataFeedClient>(std::move(securitySubset), startTime,
+            Initialize(Initialize(addresses),
+              SessionAuthenticator(serviceLocatorClient.Get()),
+              Initialize(sampling), Initialize(seconds(10))), dataStore,
+            timeClient, timerBuilder));
+      }
+      return replayClients;
+    }, std::runtime_error("Failed to build replay clients."));
   }
 }
 
 int main(int argc, const char** argv) {
-  auto configFile = std::string();
   try {
-    auto cmd = CmdLine("", ' ', "1.0-r" REPLAY_MARKET_DATA_FEED_CLIENT_VERSION
+    auto config = ParseCommandLine(argc, argv,
+      "0.9-r" REPLAY_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
-      false, "config.yml", "path");
-    cmd.add(configArg);
-    cmd.parse(argc, argv);
-    configFile = configArg.getValue();
-  } catch(const ArgException& e) {
-    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
-      std::endl;
-    return -1;
-  }
-  auto config = Require(LoadFile, configFile);
-  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
-  try {
-    serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
+    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-  } catch(const std::exception& e) {
-    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
-      std::endl;
-    return -1;
-  }
-  auto serviceLocatorClient = ApplicationServiceLocatorClient();
-  try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password,
-      serviceLocatorClientConfig.m_address);
-  } catch(const std::exception& e) {
-    std::cerr << "Error logging in: " << e.what() << std::endl;
-    return -1;
-  }
-  auto definitionsClient = ApplicationDefinitionsClient();
-  try {
-    definitionsClient.BuildSession(Ref(*serviceLocatorClient));
-  } catch(const std::exception&) {
-    std::cerr << "Unable to connect to the definitions service." << std::endl;
-    return -1;
-  }
-  auto timeClient = std::unique_ptr<LiveNtpTimeClient>();
-  try {
-    auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
-    if(timeServices.empty()) {
-      std::cerr << "No time services available." << std::endl;
-      return -1;
-    }
-    auto& timeService = timeServices.front();
-    auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
-      timeService.GetProperties().At("addresses")));
-    try {
-      timeClient = MakeLiveNtpTimeClient(ntpPool);
-    } catch(const std::exception&) {
-      std::cerr << "Unable to connect to the time service." << std::endl;
-      return -1;
-    }
-  } catch(const std::exception& e) {
-    std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
-    return -1;
-  }
-  auto dataStorePath = Extract<std::string>(config, "data_store");
-  auto historicalDataStore = SqlDataStore(
-    [=] {
+    auto definitionsClient = ApplicationDefinitionsClient(
+      serviceLocatorClient.Get());
+    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
+      *serviceLocatorClient);
+    auto dataStorePath = Extract<std::string>(config, "data_store");
+    auto historicalDataStore = SqlDataStore([=] {
       return SqlConnection(Sqlite3::Connection(dataStorePath));
     });
-  auto feedClients =
-    std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-  auto securities = ParseSecurities(Extract<std::string>(config,
-    "securities_path", "securities.yml"),
-    definitionsClient->LoadMarketDatabase());
-  try {
+    auto securities = ParseSecurities(Extract<std::string>(config,
+      "securities_path", "securities.yml"),
+      definitionsClient->LoadMarketDatabase());
     auto marketDataServices = serviceLocatorClient->Locate(
       MarketDataService::FEED_SERVICE_NAME);
     if(marketDataServices.empty()) {
-      std::cerr << "No market data services available." << std::endl;
-      return -1;
+      throw std::runtime_error("No market data services available.");
     }
     auto& marketDataService = marketDataServices.front();
     auto marketDataAddresses = Parse<std::vector<IpAddress>>(
       get<std::string>(marketDataService.GetProperties().At("addresses")));
-    feedClients = BuildReplayClients(config, securities, &historicalDataStore,
-      marketDataAddresses, Ref(serviceLocatorClient), timeClient.get());
-  } catch(const YAML::ParserException& e) {
-    std::cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
-      "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;
-    return -1;
-  } catch(const std::exception& e) {
-    std::cerr << "Exception caught: " << diagnostic_information(e);
+    auto feedClients = BuildReplayClients(config, securities,
+      &historicalDataStore, marketDataAddresses, serviceLocatorClient,
+      timeClient.get());
+    WaitForKillEvent();
+    serviceLocatorClient->Close();
+  } catch(...) {
+    ReportCurrentException();
     return -1;
   }
-  WaitForKillEvent();
   return 0;
 }

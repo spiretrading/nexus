@@ -1,9 +1,10 @@
 #ifndef NEXUS_MARKET_DATA_ASYNC_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_ASYNC_HISTORICAL_DATA_STORE_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/AsyncDataStore.hpp>
-#include <boost/noncopyable.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -15,7 +16,7 @@ namespace Nexus::MarketDataService {
    * @param <D> The underlying data store to commit the data to.
    */
   template<typename D>
-  class AsyncHistoricalDataStore : private boost::noncopyable {
+  class AsyncHistoricalDataStore {
     public:
 
       /** The underlying data store to commit the data to. */
@@ -25,14 +26,13 @@ namespace Nexus::MarketDataService {
        * Constructs an AsyncHistoricalDataStore.
        * @param dataStore Initializes the data store to commit data to.
        */
-      template<typename HistoricalDataStoreForward>
-      AsyncHistoricalDataStore(HistoricalDataStoreForward&& dataStore);
+      template<typename DF>
+      AsyncHistoricalDataStore(DF&& dataStore);
 
       ~AsyncHistoricalDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -80,19 +80,24 @@ namespace Nexus::MarketDataService {
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         Queries::EvaluatorTranslator>;
       Beam::GetOptionalLocalPtr<D> m_dataStore;
+      Beam::SynchronizedUnorderedMap<Security, SecurityInfo> m_securityInfo;
       DataStore<OrderImbalance> m_orderImbalanceDataStore;
       DataStore<BboQuote> m_bboQuoteDataStore;
       DataStore<BookQuote> m_bookQuoteDataStore;
       DataStore<MarketQuote> m_marketQuoteDataStore;
       DataStore<TimeAndSale> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
+      Beam::RoutineTaskQueue m_tasks;
+
+      AsyncHistoricalDataStore(const AsyncHistoricalDataStore&) = delete;
+      AsyncHistoricalDataStore& operator =(
+        const AsyncHistoricalDataStore&) = delete;
   };
 
   template<typename D>
-  template<typename HistoricalDataStoreForward>
-  AsyncHistoricalDataStore<D>::AsyncHistoricalDataStore(
-    HistoricalDataStoreForward&& dataStore)
-    : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
+  template<typename DF>
+  AsyncHistoricalDataStore<D>::AsyncHistoricalDataStore(DF&& dataStore)
+    : m_dataStore(std::forward<DF>(dataStore)),
       m_orderImbalanceDataStore(&*m_dataStore),
       m_bboQuoteDataStore(&*m_dataStore),
       m_bookQuoteDataStore(&*m_dataStore),
@@ -105,14 +110,9 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  boost::optional<SecurityInfo> AsyncHistoricalDataStore<D>::LoadSecurityInfo(
-      const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename D>
-  std::vector<SecurityInfo> AsyncHistoricalDataStore<D>::LoadAllSecurityInfo() {
-    return m_dataStore->LoadAllSecurityInfo();
+  std::vector<SecurityInfo> AsyncHistoricalDataStore<D>::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename D>
@@ -147,7 +147,10 @@ namespace Nexus::MarketDataService {
 
   template<typename D>
   void AsyncHistoricalDataStore<D>::Store(const SecurityInfo& info) {
-    m_dataStore->Store(info);
+    m_securityInfo.Update(info.m_security, info);
+    m_tasks.Push([=] {
+      m_dataStore->Store(info);
+    });
   }
 
   template<typename D>
@@ -220,6 +223,8 @@ namespace Nexus::MarketDataService {
     m_bookQuoteDataStore.Close();
     m_bboQuoteDataStore.Close();
     m_orderImbalanceDataStore.Close();
+    m_tasks.Break();
+    m_tasks.Wait();
     m_dataStore->Close();
     m_openState.Close();
   }

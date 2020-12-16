@@ -254,9 +254,9 @@ void DropDownList::update_height() {
 }
 
 void DropDownList::on_item_selected(QVariant value, int index) {
+  hide();
   m_index_selected_signal(index);
   m_value_selected_signal(std::move(value));
-  hide();
 }
 
 void DropDownList::on_item_selected(QVariant value, DropDownItem* item) {

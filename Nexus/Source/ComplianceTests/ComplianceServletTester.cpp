@@ -1,7 +1,6 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
@@ -26,20 +25,18 @@ using namespace Nexus::OrderExecutionService;
 namespace {
   struct Fixture {
     using TestComplianceRuleSet = ComplianceRuleSet<
-      LocalComplianceRuleDataStore*,
-      std::shared_ptr<VirtualServiceLocatorClient>>;
+      LocalComplianceRuleDataStore*, ServiceLocatorClientBox>;
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
-      MetaComplianceServlet<std::shared_ptr<VirtualServiceLocatorClient>,
-      std::unique_ptr<VirtualAdministrationClient>, TestComplianceRuleSet*,
-      IncrementalTimeClient>>;
+      MetaComplianceServlet<ServiceLocatorClientBox, AdministrationClientBox,
+        TestComplianceRuleSet*, IncrementalTimeClient>>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
-    std::shared_ptr<VirtualServiceLocatorClient> m_serviceLocatorClient;
+    ServiceLocatorClientBox m_serviceLocatorClient;
     AdministrationServiceTestEnvironment m_administrationServiceEnvironment;
     LocalComplianceRuleDataStore m_dataStore;
 
     Fixture()
-      : m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
+      : m_serviceLocatorClient(m_serviceLocatorEnvironment.MakeClient()),
         m_administrationServiceEnvironment(m_serviceLocatorClient) {}
   };
 }

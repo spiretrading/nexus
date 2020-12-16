@@ -5,7 +5,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/RiskService/ConsolidatedRiskController.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
-#include "Nexus/RiskService/TestRiskDataStore.hpp"
+#include "Nexus/RiskServiceTests/TestRiskDataStore.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
@@ -17,6 +17,7 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::RiskService;
+using namespace Nexus::RiskService::Tests;
 
 namespace {
   auto TSLA = Security("TSLA", DefaultMarkets::NASDAQ(),
@@ -54,7 +55,7 @@ namespace {
         "1234", DirectoryEntry::GetStarDirectory());
       m_adminClients.GetAdministrationClient().StoreRiskParameters(account,
         RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
-        RiskState::Type::ACTIVE, netLoss, 1, transitionTime));
+          RiskState::Type::ACTIVE, netLoss, 1, transitionTime));
       m_adminClients.GetAdministrationClient().StoreRiskState(account,
         RiskState::Type::ACTIVE);
       return account;

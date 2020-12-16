@@ -21,12 +21,12 @@ bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
     std::tie(rhs.m_account, rhs.m_inventory.m_position.m_key);
 }
 
-PortfolioModel::PortfolioModel(Ref<VirtualServiceClients> serviceClients)
-    : m_serviceClients(serviceClients.Get()) {
-  m_serviceClients->GetRiskClient().GetRiskPortfolioUpdatePublisher().Monitor(
+PortfolioModel::PortfolioModel(ServiceClientsBox serviceClients)
+    : m_serviceClients(std::move(serviceClients)) {
+  m_serviceClients.GetRiskClient().GetRiskPortfolioUpdatePublisher().Monitor(
     m_tasks.GetSlot<RiskInventoryEntry>(
-    std::bind(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this,
-    std::placeholders::_1)));
+      std::bind(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this,
+        std::placeholders::_1)));
 }
 
 PortfolioModel::~PortfolioModel() {
@@ -57,11 +57,11 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
         auto query = Beam::Queries::BuildCurrentQuery(security);
         valuationIterator = m_valuations.insert(std::make_pair(security,
           SecurityValuation(
-          inventory.m_value.m_position.m_key.m_currency))).first;
-        m_serviceClients->GetMarketDataClient().QueryBboQuotes(query,
+            inventory.m_value.m_position.m_key.m_currency))).first;
+        m_serviceClients.GetMarketDataClient().QueryBboQuotes(query,
           m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioModel::OnBboQuote, this,
-          security, std::ref(valuationIterator->second),
-          std::placeholders::_1)));
+            security, std::ref(valuationIterator->second),
+            std::placeholders::_1)));
       }
       return valuationIterator->second;
     }();

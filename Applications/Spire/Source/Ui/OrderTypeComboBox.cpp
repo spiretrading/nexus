@@ -1,7 +1,6 @@
 #include "Spire/Ui/OrderTypeComboBox.hpp"
 #include <Beam/Collections/EnumIterator.hpp>
 #include <QHBoxLayout>
-#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -18,14 +17,22 @@ OrderTypeComboBox::OrderTypeComboBox(QWidget* parent)
     }
     return types;
   }();
-  auto menu = new StaticDropDownMenu(items, this);
+  m_menu = new StaticDropDownMenu(items, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(menu);
-  m_value_connection = menu->connect_value_selected_signal(
+  layout->addWidget(m_menu);
+  m_value_connection = m_menu->connect_value_selected_signal(
     [=] (const auto& value) {
       m_selected_signal(value.value<OrderType>());
     });
+}
+
+OrderType OrderTypeComboBox::get_order_type() const {
+  return m_menu->get_current_item().value<OrderType>();
+}
+
+void OrderTypeComboBox::set_order_type(Nexus::OrderType type) {
+  m_menu->set_current_item(QVariant::fromValue(type));
 }
 
 connection OrderTypeComboBox::connect_selected_signal(

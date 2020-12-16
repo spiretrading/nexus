@@ -8,7 +8,6 @@
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStoreException.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -23,7 +22,7 @@ namespace Nexus::OrderExecutionService {
    * @param <C> The type of SQL connection to use.
    */
   template<typename C>
-  class SqlOrderExecutionDataStore : private boost::noncopyable {
+  class SqlOrderExecutionDataStore {
     public:
 
       /** The type of SQL connection. */
@@ -50,9 +49,11 @@ namespace Nexus::OrderExecutionService {
        * Constructs a MySqlOrderExecutionDataStore.
        * @param connectionBuilder The callable used to build SQL connections.
        */
-      SqlOrderExecutionDataStore(ConnectionBuilder connectionBuilder);
+      explicit SqlOrderExecutionDataStore(ConnectionBuilder connectionBuilder);
 
       ~SqlOrderExecutionDataStore();
+
+      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
 
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
@@ -89,6 +90,11 @@ namespace Nexus::OrderExecutionService {
         m_executionReportDataStore;
       Viper::Row<OrderId> m_liveOrdersRow;
       Beam::IO::OpenState m_openState;
+
+      SqlOrderExecutionDataStore(const SqlOrderExecutionDataStore&) = delete;
+      SqlOrderExecutionDataStore& operator =(
+        const SqlOrderExecutionDataStore&) = delete;
+      SequencedOrderRecord LoadRecord(SequencedOrderInfo info);
   };
 
   /**
@@ -104,15 +110,14 @@ namespace Nexus::OrderExecutionService {
       const typename SqlOrderExecutionDataStore<
       Connection>::AccountSourceFunction& accountSourceFunction) {
     auto& primaryConnectionBuilder = connectionBuilders.front();
-    auto primary = MakeVirtualOrderExecutionDataStore(
-      std::make_unique<SqlOrderExecutionDataStore<Connection>>(
-      primaryConnectionBuilder, accountSourceFunction));
-    auto duplicateDataStores =
-      std::vector<std::unique_ptr<VirtualOrderExecutionDataStore>>();
+    auto primary = OrderExecutionDataStoreBox(
+      std::in_place_type<SqlOrderExecutionDataStore<Connection>>,
+      primaryConnectionBuilder, accountSourceFunction);
+    auto duplicateDataStores = std::vector<OrderExecutionDataStoreBox>();
     for(auto i = std::size_t(1); i < connectionBuilders.size(); ++i) {
-      auto duplicate = MakeVirtualOrderExecutionDataStore(
-        std::make_unique<SqlOrderExecutionDataStore<Connection>>(
-        connectionBuilders[i], accountSourceFunction));
+      auto duplicate = OrderExecutionDataStoreBox(
+        std::in_place_type<SqlOrderExecutionDataStore<Connection>>,
+        connectionBuilders[i], accountSourceFunction);
       duplicateDataStores.push_back(std::move(duplicate));
     }
     auto dataStore = std::make_unique<ReplicatedOrderExecutionDataStore>(
@@ -138,7 +143,8 @@ namespace Nexus::OrderExecutionService {
         m_submissionDataStore("submissions", GetOrderInfoRow(), GetAccountRow(),
           Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
         m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
-          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Queries::SqlConnectionOption::NONE),
         m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
           GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)) {
     m_liveOrdersRow = Viper::Row<OrderId>().
@@ -174,6 +180,19 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C>
+  boost::optional<SequencedAccountOrderRecord>
+      SqlOrderExecutionDataStore<C>::LoadOrder(OrderId id) {
+    auto orders = m_submissionDataStore.Load(Viper::sym("order_id") == id);
+    if(orders.empty()) {
+      return boost::none;
+    }
+    auto record = LoadRecord(std::move(orders.front()));
+    return Beam::Queries::SequencedValue(Beam::Queries::IndexedValue(
+      std::move(*record), record->m_info.m_fields.m_account),
+      record.GetSequence());
+  }
+
+  template<typename C>
   std::vector<SequencedOrderRecord> SqlOrderExecutionDataStore<C>::
       LoadOrderSubmissions(const AccountQuery& query) {
     auto orderInfo = [&] {
@@ -185,19 +204,7 @@ namespace Nexus::OrderExecutionService {
     }();
     auto orderRecords = std::vector<SequencedOrderRecord>();
     for(auto& order : orderInfo) {
-      order->m_fields.m_account = m_accountEntries.Load(
-        order->m_fields.m_account.m_id);
-      order->m_submissionAccount = m_accountEntries.Load(
-        order->m_submissionAccount.m_id);
-      auto sequencedExecutionReports = m_executionReportDataStore.Load(
-        Viper::sym("order_id") == order->m_orderId);
-      auto executionReports = std::vector<ExecutionReport>();
-      for(auto& executionReport : sequencedExecutionReports) {
-        executionReports.push_back(std::move(*executionReport));
-      }
-      orderRecords.push_back(Beam::Queries::SequencedValue(
-        OrderRecord(std::move(*order), std::move(executionReports)),
-        order.GetSequence()));
+      orderRecords.push_back(LoadRecord(std::move(order)));
     }
     return orderRecords;
   }
@@ -276,6 +283,24 @@ namespace Nexus::OrderExecutionService {
     m_writerPool.Close();
     m_readerPool.Close();
     m_openState.Close();
+  }
+
+  template<typename C>
+  SequencedOrderRecord SqlOrderExecutionDataStore<C>::LoadRecord(
+      SequencedOrderInfo info) {
+    info->m_fields.m_account = m_accountEntries.Load(
+      info->m_fields.m_account.m_id);
+    info->m_submissionAccount = m_accountEntries.Load(
+      info->m_submissionAccount.m_id);
+    auto sequencedExecutionReports = m_executionReportDataStore.Load(
+      Viper::sym("order_id") == info->m_orderId);
+    auto executionReports = std::vector<ExecutionReport>();
+    for(auto& executionReport : sequencedExecutionReports) {
+      executionReports.push_back(std::move(*executionReport));
+    }
+    auto sequence = info.GetSequence();
+    return Beam::Queries::SequencedValue(OrderRecord(std::move(*info),
+      std::move(executionReports)), sequence);
   }
 }
 

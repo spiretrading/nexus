@@ -10,12 +10,12 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewController::BookViewController(Definitions definitions,
-    Ref<SecurityInputModel> security_input_model,
-    Ref<VirtualServiceClients> service_clients)
-    : m_definitions(std::move(definitions)),
-      m_security_input_model(security_input_model.Get()),
-      m_service_clients(service_clients.Get()),
-      m_window(nullptr) {}
+  Ref<SecurityInputModel> security_input_model,
+  ServiceClientsBox service_clients)
+  : m_definitions(std::move(definitions)),
+    m_security_input_model(security_input_model.Get()),
+    m_service_clients(std::move(service_clients)),
+    m_window(nullptr) {}
 
 BookViewController::~BookViewController() {
   close();
@@ -48,8 +48,8 @@ connection BookViewController::connect_closed_signal(
 }
 
 void BookViewController::on_change_security(const Security& security) {
-  auto model = std::make_shared<ServicesBookViewModel>(security,
-    m_definitions, Ref(*m_service_clients));
+  auto model = std::make_shared<ServicesBookViewModel>(security, m_definitions,
+    m_service_clients);
   m_window->set_model(model);
 }
 

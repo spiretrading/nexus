@@ -1,7 +1,7 @@
 #include "Spire/UiViewer/KeySequenceTestWidget.hpp"
+#include "Spire/KeyBindings/TestKeySequenceValidationModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Spire/TestKeySequenceValidationModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 

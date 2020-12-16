@@ -88,7 +88,7 @@ HttpResponse ServiceLocatorWebServlet::OnLogin(const HttpRequest& request) {
   try {
     auto serviceClients = m_serviceClientsBuilder(parameters.m_username,
       parameters.m_password);
-    auto account = serviceClients->GetServiceLocatorClient().GetAccount();
+    auto account = serviceClients.GetServiceLocatorClient().GetAccount();
     session->SetServiceClients(std::move(serviceClients));
     session->ShuttleResponse(account, Store(response));
     session->SetAccount(account);

@@ -13,50 +13,52 @@
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
 namespace Nexus {
 
-  /** Sends historical market data from a data store to a market data server.
-      \tparam M The type of MarketDataFeedClient connected to the
-              MarketDataFeedServer.
-      \tparam D The type of HistoricalDataStore to load market data from.
-      \tparam T The type of TimeClient to use.
-      \tparam R The type of Timer to use.
+  /**
+   * Sends historical market data from a data store to a market data server.
+   * @param <M> The type of MarketDataFeedClient connected to the
+   *        MarketDataFeedServer.
+   * @param <D> The type of HistoricalDataStore to load market data from.
+   * @param <T> The type of TimeClient to use.
+   * @param <R> The type of Timer to use.
    */
   template<typename M, typename D, typename T, typename R>
-  class ReplayMarketDataFeedClient : private boost::noncopyable {
+  class ReplayMarketDataFeedClient {
     public:
 
-      //! The type of MarketDataFeedClient connected to the
-      //! MarketDataFeedServer.
+      /**
+       * The type of MarketDataFeedClient connected to the
+       * MarketDataFeedServer.
+       */
       using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of HistoricalDataStore to load market data from.
+      /** The type of HistoricalDataStore to load market data from. */
       using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
 
-      //! The type of TimeClient to use.
+      /** The type of TimeClient to use. */
       using TimeClient = Beam::GetTryDereferenceType<T>;
 
-      //! The type of Timer to use.
+      /** The type of Timer to use. */
       using Timer = R;
 
-      //! The builder used to build Timer instances.
+      /** The builder used to build Timer instances. */
       using TimerBuilder = std::function<
-        std::unique_ptr<Timer> (boost::posix_time::time_duration d)>;
+        std::unique_ptr<Timer> (boost::posix_time::time_duration)>;
 
-      //! Constructs a ReplayMarketDataFeedClient.
-      /*!
-        \param securities The list of Securities to replay.
-        \param replayTime The timestamp to begin loading data to replay.
-        \param feedClient Initializes the MarketDataFeedClient to send the
-               replayed data to.
-        \param dataStore The HistoricalDataStore to load market data from.
-        \param timeClient Initializes the TimeClient.
-        \param timerBuilder The builder used to build Timer instances.
-      */
+      /**
+       * Constructs a ReplayMarketDataFeedClient.
+       * @param securities The list of Securities to replay.
+       * @param replayTime The timestamp to begin loading data to replay.
+       * @param feedClient Initializes the MarketDataFeedClient to send the
+       *        replayed data to.
+       * @param dataStore The HistoricalDataStore to load market data from.
+       * @param timeClient Initializes the TimeClient.
+       * @param timerBuilder The builder used to build Timer instances.
+       */
       template<typename MF, typename DF, typename TF>
       ReplayMarketDataFeedClient(std::vector<Security> securities,
         boost::posix_time::ptime replayTime, MF&& feedClient, DF&& dataStore,
@@ -82,6 +84,9 @@ namespace Nexus {
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_routines;
 
+      ReplayMarketDataFeedClient(const ReplayMarketDataFeedClient&) = delete;
+      ReplayMarketDataFeedClient& operator =(
+        const ReplayMarketDataFeedClient&) = delete;
       template<typename F, typename P>
       void ReplayMarketData(const Security& security, F&& queryLoader,
         P&& publisher);
