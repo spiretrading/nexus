@@ -84,7 +84,10 @@ namespace Spire {
         const SelectedSignal::slot_type& slot) const;
 
     protected:
+      bool event(QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable CurrentSignal m_current_signal;
@@ -99,7 +102,8 @@ namespace Spire {
       Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 
       DropDownMenuItem2* get_item(int index) const;
-      void scroll_to_current_index();
+      void follow_parent();
+      void scroll_to_current();
       void update_height();
       void on_item_selected(const QVariant& value, int index);
       void on_item_selected(const QVariant& value, DropDownMenuItem2* item);

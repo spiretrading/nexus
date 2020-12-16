@@ -13,17 +13,14 @@ namespace {
       MenuLabel(const QString& label, QLabel* status_label, QWidget* parent);
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
-      void moveEvent(QMoveEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
       QLabel* m_status_label;
       DropDownMenu2* m_menu;
 
-      void move_menu();
       void toggle_menu_visibility();
   };
 
@@ -78,16 +75,6 @@ MenuLabel::MenuLabel(const QString& label, QLabel* status_label,
   m_menu->connect_selected_signal([=] (const auto& item) {
     m_status_label->setText(QString("Selected: %1").arg(item.toString()));
   });
-  window()->installEventFilter(this);
-}
-
-bool MenuLabel::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::WindowDeactivate) {
-    m_menu->hide();
-  } else if(event->type() == QEvent::Move) {
-    move_menu();
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void MenuLabel::keyPressEvent(QKeyEvent* event) {
@@ -112,24 +99,14 @@ void MenuLabel::mousePressEvent(QMouseEvent* event) {
   }
 }
 
-void MenuLabel::moveEvent(QMoveEvent* event) {
-  move_menu();
-  QLabel::moveEvent(event);
-}
-
 void MenuLabel::resizeEvent(QResizeEvent* event) {
   m_menu->setFixedWidth(width());
   QLabel::resizeEvent(event);
 }
 
-void MenuLabel::move_menu() {
-  m_menu->move(mapToGlobal(QPoint(0, height())));
-}
-
 void MenuLabel::toggle_menu_visibility() {
   m_menu->setVisible(!m_menu->isVisible());
   if(m_menu->isVisible()) {
-    move_menu();
     m_menu->setFixedWidth(width());
   }
 }

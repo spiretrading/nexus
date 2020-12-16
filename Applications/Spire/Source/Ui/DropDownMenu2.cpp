@@ -80,6 +80,8 @@ DropDownMenu2::DropDownMenu2(std::vector<DropDownMenuItem2*> items,
       m_list_layout->itemAt(0)->widget())->set_highlighted();
     update_height();
   }
+  parent->installEventFilter(this);
+  parent->window()->installEventFilter(this);
 }
 
 const QVariant& DropDownMenu2::get_value(int index) const {
@@ -97,7 +99,7 @@ void DropDownMenu2::set_current(int index) {
   m_current_index = index;
   auto highlighted_item = get_item(*m_current_index);
   highlighted_item->set_highlighted();
-  scroll_to_current_index();
+  scroll_to_current();
   m_current_signal(highlighted_item->get_value());
 }
 
@@ -128,6 +130,36 @@ connection DropDownMenu2::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
+bool DropDownMenu2::event(QEvent* event) {
+  if(event->type() == QEvent::WindowDeactivate &&
+      focusWidget() != nullptr && !isAncestorOf(focusWidget())) {
+    hide();
+  }
+  return QWidget::event(event);
+}
+
+bool DropDownMenu2::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == parent()) {
+    if(event->type() == QEvent::FocusOut) {
+      hide();
+    } else if(event->type() == QEvent::Move) {
+      follow_parent();
+    }
+  } else if(watched == parentWidget()->window()) {
+    if(event->type() == QEvent::Move) {
+      follow_parent();
+    } else if(event->type() == QEvent::WindowDeactivate && !isActiveWindow()) {
+      hide();
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      auto keyEvent = static_cast<QMouseEvent&>(*event);
+      if(keyEvent.button() == Qt::LeftButton) {
+        hide();
+      }
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
   if(event != m_current_item_key_event) {
     switch(event->key()) {
@@ -154,12 +186,20 @@ void DropDownMenu2::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+void DropDownMenu2::showEvent(QShowEvent* event) {
+  follow_parent();
+}
+
 DropDownMenuItem2* DropDownMenu2::get_item(int index) const {
   return static_cast<DropDownMenuItem2*>(
     m_list_layout->itemAt(index)->widget());
 }
 
-void DropDownMenu2::scroll_to_current_index() {
+void DropDownMenu2::follow_parent() {
+  move(parentWidget()->mapToGlobal(QPoint(0, parentWidget()->height())));
+}
+
+void DropDownMenu2::scroll_to_current() {
   if(m_current_index != m_list_layout->count() - 1) {
     m_scroll_area->ensureWidgetVisible(get_item(*m_current_index), 0, 0);
   } else {
