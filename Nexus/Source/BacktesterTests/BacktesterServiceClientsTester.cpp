@@ -14,8 +14,8 @@ using namespace Nexus::MarketDataService;
 TEST_SUITE("BacktesterServiceClients") {
   TEST_CASE("test_timer") {
     auto localDataStore = LocalHistoricalDataStore();
-    auto testEnvironment = TestEnvironment(MakeVirtualHistoricalDataStore(
-      &localDataStore));
+    auto testEnvironment = TestEnvironment(
+      HistoricalDataStoreBox(&localDataStore));
     auto startTime = time_from_string("2016-05-03 13:35:00");
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       ServiceClientsBox(std::in_place_type<TestServiceClients>,

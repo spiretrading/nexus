@@ -17,6 +17,7 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStoreBox.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
@@ -25,7 +26,6 @@
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
-#include "Nexus/MarketDataService/VirtualHistoricalDataStore.hpp"
 
 namespace Nexus::MarketDataService::Tests {
 
@@ -54,12 +54,12 @@ namespace Nexus::MarketDataService::Tests {
       MarketDataServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
         AdministrationService::AdministrationClientBox administrationClient,
-        std::shared_ptr<VirtualHistoricalDataStore> dataStore);
+        HistoricalDataStoreBox dataStore);
 
       ~MarketDataServiceTestEnvironment();
 
       /** Returns the historical data store. */
-      const VirtualHistoricalDataStore& GetDataStore() const;
+      HistoricalDataStoreBox& GetDataStore();
 
       /** Returns the MarketDataRegistry. */
       const MarketDataRegistry& GetRegistry() const;
@@ -126,7 +126,7 @@ namespace Nexus::MarketDataService::Tests {
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaMarketDataRegistryServlet<MarketDataRegistry*,
-              VirtualHistoricalDataStore*,
+              HistoricalDataStoreBox,
               AdministrationService::AdministrationClientBox>,
             Beam::ServiceLocator::ServiceLocatorClientBox,
             Beam::NativePointerPolicy>,
@@ -136,8 +136,7 @@ namespace Nexus::MarketDataService::Tests {
           std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using BaseRegistryServlet = MarketDataRegistryServlet<
         ServiceProtocolServletContainer, MarketDataRegistry*,
-        VirtualHistoricalDataStore*,
-        AdministrationService::AdministrationClientBox>;
+        HistoricalDataStoreBox, AdministrationService::AdministrationClientBox>;
       using RegistryServlet =
         Beam::ServiceLocator::AuthenticationServletAdapter<
           ServiceProtocolServletContainer, BaseRegistryServlet*,
@@ -163,7 +162,7 @@ namespace Nexus::MarketDataService::Tests {
       AdministrationService::AdministrationClientBox m_administrationClient;
       MarketDataRegistry m_registry;
       ServerConnection m_serverConnection;
-      std::shared_ptr<VirtualHistoricalDataStore> m_dataStore;
+      HistoricalDataStoreBox m_dataStore;
       BaseRegistryServlet m_registryServlet;
       ServiceProtocolServletContainer m_container;
       ServerConnection m_feedServerConnection;
@@ -175,17 +174,17 @@ namespace Nexus::MarketDataService::Tests {
     Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
     AdministrationService::AdministrationClientBox administrationClient)
     : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
-        std::move(administrationClient), MakeVirtualHistoricalDataStore(
-          std::make_unique<LocalHistoricalDataStore>())) {}
+        std::move(administrationClient),
+        HistoricalDataStoreBox(std::in_place_type<LocalHistoricalDataStore>)) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
     AdministrationService::AdministrationClientBox administrationClient,
-    std::shared_ptr<VirtualHistoricalDataStore> dataStore)
+    HistoricalDataStoreBox dataStore)
     : m_serviceLocatorClient(std::move(serviceLocatorClient)),
       m_administrationClient(std::move(administrationClient)),
       m_dataStore(std::move(dataStore)),
-      m_registryServlet(m_administrationClient, &m_registry, &*m_dataStore),
+      m_registryServlet(m_administrationClient, &m_registry, m_dataStore),
       m_container(Beam::Initialize(m_serviceLocatorClient,
         &m_registryServlet), &m_serverConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
@@ -197,9 +196,9 @@ namespace Nexus::MarketDataService::Tests {
     Close();
   }
 
-  inline const VirtualHistoricalDataStore& MarketDataServiceTestEnvironment::
-      GetDataStore() const {
-    return *m_dataStore;
+  inline HistoricalDataStoreBox&
+      MarketDataServiceTestEnvironment::GetDataStore() {
+    return m_dataStore;
   }
 
   inline const MarketDataRegistry&

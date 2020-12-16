@@ -2,11 +2,16 @@
 #define NEXUS_PYTHON_MARKET_DATA_SERVICE_HPP
 #include <type_traits>
 #include <pybind11/pybind11.h>
+#include "Nexus/MarketDataService/HistoricalDataStoreBox.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClientBox.hpp"
 #include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported HistoricalDataStoreBox. */
+  NEXUS_EXPORT_DLL pybind11::class_<MarketDataService::HistoricalDataStoreBox>&
+    GetExportedHistoricalDataStoreBox();
 
   /** Returns the exported MarketDataClientBox. */
   NEXUS_EXPORT_DLL pybind11::class_<MarketDataService::MarketDataClientBox>&
@@ -71,6 +76,57 @@ namespace Nexus::Python {
   void ExportSqliteHistoricalDataStore(pybind11::module& module);
 
   /**
+   * Exports an HistoricalDataStore class.
+   * @param <DataStore> The type of HistoricalDataStore to export.
+   * @param module The module to export to.
+   * @param name The name of the class.
+   * @return The exported HistoricalDataStore.
+   */
+  template<typename DataStore>
+  auto ExportHistoricalDataStore(pybind11::module& module,
+      const std::string& name) {
+    auto dataStore = pybind11::class_<DataStore, std::shared_ptr<DataStore>>(
+        module, name.c_str()).
+      def("load_security_info", &DataStore::LoadSecurityInfo).
+      def("load_order_imbalances", &DataStore::LoadOrderImbalances).
+      def("load_bbo_quotes", &DataStore::LoadBboQuotes).
+      def("load_book_quotes", &DataStore::LoadBookQuotes).
+      def("load_market_quotes", &DataStore::LoadMarketQuotes).
+      def("load_time_and_sales", &DataStore::LoadTimeAndSales).
+      def("store", static_cast<void (DataStore::*)(const SecurityInfo&)>(
+        &DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const SequencedMarketOrderImbalance&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<SequencedMarketOrderImbalance>&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const SequencedSecurityBboQuote&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<SequencedSecurityBboQuote>&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const SequencedSecurityMarketQuote&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<SequencedSecurityMarketQuote>&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const SequencedSecurityBookQuote&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<SequencedSecurityBookQuote>&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const SequencedSecurityTimeAndSale&)>(&DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<SequencedSecurityTimeAndSale>&)>(&DataStore::Store)).
+      def("close", &DataStore::Close);
+    if constexpr(!std::is_same_v<DataStore,
+        MarketDataService::HistoricalDataStoreBox>) {
+      pybind11::implicitly_convertible<DataStore,
+        MarketDataService::HistoricalDataStoreBox>();
+      GetExportedHistoricalDataStoreBox().def(
+        pybind11::init<std::shared_ptr<DataStore>>());
+    }
+    return dataStore;
+  }
+
+  /**
    * Exports a MarketDataClient class.
    * @param <Client> The type of MarketDataClient to export.
    * @param module The module to export to.
@@ -119,7 +175,7 @@ namespace Nexus::Python {
         Beam::ScopedQueueWriter<TimeAndSale>)>(&Client::QueryTimeAndSales)).
       def("load_security_snapshot", &Client::LoadSecuritySnapshot).
       def("load_security_technicals", &Client::LoadSecurityTechnicals).
-      def("load_security_info", &Client::LoadSecurityInfo).
+      def("query_security_info", &Client::QuerySecurityInfo).
       def("load_security_info_from_prefix",
         &Client::LoadSecurityInfoFromPrefix).
       def("close", &Client::Close);

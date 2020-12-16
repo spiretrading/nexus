@@ -60,10 +60,8 @@ void Nexus::Python::ExportTestEnvironment(module& module) {
       "TestEnvironment").
     def(init<>(), call_guard<GilRelease>()).
     def(init<ptime>(), call_guard<GilRelease>()).
-    def(init<std::shared_ptr<VirtualHistoricalDataStore>>(),
-      call_guard<GilRelease>()).
-    def(init<std::shared_ptr<VirtualHistoricalDataStore>, ptime>(),
-      call_guard<GilRelease>()).
+    def(init<HistoricalDataStoreBox>(), call_guard<GilRelease>()).
+    def(init<HistoricalDataStoreBox, ptime>(), call_guard<GilRelease>()).
     def("__del__",
       [] (TestEnvironment& self) {
         self.Close();

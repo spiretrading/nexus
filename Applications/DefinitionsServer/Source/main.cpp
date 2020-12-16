@@ -129,6 +129,7 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error registering NTP services."));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

@@ -1,9 +1,13 @@
 #ifndef NEXUS_PYTHON_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_PYTHON_HISTORICAL_DATA_STORE_HPP
 #include <memory>
+#include <type_traits>
+#include <utility>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Utilities/TypeList.hpp>
+#include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/MarketDataService/VirtualHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStoreBox.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -12,7 +16,7 @@ namespace Nexus::MarketDataService {
    * @param <D> The type of HistoricalDataStore to wrap.
    */
   template<typename D>
-  class ToPythonHistoricalDataStore final : public VirtualHistoricalDataStore {
+  class ToPythonHistoricalDataStore {
     public:
 
       /** The type of DataStore to wrap. */
@@ -20,105 +24,110 @@ namespace Nexus::MarketDataService {
 
       /**
        * Constructs a ToPythonHistoricalDataStore.
-       * @param dataStore The data store to wrap.
+       * @param args The arguments to forward to the DataStore's constructor.
        */
-      ToPythonHistoricalDataStore(std::unique_ptr<DataStore> dataStore);
+      template<typename... Args, typename =
+        Beam::disable_copy_constructor_t<ToPythonHistoricalDataStore, Args...>>
+      ToPythonHistoricalDataStore(Args&&... args);
 
-      ~ToPythonHistoricalDataStore() override;
+      ~ToPythonHistoricalDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(
-        const Security& security) override;
+      /** Returns the wrapped data store. */
+      const DataStore& GetDataStore() const;
 
-      std::vector<SecurityInfo> LoadAllSecurityInfo() override;
+      /** Returns the wrapped data store. */
+      DataStore& GetDataStore();
+
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
-        const MarketWideDataQuery& query) override;
+        const MarketWideDataQuery& query);
 
       std::vector<SequencedBboQuote> LoadBboQuotes(
-        const SecurityMarketDataQuery& query) override;
+        const SecurityMarketDataQuery& query);
 
       std::vector<SequencedBookQuote> LoadBookQuotes(
-        const SecurityMarketDataQuery& query) override;
+        const SecurityMarketDataQuery& query);
 
       std::vector<SequencedMarketQuote> LoadMarketQuotes(
-        const SecurityMarketDataQuery& query) override;
+        const SecurityMarketDataQuery& query);
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
-        const SecurityMarketDataQuery& query) override;
+        const SecurityMarketDataQuery& query);
 
-      void Store(const SecurityInfo& info) override;
+      void Store(const SecurityInfo& info);
 
-      void Store(const SequencedMarketOrderImbalance& orderImbalance) override;
-
-      void Store(const std::vector<SequencedMarketOrderImbalance>&
-        orderImbalances) override;
-
-      void Store(const SequencedSecurityBboQuote& bboQuote) override;
+      void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
       void Store(
-        const std::vector<SequencedSecurityBboQuote>& bboQuotes) override;
+        const std::vector<SequencedMarketOrderImbalance>& orderImbalances);
 
-      void Store(const SequencedSecurityMarketQuote& marketQuote) override;
+      void Store(const SequencedSecurityBboQuote& bboQuote);
 
-      void Store(
-        const std::vector<SequencedSecurityMarketQuote>& marketQuotes) override;
+      void Store(const std::vector<SequencedSecurityBboQuote>& bboQuotes);
 
-      void Store(const SequencedSecurityBookQuote& bookQuote) override;
+      void Store(const SequencedSecurityMarketQuote& marketQuote);
 
-      void Store(
-        const std::vector<SequencedSecurityBookQuote>& bookQuotes) override;
+      void Store(const std::vector<SequencedSecurityMarketQuote>& marketQuotes);
 
-      void Store(const SequencedSecurityTimeAndSale& timeAndSale) override;
+      void Store(const SequencedSecurityBookQuote& bookQuote);
 
-      void Store(
-        const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) override;
+      void Store(const std::vector<SequencedSecurityBookQuote>& bookQuotes);
 
-      void Close() override;
+      void Store(const SequencedSecurityTimeAndSale& timeAndSale);
+
+      void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
+
+      void Close();
 
     private:
-      std::unique_ptr<DataStore> m_dataStore;
+      boost::optional<DataStore> m_dataStore;
+
+      ToPythonHistoricalDataStore(const ToPythonHistoricalDataStore&) = delete;
+      ToPythonHistoricalDataStore& operator =(
+        const ToPythonHistoricalDataStore&) = delete;
   };
 
-  /**
-   * Makes a ToPythonHistoricalDataStore.
-   * @param dataStore The data store to wrap.
-   */
   template<typename DataStore>
-  auto MakeToPythonHistoricalDataStore(std::unique_ptr<DataStore> dataStore) {
-    return std::make_unique<ToPythonHistoricalDataStore<DataStore>>(
-      std::move(dataStore));
-  }
+  ToPythonHistoricalDataStore(DataStore&&) ->
+    ToPythonHistoricalDataStore<std::decay_t<DataStore>>;
 
   template<typename D>
-  ToPythonHistoricalDataStore<D>::ToPythonHistoricalDataStore(
-    std::unique_ptr<DataStore> dataStore)
-    : m_dataStore(std::move(dataStore)) {}
+  template<typename... Args, typename>
+  ToPythonHistoricalDataStore<D>::ToPythonHistoricalDataStore(Args&&... args)
+    : m_dataStore((Beam::Python::GilRelease(), boost::in_place_init),
+        std::forward<Args>(args)...) {}
 
   template<typename D>
   ToPythonHistoricalDataStore<D>::~ToPythonHistoricalDataStore() {
-    Close();
     auto release = Beam::Python::GilRelease();
     m_dataStore.reset();
   }
 
   template<typename D>
-  boost::optional<SecurityInfo> ToPythonHistoricalDataStore<D>::
-      LoadSecurityInfo(const Security& security) {
-    auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadSecurityInfo(security);
+  const typename ToPythonHistoricalDataStore<D>::DataStore&
+      ToPythonHistoricalDataStore<D>::GetDataStore() const {
+    return *m_dataStore;
   }
 
   template<typename D>
-  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::
-      LoadAllSecurityInfo() {
+  typename ToPythonHistoricalDataStore<D>::DataStore&
+      ToPythonHistoricalDataStore<D>::GetDataStore() {
+    return *m_dataStore;
+  }
+
+  template<typename D>
+  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadAllSecurityInfo();
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename D>
   std::vector<SequencedOrderImbalance>
       ToPythonHistoricalDataStore<D>::LoadOrderImbalances(
-      const MarketWideDataQuery& query) {
+        const MarketWideDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadOrderImbalances(query);
   }
@@ -133,7 +142,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SequencedBookQuote>
       ToPythonHistoricalDataStore<D>::LoadBookQuotes(
-      const SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadBookQuotes(query);
   }
@@ -141,7 +150,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SequencedMarketQuote>
       ToPythonHistoricalDataStore<D>::LoadMarketQuotes(
-      const SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadMarketQuotes(query);
   }
@@ -149,7 +158,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SequencedTimeAndSale>
       ToPythonHistoricalDataStore<D>::LoadTimeAndSales(
-      const SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadTimeAndSales(query);
   }
