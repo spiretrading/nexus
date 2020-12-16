@@ -5,6 +5,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Spire;
 
@@ -24,23 +25,9 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
   button->setFixedSize(BUTTON_SIZE());
   button->setToolTip(tr("Tooltip"));
     button->setFixedSize(BUTTON_SIZE());
-  auto toggled_check_box = make_check_box(tr("Toggled"), this);
-  button->connect_clicked_signal([=] {
-    toggled_check_box->setChecked(!toggled_check_box->isChecked());
-  });
-  layout->addWidget(button, 0, 0);
-  auto disable_check_box = make_check_box(tr("Disable"), this);
-  connect(disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
-    button->setDisabled(disable_check_box->isChecked());
-  });
-  layout->addWidget(disable_check_box, 0, 1);
-  connect(toggled_check_box, &CheckBox::stateChanged, [=] (auto state) {
-    button->set_toggled(toggled_check_box->isChecked());
-  });
-  layout->addWidget(toggled_check_box, 1, 1);
   auto pressed_label = new QLabel(this);
   pressed_label->setFixedWidth(scale_width(80));
-  layout->addWidget(pressed_label, 1, 0);
+  layout->addWidget(pressed_label, 0, 1);
   auto pressed_timer = new QTimer(this);
   pressed_timer->setInterval(1000);
   pressed_timer->setSingleShot(true);
@@ -51,4 +38,19 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     pressed_label->setText(tr("Button Pressed"));
     pressed_timer->start();
   });
+  auto toggled_check_box = make_check_box(tr("Toggled"), this);
+  button->connect_clicked_signal([=] {
+    toggled_check_box->setChecked(!toggled_check_box->isChecked());
+  });
+  layout->addWidget(button, 0, 0);
+  layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  auto disable_check_box = make_check_box(tr("Disable"), this);
+  connect(disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
+    button->setDisabled(disable_check_box->isChecked());
+  });
+  layout->addWidget(disable_check_box, 2, 0);
+  connect(toggled_check_box, &CheckBox::stateChanged, [=] (auto state) {
+    button->set_toggled(toggled_check_box->isChecked());
+  });
+  layout->addWidget(toggled_check_box, 2, 1);
 }

@@ -16,27 +16,27 @@ ScrollAreaTestWidget::ScrollAreaTestWidget(QWidget* parent)
     : QWidget(parent),
       m_scroll_area(nullptr) {
   m_layout = new QGridLayout(this);
-  auto width_label = new QLabel(tr("Width"), this);
-  m_layout->addWidget(width_label, 0, 0);
-  m_width_input = new TextInputWidget("500", this);
+  auto width_label = new QLabel(tr("Inner Widget Width"), this);
+  m_layout->addWidget(width_label, 1, 0);
+  m_width_input = new TextInputWidget("1000", this);
   m_width_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_width_input, 0, 1);
-  auto height_label = new QLabel(tr("Height"), this);
-  m_layout->addWidget(height_label, 1, 0);
-  m_height_input = new TextInputWidget("500", this);
+  m_layout->addWidget(m_width_input, 1, 1);
+  auto height_label = new QLabel(tr("Inner Widget Height"), this);
+  m_layout->addWidget(height_label, 2, 0);
+  m_height_input = new TextInputWidget("1000", this);
   m_height_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_height_input, 1, 1);
+  m_layout->addWidget(m_height_input, 2, 1);
   auto resize_button = make_flat_button(tr("Resize Inner Widget"), this);
   resize_button->setFixedHeight(scale_height(26));
   resize_button->connect_clicked_signal([=] { on_resize_button(); });
-  m_layout->addWidget(resize_button, 2, 0, 1, 2);
+  m_layout->addWidget(resize_button, 3, 0, 1, 2);
   m_dynamic_check_box = make_check_box(tr("Dynamic"), this);
   m_dynamic_check_box->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_dynamic_check_box, 3, 0);
+  m_layout->addWidget(m_dynamic_check_box, 4, 0);
   auto reset_button = make_flat_button(tr("Reset"), this);
   reset_button->setFixedSize(CONTROL_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 3, 1);
+  m_layout->addWidget(reset_button, 4, 1);
   on_reset_button();
 }
 
@@ -55,7 +55,8 @@ bool ScrollAreaTestWidget::set_widget_size() {
 void ScrollAreaTestWidget::on_reset_button() {
   delete_later(m_scroll_area);
   m_scroll_area = new ScrollArea(m_dynamic_check_box->isChecked(), this);
-  m_layout->addWidget(m_scroll_area, 4, 0, 1, 2);
+  m_scroll_area->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_layout->addWidget(m_scroll_area, 0, 0, 1, 4);
   m_widget = new QLabel(this);
   m_widget->setAlignment(Qt::AlignLeft | Qt::AlignTop);
   m_widget->setStyleSheet(

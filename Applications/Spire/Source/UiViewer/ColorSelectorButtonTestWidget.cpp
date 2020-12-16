@@ -2,6 +2,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Spire;
 
@@ -23,18 +24,19 @@ ColorSelectorButtonTestWidget::ColorSelectorButtonTestWidget(QWidget* parent)
   auto color_selector_button_value = new QLabel(
     m_color_selector_button->get_color().name().toUpper(), this);
   m_layout->addWidget(color_selector_button_value, 0, 1);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   auto set_color_input = new TextInputWidget(this);
   set_color_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(set_color_input, 1, 0);
+  m_layout->addWidget(set_color_input, 2, 0);
   auto set_color_button = make_flat_button(tr("Set Color"), this);
   set_color_button->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(set_color_button, 1, 1);
+  m_layout->addWidget(set_color_button, 2, 1);
   auto create_color_input = new TextInputWidget(this);
   create_color_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(create_color_input, 2, 0);
+  m_layout->addWidget(create_color_input, 3, 0);
   auto create_color_button = make_flat_button(tr("Replace Button"), this);
   create_color_button->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(create_color_button, 2, 1);
+  m_layout->addWidget(create_color_button, 3, 1);
   m_color_selector_button->connect_color_signal([=] (const auto& color) {
     color_selector_button_value->setText(color.name().toUpper());
   });

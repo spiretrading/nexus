@@ -2,6 +2,7 @@
 #include <QDate>
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace boost::gregorian;
 using namespace Spire;
@@ -26,22 +27,23 @@ DateInputTestWidget::DateInputTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setMinimumWidth(scale_width(80));
   m_layout->addWidget(m_status_label, 0, 2);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 3);
   m_year_input = new TextInputWidget("1970", this);
   m_year_input->setPlaceholderText(tr("Year"));
   m_year_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(m_year_input, 1, 0);
+  m_layout->addWidget(m_year_input, 2, 0);
   m_month_input = new TextInputWidget("1", this);
   m_month_input->setPlaceholderText(tr("Month"));
   m_month_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(m_month_input, 1, 1);
+  m_layout->addWidget(m_month_input, 2, 1);
   m_day_input = new TextInputWidget("1", this);
   m_day_input->setPlaceholderText(tr("Day"));
   m_day_input->setFixedSize(INPUT_SIZE());
-  m_layout->addWidget(m_day_input, 1, 2);
+  m_layout->addWidget(m_day_input, 2, 2);
   auto reset_button = make_flat_button(tr("Reset"), this);
   reset_button->setFixedHeight(scale_height(26));
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 2, 0, 1, 3);
+  m_layout->addWidget(reset_button, 3, 0, 1, 3);
   on_reset_button();
 }
 

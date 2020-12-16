@@ -2,6 +2,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -42,56 +43,57 @@ SpinBoxTestWidget::SpinBoxTestWidget(SpinBoxAdapter* spin_box, QWidget* parent)
   m_spin_box->connect_change_signal([=] (auto value) {
     m_value_label->setText(value);
   });
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   auto initial_label = new QLabel(tr("Initial"), this);
-  m_layout->addWidget(initial_label, 1, 0);
+  m_layout->addWidget(initial_label, 2, 0);
   m_initial_input = new TextInputWidget("0", this);
   m_initial_input->setFixedSize(CONTROL_SIZE());
   connect(m_initial_input, &TextInputWidget::editingFinished, this,
     &SpinBoxTestWidget::on_initial_set);
-  m_layout->addWidget(m_initial_input, 1, 1);
+  m_layout->addWidget(m_initial_input, 2, 1);
   auto min_label = new QLabel(tr("Minimum"), this);
-  m_layout->addWidget(min_label, 2, 0);
+  m_layout->addWidget(min_label, 3, 0);
   m_min_input = new TextInputWidget("-1000", this);
   m_min_input->setFixedSize(CONTROL_SIZE());
   connect(m_min_input, &TextInputWidget::editingFinished, this,
     &SpinBoxTestWidget::on_min_set);
-  m_layout->addWidget(m_min_input, 2, 1);
+  m_layout->addWidget(m_min_input, 3, 1);
   auto max_label = new QLabel(tr("Maximum"), this);
-  m_layout->addWidget(max_label, 3, 0);
+  m_layout->addWidget(max_label, 4, 0);
   m_max_input = new TextInputWidget("1000", this);
   m_max_input->setFixedSize(CONTROL_SIZE());
   connect(m_max_input, &TextInputWidget::editingFinished, this,
     &SpinBoxTestWidget::on_max_set);
-  m_layout->addWidget(m_max_input, 3, 1);
+  m_layout->addWidget(m_max_input, 4, 1);
   m_modifier_menu = new StaticDropDownMenu({NO_MODIFIER, SHIFT_MODIFIER,
     CTRL_MODIFIER, CTRL_SHIFT_MODIFIER}, this);
   m_modifier_menu->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_modifier_menu, 4, 0);
+  m_layout->addWidget(m_modifier_menu, 5, 0);
   m_increment_input = new TextInputWidget("1", this);
   m_increment_input->setFixedSize(CONTROL_SIZE());
   connect(m_increment_input, &TextInputWidget::editingFinished, this,
     &SpinBoxTestWidget::on_increment_set);
-  m_layout->addWidget(m_increment_input, 4, 1);
+  m_layout->addWidget(m_increment_input, 5, 1);
   auto reset_button = make_flat_button(tr("Reset"), this);
   reset_button->setFixedHeight(scale_height(26));
   reset_button->connect_clicked_signal([=] { reset_spin_box(); });
-  m_layout->addWidget(reset_button, 5, 0, 1, 2);
+  m_layout->addWidget(reset_button, 6, 0, 1, 2);
   auto no_label = new QLabel(NO_MODIFIER, this);
-  m_layout->addWidget(no_label, 6, 0);
+  m_layout->addWidget(no_label, 7, 0);
   m_no_increment_label = new QLabel(this);
-  m_layout->addWidget(m_no_increment_label, 6, 1);
+  m_layout->addWidget(m_no_increment_label, 7, 1);
   auto shift_label = new QLabel(SHIFT_MODIFIER, this);
-  m_layout->addWidget(shift_label, 7, 0);
+  m_layout->addWidget(shift_label, 8, 0);
   m_shift_increment_label = new QLabel(this);
   m_layout->addWidget(m_shift_increment_label, 7, 1);
   auto ctrl_label = new QLabel(CTRL_MODIFIER, this);
-  m_layout->addWidget(ctrl_label, 8, 0);
+  m_layout->addWidget(ctrl_label, 9, 0);
   m_ctrl_increment_label = new QLabel(this);
-  m_layout->addWidget(m_ctrl_increment_label, 8, 1);
+  m_layout->addWidget(m_ctrl_increment_label, 9, 1);
   auto shift_ctrl_label = new QLabel(CTRL_SHIFT_MODIFIER, this);
-  m_layout->addWidget(shift_ctrl_label, 9, 0);
+  m_layout->addWidget(shift_ctrl_label, 10, 0);
   m_ctrl_shift_increment_label = new QLabel(this);
-  m_layout->addWidget(m_ctrl_shift_increment_label, 9, 1);
+  m_layout->addWidget(m_ctrl_shift_increment_label, 10, 1);
   reset_spin_box();
   m_value_label->setText(m_initial_input->text());
 }

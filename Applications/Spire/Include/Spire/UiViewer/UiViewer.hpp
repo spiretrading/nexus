@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_VIEWER_HPP
 #define SPIRE_UI_VIEWER_HPP
+#include <QLabel>
 
 namespace Spire {
   class CheckBoxTestWidget;
@@ -36,6 +37,12 @@ namespace Spire {
   class ToggleButtonTestWidget;
   class TransitionTestWidget;
   class UiViewerWindow;
+
+  //! Creates a label for separating test widgets from their parameters.
+  /*!
+    \param parent The parent widget.
+  */
+  QLabel* create_parameters_label(QWidget* parent);
 }
 
 #endif

@@ -1,6 +1,7 @@
 #include "Spire/UiViewer/TimeOfDayTestWidget.hpp"
 #include <QGridLayout>
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace boost::posix_time;
 using namespace Spire;
@@ -16,24 +17,25 @@ TimeOfDayTestWidget::TimeOfDayTestWidget(QWidget* parent)
     : QWidget(parent) {
   auto container = new QWidget(this);
   auto layout = new QGridLayout(container);
-  m_status_label = new QLabel(this);
-  m_status_label->setMinimumWidth(scale_width(100));
-  layout->addWidget(m_status_label, 0, 0, 1, 2);
   m_time_input = new TimeOfDayInputWidget(this);
   m_time_input->connect_time_signal([=] (const auto& time) {
     on_time_modified(time);
   });
-  layout->addWidget(m_time_input, 1, 0, 1, 2);
+  layout->addWidget(m_time_input, 0, 0, 1, 2);
+  m_status_label = new QLabel(this);
+  m_status_label->setMinimumWidth(scale_width(100));
+  layout->addWidget(m_status_label, 0, 2);
+  layout->addWidget(create_parameters_label(this), 1, 0, 1, 3);
   m_hour_input = new TextInputWidget(this);
   m_hour_input->setFixedSize(CONTROL_SIZE());
-  layout->addWidget(m_hour_input, 2, 0);
+  layout->addWidget(m_hour_input, 3, 0);
   m_minute_input = new TextInputWidget(this);
   m_minute_input->setFixedSize(CONTROL_SIZE());
-  layout->addWidget(m_minute_input, 2, 1);
+  layout->addWidget(m_minute_input, 3, 1);
   auto set_button = make_flat_button(tr("Set 24H Time"), this);
   set_button->setFixedHeight(scale_height(26));
   set_button->connect_clicked_signal([=] { on_set_button(); });
-  layout->addWidget(set_button, 3, 0, 1, 2);
+  layout->addWidget(set_button, 4, 0, 1, 2);
 }
 
 void TimeOfDayTestWidget::on_set_button() {

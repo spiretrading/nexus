@@ -40,7 +40,7 @@ using namespace Spire;
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
     : Window(parent) {
-  setMinimumSize(scale(775, 432));
+  setMinimumSize(scale(775, 522));
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));

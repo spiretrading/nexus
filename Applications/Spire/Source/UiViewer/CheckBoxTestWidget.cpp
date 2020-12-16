@@ -2,6 +2,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Spire;
 
@@ -17,16 +18,17 @@ CheckBoxTestWidget::CheckBoxTestWidget(QWidget* parent)
       m_check_box(nullptr) {
   auto container = new QWidget(this);
   m_layout = new QGridLayout(container);
-  m_layout->setContentsMargins({});
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   m_label_input = new TextInputWidget(this);
+  m_label_input->setPlaceholderText(tr("Label"));
   m_label_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_label_input, 1, 0);
+  m_layout->addWidget(m_label_input, 2, 0);
   auto reset_button = make_flat_button("Reset", this);
   reset_button->setFixedSize(CONTROL_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 1, 1);
+  m_layout->addWidget(reset_button, 2, 1);
   m_label_input->setText(tr("CheckBox"));
   on_reset_button();
   m_label_input->setText("");

@@ -3,12 +3,18 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Spire;
 
 namespace {
   auto CONTROL_SIZE() {
     static auto size = scale(100, 26);
+    return size;
+  }
+
+  auto LABEL_SIZE() {
+    static auto size = scale(260, 52);
     return size;
   }
 }
@@ -19,36 +25,35 @@ FontSelectorTestWidget::FontSelectorTestWidget(QWidget* parent)
   auto container_widget = new QWidget(this);
   m_layout = new QGridLayout(container_widget);
   m_selected_label = new QLabel(tr("Selected Font"), this);
-  m_selected_label->setMinimumHeight(scale_height(26));
-  m_layout->addWidget(m_selected_label, 0, 0, 1, 2);
+  m_selected_label->setMinimumSize(LABEL_SIZE());
+  m_layout->addWidget(m_selected_label, 0, 2, 1, 1);
   m_preview_label = new QLabel(tr("Preview Font"), this);
-  m_preview_label->setMinimumHeight(scale_height(26));
-  m_layout->addWidget(m_preview_label, 1, 0, 1, 2);
-  m_layout->setRowMinimumHeight(2, scale_height(26));
-  m_layout->setRowMinimumHeight(4, scale_height(26));
+  m_preview_label->setMinimumSize(LABEL_SIZE());
+  m_layout->addWidget(m_preview_label, 1, 2, 1, 1);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   auto fonts = QFontDatabase().families();
   m_family_list = new StaticDropDownMenu(
     std::vector<QVariant>(fonts.begin(), fonts.end()), this);
   m_family_list->setFixedHeight(scale_height(26));
-  m_layout->addWidget(m_family_list, 5, 0, 1, 2);
+  m_layout->addWidget(m_family_list, 3, 0, 1, 2);
   m_size_spin_box = new IntegerSpinBox(std::make_shared<IntegerSpinBoxModel>(
     12, 6, 72, 1), this);
   m_size_spin_box->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_size_spin_box, 6, 0);
+  m_layout->addWidget(m_size_spin_box, 4, 0);
   m_bold_check_box = make_check_box(tr("Bold"), this);
-  m_layout->addWidget(m_bold_check_box, 7, 0);
+  m_layout->addWidget(m_bold_check_box, 5, 0);
   m_italic_check_box = make_check_box(tr("Italic"), this);
-  m_layout->addWidget(m_italic_check_box, 8, 0);
+  m_layout->addWidget(m_italic_check_box, 6, 0);
   m_underline_check_box = make_check_box(tr("Underline"), this);
-  m_layout->addWidget(m_underline_check_box, 9, 0);
+  m_layout->addWidget(m_underline_check_box, 7, 0);
   auto set_button = make_flat_button(tr("Set Font"), this);
   set_button->setFixedSize(CONTROL_SIZE());
   set_button->connect_clicked_signal([=] { on_font_set(); });
-  m_layout->addWidget(set_button, 10, 0);
+  m_layout->addWidget(set_button, 8, 0);
   auto reset_button = make_flat_button(tr("Reset Widget"), this);
   reset_button->setFixedSize(CONTROL_SIZE());
   reset_button->connect_clicked_signal([=] { on_widget_reset(); });
-  m_layout->addWidget(reset_button, 10, 1);
+  m_layout->addWidget(reset_button, 8, 1);
   on_widget_reset();
 }
 
@@ -82,6 +87,6 @@ void FontSelectorTestWidget::on_widget_reset() {
   m_font_selector->connect_font_selected_signal([=] (const auto& font) {
     m_selected_label->setFont(font);
   });
-  m_layout->addWidget(m_font_selector, 3, 0, 1, 2);
+  m_layout->addWidget(m_font_selector, 0, 0, 1, 2);
   update_labels();
 }

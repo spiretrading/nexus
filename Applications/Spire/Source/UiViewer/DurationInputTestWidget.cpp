@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace boost::posix_time;
 using namespace Spire;
@@ -28,8 +29,9 @@ DurationInputTestWidget::DurationInputTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setAlignment(Qt::AlignCenter);
   layout->addWidget(m_status_label, 0, 1);
+  layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   auto input_container = new QWidget(this);
-  layout->addWidget(input_container, 1, 0, 1, 2);
+  layout->addWidget(input_container, 2, 0, 1, 2);
   auto container_layout = new QHBoxLayout(input_container);
   m_hour_input = new TextInputWidget(this);
   m_hour_input->setFixedSize(INPUT_SIZE());
@@ -43,7 +45,7 @@ DurationInputTestWidget::DurationInputTestWidget(QWidget* parent)
   auto set_duration_button = make_flat_button(tr("Set Duration"), this);
   set_duration_button->setFixedHeight(scale_height(26));
   set_duration_button->connect_clicked_signal([=] { on_set_button(); });
-  layout->addWidget(set_duration_button, 2, 0, 1, 2);
+  layout->addWidget(set_duration_button, 3, 0, 1, 2);
 }
 
 void DurationInputTestWidget::on_set_button() {

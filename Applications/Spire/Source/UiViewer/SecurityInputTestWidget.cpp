@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Beam;
 using namespace Nexus;
@@ -24,17 +25,18 @@ SecurityInputTestWidget::SecurityInputTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setFixedSize(CONTROL_SIZE());
   m_layout->addWidget(m_status_label, 0, 1, Qt::AlignRight);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   auto initial_text_label = new QLabel(tr("Initial Text"), this);
-  m_layout->addWidget(initial_text_label, 1, 0);
+  m_layout->addWidget(initial_text_label, 2, 0);
   m_initial_text_input = new TextInputWidget(this);
   m_initial_text_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_initial_text_input, 1, 1);
+  m_layout->addWidget(m_initial_text_input, 2, 1);
   m_icon_check_box = make_check_box(tr("Show Icon"), this);
-  m_layout->addWidget(m_icon_check_box, 2, 1);
+  m_layout->addWidget(m_icon_check_box, 3, 1);
   auto reset_button = make_flat_button(tr("Reset"), this);
   reset_button->setFixedHeight(scale_height(26));
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 3, 0, 1, 2);
+  m_layout->addWidget(reset_button, 4, 0, 1, 2);
   on_reset_button();
 }
 

@@ -2,6 +2,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Spire;
 
@@ -31,6 +32,7 @@ FilteredDropDownMenuTestWidget::FilteredDropDownMenuTestWidget(QWidget* parent)
   m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   m_item_input = new QPlainTextEdit(this);
   m_item_input->setPlainText("AA, AB, AC, BA, BB, BC, CA, CB, CC");
   m_item_input->setStyleSheet(QString(R"(
@@ -46,15 +48,15 @@ FilteredDropDownMenuTestWidget::FilteredDropDownMenuTestWidget(QWidget* parent)
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
   m_item_input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_layout->addWidget(m_item_input, 1, 0, 6, 2);
+  m_layout->addWidget(m_item_input, 2, 0, 6, 2);
   auto set_button = make_flat_button(tr("Set Items"), this);
   set_button->setFixedSize(CONTROL_SIZE());
   set_button->connect_clicked_signal([=] { on_set_button(); });
-  m_layout->addWidget(set_button, 7, 0);
+  m_layout->addWidget(set_button, 8, 0);
   auto reset_button = make_flat_button(tr("Reset"), this);
   reset_button->setFixedSize(CONTROL_SIZE());
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 7, 1);
+  m_layout->addWidget(reset_button, 8, 1);
   on_reset_button();
 }
 

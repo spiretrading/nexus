@@ -7,6 +7,7 @@
 #include "Spire/Ui/LocalRangeInputModel.hpp"
 #include "Spire/Ui/QuantitySpinBox.hpp"
 #include "Spire/Ui/ScalarWidget.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -41,25 +42,26 @@ RangeInputTestWidget::RangeInputTestWidget(QWidget* parent)
   m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 1, 0, 1, 2);
+  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
   auto min_label = new QLabel(tr("Minimum"), this);
-  m_layout->addWidget(min_label, 2, 0);
+  m_layout->addWidget(min_label, 3, 0);
   m_min_input = new TextInputWidget("0", this);
   m_min_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_min_input, 2, 1);
+  m_layout->addWidget(m_min_input, 3, 1);
   auto max_label = new QLabel(tr("Maximum"), this);
-  m_layout->addWidget(max_label, 3, 0);
+  m_layout->addWidget(max_label, 4, 0);
   m_max_input = new TextInputWidget("100", this);
   m_max_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_max_input, 3, 1);
+  m_layout->addWidget(m_max_input, 4, 1);
   auto count_label = new QLabel(tr("Data Count"), this);
-  m_layout->addWidget(count_label, 4, 0);
+  m_layout->addWidget(count_label, 5, 0);
   m_count_input = new TextInputWidget("1000", this);
   m_count_input->setFixedSize(CONTROL_SIZE());
-  m_layout->addWidget(m_count_input, 4, 1);
+  m_layout->addWidget(m_count_input, 5, 1);
   auto reset_button = make_flat_button(tr("Reset"), this);
   reset_button->setFixedHeight(scale_height(26));
   reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 5, 0, 1, 2);
+  m_layout->addWidget(reset_button, 6, 0, 1, 2);
   on_reset_button();
 }
 
