@@ -1,19 +1,23 @@
-#ifndef NEXUS_EXPRESSIONVISITOR_HPP
-#define NEXUS_EXPRESSIONVISITOR_HPP
-#include <boost/noncopyable.hpp>
+#ifndef NEXUS_EXPRESSION_VISITOR_HPP
+#define NEXUS_EXPRESSION_VISITOR_HPP
 #include "Nexus/Queries/Queries.hpp"
 
-namespace Nexus {
-namespace Queries {
+namespace Nexus::Queries {
 
-  /*! \class ExpressionVisitor
-      \brief Implements the visitor pattern for Expressions.
-   */
-  class ExpressionVisitor : private boost::noncopyable {
+  /** Implements the visitor pattern for Expressions. */
+  class ExpressionVisitor {
     public:
       virtual ~ExpressionVisitor() = default;
+
+    protected:
+
+      /** Constructs an ExpressionVisitor. */
+      ExpressionVisitor() = default;
+
+    private:
+      ExpressionVisitor(const ExpressionVisitor&) = delete;
+      ExpressionVisitor& operator =(const ExpressionVisitor&) = delete;
   };
-}
 }
 
 #endif

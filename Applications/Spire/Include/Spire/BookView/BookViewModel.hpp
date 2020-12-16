@@ -51,10 +51,7 @@ namespace Spire {
         const BookViewProperties& properties, const Nexus::Security& security,
         Nexus::Side side);
 
-      virtual ~BookViewModel();
-
-      /** Returns the SecurityInfo this model represents. */
-      const Nexus::SecurityInfo& GetSecurityInfo() const;
+      ~BookViewModel() override;
 
       //! Sets the properties.
       /*!

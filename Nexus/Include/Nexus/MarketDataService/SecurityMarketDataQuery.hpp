@@ -3,6 +3,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/BasicQuery.hpp>
 #include <Beam/Queries/IndexedValue.hpp>
+#include <Beam/Queries/PagedQuery.hpp>
 #include <Beam/Queries/SequencedValue.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
@@ -10,8 +11,9 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/MarketQuote.hpp"
-#include "Nexus/Definitions/TimeAndSale.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus {
@@ -38,6 +40,9 @@ namespace MarketDataService {
 
   /** Defines the type of query used to receive a Security's market data. */
   using SecurityMarketDataQuery = Beam::Queries::BasicQuery<Security>;
+
+  /** Defines the type of query used to load SecurityInfo objects. */
+  using SecurityInfoQuery = Beam::Queries::PagedQuery<Region, Security>;
 
   /**
    * Submits a query for real time BboQuotes with a snapshot.

@@ -17,13 +17,11 @@ namespace Nexus::MarketDataService {
   struct HistoricalDataStore : Beam::Concept<HistoricalDataStore> {
 
     /**
-     * Loads a SecurityInfo.
-     * @param security The Security whose SecurityInfo is to be loaded.
+     * Loads SecurityInfo objects that match a query.
+     * @param query The query to load.
+     * @return The list of all SecurityInfo objects that match the <i>query</i>.
      */
-    boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-    /** Loads all SecurityInfos. */
-    std::vector<SecurityInfo> LoadAllSecurityInfo();
+    std::vector<SecurityInfo> LoadSecurityInfo(const SecurityInfoQuery& query);
 
     /**
      * Executes a search query over a Market's OrderImbalances.

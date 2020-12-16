@@ -67,7 +67,6 @@ namespace Spire {
       BookViewProperties m_properties;
       Nexus::Security m_security;
       Nexus::Side m_side;
-      Nexus::Quantity m_boardLot;
       Nexus::Quote m_bestQuote;
       QTimer m_updateTimer;
       std::unique_ptr<BookViewModel> m_model;

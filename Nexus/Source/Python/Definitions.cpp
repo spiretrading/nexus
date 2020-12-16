@@ -593,6 +593,7 @@ void Nexus::Python::ExportRegion(module& module) {
     def_property_readonly("is_global", &Region::IsGlobal).
     def_property_readonly("countries", &Region::GetCountries).
     def_property_readonly("securities", &Region::GetSecurities).
+    def("__str__", &lexical_cast<std::string, Region>).
     def(self + self).
     def(self < self).
     def(self <= self).

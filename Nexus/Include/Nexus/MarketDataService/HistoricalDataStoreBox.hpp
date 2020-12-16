@@ -35,9 +35,8 @@ namespace Nexus::MarketDataService {
       explicit HistoricalDataStoreBox(
         const std::unique_ptr<HistoricalDataStoreBox>& dataStore);
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -82,9 +81,8 @@ namespace Nexus::MarketDataService {
     private:
       struct VirtualHistoricalDataStore {
         virtual ~VirtualHistoricalDataStore() = default;
-        virtual boost::optional<SecurityInfo> LoadSecurityInfo(
-          const Security& security) = 0;
-        virtual std::vector<SecurityInfo> LoadAllSecurityInfo() = 0;
+        virtual std::vector<SecurityInfo> LoadSecurityInfo(
+          const SecurityInfoQuery& query) = 0;
         virtual std::vector<SequencedOrderImbalance> LoadOrderImbalances(
           const MarketWideDataQuery& query) = 0;
         virtual std::vector<SequencedBboQuote> LoadBboQuotes(
@@ -121,9 +119,8 @@ namespace Nexus::MarketDataService {
 
         template<typename... Args>
         WrappedHistoricalDataStore(Args&&... args);
-        boost::optional<SecurityInfo> LoadSecurityInfo(
-          const Security& security) override;
-        std::vector<SecurityInfo> LoadAllSecurityInfo() override;
+        std::vector<SecurityInfo> LoadSecurityInfo(
+          const SecurityInfoQuery& query) override;
         std::vector<SequencedOrderImbalance> LoadOrderImbalances(
           const MarketWideDataQuery& query) override;
         std::vector<SequencedBboQuote> LoadBboQuotes(
@@ -179,14 +176,9 @@ namespace Nexus::MarketDataService {
     const std::unique_ptr<HistoricalDataStoreBox>& dataStore)
       : HistoricalDataStoreBox(*dataStore) {}
 
-  inline boost::optional<SecurityInfo> HistoricalDataStoreBox::LoadSecurityInfo(
-      const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  inline std::vector<SecurityInfo>
-      HistoricalDataStoreBox::LoadAllSecurityInfo() {
-    return m_dataStore->LoadAllSecurityInfo();
+  inline std::vector<SecurityInfo> HistoricalDataStoreBox::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   inline std::vector<SequencedOrderImbalance>
@@ -282,17 +274,10 @@ namespace Nexus::MarketDataService {
       : m_dataStore(std::forward<Args>(args)...) {}
 
   template<typename D>
-  boost::optional<SecurityInfo>
-      HistoricalDataStoreBox::WrappedHistoricalDataStore<D>::LoadSecurityInfo(
-        const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename D>
   std::vector<SecurityInfo>
-      HistoricalDataStoreBox::WrappedHistoricalDataStore<D>::
-        LoadAllSecurityInfo() {
-    return m_dataStore->LoadAllSecurityInfo();
+      HistoricalDataStoreBox::WrappedHistoricalDataStore<D>::LoadSecurityInfo(
+        const SecurityInfoQuery& query) {
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename D>

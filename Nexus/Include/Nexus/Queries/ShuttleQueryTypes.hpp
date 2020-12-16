@@ -1,15 +1,15 @@
-#ifndef NEXUS_SHUTTLEQUERYTYPES_HPP
-#define NEXUS_SHUTTLEQUERYTYPES_HPP
+#ifndef NEXUS_SHUTTLE_QUERY_TYPES_HPP
+#define NEXUS_SHUTTLE_QUERY_TYPES_HPP
 #include <Beam/Queries/ShuttleQueryTypes.hpp>
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 
-namespace Nexus {
-namespace Queries {
+namespace Nexus::Queries {
   BEAM_REGISTER_TYPES(RegisterDataTypes,
-    (QuantityType, "Nexus.Queries.QuantityType"),
     (MoneyType, "Nexus.Queries.MoneyType"),
+    (QuantityType, "Nexus.Queries.QuantityType"),
     (SecurityType, "Nexus.Queries.SecurityType"),
+    (SecurityInfoType, "Nexus.Queries.SecurityInfoType"),
     (OrderImbalanceType, "Nexus.Queries.OrderImbalanceType"),
     (BboQuoteType, "Nexus.Queries.BboQuoteType"),
     (BookQuoteType, "Nexus.Queries.BookQuoteType"),
@@ -21,6 +21,7 @@ namespace Queries {
   BEAM_REGISTER_TYPES(RegisterValueTypes,
     (QuantityValue, "Nexus.Queries.QuantityValue"),
     (SecurityValue, "Nexus.Queries.SecurityValue"),
+    (SecurityInfoValue, "Nexus.Queries.SecurityInfoValue"),
     (MoneyValue, "Nexus.Queries.MoneyValue"),
     (OrderImbalanceValue, "Nexus.Queries.OrderImbalanceValue"),
     (BboQuoteValue, "Nexus.Queries.BboQuoteValue"),
@@ -30,14 +31,13 @@ namespace Queries {
     (OrderFieldsValue, "Nexus.Queries.OrderFieldsValue"),
     (OrderInfoValue, "Nexus.Queries.OrderInfoValue"));
 
-  template<typename SenderType>
-  void RegisterQueryTypes(Beam::Out<
-      Beam::Serialization::TypeRegistry<SenderType>> registry) {
+  template<typename Sender>
+  void RegisterQueryTypes(Beam::Out<Beam::Serialization::TypeRegistry<Sender>>
+      registry) {
     Beam::Queries::RegisterQueryTypes(Beam::Store(registry));
     RegisterDataTypes(Beam::Store(registry));
     RegisterValueTypes(Beam::Store(registry));
   }
-}
 }
 
 #endif

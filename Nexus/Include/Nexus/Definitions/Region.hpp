@@ -135,6 +135,16 @@ namespace Nexus {
       Region(GlobalTag, std::string name);
   };
 
+  inline std::ostream& operator <<(std::ostream& out, const Region& region) {
+    if(region.IsGlobal()) {
+      return out << "GLOBAL";
+    } else if(!region.GetName().empty()) {
+      return out << region.GetName();
+    } else {
+      return out;
+    }
+  }
+
   inline bool operator <(const Security& security, const Region& region) {
     return Region(security) < region;
   }

@@ -65,8 +65,7 @@ namespace {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
             "test", *m_serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
-      auto clientEntry = std::make_unique<ClientEntry>(builder);
-      return clientEntry;
+      return std::make_unique<ClientEntry>(builder);
     }
 
     void OnQuerySecurityBboQuotes(Request<QueryBboQuotesService>& request,

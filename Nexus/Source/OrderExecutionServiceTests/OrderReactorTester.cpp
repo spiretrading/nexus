@@ -11,7 +11,7 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 
 namespace {
-  const auto TEST_SECURITY = Security("TST", DefaultMarkets::TSX(),
+  const auto SECURITY_A = Security("TST", DefaultMarkets::TSX(),
     DefaultCountries::CA());
 }
 
@@ -42,11 +42,11 @@ TEST_SUITE("OrderReactor") {
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto reactor = MakeLimitOrderReactor(
       Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(TEST_SECURITY), Aspen::constant(Side::BID),
+      Aspen::constant(SECURITY_A), Aspen::constant(Side::BID),
       Aspen::constant(100), Aspen::constant(Money::ONE));
     REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
     auto sentOrder = reactor.eval();
-    REQUIRE(sentOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
+    REQUIRE(sentOrder->GetInfo().m_fields.m_security == SECURITY_A);
     REQUIRE(sentOrder->GetInfo().m_fields.m_side == Side::BID);
     REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 100);
     REQUIRE(sentOrder->GetInfo().m_fields.m_price == Money::ONE);
@@ -77,11 +77,11 @@ TEST_SUITE("OrderReactor") {
     price->push(Money::CENT);
     auto reactor = MakeLimitOrderReactor(
       Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
+      Aspen::constant(SECURITY_A), Aspen::constant(Side::ASK),
       Aspen::constant(300), price);
     REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
     auto sentOrder = reactor.eval();
-    REQUIRE(sentOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
+    REQUIRE(sentOrder->GetInfo().m_fields.m_security == SECURITY_A);
     REQUIRE(sentOrder->GetInfo().m_fields.m_side == Side::ASK);
     REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 300);
     REQUIRE(sentOrder->GetInfo().m_fields.m_price == Money::CENT);
@@ -101,7 +101,7 @@ TEST_SUITE("OrderReactor") {
     REQUIRE(reactor.commit(5) == Aspen::State::EVALUATED);
     auto updatedSentOrder = reactor.eval();
     REQUIRE(updatedSentOrder->GetInfo().m_fields.m_security ==
-      TEST_SECURITY);
+      SECURITY_A);
     REQUIRE(updatedSentOrder->GetInfo().m_fields.m_side == Side::ASK);
     REQUIRE(updatedSentOrder->GetInfo().m_fields.m_quantity == 300);
     REQUIRE(updatedSentOrder->GetInfo().m_fields.m_price ==
@@ -136,7 +136,7 @@ TEST_SUITE("OrderReactor") {
     price->push(Money::CENT);
     auto reactor = MakeLimitOrderReactor(
       Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
+      Aspen::constant(SECURITY_A), Aspen::constant(Side::ASK),
       Aspen::constant(300), price);
     REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
     auto sentOrder = reactor.eval();
@@ -167,7 +167,7 @@ TEST_SUITE("OrderReactor") {
     auto quantity = Aspen::Shared<Aspen::Queue<Quantity>>();
     auto reactor = MakeLimitOrderReactor(
       Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
+      Aspen::constant(SECURITY_A), Aspen::constant(Side::ASK),
       quantity, Aspen::constant(Money::ONE));
     REQUIRE(reactor.commit(0) == Aspen::State::NONE);
     quantity->push(1200);

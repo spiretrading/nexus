@@ -32,9 +32,8 @@ namespace Nexus {
 
       ~CutoffHistoricalDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const MarketDataService::SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketDataService::MarketWideDataQuery& query);
@@ -114,21 +113,15 @@ namespace Nexus {
   }
 
   template<typename H>
-  boost::optional<SecurityInfo> CutoffHistoricalDataStore<H>::LoadSecurityInfo(
-      const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename H>
-  std::vector<SecurityInfo> CutoffHistoricalDataStore<H>::
-      LoadAllSecurityInfo() {
-    return m_dataStore->LoadAllSecurityInfo();
+  std::vector<SecurityInfo> CutoffHistoricalDataStore<H>::LoadSecurityInfo(
+      const MarketDataService::SecurityInfoQuery& query) {
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename H>
   std::vector<SequencedOrderImbalance>
       CutoffHistoricalDataStore<H>::LoadOrderImbalances(
-      const MarketDataService::MarketWideDataQuery& query) {
+        const MarketDataService::MarketWideDataQuery& query) {
     return Load(query, m_orderImbalanceCutoffSequences, [&] (auto& query) {
       return m_dataStore->LoadOrderImbalances(query);
     });
@@ -153,7 +146,7 @@ namespace Nexus {
   template<typename H>
   std::vector<SequencedMarketQuote>
       CutoffHistoricalDataStore<H>::LoadMarketQuotes(
-      const MarketDataService::SecurityMarketDataQuery& query) {
+        const MarketDataService::SecurityMarketDataQuery& query) {
     return Load(query, m_marketQuoteCutoffSequences, [&] (auto& query) {
       return m_dataStore->LoadMarketQuotes(query);
     });
@@ -162,7 +155,7 @@ namespace Nexus {
   template<typename H>
   std::vector<SequencedTimeAndSale>
       CutoffHistoricalDataStore<H>::LoadTimeAndSales(
-      const MarketDataService::SecurityMarketDataQuery& query) {
+        const MarketDataService::SecurityMarketDataQuery& query) {
     return Load(query, m_timeAndSalesCutoffSequences, [&] (auto& query) {
       return m_dataStore->LoadTimeAndSales(query);
     });
@@ -247,7 +240,7 @@ namespace Nexus {
   std::invoke_result_t<F, const Query&> CutoffHistoricalDataStore<H>::Load(
       const Query& query,
       std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
-      cutoffSequences, F&& loader) {
+        cutoffSequences, F&& loader) {
     if(auto startTimestamp = boost::get<boost::posix_time::ptime>(
         &query.GetRange().GetStart())) {
       if(*startTimestamp >= m_cutoff) {
@@ -295,7 +288,7 @@ namespace Nexus {
     auto cutoffQuery = query;
     cutoffQuery.SetRange(Beam::Queries::Range(query.GetRange().GetStart(),
       cutoffSequence));
-    return loader(cutoffQuery);
+    return std::forward<F>(loader)(cutoffQuery);
   }
 }
 

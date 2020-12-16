@@ -31,7 +31,7 @@ namespace Nexus::Queries {
        */
       EvaluatorTranslator(Beam::Ref<
         const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-        liveOrders);
+          liveOrders);
 
       std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
         NewTranslator() const override;
@@ -47,6 +47,8 @@ namespace Nexus::Queries {
 
       void TranslateSecurityMemberAccessExpression(
         const Beam::Queries::MemberAccessExpression& expression);
+      void TranslateSecurityInfoMemberAccessExpression(
+        const Beam::Queries::MemberAccessExpression& expression);
       void TranslateTimeAndSaleMemberAccessExpression(
         const Beam::Queries::MemberAccessExpression& expression);
       void TranslateOrderFieldsMemberAccessExpression(
@@ -60,7 +62,7 @@ namespace Nexus::Queries {
 
   inline EvaluatorTranslator::EvaluatorTranslator(Beam::Ref<
     const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-    liveOrders)
+      liveOrders)
     : m_liveOrders(liveOrders.Get()) {}
 
   inline std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
@@ -86,9 +88,9 @@ namespace Nexus::Queries {
       try {
         translator = Beam::Instantiate<
           Beam::Queries::FunctionEvaluatorNodeTranslator<
-          AdditionExpressionTranslator>>(
-          leftExpression.GetType()->GetNativeType(),
-          rightExpression.GetType()->GetNativeType());
+            AdditionExpressionTranslator>>(
+              leftExpression.GetType()->GetNativeType(),
+              rightExpression.GetType()->GetNativeType());
       } catch(const std::exception&) {
         Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
         return;
@@ -110,6 +112,8 @@ namespace Nexus::Queries {
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetExpression()->GetType() == SecurityType()) {
       TranslateSecurityMemberAccessExpression(expression);
+    } else if(expression.GetExpression()->GetType() == SecurityInfoType()) {
+      TranslateSecurityInfoMemberAccessExpression(expression);
     } else if(expression.GetExpression()->GetType() == TimeAndSaleType()) {
       TranslateTimeAndSaleMemberAccessExpression(expression);
     } else if(expression.GetExpression()->GetType() == OrderFieldsType()) {
@@ -128,19 +132,45 @@ namespace Nexus::Queries {
       Beam::Queries::EvaluatorNode<Security>>>(GetEvaluator());
     if(expression.GetName() == "symbol") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
-        [] (Security security) {
+        [] (const Security& security) {
           return security.GetSymbol();
         }, std::move(securityExpression)));
     } else if(expression.GetName() == "market") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
-        [] (Security security) {
+        [] (const Security& security) {
           return static_cast<std::string>(security.GetMarket().GetData());
         }, std::move(securityExpression)));
     } else if(expression.GetName() == "country") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
-        [] (Security security) {
+        [] (const Security& security) {
           return security.GetCountry();
         }, std::move(securityExpression)));
+    } else {
+      Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::TranslateSecurityInfoMemberAccessExpression(
+      const Beam::Queries::MemberAccessExpression& expression) {
+    expression.GetExpression()->Apply(*this);
+    auto securityInfoExpression = Beam::StaticCast<std::unique_ptr<
+      Beam::Queries::EvaluatorNode<SecurityInfo>>>(GetEvaluator());
+    if(expression.GetName() == "security") {
+      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
+        Security, SecurityInfo>>(std::move(securityInfoExpression),
+          &SecurityInfo::m_security));
+    } else if(expression.GetName() == "name") {
+      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
+        std::string, SecurityInfo>>(std::move(securityInfoExpression),
+          &SecurityInfo::m_name));
+    } else if(expression.GetName() == "sector") {
+      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
+        std::string, SecurityInfo>>(std::move(securityInfoExpression),
+          &SecurityInfo::m_sector));
+    } else if(expression.GetName() == "board_lot") {
+      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
+        Quantity, SecurityInfo>>(std::move(securityInfoExpression),
+          &SecurityInfo::m_boardLot));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
