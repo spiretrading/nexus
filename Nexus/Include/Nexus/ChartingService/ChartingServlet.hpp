@@ -77,7 +77,7 @@ namespace Details {
       Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       MarketDataService::CachedHistoricalDataStore<
         MarketDataService::ClientHistoricalDataStore<MarketDataClient*>>
-        m_dataStore;
+          m_dataStore;
       QueryEntry<SequencedTimeAndSale> m_timeAndSaleQueries;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;

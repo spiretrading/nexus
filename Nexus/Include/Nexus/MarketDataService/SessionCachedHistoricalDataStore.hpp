@@ -3,7 +3,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/SessionCachedDataStore.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -15,7 +14,7 @@ namespace Nexus::MarketDataService {
    * @param <D> The underlying data store to cache.
    */
   template<typename D>
-  class SessionCachedHistoricalDataStore : private boost::noncopyable {
+  class SessionCachedHistoricalDataStore {
     public:
 
       /** The type of HistoricalDataStore to cache. */
@@ -31,9 +30,8 @@ namespace Nexus::MarketDataService {
 
       ~SessionCachedHistoricalDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -86,6 +84,11 @@ namespace Nexus::MarketDataService {
       DataStore<MarketQuote> m_marketQuoteDataStore;
       DataStore<TimeAndSale> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
+
+      SessionCachedHistoricalDataStore(
+        const SessionCachedHistoricalDataStore&) = delete;
+      SessionCachedHistoricalDataStore& operator =(
+        const SessionCachedHistoricalDataStore&) = delete;
   };
 
   template<typename D>
@@ -104,15 +107,9 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  boost::optional<SecurityInfo> SessionCachedHistoricalDataStore<D>::
-      LoadSecurityInfo(const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
-  }
-
-  template<typename D>
   std::vector<SecurityInfo> SessionCachedHistoricalDataStore<D>::
-      LoadAllSecurityInfo() {
-    return m_dataStore->LoadAllSecurityInfo();
+      LoadSecurityInfo(const SecurityInfoQuery& query) {
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename D>

@@ -12,7 +12,7 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 
 namespace {
-  const auto TEST_SECURITY = Security("TST", DefaultMarkets::NASDAQ(),
+  const auto SECURITY_A = Security("TST", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
   const auto TEST_SOURCE = 321;
 
@@ -29,7 +29,7 @@ namespace {
         expectedSequence);
       REQUIRE(sequencedBboQuote.is_initialized());
       REQUIRE(sequencedBboQuote->GetSequence() == timestampedSequence);
-      REQUIRE((*sequencedBboQuote)->GetIndex() == TEST_SECURITY);
+      REQUIRE((*sequencedBboQuote)->GetIndex() == SECURITY_A);
       REQUIRE(bboQuote == **sequencedBboQuote);
       REQUIRE(bboQuote == *entry.GetBboQuote());
       auto snapshot = entry.LoadSnapshot();
@@ -48,7 +48,7 @@ namespace {
         expectedSequence);
       REQUIRE(sequencedQuote.is_initialized());
       REQUIRE(sequencedQuote->GetSequence() == timestampedSequence);
-      REQUIRE((*sequencedQuote)->GetIndex() == TEST_SECURITY);
+      REQUIRE((*sequencedQuote)->GetIndex() == SECURITY_A);
       REQUIRE(quote == **sequencedQuote);
       return *sequencedQuote;
     }
@@ -78,7 +78,7 @@ namespace {
       auto expectedQuote = quote;
       expectedQuote.m_quote.m_size = expectedQuantity;
       REQUIRE(sequencedQuote->GetSequence() == timestampedSequence);
-      REQUIRE((*sequencedQuote)->GetIndex() == TEST_SECURITY);
+      REQUIRE((*sequencedQuote)->GetIndex() == SECURITY_A);
       REQUIRE(expectedQuote == **sequencedQuote);
       return *sequencedQuote;
     }
@@ -107,7 +107,7 @@ namespace {
 TEST_SUITE("SecurityEntry") {
   TEST_CASE_FIXTURE(Fixture, "publish_bbo_quote") {
     auto initialSequences = SecurityEntry::InitialSequences();
-    auto entry = SecurityEntry(TEST_SECURITY, Money::ZERO, initialSequences);
+    auto entry = SecurityEntry(SECURITY_A, Money::ZERO, initialSequences);
     auto bboQuoteA = PublishBboQuote(entry, Money::ONE, 100,
       Money::ONE + Money::CENT, 100, Queries::Sequence(0));
     auto bboQuoteB = PublishBboQuote(entry, 2 * Money::ONE, 100,
@@ -118,7 +118,7 @@ TEST_SUITE("SecurityEntry") {
 
   TEST_CASE_FIXTURE(Fixture, "publish_market_quote") {
     auto initialSequences = SecurityEntry::InitialSequences();
-    auto entry = SecurityEntry(TEST_SECURITY, Money::ZERO, initialSequences);
+    auto entry = SecurityEntry(SECURITY_A, Money::ZERO, initialSequences);
     auto nyseQuoteA = PublishMarketQuote(entry, DefaultMarkets::NYSE(),
       Money::ONE, 100, Money::ONE + Money::CENT, 100, Queries::Sequence(0));
     TestMarketQuoteSnapshot(entry, {nyseQuoteA});
@@ -137,7 +137,7 @@ TEST_SUITE("SecurityEntry") {
 
   TEST_CASE_FIXTURE(Fixture, "add_and_remove_book_quote") {
     auto initialSequences = SecurityEntry::InitialSequences();
-    auto entry = SecurityEntry(TEST_SECURITY, Money::ZERO, initialSequences);
+    auto entry = SecurityEntry(SECURITY_A, Money::ZERO, initialSequences);
     auto abcBidA = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
       Money::ONE, 100, Side::BID, Queries::Sequence(0), 100);
     TestBookQuoteSnapshot(entry, {}, {abcBidA});

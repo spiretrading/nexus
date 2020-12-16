@@ -81,7 +81,8 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+      std::vector<SecurityInfo> QuerySecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
@@ -115,8 +116,8 @@ namespace Nexus::MarketDataService {
           const Security& security) = 0;
         virtual SecurityTechnicals LoadSecurityTechnicals(
           const Security& security) = 0;
-        virtual boost::optional<SecurityInfo> LoadSecurityInfo(
-          const Security& security) = 0;
+        virtual std::vector<SecurityInfo> QuerySecurityInfo(
+          const SecurityInfoQuery& query) = 0;
         virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
           const std::string& prefix) = 0;
         virtual void Close() = 0;
@@ -151,8 +152,8 @@ namespace Nexus::MarketDataService {
         SecuritySnapshot LoadSecuritySnapshot(const Security& security) override;
         SecurityTechnicals LoadSecurityTechnicals(
           const Security& security) override;
-        boost::optional<SecurityInfo> LoadSecurityInfo(
-          const Security& security) override;
+        std::vector<SecurityInfo> QuerySecurityInfo(
+          const SecurityInfoQuery& query) override;
         std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
           const std::string& prefix) override;
         void Close() override;
@@ -169,16 +170,16 @@ namespace Nexus::MarketDataService {
    */
   template<typename MarketDataClient>
   Beam::Routines::Routine::Id QueryRealTimeBookQuotesWithSnapshot(
-      MarketDataClient& marketDataClient, const Security& security,
+      MarketDataClient&& marketDataClient, const Security& security,
       Beam::ScopedQueueWriter<BookQuote> queue,
       Beam::Queries::InterruptionPolicy interruptionPolicy =
         Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
     return Beam::Routines::Spawn(
-      [&marketDataClient, security, queue = std::move(queue),
-          interruptionPolicy] () mutable {
+      [marketDataClient = Beam::CapturePtr<MarketDataClient>(marketDataClient),
+          security, queue = std::move(queue), interruptionPolicy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
-          snapshot = marketDataClient.LoadSecuritySnapshot(security);
+          snapshot = marketDataClient->LoadSecuritySnapshot(security);
         } catch(const std::exception&) {
           queue.Break(std::current_exception());
           return;
@@ -188,7 +189,7 @@ namespace Nexus::MarketDataService {
           bookQuoteQuery.SetIndex(security);
           bookQuoteQuery.SetRange(Beam::Queries::Range::RealTime());
           bookQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryBookQuotes(bookQuoteQuery, std::move(queue));
+          marketDataClient->QueryBookQuotes(bookQuoteQuery, std::move(queue));
         } else {
           auto startPoint = Beam::Queries::Sequence::First();
           try {
@@ -210,7 +211,7 @@ namespace Nexus::MarketDataService {
           bookQuoteQuery.SetSnapshotLimit(
             Beam::Queries::SnapshotLimit::Unlimited());
           bookQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryBookQuotes(bookQuoteQuery, std::move(queue));
+          marketDataClient->QueryBookQuotes(bookQuoteQuery, std::move(queue));
         }
       });
   }
@@ -224,16 +225,16 @@ namespace Nexus::MarketDataService {
    */
   template<typename MarketDataClient>
   Beam::Routines::Routine::Id QueryRealTimeMarketQuotesWithSnapshot(
-      MarketDataClient& marketDataClient, const Security& security,
+      MarketDataClient&& marketDataClient, const Security& security,
       Beam::ScopedQueueWriter<MarketQuote> queue,
       Beam::Queries::InterruptionPolicy interruptionPolicy =
         Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE) {
     return Beam::Routines::Spawn(
-      [&marketDataClient, security, queue = std::move(queue),
-          interruptionPolicy] () mutable {
+      [marketDataClient = Beam::CapturePtr<MarketDataClient>(marketDataClient),
+          security, queue = std::move(queue), interruptionPolicy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
-          snapshot = marketDataClient.LoadSecuritySnapshot(security);
+          snapshot = marketDataClient->LoadSecuritySnapshot(security);
         } catch(const std::exception&) {
           queue.Break(std::current_exception());
           return;
@@ -243,7 +244,7 @@ namespace Nexus::MarketDataService {
           marketQuoteQuery.SetIndex(security);
           marketQuoteQuery.SetRange(Beam::Queries::Range::RealTime());
           marketQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryMarketQuotes(marketQuoteQuery,
+          marketDataClient->QueryMarketQuotes(marketQuoteQuery,
             std::move(queue));
         } else {
           auto startPoint = Beam::Queries::Sequence::First();
@@ -264,7 +265,7 @@ namespace Nexus::MarketDataService {
           marketQuoteQuery.SetSnapshotLimit(
             Beam::Queries::SnapshotLimit::Unlimited());
           marketQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryMarketQuotes(marketQuoteQuery,
+          marketDataClient->QueryMarketQuotes(marketQuoteQuery,
             std::move(queue));
         }
       });
@@ -363,9 +364,9 @@ namespace Nexus::MarketDataService {
     return m_client->LoadSecurityTechnicals(security);
   }
 
-  inline boost::optional<SecurityInfo> MarketDataClientBox::LoadSecurityInfo(
-      const Security& security) {
-    return m_client->LoadSecurityInfo(security);
+  inline std::vector<SecurityInfo> MarketDataClientBox::QuerySecurityInfo(
+      const SecurityInfoQuery& query) {
+    return m_client->QuerySecurityInfo(query);
   }
 
   inline std::vector<SecurityInfo> MarketDataClientBox::
@@ -454,21 +455,21 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  SecuritySnapshot MarketDataClientBox::WrappedMarketDataClient<C>::LoadSecuritySnapshot(
-      const Security& security) {
+  SecuritySnapshot MarketDataClientBox::WrappedMarketDataClient<C>::
+      LoadSecuritySnapshot(const Security& security) {
     return m_client->LoadSecuritySnapshot(security);
   }
 
   template<typename C>
-  SecurityTechnicals MarketDataClientBox::WrappedMarketDataClient<C>::LoadSecurityTechnicals(
-      const Security& security) {
+  SecurityTechnicals MarketDataClientBox::WrappedMarketDataClient<C>::
+      LoadSecurityTechnicals(const Security& security) {
     return m_client->LoadSecurityTechnicals(security);
   }
 
   template<typename C>
-  boost::optional<SecurityInfo> MarketDataClientBox::WrappedMarketDataClient<C>::LoadSecurityInfo(
-      const Security& security) {
-    return m_client->LoadSecurityInfo(security);
+  std::vector<SecurityInfo> MarketDataClientBox::WrappedMarketDataClient<C>::
+      QuerySecurityInfo(const SecurityInfoQuery& query) {
+    return m_client->QuerySecurityInfo(query);
   }
 
   template<typename C>
