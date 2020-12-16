@@ -26,12 +26,12 @@ ScrollBarStyle::ScrollBarStyle(QWidget* parent)
 void ScrollBarStyle::drawComplexControl(QStyle::ComplexControl control,
     const QStyleOptionComplex* option, QPainter* painter,
     const QWidget *widget) const {
-  if(control == CC_ScrollBar) {
+  if(control == QStyle::CC_ScrollBar) {
     painter->fillRect(option->rect, Qt::white);
     auto slider_option = QStyleOptionSlider();
-    slider_option.rect = subControlRect(CC_ScrollBar, &slider_option,
-      SC_ScrollBarSlider, widget);
-    drawControl(CE_ScrollBarSlider, &slider_option, painter, widget);
+    slider_option.rect = subControlRect(QStyle::CC_ScrollBar, &slider_option,
+      QStyle::SC_ScrollBarSlider, widget);
+    drawControl(QStyle::CE_ScrollBarSlider, &slider_option, painter, widget);
     return;
   }
   QProxyStyle::drawComplexControl(control, option, painter, widget);
@@ -40,7 +40,7 @@ void ScrollBarStyle::drawComplexControl(QStyle::ComplexControl control,
 void ScrollBarStyle::drawControl(QStyle::ControlElement element,
     const QStyleOption* option, QPainter* painter,
     const QWidget *widget) const {
-  if(element == CE_ScrollBarSlider) {
+  if(element == QStyle::CE_ScrollBarSlider) {
     painter->fillRect(option->rect, QColor("#C8C8C8"));
     return;
   }
@@ -49,7 +49,7 @@ void ScrollBarStyle::drawControl(QStyle::ControlElement element,
 
 int ScrollBarStyle::pixelMetric(PixelMetric metric,
     const QStyleOption* option, const QWidget* widget) const {
-  if(metric == PM_ScrollBarExtent) {
+  if(metric == QStyle::PM_ScrollBarExtent) {
     if(auto scroll_bar = qobject_cast<const QScrollBar*>(widget); scroll_bar) {
       if(scroll_bar->orientation() == Qt::Horizontal) {
         return m_horizontal_handle_height;
@@ -73,10 +73,10 @@ int ScrollBarStyle::styleHint(QStyle::StyleHint hint,
 QRect ScrollBarStyle::subControlRect(ComplexControl control,
     const QStyleOptionComplex* option, SubControl sub_control,
     const QWidget* widget) const {
-  if(control == CC_ScrollBar) {
+  if(control == QStyle::CC_ScrollBar) {
     if(auto scroll_bar = qobject_cast<const QScrollBar*>(widget); scroll_bar) {
       switch(sub_control) {
-        case SC_ScrollBarAddPage:
+        case QStyle::SC_ScrollBarAddPage:
           if(scroll_bar->orientation() == Qt::Horizontal) {
             auto slider_right_pos = get_horizontal_slider_position(
               scroll_bar) + get_handle_size(scroll_bar);
@@ -89,26 +89,26 @@ QRect ScrollBarStyle::subControlRect(ComplexControl control,
             return {0, slider_bottom_pos, m_vertical_handle_width,
               scroll_bar->height() - slider_bottom_pos};
           }
-        case SC_ScrollBarSubPage:
+        case QStyle::SC_ScrollBarSubPage:
           if(scroll_bar->orientation() == Qt::Horizontal) {
             return {0, 0, get_horizontal_slider_position(scroll_bar),
               m_horizontal_handle_height};
           }
           return {0, 0, m_vertical_handle_width,
             get_vertical_slider_position(scroll_bar)};
-        case SC_ScrollBarGroove:
+        case QStyle::SC_ScrollBarGroove:
           return widget->rect();
-        case SC_ScrollBarSlider:
+        case QStyle::SC_ScrollBarSlider:
           if(scroll_bar->orientation() == Qt::Horizontal) {
             return {get_horizontal_slider_position(scroll_bar), 0,
               get_handle_size(scroll_bar), scroll_bar->height()};
           }
           return {0, get_vertical_slider_position(scroll_bar),
             scroll_bar->width(), get_handle_size(scroll_bar)};
-        case SC_ScrollBarAddLine:
-        case SC_ScrollBarFirst:
-        case SC_ScrollBarLast:
-        case SC_ScrollBarSubLine:
+        case QStyle::SC_ScrollBarAddLine:
+        case QStyle::SC_ScrollBarFirst:
+        case QStyle::SC_ScrollBarLast:
+        case QStyle::SC_ScrollBarSubLine:
           return {};
       }
     }
