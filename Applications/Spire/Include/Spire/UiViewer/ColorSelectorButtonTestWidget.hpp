@@ -20,7 +20,7 @@ namespace Spire {
     private:
       ColorSelectorButton* m_color_selector_button;
       QGridLayout* m_layout;
-      std::function<void()> m_set_tab_order;
+      std::function<void()> m_reset_tab_order;
 
       void on_create_color_button_color(const QString& color);
       void on_set_color_button_color(const QString& color_hex);
