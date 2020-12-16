@@ -6,7 +6,6 @@
 #include <Beam/Queries/SqlDataStore.hpp>
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
@@ -21,7 +20,7 @@ namespace Nexus::MarketDataService {
    * @param <C> The type of SQL connection.
    */
   template<typename C>
-  class SqlHistoricalDataStore : private boost::noncopyable {
+  class SqlHistoricalDataStore {
     public:
 
       /** The type of SQL connection. */
@@ -34,13 +33,12 @@ namespace Nexus::MarketDataService {
        * Constructs an SqlHistoricalDataStore.
        * @param connectionBuilder The callable used to build SQL connections.
        */
-      SqlHistoricalDataStore(ConnectionBuilder connectionBuilder);
+      explicit SqlHistoricalDataStore(ConnectionBuilder connectionBuilder);
 
       ~SqlHistoricalDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -98,6 +96,10 @@ namespace Nexus::MarketDataService {
       DataStore<Viper::Row<TimeAndSale>, Viper::Row<Security>>
         m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
+
+      SqlHistoricalDataStore(const SqlHistoricalDataStore&) = delete;
+      SqlHistoricalDataStore& operator =(
+        const SqlHistoricalDataStore&) = delete;
   };
 
   template<typename C>
@@ -139,30 +141,61 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  boost::optional<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
-      const Security& security) {
-    auto info = std::optional<SecurityInfo>();
+  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
+    auto matches = std::vector<SecurityInfo>();
+    auto filter = Beam::Queries::BuildSqlQuery<Queries::SqlTranslator>(
+      "security_info", query.GetFilter());
+    auto anchor = [&] {
+      if(auto anchor = query.GetAnchor()) {
+        auto left = Viper::Expression(
+          std::make_shared<Viper::LiteralExpression>("(symbol,country)"));
+        auto symbolLiteral = std::string();
+        Viper::literal(anchor->GetSymbol()).append_query(symbolLiteral);
+        auto countryLiteral = std::string();
+        Viper::literal(anchor->GetCountry()).append_query(countryLiteral);
+        auto right = Viper::Expression(
+          std::make_shared<Viper::LiteralExpression>(
+            "(" + symbolLiteral + "," + countryLiteral + ")"));
+        if(query.GetSnapshotLimit().GetType() ==
+            Beam::Queries::SnapshotLimit::Type::HEAD) {
+          return left > right;
+        } else {
+          return left < right;
+        }
+      } else {
+        return Viper::literal(true);
+      }
+    }();
+    auto order = [&] {
+      if(query.GetSnapshotLimit().GetType() ==
+          Beam::Queries::SnapshotLimit::Type::HEAD) {
+        return Viper::Order::ASC;
+      } else {
+        return Viper::Order::DESC;
+      }
+    }();
+    auto limit = query.GetSnapshotLimit().GetSize();
     {
       auto reader = m_readerPool.Acquire();
       reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
-        Viper::sym("symbol") == security.GetSymbol() &&
-        Viper::sym("country") == security.GetCountry(), &info));
+        filter && anchor,
+        Viper::order_by({{"symbol", order}, {"country", order}}),
+        std::back_inserter(matches)));
     }
-    if(info.has_value()) {
-      return std::move(*info);
+    matches.erase(std::remove_if(matches.begin(), matches.end(),
+      [&] (const auto& match) {
+        return !(match.m_security <= query.GetIndex());
+      }), matches.end());
+    if(static_cast<int>(matches.size()) > query.GetSnapshotLimit().GetSize()) {
+      auto delta = matches.size() - query.GetSnapshotLimit().GetSize();
+      matches.erase(matches.end() - delta, matches.end());
     }
-    return boost::none;
-  }
-
-  template<typename C>
-  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::LoadAllSecurityInfo() {
-    auto result = std::vector<SecurityInfo>();
-    {
-      auto reader = m_readerPool.Acquire();
-      reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
-        std::back_inserter(result)));
+    if(query.GetSnapshotLimit().GetType() ==
+        Beam::Queries::SnapshotLimit::Type::TAIL) {
+      std::reverse(matches.begin(), matches.end());
     }
-    return result;
+    return matches;
   }
 
   template<typename C>

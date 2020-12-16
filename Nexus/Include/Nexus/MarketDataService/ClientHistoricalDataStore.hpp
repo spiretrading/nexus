@@ -4,7 +4,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
@@ -15,7 +14,7 @@ namespace Nexus::MarketDataService {
    * @param <C> The type of MarketDataClient to wrap.
    */
   template<typename C>
-  class ClientHistoricalDataStore : private boost::noncopyable {
+  class ClientHistoricalDataStore {
     public:
 
       /** The type of MarketDataClient to wrap. */
@@ -26,13 +25,12 @@ namespace Nexus::MarketDataService {
        * @param client Initializes the client to wrap.
        */
       template<typename CF>
-      ClientHistoricalDataStore(CF&& client);
+      explicit ClientHistoricalDataStore(CF&& client);
 
       ~ClientHistoricalDataStore();
 
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
-
-      std::vector<SecurityInfo> LoadAllSecurityInfo();
+      std::vector<SecurityInfo> LoadSecurityInfo(
+        const SecurityInfoQuery& query);
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -80,6 +78,9 @@ namespace Nexus::MarketDataService {
       Beam::GetOptionalLocalPtr<C> m_client;
       Beam::IO::OpenState m_openState;
 
+      ClientHistoricalDataStore(const ClientHistoricalDataStore&) = delete;
+      ClientHistoricalDataStore& operator =(
+        const ClientHistoricalDataStore&) = delete;
       template<typename T, typename Query, typename F>
       std::vector<T> SubmitQuery(const Query& query, F f);
   };
@@ -95,15 +96,9 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  boost::optional<SecurityInfo> ClientHistoricalDataStore<C>::LoadSecurityInfo(
-      const Security& security) {
-    return m_client->LoadSecurityInfo(security);
-  }
-
-  template<typename C>
-  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::
-      LoadAllSecurityInfo() {
-    return {};
+  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::LoadSecurityInfo(
+      const SecurityInfoQuery& query) {
+    return m_client->QuerySecurityInfo(query);
   }
 
   template<typename C>

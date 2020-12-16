@@ -130,6 +130,7 @@ int main(int argc, const char** argv) {
       definitionsClient->LoadMarketDatabase(), marketDataAddresses,
       serviceLocatorClient, *timeClient);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

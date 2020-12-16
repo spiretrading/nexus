@@ -13,6 +13,7 @@ namespace Nexus::MarketDataService {
   struct EntitlementKey;
   class EntitlementSet;
   struct HistoricalDataStore;
+  class HistoricalDataStoreBox;
   class HistoricalDataStoreException;
   template<typename V, typename D> class HistoricalDataStoreQueryWrapper;
   class LocalHistoricalDataStore;
@@ -33,8 +34,6 @@ namespace Nexus::MarketDataService {
   struct SecuritySnapshot;
   template<typename D> class SessionCachedHistoricalDataStore;
   template<typename C> class SqlHistoricalDataStore;
-  class VirtualHistoricalDataStore;
-  template<typename C> class WrapperHistoricalDataStore;
 
   /** Standard name for the market data feed service. */
   inline const auto FEED_SERVICE_NAME = std::string("market_data_feed_service");

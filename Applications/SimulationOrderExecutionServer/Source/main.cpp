@@ -169,10 +169,10 @@ int main(int argc, const char** argv) {
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();
+    serviceLocatorClient->Close();
     complianceClient->Close();
     marketDataClient->Close();
     administrationClient->Close();
-    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

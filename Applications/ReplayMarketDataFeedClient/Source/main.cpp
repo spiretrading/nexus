@@ -134,6 +134,7 @@ int main(int argc, const char** argv) {
       &historicalDataStore, marketDataAddresses, serviceLocatorClient,
       timeClient.get());
     WaitForKillEvent();
+    serviceLocatorClient->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

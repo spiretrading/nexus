@@ -132,11 +132,12 @@ namespace Nexus::MarketDataService {
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
       /**
-       * Loads the SecurityInfo for a specified Security.
-       * @param security The Security whose SecurityInfo is to be loaded.
-       * @return The SecurityInfo for the specified <i>security</i>.
+       * Queries for all SecurityInfo objects that are within a region.
+       * @param query The query to submit.
+       * @return The list of SecurityInfo objects that match the <i>query</i>.
        */
-      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+      std::vector<SecurityInfo> QuerySecurityInfo(
+        const SecurityInfoQuery& query);
 
       /**
        * Loads SecurityInfo objects that match a prefix.
@@ -300,13 +301,13 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename B>
-  boost::optional<SecurityInfo> MarketDataClient<B>::LoadSecurityInfo(
-      const Security& security) {
+  std::vector<SecurityInfo> MarketDataClient<B>::QuerySecurityInfo(
+      const SecurityInfoQuery& query) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadSecurityInfoService>(security);
-    }, "Failed to load security info: " +
-      boost::lexical_cast<std::string>(security));
+      return client->template SendRequest<QuerySecurityInfoService>(query);
+    }, "Failed to query for security info records: " +
+      boost::lexical_cast<std::string>(query));
   }
 
   template<typename B>

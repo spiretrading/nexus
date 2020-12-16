@@ -97,14 +97,14 @@ namespace Nexus::MarketDataService {
       SecuritySubscriptions<TimeAndSale> m_timeAndSaleSubscriptions;
       Beam::IO::OpenState m_openState;
 
+      Security NormalizePrimaryMarket(const Security& security);
       void OnQueryOrderImbalances(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
         const MarketWideDataQuery& query);
       void OnEndOrderImbalanceQuery(ServiceProtocolClient& client,
         MarketCode market, int id);
       void OnQueryBboQuotes(Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryBboQuotesService>& request,
-        const SecurityMarketDataQuery& query);
+        QueryBboQuotesService>& request, const SecurityMarketDataQuery& query);
       void OnEndBboQuoteQuery(ServiceProtocolClient& client,
         const Security& security, int id);
       void OnQueryBookQuotes(Beam::Services::RequestToken<
@@ -123,11 +123,11 @@ namespace Nexus::MarketDataService {
       void OnEndTimeAndSaleQuery(ServiceProtocolClient& client,
         const Security& security, int id);
       SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
-        const Security& security);
-      SecurityTechnicals OnLoadSecurityTechnicals(
-        ServiceProtocolClient& client, const Security& security);
-      boost::optional<SecurityInfo> OnLoadSecurityInfo(
-        ServiceProtocolClient& client, const Security& security);
+        Security security);
+      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
+        Security security);
+      std::vector<SecurityInfo> OnQuerySecurityInfo(
+        ServiceProtocolClient& client, const SecurityInfoQuery& query);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
   };
@@ -149,7 +149,10 @@ namespace Nexus::MarketDataService {
         m_registry(std::forward<RF>(registry)),
         m_dataStore(std::forward<DF>(dataStore)) {
     try {
-      auto securityInfo = m_dataStore->LoadAllSecurityInfo();
+      auto query = SecurityInfoQuery();
+      query.SetIndex(Region::Global());
+      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+      auto securityInfo = m_dataStore->LoadSecurityInfo(query);
       for(auto& entry : securityInfo) {
         m_registry->Add(entry);
       }
@@ -261,39 +264,39 @@ namespace Nexus::MarketDataService {
       std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
       std::bind(&MarketDataRegistryServlet::OnEndOrderImbalanceQuery, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     QueryBboQuotesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnQueryBboQuotes, this,
       std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRegistryServlet::OnEndBboQuoteQuery, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     QueryBookQuotesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnQueryBookQuotes, this,
       std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRegistryServlet::OnEndBookQuoteQuery, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     QueryMarketQuotesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnQueryMarketQuotes, this,
       std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<EndMarketQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRegistryServlet::OnEndMarketQuoteQuery, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     QueryTimeAndSalesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnQueryTimeAndSales, this,
       std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
       std::bind(&MarketDataRegistryServlet::OnEndTimeAndSaleQuery, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecuritySnapshot, this,
       std::placeholders::_1, std::placeholders::_2));
     LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityInfoService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnLoadSecurityInfo, this,
+    QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
+      &MarketDataRegistryServlet::OnQuerySecurityInfo, this,
       std::placeholders::_1, std::placeholders::_2));
     LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecurityInfoFromPrefix, this,
@@ -341,14 +344,33 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename R, typename D, typename A>
+  Security MarketDataRegistryServlet<C, R, D, A>::NormalizePrimaryMarket(
+      const Security& security) {
+    if(security.GetMarket().IsEmpty()) {
+      return {};
+    }
+    auto query = SecurityInfoQuery();
+    query.SetIndex(security);
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+    auto result = m_dataStore->LoadSecurityInfo(query);
+    if(result.empty()) {
+      return security;
+    }
+    if(result.front().m_security.GetMarket() == security.GetMarket()) {
+      return result.front().m_security;
+    }
+    return {};
+  }
+
+  template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryOrderImbalances(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryOrderImbalancesService>& request, const MarketWideDataQuery& query) {
+        QueryOrderImbalancesService>& request,
+      const MarketWideDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex(),
         MarketDataType::ORDER_IMBALANCE)) {
-      auto result = OrderImbalanceQueryResult();
-      request.SetResult(result);
+      request.SetResult(OrderImbalanceQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
@@ -373,21 +395,25 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryBboQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
+        QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
         MarketDataType::BBO_QUOTE)) {
-      auto result = BboQuoteQueryResult();
-      request.SetResult(result);
+      request.SetResult(BboQuoteQueryResult());
+      return;
+    }
+    auto security = NormalizePrimaryMarket(query.GetIndex());
+    if(security == Security()) {
+      request.SetResult(BboQuoteQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
     auto result = BboQuoteQueryResult();
-    result.m_queryId = m_bboQuoteSubscriptions.Initialize(query.GetIndex(),
+    result.m_queryId = m_bboQuoteSubscriptions.Initialize(security,
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadBboQuotes(query);
-    m_bboQuoteSubscriptions.Commit(query.GetIndex(), std::move(result),
+    m_bboQuoteSubscriptions.Commit(security, std::move(result),
       [&] (const auto& result) {
         request.SetResult(result);
       });
@@ -402,21 +428,26 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryBookQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryBookQuotesService>& request, const SecurityMarketDataQuery& query) {
+        QueryBookQuotesService>& request,
+      const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
         MarketDataType::BOOK_QUOTE)) {
-      auto result = BookQuoteQueryResult();
-      request.SetResult(result);
+      request.SetResult(BookQuoteQueryResult());
+      return;
+    }
+    auto security = NormalizePrimaryMarket(query.GetIndex());
+    if(security == Security()) {
+      request.SetResult(BookQuoteQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
     auto result = BookQuoteQueryResult();
-    result.m_queryId = m_bookQuoteSubscriptions.Initialize(query.GetIndex(),
+    result.m_queryId = m_bookQuoteSubscriptions.Initialize(security,
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadBookQuotes(query);
-    m_bookQuoteSubscriptions.Commit(query.GetIndex(), std::move(result),
+    m_bookQuoteSubscriptions.Commit(security, std::move(result),
       [&] (const auto& result) {
         request.SetResult(result);
       });
@@ -431,22 +462,26 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryMarketQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryMarketQuotesService>& request,
+        QueryMarketQuotesService>& request,
       const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
         MarketDataType::MARKET_QUOTE)) {
-      auto result = MarketQuoteQueryResult();
-      request.SetResult(result);
+      request.SetResult(MarketQuoteQueryResult());
+      return;
+    }
+    auto security = NormalizePrimaryMarket(query.GetIndex());
+    if(security == Security()) {
+      request.SetResult(MarketQuoteQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
     auto result = MarketQuoteQueryResult();
-    result.m_queryId = m_marketQuoteSubscriptions.Initialize(query.GetIndex(),
+    result.m_queryId = m_marketQuoteSubscriptions.Initialize(security,
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadMarketQuotes(query);
-    m_marketQuoteSubscriptions.Commit(query.GetIndex(), std::move(result),
+    m_marketQuoteSubscriptions.Commit(security, std::move(result),
       [&] (const auto& result) {
         request.SetResult(result);
       });
@@ -461,22 +496,26 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::OnQueryTimeAndSales(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryTimeAndSalesService>& request,
+        QueryTimeAndSalesService>& request,
       const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!HasEntitlement(session, query.GetIndex().GetMarket(),
         MarketDataType::TIME_AND_SALE)) {
-      auto result = TimeAndSaleQueryResult();
-      request.SetResult(result);
+      request.SetResult(TimeAndSaleQueryResult());
+      return;
+    }
+    auto security = NormalizePrimaryMarket(query.GetIndex());
+    if(security == Security()) {
+      request.SetResult(TimeAndSaleQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
     auto result = TimeAndSaleQueryResult();
-    result.m_queryId = m_timeAndSaleSubscriptions.Initialize(query.GetIndex(),
+    result.m_queryId = m_timeAndSaleSubscriptions.Initialize(security,
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadTimeAndSales(query);
-    m_timeAndSaleSubscriptions.Commit(query.GetIndex(), std::move(result),
+    m_timeAndSaleSubscriptions.Commit(security, std::move(result),
       [&] (const auto& result) {
         request.SetResult(result);
       });
@@ -490,12 +529,15 @@ namespace Nexus::MarketDataService {
 
   template<typename C, typename R, typename D, typename A>
   SecuritySnapshot MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecuritySnapshot(ServiceProtocolClient& client,
-      const Security& security) {
+      OnLoadSecuritySnapshot(ServiceProtocolClient& client, Security security) {
     auto& session = client.GetSession();
+    security = NormalizePrimaryMarket(security);
+    if(security == Security()) {
+      return {};
+    }
     auto securitySnapshot = m_registry->FindSnapshot(security);
-    if(!securitySnapshot.is_initialized()) {
-      return SecuritySnapshot();
+    if(!securitySnapshot) {
+      return {};
     }
     if(!HasEntitlement(session, security.GetMarket(),
         MarketDataType::BBO_QUOTE)) {
@@ -519,8 +561,7 @@ namespace Nexus::MarketDataService {
     securitySnapshot->m_askBook.erase(askEndRange,
       securitySnapshot->m_askBook.end());
     auto bidEndRange = std::remove_if(securitySnapshot->m_bidBook.begin(),
-      securitySnapshot->m_bidBook.end(),
-      [&] (auto& bookQuote) {
+      securitySnapshot->m_bidBook.end(), [&] (auto& bookQuote) {
         return !HasEntitlement(session,
           EntitlementKey(security.GetMarket(), bookQuote->m_market),
           MarketDataType::BOOK_QUOTE);
@@ -533,7 +574,8 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
       OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-      const Security& security) {
+        Security security) {
+    security = NormalizePrimaryMarket(security);
     if(auto securityTechnicals = m_registry->FindSecurityTechnicals(security)) {
       return *securityTechnicals;
     }
@@ -541,16 +583,16 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename R, typename D, typename A>
-  boost::optional<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecurityInfo(ServiceProtocolClient& client,
-      const Security& security) {
-    return m_dataStore->LoadSecurityInfo(security);
+  std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
+      OnQuerySecurityInfo(ServiceProtocolClient& client,
+        const SecurityInfoQuery& query) {
+    return m_dataStore->LoadSecurityInfo(query);
   }
 
   template<typename C, typename R, typename D, typename A>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
       OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
-      const std::string& prefix) {
+        const std::string& prefix) {
     return m_registry->SearchSecurityInfo(prefix);
   }
 }
