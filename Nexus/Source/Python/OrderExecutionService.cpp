@@ -33,6 +33,7 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::UidService;
 using namespace boost;
+using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
@@ -438,7 +439,14 @@ void Nexus::Python::ExportStandardQueries(module& module) {
   module.def("build_daily_order_submission_query",
     &BuildDailyOrderSubmissionQuery);
   module.def("query_daily_order_submissions",
-    &QueryDailyOrderSubmissions<OrderExecutionClientBox>);
+    [] (const DirectoryEntry& account, ptime startTime, ptime endTime,
+        const MarketDatabase& marketDatabase,
+        const tz_database& timeZoneDatabase,
+        OrderExecutionClientBox orderExecutionClient,
+        ScopedQueueWriter<const Order*> queue) {
+      QueryDailyOrderSubmissions(account, startTime, endTime, marketDatabase,
+        timeZoneDatabase, std::move(orderExecutionClient), std::move(queue));
+    });
   module.def("build_live_orders_filter", &BuildLiveOrdersFilter);
   module.def("build_live_orders_query", &BuildLiveOrdersQuery);
   module.def("query_live_orders", &QueryLiveOrders<OrderExecutionClientBox>);

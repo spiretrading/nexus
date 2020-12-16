@@ -31,8 +31,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
         static_cast<Beam::Queries::Sequence::Ordinal>(i))));
       dataStore->Store(bboQuote);
     }
-    auto testEnvironment = TestEnvironment(
-      MakeVirtualHistoricalDataStore(dataStore));
+    auto testEnvironment = TestEnvironment(HistoricalDataStoreBox(dataStore));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       ServiceClientsBox(std::in_place_type<TestServiceClients>,
         Ref(testEnvironment)));
@@ -80,8 +79,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
         static_cast<Beam::Queries::Sequence::Ordinal>(i))));
       dataStore->Store(bboQuote);
     }
-    auto testEnvironment = TestEnvironment(
-      MakeVirtualHistoricalDataStore(dataStore));
+    auto testEnvironment = TestEnvironment(HistoricalDataStoreBox(dataStore));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       ServiceClientsBox(std::in_place_type<TestServiceClients>,
         Ref(testEnvironment)));

@@ -7,7 +7,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <boost/noncopyable.hpp>
+#include <boost/lexical_cast.hpp>
 #include <quickfix/Application.h>
 #include <quickfix/FileStore.h>
 #include <quickfix/FileLog.h>
@@ -40,7 +40,7 @@ namespace Nexus::FixUtilities {
   };
 
   /** Implements the OrderExecutionDriver using the FIX protocol. */
-  class FixOrderExecutionDriver : private boost::noncopyable {
+  class FixOrderExecutionDriver {
     public:
 
       /**
@@ -88,6 +88,10 @@ namespace Nexus::FixUtilities {
       Beam::Threading::Sync<std::vector<
         std::unique_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
       Beam::IO::OpenState m_openState;
+
+      FixOrderExecutionDriver(const FixOrderExecutionDriver&) = delete;
+      FixOrderExecutionDriver& operator =(
+        const FixOrderExecutionDriver&) = delete;
   };
 
   inline FixOrderExecutionDriver::Application::Application(
@@ -171,16 +175,17 @@ namespace Nexus::FixUtilities {
     auto fixApplicationEntryIterator = m_fixApplications.find(
       (*orderRecord)->m_info.m_fields.m_destination);
     if(fixApplicationEntryIterator == m_fixApplications.end()) {
-      BOOST_THROW_EXCEPTION(
-        OrderExecutionService::OrderUnrecoverableException());
+      BOOST_THROW_EXCEPTION(OrderExecutionService::OrderUnrecoverableException(
+        "FIX application for given destination not found: [" +
+        (*orderRecord)->m_info.m_fields.m_destination + "], " +
+        boost::lexical_cast<std::string>((*orderRecord)->m_info.m_orderId)));
     }
     auto fixApplicationEntry = fixApplicationEntryIterator->second;
     auto& order = fixApplicationEntry->m_application->Recover(orderRecord);
     Beam::Threading::With(m_orderIdToFixApplication,
       [&] (auto& orderIdToFixApplication) {
-        orderIdToFixApplication.insert(
-          std::make_pair((*orderRecord)->m_info.m_orderId,
-          fixApplicationEntry));
+        orderIdToFixApplication.insert(std::pair(
+          (*orderRecord)->m_info.m_orderId, fixApplicationEntry));
       });
     return order;
   }

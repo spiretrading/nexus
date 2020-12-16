@@ -1,5 +1,7 @@
 import argparse
 import datetime
+import functools
+import os
 import sys
 
 import beam
@@ -31,6 +33,8 @@ def parse_ip_address(source):
     int(source[separator + 1 :]))
 
 def parse_region(service_clients, region):
+  if region == '*':
+    return nexus.Region.GLOBAL
   market_database = \
     service_clients.get_definitions_client().load_market_database()
   countries = service_clients.get_definitions_client().load_country_database()
@@ -81,15 +85,25 @@ def cancel_account(service_clients, account, region, begin, end, message):
       cancel_order(service_clients, order, message)
 
 def cancel_region(service_clients, region, begin, end, message):
+  count = 0
+  routines = beam.routines.RoutineHandlerGroup()
   for account in \
-      service_clients.get_service_locator_client().load_all_accounts():
-    cancel_account(service_clients, account, region, begin, end, message)
+      service_clients[0].get_service_locator_client().load_all_accounts():
+    if count == len(service_clients):
+      count = 0
+      routines.wait()
+    routines.spawn(functools.partial(cancel_account, service_clients[count],
+      account, region, begin, end, message))
+    count += 1
+  routines.wait()
 
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
+  parser.add_argument('-j', '--connections', type=int,
+    help='Number of connections', default=(os.cpu_count() // 2))
   parser.add_argument('-o', '--order', type=int, help='Order ID.')
   parser.add_argument('-a', '--account', type=str, help='Account name.')
   parser.add_argument('-r', '--region', type=str, help='The region to cancel.')
@@ -111,23 +125,27 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = nexus.ApplicationServiceClients(username, password, address)
+  service_clients = []
+  for i in range(args.connections):
+    service_clients.append(
+      nexus.ApplicationServiceClients(username, password, address))
   if args.order:
-    cancel_order_by_id(service_clients, args.order, args.message)
+    cancel_order_by_id(service_clients[0], args.order, args.message)
   elif args.account:
     if args.region:
-      region = parse_region(service_clients, args.region)
+      region = parse_region(service_clients[0], args.region)
     else:
       region = nexus.Region.GLOBAL
-    account = service_clients.get_service_locator_client().find_account(
+    account = service_clients[0].get_service_locator_client().find_account(
       args.account)
     if not account:
       print('Account %s not found.' % args.account)
       return
-    cancel_account(service_clients, account, region, args.begin, args.end,
+    cancel_account(service_clients[0], account, region, args.begin, args.end,
       args.message)
   elif args.region:
-    cancel_region(service_clients, parse_region(service_clients, args.region),
+    cancel_region(service_clients,
+      parse_region(service_clients[0], args.region),
       args.begin, args.end, args.message)
   else:
     print('The --account or --region argument is required.')
