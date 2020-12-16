@@ -181,38 +181,45 @@ namespace Nexus::Compliance {
     if(!m_securities.Contains(fields.m_security)) {
       return;
     }
-    auto price = GetExpectedPrice(fields);
-    Beam::Threading::With(m_buyingPowerModel,
-      [&] (auto& buyingPowerModel) {
-        auto convertedFields = fields;
-        m_currencies.insert(std::pair(order.GetInfo().m_orderId,
-          fields.m_currency));
-        convertedFields.m_currency = m_currency;
-        auto convertedPrice = Money();
-        try {
-          convertedFields.m_price = m_exchangeRates.Convert(fields.m_price,
-            fields.m_currency, convertedFields.m_currency);
-          convertedPrice = m_exchangeRates.Convert(price, fields.m_currency,
-            fields.m_currency);
-        } catch(const CurrencyPairNotFoundException&) {
-          return;
+    auto price = [&] {
+      try {
+        return GetExpectedPrice(order.GetInfo().m_fields);
+      } catch(const std::exception&) {
+        if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
+          return order.GetInfo().m_fields.m_price;
         }
-        buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
-          convertedPrice);
-        order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
+        return Money::ZERO;
+      }
+    }();
+    Beam::Threading::With(m_buyingPowerModel, [&] (auto& buyingPowerModel) {
+      auto convertedFields = fields;
+      m_currencies.insert(std::pair(order.GetInfo().m_orderId,
+        fields.m_currency));
+      convertedFields.m_currency = m_currency;
+      auto convertedPrice = Money();
+      try {
+        convertedFields.m_price = m_exchangeRates.Convert(fields.m_price,
+          fields.m_currency, convertedFields.m_currency);
+        convertedPrice = m_exchangeRates.Convert(price, fields.m_currency,
+          fields.m_currency);
+      } catch(const CurrencyPairNotFoundException&) {
+        return;
+      }
+      buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
+        convertedPrice);
+      order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
     });
   }
 
   template<typename C>
   BboQuote BuyingPowerComplianceRule<C>::LoadBboQuote(
       const Security& security) {
-    auto publisher = m_bboQuotes.GetOrInsert(security,
-      [&] {
-        auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        MarketDataService::QueryRealTimeWithSnapshot(security,
-          *m_marketDataClient, publisher);
-        return publisher;
-      });
+    auto publisher = m_bboQuotes.GetOrInsert(security, [&] {
+      auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
+      MarketDataService::QueryRealTimeWithSnapshot(security,
+        *m_marketDataClient, publisher);
+      return publisher;
+    });
     try {
       return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {

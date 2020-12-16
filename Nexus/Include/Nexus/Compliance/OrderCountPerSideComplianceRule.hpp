@@ -92,9 +92,9 @@ namespace Nexus::Compliance {
     } else {
       order.GetPublisher().Monitor(
         m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
-        std::bind(&OrderCountPerSideComplianceRule::OnExecutionReport, this,
-        order.GetInfo().m_fields.m_security, order.GetInfo().m_fields.m_side,
-        std::placeholders::_1)));
+          std::bind(&OrderCountPerSideComplianceRule::OnExecutionReport, this,
+            order.GetInfo().m_fields.m_security,
+            order.GetInfo().m_fields.m_side, std::placeholders::_1)));
     }
   }
 
@@ -106,16 +106,15 @@ namespace Nexus::Compliance {
     auto& orderCounts = Pick(order.GetInfo().m_fields.m_side, m_askCounts,
       m_bidCounts);
     auto& orderCount = orderCounts.GetOrInsert(
-      order.GetInfo().m_fields.m_security,
-      [] {
+      order.GetInfo().m_fields.m_security, [] {
         return 0;
       });
     ++orderCount;
     order.GetPublisher().Monitor(
       m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
-      std::bind(&OrderCountPerSideComplianceRule::OnExecutionReport, this,
-      order.GetInfo().m_fields.m_security, order.GetInfo().m_fields.m_side,
-      std::placeholders::_1)));
+        std::bind(&OrderCountPerSideComplianceRule::OnExecutionReport, this,
+          order.GetInfo().m_fields.m_security, order.GetInfo().m_fields.m_side,
+          std::placeholders::_1)));
   }
 
   inline void OrderCountPerSideComplianceRule::OnExecutionReport(
@@ -125,10 +124,9 @@ namespace Nexus::Compliance {
       return;
     }
     auto& orderCounts = Pick(side, m_askCounts, m_bidCounts);
-    auto& orderCount = orderCounts.GetOrInsert(security,
-      [] {
-        return 0;
-      });
+    auto& orderCount = orderCounts.GetOrInsert(security, [] {
+      return 0;
+    });
     --orderCount;
   }
 }

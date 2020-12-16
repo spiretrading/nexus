@@ -292,9 +292,10 @@ namespace Details {
     }();
     if(!bboQuote) {
       orderEntry->m_order->With([&] (auto status, auto& executionReports) {
-        auto newReport = OrderExecutionService::ExecutionReport::
-          BuildUpdatedReport(executionReports.back(), OrderStatus::REJECTED,
-          m_timeClient->GetTime());
+        auto newReport =
+          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+            executionReports.back(), OrderStatus::REJECTED,
+            m_timeClient->GetTime());
         orderEntry->m_order->Update(newReport);
       });
       return;
@@ -319,8 +320,8 @@ namespace Details {
       auto fieldsPrice = Details::GetOfferPrice(fields);
       auto orderEntryPrice = Details::GetOfferPrice(orderEntryFields);
       if(OfferComparator(fields.m_side, fieldsPrice, orderEntryPrice) <= 0 &&
-          OfferComparator(fields.m_side, orderEntryPrice,
-          bboThresholdPrice) >= 0) {
+          OfferComparator(fields.m_side, orderEntryPrice, bboThresholdPrice) >=
+          0) {
         auto passiveOrderRemaining = bool();
         auto matchReport = OrderExecutionService::ExecutionReport();
         try {
@@ -347,9 +348,9 @@ namespace Details {
     if(!internalMatchReports.empty()) {
       orderEntry->m_order->With([&] (auto status, auto& executionReports) {
         orderEntry->m_isPendingNew = false;
-        auto newReport = OrderExecutionService::ExecutionReport::
-          BuildUpdatedReport(executionReports.back(), OrderStatus::NEW,
-          m_timeClient->GetTime());
+        auto newReport =
+          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+            executionReports.back(), OrderStatus::NEW, m_timeClient->GetTime());
         orderEntry->m_order->Update(newReport);
         auto sequence = newReport.m_sequence;
         for(auto& executionReport : internalMatchReports) {
@@ -362,8 +363,7 @@ namespace Details {
     }
     if(matchedQuantityRemaining != 0) {
       auto insertIterator = std::lower_bound(orderEntries->begin(),
-        orderEntries->end(), orderEntry,
-        [&] (auto& lhs, auto& rhs) {
+        orderEntries->end(), orderEntry, [&] (auto& lhs, auto& rhs) {
           auto lhsPrice = Details::GetOfferPrice(
             lhs->m_order->GetInfo().m_fields);
           auto rhsPrice = Details::GetOfferPrice(
@@ -396,10 +396,10 @@ namespace Details {
       const OrderExecutionService::OrderFields& fields,
       const std::shared_ptr<OrderEntry>& orderEntry) {
     auto driverOrderId = [&] {
-      if(orderEntry->m_driverOrder == nullptr) {
-        return orderEntry->m_order->GetInfo().m_orderId;
-      } else {
+      if(orderEntry->m_driverOrder) {
         return m_uidClient->LoadNextUid();
+      } else {
+        return orderEntry->m_order->GetInfo().m_orderId;
       }
     }();
     m_orderIds.Update(orderEntry->m_order->GetInfo().m_orderId, driverOrderId);
@@ -410,16 +410,16 @@ namespace Details {
     orderEntry->m_driverOrder = driverOrder;
     orderEntry->m_driverOrder->GetPublisher().Monitor(
       m_executionReportTasks.GetSlot<OrderExecutionService::ExecutionReport>(
-      std::bind(&InternalMatchingOrderExecutionDriver::OnExecutionReport, this,
-      std::weak_ptr<OrderEntry>{orderEntry}, std::placeholders::_1)));
+        std::bind(&InternalMatchingOrderExecutionDriver::OnExecutionReport,
+          this, std::weak_ptr<OrderEntry>(orderEntry), std::placeholders::_1)));
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
   OrderExecutionService::ExecutionReport
       InternalMatchingOrderExecutionDriver<B, M, T, U, D>::InternalMatch(
-      const std::shared_ptr<OrderEntry>& activeOrderEntry,
-      const std::shared_ptr<OrderEntry>& passiveOrderEntry, Quantity quantity,
-      Beam::Out<bool> passiveOrderRemaining) {
+        const std::shared_ptr<OrderEntry>& activeOrderEntry,
+        const std::shared_ptr<OrderEntry>& passiveOrderEntry, Quantity quantity,
+        Beam::Out<bool> passiveOrderRemaining) {
     passiveOrderEntry->m_isMatching = true;
     try {
       WaitForLiveOrder(*passiveOrderEntry);
