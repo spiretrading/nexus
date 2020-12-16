@@ -1,9 +1,10 @@
 #ifndef SPIRE_KEY_SEQUENCE_TEST_WIDGET_HPP
 #define SPIRE_KEY_SEQUENCE_TEST_WIDGET_HPP
-#include <functional>
 #include <QGridLayout>
 #include <QLabel>
 #include <QWidget>
+#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/KeySequenceInputField.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
@@ -22,10 +23,12 @@ namespace Spire {
     private:
       QGridLayout* m_layout;
       QLabel* m_status_label;
+      CheckBox* m_disable_check_box;
       KeySequenceInputField* m_input;
-      TextInputWidget* m_reset_input;
       TextInputWidget* m_set_input;
-      std::function<void()> m_reset_tab_order;
+      FlatButton* m_set_button;
+      TextInputWidget* m_reset_input;
+      FlatButton* m_reset_button;
 
       QKeySequence parse_key_sequence(const QString& text);
       void on_reset_button();

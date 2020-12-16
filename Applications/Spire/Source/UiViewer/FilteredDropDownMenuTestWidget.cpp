@@ -1,7 +1,6 @@
 #include "Spire/UiViewer/FilteredDropDownMenuTestWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
 
@@ -47,19 +46,14 @@ FilteredDropDownMenuTestWidget::FilteredDropDownMenuTestWidget(QWidget* parent)
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
   m_item_input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_layout->addWidget(m_item_input, 1, 0, 6, 2);
-  auto set_button = make_flat_button(tr("Set Items"), this);
-  set_button->setFixedSize(CONTROL_SIZE());
-  set_button->connect_clicked_signal([=] { on_set_button(); });
-  m_layout->addWidget(set_button, 7, 0);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedSize(CONTROL_SIZE());
-  reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 7, 1);
-  m_reset_sort_order = [=] {
-    setTabOrder(m_menu, m_item_input);
-    setTabOrder(m_item_input, set_button);
-    setTabOrder(set_button, reset_button);
-  };
+  m_set_button = make_flat_button(tr("Set Items"), this);
+  m_set_button->setFixedSize(CONTROL_SIZE());
+  m_set_button->connect_clicked_signal([=] { on_set_button(); });
+  m_layout->addWidget(m_set_button, 7, 0);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedSize(CONTROL_SIZE());
+  m_reset_button->connect_clicked_signal([=] { on_reset_button(); });
+  m_layout->addWidget(m_reset_button, 7, 1);
   on_reset_button();
 }
 
@@ -76,5 +70,7 @@ void FilteredDropDownMenuTestWidget::on_reset_button() {
     m_status_label->setText(m_menu->get_item().toString());
   });
   m_layout->addWidget(m_menu, 0, 0);
-  m_reset_sort_order();
+  setTabOrder(m_menu, m_item_input);
+  setTabOrder(m_item_input, m_set_button);
+  setTabOrder(m_set_button, m_reset_button);
 }

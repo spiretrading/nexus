@@ -1,11 +1,11 @@
 #ifndef SPIRE_FILTERED_DROP_DOWN_MENU_TEST_WIDGET_HPP
 #define SPIRE_FILTERED_DROP_DOWN_MENU_TEST_WIDGET_HPP
-#include <functional>
 #include <QGridLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QWidget>
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 
 namespace Spire {
 
@@ -24,8 +24,9 @@ namespace Spire {
       FilteredDropDownMenu* m_menu;
       QLabel* m_status_label;
       QPlainTextEdit* m_item_input;
+      FlatButton* m_set_button;
+      FlatButton* m_reset_button;
 
-      std::function<void()> m_reset_sort_order;
       void on_set_button();
       void on_reset_button();
   };
