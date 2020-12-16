@@ -32,7 +32,8 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     QWidget* parent)
     : QWidget(parent) {
   setFixedSize(scale(162, 78));
-  setStyleSheet("background-color: #F5F5F5;");
+  setObjectName("font_selector_widget");
+  setStyleSheet("#font_selector_widget { background-color: #F5F5F5; }");
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(scale_height(4));

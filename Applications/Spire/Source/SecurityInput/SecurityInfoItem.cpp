@@ -27,15 +27,16 @@ SecurityInfoItem::SecurityInfoItem(SecurityInfo info, QWidget* parent)
   m_security_name_label = new QLabel(item_delegate.displayText(
     QVariant::fromValue(m_info.m_security), QLocale()), this);
   m_security_name_label->setStyleSheet(QString(R"(
-    background-color: transparent;
-    color: #333333;
-    font-family: Roboto;
-    font-size: %1px;
-  )").arg(scale_height(12)));
+    QLabel {
+      background-color: transparent;
+      color: #333333;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(12)));
   top_line_layout->addWidget(m_security_name_label);
   m_icon_label = new QLabel(this);
   m_icon_label->setFixedSize(scale(14, 14));
-  m_icon_label->setStyleSheet("background-color: transparent;");
+  m_icon_label->setStyleSheet("QLabel { background-color: transparent; }");
   auto icon_path = QString(":/Icons/%1.png").arg(
     static_cast<std::uint16_t>(m_info.m_security.GetCountry()));
   m_icon_label->setPixmap(QPixmap::fromImage(
@@ -46,11 +47,12 @@ SecurityInfoItem::SecurityInfoItem(SecurityInfo info, QWidget* parent)
   m_company_name_label = new QLabel(QString::fromStdString(m_info.m_name),
     this);
   m_company_name_label->setStyleSheet(QString(R"(
-    background-color: transparent;
-    color: #8C8C8C;
-    font-family: Roboto;
-    font-size: %1px;
-  )").arg(scale_height(10)));
+    QLabel {
+      background-color: transparent;
+      color: #8C8C8C;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(10)));
   display_company_name();
   layout->addWidget(m_company_name_label);
 }

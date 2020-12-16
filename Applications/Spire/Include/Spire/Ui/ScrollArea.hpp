@@ -2,6 +2,7 @@
 #define SPIRE_SCROLL_AREA_HPP
 #include <QScrollArea>
 #include <QTimer>
+#include "Spire/Ui/ScrollBarStyle.hpp"
 
 namespace Spire {
 
@@ -46,6 +47,7 @@ namespace Spire {
     private:
       bool m_is_dynamic;
       bool m_is_wheel_disabled;
+      ScrollBarStyle* m_scroll_bar_style;
       QTimer m_horizontal_scroll_bar_timer;
       QTimer m_vertical_scroll_bar_timer;
       double m_horizontal_scrolling_error;
