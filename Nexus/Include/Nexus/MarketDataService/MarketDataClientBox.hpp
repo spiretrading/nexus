@@ -170,16 +170,16 @@ namespace Nexus::MarketDataService {
    */
   template<typename MarketDataClient>
   Beam::Routines::Routine::Id QueryRealTimeBookQuotesWithSnapshot(
-      MarketDataClient& marketDataClient, const Security& security,
+      MarketDataClient&& marketDataClient, const Security& security,
       Beam::ScopedQueueWriter<BookQuote> queue,
       Beam::Queries::InterruptionPolicy interruptionPolicy =
         Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
     return Beam::Routines::Spawn(
-      [&marketDataClient, security, queue = std::move(queue),
-          interruptionPolicy] () mutable {
+      [marketDataClient = Beam::CapturePtr<MarketDataClient>(marketDataClient),
+          security, queue = std::move(queue), interruptionPolicy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
-          snapshot = marketDataClient.LoadSecuritySnapshot(security);
+          snapshot = marketDataClient->LoadSecuritySnapshot(security);
         } catch(const std::exception&) {
           queue.Break(std::current_exception());
           return;
@@ -189,7 +189,7 @@ namespace Nexus::MarketDataService {
           bookQuoteQuery.SetIndex(security);
           bookQuoteQuery.SetRange(Beam::Queries::Range::RealTime());
           bookQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryBookQuotes(bookQuoteQuery, std::move(queue));
+          marketDataClient->QueryBookQuotes(bookQuoteQuery, std::move(queue));
         } else {
           auto startPoint = Beam::Queries::Sequence::First();
           try {
@@ -211,7 +211,7 @@ namespace Nexus::MarketDataService {
           bookQuoteQuery.SetSnapshotLimit(
             Beam::Queries::SnapshotLimit::Unlimited());
           bookQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryBookQuotes(bookQuoteQuery, std::move(queue));
+          marketDataClient->QueryBookQuotes(bookQuoteQuery, std::move(queue));
         }
       });
   }
@@ -225,16 +225,16 @@ namespace Nexus::MarketDataService {
    */
   template<typename MarketDataClient>
   Beam::Routines::Routine::Id QueryRealTimeMarketQuotesWithSnapshot(
-      MarketDataClient& marketDataClient, const Security& security,
+      MarketDataClient&& marketDataClient, const Security& security,
       Beam::ScopedQueueWriter<MarketQuote> queue,
       Beam::Queries::InterruptionPolicy interruptionPolicy =
         Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE) {
     return Beam::Routines::Spawn(
-      [&marketDataClient, security, queue = std::move(queue),
-          interruptionPolicy] () mutable {
+      [marketDataClient = Beam::CapturePtr<MarketDataClient>(marketDataClient),
+          security, queue = std::move(queue), interruptionPolicy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
-          snapshot = marketDataClient.LoadSecuritySnapshot(security);
+          snapshot = marketDataClient->LoadSecuritySnapshot(security);
         } catch(const std::exception&) {
           queue.Break(std::current_exception());
           return;
@@ -244,7 +244,7 @@ namespace Nexus::MarketDataService {
           marketQuoteQuery.SetIndex(security);
           marketQuoteQuery.SetRange(Beam::Queries::Range::RealTime());
           marketQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryMarketQuotes(marketQuoteQuery,
+          marketDataClient->QueryMarketQuotes(marketQuoteQuery,
             std::move(queue));
         } else {
           auto startPoint = Beam::Queries::Sequence::First();
@@ -265,7 +265,7 @@ namespace Nexus::MarketDataService {
           marketQuoteQuery.SetSnapshotLimit(
             Beam::Queries::SnapshotLimit::Unlimited());
           marketQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
-          marketDataClient.QueryMarketQuotes(marketQuoteQuery,
+          marketDataClient->QueryMarketQuotes(marketQuoteQuery,
             std::move(queue));
         }
       });

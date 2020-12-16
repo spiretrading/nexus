@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
 #include <unordered_map>
 #include <vector>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/ParameterExpression.hpp>
@@ -95,10 +96,11 @@ namespace Nexus::OrderExecutionService {
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      OrderExecutionClient& orderExecutionClient,
+      OrderExecutionClient&& orderExecutionClient,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    Beam::Routines::Spawn([=, queue = std::move(queue),
-        &orderExecutionClient] () mutable {
+    Beam::Routines::Spawn([=, queue = std::move(queue), orderExecutionClient =
+        Beam::CapturePtr<OrderExecutionClient>(
+          orderExecutionClient)] () mutable {
       auto marketTimeZones =
         std::unordered_map<std::string, std::vector<MarketCode>>();
       for(auto& market : marketDatabase.GetEntries()) {
@@ -123,7 +125,7 @@ namespace Nexus::OrderExecutionService {
         dailyOrderSubmissionQuery.SetSnapshotLimit(
           Beam::Queries::SnapshotLimit::Unlimited());
         auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
-        orderExecutionClient.QueryOrderSubmissions(dailyOrderSubmissionQuery,
+        orderExecutionClient->QueryOrderSubmissions(dailyOrderSubmissionQuery,
           snapshotQueue);
         try {
           while(true) {

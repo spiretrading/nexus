@@ -19,6 +19,7 @@ using namespace Beam::IO;
 using namespace Beam::Network;
 using namespace Beam::Parsers;
 using namespace Beam::Python;
+using namespace Beam::Queries;
 using namespace Beam::Services;
 using namespace Beam::ServiceLocator;
 using namespace boost;
@@ -210,6 +211,38 @@ void Nexus::Python::ExportMarketDataService(module& module) {
   ExportMarketDataReactors(submodule);
   ExportMySqlHistoricalDataStore(submodule);
   ExportSqliteHistoricalDataStore(submodule);
+  submodule.def("query_real_time_with_snapshot",
+    [] (Security security, MarketDataClientBox client,
+        ScopedQueueWriter<BboQuote> queue) {
+      return QueryRealTimeWithSnapshot(security, std::move(client),
+        std::move(queue));
+    });
+  submodule.def("query_real_time_book_quotes_with_snapshot",
+    [] (MarketDataClientBox marketDataClient, Security security,
+        ScopedQueueWriter<BookQuote> queue,
+        InterruptionPolicy interruptionPolicy) {
+      QueryRealTimeBookQuotesWithSnapshot(std::move(marketDataClient),
+        std::move(security), std::move(queue), interruptionPolicy);
+    });
+  submodule.def("query_real_time_book_quotes_with_snapshot",
+    [] (MarketDataClientBox marketDataClient, Security security,
+        ScopedQueueWriter<BookQuote> queue) {
+      return QueryRealTimeBookQuotesWithSnapshot(std::move(marketDataClient),
+        std::move(security), std::move(queue));
+    });
+  submodule.def("query_real_time_market_quotes_with_snapshot",
+    [] (MarketDataClientBox marketDataClient, Security security,
+        ScopedQueueWriter<MarketQuote> queue,
+        InterruptionPolicy interruptionPolicy) {
+      return QueryRealTimeMarketQuotesWithSnapshot(std::move(marketDataClient),
+        security, std::move(queue), interruptionPolicy);
+    });
+  submodule.def("query_real_time_market_quotes_with_snapshot",
+    [] (MarketDataClientBox marketDataClient, Security security,
+        ScopedQueueWriter<MarketQuote> queue) {
+      return QueryRealTimeMarketQuotesWithSnapshot(std::move(marketDataClient),
+        security, std::move(queue));
+    });
   auto testModule = submodule.def_submodule("tests");
   ExportMarketDataServiceTestEnvironment(testModule);
 }
