@@ -30,7 +30,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
       m_table(nullptr) {
   setMinimumSize(scale(180, 200));
   resize_body(scale(180, 410));
-  setStyleSheet("background-color: #FFFFFF;");
+  setObjectName("time_sales_window");
+  setStyleSheet("#time_sales_window { background-color: #FFFFFF; }");
   setWindowTitle(tr("Time and Sales"));
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
@@ -40,7 +41,9 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   layout->setSpacing(0);
   auto padding_widget = new QWidget(this);
   padding_widget->setFixedHeight(scale_height(4));
-  padding_widget->setStyleSheet("background-color: #F5F5F5;");
+  padding_widget->setObjectName("padding_widget");
+  padding_widget->setStyleSheet(
+    "#padding_widget { background-color: #F5F5F5; }");
   layout->addWidget(padding_widget);
   m_table = new TimeAndSalesTableView(this);
   m_table->hide();
@@ -51,12 +54,14 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   m_volume_label->setFocusPolicy(Qt::NoFocus);
   m_volume_label->setFixedHeight(scale_height(20));
   m_volume_label->setStyleSheet(QString(R"(
-    background-color: #F5F5F5;
-    color: #333333;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;
-    padding-left: %2px;)").arg(scale_height(10)).arg(scale_width(8)));
+    QLabel {
+      background-color: #F5F5F5;
+      color: #333333;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+      padding-left: %2px;
+    })").arg(scale_height(10)).arg(scale_width(8)));
   layout->addWidget(m_volume_label);
   set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
