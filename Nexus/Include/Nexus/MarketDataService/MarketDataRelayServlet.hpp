@@ -130,8 +130,6 @@ namespace Nexus::MarketDataService {
         Subscriptions& subscriptions);
       SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
         const Security& security);
-      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-        const Security& security);
       std::vector<SecurityInfo> OnQuerySecurityInfo(
         ServiceProtocolClient& client, const SecurityInfoQuery& query);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
@@ -464,13 +462,6 @@ namespace Nexus::MarketDataService {
     securitySnapshot.m_bidBook.erase(bidEndRange,
       securitySnapshot.m_bidBook.end());
     return securitySnapshot;
-  }
-
-  template<typename C, typename M, typename A>
-  SecurityTechnicals MarketDataRelayServlet<C, M, A>::OnLoadSecurityTechnicals(
-      ServiceProtocolClient& client, const Security& security) {
-    auto marketDataClient = m_marketDataClients.Acquire();
-    return marketDataClient->LoadSecurityTechnicals(security);
   }
 
   template<typename C, typename M, typename A>

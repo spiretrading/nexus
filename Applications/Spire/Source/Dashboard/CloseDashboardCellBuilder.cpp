@@ -29,7 +29,7 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Build(
       auto close = LoadPreviousClose(serviceClients.GetMarketDataClient(),
         security, serviceClients.GetTimeClient().GetTime(),
         selfUserProfile->GetMarketDatabase(),
-        selfUserProfile->GetTimeZoneDatabase(), "");
+        selfUserProfile->GetTimeZoneDatabase());
       if(close.is_initialized()) {
         queue->Push(close->m_price);
       }

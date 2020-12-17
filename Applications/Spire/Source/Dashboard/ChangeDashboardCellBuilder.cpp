@@ -35,7 +35,7 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Build(
       auto close = LoadPreviousClose(serviceClients.GetMarketDataClient(),
         security, serviceClients.GetTimeClient().GetTime(),
         selfUserProfile->GetMarketDatabase(),
-        selfUserProfile->GetTimeZoneDatabase(), "");
+        selfUserProfile->GetTimeZoneDatabase());
       if(!close.is_initialized()) {
         baseQueue->Break();
         return;

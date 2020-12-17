@@ -140,32 +140,31 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
     m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
-    &SecurityTechnicalsModel::OnHighUpdate, this, std::placeholders::_1)));
+      &SecurityTechnicalsModel::OnHighUpdate, this, std::placeholders::_1)));
   QueryDailyLow(m_userProfile->GetServiceClients().GetChartingClient(),
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
     m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
-    &SecurityTechnicalsModel::OnLowUpdate, this, std::placeholders::_1)));
+      &SecurityTechnicalsModel::OnLowUpdate, this, std::placeholders::_1)));
   QueryDailyVolume(m_userProfile->GetServiceClients().GetChartingClient(),
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
     m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
-    &SecurityTechnicalsModel::OnVolumeUpdate, this, std::placeholders::_1)));
+      &SecurityTechnicalsModel::OnVolumeUpdate, this, std::placeholders::_1)));
   QueryOpen(userProfile->GetServiceClients().GetMarketDataClient(),
     security, userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(), "",
+    userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(),
     m_slotHandler.GetSlot<TimeAndSale>(std::bind(
-    &SecurityTechnicalsModel::OnOpenUpdate, this, std::placeholders::_1)));
+      &SecurityTechnicalsModel::OnOpenUpdate, this, std::placeholders::_1)));
   Spawn(
     [=, userProfile = m_userProfile,
         loadTechnicalsFlag = m_loadTechnicalsFlag] {
       auto close = LoadPreviousClose(
         userProfile->GetServiceClients().GetMarketDataClient(), security,
         userProfile->GetServiceClients().GetTimeClient().GetTime(),
-        userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(),
-        "");
+        userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase());
       With(*loadTechnicalsFlag,
         [=] (bool loadTechnicalsFlag) {
           if(!loadTechnicalsFlag) {
