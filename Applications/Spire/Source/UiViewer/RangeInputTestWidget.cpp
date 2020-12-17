@@ -42,7 +42,7 @@ RangeInputTestWidget::RangeInputTestWidget(QWidget* parent)
   m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 1, 0, 1, 2);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto min_label = new QLabel(tr("Minimum"), this);
   m_layout->addWidget(min_label, 3, 0);
   m_min_input = new TextInputWidget("0", this);

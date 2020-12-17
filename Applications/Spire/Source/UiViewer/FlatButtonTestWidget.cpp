@@ -20,7 +20,7 @@ FlatButtonTestWidget::FlatButtonTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setFocusPolicy(Qt::NoFocus);
   m_layout->addWidget(m_status_label, 0, 1);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   m_label_input = new TextInputWidget(this);
   m_label_input->setFixedSize(BUTTON_SIZE());
   m_layout->addWidget(m_label_input, 2, 0);

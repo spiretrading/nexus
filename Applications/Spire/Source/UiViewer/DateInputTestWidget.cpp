@@ -26,7 +26,7 @@ DateInputTestWidget::DateInputTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setMinimumWidth(scale_width(80));
   m_layout->addWidget(m_status_label, 0, 2);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 3);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 3);
   m_year_input = new TextInputWidget("1970", this);
   m_year_input->setPlaceholderText(tr("Year"));
   m_year_input->setFixedSize(INPUT_SIZE());

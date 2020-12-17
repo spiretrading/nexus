@@ -62,7 +62,7 @@ KeySequenceTestWidget::KeySequenceTestWidget(QWidget* parent)
   m_layout = new QGridLayout(container_widget);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   m_disable_check_box = make_check_box(tr("Disable"), this);
   connect(m_disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
     m_input->setDisabled(m_disable_check_box->isChecked());

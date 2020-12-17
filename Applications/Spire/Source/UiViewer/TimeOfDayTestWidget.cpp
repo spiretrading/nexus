@@ -25,7 +25,7 @@ TimeOfDayTestWidget::TimeOfDayTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setMinimumWidth(scale_width(100));
   layout->addWidget(m_status_label, 0, 2);
-  layout->addWidget(create_parameters_label(this), 1, 0, 1, 3);
+  layout->addWidget(make_parameters_label(this), 1, 0, 1, 3);
   m_hour_input = new TextInputWidget(this);
   m_hour_input->setFixedSize(CONTROL_SIZE());
   layout->addWidget(m_hour_input, 3, 0);

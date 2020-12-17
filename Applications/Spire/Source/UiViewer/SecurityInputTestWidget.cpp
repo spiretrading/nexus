@@ -24,7 +24,7 @@ SecurityInputTestWidget::SecurityInputTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setFixedSize(CONTROL_SIZE());
   m_layout->addWidget(m_status_label, 0, 1, Qt::AlignRight);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto initial_text_label = new QLabel(tr("Initial Text"), this);
   m_layout->addWidget(initial_text_label, 2, 0);
   m_initial_text_input = new TextInputWidget(this);

@@ -23,7 +23,7 @@ ColorSelectorButtonTestWidget::ColorSelectorButtonTestWidget(QWidget* parent)
   auto color_selector_button_value = new QLabel(
     m_color_selector_button->get_color().name().toUpper(), this);
   m_layout->addWidget(color_selector_button_value, 0, 1);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   m_set_color_input = new TextInputWidget(this);
   m_set_color_input->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(m_set_color_input, 2, 0);

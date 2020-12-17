@@ -14,7 +14,7 @@ SecurityWidgetTestWidget::SecurityWidgetTestWidget(QWidget* parent)
       m_security_widget(nullptr) {
   auto container = new QWidget(this);
   m_layout = new QGridLayout(container);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto info_label = new QLabel(tr("Click SecurityWidget to set focus."));
   info_label->setAlignment(Qt::AlignCenter);
   m_layout->addWidget(info_label, 2, 0, 1, 2);

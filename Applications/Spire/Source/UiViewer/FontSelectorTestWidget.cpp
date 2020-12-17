@@ -29,7 +29,7 @@ FontSelectorTestWidget::FontSelectorTestWidget(QWidget* parent)
   m_preview_label = new QLabel(tr("Preview Font"), this);
   m_preview_label->setMinimumSize(LABEL_SIZE());
   m_layout->addWidget(m_preview_label, 1, 2, 1, 1);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto fonts = QFontDatabase().families();
   m_family_list = new StaticDropDownMenu(
     std::vector<QVariant>(fonts.begin(), fonts.end()), this);

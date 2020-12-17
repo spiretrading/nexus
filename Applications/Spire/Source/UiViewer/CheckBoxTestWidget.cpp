@@ -19,7 +19,7 @@ CheckBoxTestWidget::CheckBoxTestWidget(QWidget* parent)
   m_layout = new QGridLayout(container);
   m_status_label = new QLabel(this);
   m_layout->addWidget(m_status_label, 0, 1);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   m_label_input = new TextInputWidget(this);
   m_label_input->setPlaceholderText(tr("Label"));
   m_label_input->setFixedSize(CONTROL_SIZE());

@@ -42,7 +42,7 @@ SpinBoxTestWidget::SpinBoxTestWidget(SpinBoxAdapter* spin_box, QWidget* parent)
   m_spin_box->connect_change_signal([=] (auto value) {
     m_value_label->setText(value);
   });
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto initial_label = new QLabel(tr("Initial"), this);
   m_layout->addWidget(initial_label, 2, 0);
   m_initial_input = new TextInputWidget("0", this);

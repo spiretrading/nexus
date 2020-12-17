@@ -1,7 +1,7 @@
 #include "Spire/UiViewer/UiViewer.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
-QLabel* Spire::create_parameters_label(QWidget* parent) {
+QLabel* Spire::make_parameters_label(QWidget* parent) {
   auto label = new QLabel(QObject::tr("Parameters"), parent);
   label->setFixedHeight(scale_height(80));
   label->setStyleSheet(QString(R"(

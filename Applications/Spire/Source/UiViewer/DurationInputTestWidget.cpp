@@ -29,7 +29,7 @@ DurationInputTestWidget::DurationInputTestWidget(QWidget* parent)
   m_status_label = new QLabel(this);
   m_status_label->setAlignment(Qt::AlignCenter);
   layout->addWidget(m_status_label, 0, 1);
-  layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto input_container = new QWidget(this);
   layout->addWidget(input_container, 2, 0, 1, 2);
   auto container_layout = new QHBoxLayout(input_container);

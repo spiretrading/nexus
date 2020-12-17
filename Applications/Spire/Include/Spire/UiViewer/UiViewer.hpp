@@ -42,7 +42,7 @@ namespace Spire {
   /*!
     \param parent The parent widget.
   */
-  QLabel* create_parameters_label(QWidget* parent);
+  QLabel* make_parameters_label(QWidget* parent);
 }
 
 #endif

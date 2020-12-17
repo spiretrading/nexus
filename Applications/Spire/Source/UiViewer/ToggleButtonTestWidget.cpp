@@ -43,7 +43,7 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     toggled_check_box->setChecked(!toggled_check_box->isChecked());
   });
   layout->addWidget(button, 0, 0);
-  layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   auto disable_check_box = make_check_box(tr("Disable"), this);
   connect(disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
     button->setDisabled(disable_check_box->isChecked());

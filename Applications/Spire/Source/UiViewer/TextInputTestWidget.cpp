@@ -20,7 +20,7 @@ TextInputTestWidget::TextInputTestWidget(QWidget* parent)
   m_text_label = new QLabel(this);
   m_text_label->setFixedSize(WIDGET_SIZE());
   m_layout->addWidget(m_text_label, 0, 1);
-  m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
+  m_layout->addWidget(make_parameters_label(this), 1, 0, 1, 2);
   m_set_text_input = new TextInputWidget(this);
   m_set_text_input->setFixedSize(WIDGET_SIZE());
   m_layout->addWidget(m_set_text_input, 2, 0);
