@@ -10,6 +10,7 @@ CalendarDayWidget::CalendarDayWidget(date displayed_date,
     : QLabel(parent),
       m_date(displayed_date),
       m_text_color(text_color) {
+  setObjectName("calendar_day_widget");
   setAlignment(Qt::AlignCenter);
   setText(QString::number(displayed_date.day()));
   set_default_style();
@@ -51,7 +52,7 @@ void CalendarDayWidget::set_default_style() {
 
 void CalendarDayWidget::set_selected_style() {
   setStyleSheet(QString(R"(
-    QWidget {
+    #calendar_day_widget {
       background-color: #4B23A0;
       color: #FFFFFF;
       border-radius: %2px;

@@ -8,8 +8,9 @@ using namespace Spire;
 TabWidget::TabWidget(QWidget* parent)
     : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
+  setObjectName("tab_widget");
   setStyleSheet(QString(R"(
-    QWidget {
+    #tab_widget {
       outline: none;
     }
 

@@ -30,7 +30,12 @@ namespace {
 
   auto create_button(const QString& icon, const QString& tooltip,
       QWidget* parent) {
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    auto style = IconButton::Style();
+    style.m_default_color = QColor("#7F5EEC");
+    style.m_hover_background_color = Qt::transparent;
+    style.m_blur_color = QColor("#7F5EEC");
+    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
+      parent);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
     return button;
@@ -47,7 +52,8 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));
   auto body = new QWidget(this);
-  body->setStyleSheet("background-color: #F5F5F5;");
+  body->setObjectName("toolbar_window_body");
+  body->setStyleSheet("#toolbar_window_body { background-color: #F5F5F5; }");
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
