@@ -10,7 +10,7 @@
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/IntegerSpinBox.hpp"
-#include "Spire/Ui/ScrollArea.hpp"
+#include "Spire/Ui/ScrollBarStyle.hpp"
 #include "Spire/Ui/SpinBoxModel.hpp"
 
 using namespace boost::signals2;
@@ -47,14 +47,15 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   auto horizontal_layout = new QHBoxLayout();
   horizontal_layout->setContentsMargins({});
   horizontal_layout->setSpacing(0);
-  auto band_list_scroll_area = new ScrollArea(this);
-  band_list_scroll_area->setFixedSize(scale(140, 222));
-  band_list_scroll_area->set_border_style(scale_width(1), QColor("#C8C8C8"));
-  band_list_scroll_area->setWidgetResizable(true);
-  horizontal_layout->addWidget(band_list_scroll_area, 222);
+  //auto band_list_scroll_area = new ScrollArea(this);
+  //band_list_scroll_area->setFixedSize(scale(140, 222));
+  //band_list_scroll_area->set_border_style(scale_width(1), QColor("#C8C8C8"));
+  //band_list_scroll_area->setWidgetResizable(true);
+  //horizontal_layout->addWidget(band_list_scroll_area, 222);
+  //band_list_scroll_area->setWidget(m_band_list_widget);
   m_band_list_widget = new QListWidget(this);
-  band_list_scroll_area->setWidget(m_band_list_widget);
-  m_band_list_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_band_list_widget->verticalScrollBar()->setStyle(
+    new ScrollBarStyle(m_band_list_widget));
   m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: #FFFFFF;
@@ -77,6 +78,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     QAbstractItemView::SelectionMode::SingleSelection);
   connect(m_band_list_widget, &QListWidget::currentRowChanged,
     this, &BookViewLevelPropertiesWidget::update_band_list_stylesheet);
+  horizontal_layout->addWidget(m_band_list_widget, 222);
   horizontal_layout->addSpacing(scale_width(18));
   auto band_properties_layout = new QVBoxLayout();
   band_properties_layout->setContentsMargins({});
@@ -263,6 +265,6 @@ void BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed(
   } else {
     m_band_list_widget->setCurrentRow(current_row);
   }
-  m_band_list_widget->setFixedHeight(m_band_list_widget->sizeHintForRow(0) *
-    (m_band_list_widget->count() + 1));
+  //m_band_list_widget->setFixedHeight(m_band_list_widget->sizeHintForRow(0) *
+  //  (m_band_list_widget->count() + 1));
 }
