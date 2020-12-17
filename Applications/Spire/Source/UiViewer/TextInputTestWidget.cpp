@@ -1,7 +1,6 @@
 #include "Spire/UiViewer/TextInputTestWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
 
@@ -28,14 +27,14 @@ TextInputTestWidget::TextInputTestWidget(QWidget* parent)
   connect(m_disable_check_box, &CheckBox::stateChanged, [=] (auto state) {
     m_text_input->setDisabled(m_disable_check_box->isChecked());
   });
-  auto set_text_button = make_flat_button(tr("Set Text"), this);
-  set_text_button->setFixedSize(WIDGET_SIZE());
-  set_text_button->connect_clicked_signal([=] { on_set_text_button(); });
-  m_layout->addWidget(set_text_button, 2, 0);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedSize(WIDGET_SIZE());
-  reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 2, 1);
+  m_set_text_button = make_flat_button(tr("Set Text"), this);
+  m_set_text_button->setFixedSize(WIDGET_SIZE());
+  m_set_text_button->connect_clicked_signal([=] { on_set_text_button(); });
+  m_layout->addWidget(m_set_text_button, 2, 0);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedSize(WIDGET_SIZE());
+  m_reset_button->connect_clicked_signal([=] { on_reset_button(); });
+  m_layout->addWidget(m_reset_button, 2, 1);
   on_reset_button();
 }
 
@@ -48,6 +47,10 @@ void TextInputTestWidget::on_reset_button() {
   });
   m_disable_check_box->setChecked(false);
   m_layout->addWidget(m_text_input, 0, 0);
+  setTabOrder(m_text_input, m_set_text_input);
+  setTabOrder(m_set_text_input, m_disable_check_box);
+  setTabOrder(m_disable_check_box, m_set_text_button);
+  setTabOrder(m_set_text_button, m_reset_button);
 }
 
 void TextInputTestWidget::on_set_text_button() {

@@ -56,10 +56,10 @@ RangeInputTestWidget::RangeInputTestWidget(QWidget* parent)
   m_count_input = new TextInputWidget("1000", this);
   m_count_input->setFixedSize(CONTROL_SIZE());
   m_layout->addWidget(m_count_input, 4, 1);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedHeight(scale_height(26));
-  reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 5, 0, 1, 2);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedHeight(scale_height(26));
+  m_reset_button->connect_clicked_signal([=] { on_reset_button(); });
+  m_layout->addWidget(m_reset_button, 5, 0, 1, 2);
   on_reset_button();
 }
 
@@ -93,6 +93,11 @@ void RangeInputTestWidget::on_reset_button() {
     m_range_input = new RangeInputWidget(range_model, min_widget, max_widget,
       Scalar(Quantity(1)), this);
     m_layout->addWidget(m_range_input, 0, 0, 1, 2);
+    setTabOrder(min_input, max_input);
+    setTabOrder(max_input, m_min_input);
+    setTabOrder(m_min_input, m_max_input);
+    setTabOrder(m_max_input, m_count_input);
+    setTabOrder(m_count_input, m_reset_button);
   } else {
     m_status_label->setText(tr("Invalid Input"));
   }
