@@ -140,7 +140,7 @@ namespace Nexus::OrderExecutionService {
       return Beam::Threading::With(closingEntry, [&] (auto& entry) {
         entry.m_closingPrice = effectiveClosingPrice;
         entry.m_lastUpdate = timestamp;
-        return entry.m_closingPrice;
+        return effectiveClosingPrice;
       });
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
