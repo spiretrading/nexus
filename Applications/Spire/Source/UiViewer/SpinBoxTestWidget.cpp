@@ -1,7 +1,6 @@
 #include "Spire/UiViewer/SpinBoxTestWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -72,10 +71,10 @@ SpinBoxTestWidget::SpinBoxTestWidget(SpinBoxAdapter* spin_box, QWidget* parent)
   connect(m_increment_input, &TextInputWidget::editingFinished, this,
     &SpinBoxTestWidget::on_increment_set);
   m_layout->addWidget(m_increment_input, 4, 1);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedHeight(scale_height(26));
-  reset_button->connect_clicked_signal([=] { reset_spin_box(); });
-  m_layout->addWidget(reset_button, 5, 0, 1, 2);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedHeight(scale_height(26));
+  m_reset_button->connect_clicked_signal([=] { reset_spin_box(); });
+  m_layout->addWidget(m_reset_button, 5, 0, 1, 2);
   auto no_label = new QLabel(NO_MODIFIER, this);
   m_layout->addWidget(no_label, 6, 0);
   m_no_increment_label = new QLabel(this);
@@ -105,6 +104,12 @@ void SpinBoxTestWidget::reset_spin_box() {
     });
     m_spin_box->setFocus();
     m_value_label->setText(tr("Reset Successful"));
+    setTabOrder(m_spin_box->focusProxy(), m_initial_input);
+    setTabOrder(m_initial_input, m_min_input);
+    setTabOrder(m_min_input, m_max_input);
+    setTabOrder(m_max_input, m_modifier_menu);
+    setTabOrder(m_modifier_menu, m_increment_input);
+    setTabOrder(m_increment_input, m_reset_button);
   } else {
     m_value_label->setText(tr("Failed"));
   }

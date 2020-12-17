@@ -25,6 +25,7 @@ namespace Spire {
       FlatButton* m_button;
       QLabel* m_status_label;
       TextInputWidget* m_label_input;
+      FlatButton* m_create_button;
       CheckBox* m_disable_check_box;
       QTimer* m_pressed_timer;
 

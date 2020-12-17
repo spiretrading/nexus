@@ -2,7 +2,6 @@
 #include <QFontDatabase>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
 
@@ -41,14 +40,14 @@ FontSelectorTestWidget::FontSelectorTestWidget(QWidget* parent)
   m_layout->addWidget(m_italic_check_box, 8, 0);
   m_underline_check_box = make_check_box(tr("Underline"), this);
   m_layout->addWidget(m_underline_check_box, 9, 0);
-  auto set_button = make_flat_button(tr("Set Font"), this);
-  set_button->setFixedSize(CONTROL_SIZE());
-  set_button->connect_clicked_signal([=] { on_font_set(); });
-  m_layout->addWidget(set_button, 10, 0);
-  auto reset_button = make_flat_button(tr("Reset Widget"), this);
-  reset_button->setFixedSize(CONTROL_SIZE());
-  reset_button->connect_clicked_signal([=] { on_widget_reset(); });
-  m_layout->addWidget(reset_button, 10, 1);
+  m_set_button = make_flat_button(tr("Set Font"), this);
+  m_set_button->setFixedSize(CONTROL_SIZE());
+  m_set_button->connect_clicked_signal([=] { on_font_set(); });
+  m_layout->addWidget(m_set_button, 10, 0);
+  m_reset_button = make_flat_button(tr("Reset Widget"), this);
+  m_reset_button->setFixedSize(CONTROL_SIZE());
+  m_reset_button->connect_clicked_signal([=] { on_widget_reset(); });
+  m_layout->addWidget(m_reset_button, 10, 1);
   on_widget_reset();
 }
 
@@ -84,4 +83,11 @@ void FontSelectorTestWidget::on_widget_reset() {
   });
   m_layout->addWidget(m_font_selector, 3, 0, 1, 2);
   update_labels();
+  setTabOrder(m_font_selector->findChild<IntegerSpinBox*>(), m_family_list);
+  setTabOrder(m_family_list, m_size_spin_box);
+  setTabOrder(m_size_spin_box, m_bold_check_box);
+  setTabOrder(m_bold_check_box, m_italic_check_box);
+  setTabOrder(m_italic_check_box, m_underline_check_box);
+  setTabOrder(m_underline_check_box, m_set_button);
+  setTabOrder(m_set_button, m_reset_button);
 }

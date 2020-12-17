@@ -5,6 +5,7 @@
 #include <QPlainTextEdit>
 #include <QWidget>
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
@@ -26,8 +27,12 @@ namespace Spire {
       QLabel* m_status_label;
       QPlainTextEdit* m_item_input;
       TextInputWidget* m_label_input;
+      FlatButton* m_set_button;
+      FlatButton* m_reset_button;
       TextInputWidget* m_insert_item_input;
+      FlatButton* m_insert_item_button;
       TextInputWidget* m_index_input;
+      FlatButton* m_remove_item_button;
       CheckBox* m_next_item_check_box;
 
       void on_insert_button();

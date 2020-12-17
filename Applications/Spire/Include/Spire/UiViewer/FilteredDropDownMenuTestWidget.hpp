@@ -5,6 +5,7 @@
 #include <QPlainTextEdit>
 #include <QWidget>
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 
 namespace Spire {
 
@@ -23,6 +24,8 @@ namespace Spire {
       FilteredDropDownMenu* m_menu;
       QLabel* m_status_label;
       QPlainTextEdit* m_item_input;
+      FlatButton* m_set_button;
+      FlatButton* m_reset_button;
 
       void on_set_button();
       void on_reset_button();

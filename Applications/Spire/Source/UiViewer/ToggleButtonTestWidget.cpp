@@ -51,4 +51,6 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     pressed_label->setText(tr("Button Pressed"));
     pressed_timer->start();
   });
+  setTabOrder(button, disable_check_box);
+  setTabOrder(disable_check_box, toggled_check_box);
 }

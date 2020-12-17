@@ -6,6 +6,7 @@
 #include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
 namespace Spire {
@@ -26,6 +27,7 @@ namespace Spire {
       SecurityInputLineEdit* m_security_input;
       TextInputWidget* m_initial_text_input;
       CheckBox* m_icon_check_box;
+      FlatButton* m_reset_button;
       CustomVariantItemDelegate m_item_delegate;
 
       void on_reset_button();

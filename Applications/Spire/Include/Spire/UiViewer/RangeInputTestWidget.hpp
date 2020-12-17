@@ -3,6 +3,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QWidget>
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/RangeInputWidget.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
@@ -25,6 +26,7 @@ namespace Spire {
       TextInputWidget* m_min_input;
       TextInputWidget* m_max_input;
       TextInputWidget* m_count_input;
+      FlatButton* m_reset_button;
 
       void on_reset_button();
   };
