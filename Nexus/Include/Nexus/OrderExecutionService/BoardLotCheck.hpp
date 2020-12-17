@@ -64,8 +64,7 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C>
   BoardLotCheck<C>::ClosingEntry::ClosingEntry()
-    : m_lastUpdate(boost::posix_time::neg_infin),
-      m_closingPrice(Money::ZERO) {}
+    : m_lastUpdate(boost::posix_time::neg_infin) {}
 
   template<typename MarketDataClient>
   auto MakeBoardLotCheck(MarketDataClient&& marketDataClient,
@@ -119,10 +118,12 @@ namespace Nexus::OrderExecutionService {
     auto& closingEntry = m_closingEntries.Get(security);
     auto closingPrice = Beam::Threading::With(closingEntry, [&] (auto& entry) {
       if(timestamp - entry.m_lastUpdate > boost::posix_time::hours(1)) {
-        entry.m_closingPrice = TechnicalAnalysis::LoadPreviousClose(
-          *m_marketDataClient, security, timestamp, m_marketDatabase,
-          m_timeZoneDatabase);
-        entry.m_lastUpdate = timestamp;
+        if(auto close = TechnicalAnalysis::LoadPreviousClose(
+            *m_marketDataClient, security, timestamp, m_marketDatabase,
+            m_timeZoneDatabase)) {
+          entry.m_closingPrice = close->m_price;
+          entry.m_lastUpdate = timestamp;
+        }
       }
       return entry.m_closingPrice;
     });
