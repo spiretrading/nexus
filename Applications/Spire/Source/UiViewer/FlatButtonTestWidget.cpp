@@ -21,17 +21,16 @@ FlatButtonTestWidget::FlatButtonTestWidget(QWidget* parent)
   m_status_label->setFocusPolicy(Qt::NoFocus);
   m_layout->addWidget(m_status_label, 0, 1);
   m_layout->addWidget(create_parameters_label(this), 1, 0, 1, 2);
-  set_button(make_flat_button(tr("FlatButton"), this));
   m_label_input = new TextInputWidget(this);
   m_label_input->setFixedSize(BUTTON_SIZE());
   m_layout->addWidget(m_label_input, 2, 0);
   connect(m_label_input, &TextInputWidget::editingFinished, [=] {
     on_create_button();
   });
-  auto create_button = make_flat_button("Create Button", this);
-  create_button->setFixedSize(BUTTON_SIZE());
-  m_layout->addWidget(create_button, 2, 1);
-  create_button->connect_clicked_signal([=] { on_create_button(); });
+  m_create_button = make_flat_button("Create Button", this);
+  m_create_button->setFixedSize(BUTTON_SIZE());
+  m_layout->addWidget(m_create_button, 2, 1);
+  m_create_button->connect_clicked_signal([=] { on_create_button(); });
   m_disable_check_box = make_check_box(tr("Disable"), this);
   m_disable_check_box->setChecked(false);
   m_layout->addWidget(m_disable_check_box, 3, 1);
@@ -44,6 +43,7 @@ FlatButtonTestWidget::FlatButtonTestWidget(QWidget* parent)
   connect(m_pressed_timer, &QTimer::timeout, [=] {
     m_status_label->setText("");
   });
+  set_button(make_flat_button(tr("FlatButton"), this));
 }
 
 void FlatButtonTestWidget::set_button(FlatButton* button) {
@@ -54,6 +54,9 @@ void FlatButtonTestWidget::set_button(FlatButton* button) {
     m_pressed_timer->start();
   });
   m_layout->addWidget(m_button, 0, 0);
+  setTabOrder(m_button, m_label_input);
+  setTabOrder(m_label_input, m_create_button);
+  setTabOrder(m_create_button, m_disable_check_box);
 }
 
 void FlatButtonTestWidget::on_create_button() {

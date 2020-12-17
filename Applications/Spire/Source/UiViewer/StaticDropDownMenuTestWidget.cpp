@@ -1,7 +1,6 @@
 #include "Spire/UiViewer/StaticDropDownMenuTestWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Spire;
@@ -52,28 +51,28 @@ StaticDropDownMenuTestWidget::StaticDropDownMenuTestWidget(QWidget* parent)
   m_label_input->setPlaceholderText(tr("Fixed Label"));
   m_label_input->setFixedSize(CONTROL_SIZE());
   m_layout->addWidget(m_label_input, 8, 1);
-  auto set_button = make_flat_button(tr("Set Items"), this);
-  set_button->setFixedSize(CONTROL_SIZE());
-  set_button->connect_clicked_signal([=] { on_set_button(); });
-  m_layout->addWidget(set_button, 9, 0);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedSize(CONTROL_SIZE());
-  reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 9, 1);
+  m_set_button = make_flat_button(tr("Set Items"), this);
+  m_set_button->setFixedSize(CONTROL_SIZE());
+  m_set_button->connect_clicked_signal([=] { on_set_button(); });
+  m_layout->addWidget(m_set_button, 9, 0);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedSize(CONTROL_SIZE());
+  m_reset_button->connect_clicked_signal([=] { on_reset_button(); });
+  m_layout->addWidget(m_reset_button, 9, 1);
   m_insert_item_input = new TextInputWidget(this);
   m_insert_item_input->setFixedSize(CONTROL_SIZE());
   m_layout->addWidget(m_insert_item_input, 10, 0);
-  auto insert_item_button = make_flat_button(tr("Insert Item"), this);
-  insert_item_button->setFixedSize(CONTROL_SIZE());
-  insert_item_button->connect_clicked_signal([=] { on_insert_button(); });
-  m_layout->addWidget(insert_item_button, 10, 1);
+  m_insert_item_button = make_flat_button(tr("Insert Item"), this);
+  m_insert_item_button->setFixedSize(CONTROL_SIZE());
+  m_insert_item_button->connect_clicked_signal([=] { on_insert_button(); });
+  m_layout->addWidget(m_insert_item_button, 10, 1);
   m_index_input = new TextInputWidget(this);
   m_index_input->setFixedSize(CONTROL_SIZE());
   m_layout->addWidget(m_index_input, 11, 0);
-  auto remove_item_button = make_flat_button(tr("Remove Index"), this);
-  remove_item_button->setFixedSize(CONTROL_SIZE());
-  remove_item_button->connect_clicked_signal([=] { on_remove_button(); });
-  m_layout->addWidget(remove_item_button, 11, 1);
+  m_remove_item_button = make_flat_button(tr("Remove Index"), this);
+  m_remove_item_button->setFixedSize(CONTROL_SIZE());
+  m_remove_item_button->connect_clicked_signal([=] { on_remove_button(); });
+  m_layout->addWidget(m_remove_item_button, 11, 1);
   m_next_item_check_box = make_check_box(tr("Activate Next"), this);
   m_next_item_check_box->setChecked(true);
   connect(m_next_item_check_box, &CheckBox::stateChanged, [=] (auto state) {
@@ -111,4 +110,13 @@ void StaticDropDownMenuTestWidget::on_reset_button() {
     m_status_label->setText(item.toString());
   });
   m_layout->addWidget(m_menu, 0, 0);
+  setTabOrder(m_menu, m_item_input);
+  setTabOrder(m_item_input, m_label_input);
+  setTabOrder(m_label_input, m_set_button);
+  setTabOrder(m_set_button, m_reset_button);
+  setTabOrder(m_reset_button, m_insert_item_input);
+  setTabOrder(m_insert_item_input, m_insert_item_button);
+  setTabOrder(m_insert_item_button, m_index_input);
+  setTabOrder(m_index_input, m_remove_item_button);
+  setTabOrder(m_remove_item_button, m_next_item_check_box);
 }

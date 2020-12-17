@@ -44,8 +44,9 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
     : QWidget(parent),
       m_icon(icon),
       m_icon_button(nullptr) {
+  setObjectName("title_bar");
   setFixedHeight(scale_height(26));
-  setStyleSheet("background-color: #F5F5F5;");
+  setStyleSheet("#title_bar { background-color: #F5F5F5; }");
   m_layout = new QHBoxLayout(this);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
@@ -165,8 +166,10 @@ void TitleBar::on_close_button_press() {
 }
 
 void TitleBar::set_title_text_stylesheet(const QColor& font_color) {
-  m_title_label->setStyleSheet(QString(
-    R"(color: %2;
-       font-family: Roboto;
-       font-size: %1px;)").arg(scale_height(12)).arg(font_color.name()));
+  m_title_label->setStyleSheet(QString(R"(
+    QLabel {
+      color: %2;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(12)).arg(font_color.name()));
 }

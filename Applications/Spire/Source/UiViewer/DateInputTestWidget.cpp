@@ -1,7 +1,6 @@
 #include "Spire/UiViewer/DateInputTestWidget.hpp"
 #include <QDate>
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace boost::gregorian;
@@ -40,10 +39,10 @@ DateInputTestWidget::DateInputTestWidget(QWidget* parent)
   m_day_input->setPlaceholderText(tr("Day"));
   m_day_input->setFixedSize(INPUT_SIZE());
   m_layout->addWidget(m_day_input, 2, 2);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedHeight(scale_height(26));
-  reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 3, 0, 1, 3);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedHeight(scale_height(26));
+  m_reset_button->connect_clicked_signal([=] { on_reset_button(); });
+  m_layout->addWidget(m_reset_button, 3, 0, 1, 3);
   on_reset_button();
 }
 
@@ -66,6 +65,10 @@ void DateInputTestWidget::on_reset_button() {
       });
       m_layout->addWidget(m_date_input, 0, 0, 1, 2);
       m_status_label->setText("");
+      setTabOrder(m_date_input, m_year_input);
+      setTabOrder(m_year_input, m_month_input);
+      setTabOrder(m_month_input, m_day_input);
+      setTabOrder(m_day_input, m_reset_button);
       return;
     }
   } catch(const std::exception&) {}

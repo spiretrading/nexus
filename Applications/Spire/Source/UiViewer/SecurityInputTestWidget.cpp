@@ -3,7 +3,6 @@
 #include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
 using namespace Beam;
@@ -33,10 +32,10 @@ SecurityInputTestWidget::SecurityInputTestWidget(QWidget* parent)
   m_layout->addWidget(m_initial_text_input, 2, 1);
   m_icon_check_box = make_check_box(tr("Show Icon"), this);
   m_layout->addWidget(m_icon_check_box, 3, 1);
-  auto reset_button = make_flat_button(tr("Reset"), this);
-  reset_button->setFixedHeight(scale_height(26));
-  reset_button->connect_clicked_signal([=] { on_reset_button(); });
-  m_layout->addWidget(reset_button, 4, 0, 1, 2);
+  m_reset_button = make_flat_button(tr("Reset"), this);
+  m_reset_button->setFixedHeight(scale_height(26));
+  m_reset_button->connect_clicked_signal([=] { on_reset_button(); });
+  m_layout->addWidget(m_reset_button, 4, 0, 1, 2);
   on_reset_button();
 }
 
@@ -55,4 +54,7 @@ void SecurityInputTestWidget::on_reset_button() {
   m_status_label->setText("");
   m_security_input->setFocus();
   m_layout->addWidget(m_security_input, 0, 0);
+  setTabOrder(m_security_input, m_initial_text_input);
+  setTabOrder(m_initial_text_input, m_icon_check_box);
+  setTabOrder(m_icon_check_box, m_reset_button);
 }

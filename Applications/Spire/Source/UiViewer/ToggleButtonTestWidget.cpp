@@ -53,4 +53,6 @@ ToggleButtonTestWidget::ToggleButtonTestWidget(QWidget* parent)
     button->set_toggled(toggled_check_box->isChecked());
   });
   layout->addWidget(toggled_check_box, 2, 1);
+  setTabOrder(button, disable_check_box);
+  setTabOrder(disable_check_box, toggled_check_box);
 }

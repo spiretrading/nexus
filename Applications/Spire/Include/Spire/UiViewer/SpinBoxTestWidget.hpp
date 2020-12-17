@@ -2,6 +2,7 @@
 #define SPIRE_SPIN_BOX_TEST_WIDGET_HPP
 #include <QGridLayout>
 #include <QLabel>
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 #include "Spire/UiViewer/SpinBoxAdapter.hpp"
@@ -34,6 +35,7 @@ namespace Spire {
       QLabel* m_shift_increment_label;
       QLabel* m_ctrl_increment_label;
       QLabel* m_ctrl_shift_increment_label;
+      FlatButton* m_reset_button;
 
       void reset_spin_box();
       void update_increment_labels();

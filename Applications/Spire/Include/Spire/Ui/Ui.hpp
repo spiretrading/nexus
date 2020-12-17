@@ -33,6 +33,7 @@ namespace Spire {
   class RealSpinBox;
   class ScalarWidget;
   class ScrollArea;
+  class ScrollBarStyle;
   class SecurityStack;
   class SecurityWidget;
   class TabWidget;
