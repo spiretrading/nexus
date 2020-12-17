@@ -6,6 +6,7 @@ QLabel* Spire::create_parameters_label(QWidget* parent) {
   label->setFixedHeight(scale_height(80));
   label->setStyleSheet(QString(R"(
     QLabel {
+      background-color: transparent;
       border-bottom: 1px solid black;
       font-family: Roboto;
       font-size: %1px;
