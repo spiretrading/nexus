@@ -46,6 +46,7 @@ void Nexus::Python::ExportChartingService(module& module) {
     "ChartingClientBox");
   ExportApplicationChartingClient(submodule);
   ExportSecurityChartingQuery(submodule);
+  ExportQueueSuite<QueryVariant>(submodule, "QueryVariant");
   auto test_module = submodule.def_submodule("tests");
   ExportChartingServiceTestEnvironment(test_module);
 }
