@@ -20,7 +20,7 @@ FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property insta
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="9ee9c7f8a3c0a16dd73176540f6f5107eb891df9"
+SET BEAM_COMMIT="268a9e2e2c711268517c47f50fe2bc2fd488f063"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
