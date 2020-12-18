@@ -87,10 +87,10 @@ void TitleBar::set_icon(const QImage& icon) {
 }
 
 void TitleBar::set_icon(const QImage& icon, const QColor& hover_color) {
-  delete_later(m_icon_button);
   auto icon_button_style = BUTTON_STYLE();
   icon_button_style.m_hover_color = hover_color;
   icon_button_style.m_hover_background_color = Qt::transparent;
+  delete m_icon_button;
   m_icon_button = new IconButton(icon, icon_button_style, this);
   m_icon_button->setFixedSize(scale(26, 26));
   m_icon_button->setFocusPolicy(Qt::NoFocus);
