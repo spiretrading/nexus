@@ -184,5 +184,10 @@ void ScrollArea::set_scroll_bar_style(int handle_size) {
   m_scroll_bar_style->set_horizontal_scroll_bar_height(scale_height(
     handle_size));
   m_scroll_bar_style->set_vertical_scroll_bar_width(scale_width(handle_size));
+  setStyleSheet(QString(R"(
+    QScrollArea {
+      background-color: #FFFFFF;
+      border: %5px solid %6;
+    })").arg(m_border_width).arg(m_border_color.name()));
   update();
 }

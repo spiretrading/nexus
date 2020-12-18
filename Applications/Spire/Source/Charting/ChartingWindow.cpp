@@ -58,13 +58,16 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setWindowIcon(QIcon(":/Icons/taskbar_icons/chart.png"));
   setWindowTitle(tr("Chart"));
   auto body = new QWidget(this);
-  body->setStyleSheet("background-color: #FFFFFF;");
+  setObjectName("charting_window_body");
+  body->setStyleSheet("#charting_window_body { background-color: #FFFFFF; }");
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_button_header_widget = new QWidget(body);
   m_button_header_widget->setFixedHeight(scale_height(46));
-  m_button_header_widget->setStyleSheet("background-color: #F5F5F5;");
+  m_button_header_widget->setObjectName("button_header_widget");
+  m_button_header_widget->setStyleSheet(
+    "#button_header_widget { background-color: #F5F5F5; }");
   auto button_header_layout = new QHBoxLayout(m_button_header_widget);
   button_header_layout->setSpacing(0);
   button_header_layout->setContentsMargins(0, scale_height(10), 0,
@@ -112,7 +115,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
   seperator->setFixedSize(scale(1, 16));
-  seperator->setStyleSheet("background-color: #D0D0D0;");
+  seperator->setObjectName("seperator");
+  seperator->setStyleSheet("#seperator { background-color: #D0D0D0; }");
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),

@@ -1,10 +1,8 @@
-#ifndef NEXUS_TECHNICALANALYSIS_HPP
-#define NEXUS_TECHNICALANALYSIS_HPP
+#ifndef NEXUS_TECHNICAL_ANALYSIS_HPP
+#define NEXUS_TECHNICAL_ANALYSIS_HPP
 
-namespace Nexus {
-namespace TechnicalAnalysis {
-  template<typename DomainType, typename RangeType> class Candlestick;
-}
+namespace Nexus::TechnicalAnalysis {
+  template<typename D, typename R> class Candlestick;
 }
 
 #endif

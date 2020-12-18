@@ -20,15 +20,15 @@ ServicesTimeAndSalesModel::ServicesTimeAndSalesModel(Security security,
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_clients.GetMarketDataClient().QueryBboQuotes(query,
     m_event_handler.get_slot<SequencedBboQuote>(
-    [=] (const auto& bbo) { on_bbo(bbo); }));
+      [=] (const auto& bbo) { on_bbo(bbo); }));
   m_clients.GetMarketDataClient().QueryTimeAndSales(query,
     m_event_handler.get_slot<SequencedTimeAndSale>(
-    [=] (const auto& time_and_sale) { on_time_and_sale(time_and_sale); }));
+      [=] (const auto& time_and_sale) { on_time_and_sale(time_and_sale); }));
   QueryDailyVolume(m_clients.GetChartingClient(), m_security,
     m_clients.GetTimeClient().GetTime(), pos_infin,
     definitions.get_market_database(), definitions.get_time_zone_database(),
-    m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
-    [=] (const auto& volume) { on_volume(volume); }));
+    m_event_handler.get_slot<Quantity>(
+      [=] (const auto& volume) { m_volume_signal(volume); }));
 }
 
 const Security& ServicesTimeAndSalesModel::get_security() const {
@@ -94,10 +94,4 @@ void ServicesTimeAndSalesModel::on_time_and_sale(
     return TimeAndSalesProperties::PriceRange::INSIDE;
   }();
   m_time_and_sale_signal({time_and_sale, range});
-}
-
-void ServicesTimeAndSalesModel::on_volume(
-    const Nexus::Queries::QueryVariant& volume) {
-  m_volume = get<Quantity>(volume);
-  m_volume_signal(m_volume);
 }

@@ -68,11 +68,11 @@ QtPromise<void> ServicesBookViewModel::load() {
   auto market_quote_slot = m_event_handler.get_slot<MarketQuote>(
     [=] (const auto& quote) { on_market_quote(quote); },
     [=] (const auto& e) { on_market_quote_interruption(e); });
-  auto volume_slot = m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
+  auto volume_slot = m_event_handler.get_slot<Quantity>(
     [=] (const auto& value) { on_volume(value); });
-  auto high_slot = m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
+  auto high_slot = m_event_handler.get_slot<Money>(
     [=] (const auto& value) { on_high(value); });
-  auto low_slot = m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
+  auto low_slot = m_event_handler.get_slot<Money>(
     [=] (const auto& value) { on_low(value); });
   auto open_slot = m_event_handler.get_slot<TimeAndSale>(
     [=] (const auto& value) { on_open(value); });
@@ -109,11 +109,11 @@ QtPromise<void> ServicesBookViewModel::load() {
         definitions.get_time_zone_database(), std::move(low_slot));
       QueryOpen(clients.GetMarketDataClient(), security,
         clients.GetTimeClient().GetTime(), definitions.get_market_database(),
-        definitions.get_time_zone_database(), "", std::move(open_slot));
+        definitions.get_time_zone_database(), std::move(open_slot));
       auto close = LoadPreviousClose(clients.GetMarketDataClient(), security,
         clients.GetTimeClient().GetTime(),
         definitions.get_market_database(),
-        definitions.get_time_zone_database(), "");
+        definitions.get_time_zone_database());
       if(close) {
         close_slot.Push(*close);
       }
@@ -173,8 +173,8 @@ void ServicesBookViewModel::on_book_quote_interruption(
   m_local_model.clear_book_quotes();
   QueryRealTimeBookQuotesWithSnapshot(m_clients.GetMarketDataClient(),
     m_local_model.get_security(), m_event_handler.get_slot<BookQuote>(
-    [=] (const auto& quote) { on_book_quote(quote); },
-    [=] (const auto& e) { on_book_quote_interruption(e); }),
+      [=] (const auto& quote) { on_book_quote(quote); },
+      [=] (const auto& e) { on_book_quote_interruption(e); }),
     InterruptionPolicy::BREAK_QUERY);
 }
 
@@ -187,22 +187,21 @@ void ServicesBookViewModel::on_market_quote_interruption(
   m_local_model.clear_market_quotes();
   QueryRealTimeMarketQuotesWithSnapshot(m_clients.GetMarketDataClient(),
     m_local_model.get_security(), m_event_handler.get_slot<MarketQuote>(
-    [=] (const auto& quote) { on_market_quote(quote); },
-    [=] (const auto& e) { on_market_quote_interruption(e); }),
+      [=] (const auto& quote) { on_market_quote(quote); },
+      [=] (const auto& e) { on_market_quote_interruption(e); }),
     InterruptionPolicy::BREAK_QUERY);
 }
 
-void ServicesBookViewModel::on_volume(
-    const Nexus::Queries::QueryVariant& value) {
-  m_local_model.update_volume(get<Quantity>(value));
+void ServicesBookViewModel::on_volume(Quantity value) {
+  m_local_model.update_volume(value);
 }
 
-void ServicesBookViewModel::on_high(const Nexus::Queries::QueryVariant& value) {
-  m_local_model.update_high(get<Money>(value));
+void ServicesBookViewModel::on_high(Money value) {
+  m_local_model.update_high(value);
 }
 
-void ServicesBookViewModel::on_low(const Nexus::Queries::QueryVariant& value) {
-  m_local_model.update_low(get<Money>(value));
+void ServicesBookViewModel::on_low(Money value) {
+  m_local_model.update_low(value);
 }
 
 void ServicesBookViewModel::on_open(const TimeAndSale& value) {

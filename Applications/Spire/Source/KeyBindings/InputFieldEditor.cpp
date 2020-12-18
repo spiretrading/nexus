@@ -14,7 +14,7 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
   setObjectName("input_field_editor");
   setContextMenuPolicy(Qt::NoContextMenu);
   setStyleSheet(QString(R"(
-      #input_field_editor {
+    #input_field_editor {
       background-color: #FFFFFF;
       border: none;
       color: #000000;

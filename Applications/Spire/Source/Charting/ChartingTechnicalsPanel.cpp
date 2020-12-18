@@ -10,7 +10,8 @@ using namespace Spire;
 ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
     : m_model(&model) {
   m_item_delegate = new CustomVariantItemDelegate(this);
-  setStyleSheet("background-color: #25212E;");
+  setObjectName("charting_technials_panel");
+  setStyleSheet("#charting_technicals_panel { background-color: #25212E; }");
   setFixedHeight(scale_height(50));
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), 0, 0, 0);
@@ -21,10 +22,12 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   layout->addLayout(price_layout);
   m_last_label = new QLabel(tr("N/A"), this);
   m_last_label->setStyleSheet(QString(R"(
-    color: #FFFFFF;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(16)));
+    QLabel {
+      color: #FFFFFF;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    })").arg(scale_height(16)));
   m_last_label->setFixedHeight(scale_height(19));
   price_layout->addWidget(m_last_label);
   price_layout->addSpacing(scale_width(4));
@@ -45,19 +48,23 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   m_open_text_label = new QLabel(tr("O"), this);
   m_open_text_label->setFixedHeight(scale_height(11));
   auto text_label_stylesheet = QString(R"(
-    color: #FFFFFF;
-    font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(10));
+    QLabel {
+      color: #FFFFFF;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(10));
   m_open_text_label->setStyleSheet(text_label_stylesheet);
   ohlc_layout->addWidget(m_open_text_label);
   ohlc_layout->addSpacing(scale_width(3));
   m_open_value_label = new QLabel(tr("N/A"), this);
   m_open_value_label->setFixedHeight(scale_height(11));
   auto value_label_stylesheet = QString(R"(
-    color: #FFFFFF;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(10));
+    QLabel {
+      color: #FFFFFF;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    })").arg(scale_height(10));
   m_open_value_label->setStyleSheet(value_label_stylesheet);
   ohlc_layout->addWidget(m_open_value_label);
   ohlc_layout->addSpacing(scale_width(10));
@@ -216,9 +223,10 @@ void ChartingTechnicalsPanel::update_change_label() {
     m_change_label->setText(tr(""));
   }
   m_change_label->setStyleSheet(QString(R"(
-    color: %1;
-    font-family: Roboto;
-    font-size: %2px;
-    font-weight: 550;)")
-      .arg(color.name()).arg(scale_height(10)));
+    QLabel {
+      color: %1;
+      font-family: Roboto;
+      font-size: %2px;
+      font-weight: 550;
+    })").arg(color.name()).arg(scale_height(10)));
 }

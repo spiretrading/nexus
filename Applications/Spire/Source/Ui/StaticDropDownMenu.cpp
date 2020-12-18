@@ -145,7 +145,8 @@ void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(hasFocus() || underMouse() || m_menu_list->isActiveWindow()) {
+  if(isEnabled() &&
+      (hasFocus() || underMouse() || m_menu_list->isActiveWindow())) {
     draw_border(QColor("#4B23A0"), painter);
   } else {
     draw_border(QColor("#C8C8C8"), painter);
