@@ -139,17 +139,23 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Money>(m_highSignal));
+    m_slotHandler.GetSlot<Money>([this] (Money high) {
+      m_highSignal(high);
+    }));
   QueryDailyLow(m_userProfile->GetServiceClients().GetChartingClient(),
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Money>(m_lowSignal));
+    m_slotHandler.GetSlot<Money>([this] (Money low) {
+      m_lowSignal(low);
+    }));
   QueryDailyVolume(m_userProfile->GetServiceClients().GetChartingClient(),
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Quantity>(m_volumeSignal));
+    m_slotHandler.GetSlot<Quantity>([this] (Quantity volume) {
+      m_volumeSignal(volume);
+    }));
   QueryOpen(userProfile->GetServiceClients().GetMarketDataClient(),
     security, userProfile->GetServiceClients().GetTimeClient().GetTime(),
     userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(),
