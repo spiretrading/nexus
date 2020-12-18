@@ -124,7 +124,7 @@ namespace Nexus::Compliance {
   template<typename CF>
   OpposingOrderCancellationComplianceRule<C>::
     OpposingOrderCancellationComplianceRule(
-    boost::posix_time::time_duration timeout, CF&& timeClient)
+      boost::posix_time::time_duration timeout, CF&& timeClient)
     : m_timeout(timeout),
       m_timeClient(std::forward<CF>(timeClient)),
       m_lastAskFillTime(boost::posix_time::not_a_date_time),

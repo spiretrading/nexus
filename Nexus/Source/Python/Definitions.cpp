@@ -21,7 +21,6 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
@@ -274,7 +273,6 @@ void Nexus::Python::ExportDefinitions(module& module) {
   ExportRegion(module);
   ExportSecurity(module);
   ExportSecurityInfo(module);
-  ExportSecurityTechnicals(module);
   ExportSide(module);
   ExportTag(module);
   ExportTimeAndSale(module);
@@ -643,15 +641,6 @@ void Nexus::Python::ExportSecurityInfo(module& module) {
         return std::hash<SecurityInfo>()(self);
       }).
     def("__str__", &lexical_cast<std::string, SecurityInfo>);
-}
-
-void Nexus::Python::ExportSecurityTechnicals(module& module) {
-  class_<SecurityTechnicals>(module, "SecurityTechnicals").
-    def(init()).
-    def(init<const SecurityTechnicals&>()).
-    def_readwrite("volume", &SecurityTechnicals::m_volume).
-    def_readwrite("high", &SecurityTechnicals::m_high).
-    def_readwrite("low", &SecurityTechnicals::m_low);
 }
 
 void Nexus::Python::ExportSide(module& module) {

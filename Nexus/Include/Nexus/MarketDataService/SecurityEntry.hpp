@@ -1,113 +1,100 @@
-#ifndef NEXUS_MARKETDATASECURITYENTRY_HPP
-#define NEXUS_MARKETDATASECURITYENTRY_HPP
+#ifndef NEXUS_MARKET_DATA_SECURITY_ENTRY_HPP
+#define NEXUS_MARKET_DATA_SECURITY_ENTRY_HPP
 #include <unordered_map>
 #include <vector>
 #include <Beam/Queries/Sequencer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class SecurityEntry
-      \brief Keeps track of a Security's market data.
-   */
-  class SecurityEntry : private boost::noncopyable {
+  /** Keeps track of a Security's market data. */
+  class SecurityEntry {
     public:
 
-      /*! \struct InitialSequences
-          \brief Stores the next Sequence to use.
-       */
+      /** Stores the next Sequence to use. */
       struct InitialSequences {
 
-        //! The next Sequence to use for a BboQuote.
+        /** The next Sequence to use for a BboQuote. */
         Beam::Queries::Sequence m_nextBboQuoteSequence;
 
-        //! The next Sequence to use for a BookQuote.
+        /** The next Sequence to use for a BookQuote. */
         Beam::Queries::Sequence m_nextBookQuoteSequence;
 
-        //! The next Sequence to use for a MarketQuote.
+        /** The next Sequence to use for a MarketQuote. */
         Beam::Queries::Sequence m_nextMarketQuoteSequence;
 
-        //! The next Sequence to use for a TimeAndSale.
+        /** The next Sequence to use for a TimeAndSale. */
         Beam::Queries::Sequence m_nextTimeAndSaleSequence;
       };
 
-      //! Constructs a SecurityEntry.
-      /*!
-        \param security The Security represented.
-        \param closePrice The closing price.
-        \param initialSequences The initial Sequences to use.
-      */
+      /**
+       * Constructs a SecurityEntry.
+       * @param security The Security represented.
+       * @param closePrice The closing price.
+       * @param initialSequences The initial Sequences to use.
+       */
       SecurityEntry(const Security& security, Money closePrice,
         const InitialSequences& initialSequences);
 
-      //! Returns the Security.
+      /** Returns the Security. */
       const Security& GetSecurity() const;
 
-      //! Sets the Security.
+      /** Sets the Security. */
       void SetSecurity(const Security& security);
 
-      //! Returns the most recently published BboQuote.
+      /** Returns the most recently published BboQuote. */
       const SequencedSecurityBboQuote& GetBboQuote() const;
 
-      //! Publishes a BboQuote.
-      /*!
-        \param bboQuote The BboQuote to publish.
-        \param sourceId The id of the source setting the value.
-        \return The BboQuote to publish.
-      */
+      /**
+       * Publishes a BboQuote.
+       * @param bboQuote The BboQuote to publish.
+       * @param sourceId The id of the source setting the value.
+       * @return The BboQuote to publish.
+       */
       boost::optional<SequencedSecurityBboQuote> PublishBboQuote(
         const BboQuote& bboQuote, int sourceId);
 
-      //! Sets a MarketQuote.
-      /*!
-        \param marketQuote The MarketQuote to set.
-        \param sourceId The id of the source setting the value.
-        \return The MarketQuote to publish.
-      */
+      /**
+       * Sets a MarketQuote.
+       * @param marketQuote The MarketQuote to set.
+       * @param sourceId The id of the source setting the value.
+       * @return The MarketQuote to publish.
+       */
       boost::optional<SequencedSecurityMarketQuote> PublishMarketQuote(
         const MarketQuote& marketQuote, int sourceId);
 
-      //! Updates a BookQuote.
-      /*!
-        \param delta The BookQuote storing the change.
-        \param sourceId The id of the source setting the value.
-        \return The BookQuote to publish.
-      */
+      /**
+       * Updates a BookQuote.
+       * @param delta The BookQuote storing the change.
+       * @param sourceId The id of the source setting the value.
+       * @return The BookQuote to publish.
+       */
       boost::optional<SequencedSecurityBookQuote> UpdateBookQuote(
         const BookQuote& delta, int sourceId);
 
-      //! Publishes a TimeAndSale.
-      /*!
-        \param timeAndSale The TimeAndSale to publish.
-        \param sourceId The id of the source setting the value.
-        \return The TimeAndSale to publish.
-      */
+      /**
+       * Publishes a TimeAndSale.
+       * @param timeAndSale The TimeAndSale to publish.
+       * @param sourceId The id of the source setting the value.
+       * @return The TimeAndSale to publish.
+       */
       boost::optional<SequencedSecurityTimeAndSale> PublishTimeAndSale(
         const TimeAndSale& timeAndSale, int sourceId);
 
-      //! Returns the SecurityTechnicals.
-      const SecurityTechnicals& GetSecurityTechnicals() const;
-
-      //! Returns the SecurityTechnicals.
-      SecurityTechnicals& GetSecurityTechnicals();
-
-      //! Returns the Security's current snapshot.
-      /*!
-        \return The real-time snapshot of the <i>security</i>.
-      */
+      /**
+       * Returns the Security's current snapshot.
+       * @return The real-time snapshot of the <i>security</i>.
+       */
       boost::optional<SecuritySnapshot> LoadSnapshot() const;
 
-      //! Clears market data that originated from a specified source.
-      /*!
-        \param sourceId The id of the source to clear.
-      */
+      /**
+       * Clears market data that originated from a specified source.
+       * @param sourceId The id of the source to clear.
+       */
       void Clear(int sourceId);
 
     private:
@@ -122,7 +109,6 @@ namespace MarketDataService {
       Beam::Queries::Sequencer m_marketQuoteSequencer;
       Beam::Queries::Sequencer m_bookQuoteSequencer;
       Beam::Queries::Sequencer m_timeAndSaleSequencer;
-      SecurityTechnicals m_technicals;
       SequencedSecurityBboQuote m_bboQuote;
       SequencedSecurityTimeAndSale m_timeAndSale;
       std::unordered_map<MarketCode, SequencedSecurityMarketQuote>
@@ -131,20 +117,20 @@ namespace MarketDataService {
       std::vector<BookQuoteEntry> m_bidBook;
   };
 
-  //! Returns the InitialSequences for a SecurityEntry.
-  /*!
-    \param dataStore The DataStore to load the InitialSequences from.
-    \param security The security to load the InitialSequences for.
-    \return The set of InitialSequences for the specified <i>security</i>.
-  */
+  /**
+   * Returns the InitialSequences for a SecurityEntry.
+   * @param dataStore The DataStore to load the InitialSequences from.
+   * @param security The security to load the InitialSequences for.
+   * @return The set of InitialSequences for the specified <i>security</i>.
+   */
   template<typename DataStore>
   SecurityEntry::InitialSequences LoadInitialSequences(DataStore& dataStore,
       const Security& security) {
-    SecurityMarketDataQuery query;
+    auto query = SecurityMarketDataQuery();
     query.SetIndex(security);
     query.SetRange(Beam::Queries::Range::Total());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    SecurityEntry::InitialSequences initialSequences;
+    auto initialSequences = SecurityEntry::InitialSequences();
     {
       auto results = dataStore.LoadBboQuotes(query);
       if(results.empty()) {
@@ -189,19 +175,17 @@ namespace MarketDataService {
   }
 
   inline SecurityEntry::BookQuoteEntry::BookQuoteEntry(
-      const SequencedSecurityBookQuote& quote, int sourceId)
-      : m_quote{quote},
-        m_sourceId{sourceId} {}
+    const SequencedSecurityBookQuote& quote, int sourceId)
+    : m_quote(quote),
+      m_sourceId(sourceId) {}
 
   inline SecurityEntry::SecurityEntry(const Security& security,
-      Money closePrice, const InitialSequences& initialSequences)
-      : m_security{security},
-        m_bboSequencer{initialSequences.m_nextBboQuoteSequence},
-        m_marketQuoteSequencer{initialSequences.m_nextMarketQuoteSequence},
-        m_bookQuoteSequencer{initialSequences.m_nextBookQuoteSequence},
-        m_timeAndSaleSequencer{initialSequences.m_nextTimeAndSaleSequence} {
-    m_technicals.m_close = closePrice;
-  }
+    Money closePrice, const InitialSequences& initialSequences)
+    : m_security(security),
+      m_bboSequencer(initialSequences.m_nextBboQuoteSequence),
+      m_marketQuoteSequencer(initialSequences.m_nextMarketQuoteSequence),
+      m_bookQuoteSequencer(initialSequences.m_nextBookQuoteSequence),
+      m_timeAndSaleSequencer(initialSequences.m_nextTimeAndSaleSequence) {}
 
   inline const Security& SecurityEntry::GetSecurity() const {
     return m_security;
@@ -232,15 +216,15 @@ namespace MarketDataService {
 
   inline boost::optional<SequencedSecurityBookQuote> SecurityEntry::
       UpdateBookQuote(const BookQuote& delta, int sourceId) {
-    std::vector<BookQuoteEntry>* book;
-    if(delta.m_quote.m_side == Side::ASK) {
-      book = &m_askBook;
-    } else {
-      book = &m_bidBook;
-    }
+    auto book = [&] {
+      if(delta.m_quote.m_side == Side::ASK) {
+        return &m_askBook;
+      } else {
+        return &m_bidBook;
+      }
+    }();
     auto entryIterator = Beam::LinearLowerBound(book->begin(), book->end(),
-      delta,
-      [] (auto& lhs, auto& rhs) {
+      delta, [] (const auto& lhs, const auto& rhs) {
         return BookQuoteListingComparator(**lhs.m_quote, rhs);
       });
     if(entryIterator == book->end()) {
@@ -260,7 +244,7 @@ namespace MarketDataService {
         if((*entry.m_quote)->m_quote.m_size == 0) {
           auto value = m_bookQuoteSequencer.MakeSequencedValue(delta,
             m_security);
-          BookQuoteEntry quoteEntry{std::move(value), sourceId};
+          auto quoteEntry = BookQuoteEntry(std::move(value), sourceId);
           entry = quoteEntry;
         } else {
           auto value = m_bookQuoteSequencer.MakeSequencedValue(delta,
@@ -280,40 +264,20 @@ namespace MarketDataService {
     return entryIterator->m_quote;
   }
 
-  inline boost::optional<SequencedSecurityTimeAndSale> SecurityEntry::
-      PublishTimeAndSale(const TimeAndSale& timeAndSale, int sourceId) {
-    if(m_technicals.m_open == Money::ZERO) {
-      m_technicals.m_open = timeAndSale.m_price;
-    }
-    if(m_technicals.m_high == Money::ZERO ||
-        timeAndSale.m_price > m_technicals.m_high) {
-      m_technicals.m_high = timeAndSale.m_price;
-    }
-    if(m_technicals.m_low == Money::ZERO ||
-        timeAndSale.m_price < m_technicals.m_low) {
-      m_technicals.m_low = timeAndSale.m_price;
-    }
-    m_technicals.m_volume += timeAndSale.m_size;
+  inline boost::optional<SequencedSecurityTimeAndSale>
+      SecurityEntry::PublishTimeAndSale(
+        const TimeAndSale& timeAndSale, int sourceId) {
     auto value = m_timeAndSaleSequencer.MakeSequencedValue(
       timeAndSale, m_security);
     m_timeAndSale = value;
     return value;
   }
 
-  inline const SecurityTechnicals& SecurityEntry::
-      GetSecurityTechnicals() const {
-    return m_technicals;
-  }
-
-  inline SecurityTechnicals& SecurityEntry::GetSecurityTechnicals() {
-    return m_technicals;
-  }
-
   inline boost::optional<SecuritySnapshot> SecurityEntry::LoadSnapshot() const {
     if(m_security.GetMarket().IsEmpty()) {
       return boost::none;
     }
-    SecuritySnapshot snapshot{m_security};
+    auto snapshot = SecuritySnapshot(m_security);
     snapshot.m_bboQuote = m_bboQuote;
     snapshot.m_timeAndSale = m_timeAndSale;
     snapshot.m_marketQuotes.insert(m_marketQuotes.begin(),
@@ -343,7 +307,6 @@ namespace MarketDataService {
       });
     m_bidBook.erase(bidRange, m_bidBook.end());
   }
-}
 }
 
 #endif
