@@ -101,11 +101,12 @@ void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
   label->setFixedSize(scale(20, 20));
   label->setAlignment(Qt::AlignCenter);
   label->setStyleSheet(QString(R"(
+    QLabel {
       background-color: #FFFFFF;
       color: #4B23A0;
       font-family: Roboto;
       font-size: %1px;
-    )").arg(scale_height(12)));
+    })").arg(scale_height(12)));
   layout->addWidget(label);
 }
 
