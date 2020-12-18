@@ -28,10 +28,12 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   markets_layout->setSpacing(0);
   auto markets_label = new QLabel(tr("Markets"), this);
   auto generic_header_label_stylesheet = QString(R"(
-    color: #4B23A0;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(12));
+    QLabel {
+      color: #4B23A0;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    })").arg(scale_height(12));
   markets_label->setStyleSheet(generic_header_label_stylesheet);
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
@@ -115,7 +117,9 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   layout->addStretch(18);
   auto vertical_rule = new QWidget(this);
   vertical_rule->setFixedWidth(scale_width(1));
-  vertical_rule->setStyleSheet("background-color: #C8C8C8;");
+  vertical_rule->setObjectName("vertical_rule");
+  vertical_rule->setStyleSheet(
+    "#vertical_rule { background-color: #C8C8C8; }");
   layout->addWidget(vertical_rule);
   layout->addStretch(18);
   auto orders_layout = new QVBoxLayout();

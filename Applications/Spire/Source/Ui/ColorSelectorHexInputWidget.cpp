@@ -23,18 +23,18 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
     const QColor& current_color, QWidget* parent)
     : QWidget(parent),
       m_color_name(color_name(current_color)) {
-  setStyleSheet("background-color: white;");
+  setObjectName("hex_input_widget");
+  setStyleSheet("#hex_input_widget { background-color: white; }");
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   auto hex_label = new QLabel(tr("HEX"), this);
   auto label_style = QString(R"(
-      QLabel {
-        background-color: #FFFFFF;
-        font-family: Roboto;
-        font-size: %1px;
-      }
-    )").arg(FONT_HEIGHT());
+    QLabel {
+      background-color: #FFFFFF;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(FONT_HEIGHT());
   hex_label->setStyleSheet(label_style);
   hex_label->setFixedSize(scale(29, 26));
   layout->addWidget(hex_label);

@@ -8,7 +8,8 @@ using namespace Spire;
 
 TechnicalsPanel::TechnicalsPanel(QWidget* parent)
     : QWidget(parent) {
-  setStyleSheet("background-color: #F5F5F5;");
+  setObjectName("technicals_panel");
+  setStyleSheet("#technicals_panel { background-color: #F5F5F5; }");
   setFixedHeight(scale_height(36));
   m_layout = new QGridLayout(this);
   m_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);

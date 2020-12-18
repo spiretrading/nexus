@@ -26,7 +26,9 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   set_fixed_body_size(scale(482, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto body = new QWidget(this);
-  body->setStyleSheet("background-color: #F5F5F5;");
+  body->setObjectName("book_view_properties_dialog_body");
+  body->setStyleSheet(R"(#book_view_properties_dialog_body {
+    background-color: #F5F5F5; })");
   setWindowTitle(tr("Properties"));
   set_svg_icon(":/Icons/bookview-black.svg");
   auto layout = new QVBoxLayout(body);

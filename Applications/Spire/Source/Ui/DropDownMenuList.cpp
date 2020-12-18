@@ -39,7 +39,9 @@ DropDownMenuList::DropDownMenuList(
   list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
   set_items(items);
-  m_list_widget->setStyleSheet("background-color: #FFFFFF;");
+  m_list_widget->setObjectName("drop_down_list");
+  m_list_widget->setStyleSheet(
+    "#drop_down_list { background-color: #FFFFFF; }");
   m_scroll_area->setWidget(m_list_widget);
   parent->installEventFilter(this);
   m_list_widget->installEventFilter(this);

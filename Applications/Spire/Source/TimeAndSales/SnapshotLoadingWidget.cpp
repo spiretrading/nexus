@@ -18,7 +18,7 @@ SnapshotLoadingWidget::SnapshotLoadingWidget(QScrollArea* scroll_area,
   logo->setScaledSize(scale(16, 16));
   m_logo_widget->setMovie(logo);
   m_logo_widget->setStyleSheet(
-    QString("padding-top: %1px;").arg(scale_height(8)));
+    QString("QLabel { padding-top: %1px; }").arg(scale_height(8)));
   m_logo_widget->setAlignment(Qt::AlignHCenter);
   m_logo_widget->movie()->start();
   m_scroll_area->installEventFilter(this);
@@ -43,7 +43,7 @@ bool SnapshotLoadingWidget::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void SnapshotLoadingWidget::showEvent(QShowEvent* event) {
-  auto rect = m_scroll_area->visibleRegion().boundingRect();
+  auto rect = m_scroll_area->widget()->visibleRegion().boundingRect();
   if(m_scroll_area->verticalScrollBar()->isVisible()) {
     rect.setWidth(rect.width() + m_scroll_area->verticalScrollBar()->width());
   }
