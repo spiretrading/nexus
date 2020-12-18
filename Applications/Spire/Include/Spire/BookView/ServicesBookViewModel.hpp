@@ -81,9 +81,9 @@ namespace Spire {
       void on_book_quote_interruption(const std::exception_ptr& e);
       void on_market_quote(const Nexus::MarketQuote& quote);
       void on_market_quote_interruption(const std::exception_ptr& e);
-      void on_volume(const Nexus::Queries::QueryVariant& value);
-      void on_high(const Nexus::Queries::QueryVariant& value);
-      void on_low(const Nexus::Queries::QueryVariant& value);
+      void on_volume(Nexus::Quantity value);
+      void on_high(Nexus::Money value);
+      void on_low(Nexus::Money value);
       void on_open(const Nexus::TimeAndSale& value);
       void on_close(const Nexus::TimeAndSale& value);
   };

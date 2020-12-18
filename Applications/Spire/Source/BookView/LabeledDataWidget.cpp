@@ -17,14 +17,18 @@ LabeledDataWidget::LabeledDataWidget(const QString& label_text,
   m_label = new QLabel(label_text, this);
   m_label->setFixedWidth(scale_width(10));
   m_label->setStyleSheet(QString(R"(
-    font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(10)));
+    QLabel {
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(10)));
   layout->addWidget(m_label);
   m_data_label = new QLabel(data_text, this);
   m_data_label->setStyleSheet(QString(R"(
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(10)));
+    QLabel {
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    })").arg(scale_height(10)));
   layout->addWidget(m_data_label);
   layout->addStretch(1);
 }

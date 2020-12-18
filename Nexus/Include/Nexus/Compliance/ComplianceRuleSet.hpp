@@ -14,7 +14,6 @@
 #include <Beam/Utilities/Active.hpp>
 #include <Beam/Utilities/Rethrow.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
@@ -33,7 +32,7 @@ namespace Nexus::Compliance {
    *        for accounts and their parents.
    */
   template<typename C, typename S>
-  class ComplianceRuleSet : private boost::noncopyable {
+  class ComplianceRuleSet {
     public:
 
       /** The type of ComplianceClient to use. */
@@ -50,9 +49,8 @@ namespace Nexus::Compliance {
        * @param entry The ComplianceRuleEntry to build the rule from.
        * @return The ComplianceRule represented by the <i>entry</i>.
        */
-      using ComplianceRuleBuilder =
-        std::function<std::unique_ptr<ComplianceRule>
-        (const ComplianceRuleEntry& entry)>;
+      using ComplianceRuleBuilder = std::function<
+        std::unique_ptr<ComplianceRule> (const ComplianceRuleEntry& entry)>;
 
       /**
        * Constructs a ComplianceRuleSet.
@@ -104,6 +102,8 @@ namespace Nexus::Compliance {
       ComplianceRuleBuilder m_complianceRuleBuilder;
       Beam::RoutineTaskQueue m_tasks;
 
+      ComplianceRuleSet(const ComplianceRuleSet&) = delete;
+      ComplianceRuleSet& operator =(const ComplianceRuleSet&) = delete;
       std::shared_ptr<Entry> LoadEntry(
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry);
       void UpdateComplianceEntry(const ComplianceRuleEntry& updatedEntry,
@@ -114,7 +114,7 @@ namespace Nexus::Compliance {
   template<typename C, typename S>
   ComplianceRuleSet(C&&, S&&, std::function<
     std::unique_ptr<ComplianceRule> (const ComplianceRuleEntry&)>) ->
-    ComplianceRuleSet<std::remove_reference_t<C>, std::remove_reference_t<S>>;
+      ComplianceRuleSet<std::remove_reference_t<C>, std::remove_reference_t<S>>;
 
   template<typename C, typename S>
   template<typename CF, typename SF>
@@ -246,41 +246,40 @@ namespace Nexus::Compliance {
   template<typename C, typename S>
   std::shared_ptr<typename ComplianceRuleSet<C, S>::Entry>
       ComplianceRuleSet<C, S>::LoadEntry(
-      const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
+        const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
     auto entry = m_entries.GetOrInsert(directoryEntry,
       boost::factory<std::shared_ptr<Entry>>());
-    entry->m_initializer.Call(
-      [&] {
-        auto previousParents = std::unordered_set<
-          Beam::ServiceLocator::DirectoryEntry>();
-        auto searchQueue = std::deque<Beam::ServiceLocator::DirectoryEntry>();
-        searchQueue.push_back(directoryEntry);
-        while(!searchQueue.empty()) {
-          auto frontEntry = std::move(searchQueue.front());
-          searchQueue.pop_front();
-          auto parents = m_serviceLocatorClient->LoadParents(frontEntry);
-          for(auto& parent : parents) {
-            if(frontEntry.m_type ==
-                Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
-              if(parent.m_name != "traders" && parent.m_name != "managers") {
-                continue;
-              }
-            }
-            if(previousParents.insert(parent).second) {
-              entry->m_parents.push_back(parent);
-              searchQueue.push_back(parent);
+    entry->m_initializer.Call([&] {
+      auto previousParents =
+        std::unordered_set<Beam::ServiceLocator::DirectoryEntry>();
+      auto searchQueue = std::deque<Beam::ServiceLocator::DirectoryEntry>();
+      searchQueue.push_back(directoryEntry);
+      while(!searchQueue.empty()) {
+        auto frontEntry = std::move(searchQueue.front());
+        searchQueue.pop_front();
+        auto parents = m_serviceLocatorClient->LoadParents(frontEntry);
+        for(auto& parent : parents) {
+          if(frontEntry.m_type ==
+              Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
+            if(parent.m_name != "traders" && parent.m_name != "managers") {
+              continue;
             }
           }
+          if(previousParents.insert(parent).second) {
+            entry->m_parents.push_back(parent);
+            searchQueue.push_back(parent);
+          }
         }
-        auto rules = std::vector<ComplianceRuleEntry>();
-        m_complianceClient->MonitorComplianceRuleEntries(directoryEntry,
-          m_tasks.GetSlot<ComplianceRuleEntry>(std::bind(
-          &ComplianceRuleSet::OnComplianceUpdate, this,
-          std::placeholders::_1)), Beam::Store(rules));
-        for(auto& rule : rules) {
-          UpdateComplianceEntry(rule, *entry);
-        }
-      });
+      }
+      auto rules = std::vector<ComplianceRuleEntry>();
+      m_complianceClient->MonitorComplianceRuleEntries(directoryEntry,
+        m_tasks.GetSlot<ComplianceRuleEntry>(std::bind(
+          &ComplianceRuleSet::OnComplianceUpdate, this, std::placeholders::_1)),
+        Beam::Store(rules));
+      for(auto& rule : rules) {
+        UpdateComplianceEntry(rule, *entry);
+      }
+    });
     return entry;
   }
 
@@ -289,18 +288,13 @@ namespace Nexus::Compliance {
       const ComplianceRuleEntry& updatedEntry, Entry& entry) {
     auto lock = boost::lock_guard(entry.m_mutex);
     entry.m_rules.erase(std::remove_if(entry.m_rules.begin(),
-      entry.m_rules.end(),
-      [&] (const auto& rule) {
+      entry.m_rules.end(), [&] (const auto& rule) {
         return rule->m_entry.Load()->GetId() == updatedEntry.GetId();
       }), entry.m_rules.end());
     if(updatedEntry.GetState() == ComplianceRuleEntry::State::DELETED) {
       return;
     }
-    auto complianceRule = m_complianceRuleBuilder(updatedEntry);
-    if(complianceRule == nullptr) {
-      std::cerr << "Unknown compliance rule: " <<
-        updatedEntry.GetSchema().GetName() << "\n";
-    } else {
+    if(auto complianceRule = m_complianceRuleBuilder(updatedEntry)) {
       auto rule = std::make_shared<Rule>();
       rule->m_entry.Update(updatedEntry);
       rule->m_rule = std::move(complianceRule);
@@ -308,6 +302,9 @@ namespace Nexus::Compliance {
         rule->m_rule->Add(*order);
       }
       entry.m_rules.push_back(rule);
+    } else {
+      std::cerr << "Unknown compliance rule: " <<
+        updatedEntry.GetSchema().GetName() << "\n";
     }
   }
 

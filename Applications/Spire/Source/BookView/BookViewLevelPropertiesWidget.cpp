@@ -38,10 +38,12 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
   band_appearance_label->setFixedHeight(scale_height(14));
   band_appearance_label->setStyleSheet(QString(R"(
-    color: #4B23A0;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(12)));
+    QLabel {
+      color: #4B23A0;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    })").arg(scale_height(12)));
   layout->addWidget(band_appearance_label);
   layout->addStretch(10);
   auto horizontal_layout = new QHBoxLayout();
@@ -86,9 +88,11 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   auto number_of_bands_label = new QLabel(tr("Number of Bands"), this);
   number_of_bands_label->setFixedHeight(LABEL_HEIGHT());
   auto generic_label_style = QString(R"(
-    color: #000000;
-    font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12));
+    QLabel {
+      color: #000000;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(12));
   number_of_bands_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);

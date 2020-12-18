@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 

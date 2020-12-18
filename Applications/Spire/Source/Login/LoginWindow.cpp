@@ -78,11 +78,13 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   content_layout->setStretchFactor(logo_layout, 50);
   content_layout->addStretch(23);
   m_status_label = new QLabel(this);
-  m_status_label->setStyleSheet(QString(
-    R"(color: #FAEB96;
-       font-family: Roboto;
-       font-size: %1px;
-       qproperty-alignment: AlignCenter;)").arg(scale_height(12)));
+  m_status_label->setStyleSheet(QString(R"(
+    QLabel {
+      color: #FAEB96;
+      font-family: Roboto;
+      font-size: %1px;
+      qproperty-alignment: AlignCenter;
+    })").arg(scale_height(12)));
   content_layout->addWidget(m_status_label);
   content_layout->setStretchFactor(m_status_label, 14);
   content_layout->addStretch(20);
@@ -93,13 +95,14 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_username_line_edit->setPlaceholderText(tr("Username"));
   m_username_line_edit->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_username_line_edit->setStyleSheet(QString(
-    R"(background-color: white;
-       border: 0px;
-       font-family: Roboto;
-       font-size: %2px;
-       padding-left: %1px;)")
-    .arg(scale_width(10)).arg(scale_height(14)));
+  m_username_line_edit->setStyleSheet(QString(R"(
+    QLineEdit {
+      background-color: white;
+      border: 0px;
+      font-family: Roboto;
+      font-size: %2px;
+      padding-left: %1px;
+    })").arg(scale_width(10)).arg(scale_height(14)));
   content_layout->addWidget(m_username_line_edit);
   content_layout->setStretchFactor(m_username_line_edit, 30);
   content_layout->addStretch(15);
@@ -116,13 +119,14 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_password_line_edit->setPlaceholderText(tr("Password"));
   m_password_line_edit->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_password_line_edit->setStyleSheet(QString(
-    R"(background-color: white;
-       border: 0px;
-       font-family: Roboto;
-       font-size: %2px;
-       padding-left: %1px;)")
-    .arg(scale_width(10)).arg(scale_height(14)));
+  m_password_line_edit->setStyleSheet(QString(R"(
+    QLineEdit {
+      background-color: white;
+      border: 0px;
+      font-family: Roboto;
+      font-size: %2px;
+      padding-left: %1px;
+    })").arg(scale_width(10)).arg(scale_height(14)));
   password_layout->addWidget(m_password_line_edit);
   password_layout->setStretchFactor(m_password_line_edit, 246);
   auto ch_outer_widget = new QWidget(this);
@@ -147,10 +151,12 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   button_layout->setSpacing(0);
   auto build_label = new QLabel(QString(tr("Build ")) +
     QString::fromStdString(version), this);
-  build_label->setStyleSheet(QString(
-    R"(color: white;
-       font-family: Roboto;
-       font-size: %1px;)").arg(scale_height(12)));
+  build_label->setStyleSheet(QString(R"(
+    QLabel {
+      color: white;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(12)));
   build_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   button_layout->addWidget(build_label);
   button_layout->setStretchFactor(build_label, 57);

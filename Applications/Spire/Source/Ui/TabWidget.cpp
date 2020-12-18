@@ -9,12 +9,12 @@ TabWidget::TabWidget(QWidget* parent)
     : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
   setStyleSheet(QString(R"(
-    QWidget {
-      outline: none;
-    }
-
     QTabWidget::pane {
       border: none;
+    }
+
+    QTabBar {
+      outline: none;
     }
 
     QTabBar::tab {

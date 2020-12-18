@@ -79,8 +79,7 @@ namespace Nexus::Compliance {
   inline void PerAccountComplianceRule::Add(
       const OrderExecutionService::Order& order) {
     auto& rule = *m_accountEntries.GetOrInsert(
-      order.GetInfo().m_fields.m_account,
-      [&] {
+      order.GetInfo().m_fields.m_account, [&] {
         return m_complianceRuleBuilder(m_schema);
       });
     rule.Add(order);

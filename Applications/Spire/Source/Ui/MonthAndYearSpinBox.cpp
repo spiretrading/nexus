@@ -17,7 +17,7 @@ MonthAndYearSpinBox::MonthAndYearSpinBox(date initial_date, QWidget* parent)
   layout->setSpacing(0);
   layout->setContentsMargins({});
   m_left_label = new QLabel(this);
-  m_left_label->setStyleSheet("background-color: #FFFFFF;");
+  m_left_label->setStyleSheet("QLabel { background-color: #FFFFFF; }");
   m_left_label->setFocusProxy(parent);
   m_left_label->setCursor({QPixmap::fromImage(
     imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
@@ -30,15 +30,16 @@ MonthAndYearSpinBox::MonthAndYearSpinBox(date initial_date, QWidget* parent)
   m_month_label = new QLabel(this);
   m_month_label->setAlignment(Qt::AlignCenter);
   m_month_label->setStyleSheet(QString(R"(
+    QLabel {
       background-color: #FFFFFF;
       color: #000000;
       font-family: Roboto;
       font-size: %1px;
-    )").arg(scale_height(12)));
+    })").arg(scale_height(12)));
   m_month_label->setFixedHeight(scale_height(26));
   layout->addWidget(m_month_label);
   m_right_label = new QLabel(this);
-  m_right_label->setStyleSheet("background-color: #FFFFFF;");
+  m_right_label->setStyleSheet("QLabel { background-color: #FFFFFF; }");
   m_right_label->setCursor({QPixmap::fromImage(
     imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
   m_right_label->installEventFilter(this);

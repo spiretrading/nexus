@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
@@ -24,7 +23,7 @@ namespace Nexus::Compliance {
    * @param <S> The type of ComplianceRuleSet used to validate operations.
    */
   template<typename D, typename C, typename S>
-  class ComplianceCheckOrderExecutionDriver : private boost::noncopyable {
+  class ComplianceCheckOrderExecutionDriver {
     public:
 
       /**
@@ -77,6 +76,10 @@ namespace Nexus::Compliance {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      ComplianceCheckOrderExecutionDriver(
+        const ComplianceCheckOrderExecutionDriver&) = delete;
+      ComplianceCheckOrderExecutionDriver& operator =(
+        const ComplianceCheckOrderExecutionDriver&) = delete;
       void OnExecutionReport(OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
   };
@@ -85,7 +88,7 @@ namespace Nexus::Compliance {
   template<typename DF, typename CF, typename SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
     ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-    CF&& timeClient, SF&& complianceRuleSet)
+      CF&& timeClient, SF&& complianceRuleSet)
     : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
       m_timeClient(std::forward<CF>(timeClient)),
       m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {}
@@ -97,17 +100,18 @@ namespace Nexus::Compliance {
   }
 
   template<typename D, typename C, typename S>
-  const OrderExecutionService::Order& ComplianceCheckOrderExecutionDriver<
-      D, C, S>::Recover(
-      const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
+  const OrderExecutionService::Order&
+      ComplianceCheckOrderExecutionDriver<D, C, S>::Recover(
+        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
     auto& order = m_orderExecutionDriver->Recover(orderRecord);
     m_complianceRuleSet->Add(order);
     return order;
   }
 
   template<typename D, typename C, typename S>
-  const OrderExecutionService::Order& ComplianceCheckOrderExecutionDriver<
-      D, C, S>::Submit(const OrderExecutionService::OrderInfo& orderInfo) {
+  const OrderExecutionService::Order&
+      ComplianceCheckOrderExecutionDriver<D, C, S>::Submit(
+        const OrderExecutionService::OrderInfo& orderInfo) {
     auto instance = std::make_unique<OrderExecutionService::PrimitiveOrder>(
       orderInfo);
     auto& order = *instance;
@@ -115,22 +119,21 @@ namespace Nexus::Compliance {
     try {
       m_complianceRuleSet->Submit(order);
     } catch(const std::exception& e) {
-      order.With(
-        [&] (auto status, const auto& reports) {
-          auto& lastReport = reports.back();
-          auto updatedReport =
-            OrderExecutionService::ExecutionReport::BuildUpdatedReport(
-            lastReport, OrderStatus::REJECTED, m_timeClient->GetTime());
-          updatedReport.m_text = e.what();
-          order.Update(updatedReport);
-        });
+      order.With([&] (auto status, const auto& reports) {
+        auto& lastReport = reports.back();
+        auto updatedReport =
+          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+          lastReport, OrderStatus::REJECTED, m_timeClient->GetTime());
+        updatedReport.m_text = e.what();
+        order.Update(updatedReport);
+      });
       return order;
     }
     auto& driverOrder = m_orderExecutionDriver->Submit(orderInfo);
     driverOrder.GetPublisher().Monitor(
       m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind(
-      &ComplianceCheckOrderExecutionDriver::OnExecutionReport, this,
-      std::ref(order), std::placeholders::_1)));
+        &ComplianceCheckOrderExecutionDriver::OnExecutionReport, this,
+        std::ref(order), std::placeholders::_1)));
     return order;
   }
 
@@ -139,7 +142,7 @@ namespace Nexus::Compliance {
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
     auto order = m_orders.Find(orderId);
-    if(!order.is_initialized()) {
+    if(!order) {
       m_orderExecutionDriver->Cancel(session, orderId);
       return;
     }

@@ -124,8 +124,6 @@ namespace Nexus::MarketDataService {
         const Security& security, int id);
       SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
         Security security);
-      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-        Security security);
       std::vector<SecurityInfo> OnQuerySecurityInfo(
         ServiceProtocolClient& client, const SecurityInfoQuery& query);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
@@ -291,9 +289,6 @@ namespace Nexus::MarketDataService {
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecuritySnapshot, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
     QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnQuerySecurityInfo, this,
@@ -569,17 +564,6 @@ namespace Nexus::MarketDataService {
     securitySnapshot->m_bidBook.erase(bidEndRange,
       securitySnapshot->m_bidBook.end());
     return *securitySnapshot;
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-        Security security) {
-    security = NormalizePrimaryMarket(security);
-    if(auto securityTechnicals = m_registry->FindSecurityTechnicals(security)) {
-      return *securityTechnicals;
-    }
-    return {};
   }
 
   template<typename C, typename R, typename D, typename A>
