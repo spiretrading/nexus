@@ -15,16 +15,18 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
       m_line_style(TrendLineStyle::SOLID) {
   parent->installEventFilter(this);
   setFixedSize(scale(216, 36));
-  setStyleSheet("background-color: #F5F5F5");
+  setObjectName("trend_line_editor");
+  setStyleSheet("#trend_line_editor { background-color: #F5F5F5; }");
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(8),
     scale_width(8), scale_width(8));
   auto draw_tool_label = new QLabel(tr("Draw Tool"), this);
   draw_tool_label->setStyleSheet(QString(R"(
-    color: #000000;
-    font-family: Roboto;
-    font-size: %1px;
-  )").arg(scale_height(10)));
+    QLabel {
+      color: #000000;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(10)));
   layout->addWidget(draw_tool_label);
   layout->addStretch(8);
   auto color_button = new ColorSelectorButton(QColor("#FFCA19"), this);
