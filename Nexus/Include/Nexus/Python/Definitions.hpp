@@ -149,12 +149,6 @@ namespace Nexus::Python {
   void ExportSecurityInfo(pybind11::module& module);
 
   /**
-   * Exports the SecurityTechnicals class.
-   * @param module The module to export to.
-   */
-  void ExportSecurityTechnicals(pybind11::module& module);
-
-  /**
    * Exports the Side enum.
    * @param module The module to export to.
    */

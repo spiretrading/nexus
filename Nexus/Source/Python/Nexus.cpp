@@ -19,4 +19,5 @@ PYBIND11_MODULE(_nexus, module) {
   ExportRiskService(module);
   ExportServiceClients(module);
   ExportBacktester(module);
+  ExportTechnicalAnalysis(module);
 }

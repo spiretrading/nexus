@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_TECHNICALS_MODEL_HPP
-#define SPIRE_SECURITY_TECHNICALS_MODEL_HPP
+#ifndef SPIRE_SECURITYTECHNICALSMODEL_HPP
+#define SPIRE_SECURITYTECHNICALSMODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -121,7 +121,7 @@ namespace Spire {
       QTimer m_updateTimer;
       mutable Beam::TaskQueue m_slotHandler;
 
-      void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
+      void OnOpenUpdate(const Nexus::TimeAndSale& open);
       void OnUpdateTimer();
   };
 }
