@@ -41,6 +41,7 @@ namespace Spire {
 
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();
+      void update_band_list_height();
       void update_band_list_stylesheet(int index);
       void on_band_color_selected(const QColor& color);
       void on_gradient_apply_button_clicked();

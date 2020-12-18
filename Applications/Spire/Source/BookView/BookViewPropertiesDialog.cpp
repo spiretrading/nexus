@@ -30,7 +30,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   body->setStyleSheet(R"(#book_view_properties_dialog_body {
     background-color: #F5F5F5; })");
   setWindowTitle(tr("Properties"));
-  set_svg_icon(":/Icons/bookview-black.svg");
+  set_svg_icon(":/Icons/bookview.svg");
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);

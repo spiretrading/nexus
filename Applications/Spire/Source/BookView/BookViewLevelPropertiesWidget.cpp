@@ -56,6 +56,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   horizontal_layout->addWidget(band_list_scroll_area, 222);
   m_band_list_widget = new QListWidget(this);
   band_list_scroll_area->setWidget(m_band_list_widget);
+  m_band_list_widget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_band_list_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_band_list_stylesheet = QString(R"(
     QListWidget {
@@ -179,6 +180,7 @@ void BookViewLevelPropertiesWidget::update_band_list_font(
   for(auto i = 0; i < m_band_list_widget->count(); ++i) {
     m_band_list_widget->item(i)->setFont(font);
   }
+  update_band_list_height();
 }
 
 void BookViewLevelPropertiesWidget::update_band_list_gradient() {
@@ -214,6 +216,11 @@ void BookViewLevelPropertiesWidget::update_band_list_gradient() {
       m_gradient_start_button->get_color());
   }
   update_band_list_stylesheet(m_band_list_widget->currentRow());
+}
+
+void BookViewLevelPropertiesWidget::update_band_list_height() {
+  m_band_list_widget->setFixedHeight(m_band_list_widget->sizeHintForRow(0) *
+    (m_band_list_widget->count() + 1));
 }
 
 void BookViewLevelPropertiesWidget::update_band_list_stylesheet(
@@ -267,6 +274,5 @@ void BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed(
   } else {
     m_band_list_widget->setCurrentRow(current_row);
   }
-  m_band_list_widget->setFixedHeight(m_band_list_widget->sizeHintForRow(0) *
-    (m_band_list_widget->count() + 1));
+  update_band_list_height();
 }
