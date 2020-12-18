@@ -122,9 +122,6 @@ namespace Spire {
       mutable Beam::TaskQueue m_slotHandler;
 
       void OnOpenUpdate(const Nexus::TimeAndSale& open);
-      void OnHighUpdate(const Nexus::Queries::QueryVariant& volume);
-      void OnLowUpdate(const Nexus::Queries::QueryVariant& volume);
-      void OnVolumeUpdate(const Nexus::Queries::QueryVariant& volume);
       void OnUpdateTimer();
   };
 }

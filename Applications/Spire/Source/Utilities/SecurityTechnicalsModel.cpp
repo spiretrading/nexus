@@ -139,20 +139,17 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
-      &SecurityTechnicalsModel::OnHighUpdate, this, std::placeholders::_1)));
+    m_slotHandler.GetSlot<Money>(m_highSignal));
   QueryDailyLow(m_userProfile->GetServiceClients().GetChartingClient(),
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
-      &SecurityTechnicalsModel::OnLowUpdate, this, std::placeholders::_1)));
+    m_slotHandler.GetSlot<Money>(m_lowSignal));
   QueryDailyVolume(m_userProfile->GetServiceClients().GetChartingClient(),
     security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     pos_infin, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
-      &SecurityTechnicalsModel::OnVolumeUpdate, this, std::placeholders::_1)));
+    m_slotHandler.GetSlot<Quantity>(m_volumeSignal));
   QueryOpen(userProfile->GetServiceClients().GetMarketDataClient(),
     security, userProfile->GetServiceClients().GetTimeClient().GetTime(),
     userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(),
@@ -187,24 +184,6 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
 void SecurityTechnicalsModel::OnOpenUpdate(const TimeAndSale& timeAndSale) {
   m_open = timeAndSale.m_price;
   m_openSignal(m_open);
-}
-
-void SecurityTechnicalsModel::OnHighUpdate(
-    const Nexus::Queries::QueryVariant& high) {
-  m_high = boost::get<Money>(high);
-  m_highSignal(m_high);
-}
-
-void SecurityTechnicalsModel::OnLowUpdate(
-    const Nexus::Queries::QueryVariant& low) {
-  m_low = boost::get<Money>(low);
-  m_lowSignal(m_low);
-}
-
-void SecurityTechnicalsModel::OnVolumeUpdate(
-    const Nexus::Queries::QueryVariant& volume) {
-  m_volume = boost::get<Quantity>(volume);
-  m_volumeSignal(m_volume);
 }
 
 void SecurityTechnicalsModel::OnUpdateTimer() {

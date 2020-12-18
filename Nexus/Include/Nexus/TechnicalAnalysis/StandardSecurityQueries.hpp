@@ -7,6 +7,7 @@
 #include <Beam/Queries/ParameterExpression.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Queries/StandardValues.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Routine.hpp>
@@ -372,9 +373,13 @@ namespace Nexus::TechnicalAnalysis {
       boost::posix_time::ptime startDay, boost::posix_time::ptime endDay,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<Money> queue) {
     client.QuerySecurity(BuildDailyHighQuery(std::move(security), startDay,
-      endDay, marketDatabase, timeZoneDatabase), std::move(queue));
+      endDay, marketDatabase, timeZoneDatabase),
+      Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
+        [] (const Queries::QueryVariant& value) {
+          return boost::get<Money>(value);
+        }));
   }
 
   /**
@@ -437,9 +442,13 @@ namespace Nexus::TechnicalAnalysis {
       boost::posix_time::ptime startDay, boost::posix_time::ptime endDay,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<Money> queue) {
     client.QuerySecurity(BuildDailyLowQuery(std::move(security), startDay,
-      endDay, marketDatabase, timeZoneDatabase), std::move(queue));
+      endDay, marketDatabase, timeZoneDatabase),
+      Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
+        [] (const Queries::QueryVariant& value) {
+          return boost::get<Money>(value);
+        }));
   }
 
   /**
@@ -501,9 +510,13 @@ namespace Nexus::TechnicalAnalysis {
       boost::posix_time::ptime startDay, boost::posix_time::ptime endDay,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<Quantity> queue) {
     client.QuerySecurity(BuildDailyVolumeQuery(std::move(security), startDay,
-      endDay, marketDatabase, timeZoneDatabase), std::move(queue));
+      endDay, marketDatabase, timeZoneDatabase),
+      Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
+        [] (const Queries::QueryVariant& value) {
+          return boost::get<Quantity>(value);
+        }));
   }
 }
 

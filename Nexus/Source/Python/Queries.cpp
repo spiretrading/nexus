@@ -29,6 +29,11 @@ void Nexus::Python::ExportQueries(module& module) {
   ExportValue(submodule);
   ExportIndexedQuery<Security>(submodule, "SecurityIndexedQuery");
   ExportBasicQuery<Security>(submodule, "SecurityQuery");
+  ExportQueueSuite<Nexus::Queries::QueryVariant>(submodule, "QueryVariant");
+  ExportQueueSuite<Quantity>(submodule, "Quantity");
+  ExportQueueSuite<Money>(submodule, "Money");
+  ExportQueueSuite<Security>(submodule, "Security");
+  ExportQueueSuite<SecurityInfo>(submodule, "SecurityInfo");
 }
 
 void Nexus::Python::ExportValue(module& module) {

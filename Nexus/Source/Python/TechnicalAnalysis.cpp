@@ -6,6 +6,7 @@
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
 using namespace Beam;
+using namespace Beam::Python;
 using namespace boost;
 using namespace boost::local_time;
 using namespace boost::posix_time;
@@ -40,11 +41,11 @@ void Nexus::Python::ExportTechnicalAnalysis(module& module) {
   submodule.def("load_open", static_cast<
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&, std::string)>(
-        &LoadOpen<MarketDataClientBox>));
+        &LoadOpen<MarketDataClientBox>), call_guard<GilRelease>());
   submodule.def("load_open", static_cast<
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&)>(
-        &LoadOpen<MarketDataClientBox>));
+        &LoadOpen<MarketDataClientBox>), call_guard<GilRelease>());
   submodule.def("query_open",
     [] (MarketDataClientBox client, Security security, ptime date,
         const MarketDatabase& marketDatabase,
@@ -70,11 +71,11 @@ void Nexus::Python::ExportTechnicalAnalysis(module& module) {
   submodule.def("load_previous_close", static_cast<
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&, std::string)>(
-        &LoadPreviousClose<MarketDataClientBox>));
+        &LoadPreviousClose<MarketDataClientBox>), call_guard<GilRelease>());
   submodule.def("load_previous_close", static_cast<
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&)>(
-        &LoadPreviousClose<MarketDataClientBox>));
+        &LoadPreviousClose<MarketDataClientBox>), call_guard<GilRelease>());
   submodule.def("build_daily_high_query", &BuildDailyHighQuery);
   submodule.def("query_daily_high", &QueryDailyHigh<ChartingClientBox>);
   submodule.def("build_daily_low_query", &BuildDailyLowQuery);
