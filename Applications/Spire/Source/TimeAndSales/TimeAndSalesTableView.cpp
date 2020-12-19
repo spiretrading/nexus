@@ -159,8 +159,8 @@ void TimeAndSalesTableView::show_loading_widget() {
 }
 
 void TimeAndSalesTableView::update_table_height(int num_rows) {
-  auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize())
-    + m_header->height();
+  auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize()) +
+    m_header->height();
   if(m_loading_widget != nullptr) {
     height += m_loading_widget->height();
   }
@@ -205,7 +205,7 @@ void TimeAndSalesTableView::on_vertical_slider_value_changed(
     return;
   }
   m_model->set_row_visible(m_table->rowAt(
-    widget()->visibleRegion().boundingRect().bottom()));
+    m_table->visibleRegion().boundingRect().bottom()));
 }
 
 void TimeAndSalesTableView::on_rows_about_to_be_inserted(

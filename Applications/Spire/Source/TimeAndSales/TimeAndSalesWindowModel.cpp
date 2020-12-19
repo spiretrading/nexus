@@ -176,8 +176,7 @@ void TimeAndSalesWindowModel::update_data(const TimeAndSalesModel::Entry& e) {
 void TimeAndSalesWindowModel::load_snapshot(Beam::Queries::Sequence last) {
   m_is_loading = true;
   m_begin_loading_signal();
-  m_snapshot_promise = m_model->load_snapshot(last, SNAPSHOT_COUNT);
-  m_snapshot_promise.then(
+  m_snapshot_promise = m_model->load_snapshot(last, SNAPSHOT_COUNT).then(
     [=] (std::vector<TimeAndSalesModel::Entry> snapshot) {
       if(snapshot.empty()) {
         m_is_fully_loaded = true;
