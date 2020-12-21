@@ -69,7 +69,7 @@ namespace Nexus::Compliance {
   template<typename TimeClient>
   OpposingOrderSubmissionComplianceRule(boost::posix_time::time_duration, Money,
     TimeClient&& timeClient) -> OpposingOrderSubmissionComplianceRule<
-    std::decay_t<TimeClient>>;
+      std::decay_t<TimeClient>>;
 
   /**
    * Builds a ComplianceRuleSchema representing an
@@ -139,7 +139,7 @@ namespace Nexus::Compliance {
   template<typename CF>
   OpposingOrderSubmissionComplianceRule<C>::
     OpposingOrderSubmissionComplianceRule(
-    boost::posix_time::time_duration timeout, Money offset, CF&& timeClient)
+      boost::posix_time::time_duration timeout, Money offset, CF&& timeClient)
     : m_timeout(timeout),
       m_offset(offset),
       m_timeClient(std::forward<CF>(timeClient)),

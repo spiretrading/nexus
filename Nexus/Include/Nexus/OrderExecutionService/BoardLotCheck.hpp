@@ -7,6 +7,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -44,7 +45,7 @@ namespace Nexus::OrderExecutionService {
     private:
       struct ClosingEntry {
         boost::posix_time::ptime m_lastUpdate;
-        Money m_closingPrice;
+        boost::optional<Money> m_closingPrice;
 
         ClosingEntry();
       };
@@ -63,8 +64,7 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C>
   BoardLotCheck<C>::ClosingEntry::ClosingEntry()
-    : m_lastUpdate(boost::posix_time::neg_infin),
-      m_closingPrice(Money::ZERO) {}
+    : m_lastUpdate(boost::posix_time::neg_infin) {}
 
   template<typename MarketDataClient>
   auto MakeBoardLotCheck(MarketDataClient&& marketDataClient,
@@ -116,17 +116,19 @@ namespace Nexus::OrderExecutionService {
   Money BoardLotCheck<C>::LoadPrice(const Security& security,
       boost::posix_time::ptime timestamp) {
     auto& closingEntry = m_closingEntries.Get(security);
-    auto closingPrice = Beam::Threading::With(closingEntry,
-      [&] (ClosingEntry& entry) {
-        if(timestamp - entry.m_lastUpdate > boost::posix_time::hours(1)) {
-          entry.m_closingPrice = m_marketDataClient->LoadSecurityTechnicals(
-            security).m_close;
+    auto closingPrice = Beam::Threading::With(closingEntry, [&] (auto& entry) {
+      if(timestamp - entry.m_lastUpdate > boost::posix_time::hours(1)) {
+        if(auto close = TechnicalAnalysis::LoadPreviousClose(
+            *m_marketDataClient, security, timestamp, m_marketDatabase,
+            m_timeZoneDatabase)) {
+          entry.m_closingPrice = close->m_price;
           entry.m_lastUpdate = timestamp;
         }
-        return entry.m_closingPrice;
-      });
-    if(closingPrice != Money::ZERO) {
-      return closingPrice;
+      }
+      return entry.m_closingPrice;
+    });
+    if(closingPrice) {
+      return *closingPrice;
     }
     auto publisher = m_bboQuotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
@@ -135,7 +137,12 @@ namespace Nexus::OrderExecutionService {
       return publisher;
     });
     try {
-      return publisher->Peek().m_bid.m_price;
+      auto effectiveClosingPrice = publisher->Peek().m_bid.m_price;
+      return Beam::Threading::With(closingEntry, [&] (auto& entry) {
+        entry.m_closingPrice = effectiveClosingPrice;
+        entry.m_lastUpdate = timestamp;
+        return effectiveClosingPrice;
+      });
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(

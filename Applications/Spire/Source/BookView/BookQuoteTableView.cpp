@@ -12,9 +12,12 @@ BookQuoteTableView::BookQuoteTableView(
     : QTableView(parent),
       m_model(model) {
   m_model->setParent(this);
+  setObjectName("book_quote_table_view");
   setStyleSheet(QString(R"(
-    border: none;
-    gridline-color: #C8C8C8;)"));
+    #book_quote_table_view {
+      border: none;
+      gridline-color: #C8C8C8;
+    })"));
   horizontalHeader()->hide();
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   verticalHeader()->hide();

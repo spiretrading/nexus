@@ -13,6 +13,7 @@
 #include "Nexus/Python/Queries.hpp"
 #include "Nexus/Python/RiskService.hpp"
 #include "Nexus/Python/ServiceClients.hpp"
+#include "Nexus/Python/TechnicalAnalysis.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
 #include "Nexus/Python/ToPythonComplianceClient.hpp"

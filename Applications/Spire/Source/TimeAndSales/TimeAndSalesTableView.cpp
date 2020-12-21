@@ -33,6 +33,8 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
         {Column::SIZE_COLUMN, scale_width(38)},
         {Column::MARKET_COLUMN, scale_width(40)},
         {Column::CONDITION_COLUMN, scale_width(42)}}) {
+  setObjectName("time_sales_table_view");
+  setStyleSheet("#time_sales_table_view { background-color: #FFFFFF; }");
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_horizontal_slider_value_changed);
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
@@ -82,9 +84,10 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setStyleSheet(R"(
+    QTableView {
       border: none;
-      gridline-color: #C8C8C8;)");
-  m_table->installEventFilter(this);
+      gridline-color: #C8C8C8;
+    })");
   m_table->setItemDelegate(new ItemPaddingDelegate(scale_width(5),
     new CustomVariantItemDelegate(), this));
   m_layout->addWidget(m_table);
@@ -128,16 +131,6 @@ void TimeAndSalesTableView::set_properties(
   }
 }
 
-bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_table) {
-    if(event->type() == QEvent::Paint) {
-      m_table->update();
-      m_header->update();
-    }
-  }
-  return ScrollArea::eventFilter(watched, event);
-}
-
 void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
   widget()->resize(width(), widget()->height());
   m_header->setFixedWidth(widget()->width());
@@ -166,8 +159,8 @@ void TimeAndSalesTableView::show_loading_widget() {
 }
 
 void TimeAndSalesTableView::update_table_height(int num_rows) {
-  auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize())
-    + m_header->height();
+  auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize()) +
+    m_header->height();
   if(m_loading_widget != nullptr) {
     height += m_loading_widget->height();
   }
@@ -212,7 +205,7 @@ void TimeAndSalesTableView::on_vertical_slider_value_changed(
     return;
   }
   m_model->set_row_visible(m_table->rowAt(
-    widget()->visibleRegion().boundingRect().bottom()));
+    m_table->visibleRegion().boundingRect().bottom()));
 }
 
 void TimeAndSalesTableView::on_rows_about_to_be_inserted(

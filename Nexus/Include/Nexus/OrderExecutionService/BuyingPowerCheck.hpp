@@ -132,7 +132,7 @@ namespace Nexus::OrderExecutionService {
         auto updatedBuyingPower = buyingPowerModel.Submit(orderInfo.m_orderId,
           convertedFields, convertedPrice);
         if(updatedBuyingPower > riskParameters.m_buyingPower) {
-          ExecutionReport report;
+          auto report = ExecutionReport();
           report.m_id = orderInfo.m_orderId;
           report.m_status = OrderStatus::REJECTED;
           buyingPowerModel.Update(report);
@@ -174,14 +174,13 @@ namespace Nexus::OrderExecutionService {
           convertedPrice = m_exchangeRates.Convert(price,
             order.GetInfo().m_fields.m_currency, convertedFields.m_currency);
         } catch(const CurrencyPairNotFoundException&) {
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-            "Currency not recognized."));
+          return;
         }
         buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
+        order.GetPublisher().Monitor(
+          buyingPowerEntry.m_executionReportQueue.GetWriter());
       });
-    order.GetPublisher().Monitor(
-      buyingPowerEntry.m_executionReportQueue.GetWriter());
   }
 
   template<typename A, typename M>

@@ -24,19 +24,23 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
   set_fixed_body_size(scale(482, 272));
-  set_svg_icon(":/Icons/time-sale-black.svg");
+  set_svg_icon(":/Icons/time-sales.svg");
   setWindowTitle(tr("Properties"));
   auto body = new QWidget(this);
-  body->setStyleSheet("background-color: #F5F5F5;");
+  body->setObjectName("time_sales_properties_dialog");
+  body->setStyleSheet(
+    "#time_sales_properties_dialog { background-color: #F5F5F5; }");
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);
   layout->addStretch(10);
   auto section_label_style = QString(R"(
-    color: #4B23A0;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(12));
+    QLabel {
+      color: #4B23A0;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    })").arg(scale_height(12));
   auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
   band_appearance_label->setStyleSheet(section_label_style);
   band_appearance_label->setFixedHeight(scale_height(14));
@@ -83,9 +87,11 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->setSpacing(0);
   auto text_color_label = new QLabel(tr("Text Color"), this);
   auto generic_text_style = QString(R"(
-    color: black;
-    font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12));
+    QLabel {
+      color: black;
+      font-family: Roboto;
+      font-size: %1px;
+    })").arg(scale_height(12));
   text_color_label->setStyleSheet(generic_text_style);
   text_color_label->setFixedHeight(scale_height(14));
   color_settings_layout->addWidget(text_color_label);

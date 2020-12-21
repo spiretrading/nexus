@@ -11,7 +11,6 @@
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -79,8 +78,6 @@ namespace Nexus::MarketDataService {
 
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
 
-      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
-
       std::vector<SecurityInfo> QuerySecurityInfo(
         const SecurityInfoQuery& query);
 
@@ -113,8 +110,6 @@ namespace Nexus::MarketDataService {
         virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
           Beam::ScopedQueueWriter<TimeAndSale> queue) = 0;
         virtual SecuritySnapshot LoadSecuritySnapshot(
-          const Security& security) = 0;
-        virtual SecurityTechnicals LoadSecurityTechnicals(
           const Security& security) = 0;
         virtual std::vector<SecurityInfo> QuerySecurityInfo(
           const SecurityInfoQuery& query) = 0;
@@ -150,8 +145,6 @@ namespace Nexus::MarketDataService {
         void QueryTimeAndSales(const SecurityMarketDataQuery& query,
           Beam::ScopedQueueWriter<TimeAndSale> queue) override;
         SecuritySnapshot LoadSecuritySnapshot(const Security& security) override;
-        SecurityTechnicals LoadSecurityTechnicals(
-          const Security& security) override;
         std::vector<SecurityInfo> QuerySecurityInfo(
           const SecurityInfoQuery& query) override;
         std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
@@ -359,11 +352,6 @@ namespace Nexus::MarketDataService {
     return m_client->LoadSecuritySnapshot(security);
   }
 
-  inline SecurityTechnicals MarketDataClientBox::LoadSecurityTechnicals(
-      const Security& security) {
-    return m_client->LoadSecurityTechnicals(security);
-  }
-
   inline std::vector<SecurityInfo> MarketDataClientBox::QuerySecurityInfo(
       const SecurityInfoQuery& query) {
     return m_client->QuerySecurityInfo(query);
@@ -458,12 +446,6 @@ namespace Nexus::MarketDataService {
   SecuritySnapshot MarketDataClientBox::WrappedMarketDataClient<C>::
       LoadSecuritySnapshot(const Security& security) {
     return m_client->LoadSecuritySnapshot(security);
-  }
-
-  template<typename C>
-  SecurityTechnicals MarketDataClientBox::WrappedMarketDataClient<C>::
-      LoadSecurityTechnicals(const Security& security) {
-    return m_client->LoadSecurityTechnicals(security);
   }
 
   template<typename C>

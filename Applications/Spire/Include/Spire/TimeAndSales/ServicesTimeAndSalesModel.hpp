@@ -44,7 +44,6 @@ namespace Spire {
 
       void on_bbo(const Nexus::SequencedBboQuote& bbo);
       void on_time_and_sale(const Nexus::SequencedTimeAndSale& time_and_sale);
-      void on_volume(const Nexus::Queries::QueryVariant& volume);
   };
 }
 
