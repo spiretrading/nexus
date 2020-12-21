@@ -7,11 +7,14 @@ QLabel* Spire::make_parameters_label(QWidget* parent) {
   label->setStyleSheet(QString(R"(
     QLabel {
       background-color: transparent;
-      border-bottom: 1px solid black;
+      border-bottom: 1px solid #E0E0E0;
+      color: #4B23A0;
       font-family: Roboto;
       font-size: %1px;
+      font-weight: 550;
       margin-bottom: %2px;
-    })").arg(scale_height(14)).arg(scale_height(12)));
+      padding-bottom: %3px;
+    })").arg(scale_height(14)).arg(scale_height(12)).arg(scale_height(6)));
   label->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
   return label;
 }
