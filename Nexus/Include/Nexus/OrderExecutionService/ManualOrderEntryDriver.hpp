@@ -5,7 +5,6 @@
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
@@ -21,7 +20,7 @@ namespace Nexus::OrderExecutionService {
    *        manual order entry.
    */
   template<typename D, typename A>
-  class ManualOrderEntryDriver : private boost::noncopyable {
+  class ManualOrderEntryDriver {
     public:
 
       /**
@@ -67,6 +66,10 @@ namespace Nexus::OrderExecutionService {
       Beam::SynchronizedVector<std::unique_ptr<Order>> m_orders;
       Beam::SynchronizedUnorderedSet<OrderId> m_orderIds;
       Beam::IO::OpenState m_openState;
+
+      ManualOrderEntryDriver(const ManualOrderEntryDriver&) = delete;
+      ManualOrderEntryDriver& operator =(
+        const ManualOrderEntryDriver&) = delete;
   };
 
   template<typename D, typename A>
@@ -86,7 +89,15 @@ namespace Nexus::OrderExecutionService {
   template<typename D, typename A>
   const Order& ManualOrderEntryDriver<D, A>::Recover(
       const SequencedAccountOrderRecord& orderRecord) {
-    return m_orderExecutionDriver->Recover(orderRecord);
+    if((*orderRecord)->m_info.m_fields.m_destination == m_destinationName) {
+      auto order = std::make_unique<PrimitiveOrder>(**orderRecord);
+      auto result = order.get();
+      m_orderIds.Insert(order->GetInfo().m_orderId);
+      m_orders.PushBack(std::move(order));
+      return *result;
+    } else {
+      return m_orderExecutionDriver->Recover(orderRecord);
+    }
   }
 
   template<typename D, typename A>
