@@ -92,7 +92,7 @@ int main(int argc, const char** argv) {
       serviceLocatorClient.Get());
     auto countryDatabase = definitionsClient->LoadCountryDatabase();
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto marketDataClientBuilder = [&] {
+    auto marketDataClientFactory = [&] {
       auto entries = serviceLocatorClient->Locate(REGISTRY_SERVICE_NAME);
       if(entries.empty()) {
         BOOST_THROW_EXCEPTION(ConnectException(
@@ -108,7 +108,7 @@ int main(int argc, const char** argv) {
         auto marketDataClient = std::make_shared<MarketDataClientBox>(
           std::in_place_type<
             MarketDataClient<IncomingMarketDataClientSessionBuilder>>,
-          BuildBasicMarketDataClientSessionBuilder<
+          MakeBasicMarketDataClientSessionBuilder<
             IncomingMarketDataClientSessionBuilder>(serviceLocatorClient.Get(),
               [=] (const auto& candidateEntry) {
                 auto candidateCountries = ExtractCountries(
@@ -141,7 +141,7 @@ int main(int argc, const char** argv) {
     auto maxConnections = static_cast<std::size_t>(Extract<int>(config,
       "max_connections", 10 * minConnections));
     auto baseRegistryServlet = BaseMarketDataRelayServlet(entitlements,
-      clientTimeout, marketDataClientBuilder, minConnections, maxConnections,
+      clientTimeout, marketDataClientFactory, minConnections, maxConnections,
       administrationClient.Get());
     auto server = MarketDataRelayServletContainer(Initialize(
       serviceLocatorClient.Get(), &baseRegistryServlet),
