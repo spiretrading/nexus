@@ -7,7 +7,7 @@ using namespace Spire;
 
 UntilNode::UntilNode() {
   DefineFunction("Until", { "condition", "series" },
-    BuildSignatures<Signatures>());
+    MakeSignatures<Signatures>());
 }
 
 void UntilNode::Apply(CanvasNodeVisitor& visitor) const {

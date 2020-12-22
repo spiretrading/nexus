@@ -40,7 +40,7 @@ boost::optional<const CanvasNode&> PlaceNodeCommand::TryPlaceNode(
       builder.SetMetaData(*previousNode, CanvasNodeModel::GetIdentityKey(),
         CanvasNodeModel::ToMetaData(*identity));
     }
-    replacement = builder.Build();
+    replacement = builder.Make();
   } catch(const std::exception&) {
     return none;
   }

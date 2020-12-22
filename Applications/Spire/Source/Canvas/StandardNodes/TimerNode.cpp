@@ -11,7 +11,7 @@ using namespace std;
 
 TimerNode::TimerNode() {
   SetText("Timer");
-  AddChild("period", BuildDefaultCanvasNode(DurationType::GetInstance()));
+  AddChild("period", MakeDefaultCanvasNode(DurationType::GetInstance()));
   SetType(IntegerType::GetInstance());
 }
 

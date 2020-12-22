@@ -23,7 +23,7 @@ namespace {
       builder.Reset(source);
       return;
     }
-    builder.Replace(source, BuildDefaultCanvasNode(source.GetType()));
+    builder.Replace(source, MakeDefaultCanvasNode(source.GetType()));
   }
 }
 
@@ -62,7 +62,7 @@ void MoveNodeCommand::redo() {
           ResetSourceNode(builder, *source);
         }
         builder.Replace(*m_view->GetNode(m_destination), std::move(dropNode));
-        replacement = builder.Build();
+        replacement = builder.Make();
       } catch(const std::exception&) {
         m_snapshot.Restore(Store(*m_view));
         BOOST_THROW_EXCEPTION(IgnoreCommandException());
@@ -76,7 +76,7 @@ void MoveNodeCommand::redo() {
         unique_ptr<CanvasNode> replacement;
         try {
           ResetSourceNode(builder, *source);
-          replacement = builder.Build();
+          replacement = builder.Make();
         } catch(const std::exception&) {
           m_snapshot.Restore(Store(*m_view));
           BOOST_THROW_EXCEPTION(IgnoreCommandException());
@@ -89,7 +89,7 @@ void MoveNodeCommand::redo() {
         unique_ptr<CanvasNode> replacement;
         try {
           builder.Replace(*destination, std::move(dropNode));
-          replacement = builder.Build();
+          replacement = builder.Make();
         } catch(const std::exception&) {
           m_snapshot.Restore(Store(*m_view));
           BOOST_THROW_EXCEPTION(IgnoreCommandException());
@@ -110,7 +110,7 @@ void MoveNodeCommand::redo() {
       unique_ptr<CanvasNode> replacement;
       try {
         ResetSourceNode(builder, *source);
-        replacement = builder.Build();
+        replacement = builder.Make();
       } catch(const std::exception&) {
         m_snapshot.Restore(Store(*m_view));
         BOOST_THROW_EXCEPTION(IgnoreCommandException());

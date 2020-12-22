@@ -52,7 +52,7 @@ CatalogWindow::Filter CatalogWindow::SubstitutionFilter(
       CanvasNodeBuilder builder(*root);
       try {
         builder.Replace(*replacementNode, CanvasNode::Clone(entry.GetNode()));
-        builder.Build();
+        builder.Make();
       } catch(std::exception&) {
         return false;
       }

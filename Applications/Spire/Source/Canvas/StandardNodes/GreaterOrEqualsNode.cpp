@@ -9,7 +9,7 @@ using namespace std;
 
 GreaterOrEqualsNode::GreaterOrEqualsNode() {
   DefineFunction("Greater/Equals", { "left", "right" },
-    BuildSignatures<ComparisonSignatures>());
+    MakeSignatures<ComparisonSignatures>());
 }
 
 void GreaterOrEqualsNode::Apply(CanvasNodeVisitor& visitor) const {

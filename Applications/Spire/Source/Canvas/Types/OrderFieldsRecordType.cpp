@@ -17,7 +17,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  std::shared_ptr<RecordType> BuildType() {
+  std::shared_ptr<RecordType> MakeType() {
     vector<RecordType::Field> fields;
     fields.emplace_back("security", SecurityType::GetInstance());
     fields.emplace_back("currency", CurrencyType::GetInstance());
@@ -32,7 +32,7 @@ namespace {
 }
 
 const RecordType& Spire::GetOrderFieldsRecordType() {
-  static auto type = BuildType();
+  static auto type = MakeType();
   return *type;
 }
 

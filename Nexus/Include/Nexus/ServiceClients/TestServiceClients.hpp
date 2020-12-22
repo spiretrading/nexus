@@ -83,7 +83,7 @@ namespace Nexus {
 
       TimeClient& GetTimeClient();
 
-      std::unique_ptr<Timer> BuildTimer(
+      std::unique_ptr<Timer> MakeTimer(
         boost::posix_time::time_duration expiry);
 
       void Close();
@@ -190,7 +190,7 @@ namespace Nexus {
   }
 
   inline std::unique_ptr<TestServiceClients::Timer>
-      TestServiceClients::BuildTimer(boost::posix_time::time_duration expiry) {
+      TestServiceClients::MakeTimer(boost::posix_time::time_duration expiry) {
     return std::make_unique<Timer>(
       std::make_unique<Beam::TimeService::Tests::TestTimer>(expiry,
       Beam::Ref(m_environment->GetTimeEnvironment())));

@@ -9,7 +9,7 @@ using namespace std;
 
 RecordNode::RecordNode(const RecordType& type) {
   for(const auto& field : type.GetFields()) {
-    AddChild(field.m_name, BuildDefaultCanvasNode(*field.m_type));
+    AddChild(field.m_name, MakeDefaultCanvasNode(*field.m_type));
   }
   SetText(type.GetName());
   SetType(type);

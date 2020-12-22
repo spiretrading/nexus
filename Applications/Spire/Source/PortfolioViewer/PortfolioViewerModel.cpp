@@ -280,7 +280,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
   if(m_valuations.find(security) == m_valuations.end()) {
     m_valuations.insert(std::make_pair(security, SecurityValuation(
       entry.m_value.m_position.m_key.m_currency)));
-    auto bboQuery = BuildCurrentQuery(security);
+    auto bboQuery = MakeCurrentQuery(security);
     bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
     m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
       bboQuery, m_slotHandler->GetSlot<BboQuote>(

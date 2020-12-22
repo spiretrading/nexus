@@ -272,7 +272,7 @@ namespace Nexus::OrderExecutionService {
         Beam::Queries::SnapshotLimit::Unlimited());
       auto sessionOrders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
       auto liveOrders = m_dataStore->LoadOrderSubmissions(
-        BuildLiveOrdersQuery(account));
+        MakeLiveOrdersQuery(account));
       auto orders = std::vector<SequencedOrderRecord>();
       std::set_union(sessionOrders.begin(), sessionOrders.end(),
         liveOrders.begin(), liveOrders.end(), std::back_inserter(orders),
@@ -545,22 +545,22 @@ namespace Nexus::OrderExecutionService {
       shortingFlag, m_timeClient->GetTime());
     auto order = static_cast<const Order*>(nullptr);
     if(!session.HasOrderExecutionPermission(orderInfo.m_fields.m_account)) {
-      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+      auto rejectedOrder = MakeRejectedOrder(orderInfo,
         "Insufficient permissions to execute order.");
       order = rejectedOrder.get();
       m_rejectedOrders.push_back(std::move(rejectedOrder));
     } else if(orderInfo.m_fields.m_security.GetMarket() == MarketCode()) {
-      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+      auto rejectedOrder = MakeRejectedOrder(orderInfo,
         "Market not specified.");
       order = rejectedOrder.get();
       m_rejectedOrders.push_back(std::move(rejectedOrder));
     } else if(orderInfo.m_fields.m_security.GetCountry() == CountryCode()) {
-      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+      auto rejectedOrder = MakeRejectedOrder(orderInfo,
         "Country not specified.");
       order = rejectedOrder.get();
       m_rejectedOrders.push_back(std::move(rejectedOrder));
     } else if(orderInfo.m_fields.m_security.GetSymbol().empty()) {
-      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+      auto rejectedOrder = MakeRejectedOrder(orderInfo,
         "Ticker symbol not specified.");
       order = rejectedOrder.get();
       m_rejectedOrders.push_back(std::move(rejectedOrder));

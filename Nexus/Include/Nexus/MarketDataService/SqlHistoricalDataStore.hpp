@@ -144,7 +144,7 @@ namespace Nexus::MarketDataService {
   std::vector<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
       const SecurityInfoQuery& query) {
     auto matches = std::vector<SecurityInfo>();
-    auto filter = Beam::Queries::BuildSqlQuery<Queries::SqlTranslator>(
+    auto filter = Beam::Queries::MakeSqlQuery<Queries::SqlTranslator>(
       "security_info", query.GetFilter());
     auto anchor = [&] {
       if(auto anchor = query.GetAnchor()) {

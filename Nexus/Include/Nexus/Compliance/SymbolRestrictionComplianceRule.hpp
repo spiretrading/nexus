@@ -38,10 +38,10 @@ namespace Nexus::Compliance {
   };
 
   /**
-   * Builds a ComplianceRuleSchema representing a
+   * Returns a ComplianceRuleSchema representing a
    * SymbolRestrictionComplianceRule.
    */
-  inline ComplianceRuleSchema BuildSymbolRestrictionComplianceRuleSchema() {
+  inline ComplianceRuleSchema MakeSymbolRestrictionComplianceRuleSchema() {
     auto symbols = std::vector<ComplianceValue>();
     symbols.push_back(Security());
     auto parameters = std::vector<ComplianceParameter>();

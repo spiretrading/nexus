@@ -168,7 +168,7 @@ void DashboardWindow::SetName(const string& name) {
 
 void DashboardWindow::Apply(const DashboardModelSchema& schema,
     const string& name) {
-  m_model = schema.Build(Ref(*m_userProfile));
+  m_model = schema.Make(Ref(*m_userProfile));
   m_ui->m_dashboard->Initialize(Ref(*m_model), schema.GetRowBuilder(),
     Ref(*m_userProfile));
   SetName(name);
@@ -187,7 +187,7 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
     bboQuoteEntry.m_bboQuote->Push(BboQuote());
-    auto query = BuildCurrentQuery(*security);
+    auto query = MakeCurrentQuery(*security);
     m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
       query, bboQuoteEntry.m_bboQuote);
   }

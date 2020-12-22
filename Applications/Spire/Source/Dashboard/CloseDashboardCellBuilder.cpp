@@ -17,7 +17,7 @@ using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace std;
 
-std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Build(
+std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto queue = std::make_shared<Queue<DashboardCell::Value>>();

@@ -32,13 +32,13 @@ TEST_SUITE("RiskStateModel") {
       parameters, {}, &timeClient);
     REQUIRE(model.GetParameters() == parameters);
     REQUIRE(model.GetRiskState() == RiskState::Type::ACTIVE);
-    auto fields = OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
+    auto fields = OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE);
-    auto report = ExecutionReport::BuildInitialReport(1, timeClient.GetTime());
+    auto report = ExecutionReport::MakeInitialReport(1, timeClient.GetTime());
     model.GetPortfolio().Update(fields, report);
     model.UpdatePortfolio();
     REQUIRE(model.GetRiskState().m_type == RiskState::Type::ACTIVE);
-    auto fillReport = ExecutionReport::BuildUpdatedReport(report,
+    auto fillReport = ExecutionReport::MakeUpdatedReport(report,
       OrderStatus::FILLED, timeClient.GetTime());
     fillReport.m_lastQuantity = 100;
     fillReport.m_lastPrice = Money::ONE;
@@ -78,11 +78,11 @@ TEST_SUITE("RiskStateModel") {
     auto timeClient = FixedTimeClient(time_from_string("1995-01-22 14:16:00"));
     auto portfolio = RiskPortfolio(GetDefaultMarketDatabase());
     portfolio.Update(TSLA, Money::ONE, 99 * Money::CENT);
-    auto fields = OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
+    auto fields = OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE);
-    auto report = ExecutionReport::BuildInitialReport(1, timeClient.GetTime());
+    auto report = ExecutionReport::MakeInitialReport(1, timeClient.GetTime());
     portfolio.Update(fields, report);
-    auto fillReport = ExecutionReport::BuildUpdatedReport(report,
+    auto fillReport = ExecutionReport::MakeUpdatedReport(report,
       OrderStatus::FILLED, timeClient.GetTime());
     fillReport.m_lastQuantity = 100;
     fillReport.m_lastPrice = Money::ONE;
@@ -106,25 +106,25 @@ TEST_SUITE("RiskStateModel") {
     model.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
     model.GetPortfolio().Update(XIU, 2 * Money::ONE,
       Money::ONE + 99 * Money::CENT);
-    auto tslaFields = OrderFields::BuildLimitOrder(TSLA,
+    auto tslaFields = OrderFields::MakeLimitOrder(TSLA,
       DefaultCurrencies::USD(), Side::BID, 100, Money::ONE);
-    auto tslaReport = ExecutionReport::BuildInitialReport(1,
+    auto tslaReport = ExecutionReport::MakeInitialReport(1,
       timeClient.GetTime());
     model.GetPortfolio().Update(tslaFields, tslaReport);
     model.UpdatePortfolio();
-    auto tslaFillReport = ExecutionReport::BuildUpdatedReport(tslaReport,
+    auto tslaFillReport = ExecutionReport::MakeUpdatedReport(tslaReport,
       OrderStatus::FILLED, timeClient.GetTime());
     tslaFillReport.m_lastQuantity = 100;
     tslaFillReport.m_lastPrice = Money::ONE;
     model.GetPortfolio().Update(tslaFields, tslaFillReport);
     model.UpdatePortfolio();
-    auto xiuFields = OrderFields::BuildLimitOrder(XIU, DefaultCurrencies::CAD(),
+    auto xiuFields = OrderFields::MakeLimitOrder(XIU, DefaultCurrencies::CAD(),
       Side::ASK, 100, 2 * Money::ONE);
-    auto xiuReport = ExecutionReport::BuildInitialReport(2,
+    auto xiuReport = ExecutionReport::MakeInitialReport(2,
       timeClient.GetTime());
     model.GetPortfolio().Update(xiuFields, xiuReport);
     model.UpdatePortfolio();
-    auto xiuFillReport = ExecutionReport::BuildUpdatedReport(xiuReport,
+    auto xiuFillReport = ExecutionReport::MakeUpdatedReport(xiuReport,
       OrderStatus::FILLED, timeClient.GetTime());
     xiuFillReport.m_lastQuantity = 100;
     xiuFillReport.m_lastPrice = 2 * Money::ONE;
@@ -148,12 +148,12 @@ TEST_SUITE("RiskStateModel") {
     auto model = RiskStateModel(RiskPortfolio(GetDefaultMarketDatabase()),
       parameters, {}, &timeClient);
     model.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
-    auto fields = OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
+    auto fields = OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE);
-    auto report = ExecutionReport::BuildInitialReport(1, timeClient.GetTime());
+    auto report = ExecutionReport::MakeInitialReport(1, timeClient.GetTime());
     model.GetPortfolio().Update(fields, report);
     model.UpdatePortfolio();
-    auto fillReport = ExecutionReport::BuildUpdatedReport(report,
+    auto fillReport = ExecutionReport::MakeUpdatedReport(report,
       OrderStatus::FILLED, timeClient.GetTime());
     fillReport.m_lastQuantity = 100;
     fillReport.m_lastPrice = Money::ONE;

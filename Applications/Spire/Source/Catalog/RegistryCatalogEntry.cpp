@@ -55,7 +55,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntryKey(), ss.str());
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntrySourceKey(),
     RegistryCatalogEntry::GetRegistrySourceValue());
-  m_node = builder.Build();
+  m_node = builder.Make();
 }
 
 RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
@@ -75,7 +75,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntryKey(), ss.str());
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntrySourceKey(),
     RegistryCatalogEntry::GetRegistrySourceValue());
-  m_node = builder.Build();
+  m_node = builder.Make();
 }
 
 void RegistryCatalogEntry::Save() const {
@@ -169,6 +169,6 @@ void RegistryCatalogEntry::Validate() {
     builder.SetMetaData(*m_node, CatalogEntry::GetCatalogEntryKey(), ss.str());
     builder.SetMetaData(*m_node, CatalogEntry::GetCatalogEntrySourceKey(),
       RegistryCatalogEntry::GetRegistrySourceValue());
-    m_node = builder.Build();
+    m_node = builder.Make();
   }
 }

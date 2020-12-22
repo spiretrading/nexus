@@ -55,7 +55,7 @@ namespace Nexus::MarketDataService {
        *        entitlements.
        * @param clientTimeout The amount of time to wait before building another
        *        MarketDataClient.
-       * @param marketDataClientBuilder Builds MarketDataClients used to
+       * @param marketDataClientBuilder Constructs MarketDataClients used to
        *        distribute queries.
        * @param minMarketDataClients The minimum number of MarketDataClients to
        *        pool.

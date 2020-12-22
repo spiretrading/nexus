@@ -14,9 +14,9 @@ using namespace std;
 BboQuoteQueryNode::BboQuoteQueryNode() {
   SetText("BBO Quote Query");
   SetType(GetQuoteRecordType());
-  AddChild("security", BuildDefaultCanvasNode(SecurityType::GetInstance()));
-  AddChild("side", BuildDefaultCanvasNode(SideType::GetInstance()));
-  AddChild("range", BuildDefaultCanvasNode(TimeRangeType::GetInstance()));
+  AddChild("security", MakeDefaultCanvasNode(SecurityType::GetInstance()));
+  AddChild("side", MakeDefaultCanvasNode(SideType::GetInstance()));
+  AddChild("range", MakeDefaultCanvasNode(TimeRangeType::GetInstance()));
 }
 
 void BboQuoteQueryNode::Apply(CanvasNodeVisitor& visitor) const {

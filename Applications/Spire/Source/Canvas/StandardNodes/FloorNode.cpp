@@ -9,7 +9,7 @@ using namespace std;
 
 FloorNode::FloorNode() {
   DefineFunction("Floor", { "value", "to_closest" },
-    BuildSignatures<RoundingNodeSignatures>());
+    MakeSignatures<RoundingNodeSignatures>());
 }
 
 void FloorNode::Apply(CanvasNodeVisitor& visitor) const {

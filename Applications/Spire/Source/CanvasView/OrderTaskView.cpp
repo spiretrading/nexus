@@ -159,7 +159,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
             static_cast<int>(quantity)));
         }
       }
-      taskNode = builder.Build();
+      taskNode = builder.Make();
     }
   }
   return taskNode;

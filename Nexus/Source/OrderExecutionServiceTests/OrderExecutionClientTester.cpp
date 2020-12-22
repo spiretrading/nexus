@@ -69,7 +69,7 @@ TEST_SUITE("OrderExecutionClient") {
       [&] (auto& client, auto id) -> optional<SequencedAccountOrderRecord> {
         serverClient = &client;
         if(id == 10) {
-          auto record = OrderRecord(OrderInfo(OrderFields::BuildLimitOrder(
+          auto record = OrderRecord(OrderInfo(OrderFields::MakeLimitOrder(
             TST, Side::BID, 100, Money::CENT), id,
             time_from_string("2020-10-04 13:01:12")), {});
           return SequencedValue(IndexedValue(record, ACCOUNT),
@@ -85,7 +85,7 @@ TEST_SUITE("OrderExecutionClient") {
     REQUIRE_THROWS(m_client->LoadOrder(20));
     auto emptyOrder = m_client->LoadOrder(30);
     REQUIRE(!emptyOrder);
-    auto pendingNewReportOut = ExecutionReport::BuildInitialReport(
+    auto pendingNewReportOut = ExecutionReport::MakeInitialReport(
       order->GetInfo().m_orderId, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, pendingNewReportOut);
     auto executionReports = std::make_shared<Queue<ExecutionReport>>();
@@ -121,14 +121,14 @@ TEST_SUITE("OrderExecutionClient") {
     REQUIRE(sentSubmitOrderRequest);
     auto updates = std::make_shared<Queue<ExecutionReport>>();
     order.GetPublisher().Monitor(updates);
-    auto pendingNewReportOut = ExecutionReport::BuildInitialReport(
+    auto pendingNewReportOut = ExecutionReport::MakeInitialReport(
       order.GetInfo().m_orderId, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, pendingNewReportOut);
     auto pendingNewReportIn = updates->Pop();
     REQUIRE(pendingNewReportIn.m_status == OrderStatus::PENDING_NEW);
     REQUIRE(pendingNewReportIn.m_id == 1);
     REQUIRE(pendingNewReportIn.m_additionalTags.empty());
-    auto newReportOut = ExecutionReport::BuildUpdatedReport(pendingNewReportOut,
+    auto newReportOut = ExecutionReport::MakeUpdatedReport(pendingNewReportOut,
       OrderStatus::NEW, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, newReportOut);
     auto newReportIn = updates->Pop();
@@ -151,17 +151,17 @@ TEST_SUITE("OrderExecutionClient") {
     auto receivedOrder = Async<const Order*>();
     Spawn([&] {
       receivedOrder.GetEval().SetResult(&m_client->Submit(
-        OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+        OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(), TST,
         Side::BID, 100, Money::CENT)));
     });
     auto serverSideClient = receivedNewOrderToken.Get();
-    auto reportA = ExecutionReport::BuildInitialReport(ORDER_ID,
+    auto reportA = ExecutionReport::MakeInitialReport(ORDER_ID,
       time_from_string("2019-02-06 13:03:12"));
     SendRecordMessage<OrderUpdateMessage>(*serverSideClient, reportA);
-    auto reportB = ExecutionReport::BuildUpdatedReport(reportA,
+    auto reportB = ExecutionReport::MakeUpdatedReport(reportA,
       OrderStatus::NEW, time_from_string("2019-02-06 13:03:13"));
     SendRecordMessage<OrderUpdateMessage>(*serverSideClient, reportB);
-    auto reportC = ExecutionReport::BuildUpdatedReport(reportB,
+    auto reportC = ExecutionReport::MakeUpdatedReport(reportB,
       OrderStatus::FILLED, time_from_string("2019-02-06 13:03:14"));
     reportC.m_lastQuantity = 100;
     reportC.m_lastPrice = Money::CENT;
@@ -198,16 +198,16 @@ TEST_SUITE("OrderExecutionClient") {
   TEST_CASE_FIXTURE(Fixture, "submit_and_subscribe_race_condition") {
     const auto ORDER_ID = OrderId(42);
     auto expectedReports = std::vector<ExecutionReport>();
-    expectedReports.push_back(ExecutionReport::BuildInitialReport(ORDER_ID,
+    expectedReports.push_back(ExecutionReport::MakeInitialReport(ORDER_ID,
       time_from_string("2019-02-06 13:03:12")));
-    expectedReports.push_back(ExecutionReport::BuildUpdatedReport(
+    expectedReports.push_back(ExecutionReport::MakeUpdatedReport(
       expectedReports.back(), OrderStatus::NEW,
       time_from_string("2019-02-06 13:03:12")));
-    expectedReports.push_back(ExecutionReport::BuildUpdatedReport(
+    expectedReports.push_back(ExecutionReport::MakeUpdatedReport(
       expectedReports.back(), OrderStatus::CANCELED,
       time_from_string("2019-02-06 13:03:12")));
     auto expectedRecord = SequencedOrderRecord(OrderRecord(OrderInfo(
-      OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(), TST,
+      OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(), TST,
       Side::ASK, 300, Money::ONE), ORDER_ID,
       time_from_string("2019-02-06 13:03:12")), expectedReports),
       Beam::Queries::Sequence(101));

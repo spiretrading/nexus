@@ -5,9 +5,9 @@
 
 namespace Spire {
 
-  //! Builds a CanvasNode that represents the quantity executed by an Order
+  //! Return a CanvasNode that represents the quantity executed by an Order
   //! Task.
-  std::unique_ptr<CanvasNode> BuildTaskVolumeNode();
+  std::unique_ptr<CanvasNode> MakeTaskVolumeNode();
 }
 
 #endif

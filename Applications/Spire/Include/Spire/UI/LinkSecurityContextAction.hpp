@@ -16,7 +16,7 @@ namespace UI {
   class LinkSecurityContextAction : public QAction {
     public:
 
-      //! Builds a list of LinkSecurityContextActions based on all currently
+      //! Returns a list of LinkSecurityContextActions based on all currently
       //! open SecurityContexts.
       /*!
         \param context The SecurityContext that will be linked.
@@ -25,7 +25,7 @@ namespace UI {
         \param parent The parent of the actions to be built.
       */
       static std::vector<std::unique_ptr<LinkSecurityContextAction>>
-        BuildActions(SecurityContext* context,
+        MakeActions(SecurityContext* context,
         const std::string& currentLinkIdentifier, QObject* parent,
         const UserProfile& userProfile);
 

@@ -43,8 +43,8 @@ namespace Spire {
         \param model The DashboardModel to render.
         \param selectionModel The DashboardSelectionModel used to highlight
                selected rows.
-        \param rowRendererBuilder Builds the DashboardRowRenderers used by each
-               row in the <i>model</i>.
+        \param rowRendererBuilder Constructs the DashboardRowRenderers used by
+               each row in the <i>model</i>.
         \param userProfile The user's profile.
       */
       DashboardRenderer(Beam::Ref<const DashboardModel> model,

@@ -83,7 +83,7 @@ unique_ptr<CanvasNode> CanvasNodeModel::StripIdentity(const CanvasNode& node) {
   for(const auto& stripNode : BreadthFirstView(node)) {
     builder.DeleteMetaData(stripNode, CanvasNodeModel::GetIdentityKey());
   }
-  return builder.Build();
+  return builder.Make();
 }
 
 CanvasNodeModel::Coordinate::Coordinate(int row, int column)

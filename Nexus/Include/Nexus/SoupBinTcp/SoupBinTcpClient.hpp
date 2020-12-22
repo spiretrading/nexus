@@ -99,7 +99,7 @@ namespace Nexus::SoupBinTcp {
               std::make_shared<Beam::Queue<Beam::Threading::Timer::Result>>()) {
     m_timer->GetPublisher().Monitor(m_timerQueue);
     try {
-      BuildLoginRequestPacket(username, password, session, sequenceNumber,
+      MakeLoginRequestPacket(username, password, session, sequenceNumber,
         Beam::Store(m_buffer));
       m_channel->GetWriter().Write(m_buffer);
       auto loginResponse = SoupBinTcpPacket();
@@ -163,7 +163,7 @@ namespace Nexus::SoupBinTcp {
   template<typename C, typename T>
   void SoupBinTcpClient<C, T>::HeartbeatLoop() {
     auto heartbeatBuffer = typename Channel::Writer::Buffer();
-    BuildClientHeartbeatPacket(Beam::Store(heartbeatBuffer));
+    MakeClientHeartbeatPacket(Beam::Store(heartbeatBuffer));
     try {
       while(m_openState.IsOpen()) {
         auto result = m_timerQueue->Pop();

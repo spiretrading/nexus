@@ -8,7 +8,7 @@ using namespace std;
 
 MultiplicationNode::MultiplicationNode() {
   DefineFunction("Multiply", { "left", "right" },
-    BuildSignatures<MultiplicationNodeSignatures>());
+    MakeSignatures<MultiplicationNodeSignatures>());
 }
 
 void MultiplicationNode::Apply(CanvasNodeVisitor& visitor) const {

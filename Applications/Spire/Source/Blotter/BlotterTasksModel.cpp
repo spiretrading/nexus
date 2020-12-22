@@ -38,7 +38,7 @@ namespace {
         auto timeOfDay =
           userProfile.GetServiceClients().GetTimeClient().GetTime();
         for(auto& market : userProfile.GetMarketDatabase().GetEntries()) {
-          auto snapshotQuery = BuildDailyOrderSubmissionQuery(market.m_code,
+          auto snapshotQuery = MakeDailyOrderSubmissionQuery(market.m_code,
             account, timeOfDay, timeOfDay, userProfile.GetMarketDatabase(),
             userProfile.GetTimeZoneDatabase());
           auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();

@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class LastPriceDashboardCellBuilder
-      \brief Builds a DashboardCell emitting a Security's last price.
+      \brief Constructs a DashboardCell emitting a Security's last price.
    */
   class LastPriceDashboardCellBuilder : public DashboardCellBuilder {
     public:
@@ -14,7 +14,7 @@ namespace Spire {
       //! Constructs a LastPriceDashboardCellBuilder.
       LastPriceDashboardCellBuilder() = default;
 
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

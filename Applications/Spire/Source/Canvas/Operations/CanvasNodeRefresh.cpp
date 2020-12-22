@@ -18,5 +18,5 @@ unique_ptr<CanvasNode> Spire::Refresh(unique_ptr<CanvasNode> node) {
       builder.Replace(child, CanvasNode::Clone(proxy->GetOriginal()));
     }
   }
-  return builder.Build();
+  return builder.Make();
 }

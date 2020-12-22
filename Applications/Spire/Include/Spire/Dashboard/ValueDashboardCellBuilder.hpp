@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class ValueDashboardCellBuilder
-      \brief Builds a ValueDashboardCell.
+      \brief Constructs a ValueDashboardCell.
    */
   class ValueDashboardCellBuilder : public DashboardCellBuilder {
     public:
@@ -17,7 +17,7 @@ namespace Spire {
       */
       ValueDashboardCellBuilder(const DashboardCell::Value& value);
 
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

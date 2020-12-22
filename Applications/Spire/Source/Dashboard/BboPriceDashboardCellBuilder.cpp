@@ -14,7 +14,7 @@ using namespace Spire;
 BboPriceDashboardCellBuilder::BboPriceDashboardCellBuilder(Side side)
     : m_side{side} {}
 
-std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Build(
+std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& marketDataClient =
@@ -26,7 +26,7 @@ std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Build(
       [=] (const BboQuote& quote) {
         return Pick(side, quote.m_ask.m_price, quote.m_bid.m_price);
       });
-  auto query = BuildCurrentQuery(security);
+  auto query = MakeCurrentQuery(security);
   marketDataClient.QueryBboQuotes(query, baseQueue);
   auto last = std::make_unique<QueueDashboardCell>(queue);
   return std::move(last);

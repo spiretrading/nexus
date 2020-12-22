@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class VolumeDashboardCellBuilder
-      \brief Builds a DashboardCell emitting a Security's volume.
+      \brief Constructs a DashboardCell emitting a Security's volume.
    */
   class VolumeDashboardCellBuilder : public DashboardCellBuilder {
     public:
@@ -14,7 +14,7 @@ namespace Spire {
       //! Constructs a VolumeDashboardCellBuilder.
       VolumeDashboardCellBuilder() = default;
 
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

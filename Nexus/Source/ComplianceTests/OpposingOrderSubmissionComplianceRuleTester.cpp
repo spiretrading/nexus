@@ -23,14 +23,14 @@ namespace {
   const auto DURATION = seconds(10);
   const auto RANGE = 2 * Money::CENT;
 
-  auto BuildLimitOrderFields(Side side, Money price) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeLimitOrderFields(Side side, Money price) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
       DefaultCurrencies::CAD(), side, DefaultDestinations::TSX(), 1000, price);
   }
 
-  auto BuildMarketOrderFields(Side side) {
-    return OrderFields::BuildMarketOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeMarketOrderFields(Side side) {
+    return OrderFields::MakeMarketOrder(DirectoryEntry::GetRootAccount(),
       Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
       DefaultCurrencies::CAD(), side, DefaultDestinations::TSX(), 1000);
   }
@@ -41,7 +41,7 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderSubmissionComplianceRule(DURATION, RANGE,
       &timeClient);
-    auto orderA = PrimitiveOrder({BuildLimitOrderFields(Side::ASK, Money::ONE),
+    auto orderA = PrimitiveOrder({MakeLimitOrderFields(Side::ASK, Money::ONE),
       1, timeClient.GetTime()});
     {
       REQUIRE_NOTHROW(rule.Submit(orderA));
@@ -51,33 +51,33 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
       Cancel(orderA, timeClient.GetTime());
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::BID, Money::ONE),
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::BID, Money::ONE),
         2, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::BID,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::BID,
         99 * Money::CENT), 3, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::BID,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::BID,
         98 * Money::CENT), 4, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::BID,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::BID,
         97 * Money::CENT), 5, timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
     {
-      auto order = PrimitiveOrder({BuildMarketOrderFields(Side::BID), 6,
+      auto order = PrimitiveOrder({MakeMarketOrderFields(Side::BID), 6,
         timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     timeClient.SetTime(timeClient.GetTime() + DURATION + seconds(1));
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::BID, Money::ONE),
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::BID, Money::ONE),
         7, timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
@@ -87,7 +87,7 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderSubmissionComplianceRule(DURATION, RANGE,
       &timeClient);
-    auto order = PrimitiveOrder({BuildLimitOrderFields(Side::BID, Money::ONE),
+    auto order = PrimitiveOrder({MakeLimitOrderFields(Side::BID, Money::ONE),
       1, timeClient.GetTime()});
     {
       REQUIRE_NOTHROW(rule.Submit(order));
@@ -97,33 +97,33 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
       Cancel(order, timeClient.GetTime());
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK, Money::ONE),
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK, Money::ONE),
         2, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + Money::CENT), 3, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + 2 * Money::CENT), 4, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + 3 * Money::CENT), 5, timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
     {
-      auto order = PrimitiveOrder({BuildMarketOrderFields(Side::ASK), 6,
+      auto order = PrimitiveOrder({MakeMarketOrderFields(Side::ASK), 6,
         timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     timeClient.SetTime(timeClient.GetTime() + DURATION + seconds(1));
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + 2 * Money::CENT), 7, timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
@@ -133,7 +133,7 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderSubmissionComplianceRule(DURATION, RANGE,
       &timeClient);
-    auto orderA = PrimitiveOrder({BuildLimitOrderFields(Side::BID, Money::ONE),
+    auto orderA = PrimitiveOrder({MakeLimitOrderFields(Side::BID, Money::ONE),
       1, timeClient.GetTime()});
     {
       REQUIRE_NOTHROW(rule.Submit(orderA));
@@ -143,11 +143,11 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
       Cancel(orderA, timeClient.GetTime());
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + 3 * Money::CENT), 2, timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
-    auto orderB = PrimitiveOrder({BuildLimitOrderFields(Side::BID,
+    auto orderB = PrimitiveOrder({MakeLimitOrderFields(Side::BID,
       Money::ONE + Money::CENT), 3, timeClient.GetTime()});
     {
       REQUIRE_NOTHROW(rule.Submit(orderB));
@@ -157,13 +157,13 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
       Cancel(orderB, timeClient.GetTime());
     }
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + 3 * Money::CENT), 4, timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     timeClient.SetTime(timeClient.GetTime() + DURATION + seconds(1));
     {
-      auto order = PrimitiveOrder({BuildLimitOrderFields(Side::ASK,
+      auto order = PrimitiveOrder({MakeLimitOrderFields(Side::ASK,
         Money::ONE + 3 * Money::CENT), 5, timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }

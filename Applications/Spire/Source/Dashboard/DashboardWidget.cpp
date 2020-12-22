@@ -374,7 +374,7 @@ void DashboardWidget::ActivateRow(int index, const string& prefix) {
   if(existingRow.is_initialized()) {
     m_model->Remove(*existingRow);
   }
-  auto row = m_rowBuilder->Build(security, Ref(*m_userProfile));
+  auto row = m_rowBuilder->Make(security, Ref(*m_userProfile));
   m_model->Add(std::move(row));
   auto insertIndex = m_renderer->GetSize() - 1;
   m_renderer->MoveRow(insertIndex, index);

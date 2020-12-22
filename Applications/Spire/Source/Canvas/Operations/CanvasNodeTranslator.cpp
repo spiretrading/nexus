@@ -481,7 +481,7 @@ namespace {
 
   struct FileReaderTranslator {
     template<typename Parser>
-    static auto BuildParser(const Parser& parser) ->
+    static auto MakeParser(const Parser& parser) ->
         decltype(tokenize >> parser >> ('\n' | eps_p)) {
       return tokenize >> parser >> ('\n' | eps_p);
     }
@@ -497,7 +497,7 @@ namespace {
           std::is_same_v<T, TimeInForce>) {
         return Aspen::none<T>();
       } else {
-        auto parser = BuildParser(default_parser<T>);
+        auto parser = MakeParser(default_parser<T>);
         using Parser = decltype(parser);
         auto publisher = std::make_shared<
           ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
@@ -510,7 +510,7 @@ namespace {
     static Translation Template<CurrencyId>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      auto parser = BuildParser(CurrencyParser(
+      auto parser = MakeParser(CurrencyParser(
         userProfile->GetCurrencyDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
@@ -523,7 +523,7 @@ namespace {
     static Translation Template<MarketCode>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      auto parser = BuildParser(MarketParser(
+      auto parser = MakeParser(MarketParser(
         userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
@@ -536,7 +536,7 @@ namespace {
     static Translation Template<Record>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      auto parser = BuildParser(RecordParser(
+      auto parser = MakeParser(RecordParser(
         static_cast<const RecordType&>(nativeType), Ref(userProfile)));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
@@ -549,7 +549,7 @@ namespace {
     static Translation Template<Security>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      auto parser = BuildParser(SecurityParser(
+      auto parser = MakeParser(SecurityParser(
         userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<

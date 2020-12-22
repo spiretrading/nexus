@@ -9,7 +9,7 @@ using namespace std;
 
 EqualsNode::EqualsNode() {
   DefineFunction("Equals", { "left", "right" },
-    BuildSignatures<EqualitySignatures>());
+    MakeSignatures<EqualitySignatures>());
 }
 
 void EqualsNode::Apply(CanvasNodeVisitor& visitor) const {

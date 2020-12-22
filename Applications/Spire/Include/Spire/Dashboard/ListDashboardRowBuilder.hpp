@@ -10,7 +10,7 @@
 namespace Spire {
 
   /*! \class ListDashboardRowBuilder
-      \brief Builds a DashboardRow from a list of DashboardCellBuilders.
+      \brief Constructs a DashboardRow from a list of DashboardCellBuilders.
    */
   class ListDashboardRowBuilder : public DashboardRowBuilder {
     public:
@@ -24,7 +24,7 @@ namespace Spire {
 
       virtual ~ListDashboardRowBuilder();
 
-      virtual std::unique_ptr<DashboardRow> Build(
+      virtual std::unique_ptr<DashboardRow> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

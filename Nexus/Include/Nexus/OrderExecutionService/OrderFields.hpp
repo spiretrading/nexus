@@ -55,7 +55,7 @@ namespace Nexus::OrderExecutionService {
     std::vector<Tag> m_additionalFields;
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param account The account to assign the Order to.
      * @param security The Security the Order was submitted for.
@@ -66,13 +66,13 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(
+    static OrderFields MakeLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
       const Destination& destination, Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param currency The Currency being used.
@@ -82,12 +82,12 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(const Security& security,
+    static OrderFields MakeLimitOrder(const Security& security,
       CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param account The account to assign the Order to.
      * @param security The Security the Order was submitted for.
@@ -97,13 +97,13 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(
+    static OrderFields MakeLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, const Destination& destination,
       Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param orderType The type of Order.
@@ -112,11 +112,11 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(const Security& security, Side side,
+    static OrderFields MakeLimitOrder(const Security& security, Side side,
       const Destination& destination, Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param currency The Currency being used.
@@ -125,11 +125,11 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(const Security& security,
+    static OrderFields MakeLimitOrder(const Security& security,
       CurrencyId currency, Side side, Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param account The account to assign the Order to.
      * @param security The Security the Order was submitted for.
@@ -138,12 +138,12 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(
+    static OrderFields MakeLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a LIMIT order with all mandatory fields
+     * Returns OrderFields for a LIMIT order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param orderType The type of Order.
@@ -151,11 +151,11 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildLimitOrder(const Security& security, Side side,
+    static OrderFields MakeLimitOrder(const Security& security, Side side,
       Quantity quantity, Money price);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param account The account to assign the Order to.
      * @param security The Security the Order was submitted for.
@@ -166,13 +166,13 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(
+    static OrderFields MakeMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
       const Destination& destination, Quantity quantity);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param currency The Currency being used.
@@ -182,12 +182,12 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(const Security& security,
+    static OrderFields MakeMarketOrder(const Security& security,
       CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param account The account to assign the Order to.
      * @param security The Security the Order was submitted for.
@@ -197,13 +197,13 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(
+    static OrderFields MakeMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, const Destination& destination,
       Quantity quantity);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param orderType The type of Order.
@@ -212,11 +212,11 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(const Security& security, Side side,
+    static OrderFields MakeMarketOrder(const Security& security, Side side,
       const Destination& destination, Quantity quantity);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param currency The Currency being used.
@@ -225,11 +225,11 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(const Security& security,
+    static OrderFields MakeMarketOrder(const Security& security,
       CurrencyId currency, Side side, Quantity quantity);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param account The account to assign the Order to.
      * @param security The Security the Order was submitted for.
@@ -238,12 +238,12 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(
+    static OrderFields MakeMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, Quantity quantity);
 
     /**
-     * Builds an OrderFields for a MARKET order with all mandatory fields
+     * Returns OrderFields for a MARKET order with all mandatory fields
      * populated.
      * @param security The Security the Order was submitted for.
      * @param orderType The type of Order.
@@ -251,7 +251,7 @@ namespace Nexus::OrderExecutionService {
      * @param quantity The quantity to order.
      * @param price The price of the Order.
      */
-    static OrderFields BuildMarketOrder(const Security& security, Side side,
+    static OrderFields MakeMarketOrder(const Security& security, Side side,
       Quantity quantity);
 
     /** Constructs an OrderFields. */
@@ -312,7 +312,7 @@ namespace Nexus::OrderExecutionService {
       Beam::Stream(value.m_additionalFields) << ")";
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(
+  inline OrderFields OrderFields::MakeLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
       const Destination& destination, Quantity quantity, Money price) {
@@ -329,48 +329,48 @@ namespace Nexus::OrderExecutionService {
     return fields;
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+  inline OrderFields OrderFields::MakeLimitOrder(const Security& security,
       CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity, Money price) {
-    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       currency, side, destination, quantity, price);
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(
+  inline OrderFields OrderFields::MakeLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, const Destination& destination,
       Quantity quantity, Money price) {
-    return BuildLimitOrder(account, security, CurrencyId::NONE, side,
+    return MakeLimitOrder(account, security, CurrencyId::NONE, side,
       destination, quantity, price);
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+  inline OrderFields OrderFields::MakeLimitOrder(const Security& security,
       Side side, const Destination& destination, Quantity quantity,
       Money price) {
-    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       CurrencyId::NONE, side, destination, quantity, price);
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+  inline OrderFields OrderFields::MakeLimitOrder(const Security& security,
       CurrencyId currency, Side side, Quantity quantity, Money price) {
-    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       currency, side, {}, quantity, price);
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(
+  inline OrderFields OrderFields::MakeLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, Quantity quantity, Money price) {
-    return BuildLimitOrder(account, security, CurrencyId::NONE, side, {},
+    return MakeLimitOrder(account, security, CurrencyId::NONE, side, {},
       quantity, price);
   }
 
-  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+  inline OrderFields OrderFields::MakeLimitOrder(const Security& security,
       Side side, Quantity quantity, Money price) {
-    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeLimitOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       CurrencyId::NONE, side, {}, quantity, price);
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(
+  inline OrderFields OrderFields::MakeMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
       const Destination& destination, Quantity quantity) {
@@ -386,43 +386,43 @@ namespace Nexus::OrderExecutionService {
     return fields;
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+  inline OrderFields OrderFields::MakeMarketOrder(const Security& security,
       CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity) {
-    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       currency, side, destination, quantity);
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(
+  inline OrderFields OrderFields::MakeMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, const Destination& destination,
       Quantity quantity) {
-    return BuildMarketOrder(account, security, CurrencyId::NONE, side,
+    return MakeMarketOrder(account, security, CurrencyId::NONE, side,
       destination, quantity);
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+  inline OrderFields OrderFields::MakeMarketOrder(const Security& security,
       Side side, const Destination& destination, Quantity quantity) {
-    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       CurrencyId::NONE, side, destination, quantity);
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+  inline OrderFields OrderFields::MakeMarketOrder(const Security& security,
       CurrencyId currency, Side side, Quantity quantity) {
-    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       currency, side, {}, quantity);
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(
+  inline OrderFields OrderFields::MakeMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, Quantity quantity) {
-    return BuildMarketOrder(account, security, CurrencyId::NONE, side, {},
+    return MakeMarketOrder(account, security, CurrencyId::NONE, side, {},
       quantity);
   }
 
-  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+  inline OrderFields OrderFields::MakeMarketOrder(const Security& security,
       Side side, Quantity quantity) {
-    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
+    return MakeMarketOrder(Beam::ServiceLocator::DirectoryEntry(), security,
       CurrencyId::NONE, side, {}, quantity);
   }
 

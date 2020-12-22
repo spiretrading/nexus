@@ -40,7 +40,7 @@ TEST_SUITE("BoardLotCheck") {
   TEST_CASE_FIXTURE(Fixture, "unavailable_bbo_quote") {
     auto security = Security("TST", DefaultMarkets::TSX(),
       DefaultCountries::CA());
-    auto orderInfoA = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::CAD(),
       Side::BID, "TSX", 100, Money::ONE), 1,
       m_environment.GetTimeEnvironment().GetTime());

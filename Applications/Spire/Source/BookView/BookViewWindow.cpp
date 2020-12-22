@@ -322,7 +322,7 @@ unique_ptr<CanvasNode> BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
             static_cast<int>(quantity)));
         }
       }
-      taskNode = builder.Build();
+      taskNode = builder.Make();
     }
   }
   return taskNode;
@@ -513,7 +513,7 @@ void BookViewWindow::OnContextMenu(const QPoint& position) {
   propertiesAction.setToolTip(tr("Opens the Book View properties."));
   contextMenu.addAction(&propertiesAction);
   QMenu linkMenu("Links");
-  auto linkActions = LinkSecurityContextAction::BuildActions(this,
+  auto linkActions = LinkSecurityContextAction::MakeActions(this,
     m_linkIdentifier, &linkMenu, *m_userProfile);
   for(auto& action : linkActions) {
     linkMenu.addAction(action.get());

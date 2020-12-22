@@ -8,7 +8,7 @@ using namespace std;
 
 RangeNode::RangeNode() {
   DefineFunction("Range", { "lower", "upper" },
-    BuildSignatures<RangeNodeSignatures>());
+    MakeSignatures<RangeNodeSignatures>());
 }
 
 void RangeNode::Apply(CanvasNodeVisitor& visitor) const {

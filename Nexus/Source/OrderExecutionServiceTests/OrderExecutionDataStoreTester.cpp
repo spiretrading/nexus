@@ -49,22 +49,22 @@ TEST_SUITE("OrderExecutionDataStore") {
       SqlOrderExecutionDataStore<Viper::Sqlite3::Connection>) {
     auto dataStore = MakeDataStore<T>();
     auto orderInfo = SequencedValue(IndexedValue(OrderInfo(
-      OrderFields::BuildLimitOrder(ACCOUNT, SECURITY, Side::BID, 100,
+      OrderFields::MakeLimitOrder(ACCOUNT, SECURITY, Side::BID, 100,
         Money::ONE), 100, false, time_from_string("2020-02-15 3:00:01")),
       ACCOUNT), Beam::Queries::Sequence(234));
     dataStore.Store(orderInfo);
     auto initialReport = SequencedValue(IndexedValue(
-      ExecutionReport::BuildInitialReport(100,
+      ExecutionReport::MakeInitialReport(100,
         time_from_string("2020-02-15 3:00:01")), ACCOUNT),
       Beam::Queries::Sequence(432));
     dataStore.Store(initialReport);
     auto newReport = SequencedValue(IndexedValue(
-      ExecutionReport::BuildUpdatedReport(**initialReport, OrderStatus::NEW,
+      ExecutionReport::MakeUpdatedReport(**initialReport, OrderStatus::NEW,
         time_from_string("2020-02-15 3:00:02")), ACCOUNT),
       Beam::Queries::Sequence(433));
     dataStore.Store(newReport);
     auto fullReport = SequencedValue(IndexedValue(
-      ExecutionReport::BuildUpdatedReport(**newReport, OrderStatus::FILLED,
+      ExecutionReport::MakeUpdatedReport(**newReport, OrderStatus::FILLED,
         time_from_string("2020-02-15 3:00:03")), ACCOUNT),
       Beam::Queries::Sequence(434));
     (*fullReport)->m_lastQuantity = 100;

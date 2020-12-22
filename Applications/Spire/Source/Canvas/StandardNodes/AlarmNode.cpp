@@ -11,7 +11,7 @@ using namespace std;
 
 AlarmNode::AlarmNode() {
   SetText("Alarm");
-  AddChild("time", BuildDefaultCanvasNode(DateTimeType::GetInstance()));
+  AddChild("time", MakeDefaultCanvasNode(DateTimeType::GetInstance()));
   SetType(BooleanType::GetInstance());
 }
 

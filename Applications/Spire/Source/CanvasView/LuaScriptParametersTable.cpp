@@ -53,7 +53,7 @@ void LuaScriptParametersTable::CommitTypeEditor(QTableWidgetItem* item) {
     m_dialog->m_userProfile->GetCanvasTypeRegistry().GetTypes()[index];
   auto& parameter = m_dialog->m_nodes[item->row()];
   if(!IsCompatible(type, parameter->GetType())) {
-    parameter = BuildDefaultCanvasNode(type);
+    parameter = MakeDefaultCanvasNode(type);
     m_dialog->m_parameters[item->row()].m_type = static_cast<NativeType&>(type);
   }
   item->setText(QString::fromStdString(type.GetName()));

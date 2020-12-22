@@ -25,14 +25,14 @@ namespace {
   void FlattenPosition(BlotterModel& blotterModel,
       const OpenPositionsModel::Entry& position,
       const UserProfile& userProfile) {
-    auto orderFields = OrderFields::BuildMarketOrder(
+    auto orderFields = OrderFields::MakeMarketOrder(
       blotterModel.GetExecutingAccount(), position.m_key.m_index,
       position.m_key.m_currency,
       GetOpposite(GetSide(position.m_inventory.m_position)),
       userProfile.GetDestinationDatabase().GetPreferredDestination(
       position.m_key.m_index.GetMarket()).m_id,
       Abs(position.m_inventory.m_position.m_quantity));
-    auto orderNode = BuildOrderTaskNodeFromOrderFields(orderFields,
+    auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& entry = blotterModel.GetTasksModel().Add(*orderNode);
     entry.m_task->Execute();

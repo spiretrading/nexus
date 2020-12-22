@@ -8,7 +8,7 @@ using namespace std;
 
 FirstNode::FirstNode() {
   DefineFunction("First", { "expression" },
-    BuildSignatures<FirstNodeSignatures>());
+    MakeSignatures<FirstNodeSignatures>());
 }
 
 void FirstNode::Apply(CanvasNodeVisitor& visitor) const {

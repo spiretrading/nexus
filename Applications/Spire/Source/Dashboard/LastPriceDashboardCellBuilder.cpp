@@ -11,7 +11,7 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 
-std::unique_ptr<DashboardCell> LastPriceDashboardCellBuilder::Build(
+std::unique_ptr<DashboardCell> LastPriceDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& marketDataClient =
@@ -22,7 +22,7 @@ std::unique_ptr<DashboardCell> LastPriceDashboardCellBuilder::Build(
       [] (const TimeAndSale& timeAndSale) {
         return timeAndSale.m_price;
       });
-  auto query = BuildCurrentQuery(security);
+  auto query = MakeCurrentQuery(security);
   marketDataClient.QueryTimeAndSales(query, baseQueue);
   auto last = std::make_unique<QueueDashboardCell>(queue);
   return std::move(last);

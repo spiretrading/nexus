@@ -8,7 +8,7 @@ using namespace std;
 
 LastNode::LastNode() {
   DefineFunction("Last", { "expression" },
-    BuildSignatures<LastNodeSignatures>());
+    MakeSignatures<LastNodeSignatures>());
 }
 
 void LastNode::Apply(CanvasNodeVisitor& visitor) const {

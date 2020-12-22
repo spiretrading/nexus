@@ -25,7 +25,7 @@ TEST_SUITE("SqlTranslator") {
       marketAccessExpression);
     auto translator = Nexus::Queries::SqlTranslator("submissions",
       equalExpression);
-    auto translation = translator.Build();
+    auto translation = translator.Make();
     auto query = std::string();
     translation.append_query(query);
     REQUIRE(query == "(\"XTSX\" = market)");
@@ -35,9 +35,9 @@ TEST_SUITE("SqlTranslator") {
     auto ids = std::vector<OrderId>();
     ids.push_back(13);
     ids.push_back(31);
-    auto expression = BuildOrderIdFilter(ids);
+    auto expression = MakeOrderIdFilter(ids);
     auto translator = Nexus::Queries::SqlTranslator("submissions", expression);
-    auto translation = translator.Build();
+    auto translation = translator.Make();
     auto query = std::string();
     translation.append_query(query);
     REQUIRE(query ==

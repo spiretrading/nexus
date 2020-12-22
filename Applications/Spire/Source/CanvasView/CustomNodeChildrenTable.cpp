@@ -54,7 +54,7 @@ void CustomNodeChildrenTable::CommitTypeEditor(QTableWidgetItem* item) {
     m_dialog->m_userProfile->GetCanvasTypeRegistry().GetTypes()[index];
   auto& child = m_dialog->m_nodes[item->row()];
   if(!IsCompatible(type, child->GetType())) {
-    child = BuildDefaultCanvasNode(type);
+    child = MakeDefaultCanvasNode(type);
     m_dialog->m_children[item->row()].m_type = type;
   }
   item->setText(QString::fromStdString(type.GetName()));

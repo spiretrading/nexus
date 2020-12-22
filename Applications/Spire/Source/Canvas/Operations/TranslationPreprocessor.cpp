@@ -64,7 +64,7 @@ void TranslationPreprocessor::Visit(const FoldNode& node) {
     translatedNode->FindRightOperand()->GetType());
   builder.Replace(GetPath(*translatedNode, *translatedNode->FindRightOperand()),
     std::move(rightOperand));
-  m_result = builder.Build();
+  m_result = builder.Make();
 }
 
 unique_ptr<CanvasNode> TranslationPreprocessor::DefaultTranslation(
@@ -79,7 +79,7 @@ unique_ptr<CanvasNode> TranslationPreprocessor::DefaultTranslation(
     }
   }
   if(commitTranslation) {
-    return builder.Build();
+    return builder.Make();
   }
   return nullptr;
 }

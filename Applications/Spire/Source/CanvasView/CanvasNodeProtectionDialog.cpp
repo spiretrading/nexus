@@ -87,7 +87,7 @@ CanvasNodeProtectionDialog::CanvasNodeProtectionDialog(const CanvasNode& node,
 CanvasNodeProtectionDialog::~CanvasNodeProtectionDialog() {}
 
 unique_ptr<CanvasNode> CanvasNodeProtectionDialog::GetNode() {
-  return m_builder.Build();
+  return m_builder.Make();
 }
 
 void CanvasNodeProtectionDialog::OnButtonClicked(QAbstractButton* button) {

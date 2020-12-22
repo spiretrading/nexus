@@ -55,7 +55,7 @@ namespace Nexus::AdministrationService::Tests {
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
-       * Builds a new AdministrationClient.
+       * Returns a new AdministrationClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the AdministrationClient.
        */

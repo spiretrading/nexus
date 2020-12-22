@@ -17,7 +17,7 @@ using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace std;
 
-std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Build(
+std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   std::shared_ptr<Money> closePrice = std::make_shared<Money>();
@@ -46,7 +46,7 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Build(
         serviceClients.GetTimeClient().GetTime(),
         selfUserProfile->GetMarketDatabase(),
         selfUserProfile->GetTimeZoneDatabase());
-      auto query = BuildCurrentQuery(security);
+      auto query = MakeCurrentQuery(security);
       marketDataClient.QueryTimeAndSales(query, baseQueue);
     });
   return std::move(cell);

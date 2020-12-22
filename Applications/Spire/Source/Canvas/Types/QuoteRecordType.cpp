@@ -11,7 +11,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  std::shared_ptr<RecordType> BuildType() {
+  std::shared_ptr<RecordType> MakeType() {
     vector<RecordType::Field> fields;
     fields.emplace_back("price", MoneyType::GetInstance());
     fields.emplace_back("side", SideType::GetInstance());
@@ -21,7 +21,7 @@ namespace {
 }
 
 const RecordType& Spire::GetQuoteRecordType() {
-  static auto type = BuildType();
+  static auto type = MakeType();
   return *type;
 }
 

@@ -24,7 +24,7 @@ CustomNode::CustomNode(string name, vector<Child> children)
     : m_children(std::move(children)) {
   SetText(std::move(name));
   for(const auto& child : m_children) {
-    AddChild(child.m_name, BuildDefaultCanvasNode(*child.m_type));
+    AddChild(child.m_name, MakeDefaultCanvasNode(*child.m_type));
   }
   SetType(*m_children.front().m_type);
 }
@@ -71,7 +71,7 @@ unique_ptr<CanvasNode> CustomNode::Replace(const CanvasNode& child,
       builder.Replace(*target, std::move(proxy));
     }
   }
-  return CanvasNode::Replace(child, builder.Build());
+  return CanvasNode::Replace(child, builder.Make());
 }
 
 void CustomNode::Apply(CanvasNodeVisitor& visitor) const {

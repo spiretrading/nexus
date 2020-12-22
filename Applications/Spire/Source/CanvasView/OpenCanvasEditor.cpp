@@ -461,7 +461,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const QueryNode& node) {
         CanvasNodeBuilder builder(GetRoot(node));
         try {
           builder.Replace(node, node.SetField(field.m_name));
-          auto replacement = builder.Build();
+          auto replacement = builder.Make();
           if(!IsValueEqual(GetRoot(node), *replacement)) {
             editor->addItem(QString::fromStdString(field.m_name));
           }

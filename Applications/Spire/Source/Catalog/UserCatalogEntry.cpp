@@ -51,7 +51,7 @@ UserCatalogEntry::UserCatalogEntry(const string& name, const CanvasNode& node,
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntryKey(), ss.str());
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntrySourceKey(),
     UserCatalogEntry::GetUserSourceValue());
-  m_node = builder.Build();
+  m_node = builder.Make();
 }
 
 UserCatalogEntry::UserCatalogEntry(const string& name, const CanvasNode& node,
@@ -69,7 +69,7 @@ UserCatalogEntry::UserCatalogEntry(const string& name, const CanvasNode& node,
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntryKey(), ss.str());
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntrySourceKey(),
     UserCatalogEntry::GetUserSourceValue());
-  m_node = builder.Build();
+  m_node = builder.Make();
 }
 
 UserCatalogEntry::~UserCatalogEntry() {}
@@ -152,6 +152,6 @@ void UserCatalogEntry::Validate() {
     builder.SetMetaData(*m_node, CatalogEntry::GetCatalogEntryKey(), ss.str());
     builder.SetMetaData(*m_node, CatalogEntry::GetCatalogEntrySourceKey(),
       UserCatalogEntry::GetUserSourceValue());
-    m_node = builder.Build();
+    m_node = builder.Make();
   }
 }

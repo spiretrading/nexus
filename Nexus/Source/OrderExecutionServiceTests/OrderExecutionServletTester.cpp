@@ -132,7 +132,7 @@ TEST_SUITE("OrderExecutionServlet") {
       [&] (auto& client, auto& report) {
         clientReportAsync.GetEval().SetResult(report);
       });
-    auto orderFields = OrderFields::BuildLimitOrder(m_clientAccount, TST,
+    auto orderFields = OrderFields::MakeLimitOrder(m_clientAccount, TST,
       DefaultCurrencies::USD(), Side::BID, "TEST", 100, Money::CENT);
     m_protocolClient->SendRequest<NewOrderSingleService>(orderFields);
     auto serverOrder = m_serverOrders->Pop();
@@ -141,13 +141,13 @@ TEST_SUITE("OrderExecutionServlet") {
     REQUIRE(clientInitialReport.m_status == OrderStatus::PENDING_NEW);
     auto serverNewReport = ExecutionReport();
     serverNewReport.m_id = serverOrder->GetInfo().m_orderId;
-    serverNewReport = ExecutionReport::BuildUpdatedReport(clientInitialReport,
+    serverNewReport = ExecutionReport::MakeUpdatedReport(clientInitialReport,
       OrderStatus::NEW, microsec_clock::universal_time());
     serverOrder->Update(serverNewReport);
     auto clientNewReport = clientReportAsync.Get();
     clientReportAsync.Reset();
     REQUIRE(clientNewReport.m_status == OrderStatus::NEW);
-    auto serverExpiredReport = ExecutionReport::BuildUpdatedReport(
+    auto serverExpiredReport = ExecutionReport::MakeUpdatedReport(
       clientNewReport, OrderStatus::EXPIRED, microsec_clock::universal_time());
     serverOrder->Update(serverExpiredReport);
     auto clientExpiredReport = clientReportAsync.Get();
@@ -155,7 +155,7 @@ TEST_SUITE("OrderExecutionServlet") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "update_order") {
-    auto orderFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto orderFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       Money::ONE);
     auto newOrder = m_protocolClient->SendRequest<NewOrderSingleService>(
       orderFields);
@@ -163,7 +163,7 @@ TEST_SUITE("OrderExecutionServlet") {
     auto serverReports = std::make_shared<Queue<ExecutionReport>>();
     serverOrder->GetPublisher().Monitor(serverReports);
     auto serverInitialReport = serverReports->Pop();
-    auto newReport = ExecutionReport::BuildUpdatedReport(
+    auto newReport = ExecutionReport::MakeUpdatedReport(
       serverInitialReport, OrderStatus::NEW,
       time_from_string("2020-03-12 16:06:12"));
     REQUIRE_THROWS_AS(m_protocolClient->SendRequest<UpdateOrderService>(
@@ -176,15 +176,15 @@ TEST_SUITE("OrderExecutionServlet") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "query_order_ids") {
-    auto orderA = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto orderA = OrderInfo(OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       Money::ONE), 12, time_from_string("2020-03-12 16:06:12"));
     m_dataStore->Store(SequencedValue(IndexedValue(orderA, m_clientAccount),
       Beam::Queries::Sequence(44)));
-    auto orderB = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::ASK, 200,
+    auto orderB = OrderInfo(OrderFields::MakeLimitOrder(TST, Side::ASK, 200,
       Money::ONE), 17, time_from_string("2020-03-12 16:06:13"));
     m_dataStore->Store(SequencedValue(IndexedValue(orderB, m_clientAccount),
       Beam::Queries::Sequence(45)));
-    auto orderC = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::ASK, 300,
+    auto orderC = OrderInfo(OrderFields::MakeLimitOrder(TST, Side::ASK, 300,
       Money::ONE), 36, time_from_string("2020-03-12 16:06:14"));
     m_dataStore->Store(SequencedValue(IndexedValue(orderC, m_clientAccount),
       Beam::Queries::Sequence(46)));
@@ -213,7 +213,7 @@ TEST_SUITE("OrderExecutionServlet") {
 
   TEST_CASE_FIXTURE(Fixture, "load_order_without_permission") {
     auto account = DirectoryEntry::MakeAccount(599, "sephi");
-    auto orderA = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto orderA = OrderInfo(OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       Money::ONE), 12, time_from_string("2020-03-12 16:06:12"));
     m_dataStore->Store(SequencedValue(IndexedValue(orderA, account),
       Beam::Queries::Sequence(44)));
@@ -222,7 +222,7 @@ TEST_SUITE("OrderExecutionServlet") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "load_order_with_permission") {
-    auto orderA = OrderInfo(OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto orderA = OrderInfo(OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       Money::ONE), 12, time_from_string("2020-03-12 16:06:12"));
     m_dataStore->Store(SequencedValue(IndexedValue(orderA, m_clientAccount),
       Beam::Queries::Sequence(44)));
@@ -237,7 +237,7 @@ TEST_SUITE("OrderExecutionServlet") {
       [&] (auto& client, auto& report) {
         reportAsync.GetEval().SetResult(report);
       });
-    auto orderFields = OrderFields::BuildLimitOrder(TST,
+    auto orderFields = OrderFields::MakeLimitOrder(TST,
       DefaultCurrencies::USD(), Side::BID, "TEST", 100, Money::CENT);
     auto newOrder = m_protocolClient->SendRequest<NewOrderSingleService>(
       orderFields);
@@ -266,7 +266,7 @@ TEST_SUITE("OrderExecutionServlet") {
       TestOrderExecutionDataStore::LoadOrderOperation>(operations->Pop());
     REQUIRE(reloadOperation);
     REQUIRE(*reloadOperation->m_id == orderId);
-    auto newReport = ExecutionReport::BuildUpdatedReport(initialReport,
+    auto newReport = ExecutionReport::MakeUpdatedReport(initialReport,
       OrderStatus::NEW, time_from_string("2016-11-30 08:11:54"));
     receivedOrder->Update(newReport);
     auto storeOperation = std::dynamic_pointer_cast<

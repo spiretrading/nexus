@@ -208,7 +208,7 @@ void ComplianceRuleEntryWidget::SetupParameters() {
       continue;
     }
     m_parameterNames.push_back(name);
-    auto parameterWidget = BuildComplianceValueWidget(*parameterValue,
+    auto parameterWidget = MakeComplianceValueWidget(*parameterValue,
       m_isReadOnly, Ref(*m_userProfile));
     SetComplianceValue(*parameterWidget, parameter.m_value);
     m_ui->m_parametersLayout->addRow(QString::fromStdString(name + ": "),

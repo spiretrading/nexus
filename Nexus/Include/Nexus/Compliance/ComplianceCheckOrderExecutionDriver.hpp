@@ -122,7 +122,7 @@ namespace Nexus::Compliance {
       order.With([&] (auto status, const auto& reports) {
         auto& lastReport = reports.back();
         auto updatedReport =
-          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+          OrderExecutionService::ExecutionReport::MakeUpdatedReport(
           lastReport, OrderStatus::REJECTED, m_timeClient->GetTime());
         updatedReport.m_text = e.what();
         order.Update(updatedReport);

@@ -41,7 +41,7 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
     query, m_slotHandler->GetSlot<TimeAndSale>(
     std::bind(&TimeAndSalesModel::OnTimeAndSale, this, std::placeholders::_1)));
-  auto bboQuery = BuildCurrentQuery(security);
+  auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_slotHandler->GetSlot<BboQuote>(

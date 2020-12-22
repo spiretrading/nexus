@@ -143,12 +143,12 @@ TEST_SUITE("RiskServlet") {
     auto subscriptionResponse =
       client.m_riskClient->SendRequest<SubscribeRiskPortfolioUpdatesService>();
     m_accounts->Push(client.m_serviceLocatorClient.GetAccount());
-    client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
+    client.m_orderExecutionClient->Submit(OrderFields::MakeLimitOrder(XIU,
       Side::BID, 200, Money::ONE));
     auto& receivedBid = *m_orders->Pop();
     Accept(receivedBid);
     receivedBid.With([&] (auto status, const auto& executionReports) {
-      auto report = ExecutionReport::BuildUpdatedReport(
+      auto report = ExecutionReport::MakeUpdatedReport(
         executionReports.back(), OrderStatus::PARTIALLY_FILLED,
         executionReports.back().m_timestamp);
       report.m_executionFee = Money::CENT;
@@ -173,12 +173,12 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(bidInventory.m_grossProfitAndLoss == Money::ZERO);
     REQUIRE(bidInventory.m_transactionCount == 1);
     REQUIRE(bidInventory.m_volume == 100);
-    client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
+    client.m_orderExecutionClient->Submit(OrderFields::MakeLimitOrder(XIU,
       Side::ASK, 200, Money::ONE + Money::CENT));
     auto& receivedAsk = *m_orders->Pop();
     Accept(receivedAsk);
     receivedAsk.With([&] (auto status, const auto& executionReports) {
-      auto report = ExecutionReport::BuildUpdatedReport(
+      auto report = ExecutionReport::MakeUpdatedReport(
         executionReports.back(), OrderStatus::FILLED,
         executionReports.back().m_timestamp);
       report.m_executionFee = Money::CENT;

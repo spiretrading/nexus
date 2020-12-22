@@ -447,7 +447,7 @@ BuiltInCatalogEntry::BuiltInCatalogEntry(const string& name,
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntryKey(), ss.str());
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntrySourceKey(),
     BuiltInCatalogEntry::GetBuiltInSourceValue());
-  m_node = builder.Build();
+  m_node = builder.Make();
 }
 
 BuiltInCatalogEntry::BuiltInCatalogEntry(const uuid& uid,
@@ -463,7 +463,7 @@ BuiltInCatalogEntry::BuiltInCatalogEntry(const uuid& uid,
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntryKey(), ss.str());
   builder.SetMetaData(node, CatalogEntry::GetCatalogEntrySourceKey(),
     BuiltInCatalogEntry::GetBuiltInSourceValue());
-  m_node = builder.Build();
+  m_node = builder.Make();
 }
 
 string BuiltInCatalogEntry::GetName() const {

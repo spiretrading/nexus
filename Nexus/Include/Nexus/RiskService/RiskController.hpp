@@ -116,7 +116,7 @@ namespace Nexus::RiskService {
       RiskController& operator =(const RiskController&) = delete;
       void UpdateSnapshot(const OrderExecutionService::Order& order);
       std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-        std::vector<const OrderExecutionService::Order*>> BuildPortfolio(
+        std::vector<const OrderExecutionService::Order*>> MakePortfolio(
         MarketDatabase markets);
       template<typename F>
       void Update(F&& f);
@@ -155,7 +155,7 @@ namespace Nexus::RiskService {
         m_dataStore(std::forward<DF>(dataStore)),
         m_snapshotPortfolio(markets) {
     auto lock = std::lock_guard(m_mutex);
-    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(
+    auto [portfolio, sequence, excludedOrders] = MakePortfolio(
       std::move(markets));
     auto inventories = std::vector<RiskInventory>();
     for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
@@ -240,8 +240,8 @@ namespace Nexus::RiskService {
     typename D>
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
       std::vector<const OrderExecutionService::Order*>>
-      RiskController<A, M, O, R, T, D>::BuildPortfolio(MarketDatabase markets) {
-    auto [portfolio, sequence, excludedOrders] = RiskService::BuildPortfolio(
+      RiskController<A, M, O, R, T, D>::MakePortfolio(MarketDatabase markets) {
+    auto [portfolio, sequence, excludedOrders] = RiskService::MakePortfolio(
       m_dataStore->LoadInventorySnapshot(m_account), m_account,
       std::move(markets), *m_orderExecutionClient);
     m_snapshotPortfolio = portfolio;

@@ -35,7 +35,7 @@ namespace Spire {
       //! Initializes this widget.
       /*!
         \param model The model to render.
-        \param rowBuilder Builds the rows to display.
+        \param rowBuilder Constructs the rows to display.
         \param userProfile The user's profile.
       */
       void Initialize(Beam::Ref<DashboardModel> model,

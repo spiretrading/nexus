@@ -87,7 +87,7 @@ namespace {
     }
 
     auto Submit(Side side, Money price, Quantity quantity) {
-      auto fields = OrderFields::BuildLimitOrder(TRADER_A, TST,
+      auto fields = OrderFields::MakeLimitOrder(TRADER_A, TST,
         DefaultCurrencies::USD(), side, "NASDAQ", quantity, price);
       auto orderEntry = OrderEntry();
       orderEntry.m_fields = fields;

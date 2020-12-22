@@ -65,7 +65,7 @@ namespace Spire {
       //! Returns the TimeClient.
       Beam::TimeService::TimeClientBox& GetTimeClient();
 
-      std::unique_ptr<Beam::Threading::TimerBox> BuildTimer(
+      std::unique_ptr<Beam::Threading::TimerBox> MakeTimer(
         boost::posix_time::time_duration expiry);
 
       //! Closes all the clients.

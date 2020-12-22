@@ -100,7 +100,7 @@ namespace Nexus::OrderExecutionService {
   /**
    * Makes an OrderExecutionDataStore replicated among multiple database
    * instances.
-   * @param connectionBuilders Builds the connections to the SQL database to
+   * @param connectionBuilders Constructs the connections to the SQL database to
    *        replicate.
    * @param accountSourceFunction The function used to load DirectoryEntries.
    */

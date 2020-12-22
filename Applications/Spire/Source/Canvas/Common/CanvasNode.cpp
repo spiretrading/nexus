@@ -249,5 +249,5 @@ void CanvasNode::InternalSetReadOnly(bool isReadOnly) {
 }
 
 unique_ptr<CanvasNode> CanvasNode::Reset() const {
-  return BuildDefaultCanvasNode(GetType());
+  return MakeDefaultCanvasNode(GetType());
 }

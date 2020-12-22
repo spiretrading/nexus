@@ -14,7 +14,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  std::shared_ptr<RecordType> BuildType() {
+  std::shared_ptr<RecordType> MakeType() {
     std::vector<RecordType::Field> fields;
     fields.emplace_back("id", IntegerType::GetInstance());
     fields.emplace_back("sequence", IntegerType::GetInstance());
@@ -33,7 +33,7 @@ namespace {
 }
 
 const RecordType& Spire::GetExecutionReportRecordType() {
-  static auto type = BuildType();
+  static auto type = MakeType();
   return *type;
 }
 

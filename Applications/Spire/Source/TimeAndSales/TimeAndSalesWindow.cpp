@@ -255,7 +255,7 @@ void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {
   contextMenu.addAction(&propertiesAction);
   QMenu linkMenu("Links");
   vector<unique_ptr<LinkSecurityContextAction>> linkActions =
-    LinkSecurityContextAction::BuildActions(this, m_linkIdentifier, &linkMenu,
+    LinkSecurityContextAction::MakeActions(this, m_linkIdentifier, &linkMenu,
     *m_userProfile);
   for(auto i = linkActions.begin(); i != linkActions.end(); ++i) {
     linkMenu.addAction(i->get());

@@ -245,7 +245,7 @@ namespace Nexus::OrderExecutionService {
             return;
           }
           client->template SendRequest<QueryOrderSubmissionsService>(
-            Beam::Queries::BuildRealTimeQuery(fields.m_account));
+            Beam::Queries::MakeRealTimeQuery(fields.m_account));
           realTimeSubscriptions.insert(fields.m_account);
         });
       }

@@ -49,14 +49,14 @@ namespace {
 
 TEST_SUITE("BuyingPowerCheck") {
   TEST_CASE_FIXTURE(Fixture, "submission") {
-    auto orderInfoA = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 100, Money::ONE), 1,
       m_environment.GetTimeEnvironment().GetTime());
     auto orderA = PrimitiveOrder(orderInfoA);
     REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoA));
     m_buyingPowerCheck.Add(orderA);
-    auto orderInfoB = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 1000, Money::ONE), 2,
       m_environment.GetTimeEnvironment().GetTime());
@@ -65,13 +65,13 @@ TEST_SUITE("BuyingPowerCheck") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "add_without_submission") {
-    auto orderInfoA = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 100, Money::ONE), 1,
       m_environment.GetTimeEnvironment().GetTime());
     auto orderA = PrimitiveOrder(orderInfoA);
     m_buyingPowerCheck.Add(orderA);
-    auto orderInfoB = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 1000, Money::ONE), 2,
       m_environment.GetTimeEnvironment().GetTime());
@@ -80,13 +80,13 @@ TEST_SUITE("BuyingPowerCheck") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "submission_then_rejection") {
-    auto orderInfoA = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 100, Money::ONE), 1, not_a_date_time);
     auto orderA = PrimitiveOrder(orderInfoA);
     REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoA));
     m_buyingPowerCheck.Reject(orderInfoA);
-    auto orderInfoB = OrderInfo(OrderFields::BuildLimitOrder(
+    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 1000, Money::ONE), 2,
       m_environment.GetTimeEnvironment().GetTime());
@@ -94,7 +94,7 @@ TEST_SUITE("BuyingPowerCheck") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "order_recovery") {
-    auto recoveryFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto recoveryFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       Money::ONE);
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
@@ -102,7 +102,7 @@ TEST_SUITE("BuyingPowerCheck") {
     m_environment.Accept(*submittedRecoveryOrder);
     m_environment.Fill(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(m_buyingPowerCheck.Add(*submittedRecoveryOrder));
-    auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto submissionFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       2 * Money::ONE);
     auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       submissionFields);

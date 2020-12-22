@@ -73,7 +73,7 @@ TEST_SUITE("ConsolidatedRiskController") {
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
       [=] {
-        return m_adminClients.BuildTimer(seconds(1));
+        return m_adminClients.MakeTimer(seconds(1));
       },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
@@ -92,7 +92,7 @@ TEST_SUITE("ConsolidatedRiskController") {
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
       [=] {
-        return m_adminClients.BuildTimer(seconds(1));
+        return m_adminClients.MakeTimer(seconds(1));
       },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());

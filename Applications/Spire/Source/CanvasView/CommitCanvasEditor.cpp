@@ -275,7 +275,7 @@ void CommitEditorCanvasNodeVisitor::Visit(const ReferenceNode& node) {
   CanvasNodeBuilder builder(*newReference);
   builder.DeleteMetaData(*newReference, CanvasNodeModel::GetReferentKey());
   m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-    *builder.Build());
+    *builder.Make());
 }
 
 void CommitEditorCanvasNodeVisitor::Visit(const SideNode& node) {

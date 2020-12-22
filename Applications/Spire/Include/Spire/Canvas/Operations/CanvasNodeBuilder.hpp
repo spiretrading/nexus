@@ -10,7 +10,7 @@
 namespace Spire {
 
   /*! \class CanvasNodeBuilder
-      \brief Builds a new CanvasNode from an existing CanvasNode.
+      \brief Constructs a new CanvasNode from an existing CanvasNode.
    */
   class CanvasNodeBuilder : private boost::noncopyable {
     public:
@@ -21,8 +21,8 @@ namespace Spire {
       */
       CanvasNodeBuilder(const CanvasNode& node);
 
-      //! Builds the CanvasNode.
-      std::unique_ptr<CanvasNode> Build();
+      //! Returns the CanvasNode.
+      std::unique_ptr<CanvasNode> Make();
 
       //! Converts a CanvasNode to a specified type.
       /*!

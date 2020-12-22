@@ -10,7 +10,7 @@ using namespace Spire::UI;
 using namespace std;
 
 vector<unique_ptr<LinkSecurityContextAction>>
-    LinkSecurityContextAction::BuildActions(SecurityContext* context,
+    LinkSecurityContextAction::MakeActions(SecurityContext* context,
     const string& currentLinkIdentifier, QObject* parent,
     const UserProfile& userProfile) {
   vector<unique_ptr<LinkSecurityContextAction>> linkActions;

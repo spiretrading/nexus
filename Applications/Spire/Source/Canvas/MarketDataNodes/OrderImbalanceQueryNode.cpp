@@ -13,8 +13,8 @@ using namespace std;
 OrderImbalanceQueryNode::OrderImbalanceQueryNode() {
   SetText("Order Imbalance Query");
   SetType(GetOrderImbalanceRecordType());
-  AddChild("market", BuildDefaultCanvasNode(MarketType::GetInstance()));
-  AddChild("range", BuildDefaultCanvasNode(TimeRangeType::GetInstance()));
+  AddChild("market", MakeDefaultCanvasNode(MarketType::GetInstance()));
+  AddChild("range", MakeDefaultCanvasNode(TimeRangeType::GetInstance()));
 }
 
 void OrderImbalanceQueryNode::Apply(CanvasNodeVisitor& visitor) const {

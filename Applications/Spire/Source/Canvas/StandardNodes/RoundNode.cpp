@@ -9,7 +9,7 @@ using namespace std;
 
 RoundNode::RoundNode() {
   DefineFunction("Round", { "value", "to_closest" },
-    BuildSignatures<RoundingNodeSignatures>());
+    MakeSignatures<RoundingNodeSignatures>());
 }
 
 void RoundNode::Apply(CanvasNodeVisitor& visitor) const {

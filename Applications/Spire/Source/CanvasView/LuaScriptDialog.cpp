@@ -51,7 +51,7 @@ unique_ptr<LuaScriptNode> LuaScriptDialog::GetNode() {
   for(std::size_t i = 0; i < m_nodes.size(); ++i) {
     builder.Replace(node->GetChildren()[i], CanvasNode::Clone(*m_nodes[i]));
   }
-  return StaticCast<std::unique_ptr<LuaScriptNode>>(builder.Build());
+  return StaticCast<std::unique_ptr<LuaScriptNode>>(builder.Make());
 }
 
 void LuaScriptDialog::Setup(const LuaScriptNode& node) {

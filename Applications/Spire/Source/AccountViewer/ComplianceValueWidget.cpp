@@ -136,7 +136,7 @@ namespace {
   };
 }
 
-QWidget* Spire::BuildComplianceValueWidget(ComplianceValue value,
+QWidget* Spire::MakeComplianceValueWidget(ComplianceValue value,
     bool isReadOnly, Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags) {
   return apply_visitor(ComplianceWidgetVisitor{isReadOnly, Ref(userProfile),

@@ -72,12 +72,12 @@ unique_ptr<CanvasNode> Spire::ForceConversion(unique_ptr<CanvasNode> node,
     return node;
   }
   if(dynamic_cast<const NoneNode*>(node.get())) {
-    return BuildDefaultCanvasNode(type);
+    return MakeDefaultCanvasNode(type);
   }
   try {
     return node->Convert(type);
   } catch(const CanvasOperationException&) {
-    return BuildDefaultCanvasNode(type);
+    return MakeDefaultCanvasNode(type);
   }
 }
 
