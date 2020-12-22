@@ -430,7 +430,7 @@ namespace Details {
         FIX::Side side) {
     auto order = std::make_shared<FixOrder>(info, side);
     Beam::Threading::With(m_orders, [&] (auto& orders) {
-      orders.insert(std::make_pair(info.m_orderId, order));
+      orders.insert(std::pair(info.m_orderId, order));
     });
     return order;
   }
@@ -440,7 +440,7 @@ namespace Details {
         const OrderExecutionService::OrderRecord& orderRecord, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(orderRecord, side);
     Beam::Threading::With(m_orders, [&] (auto& orders) {
-      orders.insert(std::make_pair(orderRecord.m_info.m_orderId, order));
+      orders.insert(std::pair(orderRecord.m_info.m_orderId, order));
     });
     return order;
   }
@@ -450,7 +450,7 @@ namespace Details {
         const std::string& reason) {
     auto order = std::shared_ptr(BuildRejectedOrder(info, reason));
     Beam::Threading::With(m_orders, [&] (auto& orders) {
-      orders.insert(std::make_pair(info.m_orderId, order));
+      orders.insert(std::pair(info.m_orderId, order));
     });
     return order;
   }

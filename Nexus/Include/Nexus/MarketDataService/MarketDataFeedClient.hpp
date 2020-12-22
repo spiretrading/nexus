@@ -448,7 +448,7 @@ namespace Nexus::MarketDataService {
     if(orderIterator != m_orders.end()) {
       LockedDeleteOrder(orderIterator, timestamp);
     }
-    m_orders.insert(std::make_pair(id, OrderEntry(security, market, mpid,
+    m_orders.insert(std::pair(id, OrderEntry(security, market, mpid,
       isPrimaryMpid, side, price, size)));
     auto bookQuote = BookQuote(mpid, isPrimaryMpid, market,
       Quote(price, size, side), timestamp);

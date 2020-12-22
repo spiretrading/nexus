@@ -106,7 +106,7 @@ namespace Nexus::FixUtilities {
       auto application = std::make_shared<Application>(entry.m_application,
         entry.m_configPath);
       for(const auto& destination : entry.m_destinations) {
-        m_fixApplications.insert(std::make_pair(destination, application));
+        m_fixApplications.insert(std::pair(destination, application));
       }
     }
     try {
@@ -209,7 +209,7 @@ namespace Nexus::FixUtilities {
     Beam::Threading::With(m_orderIdToFixApplication,
       [&] (auto& orderIdToFixApplication) {
         orderIdToFixApplication.insert(
-          std::make_pair(info.m_orderId, fixApplicationEntry));
+          std::pair(info.m_orderId, fixApplicationEntry));
       });
     return order;
   }

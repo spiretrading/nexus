@@ -589,8 +589,8 @@ namespace Nexus::OrderExecutionService {
       });
     order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
       std::bind(&OrderExecutionServlet::OnExecutionReport, this,
-      std::placeholders::_1, orderInfo.m_fields.m_account,
-      std::ref(*shortingModel))));
+        std::placeholders::_1, orderInfo.m_fields.m_account,
+        std::ref(*shortingModel))));
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
@@ -605,6 +605,10 @@ namespace Nexus::OrderExecutionService {
     }
     auto sanitizedExecutionReport = executionReport;
     sanitizedExecutionReport.m_id = orderId;
+    if(sanitizedExecutionReport.m_timestamp ==
+        boost::posix_time::not_a_date_time) {
+      sanitizedExecutionReport.m_timestamp = m_timeClient->GetTime();
+    }
     m_driver->Update(session, orderId, sanitizedExecutionReport);
   }
 
