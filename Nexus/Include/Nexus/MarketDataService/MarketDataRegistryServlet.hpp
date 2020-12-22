@@ -342,7 +342,7 @@ namespace Nexus::MarketDataService {
   Security MarketDataRegistryServlet<C, R, D, A>::NormalizePrimaryMarket(
       const Security& security) {
     if(security.GetMarket().IsEmpty()) {
-      return {};
+      return security;
     }
     auto query = SecurityInfoQuery();
     query.SetIndex(security);

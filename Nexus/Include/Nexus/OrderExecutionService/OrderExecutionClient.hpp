@@ -47,6 +47,14 @@ namespace Nexus::OrderExecutionService {
       boost::optional<const Order&> LoadOrder(OrderId id);
 
       /**
+       * Submits a query for SequencedOrderRecords.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
+      void QueryOrderRecords(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
+
+      /**
        * Submits a query for OrderRecords.
        * @param query The query to submit.
        * @param queue The queue that will store the result of the query.
@@ -55,7 +63,7 @@ namespace Nexus::OrderExecutionService {
         Beam::ScopedQueueWriter<OrderRecord> queue);
 
       /**
-       * Submits a query for Order submissions.
+       * Submits a query for SequencedOrder submissions.
        * @param query The query to submit.
        * @param queue The queue that will store the result of the query.
        */
@@ -69,6 +77,14 @@ namespace Nexus::OrderExecutionService {
        */
       void QueryOrderSubmissions(const AccountQuery& query,
         Beam::ScopedQueueWriter<const Order*> queue);
+
+      /**
+       * Submits a query for SequencedExecutionReports.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
+      void QueryExecutionReports(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
 
       /**
        * Submits a query for ExecutionReports.
@@ -175,6 +191,12 @@ namespace Nexus::OrderExecutionService {
 
   template<typename B>
   void OrderExecutionClient<B>::QueryOrderRecords(const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
+    m_orderSubmissionPublisher.SubmitQuery(query, std::move(queue));
+  }
+
+  template<typename B>
+  void OrderExecutionClient<B>::QueryOrderRecords(const AccountQuery& query,
       Beam::ScopedQueueWriter<OrderRecord> queue) {
     m_orderSubmissionPublisher.SubmitQuery(query, std::move(queue));
   }
@@ -199,6 +221,12 @@ namespace Nexus::OrderExecutionService {
       [=] (const auto& orderRecord) {
         return static_cast<const Order*>(LoadOrder(orderRecord).get());
       }));
+  }
+
+  template<typename B>
+  void OrderExecutionClient<B>::QueryExecutionReports(const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
+    m_executionReportPublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>

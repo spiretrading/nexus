@@ -41,6 +41,9 @@ namespace Nexus::OrderExecutionService {
       boost::optional<const Order&> LoadOrder(OrderId id);
 
       void QueryOrderRecords(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
+
+      void QueryOrderRecords(const AccountQuery& query,
         Beam::ScopedQueueWriter<OrderRecord> queue);
 
       void QueryOrderSubmissions(const AccountQuery& query,
@@ -48,6 +51,9 @@ namespace Nexus::OrderExecutionService {
 
       void QueryOrderSubmissions(const AccountQuery& query,
         Beam::ScopedQueueWriter<const Order*> queue);
+
+      void QueryExecutionReports(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
 
       void QueryExecutionReports(const AccountQuery& query,
         Beam::ScopedQueueWriter<ExecutionReport> queue);
@@ -107,6 +113,14 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C>
   void ToPythonOrderExecutionClient<C>::QueryOrderRecords(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
+    auto release = Beam::Python::GilRelease();
+    m_client->QueryOrderRecords(query, std::move(queue));
+  }
+
+  template<typename C>
+  void ToPythonOrderExecutionClient<C>::QueryOrderRecords(
       const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->QueryOrderRecords(query, std::move(queue));
@@ -125,6 +139,14 @@ namespace Nexus::OrderExecutionService {
       const AccountQuery& query, Beam::ScopedQueueWriter<const Order*> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->QueryOrderSubmissions(query, std::move(queue));
+  }
+
+  template<typename C>
+  void ToPythonOrderExecutionClient<C>::QueryExecutionReports(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
+    auto release = Beam::Python::GilRelease();
+    m_client->QueryExecutionReports(query, std::move(queue));
   }
 
   template<typename C>

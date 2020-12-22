@@ -40,7 +40,7 @@ namespace Nexus {
     for(auto& row : config) {
       auto flag = row.first.as<std::string>();
       auto fee = Beam::Extract<T>(row.second);
-      table->insert(std::make_pair(flag, fee));
+      table->insert(std::pair(flag, fee));
     }
   }
 

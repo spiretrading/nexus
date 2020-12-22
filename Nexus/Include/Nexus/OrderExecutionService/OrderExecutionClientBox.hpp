@@ -42,6 +42,9 @@ namespace Nexus::OrderExecutionService {
       boost::optional<const Order&> LoadOrder(OrderId id);
 
       void QueryOrderRecords(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
+
+      void QueryOrderRecords(const AccountQuery& query,
         Beam::ScopedQueueWriter<OrderRecord> queue);
 
       void QueryOrderSubmissions(const AccountQuery& query,
@@ -49,6 +52,9 @@ namespace Nexus::OrderExecutionService {
 
       void QueryOrderSubmissions(const AccountQuery& query,
         Beam::ScopedQueueWriter<const Order*> queue);
+
+      void QueryExecutionReports(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
 
       void QueryExecutionReports(const AccountQuery& query,
         Beam::ScopedQueueWriter<ExecutionReport> queue);
@@ -66,11 +72,15 @@ namespace Nexus::OrderExecutionService {
         virtual ~VirtualOrderExecutionClient() = default;
         virtual boost::optional<const Order&> LoadOrder(OrderId id) = 0;
         virtual void QueryOrderRecords(const AccountQuery& query,
+          Beam::ScopedQueueWriter<SequencedOrderRecord> queue) = 0;
+        virtual void QueryOrderRecords(const AccountQuery& query,
           Beam::ScopedQueueWriter<OrderRecord> queue) = 0;
         virtual void QueryOrderSubmissions(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrder> queue) = 0;
         virtual void QueryOrderSubmissions(const AccountQuery& query,
           Beam::ScopedQueueWriter<const Order*> queue) = 0;
+        virtual void QueryExecutionReports(const AccountQuery& query,
+          Beam::ScopedQueueWriter<SequencedExecutionReport> queue) = 0;
         virtual void QueryExecutionReports(const AccountQuery& query,
           Beam::ScopedQueueWriter<ExecutionReport> queue) = 0;
         virtual const Order& Submit(const OrderFields& fields) = 0;
@@ -88,11 +98,15 @@ namespace Nexus::OrderExecutionService {
         WrappedOrderExecutionClient(Args&&... args);
         boost::optional<const Order&> LoadOrder(OrderId id) override;
         void QueryOrderRecords(const AccountQuery& query,
+          Beam::ScopedQueueWriter<SequencedOrderRecord> queue) override;
+        void QueryOrderRecords(const AccountQuery& query,
           Beam::ScopedQueueWriter<OrderRecord> queue) override;
         void QueryOrderSubmissions(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrder> queue) override;
         void QueryOrderSubmissions(const AccountQuery& query,
           Beam::ScopedQueueWriter<const Order*> queue) override;
+        void QueryExecutionReports(const AccountQuery& query,
+          Beam::ScopedQueueWriter<SequencedExecutionReport> queue) override;
         void QueryExecutionReports(const AccountQuery& query,
           Beam::ScopedQueueWriter<ExecutionReport> queue) override;
         const Order& Submit(const OrderFields& fields) override;
@@ -133,6 +147,12 @@ namespace Nexus::OrderExecutionService {
   }
 
   inline void OrderExecutionClientBox::QueryOrderRecords(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
+    m_client->QueryOrderRecords(query, std::move(queue));
+  }
+
+  inline void OrderExecutionClientBox::QueryOrderRecords(
       const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
     m_client->QueryOrderRecords(query, std::move(queue));
   }
@@ -146,6 +166,12 @@ namespace Nexus::OrderExecutionService {
   inline void OrderExecutionClientBox::QueryOrderSubmissions(
       const AccountQuery& query, Beam::ScopedQueueWriter<const Order*> queue) {
     m_client->QueryOrderSubmissions(query, std::move(queue));
+  }
+
+  inline void OrderExecutionClientBox::QueryExecutionReports(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
+    m_client->QueryExecutionReports(query, std::move(queue));
   }
 
   inline void OrderExecutionClientBox::QueryExecutionReports(
@@ -188,6 +214,13 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void OrderExecutionClientBox::WrappedOrderExecutionClient<C>::
       QueryOrderRecords(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
+    m_client->QueryOrderRecords(query, std::move(queue));
+  }
+
+  template<typename C>
+  void OrderExecutionClientBox::WrappedOrderExecutionClient<C>::
+      QueryOrderRecords(const AccountQuery& query,
         Beam::ScopedQueueWriter<OrderRecord> queue) {
     m_client->QueryOrderRecords(query, std::move(queue));
   }
@@ -204,6 +237,13 @@ namespace Nexus::OrderExecutionService {
       QueryOrderSubmissions(const AccountQuery& query,
         Beam::ScopedQueueWriter<const Order*> queue) {
     m_client->QueryOrderSubmissions(query, std::move(queue));
+  }
+
+  template<typename C>
+  void OrderExecutionClientBox::WrappedOrderExecutionClient<C>::
+      QueryExecutionReports(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
+    m_client->QueryExecutionReports(query, std::move(queue));
   }
 
   template<typename C>

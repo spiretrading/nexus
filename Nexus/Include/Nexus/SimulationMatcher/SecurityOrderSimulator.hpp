@@ -100,7 +100,7 @@ namespace Nexus::OrderExecutionService {
       std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
     marketDataClient.QueryTimeAndSales(query, m_tasks.GetSlot<TimeAndSale>(
       std::bind(&SecurityOrderSimulator::OnTimeAndSale, this,
-      std::placeholders::_1)));
+        std::placeholders::_1)));
   }
 
   template<typename C>

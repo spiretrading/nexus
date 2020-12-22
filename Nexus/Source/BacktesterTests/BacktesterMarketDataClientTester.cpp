@@ -26,9 +26,9 @@ TEST_SUITE("BacktesterMarketDataClient") {
       auto timestamp = startTime + seconds(i - 3);
       auto bboQuote = SequencedValue(IndexedValue(
         BboQuote(Quote(Money::ONE, 100, Side::BID),
-        Quote(Money::ONE, 100, Side::ASK), timestamp), security),
+          Quote(Money::ONE, 100, Side::ASK), timestamp), security),
         EncodeTimestamp(timestamp, Beam::Queries::Sequence(
-        static_cast<Beam::Queries::Sequence::Ordinal>(i))));
+          static_cast<Beam::Queries::Sequence::Ordinal>(i))));
       dataStore->Store(bboQuote);
     }
     auto testEnvironment = TestEnvironment(HistoricalDataStoreBox(dataStore));

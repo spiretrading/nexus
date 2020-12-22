@@ -200,11 +200,9 @@ namespace Nexus {
 
   template<typename T>
   void MarketDataQueryEvent<T>::Execute() {
-    if(m_query.GetRange().GetEnd() != Beam::Queries::Sequence::Last()) {
-      return;
-    }
-    if(!m_service->m_queries.insert(std::make_tuple(m_query.GetIndex(),
-        MarketDataService::GetMarketDataType<MarketDataType>())).second) {
+    if(m_query.GetRange().GetEnd() != Beam::Queries::Sequence::Last() ||
+        !m_service->m_queries.insert(std::tuple(m_query.GetIndex(),
+          MarketDataService::GetMarketDataType<MarketDataType>())).second) {
       return;
     }
     auto startTime = m_service->m_eventHandler->GetTime();
@@ -226,14 +224,13 @@ namespace Nexus {
   template<typename T>
   void MarketDataLoadEvent<T>::Execute() {
     const auto QUERY_SIZE = 1000;
-    auto endPoint =
-      [&] () -> Beam::Queries::Range::Point {
-        if(m_service->m_eventHandler->GetEndTime() ==
-            boost::posix_time::pos_infin) {
-          return Beam::Queries::Sequence::Present();
-        }
-        return m_service->m_eventHandler->GetEndTime();
-      }();
+    auto endPoint = [&] () -> Beam::Queries::Range::Point {
+      if(m_service->m_eventHandler->GetEndTime() ==
+          boost::posix_time::pos_infin) {
+        return Beam::Queries::Sequence::Present();
+      }
+      return m_service->m_eventHandler->GetEndTime();
+    }();
     auto query = Query();
     query.SetIndex(m_index);
     query.SetRange(m_startPoint, endPoint);

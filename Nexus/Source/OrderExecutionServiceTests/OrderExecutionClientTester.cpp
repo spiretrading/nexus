@@ -179,6 +179,22 @@ TEST_SUITE("OrderExecutionClient") {
     REQUIRE(reportQueue->Pop().m_status == OrderStatus::FILLED);
   }
 
+  TEST_CASE_FIXTURE(Fixture, "query_sequenced_order_submissions") {
+    QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, auto& query) {
+        auto result = OrderSubmissionQueryResult();
+        result.m_queryId = 10;
+        return result;
+      });
+    auto query = AccountQuery();
+    query.SetIndex(ACCOUNT);
+    query.SetRange(Range::Historical());
+    query.SetSnapshotLimit(SnapshotLimit::FromTail(1));
+    auto queue = std::make_shared<Queue<SequencedOrder>>();
+    m_client->QueryOrderSubmissions(query, queue);
+    REQUIRE_THROWS_AS(queue->Pop(), PipeBrokenException);
+  }
+
   TEST_CASE_FIXTURE(Fixture, "submit_and_subscribe_race_condition") {
     const auto ORDER_ID = OrderId(42);
     auto expectedReports = std::vector<ExecutionReport>();

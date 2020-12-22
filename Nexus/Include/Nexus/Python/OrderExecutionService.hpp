@@ -140,7 +140,14 @@ namespace Nexus::Python {
         }
         return &*order;
       }, pybind11::return_value_policy::reference_internal).
-      def("query_order_records", &Client::QueryOrderRecords).
+      def("query_sequenced_order_records", static_cast<void (Client::*)(
+        const OrderExecutionService::AccountQuery&,
+        Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrderRecord>)>(
+          &Client::QueryOrderRecords)).
+      def("query_order_records", static_cast<void (Client::*)(
+        const OrderExecutionService::AccountQuery&,
+        Beam::ScopedQueueWriter<OrderExecutionService::OrderRecord>)>(
+          &Client::QueryOrderRecords)).
       def("query_sequenced_order_submissions", static_cast<void (Client::*)(
         const OrderExecutionService::AccountQuery&,
         Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrder>)>(
@@ -149,7 +156,14 @@ namespace Nexus::Python {
         const OrderExecutionService::AccountQuery&,
         Beam::ScopedQueueWriter<const OrderExecutionService::Order*>)>(
           &Client::QueryOrderSubmissions)).
-      def("query_execution_reports", &Client::QueryExecutionReports).
+      def("query_sequenced_execution_reports", static_cast<void (Client::*)(
+        const OrderExecutionService::AccountQuery&, Beam::ScopedQueueWriter<
+          OrderExecutionService::SequencedExecutionReport>)>(
+            &Client::QueryExecutionReports)).
+      def("query_execution_reports", static_cast<void (Client::*)(
+        const OrderExecutionService::AccountQuery&,
+        Beam::ScopedQueueWriter<OrderExecutionService::ExecutionReport>)>(
+          &Client::QueryExecutionReports)).
       def("submit", &Client::Submit,
         pybind11::return_value_policy::reference_internal).
       def("cancel", &Client::Cancel).
