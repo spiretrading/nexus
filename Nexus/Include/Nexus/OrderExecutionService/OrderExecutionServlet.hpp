@@ -110,13 +110,13 @@ namespace Nexus::OrderExecutionService {
       OrderSubmissionRegistry m_registry;
       Beam::Queries::IndexedSubscriptions<OrderRecord,
         Beam::ServiceLocator::DirectoryEntry, ServiceProtocolClient>
-        m_submissionSubscriptions;
+          m_submissionSubscriptions;
       Beam::Queries::IndexedSubscriptions<ExecutionReport,
         Beam::ServiceLocator::DirectoryEntry, ServiceProtocolClient>
-        m_orderSubscriptions;
+          m_orderSubscriptions;
       Beam::Queries::IndexedSubscriptions<ExecutionReport,
         Beam::ServiceLocator::DirectoryEntry, ServiceProtocolClient>
-        m_executionReportSubscriptions;
+          m_executionReportSubscriptions;
       std::vector<std::unique_ptr<PrimitiveOrder>> m_rejectedOrders;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<SyncShortingModel>> m_shortingModels;
@@ -211,7 +211,7 @@ namespace Nexus::OrderExecutionService {
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     Beam::Services::AddMessageSlot<CancelOrderMessage>(Beam::Store(slots),
       std::bind(&OrderExecutionServlet::OnCancelOrder, this,
-      std::placeholders::_1, std::placeholders::_2));
+        std::placeholders::_1, std::placeholders::_2));
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
@@ -341,14 +341,15 @@ namespace Nexus::OrderExecutionService {
         [&] {
           return LoadInitialSequences(*m_dataStore, account);
         },
-        [&] (auto& executionReport) {
+        [&] (const auto& executionReport) {
           m_dataStore->Store(executionReport);
-          m_orderSubscriptions.Publish(executionReport, [&] (auto& clients) {
-            Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(clients,
-              **executionReport);
-          });
+          m_orderSubscriptions.Publish(executionReport,
+            [&] (const auto& clients) {
+              Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(
+                clients, **executionReport);
+            });
           m_executionReportSubscriptions.Publish(executionReport,
-            [&] (auto& clients) {
+            [&] (const auto& clients) {
               Beam::Services::BroadcastRecordMessage<ExecutionReportMessage>(
                 clients, executionReport);
             });
@@ -398,7 +399,7 @@ namespace Nexus::OrderExecutionService {
           }
           auto insertionPoint = std::lower_bound(executionReports.begin(),
             executionReports.end(), *executionReport,
-            [] (auto& lhs, auto& rhs) {
+            [] (const auto& lhs, const auto& rhs) {
               return lhs.m_sequence < rhs.m_sequence;
             });
           if(insertionPoint == executionReports.end() ||
@@ -423,8 +424,7 @@ namespace Nexus::OrderExecutionService {
       revisedQuery.SetIndex(session.GetAccount());
     }
     if(!session.HasOrderExecutionPermission(revisedQuery.GetIndex())) {
-      auto result = OrderSubmissionQueryResult();
-      request.SetResult(result);
+      request.SetResult(OrderSubmissionQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
@@ -447,7 +447,8 @@ namespace Nexus::OrderExecutionService {
             for(auto& executionReport : executionReportResult.m_snapshot) {
               auto submissionIterator = std::find_if(
                 submissionResult.m_snapshot.begin(),
-                submissionResult.m_snapshot.end(), [&] (auto& orderRecord) {
+                submissionResult.m_snapshot.end(),
+                [&] (const auto& orderRecord) {
                   return orderRecord->m_info.m_orderId == executionReport->m_id;
                 });
               if(submissionIterator == submissionResult.m_snapshot.end()) {
@@ -457,7 +458,7 @@ namespace Nexus::OrderExecutionService {
               auto insertionPoint = std::lower_bound(
                 submission->m_executionReports.begin(),
                 submission->m_executionReports.end(), *executionReport,
-                [] (auto& lhs, auto& rhs) {
+                [] (const auto& lhs, const auto& rhs) {
                   return lhs.m_sequence < rhs.m_sequence;
                 });
               if(insertionPoint == submission->m_executionReports.end() ||
@@ -484,8 +485,7 @@ namespace Nexus::OrderExecutionService {
       revisedQuery.SetIndex(session.GetAccount());
     }
     if(!session.HasOrderExecutionPermission(revisedQuery.GetIndex())) {
-      auto result = ExecutionReportQueryResult();
-      request.SetResult(result);
+      request.SetResult(ExecutionReportQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
@@ -549,6 +549,21 @@ namespace Nexus::OrderExecutionService {
         "Insufficient permissions to execute order.");
       order = rejectedOrder.get();
       m_rejectedOrders.push_back(std::move(rejectedOrder));
+    } else if(orderInfo.m_fields.m_security.GetMarket() == MarketCode()) {
+      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+        "Market not specified.");
+      order = rejectedOrder.get();
+      m_rejectedOrders.push_back(std::move(rejectedOrder));
+    } else if(orderInfo.m_fields.m_security.GetCountry() == CountryCode()) {
+      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+        "Country not specified.");
+      order = rejectedOrder.get();
+      m_rejectedOrders.push_back(std::move(rejectedOrder));
+    } else if(orderInfo.m_fields.m_security.GetSymbol().empty()) {
+      auto rejectedOrder = BuildRejectedOrder(orderInfo,
+        "Ticker symbol not specified.");
+      order = rejectedOrder.get();
+      m_rejectedOrders.push_back(std::move(rejectedOrder));
     } else {
       order = &m_driver->Submit(orderInfo);
     }
@@ -556,7 +571,7 @@ namespace Nexus::OrderExecutionService {
       [&] {
         return LoadInitialSequences(*m_dataStore, orderInfo.m_fields.m_account);
       },
-      [&] (auto& orderInfo) {
+      [&] (const auto& orderInfo) {
         m_liveOrders.Insert((*orderInfo)->m_orderId);
         m_dataStore->Store(orderInfo);
         request.SetResult(orderInfo);
@@ -564,10 +579,10 @@ namespace Nexus::OrderExecutionService {
           Beam::Queries::IndexedValue(OrderRecord(**orderInfo, {}),
           orderInfo->GetIndex()), orderInfo.GetSequence());
         m_submissionSubscriptions.Publish(orderRecord,
-          [&] (auto& client) {
+          [&] (const auto& client) {
             return &client != &request.GetClient();
           },
-          [&] (auto& clients) {
+          [&] (const auto& clients) {
             Beam::Services::BroadcastRecordMessage<OrderSubmissionMessage>(
               clients, orderRecord);
           });
