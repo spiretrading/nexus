@@ -1,5 +1,6 @@
-#ifndef SPIRE_INT_UI_PROPERTY_HPP
-#define SPIRE_INT_UI_PROPERTY_HPP
+#ifndef SPIRE_STANDARD_UI_PROPERTY_HPP
+#define SPIRE_STANDARD_UI_PROPERTY_HPP
+#include "Nexus/Definitions/Currency.hpp"
 #include "Spire/UiViewer/TypedUiProperty.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
@@ -39,10 +40,24 @@ namespace Spire {
 
       QWidget* make_setter_widget(QWidget* parent) override;
 
-      using TypedUiProperty<T>::set;
     private:
       std::function<QWidget* (QWidget*, StandardUiProperty&)> m_setter_factory;
   };
+
+  //! Populates a list of properties with the basic QWidget properties.
+  /*!
+    \param properties The list of properties to populate.
+  */
+  void populate_widget_properties(
+    std::vector<std::shared_ptr<UiProperty>>& properties);
+
+  //! Applies the basic QWidget properties to a given QWidget.
+  /*!
+    \param widget The QWidget having the properties applied to it.
+    \param properties The list of properties to apply to the <i>widget</i>.
+  */
+  void apply_widget_properties(QWidget* widget,
+    const std::vector<std::shared_ptr<UiProperty>>& properties);
 
   //! Returns a standard TypedUiProperty<bool> with an initial value of
   //! <i>false</i>.
@@ -59,6 +74,22 @@ namespace Spire {
   */
   std::shared_ptr<TypedUiProperty<bool>> make_standard_bool_property(
     QString name, bool value);
+
+  //! Returns a standard TypedUiProperty<CurrencyId> with an initial value of
+  //! <i>NONE</i>.
+  /*!
+    \param name The name of the property.
+  */
+  std::shared_ptr<TypedUiProperty<Nexus::CurrencyId>>
+    make_standard_currency_property(QString name);
+
+  //! Returns a standard TypedUiProperty<CurrencyId>.
+  /*!
+    \param name The name of the property.
+    \param value The property's initial value.
+  */
+  std::shared_ptr<TypedUiProperty<Nexus::CurrencyId>>
+    make_standard_currency_property(QString name, Nexus::CurrencyId value);
 
   //! Returns a standard TypedUiProperty<int> with an initial value of <i>0</i>.
   /*!

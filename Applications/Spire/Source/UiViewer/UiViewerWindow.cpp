@@ -70,6 +70,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   m_body->setSizes({scale_width(150), scale_width(375), scale_width(250)});
   add(make_check_box_profile());
   add(make_color_selector_button_profile());
+  add(make_currency_combo_box_profile());
   add(make_flat_button_profile());
   m_widget_list->setCurrentRow(0);
 }
@@ -105,23 +106,23 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     profile.reset();
   }
   auto& profile = m_profiles.at(current->text());
-  auto table = new UiPropertyTableView(profile.get_properties(), this);
+  auto table = new UiPropertyTableView(profile.get_properties());
   auto previous_properties = m_body->replaceWidget(PROPERTIES_INDEX, table);
   delete previous_properties;
   table->show();
-  auto stage = new QSplitter(Qt::Vertical, this);
-  auto center_stage = new QScrollArea(this);
-  center_stage->setAlignment(Qt::AlignCenter);
+  auto stage = new QSplitter(Qt::Vertical);
+  auto center_stage = new QScrollArea();
   center_stage->setWidget(profile.get_widget());
+  center_stage->setAlignment(Qt::AlignCenter);
   stage->addWidget(center_stage);
-  m_event_log = new QTextEdit(this);
+  m_event_log = new QTextEdit();
   m_event_log->setReadOnly(true);
   stage->addWidget(m_event_log);
   stage->setSizes({350, 150});
   auto previous_stage = m_body->replaceWidget(STAGE_INDEX, stage);
   delete previous_stage;
   profile.connect_event_signal(
-    [this] (const QString& name, const std::vector<std::any>& arguments) {
+    [this] (const auto& name, const auto& arguments) {
       on_event(name, arguments);
     });
   m_line_count = 0;

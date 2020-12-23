@@ -31,6 +31,9 @@ QWidget* UiProfile::get_widget() {
 
 void UiProfile::reset() {
   m_event_signal->disconnect_all_slots();
+  for(auto& property : m_properties) {
+    property->reset();
+  }
   m_widget = nullptr;
 }
 

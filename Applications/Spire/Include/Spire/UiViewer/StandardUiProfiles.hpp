@@ -10,6 +10,9 @@ namespace Spire {
   //! Returns a UiProfile for the ColorSelectorButton.
   UiProfile make_color_selector_button_profile();
 
+  //! Returns a UiProfile for the CurrencyComboBox.
+  UiProfile make_currency_combo_box_profile();
+
   //! Returns a UiProfile for the FlatButton.
   UiProfile make_flat_button_profile();
 }

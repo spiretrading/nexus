@@ -30,6 +30,9 @@ namespace Spire {
       //! Returns a widget that can be used to edit the property.
       virtual QWidget* make_setter_widget(QWidget* parent) = 0;
 
+      //! Resets the property, disconnecting all slots and resetting the value.
+      virtual void reset();
+
       //! Connects a slot to the ChangedSignal.
       /*!
         \param slot The slot to connect.

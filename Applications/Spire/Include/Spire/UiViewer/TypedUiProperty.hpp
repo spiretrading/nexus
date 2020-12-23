@@ -8,7 +8,9 @@ namespace Spire {
 
   //! Provides a type safe derived class of the UiProperty that can be used
   //! as a helper class to implement a property for a specific type.
-  //! \tparam T The property's static type.
+  /*!
+     \tparam T The property's static type.
+  */
   template<typename T>
   class TypedUiProperty : public UiProperty {
     public:
@@ -24,12 +26,17 @@ namespace Spire {
 
       std::any get_value() const override;
 
+      //! Sets the value of the property.
+      void set(const Type& value);
+
       //! Connects a slot to the type-safe ChangedSignal.
       /*!
         \param slot The slot to connect.
       */
       boost::signals2::connection connect_changed_signal(
         const typename ChangedSignal::slot_type& slot) const;
+
+      void reset() override;
 
     protected:
 
@@ -48,10 +55,8 @@ namespace Spire {
       */
       TypedUiProperty(QString name, Type value);
 
-      //! Sets the value of the widget.
-      void set(const Type& value);
-
     private:
+      Type m_initial_value;
       Type m_value;
   };
 
@@ -85,6 +90,12 @@ namespace Spire {
   }
 
   template<typename T>
+  void TypedUiProperty<T>::set(const Type& value) {
+    m_value = value;
+    signal_change();
+  }
+
+  template<typename T>
   boost::signals2::connection TypedUiProperty<T>::connect_changed_signal(
       const typename ChangedSignal::slot_type& slot) const {
     return UiProperty::connect_changed_signal(
@@ -94,19 +105,20 @@ namespace Spire {
   }
 
   template<typename T>
+  void TypedUiProperty<T>::reset() {
+    m_value = m_initial_value;
+    UiProperty::reset();
+  }
+
+  template<typename T>
   TypedUiProperty<T>::TypedUiProperty(QString name)
     : TypedUiProperty(std::move(name), Type()) {}
 
   template<typename T>
   TypedUiProperty<T>::TypedUiProperty(QString name, Type value)
     : UiProperty(std::move(name)),
-      m_value(std::move(value)) {}
-
-  template<typename T>
-  void TypedUiProperty<T>::set(const Type& value) {
-    m_value = value;
-    signal_change();
-  }
+      m_initial_value(std::move(value)),
+      m_value(m_initial_value) {}
 }
 
 #endif

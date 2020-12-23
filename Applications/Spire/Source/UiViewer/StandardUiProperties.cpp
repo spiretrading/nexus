@@ -1,9 +1,64 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
+#include <limits>
 #include <QCheckBox>
+#include <QLineEdit>
+#include <QResizeEvent>
 #include <QSpinBox>
-#include <QTextEdit>
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
+using namespace Nexus;
 using namespace Spire;
+
+namespace {
+  struct SizeFilter : QObject {
+    TypedUiProperty<int>* m_width;
+    TypedUiProperty<int>* m_height;
+
+    SizeFilter(TypedUiProperty<int>* width, TypedUiProperty<int>* height,
+      QObject* parent)
+      : QObject(parent),
+        m_width(width),
+        m_height(height) {}
+
+    bool eventFilter(QObject* object, QEvent* event) override {
+      if(event->type() == QEvent::Resize) {
+        auto& resizeEvent = static_cast<QResizeEvent&>(*event);
+        m_width->set(resizeEvent.size().width());
+        m_height->set(resizeEvent.size().height());
+      }
+      return QObject::eventFilter(object, event);
+    };
+  };
+}
+
+void Spire::populate_widget_properties(
+    std::vector<std::shared_ptr<UiProperty>>& properties) {
+  properties.push_back(make_standard_bool_property("enabled", true));
+  properties.push_back(make_standard_int_property("width"));
+  properties.push_back(make_standard_int_property("height"));
+}
+
+void Spire::apply_widget_properties(QWidget* widget,
+    const std::vector<std::shared_ptr<UiProperty>>& properties) {
+  auto& enabled = get<bool>("enabled", properties);
+  auto& width = get<int>("width", properties);
+  auto& height = get<int>("height", properties);
+  enabled.connect_changed_signal([=] (auto value) {
+    widget->setEnabled(value);
+  });
+  width.connect_changed_signal([=] (auto value) {
+    if(value != 0) {
+      widget->setFixedSize(value, widget->height());
+    }
+  });
+  height.connect_changed_signal([=] (auto value) {
+    if(value != 0) {
+      widget->setFixedSize(widget->width(), value);
+    }
+  });
+  auto sizeFilter = new SizeFilter(&width, &height, widget);
+  widget->installEventFilter(sizeFilter);
+}
 
 std::shared_ptr<TypedUiProperty<bool>> Spire::make_standard_bool_property(
     QString name) {
@@ -15,19 +70,42 @@ std::shared_ptr<TypedUiProperty<bool>> Spire::make_standard_bool_property(
   return std::make_shared<StandardUiProperty<bool>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<bool>& property) {
       auto setter = new QCheckBox(parent);
-      if(property.get()) {
-        setter->setCheckState(Qt::Checked);
-      } else {
-        setter->setCheckState(Qt::Unchecked);
-      }
-      QObject::connect(setter, &QCheckBox::stateChanged,
-        [&property] (auto value) {
-          if(value == Qt::Checked) {
-            property.set(true);
-          } else {
-            property.set(false);
-          }
-        });
+      property.connect_changed_signal([=] (auto value) {
+        if(value) {
+          setter->setCheckState(Qt::Checked);
+        } else {
+          setter->setCheckState(Qt::Unchecked);
+        }
+      });
+      QObject::connect(setter, &QCheckBox::stateChanged, [&] (auto value) {
+        property.set(value == Qt::Checked);
+      });
+      return setter;
+    });
+}
+
+std::shared_ptr<TypedUiProperty<CurrencyId>>
+    Spire::make_standard_currency_property(QString name) {
+  return make_standard_currency_property(std::move(name), CurrencyId::NONE);
+}
+
+std::shared_ptr<TypedUiProperty<CurrencyId>>
+    Spire::make_standard_currency_property(QString name, CurrencyId value) {
+  return std::make_shared<StandardUiProperty<CurrencyId>>(std::move(name),
+    value,
+    [] (QWidget* parent, StandardUiProperty<CurrencyId>& property) {
+      auto setter = new QLineEdit(parent);
+      property.connect_changed_signal([=] (auto value) {
+        auto code = GetDefaultCurrencyDatabase().FromId(value).m_code;
+        setter->setText(QString::fromStdString(code.GetData()));
+      });
+      QObject::connect(setter, &QLineEdit::textChanged, [&] (const auto& text) {
+        auto id = GetDefaultCurrencyDatabase().FromCode(
+          text.toUpper().toStdString()).m_id;
+        if(id != CurrencyId::NONE) {
+          property.set(id);
+        }
+      });
       return setter;
     });
 }
@@ -42,11 +120,13 @@ std::shared_ptr<TypedUiProperty<int>> Spire::make_standard_int_property(
   return std::make_shared<StandardUiProperty<int>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<int>& property) {
       auto setter = new QSpinBox(parent);
-      setter->setMinimum(1);
-      setter->setMaximum(100000000);
-      setter->setValue(property.get());
+      setter->setMinimum(std::numeric_limits<int>::min());
+      setter->setMaximum(std::numeric_limits<int>::max());
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(value);
+      });
       QObject::connect(setter, qOverload<int>(&QSpinBox::valueChanged),
-        [&property] (auto value) {
+        [&] (auto value) {
           property.set(value);
         });
       return setter;
@@ -62,10 +142,13 @@ std::shared_ptr<TypedUiProperty<QColor>> Spire::make_standard_qcolor_property(
     QString name, QColor value) {
   return std::make_shared<StandardUiProperty<QColor>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<QColor>& property) {
-      auto setter = new QTextEdit(property.get().name().toUpper(), parent);
-      QObject::connect(setter, &QTextEdit::textChanged,
-        [=, &property] {
-          auto color = QColor(setter->toPlainText().toUpper());
+      auto setter = new QLineEdit(property.get().name().toUpper(), parent);
+      property.connect_changed_signal([=] (auto value) {
+        setter->setText(value.name());
+      });
+      QObject::connect(setter, &QLineEdit::textChanged,
+        [&] (const auto& text) {
+          auto color = QColor(text.toUpper());
           if(color.isValid()) {
             property.set(color);
           }
@@ -83,11 +166,13 @@ std::shared_ptr<TypedUiProperty<QString>> Spire::make_standard_qstring_property(
     QString name, QString value) {
   return std::make_shared<StandardUiProperty<QString>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<QString>& property) {
-      auto setter = new QTextEdit(property.get(), parent);
-      QObject::connect(setter, &QTextEdit::textChanged,
-        [=, &property] {
-          property.set(setter->toPlainText());
-        });
+      auto setter = new QLineEdit(property.get(), parent);
+      property.connect_changed_signal([=] (const auto& value) {
+        setter->setText(value);
+      });
+      QObject::connect(setter, &QLineEdit::textChanged, [&] (const auto& text) {
+        property.set(text);
+      });
       return setter;
     });
 }
