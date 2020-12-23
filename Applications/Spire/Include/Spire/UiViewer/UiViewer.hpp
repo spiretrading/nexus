@@ -15,6 +15,7 @@ namespace Spire {
   class FontSelectorTestWidget;
   class IconButtonTestWidget;
   class IntegerSpinBoxTestWidget;
+  class IntUiProperty;
   class KeySequenceTestWidget;
   class MarketComboBoxTestWidget;
   class MoneySpinBoxTestWidget;
@@ -35,6 +36,9 @@ namespace Spire {
   class TimeOfDayTestWidget;
   class ToggleButtonTestWidget;
   class TransitionTestWidget;
+  template<typename T> class TypedUiProperty;
+  class UiProperty;
+  class UiPropertyTableView;
   class UiViewerWindow;
 }
 

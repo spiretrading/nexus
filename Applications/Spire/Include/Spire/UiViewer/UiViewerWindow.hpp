@@ -18,11 +18,8 @@ namespace Spire {
       explicit UiViewerWindow(QWidget* parent = nullptr);
 
     private:
-      QHash<QString, QWidget*> m_widgets;
       QListWidget* m_widget_list;
-      QHBoxLayout* m_layout;
 
-      void add_test_widget(const QString& name, QWidget* widget);
       void on_item_selected(const QListWidgetItem* current,
         const QListWidgetItem* previous);
   };
