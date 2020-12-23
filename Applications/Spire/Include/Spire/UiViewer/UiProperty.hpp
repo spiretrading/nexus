@@ -3,7 +3,7 @@
 #include <any>
 #include <functional>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 namespace Spire {
 
@@ -30,14 +30,6 @@ namespace Spire {
       //! Returns a widget that can be used to edit the property.
       virtual QWidget* make_setter_widget(QWidget* parent) = 0;
 
-      //! Attaches this property to a widget's setter function.
-      /*!
-        \tparam T The static type of the property being set.
-        \param setter The setter function to attach this property to.
-      */
-      template<typename T, typename F>
-      void attach(F&& setter);
-
       //! Connects a slot to the ChangedSignal.
       /*!
         \param slot The slot to connect.
@@ -53,12 +45,8 @@ namespace Spire {
       */
       explicit UiProperty(QString name);
 
-      //! Attaches this property to a widget's setter function.
-      /*!
-        \param setter The type erased std::function<void (const T&)> setter
-               to attach this property to.
-      */
-      virtual void attach_setter(const std::any& setter) = 0;
+      //! Signals a change in the property's value.
+      void signal_change();
 
     private:
       mutable ChangedSignal m_changed_signal;
@@ -67,11 +55,6 @@ namespace Spire {
       UiProperty(const UiProperty&) = delete;
       UiProperty& operator =(const UiProperty&) = delete;
   };
-
-  template<typename T, typename F>
-  void UiProperty::attach(F&& setter) {
-    attach_setter(std::function<void (const T&)>(std::forward<F>(setter)));
-  }
 }
 
 #endif

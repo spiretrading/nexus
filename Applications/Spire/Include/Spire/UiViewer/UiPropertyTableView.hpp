@@ -5,16 +5,17 @@
 #include <QTableWidget>
 #include <QWidget>
 #include "Spire/UiViewer/UiProperty.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 namespace Spire {
   class UiPropertyTableView : public QWidget {
     public:
       explicit UiPropertyTableView(
-        std::vector<std::unique_ptr<UiProperty>> properties,
+        std::vector<std::shared_ptr<UiProperty>> properties,
         QWidget* parent = nullptr);
 
     private:
-      std::vector<std::unique_ptr<UiProperty>> m_properties;
+      std::vector<std::shared_ptr<UiProperty>> m_properties;
       QTableWidget* m_table;
   };
 }

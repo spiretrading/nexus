@@ -105,7 +105,7 @@ namespace Spire {
     \param label The button's label.
     \param parent The parent widget.
   */
-  FlatButton* make_flat_button(const QString& label, QWidget* parent);
+  FlatButton* make_flat_button(const QString& label, QWidget* parent = nullptr);
 }
 
 #endif

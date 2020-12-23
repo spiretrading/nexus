@@ -15,3 +15,8 @@ connection UiProperty::connect_changed_signal(
 
 UiProperty::UiProperty(QString name)
   : m_name(std::move(name)) {}
+
+void UiProperty::signal_change() {
+  auto value = get_value();
+  m_changed_signal(value);
+}

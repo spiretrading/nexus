@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_VIEWER_HPP
 #define SPIRE_UI_VIEWER_HPP
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
   class CheckBoxTestWidget;
@@ -15,7 +16,6 @@ namespace Spire {
   class FontSelectorTestWidget;
   class IconButtonTestWidget;
   class IntegerSpinBoxTestWidget;
-  class IntUiProperty;
   class KeySequenceTestWidget;
   class MarketComboBoxTestWidget;
   class MoneySpinBoxTestWidget;
@@ -29,6 +29,7 @@ namespace Spire {
   class SideComboBoxTestWidget;
   class SpinBoxAdapter;
   class SpinBoxTestWidget;
+  template<typename T> class StandardUiProperty;
   class StaticDropDownMenuTestWidget;
   class TabTestWidget;
   class TextInputTestWidget;
@@ -37,6 +38,7 @@ namespace Spire {
   class ToggleButtonTestWidget;
   class TransitionTestWidget;
   template<typename T> class TypedUiProperty;
+  class UiProfile;
   class UiProperty;
   class UiPropertyTableView;
   class UiViewerWindow;
