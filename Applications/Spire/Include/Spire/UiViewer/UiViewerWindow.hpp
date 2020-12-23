@@ -1,8 +1,11 @@
 #ifndef SPIRE_UI_VIEWER_WINDOW_HPP
 #define SPIRE_UI_VIEWER_WINDOW_HPP
+#include <any>
 #include <unordered_map>
+#include <vector>
 #include <QListWidget>
 #include <QSplitter>
+#include <QTextEdit>
 #include "Spire/Ui/Window.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
@@ -22,9 +25,13 @@ namespace Spire {
     private:
       QSplitter* m_body;
       QListWidget* m_widget_list;
+      int m_line_count;
+      QTextEdit* m_event_log;
       std::unordered_map<QString, UiProfile> m_profiles;
 
       void add(UiProfile profile);
+      void on_event(const QString& name,
+        const std::vector<std::any>& arguments);
       void on_item_selected(const QListWidgetItem* current,
         const QListWidgetItem* previous);
   };

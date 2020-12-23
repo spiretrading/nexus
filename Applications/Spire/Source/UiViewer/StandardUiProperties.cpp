@@ -1,4 +1,4 @@
-#include "Spire/UiViewer/StandardUiProperty.hpp"
+#include "Spire/UiViewer/StandardUiProperties.hpp"
 #include <QCheckBox>
 #include <QSpinBox>
 #include <QTextEdit>
