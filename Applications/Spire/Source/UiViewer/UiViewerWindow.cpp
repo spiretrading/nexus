@@ -68,6 +68,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   m_body->addWidget(new QWidget(this));
   m_body->addWidget(new QWidget(this));
   m_body->setSizes({scale_width(150), scale_width(375), scale_width(250)});
+  add(make_check_box_profile());
+  add(make_color_selector_button_profile());
   add(make_flat_button_profile());
   m_widget_list->setCurrentRow(0);
 }

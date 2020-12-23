@@ -75,6 +75,21 @@ namespace Spire {
   std::shared_ptr<TypedUiProperty<int>> make_standard_int_property(QString name,
     int value);
 
+  //! Returns a standard TypedUiProperty<QColor> with an initial value of white.
+  /*!
+    \param name The name of the property.
+  */
+  std::shared_ptr<TypedUiProperty<QColor>> make_standard_qcolor_property(
+    QString name);
+
+  //! Returns a standard TypedUiProperty<QColor>.
+  /*!
+    \param name The name of the property.
+    \param value The property's initial value.
+  */
+  std::shared_ptr<TypedUiProperty<QColor>> make_standard_qcolor_property(
+    QString name, QColor value);
+
   //! Returns a standard TypedUiProperty<QString> with an empty string as its
   //! initial value.
   /*!

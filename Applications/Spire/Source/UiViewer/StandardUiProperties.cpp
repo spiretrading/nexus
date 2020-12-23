@@ -53,6 +53,27 @@ std::shared_ptr<TypedUiProperty<int>> Spire::make_standard_int_property(
     });
 }
 
+std::shared_ptr<TypedUiProperty<QColor>> Spire::make_standard_qcolor_property(
+    QString name) {
+  return make_standard_qcolor_property(std::move(name), QColorConstants::White);
+}
+
+std::shared_ptr<TypedUiProperty<QColor>> Spire::make_standard_qcolor_property(
+    QString name, QColor value) {
+  return std::make_shared<StandardUiProperty<QColor>>(std::move(name), value,
+    [] (QWidget* parent, StandardUiProperty<QColor>& property) {
+      auto setter = new QTextEdit(property.get().name().toUpper(), parent);
+      QObject::connect(setter, &QTextEdit::textChanged,
+        [=, &property] {
+          auto color = QColor(setter->toPlainText().toUpper());
+          if(color.isValid()) {
+            property.set(color);
+          }
+        });
+      return setter;
+    });
+}
+
 std::shared_ptr<TypedUiProperty<QString>> Spire::make_standard_qstring_property(
     QString name) {
   return make_standard_qstring_property(std::move(name), QString());
