@@ -174,6 +174,7 @@ namespace Nexus::Python {
         const MarketDataService::SecurityMarketDataQuery&,
         Beam::ScopedQueueWriter<TimeAndSale>)>(&Client::QueryTimeAndSales)).
       def("load_security_snapshot", &Client::LoadSecuritySnapshot).
+      def("load_security_technicals", &Client::LoadSecurityTechnicals).
       def("query_security_info", &Client::QuerySecurityInfo).
       def("load_security_info_from_prefix",
         &Client::LoadSecurityInfoFromPrefix).

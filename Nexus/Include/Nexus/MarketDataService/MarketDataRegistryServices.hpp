@@ -5,6 +5,7 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
@@ -74,6 +75,14 @@ namespace Nexus::MarketDataService {
       Security, security),
 
     /**
+     * Loads the SecurityTechnicals for a specified Security.
+     * @param security The Security whose SecurityTechnicals is to be loaded.
+     * @return The SecurityTechnicals for the specified <i>security</i>.
+     */
+    (LoadSecurityTechnicalsService,
+      "Nexus.MarketDataService.LoadSecurityTechnicalsService",
+      SecurityTechnicals, Security, security),
+
     /**
      * Queries for all SecurityInfo objects that are within a region.
      * @param security The Security whose SecurityInfo is to be loaded.

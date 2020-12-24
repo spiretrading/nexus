@@ -6,6 +6,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
+#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
@@ -65,6 +66,8 @@ namespace Nexus::MarketDataService {
         Beam::ScopedQueueWriter<TimeAndSale> queue);
 
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
+
+      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
       std::vector<SecurityInfo> QuerySecurityInfo(
         const SecurityInfoQuery& query);
@@ -195,6 +198,12 @@ namespace Nexus::MarketDataService {
 
   template<typename D>
   SecuritySnapshot DataStoreMarketDataClient<D>::LoadSecuritySnapshot(
+      const Security& security) {
+    return {};
+  }
+
+  template<typename D>
+  SecurityTechnicals DataStoreMarketDataClient<D>::LoadSecurityTechnicals(
       const Security& security) {
     return {};
   }

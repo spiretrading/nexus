@@ -1,5 +1,4 @@
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -135,39 +134,18 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   if(security == Security()) {
     return;
   }
-  QueryDailyHigh(m_userProfile->GetServiceClients().GetChartingClient(),
-    security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    pos_infin, m_userProfile->GetMarketDatabase(),
-    m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Money>([this] (Money high) {
-      m_highSignal(high);
-    }));
-  QueryDailyLow(m_userProfile->GetServiceClients().GetChartingClient(),
-    security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    pos_infin, m_userProfile->GetMarketDatabase(),
-    m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Money>([this] (Money low) {
-      m_lowSignal(low);
-    }));
-  QueryDailyVolume(m_userProfile->GetServiceClients().GetChartingClient(),
-    security, m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    pos_infin, m_userProfile->GetMarketDatabase(),
-    m_userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<Quantity>([this] (Quantity volume) {
-      m_volumeSignal(volume);
-    }));
-  QueryOpen(userProfile->GetServiceClients().GetMarketDataClient(),
-    security, userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(),
-    m_slotHandler.GetSlot<TimeAndSale>(std::bind(
-      &SecurityTechnicalsModel::OnOpenUpdate, this, std::placeholders::_1)));
+  SecurityMarketDataQuery timeAndSaleQuery;
+  timeAndSaleQuery.SetIndex(security);
+  timeAndSaleQuery.SetRange(Beam::Queries::Range::RealTime());
+  timeAndSaleQuery.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+    timeAndSaleQuery, m_slotHandler.GetSlot<TimeAndSale>(std::bind(
+    &SecurityTechnicalsModel::OnTimeAndSale, this, std::placeholders::_1)));
   Spawn(
     [=, userProfile = m_userProfile,
         loadTechnicalsFlag = m_loadTechnicalsFlag] {
-      auto close = LoadPreviousClose(
-        userProfile->GetServiceClients().GetMarketDataClient(), security,
-        userProfile->GetServiceClients().GetTimeClient().GetTime(),
-        userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase());
+      auto securityTechnicals = userProfile->GetServiceClients().
+        GetMarketDataClient().LoadSecurityTechnicals(security);
       With(*loadTechnicalsFlag,
         [=] (bool loadTechnicalsFlag) {
           if(!loadTechnicalsFlag) {
@@ -175,10 +153,16 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
           }
           m_slotHandler.Push(
             [=] {
-              if(close.is_initialized()) {
-                m_close = close->m_price;
-                m_closeSignal(m_close);
-              }
+              m_open = securityTechnicals.m_open;
+              m_openSignal(m_open);
+              m_close = securityTechnicals.m_close;
+              m_closeSignal(m_close);
+              m_high = securityTechnicals.m_high;
+              m_highSignal(m_high);
+              m_low = securityTechnicals.m_low;
+              m_lowSignal(m_low);
+              m_volume = securityTechnicals.m_volume;
+              m_volumeSignal(m_volume);
             });
         });
     });
@@ -187,9 +171,17 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   m_updateTimer.start(UPDATE_INTERVAL);
 }
 
-void SecurityTechnicalsModel::OnOpenUpdate(const TimeAndSale& timeAndSale) {
-  m_open = timeAndSale.m_price;
-  m_openSignal(m_open);
+void SecurityTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
+  m_volume += timeAndSale.m_size;
+  m_volumeSignal(m_volume);
+  if(timeAndSale.m_price > m_high) {
+    m_high = timeAndSale.m_price;
+    m_highSignal(m_high);
+  }
+  if(timeAndSale.m_price < m_low || m_low == Money::ZERO) {
+    m_low = timeAndSale.m_price;
+    m_lowSignal(m_low);
+  }
 }
 
 void SecurityTechnicalsModel::OnUpdateTimer() {
