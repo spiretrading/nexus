@@ -4301,6 +4301,8 @@ namespace {
     PopulateEdgxOrders(nasdaqOrderTypes);
     PopulateNasdaqOrders(nasdaqOrderTypes);
     auto& neoeOrderTypes = orderTypes[DefaultMarkets::NEOE()];
+    PopulateMatchNowLpOrders(neoeOrderTypes);
+    PopulateMatchNowMfOrders(neoeOrderTypes);
     PopulateNeoeOrders(neoeOrderTypes);
     auto& nyseOrderTypes = orderTypes[DefaultMarkets::NYSE()];
     PopulateArcaOrders(nyseOrderTypes);

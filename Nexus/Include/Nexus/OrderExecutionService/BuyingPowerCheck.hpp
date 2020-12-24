@@ -178,9 +178,9 @@ namespace Nexus::OrderExecutionService {
         }
         buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
-        order.GetPublisher().Monitor(
-          buyingPowerEntry.m_executionReportQueue.GetWriter());
       });
+    order.GetPublisher().Monitor(
+      buyingPowerEntry.m_executionReportQueue.GetWriter());
   }
 
   template<typename A, typename M>
