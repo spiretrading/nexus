@@ -8,6 +8,10 @@ const QString& UiProperty::get_name() const {
   return m_name;
 }
 
+void UiProperty::disconnect() {
+  m_changed_signal.disconnect_all_slots();
+}
+
 void UiProperty::reset() {
   m_changed_signal.disconnect_all_slots();
 }

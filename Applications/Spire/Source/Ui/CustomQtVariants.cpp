@@ -68,6 +68,8 @@ posix_time::ptime Spire::to_ptime(const QDateTime& time) {
 QVariant Spire::to_qvariant(const std::any& value) {
   if(value.type() == typeid(bool)) {
     return QVariant::fromValue(std::any_cast<bool>(value));
+  } else if(value.type() == typeid(int)) {
+    return QVariant::fromValue(std::any_cast<int>(value));
   } else if(value.type() == typeid(Quantity)) {
     return QVariant::fromValue(std::any_cast<Quantity>(value));
   } else if(value.type() == typeid(double)) {

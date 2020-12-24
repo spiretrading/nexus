@@ -47,6 +47,9 @@ namespace Spire {
       template<typename... Args>
       std::function<void (const Args&...)> make_event_slot(const QString& name);
 
+      //! Constructs a new widget to display based on the current properties.
+      void rebuild();
+
       //! Resets this profile.
       void reset();
 

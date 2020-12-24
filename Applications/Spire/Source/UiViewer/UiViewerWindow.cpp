@@ -46,6 +46,19 @@ namespace {
     widget_list->verticalScrollBar()->setStyle(new ScrollBarStyle(widget_list));
     return widget_list;
   }
+
+  auto make_table(const UiProfile& profile, QPushButton* reset_button,
+      QPushButton* rebuild_button) {
+    auto container = new QWidget();
+    auto layout = new QVBoxLayout(container);
+    auto table = new UiPropertyTableView(profile.get_properties());
+    layout->addWidget(table);
+    auto button_layout = new QHBoxLayout();
+    button_layout->addWidget(reset_button);
+    button_layout->addWidget(rebuild_button);
+    layout->addLayout(button_layout);
+    return container;
+  }
 }
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
@@ -68,6 +81,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   m_body->addWidget(new QWidget(this));
   m_body->addWidget(new QWidget(this));
   m_body->setSizes({scale_width(150), scale_width(375), scale_width(250)});
+  m_reset_button = new QPushButton(QString::fromUtf8("Reset"));
+  connect(m_reset_button, &QPushButton::pressed, [this] { on_reset(); });
+  m_rebuild_button = new QPushButton(QString::fromUtf8("Rebuild"));
+  connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
   add(make_check_box_profile());
   add(make_color_selector_button_profile());
   add(make_currency_combo_box_profile());
@@ -109,15 +126,15 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     profile.reset();
   }
   auto& profile = m_profiles.at(current->text());
-  auto table = new UiPropertyTableView(profile.get_properties());
-  auto previous_properties = m_body->replaceWidget(PROPERTIES_INDEX, table);
-  delete previous_properties;
+  auto table = make_table(profile, m_reset_button, m_rebuild_button);
+  auto previous_table = m_body->replaceWidget(PROPERTIES_INDEX, table);
+  delete previous_table;
   table->show();
   auto stage = new QSplitter(Qt::Vertical);
-  auto center_stage = new QScrollArea();
-  center_stage->setWidget(profile.get_widget());
-  center_stage->setAlignment(Qt::AlignCenter);
-  stage->addWidget(center_stage);
+  m_center_stage = new QScrollArea();
+  m_center_stage->setWidget(profile.get_widget());
+  m_center_stage->setAlignment(Qt::AlignCenter);
+  stage->addWidget(m_center_stage);
   m_event_log = new QTextEdit();
   m_event_log->setReadOnly(true);
   stage->addWidget(m_event_log);
@@ -130,4 +147,16 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     });
   m_line_count = 0;
   stage->show();
+}
+
+void UiViewerWindow::on_reset() {
+  on_item_selected(m_widget_list->currentItem(), m_widget_list->currentItem());
+}
+
+void UiViewerWindow::on_rebuild() {
+  auto& profile = m_profiles.at(m_widget_list->currentItem()->text());
+  profile.rebuild();
+  auto previous_widget = m_center_stage->takeWidget();
+  m_center_stage->setWidget(profile.get_widget());
+  delete previous_widget;
 }

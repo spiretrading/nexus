@@ -29,6 +29,13 @@ QWidget* UiProfile::get_widget() {
   return m_widget;
 }
 
+void UiProfile::rebuild() {
+  for(auto& property : m_properties) {
+    property->disconnect();
+  }
+  m_widget = m_factory(*this);
+}
+
 void UiProfile::reset() {
   m_event_signal->disconnect_all_slots();
   for(auto& property : m_properties) {

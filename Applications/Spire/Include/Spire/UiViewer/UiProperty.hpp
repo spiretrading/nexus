@@ -30,6 +30,9 @@ namespace Spire {
       //! Returns a widget that can be used to edit the property.
       virtual QWidget* make_setter_widget(QWidget* parent) = 0;
 
+      //! Disconnects all slots.
+      void disconnect();
+
       //! Resets the property, disconnecting all slots and resetting the value.
       virtual void reset();
 

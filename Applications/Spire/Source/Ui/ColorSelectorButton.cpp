@@ -34,8 +34,12 @@ const QColor& ColorSelectorButton::get_color() const {
 }
 
 void ColorSelectorButton::set_color(const QColor& color) {
+  if(color == m_current_color) {
+    return;
+  }
   m_current_color = color;
   m_selector_widget->set_color(color);
+  m_color_signal(m_current_color);
   update();
 }
 
@@ -72,6 +76,9 @@ QSize	ColorSelectorButton::sizeHint() const {
 }
 
 void ColorSelectorButton::on_color_selected(const QColor& color) {
+  if(color == m_current_color) {
+    return;
+  }
   m_current_color = color;
   m_color_signal(m_current_color);
   update();

@@ -5,6 +5,7 @@
 #include <vector>
 #include <QPushButton>
 #include <QListWidget>
+#include <QScrollArea>
 #include <QSplitter>
 #include <QTextEdit>
 #include "Spire/Ui/Window.hpp"
@@ -27,7 +28,9 @@ namespace Spire {
       QSplitter* m_body;
       QListWidget* m_widget_list;
       int m_line_count;
+      QScrollArea* m_center_stage;
       QTextEdit* m_event_log;
+      QPushButton* m_reset_button;
       QPushButton* m_rebuild_button;
       std::unordered_map<QString, UiProfile> m_profiles;
 
@@ -36,6 +39,8 @@ namespace Spire {
         const std::vector<std::any>& arguments);
       void on_item_selected(const QListWidgetItem* current,
         const QListWidgetItem* previous);
+      void on_reset();
+      void on_rebuild();
   };
 }
 
