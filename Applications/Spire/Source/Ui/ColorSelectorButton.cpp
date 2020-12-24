@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QPainter>
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropDownWindow.hpp"
 
 using namespace boost::signals2;
@@ -64,6 +65,10 @@ void ColorSelectorButton::paintEvent(QPaintEvent* event) {
   painter.setPen(Qt::white);
   painter.drawRect(1, 1, width() - 3, height() - 3);
   painter.fillRect(2, 2, width() - 4, height() - 4, m_current_color);
+}
+
+QSize	ColorSelectorButton::sizeHint() const {
+  return scale(100, 26);
 }
 
 void ColorSelectorButton::on_color_selected(const QColor& color) {

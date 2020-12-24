@@ -15,7 +15,8 @@ UiProfile Spire::make_check_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("checked"));
-  properties.push_back(make_standard_qstring_property("text"));
+  properties.push_back(make_standard_qstring_property("text",
+    QString::fromUtf8("Click me!")));
   auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
     [] (auto& profile) {
       auto& text = get<QString>("text", profile.get_properties());
@@ -47,7 +48,6 @@ UiProfile Spire::make_color_selector_button_profile() {
     [] (auto& profile) {
       auto& color = get<QColor>("color", profile.get_properties());
       auto button = new ColorSelectorButton(color.get());
-      button->setFixedSize(scale(100, 26));
       apply_widget_properties(button, profile.get_properties());
       color.connect_changed_signal([=] (const auto& value) {
         button->set_color(value);
@@ -69,7 +69,6 @@ UiProfile Spire::make_currency_combo_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("CurrencyComboBox"), properties,
     [] (auto& profile) {
       auto combo_box = new CurrencyComboBox(GetDefaultCurrencyDatabase());
-      combo_box->setFixedSize(scale(100, 26));
       apply_widget_properties(combo_box, profile.get_properties());
       auto& currency = get<CurrencyId>("currency", profile.get_properties());
       currency.set(combo_box->get_currency());
@@ -95,7 +94,6 @@ UiProfile Spire::make_flat_button_profile() {
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
       auto button = make_flat_button(label.get());
-      button->setFixedSize(scale(100, 26));
       apply_widget_properties(button, profile.get_properties());
       label.connect_changed_signal([=] (const auto& value) {
         button->set_label(value);

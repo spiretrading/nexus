@@ -80,6 +80,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      QSize sizeHint() const override;
 
     private:
       mutable ClickedSignal m_clicked_signal;

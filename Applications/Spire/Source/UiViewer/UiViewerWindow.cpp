@@ -92,7 +92,10 @@ void UiViewerWindow::on_event(const QString& name,
     for(auto& argument : arguments) {
       if(prepend_comma) {
         log += ", ";
+      } else {
+        prepend_comma = true;
       }
+      log += displayTextAny(argument);
     }
     log += ")";
   }

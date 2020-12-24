@@ -182,6 +182,10 @@ void StaticDropDownMenu::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
+QSize	StaticDropDownMenu::sizeHint() const {
+  return scale(100, 26);
+}
+
 connection StaticDropDownMenu::connect_index_selected_signal(
     const IndexSelectedSignal::slot_type& slot) const {
   return m_menu_list->connect_index_selected_signal(slot);

@@ -1,6 +1,6 @@
 #ifndef SPIRE_CUSTOM_VARIANTS_HPP
 #define SPIRE_CUSTOM_VARIANTS_HPP
-#include <boost/any.hpp>
+#include <any>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
@@ -59,7 +59,6 @@ namespace Spire {
   };
 }
 
-Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
 Q_DECLARE_METATYPE(Nexus::CurrencyId);
@@ -74,6 +73,7 @@ Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Spire::MarketToken);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
 Q_DECLARE_METATYPE(Spire::TrendLineStyle);
+Q_DECLARE_METATYPE(std::any);
 
 namespace Spire {
 
@@ -89,6 +89,9 @@ namespace Spire {
   //! Converts a posix timestamp into a QDateTime.
   boost::posix_time::ptime to_ptime(const QDateTime& time);
 
+  //! Converts an std::any to a QVariant.
+  QVariant to_qvariant(const std::any& value);
+
   //! Registers the custom QVariant types.
   void register_custom_qt_variants();
 
@@ -103,6 +106,9 @@ namespace Spire {
 
   //! Returns the text representation of an OrderType.
   const QString& displayText(Nexus::OrderType type);
+
+  //! Returns the text representation of the value stored within an std::any.
+  QString displayTextAny(const std::any& value);
 
   /*! Implements Qt's item delegate to support the custom QVariant types. */
   class CustomVariantItemDelegate : public QStyledItemDelegate {

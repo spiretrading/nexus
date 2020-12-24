@@ -3,6 +3,7 @@
 #include <any>
 #include <unordered_map>
 #include <vector>
+#include <QPushButton>
 #include <QListWidget>
 #include <QSplitter>
 #include <QTextEdit>
@@ -27,6 +28,7 @@ namespace Spire {
       QListWidget* m_widget_list;
       int m_line_count;
       QTextEdit* m_event_log;
+      QPushButton* m_rebuild_button;
       std::unordered_map<QString, UiProfile> m_profiles;
 
       void add(UiProfile profile);

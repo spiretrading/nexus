@@ -40,6 +40,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      QSize sizeHint() const override;
 
     private:
       mutable ColorSignal m_color_signal;

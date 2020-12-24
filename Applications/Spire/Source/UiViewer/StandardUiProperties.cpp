@@ -56,8 +56,7 @@ void Spire::apply_widget_properties(QWidget* widget,
       widget->setFixedSize(widget->width(), value);
     }
   });
-  auto sizeFilter = new SizeFilter(&width, &height, widget);
-  widget->installEventFilter(sizeFilter);
+  widget->installEventFilter(new SizeFilter(&width, &height, widget));
 }
 
 std::shared_ptr<TypedUiProperty<bool>> Spire::make_standard_bool_property(
