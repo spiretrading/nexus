@@ -248,6 +248,9 @@ namespace Nexus::MarketDataService {
     LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecuritySnapshot, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::OnLoadSecurityTechnicals, this,
+      std::placeholders::_1, std::placeholders::_2));
     QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnQuerySecurityInfo, this, std::placeholders::_1,
       std::placeholders::_2));
