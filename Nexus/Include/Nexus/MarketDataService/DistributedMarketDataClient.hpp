@@ -66,6 +66,8 @@ namespace Nexus::MarketDataService {
 
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
 
+      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
+
       std::vector<SecurityInfo> QuerySecurityInfo(
         const SecurityInfoQuery& query);
 
@@ -186,6 +188,14 @@ namespace Nexus::MarketDataService {
       return marketDataClient->LoadSecuritySnapshot(security);
     }
     return SecuritySnapshot();
+  }
+
+  inline SecurityTechnicals DistributedMarketDataClient::
+      LoadSecurityTechnicals(const Security& security) {
+    if(auto marketDataClient = FindMarketDataClient(security)) {
+      return marketDataClient->LoadSecurityTechnicals(security);
+    }
+    return SecurityTechnicals();
   }
 
   inline std::vector<SecurityInfo> DistributedMarketDataClient::

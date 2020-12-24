@@ -144,6 +144,14 @@ namespace Details {
         int sourceId, DataStore& dataStore, const F& f);
 
       /**
+       * Returns a Security's SecurityTechnicals.
+       * @param security The Security whose SecurityTechnicals is to be
+       *        returned.
+       * @return A snapshot of the <i>security</i>'s SecurityTechnicals.
+       */
+      boost::optional<SecurityTechnicals> FindSecurityTechnicals(
+        const Security& security);
+
       /**
        * Returns a Security's SecurityInfo.
        * @param security The Security whose SecurityInfo is to be returned.
@@ -380,6 +388,18 @@ namespace Details {
         if(sequencedTimeAndSale.is_initialized()) {
           f(*sequencedTimeAndSale);
         }
+      });
+  }
+
+  inline boost::optional<SecurityTechnicals>
+      MarketDataRegistry::FindSecurityTechnicals(const Security& security) {
+    auto entry = m_securityEntries.Find(security);
+    if(!entry.is_initialized() || !(*entry)->IsAvailable()) {
+      return boost::none;
+    }
+    return Beam::Threading::With(***entry,
+      [&] (auto& entry) {
+        return entry.GetSecurityTechnicals();
       });
   }
 

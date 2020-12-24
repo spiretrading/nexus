@@ -121,7 +121,7 @@ namespace Spire {
       QTimer m_updateTimer;
       mutable Beam::TaskQueue m_slotHandler;
 
-      void OnOpenUpdate(const Nexus::TimeAndSale& open);
+      void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
       void OnUpdateTimer();
   };
 }
