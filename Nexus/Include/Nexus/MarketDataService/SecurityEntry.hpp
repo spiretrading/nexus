@@ -243,7 +243,11 @@ namespace Nexus::MarketDataService {
       m_technicals.m_low = Money::ZERO;
       m_technicals.m_open = Money::ZERO;
       m_technicals.m_close = m_nextClose;
-      m_technicalsResetTime += boost::gregorian::days(1);
+      auto delta = bboQuote.m_timestamp.date() - m_technicalsResetTime.date();
+      m_technicalsResetTime += delta;
+      if(m_technicalsResetTime <= bboQuote.m_timestamp) {
+        m_technicalsResetTime += boost::gregorian::days(1);
+      }
     }
     auto value = m_bboSequencer.MakeSequencedValue(bboQuote, m_security);
     m_bboQuote = value;

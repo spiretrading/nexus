@@ -242,7 +242,7 @@ TEST_SUITE("SecurityEntry") {
       auto bboQuote = BboQuote(
         Quote(Money::ONE, 100, Side::BID),
         Quote(Money::ONE + Money::CENT, 100, Side::ASK),
-        time_from_string("2020-12-04 05:00:00"));
+        time_from_string("2020-12-10 05:00:00"));
       entry.PublishBboQuote(bboQuote, TEST_SOURCE);
       auto technicals = entry.GetSecurityTechnicals();
       REQUIRE(technicals.m_open == Money::ZERO);
@@ -250,6 +250,32 @@ TEST_SUITE("SecurityEntry") {
       REQUIRE(technicals.m_high == Money::ZERO);
       REQUIRE(technicals.m_low == Money::ZERO);
       REQUIRE(technicals.m_volume == 0);
+    }
+    {
+      auto timeAndSale = TimeAndSale(
+        time_from_string("2020-12-10 5:01:00"), 7 * Money::CENT, 900,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "XNAS");
+      entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == 7 * Money::CENT);
+      REQUIRE(technicals.m_close == 3 * Money::ONE);
+      REQUIRE(technicals.m_high == 7 * Money::CENT);
+      REQUIRE(technicals.m_low == 7 * Money::CENT);
+      REQUIRE(technicals.m_volume == 900);
+    }
+    {
+      auto bboQuote = BboQuote(
+        Quote(Money::ONE + Money::CENT, 100, Side::BID),
+        Quote(Money::ONE + 2 * Money::CENT, 100, Side::ASK),
+        time_from_string("2020-12-10 05:02:00"));
+      entry.PublishBboQuote(bboQuote, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == 7 * Money::CENT);
+      REQUIRE(technicals.m_close == 3 * Money::ONE);
+      REQUIRE(technicals.m_high == 7 * Money::CENT);
+      REQUIRE(technicals.m_low == 7 * Money::CENT);
+      REQUIRE(technicals.m_volume == 900);
     }
   }
 }
