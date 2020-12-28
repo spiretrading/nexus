@@ -21,7 +21,7 @@ namespace {
 
     auto PublishBboQuote(SecurityEntry& entry, Money bidPrice,
         Quantity bidQuantity, Money askPrice, Quantity askQuantity,
-        const Beam::Queries::Sequence& expectedSequence) {
+        Beam::Queries::Sequence expectedSequence) {
       auto bboQuote = BboQuote(Quote(bidPrice, bidQuantity, Side::BID),
         Quote(askPrice, askQuantity, Side::ASK), m_timeClient.GetTime());
       auto sequencedBboQuote = entry.PublishBboQuote(bboQuote, TEST_SOURCE);
@@ -40,7 +40,7 @@ namespace {
 
     auto PublishMarketQuote(SecurityEntry& entry, MarketCode market,
         Money bidPrice, Quantity bidQuantity, Money askPrice,
-        Quantity askQuantity, const Beam::Queries::Sequence& expectedSequence) {
+        Quantity askQuantity, Beam::Queries::Sequence expectedSequence) {
       auto quote = MarketQuote(market, Quote(bidPrice, bidQuantity, Side::BID),
         Quote(askPrice, askQuantity, Side::ASK), m_timeClient.GetTime());
       auto sequencedQuote = entry.PublishMarketQuote(quote, TEST_SOURCE);
@@ -67,7 +67,7 @@ namespace {
 
     auto PublishBookQuote(SecurityEntry& entry, std::string mpid,
         bool isPrimaryMpid, MarketCode market, Money price, Quantity quantity,
-        Side side, const Beam::Queries::Sequence& expectedSequence,
+        Side side, Beam::Queries::Sequence expectedSequence,
         Quantity expectedQuantity) {
       auto quote = BookQuote(mpid, isPrimaryMpid, market,
         Quote(price, quantity, side), m_timeClient.GetTime());
@@ -109,29 +109,31 @@ TEST_SUITE("SecurityEntry") {
     auto initialSequences = SecurityEntry::InitialSequences();
     auto entry = SecurityEntry(SECURITY_A, Money::ZERO, initialSequences);
     auto bboQuoteA = PublishBboQuote(entry, Money::ONE, 100,
-      Money::ONE + Money::CENT, 100, Queries::Sequence(0));
+      Money::ONE + Money::CENT, 100, Beam::Queries::Sequence(0));
     auto bboQuoteB = PublishBboQuote(entry, 2 * Money::ONE, 100,
-      2 * Money::ONE + Money::CENT, 100, Queries::Sequence(1));
+      2 * Money::ONE + Money::CENT, 100, Beam::Queries::Sequence(1));
     auto bboQuoteC = PublishBboQuote(entry, 1 * Money::ONE, 100,
-      1 * Money::ONE + Money::CENT, 100, Queries::Sequence(2));
+      1 * Money::ONE + Money::CENT, 100, Beam::Queries::Sequence(2));
   }
 
   TEST_CASE_FIXTURE(Fixture, "publish_market_quote") {
     auto initialSequences = SecurityEntry::InitialSequences();
     auto entry = SecurityEntry(SECURITY_A, Money::ZERO, initialSequences);
     auto nyseQuoteA = PublishMarketQuote(entry, DefaultMarkets::NYSE(),
-      Money::ONE, 100, Money::ONE + Money::CENT, 100, Queries::Sequence(0));
+      Money::ONE, 100, Money::ONE + Money::CENT, 100,
+      Beam::Queries::Sequence(0));
     TestMarketQuoteSnapshot(entry, {nyseQuoteA});
     auto nasdaqQuoteA = PublishMarketQuote(entry, DefaultMarkets::NASDAQ(),
-      Money::ONE, 100, Money::ONE + Money::CENT, 100, Queries::Sequence(1));
+      Money::ONE, 100, Money::ONE + Money::CENT, 100,
+      Beam::Queries::Sequence(1));
     TestMarketQuoteSnapshot(entry, {nyseQuoteA, nasdaqQuoteA});
     auto nyseQuoteB = PublishMarketQuote(entry, DefaultMarkets::NYSE(),
       2 * Money::ONE, 100, 2 * Money::ONE + Money::CENT, 100,
-      Queries::Sequence(2));
+      Beam::Queries::Sequence(2));
     TestMarketQuoteSnapshot(entry, {nyseQuoteB, nasdaqQuoteA});
     auto nasdaqQuoteB = PublishMarketQuote(entry, DefaultMarkets::NASDAQ(),
       2 * Money::ONE, 100, 3 * Money::ONE + Money::CENT, 100,
-      Queries::Sequence(3));
+      Beam::Queries::Sequence(3));
     TestMarketQuoteSnapshot(entry, {nyseQuoteB, nasdaqQuoteB});
   }
 
@@ -139,25 +141,115 @@ TEST_SUITE("SecurityEntry") {
     auto initialSequences = SecurityEntry::InitialSequences();
     auto entry = SecurityEntry(SECURITY_A, Money::ZERO, initialSequences);
     auto abcBidA = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      Money::ONE, 100, Side::BID, Queries::Sequence(0), 100);
+      Money::ONE, 100, Side::BID, Beam::Queries::Sequence(0), 100);
     TestBookQuoteSnapshot(entry, {}, {abcBidA});
     auto abcAskA = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      2 * Money::ONE, 100, Side::ASK, Queries::Sequence(1), 100);
+      2 * Money::ONE, 100, Side::ASK, Beam::Queries::Sequence(1), 100);
     TestBookQuoteSnapshot(entry, {abcAskA}, {abcBidA});
     auto abcAskB = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      2 * Money::ONE, 100, Side::ASK, Queries::Sequence(2), 200);
+      2 * Money::ONE, 100, Side::ASK, Beam::Queries::Sequence(2), 200);
     TestBookQuoteSnapshot(entry, {abcAskB}, {abcBidA});
     auto abcAskC = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      2 * Money::ONE, -200, Side::ASK, Queries::Sequence(3), 0);
+      2 * Money::ONE, -200, Side::ASK, Beam::Queries::Sequence(3), 0);
     TestBookQuoteSnapshot(entry, {}, {abcBidA});
     auto abcBidB = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      Money::ONE, -100, Side::BID, Queries::Sequence(4), 0);
+      Money::ONE, -100, Side::BID, Beam::Queries::Sequence(4), 0);
     TestBookQuoteSnapshot(entry, {}, {});
     auto abcBidC = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      Money::ONE, 100, Side::BID, Queries::Sequence(5), 100);
+      Money::ONE, 100, Side::BID, Beam::Queries::Sequence(5), 100);
     TestBookQuoteSnapshot(entry, {}, {abcBidC});
     auto abcAskD = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
-      2 * Money::ONE, 100, Side::ASK, Queries::Sequence(6), 100);
+      2 * Money::ONE, 100, Side::ASK, Beam::Queries::Sequence(6), 100);
     TestBookQuoteSnapshot(entry, {abcAskD}, {abcBidC});
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "technicals_reset") {
+    auto entry = SecurityEntry(SECURITY_A, Money::CENT,
+      SecurityEntry::InitialSequences());
+    {
+      auto bboQuote = BboQuote(
+        Quote(Money::ONE, 100, Side::BID),
+        Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+        time_from_string("2020-12-03 04:30:00"));
+      entry.PublishBboQuote(bboQuote, TEST_SOURCE);
+    }
+    {
+      auto timeAndSale = TimeAndSale(
+        time_from_string("2020-12-03 4:31:00"), Money::ONE, 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "XNAS");
+      entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == Money::ONE);
+      REQUIRE(technicals.m_close == Money::CENT);
+      REQUIRE(technicals.m_high == Money::ONE);
+      REQUIRE(technicals.m_low == Money::ONE);
+      REQUIRE(technicals.m_volume == 100);
+    }
+    {
+      auto timeAndSale = TimeAndSale(
+        time_from_string("2020-12-03 4:32:00"), Money::ONE + Money::CENT, 200,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "XNAS");
+      entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == Money::ONE);
+      REQUIRE(technicals.m_close == Money::CENT);
+      REQUIRE(technicals.m_high == Money::ONE + Money::CENT);
+      REQUIRE(technicals.m_low == Money::ONE);
+      REQUIRE(technicals.m_volume == 300);
+    }
+    {
+      auto timeAndSale = TimeAndSale(
+        time_from_string("2020-12-03 4:59:00"), 3 * Money::CENT, 600,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "XNAS");
+      entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == Money::ONE);
+      REQUIRE(technicals.m_close == Money::CENT);
+      REQUIRE(technicals.m_high == Money::ONE + Money::CENT);
+      REQUIRE(technicals.m_low == 3 * Money::CENT);
+      REQUIRE(technicals.m_volume == 900);
+    }
+    {
+      auto bboQuote = BboQuote(
+        Quote(Money::ONE, 100, Side::BID),
+        Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+        time_from_string("2020-12-03 05:00:00"));
+      entry.PublishBboQuote(bboQuote, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == Money::ZERO);
+      REQUIRE(technicals.m_close == 3 * Money::CENT);
+      REQUIRE(technicals.m_high == Money::ZERO);
+      REQUIRE(technicals.m_low == Money::ZERO);
+      REQUIRE(technicals.m_volume == 0);
+    }
+    {
+      auto timeAndSale = TimeAndSale(
+        time_from_string("2020-12-03 5:01:00"), 3 * Money::ONE, 300,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "XNAS");
+      entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == 3 * Money::ONE);
+      REQUIRE(technicals.m_close == 3 * Money::CENT);
+      REQUIRE(technicals.m_high == 3 * Money::ONE);
+      REQUIRE(technicals.m_low == 3 * Money::ONE);
+      REQUIRE(technicals.m_volume == 300);
+    }
+    {
+      auto bboQuote = BboQuote(
+        Quote(Money::ONE, 100, Side::BID),
+        Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+        time_from_string("2020-12-04 05:00:00"));
+      entry.PublishBboQuote(bboQuote, TEST_SOURCE);
+      auto technicals = entry.GetSecurityTechnicals();
+      REQUIRE(technicals.m_open == Money::ZERO);
+      REQUIRE(technicals.m_close == 3 * Money::ONE);
+      REQUIRE(technicals.m_high == Money::ZERO);
+      REQUIRE(technicals.m_low == Money::ZERO);
+      REQUIRE(technicals.m_volume == 0);
+    }
   }
 }

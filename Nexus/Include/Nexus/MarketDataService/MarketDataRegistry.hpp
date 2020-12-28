@@ -419,7 +419,7 @@ namespace Details {
   template<typename DataStore>
   inline boost::optional<MarketDataRegistry::SyncMarketEntry&>
       MarketDataRegistry::LoadMarketEntry(MarketCode market,
-      DataStore& dataStore) {
+        DataStore& dataStore) {
     if(market == MarketCode()) {
       return boost::none;
     }
