@@ -90,4 +90,84 @@ TEST_SUITE("TrueAverageBookkeeper") {
     TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
       -2, Money::ONE, Money::ZERO, -50 * Money::CENT, -50 * Money::CENT);
   }
+
+  TEST_CASE("reset_cost_basis_when_flat") {
+    auto bookkeeper = TestTrueAverageBookkeeper();
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.835"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.82"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.83"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.83"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
+      -100 * *Money::FromValue("32.825"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -700,
+      -700 * *Money::FromValue("32.83"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -800,
+      -800 * *Money::FromValue("32.83"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
+      200 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 300,
+      300 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
+      200 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
+      200 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
+      200 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
+      200 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 900,
+      900 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
+      100 * *Money::FromValue("32.84"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -200,
+      -200 * *Money::FromValue("32.885"), Money::ZERO);
+    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 300,
+      300 * *Money::FromValue("32.89"), Money::ZERO);
+    auto inventory = bookkeeper.GetInventory("TST", DefaultCurrencies::CAD());
+    REQUIRE(inventory.m_position.m_costBasis == Money::ZERO);
+  }
 }
