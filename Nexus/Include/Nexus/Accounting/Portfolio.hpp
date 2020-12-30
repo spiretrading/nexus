@@ -195,13 +195,13 @@ namespace Nexus::Accounting {
     }
     auto price = Money();
     if(inventory.m_position.m_quantity > 0) {
-      if(valuation.m_bidValue.is_initialized()) {
+      if(valuation.m_bidValue) {
         price = *valuation.m_bidValue;
       } else {
         return boost::none;
       }
     } else {
-      if(valuation.m_askValue.is_initialized()) {
+      if(valuation.m_askValue) {
         price = *valuation.m_askValue;
       } else {
         return boost::none;
@@ -224,10 +224,11 @@ namespace Nexus::Accounting {
       const SecurityValuation& valuation) {
     auto unrealizedProfitAndLoss =
       GetUnrealizedProfitAndLoss(inventory, valuation);
-    if(!unrealizedProfitAndLoss.is_initialized()) {
-      return boost::none;
+    if(auto unrealizedProfitAndLoss =
+        GetUnrealizedProfitAndLoss(inventory, valuation)) {
+      return GetRealizedProfitAndLoss(inventory) + *unrealizedProfitAndLoss;
     }
-    return GetRealizedProfitAndLoss(inventory) + *unrealizedProfitAndLoss;
+    return boost::none;
   }
 
   /**
@@ -339,9 +340,8 @@ namespace Nexus::Accounting {
       executionReport.m_lastQuantity * executionReport.m_lastPrice,
       OrderExecutionService::GetFeeTotal(executionReport));
     auto securityInventory = m_bookkeeper.GetInventory(security, currency);
-    auto unrealizedSecurity = CalculateUnrealized(securityInventory,
-      securityEntry);
-    if(unrealizedSecurity) {
+    if(auto unrealizedSecurity =
+        CalculateUnrealized(securityInventory, securityEntry)) {
       auto& unrealizedCurrency = m_unrealizedCurrencies[currency];
       if(*unrealizedSecurity != securityEntry.m_unrealized) {
         unrealizedCurrency -= securityEntry.m_unrealized;

@@ -38,16 +38,15 @@ PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
       m_totalCurrency(DefaultCurrencies::CAD()),
       m_exchangeRates(&m_userProfile->GetExchangeRates()),
       m_selectionModel(selectionModel.Get()),
-      m_displayCount(0),
-      m_slotHandler(std::make_shared<TaskQueue>()) {
+      m_displayCount(0) {
   connect(&m_updateTimer, &QTimer::timeout, this,
     &PortfolioViewerModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
   m_userProfile->GetServiceClients().GetRiskClient().
     GetRiskPortfolioUpdatePublisher().Monitor(
-    m_slotHandler->GetSlot<RiskInventoryEntry>(std::bind(
-    &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this,
-    std::placeholders::_1)));
+      m_slotHandler.GetSlot<RiskInventoryEntry>(std::bind(
+        &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this,
+        std::placeholders::_1)));
   connect(m_selectionModel, &PortfolioSelectionModel::dataChanged, this,
     &PortfolioViewerModel::OnSelectionModelUpdated);
 }
@@ -283,9 +282,9 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     auto bboQuery = BuildCurrentQuery(security);
     bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
     m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
-      bboQuery, m_slotHandler->GetSlot<BboQuote>(
-      std::bind(&PortfolioViewerModel::OnBboQuote, this, security,
-      std::placeholders::_1)));
+      bboQuery, m_slotHandler.GetSlot<BboQuote>(
+        std::bind(&PortfolioViewerModel::OnBboQuote, this, security,
+          std::placeholders::_1)));
   }
   auto indexIterator = m_inventoryKeyToIndex.find(entry.m_key);
   if(indexIterator == m_inventoryKeyToIndex.end()) {
@@ -492,14 +491,11 @@ void PortfolioViewerModel::OnSelectionModelUpdated(const QModelIndex& topLeft,
 
 void PortfolioViewerModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
-  auto slotHandler = m_slotHandler;
-  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();
-      task = slotHandler->TryPop()) {
+  while(auto task = m_slotHandler.TryPop()) {
     (*task)();
-    auto frameTime = boost::posix_time::microsec_clock::universal_time();
-    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
-      QCoreApplication::instance()->processEvents();
-      startTime = boost::posix_time::microsec_clock::universal_time();
+    auto currentTime = boost::posix_time::microsec_clock::universal_time();
+    if(currentTime - startTime > boost::posix_time::seconds(1) / 10) {
+      break;
     }
   }
 }

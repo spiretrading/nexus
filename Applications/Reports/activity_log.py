@@ -102,12 +102,13 @@ def main():
   password = config['password']
   start_date = beam.time_service.to_utc_time(args.start)
   end_date = beam.time_service.to_utc_time(args.end)
-  service_locator_client = beam.service_locator.ServiceLocatorClient(username,
-    password, address)
-  definitions_client = nexus.definitions_service.DefinitionsClient(
+  service_locator_client = beam.service_locator.ApplicationServiceLocatorClient(
+    username, password, address)
+  definitions_client = nexus.definitions_service.ApplicationDefinitionsClient(
     service_locator_client)
-  order_execution_client = nexus.order_execution_service.OrderExecutionClient(
-    service_locator_client)
+  order_execution_client = \
+    nexus.order_execution_service.ApplicationOrderExecutionClient(
+      service_locator_client)
   market_database = definitions_client.load_market_database()
   time_zone_database = definitions_client.load_time_zone_database()
   if args.market is not None:

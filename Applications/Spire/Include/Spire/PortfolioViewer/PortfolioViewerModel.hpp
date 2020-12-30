@@ -204,7 +204,7 @@ namespace Spire {
         m_inventoryKeyToIndex;
       QTimer m_updateTimer;
       Beam::Routines::RoutineHandlerGroup m_loadRoutines;
-      std::shared_ptr<Beam::TaskQueue> m_slotHandler;
+      Beam::TaskQueue m_slotHandler;
       mutable TotalsUpdatedSignal m_totalsUpdatedSignal;
 
       boost::optional<Nexus::Money> GetUnrealizedProfitAndLoss(
