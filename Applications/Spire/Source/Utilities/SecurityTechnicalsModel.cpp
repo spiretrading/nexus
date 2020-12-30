@@ -153,16 +153,26 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
           }
           m_slotHandler.Push(
             [=] {
-              m_open = securityTechnicals.m_open;
-              m_openSignal(m_open);
-              m_close = securityTechnicals.m_close;
-              m_closeSignal(m_close);
-              m_high = securityTechnicals.m_high;
-              m_highSignal(m_high);
-              m_low = securityTechnicals.m_low;
-              m_lowSignal(m_low);
-              m_volume = securityTechnicals.m_volume;
-              m_volumeSignal(m_volume);
+              if(securityTechnicals.m_open != Money::ZERO) {
+                m_open = securityTechnicals.m_open;
+                m_openSignal(m_open);
+              }
+              if(securityTechnicals.m_close != Money::ZERO) {
+                m_close = securityTechnicals.m_close;
+                m_closeSignal(m_close);
+              }
+              if(securityTechnicals.m_high != Money::ZERO) {
+                m_high = securityTechnicals.m_high;
+                m_highSignal(m_high);
+              }
+              if(securityTechnicals.m_low != Money::ZERO) {
+                m_low = securityTechnicals.m_low;
+                m_lowSignal(m_low);
+              }
+              if(securityTechnicals.m_volume != 0) {
+                m_volume = securityTechnicals.m_volume;
+                m_volumeSignal(m_volume);
+              }
             });
         });
     });
@@ -174,6 +184,10 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
 void SecurityTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
   m_volume += timeAndSale.m_size;
   m_volumeSignal(m_volume);
+  if(m_open == Money::ZERO) {
+    m_open = timeAndSale.m_price;
+    m_openSignal(m_open);
+  }
   if(timeAndSale.m_price > m_high) {
     m_high = timeAndSale.m_price;
     m_highSignal(m_high);
