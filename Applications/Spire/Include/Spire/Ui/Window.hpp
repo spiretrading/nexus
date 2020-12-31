@@ -50,12 +50,15 @@ namespace Spire {
       bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
+      void paintEvent(QPaintEvent* event) override;
+      QLayout* get_layout() const;
 
     private:
       mutable ClosedSignal m_closed_signal;
       TitleBar* m_title_bar;
       int m_resize_area_width;
       bool m_is_resizeable;
+      QWidget* m_central_widget;
 
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
