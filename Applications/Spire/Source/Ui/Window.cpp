@@ -1,6 +1,7 @@
 #include "Spire/Ui/Window.hpp"
 #include <QEvent>
 #include <QGuiApplication>
+#include <QGraphicsDropShadowEffect>
 #include <QPainter>
 #include <QScreen>
 #include <QVBoxLayout>
@@ -32,23 +33,36 @@ Window::Window(QWidget* parent)
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
-  //setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
-  //setAttribute(Qt::WA_TranslucentBackground, true);
-  //setWindowOpacity(0.1);
+  setAttribute(Qt::WA_TranslucentBackground, true);
   setObjectName("spire_window");
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   installEventFilter(m_title_bar);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
-  layout->setContentsMargins(scale_width(1), scale_height(1),
-    scale_width(1), scale_height(1));
+  layout->setContentsMargins(0, 0, 0, 0);
+  //layout->setContentsMargins(scale_width(1), scale_height(1),
+  //  scale_width(1), scale_height(1));
   //layout->setContentsMargins(scale_width(m_resize_area_width), scale_height(m_resize_area_width),
   //  scale_width(m_resize_area_width), scale_height(m_resize_area_width));
-  layout->addWidget(m_title_bar);
+  //layout->addWidget(m_title_bar);
   //setLayout(layout);
   m_central_widget = new QWidget(this);
   m_central_widget->setObjectName("central_widget");
-  m_central_widget->setLayout(layout);
+  auto central_layout = new QVBoxLayout(this);
+  central_layout->setSpacing(0);
+  central_layout->setContentsMargins(0, 0, 0, 0);
+  central_layout->addWidget(m_title_bar);
+  m_central_widget->setLayout(central_layout);
+  layout->addWidget(m_central_widget);
+
+  auto shadow_effect = new QGraphicsDropShadowEffect(this);
+  //shadow_effect->setColor(Qt::gray);
+  //shadow_effect->setBlurRadius(50);
+  shadow_effect->setOffset(0, 0);
+  m_central_widget->setGraphicsEffect(shadow_effect);
+  setContentsMargins(m_resize_area_width, m_resize_area_width, m_resize_area_width, m_resize_area_width);
+  
+  setLayout(layout);
 }
 
 void Window::set_icon(const QImage& icon) {
@@ -62,13 +76,19 @@ void Window::set_svg_icon(const QString& icon_path) {
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
+      auto shadow_effect = static_cast<QGraphicsDropShadowEffect*>(m_central_widget->graphicsEffect());
+      shadow_effect->setColor(QColor(112, 112, 112));
+      shadow_effect->setBlurRadius(30);
       //setStyleSheet("#spire_window { background-color: #A0A0A0; }");
-      setStyleSheet(" { background-color: rgba(0, 0, 0, 20); }");
-      m_central_widget->setStyleSheet("#central_widget { background-color: rgba(160, 160, 160); }");
+      //setStyleSheet(" { background-color: rgba(0, 0, 0, 20); }");
+      //m_central_widget->setStyleSheet("#central_widget { background-color: rgba(160, 160, 160); }");
     } else {
+      auto shadow_effect = static_cast<QGraphicsDropShadowEffect*>(m_central_widget->graphicsEffect());
+      shadow_effect->setColor(Qt::lightGray);
+      shadow_effect->setBlurRadius(20);
       //setStyleSheet("#spire_window { background-color: #C8C8C8; }");
-      setStyleSheet("#spire_window { background-color: rgba(0, 0, 0, 20); }");
-      m_central_widget->setStyleSheet("#central_widget { background-color: rgba(200, 200, 200); }");
+      //setStyleSheet("#spire_window { background-color: rgba(0, 0, 0, 20); }");
+      //m_central_widget->setStyleSheet("#central_widget { background-color: rgba(200, 200, 200); }");
     }
   }
 }
@@ -91,7 +111,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCCALCSIZE) {
     result = 0;
-    //InflateRect(reinterpret_cast<LPRECT>(msg->lParam), m_resize_area_width, m_resize_area_width);
     return true;
   } else if(msg->message == WM_NCHITTEST) {
     auto window_rect = RECT{};
@@ -171,9 +190,8 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         std::abs(abs_pos.y() - pos.y()));
       setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
     } else if(msg->wParam == SIZE_RESTORED) {
-      setContentsMargins({});
+      //setContentsMargins({});
     }
-    m_central_widget->setGeometry(m_resize_area_width, 0, size().width(), size().height());
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
     mmi->ptMaxTrackSize.x = maximumSize().width();
@@ -185,25 +203,13 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   return QWidget::nativeEvent(eventType, message, result);
 }
 
-void Window::paintEvent(QPaintEvent* event) {
-  QPainter painter(this);
-  //painter.fillRect(rect(), QColor(200, 200, 200, 2));
-  painter.fillRect(rect(), QColor(0, 0, 0, 0));
- /* QStyleOption opt;
-  opt.init(this);
-  QPainter painter(this);
-  style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);*/
-}
-
 QLayout* Window::get_layout() const {
   return m_central_widget->layout();
 }
 
 void Window::resize_body(const QSize& size) {
   //resize({size.width(), size.height() + m_title_bar->height()});
-  resize({size.width() + m_resize_area_width * 2, size.height() + m_title_bar->height() + m_resize_area_width});
-  m_central_widget->setGeometry(m_resize_area_width, 0, size.width(), size.height() + m_title_bar->height());
-  //layout()->setContentsMargins(m_resize_area_width, m_resize_area_width, m_resize_area_width, m_resize_area_width);
+  resize({size.width() + m_resize_area_width * 2, size.height() + m_title_bar->height() + m_resize_area_width * 2});
 }
 
 void Window::on_screen_changed(QScreen* screen) {
@@ -239,14 +245,14 @@ void Window::set_window_attributes(bool is_resizeable) {
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
 
-  auto bb = DWM_BLURBEHIND{0};
-  auto rgn = CreateRectRgn(0, 0, -1, -1);
-  bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
-  bb.fEnable = true;
-  bb.hRgnBlur = rgn;
-  auto ret = DwmEnableBlurBehindWindow(reinterpret_cast<HWND>(effectiveWinId()), &bb);
-  //const auto shadow = MARGINS{ 1, 1, 1, 1 };
-  const auto shadow = MARGINS{ -1 };
-  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
-    &shadow);
+  //auto bb = DWM_BLURBEHIND{0};
+  //auto rgn = CreateRectRgn(0, 0, -1, -1);
+  //bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+  //bb.fEnable = true;
+  //bb.hRgnBlur = rgn;
+  //auto ret = DwmEnableBlurBehindWindow(reinterpret_cast<HWND>(effectiveWinId()), &bb);
+  ////const auto shadow = MARGINS{ 1, 1, 1, 1 };
+  //const auto shadow = MARGINS{ -1 };
+  //DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
+  //  &shadow);
 }

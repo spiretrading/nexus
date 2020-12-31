@@ -50,7 +50,6 @@ namespace Spire {
       bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
-      void paintEvent(QPaintEvent* event) override;
       QLayout* get_layout() const;
 
     private:
