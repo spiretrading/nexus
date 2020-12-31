@@ -276,6 +276,7 @@ TEST_SUITE("OrderExecutionServlet") {
     REQUIRE((**storeOperation->m_executionReport)->m_status ==
       OrderStatus::NEW);
     storeOperation->m_result.SetResult();
+    FlushPendingRoutines();
     reloadOperation->m_result.SetResult(initialLoadResult);
     auto receivedRecord = loadResult.Get();
     REQUIRE((**receivedRecord)->m_executionReports.size() == 2);
