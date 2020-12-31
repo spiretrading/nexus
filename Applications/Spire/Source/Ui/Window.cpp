@@ -56,11 +56,9 @@ Window::Window(QWidget* parent)
   layout->addWidget(m_central_widget);
 
   auto shadow_effect = new QGraphicsDropShadowEffect(this);
-  //shadow_effect->setColor(Qt::gray);
-  //shadow_effect->setBlurRadius(50);
   shadow_effect->setOffset(0, 0);
   m_central_widget->setGraphicsEffect(shadow_effect);
-  setContentsMargins(m_resize_area_width, m_resize_area_width, m_resize_area_width, m_resize_area_width);
+  setContentsMargins(m_resize_area_width * 2, m_resize_area_width * 2, m_resize_area_width * 3, m_resize_area_width * 3);
   
   setLayout(layout);
 }
@@ -190,6 +188,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         std::abs(abs_pos.y() - pos.y()));
       setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
     } else if(msg->wParam == SIZE_RESTORED) {
+      setContentsMargins(m_resize_area_width * 2, m_resize_area_width * 2, m_resize_area_width * 3, m_resize_area_width * 3);
       //setContentsMargins({});
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
