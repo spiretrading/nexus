@@ -27,10 +27,14 @@ namespace {
 }
 
 Window::Window(QWidget* parent)
-    : QWidget(parent),
-      m_resize_area_width(scale_width(7)),
-      m_is_resizeable(true),
-      m_title_bar(nullptr) {
+  : QWidget(parent),
+  m_resize_area_width(scale_width(7)),
+  //m_shadow_margins(m_resize_area_width * 2, m_resize_area_width * 2,
+  //  m_resize_area_width * 3, m_resize_area_width * 3),
+  m_shadow_margins(m_resize_area_width, m_resize_area_width,
+    m_resize_area_width, m_resize_area_width),
+  m_is_resizeable(true),
+  m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
@@ -54,12 +58,10 @@ Window::Window(QWidget* parent)
   central_layout->addWidget(m_title_bar);
   m_central_widget->setLayout(central_layout);
   layout->addWidget(m_central_widget);
-
   auto shadow_effect = new QGraphicsDropShadowEffect(this);
   shadow_effect->setOffset(0, 0);
   m_central_widget->setGraphicsEffect(shadow_effect);
-  setContentsMargins(m_resize_area_width * 2, m_resize_area_width * 2, m_resize_area_width * 3, m_resize_area_width * 3);
-  
+  setContentsMargins(m_shadow_margins);
   setLayout(layout);
 }
 
@@ -73,20 +75,21 @@ void Window::set_svg_icon(const QString& icon_path) {
 
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
+    auto shadow_effect = static_cast<QGraphicsDropShadowEffect*>(m_central_widget->graphicsEffect());
     if(isActiveWindow()) {
-      auto shadow_effect = static_cast<QGraphicsDropShadowEffect*>(m_central_widget->graphicsEffect());
-      shadow_effect->setColor(QColor(112, 112, 112));
-      shadow_effect->setBlurRadius(30);
+      //shadow_effect->setColor(QColor(112, 112, 112));
+      shadow_effect->setColor(QColor(116, 120, 128));
+      shadow_effect->setBlurRadius(22);
       //setStyleSheet("#spire_window { background-color: #A0A0A0; }");
       //setStyleSheet(" { background-color: rgba(0, 0, 0, 20); }");
-      //m_central_widget->setStyleSheet("#central_widget { background-color: rgba(160, 160, 160); }");
+      m_central_widget->setStyleSheet("#central_widget { background-color: #A0A0A0; }");
     } else {
-      auto shadow_effect = static_cast<QGraphicsDropShadowEffect*>(m_central_widget->graphicsEffect());
       shadow_effect->setColor(Qt::lightGray);
-      shadow_effect->setBlurRadius(20);
+      shadow_effect->setBlurRadius(18);
       //setStyleSheet("#spire_window { background-color: #C8C8C8; }");
       //setStyleSheet("#spire_window { background-color: rgba(0, 0, 0, 20); }");
       //m_central_widget->setStyleSheet("#central_widget { background-color: rgba(200, 200, 200); }");
+      m_central_widget->setStyleSheet("#central_widget { background-color: #C8C8C8; }");
     }
   }
 }
@@ -105,7 +108,7 @@ bool Window::event(QEvent* event) {
 }
 
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
-    long* result) {
+  long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCCALCSIZE) {
     result = 0;
@@ -113,61 +116,58 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   } else if(msg->message == WM_NCHITTEST) {
     auto window_rect = RECT{};
     GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
-    auto client_rect = RECT{};
-    GetClientRect(reinterpret_cast<HWND>(effectiveWinId()), &client_rect);
-    auto border_width = ((window_rect.right - window_rect.left) - client_rect.right) / 2;
-    auto extend_frame_rect = RECT{};
-    DwmGetWindowAttribute(reinterpret_cast<HWND>(effectiveWinId()), DWMWA_EXTENDED_FRAME_BOUNDS, &extend_frame_rect, sizeof(RECT));
-    auto rcFrame = RECT{};
-    AdjustWindowRectEx(&rcFrame, WS_OVERLAPPEDWINDOW & ~WS_CAPTION, FALSE, NULL);
+    //window_rect.left +=  m_resize_area_width;
+    //window_rect.right -= m_resize_area_width * 2;
+    //window_rect.top += m_resize_area_width;
+    //window_rect.bottom -= m_resize_area_width * 2;
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
     if(m_is_resizeable) {
       if(x >= window_rect.left &&
-          x < window_rect.left + m_resize_area_width &&
-          y < window_rect.bottom &&
-          y >= window_rect.bottom - m_resize_area_width) {
+        x < window_rect.left + m_resize_area_width &&
+        y < window_rect.bottom &&
+        y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOMLEFT;
         return true;
       }
       if(x < window_rect.right &&
-          x >= window_rect.right - m_resize_area_width &&
-          y < window_rect.bottom &&
-          y >= window_rect.bottom - m_resize_area_width) {
+        x >= window_rect.right - m_resize_area_width &&
+        y < window_rect.bottom &&
+        y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOMRIGHT;
         return true;
       }
       if(x >= window_rect.left &&
-          x < window_rect.left + m_resize_area_width &&
-          y >= window_rect.top &&
-          y < window_rect.top + m_resize_area_width) {
+        x < window_rect.left + m_resize_area_width &&
+        y >= window_rect.top &&
+        y < window_rect.top + m_resize_area_width) {
         *result = HTTOPLEFT;
         return true;
       }
       if(x < window_rect.right &&
-          x >= window_rect.right - m_resize_area_width &&
-          y >= window_rect.top &&
-          y < window_rect.top + m_resize_area_width) {
+        x >= window_rect.right - m_resize_area_width &&
+        y >= window_rect.top &&
+        y < window_rect.top + m_resize_area_width) {
         *result = HTTOPRIGHT;
         return true;
       }
       if(x >= window_rect.left &&
-          x < window_rect.left + m_resize_area_width) {
+        x < window_rect.left + m_resize_area_width) {
         *result = HTLEFT;
         return true;
       }
       if(x < window_rect.right &&
-          x >= window_rect.right - m_resize_area_width) {
+        x >= window_rect.right - m_resize_area_width) {
         *result = HTRIGHT;
         return true;
       }
       if(y < window_rect.bottom &&
-          y >= window_rect.bottom - m_resize_area_width) {
+        y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOM;
         return true;
       }
       if(y >= window_rect.top &&
-          y < window_rect.top + m_resize_area_width) {
+        y < window_rect.top + m_resize_area_width) {
         *result = HTTOP;
         return true;
       }
@@ -188,8 +188,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         std::abs(abs_pos.y() - pos.y()));
       setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
     } else if(msg->wParam == SIZE_RESTORED) {
-      setContentsMargins(m_resize_area_width * 2, m_resize_area_width * 2, m_resize_area_width * 3, m_resize_area_width * 3);
-      //setContentsMargins({});
+      setContentsMargins(m_shadow_margins);
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
@@ -208,14 +207,16 @@ QLayout* Window::get_layout() const {
 
 void Window::resize_body(const QSize& size) {
   //resize({size.width(), size.height() + m_title_bar->height()});
-  resize({size.width() + m_resize_area_width * 2, size.height() + m_title_bar->height() + m_resize_area_width * 2});
+  resize({size.width() + m_shadow_margins.left() + m_shadow_margins.right(),
+    size.height() + m_title_bar->height() + m_shadow_margins.top() +
+    m_shadow_margins.bottom()});
 }
 
 void Window::on_screen_changed(QScreen* screen) {
   // TODO: Workaround for this change:
   // https://github.com/qt/qtbase/commit/d2fd9b1b9818b3ec88487967e010f66e92952f55
   auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-  auto rect = RECT{ 0, 0, 1, 1 };
+  auto rect = RECT{0, 0, 1, 1};
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
 }
 
@@ -227,7 +228,7 @@ void Window::set_fixed_body_size(const QSize& size) {
 void Window::set_window_attributes(bool is_resizeable) {
   m_is_resizeable = is_resizeable;
   if(m_is_resizeable &&
-      maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+    maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)

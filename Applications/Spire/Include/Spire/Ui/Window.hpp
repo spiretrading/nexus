@@ -55,9 +55,10 @@ namespace Spire {
     private:
       mutable ClosedSignal m_closed_signal;
       TitleBar* m_title_bar;
-      int m_resize_area_width;
-      bool m_is_resizeable;
       QWidget* m_central_widget;
+      int m_resize_area_width;
+      QMargins m_shadow_margins;
+      bool m_is_resizeable;
 
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
