@@ -168,6 +168,8 @@ namespace Nexus::RiskService {
     realTimeQuery.SetIndex(m_account);
     realTimeQuery.SetRange(sequence, Beam::Queries::Sequence::Last());
     realTimeQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    realTimeQuery.SetInterruptionPolicy(
+      Beam::Queries::InterruptionPolicy::RECOVER_DATA);
     auto realTimeQueue = std::make_shared<
       Beam::Queue<const OrderExecutionService::Order*>>();
     for(auto& order : excludedOrders) {
