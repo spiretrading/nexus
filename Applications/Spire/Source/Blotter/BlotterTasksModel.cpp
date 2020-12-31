@@ -60,6 +60,7 @@ namespace {
         } else {
           query.SetRange(Increment(lastSequence), pos_infin);
         }
+        query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
         userProfile.GetServiceClients().GetOrderExecutionClient().
           QueryOrderSubmissions(query, std::move(queue));
       });
