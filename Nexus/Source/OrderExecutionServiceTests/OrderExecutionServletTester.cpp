@@ -50,8 +50,7 @@ namespace {
           std::shared_ptr<TestOrderExecutionDataStore>>>;
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     UidServiceTestEnvironment m_uidServiceEnvironment;
-    optional<AdministrationServiceTestEnvironment>
-      m_administrationServiceEnvironment;
+    AdministrationServiceTestEnvironment m_administrationEnvironment;
     DirectoryEntry m_clientAccount;
     std::shared_ptr<MockOrderExecutionDriver> m_driver;
     std::shared_ptr<LocalOrderExecutionDataStore> m_baseDataStore;
@@ -61,29 +60,9 @@ namespace {
     std::unique_ptr<TestServiceProtocolClient> m_protocolClient;
     std::shared_ptr<Queue<PrimitiveOrder*>> m_serverOrders;
 
-    Fixture() {
-      auto servicesDirectory =
-        m_serviceLocatorEnvironment.GetRoot().MakeDirectory("services",
-          DirectoryEntry::GetStarDirectory());
-      auto administratorsDirectory =
-        m_serviceLocatorEnvironment.GetRoot().MakeDirectory("administrators",
-          DirectoryEntry::GetStarDirectory());
-      auto administrationAccount =
-        m_serviceLocatorEnvironment.GetRoot().MakeAccount(
-          "administration_service", "", servicesDirectory);
-      m_serviceLocatorEnvironment.GetRoot().StorePermissions(
-        administrationAccount, DirectoryEntry::GetStarDirectory(),
-        Permissions(~0));
-      m_serviceLocatorEnvironment.GetRoot().MakeAccount(
-        "order_execution_service", "", servicesDirectory);
-      auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
-        "client", "", DirectoryEntry::GetStarDirectory());
-      m_administrationServiceEnvironment.emplace(
-        m_serviceLocatorEnvironment.MakeClient("administration_service", ""));
-      m_administrationServiceEnvironment->MakeAdministrator(
-        administrationAccount);
-      auto servletServiceLocatorClient = m_serviceLocatorEnvironment.MakeClient(
-        "order_execution_service", "");
+    Fixture()
+        : m_administrationEnvironment(MakeAdministrationServiceTestEnvironment(
+            m_serviceLocatorEnvironment)) {
       m_driver = std::make_shared<MockOrderExecutionDriver>();
       m_serverOrders = std::make_shared<Queue<PrimitiveOrder*>>();
       m_driver->GetPublisher().Monitor(m_serverOrders);
@@ -91,19 +70,25 @@ namespace {
       m_dataStore = std::make_shared<TestOrderExecutionDataStore>(
         OrderExecutionDataStoreBox(m_baseDataStore));
       m_serverConnection = std::make_shared<TestServerConnection>();
+      auto orderExecutionAccount =
+        m_serviceLocatorEnvironment.GetRoot().MakeAccount(
+          "order_execution_service", "",
+          m_administrationEnvironment.GetClient().LoadServicesRootEntry());
+      m_administrationEnvironment.MakeAdministrator(orderExecutionAccount);
+      auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
+        "client", "", DirectoryEntry::GetStarDirectory());
+      auto servletServiceLocatorClient = m_serviceLocatorEnvironment.MakeClient(
+        "order_execution_service", "");
       m_container.emplace(Initialize(servletServiceLocatorClient,
         Initialize(pos_infin, GetDefaultMarketDatabase(),
           GetDefaultDestinationDatabase(), Initialize(),
           servletServiceLocatorClient, m_uidServiceEnvironment.MakeClient(),
-          m_administrationServiceEnvironment->MakeClient(
-            servletServiceLocatorClient), m_driver, m_dataStore)),
-          m_serverConnection, factory<std::unique_ptr<TriggerTimer>>());
+          m_administrationEnvironment.MakeClient(servletServiceLocatorClient),
+          m_driver, m_dataStore)), m_serverConnection,
+        factory<std::unique_ptr<TriggerTimer>>());
       std::tie(m_protocolClient, m_clientAccount) = MakeClient("client");
-      auto orderSubmissionQuery = AccountQuery();
-      orderSubmissionQuery.SetIndex(m_clientAccount);
-      orderSubmissionQuery.SetRange(Range::RealTime());
       m_protocolClient->SendRequest<QueryOrderSubmissionsService>(
-        orderSubmissionQuery);
+        BuildRealTimeQuery(m_clientAccount));
     }
 
     std::tuple<std::unique_ptr<TestServiceProtocolClient>, DirectoryEntry>
@@ -168,7 +153,7 @@ TEST_SUITE("OrderExecutionServlet") {
       time_from_string("2020-03-12 16:06:12"));
     REQUIRE_THROWS_AS(m_protocolClient->SendRequest<UpdateOrderService>(
       (*newOrder)->m_orderId, newReport), ServiceRequestException);
-    auto [adminClient, adminAccount] = MakeClient("administration_service");
+    auto [adminClient, adminAccount] = MakeClient("order_execution_service");
     adminClient->SendRequest<UpdateOrderService>(
       (*newOrder)->m_orderId, newReport);
     auto serverNewReport = serverReports->Pop();
