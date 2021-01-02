@@ -152,13 +152,6 @@ namespace Details {
         const Security& security);
 
       /**
-       * Returns a Security's SecurityInfo.
-       * @param security The Security whose SecurityInfo is to be returned.
-       * @return The SecurityInfo for the specified <i>security</i>.
-       */
-      boost::optional<SecurityInfo> FindSecurityInfo(const Security& security);
-
-      /**
        * Returns a Security's real time snapshot.
        * @param security The Security whose snapshot is to be returned.
        * @return The real-time snapshot of the <i>security</i>.
@@ -177,7 +170,7 @@ namespace Details {
       using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry,
         Beam::Threading::Mutex>;
       Beam::Threading::Sync<rtv::Trie<char, SecurityInfo>> m_securityDatabase;
-      Beam::SynchronizedUnorderedMap<Security, Security> m_verifiedSecurities;
+      Beam::SynchronizedUnorderedSet<Security> m_verifiedSecurities;
       Beam::SynchronizedUnorderedMap<MarketCode, std::shared_ptr<Beam::Remote<
         SyncMarketEntry, Beam::Threading::Mutex>>> m_marketEntries;
       Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
@@ -197,14 +190,13 @@ namespace Details {
     : m_securityDatabase('\0') {}
 
   inline void MarketDataRegistry::Add(const SecurityInfo& securityInfo) {
-    auto key = ToString(securityInfo.m_security, GetDefaultMarketDatabase());
+    auto key = ToString(securityInfo.m_security);
     auto name = boost::to_upper_copy(securityInfo.m_name);
     Beam::Threading::With(m_securityDatabase, [&] (auto& securityDatabase) {
       securityDatabase[key.c_str()] = securityInfo;
       securityDatabase[name.c_str()] = securityInfo;
     });
-    m_verifiedSecurities.Update(securityInfo.m_security,
-      securityInfo.m_security);
+    m_verifiedSecurities.Update(securityInfo.m_security);
   }
 
   inline std::vector<SecurityInfo> MarketDataRegistry::SearchSecurityInfo(
@@ -246,8 +238,8 @@ namespace Details {
         security.GetCountry() == CountryCode::NONE) {
       return Security(security.GetSymbol(), CountryCode::NONE);
     }
-    if(auto verifiedSecurity = m_verifiedSecurities.Find(security)) {
-      return *verifiedSecurity;
+    if(auto verifiedSecurity = m_verifiedSecurities.FindValue(security)) {
+      return std::move(*verifiedSecurity);
     }
     auto entry = m_securityEntries.Find(security);
     if(!entry || !(*entry)->IsAvailable()) {
@@ -307,12 +299,12 @@ namespace Details {
     Beam::Threading::With(*entry, [&] (auto& entry) {
       if(entry.GetSecurity().GetMarket().IsEmpty()) {
         if(auto verifiedSecurity =
-            m_verifiedSecurities.Find(bboQuote.GetIndex())) {
-          entry.SetSecurity(*verifiedSecurity);
+            m_verifiedSecurities.FindValue(bboQuote.GetIndex())) {
+          entry.SetSecurity(std::move(*verifiedSecurity));
         } else {
           entry.SetSecurity(bboQuote.GetIndex());
         }
-        auto key = ToString(entry.GetSecurity(), GetDefaultMarketDatabase());
+        auto key = ToString(entry.GetSecurity());
         auto info = SecurityInfo(entry.GetSecurity(), key, "", 0);
         Beam::Threading::With(m_securityDatabase, [&] (auto& securityDatabase) {
           securityDatabase.insert(key.c_str(), info);
@@ -381,11 +373,6 @@ namespace Details {
     return Beam::Threading::With(***entry, [&] (auto& entry) {
       return entry.GetSecurityTechnicals();
     });
-  }
-
-  inline boost::optional<SecurityInfo> MarketDataRegistry::FindSecurityInfo(
-      const Security& security) {
-    return boost::none;
   }
 
   inline boost::optional<SecuritySnapshot> MarketDataRegistry::FindSnapshot(
