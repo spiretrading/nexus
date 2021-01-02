@@ -12,53 +12,56 @@
 
 namespace Nexus::MarketDataService {
 
-  /* Stores the database of all market data entitlements. */
+  /** Stores the database of all market data entitlements. */
   class EntitlementDatabase {
     public:
 
-      /* Stores a single entry in an EntitlementDatabase. */
+      /** Stores a single entry in an EntitlementDatabase. */
       struct Entry {
 
-        //! The name the entitlement displays as.
+        /** The name the entitlement displays as. */
         std::string m_name;
 
-        //! The price of the entitlement.
+        /** The price of the entitlement. */
         Money m_price;
 
-        //! The currency the entitlement is charged in.
+        /** The currency the entitlement is charged in. */
         CurrencyId m_currency;
 
-        //! The entitlement's group entry, basically it's the directory all
-        //! accounts with this entitlement are located under.
+        /**
+         * The entitlement's group entry, basically it's the directory all
+         * accounts with this entitlement are located under.
+         */
         Beam::ServiceLocator::DirectoryEntry m_groupEntry;
 
-        //! Stores the entitlement's applicability.  Each market this
-        //! entitlement applies to is mapped to the message types the
-        //! entitlement grants.
+        /**
+         * Stores the entitlement's applicability.  Each market this
+         * entitlement applies to is mapped to the message types the
+         * entitlement grants.
+         */
         std::unordered_map<EntitlementKey, MarketDataTypeSet> m_applicability;
       };
 
-      //! Constructs an empty MarketDatabase.
+      /** Constructs an empty MarketDatabase. */
       EntitlementDatabase() = default;
 
-      //! Returns all Entries.
+      /** Returns all Entries. */
       const std::vector<Entry>& GetEntries() const;
 
-      //! Adds an Entry.
-      /*!
-        \param entry The Entry to add.
-      */
+      /**
+       * Adds an Entry.
+       * @param entry The Entry to add.
+       */
       void Add(const Entry& entry);
 
-      //! Deletes an Entry.
-      /*!
-        \param groupEntry The Entry's group to delete.
-      */
+      /**
+       * Deletes an Entry.
+       * @param groupEntry The Entry's group to delete.
+       */
       void Delete(const Beam::ServiceLocator::DirectoryEntry& groupEntry);
 
     private:
       friend struct Beam::Serialization::DataShuttle;
-      static Entry MakeNoneEntry();
       template<typename T>
       struct NoneEntry {
         static Entry NONE_ENTRY;
