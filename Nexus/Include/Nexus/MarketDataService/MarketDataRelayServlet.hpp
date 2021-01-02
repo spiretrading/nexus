@@ -87,11 +87,11 @@ namespace Nexus::MarketDataService {
       using MarketSubscriptions = Beam::Queries::IndexedSubscriptions<
         T, MarketCode, ServiceProtocolClient>;
       template<typename T>
-      using SecuritySubscriptions = Beam::Queries::IndexedSubscriptions<
-        T, Security, ServiceProtocolClient>;
+      using SecuritySubscriptions =
+        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       template<typename T>
-      using RealTimeSubscriptionSet = Beam::SynchronizedUnorderedSet<
-        T, Beam::Threading::Mutex>;
+      using RealTimeSubscriptionSet =
+        Beam::SynchronizedUnorderedSet<T, Beam::Threading::Mutex>;
       MarketSubscriptions<OrderImbalance> m_orderImbalanceSubscriptions;
       SecuritySubscriptions<BboQuote> m_bboQuoteSubscriptions;
       SecuritySubscriptions<BookQuote> m_bookQuoteSubscriptions;
@@ -333,41 +333,43 @@ namespace Nexus::MarketDataService {
       request.SetResult(result);
       return;
     }
-    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      if constexpr(std::is_same_v<typename Query::Index, Security>) {
-        if(query.GetIndex().GetMarket().IsEmpty()) {
+    if constexpr(std::is_same_v<typename Query::Index, Security>) {
+      if(query.GetIndex().GetMarket().IsEmpty()) {
+        request.SetResult(result);
+        return;
+      }
+      if(auto security = m_primarySecurities.FindValue(query.GetIndex())) {
+        if(security->GetMarket() != query.GetIndex().GetMarket()) {
           request.SetResult(result);
           return;
         }
-        if(!m_primarySecurities.Contains(query.GetIndex())) {
-          auto client = m_marketDataClients.Acquire();
-          auto infoQuery = SecurityInfoQuery();
-          infoQuery.SetIndex(query.GetIndex());
-          infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-          auto infoResult = client->QuerySecurityInfo(infoQuery);
-          if(!infoResult.empty() && infoResult.front().m_security.GetMarket() !=
-              query.GetIndex().GetMarket()) {
-            request.SetResult(result);
-            return;
-          }
-          m_primarySecurities.Insert(query.GetIndex());
+      } else {
+        auto client = m_marketDataClients.Acquire();
+        auto infoQuery = SecurityInfoQuery();
+        infoQuery.SetIndex(query.GetIndex());
+        infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+        auto infoResult = client->QuerySecurityInfo(infoQuery);
+        if(!infoResult.empty()) {
+          m_primarySecurities.Insert(infoResult.front().m_security);
+        }
+        if(infoResult.empty() || infoResult.front().m_security.GetMarket() !=
+            query.GetIndex().GetMarket()) {
+          request.SetResult(result);
+          return;
         }
       }
+    }
+    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
         query.GetFilter());
       result.m_queryId = subscriptions.Initialize(query.GetIndex(),
         request.GetClient(), Beam::Queries::Range::Total(), std::move(filter));
       realTimeSubscriptions.TestAndSet(query.GetIndex(), [&] {
         auto& queryEntry = GetRealTimeQueryEntry(query.GetIndex());
-        auto initialValueQuery = Query();
-        initialValueQuery.SetIndex(query.GetIndex());
-        initialValueQuery.SetRange(Beam::Queries::Sequence::First(),
-          Beam::Queries::Sequence::Present());
-        initialValueQuery.SetSnapshotLimit(
-          Beam::Queries::SnapshotLimit::FromTail(1));
         auto initialValueQueue =
           std::make_shared<Beam::Queue<MarketDataType>>();
-        QueryMarketDataClient(*queryEntry.m_marketDataClient, initialValueQuery,
+        QueryMarketDataClient(*queryEntry.m_marketDataClient,
+          Beam::Queries::BuildLatestQuery(query.GetIndex()),
           Beam::ScopedQueueWriter(initialValueQueue));
         auto initialValues = std::vector<MarketDataType>();
         Beam::Flush(initialValueQueue, std::back_inserter(initialValues));
