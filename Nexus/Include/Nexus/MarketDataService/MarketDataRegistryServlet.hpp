@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -28,7 +27,7 @@ namespace Nexus::MarketDataService {
    * @param <A> The type of AdministrationClient to use.
    */
   template<typename C, typename R, typename D, typename A>
-  class MarketDataRegistryServlet : private boost::noncopyable {
+  class MarketDataRegistryServlet {
     public:
 
       /** The registry storing all market data sent to this servlet. */
@@ -84,8 +83,8 @@ namespace Nexus::MarketDataService {
       using MarketSubscriptions = Beam::Queries::IndexedSubscriptions<
         T, MarketCode, ServiceProtocolClient>;
       template<typename T>
-      using SecuritySubscriptions = Beam::Queries::IndexedSubscriptions<
-        T, Security, ServiceProtocolClient>;
+      using SecuritySubscriptions =
+        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       EntitlementDatabase m_entitlementDatabase;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<R> m_registry;
@@ -97,6 +96,9 @@ namespace Nexus::MarketDataService {
       SecuritySubscriptions<TimeAndSale> m_timeAndSaleSubscriptions;
       Beam::IO::OpenState m_openState;
 
+      MarketDataRegistryServlet(const MarketDataRegistryServlet&) = delete;
+      MarketDataRegistryServlet& operator =(
+        const MarketDataRegistryServlet&) = delete;
       Security NormalizePrimaryMarket(const Security& security);
       void OnQueryOrderImbalances(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
