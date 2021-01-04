@@ -17,8 +17,11 @@ SnapshotLoadingWidget::SnapshotLoadingWidget(QScrollArea* scroll_area,
     m_logo_widget);
   logo->setScaledSize(scale(16, 16));
   m_logo_widget->setMovie(logo);
-  m_logo_widget->setStyleSheet(
-    QString("QLabel { padding-top: %1px; }").arg(scale_height(8)));
+  m_logo_widget->setStyleSheet(QString(R"(
+    QLabel {
+      background-color: white;
+      padding-top: %1px;
+    })").arg(scale_height(8)));
   m_logo_widget->setAlignment(Qt::AlignHCenter);
   m_logo_widget->movie()->start();
   m_scroll_area->installEventFilter(this);
