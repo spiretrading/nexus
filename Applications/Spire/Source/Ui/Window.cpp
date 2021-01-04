@@ -197,6 +197,26 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     mmi->ptMinTrackSize.x = minimumSize().width();
     mmi->ptMinTrackSize.y = minimumSize().height();
     return true;
+  } else if(msg->message == WM_WINDOWPOSCHANGED) {
+    auto screen_rect = screen()->availableGeometry();
+    auto window_pos = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+    auto window_rect = QRect(window_pos->x, window_pos->y, window_pos->cx,
+      window_pos->cy);
+    if(window_rect.top() == screen_rect.top() &&
+      window_rect.bottom() == screen_rect.bottom()) {
+        if(window_rect.left() == screen_rect.left() ||
+          window_rect.right() == screen_rect.right()) {
+        m_shadow_margins = {0, 0, 0, 0};
+      } else {
+        m_shadow_margins = {m_resize_area_width, 0, m_resize_area_width, 0};
+      }
+    } else if(window_rect.height() == screen_rect.height() / 2 &&
+      (window_rect.top() == screen_rect.top() ||
+      window_rect.bottom() == screen_rect.bottom()) &&
+      (window_rect.left() == screen_rect.left() ||
+      window_rect.right() == screen_rect.right())) {
+        m_shadow_margins = {0, 0, 0, 0};
+    }
   }
   return QWidget::nativeEvent(eventType, message, result);
 }
