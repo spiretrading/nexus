@@ -18,6 +18,7 @@
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "SimulationMarketDataFeedClient/SimulationMarketDataFeedClient.hpp"
 #include "Version.hpp"
@@ -67,6 +68,7 @@ namespace {
       BuildMockFeedClients(const YAML::Node& config,
       const MarketDatabase& marketDatabase,
       const std::vector<IpAddress>& addresses,
+      ApplicationMarketDataClient& marketDataClient,
       ApplicationServiceLocatorClient& serviceLocatorClient,
       LiveNtpTimeClient& timeClient) {
     return TryOrNest([&] {
@@ -95,7 +97,7 @@ namespace {
         }
         auto applicationMarketDataFeed =
           std::make_unique<ApplicationMarketDataFeedClient>(feedSecurities,
-            marketDatabase, Initialize(Initialize(addresses),
+            marketDatabase, *marketDataClient, Initialize(Initialize(addresses),
               SessionAuthenticator(serviceLocatorClient.Get()),
               Initialize(sampling), Initialize(seconds(10))), &timeClient,
             Initialize(bboPeriod), Initialize(marketQuotePeriod),
@@ -112,23 +114,26 @@ int main(int argc, const char** argv) {
     auto config = ParseCommandLine(argc, argv,
       "1.0-r" SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto marketDataServices = serviceLocatorClient->Locate(
-      MarketDataService::FEED_SERVICE_NAME);
+    auto serviceLocatorClient =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto definitionsClient =
+      ApplicationDefinitionsClient(serviceLocatorClient.Get());
+    auto timeClient =
+      MakeLiveNtpTimeClientFromServiceLocator(*serviceLocatorClient);
+    auto marketDataServices =
+      serviceLocatorClient->Locate(MarketDataService::FEED_SERVICE_NAME);
     if(marketDataServices.empty()) {
       throw std::runtime_error("No market data services available.");
     }
     auto& marketDataService = marketDataServices.front();
     auto marketDataAddresses = Parse<std::vector<IpAddress>>(
       get<std::string>(marketDataService.GetProperties().At("addresses")));
-    auto feedClients = BuildMockFeedClients(config,
-      definitionsClient->LoadMarketDatabase(), marketDataAddresses,
-      serviceLocatorClient, *timeClient);
+    auto marketDataClient =
+      ApplicationMarketDataClient(serviceLocatorClient.Get());
+    auto feedClients =
+      BuildMockFeedClients(config, definitionsClient->LoadMarketDatabase(),
+        marketDataAddresses, marketDataClient, serviceLocatorClient,
+        *timeClient);
     WaitForKillEvent();
     serviceLocatorClient->Close();
   } catch(...) {
