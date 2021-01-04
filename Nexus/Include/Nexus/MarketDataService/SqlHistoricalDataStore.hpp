@@ -175,21 +175,31 @@ namespace Nexus::MarketDataService {
         return Viper::Order::DESC;
       }
     }();
-    auto limit = query.GetSnapshotLimit().GetSize();
+    auto regionFilter = [&] {
+      if(query.GetIndex().IsGlobal()) {
+        return Viper::literal(true);
+      }
+      return Viper::literal(false);
+    }();
+    for(auto country : query.GetIndex().GetCountries()) {
+      regionFilter = regionFilter || Viper::sym("country") == country;
+    }
+    for(auto market : query.GetIndex().GetMarkets()) {
+      regionFilter = regionFilter ||
+        Viper::sym("market") == Viper::literal(std::string(market.GetData()));
+    }
+    for(auto& security : query.GetIndex().GetSecurities()) {
+      regionFilter = regionFilter ||
+        Viper::sym("symbol") == security.GetSymbol() &&
+        Viper::sym("country") == security.GetCountry();
+    }
     {
       auto reader = m_readerPool.Acquire();
       reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
-        filter && anchor,
+        filter && anchor && regionFilter,
         Viper::order_by({{"symbol", order}, {"country", order}}),
+        Viper::limit(query.GetSnapshotLimit().GetSize()),
         std::back_inserter(matches)));
-    }
-    matches.erase(std::remove_if(matches.begin(), matches.end(),
-      [&] (const auto& match) {
-        return !(match.m_security <= query.GetIndex());
-      }), matches.end());
-    if(static_cast<int>(matches.size()) > query.GetSnapshotLimit().GetSize()) {
-      auto delta = matches.size() - query.GetSnapshotLimit().GetSize();
-      matches.erase(matches.end() - delta, matches.end());
     }
     if(query.GetSnapshotLimit().GetType() ==
         Beam::Queries::SnapshotLimit::Type::TAIL) {

@@ -51,8 +51,6 @@ namespace Nexus::MarketDataService {
 
       /**
        * Constructs a MarketDataRelayServlet.
-       * @param entitlementDatabase The database of all market data
-       *        entitlements.
        * @param clientTimeout The amount of time to wait before building another
        *        MarketDataClient.
        * @param marketDataClientBuilder Builds MarketDataClients used to
@@ -64,14 +62,13 @@ namespace Nexus::MarketDataService {
        * @param administrationClient Used to check for entitlements.
        */
       template<typename AF>
-      MarketDataRelayServlet(EntitlementDatabase entitlementDatabase,
-        boost::posix_time::time_duration clientTimeout,
+      MarketDataRelayServlet(boost::posix_time::time_duration clientTimeout,
         MarketDataClientBuilder marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
         AF&& administrationClient);
 
-      void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
-        ServiceProtocolClient>> slots);
+      void RegisterServices(
+        Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
 
       void HandleClientAccepted(ServiceProtocolClient& client);
 
@@ -90,11 +87,11 @@ namespace Nexus::MarketDataService {
       using MarketSubscriptions = Beam::Queries::IndexedSubscriptions<
         T, MarketCode, ServiceProtocolClient>;
       template<typename T>
-      using SecuritySubscriptions = Beam::Queries::IndexedSubscriptions<
-        T, Security, ServiceProtocolClient>;
+      using SecuritySubscriptions =
+        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       template<typename T>
-      using RealTimeSubscriptionSet = Beam::SynchronizedUnorderedSet<
-        T, Beam::Threading::Mutex>;
+      using RealTimeSubscriptionSet =
+        Beam::SynchronizedUnorderedSet<T, Beam::Threading::Mutex>;
       MarketSubscriptions<OrderImbalance> m_orderImbalanceSubscriptions;
       SecuritySubscriptions<BboQuote> m_bboQuoteSubscriptions;
       SecuritySubscriptions<BookQuote> m_bookQuoteSubscriptions;
@@ -106,10 +103,10 @@ namespace Nexus::MarketDataService {
       RealTimeSubscriptionSet<Security> m_marketQuoteRealTimeSubscriptions;
       RealTimeSubscriptionSet<Security> m_timeAndSaleRealTimeSubscriptions;
       Beam::SynchronizedUnorderedSet<Security> m_primarySecurities;
-      EntitlementDatabase m_entitlementDatabase;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_marketDataClients;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      EntitlementDatabase m_entitlementDatabase;
       Beam::IO::OpenState m_openState;
       std::vector<std::unique_ptr<RealTimeQueryEntry>> m_realTimeQueryEntries;
 
@@ -120,15 +117,17 @@ namespace Nexus::MarketDataService {
       RealTimeQueryEntry& GetRealTimeQueryEntry(const T& index);
       template<typename Service, typename Query, typename Subscriptions,
         typename RealTimeSubscriptions>
-      void HandleQueryRequest(Beam::Services::RequestToken<
-        ServiceProtocolClient, Service>& request, const Query& query,
-        Subscriptions& subscriptions,
+      void HandleQueryRequest(
+        Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
+        const Query& query, Subscriptions& subscriptions,
         RealTimeSubscriptions& realTimeSubscriptions);
       template<typename Subscriptions>
       void OnEndQuery(ServiceProtocolClient& client,
         const typename Subscriptions::Index& index, int id,
         Subscriptions& subscriptions);
       SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
+        const Security& security);
+      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
         const Security& security);
       std::vector<SecurityInfo> OnQuerySecurityInfo(
         ServiceProtocolClient& client, const SecurityInfoQuery& query);
@@ -163,15 +162,14 @@ namespace Nexus::MarketDataService {
   template<typename C, typename M, typename A>
   template<typename AF>
   MarketDataRelayServlet<C, M, A>::MarketDataRelayServlet(
-      EntitlementDatabase entitlementDatabase,
       boost::posix_time::time_duration clientTimeout,
       MarketDataClientBuilder marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
       AF&& administrationClient)
-      : m_entitlementDatabase(entitlementDatabase),
-        m_marketDataClients(clientTimeout, marketDataClientBuilder,
+      : m_marketDataClients(clientTimeout, marketDataClientBuilder,
           minMarketDataClients, maxMarketDataClients),
-        m_administrationClient(std::forward<AF>(administrationClient)) {
+        m_administrationClient(std::forward<AF>(administrationClient)),
+        m_entitlementDatabase(m_administrationClient->LoadEntitlements()) {
     for(auto i = std::size_t(0); i < boost::thread::hardware_concurrency();
         ++i) {
       m_realTimeQueryEntries.emplace_back(
@@ -185,86 +183,84 @@ namespace Nexus::MarketDataService {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(slots));
     RegisterMarketDataRegistryMessages(Beam::Store(slots));
-    QueryOrderImbalancesService::AddRequestSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-        QueryOrderImbalancesService, MarketWideDataQuery,
-        MarketSubscriptions<OrderImbalance>,
+    QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::HandleQueryRequest<QueryOrderImbalancesService,
+        MarketWideDataQuery, MarketSubscriptions<OrderImbalance>,
         RealTimeSubscriptionSet<MarketCode>>, this, std::placeholders::_1,
-        std::placeholders::_2, std::ref(m_orderImbalanceSubscriptions),
-        std::ref(m_orderImbalanceRealTimeSubscriptions)));
+      std::placeholders::_2, std::ref(m_orderImbalanceSubscriptions),
+      std::ref(m_orderImbalanceRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
       std::bind(&MarketDataRelayServlet::OnEndQuery<
         MarketSubscriptions<OrderImbalance>>, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3,
         std::ref(m_orderImbalanceSubscriptions)));
-    QueryBboQuotesService::AddRequestSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-        QueryBboQuotesService, SecurityMarketDataQuery,
-        SecuritySubscriptions<BboQuote>, RealTimeSubscriptionSet<Security>>,
-        this, std::placeholders::_1, std::placeholders::_2,
-        std::ref(m_bboQuoteSubscriptions),
-        std::ref(m_bboQuoteRealTimeSubscriptions)));
+    QueryBboQuotesService::AddRequestSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::HandleQueryRequest<QueryBboQuotesService,
+        SecurityMarketDataQuery, SecuritySubscriptions<BboQuote>,
+        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+      std::placeholders::_2, std::ref(m_bboQuoteSubscriptions),
+      std::ref(m_bboQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnEndQuery<
-        SecuritySubscriptions<BboQuote>>, this, std::placeholders::_1,
-        std::placeholders::_2, std::placeholders::_3,
-        std::ref(m_bboQuoteSubscriptions)));
-    QueryBookQuotesService::AddRequestSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-        QueryBookQuotesService, SecurityMarketDataQuery,
-        SecuritySubscriptions<BookQuote>, RealTimeSubscriptionSet<Security>>,
+      std::bind(
+        &MarketDataRelayServlet::OnEndQuery<SecuritySubscriptions<BboQuote>>,
         this, std::placeholders::_1, std::placeholders::_2,
-        std::ref(m_bookQuoteSubscriptions),
-        std::ref(m_bookQuoteRealTimeSubscriptions)));
+        std::placeholders::_3, std::ref(m_bboQuoteSubscriptions)));
+    QueryBookQuotesService::AddRequestSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::HandleQueryRequest<QueryBookQuotesService,
+        SecurityMarketDataQuery, SecuritySubscriptions<BookQuote>,
+        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+      std::placeholders::_2, std::ref(m_bookQuoteSubscriptions),
+      std::ref(m_bookQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnEndQuery<
-        SecuritySubscriptions<BookQuote>>, this, std::placeholders::_1,
-        std::placeholders::_2, std::placeholders::_3,
-        std::ref(m_bookQuoteSubscriptions)));
-    QueryMarketQuotesService::AddRequestSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-        QueryMarketQuotesService, SecurityMarketDataQuery,
-        SecuritySubscriptions<MarketQuote>, RealTimeSubscriptionSet<Security>>,
+      std::bind(
+        &MarketDataRelayServlet::OnEndQuery<SecuritySubscriptions<BookQuote>>,
         this, std::placeholders::_1, std::placeholders::_2,
-        std::ref(m_marketQuoteSubscriptions),
-        std::ref(m_marketQuoteRealTimeSubscriptions)));
+        std::placeholders::_3, std::ref(m_bookQuoteSubscriptions)));
+    QueryMarketQuotesService::AddRequestSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::HandleQueryRequest<QueryMarketQuotesService,
+        SecurityMarketDataQuery, SecuritySubscriptions<MarketQuote>,
+        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+      std::placeholders::_2, std::ref(m_marketQuoteSubscriptions),
+      std::ref(m_marketQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndMarketQuoteQueryMessage>(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnEndQuery<
-        SecuritySubscriptions<MarketQuote>>, this, std::placeholders::_1,
-        std::placeholders::_2, std::placeholders::_3,
-        std::ref(m_marketQuoteSubscriptions)));
-    QueryTimeAndSalesService::AddRequestSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::HandleQueryRequest<
-        QueryTimeAndSalesService, SecurityMarketDataQuery,
-        SecuritySubscriptions<TimeAndSale>, RealTimeSubscriptionSet<Security>>,
+      std::bind(
+        &MarketDataRelayServlet::OnEndQuery<SecuritySubscriptions<MarketQuote>>,
         this, std::placeholders::_1, std::placeholders::_2,
-        std::ref(m_timeAndSaleSubscriptions),
-        std::ref(m_timeAndSaleRealTimeSubscriptions)));
+        std::placeholders::_3, std::ref(m_marketQuoteSubscriptions)));
+    QueryTimeAndSalesService::AddRequestSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::HandleQueryRequest<QueryTimeAndSalesService,
+        SecurityMarketDataQuery, SecuritySubscriptions<TimeAndSale>,
+        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+      std::placeholders::_2, std::ref(m_timeAndSaleSubscriptions),
+      std::ref(m_timeAndSaleRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnEndQuery<
-        SecuritySubscriptions<TimeAndSale>>, this, std::placeholders::_1,
-        std::placeholders::_2, std::placeholders::_3,
-        std::ref(m_timeAndSaleSubscriptions)));
-    LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
-      &MarketDataRelayServlet::OnLoadSecuritySnapshot, this,
-      std::placeholders::_1, std::placeholders::_2));
-    QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
-      &MarketDataRelayServlet::OnQuerySecurityInfo, this, std::placeholders::_1,
-      std::placeholders::_2));
-    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
-      &MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind(
+        &MarketDataRelayServlet::OnEndQuery<SecuritySubscriptions<TimeAndSale>>,
+        this, std::placeholders::_1, std::placeholders::_2,
+        std::placeholders::_3, std::ref(m_timeAndSaleSubscriptions)));
+    LoadSecuritySnapshotService::AddSlot(Store(slots),
+      std::bind(&MarketDataRelayServlet::OnLoadSecuritySnapshot, this,
+        std::placeholders::_1, std::placeholders::_2));
+    LoadSecurityTechnicalsService::AddSlot(Store(slots),
+      std::bind(&MarketDataRelayServlet::OnLoadSecurityTechnicals, this,
+        std::placeholders::_1, std::placeholders::_2));
+    QuerySecurityInfoService::AddSlot(Store(slots),
+      std::bind(&MarketDataRelayServlet::OnQuerySecurityInfo, this,
+        std::placeholders::_1, std::placeholders::_2));
+    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots),
+      std::bind(&MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this,
+        std::placeholders::_1, std::placeholders::_2));
   }
 
   template<typename C, typename M, typename A>
   void MarketDataRelayServlet<C, M, A>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    session.m_roles = m_administrationClient->LoadAccountRoles(
-      session.GetAccount());
+    session.m_roles =
+      m_administrationClient->LoadAccountRoles(session.GetAccount());
     auto& entitlements = m_entitlementDatabase.GetEntries();
-    auto accountEntitlements = m_administrationClient->LoadEntitlements(
-      session.GetAccount());
+    auto accountEntitlements =
+      m_administrationClient->LoadEntitlements(session.GetAccount());
     for(auto& entitlement : entitlements) {
       auto entryIterator = std::find(accountEntitlements.begin(),
         accountEntitlements.end(), entitlement.m_groupEntry);
@@ -337,51 +333,53 @@ namespace Nexus::MarketDataService {
       request.SetResult(result);
       return;
     }
-    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      if constexpr(std::is_same_v<typename Query::Index, Security>) {
-        if(query.GetIndex().GetMarket().IsEmpty()) {
+    if constexpr(std::is_same_v<typename Query::Index, Security>) {
+      if(query.GetIndex().GetMarket().IsEmpty()) {
+        request.SetResult(result);
+        return;
+      }
+      if(auto security = m_primarySecurities.FindValue(query.GetIndex())) {
+        if(security->GetMarket() != query.GetIndex().GetMarket()) {
           request.SetResult(result);
           return;
         }
-        if(!m_primarySecurities.Contains(query.GetIndex())) {
-          auto client = m_marketDataClients.Acquire();
-          auto infoQuery = SecurityInfoQuery();
-          infoQuery.SetIndex(query.GetIndex());
-          infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-          auto infoResult = client->QuerySecurityInfo(infoQuery);
-          if(!infoResult.empty() && infoResult.front().m_security.GetMarket() !=
-              query.GetIndex().GetMarket()) {
-            request.SetResult(result);
-            return;
-          }
-          m_primarySecurities.Insert(query.GetIndex());
+      } else {
+        auto client = m_marketDataClients.Acquire();
+        auto infoQuery = SecurityInfoQuery();
+        infoQuery.SetIndex(query.GetIndex());
+        infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+        auto infoResult = client->QuerySecurityInfo(infoQuery);
+        if(!infoResult.empty()) {
+          m_primarySecurities.Insert(infoResult.front().m_security);
+        }
+        if(infoResult.empty() || infoResult.front().m_security.GetMarket() !=
+            query.GetIndex().GetMarket()) {
+          request.SetResult(result);
+          return;
         }
       }
+    }
+    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
         query.GetFilter());
       result.m_queryId = subscriptions.Initialize(query.GetIndex(),
         request.GetClient(), Beam::Queries::Range::Total(), std::move(filter));
       realTimeSubscriptions.TestAndSet(query.GetIndex(), [&] {
         auto& queryEntry = GetRealTimeQueryEntry(query.GetIndex());
-        auto initialValueQuery = Query();
-        initialValueQuery.SetIndex(query.GetIndex());
-        initialValueQuery.SetRange(Beam::Queries::Sequence::First(),
-          Beam::Queries::Sequence::Present());
-        initialValueQuery.SetSnapshotLimit(
-          Beam::Queries::SnapshotLimit::FromTail(1));
         auto initialValueQueue =
           std::make_shared<Beam::Queue<MarketDataType>>();
-        QueryMarketDataClient(*queryEntry.m_marketDataClient, initialValueQuery,
+        QueryMarketDataClient(*queryEntry.m_marketDataClient,
+          Beam::Queries::BuildLatestQuery(query.GetIndex()),
           Beam::ScopedQueueWriter(initialValueQueue));
         auto initialValues = std::vector<MarketDataType>();
         Beam::Flush(initialValueQueue, std::back_inserter(initialValues));
-        auto initialSequence = Beam::Queries::Sequence();
-        if(initialValues.empty()) {
-          initialSequence = Beam::Queries::Sequence::First();
-        } else {
-          initialSequence = Beam::Queries::Increment(
-            initialValues.back().GetSequence());
-        }
+        auto initialSequence = [&] {
+          if(initialValues.empty()) {
+            return Beam::Queries::Sequence::First();
+          } else {
+            return Beam::Queries::Increment(initialValues.back().GetSequence());
+          }
+        }();
         auto realTimeQuery = Query();
         realTimeQuery.SetIndex(query.GetIndex());
         realTimeQuery.SetInterruptionPolicy(
@@ -459,6 +457,13 @@ namespace Nexus::MarketDataService {
     securitySnapshot.m_bidBook.erase(bidEndRange,
       securitySnapshot.m_bidBook.end());
     return securitySnapshot;
+  }
+
+  template<typename C, typename M, typename A>
+  SecurityTechnicals MarketDataRelayServlet<C, M, A>::OnLoadSecurityTechnicals(
+      ServiceProtocolClient& client, const Security& security) {
+    auto marketDataClient = m_marketDataClients.Acquire();
+    return marketDataClient->LoadSecurityTechnicals(security);
   }
 
   template<typename C, typename M, typename A>

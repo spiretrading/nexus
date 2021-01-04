@@ -24,6 +24,7 @@ namespace Nexus {
   class Security;
   struct SecurityInfo;
   class SecuritySet;
+  struct SecurityTechnicals;
   class Tag;
   struct TimeAndSale;
   class TimeInForce;

@@ -6,7 +6,6 @@
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/VariantLambdaVisitor.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
 namespace Nexus::MarketDataService {
@@ -18,7 +17,7 @@ namespace Nexus::MarketDataService {
    *        servlet.
    */
   template<typename C, typename R>
-  class MarketDataFeedServlet : private boost::noncopyable {
+  class MarketDataFeedServlet {
     public:
 
       /** The registry storing all market data originating from this servlet. */
@@ -32,7 +31,7 @@ namespace Nexus::MarketDataService {
        *        originating from this servlet.
        */
       template<typename RF>
-      MarketDataFeedServlet(RF&& marketDataRegistry);
+      explicit MarketDataFeedServlet(RF&& marketDataRegistry);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -48,8 +47,8 @@ namespace Nexus::MarketDataService {
       std::atomic_int m_nextSourceId;
       Beam::IO::OpenState m_openState;
 
-      void OnResetMessage(ServiceProtocolClient& client,
-        MarketDataTypeSet messageTypes);
+      MarketDataFeedServlet(const MarketDataFeedServlet&) = delete;
+      MarketDataFeedServlet& operator =(const MarketDataFeedServlet&) = delete;
       void OnSetSecurityInfoMessage(ServiceProtocolClient& client,
         const SecurityInfo& securityInfo);
       void OnSendMarketDataFeedMessages(ServiceProtocolClient& client,
@@ -79,16 +78,13 @@ namespace Nexus::MarketDataService {
   void MarketDataFeedServlet<C, R>::RegisterServices(Beam::Out<
       Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterMarketDataFeedMessages(Beam::Store(slots));
-    Beam::Services::AddMessageSlot<ResetDataMessage>(Beam::Store(slots),
-      std::bind(&MarketDataFeedServlet::OnResetMessage, this,
-      std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<SetSecurityInfoMessage>(Beam::Store(slots),
       std::bind(&MarketDataFeedServlet::OnSetSecurityInfoMessage, this,
-      std::placeholders::_1, std::placeholders::_2));
+        std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<SendMarketDataFeedMessages>(
       Beam::Store(slots), std::bind(
-      &MarketDataFeedServlet::OnSendMarketDataFeedMessages, this,
-      std::placeholders::_1, std::placeholders::_2));
+        &MarketDataFeedServlet::OnSendMarketDataFeedMessages, this,
+        std::placeholders::_1, std::placeholders::_2));
   }
 
   template<typename C, typename R>
@@ -109,10 +105,6 @@ namespace Nexus::MarketDataService {
   void MarketDataFeedServlet<C, R>::Close() {
     m_openState.Close();
   }
-
-  template<typename C, typename R>
-  void MarketDataFeedServlet<C, R>::OnResetMessage(
-      ServiceProtocolClient& client, MarketDataTypeSet messages) {}
 
   template<typename C, typename R>
   void MarketDataFeedServlet<C, R>::OnSetSecurityInfoMessage(
