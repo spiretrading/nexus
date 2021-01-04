@@ -6,6 +6,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
+#include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <boost/any.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
@@ -217,6 +218,7 @@ namespace Spire {
       mutable TaskRemovedSignal m_taskRemovedSignal;
       Beam::TaskQueue m_orderSlotHandler;
       std::optional<Beam::TaskQueue> m_taskSlotHandler;
+      Beam::Routines::RoutineHandlerGroup m_pendingRoutines;
 
       void SetupLinkedOrderExecutionMonitor();
       void OnMonitorUpdate(TaskEntry& entry, const std::string& property,
