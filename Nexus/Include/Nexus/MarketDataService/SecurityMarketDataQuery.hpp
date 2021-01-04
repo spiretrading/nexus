@@ -8,11 +8,12 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Routine.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/MarketQuote.hpp"
 #include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
@@ -51,10 +52,11 @@ namespace MarketDataService {
    * @param queue The Queue to write to.
    */
   template<typename MarketDataClient>
-  void QueryRealTimeWithSnapshot(Security security, MarketDataClient&& client,
-      Beam::ScopedQueueWriter<BboQuote> queue) {
-    Beam::Routines::Spawn(
-      [=, client = Beam::CapturePtr<MarketDataClient>(client),
+  Beam::Routines::Routine::Id QueryRealTimeWithSnapshot(Security security,
+      MarketDataClient&& client, Beam::ScopedQueueWriter<BboQuote> queue) {
+    return Beam::Routines::Spawn(
+      [=, security = std::move(security),
+          client = Beam::CapturePtr<MarketDataClient>(client),
           queue = std::move(queue)] () mutable {
         auto snapshotQueue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
         client->QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
@@ -77,6 +79,34 @@ namespace MarketDataService {
           Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
         client->QueryBboQuotes(continuationQuery, std::move(queue));
       });
+  }
+
+  /**
+   * Returns a query to retrieve the SecurityInfo for a single security.
+   * @param security The Security to query.
+   * @return The SecurityInfo for the given
+   */
+  inline SecurityInfoQuery MakeSecurityInfoQuery(const Security& security) {
+    auto query = SecurityInfoQuery();
+    query.SetIndex(security);
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+    return query;
+  }
+
+  /**
+   * Submits a query to retrieve the SecurityInfo for a single security.
+   * @param security The Security to query.
+   * @param client The MarketDataClient to submit the query to.
+   * @return The SecurityInfo for the given <i>security</i>.
+   */
+  template<typename MarketDataClient>
+  boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security,
+      MarketDataClient& client) {
+    auto result = client.QuerySecurityInfo(MakeSecurityInfoQuery(security));
+    if(!result.empty()) {
+      return result.front();
+    }
+    return boost::none;
   }
 }
 }

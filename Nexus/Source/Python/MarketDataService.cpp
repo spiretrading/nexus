@@ -221,7 +221,7 @@ void Nexus::Python::ExportMarketDataService(module& module) {
     [] (MarketDataClientBox marketDataClient, Security security,
         ScopedQueueWriter<BookQuote> queue,
         InterruptionPolicy interruptionPolicy) {
-      QueryRealTimeBookQuotesWithSnapshot(std::move(marketDataClient),
+      return QueryRealTimeBookQuotesWithSnapshot(std::move(marketDataClient),
         std::move(security), std::move(queue), interruptionPolicy);
     });
   submodule.def("query_real_time_book_quotes_with_snapshot",

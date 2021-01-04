@@ -51,6 +51,8 @@ namespace Nexus {
        * Constructs a SimulationMarketDataFeedClient.
        * @param securities The list of Securities to simulate market data for.
        * @param marketDatabase The MarketDatabase to use.
+       * @param marketDataClient The MarketDataClient used to query for
+       *        SecurityInfo on each simulated security.
        * @param marketDataFeedClient Initializes the MarketDataFeedClient to
        *        send the simulated data through.
        * @param timeClient Initializes the TimeClient.
@@ -60,10 +62,11 @@ namespace Nexus {
        * @param timeAndSaleTimer Initializes the Timer used to update the
        *        TimeAndSales.
        */
-      template<typename FF, typename TF, typename BF, typename MF,
-        typename SF>
+      template<typename MarketDataClient, typename FF, typename TF, typename BF,
+        typename MF, typename SF>
       SimulationMarketDataFeedClient(const std::vector<Security>& securities,
-        const MarketDatabase& marketDatabase, FF&& marketDataFeedClient,
+        const MarketDatabase& marketDatabase,
+        MarketDataClient& marketDataClient, FF&& marketDataFeedClient,
         TF&& timeClient, BF&& bboTimer, MF&& marketQuoteTimer,
         SF&& timeAndSaleTimer);
 
@@ -88,12 +91,13 @@ namespace Nexus {
   };
 
   template<typename F, typename T, typename B, typename M, typename S>
-  template<typename FF, typename TF, typename BF, typename MF, typename SF>
+  template<typename MarketDataClient, typename FF, typename TF, typename BF,
+    typename MF, typename SF>
   SimulationMarketDataFeedClient<F, T, B, M, S>::SimulationMarketDataFeedClient(
       const std::vector<Security>& securities,
-      const MarketDatabase& marketDatabase, FF&& marketDataFeedClient,
-      TF&& timeClient, BF&& bboTimer, MF&& marketQuoteTimer,
-      SF&& timeAndSaleTimer)
+      const MarketDatabase& marketDatabase, MarketDataClient& marketDataClient,
+      FF&& marketDataFeedClient, TF&& timeClient, BF&& bboTimer,
+      MF&& marketQuoteTimer, SF&& timeAndSaleTimer)
       : m_marketDatabase(marketDatabase),
         m_feedClient(std::forward<FF>(marketDataFeedClient)),
         m_timeClient(std::forward<TF>(timeClient)),
@@ -101,6 +105,10 @@ namespace Nexus {
         m_marketQuoteTimer(std::forward<MF>(marketQuoteTimer)),
         m_timeAndSaleTimer(std::forward<SF>(timeAndSaleTimer)) {
     for(auto& security : securities) {
+      auto info = LoadSecurityInfo(security, marketDataClient);
+      if(!info) {
+        m_feedClient->Add(SecurityInfo(security, ToString(security), "", 100));
+      }
       m_securities.emplace_back();
       auto& snapshot = m_securities.back();
       snapshot.m_security = security;
@@ -108,8 +116,8 @@ namespace Nexus {
     try {
       for(auto& snapshot : m_securities) {
         snapshot.m_bboQuote->m_bid.m_side = Side::BID;
-        snapshot.m_bboQuote->m_bid.m_price = ((std::rand() % 100) + 1) *
-          Money::ONE;
+        snapshot.m_bboQuote->m_bid.m_price =
+          ((std::rand() % 100) + 1) * Money::ONE;
         snapshot.m_bboQuote->m_ask.m_side = Side::ASK;
         snapshot.m_bboQuote->m_ask.m_price =
           snapshot.m_bboQuote->m_bid.m_price + Money::CENT;
@@ -117,24 +125,24 @@ namespace Nexus {
         auto markets = m_marketDatabase.FromCountry(
           snapshot.m_security.GetCountry());
         for(auto& market : markets) {
-          auto quote = MarketQuote(market.m_code,
-            Quote(Money::CENT, 100, Side::BID),
-            Quote(2 * Money::CENT, 100, Side::ASK), m_timeClient->GetTime());
+          auto quote =
+            MarketQuote(market.m_code, Quote(Money::CENT, 100, Side::BID),
+              Quote(2 * Money::CENT, 100, Side::ASK), m_timeClient->GetTime());
           *snapshot.m_marketQuotes[market.m_code] = quote;
         }
       }
       m_bboTimer->GetPublisher().Monitor(
         m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind(&SimulationMarketDataFeedClient::OnBboTimerExpired, this,
-        std::placeholders::_1)));
+          std::bind(&SimulationMarketDataFeedClient::OnBboTimerExpired, this,
+            std::placeholders::_1)));
       m_marketQuoteTimer->GetPublisher().Monitor(
         m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind(&SimulationMarketDataFeedClient::OnMarketQuoteTimerExpired,
-        this, std::placeholders::_1)));
+          std::bind(&SimulationMarketDataFeedClient::OnMarketQuoteTimerExpired,
+            this, std::placeholders::_1)));
       m_timeAndSaleTimer->GetPublisher().Monitor(
         m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind(&SimulationMarketDataFeedClient::OnTimeAndSaleTimerExpired,
-        this, std::placeholders::_1)));
+          std::bind(&SimulationMarketDataFeedClient::OnTimeAndSaleTimerExpired,
+            this, std::placeholders::_1)));
       m_bboTimer->Start();
       m_marketQuoteTimer->Start();
       m_timeAndSaleTimer->Start();
@@ -178,8 +186,8 @@ namespace Nexus {
         snapshot.m_bboQuote->m_bid.m_price -= Money::CENT;
         snapshot.m_bboQuote->m_ask.m_price -= Money::CENT;
       }
-      m_feedClient->PublishBboQuote(SecurityBboQuote(snapshot.m_bboQuote,
-        snapshot.m_security));
+      m_feedClient->PublishBboQuote(
+        SecurityBboQuote(snapshot.m_bboQuote, snapshot.m_security));
     }
     m_bboTimer->Start();
   }
@@ -206,8 +214,8 @@ namespace Nexus {
   void SimulationMarketDataFeedClient<F, T, B, M, S>::OnTimeAndSaleTimerExpired(
       Beam::Threading::Timer::Result result) {
     for(auto& snapshot : m_securities) {
-      auto condition = TimeAndSale::Condition(
-        TimeAndSale::Condition::Type::REGULAR, "@");
+      auto condition =
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
       auto price = [&] {
         if(std::rand() % 2 == 0) {
           return snapshot.m_bboQuote->m_bid.m_price;

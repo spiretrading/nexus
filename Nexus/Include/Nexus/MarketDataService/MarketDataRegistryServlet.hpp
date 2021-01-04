@@ -351,10 +351,8 @@ namespace Nexus::MarketDataService {
     if(security.GetMarket().IsEmpty()) {
       return security;
     }
-    auto query = SecurityInfoQuery();
-    query.SetIndex(security);
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-    auto result = m_dataStore->LoadSecurityInfo(query);
+    auto result = m_dataStore->LoadSecurityInfo(
+      MakeSecurityInfoQuery(security));
     if(result.empty()) {
       return security;
     }
