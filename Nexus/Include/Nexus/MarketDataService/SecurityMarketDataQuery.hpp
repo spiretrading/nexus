@@ -13,7 +13,7 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/MarketQuote.hpp"
 #include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
