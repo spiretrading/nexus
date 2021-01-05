@@ -66,7 +66,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
   m_item_delegate = new CustomVariantItemDelegate(this);
-  Window::get_layout()->addWidget(m_body);
+  Window::layout()->addWidget(m_body);
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {

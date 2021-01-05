@@ -30,6 +30,10 @@ namespace Spire {
       */
       void set_svg_icon(const QString& icon_path);
 
+      //! Return the layout manager of the central widget instead of its own.
+      //! Overwride the layout function in QWidget class.
+      QLayout* layout() const;
+
     protected:
 
       //! Resizes the Window, adding the TitleBar's height to provided size.
@@ -50,7 +54,6 @@ namespace Spire {
       bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
-      QLayout* get_layout() const;
 
     private:
       mutable ClosedSignal m_closed_signal;
