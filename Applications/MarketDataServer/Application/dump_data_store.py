@@ -1,7 +1,8 @@
 import argparse
 import copy
 import datetime
-import multiprocessing
+import functools
+import sqlite3
 import sys
 
 import beam
@@ -14,8 +15,7 @@ def parse_date(source):
   try:
     return datetime.datetime.strptime(source, '%Y-%m-%d %H:%M:%S')
   except ValueError:
-    raise argparse.ArgumentTypeError(
-      "Not a valid date: '{0}'.".format(source))
+    raise argparse.ArgumentTypeError("Not a valid date: '{0}'.".format(source))
 
 def report_yaml_error(error):
   if hasattr(error, 'problem_mark'):
@@ -28,8 +28,35 @@ def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
     return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
-    int(source[separator + 1 :]))
+  return beam.network.IpAddress(
+    source[0:separator], int(source[separator + 1 :]))
+
+def load_securities(source):
+  securities = []
+  cursor = source.cursor()
+  query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
+  cursor.execute(query)
+  for result in cursor.fetchall():
+    securities.append(
+      nexus.Security(result[0], nexus.CountryCode(int(result[1]))))
+  return securities
+
+def load_markets(source):
+  markets = []
+  cursor = source.cursor()
+  query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
+  cursor.execute(query)
+  for result in cursor.fetchall():
+    markets.append(result[0])
+  return markets
+
+def backup_security_info(source, destination):
+  query = beam.queries.PagedQuery()
+  query.index = nexus.Region.GLOBAL
+  query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
+  rows = source.load_security_info(query)
+  for info in rows:
+    destination.store(info)
 
 def backup(index, start, end, loader, destination):
   if isinstance(index, nexus.Security):
@@ -71,16 +98,14 @@ def backup_spawn(index, start, end, source, destination):
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
-  parser.add_argument('-c', '--config', type=str, help='Configuration file',
+  parser.add_argument('-c', '--config', type=str, help='Configuration file.',
     default='config.yml')
-  parser.add_argument('-s', '--start', type=parse_date, help='Start range',
-    required=True)
-  parser.add_argument('-e', '--end', type=parse_date, help='End range',
-    required=True)
-  parser.add_argument('-o', '--out', type=str, help='SQLite File',
-    required=True)
-  parser.add_argument('-j', '--cores', type=int, help='Number of cores to use',
-    required=False, default=(multiprocessing.cpu_count() - 1))
+  parser.add_argument(
+    '-s', '--start', type=parse_date, help='Start time range.', required=True)
+  parser.add_argument(
+    '-e', '--end', type=parse_date, help='End time range.', required=True)
+  parser.add_argument('-o', '--output', type=str, help='SQLite output file.')
+  parser.add_argument('-i', '--input', type=str, help='SQLite input file.')
   args = parser.parse_args()
   try:
     stream = open(args.config, 'r').read()
@@ -91,52 +116,48 @@ def main():
   except yaml.YAMLError as e:
     report_yaml_error(e)
     exit(1)
+  if args.output and args.input:
+    print('Can not use Sqlite as both the input and output.')
+    exit(1)
+  elif not args.output and not args.input:
+    print('Sqlite path not specified.')
+    exit(1)
   data_store_config = config['data_store']
   address = parse_ip_address(data_store_config['address'])
   username = data_store_config['username']
   password = data_store_config['password']
   schema = data_store_config['schema']
+  if args.output is not None:
+    sqlite_path = args.output
+    connection = pymysql.connect(
+      address.host, username, password, schema, address.port)
+  else:
+    sqlite_path = args.input
+    connection = sqlite3.connect(sqlite_path)
+  securities = load_securities(connection)
+  markets = load_markets(connection)
+  connection.close()
   mysql_data_store = nexus.market_data_service.MySqlHistoricalDataStore(
     address.host, address.port, username, password, schema)
-  mysql_connection = pymysql.connect(address.host, username, password, schema,
-    address.port)
-  securities = []
-  with mysql_connection.cursor() as cursor:
-    query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
-    cursor.execute(query)
-    for result in cursor.fetchall():
-      securities.append(nexus.Security(result[0],
-        nexus.CountryCode(int(result[1]))))
-  markets = []
-  with mysql_connection.cursor() as cursor:
-    query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
-    cursor.execute(query)
-    for result in cursor.fetchall():
-      markets.append(result[0])
   sqlite_data_store = nexus.market_data_service.SqliteHistoricalDataStore(
-    args.out)
-  routines = []
+    sqlite_path)
+  if args.output is not None:
+    source = mysql_data_store
+    destination = sqlite_data_store
+  else:
+    source = sqlite_data_store
+    destination = mysql_data_store
+  routines = beam.routines.RoutineHandlerGroup()
   for security in securities:
-    if len(routines) == args.cores:
-      for routine in routines:
-        routine.wait()
-      routines = []
-    routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
-      (lambda s: lambda: backup_spawn(s, args.start, args.end, mysql_data_store,
-        sqlite_data_store))(security))))
-  for routine in routines:
-    routine.wait()
-  routines = []
+    routines.spawn(functools.partial(backup_spawn, security, args.start,
+      args.end, source, destination))
+  routines.wait()
+  routines = beam.routines.RoutineHandlerGroup()
   for market in markets:
-    if len(routines) == args.cores:
-      for routine in routines:
-        routine.wait()
-      routines = []
-    routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
-      (lambda s: lambda: backup(s, args.start, args.end,
-      mysql_data_store.load_order_imbalances, sqlite_data_store))(market))))
-  for routine in routines:
-    routine.wait()
+    routines.spawn(functools.partial(backup, market, args.start, args.end,
+      source.load_order_imbalances, destination))
+  routines.wait()
+  backup_security_info(source, destination)
 
 if __name__ == '__main__':
   main()
