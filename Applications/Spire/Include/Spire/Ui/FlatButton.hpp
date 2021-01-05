@@ -80,6 +80,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      QSize sizeHint() const override;
 
     private:
       mutable ClickedSignal m_clicked_signal;
@@ -105,7 +106,7 @@ namespace Spire {
     \param label The button's label.
     \param parent The parent widget.
   */
-  FlatButton* make_flat_button(const QString& label, QWidget* parent);
+  FlatButton* make_flat_button(const QString& label, QWidget* parent = nullptr);
 }
 
 #endif

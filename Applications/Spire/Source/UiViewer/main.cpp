@@ -5,11 +5,11 @@
 using namespace Spire;
 
 int main(int argc, char** argv) {
-  auto application = new QApplication(argc, argv);
-  application->setOrganizationName(QObject::tr("Spire Trading Inc"));
-  application->setApplicationName(QObject::tr("Scratch"));
+  auto application = QApplication(argc, argv);
+  application.setOrganizationName(QObject::tr("Spire Trading Inc"));
+  application.setApplicationName(QObject::tr("UI Viewer"));
   initialize_resources();
-  auto window = new UiViewerWindow();
-  window->show();
-  application->exec();
+  auto window = UiViewerWindow();
+  window.show();
+  application.exec();
 }

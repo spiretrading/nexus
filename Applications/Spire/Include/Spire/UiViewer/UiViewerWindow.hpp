@@ -1,9 +1,16 @@
 #ifndef SPIRE_UI_VIEWER_WINDOW_HPP
 #define SPIRE_UI_VIEWER_WINDOW_HPP
-#include <QHash>
-#include <QHboxLayout>
+#include <any>
+#include <unordered_map>
+#include <vector>
+#include <QPushButton>
 #include <QListWidget>
+#include <QScrollArea>
+#include <QSplitter>
+#include <QTextEdit>
 #include "Spire/Ui/Window.hpp"
+#include "Spire/UiViewer/UiProfile.hpp"
+#include "Spire/UiViewer/UiViewer.hpp"
 
 namespace Spire {
 
@@ -18,13 +25,22 @@ namespace Spire {
       explicit UiViewerWindow(QWidget* parent = nullptr);
 
     private:
-      QHash<QString, QWidget*> m_widgets;
+      QSplitter* m_body;
       QListWidget* m_widget_list;
-      QHBoxLayout* m_layout;
+      int m_line_count;
+      QScrollArea* m_center_stage;
+      QTextEdit* m_event_log;
+      QPushButton* m_reset_button;
+      QPushButton* m_rebuild_button;
+      std::unordered_map<QString, UiProfile> m_profiles;
 
-      void add_test_widget(const QString& name, QWidget* widget);
+      void add(UiProfile profile);
+      void on_event(const QString& name,
+        const std::vector<std::any>& arguments);
       void on_item_selected(const QListWidgetItem* current,
         const QListWidgetItem* previous);
+      void on_reset();
+      void on_rebuild();
   };
 }
 

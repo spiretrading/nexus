@@ -93,6 +93,7 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
+      QSize	sizeHint() const override;
 
     private:
       mutable ValueSelectedSignal m_value_selected_signal;

@@ -12,46 +12,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  QVariant to_variant(const any& value) {
-    if(value.type() == typeid(bool)) {
-      return QVariant::fromValue(any_cast<bool>(value));
-    } else if(value.type() == typeid(Quantity)) {
-      return QVariant::fromValue(any_cast<Quantity>(value));
-    } else if(value.type() == typeid(double)) {
-      return QVariant::fromValue(any_cast<double>(value));
-    } else if(value.type() == typeid(ptime)) {
-      return QVariant::fromValue(any_cast<ptime>(value));
-    } else if(value.type() == typeid(posix_time::time_duration)) {
-      return QVariant::fromValue(any_cast<posix_time::time_duration>(value));
-    } else if(value.type() == typeid(std::string)) {
-      return QVariant::fromValue(QString::fromStdString(
-        any_cast<std::string>(value)));
-    } else if(value.type() == typeid(CurrencyId)) {
-      return QVariant::fromValue(any_cast<CurrencyId>(value));
-    } else if(value.type() == typeid(MarketToken)) {
-      return QVariant::fromValue(any_cast<MarketToken>(value));
-    } else if(value.type() == typeid(Money)) {
-      return QVariant::fromValue(any_cast<Money>(value));
-    } else if(value.type() == typeid(Quantity)) {
-      return QVariant::fromValue(any_cast<Quantity>(value));
-    } else if(value.type() == typeid(Region)) {
-      return QVariant::fromValue(any_cast<Region>(value));
-    } else if(value.type() == typeid(OrderStatus)) {
-      return QVariant::fromValue(any_cast<OrderStatus>(value));
-    } else if(value.type() == typeid(OrderType)) {
-      return QVariant::fromValue(any_cast<OrderType>(value));
-    } else if(value.type() == typeid(PositionSideToken)) {
-      return QVariant::fromValue(any_cast<PositionSideToken>(value));
-    } else if(value.type() == typeid(Security)) {
-      return QVariant::fromValue(any_cast<Security>(value));
-    } else if(value.type() == typeid(Side)) {
-      return QVariant::fromValue(any_cast<Side>(value));
-    } else if(value.type() == typeid(TimeInForce)) {
-      return QVariant::fromValue(any_cast<TimeInForce>(value));
-    }
-    return QString("N/A");
-  }
-
   template<typename T>
   bool compare(const T& left, const T& right, const QModelIndex& leftIndex,
       const QModelIndex& rightIndex) {
@@ -103,6 +63,52 @@ posix_time::ptime Spire::to_ptime(const QDateTime& time) {
     posix_time::time_duration(time.time().hour(), time.time().minute(),
     time.time().second(), time.time().msec()));
   return posix_time;
+}
+
+QVariant Spire::to_qvariant(const std::any& value) {
+  if(value.type() == typeid(bool)) {
+    return QVariant::fromValue(std::any_cast<bool>(value));
+  } else if(value.type() == typeid(int)) {
+    return QVariant::fromValue(std::any_cast<int>(value));
+  } else if(value.type() == typeid(Quantity)) {
+    return QVariant::fromValue(std::any_cast<Quantity>(value));
+  } else if(value.type() == typeid(double)) {
+    return QVariant::fromValue(std::any_cast<double>(value));
+  } else if(value.type() == typeid(ptime)) {
+    return QVariant::fromValue(std::any_cast<ptime>(value));
+  } else if(value.type() == typeid(posix_time::time_duration)) {
+    return QVariant::fromValue(std::any_cast<posix_time::time_duration>(value));
+  } else if(value.type() == typeid(std::string)) {
+    return QVariant::fromValue(QString::fromStdString(
+      std::any_cast<std::string>(value)));
+  } else if(value.type() == typeid(CurrencyId)) {
+    return QVariant::fromValue(std::any_cast<CurrencyId>(value));
+  } else if(value.type() == typeid(MarketToken)) {
+    return QVariant::fromValue(std::any_cast<MarketToken>(value));
+  } else if(value.type() == typeid(Money)) {
+    return QVariant::fromValue(std::any_cast<Money>(value));
+  } else if(value.type() == typeid(Quantity)) {
+    return QVariant::fromValue(std::any_cast<Quantity>(value));
+  } else if(value.type() == typeid(Region)) {
+    return QVariant::fromValue(std::any_cast<Region>(value));
+  } else if(value.type() == typeid(OrderStatus)) {
+    return QVariant::fromValue(std::any_cast<OrderStatus>(value));
+  } else if(value.type() == typeid(OrderType)) {
+    return QVariant::fromValue(std::any_cast<OrderType>(value));
+  } else if(value.type() == typeid(PositionSideToken)) {
+    return QVariant::fromValue(std::any_cast<PositionSideToken>(value));
+  } else if(value.type() == typeid(Security)) {
+    return QVariant::fromValue(std::any_cast<Security>(value));
+  } else if(value.type() == typeid(Side)) {
+    return QVariant::fromValue(std::any_cast<Side>(value));
+  } else if(value.type() == typeid(TimeInForce)) {
+    return QVariant::fromValue(std::any_cast<TimeInForce>(value));
+  } else if(value.type() == typeid(QColor)) {
+    return QVariant::fromValue(std::any_cast<QColor>(value));
+  } else if(value.type() == typeid(QString)) {
+    return QVariant::fromValue(std::any_cast<QString>(value));
+  }
+  return QVariant();
 }
 
 void Spire::register_custom_qt_variants() {}
@@ -214,6 +220,11 @@ const QString& Spire::displayText(OrderType type) {
   }
 }
 
+QString Spire::displayTextAny(const std::any& value) {
+  auto translated_value = to_qvariant(value);
+  return CustomVariantItemDelegate().displayText(translated_value);
+}
+
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
   : QStyledItemDelegate(parent) {}
 
@@ -263,8 +274,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return Spire::displayText(value.value<TimeInForce>().GetType());
-  } else if(value.canConvert<any>()) {
-    auto translated_value = to_variant(value.value<any>());
+  } else if(value.canConvert<std::any>()) {
+    auto translated_value = to_qvariant(value.value<std::any>());
     return displayText(translated_value, locale);
   }
   return QStyledItemDelegate::displayText(value, locale);
@@ -279,12 +290,12 @@ CustomVariantSortFilterProxyModel::CustomVariantSortFilterProxyModel(
 bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     const QModelIndex& right) const {
   auto left_variant = sourceModel()->data(left, sortRole());
-  if(left_variant.canConvert<any>()) {
-    left_variant = to_variant(left_variant.value<any>());
+  if(left_variant.canConvert<std::any>()) {
+    left_variant = to_qvariant(left_variant.value<std::any>());
   }
   auto right_variant = sourceModel()->data(right, sortRole());
-  if(right_variant.canConvert<any>()) {
-    right_variant = to_variant(right_variant.value<any>());
+  if(right_variant.canConvert<std::any>()) {
+    right_variant = to_qvariant(right_variant.value<std::any>());
   }
   if(left_variant.type() != right_variant.type()) {
     return QSortFilterProxyModel::lessThan(left, right);

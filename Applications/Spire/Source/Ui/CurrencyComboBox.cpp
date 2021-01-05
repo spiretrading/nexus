@@ -23,8 +23,6 @@ CurrencyComboBox::CurrencyComboBox(const CurrencyDatabase& database,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_menu);
-  m_value_connection = m_menu->connect_value_selected_signal(
-    [=] (const auto& value) { m_selected_signal(value.value<CurrencyId>()); });
 }
 
 CurrencyId CurrencyComboBox::get_currency() const {
@@ -37,5 +35,7 @@ void CurrencyComboBox::set_currency(CurrencyId currency) {
 
 connection CurrencyComboBox::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
+  return m_menu->connect_value_selected_signal([=] (const auto& value) {
+    slot(value.value<CurrencyId>());
+  });
 }

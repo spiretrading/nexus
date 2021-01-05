@@ -80,9 +80,13 @@ QVariant StaticDropDownMenu::get_current_item() const {
 }
 
 void StaticDropDownMenu::set_current_item(const QVariant& item) {
+  if(item == m_current_item) {
+    return;
+  }
   for(auto i = 0; i < m_menu_list->item_count(); ++i) {
     if(m_menu_list->get_value(i) == item) {
       m_current_item = item;
+      m_value_selected_signal(m_current_item);
       break;
     }
   }
@@ -180,6 +184,10 @@ void StaticDropDownMenu::showEvent(QShowEvent* event) {
     m_menu_list->show();
   }
   QWidget::showEvent(event);
+}
+
+QSize	StaticDropDownMenu::sizeHint() const {
+  return scale(100, 26);
 }
 
 connection StaticDropDownMenu::connect_index_selected_signal(

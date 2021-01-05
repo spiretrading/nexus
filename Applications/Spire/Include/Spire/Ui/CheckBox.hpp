@@ -51,7 +51,7 @@ namespace Spire {
     \param label The CheckBox's text label.
     \param parent The parent widget.
   */
-  CheckBox* make_check_box(const QString& label, QWidget* parent);
+  CheckBox* make_check_box(const QString& label, QWidget* parent = nullptr);
 }
 
 #endif

@@ -170,6 +170,7 @@ void TimeAndSalesTableView::update_table_height(int num_rows) {
 void TimeAndSalesTableView::on_end_loading_signal() {
   delete_later(m_transition_widget);
   delete_later(m_loading_widget);
+  update_table_height(m_table->model()->rowCount());
 }
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,

@@ -83,20 +83,20 @@ namespace Details {
     auto key = Key(index, currency);
     auto entryIterator = m_inventories.find(key);
     if(entryIterator == m_inventories.end()) {
-      entryIterator = m_inventories.insert(
-        std::pair(key, Inventory(key))).first;
+      entryIterator =
+        m_inventories.insert(std::pair(key, Inventory(key))).first;
     }
     auto& entry = entryIterator->second;
-    auto& total = InternalGetTotal(currency);
     entry.m_fees += fees;
-    entry.m_volume += Abs(quantity);
-    ++entry.m_transactionCount;
+    auto& total = InternalGetTotal(currency);
     total.m_fees += fees;
-    total.m_volume += Abs(quantity);
-    ++total.m_transactionCount;
     if(quantity == 0) {
       return;
     }
+    entry.m_volume += Abs(quantity);
+    ++entry.m_transactionCount;
+    total.m_volume += Abs(quantity);
+    ++total.m_transactionCount;
     auto price = Abs(costBasis / quantity);
     auto remainingQuantity = Abs(quantity);
     auto direction = [&] {
@@ -111,16 +111,18 @@ namespace Details {
     total.m_position.m_costBasis -= Abs(entry.m_position.m_costBasis);
     if((entry.m_position.m_quantity > 0 && quantity < 0) ||
         (entry.m_position.m_quantity < 0 && quantity > 0)) {
+      auto transactionReduction =
+        std::min(remainingQuantity, Abs(entry.m_position.m_quantity));
       auto averagePrice = GetAveragePrice(entry.m_position);
-      auto transactionReduction = std::min(remainingQuantity,
-        Abs(entry.m_position.m_quantity));
-      auto grossDelta = -direction * transactionReduction *
-        (price - averagePrice);
+      entry.m_grossProfitAndLoss +=
+        -direction * transactionReduction * (price - averagePrice);
       auto quantityDelta = direction * transactionReduction;
-      auto costBasisDelta = quantityDelta * averagePrice;
-      entry.m_grossProfitAndLoss += grossDelta;
       entry.m_position.m_quantity += quantityDelta;
-      entry.m_position.m_costBasis += costBasisDelta;
+      if(entry.m_position.m_quantity == 0) {
+        entry.m_position.m_costBasis = Money::ZERO;
+      } else {
+        entry.m_position.m_costBasis += quantityDelta * averagePrice;
+      }
       remainingQuantity -= transactionReduction;
       if(remainingQuantity == 0) {
         total.m_grossProfitAndLoss += entry.m_grossProfitAndLoss;
@@ -141,16 +143,15 @@ namespace Details {
   template<typename I>
   const typename TrueAverageBookkeeper<I>::Inventory&
       TrueAverageBookkeeper<I>::GetInventory(const Index& index,
-      CurrencyId currency) const {
+        CurrencyId currency) const {
     auto key = Key(index, currency);
     auto inventoryIterator = m_inventories.find(key);
     if(inventoryIterator == m_inventories.end()) {
-      static auto emptyInventories = Beam::SynchronizedUnorderedMap<
-        Key, Inventory>();
-      return emptyInventories.GetOrInsert(key,
-        [&] {
-          return Inventory(key);
-        });
+      static auto emptyInventories =
+        Beam::SynchronizedUnorderedMap<Key, Inventory>();
+      return emptyInventories.GetOrInsert(key, [&] {
+        return Inventory(key);
+      });
     }
     return inventoryIterator->second;
   }
@@ -160,14 +161,13 @@ namespace Details {
       TrueAverageBookkeeper<I>::GetTotal(CurrencyId currency) const {
     auto totalsIterator = m_totals.find(currency);
     if(totalsIterator == m_totals.end()) {
-      static auto emptyTotals = Beam::SynchronizedUnorderedMap<
-        CurrencyId, Inventory>();
-      return emptyTotals.GetOrInsert(currency,
-        [&] {
-          auto totals = Inventory();
-          totals.m_position.m_key.m_currency = currency;
-          return totals;
-        });
+      static auto emptyTotals =
+        Beam::SynchronizedUnorderedMap<CurrencyId, Inventory>();
+      return emptyTotals.GetOrInsert(currency, [&] {
+        auto totals = Inventory();
+        totals.m_position.m_key.m_currency = currency;
+        return totals;
+      });
     }
     return totalsIterator->second;
   }
@@ -184,8 +184,8 @@ namespace Details {
   template<typename I>
   Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
       TrueAverageBookkeeper<I>::GetTotalsRange() const {
-    using Accessor = Details::ValueAccessor<
-      std::pair<const CurrencyId, Inventory>>;
+    using Accessor =
+      Details::ValueAccessor<std::pair<const CurrencyId, Inventory>>;
     return Beam::View(
       boost::make_transform_iterator(m_totals.begin(), Accessor()),
       boost::make_transform_iterator(m_totals.end(), Accessor()));

@@ -36,7 +36,6 @@ namespace Spire {
         const SelectedSignal::slot_type& slot) const;
 
     private:
-      mutable SelectedSignal m_selected_signal;
       StaticDropDownMenu* m_menu;
       boost::signals2::scoped_connection m_value_connection;
   };

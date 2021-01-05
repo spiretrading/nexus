@@ -1,148 +1,162 @@
 #include "Spire/UiViewer/UiViewerWindow.hpp"
 #include <QGridLayout>
 #include <QLabel>
+#include <QScrollArea>
+#include <QSplitter>
+#include <QTextEdit>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/ScrollBarStyle.hpp"
-#include "Spire/UiViewer/CheckBoxTestWidget.hpp"
-#include "Spire/UiViewer/ColorSelectorButtonTestWidget.hpp"
-#include "Spire/UiViewer/ComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/CurrencyComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/DateInputTestWidget.hpp"
-#include "Spire/UiViewer/DecimalSpinBoxTestWidget.hpp"
-#include "Spire/UiViewer/DropDownMenu2TestWidget.hpp"
-#include "Spire/UiViewer/DurationInputTestWidget.hpp"
-#include "Spire/UiViewer/FilteredDropDownMenuTestWidget.hpp"
-#include "Spire/UiViewer/FlatButtonTestWidget.hpp"
-#include "Spire/UiViewer/FontSelectorTestWidget.hpp"
-#include "Spire/UiViewer/IconButtonTestWidget.hpp"
-#include "Spire/UiViewer/IntegerSpinBoxTestWidget.hpp"
-#include "Spire/UiViewer/KeySequenceTestWidget.hpp"
-#include "Spire/UiViewer/MarketComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/MoneySpinBoxTestWidget.hpp"
-#include "Spire/UiViewer/OrderStatusComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/OrderTypeComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/QuantitySpinBoxTestWidget.hpp"
-#include "Spire/UiViewer/RangeInputTestWidget.hpp"
-#include "Spire/UiViewer/ScrollAreaTestWidget.hpp"
-#include "Spire/UiViewer/SecurityInputTestWidget.hpp"
-#include "Spire/UiViewer/SecurityWidgetTestWidget.hpp"
-#include "Spire/UiViewer/SideComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/SpinBoxTestWidget.hpp"
-#include "Spire/UiViewer/StaticDropDownMenuTestWidget.hpp"
-#include "Spire/UiViewer/TabTestWidget.hpp"
-#include "Spire/UiViewer/TextInputTestWidget.hpp"
-#include "Spire/UiViewer/TimeInForceComboBoxTestWidget.hpp"
-#include "Spire/UiViewer/TimeOfDayTestWidget.hpp"
-#include "Spire/UiViewer/ToggleButtonTestWidget.hpp"
-#include "Spire/UiViewer/TransitionTestWidget.hpp"
+#include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include "Spire/UiViewer/UiProfile.hpp"
+#include "Spire/UiViewer/UiPropertyTableView.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Spire;
 
+namespace {
+  const auto LIST_INDEX = 0;
+  const auto STAGE_INDEX = 1;
+  const auto PROPERTIES_INDEX = 2;
+
+  auto make_widget_list(QWidget* parent) {
+    auto widget_list = new QListWidget(parent);
+    widget_list->setSelectionMode(QAbstractItemView::SingleSelection);
+    widget_list->setStyleSheet(QString(R"(
+      QListWidget {
+        background-color: white;
+        border: 1px solid #A0A0A0;
+        outline: none;
+        padding: %1px 0px %1px %2px;
+      }
+      QListWidget:focus {
+        border: 1px solid #4B23A0;
+      }
+      QListWidget::item {
+        margin-right: %2px;
+        padding-top: %5px;
+        padding-bottom: %5px;
+      }
+      QListWidget::item:selected {
+        border: %3px solid #4B23A0 %4px solid #4B23A0;
+        color: #000000;
+        padding-left: -%4px;
+      })").arg(scale_height(4)).arg(scale_width(4))
+        .arg(scale_height(1)).arg(scale_width(1))
+        .arg(scale_height(3)));
+    widget_list->verticalScrollBar()->setStyle(new ScrollBarStyle(widget_list));
+    return widget_list;
+  }
+
+  auto make_table(const UiProfile& profile, QPushButton* reset_button,
+      QPushButton* rebuild_button) {
+    auto container = new QWidget();
+    auto layout = new QVBoxLayout(container);
+    auto table = new UiPropertyTableView(profile.get_properties());
+    layout->addWidget(table);
+    auto button_layout = new QHBoxLayout();
+    button_layout->addWidget(reset_button);
+    button_layout->addWidget(rebuild_button);
+    layout->addLayout(button_layout);
+    return container;
+  }
+}
+
 UiViewerWindow::UiViewerWindow(QWidget* parent)
-    : Window(parent) {
-  setMinimumSize(scale(775, 432));
+    : Window(parent),
+      m_line_count(0) {
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  auto body = new QWidget(this);
-  body->setObjectName("ui_viewer_body");
-  body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
-  layout()->addWidget(body);
-  m_layout = new QHBoxLayout(body);
-  m_widget_list = new QListWidget(this);
-  m_widget_list->setSelectionMode(QAbstractItemView::SingleSelection);
-  m_widget_list->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-  m_widget_list->setMaximumWidth(scale_width(200));
-  m_widget_list->setStyleSheet(QString(R"(
-    QListWidget {
-      background-color: white;
-      border: 1px solid #A0A0A0;
-      outline: none;
-      padding: %1px 0px %1px %2px;
-    }
-
-    QListWidget:focus {
-      border: 1px solid #4B23A0;
-    }
-
-    QListWidget::item {
-      margin-right: %2px;
-      padding-top: %5px;
-      padding-bottom: %5px;
-    }
-
-    QListWidget::item:selected {
-      border: %3px solid #4B23A0 %4px solid #4B23A0;
-      color: #000000;
-      padding-left: -%4px;
-    })").arg(scale_height(4)).arg(scale_width(4))
-      .arg(scale_height(1)).arg(scale_width(1))
-      .arg(scale_height(3)));
-  m_widget_list->verticalScrollBar()->setStyle(new ScrollBarStyle(this));
+  resize(scale(775, 500));
+  m_body = new QSplitter(Qt::Horizontal, this);
+  m_body->setObjectName("ui_viewer_body");
+  m_body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
+  m_body->setContentsMargins(scale_width(6), scale_height(6), scale_width(6),
+    scale_height(6));
+  layout()->addWidget(m_body);
+  m_widget_list = make_widget_list(this);
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
-  m_layout->addWidget(m_widget_list);
-  add_test_widget(tr("CheckBox"), new CheckBoxTestWidget(this));
-  add_test_widget(tr("ColorSelectorButton"),
-    new ColorSelectorButtonTestWidget(this));
-  add_test_widget(tr("CurrencyComboBox"), new ComboBoxTestWidget(
-    new CurrencyComboBoxTestWidget(this), this));
-  add_test_widget(tr("DateInputWidget"), new DateInputTestWidget(this));
-  add_test_widget(tr("DecimalSpinBox"), new SpinBoxTestWidget(
-    new DecimalSpinBoxTestWidget(this), this));
-  add_test_widget(tr("DropDownMenu2"),
-    new DropDownMenu2TestWidget(this));
-  add_test_widget(tr("DurationInputWidget"),
-    new DurationInputTestWidget(this));
-  add_test_widget(tr("FilteredDropDownMenu"),
-    new FilteredDropDownMenuTestWidget(this));
-  add_test_widget(tr("FlatButton"), new FlatButtonTestWidget(this));
-  add_test_widget(tr("FontSelectorWidget"), new FontSelectorTestWidget(this));
-  add_test_widget(tr("IconButton"), new IconButtonTestWidget(this));
-  add_test_widget(tr("IntegerSpinBox"), new SpinBoxTestWidget(
-    new IntegerSpinBoxTestWidget(this), this));
-  add_test_widget(tr("KeySequenceTestWidget"),
-    new KeySequenceTestWidget(this));
-  add_test_widget(tr("MarketComboBox"), new ComboBoxTestWidget(
-    new MarketComboBoxTestWidget(this)));
-  add_test_widget(tr("MoneySpinBox"), new SpinBoxTestWidget(
-    new MoneySpinBoxTestWidget(this), this));
-  add_test_widget(tr("OrderStatusComboBox"), new ComboBoxTestWidget(
-    new OrderStatusComboBoxTestWidget(this)));
-  add_test_widget(tr("OrderTypeComboBox"), new ComboBoxTestWidget(
-    new OrderTypeComboBoxTestWidget(this)));
-  add_test_widget(tr("QuantitySpinBox"), new SpinBoxTestWidget(
-    new QuantitySpinBoxTestWidget(this), this));
-  add_test_widget(tr("RangeInputWidget"), new RangeInputTestWidget(this));
-  add_test_widget(tr("ScrollArea"), new ScrollAreaTestWidget(this));
-  add_test_widget(tr("SecurityInput"), new SecurityInputTestWidget(this));
-  add_test_widget(tr("SecurityWidget"), new SecurityWidgetTestWidget(this));
-  add_test_widget(tr("SideComboBox"), new ComboBoxTestWidget(
-    new SideComboBoxTestWidget(this), this));
-  add_test_widget(tr("StaticDropDownMenu"),
-    new StaticDropDownMenuTestWidget(this));
-  add_test_widget(tr("TabWidget"), new TabTestWidget(this));
-  add_test_widget(tr("TextInputWidget"), new TextInputTestWidget(this));
-  add_test_widget(tr("TimeInForceComboBox"), new ComboBoxTestWidget(
-    new TimeInForceComboBoxTestWidget(this)));
-  add_test_widget(tr("TimeOfDayInputWidget"), new TimeOfDayTestWidget(this));
-  add_test_widget(tr("ToggleButton"), new ToggleButtonTestWidget(this));
-  add_test_widget(tr("TransitionWidget"), new TransitionTestWidget(this));
+  m_body->addWidget(m_widget_list);
+  m_body->addWidget(new QWidget(this));
+  m_body->addWidget(new QWidget(this));
+  m_body->setSizes({scale_width(150), scale_width(375), scale_width(250)});
+  m_reset_button = new QPushButton(QString::fromUtf8("Reset"));
+  connect(m_reset_button, &QPushButton::pressed, [this] { on_reset(); });
+  m_rebuild_button = new QPushButton(QString::fromUtf8("Rebuild"));
+  connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
+  add(make_check_box_profile());
+  add(make_color_selector_button_profile());
+  add(make_currency_combo_box_profile());
+  add(make_flat_button_profile());
   m_widget_list->setCurrentRow(0);
 }
 
-void UiViewerWindow::add_test_widget(const QString& name, QWidget* widget) {
-  m_widgets.insert(name, widget);
-  m_layout->addWidget(widget);
+void UiViewerWindow::add(UiProfile profile) {
+  auto name = profile.get_name();
   m_widget_list->addItem(name);
-  widget->hide();
+  m_profiles.insert(std::pair(std::move(name), std::move(profile)));
+}
+
+void UiViewerWindow::on_event(const QString& name,
+    const std::vector<std::any>& arguments) {
+  ++m_line_count;
+  auto log = QString();
+  log += QString::number(m_line_count) + ": " + name;
+  if(!arguments.empty()) {
+    log += "(";
+    auto prepend_comma = false;
+    for(auto& argument : arguments) {
+      if(prepend_comma) {
+        log += ", ";
+      } else {
+        prepend_comma = true;
+      }
+      log += displayTextAny(argument);
+    }
+    log += ")";
+  }
+  m_event_log->append(log);
 }
 
 void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     const QListWidgetItem* previous) {
   if(previous) {
-    m_widgets[previous->text()]->hide();
+    auto& profile = m_profiles.at(previous->text());
+    profile.reset();
   }
-  m_widgets[current->text()]->show();
+  auto& profile = m_profiles.at(current->text());
+  auto table = make_table(profile, m_reset_button, m_rebuild_button);
+  auto previous_table = m_body->replaceWidget(PROPERTIES_INDEX, table);
+  delete previous_table;
+  table->show();
+  auto stage = new QSplitter(Qt::Vertical);
+  m_center_stage = new QScrollArea();
+  m_center_stage->setWidget(profile.get_widget());
+  m_center_stage->setAlignment(Qt::AlignCenter);
+  stage->addWidget(m_center_stage);
+  m_event_log = new QTextEdit();
+  m_event_log->setReadOnly(true);
+  stage->addWidget(m_event_log);
+  stage->setSizes({350, 150});
+  auto previous_stage = m_body->replaceWidget(STAGE_INDEX, stage);
+  delete previous_stage;
+  profile.connect_event_signal(
+    [this] (const auto& name, const auto& arguments) {
+      on_event(name, arguments);
+    });
+  m_line_count = 0;
+  stage->show();
+}
+
+void UiViewerWindow::on_reset() {
+  on_item_selected(m_widget_list->currentItem(), m_widget_list->currentItem());
+}
+
+void UiViewerWindow::on_rebuild() {
+  auto& profile = m_profiles.at(m_widget_list->currentItem()->text());
+  profile.rebuild();
+  auto previous_widget = m_center_stage->takeWidget();
+  m_center_stage->setWidget(profile.get_widget());
+  delete previous_widget;
 }

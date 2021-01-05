@@ -26,7 +26,7 @@ TEST_SUITE("BacktesterServiceClients") {
     timer->Start();
     backtesterEnvironment.GetEventHandler().Add(
       std::make_shared<ActiveBacktesterEvent>(
-      time_from_string("2016-05-07 00:00:00")));
+        time_from_string("2016-05-07 00:00:00")));
     timer->Wait();
     REQUIRE(serviceClients.GetTimeClient().GetTime() ==
       startTime + seconds(21));

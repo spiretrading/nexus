@@ -63,6 +63,9 @@ namespace Nexus {
       /** Returns the countries in this Region. */
       const std::unordered_set<CountryCode>& GetCountries() const;
 
+      /** Returns the markets in this Region. */
+      std::unordered_set<MarketCode> GetMarkets() const;
+
       /** Returns the Securities in this Region. */
       const std::unordered_set<Security>& GetSecurities() const;
 
@@ -228,6 +231,14 @@ namespace Nexus {
 
   inline const std::unordered_set<CountryCode>& Region::GetCountries() const {
     return m_countries;
+  }
+
+  inline std::unordered_set<MarketCode> Region::GetMarkets() const {
+    auto markets = std::unordered_set<MarketCode>();
+    for(auto& market : m_markets) {
+      markets.insert(market.m_market);
+    }
+    return markets;
   }
 
   inline const std::unordered_set<Security>& Region::GetSecurities() const {

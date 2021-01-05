@@ -2,13 +2,11 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QMouseEvent>
-#include <QPointF>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
-using Style = FlatButton::Style;
 
 FlatButton::FlatButton(QWidget* parent)
   : FlatButton("", parent) {}
@@ -47,7 +45,7 @@ void FlatButton::set_label(const QString& label) {
   m_label->setText(label);
 }
 
-const Style& FlatButton::get_style() const {
+const FlatButton::Style& FlatButton::get_style() const {
   return m_default_style;
 }
 
@@ -56,7 +54,7 @@ void FlatButton::set_style(const Style& default_style) {
   on_style_updated();
 }
 
-const Style& FlatButton::get_hover_style() const {
+const FlatButton::Style& FlatButton::get_hover_style() const {
   return m_hover_style;
 }
 
@@ -65,7 +63,7 @@ void FlatButton::set_hover_style(const Style& hover_style) {
   on_style_updated();
 }
 
-const Style& FlatButton::get_focus_style() const {
+const FlatButton::Style& FlatButton::get_focus_style() const {
   return m_focus_style;
 }
 
@@ -74,7 +72,7 @@ void FlatButton::set_focus_style(const Style& focus_style) {
   on_style_updated();
 }
 
-const Style& FlatButton::get_disabled_style() const {
+const FlatButton::Style& FlatButton::get_disabled_style() const {
   return m_disabled_style;
 }
 
@@ -142,6 +140,10 @@ void FlatButton::mouseReleaseEvent(QMouseEvent* event) {
       m_clicked_signal();
     }
   }
+}
+
+QSize FlatButton::sizeHint() const {
+  return scale(100, 26);
 }
 
 void FlatButton::disable_button() {

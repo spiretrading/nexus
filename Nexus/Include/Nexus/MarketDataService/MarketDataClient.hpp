@@ -125,6 +125,13 @@ namespace Nexus::MarketDataService {
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
 
       /**
+       * Loads the SecurityTechnicals for a specified Security.
+       * @param security The Security whose SecurityTechnicals is to be loaded.
+       * @return The SecurityTechnicals for the specified <i>security</i>.
+       */
+      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
+
+      /**
        * Queries for all SecurityInfo objects that are within a region.
        * @param query The query to submit.
        * @return The list of SecurityInfo objects that match the <i>query</i>.
@@ -279,6 +286,17 @@ namespace Nexus::MarketDataService {
       return client->template SendRequest<LoadSecuritySnapshotService>(
         security);
     }, "Failed to load security snapshot: " +
+      boost::lexical_cast<std::string>(security));
+  }
+
+  template<typename B>
+  SecurityTechnicals MarketDataClient<B>::LoadSecurityTechnicals(
+      const Security& security) {
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_clientHandler.GetClient();
+      return client->template SendRequest<LoadSecurityTechnicalsService>(
+        security);
+    }, "Failed to load security technicals: " +
       boost::lexical_cast<std::string>(security));
   }
 

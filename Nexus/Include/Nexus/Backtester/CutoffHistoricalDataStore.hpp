@@ -260,19 +260,19 @@ namespace Nexus {
           Beam::Queries::SnapshotLimit::FromTail(100));
         auto sequences = loader(cutoffQuery);
         if(sequences.empty()) {
-          cutoff = cutoffSequences.insert(std::make_pair(query.GetIndex(),
+          cutoff = cutoffSequences.insert(std::pair(query.GetIndex(),
             Beam::Queries::Sequence::First())).first;
         } else {
           for(auto i = sequences.rbegin(); i != sequences.rend(); ++i) {
             if((*i)->m_timestamp < m_cutoff) {
               cutoff = cutoffSequences.insert(
-                std::make_pair(query.GetIndex(), i->GetSequence())).first;
+                std::pair(query.GetIndex(), i->GetSequence())).first;
               break;
             }
           }
           rangeEnd = Beam::Queries::Decrement(sequences.front().GetSequence());
           if(rangeEnd == Beam::Queries::Sequence::First()) {
-            cutoff = cutoffSequences.insert(std::make_pair(query.GetIndex(),
+            cutoff = cutoffSequences.insert(std::pair(query.GetIndex(),
               Beam::Queries::Sequence::First())).first;
           }
         }

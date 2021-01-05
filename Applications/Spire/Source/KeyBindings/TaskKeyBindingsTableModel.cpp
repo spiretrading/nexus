@@ -17,24 +17,6 @@ namespace {
   const auto TIME_IN_FORCE_TAG_KEY = 59;
   const auto QUANTITY_TAG_KEY = 38;
 
-  QVariant to_variant(const any& value) {
-    auto& type = value.type();
-    if(type == typeid(Quantity)) {
-      return QVariant::fromValue(any_cast<Quantity>(value));
-    } else if(type == typeid(Region)) {
-      return QVariant::fromValue(any_cast<Region>(value));
-    } else if(type == typeid(OrderType)) {
-      return QVariant::fromValue(any_cast<OrderType>(value));
-    } else if(type == typeid(Security)) {
-      return QVariant::fromValue(any_cast<Security>(value));
-    } else if(type == typeid(Side)) {
-      return QVariant::fromValue(any_cast<Side>(value));
-    } else if(type == typeid(TimeInForce)) {
-      return QVariant::fromValue(any_cast<TimeInForce>(value));
-    }
-    return QVariant();
-  }
-
   bool is_same_value(const QVariant& value, const QModelIndex& index) {
     auto data = index.data();
     switch(static_cast<TaskKeyBindingsTableModel::Columns>(index.column())) {
@@ -116,27 +98,27 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
         {
           const auto& securities = binding.m_region.GetSecurities();
           if(!securities.empty()) {
-            return to_variant(*(securities.cbegin()));
+            return to_qvariant(*(securities.cbegin()));
           }
         }
         break;
       case Columns::DESTINATION:
-        return to_variant(binding.m_region);
+        return to_qvariant(binding.m_region);
       case Columns::ORDER_TYPE:
         if(auto order_type = get_value_from_action<OrderType>(action,
             ORDER_TYPE_TAG_KEY)) {
-          return to_variant(*order_type);
+          return to_qvariant(*order_type);
         }
         break;
       case Columns::SIDE:
         if(auto side = get_value_from_action<Side>(action, SIDE_TAG_KEY)) {
-          return to_variant(*side);
+          return to_qvariant(*side);
         }
         break;
       case Columns::QUANTITY:
         if(auto side = get_value_from_action<Quantity>(action,
             QUANTITY_TAG_KEY)) {
-          return to_variant(*side);
+          return to_qvariant(*side);
         }
         break;
       case Columns::TIME_IN_FORCE:
@@ -145,7 +127,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
             TIME_IN_FORCE_TAG_KEY);
           if(time_in_force &&
               time_in_force->GetType() != TimeInForce::Type::NONE) {
-            return to_variant(*time_in_force);
+            return to_qvariant(*time_in_force);
           }
           break;
         }
