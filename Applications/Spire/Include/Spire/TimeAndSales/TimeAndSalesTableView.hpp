@@ -34,6 +34,7 @@ namespace Spire {
       void set_properties(const TimeAndSalesProperties& properties);
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 

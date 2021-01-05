@@ -90,6 +90,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     })");
   m_table->setItemDelegate(new ItemPaddingDelegate(scale_width(5),
     new CustomVariantItemDelegate(), this));
+  m_table->installEventFilter(this);
   m_layout->addWidget(m_table);
   setWidget(main_widget);
 }
@@ -129,6 +130,13 @@ void TimeAndSalesTableView::set_properties(
   if(m_table->model()->rowCount() > 0) {
     update_table_height(m_table->model()->rowCount());
   }
+}
+
+bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_table && event->type() == QEvent::Paint) {
+    m_header->viewport()->update();
+  }
+  return ScrollArea::eventFilter(watched, event);
 }
 
 void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
