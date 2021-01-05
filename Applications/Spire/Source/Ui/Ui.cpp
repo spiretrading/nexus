@@ -32,6 +32,10 @@ QHeaderView* Spire::make_fixed_header(QWidget* parent) {
   header->setSectionResizeMode(QHeaderView::Fixed);
   header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   header->setStyleSheet(QString(R"(
+    QHeaderView {
+      background-color: #FFFFFF;
+    }
+
     QHeaderView::section {
       background-color: #FFFFFF;
       border: none;
@@ -51,6 +55,7 @@ QHeaderView* Spire::make_header(QWidget* parent) {
   header->setSectionResizeMode(QHeaderView::Interactive);
   header->setStyleSheet(QString(R"(
     QHeaderView {
+      background-color: #FFFFFF;
       padding-left: %1px;
     }
 
