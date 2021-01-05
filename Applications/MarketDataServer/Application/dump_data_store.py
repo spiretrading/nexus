@@ -15,8 +15,7 @@ def parse_date(source):
   try:
     return datetime.datetime.strptime(source, '%Y-%m-%d %H:%M:%S')
   except ValueError:
-    raise argparse.ArgumentTypeError(
-      "Not a valid date: '{0}'.".format(source))
+    raise argparse.ArgumentTypeError("Not a valid date: '{0}'.".format(source))
 
 def report_yaml_error(error):
   if hasattr(error, 'problem_mark'):
@@ -29,32 +28,32 @@ def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
     return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
-    int(source[separator + 1 :]))
+  return beam.network.IpAddress(
+    source[0:separator], int(source[separator + 1 :]))
 
 def load_securities(source):
   securities = []
-  with source.cursor() as cursor:
-    query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
-    cursor.execute(query)
-    for result in cursor.fetchall():
-      securities.append(nexus.Security(result[0],
-        nexus.CountryCode(int(result[1]))))
+  cursor = source.cursor()
+  query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
+  cursor.execute(query)
+  for result in cursor.fetchall():
+    securities.append(
+      nexus.Security(result[0], nexus.CountryCode(int(result[1]))))
   return securities
 
 def load_markets(source):
   markets = []
-  with source.cursor() as cursor:
-    query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
-    cursor.execute(query)
-    for result in cursor.fetchall():
-      markets.append(result[0])
+  cursor = source.cursor()
+  query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
+  cursor.execute(query)
+  for result in cursor.fetchall():
+    markets.append(result[0])
   return markets
 
 def backup_security_info(source, destination):
-  query = nexus.market_data_service.SecurityInfoQuery()
+  query = beam.queries.PagedQuery()
   query.index = nexus.Region.GLOBAL
-  query.set_snapshot_limit(beam.queries.SnapshotLimit.UNLIMITED)
+  query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
   rows = source.load_security_info(query)
   for info in rows:
     destination.store(info)
@@ -101,10 +100,10 @@ def main():
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file.',
     default='config.yml')
-  parser.add_argument('-s', '--start', type=parse_date,
-    help='Start time range.', required=True)
-  parser.add_argument('-e', '--end', type=parse_date, help='End time range.',
-    required=True)
+  parser.add_argument(
+    '-s', '--start', type=parse_date, help='Start time range.', required=True)
+  parser.add_argument(
+    '-e', '--end', type=parse_date, help='End time range.', required=True)
   parser.add_argument('-o', '--output', type=str, help='SQLite output file.')
   parser.add_argument('-i', '--input', type=str, help='SQLite input file.')
   args = parser.parse_args()
@@ -130,8 +129,8 @@ def main():
   schema = data_store_config['schema']
   if args.output is not None:
     sqlite_path = args.output
-    connection = pymysql.connect(address.host, username, password, schema,
-      address.port)
+    connection = pymysql.connect(
+      address.host, username, password, schema, address.port)
   else:
     sqlite_path = args.input
     connection = sqlite3.connect(sqlite_path)
