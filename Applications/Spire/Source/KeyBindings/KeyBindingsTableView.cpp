@@ -56,6 +56,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_header->setParent(this);
   m_header->setStretchLastSection(false);
   auto main_widget = new QWidget(this);
+  main_widget->setObjectName("key_bindings_table_main_widget");
+  main_widget->setStyleSheet(
+    "#key_bindings_table_main_widget { background-color: #FFFFFF; }");
   connect(m_header, &QHeaderView::sectionResized, this,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
@@ -97,6 +100,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
     m_delete_buttons_widget = new QWidget(main_widget);
+    m_delete_buttons_widget->setObjectName("delete_buttons_widget");
+    m_delete_buttons_widget->setStyleSheet(
+      "#delete_buttons_widget { background-color: #FFFFFF; }");
     m_delete_buttons_widget->setFixedWidth(DELETE_ROW_LAYOUT_WIDTH());
     m_delete_buttons_widget->move(0, m_header->height());
     m_delete_buttons_layout = new QVBoxLayout(m_delete_buttons_widget);
