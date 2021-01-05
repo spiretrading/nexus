@@ -192,19 +192,19 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     auto window_rect = QRect(window_pos->x, window_pos->y, window_pos->cx,
       window_pos->cy);
     if(window_rect.top() == screen_rect.top() &&
-      window_rect.bottom() == screen_rect.bottom()) {
-        if(window_rect.left() == screen_rect.left() ||
+        window_rect.bottom() == screen_rect.bottom()) {
+      if(window_rect.left() == screen_rect.left() ||
           window_rect.right() == screen_rect.right()) {
         m_shadow_margins = {0, 0, 0, 0};
       } else {
         m_shadow_margins = {m_resize_area_width, 0, m_resize_area_width, 0};
       }
     } else if(window_rect.height() == screen_rect.height() / 2 &&
-      (window_rect.top() == screen_rect.top() ||
-      window_rect.bottom() == screen_rect.bottom()) &&
-      (window_rect.left() == screen_rect.left() ||
-      window_rect.right() == screen_rect.right())) {
-        m_shadow_margins = {0, 0, 0, 0};
+        (window_rect.top() == screen_rect.top() ||
+        window_rect.bottom() == screen_rect.bottom()) &&
+        (window_rect.left() == screen_rect.left() ||
+        window_rect.right() == screen_rect.right())) {
+      m_shadow_margins = {0, 0, 0, 0};
     } else {
       m_shadow_margins = {m_resize_area_width, m_resize_area_width,
         m_resize_area_width, m_resize_area_width};
@@ -229,7 +229,9 @@ void Window::on_screen_changed(QScreen* screen) {
 
 void Window::set_fixed_body_size(const QSize& size) {
   set_window_attributes(false);
-  setFixedSize({size.width(), size.height() + m_title_bar->height()});
+  setFixedSize({size.width() + m_shadow_margins.left() +
+    m_shadow_margins.right(), size.height() + m_title_bar->height() +
+    m_shadow_margins.top() + m_shadow_margins.bottom()});
 }
 
 void Window::set_window_attributes(bool is_resizeable) {
