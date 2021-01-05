@@ -345,15 +345,12 @@ namespace Nexus::MarketDataService {
         }
       } else {
         auto client = m_marketDataClients.Acquire();
-        auto infoQuery = SecurityInfoQuery();
-        infoQuery.SetIndex(query.GetIndex());
-        infoQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-        auto infoResult = client->QuerySecurityInfo(infoQuery);
-        if(!infoResult.empty()) {
-          m_primarySecurities.Insert(infoResult.front().m_security);
+        auto info = LoadSecurityInfo(query.GetIndex(), *client);
+        if(info) {
+          m_primarySecurities.Insert(info->m_security);
         }
-        if(infoResult.empty() || infoResult.front().m_security.GetMarket() !=
-            query.GetIndex().GetMarket()) {
+        if(!info ||
+            info->m_security.GetMarket() != query.GetIndex().GetMarket()) {
           request.SetResult(result);
           return;
         }
