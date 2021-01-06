@@ -13,11 +13,28 @@
 using namespace Spire;
 
 namespace {
+  auto BUTTON_SIZE() {
+    static auto size = scale(16, 16);
+    return size;
+  }
+
+  const auto& BUTTON_STYLE() {
+    static auto style = [] {
+      auto style = IconButton::Style();
+      style.m_default_color = "#BAB3D9";
+      style.m_hover_color = "#E63F44";
+      style.m_hover_background_color = Qt::transparent;
+      style.m_blur_color = style.m_default_color;
+      return style;
+    }();
+    return style;
+  }
+
   auto create_delete_button(QWidget* parent) {
-    auto close_icon_size = scale(8, 8);
     auto button = new IconButton(
-      imageFromSvg(":/Icons/close-purple.svg", close_icon_size), parent);
-    button->setFixedSize(scale(16, 16));
+      imageFromSvg(":/Icons/delete-row.svg", BUTTON_SIZE()), BUTTON_STYLE(),
+      parent);
+    button->setFixedSize(BUTTON_SIZE());
     return button;
   }
 

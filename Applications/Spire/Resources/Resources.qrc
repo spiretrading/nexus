@@ -97,5 +97,6 @@
         <file>Icons/draw.svg</file>
         <file>Icons/lock-grid.svg</file>
         <file>Icons/chart-cursor.svg</file>
+        <file>Icons/delete-row.svg</file>
     </qresource>
 </RCC>
