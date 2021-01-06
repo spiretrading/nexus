@@ -13,11 +13,28 @@
 using namespace Spire;
 
 namespace {
+  auto BUTTON_SIZE() {
+    static auto size = scale(16, 16);
+    return size;
+  }
+
+  const auto& BUTTON_STYLE() {
+    static auto style = [] {
+      auto style = IconButton::Style();
+      style.m_default_color = "#BAB3D9";
+      style.m_hover_color = "#E63F44";
+      style.m_hover_background_color = Qt::transparent;
+      style.m_blur_color = style.m_default_color;
+      return style;
+    }();
+    return style;
+  }
+
   auto create_delete_button(QWidget* parent) {
-    auto close_icon_size = scale(8, 8);
     auto button = new IconButton(
-      imageFromSvg(":/Icons/close-purple.svg", close_icon_size), parent);
-    button->setFixedSize(scale(16, 16));
+      imageFromSvg(":/Icons/delete-row.svg", BUTTON_SIZE()), BUTTON_STYLE(),
+      parent);
+    button->setFixedSize(BUTTON_SIZE());
     return button;
   }
 
@@ -56,6 +73,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_header->setParent(this);
   m_header->setStretchLastSection(false);
   auto main_widget = new QWidget(this);
+  main_widget->setObjectName("key_bindings_table_main_widget");
+  main_widget->setStyleSheet(
+    "#key_bindings_table_main_widget { background-color: #FFFFFF; }");
   connect(m_header, &QHeaderView::sectionResized, this,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
@@ -97,6 +117,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
     m_delete_buttons_widget = new QWidget(main_widget);
+    m_delete_buttons_widget->setObjectName("delete_buttons_widget");
+    m_delete_buttons_widget->setStyleSheet(
+      "#delete_buttons_widget { background-color: #FFFFFF; }");
     m_delete_buttons_widget->setFixedWidth(DELETE_ROW_LAYOUT_WIDTH());
     m_delete_buttons_widget->move(0, m_header->height());
     m_delete_buttons_layout = new QVBoxLayout(m_delete_buttons_widget);
