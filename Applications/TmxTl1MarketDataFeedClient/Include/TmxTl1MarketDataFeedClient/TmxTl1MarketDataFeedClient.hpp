@@ -213,7 +213,7 @@ namespace Nexus::MarketDataService {
     auto bid = Quote(*bidPrice, *bidVolume, Side::BID);
     auto ask = Quote(*askPrice, *askVolume, Side::ASK);
     auto bbo = BboQuote(bid, ask, *timestamp);
-    m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo, security));
+    m_marketDataFeedClient->Publish(SecurityBboQuote(bbo, security));
   }
 
   template<typename M, typename S>

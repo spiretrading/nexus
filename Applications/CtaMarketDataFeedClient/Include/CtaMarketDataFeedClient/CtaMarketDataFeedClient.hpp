@@ -292,29 +292,25 @@ namespace Nexus::MarketDataService {
     auto ask = Quote(askPrice, askSize, Side::ASK);
     if(nationalBboIndicator == 'G') {
       auto bboQuote = BboQuote(bid, ask, message.m_header.m_timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'T') {
       auto bboBid = HandleShortNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
       auto bboAsk = HandleShortNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'U') {
       auto bboBid = HandleLongNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
       auto bboAsk = HandleLongNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     }
     auto marketQuote = MarketQuote(market, bid, ask,
       message.m_header.m_timestamp);
-    m_marketDataFeedClient->PublishMarketQuote(
-      SecurityMarketQuote(marketQuote, security));
+    m_marketDataFeedClient->Publish(SecurityMarketQuote(marketQuote, security));
   }
 
   template<typename M, typename P>
@@ -351,29 +347,25 @@ namespace Nexus::MarketDataService {
     auto ask = Quote(askPrice, askSize, Side::ASK);
     if(nationalBboIndicator == 'G') {
       auto bboQuote = BboQuote(bid, ask, message.m_header.m_timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'T') {
       auto bboBid = HandleShortNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
       auto bboAsk = HandleShortNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(nationalBboIndicator == 'U') {
       auto bboBid = HandleLongNationalBboAppendage(Side::BID,
         Beam::Store(cursor));
       auto bboAsk = HandleLongNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
       auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+      m_marketDataFeedClient->Publish(SecurityBboQuote{bboQuote, security});
     }
     auto marketQuote = MarketQuote(market, bid, ask,
       message.m_header.m_timestamp);
-    m_marketDataFeedClient->PublishMarketQuote(
-      SecurityMarketQuote(marketQuote, security));
+    m_marketDataFeedClient->Publish(SecurityMarketQuote(marketQuote, security));
   }
 
   template<typename M, typename P>
@@ -394,8 +386,7 @@ namespace Nexus::MarketDataService {
     auto timeAndSale = TimeAndSale(message.m_header.m_timestamp, price,
       quantity, condition, market.GetData());
     auto security = Security(symbol, primaryMarket, m_config.m_country);
-    m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale(timeAndSale, security));
+    m_marketDataFeedClient->Publish(SecurityTimeAndSale(timeAndSale, security));
   }
 
   template<typename M, typename P>
@@ -424,8 +415,7 @@ namespace Nexus::MarketDataService {
     auto timeAndSale = TimeAndSale(message.m_header.m_timestamp, price,
       quantity, condition, market.GetData());
     auto security = Security(symbol, primaryMarket, m_config.m_country);
-    m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale(timeAndSale, security));
+    m_marketDataFeedClient->Publish(SecurityTimeAndSale(timeAndSale, security));
   }
 
   template<typename M, typename P>

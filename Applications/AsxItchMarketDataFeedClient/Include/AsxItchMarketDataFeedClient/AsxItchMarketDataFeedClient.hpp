@@ -385,7 +385,7 @@ namespace Nexus::MarketDataService {
         bid.m_size = bboEntry.m_bids.front().m_quantity;
       }
       auto bbo = BboQuote(bid, ask, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bbo, security));
     }
   }
 
@@ -456,9 +456,8 @@ namespace Nexus::MarketDataService {
         auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price,
           executedQuantity, std::move(condition),
           m_config.m_market.m_displayName);
-        m_marketDataFeedClient->PublishTimeAndSale(
-          SecurityTimeAndSale(std::move(timeAndSale),
-          directory->m_security.m_security));
+        m_marketDataFeedClient->Publish(SecurityTimeAndSale(
+          std::move(timeAndSale), directory->m_security.m_security));
       }
       UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
         -executedQuantity, timestamp);
@@ -496,9 +495,8 @@ namespace Nexus::MarketDataService {
         condition.m_code = "@";
         auto timeAndSale = TimeAndSale(timestamp, price, executedQuantity,
           std::move(condition), m_config.m_market.m_displayName);
-        m_marketDataFeedClient->PublishTimeAndSale(
-          SecurityTimeAndSale(std::move(timeAndSale),
-          directory->m_security.m_security));
+        m_marketDataFeedClient->Publish(SecurityTimeAndSale(
+          std::move(timeAndSale), directory->m_security.m_security));
       }
       UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
         -executedQuantity, timestamp);
@@ -588,9 +586,8 @@ namespace Nexus::MarketDataService {
       condition.m_code = "@";
       auto timeAndSale = TimeAndSale(timestamp, price, quantity,
         std::move(condition), m_config.m_market.m_displayName);
-      m_marketDataFeedClient->PublishTimeAndSale(
-        SecurityTimeAndSale(std::move(timeAndSale),
-        directory->m_security.m_security));
+      m_marketDataFeedClient->Publish(SecurityTimeAndSale(
+        std::move(timeAndSale), directory->m_security.m_security));
     }
   }
 

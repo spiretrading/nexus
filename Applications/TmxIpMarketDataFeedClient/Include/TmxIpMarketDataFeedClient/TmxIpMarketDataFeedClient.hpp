@@ -215,8 +215,7 @@ namespace Nexus::MarketDataService {
     auto bid = Quote(*bidPrice, *bidVolume, Side::BID);
     auto ask = Quote(*askPrice, *askVolume, Side::ASK);
     auto bbo = BboQuote(bid, ask, m_timeClient->GetTime());
-    m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo,
-      std::move(security)));
+    m_marketDataFeedClient->Publish(SecurityBboQuote(bbo, std::move(security)));
   }
 
   template<typename M, typename S, typename T>
@@ -255,7 +254,7 @@ namespace Nexus::MarketDataService {
     condition.m_code = "@";
     auto timeAndSale = TimeAndSale(*timestamp, *price, *volume,
       std::move(condition), *exchangeId);
-    m_marketDataFeedClient->PublishTimeAndSale(
+    m_marketDataFeedClient->Publish(
       SecurityTimeAndSale(timeAndSale, std::move(security)));
   }
 
@@ -526,7 +525,7 @@ namespace Nexus::MarketDataService {
     auto imbalance = MarketOrderImbalance(OrderImbalance(std::move(security),
       *imbalanceSide, *imbalanceVolume, Money::ZERO, *timestamp),
       m_config.m_market);
-    m_marketDataFeedClient->PublishOrderImbalance(imbalance);
+    m_marketDataFeedClient->Publish(imbalance);
   }
 
   template<typename M, typename S, typename T>

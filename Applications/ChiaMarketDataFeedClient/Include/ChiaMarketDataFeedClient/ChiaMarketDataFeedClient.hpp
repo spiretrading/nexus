@@ -187,8 +187,8 @@ namespace Nexus::MarketDataService {
       condition.m_code = "@";
       auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price, shares,
         std::move(condition), m_config.m_mpid);
-      m_marketDataFeedClient->PublishTimeAndSale(
-        SecurityTimeAndSale(std::move(timeAndSale), orderEntry->m_security));
+      m_marketDataFeedClient->Publish(SecurityTimeAndSale(
+        std::move(timeAndSale), orderEntry->m_security));
     }
     if(m_config.m_isLoggingMessages) {
       std::cout << timestamp << "," << message.m_type << "," <<
@@ -241,8 +241,8 @@ namespace Nexus::MarketDataService {
     condition.m_code = "@";
     auto timeAndSale = TimeAndSale(timestamp, price, shares,
       std::move(condition), m_config.m_mpid);
-    m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale(std::move(timeAndSale), security));
+    m_marketDataFeedClient->Publish(SecurityTimeAndSale(
+      std::move(timeAndSale), security));
     if(m_config.m_isLoggingMessages) {
       std::cout << timestamp << "," << message.m_type << "," <<
         orderReference << "," << shares << "," << symbol << "," <<

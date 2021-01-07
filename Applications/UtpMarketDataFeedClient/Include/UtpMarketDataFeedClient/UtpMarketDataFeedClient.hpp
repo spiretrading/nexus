@@ -192,8 +192,7 @@ namespace Nexus::MarketDataService {
       auto bboBid = Quote(bboBidPrice, bboBidSize, Side::BID);
       auto bboAsk = Quote(bboAskPrice, bboAskSize, Side::ASK);
       auto bboQuote = BboQuote(bboBid, bboAsk, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(bboIndicator == '3') {
       ++cursor;
       ++cursor;
@@ -207,16 +206,13 @@ namespace Nexus::MarketDataService {
       auto bboBid = Quote(bboBidPrice, bboBidSize, Side::BID);
       auto bboAsk = Quote(bboAskPrice, bboAskSize, Side::ASK);
       auto bboQuote = BboQuote(bboBid, bboAsk, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(bboIndicator == '4') {
       auto bboQuote = BboQuote(bid, ask, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     }
     auto marketQuote = MarketQuote(market, bid, ask, timestamp);
-    m_marketDataFeedClient->PublishMarketQuote(
-      SecurityMarketQuote(marketQuote, security));
+    m_marketDataFeedClient->Publish(SecurityMarketQuote(marketQuote, security));
   }
 
   template<typename M, typename P>
@@ -256,8 +252,7 @@ namespace Nexus::MarketDataService {
       auto bboBid = Quote(bboBidPrice, bboBidSize, Side::BID);
       auto bboAsk = Quote(bboAskPrice, bboAskSize, Side::ASK);
       auto bboQuote = BboQuote(bboBid, bboAsk, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(bboIndicator == '3') {
       ++cursor;
       ++cursor;
@@ -271,16 +266,13 @@ namespace Nexus::MarketDataService {
       auto bboBid = Quote(bboBidPrice, bboBidSize, Side::BID);
       auto bboAsk = Quote(bboAskPrice, bboAskSize, Side::ASK);
       auto bboQuote = BboQuote(bboBid, bboAsk, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     } else if(bboIndicator == '4') {
       auto bboQuote = BboQuote(bid, ask, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(bboQuote, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bboQuote, security));
     }
     auto marketQuote = MarketQuote(market, bid, ask, timestamp);
-    m_marketDataFeedClient->PublishMarketQuote(
-      SecurityMarketQuote(marketQuote, security));
+    m_marketDataFeedClient->Publish(SecurityMarketQuote(marketQuote, security));
   }
 
   template<typename M, typename P>
@@ -303,8 +295,7 @@ namespace Nexus::MarketDataService {
       TimeAndSale::Condition::Type::REGULAR, conditionCode);
     auto timeAndSale = TimeAndSale(timestamp, price, volume, condition,
       market.GetData());
-    m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale(timeAndSale, security));
+    m_marketDataFeedClient->Publish(SecurityTimeAndSale(timeAndSale, security));
   }
 
   template<typename M, typename P>
@@ -327,8 +318,7 @@ namespace Nexus::MarketDataService {
       TimeAndSale::Condition::Type::REGULAR, conditionCode);
     auto timeAndSale = TimeAndSale(timestamp, price, volume, condition,
       market.GetData());
-    m_marketDataFeedClient->PublishTimeAndSale(
-      SecurityTimeAndSale(timeAndSale, security));
+    m_marketDataFeedClient->Publish(SecurityTimeAndSale(timeAndSale, security));
   }
 
   template<typename M, typename P>

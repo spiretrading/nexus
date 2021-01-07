@@ -177,11 +177,11 @@ namespace Nexus::MarketDataService {
   void JpxFlexMarketDataFeedClient<C, P>::PublishTimeAndSale(
       const Security& security, SecurityEntry& entry,
       boost::posix_time::ptime timestamp) {
-    m_marketDataFeedClient->PublishTimeAndSale(SecurityTimeAndSale(
+    m_marketDataFeedClient->Publish(SecurityTimeAndSale(
       TimeAndSale(timestamp, *entry.m_tradePrice / *entry.m_tradeQuantity,
-      *entry.m_tradeQuantity,
-      TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
-      m_config.m_disseminatingMarket.GetData()), security));
+        *entry.m_tradeQuantity,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
+        m_config.m_disseminatingMarket.GetData()), security));
     entry.m_tradePrice.reset();
     entry.m_tradeQuantity.reset();
   }
@@ -272,9 +272,9 @@ namespace Nexus::MarketDataService {
         positionIterator = levels.erase(positionIterator);
       }
     }
-    m_marketDataFeedClient->SetBookQuote(SecurityBookQuote(
+    m_marketDataFeedClient->Publish(SecurityBookQuote(
       BookQuote(m_config.m_mpid, true, m_config.m_disseminatingMarket,
-      Quote(price, quantity, side), timestamp), security));
+        Quote(price, quantity, side), timestamp), security));
     if(positionIterator == levels.begin()) {
       auto ask = Quote();
       ask.m_side = Side::ASK;
@@ -295,7 +295,7 @@ namespace Nexus::MarketDataService {
         bid.m_size = entry.m_bids.front().m_quantity;
       }
       auto bbo = BboQuote(bid, ask, timestamp);
-      m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo, security));
+      m_marketDataFeedClient->Publish(SecurityBboQuote(bbo, security));
     }
   }
 

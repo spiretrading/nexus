@@ -247,7 +247,7 @@ namespace Nexus::MarketDataService {
       TimeAndSale(timestamp, price, quantity,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, code),
       m_config.m_market.m_displayName), std::move(security));
-    m_marketDataFeedClient->PublishTimeAndSale(std::move(timeAndSale));
+    m_marketDataFeedClient->Publish(std::move(timeAndSale));
   }
 
   template<typename C, typename P>
@@ -291,10 +291,10 @@ namespace Nexus::MarketDataService {
             levels.pop_back();
           }
         }
-        m_marketDataFeedClient->SetBookQuote(
+        m_marketDataFeedClient->Publish(
           SecurityBookQuote(BookQuote(m_config.m_mpid, true,
-          m_config.m_market.m_code, Quote(price, quantity, side),
-          ToTimestamp(message.m_packet->m_sendTime)), security));
+            m_config.m_market.m_code, Quote(price, quantity, side),
+            ToTimestamp(message.m_packet->m_sendTime)), security));
       } else if(action == 2) {
         if(positionIterator != levels.end() &&
             positionIterator->m_price == price) {
@@ -305,23 +305,23 @@ namespace Nexus::MarketDataService {
               levels.pop_back();
             }
           }
-          m_marketDataFeedClient->SetBookQuote(
+          m_marketDataFeedClient->Publish(
             SecurityBookQuote(BookQuote(m_config.m_mpid, true,
-            m_config.m_market.m_code, Quote(price, 0, side),
-            ToTimestamp(message.m_packet->m_sendTime)), security));
+              m_config.m_market.m_code, Quote(price, 0, side),
+              ToTimestamp(message.m_packet->m_sendTime)), security));
         }
       } else if(action == 74) {
         for(auto& level : entry.m_asks) {
-          m_marketDataFeedClient->SetBookQuote(
+          m_marketDataFeedClient->Publish(
             SecurityBookQuote(BookQuote(m_config.m_mpid, true,
-            m_config.m_market.m_code, Quote(level.m_price, 0, Side::ASK),
-            ToTimestamp(message.m_packet->m_sendTime)), security));
+              m_config.m_market.m_code, Quote(level.m_price, 0, Side::ASK),
+              ToTimestamp(message.m_packet->m_sendTime)), security));
         }
         for(auto& level : entry.m_bids) {
-          m_marketDataFeedClient->SetBookQuote(
+          m_marketDataFeedClient->Publish(
             SecurityBookQuote(BookQuote(m_config.m_mpid, true,
-            m_config.m_market.m_code, Quote(level.m_price, 0, Side::BID),
-            ToTimestamp(message.m_packet->m_sendTime)), security));
+              m_config.m_market.m_code, Quote(level.m_price, 0, Side::BID),
+              ToTimestamp(message.m_packet->m_sendTime)), security));
         }
         entry.m_asks.clear();
         entry.m_bids.clear();
@@ -342,9 +342,9 @@ namespace Nexus::MarketDataService {
         return Quote(entry.m_asks.back().m_price,
           entry.m_asks.back().m_quantity, Side::ASK);
       }();
-      m_marketDataFeedClient->PublishBboQuote(
+      m_marketDataFeedClient->Publish(
         SecurityBboQuote(BboQuote(std::move(bid), std::move(ask),
-        ToTimestamp(message.m_packet->m_sendTime)), security));
+          ToTimestamp(message.m_packet->m_sendTime)), security));
     }
   }
 
