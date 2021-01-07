@@ -43,13 +43,15 @@ namespace Nexus::MarketDataService {
 
       void Add(const SecurityInfo& securityInfo);
 
-      void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance);
+      void Publish(const MarketOrderImbalance& orderImbalance);
 
-      void PublishBboQuote(const SecurityBboQuote& bboQuote);
+      void Publish(const SecurityBboQuote& bboQuote);
 
-      void PublishMarketQuote(const SecurityMarketQuote& marketQuote);
+      void Publish(const SecurityMarketQuote& marketQuote);
 
-      void SetBookQuote(const SecurityBookQuote& bookQuote);
+      void Publish(const SecurityBookQuote& bookQuote);
+
+      void Publish(const SecurityTimeAndSale& timeAndSale);
 
       void AddOrder(const Security& security, MarketCode market,
         const std::string& mpid, bool isPrimaryMpid, const std::string& id,
@@ -68,20 +70,17 @@ namespace Nexus::MarketDataService {
       void DeleteOrder(const std::string& id,
         boost::posix_time::ptime timestamp);
 
-      void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale);
-
       void Close();
 
     private:
       struct VirtualMarketDataFeedClient {
         virtual ~VirtualMarketDataFeedClient() = default;
         virtual void Add(const SecurityInfo& securityInfo) = 0;
-        virtual void PublishOrderImbalance(
-          const MarketOrderImbalance& orderImbalance) = 0;
-        virtual void PublishBboQuote(const SecurityBboQuote& bboQuote) = 0;
-        virtual void PublishMarketQuote(
-          const SecurityMarketQuote& marketQuote) = 0;
-        virtual void SetBookQuote(const SecurityBookQuote& bookQuote) = 0;
+        virtual void Publish(const MarketOrderImbalance& orderImbalance) = 0;
+        virtual void Publish(const SecurityBboQuote& bboQuote) = 0;
+        virtual void Publish(const SecurityMarketQuote& marketQuote) = 0;
+        virtual void Publish(const SecurityBookQuote& bookQuote) = 0;
+        virtual void Publish(const SecurityTimeAndSale& timeAndSale) = 0;
         virtual void AddOrder(const Security& security, MarketCode market,
           const std::string& mpid, bool isPrimaryMpid, const std::string& id,
           Side side, Money price, Quantity size,
@@ -94,8 +93,6 @@ namespace Nexus::MarketDataService {
           boost::posix_time::ptime timestamp) = 0;
         virtual void DeleteOrder(const std::string& id,
           boost::posix_time::ptime timestamp) = 0;
-        virtual void PublishTimeAndSale(
-          const SecurityTimeAndSale& timeAndSale) = 0;
         virtual void Close() = 0;
       };
       template<typename C>
@@ -106,12 +103,11 @@ namespace Nexus::MarketDataService {
         template<typename... Args>
         WrappedMarketDataFeedClient(Args&&... args);
         void Add(const SecurityInfo& securityInfo) override;
-        void PublishOrderImbalance(
-          const MarketOrderImbalance& orderImbalance) override;
-        void PublishBboQuote(const SecurityBboQuote& bboQuote) override;
-        void PublishMarketQuote(
-          const SecurityMarketQuote& marketQuote) override;
-        void SetBookQuote(const SecurityBookQuote& bookQuote) override;
+        void Publish(const MarketOrderImbalance& orderImbalance) override;
+        void Publish(const SecurityBboQuote& bboQuote) override;
+        void Publish(const SecurityMarketQuote& marketQuote) override;
+        void Publish(const SecurityBookQuote& bookQuote) override;
+        void Publish(const SecurityTimeAndSale& timeAndSale) override;
         void AddOrder(const Security& security, MarketCode market,
           const std::string& mpid, bool isPrimaryMpid, const std::string& id,
           Side side, Money price, Quantity size,
@@ -124,8 +120,6 @@ namespace Nexus::MarketDataService {
           boost::posix_time::ptime timestamp) override;
         void DeleteOrder(const std::string& id,
           boost::posix_time::ptime timestamp) override;
-        void PublishTimeAndSale(
-          const SecurityTimeAndSale& timeAndSale) override;
         void Close() override;
       };
       std::shared_ptr<VirtualMarketDataFeedClient> m_client;
@@ -158,24 +152,29 @@ namespace Nexus::MarketDataService {
     return m_client->Add(securityInfo);
   }
 
-  inline void MarketDataFeedClientBox::PublishOrderImbalance(
+  inline void MarketDataFeedClientBox::Publish(
       const MarketOrderImbalance& orderImbalance) {
-    return m_client->PublishOrderImbalance(orderImbalance);
+    return m_client->Publish(orderImbalance);
   }
 
-  inline void MarketDataFeedClientBox::PublishBboQuote(
+  inline void MarketDataFeedClientBox::Publish(
       const SecurityBboQuote& bboQuote) {
-    return m_client->PublishBboQuote(bboQuote);
+    return m_client->Publish(bboQuote);
   }
 
-  inline void MarketDataFeedClientBox::PublishMarketQuote(
+  inline void MarketDataFeedClientBox::Publish(
       const SecurityMarketQuote& marketQuote) {
-    return m_client->PublishMarketQuote(marketQuote);
+    return m_client->Publish(marketQuote);
   }
 
-  inline void MarketDataFeedClientBox::SetBookQuote(
+  inline void MarketDataFeedClientBox::Publish(
       const SecurityBookQuote& bookQuote) {
-    return m_client->SetBookQuote(bookQuote);
+    return m_client->Publish(bookQuote);
+  }
+
+  inline void MarketDataFeedClientBox::Publish(
+      const SecurityTimeAndSale& timeAndSale) {
+    return m_client->Publish(timeAndSale);
   }
 
   inline void MarketDataFeedClientBox::AddOrder(const Security& security,
@@ -206,11 +205,6 @@ namespace Nexus::MarketDataService {
     return m_client->DeleteOrder(id, timestamp);
   }
 
-  inline void MarketDataFeedClientBox::PublishTimeAndSale(
-      const SecurityTimeAndSale& timeAndSale) {
-    return m_client->PublishTimeAndSale(timeAndSale);
-  }
-
   inline void MarketDataFeedClientBox::Close() {
     return m_client->Close();
   }
@@ -228,27 +222,33 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::
-      PublishOrderImbalance(const MarketOrderImbalance& orderImbalance) {
-    return m_client->PublishOrderImbalance(orderImbalance);
+  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::Publish(
+      const MarketOrderImbalance& orderImbalance) {
+    return m_client->Publish(orderImbalance);
   }
 
   template<typename C>
-  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::PublishBboQuote(
+  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::Publish(
       const SecurityBboQuote& bboQuote) {
-    return m_client->PublishBboQuote(bboQuote);
+    return m_client->Publish(bboQuote);
   }
 
   template<typename C>
-  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::
-      PublishMarketQuote(const SecurityMarketQuote& marketQuote) {
-    return m_client->PublishMarketQuote(marketQuote);
+  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::Publish(
+      const SecurityMarketQuote& marketQuote) {
+    return m_client->Publish(marketQuote);
   }
 
   template<typename C>
-  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::SetBookQuote(
+  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::Publish(
       const SecurityBookQuote& bookQuote) {
-    return m_client->SetBookQuote(bookQuote);
+    return m_client->Publish(bookQuote);
+  }
+
+  template<typename C>
+  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::Publish(
+      const SecurityTimeAndSale& timeAndSale) {
+    return m_client->Publish(timeAndSale);
   }
 
   template<typename C>
@@ -285,12 +285,6 @@ namespace Nexus::MarketDataService {
   void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::DeleteOrder(
       const std::string& id, boost::posix_time::ptime timestamp) {
     return m_client->DeleteOrder(id, timestamp);
-  }
-
-  template<typename C>
-  void MarketDataFeedClientBox::WrappedMarketDataFeedClient<C>::
-      PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale) {
-    return m_client->PublishTimeAndSale(timeAndSale);
   }
 
   template<typename C>

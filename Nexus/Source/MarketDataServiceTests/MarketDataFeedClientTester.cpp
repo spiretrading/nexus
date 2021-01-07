@@ -70,7 +70,7 @@ TEST_SUITE("MarketDataFeedClient") {
         REQUIRE(bboQuote == bbo);
         sentMessages.GetEval().SetResult();
       });
-    m_client->PublishBboQuote(bbo);
+    m_client->Publish(bbo);
     m_samplingTimer.Trigger();
     sentMessages.Get();
   }
@@ -90,7 +90,7 @@ TEST_SUITE("MarketDataFeedClient") {
         REQUIRE(message == orderImbalance);
         sentMessages.GetEval().SetResult();
       });
-    m_client->PublishOrderImbalance(orderImbalance);
+    m_client->Publish(orderImbalance);
     m_samplingTimer.Trigger();
     sentMessages.Get();
   }

@@ -26,6 +26,8 @@
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTests.hpp"
+#include "Nexus/MarketDataServiceTests/TestMarketDataFeedClient.hpp"
 
 namespace Nexus::MarketDataService::Tests {
 
@@ -64,47 +66,18 @@ namespace Nexus::MarketDataService::Tests {
       /** Returns the MarketDataRegistry. */
       const MarketDataRegistry& GetRegistry() const;
 
-      /**
-       * Publishes an OrderImbalance.
-       * @param market The market to publish to.
-       * @param orderImbalance The OrderImbalance to publish.
-       */
-      void Publish(MarketCode market, const OrderImbalance& orderImbalance);
+      /** Returns this test environment's MarketDataClient. */
+      MarketDataClientBox& GetRegistryClient();
 
-      /**
-       * Publishes a BboQuote.
-       * @param security The Security to publish to.
-       * @param bboQuote The BboQuote to publish.
-       */
-      void Publish(const Security& security, const BboQuote& bboQuote);
-
-      /**
-       * Publishes a BookQuote.
-       * @param security The Security to publish to.
-       * @param bookQuote The BookQuote to publish.
-       */
-      void Publish(const Security& security, const BookQuote& bookQuote);
-
-      /**
-       * Publishes a MarketQuote.
-       * @param security The Security to publish to.
-       * @param marketQuote The MarketQuote to publish.
-       */
-      void Publish(const Security& security, const MarketQuote& marketQuote);
-
-      /**
-       * Publishes a TimeAndSale.
-       * @param security The Security to publish to.
-       * @param timeAndSale The TimeAndSale to publish.
-       */
-      void Publish(const Security& security, const TimeAndSale& timeAndSale);
+      /** Returns this test environment's MarketDataFeedClient. */
+      MarketDataFeedClientBox& GetFeedClient();
 
       /**
        * Builds a new MarketDataClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the MarketDataClient.
        */
-      MarketDataClientBox MakeClient(
+      MarketDataClientBox MakeRegistryClient(
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       /**
@@ -168,6 +141,8 @@ namespace Nexus::MarketDataService::Tests {
       ServerConnection m_feedServerConnection;
       FeedServiceProtocolServletContainer m_feedContainer;
       Beam::Threading::TriggerTimer m_samplingTimer;
+      MarketDataClientBox m_registryClient;
+      MarketDataFeedClientBox m_feedClient;
   };
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
@@ -190,7 +165,11 @@ namespace Nexus::MarketDataService::Tests {
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
       m_feedContainer(Beam::Initialize(m_serviceLocatorClient,
         &m_registryServlet), &m_feedServerConnection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
+      m_registryClient(MakeRegistryClient(m_serviceLocatorClient)),
+      m_feedClient(
+        std::in_place_type<TestMarketDataFeedClient<BaseRegistryServlet*>>,
+        &m_registryServlet) {}
 
   inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
     Close();
@@ -206,38 +185,19 @@ namespace Nexus::MarketDataService::Tests {
     return m_registry;
   }
 
-  inline void MarketDataServiceTestEnvironment::Publish(
-      MarketCode market, const OrderImbalance& orderImbalance) {
-    m_registryServlet.PublishOrderImbalance(
-      MarketOrderImbalance{orderImbalance, market}, 0);
+  inline MarketDataClientBox&
+      MarketDataServiceTestEnvironment::GetRegistryClient() {
+    return m_registryClient;
   }
 
-  inline void MarketDataServiceTestEnvironment::Publish(
-      const Security& security, const BboQuote& bboQuote) {
-    m_registryServlet.PublishBboQuote(
-      SecurityBboQuote{bboQuote, security}, 0);
+  inline MarketDataFeedClientBox&
+      MarketDataServiceTestEnvironment::GetFeedClient() {
+    return m_feedClient;
   }
 
-  inline void MarketDataServiceTestEnvironment::Publish(
-      const Security& security, const BookQuote& bookQuote) {
-    m_registryServlet.UpdateBookQuote(
-      SecurityBookQuote{bookQuote, security}, 0);
-  }
-
-  inline void MarketDataServiceTestEnvironment::Publish(
-      const Security& security, const MarketQuote& marketQuote) {
-    m_registryServlet.PublishMarketQuote(
-      SecurityMarketQuote{marketQuote, security}, 0);
-  }
-
-  inline void MarketDataServiceTestEnvironment::Publish(
-      const Security& security, const TimeAndSale& timeAndSale) {
-    m_registryServlet.PublishTimeAndSale(
-      SecurityTimeAndSale{timeAndSale, security}, 0);
-  }
-
-  inline MarketDataClientBox MarketDataServiceTestEnvironment::MakeClient(
-      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
+  inline MarketDataClientBox
+      MarketDataServiceTestEnvironment::MakeRegistryClient(
+        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
     return MarketDataClientBox(
       std::in_place_type<MarketDataClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
@@ -260,8 +220,7 @@ namespace Nexus::MarketDataService::Tests {
     return MarketDataFeedClientBox(std::in_place_type<Client>,
       Beam::Initialize("test_market_data_feed_client", m_feedServerConnection),
       Beam::ServiceLocator::SessionAuthenticator(
-        std::move(serviceLocatorClient)),
-      &m_samplingTimer, Beam::Initialize());
+        std::move(serviceLocatorClient)), &m_samplingTimer, Beam::Initialize());
   }
 
   inline void MarketDataServiceTestEnvironment::Close() {
