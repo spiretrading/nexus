@@ -69,8 +69,8 @@ namespace Nexus::OrderExecutionService {
       Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<BuyingPowerEntry>> m_buyingPowerEntries;
-      Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<
-        Beam::StateQueue<BboQuote>>> m_bboQuotes;
+      Beam::SynchronizedUnorderedMap<Security,
+        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
 
       BboQuote LoadBboQuote(const Security& security);
       Money GetExpectedPrice(const OrderFields& orderFields);

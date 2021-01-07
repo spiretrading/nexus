@@ -164,48 +164,37 @@ TEST_SUITE("MarketDataRelayServlet") {
 
   TEST_CASE_FIXTURE(Fixture, "primary_security_cache_invalidation") {
     auto relayClient = MakeMarketDataRelayClient("test_client");
-    {
-      auto snapshot = relayClient->SendRequest<QueryTimeAndSalesService>(
-        BuildRealTimeQuery(TST_A));
-      REQUIRE(snapshot.m_queryId != -1);
-    }
-    m_marketDataEnvironment.GetFeedClient().Publish(
-      SecurityTimeAndSale(
-        TimeAndSale(time_from_string("2021-01-01 17:57:22"), Money::ONE, 100,
-          TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-            "TSE"), TST_A));
-    {
-      auto timeAndSaleMessage = std::dynamic_pointer_cast<
-        RecordMessage<TimeAndSaleMessage, TestServiceProtocolClient>>(
-          relayClient->ReadMessage());
-      REQUIRE(timeAndSaleMessage != nullptr);
-      REQUIRE(
-        timeAndSaleMessage->GetRecord().time_and_sale->GetIndex() == TST_A);
-    }
+    auto alternativeClient = MakeMarketDataRelayClient("test_client2");
+    relayClient->SendRequest<QueryTimeAndSalesService>(
+      BuildRealTimeQuery(TST_A));
+    alternativeClient->SendRequest<QueryTimeAndSalesService>(
+      BuildRealTimeQuery(TST_A));
+    alternativeClient->SendRequest<QueryTimeAndSalesService>(
+      BuildRealTimeQuery(TST_B));
+    m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
+      TimeAndSale(time_from_string("2021-01-01 17:57:22"), Money::ONE, 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+          "TSE"), TST_A));
+    relayClient->ReadMessage();
+    alternativeClient->ReadMessage();
     auto updatedSecurity = Security("TST_A", DefaultMarkets::OMGA(),
       DefaultCountries::CA());
-    {
-      auto snapshot = relayClient->SendRequest<QueryTimeAndSalesService>(
-        BuildRealTimeQuery(updatedSecurity));
-      REQUIRE(snapshot.m_queryId == -1);
-    }
     m_marketDataEnvironment.GetFeedClient().Add(
       SecurityInfo(updatedSecurity, "TST_A Update", "", 200));
     {
       auto snapshot = relayClient->SendRequest<QueryTimeAndSalesService>(
-        BuildRealTimeQuery(TST_A));
-      REQUIRE(snapshot.m_queryId == -1);
-    }
-    {
-      auto snapshot = relayClient->SendRequest<QueryTimeAndSalesService>(
         BuildRealTimeQuery(updatedSecurity));
       REQUIRE(snapshot.m_queryId != -1);
     }
-    m_marketDataEnvironment.GetFeedClient().Publish(
-      SecurityTimeAndSale(
-        TimeAndSale(time_from_string("2021-01-01 17:58:22"), Money::ONE, 100,
-          TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-            "TSE"), updatedSecurity));
+    {
+      auto snapshot = relayClient->SendRequest<QueryTimeAndSalesService>(
+        BuildRealTimeQuery(TST_A));
+      REQUIRE(snapshot.m_queryId == -1);
+    }
+    m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
+      TimeAndSale(time_from_string("2021-01-01 17:58:22"), Money::ONE, 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+          "OMGA"), updatedSecurity));
     {
       auto timeAndSaleMessage = std::dynamic_pointer_cast<
         RecordMessage<TimeAndSaleMessage, TestServiceProtocolClient>>(
