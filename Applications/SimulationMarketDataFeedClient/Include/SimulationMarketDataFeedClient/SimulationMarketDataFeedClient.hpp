@@ -186,7 +186,7 @@ namespace Nexus {
         snapshot.m_bboQuote->m_bid.m_price -= Money::CENT;
         snapshot.m_bboQuote->m_ask.m_price -= Money::CENT;
       }
-      m_feedClient->PublishBboQuote(
+      m_feedClient->Publish(
         SecurityBboQuote(snapshot.m_bboQuote, snapshot.m_security));
     }
     m_bboTimer->Start();
@@ -203,7 +203,7 @@ namespace Nexus {
         marketQuote->m_bid.m_size = 100 + (std::rand() % 1000);
         marketQuote->m_ask.m_size = 100 + (std::rand() % 1000);
         marketQuote->m_timestamp = m_timeClient->GetTime();
-        m_feedClient->PublishMarketQuote(
+        m_feedClient->Publish(
           SecurityMarketQuote(marketQuote, snapshot.m_security));
       }
     }
@@ -224,7 +224,7 @@ namespace Nexus {
       }();
       auto timeAndSale = TimeAndSale(m_timeClient->GetTime(), price, 100,
         condition, snapshot.m_security.GetMarket().GetData());
-      m_feedClient->PublishTimeAndSale(
+      m_feedClient->Publish(
         SecurityTimeAndSale(timeAndSale, snapshot.m_security));
     }
     m_timeAndSaleTimer->Start();
