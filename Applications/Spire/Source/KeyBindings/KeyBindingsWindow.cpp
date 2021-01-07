@@ -26,7 +26,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
   Window::layout()->addWidget(body);
-  m_tab_widget = new TabWidget(this);
+  m_tab_widget = new TabWidget(TabWidget::PaddingStyle::LEFT, this);
   layout->addWidget(m_tab_widget);
   auto task_keys_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(task_keys_widget, tr("Task Keys"));
