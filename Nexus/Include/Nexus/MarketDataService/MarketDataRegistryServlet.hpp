@@ -351,8 +351,8 @@ namespace Nexus::MarketDataService {
     if(security.GetMarket().IsEmpty()) {
       return security;
     }
-    auto result = m_dataStore->LoadSecurityInfo(
-      MakeSecurityInfoQuery(security));
+    auto result =
+      m_dataStore->LoadSecurityInfo(MakeSecurityInfoQuery(security));
     if(result.empty()) {
       return security;
     }

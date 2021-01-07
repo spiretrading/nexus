@@ -91,7 +91,7 @@ namespace {
         DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
       m_container.emplace(Initialize(m_serviceLocatorEnvironment.GetRoot(),
         Initialize(m_accounts, m_administrationEnvironment.GetClient(),
-          m_marketDataServiceEnvironment.MakeClient(
+          m_marketDataServiceEnvironment.MakeRegistryClient(
             m_serviceLocatorEnvironment.GetRoot()),
           m_orderExecutionServiceEnvironment.MakeClient(
             m_serviceLocatorEnvironment.GetRoot()),
@@ -101,14 +101,16 @@ namespace {
           exchangeRates, GetDefaultMarketDatabase(),
           GetDefaultDestinationDatabase())), m_serverConnection,
         factory<std::unique_ptr<TriggerTimer>>());
-      m_marketDataServiceEnvironment.Publish(TSLA, BboQuote(
-        Quote(*Money::FromValue("1.00"), 100, Side::BID),
-        Quote(*Money::FromValue("1.01"), 100, Side::ASK),
-        second_clock::universal_time()));
-      m_marketDataServiceEnvironment.Publish(XIU, BboQuote(
-        Quote(*Money::FromValue("2.00"), 100, Side::BID),
-        Quote(*Money::FromValue("2.01"), 100, Side::ASK),
-        second_clock::universal_time()));
+      m_marketDataServiceEnvironment.GetFeedClient().Publish(
+        SecurityBboQuote(BboQuote(
+          Quote(*Money::FromValue("1.00"), 100, Side::BID),
+          Quote(*Money::FromValue("1.01"), 100, Side::ASK),
+          second_clock::universal_time()), TSLA));
+      m_marketDataServiceEnvironment.GetFeedClient().Publish(
+        SecurityBboQuote(BboQuote(
+          Quote(*Money::FromValue("2.00"), 100, Side::BID),
+          Quote(*Money::FromValue("2.01"), 100, Side::ASK),
+          second_clock::universal_time()), XIU));
     }
 
     Client MakeClient(std::string name) {

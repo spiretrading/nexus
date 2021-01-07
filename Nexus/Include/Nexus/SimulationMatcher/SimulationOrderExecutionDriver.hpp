@@ -58,8 +58,8 @@ namespace Nexus::OrderExecutionService {
         OrderExecutionService::SecurityOrderSimulator<TimeClient>;
       using Orders =
         std::unordered_map<OrderId, std::shared_ptr<PrimitiveOrder>>;
-      using SecurityOrderSimulators = std::unordered_map<Security,
-        std::unique_ptr<SecurityOrderSimulator>>;
+      using SecurityOrderSimulators =
+        std::unordered_map<Security, std::unique_ptr<SecurityOrderSimulator>>;
       Beam::GetOptionalLocalPtr<C> m_marketDataClient;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::SynchronizedMap<Orders> m_orders;

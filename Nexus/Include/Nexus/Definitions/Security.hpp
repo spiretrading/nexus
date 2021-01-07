@@ -3,6 +3,8 @@
 #include <istream>
 #include <ostream>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Country.hpp"
@@ -120,6 +122,17 @@ namespace Nexus {
     }
   }
 
+  /**
+   * Performs a more precise equality test, ensuring that the market is equal.
+   * @param left The left hand side of the equality.
+   * @param right The right hand side of the equality.
+   * @return <code>true</code> iff <i>left</i> is equal to <i>right</i> and
+   *         both have equal markets.
+   */
+  inline bool PreciseEqualTo(const Security& left, const Security& right) {
+    return left == right && left.GetMarket() == right.GetMarket();
+  }
+
   inline std::string ToString(const Security& value) {
     return ToString(value, GetDefaultMarketDatabase());
   }
@@ -201,6 +214,44 @@ namespace std {
       return Nexus::hash_value(value);
     }
   };
-};
+}
+
+namespace Nexus {
+namespace Details {
+  struct SecurityPreciseEqualTo {
+    bool operator ()(const Security& left, const Security& right) const {
+      return PreciseEqualTo(left, right);
+    }
+  };
+}
+
+  /**
+   * Specifies the default unordered set to use with a Security as the key.
+   * @param <V> The set's value type.
+   */
+  using SecurityUnorderedSet = std::unordered_set<Security>;
+
+  /**
+   * Specifies an unordered set that precisely matches a Security's market.
+   * @param <V> The set's value type.
+   */
+  using PreciseSecurityUnorderedSet = std::unordered_set<Security,
+    std::hash<Security>, Details::SecurityPreciseEqualTo>;
+
+  /**
+   * Specifies the default unordered map to use with a Security as the key.
+   * @param <V> The map's value type.
+   */
+  template<typename V>
+  using SecurityMap = std::unordered_map<Security, V>;
+
+  /**
+   * Specifies an unordered map that precisely matches a Security's market.
+   * @param <V> The map's value type.
+   */
+  template<typename V>
+  using PreciseSecurityMap = std::unordered_map<Security, V,
+    std::hash<Security>, Details::SecurityPreciseEqualTo>;
+}
 
 #endif

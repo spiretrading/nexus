@@ -166,8 +166,8 @@ namespace Nexus {
           Beam::Ref(m_marketDataEnvironment),
           m_serviceClients.GetMarketDataClient()),
         m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
-          Beam::Ref(m_marketDataService), m_marketDataEnvironment.MakeClient(
-            m_serviceLocatorClient))),
+          Beam::Ref(m_marketDataService),
+          m_marketDataEnvironment.MakeRegistryClient(m_serviceLocatorClient))),
         m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
         m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
           m_timeClient) {

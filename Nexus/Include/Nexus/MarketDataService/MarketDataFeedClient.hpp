@@ -70,25 +70,31 @@ namespace Nexus::MarketDataService {
        * Publishes an OrderImbalance.
        * @param orderImbalance The OrderImbalance to publish.
        */
-      void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance);
+      void Publish(const MarketOrderImbalance& orderImbalance);
 
       /**
        * Publishes a BboQuote.
        * @param bboQuote The BboQuote to publish.
        */
-      void PublishBboQuote(const SecurityBboQuote& bboQuote);
+      void Publish(const SecurityBboQuote& bboQuote);
 
       /**
        * Publishes a MarketQuote.
        * @param marketQuote The MarketQuote to publish.
        */
-      void PublishMarketQuote(const SecurityMarketQuote& marketQuote);
+      void Publish(const SecurityMarketQuote& marketQuote);
 
       /**
        * Sets a BookQuote.
        * @param bookQuote The BookQuote to set.
        */
-      void SetBookQuote(const SecurityBookQuote& bookQuote);
+      void Publish(const SecurityBookQuote& bookQuote);
+
+      /**
+       * Publishes a TimeAndSale.
+       * @param timeAndSale The TimeAndSale to publish.
+       */
+      void Publish(const SecurityTimeAndSale& timeAndSale);
 
       /**
        * Adds an order.
@@ -141,12 +147,6 @@ namespace Nexus::MarketDataService {
        * @param timestamp The modification's timestamp.
        */
       void DeleteOrder(const OrderId& id, boost::posix_time::ptime timestamp);
-
-      /**
-       * Publishes a TimeAndSale.
-       * @param timeAndSale The TimeAndSale to publish.
-       */
-      void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale);
 
       void Close();
 
@@ -280,7 +280,14 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::PublishBboQuote(
+  void MarketDataFeedClient<O, S, P, H>::Publish(
+      const MarketOrderImbalance& orderImbalance) {
+    auto lock = boost::lock_guard(m_mutex);
+    m_orderImbalances.push_back(orderImbalance);
+  }
+
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityBboQuote& bboQuote) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[bboQuote.GetIndex()];
@@ -288,7 +295,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::PublishMarketQuote(
+  void MarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityMarketQuote& marketQuote) {
     auto lock = boost::lock_guard(m_mutex);
     m_quoteUpdates[marketQuote.GetIndex()].m_marketQuotes[
@@ -296,7 +303,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::SetBookQuote(
+  void MarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityBookQuote& bookQuote) {
     auto id = bookQuote.GetIndex().GetSymbol() + '-' +
       boost::lexical_cast<std::string>(bookQuote.GetIndex().GetCountry()) +
@@ -319,6 +326,14 @@ namespace Nexus::MarketDataService {
           bookQuote->m_quote.m_size, bookQuote->m_timestamp);
       }
     }
+  }
+
+  template<typename O, typename S, typename P, typename H>
+  void MarketDataFeedClient<O, S, P, H>::Publish(
+      const SecurityTimeAndSale& timeAndSale) {
+    auto lock = boost::lock_guard(m_mutex);
+    auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
+    updates.m_timeAndSales.push_back(timeAndSale);
   }
 
   template<typename O, typename S, typename P, typename H>
@@ -383,21 +398,6 @@ namespace Nexus::MarketDataService {
       return;
     }
     LockedDeleteOrder(orderIterator, timestamp);
-  }
-
-  template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::PublishTimeAndSale(
-      const SecurityTimeAndSale& timeAndSale) {
-    auto lock = boost::lock_guard(m_mutex);
-    auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
-    updates.m_timeAndSales.push_back(timeAndSale);
-  }
-
-  template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::PublishOrderImbalance(
-      const MarketOrderImbalance& orderImbalance) {
-    auto lock = boost::lock_guard(m_mutex);
-    m_orderImbalances.push_back(orderImbalance);
   }
 
   template<typename O, typename S, typename P, typename H>
