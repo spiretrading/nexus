@@ -19,7 +19,7 @@ namespace Spire {
         HORIZONTAL
       };
 
-      //! Constructs a TabWidget with PaddingStyle::DEFAULT.
+      //! Constructs a TabWidget with PaddingStyle::HORIZONTAL.
       /*!
         \param parent The parent widget.
       */
