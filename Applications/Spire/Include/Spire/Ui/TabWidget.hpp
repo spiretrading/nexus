@@ -1,7 +1,6 @@
 #ifndef SPIRE_TAB_WIDGET_HPP
 #define SPIRE_TAB_WIDGET_HPP
 #include <QTabWidget>
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

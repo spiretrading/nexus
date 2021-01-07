@@ -6,13 +6,13 @@
 using namespace Spire;
 
 TabWidget::TabWidget(QWidget* parent)
-  : TabWidget(PaddingStyle::DEFAULT, parent) {}
+  : TabWidget(PaddingStyle::NONE, parent) {}
 
 TabWidget::TabWidget(PaddingStyle padding_style, QWidget* parent)
     : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
   auto tab_bar_padding = [&] {
-    if(padding_style == PaddingStyle::DEFAULT) {
+    if(padding_style == PaddingStyle::LEFT) {
       return scale_width(8);
     }
     return 0;
