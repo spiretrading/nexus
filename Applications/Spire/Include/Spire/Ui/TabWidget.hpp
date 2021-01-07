@@ -9,17 +9,17 @@ namespace Spire {
   class TabWidget : public QTabWidget {
     public:
 
-      //! Represents the supported tab bar padding styles.
+      //! Represents the supported tab content padding styles.
       enum class PaddingStyle {
 
-        //! The tab bar has no padding.
+        //! The content has no padding.
         NONE,
 
-        //! The tab bar has left padding.
-        LEFT
+        //! The default content padding.
+        DEFAULT
       };
 
-      //! Constructs a TabWidget with PaddingStyle::NONE.
+      //! Constructs a TabWidget with PaddingStyle::DEFAULT.
       /*!
         \param parent The parent widget.
       */

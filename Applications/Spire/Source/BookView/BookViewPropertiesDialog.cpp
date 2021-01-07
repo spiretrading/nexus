@@ -16,6 +16,13 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  auto PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
+}
+
 BookViewPropertiesDialog::BookViewPropertiesDialog(
     const BookViewProperties& properties, const Security& security,
     QWidget* parent)
@@ -32,7 +39,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   setWindowTitle(tr("Properties"));
   set_svg_icon(":/Icons/bookview.svg");
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   m_tab_widget = new TabWidget(this);
   m_levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
@@ -48,6 +55,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   }
   layout->addWidget(m_tab_widget);
   auto button_group_widget = new PropertiesWindowButtonsWidget(this);
+  button_group_widget->setContentsMargins(PADDING(), 0, PADDING(), 0);
   layout->addWidget(button_group_widget);
   button_group_widget->connect_apply_signal([=] { m_apply_signal(); });
   button_group_widget->connect_apply_to_all_signal(

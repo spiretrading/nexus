@@ -5,21 +5,29 @@
 
 using namespace Spire;
 
+namespace {
+  auto PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
+}
+
 TabWidget::TabWidget(QWidget* parent)
-  : TabWidget(PaddingStyle::NONE, parent) {}
+  : TabWidget(PaddingStyle::DEFAULT, parent) {}
 
 TabWidget::TabWidget(PaddingStyle padding_style, QWidget* parent)
     : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
-  auto tab_bar_padding = [&] {
-    if(padding_style == PaddingStyle::LEFT) {
-      return scale_width(8);
+  auto content_padding = [&] {
+    if(padding_style == PaddingStyle::DEFAULT) {
+      return PADDING();
     }
     return 0;
   }();
   setStyleSheet(QString(R"(
     QTabWidget::pane {
       border: none;
+      padding: 0px %7px 0px %7px;
     }
 
     QTabBar {
@@ -41,7 +49,7 @@ TabWidget::TabWidget(PaddingStyle padding_style, QWidget* parent)
     }
 
     QTabBar::tab:first {
-      margin-left: %7px;
+      margin-left: %8px;
     }
 
     QTabBar::tab:focus {
@@ -56,7 +64,7 @@ TabWidget::TabWidget(PaddingStyle padding_style, QWidget* parent)
       color: white;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
-        .arg(tab_bar_padding));
+        .arg(content_padding).arg(PADDING()));
 }
 
 void TabWidget::paintEvent(QPaintEvent* event) {
