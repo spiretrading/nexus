@@ -15,8 +15,8 @@ namespace Spire {
         //! The content has no padding.
         NONE,
 
-        //! The default content padding.
-        DEFAULT
+        //! The content has padding on the left and right sidess.
+        HORIZONTAL
       };
 
       //! Constructs a TabWidget with PaddingStyle::DEFAULT.

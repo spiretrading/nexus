@@ -13,13 +13,13 @@ namespace {
 }
 
 TabWidget::TabWidget(QWidget* parent)
-  : TabWidget(PaddingStyle::DEFAULT, parent) {}
+  : TabWidget(PaddingStyle::HORIZONTAL, parent) {}
 
 TabWidget::TabWidget(PaddingStyle padding_style, QWidget* parent)
     : QTabWidget(parent) {
   tabBar()->setFixedHeight(scale_height(40));
   auto content_padding = [&] {
-    if(padding_style == PaddingStyle::DEFAULT) {
+    if(padding_style == PaddingStyle::HORIZONTAL) {
       return PADDING();
     }
     return 0;
