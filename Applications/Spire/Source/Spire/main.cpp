@@ -101,9 +101,9 @@ namespace {
     while(instantiateSecurityWindows && index < defaultSecurities.size()) {
       auto width = 0;
       auto bookViewWindow = new BookViewWindow(Ref(userProfile),
-        userProfile.GetDefaultBookViewProperties(), "", nullptr, 0);
+        userProfile.GetDefaultBookViewProperties(), "");
       auto timeAndSalesWindow = new TimeAndSalesWindow(Ref(userProfile),
-        userProfile.GetDefaultTimeAndSalesProperties(), "", nullptr, 0);
+        userProfile.GetDefaultTimeAndSalesProperties(), "");
       bookViewWindow->Link(*timeAndSalesWindow);
       timeAndSalesWindow->Link(*bookViewWindow);
       bookViewWindow->move(nextPosition);
@@ -125,7 +125,7 @@ namespace {
     }
     nextPosition.setX(0);
     nextPosition.setY(nextHeight);
-    auto toolbar = new Toolbar(Ref(userProfile), nullptr, 0);
+    auto toolbar = new Toolbar(Ref(userProfile));
     toolbar->move(nextPosition);
     toolbar->show();
     nextPosition.ry() += toolbar->frameSize().height();
@@ -240,8 +240,7 @@ int main(int argc, char* argv[]) {
   HotkeyOverride hotkeyOverride;
   if(!windowSettings.empty()) {
     for(auto& settings : windowSettings) {
-      auto window = settings->Reopen(Ref(userProfile));
-      if(window != nullptr) {
+      if(auto window = settings->Reopen(Ref(userProfile))) {
         windows.push_back(window);
       }
     }

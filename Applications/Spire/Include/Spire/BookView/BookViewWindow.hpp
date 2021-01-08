@@ -45,7 +45,7 @@ namespace Spire {
       BookViewWindow(Beam::Ref<UserProfile> userProfile,
         const BookViewProperties& properties,
         const std::string& identifier = "", QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Returns the BookViewProperties used to display the book view.
       const BookViewProperties& GetBookViewProperties() const;

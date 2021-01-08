@@ -41,7 +41,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      OrderLogWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      OrderLogWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~OrderLogWidget();
 

@@ -33,7 +33,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       ChartIntervalComboBox(QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ChartIntervalComboBox();
 
@@ -79,7 +79,7 @@ namespace Spire {
       mutable IntervalChangedSignal m_intervalChangedSignal;
 
       std::vector<IntervalEntry> GetStandardDurationIntervals() const;
-      void OnCurrentIndexChanged(const QString& text);
+      void OnCurrentIndexChanged(int index);
   };
 }
 

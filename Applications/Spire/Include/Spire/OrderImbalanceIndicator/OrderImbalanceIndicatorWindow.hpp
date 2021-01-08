@@ -29,7 +29,7 @@ namespace Spire {
       */
       OrderImbalanceIndicatorWindow(Beam::Ref<UserProfile> userProfile,
         const std::shared_ptr<OrderImbalanceIndicatorModel>& model,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~OrderImbalanceIndicatorWindow();
 

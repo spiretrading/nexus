@@ -19,7 +19,7 @@ namespace Spire {
   */
   QWidget* BuildComplianceValueWidget(Nexus::Compliance::ComplianceValue value,
     bool isReadOnly, Beam::Ref<UserProfile> userProfile,
-    QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+    QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
   //! Returns the ComplianceValue represented by a widget.
   /*!

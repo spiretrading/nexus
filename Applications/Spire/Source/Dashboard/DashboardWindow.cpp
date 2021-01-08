@@ -58,9 +58,8 @@ DashboardWindow::DashboardWindow(const string& name,
     m_ui->m_savesComboBox->addItem(QString::fromStdString(entry.m_name));
   }
   Apply(schema, name);
-  connect(m_ui->m_savesComboBox,
-    static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated),
-    this, &DashboardWindow::OnDashboardActivated);
+  connect(m_ui->m_savesComboBox, &QComboBox::textActivated, this,
+    &DashboardWindow::OnDashboardActivated);
   connect(m_ui->m_saveButton, &QPushButton::pressed, this,
     &DashboardWindow::OnSaveButtonPressed);
   connect(m_ui->m_deleteButton, &QPushButton::pressed, this,

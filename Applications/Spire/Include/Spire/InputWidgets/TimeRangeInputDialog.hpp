@@ -22,7 +22,7 @@ namespace Spire {
       */
       TimeRangeInputDialog(const TimeRangeParameter& startTime,
         const TimeRangeParameter& endTime, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~TimeRangeInputDialog();
 
