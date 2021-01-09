@@ -28,41 +28,41 @@ namespace {
   const auto UPDATE_INTERVAL = 100;
   const auto EXPIRY_INTERVAL = 500;
 
-  void QueryDailyOrderSubmissions(const UserProfile& userProfile,
+  RoutineHandler QueryDailyOrderSubmissions(const UserProfile& userProfile,
       const DirectoryEntry& account, ScopedQueueWriter<const Order*> queue) {
-    Spawn(
-      [&userProfile, account, queue = std::move(queue)] () mutable {
-        auto currentTime =
-          userProfile.GetServiceClients().GetTimeClient().GetTime();
-        auto lastSequence = Beam::Queries::Sequence::First();
-        auto timeOfDay =
-          userProfile.GetServiceClients().GetTimeClient().GetTime();
-        for(auto& market : userProfile.GetMarketDatabase().GetEntries()) {
-          auto snapshotQuery = MakeDailyOrderSubmissionQuery(market.m_code,
-            account, timeOfDay, timeOfDay, userProfile.GetMarketDatabase(),
-            userProfile.GetTimeZoneDatabase());
-          auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();
-          userProfile.GetServiceClients().GetOrderExecutionClient().
-            QueryOrderSubmissions(snapshotQuery, snapshotQueue);
-          try {
-            while(true) {
-              auto value = snapshotQueue->Pop();
-              queue.Push(value.GetValue());
-              lastSequence = std::max(lastSequence, value.GetSequence());
-            }
-          } catch(const std::exception&) {}
-        }
-        auto query = AccountQuery();
-        query.SetIndex(account);
-        query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-        if(lastSequence == Beam::Queries::Sequence::First()) {
-          query.SetRange(currentTime, pos_infin);
-        } else {
-          query.SetRange(Increment(lastSequence), pos_infin);
-        }
+    return Spawn([&userProfile, account, queue = std::move(queue)] () mutable {
+      auto currentTime =
+        userProfile.GetServiceClients().GetTimeClient().GetTime();
+      auto lastSequence = Beam::Queries::Sequence::First();
+      auto timeOfDay =
+        userProfile.GetServiceClients().GetTimeClient().GetTime();
+      for(auto& market : userProfile.GetMarketDatabase().GetEntries()) {
+        auto snapshotQuery = MakeDailyOrderSubmissionQuery(market.m_code,
+          account, timeOfDay, timeOfDay, userProfile.GetMarketDatabase(),
+          userProfile.GetTimeZoneDatabase());
+        auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();
         userProfile.GetServiceClients().GetOrderExecutionClient().
-          QueryOrderSubmissions(query, std::move(queue));
-      });
+          QueryOrderSubmissions(snapshotQuery, snapshotQueue);
+        try {
+          while(true) {
+            auto value = snapshotQueue->Pop();
+            queue.Push(value.GetValue());
+            lastSequence = std::max(lastSequence, value.GetSequence());
+          }
+        } catch(const std::exception&) {}
+      }
+      auto query = AccountQuery();
+      query.SetIndex(account);
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      if(lastSequence == Beam::Queries::Sequence::First()) {
+        query.SetRange(currentTime, pos_infin);
+      } else {
+        query.SetRange(Increment(lastSequence), pos_infin);
+      }
+      query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+      userProfile.GetServiceClients().GetOrderExecutionClient().
+        QueryOrderSubmissions(query, std::move(queue));
+    });
   }
 
   struct UniqueFilter {
@@ -89,7 +89,8 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
   m_taskSlotHandler.emplace();
   if(isConsolidated) {
     auto orderQueue = std::make_shared<Queue<const Order*>>();
-    QueryDailyOrderSubmissions(*m_userProfile, m_executingAccount, orderQueue);
+    m_pendingRoutines.Add(QueryDailyOrderSubmissions(*m_userProfile,
+      m_executingAccount, orderQueue));
     m_accountOrderPublisher = MakeSequencePublisherAdaptor(
       std::make_shared<QueueReaderPublisher<const Order*>>(orderQueue));
   } else {
@@ -130,8 +131,8 @@ const OrderExecutionPublisher&
 
 const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
     const CanvasNode& node) {
-  return Add(std::make_shared<Task>(node, m_executingAccount,
-    Ref(*m_userProfile)));
+  return Add(
+    std::make_shared<Task>(node, m_executingAccount, Ref(*m_userProfile)));
 }
 
 const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
@@ -148,21 +149,21 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   entry->m_task = std::move(task);
   entry->m_task->GetPublisher().Monitor(
     m_taskSlotHandler->GetSlot<Task::StateEntry>(
-    [=, entry = entry.get()] (const Task::StateEntry& state) {
-      OnTaskState(*entry, state);
-    }));
+      [=, entry = entry.get()] (const Task::StateEntry& state) {
+        OnTaskState(*entry, state);
+      }));
   m_taskIds.insert(std::make_pair(entry->m_task->GetId(), entry.get()));
   for(auto& taskMonitor : m_taskMonitors) {
-    auto observer = std::make_unique<CanvasObserver>(entry->m_task,
-      taskMonitor.GetMonitor());
-    auto observerEntry = std::make_unique<ObserverEntry>(taskMonitor.GetName(),
-      std::move(observer));
+    auto observer =
+      std::make_unique<CanvasObserver>(entry->m_task, taskMonitor.GetMonitor());
+    auto observerEntry = std::make_unique<ObserverEntry>(
+      taskMonitor.GetName(), std::move(observer));
     observerEntry->m_connection =
       observerEntry->m_observer->ConnectUpdateSignal(
-      [=, entry = entry.get(), name = taskMonitor.GetName()]
-          (const boost::any& value) {
-        OnMonitorUpdate(*entry, name, value);
-      });
+        [=, entry = entry.get(), name = taskMonitor.GetName()] (
+            const any& value) {
+          OnMonitorUpdate(*entry, name, value);
+        });
     entry->m_monitors.push_back(std::move(observerEntry));
   }
   auto& entryReference = *entry;
@@ -176,7 +177,7 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
     m_orders->GetWriter());
   entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
     m_orderSlotHandler.GetSlot<const Order*>(
-    [=] (const Order* order) { OnTaskOrderSubmitted(order); }));
+      [=] (const Order* order) { OnTaskOrderSubmitted(order); }));
   return entryReference;
 }
 
@@ -210,15 +211,14 @@ void BlotterTasksModel::Refresh() {
   for(auto& link : m_outgoingLinks) {
     link->Refresh();
   }
-  WithModels(*this,
-    [&] (const BlotterTasksModel& model) {
-      model.GetOrderExecutionPublisher().Monitor(m_orders->GetWriter());
-      auto size = model.rowCount();
-      for(auto i = 0; i != size; ++i) {
-        auto& entry = model.GetEntry(i);
-        Add(entry.m_task);
-      }
-    });
+  WithModels(*this, [&] (const BlotterTasksModel& model) {
+    model.GetOrderExecutionPublisher().Monitor(m_orders->GetWriter());
+    auto size = model.rowCount();
+    for(auto i = 0; i != size; ++i) {
+      auto& entry = model.GetEntry(i);
+      Add(entry.m_task);
+    }
+  });
   m_isRefreshing = false;
   endResetModel();
 }
@@ -230,14 +230,13 @@ void BlotterTasksModel::Link(Ref<BlotterTasksModel> model) {
   for(const auto& link : m_outgoingLinks) {
     link->Refresh();
   }
-  WithModels(*model.Get(),
-    [&] (const BlotterTasksModel& model) {
-      auto size = model.rowCount();
-      for(auto i = 0; i != size; ++i) {
-        auto& entry = model.GetEntry(i);
-        Add(entry.m_task);
-      }
-    });
+  WithModels(*model.Get(), [&] (const BlotterTasksModel& model) {
+    auto size = model.rowCount();
+    for(auto i = 0; i != size; ++i) {
+      auto& entry = model.GetEntry(i);
+      Add(entry.m_task);
+    }
+  });
 }
 
 void BlotterTasksModel::Unlink(BlotterTasksModel& model) {
@@ -300,8 +299,8 @@ QVariant BlotterTasksModel::data(const QModelIndex& index, int role) const {
   return QVariant();
 }
 
-QVariant BlotterTasksModel::headerData(int section,
-    Qt::Orientation orientation, int role) const {
+QVariant BlotterTasksModel::headerData(
+    int section, Qt::Orientation orientation, int role) const {
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -322,8 +321,8 @@ QVariant BlotterTasksModel::headerData(int section,
   return QVariant();
 }
 
-bool BlotterTasksModel::setData(const QModelIndex& index,
-    const QVariant& value, int role) {
+bool BlotterTasksModel::setData(
+    const QModelIndex& index, const QVariant& value, int role) {
   if(!index.isValid() || index.column() != STICKY_COLUMN ||
       role != Qt::EditRole || !value.canConvert<bool>()) {
     return false;
@@ -341,7 +340,7 @@ void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
   m_orders = std::make_shared<MultiQueueWriter<const Order*>>();
   m_linkedOrderExecutionPublisher = MakeSequencePublisherAdaptor(
     std::make_shared<QueueReaderPublisher<const Order*>>(
-    MakeFilteredQueueReader(m_orders, UniqueFilter())));
+      MakeFilteredQueueReader(m_orders, UniqueFilter())));
   m_accountOrderPublisher->Monitor(m_orders->GetWriter());
 }
 

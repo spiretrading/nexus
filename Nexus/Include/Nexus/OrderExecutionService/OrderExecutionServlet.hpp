@@ -127,6 +127,7 @@ namespace Nexus::OrderExecutionService {
       OrderExecutionServlet(const OrderExecutionServlet&) = delete;
       OrderExecutionServlet& operator =(
         const OrderExecutionServlet&) = delete;
+      void Recover(const Beam::ServiceLocator::DirectoryEntry& account);
       void RecoverTradingSession();
       void OnExecutionReport(const ExecutionReport& executionReport,
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -261,70 +262,79 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
-  void OrderExecutionServlet<C, T, S, U, A, O, D>::RecoverTradingSession() {
-    auto accounts = m_serviceLocatorClient->LoadAllAccounts();
-    for(auto& account : accounts) {
-      auto recoveryQuery = AccountQuery();
-      recoveryQuery.SetIndex(account);
-      recoveryQuery.SetRange(m_sessionStartTime,
-        Beam::Queries::Sequence::Last());
-      recoveryQuery.SetSnapshotLimit(
-        Beam::Queries::SnapshotLimit::Unlimited());
-      auto sessionOrders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
-      auto liveOrders = m_dataStore->LoadOrderSubmissions(
-        MakeLiveOrdersQuery(account));
-      auto orders = std::vector<SequencedOrderRecord>();
-      std::set_union(sessionOrders.begin(), sessionOrders.end(),
-        liveOrders.begin(), liveOrders.end(), std::back_inserter(orders),
-        Beam::Queries::SequenceComparator());
-      for(auto& orderRecord : orders) {
-        auto& syncShortingModel = m_shortingModels.GetOrInsert(
-          orderRecord->m_info.m_fields.m_account,
-          boost::factory<std::shared_ptr<SyncShortingModel>>());
-        syncShortingModel->With([&] (auto& shortingModel) {
-          shortingModel.Submit(orderRecord->m_info.m_orderId,
-            orderRecord->m_info.m_fields);
-          for(auto& executionReport : orderRecord->m_executionReports) {
-            shortingModel.Update(executionReport);
-          }
-        });
-        m_liveOrders.Insert(orderRecord->m_info.m_orderId);
-        auto order = static_cast<const Order*>(nullptr);
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::Recover(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto recoveryQuery = AccountQuery();
+    recoveryQuery.SetIndex(account);
+    recoveryQuery.SetRange(m_sessionStartTime, Beam::Queries::Sequence::Last());
+    recoveryQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    auto sessionOrders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+    auto liveOrders = m_dataStore->LoadOrderSubmissions(
+      MakeLiveOrdersQuery(account));
+    auto orders = std::vector<SequencedOrderRecord>();
+    std::set_union(sessionOrders.begin(), sessionOrders.end(),
+      liveOrders.begin(), liveOrders.end(), std::back_inserter(orders),
+      Beam::Queries::SequenceComparator());
+    for(auto& orderRecord : orders) {
+      auto& syncShortingModel = m_shortingModels.GetOrInsert(
+        orderRecord->m_info.m_fields.m_account,
+        boost::factory<std::shared_ptr<SyncShortingModel>>());
+      syncShortingModel->With([&] (auto& shortingModel) {
+        shortingModel.Submit(orderRecord->m_info.m_orderId,
+          orderRecord->m_info.m_fields);
+        for(auto& executionReport : orderRecord->m_executionReports) {
+          shortingModel.Update(executionReport);
+        }
+      });
+      m_liveOrders.Insert(orderRecord->m_info.m_orderId);
+      auto order = static_cast<const Order*>(nullptr);
+      try {
+        order = &m_driver->Recover(Beam::Queries::SequencedValue(
+          Beam::Queries::IndexedValue(*orderRecord, account),
+          orderRecord.GetSequence()));
+      } catch(const std::exception&) {
         try {
-          order = &m_driver->Recover(Beam::Queries::SequencedValue(
-            Beam::Queries::IndexedValue(*orderRecord, account),
-            orderRecord.GetSequence()));
+          std::throw_with_nested(std::runtime_error(
+            "Unable to recover order: " + boost::lexical_cast<std::string>(
+              orderRecord->m_info.m_orderId)));
         } catch(const std::exception&) {
-          try {
-            std::throw_with_nested(std::runtime_error(
-              "Unable to recover order: " + boost::lexical_cast<std::string>(
-                orderRecord->m_info.m_orderId)));
-          } catch(const std::exception&) {
-            std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
-            continue;
+          std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+          continue;
+        }
+      }
+      order->GetPublisher().With([&] {
+        auto existingExecutionReports =
+          boost::optional<std::vector<ExecutionReport>>();
+        order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+          std::bind(&OrderExecutionServlet::OnExecutionReport, this,
+            std::placeholders::_1, order->GetInfo().m_fields.m_account,
+            std::ref(*syncShortingModel))),
+          Beam::Store(existingExecutionReports));
+        if(existingExecutionReports) {
+          existingExecutionReports->erase(existingExecutionReports->begin(),
+            existingExecutionReports->begin() +
+            orderRecord->m_executionReports.size());
+          for(auto& executionReport : *existingExecutionReports) {
+            m_tasks.Push(std::bind(&OrderExecutionServlet::OnExecutionReport,
+              this, executionReport, order->GetInfo().m_fields.m_account,
+              std::ref(*syncShortingModel)));
           }
         }
-        order->GetPublisher().With([&] {
-          auto existingExecutionReports =
-            boost::optional<std::vector<ExecutionReport>>();
-          order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
-            std::bind(&OrderExecutionServlet::OnExecutionReport, this,
-              std::placeholders::_1, order->GetInfo().m_fields.m_account,
-              std::ref(*syncShortingModel))),
-            Beam::Store(existingExecutionReports));
-          if(existingExecutionReports) {
-            existingExecutionReports->erase(existingExecutionReports->begin(),
-              existingExecutionReports->begin() +
-              orderRecord->m_executionReports.size());
-            for(auto& executionReport : *existingExecutionReports) {
-              m_tasks.Push(std::bind(&OrderExecutionServlet::OnExecutionReport,
-                this, executionReport, order->GetInfo().m_fields.m_account,
-                std::ref(*syncShortingModel)));
-            }
-          }
-        });
-      }
+      });
     }
+  }
+
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::RecoverTradingSession() {
+    auto accounts = m_serviceLocatorClient->LoadAllAccounts();
+    auto routines = Beam::Routines::RoutineHandlerGroup();
+    for(auto& account : accounts) {
+      routines.Spawn([=] {
+        Recover(account);
+      });
+    }
+    routines.Wait();
   }
 
   template<typename C, typename T, typename S, typename U, typename A,

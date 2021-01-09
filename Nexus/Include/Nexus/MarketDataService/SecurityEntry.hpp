@@ -5,9 +5,13 @@
 #include <Beam/Queries/Sequencer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -37,7 +41,7 @@ namespace Nexus::MarketDataService {
        * @param closePrice The closing price.
        * @param initialSequences The initial Sequences to use.
        */
-      SecurityEntry(const Security& security, Money closePrice,
+      SecurityEntry(Security security, Money closePrice,
         const InitialSequences& initialSequences);
 
       /** Returns the Security. */
@@ -85,6 +89,9 @@ namespace Nexus::MarketDataService {
       boost::optional<SequencedSecurityTimeAndSale> PublishTimeAndSale(
         const TimeAndSale& timeAndSale, int sourceId);
 
+      /** Returns the SecurityTechnicals. */
+      const SecurityTechnicals& GetSecurityTechnicals() const;
+
       /**
        * Returns the Security's current snapshot.
        * @return The real-time snapshot of the <i>security</i>.
@@ -109,12 +116,19 @@ namespace Nexus::MarketDataService {
       Beam::Queries::Sequencer m_marketQuoteSequencer;
       Beam::Queries::Sequencer m_bookQuoteSequencer;
       Beam::Queries::Sequencer m_timeAndSaleSequencer;
+      SecurityTechnicals m_technicals;
+      std::string m_marketCenter;
+      Money m_nextClose;
+      boost::posix_time::ptime m_technicalsResetTime;
       SequencedSecurityBboQuote m_bboQuote;
       SequencedSecurityTimeAndSale m_timeAndSale;
       std::unordered_map<MarketCode, SequencedSecurityMarketQuote>
         m_marketQuotes;
       std::vector<BookQuoteEntry> m_askBook;
       std::vector<BookQuoteEntry> m_bidBook;
+
+      SecurityEntry(const SecurityEntry&) = delete;
+      SecurityEntry& operator =(const SecurityEntry&) = delete;
   };
 
   /**
@@ -129,7 +143,7 @@ namespace Nexus::MarketDataService {
     auto query = SecurityMarketDataQuery();
     query.SetIndex(security);
     query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
     auto initialSequences = SecurityEntry::InitialSequences();
     {
       auto results = dataStore.LoadBboQuotes(query);
@@ -179,13 +193,17 @@ namespace Nexus::MarketDataService {
     : m_quote(quote),
       m_sourceId(sourceId) {}
 
-  inline SecurityEntry::SecurityEntry(const Security& security,
-    Money closePrice, const InitialSequences& initialSequences)
-    : m_security(security),
-      m_bboSequencer(initialSequences.m_nextBboQuoteSequence),
-      m_marketQuoteSequencer(initialSequences.m_nextMarketQuoteSequence),
-      m_bookQuoteSequencer(initialSequences.m_nextBookQuoteSequence),
-      m_timeAndSaleSequencer(initialSequences.m_nextTimeAndSaleSequence) {}
+  inline SecurityEntry::SecurityEntry(Security security, Money closePrice,
+      const InitialSequences& initialSequences)
+      : m_security(std::move(security)),
+        m_bboSequencer(initialSequences.m_nextBboQuoteSequence),
+        m_marketQuoteSequencer(initialSequences.m_nextMarketQuoteSequence),
+        m_bookQuoteSequencer(initialSequences.m_nextBookQuoteSequence),
+        m_timeAndSaleSequencer(initialSequences.m_nextTimeAndSaleSequence),
+        m_marketCenter(TechnicalAnalysis::GetDefaultMarketCenter(
+          m_security.GetMarket())) {
+    m_technicals.m_close = closePrice;
+  }
 
   inline const Security& SecurityEntry::GetSecurity() const {
     return m_security;
@@ -199,30 +217,52 @@ namespace Nexus::MarketDataService {
     return m_bboQuote;
   }
 
-  inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::
-      PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
+  inline boost::optional<SequencedSecurityBboQuote>
+      SecurityEntry::PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
+    if(m_technicalsResetTime == boost::posix_time::not_a_date_time) {
+      auto& marketEntry = GetDefaultMarketDatabase().FromCode(
+        m_security.GetMarket());
+      if(marketEntry != MarketDatabase::GetNoneEntry()) {
+        auto marketTimeZone =
+          GetDefaultTimeZoneDatabase().time_zone_from_region(
+            marketEntry.m_timeZone);
+        auto marketResetTime = boost::local_time::local_date_time(
+          bboQuote.m_timestamp, marketTimeZone) + boost::gregorian::days(1);
+        marketResetTime -= marketResetTime.local_time().time_of_day();
+        m_technicalsResetTime = marketResetTime.utc_time();
+      } else {
+        m_technicalsResetTime = boost::posix_time::pos_infin;
+      }
+    }
+    if(bboQuote.m_timestamp >= m_technicalsResetTime) {
+      m_technicals.m_volume = 0;
+      m_technicals.m_high = Money::ZERO;
+      m_technicals.m_low = Money::ZERO;
+      m_technicals.m_open = Money::ZERO;
+      m_technicals.m_close = m_nextClose;
+      auto delta = bboQuote.m_timestamp.date() - m_technicalsResetTime.date();
+      m_technicalsResetTime += delta;
+      if(m_technicalsResetTime <= bboQuote.m_timestamp) {
+        m_technicalsResetTime += boost::gregorian::days(1);
+      }
+    }
     auto value = m_bboSequencer.MakeSequencedValue(bboQuote, m_security);
     m_bboQuote = value;
     return value;
   }
 
-  inline boost::optional<SequencedSecurityMarketQuote> SecurityEntry::
-      PublishMarketQuote(const MarketQuote& marketQuote, int sourceId) {
+  inline boost::optional<SequencedSecurityMarketQuote>
+      SecurityEntry::PublishMarketQuote(
+        const MarketQuote& marketQuote, int sourceId) {
     auto value = m_marketQuoteSequencer.MakeSequencedValue(marketQuote,
       m_security);
     m_marketQuotes[marketQuote.m_market] = value;
     return value;
   }
 
-  inline boost::optional<SequencedSecurityBookQuote> SecurityEntry::
-      UpdateBookQuote(const BookQuote& delta, int sourceId) {
-    auto book = [&] {
-      if(delta.m_quote.m_side == Side::ASK) {
-        return &m_askBook;
-      } else {
-        return &m_bidBook;
-      }
-    }();
+  inline boost::optional<SequencedSecurityBookQuote>
+      SecurityEntry::UpdateBookQuote(const BookQuote& delta, int sourceId) {
+    auto book = Pick(delta.m_quote.m_side, &m_askBook, &m_bidBook);
     auto entryIterator = Beam::LinearLowerBound(book->begin(), book->end(),
       delta, [] (const auto& lhs, const auto& rhs) {
         return BookQuoteListingComparator(**lhs.m_quote, rhs);
@@ -267,10 +307,30 @@ namespace Nexus::MarketDataService {
   inline boost::optional<SequencedSecurityTimeAndSale>
       SecurityEntry::PublishTimeAndSale(
         const TimeAndSale& timeAndSale, int sourceId) {
+    if(m_technicals.m_open == Money::ZERO) {
+      m_technicals.m_open = timeAndSale.m_price;
+    }
+    if(m_technicals.m_high == Money::ZERO ||
+        timeAndSale.m_price > m_technicals.m_high) {
+      m_technicals.m_high = timeAndSale.m_price;
+    }
+    if(m_technicals.m_low == Money::ZERO ||
+        timeAndSale.m_price < m_technicals.m_low) {
+      m_technicals.m_low = timeAndSale.m_price;
+    }
+    m_technicals.m_volume += timeAndSale.m_size;
+    if(timeAndSale.m_marketCenter == m_marketCenter) {
+      m_nextClose = timeAndSale.m_price;
+    }
     auto value = m_timeAndSaleSequencer.MakeSequencedValue(
       timeAndSale, m_security);
     m_timeAndSale = value;
     return value;
+  }
+
+  inline const SecurityTechnicals&
+      SecurityEntry::GetSecurityTechnicals() const {
+    return m_technicals;
   }
 
   inline boost::optional<SecuritySnapshot> SecurityEntry::LoadSnapshot() const {

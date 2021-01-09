@@ -31,16 +31,18 @@ namespace Nexus::TechnicalAnalysis {
    * @return The default market center for the given <i>market</i>.
    */
   inline std::string GetDefaultMarketCenter(MarketCode code) {
-    if(code == DefaultMarkets::TSX()) {
-      return "TSE";
-    } else if(code == DefaultMarkets::TSXV()) {
-      return "CDX";
+    if(code == DefaultMarkets::ASX()) {
+      return "ASX";
     } else if(code == DefaultMarkets::CSE()) {
       return "CNQ";
     } else if(code == DefaultMarkets::HKEX()) {
       return "HKEX";
     } else if(code == DefaultMarkets::NEOE()) {
       return "AQL";
+    } else if(code == DefaultMarkets::TSX()) {
+      return "TSE";
+    } else if(code == DefaultMarkets::TSXV()) {
+      return "CDX";
     } else if(!code.IsEmpty()) {
       return code.GetData();
     }

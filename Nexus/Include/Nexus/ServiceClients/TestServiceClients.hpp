@@ -123,8 +123,9 @@ namespace Nexus {
       m_administrationClient(
         m_environment->GetAdministrationEnvironment().MakeClient(
           m_serviceLocatorClient)),
-      m_marketDataClient(m_environment->GetMarketDataEnvironment().MakeClient(
-        m_serviceLocatorClient)),
+      m_marketDataClient(
+        m_environment->GetMarketDataEnvironment().MakeRegistryClient(
+          m_serviceLocatorClient)),
       m_chartingClient(m_environment->GetChartingEnvironment().MakeClient(
         m_serviceLocatorClient)),
       m_complianceClient(m_environment->GetComplianceEnvironment().MakeClient(

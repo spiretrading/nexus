@@ -6,6 +6,7 @@
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 using namespace Beam;
+using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
@@ -108,5 +109,29 @@ TEST_SUITE("BuyingPowerCheck") {
       submissionFields);
     auto submittedOrder = m_orderSubmissions->Pop();
     REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(submittedOrder->GetInfo()));
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "order_cancellation") {
+    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
+      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
+      Side::BID, "NYSE", 1000, Money::ONE), 1,
+      m_environment.GetTimeEnvironment().GetTime());
+    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoA));
+    auto orderA = PrimitiveOrder(orderInfoA);
+    m_buyingPowerCheck.Add(orderA);
+    Accept(orderA);
+    SetOrderStatus(orderA, OrderStatus::PENDING_CANCEL);
+    Cancel(orderA);
+    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
+      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
+      Side::BID, "NYSE", 1000, Money::ONE), 2,
+      m_environment.GetTimeEnvironment().GetTime());
+    FlushPendingRoutines();
+    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoB));
+    auto orderB = PrimitiveOrder(orderInfoB);
+    m_buyingPowerCheck.Add(orderB);
+    Accept(orderB);
+    SetOrderStatus(orderB, OrderStatus::PENDING_CANCEL);
+    Cancel(orderB);
   }
 }

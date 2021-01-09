@@ -174,6 +174,7 @@ namespace Nexus::Python {
         const MarketDataService::SecurityMarketDataQuery&,
         Beam::ScopedQueueWriter<TimeAndSale>)>(&Client::QueryTimeAndSales)).
       def("load_security_snapshot", &Client::LoadSecuritySnapshot).
+      def("load_security_technicals", &Client::LoadSecurityTechnicals).
       def("query_security_info", &Client::QuerySecurityInfo).
       def("load_security_info_from_prefix",
         &Client::LoadSecurityInfoFromPrefix).
@@ -201,16 +202,21 @@ namespace Nexus::Python {
     auto client = pybind11::class_<Client, std::shared_ptr<Client>>(module,
       name.c_str()).
       def("add", &Client::Add).
-      def("publish_order_imbalance", &Client::PublishOrderImbalance).
-      def("publish_bbo_quote", &Client::PublishBboQuote).
-      def("publish_market_quote", &Client::PublishMarketQuote).
-      def("set_book_quote", &Client::SetBookQuote).
+      def("publish", static_cast<void (Client::*)(const MarketOrderImbalance&)>(
+        &Client::Publish)).
+      def("publish", static_cast<void (Client::*)(const SecurityBboQuote&)>(
+        &Client::Publish)).
+      def("publish", static_cast<void (Client::*)(const SecurityMarketQuote&)>(
+        &Client::Publish)).
+      def("publish", static_cast<void (Client::*)(const SecurityBookQuote&)>(
+        &Client::Publish)).
+      def("publish", static_cast<void (Client::*)(const SecurityTimeAndSale&)>(
+        &Client::Publish)).
       def("add_order", &Client::AddOrder).
       def("modify_order_size", &Client::ModifyOrderSize).
       def("offset_order_size", &Client::OffsetOrderSize).
       def("modify_order_price", &Client::ModifyOrderPrice).
       def("delete_order", &Client::DeleteOrder).
-      def("publish_time_and_sale", &Client::PublishTimeAndSale).
       def("close", &Client::Close);
     if constexpr(!std::is_same_v<Client,
         MarketDataService::MarketDataFeedClientBox>) {

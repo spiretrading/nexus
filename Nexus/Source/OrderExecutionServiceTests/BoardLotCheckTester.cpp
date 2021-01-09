@@ -47,8 +47,7 @@ TEST_SUITE("BoardLotCheck") {
     auto orderA = PrimitiveOrder(orderInfoA);
     REQUIRE_THROWS_AS(m_check.Submit(orderInfoA),
       OrderSubmissionCheckException);
-    m_environment.Publish(security,
-      BboQuote(Quote(Money::ONE, 100, Side::BID),
+    m_environment.Publish(security, BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE + Money::CENT, 100, Side::ASK), not_a_date_time));
     REQUIRE_NOTHROW(m_check.Submit(orderInfoA));
   }

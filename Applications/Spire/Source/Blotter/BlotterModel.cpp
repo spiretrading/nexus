@@ -160,6 +160,7 @@ void BlotterModel::InitializeModels() {
     query.SetIndex(m_executingAccount);
     query.SetRange(Increment(sequence), Beam::Queries::Sequence::Last());
     query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+    query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
     m_userProfile->GetServiceClients().GetOrderExecutionClient().
       QueryOrderSubmissions(query, orders);
     m_portfolioController.emplace(std::move(portfolio),

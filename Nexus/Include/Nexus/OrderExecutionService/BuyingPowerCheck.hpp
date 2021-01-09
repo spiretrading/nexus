@@ -69,8 +69,8 @@ namespace Nexus::OrderExecutionService {
       Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<BuyingPowerEntry>> m_buyingPowerEntries;
-      Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<
-        Beam::StateQueue<BboQuote>>> m_bboQuotes;
+      Beam::SynchronizedUnorderedMap<Security,
+        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
 
       BboQuote LoadBboQuote(const Security& security);
       Money GetExpectedPrice(const OrderFields& orderFields);
@@ -178,9 +178,9 @@ namespace Nexus::OrderExecutionService {
         }
         buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
-        order.GetPublisher().Monitor(
-          buyingPowerEntry.m_executionReportQueue.GetWriter());
       });
+    order.GetPublisher().Monitor(
+      buyingPowerEntry.m_executionReportQueue.GetWriter());
   }
 
   template<typename A, typename M>

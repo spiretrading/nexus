@@ -296,7 +296,7 @@ namespace Nexus {
         m_administrationClient.LoadServicesRootEntry());
       m_marketDataEnvironment.emplace(m_serviceLocatorClient,
         m_administrationClient, std::move(historicalDataStore));
-      m_marketDataClient.emplace(m_marketDataEnvironment->MakeClient(
+      m_marketDataClient.emplace(m_marketDataEnvironment->MakeRegistryClient(
         m_serviceLocatorClient));
       m_chartingEnvironment.emplace(m_serviceLocatorClient,
         *m_marketDataClient);
@@ -591,11 +591,13 @@ namespace Nexus {
     if(Beam::Queries::GetTimestamp(value) !=
         boost::posix_time::not_a_date_time) {
       m_timeEnvironment.SetTime(Beam::Queries::GetTimestamp(value));
-      GetMarketDataEnvironment().Publish(index, value);
+      GetMarketDataEnvironment().GetFeedClient().Publish(
+        Beam::Queries::IndexedValue(value, index));
     } else {
       auto revisedValue = value;
       Beam::Queries::GetTimestamp(revisedValue) = m_timeEnvironment.GetTime();
-      GetMarketDataEnvironment().Publish(index, revisedValue);
+      GetMarketDataEnvironment().GetFeedClient().Publish(
+        Beam::Queries::IndexedValue(revisedValue, index));
     }
     Beam::Routines::FlushPendingRoutines();
   }

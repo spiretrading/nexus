@@ -100,7 +100,7 @@ TEST_SUITE("OrderExecutionClient") {
     auto serverClient = (TestServiceProtocolServer::ServiceProtocolClient*)(
       nullptr);
     NewOrderSingleService::AddSlot(Store(m_server->GetSlots()),
-      [&] (auto& client, auto& requestedOrderFields) {
+      [&] (auto& client, const auto& requestedOrderFields) {
         REQUIRE(requestedOrderFields == orderFields);
         sentSubmitOrderRequest = true;
         serverClient = &client;
@@ -144,7 +144,7 @@ TEST_SUITE("OrderExecutionClient") {
       Async<TestServiceProtocolServer::ServiceProtocolClient*>();
     auto orderResponse = Async<SequencedAccountOrderInfo>();
     NewOrderSingleService::AddSlot(Store(m_server->GetSlots()),
-      [&] (auto& client, auto& requestedOrderFields) {
+      [&] (auto& client, const auto& requestedOrderFields) {
         receivedNewOrderToken.GetEval().SetResult(&client);
         return orderResponse.Get();
       });
@@ -181,7 +181,7 @@ TEST_SUITE("OrderExecutionClient") {
 
   TEST_CASE_FIXTURE(Fixture, "query_sequenced_order_submissions") {
     QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
-      [&] (auto& client, auto& query) {
+      [&] (auto& client, const auto& query) {
         auto result = OrderSubmissionQueryResult();
         result.m_queryId = 10;
         return result;
@@ -214,7 +214,7 @@ TEST_SUITE("OrderExecutionClient") {
     auto receivedQueryToken = Async<void>();
     auto sendQueryToken = Async<void>();
     QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
-      [&] (auto& client, auto& query) {
+      [&] (auto& client, const auto& query) {
         auto result = OrderSubmissionQueryResult();
         if(query.GetRange() != Range::Historical()) {
           result.m_queryId = -1;
@@ -271,5 +271,50 @@ TEST_SUITE("OrderExecutionClient") {
     REQUIRE(executionReports->Pop().m_status == OrderStatus::CANCELED);
     orders->Break();
     REQUIRE(!orders->TryPop());
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "recover_real_time_subscriptions") {
+    auto newOrderToken =
+      Async<TestServiceProtocolServer::ServiceProtocolClient*>();
+    NewOrderSingleService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, const auto& requestedOrderFields) {
+        newOrderToken.GetEval().SetResult(&client);
+        return SequencedAccountOrderInfo(AccountOrderInfo(OrderInfo(
+          requestedOrderFields, 100, time_from_string("2020-12-30 22:01:41")),
+          ACCOUNT), Beam::Queries::Sequence(10));
+      });
+    auto queryToken = Async<AccountQuery>();
+    auto queryCompletionToken = Async<void>();
+    QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
+      [&] (auto& client, const auto& query) {
+        queryToken.GetEval().SetResult(query);
+        queryCompletionToken.Get();
+        auto result = OrderSubmissionQueryResult();
+        result.m_queryId = 10;
+        return result;
+      });
+    auto fields =
+      OrderFields::MakeLimitOrder(ACCOUNT, TST, Side::BID, 100, Money::CENT);
+    Spawn([&] {
+      m_client->Submit(fields);
+    });
+    auto realTimeQuery = queryToken.Get();
+    REQUIRE(realTimeQuery.GetIndex() == ACCOUNT);
+    REQUIRE(realTimeQuery.GetRange() == Range::RealTime());
+    queryToken.Reset();
+    queryCompletionToken.GetEval().SetResult();
+    auto serverSideClient = newOrderToken.Get();
+    FlushPendingRoutines();
+    serverSideClient->Close();
+    auto recoveryQuery = queryToken.Get();
+    REQUIRE(recoveryQuery.GetIndex() == ACCOUNT);
+    REQUIRE(recoveryQuery.GetRange() == Range::Historical());
+    queryToken.Reset();
+    queryCompletionToken.GetEval().SetResult();
+    auto realTimeRecoveryQuery = queryToken.Get();
+    REQUIRE(realTimeRecoveryQuery.GetIndex() == ACCOUNT);
+    REQUIRE(realTimeRecoveryQuery.GetRange() == Range::RealTime());
+    queryToken.Reset();
+    queryCompletionToken.GetEval().SetResult();
   }
 }

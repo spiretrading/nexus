@@ -12,6 +12,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
@@ -46,6 +47,9 @@ namespace Nexus::AdministrationService::Tests {
         MarketDataService::EntitlementDatabase entitlements);
 
       ~AdministrationServiceTestEnvironment();
+
+      /** Returns this test environment's AdministrationClient. */
+      AdministrationClientBox& GetClient();
 
       /**
        * Grants an account administrative privileges.
@@ -91,6 +95,7 @@ namespace Nexus::AdministrationService::Tests {
       LocalAdministrationDataStore m_dataStore;
       ServerConnection m_serverConnection;
       ServiceProtocolServletContainer m_container;
+      boost::optional<AdministrationClientBox> m_client;
 
       static MarketDataService::EntitlementDatabase MakeDefaultEntitlements(
         Beam::ServiceLocator::ServiceLocatorClientBox& client);
@@ -99,6 +104,46 @@ namespace Nexus::AdministrationService::Tests {
       AdministrationServiceTestEnvironment& operator =(
         const AdministrationServiceTestEnvironment&) = delete;
   };
+
+  /**
+   * Uses a ServiceLocatorAccount to make an account suitable for use by a
+   * AdministrationServiceTestEnvironment.
+   * @param serviceLocatorClient The ServiceLocatorClient to use, should have
+   *        root permissions.
+   * @param name The name of the account.
+   * @param password The account's password.
+   * @return The account's DirectoryEntry.
+   */
+  template<typename ServiceLocatorClient>
+  inline Beam::ServiceLocator::DirectoryEntry MakeAdministratorAccount(
+      ServiceLocatorClient& serviceLocatorClient, const std::string& name,
+      const std::string& password) {
+    auto account = serviceLocatorClient.MakeAccount(name, password,
+      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+    serviceLocatorClient.StorePermissions(account,
+      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
+      Beam::ServiceLocator::Permissions().Set(
+        Beam::ServiceLocator::Permission::READ).Set(
+        Beam::ServiceLocator::Permission::MOVE).Set(
+        Beam::ServiceLocator::Permission::ADMINISTRATE));
+    return account;
+  }
+
+  /**
+   * Constructs an AdministrationServiceTestEnvironment using defaults settings
+   * from a ServiceLocatorTestEnvironment.
+   * @param serviceLocatorEnvironment The ServiceLocatorTestEnvironment used
+   *        to create default settings.
+   */
+  inline AdministrationServiceTestEnvironment
+      MakeAdministrationServiceTestEnvironment(
+        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+          serviceLocatorEnvironment) {
+    MakeAdministratorAccount(serviceLocatorEnvironment.GetRoot(),
+      "administration_service", "1234");
+    return AdministrationServiceTestEnvironment(
+      serviceLocatorEnvironment.MakeClient("administration_service", "1234"));
+  }
 
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(
@@ -110,15 +155,23 @@ namespace Nexus::AdministrationService::Tests {
     AdministrationServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
       MarketDataService::EntitlementDatabase entitlements)
-    : m_serviceLocatorClient(std::move(serviceLocatorClient)),
-      m_container(Beam::Initialize(m_serviceLocatorClient, Beam::Initialize(
-        m_serviceLocatorClient, std::move(entitlements), &m_dataStore)),
-        &m_serverConnection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+      : m_serviceLocatorClient(std::move(serviceLocatorClient)),
+          m_container(Beam::Initialize(m_serviceLocatorClient, Beam::Initialize(
+            m_serviceLocatorClient, std::move(entitlements), &m_dataStore)),
+            &m_serverConnection,
+            boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {
+    MakeAdministrator(m_serviceLocatorClient.GetAccount());
+    m_client.emplace(MakeClient(m_serviceLocatorClient));
+  }
 
   inline AdministrationServiceTestEnvironment::
       ~AdministrationServiceTestEnvironment() {
     Close();
+  }
+
+  inline AdministrationClientBox&
+      AdministrationServiceTestEnvironment::GetClient() {
+    return *m_client;
   }
 
   inline void AdministrationServiceTestEnvironment::MakeAdministrator(

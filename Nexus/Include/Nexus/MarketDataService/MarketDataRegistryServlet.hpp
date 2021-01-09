@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -28,7 +27,7 @@ namespace Nexus::MarketDataService {
    * @param <A> The type of AdministrationClient to use.
    */
   template<typename C, typename R, typename D, typename A>
-  class MarketDataRegistryServlet : private boost::noncopyable {
+  class MarketDataRegistryServlet {
     public:
 
       /** The registry storing all market data sent to this servlet. */
@@ -84,8 +83,8 @@ namespace Nexus::MarketDataService {
       using MarketSubscriptions = Beam::Queries::IndexedSubscriptions<
         T, MarketCode, ServiceProtocolClient>;
       template<typename T>
-      using SecuritySubscriptions = Beam::Queries::IndexedSubscriptions<
-        T, Security, ServiceProtocolClient>;
+      using SecuritySubscriptions =
+        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       EntitlementDatabase m_entitlementDatabase;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<R> m_registry;
@@ -97,6 +96,9 @@ namespace Nexus::MarketDataService {
       SecuritySubscriptions<TimeAndSale> m_timeAndSaleSubscriptions;
       Beam::IO::OpenState m_openState;
 
+      MarketDataRegistryServlet(const MarketDataRegistryServlet&) = delete;
+      MarketDataRegistryServlet& operator =(
+        const MarketDataRegistryServlet&) = delete;
       Security NormalizePrimaryMarket(const Security& security);
       void OnQueryOrderImbalances(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
@@ -123,6 +125,8 @@ namespace Nexus::MarketDataService {
       void OnEndTimeAndSaleQuery(ServiceProtocolClient& client,
         const Security& security, int id);
       SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
+        Security security);
+      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
         Security security);
       std::vector<SecurityInfo> OnQuerySecurityInfo(
         ServiceProtocolClient& client, const SecurityInfoQuery& query);
@@ -290,6 +294,9 @@ namespace Nexus::MarketDataService {
     LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecuritySnapshot, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
+      &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this,
+      std::placeholders::_1, std::placeholders::_2));
     QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnQuerySecurityInfo, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -344,10 +351,8 @@ namespace Nexus::MarketDataService {
     if(security.GetMarket().IsEmpty()) {
       return security;
     }
-    auto query = SecurityInfoQuery();
-    query.SetIndex(security);
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-    auto result = m_dataStore->LoadSecurityInfo(query);
+    auto result =
+      m_dataStore->LoadSecurityInfo(MakeSecurityInfoQuery(security));
     if(result.empty()) {
       return security;
     }
@@ -564,6 +569,17 @@ namespace Nexus::MarketDataService {
     securitySnapshot->m_bidBook.erase(bidEndRange,
       securitySnapshot->m_bidBook.end());
     return *securitySnapshot;
+  }
+
+  template<typename C, typename R, typename D, typename A>
+  SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
+      OnLoadSecurityTechnicals(ServiceProtocolClient& client,
+        Security security) {
+    security = NormalizePrimaryMarket(security);
+    if(auto securityTechnicals = m_registry->FindSecurityTechnicals(security)) {
+      return *securityTechnicals;
+    }
+    return {};
   }
 
   template<typename C, typename R, typename D, typename A>
