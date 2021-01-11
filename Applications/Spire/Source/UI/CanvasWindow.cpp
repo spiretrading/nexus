@@ -83,7 +83,7 @@ namespace {
     action->setEnabled(selection.size() > 1);
   }
 
-  QLabel* BuildStateLabel() {
+  QLabel* MakeStateLabel() {
     auto label = new QLabel();
     QSizePolicy sizePolicy(QSizePolicy::Maximum,
       label->sizePolicy().verticalPolicy());
@@ -93,7 +93,7 @@ namespace {
     return label;
   }
 
-  QLabel* BuildTypeLabel() {
+  QLabel* MakeTypeLabel() {
     auto label = new QLabel();
     QSizePolicy sizePolicy(QSizePolicy::Ignored,
       label->sizePolicy().verticalPolicy());
@@ -102,7 +102,7 @@ namespace {
     return label;
   }
 
-  QLabel* BuildErrorLabel() {
+  QLabel* MakeErrorLabel() {
     auto label = new QLabel();
     QSizePolicy sizePolicy(QSizePolicy::Ignored,
       label->sizePolicy().verticalPolicy());
@@ -111,7 +111,7 @@ namespace {
     return label;
   }
 
-  QWidget* BuildCoordinatesLabel(QLabel*& xCoordinateLabel,
+  QWidget* MakeCoordinatesLabel(QLabel*& xCoordinateLabel,
       QLabel*& yCoordinateLabel) {
     auto coordinates = new QWidget();
     auto coordinateLayout = new QHBoxLayout();
@@ -151,13 +151,13 @@ CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
   sizePolicy.setHeightForWidth(m_statusBar->sizePolicy().hasHeightForWidth());
   m_statusBar->setSizePolicy(sizePolicy);
   m_ui->verticalLayout->addWidget(m_statusBar);
-  m_stateLabel = BuildStateLabel();
+  m_stateLabel = MakeStateLabel();
   m_statusBar->addWidget(m_stateLabel);
-  m_typeLabel = BuildTypeLabel();
+  m_typeLabel = MakeTypeLabel();
   m_statusBar->addWidget(m_typeLabel);
-  m_errorLabel = BuildErrorLabel();
+  m_errorLabel = MakeErrorLabel();
   m_statusBar->addWidget(m_errorLabel);
-  QWidget* coordinates = BuildCoordinatesLabel(m_xCoordinateLabel,
+  QWidget* coordinates = MakeCoordinatesLabel(m_xCoordinateLabel,
     m_yCoordinateLabel);
   m_statusBar->addWidget(coordinates);
   m_toolbar = new QToolBar(this);

@@ -29,7 +29,7 @@ namespace Spire {
       */
       SecurityInputDialog(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& initial, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a SecurityInputDialog.
       /*!
@@ -40,7 +40,7 @@ namespace Spire {
       */
       SecurityInputDialog(Beam::Ref<UserProfile> userProfile,
         const std::string& text, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~SecurityInputDialog();
 

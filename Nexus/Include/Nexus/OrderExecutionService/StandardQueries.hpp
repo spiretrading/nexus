@@ -20,12 +20,12 @@
 namespace Nexus::OrderExecutionService {
 
   /**
-   * Builds a Query Expression to filter Orders by MarketCode.
+   * Returns a Query Expression to filter Orders by MarketCode.
    * @param market The market to query.
    * @return A Query Expression that filters any Order not submitted to the
    *         specified <i>market</i>.
    */
-  inline auto BuildMarketFilter(MarketCode market) {
+  inline auto MakeMarketFilter(MarketCode market) {
     auto queryMarketCode = Beam::Queries::StringValue(market.GetData());
     auto marketCodeExpression = Beam::Queries::ConstantExpression(
       queryMarketCode);
@@ -43,7 +43,7 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Builds a query to retrieve Orders submitted to a specified market on
+   * Returns a query to retrieve Orders submitted to a specified market on
    * on a daily basis.
    * @param market The market to query.
    * @param account The account to query.
@@ -55,7 +55,7 @@ namespace Nexus::OrderExecutionService {
    *         submissions for the specified <i>account</i> on the specified
    *         <i>market</i>.
    */
-  inline AccountQuery BuildDailyOrderSubmissionQuery(MarketCode market,
+  inline AccountQuery MakeDailyOrderSubmissionQuery(MarketCode market,
       const Beam::ServiceLocator::DirectoryEntry& account,
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       const MarketDatabase& marketDatabase,
@@ -70,7 +70,7 @@ namespace Nexus::OrderExecutionService {
           timeZoneDatabase) + boost::gregorian::days(1);
       }
     }();
-    auto marketFilter = BuildMarketFilter(market);
+    auto marketFilter = MakeMarketFilter(market);
     auto dailyOrderSubmissionQuery = AccountQuery();
     dailyOrderSubmissionQuery.SetIndex(account);
     dailyOrderSubmissionQuery.SetRange(marketStartOfDay, marketEndOfDay);
@@ -114,7 +114,7 @@ namespace Nexus::OrderExecutionService {
           boost::gregorian::days(1);
         auto marketExpressions = std::vector<Beam::Queries::Expression>();
         for(auto& market : marketTimeZone.second) {
-          marketExpressions.push_back(BuildMarketFilter(market));
+          marketExpressions.push_back(MakeMarketFilter(market));
         }
         auto marketFilter = Beam::Queries::MakeOrExpression(
           marketExpressions.begin(), marketExpressions.end());
@@ -139,8 +139,8 @@ namespace Nexus::OrderExecutionService {
     });
   }
 
-  /** Builds a Query Expression to filter an account's live Orders. */
-  inline auto BuildLiveOrdersFilter() {
+  /** Returns a Query Expression to filter an account's live Orders. */
+  inline auto MakeLiveOrdersFilter() {
     auto info = Beam::Queries::ParameterExpression(0,
       Nexus::Queries::OrderInfoType());
     return Beam::Queries::MemberAccessExpression("is_live",
@@ -148,16 +148,16 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Builds a query to retrieve all of an account's live Orders.
+   * Returns a query to retrieve all of an account's live Orders.
    * @param account The account to query.
    */
-  inline AccountQuery BuildLiveOrdersQuery(
+  inline AccountQuery MakeLiveOrdersQuery(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto query = AccountQuery();
     query.SetIndex(account);
     query.SetRange(Beam::Queries::Range::Historical());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    query.SetFilter(BuildLiveOrdersFilter());
+    query.SetFilter(MakeLiveOrdersFilter());
     return query;
   }
 
@@ -171,7 +171,7 @@ namespace Nexus::OrderExecutionService {
   void QueryLiveOrders(const Beam::ServiceLocator::DirectoryEntry& account,
       OrderExecutionClient& orderExecutionClient,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    orderExecutionClient.QueryOrderSubmissions(BuildLiveOrdersQuery(account),
+    orderExecutionClient.QueryOrderSubmissions(MakeLiveOrdersQuery(account),
       std::move(queue));
   }
 
@@ -192,10 +192,10 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Builds a Query Expression to filter Orders by id.
+   * Returns a Query Expression to filter Orders by id.
    * @param ids The order ids to filter.
    */
-  inline auto BuildOrderIdFilter(const std::vector<OrderId>& ids) {
+  inline auto MakeOrderIdFilter(const std::vector<OrderId>& ids) {
     auto info = Beam::Queries::ParameterExpression(0,
       Nexus::Queries::OrderInfoType());
     auto field = Beam::Queries::MemberAccessExpression("order_id",
@@ -210,18 +210,18 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Builds a query to retrieve Orders by their id.
+   * Returns a query to retrieve Orders by their id.
    * @param account The account to query.
    * @param ids The order ids to query.
    */
-  inline AccountQuery BuildOrderIdQuery(
+  inline AccountQuery MakeOrderIdQuery(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<OrderId>& ids) {
     auto query = AccountQuery();
     query.SetIndex(account);
     query.SetRange(Beam::Queries::Range::Historical());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    query.SetFilter(BuildOrderIdFilter(ids));
+    query.SetFilter(MakeOrderIdFilter(ids));
     return query;
   }
 
@@ -237,7 +237,7 @@ namespace Nexus::OrderExecutionService {
       const std::vector<OrderId>& ids,
       OrderExecutionClient& orderExecutionClient,
       Beam::ScopedQueueWriter<const Order*> queue) {
-    orderExecutionClient.QueryOrderSubmissions(BuildOrderIdQuery(account, ids),
+    orderExecutionClient.QueryOrderSubmissions(MakeOrderIdQuery(account, ids),
       std::move(queue));
   }
 

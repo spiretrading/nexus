@@ -126,7 +126,7 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TimeRangeType& type) {
   m_node = make_unique<TimeRangeParameterNode>();
 }
 
-unique_ptr<CanvasNode> Spire::BuildDefaultCanvasNode(const CanvasType& type) {
+unique_ptr<CanvasNode> Spire::MakeDefaultCanvasNode(const CanvasType& type) {
   DefaultCanvasNodeFromCanvasTypeVisitor visitor;
   return visitor.GetNode(type);
 }

@@ -11,7 +11,7 @@ namespace Spire {
     \param type The CanvasType to get the CanvasNode from.
     \return The default CanvasNode for the specified <i>type</i>.
   */
-  std::unique_ptr<CanvasNode> BuildDefaultCanvasNode(const CanvasType& type);
+  std::unique_ptr<CanvasNode> MakeDefaultCanvasNode(const CanvasType& type);
 }
 
 #endif

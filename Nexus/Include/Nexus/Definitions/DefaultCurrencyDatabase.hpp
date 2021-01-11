@@ -4,60 +4,57 @@
 #include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
-namespace Details {
-  inline CurrencyDatabase BuildDefaultCurrencyDatabase() {
-    auto database = CurrencyDatabase();
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(36);
-      entry.m_code = "AUD";
-      entry.m_sign = "$";
-      database.Add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(124);
-      entry.m_code = "CAD";
-      entry.m_sign = "$";
-      database.Add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(344);
-      entry.m_code = "HKD";
-      entry.m_sign = "$";
-      database.Add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(392);
-      entry.m_code = "JPY";
-      entry.m_sign = u8"\u00A5";
-      database.Add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(840);
-      entry.m_code = "USD";
-      entry.m_sign = "$";
-      database.Add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(1001);
-      entry.m_code = "XBT";
-      entry.m_sign = u8"\u20BF";
-      database.Add(entry);
-    }
-    return database;
-  }
-}
 
   /**
    * Returns the default CurrencyDatabase, typically used for testing purposes.
    */
   inline const CurrencyDatabase& GetDefaultCurrencyDatabase() {
-    static auto database = Details::BuildDefaultCurrencyDatabase();
+    static auto database = [] {
+      auto database = CurrencyDatabase();
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(36);
+        entry.m_code = "AUD";
+        entry.m_sign = "$";
+        database.Add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(124);
+        entry.m_code = "CAD";
+        entry.m_sign = "$";
+        database.Add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(344);
+        entry.m_code = "HKD";
+        entry.m_sign = "$";
+        database.Add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(392);
+        entry.m_code = "JPY";
+        entry.m_sign = u8"\u00A5";
+        database.Add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(840);
+        entry.m_code = "USD";
+        entry.m_sign = "$";
+        database.Add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(1001);
+        entry.m_code = "XBT";
+        entry.m_sign = u8"\u20BF";
+        database.Add(entry);
+      }
+      return database;
+    }();
     return database;
   }
 

@@ -19,7 +19,7 @@ namespace {
 TEST_SUITE("ExecutionReportPublisher") {
   TEST_CASE("partial_snapshot") {
     auto initialOrder = PrimitiveOrder(OrderInfo(
-      OrderFields::BuildLimitOrder(TST, Side::BID, 100, Money::ONE), 17,
+      OrderFields::MakeLimitOrder(TST, Side::BID, 100, Money::ONE), 17,
       ptime(date(2020, 5, 12), time_duration(4, 12, 18))));
     auto orders = std::make_shared<Queue<const Order*>>();
     orders->Push(&initialOrder);
@@ -31,7 +31,7 @@ TEST_SUITE("ExecutionReportPublisher") {
     REQUIRE(reportA.m_executionReport ==
       initialOrder.GetPublisher().GetSnapshot()->back());
     auto update = initialOrder.With([&] (auto status, const auto& reports) {
-      auto update = ExecutionReport::BuildUpdatedReport(reports.back(),
+      auto update = ExecutionReport::MakeUpdatedReport(reports.back(),
         OrderStatus::NEW, reports.back().m_timestamp);
       initialOrder.Update(update);
       return update;

@@ -17,8 +17,8 @@ namespace {
   const auto SECURITY_A = Security("TST", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
 
-  auto BuildOrderFields(Side side, Quantity quantity, Money price) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Side side, Quantity quantity, Money price) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       SECURITY_A, DefaultCurrencies::USD(), side, "NYSE", quantity, price);
   }
 
@@ -35,7 +35,7 @@ namespace {
     order.With(
       [&] (OrderStatus status,
           const std::vector<ExecutionReport>& executionReports) {
-        auto update = ExecutionReport::BuildUpdatedReport(
+        auto update = ExecutionReport::MakeUpdatedReport(
           executionReports.back(), OrderStatus::FILLED,
           second_clock::universal_time());
         update.m_lastQuantity = quantity;
@@ -48,7 +48,7 @@ namespace {
     order.With(
       [&] (OrderStatus status,
           const std::vector<ExecutionReport>& executionReports) {
-        auto update = ExecutionReport::BuildUpdatedReport(
+        auto update = ExecutionReport::MakeUpdatedReport(
           executionReports.back(), OrderStatus::CANCELED,
           second_clock::universal_time());
         book.Update(update);
@@ -68,77 +68,77 @@ namespace {
 TEST_SUITE("PositionOrderBook") {
   TEST_CASE("bid_opening_order_submission") {
     auto book = PositionOrderBook();
-    auto orderFieldsA = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsA = MakeOrderFields(Side::BID, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsA));
     auto orderA = AddOrder(1, orderFieldsA, book);
     Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
       orderA->GetInfo().m_fields.m_price);
-    auto orderFieldsB = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsB = MakeOrderFields(Side::BID, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsB));
-    auto orderFieldsC = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsC = MakeOrderFields(Side::ASK, 100, Money::ONE);
     REQUIRE(!book.TestOpeningOrderSubmission(orderFieldsC));
     auto orderC = AddOrder(2, orderFieldsC, book);
-    auto orderFieldsD = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsD = MakeOrderFields(Side::ASK, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsD));
     Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
       orderC->GetInfo().m_fields.m_price);
-    auto orderFieldsE = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsE = MakeOrderFields(Side::BID, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsE));
-    auto orderFieldsF = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsF = MakeOrderFields(Side::ASK, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsF));
   }
 
   TEST_CASE("ask_opening_order_submission") {
     auto book = PositionOrderBook();
-    auto orderFieldsA = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsA = MakeOrderFields(Side::ASK, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsA));
     auto orderA = AddOrder(1, orderFieldsA, book);
     Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
       orderA->GetInfo().m_fields.m_price);
-    auto orderFieldsB = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsB = MakeOrderFields(Side::ASK, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsB));
-    auto orderFieldsC = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsC = MakeOrderFields(Side::BID, 100, Money::ONE);
     REQUIRE(!book.TestOpeningOrderSubmission(orderFieldsC));
     auto orderC = AddOrder(2, orderFieldsC, book);
-    auto orderFieldsD = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsD = MakeOrderFields(Side::BID, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsD));
     Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
       orderC->GetInfo().m_fields.m_price);
-    auto orderFieldsE = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsE = MakeOrderFields(Side::ASK, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsE));
-    auto orderFieldsF = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsF = MakeOrderFields(Side::BID, 100, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsF));
   }
 
   TEST_CASE("removing_orders") {
     auto book = PositionOrderBook();
-    auto orderFieldsA = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsA = MakeOrderFields(Side::ASK, 100, Money::ONE);
     auto orderA = AddOrder(1, orderFieldsA, book);
-    auto orderFieldsB = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsB = MakeOrderFields(Side::ASK, 100, Money::ONE);
     auto orderB = AddOrder(2, orderFieldsA, book);
     Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
       orderA->GetInfo().m_fields.m_price);
     Cancel(*orderB, book);
-    auto orderFieldsC = BuildOrderFields(Side::BID, 200, Money::ONE);
+    auto orderFieldsC = MakeOrderFields(Side::BID, 200, Money::ONE);
     auto orderC = AddOrder(3, orderFieldsC, book);
     Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
       orderC->GetInfo().m_fields.m_price);
-    auto orderFieldsD = BuildOrderFields(Side::ASK, 200, Money::ONE);
+    auto orderFieldsD = MakeOrderFields(Side::ASK, 200, Money::ONE);
     REQUIRE(book.TestOpeningOrderSubmission(orderFieldsD));
   }
 
   TEST_CASE("get_opening_orders") {
     auto book = PositionOrderBook();
-    auto orderFieldsA = BuildOrderFields(Side::BID, 100, Money::ONE);
+    auto orderFieldsA = MakeOrderFields(Side::BID, 100, Money::ONE);
     auto orderA = AddOrder(1, orderFieldsA, book);
     AssertOpeningOrders(book.GetOpeningOrders(), {orderA.get()});
-    auto orderFieldsB = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsB = MakeOrderFields(Side::ASK, 100, Money::ONE);
     auto orderB = AddOrder(2, orderFieldsB, book);
     AssertOpeningOrders(book.GetOpeningOrders(), {orderA.get(), orderB.get()});
     Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
       orderA->GetInfo().m_fields.m_price);
     AssertOpeningOrders(book.GetOpeningOrders(), {});
-    auto orderFieldsC = BuildOrderFields(Side::ASK, 100, Money::ONE);
+    auto orderFieldsC = MakeOrderFields(Side::ASK, 100, Money::ONE);
     auto orderC = AddOrder(3, orderFieldsC, book);
     AssertOpeningOrders(book.GetOpeningOrders(), {orderC.get()});
     Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
@@ -147,7 +147,7 @@ TEST_SUITE("PositionOrderBook") {
     Fill(*orderB, book, orderB->GetInfo().m_fields.m_quantity,
       orderB->GetInfo().m_fields.m_price);
     AssertOpeningOrders(book.GetOpeningOrders(), {});
-    auto orderFieldsD = BuildOrderFields(Side::BID, 200, Money::ONE);
+    auto orderFieldsD = MakeOrderFields(Side::BID, 200, Money::ONE);
     auto orderD = AddOrder(4, orderFieldsD, book);
     AssertOpeningOrders(book.GetOpeningOrders(), {orderD.get()});
   }

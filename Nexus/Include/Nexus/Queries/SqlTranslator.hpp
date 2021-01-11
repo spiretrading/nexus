@@ -61,9 +61,9 @@ namespace Nexus::Queries {
    * @param expression The Expression to translate.
    * @return The SQL query representing the <i>expression</i>.
    */
-  inline auto BuildSqlQuery(std::string parameter,
+  inline auto MakeSqlQuery(std::string parameter,
       Beam::Queries::Expression expression) {
-    return Beam::Queries::BuildSqlQuery<SqlTranslator>(std::move(parameter),
+    return Beam::Queries::MakeSqlQuery<SqlTranslator>(std::move(parameter),
       std::move(expression));
   }
 

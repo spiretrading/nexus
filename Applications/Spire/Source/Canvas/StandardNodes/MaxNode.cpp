@@ -8,7 +8,7 @@ using namespace Spire;
 using namespace std;
 
 MaxNode::MaxNode() {
-  DefineFunction("Max", { "a", "b" }, BuildSignatures<ExtremaNodeSignatures>());
+  DefineFunction("Max", { "a", "b" }, MakeSignatures<ExtremaNodeSignatures>());
 }
 
 void MaxNode::Apply(CanvasNodeVisitor& visitor) const {

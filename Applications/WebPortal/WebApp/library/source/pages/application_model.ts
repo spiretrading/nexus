@@ -14,7 +14,7 @@ export abstract class ApplicationModel {
   public abstract get dashboardModel(): DashboardModel;
 
   /** Loads the account. */
-  public abstract async loadAccount(): Promise<Beam.DirectoryEntry>;
+  public abstract loadAccount(): Promise<Beam.DirectoryEntry>;
 
   /** Resets the model. */
   public abstract reset(): void;

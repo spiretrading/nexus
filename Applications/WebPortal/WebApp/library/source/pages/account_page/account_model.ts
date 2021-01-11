@@ -26,5 +26,5 @@ export abstract class AccountModel {
   public abstract get riskModel(): RiskModel;
 
   /** Loads this model. */
-  public abstract async load(): Promise<void>;
+  public abstract load(): Promise<void>;
 }

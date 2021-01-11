@@ -57,7 +57,7 @@ namespace Spire {
     \param orderFields The OrderFields to build the CanvasNode from.
     \param userProfile The user's profile.
   */
-  std::unique_ptr<SingleOrderTaskNode> BuildOrderTaskNodeFromOrderFields(
+  std::unique_ptr<SingleOrderTaskNode> MakeOrderTaskNodeFromOrderFields(
     const Nexus::OrderExecutionService::OrderFields& orderFields,
     const UserProfile& userProfile);
 }

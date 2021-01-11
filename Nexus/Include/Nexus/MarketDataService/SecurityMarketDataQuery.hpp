@@ -59,7 +59,7 @@ namespace MarketDataService {
           client = Beam::CapturePtr<MarketDataClient>(client),
           queue = std::move(queue)] () mutable {
         auto snapshotQueue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
-        client->QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
+        client->QueryBboQuotes(Beam::Queries::MakeLatestQuery(security),
           snapshotQueue);
         auto snapshot = SequencedBboQuote();
         try {

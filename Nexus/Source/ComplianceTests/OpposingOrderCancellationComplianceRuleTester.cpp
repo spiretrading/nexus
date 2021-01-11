@@ -22,8 +22,8 @@ namespace {
   const auto TIMESTAMP = ptime(date(1984, May, 6), seconds(10));
   const auto DURATION = seconds(10);
 
-  auto BuildOrderFields(Side side) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Side side) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
       DefaultCurrencies::CAD(), side, DefaultDestinations::TSX(), 1000,
       Money::ONE);
@@ -35,13 +35,13 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
     {
-      auto order = PrimitiveOrder{{BuildOrderFields(Side::ASK), 1,
+      auto order = PrimitiveOrder{{MakeOrderFields(Side::ASK), 1,
         timeClient.GetTime()}};
       rule.Add(order);
       REQUIRE_NOTHROW(rule.Cancel(order));
     }
     {
-      auto order = PrimitiveOrder({BuildOrderFields(Side::BID), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(Side::BID), 2,
         timeClient.GetTime()});
       rule.Add(order);
       REQUIRE_NOTHROW(rule.Cancel(order));
@@ -51,10 +51,10 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
   TEST_CASE("in_order_cancel_opposing_order_without_fill") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
-    auto askOrder = PrimitiveOrder({BuildOrderFields(Side::ASK), 1,
+    auto askOrder = PrimitiveOrder({MakeOrderFields(Side::ASK), 1,
       timeClient.GetTime()});
     rule.Add(askOrder);
-    auto bidOrder = PrimitiveOrder({BuildOrderFields(Side::BID), 1,
+    auto bidOrder = PrimitiveOrder({MakeOrderFields(Side::BID), 1,
       timeClient.GetTime()});
     rule.Add(bidOrder);
     REQUIRE_NOTHROW(rule.Cancel(bidOrder));
@@ -64,10 +64,10 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
   TEST_CASE("reverse_order_cancel_opposing_order_without_fill") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
-    auto askOrder = PrimitiveOrder({BuildOrderFields(Side::ASK), 1,
+    auto askOrder = PrimitiveOrder({MakeOrderFields(Side::ASK), 1,
       timeClient.GetTime()});
     rule.Add(askOrder);
-    auto bidOrder = PrimitiveOrder({BuildOrderFields(Side::BID), 1,
+    auto bidOrder = PrimitiveOrder({MakeOrderFields(Side::BID), 1,
       timeClient.GetTime()});
     rule.Add(bidOrder);
     REQUIRE_NOTHROW(rule.Cancel(askOrder));
@@ -77,10 +77,10 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
   TEST_CASE("in_order_cancel_opposing_order_with_fill_inside_period") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
-    auto askOrder = PrimitiveOrder({BuildOrderFields(Side::ASK), 1,
+    auto askOrder = PrimitiveOrder({MakeOrderFields(Side::ASK), 1,
       timeClient.GetTime()});
     rule.Add(askOrder);
-    auto bidOrder = PrimitiveOrder({BuildOrderFields(Side::BID), 1,
+    auto bidOrder = PrimitiveOrder({MakeOrderFields(Side::BID), 1,
       timeClient.GetTime()});
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
@@ -95,10 +95,10 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
   TEST_CASE("reverse_order_cancel_opposing_order_with_fill_inside_period") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
-    auto askOrder = PrimitiveOrder({BuildOrderFields(Side::ASK), 1,
+    auto askOrder = PrimitiveOrder({MakeOrderFields(Side::ASK), 1,
       timeClient.GetTime()});
     rule.Add(askOrder);
-    auto bidOrder = PrimitiveOrder({BuildOrderFields(Side::BID), 1,
+    auto bidOrder = PrimitiveOrder({MakeOrderFields(Side::BID), 1,
       timeClient.GetTime()});
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
@@ -113,10 +113,10 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
   TEST_CASE("in_order_cancel_opposing_order_with_fill_outside_period") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
-    auto askOrder = PrimitiveOrder({BuildOrderFields(Side::ASK), 1,
+    auto askOrder = PrimitiveOrder({MakeOrderFields(Side::ASK), 1,
       timeClient.GetTime()});
     rule.Add(askOrder);
-    auto bidOrder = PrimitiveOrder({BuildOrderFields(Side::BID), 1,
+    auto bidOrder = PrimitiveOrder({MakeOrderFields(Side::BID), 1,
       timeClient.GetTime()});
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
@@ -130,10 +130,10 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
   TEST_CASE("reverse_order_cancel_opposing_order_with_fill_outside_period") {
     auto timeClient = FixedTimeClient(TIMESTAMP);
     auto rule = OpposingOrderCancellationComplianceRule(DURATION, &timeClient);
-    auto askOrder = PrimitiveOrder({BuildOrderFields(Side::ASK), 1,
+    auto askOrder = PrimitiveOrder({MakeOrderFields(Side::ASK), 1,
       timeClient.GetTime()});
     rule.Add(askOrder);
-    auto bidOrder = PrimitiveOrder({BuildOrderFields(Side::BID), 1,
+    auto bidOrder = PrimitiveOrder({MakeOrderFields(Side::BID), 1,
       timeClient.GetTime()});
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());

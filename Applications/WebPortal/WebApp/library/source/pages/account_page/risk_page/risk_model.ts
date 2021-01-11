@@ -11,12 +11,12 @@ export abstract class RiskModel {
   public abstract get riskParameters(): Nexus.RiskParameters;
 
   /** Loads this model. */
-  public abstract async load(): Promise<void>;
+  public abstract load(): Promise<void>;
 
   /** Submits a request to update the RiskParameters.
    * @param comment - The comment to include in the request.
    * @param riskParameters - The RiskParameters to request.
    */
-  public abstract async submit(comment: string,
+  public abstract submit(comment: string,
     riskParameters: Nexus.RiskParameters): Promise<void>;
 }

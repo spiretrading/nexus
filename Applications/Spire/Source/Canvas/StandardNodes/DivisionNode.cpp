@@ -8,7 +8,7 @@ using namespace std;
 
 DivisionNode::DivisionNode() {
   DefineFunction("Divide", { "numerator", "denominator" },
-    BuildSignatures<DivisionNodeSignatures>());
+    MakeSignatures<DivisionNodeSignatures>());
 }
 
 void DivisionNode::Apply(CanvasNodeVisitor& visitor) const {

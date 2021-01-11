@@ -18,7 +18,7 @@ namespace {
     return Security("TSTN", DefaultMarkets::NYSE(), DefaultCountries::US());
   }
 
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = NyseFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     return feeTable;
@@ -27,6 +27,6 @@ namespace {
 
 TEST_SUITE("NyseFeeHandling") {
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
   }
 }

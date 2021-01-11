@@ -8,7 +8,7 @@ using namespace std;
 
 SubtractionNode::SubtractionNode() {
   DefineFunction("Subtract", { "left", "right" },
-    BuildSignatures<SubtractionNodeSignatures>());
+    MakeSignatures<SubtractionNodeSignatures>());
 }
 
 void SubtractionNode::Apply(CanvasNodeVisitor& visitor) const {

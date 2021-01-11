@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class BboSizeDashboardCellBuilder
-      \brief Builds a DashboardCell emitting a Security's BBO size.
+      \brief Constructs a DashboardCell emitting a Security's BBO size.
    */
   class BboSizeDashboardCellBuilder : public DashboardCellBuilder {
     public:
@@ -17,7 +17,7 @@ namespace Spire {
       */
       BboSizeDashboardCellBuilder(Nexus::Side side);
 
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

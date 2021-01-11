@@ -40,7 +40,7 @@ namespace Nexus::DefinitionsService::Tests {
       ~DefinitionsServiceTestEnvironment();
 
       /**
-       * Builds a new DefinitionsClient.
+       * Returns a new DefinitionsClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the DefinitionsClient.
        */

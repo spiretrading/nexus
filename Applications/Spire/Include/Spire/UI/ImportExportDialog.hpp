@@ -24,7 +24,7 @@ namespace UI {
         \param flags Qt flags passed to the parent widget.
       */
       ImportExportDialog(Beam::Ref<UserProfile> userProfile,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ImportExportDialog();
 

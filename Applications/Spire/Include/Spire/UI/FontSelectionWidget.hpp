@@ -30,7 +30,8 @@ namespace UI {
         \param parent The parent widget.
         \param flags The flags passed to the <i>parent</i> widget.
       */
-      FontSelectionWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      FontSelectionWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~FontSelectionWidget();
 

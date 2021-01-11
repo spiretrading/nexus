@@ -88,7 +88,7 @@ namespace Nexus {
 
       TimeClient& GetTimeClient();
 
-      std::unique_ptr<Timer> BuildTimer(
+      std::unique_ptr<Timer> MakeTimer(
         boost::posix_time::time_duration expiry);
 
       void Close();
@@ -106,7 +106,7 @@ namespace Nexus {
         virtual OrderExecutionClient& GetOrderExecutionClient() = 0;
         virtual RiskClient& GetRiskClient() = 0;
         virtual TimeClient& GetTimeClient() = 0;
-        virtual std::unique_ptr<Timer> BuildTimer(
+        virtual std::unique_ptr<Timer> MakeTimer(
           boost::posix_time::time_duration expiry) = 0;
         virtual void Close() = 0;
       };
@@ -137,7 +137,7 @@ namespace Nexus {
         OrderExecutionClient& GetOrderExecutionClient() override;
         RiskClient& GetRiskClient() override;
         TimeClient& GetTimeClient() override;
-        std::unique_ptr<Timer> BuildTimer(
+        std::unique_ptr<Timer> MakeTimer(
           boost::posix_time::time_duration expiry) override;
         void Close() override;
       };
@@ -215,8 +215,8 @@ namespace Nexus {
   }
 
   inline std::unique_ptr<ServiceClientsBox::Timer>
-      ServiceClientsBox::BuildTimer(boost::posix_time::time_duration expiry) {
-    return m_clients->BuildTimer(expiry);
+      ServiceClientsBox::MakeTimer(boost::posix_time::time_duration expiry) {
+    return m_clients->MakeTimer(expiry);
   }
 
   inline void ServiceClientsBox::Close() {
@@ -301,10 +301,10 @@ namespace Nexus {
 
   template<typename C>
   std::unique_ptr<ServiceClientsBox::Timer>
-      ServiceClientsBox::WrappedServiceClients<C>::BuildTimer(
+      ServiceClientsBox::WrappedServiceClients<C>::MakeTimer(
         boost::posix_time::time_duration expiry) {
     return std::make_unique<Beam::Threading::TimerBox>(
-      m_clients->BuildTimer(expiry));
+      m_clients->MakeTimer(expiry));
   }
 
   template<typename C>

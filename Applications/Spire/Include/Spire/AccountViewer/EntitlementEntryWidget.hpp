@@ -30,7 +30,7 @@ namespace Spire {
         bool isReadOnly,
         const Nexus::MarketDataService::EntitlementDatabase::Entry& entitlement,
         std::shared_ptr<AccountEntitlementModel> model,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~EntitlementEntryWidget();
 

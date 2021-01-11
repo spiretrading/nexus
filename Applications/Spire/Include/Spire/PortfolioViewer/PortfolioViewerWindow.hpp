@@ -28,7 +28,7 @@ namespace Spire {
       */
       PortfolioViewerWindow(Beam::Ref<UserProfile> userProfile,
         const PortfolioViewerProperties& properties, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~PortfolioViewerWindow();
 

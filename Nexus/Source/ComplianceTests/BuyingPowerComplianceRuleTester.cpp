@@ -38,7 +38,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     parameters.emplace_back("symbols", symbols);
     auto rule = BuyingPowerComplianceRule(parameters, {},
       &m_serviceClients.GetMarketDataClient());
-    auto recoveryFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto recoveryFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       Money::ONE);
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
@@ -46,7 +46,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     m_testEnvironment.Accept(*submittedRecoveryOrder);
     m_testEnvironment.Fill(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
-    auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    auto submissionFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
       2 * Money::ONE);
     auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       submissionFields);

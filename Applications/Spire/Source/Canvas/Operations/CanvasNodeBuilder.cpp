@@ -12,7 +12,7 @@ using namespace std;
 CanvasNodeBuilder::CanvasNodeBuilder(const CanvasNode& node)
     : m_node(CanvasNode::Clone(node)) {}
 
-unique_ptr<CanvasNode> CanvasNodeBuilder::Build() {
+unique_ptr<CanvasNode> CanvasNodeBuilder::Make() {
   return std::move(m_node);
 }
 
@@ -36,7 +36,7 @@ void CanvasNodeBuilder::ForceConvert(const CanvasPath& path,
   try {
     convertedNode = node.Convert(type);
   } catch(std::exception&) {
-    convertedNode = BuildDefaultCanvasNode(type);
+    convertedNode = MakeDefaultCanvasNode(type);
   }
   Replace(node, std::move(convertedNode));
 }

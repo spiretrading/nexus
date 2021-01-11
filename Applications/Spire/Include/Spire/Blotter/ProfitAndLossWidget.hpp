@@ -22,7 +22,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      ProfitAndLossWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      ProfitAndLossWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ProfitAndLossWidget();
 

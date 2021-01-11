@@ -135,7 +135,7 @@ int main(int argc, const char** argv) {
       &internalMatchingOrderExecutionDriver, std::move(checks));
     auto complianceRuleSet = ComplianceRuleSet(complianceClient.Get(),
       serviceLocatorClient.Get(), [&] (const auto& entry) {
-        return BuildComplianceRule(entry.GetSchema(), *marketDataClient,
+        return MakeComplianceRule(entry.GetSchema(), *marketDataClient,
           *definitionsClient, *timeClient);
       });
     auto complianceCheckOrderExecutionDriver =

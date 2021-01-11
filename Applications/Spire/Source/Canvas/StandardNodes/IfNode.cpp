@@ -8,7 +8,7 @@ using namespace std;
 
 IfNode::IfNode() {
   DefineFunction("If", { "condition", "consequent", "default" },
-    BuildSignatures<IfNodeSignatures>());
+    MakeSignatures<IfNodeSignatures>());
 }
 
 void IfNode::Apply(CanvasNodeVisitor& visitor) const {

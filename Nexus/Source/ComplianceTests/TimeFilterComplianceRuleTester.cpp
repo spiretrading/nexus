@@ -22,8 +22,8 @@ namespace {
   const auto START_TIME = ptime(date(1984, May, 6), seconds(10));
   const auto END_TIME = ptime(date(1984, May, 6), seconds(20));
 
-  auto BuildOrderFields() {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields() {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
       DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
       Money::ONE);
@@ -38,13 +38,13 @@ TEST_SUITE("TimeFilterComplianceRule") {
       END_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME);
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Add(order));
     }
     {
       timeClient.SetTime(END_TIME);
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Add(order));
     }
@@ -57,13 +57,13 @@ TEST_SUITE("TimeFilterComplianceRule") {
       END_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME - seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Add(order));
     }
     {
       timeClient.SetTime(END_TIME + seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Add(order));
     }
@@ -76,13 +76,13 @@ TEST_SUITE("TimeFilterComplianceRule") {
       END_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME);
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
       timeClient.SetTime(END_TIME);
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
@@ -95,13 +95,13 @@ TEST_SUITE("TimeFilterComplianceRule") {
       END_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME - seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
     {
       timeClient.SetTime(END_TIME + seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
@@ -114,14 +114,14 @@ TEST_SUITE("TimeFilterComplianceRule") {
       END_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME);
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       rule.Add(order);
       REQUIRE_THROWS_AS(rule.Cancel(order), ComplianceCheckException);
     }
     {
       timeClient.SetTime(END_TIME);
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       rule.Add(order);
       REQUIRE_THROWS_AS(rule.Cancel(order), ComplianceCheckException);
@@ -135,14 +135,14 @@ TEST_SUITE("TimeFilterComplianceRule") {
       END_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME - seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       rule.Add(order);
       REQUIRE_NOTHROW(rule.Cancel(order));
     }
     {
       timeClient.SetTime(END_TIME + seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       rule.Add(order);
       REQUIRE_NOTHROW(rule.Cancel(order));
@@ -156,25 +156,25 @@ TEST_SUITE("TimeFilterComplianceRule") {
       START_TIME.time_of_day(), &timeClient, std::move(baseRule));
     {
       timeClient.SetTime(START_TIME - seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 1,
+      auto order = PrimitiveOrder({MakeOrderFields(), 1,
         timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
       timeClient.SetTime(END_TIME + seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 2,
+      auto order = PrimitiveOrder({MakeOrderFields(), 2,
         timeClient.GetTime()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
       timeClient.SetTime(END_TIME - seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 3,
+      auto order = PrimitiveOrder({MakeOrderFields(), 3,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
     {
       timeClient.SetTime(START_TIME + seconds(1));
-      auto order = PrimitiveOrder({BuildOrderFields(), 4,
+      auto order = PrimitiveOrder({MakeOrderFields(), 4,
         timeClient.GetTime()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }

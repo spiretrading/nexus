@@ -42,7 +42,7 @@ namespace Nexus::Compliance::Tests {
       ~ComplianceTestEnvironment();
 
       /**
-       * Builds a new ComplianceClient.
+       * Returns a new ComplianceClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the ComplianceClient.
        */

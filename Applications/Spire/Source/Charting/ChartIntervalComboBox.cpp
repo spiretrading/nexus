@@ -40,9 +40,9 @@ ChartIntervalComboBox::ChartIntervalComboBox(QWidget* parent,
   m_ui->m_comboBox->installEventFilter(this);
   SetInterval(DurationType::GetInstance(),
     ChartValue(time_duration(minutes(1))));
-  connect(m_ui->m_comboBox, static_cast<void (QComboBox::*)(const QString&)>(
-    &QComboBox::currentIndexChanged), this,
-    &ChartIntervalComboBox::OnCurrentIndexChanged);
+  connect(m_ui->m_comboBox,
+    static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+    this, &ChartIntervalComboBox::OnCurrentIndexChanged);
 }
 
 ChartIntervalComboBox::~ChartIntervalComboBox() {}
@@ -141,10 +141,10 @@ vector<ChartIntervalComboBox::IntervalEntry>
   return standardDurationIntervals;
 }
 
-void ChartIntervalComboBox::OnCurrentIndexChanged(const QString& text) {
+void ChartIntervalComboBox::OnCurrentIndexChanged(int index) {
   regex durationRegex("^\\s*(\\d{0,4})\\s*(\\w+)\\s*$");
   smatch matcher;
-  auto textValue = text.toStdString();
+  auto textValue = m_ui->m_comboBox->itemText(index).toStdString();
   if(regex_match(textValue, matcher, durationRegex)) {
     int value = lexical_cast<int>(string(matcher[1]));
     string unit = to_lower_copy(string(matcher[2]));

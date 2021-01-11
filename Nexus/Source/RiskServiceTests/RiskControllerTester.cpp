@@ -58,7 +58,7 @@ TEST_SUITE("RiskController") {
       &m_adminClients.GetAdministrationClient(),
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
-      m_adminClients.BuildTimer(seconds(1)),
+      m_adminClients.MakeTimer(seconds(1)),
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
     auto state = std::make_shared<Queue<RiskState>>();
@@ -67,7 +67,7 @@ TEST_SUITE("RiskController") {
     auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
     controller.GetPortfolioPublisher().Monitor(portfolio);
     auto& order = m_userClients->GetOrderExecutionClient().Submit(
-      OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
+      OrderFields::MakeMarketOrder(TSLA, Side::BID, 100));
     auto receivedOrder = m_orders->Pop();
     m_environment.Accept(*receivedOrder);
     m_environment.Fill(*receivedOrder, *Money::FromValue("1.01"), 100);
@@ -93,7 +93,7 @@ TEST_SUITE("RiskController") {
       &m_adminClients.GetAdministrationClient(),
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
-      m_adminClients.BuildTimer(seconds(1)),
+      m_adminClients.MakeTimer(seconds(1)),
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
     auto state = std::make_shared<Queue<RiskState>>();

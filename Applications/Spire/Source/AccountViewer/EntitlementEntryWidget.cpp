@@ -23,7 +23,7 @@ namespace {
     IMBALANCES_COLUMN = 5,
   };
 
-  QHBoxLayout* BuildCheckboxLayout(bool checked) {
+  QHBoxLayout* MakeCheckboxLayout(bool checked) {
     QHBoxLayout* layout = new QHBoxLayout();
     layout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::Expanding,
       QSizePolicy::Minimum));
@@ -105,23 +105,23 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     m_ui->m_applicabilityTableLayout->addWidget(marketLabel, row,
       MARKET_COLUMN);
     MarketDataTypeSet applicability = entitlement.second;
-    QHBoxLayout* bboCheckBox = BuildCheckboxLayout(
+    QHBoxLayout* bboCheckBox = MakeCheckboxLayout(
       applicability.Test(MarketDataType::BBO_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(bboCheckBox, row,
       BBO_COLUMN);
-    QHBoxLayout* marketQuoteCheckBox = BuildCheckboxLayout(
+    QHBoxLayout* marketQuoteCheckBox = MakeCheckboxLayout(
       applicability.Test(MarketDataType::MARKET_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(marketQuoteCheckBox, row,
       MARKET_QUOTES_COLUMN);
-    QHBoxLayout* bookQuoteCheckBox = BuildCheckboxLayout(
+    QHBoxLayout* bookQuoteCheckBox = MakeCheckboxLayout(
       applicability.Test(MarketDataType::BOOK_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(bookQuoteCheckBox, row,
       BOOK_QUOTES_COLUMN);
-    QHBoxLayout* timeAndSalesCheckBox = BuildCheckboxLayout(
+    QHBoxLayout* timeAndSalesCheckBox = MakeCheckboxLayout(
       applicability.Test(MarketDataType::TIME_AND_SALE));
     m_ui->m_applicabilityTableLayout->addLayout(timeAndSalesCheckBox, row,
       TIME_AND_SALES_COLUMN);
-    QHBoxLayout* imbalancesCheckBox = BuildCheckboxLayout(
+    QHBoxLayout* imbalancesCheckBox = MakeCheckboxLayout(
       applicability.Test(MarketDataType::ORDER_IMBALANCE));
     m_ui->m_applicabilityTableLayout->addLayout(imbalancesCheckBox, row,
       IMBALANCES_COLUMN);

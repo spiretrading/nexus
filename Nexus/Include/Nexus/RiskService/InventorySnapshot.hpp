@@ -35,7 +35,7 @@ namespace Nexus::RiskService {
   };
 
   /**
-   * Builds a RiskPortfolio from an InventorySnapshot.
+   * Returns a RiskPortfolio from an InventorySnapshot.
    * @param snapshot The InventorySnapshot used to build the portfolio.
    * @param account The account the portfolio represents.
    * @param markets The MarketDatabase to query.
@@ -46,7 +46,7 @@ namespace Nexus::RiskService {
    */
   template<typename OrderExecutionClient>
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-      std::vector<const OrderExecutionService::Order*>> BuildPortfolio(
+      std::vector<const OrderExecutionService::Order*>> MakePortfolio(
       const InventorySnapshot& snapshot,
       const Beam::ServiceLocator::DirectoryEntry& account,
       MarketDatabase markets, OrderExecutionClient& client) {

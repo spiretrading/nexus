@@ -45,8 +45,8 @@ namespace {
     }
   };
 
-  auto BuildOrderFields(std::string symbol, MarketCode market) {
-    auto fields = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(std::string symbol, MarketCode market) {
+    auto fields = OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security(std::move(symbol), market, DefaultCountries::CA()),
       DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
       Money::ONE);
@@ -57,7 +57,7 @@ namespace {
 TEST_SUITE("ComplianceRuleSet") {
   TEST_CASE("submit") {
     auto session = OrderExecutionSession();
-    auto fields = BuildOrderFields("TST1", DefaultMarkets::TSX());
+    auto fields = MakeOrderFields("TST1", DefaultMarkets::TSX());
     //  m_complianceRuleSet->Submit(session, 1, fields, false);
   }
 }

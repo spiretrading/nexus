@@ -12,26 +12,26 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
-  auto BuildOrderFields(Money price, Quantity quantity) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Money price, Quantity quantity) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security{"TST", DefaultMarkets::TSX(), DefaultCountries::CA()},
       DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::OMEGA(),
       quantity, price);
   }
 
-  auto BuildOrderFields(Money price) {
-    return BuildOrderFields(price, 100);
+  auto MakeOrderFields(Money price) {
+    return MakeOrderFields(price, 100);
   }
 
-  auto BuildHiddenOrderFields(Money price, Quantity quantity) {
-    auto fields = BuildOrderFields(price, quantity);
+  auto MakeHiddenOrderFields(Money price, Quantity quantity) {
+    auto fields = MakeOrderFields(price, quantity);
     fields.m_type = OrderType::PEGGED;
     fields.m_additionalFields.emplace_back(18, "M");
     return fields;
   }
 
-  auto BuildHiddenOrderFields(Money price) {
-    return BuildHiddenOrderFields(price, 100);
+  auto MakeHiddenOrderFields(Money price) {
+    return MakeHiddenOrderFields(price, 100);
   }
 }
 
@@ -46,7 +46,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("zero_quantity") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     fields.m_quantity = 0;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
@@ -56,7 +56,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("default_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -67,7 +67,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("default_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -78,7 +78,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("default_hidden_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::ONE);
+    auto fields = MakeHiddenOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -89,7 +89,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("default_hidden_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::ONE);
+    auto fields = MakeHiddenOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -100,7 +100,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("etf_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ETF_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -111,7 +111,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("etf_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ETF_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -122,7 +122,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("odd_lot_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE, 50);
+    auto fields = MakeOrderFields(Money::ONE, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -133,7 +133,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("odd_lot_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE, 50);
+    auto fields = MakeOrderFields(Money::ONE, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -144,7 +144,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -155,7 +155,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -166,7 +166,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_hidden_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::CENT);
+    auto fields = MakeHiddenOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -177,7 +177,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_hidden_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::CENT);
+    auto fields = MakeHiddenOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -188,7 +188,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_etf_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ETF_ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -199,7 +199,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_etf_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ETF_PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -210,7 +210,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_odd_lot_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::CENT, 50);
+    auto fields = MakeOrderFields(Money::CENT, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -221,7 +221,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("subdollar_odd_lot_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::CENT, 50);
+    auto fields = MakeOrderFields(Money::CENT, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -232,7 +232,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("hidden_etf_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::ONE);
+    auto fields = MakeHiddenOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -243,7 +243,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("hidden_etf_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::ONE);
+    auto fields = MakeHiddenOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -254,7 +254,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("odd_lot_etf_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE, 50);
+    auto fields = MakeOrderFields(Money::ONE, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -265,7 +265,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("odd_lot_etf_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE, 50);
+    auto fields = MakeOrderFields(Money::ONE, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -276,7 +276,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("odd_lot_hidden_etf_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::ONE, 50);
+    auto fields = MakeHiddenOrderFields(Money::ONE, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -287,7 +287,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("odd_lot_hidden_etf_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildHiddenOrderFields(Money::ONE, 50);
+    auto fields = MakeHiddenOrderFields(Money::ONE, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -298,9 +298,9 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("unknown_liquidity_flag") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -312,7 +312,7 @@ TEST_SUITE("OmgaFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
@@ -324,7 +324,7 @@ TEST_SUITE("OmgaFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -340,7 +340,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("empty_liquidity_flag") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,

@@ -60,11 +60,11 @@ namespace Nexus::Compliance {
   };
 
   /**
-   * Builds a ComplianceRuleSchema representing a
+   * Returns a ComplianceRuleSchema representing a
    * SubmissionRestrictionPeriodComplianceRule.
    */
   inline ComplianceRuleSchema
-      BuildSubmissionRestrictionPeriodComplianceRuleSchema() {
+      MakeSubmissionRestrictionPeriodComplianceRuleSchema() {
     auto symbols = std::vector<ComplianceValue>();
     symbols.push_back(Security());
     auto parameters = std::vector<ComplianceParameter>();

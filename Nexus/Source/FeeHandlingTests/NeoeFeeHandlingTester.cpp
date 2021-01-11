@@ -15,13 +15,13 @@ namespace {
     return Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA());
   }
 
-  auto BuildOrderFields(Money price) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Money price) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       GetTestSecurity(), DefaultCurrencies::CAD(), Side::BID,
       DefaultDestinations::NEOE(), 100, price);
   }
 
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = NeoeFeeTable();
     PopulateFeeTable(Store(feeTable.m_generalFeeTable));
     PopulateFeeTable(Store(feeTable.m_interlistedFeeTable));
@@ -31,7 +31,7 @@ namespace {
 
 TEST_SUITE("NeoeFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_generalFeeTable, LookupGeneralFee,
       LIQUIDITY_FLAG_COUNT, NeoeFeeTable::PRICE_CLASS_COUNT);
     TestFeeTableIndex(feeTable, feeTable.m_interlistedFeeTable,
@@ -40,8 +40,8 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
-    auto orderFields = BuildOrderFields(Money::ONE);
+    auto feeTable = MakeFeeTable();
+    auto orderFields = MakeOrderFields(Money::ONE);
     TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
       LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
       false, orderFields, std::placeholders::_2), Money::ZERO);
@@ -51,9 +51,9 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto orderFields = BuildOrderFields(Money::ONE);
+      auto orderFields = MakeOrderFields(Money::ONE);
       auto expectedFee = LookupGeneralFee(feeTable, LiquidityFlag::ACTIVE,
         NeoeFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -62,7 +62,7 @@ TEST_SUITE("NeoeFeeHandling") {
         std::placeholders::_2), expectedFee);
     }
     {
-      auto orderFields = BuildOrderFields(Money::ONE);
+      auto orderFields = MakeOrderFields(Money::ONE);
       auto expectedFee = LookupInterlistedFee(feeTable, LiquidityFlag::ACTIVE,
         NeoeFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -73,9 +73,9 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto orderFields = BuildOrderFields(Money::ONE);
+      auto orderFields = MakeOrderFields(Money::ONE);
       auto expectedFee = LookupGeneralFee(feeTable, LiquidityFlag::PASSIVE,
         NeoeFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -83,7 +83,7 @@ TEST_SUITE("NeoeFeeHandling") {
         false, orderFields, std::placeholders::_2), expectedFee);
     }
     {
-      auto orderFields = BuildOrderFields(Money::ONE);
+      auto orderFields = MakeOrderFields(Money::ONE);
       auto expectedFee = LookupInterlistedFee(feeTable, LiquidityFlag::PASSIVE,
         NeoeFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -93,9 +93,9 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("subdollar_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto orderFields = BuildOrderFields(Money::CENT);
+      auto orderFields = MakeOrderFields(Money::CENT);
       auto expectedFee = LookupGeneralFee(feeTable, LiquidityFlag::ACTIVE,
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -103,7 +103,7 @@ TEST_SUITE("NeoeFeeHandling") {
         false, orderFields, std::placeholders::_2), expectedFee);
     }
     {
-      auto orderFields = BuildOrderFields(Money::CENT);
+      auto orderFields = MakeOrderFields(Money::CENT);
       auto expectedFee = LookupInterlistedFee(feeTable, LiquidityFlag::ACTIVE,
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -113,9 +113,9 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("subdollar_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto orderFields = BuildOrderFields(Money::CENT);
+      auto orderFields = MakeOrderFields(Money::CENT);
       auto expectedFee = LookupGeneralFee(feeTable, LiquidityFlag::PASSIVE,
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -123,7 +123,7 @@ TEST_SUITE("NeoeFeeHandling") {
         false, orderFields, std::placeholders::_2), expectedFee);
     }
     {
-      auto orderFields = BuildOrderFields(Money::CENT);
+      auto orderFields = MakeOrderFields(Money::CENT);
       auto expectedFee = LookupInterlistedFee(feeTable, LiquidityFlag::PASSIVE,
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -133,15 +133,15 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
       executionReport.m_liquidityFlag = "AP";
       {
-        auto orderFields = BuildOrderFields(Money::ONE);
+        auto orderFields = MakeOrderFields(Money::ONE);
         auto calculatedFee = CalculateFee(feeTable, false, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
@@ -149,7 +149,7 @@ TEST_SUITE("NeoeFeeHandling") {
         REQUIRE(calculatedFee == expectedFee);
       }
       {
-        auto orderFields = BuildOrderFields(Money::ONE);
+        auto orderFields = MakeOrderFields(Money::ONE);
         auto calculatedFee = CalculateFee(feeTable, true, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *
@@ -159,13 +159,13 @@ TEST_SUITE("NeoeFeeHandling") {
       }
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
       executionReport.m_liquidityFlag = "PA";
       {
-        auto orderFields = BuildOrderFields(Money::CENT);
+        auto orderFields = MakeOrderFields(Money::CENT);
         auto calculatedFee = CalculateFee(feeTable, false, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
@@ -174,7 +174,7 @@ TEST_SUITE("NeoeFeeHandling") {
         REQUIRE(calculatedFee == expectedFee);
       }
       {
-        auto orderFields = BuildOrderFields(Money::CENT);
+        auto orderFields = MakeOrderFields(Money::CENT);
         auto calculatedFee = CalculateFee(feeTable, true, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *
@@ -184,13 +184,13 @@ TEST_SUITE("NeoeFeeHandling") {
       }
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
       executionReport.m_liquidityFlag = "?????";
       {
-        auto orderFields = BuildOrderFields(Money::ONE);
+        auto orderFields = MakeOrderFields(Money::ONE);
         auto calculatedFee = CalculateFee(feeTable, false, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
@@ -198,7 +198,7 @@ TEST_SUITE("NeoeFeeHandling") {
         REQUIRE(calculatedFee == expectedFee);
       }
       {
-        auto orderFields = BuildOrderFields(Money::ONE);
+        auto orderFields = MakeOrderFields(Money::ONE);
         auto calculatedFee = CalculateFee(feeTable, true, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *
@@ -210,15 +210,15 @@ TEST_SUITE("NeoeFeeHandling") {
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
       executionReport.m_liquidityFlag = "";
       {
-        auto orderFields = BuildOrderFields(Money::ONE);
+        auto orderFields = MakeOrderFields(Money::ONE);
         auto calculatedFee = CalculateFee(feeTable, false, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
@@ -226,7 +226,7 @@ TEST_SUITE("NeoeFeeHandling") {
         REQUIRE(calculatedFee == expectedFee);
       }
       {
-        auto orderFields = BuildOrderFields(Money::ONE);
+        auto orderFields = MakeOrderFields(Money::ONE);
         auto calculatedFee = CalculateFee(feeTable, true, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *
@@ -236,13 +236,13 @@ TEST_SUITE("NeoeFeeHandling") {
       }
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
       executionReport.m_liquidityFlag = "";
       {
-        auto orderFields = BuildOrderFields(Money::CENT);
+        auto orderFields = MakeOrderFields(Money::CENT);
         auto calculatedFee = CalculateFee(feeTable, false, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
@@ -251,7 +251,7 @@ TEST_SUITE("NeoeFeeHandling") {
         REQUIRE(calculatedFee == expectedFee);
       }
       {
-        auto orderFields = BuildOrderFields(Money::CENT);
+        auto orderFields = MakeOrderFields(Money::CENT);
         auto calculatedFee = CalculateFee(feeTable, true, orderFields,
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *

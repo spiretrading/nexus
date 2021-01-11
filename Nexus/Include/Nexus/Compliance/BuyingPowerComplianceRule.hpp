@@ -84,8 +84,10 @@ namespace Nexus::Compliance {
     const std::vector<ExchangeRate>&, MarketDataClient&&) ->
     BuyingPowerComplianceRule<std::decay_t<MarketDataClient>>;
 
-  /** Builds a ComplianceRuleSchema representing a BuyingPowerComplianceRule. */
-  inline ComplianceRuleSchema BuildBuyingPowerComplianceRuleSchema() {
+  /**
+   * Returns a ComplianceRuleSchema representing a BuyingPowerComplianceRule.
+   */
+  inline ComplianceRuleSchema MakeBuyingPowerComplianceRuleSchema() {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("currency", DefaultCurrencies::USD());
     parameters.emplace_back("buying_power", Money::ZERO);

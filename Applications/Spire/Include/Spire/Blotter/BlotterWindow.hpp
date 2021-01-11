@@ -40,7 +40,7 @@ namespace Spire {
        */
       static BlotterWindow& GetBlotterWindow(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<BlotterModel> model, QWidget* parent,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       ~BlotterWindow() = default;
 

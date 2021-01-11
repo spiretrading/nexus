@@ -75,8 +75,8 @@ void Nexus::Python::ExportExecutionReport(module& module) {
   class_<ExecutionReport>(module, "ExecutionReport").
     def(init()).
     def(init<const ExecutionReport&>()).
-    def_static("build_initial_report", &ExecutionReport::BuildInitialReport).
-    def_static("build_updated_report", &ExecutionReport::BuildUpdatedReport).
+    def_static("make_initial_report", &ExecutionReport::MakeInitialReport).
+    def_static("make_updated_report", &ExecutionReport::MakeUpdatedReport).
     def_readwrite("id", &ExecutionReport::m_id).
     def_readwrite("timestamp", &ExecutionReport::m_timestamp).
     def_readwrite("sequence", &ExecutionReport::m_sequence).
@@ -256,46 +256,46 @@ void Nexus::Python::ExportOrderFields(module& module) {
   class_<OrderFields>(module, "OrderFields").
     def(init()).
     def(init<const OrderFields&>()).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
+    def_static("make_limit_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, CurrencyId, Side,
-      const std::string&, Quantity, Money)>(&OrderFields::BuildLimitOrder)).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
+      const std::string&, Quantity, Money)>(&OrderFields::MakeLimitOrder)).
+    def_static("make_limit_order", static_cast<OrderFields (*)(
       const Security&, CurrencyId, Side, const std::string&, Quantity, Money)>(
-      &OrderFields::BuildLimitOrder)).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeLimitOrder)).
+    def_static("make_limit_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, const std::string&,
-      Quantity, Money)>(&OrderFields::BuildLimitOrder)).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
+      Quantity, Money)>(&OrderFields::MakeLimitOrder)).
+    def_static("make_limit_order", static_cast<OrderFields (*)(
       const Security&, Side, const std::string&, Quantity, Money)>(
-      &OrderFields::BuildLimitOrder)).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeLimitOrder)).
+    def_static("make_limit_order", static_cast<OrderFields (*)(
       const Security&, CurrencyId, Side, Quantity, Money)>(
-      &OrderFields::BuildLimitOrder)).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeLimitOrder)).
+    def_static("make_limit_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, Quantity, Money)>(
-      &OrderFields::BuildLimitOrder)).
-    def_static("build_limit_order", static_cast<OrderFields (*)(
-      const Security&, Side, Quantity, Money)>(&OrderFields::BuildLimitOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeLimitOrder)).
+    def_static("make_limit_order", static_cast<OrderFields (*)(
+      const Security&, Side, Quantity, Money)>(&OrderFields::MakeLimitOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, CurrencyId, Side,
-      const std::string&, Quantity)>(&OrderFields::BuildMarketOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
+      const std::string&, Quantity)>(&OrderFields::MakeMarketOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
       const Security&, CurrencyId, Side, const std::string&, Quantity)>(
-      &OrderFields::BuildMarketOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeMarketOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, const std::string&,
-      Quantity)>(&OrderFields::BuildMarketOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
+      Quantity)>(&OrderFields::MakeMarketOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
       const Security&, Side, const std::string&, Quantity)>(
-      &OrderFields::BuildMarketOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeMarketOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
       const Security&, CurrencyId, Side, Quantity)>(
-      &OrderFields::BuildMarketOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
+      &OrderFields::MakeMarketOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, Quantity)>(
-      &OrderFields::BuildMarketOrder)).
-    def_static("build_market_order", static_cast<OrderFields (*)(
-      const Security&, Side, Quantity)>(&OrderFields::BuildMarketOrder)).
+      &OrderFields::MakeMarketOrder)).
+    def_static("make_market_order", static_cast<OrderFields (*)(
+      const Security&, Side, Quantity)>(&OrderFields::MakeMarketOrder)).
     def_readwrite("account", &OrderFields::m_account).
     def_readwrite("security", &OrderFields::m_security).
     def_readwrite("currency", &OrderFields::m_currency).
@@ -427,7 +427,7 @@ void Nexus::Python::ExportPrimitiveOrder(module& module) {
     def(init<OrderInfo>()).
     def(init<OrderRecord>()).
     def("update", &PrimitiveOrder::Update, call_guard<GilRelease>());
-  module.def("build_rejected_order", &BuildRejectedOrder);
+  module.def("make_rejected_order", &MakeRejectedOrder);
   module.def("reject_cancel_request", &RejectCancelRequest);
   ExportPublisher<const PrimitiveOrder*>(module,
     "ConstPrimitiveOrderPublisher");
@@ -435,9 +435,9 @@ void Nexus::Python::ExportPrimitiveOrder(module& module) {
 }
 
 void Nexus::Python::ExportStandardQueries(module& module) {
-  module.def("build_market_filter", &BuildMarketFilter);
-  module.def("build_daily_order_submission_query",
-    &BuildDailyOrderSubmissionQuery);
+  module.def("make_market_filter", &MakeMarketFilter);
+  module.def("make_daily_order_submission_query",
+    &MakeDailyOrderSubmissionQuery);
   module.def("query_daily_order_submissions",
     [] (const DirectoryEntry& account, ptime startTime, ptime endTime,
         const MarketDatabase& marketDatabase,
@@ -447,12 +447,12 @@ void Nexus::Python::ExportStandardQueries(module& module) {
       QueryDailyOrderSubmissions(account, startTime, endTime, marketDatabase,
         timeZoneDatabase, std::move(orderExecutionClient), std::move(queue));
     });
-  module.def("build_live_orders_filter", &BuildLiveOrdersFilter);
-  module.def("build_live_orders_query", &BuildLiveOrdersQuery);
+  module.def("make_live_orders_filter", &MakeLiveOrdersFilter);
+  module.def("make_live_orders_query", &MakeLiveOrdersQuery);
   module.def("query_live_orders", &QueryLiveOrders<OrderExecutionClientBox>);
   module.def("load_live_orders", &LoadLiveOrders<OrderExecutionClientBox>);
-  module.def("build_order_id_filter", &BuildOrderIdFilter);
-  module.def("build_order_id_query", &BuildOrderIdQuery);
+  module.def("make_order_id_filter", &MakeOrderIdFilter);
+  module.def("make_order_id_query", &MakeOrderIdQuery);
   module.def("query_order_ids", &QueryOrderIds<OrderExecutionClientBox>);
   module.def("load_order_ids", &LoadOrderIds<OrderExecutionClientBox>);
 }

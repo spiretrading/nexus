@@ -32,7 +32,7 @@ namespace Spire {
       //! Constructs a DashboardRowRenderer.
       /*!
         \param row The DashboardRow to render.
-        \param cellRendererBuilder Builds the default DashboardCellRenderer
+        \param cellRendererBuilder Constructs the default DashboardCellRenderer
                used.
       */
       DashboardRowRenderer(Beam::Ref<const DashboardRow> row,

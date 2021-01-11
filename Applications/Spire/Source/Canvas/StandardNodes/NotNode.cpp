@@ -7,7 +7,7 @@ using namespace Spire;
 using namespace std;
 
 NotNode::NotNode() {
-  DefineFunction("Not", { "value" }, BuildSignatures<NotNodeSignatures>());
+  DefineFunction("Not", { "value" }, MakeSignatures<NotNodeSignatures>());
 }
 
 void NotNode::Apply(CanvasNodeVisitor& visitor) const {

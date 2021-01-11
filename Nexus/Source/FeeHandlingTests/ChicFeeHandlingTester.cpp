@@ -20,8 +20,8 @@ namespace {
     return Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA());
   }
 
-  auto BuildOrderFields(Money price) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Money price) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       GetTestSecurity(), DefaultCurrencies::CAD(), Side::BID,
       DefaultDestinations::CHIX(), 100, price);
   }
@@ -38,7 +38,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("zero_quantity") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     fields.m_quantity = 0;
     auto expectedFee = Money::ZERO;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
@@ -48,7 +48,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("default_active") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -58,7 +58,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("default_passive") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -68,7 +68,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("default_hidden_passive") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
@@ -78,7 +78,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("default_hidden_active") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
@@ -88,7 +88,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdollar_active") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto fields = MakeOrderFields(20 * Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -98,7 +98,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdollar_passive") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto fields = MakeOrderFields(20 * Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -108,7 +108,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdime_active") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -118,7 +118,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdime_passive") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::SUBDIME);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -128,7 +128,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdollar_hidden_active") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto fields = MakeOrderFields(20 * Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
@@ -138,7 +138,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdollar_hidden_passive") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto fields = MakeOrderFields(20 * Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
@@ -148,7 +148,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdime_hidden_active") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
@@ -158,7 +158,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdime_hidden_passive") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::SUBDIME);
     TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
@@ -169,7 +169,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_interlisted.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -180,7 +180,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_interlisted.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -191,7 +191,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_interlisted.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
@@ -202,7 +202,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_interlisted.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
@@ -213,7 +213,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_interlisted.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto fields = MakeOrderFields(20 * Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -224,7 +224,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_interlisted.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -235,7 +235,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_etfs.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::ETF);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -246,7 +246,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_etfs.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::ETF);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
@@ -257,7 +257,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_etfs.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::ETF);
     TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
@@ -268,7 +268,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_etfs.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::ETF);
     TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
@@ -279,7 +279,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_etfs.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto fields = MakeOrderFields(20 * Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -290,7 +290,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto feeTable = ChicFeeTable();
     feeTable.m_etfs.insert(GetTestSecurity());
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::CENT);
+    auto fields = MakeOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -300,9 +300,9 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("unknown_liquidity_flag") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -314,7 +314,7 @@ TEST_SUITE("ChicFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
@@ -325,7 +325,7 @@ TEST_SUITE("ChicFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -341,7 +341,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("empty_liquidity_flag") {
     auto feeTable = ChicFeeTable();
     PopulateFeeTable(Store(feeTable.m_securityTable));
-    auto fields = BuildOrderFields(Money::ONE);
+    auto fields = MakeOrderFields(Money::ONE);
     auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,

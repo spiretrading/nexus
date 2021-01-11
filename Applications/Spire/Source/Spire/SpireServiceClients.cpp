@@ -143,7 +143,7 @@ TimeClientBox& SpireServiceClients::GetTimeClient() {
   return m_timeClient;
 }
 
-std::unique_ptr<TimerBox> SpireServiceClients::BuildTimer(
+std::unique_ptr<TimerBox> SpireServiceClients::MakeTimer(
     time_duration expiry) {
   return std::make_unique<TimerBox>(std::make_unique<LiveTimer>(expiry));
 }

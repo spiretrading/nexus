@@ -31,7 +31,7 @@ namespace Spire {
         std::shared_ptr<AccountEntitlementModel> entitlementModel,
         std::shared_ptr<RiskModel> riskModel,
         std::shared_ptr<ComplianceModel> complianceModel,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~TraderItemWidget();
 

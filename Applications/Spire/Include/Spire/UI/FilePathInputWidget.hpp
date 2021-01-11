@@ -21,7 +21,8 @@ namespace UI {
         \param parent The parent widget.
         \param flags The flags passed to the <i>parent</i> widget.
       */
-      FilePathInputWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      FilePathInputWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~FilePathInputWidget();
 

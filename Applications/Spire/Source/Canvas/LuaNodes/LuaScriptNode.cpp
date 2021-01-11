@@ -30,7 +30,7 @@ LuaScriptNode::LuaScriptNode(string name, const NativeType& type,
       m_parameters(std::move(parameters)) {
   SetText("Lua: " + m_name);
   for(const auto& parameter : m_parameters) {
-    AddChild(parameter.m_name, BuildDefaultCanvasNode(*parameter.m_type));
+    AddChild(parameter.m_name, MakeDefaultCanvasNode(*parameter.m_type));
   }
   SetType(type);
 }

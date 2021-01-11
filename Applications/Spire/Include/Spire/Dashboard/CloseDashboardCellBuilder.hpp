@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class CloseDashboardCellBuilder
-      \brief Builds a DashboardCell emitting a Security's closing price.
+      \brief Constructs a DashboardCell emitting a Security's closing price.
    */
   class CloseDashboardCellBuilder : public DashboardCellBuilder {
     public:
@@ -14,7 +14,7 @@ namespace Spire {
       //! Constructs a CloseDashboardCellBuilder.
       CloseDashboardCellBuilder() = default;
 
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

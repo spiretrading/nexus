@@ -77,7 +77,7 @@ namespace Nexus {
 
       TimeClient& GetTimeClient();
 
-      std::unique_ptr<Timer> BuildTimer(
+      std::unique_ptr<Timer> MakeTimer(
         boost::posix_time::time_duration duration);
 
       void Close();
@@ -173,7 +173,7 @@ namespace Nexus {
   }
 
   inline std::unique_ptr<ApplicationServiceClients::Timer>
-      ApplicationServiceClients::BuildTimer(
+      ApplicationServiceClients::MakeTimer(
       boost::posix_time::time_duration duration) {
     return std::make_unique<Timer>(duration);
   }

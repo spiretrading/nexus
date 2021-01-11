@@ -88,14 +88,14 @@ namespace Nexus::OrderExecutionService {
       : m_timeClient(timeClient.Get()) {
     SetSessionTimestamps(m_timeClient->GetTime());
     auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();
-    marketDataClient.QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
+    marketDataClient.QueryBboQuotes(Beam::Queries::MakeLatestQuery(security),
       snapshot);
     try {
       m_bboQuote = snapshot->Pop();
     } catch(const std::exception&) {
       return;
     }
-    auto query = Beam::Queries::BuildCurrentQuery(security);
+    auto query = Beam::Queries::MakeCurrentQuery(security);
     marketDataClient.QueryBboQuotes(query, m_tasks.GetSlot<BboQuote>(
       std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
     marketDataClient.QueryTimeAndSales(query, m_tasks.GetSlot<TimeAndSale>(
@@ -118,7 +118,7 @@ namespace Nexus::OrderExecutionService {
           }
           return OrderStatus::NEW;
         }();
-        auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+        auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
           nextStatus, order->GetInfo().m_timestamp);
         order->Update(updatedReport);
       });
@@ -137,10 +137,10 @@ namespace Nexus::OrderExecutionService {
         if(IsTerminal(status) || reports.empty()) {
           return;
         }
-        auto pendingCancelReport = ExecutionReport::BuildUpdatedReport(
+        auto pendingCancelReport = ExecutionReport::MakeUpdatedReport(
           reports.back(), OrderStatus::PENDING_CANCEL, m_timeClient->GetTime());
         order->Update(pendingCancelReport);
-        auto cancelReport = ExecutionReport::BuildUpdatedReport(reports.back(),
+        auto cancelReport = ExecutionReport::MakeUpdatedReport(reports.back(),
           OrderStatus::CANCELED, m_timeClient->GetTime());
         order->Update(cancelReport);
       });
@@ -198,7 +198,7 @@ namespace Nexus::OrderExecutionService {
       PrimitiveOrder& order, Money price) {
     order.With([&] (auto status, auto& reports) {
       auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
         OrderStatus::FILLED, m_timeClient->GetTime());
       updatedReport.m_lastQuantity = order.GetInfo().m_fields.m_quantity;
       updatedReport.m_lastPrice = price;

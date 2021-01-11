@@ -37,7 +37,7 @@ void DeleteNodeCommand::redo() {
     unique_ptr<CanvasNode> replacement;
     try {
       builder.Reset(node);
-      replacement = builder.Build();
+      replacement = builder.Make();
     } catch(std::exception&) {
       m_snapshot.Restore(Store(*m_view));
       BOOST_THROW_EXCEPTION(IgnoreCommandException());

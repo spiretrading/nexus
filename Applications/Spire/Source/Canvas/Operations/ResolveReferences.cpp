@@ -41,7 +41,7 @@ namespace {
     try {
       CanvasNodeBuilder builder(GetRoot(*currentNode));
       builder.Convert(*currentNode, referent->GetType());
-      m_node = builder.Build();
+      m_node = builder.Make();
     } catch(std::exception&) {}
   }
 }

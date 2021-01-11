@@ -13,14 +13,14 @@ ListDashboardRowBuilder::ListDashboardRowBuilder(
 
 ListDashboardRowBuilder::~ListDashboardRowBuilder() {}
 
-std::unique_ptr<DashboardRow> ListDashboardRowBuilder::Build(
+std::unique_ptr<DashboardRow> ListDashboardRowBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto indexCell = std::make_unique<ValueDashboardCell>();
   indexCell->SetBufferSize(1);
   indexCell->SetValue(index);
   auto row = std::make_unique<DashboardRow>(std::move(indexCell));
   for(auto& builder : m_cellBuilders) {
-    auto cell = builder->Build(index, Ref(userProfile));
+    auto cell = builder->Make(index, Ref(userProfile));
     row->Add(std::move(cell));
   }
   return row;

@@ -28,14 +28,15 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      DashboardWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      DashboardWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~DashboardWidget();
 
       //! Initializes this widget.
       /*!
         \param model The model to render.
-        \param rowBuilder Builds the rows to display.
+        \param rowBuilder Constructs the rows to display.
         \param userProfile The user's profile.
       */
       void Initialize(Beam::Ref<DashboardModel> model,

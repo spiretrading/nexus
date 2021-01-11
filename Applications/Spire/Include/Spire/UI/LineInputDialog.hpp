@@ -25,7 +25,7 @@ namespace UI {
       */
       LineInputDialog(const std::string& title, const std::string& inputLabel,
         const std::string& initialInput, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~LineInputDialog();
 

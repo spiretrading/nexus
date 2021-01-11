@@ -389,7 +389,7 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
     m_linkMenu->removeAction(action.get());
   }
   m_linkMenu->clear();
-  auto linkActions = LinkSecurityContextAction::BuildActions(this,
+  auto linkActions = LinkSecurityContextAction::MakeActions(this,
     m_linkIdentifier, m_linkMenu, *m_userProfile);
   for(const auto& linkAction : linkActions) {
     m_linkMenu->addAction(linkAction.get());

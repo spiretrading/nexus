@@ -9,7 +9,7 @@ using namespace std;
 
 UnequalNode::UnequalNode() {
   DefineFunction("Unequal", { "left", "right" },
-    BuildSignatures<ComparisonSignatures>());
+    MakeSignatures<ComparisonSignatures>());
 }
 
 void UnequalNode::Apply(CanvasNodeVisitor& visitor) const {

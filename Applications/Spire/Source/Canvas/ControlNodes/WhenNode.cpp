@@ -7,7 +7,7 @@ using namespace Spire;
 
 WhenNode::WhenNode() {
   DefineFunction("When", { "condition", "series" },
-    BuildSignatures<Signatures>());
+    MakeSignatures<Signatures>());
 }
 
 void WhenNode::Apply(CanvasNodeVisitor& visitor) const {

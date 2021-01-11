@@ -22,7 +22,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      InteractionsWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      InteractionsWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~InteractionsWidget();
 
@@ -60,7 +61,7 @@ namespace Spire {
       void StyleRegion(const RegionEntry& region);
       void Update();
       void Store();
-      void OnRegionIndexChanged(const QString& index);
+      void OnRegionIndexChanged(int index);
       void OnKeyboardModifierIndexChanged(int index);
       void OnActivateRegionClicked();
       void OnResetRegionClicked();

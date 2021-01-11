@@ -26,7 +26,7 @@ namespace {
     return Security("???", DefaultMarkets::ASX(), DefaultCountries::CA());
   }
 
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = PureFeeTable();
     PopulateFeeTable(Store(feeTable.m_tsxListedFeeTable));
     PopulateFeeTable(Store(feeTable.m_tsxVentureListedFeeTable));
@@ -43,7 +43,7 @@ namespace {
 
 TEST_SUITE("PureFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_tsxListedFeeTable,
       LookupTsxListedFee, LIQUIDITY_FLAG_COUNT,
       PureFeeTable::PRICE_CLASS_COUNT);
@@ -53,7 +53,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
       std::placeholders::_2), Money::ZERO);
@@ -66,7 +66,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_default_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
       PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -75,7 +75,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_default_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
       PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -84,7 +84,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_designated_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -93,7 +93,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_designated_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -102,7 +102,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_subdollar_designated_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
@@ -111,7 +111,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_subdollar_designated_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
@@ -120,7 +120,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_subdollar_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
       PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
@@ -129,7 +129,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_subdollar_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
       PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
@@ -138,7 +138,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_venture_default_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxVentureListedFee(feeTable,
       LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -147,7 +147,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_venture_default_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxVentureListedFee(feeTable,
       LiquidityFlag::PASSIVE, PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -156,7 +156,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_venture_subdollar_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxVentureListedFee(feeTable,
       LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 50 * Money::CENT, 100,
@@ -165,7 +165,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_venture_subdollar_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxVentureListedFee(feeTable,
       LiquidityFlag::PASSIVE, PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 50 * Money::CENT, 100,
@@ -174,7 +174,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_venture_subdime_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxVentureListedFee(feeTable,
       LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -186,7 +186,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("tsx_venture_subdime_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxVentureListedFee(feeTable,
       LiquidityFlag::PASSIVE, PureFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -198,7 +198,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("odd_lot") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = feeTable.m_oddLot;
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
@@ -215,9 +215,9 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -229,7 +229,7 @@ TEST_SUITE("PureFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
@@ -242,7 +242,7 @@ TEST_SUITE("PureFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -256,7 +256,7 @@ TEST_SUITE("PureFeeHandling") {
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
       PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,

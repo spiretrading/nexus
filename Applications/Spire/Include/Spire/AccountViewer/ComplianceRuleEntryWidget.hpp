@@ -31,7 +31,7 @@ namespace Spire {
       ComplianceRuleEntryWidget(Beam::Ref<UserProfile> userProfile,
         bool isReadOnly, const Nexus::Compliance::ComplianceRuleEntry& entry,
         std::shared_ptr<ComplianceModel> model, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ComplianceRuleEntryWidget();
 

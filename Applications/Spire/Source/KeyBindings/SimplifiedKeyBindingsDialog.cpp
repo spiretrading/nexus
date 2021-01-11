@@ -47,7 +47,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "ASX TradeMatch Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -60,7 +60,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "ASX TradeMatch Market Bid"));
     marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -72,7 +72,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "ASX TradeMatch Market Ask"));
     marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -84,7 +84,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename(
       "ASX TradeMatch Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -97,7 +97,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename(
       "ASX TradeMatch Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -110,7 +110,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "ASX TradeMatch Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -130,7 +130,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "ASX TradeMatch Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -150,7 +150,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "ASX TradeMatch Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -165,7 +165,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "ASX TradeMatch Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -180,7 +180,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "ASX TradeMatch Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -198,7 +198,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "ASX TradeMatch Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -216,7 +216,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateCxaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -231,7 +231,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CXA Limit Ask"));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -243,7 +243,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "CXA Market Bid"));
     marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -255,7 +255,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "CXA Market Ask"));
     marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -267,7 +267,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("CXA Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -279,7 +279,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("CXA Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -291,7 +291,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "CXA Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -311,7 +311,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "CXA Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -331,7 +331,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "CXA Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -346,7 +346,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "CXA Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -361,7 +361,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "CXA Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -379,7 +379,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "CXA Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -397,7 +397,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateAlphaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -413,7 +413,7 @@ namespace {
     alphaLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     alphaLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     alphaLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(alphaLimitBid.Build());
+    orderTypes.emplace_back(alphaLimitBid.Make());
     CanvasNodeBuilder alphaLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Alpha Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -426,7 +426,7 @@ namespace {
     alphaLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     alphaLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     alphaLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(alphaLimitAsk.Build());
+    orderTypes.emplace_back(alphaLimitAsk.Make());
     CanvasNodeBuilder alphaMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "Alpha Market Bid"));
     alphaMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -440,7 +440,7 @@ namespace {
     alphaMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     alphaMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(alphaMarketBid.Build());
+    orderTypes.emplace_back(alphaMarketBid.Make());
     CanvasNodeBuilder alphaMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "Alpha Market Ask"));
     alphaMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -454,7 +454,7 @@ namespace {
     alphaMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     alphaMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(alphaMarketAsk.Build());
+    orderTypes.emplace_back(alphaMarketAsk.Make());
     CanvasNodeBuilder alphaBuy(*GetMarketBidOrderTaskNode()->Rename(
       "Alpha Buy"));
     alphaBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -467,7 +467,7 @@ namespace {
     alphaBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     alphaBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     alphaBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(alphaBuy.Build());
+    orderTypes.emplace_back(alphaBuy.Make());
     CanvasNodeBuilder alphaSell(*GetMarketAskOrderTaskNode()->Rename(
       "Alpha Sell"));
     alphaSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -480,7 +480,7 @@ namespace {
     alphaSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     alphaSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     alphaSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(alphaSell.Build());
+    orderTypes.emplace_back(alphaSell.Make());
   }
 
   void PopulateChixOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -496,7 +496,7 @@ namespace {
     chixLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixLimitBid.Build());
+    orderTypes.emplace_back(chixLimitBid.Make());
     CanvasNodeBuilder chixLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CHI-X Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -509,7 +509,7 @@ namespace {
     chixLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixLimitAsk.Build());
+    orderTypes.emplace_back(chixLimitAsk.Make());
     CanvasNodeBuilder chixMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "CHI-X Market Bid"));
     chixMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -521,7 +521,7 @@ namespace {
     chixMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMarketBid.Build());
+    orderTypes.emplace_back(chixMarketBid.Make());
     CanvasNodeBuilder chixMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "CHI-X Market Ask"));
     chixMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -533,7 +533,7 @@ namespace {
     chixMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMarketAsk.Build());
+    orderTypes.emplace_back(chixMarketAsk.Make());
     CanvasNodeBuilder chixBuy(
       *GetMarketBidOrderTaskNode()->Rename("CHI-X Buy"));
     chixBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -546,7 +546,7 @@ namespace {
     chixBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixBuy.Build());
+    orderTypes.emplace_back(chixBuy.Make());
     CanvasNodeBuilder chixSell(*GetMarketAskOrderTaskNode()->Rename(
       "CHI-X Sell"));
     chixSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -559,7 +559,7 @@ namespace {
     chixSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSell.Build());
+    orderTypes.emplace_back(chixSell.Make());
     CanvasNodeBuilder chixFeeSensitiveLimitBid(
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Limit Bid")->AddField("max_floor", 111,
@@ -580,7 +580,7 @@ namespace {
     chixFeeSensitiveLimitBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixFeeSensitiveLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixFeeSensitiveLimitBid.Build());
+    orderTypes.emplace_back(chixFeeSensitiveLimitBid.Make());
     CanvasNodeBuilder chixFeeSensitiveLimitAsk(
       *GetLimitAskOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Limit Ask")->AddField("max_floor", 111,
@@ -601,7 +601,7 @@ namespace {
     chixFeeSensitiveLimitAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixFeeSensitiveLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixFeeSensitiveLimitAsk.Build());
+    orderTypes.emplace_back(chixFeeSensitiveLimitAsk.Make());
     CanvasNodeBuilder chixFeeSensitiveMarketBid(
       *GetMarketBidOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Market Bid")->AddField(
@@ -621,7 +621,7 @@ namespace {
     chixFeeSensitiveMarketBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixFeeSensitiveMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixFeeSensitiveMarketBid.Build());
+    orderTypes.emplace_back(chixFeeSensitiveMarketBid.Make());
     CanvasNodeBuilder chixFeeSensitiveMarketAsk(
       *GetMarketAskOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Market Ask")->AddField(
@@ -641,7 +641,7 @@ namespace {
     chixFeeSensitiveMarketAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixFeeSensitiveMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixFeeSensitiveMarketAsk.Build());
+    orderTypes.emplace_back(chixFeeSensitiveMarketAsk.Make());
     CanvasNodeBuilder chixFeeSensitiveBuy(
       *GetMarketBidOrderTaskNode()->Rename("CHI-X Fee Sensitive Buy")->AddField(
       "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
@@ -661,7 +661,7 @@ namespace {
     chixFeeSensitiveBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixFeeSensitiveBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixFeeSensitiveBuy.Build());
+    orderTypes.emplace_back(chixFeeSensitiveBuy.Make());
     CanvasNodeBuilder chixFeeSensitiveSell(*GetMarketAskOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Sell")->AddField(
       "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
@@ -681,7 +681,7 @@ namespace {
     chixFeeSensitiveSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixFeeSensitiveSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixFeeSensitiveSell.Build());
+    orderTypes.emplace_back(chixFeeSensitiveSell.Make());
     CanvasNodeBuilder chixSmartXDarkLimitBid(
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Bid")->AddField("max_floor", 111,
@@ -705,7 +705,7 @@ namespace {
     chixSmartXDarkLimitBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixSmartXDarkLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSmartXDarkLimitBid.Build());
+    orderTypes.emplace_back(chixSmartXDarkLimitBid.Make());
     CanvasNodeBuilder chixSmartXDarkLimitAsk(
       *GetLimitAskOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Ask")->AddField("max_floor", 111,
@@ -729,7 +729,7 @@ namespace {
     chixSmartXDarkLimitAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixSmartXDarkLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSmartXDarkLimitAsk.Build());
+    orderTypes.emplace_back(chixSmartXDarkLimitAsk.Make());
     CanvasNodeBuilder chixSmartXDarkMarketBid(
       *GetMarketBidOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Market Bid")->AddField(
@@ -749,7 +749,7 @@ namespace {
     chixSmartXDarkMarketBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixSmartXDarkMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSmartXDarkMarketBid.Build());
+    orderTypes.emplace_back(chixSmartXDarkMarketBid.Make());
     CanvasNodeBuilder chixSmartXDarkMarketAsk(
       *GetMarketAskOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Market Ask")->AddField(
@@ -769,7 +769,7 @@ namespace {
     chixSmartXDarkMarketAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixSmartXDarkMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSmartXDarkMarketAsk.Build());
+    orderTypes.emplace_back(chixSmartXDarkMarketAsk.Make());
     CanvasNodeBuilder chixSmartXDarkBuy(
       *GetMarketBidOrderTaskNode()->Rename("CHI-X SMART X Dark Buy")->AddField(
       "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR")));
@@ -789,7 +789,7 @@ namespace {
     chixSmartXDarkBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixSmartXDarkBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSmartXDarkBuy.Build());
+    orderTypes.emplace_back(chixSmartXDarkBuy.Make());
     CanvasNodeBuilder chixSmartXDarkSell(*GetMarketAskOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Sell")->AddField(
       "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR")));
@@ -809,7 +809,7 @@ namespace {
     chixSmartXDarkSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixSmartXDarkSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixSmartXDarkSell.Build());
+    orderTypes.emplace_back(chixSmartXDarkSell.Make());
     CanvasNodeBuilder chixDarkAttBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "CHI-X Dark ATT Bid")->AddField("ex_destination", 100,
       make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
@@ -830,7 +830,7 @@ namespace {
       false);
     chixDarkAttBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixDarkAttBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixDarkAttBid.Build());
+    orderTypes.emplace_back(chixDarkAttBid.Make());
     CanvasNodeBuilder chixDarkAttAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "CHI-X Dark ATT Ask")->AddField("ex_destination", 100,
       make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
@@ -848,7 +848,7 @@ namespace {
     chixDarkAttAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixDarkAttAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixDarkAttAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixDarkAttAsk.Build());
+    orderTypes.emplace_back(chixDarkAttAsk.Make());
     CanvasNodeBuilder chixDarkMpiBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "CHI-X Dark MPI Bid")->AddField("ex_destination", 100,
       make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
@@ -869,7 +869,7 @@ namespace {
       false);
     chixDarkMpiBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixDarkMpiBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixDarkMpiBid.Build());
+    orderTypes.emplace_back(chixDarkMpiBid.Make());
     CanvasNodeBuilder chixDarkMpiAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "CHI-X Dark MPI Ask")->AddField("ex_destination", 100,
       make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
@@ -887,7 +887,7 @@ namespace {
     chixDarkMpiAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixDarkMpiAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixDarkMpiAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixDarkMpiAsk.Build());
+    orderTypes.emplace_back(chixDarkMpiAsk.Make());
     CanvasNodeBuilder chixPrimaryPegBid(
       *GetPeggedBidOrderTaskNode(false)->Rename(
       "CHI-X Primary Peg Bid")->AddField("exec_inst", 18,
@@ -908,7 +908,7 @@ namespace {
     chixPrimaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixPrimaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixPrimaryPegBid.Build());
+    orderTypes.emplace_back(chixPrimaryPegBid.Make());
     CanvasNodeBuilder chixPrimaryPegAsk(
       *GetPeggedAskOrderTaskNode(false)->Rename(
       "CHI-X Primary Peg Ask")->AddField("exec_inst", 18,
@@ -929,7 +929,7 @@ namespace {
     chixPrimaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixPrimaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixPrimaryPegAsk.Build());
+    orderTypes.emplace_back(chixPrimaryPegAsk.Make());
     CanvasNodeBuilder chixMidPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
       "CHI-X Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -944,7 +944,7 @@ namespace {
     chixMidPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixMidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMidPegBid.Build());
+    orderTypes.emplace_back(chixMidPegBid.Make());
     CanvasNodeBuilder chixMidPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
       "CHI-X Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -959,7 +959,7 @@ namespace {
     chixMidPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     chixMidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMidPegAsk.Build());
+    orderTypes.emplace_back(chixMidPegAsk.Make());
     CanvasNodeBuilder chixDarkMidPegBid(
       *GetPeggedBidOrderTaskNode(true)->Rename(
       "CHI-X Dark Mid Peg Bid")->AddField("exec_inst", 18,
@@ -982,7 +982,7 @@ namespace {
     chixDarkMidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixDarkMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixDarkMidPegBid.Build());
+    orderTypes.emplace_back(chixDarkMidPegBid.Make());
     CanvasNodeBuilder chixDarkMidPegAsk(
       *GetPeggedAskOrderTaskNode(true)->Rename(
       "CHI-X Dark Mid Peg Ask")->AddField("exec_inst", 18,
@@ -1005,7 +1005,7 @@ namespace {
     chixDarkMidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixDarkMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixDarkMidPegAsk.Build());
+    orderTypes.emplace_back(chixDarkMidPegAsk.Make());
     CanvasNodeBuilder chixMarketPegBid(
       *GetPeggedBidOrderTaskNode(true)->Rename(
       "CHI-X Market Peg Bid")->AddField("exec_inst", 18,
@@ -1026,7 +1026,7 @@ namespace {
     chixMarketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixMarketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMarketPegBid.Build());
+    orderTypes.emplace_back(chixMarketPegBid.Make());
     CanvasNodeBuilder chixMarketPegAsk(
       *GetPeggedAskOrderTaskNode(true)->Rename(
       "CHI-X Market Peg Ask")->AddField("exec_inst", 18,
@@ -1047,7 +1047,7 @@ namespace {
     chixMarketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     chixMarketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMarketPegAsk.Build());
+    orderTypes.emplace_back(chixMarketPegAsk.Make());
     CanvasNodeBuilder chixMultiMidPegBid(
       *GetPeggedBidOrderTaskNode(true)->Rename(
       "CHI-X Multi-Mid Peg Bid")->AddField("exec_inst", 18,
@@ -1070,7 +1070,7 @@ namespace {
     chixMultiMidPegBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixMultiMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMultiMidPegBid.Build());
+    orderTypes.emplace_back(chixMultiMidPegBid.Make());
     CanvasNodeBuilder chixMultiMidPegAsk(
       *GetPeggedAskOrderTaskNode(true)->Rename(
       "CHI-X Multi-Mid Peg Ask")->AddField("exec_inst", 18,
@@ -1093,7 +1093,7 @@ namespace {
     chixMultiMidPegAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     chixMultiMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(chixMultiMidPegAsk.Build());
+    orderTypes.emplace_back(chixMultiMidPegAsk.Make());
   }
 
   void PopulateCseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -1109,7 +1109,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CSE Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -1122,7 +1122,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "CSE Market Bid"));
     marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1134,7 +1134,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "CSE Market Ask"));
     marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1146,7 +1146,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename(
       "CSE Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1159,7 +1159,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename(
       "CSE Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1172,7 +1172,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
       "CSE Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -1187,7 +1187,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
       "CSE Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -1202,7 +1202,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
       "CSE Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -1220,7 +1220,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
       "CSE Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -1238,7 +1238,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateCx2Orders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -1254,7 +1254,7 @@ namespace {
     cx2LimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2LimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2LimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2LimitBid.Build());
+    orderTypes.emplace_back(cx2LimitBid.Make());
     CanvasNodeBuilder cx2LimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CX2 Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -1267,7 +1267,7 @@ namespace {
     cx2LimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2LimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2LimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2LimitAsk.Build());
+    orderTypes.emplace_back(cx2LimitAsk.Make());
     CanvasNodeBuilder cx2MarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "CX2 Market Bid"));
     cx2MarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1279,7 +1279,7 @@ namespace {
     cx2MarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2MarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2MarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2MarketBid.Build());
+    orderTypes.emplace_back(cx2MarketBid.Make());
     CanvasNodeBuilder cx2MarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "CX2 Market Ask"));
     cx2MarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1291,7 +1291,7 @@ namespace {
     cx2MarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2MarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2MarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2MarketAsk.Build());
+    orderTypes.emplace_back(cx2MarketAsk.Make());
     CanvasNodeBuilder cx2Buy(*GetMarketBidOrderTaskNode()->Rename("CX2 Buy"));
     cx2Buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     cx2Buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1303,7 +1303,7 @@ namespace {
     cx2Buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2Buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2Buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2Buy.Build());
+    orderTypes.emplace_back(cx2Buy.Make());
     CanvasNodeBuilder cx2Sell(*GetMarketAskOrderTaskNode()->Rename(
       "CX2 Sell"));
     cx2Sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1316,7 +1316,7 @@ namespace {
     cx2Sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2Sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2Sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2Sell.Build());
+    orderTypes.emplace_back(cx2Sell.Make());
     CanvasNodeBuilder cx2PrimaryPegBid(
       *GetPeggedBidOrderTaskNode(true)->Rename(
       "CX2 Primary Peg Bid")->AddField("exec_inst", 18,
@@ -1337,7 +1337,7 @@ namespace {
     cx2PrimaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     cx2PrimaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2PrimaryPegBid.Build());
+    orderTypes.emplace_back(cx2PrimaryPegBid.Make());
     CanvasNodeBuilder cx2PrimaryPegAsk(
       *GetPeggedAskOrderTaskNode(true)->Rename(
       "CX2 Primary Peg Ask")->AddField("exec_inst", 18,
@@ -1358,7 +1358,7 @@ namespace {
     cx2PrimaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     cx2PrimaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2PrimaryPegAsk.Build());
+    orderTypes.emplace_back(cx2PrimaryPegAsk.Make());
     CanvasNodeBuilder cx2MidPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
       "CX2 Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -1373,7 +1373,7 @@ namespace {
     cx2MidPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2MidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2MidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2MidPegBid.Build());
+    orderTypes.emplace_back(cx2MidPegBid.Make());
     CanvasNodeBuilder cx2MidPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
       "CX2 Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -1388,7 +1388,7 @@ namespace {
     cx2MidPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     cx2MidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     cx2MidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2MidPegAsk.Build());
+    orderTypes.emplace_back(cx2MidPegAsk.Make());
     CanvasNodeBuilder cx2MarketPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
       "CX2 Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -1406,7 +1406,7 @@ namespace {
     cx2MarketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     cx2MarketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2MarketPegBid.Build());
+    orderTypes.emplace_back(cx2MarketPegBid.Make());
     CanvasNodeBuilder cx2MarketPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
       "CX2 Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -1424,7 +1424,7 @@ namespace {
     cx2MarketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     cx2MarketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(cx2MarketPegAsk.Build());
+    orderTypes.emplace_back(cx2MarketPegAsk.Make());
   }
 
   void PopulateHkexOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -1439,7 +1439,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "HKEX Limit Ask"));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1451,7 +1451,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "HKEX Market Bid"));
     marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1463,7 +1463,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "HKEX Market Ask"));
     marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1475,7 +1475,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
   }
 
   void PopulateLynxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -1491,7 +1491,7 @@ namespace {
     lynxLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     lynxLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     lynxLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(lynxLimitBid.Build());
+    orderTypes.emplace_back(lynxLimitBid.Make());
     CanvasNodeBuilder lynxLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Lynx Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -1504,7 +1504,7 @@ namespace {
     lynxLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     lynxLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     lynxLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(lynxLimitAsk.Build());
+    orderTypes.emplace_back(lynxLimitAsk.Make());
     CanvasNodeBuilder lynxMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "Lynx Market Bid"));
     lynxMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1516,7 +1516,7 @@ namespace {
     lynxMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     lynxMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     lynxMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(lynxMarketBid.Build());
+    orderTypes.emplace_back(lynxMarketBid.Make());
     CanvasNodeBuilder lynxMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "Lynx Market Ask"));
     lynxMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1528,7 +1528,7 @@ namespace {
     lynxMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     lynxMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     lynxMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(lynxMarketAsk.Build());
+    orderTypes.emplace_back(lynxMarketAsk.Make());
     CanvasNodeBuilder lynxBuy(*GetMarketBidOrderTaskNode()->Rename(
       "Lynx Buy"));
     lynxBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1541,7 +1541,7 @@ namespace {
     lynxBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     lynxBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     lynxBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(lynxBuy.Build());
+    orderTypes.emplace_back(lynxBuy.Make());
     CanvasNodeBuilder lynxSell(*GetMarketAskOrderTaskNode()->Rename(
       "Lynx Sell"));
     lynxSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1554,7 +1554,7 @@ namespace {
     lynxSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     lynxSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     lynxSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(lynxSell.Build());
+    orderTypes.emplace_back(lynxSell.Make());
   }
 
   void PopulateMatchNowLpOrders(
@@ -1572,7 +1572,7 @@ namespace {
     matnlpLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     matnlpLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpLimitBid.Build());
+    orderTypes.emplace_back(matnlpLimitBid.Make());
     CanvasNodeBuilder matnlpLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "MATCH Now LP Limit Ask"));
     matnlpLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1586,7 +1586,7 @@ namespace {
     matnlpLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     matnlpLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpLimitAsk.Build());
+    orderTypes.emplace_back(matnlpLimitAsk.Make());
     CanvasNodeBuilder matnlpAttBid(*GetLimitBidOrderTaskNode()->Rename(
       "MATCH Now LP At-The-Touch Bid")->AddField(
       "constraints", 6005, make_unique<TextNode>("PAG")));
@@ -1601,7 +1601,7 @@ namespace {
     matnlpAttBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnlpAttBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnlpAttBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpAttBid.Build());
+    orderTypes.emplace_back(matnlpAttBid.Make());
     CanvasNodeBuilder matnlpAttAsk(*GetLimitAskOrderTaskNode()->Rename(
       "MATCH Now LP At-The-Touch Ask")->AddField(
       "constraints", 6005, make_unique<TextNode>("PAG")));
@@ -1616,7 +1616,7 @@ namespace {
     matnlpAttAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnlpAttAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnlpAttAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpAttAsk.Build());
+    orderTypes.emplace_back(matnlpAttAsk.Make());
     CanvasNodeBuilder matnlpMpiBid(*GetLimitBidOrderTaskNode()->Rename(
       "MATCH Now LP MPI Bid")->AddField(
       "constraints", 6005, make_unique<TextNode>("PMI")));
@@ -1631,7 +1631,7 @@ namespace {
     matnlpMpiBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnlpMpiBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnlpMpiBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpMpiBid.Build());
+    orderTypes.emplace_back(matnlpMpiBid.Make());
     CanvasNodeBuilder matnlpMpiAsk(*GetLimitAskOrderTaskNode()->Rename(
       "MATCH Now LP MPI Ask")->AddField(
       "constraints", 6005, make_unique<TextNode>("PMI")));
@@ -1646,7 +1646,7 @@ namespace {
     matnlpMpiAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnlpMpiAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnlpMpiAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpMpiAsk.Build());
+    orderTypes.emplace_back(matnlpMpiAsk.Make());
     CanvasNodeBuilder matnlpMarketBid(
       *GetMarketBidOrderTaskNode()->Rename("MATCH Now LP Market Bid"));
     matnlpMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1660,7 +1660,7 @@ namespace {
     matnlpMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     matnlpMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpMarketBid.Build());
+    orderTypes.emplace_back(matnlpMarketBid.Make());
     CanvasNodeBuilder matnlpMarketAsk(
       *GetMarketAskOrderTaskNode()->Rename("MATCH Now LP Market Ask"));
     matnlpMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1674,7 +1674,7 @@ namespace {
     matnlpMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     matnlpMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpMarketAsk.Build());
+    orderTypes.emplace_back(matnlpMarketAsk.Make());
     CanvasNodeBuilder matnlpBuy(*GetMarketBidOrderTaskNode()->Rename(
       "MATCH Now LP Buy"));
     matnlpBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1687,7 +1687,7 @@ namespace {
     matnlpBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnlpBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnlpBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpBuy.Build());
+    orderTypes.emplace_back(matnlpBuy.Make());
     CanvasNodeBuilder matnlpSell(
       *GetMarketAskOrderTaskNode()->Rename("MATCH Now LP Sell"));
     matnlpSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1700,7 +1700,7 @@ namespace {
     matnlpSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnlpSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnlpSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnlpSell.Build());
+    orderTypes.emplace_back(matnlpSell.Make());
   }
 
   void PopulateMatchNowMfOrders(
@@ -1720,7 +1720,7 @@ namespace {
     matnMarketFlowLimitBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnMarketFlowLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnMarketFlowLimitBid.Build());
+    orderTypes.emplace_back(matnMarketFlowLimitBid.Make());
     CanvasNodeBuilder matnMarketFlowLimitAsk(
       *GetLimitAskOrderTaskNode()->Rename("MATCH Now MF Limit Ask"));
     matnMarketFlowLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1736,7 +1736,7 @@ namespace {
     matnMarketFlowLimitAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnMarketFlowLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnMarketFlowLimitAsk.Build());
+    orderTypes.emplace_back(matnMarketFlowLimitAsk.Make());
     CanvasNodeBuilder matnMarketFlowMarketBid(
       *GetMarketBidOrderTaskNode()->Rename("MATCH Now MF Market Bid"));
     matnMarketFlowMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1752,7 +1752,7 @@ namespace {
     matnMarketFlowMarketBid.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnMarketFlowMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnMarketFlowMarketBid.Build());
+    orderTypes.emplace_back(matnMarketFlowMarketBid.Make());
     CanvasNodeBuilder matnMarketFlowMarketAsk(
       *GetMarketAskOrderTaskNode()->Rename("MATCH Now MF Market Ask"));
     matnMarketFlowMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1768,7 +1768,7 @@ namespace {
     matnMarketFlowMarketAsk.SetReadOnly(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnMarketFlowMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnMarketFlowMarketAsk.Build());
+    orderTypes.emplace_back(matnMarketFlowMarketAsk.Make());
     CanvasNodeBuilder matnmfBuy(*GetMarketBidOrderTaskNode()->Rename(
       "MATCH Now MF Buy"));
     matnmfBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1781,7 +1781,7 @@ namespace {
     matnmfBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnmfBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnmfBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnmfBuy.Build());
+    orderTypes.emplace_back(matnmfBuy.Make());
     CanvasNodeBuilder matnmfSell(
       *GetMarketAskOrderTaskNode()->Rename("MATCH Now MF Sell"));
     matnmfSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1794,7 +1794,7 @@ namespace {
     matnmfSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     matnmfSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     matnmfSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(matnmfSell.Build());
+    orderTypes.emplace_back(matnmfSell.Make());
   }
 
   void PopulateNeoeOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -1810,7 +1810,7 @@ namespace {
     litLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litLimitBid.Build());
+    orderTypes.emplace_back(litLimitBid.Make());
     CanvasNodeBuilder litLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NEO Lit Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -1823,7 +1823,7 @@ namespace {
     litLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litLimitAsk.Build());
+    orderTypes.emplace_back(litLimitAsk.Make());
     CanvasNodeBuilder litMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "NEO Lit Market Bid"));
     litMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1835,7 +1835,7 @@ namespace {
     litMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litMarketBid.Build());
+    orderTypes.emplace_back(litMarketBid.Make());
     CanvasNodeBuilder litMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NEO Lit Market Ask"));
     litMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1847,7 +1847,7 @@ namespace {
     litMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litMarketAsk.Build());
+    orderTypes.emplace_back(litMarketAsk.Make());
     CanvasNodeBuilder litBuy(*GetMarketBidOrderTaskNode()->Rename(
       "NEO Lit Buy"));
     litBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1860,7 +1860,7 @@ namespace {
     litBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litBuy.Build());
+    orderTypes.emplace_back(litBuy.Make());
     CanvasNodeBuilder litSell(*GetMarketAskOrderTaskNode()->Rename(
       "NEO Lit Sell"));
     litSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -1873,7 +1873,7 @@ namespace {
     litSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litSell.Build());
+    orderTypes.emplace_back(litSell.Make());
     CanvasNodeBuilder litMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NEOE Lit Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -1888,7 +1888,7 @@ namespace {
     litMidPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     litMidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     litMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litMidPegBid.Build());
+    orderTypes.emplace_back(litMidPegBid.Make());
     CanvasNodeBuilder litMidPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NEOE Lit Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -1905,7 +1905,7 @@ namespace {
     litMidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     litMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(litMidPegAsk.Build());
+    orderTypes.emplace_back(litMidPegAsk.Make());
     CanvasNodeBuilder neoLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "NEO Book Limit Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
@@ -1921,7 +1921,7 @@ namespace {
     neoLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoLimitBid.Build());
+    orderTypes.emplace_back(neoLimitBid.Make());
     CanvasNodeBuilder neoLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NEO Book Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
@@ -1937,7 +1937,7 @@ namespace {
     neoLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoLimitAsk.Build());
+    orderTypes.emplace_back(neoLimitAsk.Make());
     CanvasNodeBuilder neoMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "NEO Book Market Bid")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -1952,7 +1952,7 @@ namespace {
     neoMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoMarketBid.Build());
+    orderTypes.emplace_back(neoMarketBid.Make());
     CanvasNodeBuilder neoMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NEO Book Market Ask")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -1967,7 +1967,7 @@ namespace {
     neoMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoMarketAsk.Build());
+    orderTypes.emplace_back(neoMarketAsk.Make());
     CanvasNodeBuilder neoBuy(*GetMarketBidOrderTaskNode()->Rename(
       "NEO Book Buy")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -1983,7 +1983,7 @@ namespace {
     neoBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoBuy.Build());
+    orderTypes.emplace_back(neoBuy.Make());
     CanvasNodeBuilder neoSell(*GetMarketAskOrderTaskNode()->Rename(
       "NEO Book Sell")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -1999,7 +1999,7 @@ namespace {
     neoSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoSell.Build());
+    orderTypes.emplace_back(neoSell.Make());
     CanvasNodeBuilder neoIocBid(*GetLimitBidOrderTaskNode()->Rename(
       "NEO Book IOC Bid")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -2014,7 +2014,7 @@ namespace {
     neoIocBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoIocBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoIocBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoIocBid.Build());
+    orderTypes.emplace_back(neoIocBid.Make());
     CanvasNodeBuilder neoIocAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NEO Book IOC Ask")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -2029,7 +2029,7 @@ namespace {
     neoIocAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoIocAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoIocAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoIocAsk.Build());
+    orderTypes.emplace_back(neoIocAsk.Make());
     CanvasNodeBuilder neoFokBid(*GetLimitBidOrderTaskNode()->Rename(
       "NEO Book FOK Bid")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -2044,7 +2044,7 @@ namespace {
     neoFokBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoFokBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoFokBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoFokBid.Build());
+    orderTypes.emplace_back(neoFokBid.Make());
     CanvasNodeBuilder neoFokAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NEO Book FOK Ask")->AddField("ex_destination", 100,
       make_unique<TextNode>("N")));
@@ -2059,7 +2059,7 @@ namespace {
     neoFokAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoFokAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoFokAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoFokAsk.Build());
+    orderTypes.emplace_back(neoFokAsk.Make());
     CanvasNodeBuilder neoMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NEOE Book Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M"))->AddField("ex_destination", 100,
@@ -2077,7 +2077,7 @@ namespace {
     neoMidPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoMidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoMidPegBid.Build());
+    orderTypes.emplace_back(neoMidPegBid.Make());
     CanvasNodeBuilder neoMidPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NEOE Book Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M"))->AddField("ex_destination", 100,
@@ -2095,7 +2095,7 @@ namespace {
     neoMidPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     neoMidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoMidPegAsk.Build());
+    orderTypes.emplace_back(neoMidPegAsk.Make());
   }
 
   void PopulateOmegaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -2111,7 +2111,7 @@ namespace {
     omegaLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     omegaLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     omegaLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(omegaLimitBid.Build());
+    orderTypes.emplace_back(omegaLimitBid.Make());
     CanvasNodeBuilder omegaLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Omega Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2124,7 +2124,7 @@ namespace {
     omegaLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     omegaLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     omegaLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(omegaLimitAsk.Build());
+    orderTypes.emplace_back(omegaLimitAsk.Make());
     CanvasNodeBuilder omegaMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "Omega Market Bid"));
     omegaMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2138,7 +2138,7 @@ namespace {
     omegaMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     omegaMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(omegaMarketBid.Build());
+    orderTypes.emplace_back(omegaMarketBid.Make());
     CanvasNodeBuilder omegaMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "Omega Market Ask"));
     omegaMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2152,7 +2152,7 @@ namespace {
     omegaMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     omegaMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(omegaMarketAsk.Build());
+    orderTypes.emplace_back(omegaMarketAsk.Make());
     CanvasNodeBuilder omegaBuy(*GetMarketBidOrderTaskNode()->Rename(
       "Omega Buy"));
     omegaBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -2165,7 +2165,7 @@ namespace {
     omegaBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     omegaBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     omegaBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(omegaBuy.Build());
+    orderTypes.emplace_back(omegaBuy.Make());
     CanvasNodeBuilder omegaSell(*GetMarketAskOrderTaskNode()->Rename(
       "Omega Sell"));
     omegaSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -2178,7 +2178,7 @@ namespace {
     omegaSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     omegaSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     omegaSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(omegaSell.Build());
+    orderTypes.emplace_back(omegaSell.Make());
   }
 
   void PopulatePureOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -2194,7 +2194,7 @@ namespace {
     pureLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     pureLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     pureLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(pureLimitBid.Build());
+    orderTypes.emplace_back(pureLimitBid.Make());
     CanvasNodeBuilder pureLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Pure Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2207,7 +2207,7 @@ namespace {
     pureLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     pureLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     pureLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(pureLimitAsk.Build());
+    orderTypes.emplace_back(pureLimitAsk.Make());
     CanvasNodeBuilder pureMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "Pure Market Bid"));
     pureMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2219,7 +2219,7 @@ namespace {
     pureMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     pureMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     pureMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(pureMarketBid.Build());
+    orderTypes.emplace_back(pureMarketBid.Make());
     CanvasNodeBuilder pureMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "Pure Market Ask"));
     pureMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2231,7 +2231,7 @@ namespace {
     pureMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     pureMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     pureMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(pureMarketAsk.Build());
+    orderTypes.emplace_back(pureMarketAsk.Make());
     CanvasNodeBuilder pureBuy(*GetMarketBidOrderTaskNode()->Rename(
       "Pure Buy"));
     pureBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -2244,7 +2244,7 @@ namespace {
     pureBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     pureBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     pureBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(pureBuy.Build());
+    orderTypes.emplace_back(pureBuy.Make());
     CanvasNodeBuilder pureSell(*GetMarketAskOrderTaskNode()->Rename(
       "Pure Sell"));
     pureSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -2257,7 +2257,7 @@ namespace {
     pureSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     pureSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     pureSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(pureSell.Build());
+    orderTypes.emplace_back(pureSell.Make());
   }
 
   void PopulateTsxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -2276,7 +2276,7 @@ namespace {
     tsxLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     tsxLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     tsxLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxLimitBid.Build());
+    orderTypes.emplace_back(tsxLimitBid.Make());
     CanvasNodeBuilder tsxLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "TSX Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
@@ -2292,7 +2292,7 @@ namespace {
     tsxLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     tsxLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     tsxLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxLimitAsk.Build());
+    orderTypes.emplace_back(tsxLimitAsk.Make());
     CanvasNodeBuilder tsxMarketBid(*GetMarketBidOrderTaskNode()->Rename(
       "TSX Market Bid"));
     tsxMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2304,7 +2304,7 @@ namespace {
     tsxMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     tsxMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     tsxMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxMarketBid.Build());
+    orderTypes.emplace_back(tsxMarketBid.Make());
     CanvasNodeBuilder tsxMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "TSX Market Ask"));
     tsxMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2316,7 +2316,7 @@ namespace {
     tsxMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     tsxMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     tsxMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxMarketAsk.Build());
+    orderTypes.emplace_back(tsxMarketAsk.Make());
     CanvasNodeBuilder tsxBuy(*GetMarketBidOrderTaskNode()->Rename("TSX Buy"));
     tsxBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     tsxBuy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2328,7 +2328,7 @@ namespace {
     tsxBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     tsxBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     tsxBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxBuy.Build());
+    orderTypes.emplace_back(tsxBuy.Make());
     CanvasNodeBuilder tsxSell(*GetMarketAskOrderTaskNode()->Rename(
       "TSX Sell"));
     tsxSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -2341,7 +2341,7 @@ namespace {
     tsxSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     tsxSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     tsxSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxSell.Build());
+    orderTypes.emplace_back(tsxSell.Make());
     CanvasNodeBuilder tsxLimitOnCloseBid(*GetLimitBidOrderTaskNode()->Rename(
       "TSX Limit On Close Bid"));
     tsxLimitOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2357,7 +2357,7 @@ namespace {
     tsxLimitOnCloseBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     tsxLimitOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxLimitOnCloseBid.Build());
+    orderTypes.emplace_back(tsxLimitOnCloseBid.Make());
     CanvasNodeBuilder tsxLimitOnCloseAsk(*GetLimitAskOrderTaskNode()->Rename(
       "TSX Limit On Close Ask"));
     tsxLimitOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2373,7 +2373,7 @@ namespace {
     tsxLimitOnCloseAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     tsxLimitOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxLimitOnCloseAsk.Build());
+    orderTypes.emplace_back(tsxLimitOnCloseAsk.Make());
     CanvasNodeBuilder tsxMarketOnCloseBid(*GetMarketBidOrderTaskNode()->Rename(
       "TSX Market On Close Bid"));
     tsxMarketOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2389,7 +2389,7 @@ namespace {
     tsxMarketOnCloseBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     tsxMarketOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxMarketOnCloseBid.Build());
+    orderTypes.emplace_back(tsxMarketOnCloseBid.Make());
     CanvasNodeBuilder tsxMarketOnCloseAsk(*GetMarketAskOrderTaskNode()->Rename(
       "TSX Market On Close Ask"));
     tsxMarketOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2405,7 +2405,7 @@ namespace {
     tsxMarketOnCloseAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     tsxMarketOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxMarketOnCloseAsk.Build());
+    orderTypes.emplace_back(tsxMarketOnCloseAsk.Make());
     CanvasNodeBuilder tsxDarkMidPointBid(
       *GetPeggedBidOrderTaskNode(true)->Rename("TSX Dark Mid-Point Bid"));
     tsxDarkMidPointBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2421,7 +2421,7 @@ namespace {
     tsxDarkMidPointBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     tsxDarkMidPointBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxDarkMidPointBid.Build());
+    orderTypes.emplace_back(tsxDarkMidPointBid.Make());
     CanvasNodeBuilder tsxDarkMidPointAsk(
       *GetPeggedAskOrderTaskNode(true)->Rename("TSX Dark Mid-Point Ask"));
     tsxDarkMidPointAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2437,7 +2437,7 @@ namespace {
     tsxDarkMidPointAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     tsxDarkMidPointAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(tsxDarkMidPointAsk.Build());
+    orderTypes.emplace_back(tsxDarkMidPointAsk.Make());
   }
 
   void PopulateAmexOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -2453,7 +2453,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "AMEX Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2466,7 +2466,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "AMEX Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2479,7 +2479,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "AMEX Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2492,7 +2492,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("AMEX Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2504,7 +2504,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("AMEX Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2516,7 +2516,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "AMEX Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -2536,7 +2536,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "AMEX Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -2556,7 +2556,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "AMEX Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -2571,7 +2571,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "AMEX Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -2586,7 +2586,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "AMEX Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -2604,7 +2604,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "AMEX Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -2622,7 +2622,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateArcaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -2638,7 +2638,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "ARCA Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2651,7 +2651,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "ARCA Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2664,7 +2664,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "ARCA Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2677,7 +2677,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("ARCA Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2689,7 +2689,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("ARCA Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2701,7 +2701,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "ARCA Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -2721,7 +2721,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "ARCA Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -2741,7 +2741,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "ARCA Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -2756,7 +2756,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "ARCA Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -2771,7 +2771,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "ARCA Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -2789,7 +2789,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "ARCA Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -2807,7 +2807,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateBatsOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -2823,7 +2823,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "BATS Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2836,7 +2836,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "BATS Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2849,7 +2849,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "BATS Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -2862,7 +2862,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("BATS Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2874,7 +2874,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("BATS Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -2886,7 +2886,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "BATS Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -2906,7 +2906,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "BATS Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -2926,7 +2926,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "BATS Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -2941,7 +2941,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "BATS Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -2956,7 +2956,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "BATS Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -2974,7 +2974,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "BATS Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -2992,7 +2992,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateBatyOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -3008,7 +3008,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "BATY Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3021,7 +3021,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "BATY Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3034,7 +3034,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "BATY Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3047,7 +3047,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("BATY Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3059,7 +3059,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("BATY Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3071,7 +3071,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "BATY Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3091,7 +3091,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "BATY Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3111,7 +3111,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "BATY Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3126,7 +3126,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "BATY Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3141,7 +3141,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "BATY Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3159,7 +3159,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "BATY Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3177,7 +3177,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateEdgaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -3193,7 +3193,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "EDGA Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3206,7 +3206,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "EDGA Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3219,7 +3219,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "EDGA Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3232,7 +3232,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("EDGA Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3244,7 +3244,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("EDGA Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3256,7 +3256,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "EDGA Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3276,7 +3276,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "EDGA Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3296,7 +3296,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "EDGA Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3311,7 +3311,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "EDGA Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3326,7 +3326,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "EDGA Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3344,7 +3344,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "EDGA Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3362,7 +3362,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateEdgxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -3378,7 +3378,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "EDGX Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3391,7 +3391,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "EDGX Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3404,7 +3404,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "EDGX Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3417,7 +3417,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("EDGX Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3429,7 +3429,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("EDGX Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3441,7 +3441,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "EDGX Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3461,7 +3461,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "EDGX Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3481,7 +3481,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "EDGX Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3496,7 +3496,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "EDGX Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3511,7 +3511,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "EDGX Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3529,7 +3529,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "EDGX Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3547,7 +3547,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateNyseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -3563,7 +3563,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NYSE Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3576,7 +3576,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "NYSE Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3589,7 +3589,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NYSE Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3602,7 +3602,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("NYSE Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3614,7 +3614,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("NYSE Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3626,7 +3626,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NYSE Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3646,7 +3646,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NYSE Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3666,7 +3666,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NYSE Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3681,7 +3681,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NYSE Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3696,7 +3696,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NYSE Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3714,7 +3714,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NYSE Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -3732,7 +3732,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
   }
 
   void PopulateNyseOpenCloseOrders(
@@ -3750,7 +3750,7 @@ namespace {
     limitOnOpenBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnOpenBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnOpenBid.Build());
+    orderTypes.emplace_back(limitOnOpenBid.Make());
     CanvasNodeBuilder limitOnOpenAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NYSE Limit On Open Ask"));
     limitOnOpenAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3764,7 +3764,7 @@ namespace {
     limitOnOpenAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnOpenAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnOpenAsk.Build());
+    orderTypes.emplace_back(limitOnOpenAsk.Make());
     CanvasNodeBuilder marketOnOpenBid(*GetMarketBidOrderTaskNode()->Rename(
       "NYSE Market On Open Bid"));
     marketOnOpenBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3778,7 +3778,7 @@ namespace {
     marketOnOpenBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnOpenBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnOpenBid.Build());
+    orderTypes.emplace_back(marketOnOpenBid.Make());
     CanvasNodeBuilder marketOnOpenAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NYSE Market On Open Ask"));
     marketOnOpenAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3792,7 +3792,7 @@ namespace {
     marketOnOpenAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnOpenAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnOpenAsk.Build());
+    orderTypes.emplace_back(marketOnOpenAsk.Make());
     CanvasNodeBuilder limitOnCloseBid(*GetLimitBidOrderTaskNode()->Rename(
       "NYSE Limit On Close Bid"));
     limitOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3806,7 +3806,7 @@ namespace {
     limitOnCloseBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnCloseBid.Build());
+    orderTypes.emplace_back(limitOnCloseBid.Make());
     CanvasNodeBuilder limitOnCloseAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NYSE Limit On Close Ask"));
     limitOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3820,7 +3820,7 @@ namespace {
     limitOnCloseAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnCloseAsk.Build());
+    orderTypes.emplace_back(limitOnCloseAsk.Make());
     CanvasNodeBuilder marketOnCloseBid(*GetMarketBidOrderTaskNode()->Rename(
       "NYSE Market On Close Bid"));
     marketOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3836,7 +3836,7 @@ namespace {
     marketOnCloseBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnCloseBid.Build());
+    orderTypes.emplace_back(marketOnCloseBid.Make());
     CanvasNodeBuilder marketOnCloseAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NYSE Market On Close Ask"));
     marketOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3852,7 +3852,7 @@ namespace {
     marketOnCloseAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnCloseAsk.Build());
+    orderTypes.emplace_back(marketOnCloseAsk.Make());
   }
 
   void PopulateNasdaqOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -3868,7 +3868,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NASDAQ Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3881,7 +3881,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "NASDAQ Market Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3894,7 +3894,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NASDAQ Market Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
@@ -3907,7 +3907,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
     CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("NASDAQ Buy"));
     buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -3919,7 +3919,7 @@ namespace {
     buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(buy.Build());
+    orderTypes.emplace_back(buy.Make());
     CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename(
       "NASDAQ Sell"));
     sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
@@ -3932,7 +3932,7 @@ namespace {
     sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(sell.Build());
+    orderTypes.emplace_back(sell.Make());
     CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NASDAQ Primary Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3952,7 +3952,7 @@ namespace {
     primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegBid.Build());
+    orderTypes.emplace_back(primaryPegBid.Make());
     CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NASDAQ Primary Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("R"))->AddField("peg_difference", 211,
@@ -3972,7 +3972,7 @@ namespace {
     primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(primaryPegAsk.Build());
+    orderTypes.emplace_back(primaryPegAsk.Make());
     CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NASDAQ Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -3987,7 +3987,7 @@ namespace {
     midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
+    orderTypes.emplace_back(midPegBid.Make());
     CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NASDAQ Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
@@ -4002,7 +4002,7 @@ namespace {
     midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    orderTypes.emplace_back(midPegAsk.Make());
     CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NASDAQ Market Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -4020,7 +4020,7 @@ namespace {
     marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegBid.Build());
+    orderTypes.emplace_back(marketPegBid.Make());
     CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
       "NASDAQ Market Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("P"))->AddField("peg_difference", 211,
@@ -4038,7 +4038,7 @@ namespace {
     marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketPegAsk.Build());
+    orderTypes.emplace_back(marketPegAsk.Make());
     CanvasNodeBuilder limitOnOpenBid(*GetLimitBidOrderTaskNode()->Rename(
       "NASDAQ Limit On Open Bid"));
     limitOnOpenBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4052,7 +4052,7 @@ namespace {
     limitOnOpenBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnOpenBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnOpenBid.Build());
+    orderTypes.emplace_back(limitOnOpenBid.Make());
     CanvasNodeBuilder limitOnOpenAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NASDAQ Limit On Open Ask"));
     limitOnOpenAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4066,7 +4066,7 @@ namespace {
     limitOnOpenAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnOpenAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnOpenAsk.Build());
+    orderTypes.emplace_back(limitOnOpenAsk.Make());
     CanvasNodeBuilder marketOnOpenBid(*GetMarketBidOrderTaskNode()->Rename(
       "NASDAQ Market On Open Bid"));
     marketOnOpenBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4080,7 +4080,7 @@ namespace {
     marketOnOpenBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnOpenBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnOpenBid.Build());
+    orderTypes.emplace_back(marketOnOpenBid.Make());
     CanvasNodeBuilder marketOnOpenAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NASDAQ Market On Open Ask"));
     marketOnOpenAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4094,7 +4094,7 @@ namespace {
     marketOnOpenAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnOpenAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnOpenAsk.Build());
+    orderTypes.emplace_back(marketOnOpenAsk.Make());
     CanvasNodeBuilder limitOnCloseBid(*GetLimitBidOrderTaskNode()->Rename(
       "NASDAQ Limit On Close Bid"));
     limitOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4108,7 +4108,7 @@ namespace {
     limitOnCloseBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnCloseBid.Build());
+    orderTypes.emplace_back(limitOnCloseBid.Make());
     CanvasNodeBuilder limitOnCloseAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NASDAQ Limit On Close Ask"));
     limitOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4122,7 +4122,7 @@ namespace {
     limitOnCloseAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     limitOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitOnCloseAsk.Build());
+    orderTypes.emplace_back(limitOnCloseAsk.Make());
     CanvasNodeBuilder marketOnCloseBid(*GetMarketBidOrderTaskNode()->Rename(
       "NASDAQ Market On Close Bid"));
     marketOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4138,7 +4138,7 @@ namespace {
     marketOnCloseBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnCloseBid.Build());
+    orderTypes.emplace_back(marketOnCloseBid.Make());
     CanvasNodeBuilder marketOnCloseAsk(*GetMarketAskOrderTaskNode()->Rename(
       "NASDAQ Market On Close Ask"));
     marketOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4154,7 +4154,7 @@ namespace {
     marketOnCloseAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       true);
     marketOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketOnCloseAsk.Build());
+    orderTypes.emplace_back(marketOnCloseAsk.Make());
   }
 
   void PopulateOseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -4169,7 +4169,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "OSE Limit Ask"));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4181,7 +4181,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "OSE Market Bid"));
     marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4193,7 +4193,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "OSE Market Ask"));
     marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4205,7 +4205,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
   }
 
   void PopulateTseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
@@ -4220,7 +4220,7 @@ namespace {
     limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitBid.Build());
+    orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "TSE Limit Ask"));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4232,7 +4232,7 @@ namespace {
     limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(limitAsk.Build());
+    orderTypes.emplace_back(limitAsk.Make());
     CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
       "TSE Market Bid"));
     marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4244,7 +4244,7 @@ namespace {
     marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketBid.Build());
+    orderTypes.emplace_back(marketBid.Make());
     CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
       "TSE Market Ask"));
     marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -4256,7 +4256,7 @@ namespace {
     marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
     marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(marketAsk.Build());
+    orderTypes.emplace_back(marketAsk.Make());
   }
 
   std::unordered_map<MarketCode, vector<unique_ptr<const CanvasNode>>>

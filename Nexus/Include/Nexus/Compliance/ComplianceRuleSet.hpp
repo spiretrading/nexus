@@ -45,7 +45,7 @@ namespace Nexus::Compliance {
       using ServiceLocatorClient = Beam::GetTryDereferenceType<S>;
 
       /**
-       * Builds a ComplianceRule from a ComplianceRuleEntry.
+       * Returns a ComplianceRule from a ComplianceRuleEntry.
        * @param entry The ComplianceRuleEntry to build the rule from.
        * @return The ComplianceRule represented by the <i>entry</i>.
        */
@@ -56,7 +56,7 @@ namespace Nexus::Compliance {
        * Constructs a ComplianceRuleSet.
        * @param complianceClient Initializes the ComplianceClient.
        * @param serviceLocatorClient Initializes The ServiceLocatorClient.
-       * @param complianceRuleBuilder Builds compliance rules from a
+       * @param complianceRuleBuilder Constructs compliance rules from a
        *        ComplianceRuleEntry.
        */
       template<typename CF, typename SF>

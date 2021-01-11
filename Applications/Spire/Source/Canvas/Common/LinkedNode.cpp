@@ -67,5 +67,5 @@ unique_ptr<CanvasNode> Spire::Relink(const CanvasNode& root) {
       }
     }
   }
-  return builder.Build();
+  return builder.Make();
 }

@@ -33,7 +33,7 @@ namespace {
       UserProfile& userProfile) {
     auto& blotter = userProfile.GetBlotterSettings().GetConsolidatedBlotter(
       entry.m_account);
-    auto orderFields = OrderFields::BuildMarketOrder(
+    auto orderFields = OrderFields::MakeMarketOrder(
       blotter.GetExecutingAccount(),
       entry.m_inventory.m_position.m_key.m_index,
       entry.m_inventory.m_position.m_key.m_currency,
@@ -41,7 +41,7 @@ namespace {
       userProfile.GetDestinationDatabase().GetPreferredDestination(
       entry.m_inventory.m_position.m_key.m_index.GetMarket()).m_id,
       Abs(entry.m_inventory.m_position.m_quantity));
-    auto orderNode = BuildOrderTaskNodeFromOrderFields(orderFields,
+    auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);
     taskEntry.m_task->Execute();

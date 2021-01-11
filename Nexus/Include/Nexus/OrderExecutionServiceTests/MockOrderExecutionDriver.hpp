@@ -124,7 +124,7 @@ namespace Nexus::OrderExecutionService::Tests {
       if(pendingCancelIterator != executionReports.end()) {
         return;
       }
-      auto updatedReport = ExecutionReport::BuildUpdatedReport(
+      auto updatedReport = ExecutionReport::MakeUpdatedReport(
         executionReports.back(), OrderStatus::PENDING_CANCEL,
         boost::posix_time::microsec_clock::universal_time());
       order->Update(updatedReport);

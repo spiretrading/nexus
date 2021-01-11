@@ -114,7 +114,7 @@ namespace Nexus::RiskService {
 
       RiskServlet(const RiskServlet&) = delete;
       RiskServlet& operator =(const RiskServlet&) = delete;
-      void BuildController();
+      void MakeController();
       void Reset(const Beam::ServiceLocator::DirectoryEntry& account,
         const Region& region);
       Beam::ServiceLocator::DirectoryEntry LoadGroup(
@@ -161,7 +161,7 @@ namespace Nexus::RiskService {
           Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
             std::move(accounts)))) {
     try {
-      BuildController();
+      MakeController();
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;
@@ -222,7 +222,7 @@ namespace Nexus::RiskService {
 
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
-  void RiskServlet<C, A, M, O, R, T, D>::BuildController() {
+  void RiskServlet<C, A, M, O, R, T, D>::MakeController() {
     auto accounts = std::make_shared<Beam::Queue<
       Beam::ServiceLocator::DirectoryEntry>>();
     m_accountPublisher->Monitor(accounts);
@@ -244,7 +244,7 @@ namespace Nexus::RiskService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Region& region) {
     auto snapshot = m_dataStore->LoadInventorySnapshot(account);
-    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(snapshot,
+    auto [portfolio, sequence, excludedOrders] = MakePortfolio(snapshot,
       account, m_markets, *m_orderExecutionClient);
     auto reports = std::vector<OrderExecutionService::ExecutionReportEntry>();
     for(auto& order : excludedOrders) {
@@ -395,7 +395,7 @@ namespace Nexus::RiskService {
         }
       }
     }
-    BuildController();
+    MakeController();
   }
 
   template<typename C, typename A, typename M, typename O, typename R,

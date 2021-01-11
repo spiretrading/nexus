@@ -103,7 +103,7 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   if(m_security == Security()) {
     return;
   }
-  auto bboQuery = BuildCurrentQuery(security);
+  auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_slotHandler->GetSlot<BboQuote>(

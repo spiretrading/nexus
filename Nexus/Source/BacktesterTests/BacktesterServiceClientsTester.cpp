@@ -21,7 +21,7 @@ TEST_SUITE("BacktesterServiceClients") {
       ServiceClientsBox(std::in_place_type<TestServiceClients>,
         Ref(testEnvironment)));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
-    auto timer = serviceClients.BuildTimer(seconds(21));
+    auto timer = serviceClients.MakeTimer(seconds(21));
     REQUIRE(serviceClients.GetTimeClient().GetTime() == startTime);
     timer->Start();
     backtesterEnvironment.GetEventHandler().Add(

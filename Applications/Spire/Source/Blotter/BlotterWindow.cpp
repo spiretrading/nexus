@@ -52,7 +52,7 @@ BlotterModel& LinkBlotterAction::GetBlotterModel() {
 
 BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
     Ref<BlotterModel> model) {
-  return GetBlotterWindow(Ref(userProfile), Ref(model), nullptr, 0);
+  return GetBlotterWindow(Ref(userProfile), Ref(model), nullptr);
 }
 
 BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,

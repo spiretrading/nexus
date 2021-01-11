@@ -18,8 +18,8 @@ namespace {
     return Security("TST", DefaultMarkets::HKEX(), DefaultCountries::HK());
   }
 
-  auto BuildOrderFields(Money price) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Money price) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       GetTestSecurity(), DefaultCurrencies::HKD(), Side::BID,
       DefaultDestinations::HKEX(), 100, price);
   }

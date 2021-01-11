@@ -95,7 +95,7 @@ namespace Nexus {
 
       TimeClient& GetTimeClient();
 
-      std::unique_ptr<Timer> BuildTimer(
+      std::unique_ptr<Timer> MakeTimer(
         boost::posix_time::time_duration expiry);
 
       void Close();
@@ -181,9 +181,9 @@ namespace Python {
         pybind11::return_value_policy::reference_internal).
       def("get_time_client", &Clients::GetTimeClient,
         pybind11::return_value_policy::reference_internal).
-      def("build_timer",
+      def("make_timer",
         [] (Clients& serviceClients, boost::posix_time::time_duration expiry) {
-          return std::shared_ptr(serviceClients.BuildTimer(expiry));
+          return std::shared_ptr(serviceClients.MakeTimer(expiry));
         }).
       def("close", &Clients::Close);
     if constexpr(!std::is_same_v<Clients, ServiceClientsBox>) {
@@ -334,12 +334,12 @@ namespace Python {
 
   template<typename C>
   std::unique_ptr<typename ToPythonServiceClients<C>::Timer>
-      ToPythonServiceClients<C>::BuildTimer(
+      ToPythonServiceClients<C>::MakeTimer(
       boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
     return std::make_unique<Timer>(std::in_place_type<
       Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>>,
-      Beam::Threading::TimerBox(m_clients->BuildTimer(expiry)));
+      Beam::Threading::TimerBox(m_clients->MakeTimer(expiry)));
   }
 
   template<typename C>

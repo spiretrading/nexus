@@ -293,7 +293,7 @@ namespace Details {
     if(!bboQuote) {
       orderEntry->m_order->With([&] (auto status, auto& executionReports) {
         auto newReport =
-          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+          OrderExecutionService::ExecutionReport::MakeUpdatedReport(
             executionReports.back(), OrderStatus::REJECTED,
             m_timeClient->GetTime());
         orderEntry->m_order->Update(newReport);
@@ -349,7 +349,7 @@ namespace Details {
       orderEntry->m_order->With([&] (auto status, auto& executionReports) {
         orderEntry->m_isPendingNew = false;
         auto newReport =
-          OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+          OrderExecutionService::ExecutionReport::MakeUpdatedReport(
             executionReports.back(), OrderStatus::NEW, m_timeClient->GetTime());
         orderEntry->m_order->Update(newReport);
         auto sequence = newReport.m_sequence;
@@ -465,7 +465,7 @@ namespace Details {
     } else {
       passiveMatchReport.m_status = OrderStatus::PARTIALLY_FILLED;
     }
-    m_matchReportBuilder->Build(passiveOrderEntry->m_order->GetInfo().m_fields,
+    m_matchReportBuilder->Make(passiveOrderEntry->m_order->GetInfo().m_fields,
       activeOrderEntry->m_order->GetInfo().m_fields,
       Beam::Store(passiveMatchReport), Beam::Store(activeMatchReport));
     passiveOrderEntry->m_order->With([&] (auto status, auto& executionReports) {

@@ -31,7 +31,7 @@ namespace Spire {
       /*!
         \param columnNames The list of column names.
         \param rowIndices The list of row indices.
-        \param rowBuilder Builds the rows of the DashboardModel.
+        \param rowBuilder Constructs the rows of the DashboardModel.
       */
       DashboardModelSchema(std::vector<std::string> columnNames,
         std::vector<DashboardCell::Value> rowIndices,
@@ -41,7 +41,7 @@ namespace Spire {
       //! DashboardRowBuilder.
       /*!
         \param model The model to represent.
-        \param rowBuilder Builds the rows of the DashboardModel.
+        \param rowBuilder Constructs the rows of the DashboardModel.
       */
       DashboardModelSchema(const DashboardModel& model,
         const DashboardRowBuilder& rowBuilder);
@@ -70,11 +70,11 @@ namespace Spire {
       //! Returns the DashboardRowBuilder.
       const DashboardRowBuilder& GetRowBuilder() const;
 
-      //! Builds a new DashboardModel represented by this schema.
+      //! Constructs a new DashboardModel represented by this schema.
       /*!
         \param userProfile The user's profile.
       */
-      std::unique_ptr<DashboardModel> Build(
+      std::unique_ptr<DashboardModel> Make(
         Beam::Ref<UserProfile> userProfile) const;
 
     private:

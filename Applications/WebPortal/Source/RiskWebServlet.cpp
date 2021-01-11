@@ -45,7 +45,7 @@ RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
     : m_sessions(sessions.Get()),
       m_serviceClients(std::move(serviceClients)),
       m_portfolioModel(m_serviceClients),
-      m_portfolioTimer(m_serviceClients.BuildTimer(seconds(1))) {
+      m_portfolioTimer(m_serviceClients.MakeTimer(seconds(1))) {
   try {
     m_portfolioTimer.GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
       std::bind(&RiskWebServlet::OnPortfolioTimerExpired, this,

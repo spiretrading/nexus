@@ -31,7 +31,7 @@ namespace Spire {
       */
       ValueListInputDialog(Beam::Ref<UserProfile> userProfile,
         const std::type_info& type, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a ValueListInputDialog.
       /*!
@@ -43,7 +43,7 @@ namespace Spire {
       */
       ValueListInputDialog(Beam::Ref<UserProfile> userProfile,
         const std::type_info& type, const std::vector<Value>& values,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ValueListInputDialog();
 

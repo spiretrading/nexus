@@ -13,8 +13,8 @@ using namespace std;
 TimeAndSaleQueryNode::TimeAndSaleQueryNode() {
   SetText("Time and Sale Query");
   SetType(GetTimeAndSaleRecordType());
-  AddChild("security", BuildDefaultCanvasNode(SecurityType::GetInstance()));
-  AddChild("range", BuildDefaultCanvasNode(TimeRangeType::GetInstance()));
+  AddChild("security", MakeDefaultCanvasNode(SecurityType::GetInstance()));
+  AddChild("range", MakeDefaultCanvasNode(TimeRangeType::GetInstance()));
 }
 
 void TimeAndSaleQueryNode::Apply(CanvasNodeVisitor& visitor) const {

@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  vector<FilterNode::Signature> BuildFilterSignatures() {
+  vector<FilterNode::Signature> MakeFilterSignatures() {
     vector<FilterNode::Signature> signatures;
     for(const auto& valueType :
         UnionType::GetAnyValueType().GetCompatibleTypes()) {
@@ -48,7 +48,7 @@ unique_ptr<CanvasNode> FilterNode::Clone() const {
 }
 
 const vector<FilterNode::Signature>& FilterNode::GetSignatures() const {
-  static vector<FilterNode::Signature> signatures = BuildFilterSignatures();
+  static vector<FilterNode::Signature> signatures = MakeFilterSignatures();
   return signatures;
 }
 

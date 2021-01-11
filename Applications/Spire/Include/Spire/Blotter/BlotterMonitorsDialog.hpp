@@ -27,7 +27,7 @@ namespace Spire {
       BlotterMonitorsDialog(Beam::Ref<UserProfile> userProfile,
         const BlotterTaskProperties& properties,
         Beam::Ref<BlotterModel> model, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~BlotterMonitorsDialog();
 

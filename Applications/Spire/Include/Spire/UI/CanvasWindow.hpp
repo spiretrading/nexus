@@ -32,7 +32,7 @@ namespace UI {
         \param flags Qt flags passed to the parent widget.
       */
       CanvasWindow(Beam::Ref<UserProfile> userProfile,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Returns the CanvasNodeModel being displayed.
       const CanvasNodeModel& GetCanvasNodeModel() const;

@@ -7,7 +7,7 @@ using namespace Nexus;
 using namespace Nexus::Tests;
 
 namespace {
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = XatsFeeTable();
     PopulateFeeTable(Store(feeTable.m_generalFeeTable));
     PopulateFeeTable(Store(feeTable.m_etfFeeTable));
@@ -19,7 +19,7 @@ namespace {
 
 TEST_SUITE("XatsFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_generalFeeTable, LookupGeneralFee,
       XatsFeeTable::TYPE_COUNT, XatsFeeTable::PRICE_CLASS_COUNT);
     TestFeeTableIndex(feeTable, feeTable.m_etfFeeTable, LookupEtfFee,
@@ -27,7 +27,7 @@ TEST_SUITE("XatsFeeHandling") {
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = Money::ZERO;
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1, false,

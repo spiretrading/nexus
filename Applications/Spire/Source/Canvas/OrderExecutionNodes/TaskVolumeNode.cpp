@@ -15,7 +15,7 @@ using namespace Beam;
 using namespace Spire;
 using namespace std;
 
-unique_ptr<CanvasNode> Spire::BuildTaskVolumeNode() {
+unique_ptr<CanvasNode> Spire::MakeTaskVolumeNode() {
   auto taskReference = make_unique<ReferenceNode>("<<<<task",
     OrderReferenceType::GetInstance());
   unique_ptr<CanvasNode> executionReportMonitor =

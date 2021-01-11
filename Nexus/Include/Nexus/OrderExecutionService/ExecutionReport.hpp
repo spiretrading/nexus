@@ -59,21 +59,21 @@ namespace Nexus::OrderExecutionService {
     ExecutionReport();
 
     /**
-     * Builds an initial ExecutionReport for an Order in a PENDING_NEW status.
+     * Returns an initial ExecutionReport for an Order in a PENDING_NEW status.
      * @param id The id of the Order this ExecutionReport belongs to.
      * @param timestamp The timestamp.
      */
-    static ExecutionReport BuildInitialReport(OrderId id,
+    static ExecutionReport MakeInitialReport(OrderId id,
       boost::posix_time::ptime timestamp);
 
     /**
-     * Builds a new ExecutionReport updating the OrderStatus of a previous
+     * Returns an ExecutionReport updating the OrderStatus of a previous
      * ExecutionReport.
      * @param report The ExecutionReport to update.
      * @param status The new OrderStatus.
      * @param timestamp The timestamp.
      */
-    static ExecutionReport BuildUpdatedReport(const ExecutionReport& report,
+    static ExecutionReport MakeUpdatedReport(const ExecutionReport& report,
       OrderStatus status, boost::posix_time::ptime timestamp);
   };
 
@@ -141,7 +141,7 @@ namespace Nexus::OrderExecutionService {
     : m_id(0),
       m_lastQuantity(0) {}
 
-  inline ExecutionReport ExecutionReport::BuildInitialReport(OrderId id,
+  inline ExecutionReport ExecutionReport::MakeInitialReport(OrderId id,
       boost::posix_time::ptime timestamp) {
     auto report = ExecutionReport();
     report.m_id = id;
@@ -156,7 +156,7 @@ namespace Nexus::OrderExecutionService {
     return report;
   }
 
-  inline ExecutionReport ExecutionReport::BuildUpdatedReport(
+  inline ExecutionReport ExecutionReport::MakeUpdatedReport(
       const ExecutionReport& report, OrderStatus status,
       boost::posix_time::ptime timestamp) {
     auto updatedReport = ExecutionReport();

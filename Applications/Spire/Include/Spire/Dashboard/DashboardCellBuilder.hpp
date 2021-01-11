@@ -10,19 +10,19 @@
 namespace Spire {
 
   /*! \class DashboardCellBuilder
-      \brief Builds a DashboardCell.
+      \brief Constructs a DashboardCell.
    */
   class DashboardCellBuilder {
     public:
       virtual ~DashboardCellBuilder() = default;
 
-      //! Builds a DashboardCell.
+      //! Returns a DashboardCell.
       /*!
         \param index The index of the row this cell belongs to.
         \param userProfile The user's profile.
         \return The DashboardCell represented by this builder.
       */
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const = 0;
 

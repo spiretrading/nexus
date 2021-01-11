@@ -10,7 +10,7 @@
 namespace Nexus::MarketDataService {
 
   /**
-   * Builds a reactor that queries BboQuotes.
+   * Returns a reactor that queries BboQuotes.
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
@@ -25,7 +25,7 @@ namespace Nexus::MarketDataService {
   }
 
   /**
-   * Builds a reactor that queries the current BboQuote.
+   * Returns a reactor that queries the current BboQuote.
    * @param client The market data client to query.
    * @param security The security whose current BboQuotes are to be queried.
    */
@@ -33,12 +33,12 @@ namespace Nexus::MarketDataService {
   auto CurrentBboQuoteReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return BboQuoteReactor(std::forward<MarketDataClient>(client), Aspen::lift(
-      &Beam::Queries::BuildCurrentQuery<Security>,
+      &Beam::Queries::MakeCurrentQuery<Security>,
       std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries for real time BboQuotes.
+   * Returns a reactor that queries for real time BboQuotes.
    * @param client The market data client to query.
    * @param security The security whose real time BboQuotes are to be queried.
    */
@@ -46,12 +46,12 @@ namespace Nexus::MarketDataService {
   auto RealTimeBboQuoteReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return BboQuoteReactor(std::forward<MarketDataClient>(client), Aspen::lift(
-      &Beam::Queries::BuildRealTimeQuery<Security>,
+      &Beam::Queries::MakeRealTimeQuery<Security>,
       std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries BookQuotes.
+   * Returns a reactor that queries BookQuotes.
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
@@ -66,7 +66,7 @@ namespace Nexus::MarketDataService {
   }
 
   /**
-   * Builds a reactor that queries the current BookQuote.
+   * Returns a reactor that queries the current BookQuote.
    * @param client The market data client to query.
    * @param security The security whose current BookQuotes are to be queried.
    */
@@ -74,12 +74,12 @@ namespace Nexus::MarketDataService {
   auto CurrentBookQuoteReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return BookQuoteReactor(std::forward<MarketDataClient>(client), Aspen::lift(
-      &Beam::Queries::BuildCurrentQuery<Security>,
+      &Beam::Queries::MakeCurrentQuery<Security>,
       std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries for real time BookQuotes.
+   * Returns a reactor that queries for real time BookQuotes.
    * @param client The market data client to query.
    * @param security The security whose real time BookQuotes are to be queried.
    */
@@ -87,12 +87,12 @@ namespace Nexus::MarketDataService {
   auto RealTimeBookQuoteReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return BookQuoteReactor(std::forward<MarketDataClient>(client), Aspen::lift(
-      &Beam::Queries::BuildRealTimeQuery<Security>,
+      &Beam::Queries::MakeRealTimeQuery<Security>,
       std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries MarketQuotes.
+   * Returns a reactor that queries MarketQuotes.
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
@@ -107,7 +107,7 @@ namespace Nexus::MarketDataService {
   }
 
   /**
-   * Builds a reactor that queries the current MarketQuote.
+   * Returns a reactor that queries the current MarketQuote.
    * @param client The market data client to query.
    * @param security The security whose current MarketQuotes are to be queried.
    */
@@ -115,12 +115,12 @@ namespace Nexus::MarketDataService {
   auto CurrentMarketQuoteReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return MarketQuoteReactor(std::forward<MarketDataClient>(client),
-      Aspen::lift(&Beam::Queries::BuildCurrentQuery<Security>,
+      Aspen::lift(&Beam::Queries::MakeCurrentQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries for real time MarketQuotes.
+   * Returns a reactor that queries for real time MarketQuotes.
    * @param client The market data client to query.
    * @param security The security whose real time MarketQuotes are to be
    *        queried.
@@ -129,12 +129,12 @@ namespace Nexus::MarketDataService {
   auto RealTimeMarketQuoteReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return MarketQuoteReactor(std::forward<MarketDataClient>(client),
-      Aspen::lift(&Beam::Queries::BuildRealTimeQuery<Security>,
+      Aspen::lift(&Beam::Queries::MakeRealTimeQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries TimeAndSales.
+   * Returns a reactor that queries TimeAndSales.
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
@@ -149,7 +149,7 @@ namespace Nexus::MarketDataService {
   }
 
   /**
-   * Builds a reactor that queries the current TimeAndSales.
+   * Returns a reactor that queries the current TimeAndSales.
    * @param client The market data client to query.
    * @param security The security whose current TimeAndSales are to be queried.
    */
@@ -157,12 +157,12 @@ namespace Nexus::MarketDataService {
   auto CurrentTimeAndSalesReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return TimeAndSalesReactor(std::forward<MarketDataClient>(client),
-      Aspen::lift(&Beam::Queries::BuildCurrentQuery<Security>,
+      Aspen::lift(&Beam::Queries::MakeCurrentQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
 
   /**
-   * Builds a reactor that queries for real time TimeAndSales.
+   * Returns a reactor that queries for real time TimeAndSales.
    * @param client The market data client to query.
    * @param security The security whose real time TimeAndSales are to be
    *        queried.
@@ -171,7 +171,7 @@ namespace Nexus::MarketDataService {
   auto RealTimeTimeAndSalesReactor(MarketDataClient&& client,
       SecurityReactor&& security) {
     return TimeAndSalesReactor(std::forward<MarketDataClient>(client),
-      Aspen::lift(&Beam::Queries::BuildRealTimeQuery<Security>,
+      Aspen::lift(&Beam::Queries::MakeRealTimeQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
 }

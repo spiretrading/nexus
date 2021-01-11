@@ -46,7 +46,8 @@ namespace Spire {
       CatalogTabView(Beam::Ref<CatalogTabModel> model,
         Beam::Ref<CatalogSearchBarModel> searchBarModel,
         const Filter& filter, Beam::Ref<UserProfile> userProfile,
-        bool saving, QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        bool saving, QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Returns the model being displayed.
       CatalogTabModel& GetModel();

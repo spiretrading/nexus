@@ -58,7 +58,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       CatalogWindow(Beam::Ref<UserProfile> userProfile,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a CatalogWindow for the purpose of saving a CanvasNode.
       /*!
@@ -70,7 +70,7 @@ namespace Spire {
       */
       CatalogWindow(Beam::Ref<UserProfile> userProfile,
         const CanvasNode& node, bool saveToRegistry, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a CatalogWindow for the purpose of loading CatalogEntries.
       /*!
@@ -81,7 +81,7 @@ namespace Spire {
       */
       CatalogWindow(Beam::Ref<UserProfile> userProfile,
         const Filter& filter, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a CatalogWindow for the purpose of saving a CanvasNode.
       /*!
@@ -94,7 +94,7 @@ namespace Spire {
       */
       CatalogWindow(Beam::Ref<UserProfile> userProfile,
         const Filter& filter, const CanvasNode& node, bool saveToRegistry,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~CatalogWindow();
 

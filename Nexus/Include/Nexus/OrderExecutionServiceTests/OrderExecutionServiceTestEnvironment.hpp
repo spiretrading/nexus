@@ -74,7 +74,7 @@ namespace Nexus::OrderExecutionService::Tests {
       VirtualOrderExecutionDriver& GetDriver();
 
       /**
-       * Builds a new OrderExecutionClient.
+       * Returns a new OrderExecutionClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the OrderExecutionClient.
        */

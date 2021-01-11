@@ -15,12 +15,12 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFieldsA = OrderFields::BuildLimitOrder(
+    auto bidFieldsA = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFieldsA, bidFieldsA.m_price);
     REQUIRE(buyingPower == 100 * Money::ONE);
-    auto bidFieldsB = OrderFields::BuildLimitOrder(
+    auto bidFieldsB = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 200, Money::ONE);
     buyingPower = model.Submit(1, bidFieldsB, 2 * Money::ONE);
@@ -31,12 +31,12 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
     REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::BuildLimitOrder(
+    auto askFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::ASK, "", 50, Money::ONE);
     buyingPower = model.Submit(1, askFields, askFields.m_price);
@@ -47,12 +47,12 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
     REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::BuildLimitOrder(
+    auto askFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::ASK, "", 200, Money::ONE);
     buyingPower = model.Submit(1, askFields, askFields.m_price);
@@ -63,7 +63,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -80,7 +80,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -99,7 +99,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -124,7 +124,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -137,7 +137,7 @@ TEST_SUITE("BuyingPowerModel") {
     model.Update(bidFillReport);
     buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
     REQUIRE(buyingPower == 100 * 50 * Money::CENT);
-    auto askFields = OrderFields::BuildLimitOrder(
+    auto askFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::ASK, "", 100, 2 * Money::ONE);
     buyingPower = model.Submit(1, askFields, askFields.m_price);
@@ -156,7 +156,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -169,7 +169,7 @@ TEST_SUITE("BuyingPowerModel") {
     model.Update(bidFillReport);
     buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
     REQUIRE(buyingPower == 100 * 50 * Money::CENT);
-    auto askFields = OrderFields::BuildLimitOrder(
+    auto askFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::ASK, "", 50, 2 * Money::ONE);
     buyingPower = model.Submit(1, askFields, askFields.m_price);
@@ -188,7 +188,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -201,7 +201,7 @@ TEST_SUITE("BuyingPowerModel") {
     model.Update(bidFillReport);
     buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
     REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::BuildLimitOrder(
+    auto askFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::ASK, "", 50, 2 * Money::ONE);
     buyingPower = model.Submit(1, askFields, askFields.m_price);
@@ -220,7 +220,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto model = BuyingPowerModel();
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
-    auto bidFields = OrderFields::BuildLimitOrder(
+    auto bidFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "", 100, Money::ONE);
     auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -233,7 +233,7 @@ TEST_SUITE("BuyingPowerModel") {
     model.Update(bidFillReport);
     buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
     REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::BuildLimitOrder(
+    auto askFields = OrderFields::MakeLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::ASK, "", 50, 2 * Money::ONE);
     buyingPower = model.Submit(1, askFields, askFields.m_price);
@@ -253,7 +253,7 @@ TEST_SUITE("BuyingPowerModel") {
     auto security = Security("A", DefaultMarkets::NASDAQ(),
       DefaultCountries::US());
     {
-      auto bidFields = OrderFields::BuildLimitOrder(
+      auto bidFields = OrderFields::MakeLimitOrder(
         DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
         Side::BID, "", 100, Money::ONE);
       auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
@@ -268,14 +268,14 @@ TEST_SUITE("BuyingPowerModel") {
       REQUIRE(buyingPower == (50 * Money::ONE));
     }
     {
-      auto askFields = OrderFields::BuildLimitOrder(
+      auto askFields = OrderFields::MakeLimitOrder(
         DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
         Side::ASK, "", 100, 2 * Money::ONE);
       auto buyingPower = model.Submit(1, askFields, askFields.m_price);
       REQUIRE(buyingPower == 50 * Money::ONE);
     }
     {
-      auto askFields = OrderFields::BuildLimitOrder(
+      auto askFields = OrderFields::MakeLimitOrder(
         DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
         Side::ASK, "", 100, 2 * Money::ONE);
       auto buyingPower = model.Submit(1, askFields, askFields.m_price);

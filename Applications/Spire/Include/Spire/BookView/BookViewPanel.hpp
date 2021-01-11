@@ -28,7 +28,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags The flags passed to the <i>parent</i> widget.
       */
-      BookViewPanel(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      BookViewPanel(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~BookViewPanel();
 

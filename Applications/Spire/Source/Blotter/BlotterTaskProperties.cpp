@@ -11,8 +11,8 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  unique_ptr<CanvasNode> BuildVolumeNode() {
-    auto volumeNode = BuildTaskVolumeNode();
+  unique_ptr<CanvasNode> MakeVolumeNode() {
+    auto volumeNode = MakeTaskVolumeNode();
     volumeNode = volumeNode->Replace(volumeNode->GetChildren().back(),
       make_unique<ReferenceNode>("<<target",
       OrderReferenceType::GetInstance()));
@@ -44,7 +44,7 @@ BlotterTaskProperties BlotterTaskProperties::GetDefault() {
   properties.Add(BlotterTaskMonitor("Quantity", *quantityMonitor));
   unique_ptr<CanvasNode> volumeMonitor = make_unique<BlotterTaskMonitorNode>();
   volumeMonitor = volumeMonitor->Replace(volumeMonitor->GetChildren().front(),
-    BuildVolumeNode());
+    MakeVolumeNode());
   properties.Add(BlotterTaskMonitor("Volume", *volumeMonitor));
   return properties;
 }

@@ -12,6 +12,6 @@ export abstract class LoginModel {
    * @return The directory entry of the account that logged in.
    * @throws ServiceError - The login service request failed.
    */
-  public abstract async login(username: string, password: string):
+  public abstract login(username: string, password: string):
     Promise<Beam.DirectoryEntry>;
 }

@@ -10,7 +10,7 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = MatnFeeTable();
     PopulateFeeTable(Store(feeTable.m_generalFeeTable));
     PopulateFeeTable(Store(feeTable.m_alternativeFeeTable));
@@ -34,7 +34,7 @@ namespace {
 
 TEST_SUITE("MatnFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_generalFeeTable, LookupGeneralFee,
       MatnFeeTable::GENERAL_INDEX_COUNT, MatnFeeTable::PRICE_CLASS_COUNT);
     TestFeeTableIndex(feeTable, feeTable.m_alternativeFeeTable,
@@ -43,7 +43,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1,
       MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
@@ -51,7 +51,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("active_default_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, 5 * Money::ONE, 100,
@@ -68,7 +68,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("passive_default_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, 5 * Money::ONE, 100,
@@ -85,7 +85,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("active_dollar_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -102,7 +102,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("passive_dollar_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -119,7 +119,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("active_subdollar_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100, LiquidityFlag::ACTIVE,
@@ -136,7 +136,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("passive_subdollar_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -153,7 +153,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("active_etf_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       MatnFeeTable::Category::ETF);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -162,7 +162,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("passive_etf_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       MatnFeeTable::Category::ETF);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -171,7 +171,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("active_odd_lot_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
@@ -181,7 +181,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("passive_odd_lot_trade") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
@@ -191,7 +191,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("active_odd_lot_etf") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
@@ -200,7 +200,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("passive_odd_lot_etf") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
@@ -209,9 +209,9 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
@@ -223,7 +223,7 @@ TEST_SUITE("MatnFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -236,7 +236,7 @@ TEST_SUITE("MatnFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -250,7 +250,7 @@ TEST_SUITE("MatnFeeHandling") {
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
       MatnFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, 5 * Money::ONE, 100,

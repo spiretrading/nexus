@@ -6,8 +6,8 @@
 namespace Spire {
 
   /*! \class ChangeDashboardCellBuilder
-      \brief Builds a DashboardCell emitting the change in a Security's price
-             from it's previous day's closing price.
+      \brief Constructs a DashboardCell emitting the change in a Security's
+             price from it's previous day's closing price.
    */
   class ChangeDashboardCellBuilder : public DashboardCellBuilder {
     public:
@@ -15,7 +15,7 @@ namespace Spire {
       //! Constructs a ChangeDashboardCellBuilder.
       ChangeDashboardCellBuilder() = default;
 
-      virtual std::unique_ptr<DashboardCell> Build(
+      virtual std::unique_ptr<DashboardCell> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const;
 

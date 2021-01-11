@@ -98,7 +98,7 @@ namespace Nexus::OrderExecutionService {
       for(auto i = m_checks.begin(); i != submissionIterator; ++i) {
         (*i)->Reject(orderInfo);
       }
-      auto order = BuildRejectedOrder(orderInfo, e.what());
+      auto order = MakeRejectedOrder(orderInfo, e.what());
       auto result = order.get();
       Beam::Threading::With(m_orders, [&] (auto& orders) {
         orders.emplace_back(std::move(order));

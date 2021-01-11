@@ -117,12 +117,12 @@ namespace Nexus::Accounting {
         securityIterator == m_securities.end()) {
       auto snapshot = std::make_shared<Beam::StateQueue<BboQuote>>();
       m_marketDataClient->QueryBboQuotes(
-        Beam::Queries::BuildLatestQuery(security), snapshot);
+        Beam::Queries::MakeLatestQuery(security), snapshot);
       try {
         OnBbo(security, snapshot->Pop());
       } catch(const std::exception&) {
       }
-      m_marketDataClient->QueryBboQuotes(Beam::Queries::BuildRealTimeQuery(
+      m_marketDataClient->QueryBboQuotes(Beam::Queries::MakeRealTimeQuery(
         security), m_tasks.GetSlot<BboQuote>(std::bind(
           &PortfolioController::OnBbo, this, security, std::placeholders::_1)));
       m_securities.insert(security);

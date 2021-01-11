@@ -241,7 +241,7 @@ namespace Nexus::OrderExecutionService {
       auto client = m_clientHandler.GetClient();
       m_realTimeSubscriptions.TestAndSet(fields.m_account, [&] {
         client->template SendRequest<QueryOrderSubmissionsService>(
-          Beam::Queries::BuildRealTimeQuery(fields.m_account));
+          Beam::Queries::MakeRealTimeQuery(fields.m_account));
       });
       auto orderInfo = client->template SendRequest<NewOrderSingleService>(
         fields);
@@ -315,7 +315,7 @@ namespace Nexus::OrderExecutionService {
     m_realTimeSubscriptions.With([&] (const auto& subscriptions) {
       for(auto& subscription : subscriptions) {
         client->template SendRequest<QueryOrderSubmissionsService>(
-          Beam::Queries::BuildRealTimeQuery(subscription));
+          Beam::Queries::MakeRealTimeQuery(subscription));
       }
     });
     m_orderSubmissionPublisher.Recover(*client);

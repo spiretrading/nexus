@@ -9,7 +9,7 @@ using namespace std;
 
 LesserOrEqualsNode::LesserOrEqualsNode() {
   DefineFunction("Lesser/Equals", { "left", "right" },
-    BuildSignatures<ComparisonSignatures>());
+    MakeSignatures<ComparisonSignatures>());
 }
 
 void LesserOrEqualsNode::Apply(CanvasNodeVisitor& visitor) const {

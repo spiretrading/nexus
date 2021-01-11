@@ -28,7 +28,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  std::shared_ptr<UnionType> BuildAnyType() {
+  std::shared_ptr<UnionType> MakeAnyType() {
     vector<std::shared_ptr<NativeType>> types;
     types.push_back(BooleanType::GetInstance());
     types.push_back(CurrencyType::GetInstance());
@@ -53,7 +53,7 @@ namespace {
       MakeDereferenceView(types), "Any"));
   }
 
-  std::shared_ptr<UnionType> BuildAnyValueType() {
+  std::shared_ptr<UnionType> MakeAnyValueType() {
     vector<std::shared_ptr<NativeType>> types;
     types.push_back(BooleanType::GetInstance());
     types.push_back(CurrencyType::GetInstance());
@@ -85,12 +85,12 @@ const UnionType& UnionType::GetEmptyType() {
 }
 
 const UnionType& UnionType::GetAnyType() {
-  static auto type = BuildAnyType();
+  static auto type = MakeAnyType();
   return *type;
 }
 
 const UnionType& UnionType::GetAnyValueType() {
-  static auto type = BuildAnyValueType();
+  static auto type = MakeAnyValueType();
   return *type;
 }
 

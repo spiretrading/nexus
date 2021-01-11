@@ -7,7 +7,7 @@ using namespace Spire;
 using namespace std;
 
 AbsNode::AbsNode() {
-  DefineFunction("Abs", { "value" }, BuildSignatures<AbsNodeSignatures>());
+  DefineFunction("Abs", { "value" }, MakeSignatures<AbsNodeSignatures>());
 }
 
 void AbsNode::Apply(CanvasNodeVisitor& visitor) const {

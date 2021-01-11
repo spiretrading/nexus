@@ -30,7 +30,7 @@ TEST_SUITE("BookkeeperReactor") {
         commits.Push(true);
       });
     Trigger::set_trigger(trigger);
-    auto order = PrimitiveOrder(OrderInfo(OrderFields::BuildLimitOrder(
+    auto order = PrimitiveOrder(OrderInfo(OrderFields::MakeLimitOrder(
       TST_SECURITY, DefaultCurrencies::USD(), Side::BID, "NYSE", 1000,
       Money::ONE), 10, ptime(date(2019, 10, 3))));
     SetOrderStatus(order, OrderStatus::NEW, ptime(date(2019, 10, 3)));

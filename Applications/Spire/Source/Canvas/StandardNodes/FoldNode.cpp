@@ -9,7 +9,7 @@ using namespace std;
 
 FoldNode::FoldNode() {
   DefineFunction("Fold", { "combiner", "source" },
-    BuildSignatures<FoldSignatures>());
+    MakeSignatures<FoldSignatures>());
 }
 
 boost::optional<const CanvasNode&> FoldNode::FindLeftOperand() const {

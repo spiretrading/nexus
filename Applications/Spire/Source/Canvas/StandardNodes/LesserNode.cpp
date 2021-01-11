@@ -9,7 +9,7 @@ using namespace std;
 
 LesserNode::LesserNode() {
   DefineFunction("Lesser", { "left", "right" },
-    BuildSignatures<ComparisonSignatures>());
+    MakeSignatures<ComparisonSignatures>());
 }
 
 void LesserNode::Apply(CanvasNodeVisitor& visitor) const {

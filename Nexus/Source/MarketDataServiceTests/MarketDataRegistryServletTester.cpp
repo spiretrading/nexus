@@ -43,7 +43,7 @@ namespace {
 
     Fixture()
         : m_administrationEnvironment(
-            m_serviceLocatorEnvironment.MakeClient(), BuildEntitlements()) {
+            m_serviceLocatorEnvironment.MakeClient(), MakeEntitlements()) {
       auto servletServiceLocatorClient =
         m_serviceLocatorEnvironment.MakeClient();
       m_registryServlet.emplace(m_administrationEnvironment.MakeClient(
@@ -64,7 +64,7 @@ namespace {
       authenticator(*m_protocolClient);
     }
 
-    EntitlementDatabase BuildEntitlements() {
+    EntitlementDatabase MakeEntitlements() {
       auto servletAccount = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
         "servlet", "", DirectoryEntry::GetStarDirectory());
       auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(

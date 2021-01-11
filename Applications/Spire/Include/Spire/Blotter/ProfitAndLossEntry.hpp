@@ -23,7 +23,7 @@ namespace Spire {
       */
       ProfitAndLossEntry(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<ProfitAndLossEntryModel> model,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ProfitAndLossEntry();
 

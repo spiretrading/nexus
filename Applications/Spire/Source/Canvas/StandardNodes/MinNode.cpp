@@ -8,7 +8,7 @@ using namespace Spire;
 using namespace std;
 
 MinNode::MinNode() {
-  DefineFunction("Min", { "a", "b" }, BuildSignatures<ExtremaNodeSignatures>());
+  DefineFunction("Min", { "a", "b" }, MakeSignatures<ExtremaNodeSignatures>());
 }
 
 void MinNode::Apply(CanvasNodeVisitor& visitor) const {

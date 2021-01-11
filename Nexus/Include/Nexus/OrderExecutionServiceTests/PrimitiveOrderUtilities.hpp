@@ -26,7 +26,7 @@ namespace Nexus::OrderExecutionService::Tests {
     while(auto report = monitor->TryPop()) {
       lastReport = std::move(*report);
     }
-    auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+    auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
       OrderStatus::CANCELED, timestamp);
     order.Update(updatedReport);
   }
@@ -50,7 +50,7 @@ namespace Nexus::OrderExecutionService::Tests {
     order.With(
       [&] (auto status, auto& reports) {
         auto& lastReport = reports.back();
-        auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+        auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
           newStatus, timestamp);
         order.Update(updatedReport);
       });
@@ -129,7 +129,7 @@ namespace Nexus::OrderExecutionService::Tests {
               return OrderStatus::PARTIALLY_FILLED;
             }
           }();
-        auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+        auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
           newStatus, timestamp);
         updatedReport.m_lastPrice = price;
         updatedReport.m_lastQuantity = quantity;

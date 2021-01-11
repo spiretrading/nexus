@@ -250,7 +250,7 @@ const CanvasNode& CanvasTableWidget::Add(const Coordinate& coordinate,
     builder.SetMetaData(metaDataNode, GetIdentityKey(), ToMetaData(identity));
     ++metaDataIterator;
   }
-  auto managedNode = builder.Build();
+  auto managedNode = builder.Make();
   auto unmanagedNode = managedNode.release();
   InternalAdd(coordinate, *unmanagedNode);
   auto errors = Validate(*unmanagedNode);

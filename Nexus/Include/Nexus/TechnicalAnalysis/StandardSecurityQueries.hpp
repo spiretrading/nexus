@@ -50,7 +50,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query to retrieve a Security's opening trade.
+   * Returns a query to retrieve a Security's opening trade.
    * @param security The Security to query.
    * @param date The date to retrieve the opening trade for.
    * @param marketDatabase The database containing Market info.
@@ -59,7 +59,7 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityMarketDataQuery that can be used to retrieve the
    *         <i>security</i>'s opening trade.
    */
-  inline MarketDataService::SecurityMarketDataQuery BuildOpenQuery(
+  inline MarketDataService::SecurityMarketDataQuery MakeOpenQuery(
       Security security, boost::posix_time::ptime date,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
@@ -85,7 +85,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query to retrieve a Security's opening trade using the default
+   * Returns a query to retrieve a Security's opening trade using the default
    * market center.
    * @param security The Security to query.
    * @param date The date to retrieve the opening trade for.
@@ -94,12 +94,12 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityMarketDataQuery that can be used to retrieve the
    *         <i>security</i>'s opening trade.
    */
-  inline MarketDataService::SecurityMarketDataQuery BuildOpenQuery(
+  inline MarketDataService::SecurityMarketDataQuery MakeOpenQuery(
       Security security, boost::posix_time::ptime date,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
     auto code = security.GetMarket();
-    return BuildOpenQuery(std::move(security), date, marketDatabase,
+    return MakeOpenQuery(std::move(security), date, marketDatabase,
       timeZoneDatabase, GetDefaultMarketCenter(code));
   }
 
@@ -119,7 +119,7 @@ namespace Nexus::TechnicalAnalysis {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       std::string marketCenter) {
-    auto query = BuildOpenQuery(std::move(security), date, marketDatabase,
+    auto query = MakeOpenQuery(std::move(security), date, marketDatabase,
       timeZoneDatabase, std::move(marketCenter));
     auto queue = std::make_shared<Beam::Queue<TimeAndSale>>();
     client.QueryTimeAndSales(query, queue);
@@ -173,7 +173,7 @@ namespace Nexus::TechnicalAnalysis {
           queue.Push(*open);
           return;
         }
-        auto query = BuildOpenQuery(std::move(security), date, marketDatabase,
+        auto query = MakeOpenQuery(std::move(security), date, marketDatabase,
           timeZoneDatabase, std::move(marketCenter));
         query.SetRange(query.GetRange().GetStart(),
           Beam::Queries::Sequence::Last());
@@ -208,7 +208,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query to retrieve a Security's previous session's closing trade.
+   * Returns a query to retrieve a Security's previous session's closing trade.
    * @param security The Security to query.
    * @param date The date for which the previous trading session's closing trade
    *        will be retrieved.
@@ -218,7 +218,7 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityMarketDataQuery that can be used to retrieve the
    *         <i>security</i>'s previous session's closing trade.
    */
-  inline MarketDataService::SecurityMarketDataQuery BuildPreviousCloseQuery(
+  inline MarketDataService::SecurityMarketDataQuery MakePreviousCloseQuery(
       Security security, boost::posix_time::ptime date,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
@@ -245,7 +245,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query to retrieve a Security's previous session's closing trade
+   * Returns a query to retrieve a Security's previous session's closing trade
    * using the default market center.
    * @param security The Security to query.
    * @param date The date for which the previous trading session's closing trade
@@ -255,12 +255,12 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityMarketDataQuery that can be used to retrieve the
    *         <i>security</i>'s previous session's closing trade.
    */
-  inline MarketDataService::SecurityMarketDataQuery BuildPreviousCloseQuery(
+  inline MarketDataService::SecurityMarketDataQuery MakePreviousCloseQuery(
       Security security, boost::posix_time::ptime date,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
     auto code = security.GetMarket();
-    return BuildPreviousCloseQuery(std::move(security), date, marketDatabase,
+    return MakePreviousCloseQuery(std::move(security), date, marketDatabase,
       timeZoneDatabase, GetDefaultMarketCenter(code));
   }
 
@@ -282,7 +282,7 @@ namespace Nexus::TechnicalAnalysis {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       std::string marketCenter) {
-    auto query = BuildPreviousCloseQuery(std::move(security), date,
+    auto query = MakePreviousCloseQuery(std::move(security), date,
       marketDatabase, timeZoneDatabase, std::move(marketCenter));
     auto queue = std::make_shared<Beam::Queue<TimeAndSale>>();
     client.QueryTimeAndSales(query, queue);
@@ -316,7 +316,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query for a Security's high price.
+   * Returns a query for a Security's high price.
    * @param security The Security to query.
    * @param startDay The day to begin the high query.
    * @param endDay The day to end the high query.
@@ -325,7 +325,7 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityChartingQuery that can be used to retrieve the
    *         <i>security</i>'s high price.
    */
-  inline ChartingService::SecurityChartingQuery BuildDailyHighQuery(
+  inline ChartingService::SecurityChartingQuery MakeDailyHighQuery(
       Security security, boost::posix_time::ptime startDay,
       boost::posix_time::ptime endDay, const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
@@ -376,7 +376,7 @@ namespace Nexus::TechnicalAnalysis {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       Beam::ScopedQueueWriter<Money> queue) {
-    client.QuerySecurity(BuildDailyHighQuery(std::move(security), startDay,
+    client.QuerySecurity(MakeDailyHighQuery(std::move(security), startDay,
       endDay, marketDatabase, timeZoneDatabase),
       Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
         [] (const Queries::QueryVariant& value) {
@@ -385,7 +385,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query for a Security's low price.
+   * Returns a query for a Security's low price.
    * @param security The Security to query.
    * @param startDay The day to begin the low query.
    * @param startDay The day to end the low query.
@@ -394,7 +394,7 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityChartingQuery that can be used to retrieve the
    *         <i>security</i>'s low price.
    */
-  inline ChartingService::SecurityChartingQuery BuildDailyLowQuery(
+  inline ChartingService::SecurityChartingQuery MakeDailyLowQuery(
       Security security, boost::posix_time::ptime startDay,
       boost::posix_time::ptime endDay, const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
@@ -445,7 +445,7 @@ namespace Nexus::TechnicalAnalysis {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       Beam::ScopedQueueWriter<Money> queue) {
-    client.QuerySecurity(BuildDailyLowQuery(std::move(security), startDay,
+    client.QuerySecurity(MakeDailyLowQuery(std::move(security), startDay,
       endDay, marketDatabase, timeZoneDatabase),
       Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
         [] (const Queries::QueryVariant& value) {
@@ -454,7 +454,7 @@ namespace Nexus::TechnicalAnalysis {
   }
 
   /**
-   * Builds a query over a Security's volume.
+   * Returns a query over a Security's volume.
    * @param security The Security to query.
    * @param startDay The day to begin the volume query.
    * @param endDay The day to end the volume query.
@@ -463,7 +463,7 @@ namespace Nexus::TechnicalAnalysis {
    * @return A SecurityChartingQuery that can be used to retrieve the
    *         <i>security</i>'s volume.
    */
-  inline ChartingService::SecurityChartingQuery BuildDailyVolumeQuery(
+  inline ChartingService::SecurityChartingQuery MakeDailyVolumeQuery(
       Security security, boost::posix_time::ptime startDay,
       boost::posix_time::ptime endDay, const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
@@ -513,7 +513,7 @@ namespace Nexus::TechnicalAnalysis {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       Beam::ScopedQueueWriter<Quantity> queue) {
-    client.QuerySecurity(BuildDailyVolumeQuery(std::move(security), startDay,
+    client.QuerySecurity(MakeDailyVolumeQuery(std::move(security), startDay,
       endDay, marketDatabase, timeZoneDatabase),
       Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
         [] (const Queries::QueryVariant& value) {

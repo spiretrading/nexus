@@ -9,7 +9,7 @@ using namespace std;
 
 CeilNode::CeilNode() {
   DefineFunction("Ceil", { "value", "to_closest" },
-    BuildSignatures<RoundingNodeSignatures>());
+    MakeSignatures<RoundingNodeSignatures>());
 }
 
 void CeilNode::Apply(CanvasNodeVisitor& visitor) const {

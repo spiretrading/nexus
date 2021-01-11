@@ -8,7 +8,7 @@ using namespace std;
 
 AdditionNode::AdditionNode() {
   DefineFunction("Add", { "left", "right" },
-    BuildSignatures<AdditionNodeSignatures>());
+    MakeSignatures<AdditionNodeSignatures>());
 }
 
 void AdditionNode::Apply(CanvasNodeVisitor& visitor) const {

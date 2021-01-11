@@ -147,7 +147,7 @@ void BlotterModel::Unlink(BlotterModel& blotter) {
 void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
   if(m_isConsolidated) {
-    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(
+    auto [portfolio, sequence, excludedOrders] = MakePortfolio(
       m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
       m_executingAccount), m_executingAccount,
       m_userProfile->GetMarketDatabase(),

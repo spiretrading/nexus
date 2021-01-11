@@ -65,7 +65,7 @@ TEST_SUITE("TestOrderExecutionDataStore") {
 
   TEST_CASE_FIXTURE(Fixture, "load_order") {
     auto record = SequencedValue(IndexedValue(OrderRecord(OrderInfo(
-      OrderFields::BuildLimitOrder(SECURITY, Side::BID, 230, Money::ONE), 100,
+      OrderFields::MakeLimitOrder(SECURITY, Side::BID, 230, Money::ONE), 100,
         time_from_string("2020-04-27 22:01:16")), {}),
       ACCOUNT), Beam::Queries::Sequence(200));
     TestReifiedMethod<TestOrderExecutionDataStore::LoadOrderOperation>(
@@ -97,7 +97,7 @@ TEST_SUITE("TestOrderExecutionDataStore") {
 
   TEST_CASE_FIXTURE(Fixture, "store_order_info") {
     auto info = SequencedValue(IndexedValue(OrderInfo(
-      OrderFields::BuildLimitOrder(SECURITY, Side::ASK, 100, Money::CENT), 422,
+      OrderFields::MakeLimitOrder(SECURITY, Side::ASK, 100, Money::CENT), 422,
       time_from_string("2020-04-11 17:12:11")), ACCOUNT),
       Beam::Queries::Sequence(9912));
     TestReifiedMethod<TestOrderExecutionDataStore::StoreOrderInfoOperation>(
@@ -108,7 +108,7 @@ TEST_SUITE("TestOrderExecutionDataStore") {
 
   TEST_CASE_FIXTURE(Fixture, "store_execution_report") {
     auto report = SequencedValue(IndexedValue(
-      ExecutionReport::BuildInitialReport(2212,
+      ExecutionReport::MakeInitialReport(2212,
         time_from_string("2020-04-11 17:12:11")), ACCOUNT),
       Beam::Queries::Sequence(1299));
     TestReifiedMethod<

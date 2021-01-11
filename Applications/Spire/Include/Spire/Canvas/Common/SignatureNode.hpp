@@ -76,9 +76,9 @@ namespace Details {
       std::shared_ptr<CanvasType> m_type;
   };
 
-  //! Builds a list of signatures from a compile time list of types.
+  //! Returns a list of signatures from a compile time list of types.
   template<typename Signatures>
-  std::vector<SignatureNode::Signature> BuildSignatures() {
+  std::vector<SignatureNode::Signature> MakeSignatures() {
     std::vector<SignatureNode::Signature> signatures;
     boost::mpl::for_each<typename Signatures::type>(
       Details::SignatureOuterLoop(signatures));

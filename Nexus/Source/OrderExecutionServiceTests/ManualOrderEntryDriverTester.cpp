@@ -56,7 +56,7 @@ TEST_SUITE("ManualOrderEntryDriver") {
   TEST_CASE_FIXTURE(Fixture, "submit_moe_without_permission") {
     auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount("trader",
       "1234", DirectoryEntry::GetStarDirectory());
-    auto orderInfo = OrderInfo(OrderFields::BuildLimitOrder(SECURITY, Side::BID,
+    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
       "MOE", 100, Money::ONE), account, 100, false,
       time_from_string("2020-12-18 14:49:12"));
     auto& rejectedOrder = m_driver->Submit(orderInfo);
@@ -70,7 +70,7 @@ TEST_SUITE("ManualOrderEntryDriver") {
     auto adminAccount = m_serviceLocatorEnvironment.GetRoot().FindAccount(
       "administrator");
     REQUIRE(adminAccount.is_initialized());
-    auto orderInfo = OrderInfo(OrderFields::BuildLimitOrder(SECURITY, Side::BID,
+    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
       "MOE", 100, Money::ONE), *adminAccount, 100, false,
       time_from_string("2020-12-18 14:49:12"));
     auto& filledOrder = m_driver->Submit(orderInfo);
@@ -84,7 +84,7 @@ TEST_SUITE("ManualOrderEntryDriver") {
   TEST_CASE_FIXTURE(Fixture, "submit") {
     auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount("trader",
       "1234", DirectoryEntry::GetStarDirectory());
-    auto orderInfo = OrderInfo(OrderFields::BuildLimitOrder(SECURITY, Side::BID,
+    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
       "TSX", 100, Money::ONE), account, 100, false,
       time_from_string("2020-12-18 14:49:12"));
     auto submittedOrders = std::make_shared<Queue<PrimitiveOrder*>>();
@@ -109,7 +109,7 @@ TEST_SUITE("ManualOrderEntryDriver") {
   TEST_CASE_FIXTURE(Fixture, "recover_moe") {
     auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount("trader",
       "1234", DirectoryEntry::GetStarDirectory());
-    auto orderInfo = OrderInfo(OrderFields::BuildLimitOrder(SECURITY, Side::BID,
+    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
       "MOE", 100, Money::ONE), account, 100, false,
       time_from_string("2020-12-18 14:49:12"));
     auto submittedOrders = std::make_shared<Queue<PrimitiveOrder*>>();

@@ -120,7 +120,7 @@ namespace Nexus::MarketDataService {
   };
 
   /**
-   * Builds a SessionBuilder for a standard MarketDataClient.
+   * Makes a SessionBuilder for a standard MarketDataClient.
    * @param serviceLocatorClient The ServiceLocatorClient used to authenticate
    *        sessions.
    * @param servicePredicate The function used to match an appropriate
@@ -128,7 +128,7 @@ namespace Nexus::MarketDataService {
    * @param service The name of the service to connect to.
    */
   template<typename SessionBuilder, typename Predicate>
-  SessionBuilder BuildBasicMarketDataClientSessionBuilder(
+  SessionBuilder MakeBasicMarketDataClientSessionBuilder(
       typename SessionBuilder::ServiceLocatorClient serviceLocatorClient,
       Predicate&& servicePredicate,
       const std::string& service = RELAY_SERVICE_NAME) {
@@ -148,13 +148,13 @@ namespace Nexus::MarketDataService {
   }
 
   /**
-   * Builds a SessionBuilder for a standard MarketDataClient.
+   * Returns a SessionBuilder for a standard MarketDataClient.
    * @param serviceLocatorClient The ServiceLocatorClient used to authenticate
    *        sessions.
    * @param service The name of the service to connect to.
    */
   inline ApplicationMarketDataClient::SessionBuilder
-      BuildMarketDataClientSessionBuilder(
+      MakeMarketDataClientSessionBuilder(
       ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
         serviceLocatorClient, const std::string& service = RELAY_SERVICE_NAME) {
     auto clientBox = Beam::ServiceLocator::ServiceLocatorClientBox(
@@ -173,7 +173,7 @@ namespace Nexus::MarketDataService {
 
   inline ApplicationMarketDataClient::ApplicationMarketDataClient(
     SessionBuilder::ServiceLocatorClient serviceLocatorClient)
-    : m_client(BuildMarketDataClientSessionBuilder(serviceLocatorClient)) {}
+    : m_client(MakeMarketDataClientSessionBuilder(serviceLocatorClient)) {}
 
   inline ApplicationMarketDataClient::Client&
       ApplicationMarketDataClient::operator *() {

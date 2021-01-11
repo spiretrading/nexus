@@ -53,7 +53,7 @@ namespace Nexus::MarketDataService {
        * Constructs a MarketDataRelayServlet.
        * @param clientTimeout The amount of time to wait before building another
        *        MarketDataClient.
-       * @param marketDataClientBuilder Builds MarketDataClients used to
+       * @param marketDataClientBuilder Constructs MarketDataClients used to
        *        distribute queries.
        * @param minMarketDataClients The minimum number of MarketDataClients to
        *        pool.
@@ -368,7 +368,7 @@ namespace Nexus::MarketDataService {
         auto initialValueQueue =
           std::make_shared<Beam::Queue<MarketDataType>>();
         QueryMarketDataClient(*queryEntry.m_marketDataClient,
-          Beam::Queries::BuildLatestQuery(query.GetIndex()),
+          Beam::Queries::MakeLatestQuery(query.GetIndex()),
           Beam::ScopedQueueWriter(initialValueQueue));
         auto initialValues = std::vector<MarketDataType>();
         Beam::Flush(initialValueQueue, std::back_inserter(initialValues));

@@ -73,7 +73,7 @@ namespace Nexus::MarketDataService::Tests {
       MarketDataFeedClientBox& GetFeedClient();
 
       /**
-       * Builds a new MarketDataClient.
+       * Returns a new MarketDataClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the MarketDataClient.
        */
@@ -81,7 +81,7 @@ namespace Nexus::MarketDataService::Tests {
         Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
 
       /**
-       * Builds a new MarketDataFeedClient.
+       * Returns a new MarketDataFeedClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the MarketDataFeedClient.
        */

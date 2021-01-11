@@ -50,7 +50,7 @@ namespace Nexus::OrderExecutionService {
 
   inline PrimitiveOrder::PrimitiveOrder(OrderInfo info)
       : m_info(std::move(info)) {
-    auto report = ExecutionReport::BuildInitialReport(m_info.m_orderId,
+    auto report = ExecutionReport::MakeInitialReport(m_info.m_orderId,
       m_info.m_timestamp);
     Update(report);
   }
@@ -98,16 +98,16 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Builds a PrimitiveOrder that is immediately rejected.
+   * Returns a PrimitiveOrder with a rejected order status.
    * @param info The Order's submission info.
    * @param reason The reason for the rejection.
    */
-  inline std::unique_ptr<PrimitiveOrder> BuildRejectedOrder(OrderInfo info,
+  inline std::unique_ptr<PrimitiveOrder> MakeRejectedOrder(OrderInfo info,
       const std::string& reason) {
     auto order = std::make_unique<PrimitiveOrder>(std::move(info));
     order->With([&] (auto status, const auto& reports) {
       auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
         OrderStatus::REJECTED, order->GetInfo().m_timestamp);
       updatedReport.m_text = reason;
       order->Update(updatedReport);
@@ -128,7 +128,7 @@ namespace Nexus::OrderExecutionService {
         return;
       }
       auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
         OrderStatus::CANCEL_REJECT, timestamp);
       updatedReport.m_text = std::move(reason);
       order.Update(updatedReport);

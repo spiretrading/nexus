@@ -10,19 +10,19 @@
 namespace Spire {
 
   /*! \class DashboardRowBuilder
-      \brief Builds a DashboardRow.
+      \brief Constructs a DashboardRow.
    */
   class DashboardRowBuilder {
     public:
       virtual ~DashboardRowBuilder() = default;
 
-      //! Builds a DashboardRow with a specified index.
+      //! Return a DashboardRow with a specified index.
       /*!
         \param index The row's index.
         \param userProfile The user's profile.
         \return A DashboardRow with the specified <i>index</i>.
       */
-      virtual std::unique_ptr<DashboardRow> Build(
+      virtual std::unique_ptr<DashboardRow> Make(
         const DashboardCell::Value& index,
         Beam::Ref<UserProfile> userProfile) const = 0;
 

@@ -15,7 +15,7 @@ namespace {
     return LookupFee(feeTable, liquidityFlag, priceClass);
   }
 
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = LynxFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     return feeTable;
@@ -24,20 +24,20 @@ namespace {
 
 TEST_SUITE("LynxFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_feeTable, LookupLiquidityFee,
       LIQUIDITY_FLAG_COUNT, LynxFeeTable::PRICE_CLASS_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
       Money::ZERO);
   }
 
   TEST_CASE("active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       LynxFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -46,7 +46,7 @@ TEST_SUITE("LynxFeeHandling") {
   }
 
   TEST_CASE("passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       LynxFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -56,7 +56,7 @@ TEST_SUITE("LynxFeeHandling") {
   }
 
   TEST_CASE("subdollar_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       LynxFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -66,7 +66,7 @@ TEST_SUITE("LynxFeeHandling") {
   }
 
   TEST_CASE("subdollar_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       LynxFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -76,9 +76,9 @@ TEST_SUITE("LynxFeeHandling") {
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -89,7 +89,7 @@ TEST_SUITE("LynxFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
@@ -100,7 +100,7 @@ TEST_SUITE("LynxFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -115,9 +115,9 @@ TEST_SUITE("LynxFeeHandling") {
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -128,7 +128,7 @@ TEST_SUITE("LynxFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
