@@ -33,8 +33,8 @@ export abstract class DashboardModel {
   public abstract makeGroupModel(group: Beam.DirectoryEntry): GroupModel;
 
   /** Loads this model. */
-  public abstract async load(): Promise<void>;
+  public abstract load(): Promise<void>;
 
   /** Logs the user out. */
-  public abstract async logout(): Promise<void>;
+  public abstract logout(): Promise<void>;
 }

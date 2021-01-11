@@ -7,7 +7,7 @@ const minigyPluginOpts = {
   test: /\.js($|\?)/i,
 };
 module.exports = {
-  devtool: PROD ? 'none' : 'source-map',
+  devtool: PROD ? false : 'source-map',
   entry: path.resolve(process.cwd(), 'source/index.tsx'),
   mode: PROD ? 'production' : 'development',
   module: {

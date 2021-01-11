@@ -11,5 +11,5 @@ export abstract class GroupModel {
   public abstract get accounts(): AccountEntry[];
 
   /** Loads this model. */
-  public abstract async load(): Promise<void>;
+  public abstract load(): Promise<void>;
 }

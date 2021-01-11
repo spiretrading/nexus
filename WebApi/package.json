@@ -10,10 +10,10 @@
     "build": "npm run compile"
   },
   "devDependencies": {
-    "typescript": "3.7.4"
+    "typescript": "4.1.3"
   },
   "dependencies": {
     "beam": "file:Dependencies/Beam/WebApi",
-    "collections": "5.1.9"
+    "collections": "5.1.12"
   }
 }
