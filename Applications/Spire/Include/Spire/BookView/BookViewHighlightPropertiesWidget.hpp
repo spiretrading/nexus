@@ -24,7 +24,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       BookViewHighlightPropertiesWidget(QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~BookViewHighlightPropertiesWidget();
 

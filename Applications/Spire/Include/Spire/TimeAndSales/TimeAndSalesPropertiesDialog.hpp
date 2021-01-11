@@ -26,7 +26,7 @@ namespace Spire {
       */
       TimeAndSalesPropertiesDialog(Beam::Ref<UserProfile> userProfile,
         const TimeAndSalesProperties& properties, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~TimeAndSalesPropertiesDialog();
 

@@ -25,7 +25,7 @@ namespace Spire {
       */
       ManagerItemWidget(Beam::Ref<UserProfile> userProfile,
         const std::shared_ptr<AccountInfoModel>& infoModel,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ManagerItemWidget();
 

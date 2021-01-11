@@ -17,17 +17,17 @@ export abstract class ProfileModel {
   public abstract get identity(): Nexus.AccountIdentity;
 
   /** Loads this model. */
-  public abstract async load(): Promise<void>;
+  public abstract load(): Promise<void>;
 
   /** Updates the account's identity.
    * @param roles - The update roles.
    * @param identity - The updated identity.
    */
-  public abstract async updateIdentity(roles: Nexus.AccountRoles,
+  public abstract updateIdentity(roles: Nexus.AccountRoles,
     identity: Nexus.AccountIdentity): Promise<void>;
 
   /** Updates the account's password.
    * @param password - The updated password.
    */
-  public abstract async updatePassword(password: string): Promise<void>;
+  public abstract updatePassword(password: string): Promise<void>;
 }

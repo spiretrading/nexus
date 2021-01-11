@@ -21,7 +21,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      AccountInfoWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      AccountInfoWidget(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~AccountInfoWidget();
 

@@ -24,9 +24,8 @@ InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
   m_ui->m_priceIncrementModifierComboBox->addItem(QObject::tr("Alt"));
   m_ui->m_priceIncrementModifierComboBox->addItem(QObject::tr("Ctrl"));
   connect(m_ui->m_regionComboBox,
-    static_cast<void (QComboBox::*)(const QString&)>(
-    &QComboBox::currentIndexChanged), this,
-    &InteractionsWidget::OnRegionIndexChanged);
+    static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+    this, &InteractionsWidget::OnRegionIndexChanged);
   connect(m_ui->m_quantityIncrementModifierComboBox,
     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
     this, &InteractionsWidget::OnKeyboardModifierIndexChanged);
@@ -175,7 +174,7 @@ void InteractionsWidget::Store() {
   properties.m_cancelOnFill = m_ui->m_cancelOnFillCheckBox->isChecked();
 }
 
-void InteractionsWidget::OnRegionIndexChanged(const QString& index) {
+void InteractionsWidget::OnRegionIndexChanged(int index) {
   Store();
   Update();
 }

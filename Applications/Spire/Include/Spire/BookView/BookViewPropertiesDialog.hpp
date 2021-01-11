@@ -25,7 +25,7 @@ namespace Spire {
       */
       BookViewPropertiesDialog(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security, const BookViewProperties& properties,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~BookViewPropertiesDialog();
 

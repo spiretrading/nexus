@@ -21,7 +21,7 @@ if [ -f "cache_files/nexus.txt" ]; then
   fi
 fi
 cores="`grep -c "processor" < /proc/cpuinfo`"
-beam_commit="63b0eb25e64444a8f8a6526f93dfe050f9277f47"
+beam_commit="7fd280fca54527e25ba21382903e27401fe27e57"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
@@ -53,18 +53,18 @@ if [ -d "Beam" ]; then
   fi
   popd
 fi
-if [ ! -d "lua-5.3.5" ]; then
-  wget http://www.lua.org/ftp/lua-5.3.5.tar.gz --no-check-certificate
+if [ ! -d "lua-5.4.2" ]; then
+  wget http://www.lua.org/ftp/lua-5.4.2.tar.gz --no-check-certificate
   if [ "$?" == "0" ]; then
-    gzip -d -c lua-5.3.5.tar.gz | tar -x
-    pushd lua-5.3.5
+    gzip -d -c lua-5.4.2.tar.gz | tar -x
+    pushd lua-5.4.2
     make -j $cores linux
     make local
     popd
   else
     exit_status=1
   fi
-  rm -rf lua-5.3.5.tar.gz
+  rm -rf lua-5.4.2.tar.gz
 fi
 if [ ! -d "quickfix-v.1.15.1" ]; then
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
