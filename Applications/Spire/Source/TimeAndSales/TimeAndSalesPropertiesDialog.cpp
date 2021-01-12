@@ -7,7 +7,7 @@
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -115,7 +115,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(1);
-  m_show_grid_check_box = make_check_box(tr("Show Grid"), this);
+  m_show_grid_check_box = new Checkbox(tr("Show Grid"), this);
   color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
   auto font_layout = new QVBoxLayout();

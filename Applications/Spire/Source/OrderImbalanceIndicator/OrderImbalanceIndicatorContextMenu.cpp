@@ -2,7 +2,7 @@
 #include <QEvent>
 #include <QWidgetAction>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::signals2;
@@ -150,43 +150,15 @@ bool OrderImbalanceIndicatorContextMenu::eventFilter(QObject* watched,
 
 void OrderImbalanceIndicatorContextMenu::add_check_box(const QString& text,
     ToggledSignal& signal) {
-  auto font = QFont("Roboto");
-  font.setPixelSize(scale_height(12));
-  auto metrics = QFontMetrics(font);
-  auto spacing = scale_width(108) - metrics.horizontalAdvance(text);
-  auto text_style = QString(R"(
-    color: black;
-    font-family: %4;
-    font-size: %1px;
-    outline: none;
-    padding-right: %3px;
-    spacing: %2px;
-    text-align: left center;)")
-    .arg(font.pixelSize()).arg(spacing).arg(scale_width(8))
-    .arg(font.family());
-  auto indicator_style = QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    height: %3px;
-    width: %4px;)").arg(scale_height(1))
-    .arg(scale_width(1)).arg(scale_height(16)).arg(scale_width(16));
-  auto checked_style = QString(R"(
-    image: url(:/Icons/check-with-box.svg);)");
-  auto hover_style = QString(R"(
-    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-    .arg(scale_height(1)).arg(scale_width(1));
-  auto focused_style = QString(R"(border-color: #4B23A0;)");
-  auto check_box = make_check_box(text, this);
+  auto check_box = new Checkbox(text, this);
   check_box->setFixedSize(CHECK_BOX_SIZE());
   check_box->setChecked(true);
-  check_box->set_stylesheet(text_style, indicator_style, checked_style,
-    hover_style, focused_style);
   check_box->setLayoutDirection(Qt::RightToLeft);
   auto action = new QWidgetAction(this);
   action->setDefaultWidget(check_box);
   m_table_columns_menu->addAction(action);
-  connect(static_cast<QCheckBox*>(action->defaultWidget()),
-    &QCheckBox::stateChanged, [signal = &signal] (int state) {
+  connect(static_cast<Checkbox*>(action->defaultWidget()),
+    &Checkbox::stateChanged, [signal = &signal] (int state) {
       (*signal)(state == Qt::Checked);
     });
 }

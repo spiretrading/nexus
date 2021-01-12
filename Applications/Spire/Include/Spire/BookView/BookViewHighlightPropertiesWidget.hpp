@@ -32,13 +32,13 @@ namespace Spire {
 
     private:
       QListWidget* m_markets_list_widget;
-      CheckBox* m_highlight_none_check_box;
-      CheckBox* m_highlight_top_level_check_box;
-      CheckBox* m_highlight_all_levels_check_box;
+      Checkbox* m_highlight_none_check_box;
+      Checkbox* m_highlight_top_level_check_box;
+      Checkbox* m_highlight_all_levels_check_box;
       ColorSelectorButton* m_market_highlight_color_button;
-      CheckBox* m_hide_orders_check_box;
-      CheckBox* m_display_orders_check_box;
-      CheckBox* m_highlight_orders_check_box;
+      Checkbox* m_hide_orders_check_box;
+      Checkbox* m_display_orders_check_box;
+      Checkbox* m_highlight_orders_check_box;
       ColorSelectorButton* m_order_highlight_color_button;
 
       void update_market_widgets();

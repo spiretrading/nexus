@@ -10,7 +10,7 @@
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/BookView/MarketListItem.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
@@ -75,22 +75,22 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->setContentsMargins({});
   market_highlight_layout->setSpacing(0);
   market_highlight_layout->addStretch(26);
-  m_highlight_none_check_box = make_check_box(tr("Highlight None"), this);
-  connect(m_highlight_none_check_box, &QCheckBox::stateChanged, this,
+  m_highlight_none_check_box = new Checkbox(tr("Highlight None"), this);
+  connect(m_highlight_none_check_box, &Checkbox::stateChanged, this,
     &BookViewHighlightPropertiesWidget::
     on_highlight_none_check_box_checked);
   market_highlight_layout->addWidget(m_highlight_none_check_box, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_top_level_check_box = make_check_box(tr("Highlight Top Level"),
+  m_highlight_top_level_check_box = new Checkbox(tr("Highlight Top Level"),
     this);
-  connect(m_highlight_top_level_check_box, &QCheckBox::stateChanged, this,
+  connect(m_highlight_top_level_check_box, &Checkbox::stateChanged, this,
     &BookViewHighlightPropertiesWidget::
     on_highlight_top_level_check_box_checked);
   market_highlight_layout->addWidget(m_highlight_top_level_check_box, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_all_levels_check_box = make_check_box(
+  m_highlight_all_levels_check_box = new Checkbox(
     tr("Highlight All Levels"), this);
-  connect(m_highlight_all_levels_check_box, &QCheckBox::stateChanged, this,
+  connect(m_highlight_all_levels_check_box, &Checkbox::stateChanged, this,
     &BookViewHighlightPropertiesWidget::
     on_highlight_all_levels_check_box_checked);
   market_highlight_layout->addWidget(m_highlight_all_levels_check_box, 16);
@@ -129,13 +129,13 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  m_hide_orders_check_box = make_check_box(tr("Hide Orders"), this);
+  m_hide_orders_check_box = new Checkbox(tr("Hide Orders"), this);
   orders_layout->addWidget(m_hide_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_display_orders_check_box = make_check_box(tr("Display Orders"), this);
+  m_display_orders_check_box = new Checkbox(tr("Display Orders"), this);
   orders_layout->addWidget(m_display_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_check_box = make_check_box(tr("Highlight Orders"), this);
+  m_highlight_orders_check_box = new Checkbox(tr("Highlight Orders"), this);
   m_highlight_orders_check_box->setChecked(true);
   orders_layout->addWidget(m_highlight_orders_check_box, 16);
   auto orders_check_box_button_group = new QButtonGroup(this);

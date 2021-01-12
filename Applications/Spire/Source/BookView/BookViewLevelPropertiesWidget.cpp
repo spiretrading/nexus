@@ -6,7 +6,7 @@
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/IntegerSpinBox.hpp"
@@ -147,7 +147,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] (const auto& font) { update_band_list_font(font); });
   font_layout->addWidget(change_font_widget);
   font_layout->addSpacing(scale_height(48));
-  m_show_grid_lines_check_box = make_check_box(tr("Show Grid"), this);
+  m_show_grid_lines_check_box = new Checkbox(tr("Show Grid"), this);
   m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
   font_layout->addWidget(m_show_grid_lines_check_box);
   font_layout->addStretch(1);
