@@ -51,7 +51,7 @@ namespace Nexus::SoupBinTcp {
    */
   inline LoginRejectedPacket ParseLoginRejectedPacket(
       const SoupBinTcpPacket& packet) {
-    auto loginPacket = LoginAcceptedPacket();
+    auto loginPacket = LoginRejectedPacket();
     auto cursor = packet.m_payload;
     loginPacket.m_reason = ParseLeftPaddedAlphaNumeric(1, Beam::Store(cursor));
     return loginPacket;
