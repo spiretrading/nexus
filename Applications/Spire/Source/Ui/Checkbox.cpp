@@ -108,7 +108,8 @@ QColor Checkbox::get_check_color() const {
 
 QPoint Checkbox::get_check_position() const {
   auto box_pos = get_box_position();
-  return {box_pos.x() + scale_width(3), box_pos.y() + scale_height(4)};
+  return {box_pos.x() + ((BOX_SIZE().width() - m_check_icon.width()) / 2),
+    box_pos.y() + ((BOX_SIZE().height() - m_check_icon.height()) / 2)};
 }
 
 QColor Checkbox::get_inner_box_color() const {
