@@ -29,7 +29,6 @@ namespace Spire {
       void set_read_only(bool is_read_only);
 
     protected:
-      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;

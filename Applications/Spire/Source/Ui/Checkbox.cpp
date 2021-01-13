@@ -33,13 +33,6 @@ Checkbox::Checkbox(const QString& label, QWidget* parent)
   setFont(font);
 }
 
-bool Checkbox::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutDirectionChange) {
-    update();
-  }
-  return QCheckBox::event(event);
-}
-
 void Checkbox::keyPressEvent(QKeyEvent* event) {
   event->accept();
   if(m_is_read_only || event->isAutoRepeat()) {
