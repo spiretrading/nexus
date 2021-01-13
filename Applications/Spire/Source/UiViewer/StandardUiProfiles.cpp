@@ -1,7 +1,7 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
@@ -15,12 +15,14 @@ UiProfile Spire::make_check_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("checked"));
-  properties.push_back(make_standard_qstring_property("text",
+  properties.push_back(make_standard_qstring_property("label",
     QString::fromUtf8("Click me!")));
+  properties.push_back(make_standard_bool_property("read-only"));
+  properties.push_back(make_standard_bool_property("left-to-right", true));
   auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
     [] (auto& profile) {
-      auto& text = get<QString>("text", profile.get_properties());
-      auto check_box = make_check_box(text.get());
+      auto& label = get<QString>("label", profile.get_properties());
+      auto check_box = new Checkbox(label.get());
       apply_widget_properties(check_box, profile.get_properties());
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto value) {
@@ -30,11 +32,24 @@ UiProfile Spire::make_check_box_profile() {
           check_box->setCheckState(Qt::Unchecked);
         }
       });
-      QObject::connect(check_box, &CheckBox::stateChanged, [&] (auto value) {
+      QObject::connect(check_box, &Checkbox::stateChanged, [&] (auto value) {
         checked.set(value == Qt::Checked);
       });
-      QObject::connect(check_box, &CheckBox::stateChanged,
+      QObject::connect(check_box, &Checkbox::stateChanged,
         profile.make_event_slot<int>(QString::fromUtf8("stateChanged")));
+      auto& read_only = get<bool>("read-only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        check_box->set_read_only(is_read_only);
+      });
+      auto& layout_direction = get<bool>("left-to-right",
+        profile.get_properties());
+      layout_direction.connect_changed_signal([=] (auto value) {
+        if(value) {
+          check_box->setLayoutDirection(Qt::LeftToRight);
+        } else {
+          check_box->setLayoutDirection(Qt::RightToLeft);
+        }
+      });
       return check_box;
     });
   return profile;

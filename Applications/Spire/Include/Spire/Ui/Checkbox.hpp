@@ -42,6 +42,8 @@ namespace Spire {
       QPoint get_box_position() const;
       QColor get_check_color() const;
       QPoint get_check_position() const;
+      QColor get_inner_box_color() const;
+      QRect get_inner_box_rect() const;
       QPoint get_text_position() const;
   };
 }

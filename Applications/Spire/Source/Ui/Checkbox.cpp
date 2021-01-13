@@ -1,6 +1,7 @@
 #include "Spire/Ui/Checkbox.hpp"
 #include <QEvent>
 #include <QFontMetrics>
+#include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -34,34 +35,35 @@ Checkbox::Checkbox(const QString& label, QWidget* parent)
 
 bool Checkbox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutDirectionChange) {
-    // TODO: add this as a test paramter to UiViewer.
     update();
   }
   return QCheckBox::event(event);
 }
 
 void Checkbox::keyPressEvent(QKeyEvent* event) {
-  // TODO: add read-only as test parameter
-  if(!m_is_read_only) {
-    QCheckBox::keyPressEvent(event);
+  event->accept();
+  if(m_is_read_only || event->isAutoRepeat()) {
+    return;
+  }
+  if(event->key() == Qt::Key_Space) {
+    setChecked(!isChecked());
+    update();
   }
 }
 
 void Checkbox::mousePressEvent(QMouseEvent* event) {
-  if(!m_is_read_only) {
-    QCheckBox::mousePressEvent(event);
+  event->accept();
+  if(m_is_read_only) {
+    return;
   }
+  setChecked(!isChecked());
+  update();
 }
 
 void Checkbox::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(!isEnabled() || m_is_read_only) {
-    painter.fillRect(QRect(get_box_position(), BOX_SIZE()), "#F5F5F5");
-  } else {
-    painter.fillRect(QRect(get_box_position(), BOX_SIZE()), "#FFFFFF");
-  }
-  painter.setPen(get_box_color());
-  painter.drawRect(QRect(get_box_position(), BOX_SIZE()));
+  painter.fillRect(QRect(get_box_position(), BOX_SIZE()), get_box_color());
+  painter.fillRect(get_inner_box_rect(), get_inner_box_color());
   if(isChecked()) {
     auto icon = QPixmap::fromImage(m_check_icon);
     auto image_painter = QPainter(&icon);
@@ -80,6 +82,13 @@ void Checkbox::set_read_only(bool is_read_only) {
     m_is_read_only = is_read_only;
     update();
   }
+}
+
+QColor Checkbox::get_box_color() const {
+  if(!isEnabled() || m_is_read_only || (!hasFocus() && !underMouse())) {
+    return "#C8C8C8";
+  }
+  return "#4B23A0";
 }
 
 QPoint Checkbox::get_box_position() const {
@@ -102,17 +111,21 @@ QPoint Checkbox::get_check_position() const {
   return {box_pos.x() + scale_width(3), box_pos.y() + scale_height(4)};
 }
 
-QColor Checkbox::get_box_color() const {
-  if(!isEnabled() || m_is_read_only || (!hasFocus() && !underMouse())) {
-    return "#C8C8C8";
+QColor Checkbox::get_inner_box_color() const {
+  if(!isEnabled() || m_is_read_only) {
+    return "#F5F5F5";
   }
-  return "#4B23A0";
+  return "#FFFFFF";
+}
+
+QRect Checkbox::get_inner_box_rect() const {
+  return {get_box_position() + QPoint(scale_width(1), scale_height(1)),
+    BOX_SIZE().shrunkBy({scale_width(1), scale_height(1), scale_width(1),
+    scale_width(1)})};
 }
 
 QPoint Checkbox::get_text_position() const {
-  auto metrics = QFontMetrics(font());
-  auto text_height = metrics.tightBoundingRect(text()).height();
-  auto text_y = (height() - text_height) / 2;
+  auto text_y = (height() - font().pixelSize()) / 2;
   if(layoutDirection() == Qt::LeftToRight) {
     return {BOX_SIZE().width() + PADDING(), text_y};
   }
