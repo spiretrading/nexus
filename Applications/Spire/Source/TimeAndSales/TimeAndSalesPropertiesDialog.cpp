@@ -116,6 +116,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(1);
   m_show_grid_check_box = new Checkbox(tr("Show Grid"), this);
+  m_show_grid_check_box->setFixedSize(scale(78, 16));
   color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
   auto font_layout = new QVBoxLayout();
