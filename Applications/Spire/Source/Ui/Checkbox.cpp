@@ -49,8 +49,10 @@ void Checkbox::mousePressEvent(QMouseEvent* event) {
   if(m_is_read_only) {
     return;
   }
-  setChecked(!isChecked());
-  update();
+  if(event->button() == Qt::LeftButton) {
+    setChecked(!isChecked());
+    update();
+  }
 }
 
 void Checkbox::paintEvent(QPaintEvent* event) {
@@ -64,8 +66,8 @@ void Checkbox::paintEvent(QPaintEvent* event) {
     image_painter.fillRect(icon.rect(), get_check_color());
     painter.drawPixmap(get_check_position(), icon);
   }
-  painter.setPen("#000000");
   if(!text().isEmpty()) {
+    painter.setPen("#000000");
     painter.drawText(QRect(get_text_position(), size()), 0, text());
   }
 }
