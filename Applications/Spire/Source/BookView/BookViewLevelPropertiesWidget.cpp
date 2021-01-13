@@ -149,6 +149,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   font_layout->addSpacing(scale_height(48));
   m_show_grid_lines_check_box = new Checkbox(tr("Show Grid"), this);
   m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
+  m_show_grid_lines_check_box->setFixedSize(scale(78, 16));
   font_layout->addWidget(m_show_grid_lines_check_box);
   font_layout->addStretch(1);
   horizontal_layout->addLayout(font_layout);
