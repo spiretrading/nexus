@@ -100,7 +100,7 @@ QPoint Checkbox::get_box_position() const {
 }
 
 QColor Checkbox::get_check_color() const {
-  if(!isEnabled() || m_is_read_only) {
+  if(!isEnabled()) {
     return "#C8C8C8";
   }
   return "#4B23A0";
