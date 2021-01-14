@@ -78,7 +78,7 @@ namespace Spire {
       DropShadow* m_drop_shadow;
       DropShadow* m_sub_menu_drop_shadow;
 
-      void add_check_box(const QString& text, ToggledSignal& signal);
+      void add_checkbox(const QString& text, ToggledSignal& signal);
       void add_menu_item(const QString& text, SelectedSignal& signal);
   };
 }

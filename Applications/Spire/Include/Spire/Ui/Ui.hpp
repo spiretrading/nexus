@@ -11,7 +11,7 @@ namespace Spire {
   class CalendarDayWidget;
   class CalendarModel;
   class CalendarWidget;
-  class CheckBox;
+  class Checkbox;
   class ColonWidget;
   class DateInputWidget;
   class DecimalSpinBox;
