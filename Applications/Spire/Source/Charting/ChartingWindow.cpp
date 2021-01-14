@@ -106,8 +106,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(2));
   m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
     tr("Auto Scale"), m_button_header_widget);
-  m_auto_scale_button->set_toggled(true);
-  m_auto_scale_button_connection = m_auto_scale_button->connect_clicked_signal(
+  m_auto_scale_button->set_checked(true);
+  m_auto_scale_button_connection = m_auto_scale_button->connect_selected_signal(
     [=] {
       on_auto_scale_button_click();
     });
@@ -121,7 +121,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),
     m_button_header_widget);
-  m_draw_button_connection = m_draw_line_button->connect_clicked_signal([=] {
+  m_draw_button_connection = m_draw_line_button->connect_selected_signal([=] {
     on_draw_line_button_click();
   });
   button_header_layout->addWidget(m_draw_line_button);
@@ -162,7 +162,7 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_lock_grid_button->setEnabled(true);
   m_auto_scale_button->setEnabled(true);
   m_draw_line_button->setEnabled(true);
-  m_draw_line_button->set_toggled(false);
+  m_draw_line_button->set_checked(false);
   m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
   m_trend_line_editor_widget->hide();
   m_trend_line_editor_widget->connect_color_signal(
