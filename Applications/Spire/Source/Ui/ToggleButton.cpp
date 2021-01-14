@@ -11,6 +11,13 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto DEFAULT_SIZE() {
+    static auto size = scale(26, 26);
+    return size;
+  }
+}
+
 ToggleButton::ToggleButton(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_icon(std::move(icon)),
@@ -46,9 +53,13 @@ void ToggleButton::setDisabled(bool disabled) {
   update_button(!disabled);
 }
 
-connection ToggleButton::connect_clicked_signal(
-    const ClickedSignal::slot_type& slot) const {
-  return m_clicked_signal.connect(slot);
+connection ToggleButton::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
+}
+
+QSize ToggleButton::sizeHint() const {
+  return DEFAULT_SIZE();
 }
 
 void ToggleButton::swap_check_state() {
@@ -71,7 +82,7 @@ void ToggleButton::update_button() {
   m_icon_button = new IconButton(m_icon, style, this);
   m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
     swap_check_state();
-    m_clicked_signal();
+    m_selected_signal();
   });
   setFocusProxy(m_icon_button);
   m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

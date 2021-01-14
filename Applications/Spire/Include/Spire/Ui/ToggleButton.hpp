@@ -10,8 +10,8 @@ namespace Spire {
   class ToggleButton : public QWidget {
     public:
 
-      //! Signal type for the clicked signal.
-      using ClickedSignal = Signal<void ()>;
+      //! Signals that the ToggleButton was selected.
+      using SelectedSignal = Signal<void ()>;
 
       //! Constructs a ToggleButton.
       /*!
@@ -38,12 +38,15 @@ namespace Spire {
       */
       void setDisabled(bool disabled);
 
-      //! Connects a slot to the clicked signal.
-      boost::signals2::connection connect_clicked_signal(
-        const ClickedSignal::slot_type& slot) const;
+      //! Connects a slot to the selected signal.
+      boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const;
+
+    protected:
+      QSize sizeHint() const override;
 
     private:
-      mutable ClickedSignal m_clicked_signal;
+      mutable SelectedSignal m_selected_signal;
       QImage m_icon;
       IconButton* m_icon_button;
       boost::signals2::scoped_connection m_clicked_connection;
