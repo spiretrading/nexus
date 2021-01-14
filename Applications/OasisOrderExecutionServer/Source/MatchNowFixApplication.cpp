@@ -125,8 +125,8 @@ void MatchNowFixApplication::onMessage(const FIX42::ExecutionReport& message,
             const ExecutionReport& lastReport = reports.back();
             if(lastReport.m_status == OrderStatus::PENDING_NEW) {
               ExecutionReport updatedReport =
-                ExecutionReport::BuildUpdatedReport(lastReport,
-                OrderStatus::NEW, m_timeClient->GetTime());
+                ExecutionReport::MakeUpdatedReport(lastReport,
+                  OrderStatus::NEW, m_timeClient->GetTime());
               order->Update(updatedReport);
             }
           });
