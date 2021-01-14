@@ -79,12 +79,12 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
   m_table_columns_menu->setContentsMargins(0, scale_height(0), 0,
     scale_height(4));
   addMenu(m_table_columns_menu);
-  add_check_box(tr("Side"), m_side_signal);
-  add_check_box(tr("Size"), m_size_signal);
-  add_check_box(tr("Reference Px"), m_reference_price_signal);
-  add_check_box(tr("Date"), m_date_signal);
-  add_check_box(tr("Time"), m_time_signal);
-  add_check_box(tr("Notional Value"), m_notional_value_signal);
+  add_checkbox(tr("Side"), m_side_signal);
+  add_checkbox(tr("Size"), m_size_signal);
+  add_checkbox(tr("Reference Px"), m_reference_price_signal);
+  add_checkbox(tr("Date"), m_date_signal);
+  add_checkbox(tr("Time"), m_time_signal);
+  add_checkbox(tr("Notional Value"), m_notional_value_signal);
   add_menu_item(tr("Export Table"), m_export_table_signal);
   add_menu_item(tr("Export Chart"), m_export_chart_signal);
   add_menu_item(tr("Reset All Filters"), m_reset_signal);
@@ -148,17 +148,17 @@ bool OrderImbalanceIndicatorContextMenu::eventFilter(QObject* watched,
   return QMenu::eventFilter(watched, event);
 }
 
-void OrderImbalanceIndicatorContextMenu::add_check_box(const QString& text,
+void OrderImbalanceIndicatorContextMenu::add_checkbox(const QString& text,
     ToggledSignal& signal) {
-  auto check_box = new Checkbox(text, this);
-  check_box->setFixedSize(CHECK_BOX_SIZE());
-  check_box->setChecked(true);
-  check_box->setLayoutDirection(Qt::RightToLeft);
+  auto checkbox = new Checkbox(text, this);
+  checkbox->setFixedSize(CHECK_BOX_SIZE());
+  checkbox->setChecked(true);
+  checkbox->setLayoutDirection(Qt::RightToLeft);
   auto action = new QWidgetAction(this);
-  action->setDefaultWidget(check_box);
+  action->setDefaultWidget(checkbox);
   m_table_columns_menu->addAction(action);
-  connect(static_cast<Checkbox*>(action->defaultWidget()),
-    &Checkbox::stateChanged, [signal = &signal] (int state) {
+  connect(checkbox, &Checkbox::stateChanged,
+    [signal = &signal] (int state) {
       (*signal)(state == Qt::Checked);
     });
 }

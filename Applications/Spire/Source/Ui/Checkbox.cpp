@@ -18,6 +18,36 @@ namespace {
     static auto padding = scale_width(8);
     return padding;
   }
+
+  const auto& CHECK_ICON() {
+    static auto icon = imageFromSvg(":/Icons/check.svg", scale(10, 8));
+    return icon;
+  }
+
+  const auto& BOX_ENABLED_COLOR() {
+    static auto color = QColor("#FFFFFF");
+    return color;
+  }
+
+  const auto& BOX_DISABLED_COLOR() {
+    static auto color = QColor("#F5F5F5");
+    return color;
+  }
+
+  const auto& CHECK_ENABLED_COLOR() {
+    static auto color = QColor("#4B23A0");
+    return color;
+  }
+
+  const auto& CHECK_DISABLED_COLOR() {
+    static auto color = QColor("#C8C8C8");
+    return color;
+  }
+
+  const auto& TEXT_COLOR() {
+    static auto color = QColor("#000000");
+    return color;
+  }
 }
 
 Checkbox::Checkbox(QWidget* parent)
@@ -25,8 +55,7 @@ Checkbox::Checkbox(QWidget* parent)
 
 Checkbox::Checkbox(const QString& label, QWidget* parent)
     : QCheckBox(label, parent),
-      m_is_read_only(false),
-      m_check_icon(imageFromSvg(":/Icons/check.svg", scale(10, 8))) {
+      m_is_read_only(false) {
   setAttribute(Qt::WA_Hover);
   auto font = QFont("Roboto");
   font.setPixelSize(scale_height(12));
@@ -34,14 +63,11 @@ Checkbox::Checkbox(const QString& label, QWidget* parent)
 }
 
 void Checkbox::keyPressEvent(QKeyEvent* event) {
-  event->accept();
-  if(m_is_read_only || event->isAutoRepeat()) {
+  if(m_is_read_only) {
+    event->accept();
     return;
   }
-  if(event->key() == Qt::Key_Space) {
-    setChecked(!isChecked());
-    update();
-  }
+  QCheckBox::keyPressEvent(event);
 }
 
 void Checkbox::mousePressEvent(QMouseEvent* event) {
@@ -51,7 +77,6 @@ void Checkbox::mousePressEvent(QMouseEvent* event) {
   }
   if(event->button() == Qt::LeftButton) {
     setChecked(!isChecked());
-    update();
   }
 }
 
@@ -60,14 +85,14 @@ void Checkbox::paintEvent(QPaintEvent* event) {
   painter.fillRect(QRect(get_box_position(), BOX_SIZE()), get_box_color());
   painter.fillRect(get_inner_box_rect(), get_inner_box_color());
   if(isChecked()) {
-    auto icon = QPixmap::fromImage(m_check_icon);
+    auto icon = QPixmap::fromImage(CHECK_ICON());
     auto image_painter = QPainter(&icon);
     image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
     image_painter.fillRect(icon.rect(), get_check_color());
     painter.drawPixmap(get_check_position(), icon);
   }
   if(!text().isEmpty()) {
-    painter.setPen("#000000");
+    painter.setPen(TEXT_COLOR());
     painter.drawText(QRect(get_text_position(), size()), 0, text());
   }
 }
@@ -81,9 +106,9 @@ void Checkbox::set_read_only(bool is_read_only) {
 
 QColor Checkbox::get_box_color() const {
   if(!isEnabled() || m_is_read_only || (!hasFocus() && !underMouse())) {
-    return "#C8C8C8";
+    return CHECK_DISABLED_COLOR();
   }
-  return "#4B23A0";
+  return CHECK_ENABLED_COLOR();
 }
 
 QPoint Checkbox::get_box_position() const {
@@ -96,22 +121,22 @@ QPoint Checkbox::get_box_position() const {
 
 QColor Checkbox::get_check_color() const {
   if(!isEnabled()) {
-    return "#C8C8C8";
+    return CHECK_DISABLED_COLOR();
   }
-  return "#4B23A0";
+  return CHECK_ENABLED_COLOR();
 }
 
 QPoint Checkbox::get_check_position() const {
   auto box_pos = get_box_position();
-  return {box_pos.x() + ((BOX_SIZE().width() - m_check_icon.width()) / 2),
-    box_pos.y() + ((BOX_SIZE().height() - m_check_icon.height()) / 2)};
+  return {box_pos.x() + ((BOX_SIZE().width() - CHECK_ICON().width()) / 2),
+    box_pos.y() + ((BOX_SIZE().height() - CHECK_ICON().height()) / 2)};
 }
 
 QColor Checkbox::get_inner_box_color() const {
   if(!isEnabled() || m_is_read_only) {
-    return "#F5F5F5";
+    return BOX_DISABLED_COLOR();
   }
-  return "#FFFFFF";
+  return BOX_ENABLED_COLOR();
 }
 
 QRect Checkbox::get_inner_box_rect() const {

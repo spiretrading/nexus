@@ -1,5 +1,5 @@
-#ifndef SPIRE_CHECK_BOX_HPP
-#define SPIRE_CHECK_BOX_HPP
+#ifndef SPIRE_CHECKBOX_HPP
+#define SPIRE_CHECKBOX_HPP
 #include <QCheckBox>
 
 namespace Spire {
@@ -35,7 +35,6 @@ namespace Spire {
 
     private:
       bool m_is_read_only;
-      QImage m_check_icon;
 
       QColor get_box_color() const;
       QPoint get_box_position() const;

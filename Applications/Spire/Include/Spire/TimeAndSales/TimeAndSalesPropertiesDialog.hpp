@@ -61,7 +61,7 @@ namespace Spire {
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_text_color_button;
       FontSelectorWidget* m_edit_font_widget;
-      Checkbox* m_show_grid_check_box;
+      Checkbox* m_show_grid_checkbox;
 
       void set_band_color(const QColor& color);
       void set_color_settings_stylesheet(int band_index);

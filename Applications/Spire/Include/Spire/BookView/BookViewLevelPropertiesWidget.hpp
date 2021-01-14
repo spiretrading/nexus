@@ -37,7 +37,7 @@ namespace Spire {
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_gradient_start_button;
       ColorSelectorButton* m_gradient_end_button;
-      Checkbox* m_show_grid_lines_check_box;
+      Checkbox* m_show_grid_lines_checkbox;
 
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();

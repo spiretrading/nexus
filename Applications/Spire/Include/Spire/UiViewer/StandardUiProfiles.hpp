@@ -5,7 +5,7 @@
 namespace Spire {
 
   //! Returns a UiProfile for the CheckBox.
-  UiProfile make_check_box_profile();
+  UiProfile make_checkbox_profile();
 
   //! Returns a UiProfile for the ColorSelectorButton.
   UiProfile make_color_selector_button_profile();
