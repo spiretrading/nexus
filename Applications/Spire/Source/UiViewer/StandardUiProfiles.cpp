@@ -5,6 +5,7 @@
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -115,6 +116,29 @@ UiProfile Spire::make_flat_button_profile() {
       });
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_toggle_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_bool_property("checked"));
+  auto profile = UiProfile(QString::fromUtf8("ToggleButton"), properties,
+    [] (auto& profile) {
+      auto button = new ToggleButton(imageFromSvg(":/Icons/lock-grid.svg",
+        scale(26, 26)));
+      apply_widget_properties(button, profile.get_properties());
+      auto& checked = get<bool>("checked", profile.get_properties());
+      checked.connect_changed_signal([=] (auto is_checked) {
+        button->set_checked(is_checked);
+      });
+      button->connect_selected_signal([&] {
+        checked.set(!checked.get());
+      });
+      button->connect_selected_signal(
+        profile.make_event_slot(QString::fromUtf8("SelectedSignal")));
       return button;
     });
   return profile;
