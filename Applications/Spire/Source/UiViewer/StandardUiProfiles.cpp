@@ -132,13 +132,13 @@ UiProfile Spire::make_toggle_button_profile() {
       apply_widget_properties(button, profile.get_properties());
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto is_checked) {
-        button->set_checked(is_checked);
+        button->setChecked(is_checked);
       });
-      button->connect_selected_signal([&] {
+      QObject::connect(button, &ToggleButton::released, [&] {
         checked.set(!checked.get());
       });
-      button->connect_selected_signal(
-        profile.make_event_slot(QString::fromUtf8("SelectedSignal")));
+      QObject::connect(button, &ToggleButton::released,
+        profile.make_event_slot(QString::fromUtf8("released")));
       return button;
     });
   return profile;
