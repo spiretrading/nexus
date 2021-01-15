@@ -266,7 +266,7 @@ void KeyBindingsTableView::add_delete_button(int index) {
   auto button = create_delete_button(this);
   button->installEventFilter(this);
   m_delete_buttons_layout->insertWidget(index, button);
-  button->connect_clicked_signal([=] {
+  connect(button, &IconButton::released, [=] {
     on_delete_button_clicked(index);
   });
 }
