@@ -32,7 +32,6 @@ namespace {
       QWidget* parent) {
     auto style = IconButton::Style();
     style.m_default_color = QColor("#7F5EEC");
-    style.m_hover_background_color = Qt::transparent;
     style.m_blur_color = QColor("#7F5EEC");
     auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
       parent);

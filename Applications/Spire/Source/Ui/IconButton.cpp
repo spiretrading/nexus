@@ -89,7 +89,7 @@ QSize IconButton::sizeHint() const {
 
 const QColor& IconButton::get_current_icon_color() const {
   if(isEnabled()) {
-    if(underMouse() || hasFocus()) {
+    if(underMouse()) {
       return m_style.m_hover_color;
     } else if(!window()->isActiveWindow()) {
       return m_style.m_blur_color;
