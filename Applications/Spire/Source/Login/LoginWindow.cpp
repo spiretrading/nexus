@@ -48,7 +48,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_exit_button->setFixedSize(BUTTON_SIZE());
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
-  m_exit_button->connect_clicked_signal([=] { window()->close(); });
+  connect(m_exit_button, &IconButton::released, [=] { window()->close(); });
   title_bar_layout->addWidget(m_exit_button);
   title_bar_layout->setStretchFactor(m_exit_button, 32);
   body_layout->addLayout(title_bar_layout);
