@@ -76,7 +76,6 @@ void ToggleButton::update_button() {
     return style;
   }();
   m_icon_button = new IconButton(m_icon, style, this);
-  m_icon_button->setObjectName("icon button");
   setFocusProxy(m_icon_button);
   m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   connect(m_icon_button, &IconButton::released, [=] {
@@ -87,7 +86,6 @@ void ToggleButton::update_button() {
   if(is_button_focused) {
     m_icon_button->setFocus();
   }
-  m_icon_button->repaint();
 }
 
 void ToggleButton::update_button(bool enabled) {

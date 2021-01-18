@@ -3,7 +3,6 @@
 #include <QAbstractButton>
 #include <QImage>
 #include <QString>
-#include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -53,8 +52,10 @@ namespace Spire {
       IconButton(QImage icon, Style style, QWidget* parent = nullptr);
 
     protected:
+      void keyPressEvent(QKeyEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      QSize sizeHint() const override;
 
     private:
       QImage m_icon;
