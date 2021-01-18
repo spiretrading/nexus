@@ -3,7 +3,6 @@
 #include <QAbstractButton>
 #include <QImage>
 #include <QString>
-#include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -37,9 +36,6 @@ namespace Spire {
         Style();
       };
 
-      //! Signal type for the clicked signal.
-      using ClickedSignal = Signal<void ()>;
-
       //! Constructs an IconButton with the default Style.
       /*!
         \param icon The icon to show.
@@ -55,26 +51,17 @@ namespace Spire {
       */
       IconButton(QImage icon, Style style, QWidget* parent = nullptr);
 
-      //! Connects a slot to the clicked signal.
-      boost::signals2::connection connect_clicked_signal(
-        const ClickedSignal::slot_type& slot) const;
-
     protected:
-      void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      QSize sizeHint() const override;
 
     private:
-      mutable ClickedSignal m_clicked_signal;
-      Qt::FocusReason m_last_focus_reason;
       QImage m_icon;
       Style m_style;
 
       const QColor& get_current_icon_color() const;
-      bool is_last_focus_reason_tab() const;
   };
 }
 
