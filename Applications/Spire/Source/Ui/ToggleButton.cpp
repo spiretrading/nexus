@@ -41,6 +41,10 @@ ToggleButton::ToggleButton(QImage icon, QWidget* parent)
 void ToggleButton::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_button();
+  } else if(event->type() == QEvent::ToolTipChange) {
+    if(m_icon_button != nullptr) {
+      m_icon_button->setToolTip(toolTip());
+    }
   }
   QAbstractButton::changeEvent(event);
 }
@@ -77,6 +81,7 @@ void ToggleButton::update_button() {
   }();
   m_icon_button = new IconButton(m_icon, style, this);
   setFocusProxy(m_icon_button);
+  m_icon_button->setToolTip(toolTip());
   m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   connect(m_icon_button, &IconButton::released, [=] {
     nextCheckState();
