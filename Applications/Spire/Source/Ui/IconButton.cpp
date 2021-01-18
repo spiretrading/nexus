@@ -22,7 +22,7 @@ IconButton::Style::Style()
       m_hover_color("#4B23A0"),
       m_disabled_color("#D0D0D0"),
       m_hover_background_color("#E3E3E3"),
-      m_blur_color(m_default_color) {
+      m_blur_color("#7F5EEC") {
   m_default_background_color.setAlpha(0);
 }
 
