@@ -48,7 +48,7 @@ else
   if [ ! -f "CMakeFiles/timestamp.txt" ]; then
     run_cmake=1
   else
-    ct="$(find $directory -type f -name CMakeLists.txt | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+    ct="$((echo $directory/CMakeLists.txt; find $directory/Config -type f -name CMakeLists.txt -o -name dependencies*.cmake) | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
     mt="$($STAT CMakeFiles/timestamp.txt | grep Modify | awk '{print $2 $3}')"
     if [ "$ct" \> "$mt" ]; then
       run_cmake=1
@@ -80,7 +80,7 @@ if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
   ln -s "$dependencies" Dependencies
 fi
 if [ -d "$directory/Include" ]; then
-  include_hash=$(find $root $directory/Include -name "*.hpp" | grep "^/" | md5sum | cut -d" " -f1)
+  include_hash=$(find $directory/Include -name "*" | grep "^/" | md5sum | cut -d" " -f1)
   if [ -f "CMakeFiles/hpp_hash.txt" ]; then
     hpp_hash=$(cat "CMakeFiles/hpp_hash.txt")
     if [ "$include_hash" != "$hpp_hash" ]; then
@@ -97,7 +97,7 @@ if [ -d "$directory/Include" ]; then
   fi
 fi
 if [ -d "$directory/Source" ]; then
-  source_hash=$(find $root $directory/Source -name "*.cpp" | grep "^/" | md5sum | cut -d" " -f1)
+  source_hash=$(find $directory/Source -name "*" | grep "^/" | md5sum | cut -d" " -f1)
   if [ -f "CMakeFiles/cpp_hash.txt" ]; then
     cpp_hash=$(cat "CMakeFiles/cpp_hash.txt")
     if [ "$source_hash" != "$cpp_hash" ]; then
