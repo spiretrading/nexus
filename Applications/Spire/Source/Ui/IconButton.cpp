@@ -75,11 +75,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
     (height() - icon.height()) / 2, icon);
   if(hasFocus()) {
     painter.setPen("#4B23A0");
-    auto path = QPainterPath();
-    path.addRoundedRect(0, 0, width() - scale_width(1),
-      height() - scale_height(1), scale_width(1), scale_height(1));
-    painter.setPen({QColor("#4B23A0"), static_cast<qreal>(scale_width(1))});
-    painter.drawPath(path);
+    painter.drawRect(rect().adjusted(0, 0, -scale_width(1), -scale_height(1)));
   }
 }
 
