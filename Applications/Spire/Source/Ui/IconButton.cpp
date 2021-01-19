@@ -46,12 +46,25 @@ IconButton::IconButton(QImage icon, Style style, QWidget* parent)
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+  if(!event->isAutoRepeat() && (event->key() == Qt::Key_Enter ||
+      event->key() == Qt::Key_Return)) {
     event->accept();
-    Q_EMIT released();
+    setDown(true);
+    Q_EMIT pressed();
     return;
   }
   QAbstractButton::keyPressEvent(event);
+}
+
+void IconButton::keyReleaseEvent(QKeyEvent* event) {
+  if(!event->isAutoRepeat() && isDown()) {
+    event->accept();
+    setDown(false);
+    Q_EMIT released();
+    Q_EMIT clicked(isChecked());
+    return;
+  }
+  QAbstractButton::keyReleaseEvent(event);
 }
 
 void IconButton::mouseMoveEvent(QMouseEvent* event) {
