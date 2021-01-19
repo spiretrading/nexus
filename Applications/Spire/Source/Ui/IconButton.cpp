@@ -74,7 +74,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
   if(hasFocus()) {
-    painter.setPen("#4B23A0");
+    painter.setPen({QColor("#4B23A0"), static_cast<double>(scale_width(1))});
     painter.drawRect(rect().adjusted(0, 0, -scale_width(1), -scale_height(1)));
   }
 }
