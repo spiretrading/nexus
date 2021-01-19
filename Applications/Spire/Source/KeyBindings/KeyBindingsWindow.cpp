@@ -68,25 +68,25 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
-  auto restore_button = make_flat_button(tr("Restore Defaults"), this);
-  restore_button->connect_clicked_signal([=] {
+  auto restore_button = new FlatButton(tr("Restore Defaults"), this);
+  restore_button->connect_pressed_signal([=] {
     on_restore_button_clicked();
   });
   restore_button->setFixedSize(scale(120, 26));
   button_layout->addWidget(restore_button);
   button_layout->addStretch(1);
-  auto cancel_button = make_flat_button(tr("Cancel"), this);
-  cancel_button->connect_clicked_signal([=] { close(); });
+  auto cancel_button = new FlatButton(tr("Cancel"), this);
+  cancel_button->connect_pressed_signal([=] { close(); });
   cancel_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(cancel_button);
   button_layout->addSpacing(scale_width(8));
-  auto apply_button = make_flat_button(tr("Apply"), this);
-  apply_button->connect_clicked_signal(m_apply_signal);
+  auto apply_button = new FlatButton(tr("Apply"), this);
+  apply_button->connect_pressed_signal(m_apply_signal);
   apply_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(apply_button);
   button_layout->addSpacing(scale_width(8));
-  auto ok_button = make_flat_button(tr("OK"), this);
-  ok_button->connect_clicked_signal([=] {
+  auto ok_button = new FlatButton(tr("OK"), this);
+  ok_button->connect_pressed_signal([=] {
     on_ok_button_clicked();
   });
   ok_button->setFixedSize(scale(100, 26));

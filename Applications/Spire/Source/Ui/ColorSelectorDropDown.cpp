@@ -55,10 +55,10 @@ namespace {
   auto create_color_button(const QColor& color, QWidget* parent) {
     auto button = new FlatButton(parent);
     button->setFixedSize(BUTTON_WIDTH(), BUTTON_HEIGHT());
-    auto style = button->get_style();
+    auto style = button->get_default_style();
     style.m_background_color = color;
     style.m_border_color = QColor("#C8C8C8");
-    button->set_style(style);
+    button->set_default_style(style);
     style.m_border_color = QColor("#4B23A0");
     button->set_hover_style(style);
     button->set_focus_style(style);
@@ -230,7 +230,7 @@ void ColorSelectorDropDown::add_basic_color_button(int x, int y,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->setFocusPolicy(Qt::TabFocus);
-  m_button_clicked_connections.AddConnection(button->connect_clicked_signal(
+  m_button_clicked_connections.AddConnection(button->connect_pressed_signal(
     [=] {
       on_color_button_clicked(color);
     }));
@@ -241,7 +241,7 @@ void ColorSelectorDropDown::add_recent_color_button(int index,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->setFocusPolicy(Qt::TabFocus);
-  m_button_clicked_connections.AddConnection(button->connect_clicked_signal(
+  m_button_clicked_connections.AddConnection(button->connect_pressed_signal(
     [=] {
       on_color_button_clicked(color);
     }));

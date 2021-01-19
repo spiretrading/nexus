@@ -129,9 +129,9 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_gradient_end_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
-  auto apply_gradient_button = make_flat_button(tr("Apply Gradient"), this);
+  auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedSize(BUTTON_SIZE());
-  apply_gradient_button->connect_clicked_signal(
+  apply_gradient_button->connect_pressed_signal(
     [=] { on_gradient_apply_button_clicked(); });
   band_properties_layout->addWidget(apply_gradient_button);
   horizontal_layout->addLayout(band_properties_layout);
