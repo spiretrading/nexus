@@ -48,7 +48,7 @@ else
   if [ ! -f "CMakeFiles/timestamp.txt" ]; then
     run_cmake=1
   else
-    ct="$((echo $directory/CMakeLists.txt; find $directory/Config -type f -name CMakeLists.txt -o -name dependencies*.cmake) | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+    ct="$(echo $directory/CMakeLists.txt | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
     mt="$($STAT CMakeFiles/timestamp.txt | grep Modify | awk '{print $2 $3}')"
     if [ "$ct" \> "$mt" ]; then
       run_cmake=1

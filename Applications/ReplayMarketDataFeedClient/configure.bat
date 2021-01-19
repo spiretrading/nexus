@@ -49,7 +49,7 @@ IF NOT EXIST CMakeFiles (
     SET RUN_CMAKE=1
   ) ELSE (
     FOR /F %%i IN (
-        'ls -l --time-style=full-iso !DIRECTORY!CMakeLists.txt !DIRECTORY!PreLoad.cmake !DIRECTORY!Config\* ^| grep "PreLoad\.cmake\|CMakeLists\.txt\|dependencies.*.cmake" ^| awk "{print $6 $7}"') DO (
+        'ls -l --time-style=full-iso !DIRECTORY!CMakeLists.txt !DIRECTORY!PreLoad.cmake ^| grep "PreLoad\.cmake\|CMakeLists\.txt\|dependencies.*.cmake" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
           'ls -l --time-style=full-iso CMakeFiles\timestamp.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
