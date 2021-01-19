@@ -70,7 +70,7 @@ void ToggleButton::update_button() {
     auto style = IconButton::Style();
     if(isChecked()) {
       style.m_default_color = "#1FD37A";
-      style.m_hover_color = "#1FD37A";
+      style.m_hover_color = "#2CAC79";
       style.m_blur_color = "#1FD37A";
     } else {
       style.m_default_color = "#7F5EEC";
