@@ -67,14 +67,8 @@ void IconButton::keyReleaseEvent(QKeyEvent* event) {
   QAbstractButton::keyReleaseEvent(event);
 }
 
-void IconButton::mouseMoveEvent(QMouseEvent* event) {
-  if(rect().contains(event->pos())) {
-    QAbstractButton::mouseMoveEvent(event);
-  }
-}
-
 void IconButton::paintEvent(QPaintEvent* event) {
-  QPainter painter(this);
+  auto painter = QPainter(this);
   if(!underMouse() || !isEnabled()) {
     painter.fillRect(rect(), m_style.m_default_background_color);
   } else {
