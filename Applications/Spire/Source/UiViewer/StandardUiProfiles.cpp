@@ -5,6 +5,7 @@
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/IconButton.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -115,6 +116,28 @@ UiProfile Spire::make_flat_button_profile() {
       });
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_icon_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_qstring_property("tooltip",
+    QString::fromUtf8("Tooltip")));
+  auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
+    [] (auto& profile) {
+      auto button = new IconButton(imageFromSvg(":/Icons/demo.svg",
+        scale(26, 26)));
+      auto& tooltip = get<QString>("tooltip", profile.get_properties());
+      button->setToolTip(tooltip.get());
+      apply_widget_properties(button, profile.get_properties());
+      tooltip.connect_changed_signal([=] (const auto& value) {
+        button->setToolTip(value);
+      });
+      QObject::connect(button, &IconButton::clicked,
+        profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
       return button;
     });
   return profile;

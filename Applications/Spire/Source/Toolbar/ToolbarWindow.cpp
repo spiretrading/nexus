@@ -32,7 +32,6 @@ namespace {
       QWidget* parent) {
     auto style = IconButton::Style();
     style.m_default_color = QColor("#7F5EEC");
-    style.m_hover_background_color = Qt::transparent;
     style.m_blur_color = QColor("#7F5EEC");
     auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
       parent);
@@ -96,12 +95,12 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   button_layout->addWidget(m_canvas_button);
   m_book_view_button = create_button(":/Icons/toolbar_icons/bookview.svg",
     tr("Book View"), body);
-  m_book_view_button->connect_clicked_signal(
+  connect(m_book_view_button, &IconButton::clicked,
     [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
   m_time_and_sales_button = create_button(
     ":/Icons/toolbar_icons/time-sales.svg", tr("Time and Sales"), body);
-  m_time_and_sales_button->connect_clicked_signal(
+  connect(m_time_and_sales_button, &IconButton::clicked,
     [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
   m_chart_button = create_button(":/Icons/toolbar_icons/chart.svg",

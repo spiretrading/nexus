@@ -69,7 +69,7 @@ void ToggleButton::update_button() {
     style.m_blur_color = "#7F5EEC";
   }
   m_icon_button = new IconButton(m_icon, style, this);
-  m_clicked_connection = m_icon_button->connect_clicked_signal([=] {
+  connect(m_icon_button, &IconButton::clicked, [=] {
     swap_toggle();
     m_clicked_signal();
   });
