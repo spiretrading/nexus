@@ -1,7 +1,8 @@
-#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include <QLabel>
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
+#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
@@ -69,24 +70,26 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
   auto restore_button = new FlatButton(tr("Restore Defaults"), this);
-  restore_button->connect_pressed_signal([=] {
+  connect(restore_button, &FlatButton::clicked, [=] {
     on_restore_button_clicked();
   });
   restore_button->setFixedSize(scale(120, 26));
   button_layout->addWidget(restore_button);
   button_layout->addStretch(1);
   auto cancel_button = new FlatButton(tr("Cancel"), this);
-  cancel_button->connect_pressed_signal([=] { close(); });
+  connect(cancel_button, &FlatButton::clicked, [=] { close(); });
   cancel_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(cancel_button);
   button_layout->addSpacing(scale_width(8));
   auto apply_button = new FlatButton(tr("Apply"), this);
-  apply_button->connect_pressed_signal(m_apply_signal);
+  connect(apply_button, &FlatButton::clicked, [=] {
+    m_apply_signal();
+  });
   apply_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(apply_button);
   button_layout->addSpacing(scale_width(8));
   auto ok_button = new FlatButton(tr("OK"), this);
-  ok_button->connect_pressed_signal([=] {
+  connect(ok_button, &FlatButton::clicked, [=] {
     on_ok_button_clicked();
   });
   ok_button->setFixedSize(scale(100, 26));
