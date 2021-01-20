@@ -53,7 +53,6 @@ namespace Spire {
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
-      void keyReleaseEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       QSize sizeHint() const override;
 

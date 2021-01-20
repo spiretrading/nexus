@@ -46,7 +46,6 @@ IconButton::IconButton(QImage icon, Style style, QWidget* parent)
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {
-  event->accept();
   if(!event->isAutoRepeat()) {
     switch(event->key()) {
       case Qt::Key_Enter:
@@ -56,10 +55,6 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
         return;
     }
   }
-}
-
-void IconButton::keyReleaseEvent(QKeyEvent* event) {
-  event->accept();
 }
 
 void IconButton::paintEvent(QPaintEvent* event) {
