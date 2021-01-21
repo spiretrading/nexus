@@ -113,9 +113,8 @@ UiProfile Spire::make_flat_button_profile() {
       label.connect_changed_signal([=] (const auto& value) {
         button->setText(value);
       });
-      QObject::connect(button, &FlatButton::clicked, [&profile] {
-        profile.make_event_slot(QString::fromUtf8("ClickedSignal"))();
-      });
+      QObject::connect(button, &FlatButton::clicked,
+        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
       return button;
     });
   return profile;

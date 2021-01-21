@@ -162,7 +162,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   button_layout->setStretchFactor(build_label, 57);
   button_layout->addStretch(103);
   m_sign_in_button = new FlatButton(tr("Sign In"), this);
-  connect(m_sign_in_button, &FlatButton::clicked, [=] { try_login(); });
+  connect(m_sign_in_button, &FlatButton::clicked,
+    this, &LoginWindow::try_login);
   m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
