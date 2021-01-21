@@ -86,6 +86,8 @@ void FlatButton::keyPressEvent(QKeyEvent* event) {
         Q_EMIT clicked(isChecked());
       }
       break;
+    default:
+      QPushButton::keyPressEvent(event);
   }
 }
 
