@@ -24,7 +24,7 @@ ToggleButton::ToggleButton(QImage icon, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   update_button();
-  connect(this, &ToggleButton::clicked, this, &ToggleButton::update_button);
+  connect(this, &ToggleButton::toggled, this, &ToggleButton::update_button);
   setStyleSheet(QString(R"(
     QToolTip {
       background-color: white;
