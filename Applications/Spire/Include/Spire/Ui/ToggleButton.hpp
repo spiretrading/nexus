@@ -1,7 +1,6 @@
 #ifndef SPIRE_TOGGLE_BUTTON_HPP
 #define SPIRE_TOGGLE_BUTTON_HPP
 #include <QAbstractButton>
-#include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -18,15 +17,13 @@ namespace Spire {
       explicit ToggleButton(QImage icon, QWidget* parent = nullptr);
 
     protected:
-      void changeEvent(QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       QSize sizeHint() const override;
 
     private:
       QImage m_icon;
-      IconButton* m_icon_button;
 
-      void update_button();
+      const QColor& get_current_icon_color() const;
   };
 }
 
