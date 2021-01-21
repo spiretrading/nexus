@@ -27,7 +27,6 @@ namespace Spire {
       IconButton* m_icon_button;
 
       void update_button();
-      void update_button(bool enabled);
   };
 }
 

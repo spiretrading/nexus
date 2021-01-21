@@ -24,9 +24,7 @@ ToggleButton::ToggleButton(QImage icon, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   update_button();
-  connect(this, &ToggleButton::toggled, [=] (auto is_checked) {
-    update_button();
-  });
+  connect(this, &ToggleButton::clicked, this, &ToggleButton::update_button);
   setStyleSheet(QString(R"(
     QToolTip {
       background-color: white;
@@ -90,11 +88,5 @@ void ToggleButton::update_button() {
   layout()->addWidget(m_icon_button);
   if(is_button_focused) {
     m_icon_button->setFocus();
-  }
-}
-
-void ToggleButton::update_button(bool enabled) {
-  if(enabled) {
-    update_button();
   }
 }
