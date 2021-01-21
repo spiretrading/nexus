@@ -58,17 +58,17 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
   m_layout->addSpacerItem(new QSpacerItem(scale_width(8), 10, QSizePolicy::Fixed,
     QSizePolicy::Expanding));
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
-  connect(m_minimize_button, &IconButton::released, [=] {
+  connect(m_minimize_button, &IconButton::clicked, [=] {
     on_minimize_button_press();
   });
   m_layout->addWidget(m_minimize_button);
   m_maximize_button = create_button(":/Icons/maximize.svg", this);
-  connect(m_maximize_button, &IconButton::released, [=] {
+  connect(m_maximize_button, &IconButton::clicked, [=] {
     on_maximize_button_press();
   });
   m_layout->addWidget(m_maximize_button);
   m_restore_button = create_button(":/Icons/restore.svg", this);
-  connect(m_restore_button, &IconButton::released, [=] {
+  connect(m_restore_button, &IconButton::clicked, [=] {
     on_restore_button_press();
   });
   m_restore_button->hide();
@@ -79,7 +79,7 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
     BUTTON_SIZE()), close_button_style, parent);
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->setFixedSize(BUTTON_SIZE());
-  connect(m_close_button, &IconButton::released, [=] {
+  connect(m_close_button, &IconButton::clicked, [=] {
     on_close_button_press();
   });
   m_layout->addWidget(m_close_button);

@@ -167,8 +167,8 @@ UiProfile Spire::make_icon_button_profile() {
       tooltip.connect_changed_signal([=] (const auto& value) {
         button->setToolTip(value);
       });
-      QObject::connect(button, &IconButton::released,
-        profile.make_event_slot(QString::fromUtf8("released")));
+      QObject::connect(button, &IconButton::clicked,
+        profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
       return button;
     });
   return profile;

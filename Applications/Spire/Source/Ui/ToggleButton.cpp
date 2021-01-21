@@ -83,9 +83,9 @@ void ToggleButton::update_button() {
   setFocusProxy(m_icon_button);
   m_icon_button->setToolTip(toolTip());
   m_icon_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  connect(m_icon_button, &IconButton::released, [=] {
+  connect(m_icon_button, &IconButton::clicked, [=] {
     nextCheckState();
-    Q_EMIT released();
+    Q_EMIT clicked(isChecked());
   });
   layout()->addWidget(m_icon_button);
   if(is_button_focused) {

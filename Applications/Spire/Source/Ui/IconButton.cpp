@@ -46,22 +46,19 @@ IconButton::IconButton(QImage icon, Style style, QWidget* parent)
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    event->accept();
-    Q_EMIT released();
-    return;
-  }
-  QAbstractButton::keyPressEvent(event);
-}
-
-void IconButton::mouseMoveEvent(QMouseEvent* event) {
-  if(rect().contains(event->pos())) {
-    QAbstractButton::mouseMoveEvent(event);
+  if(!event->isAutoRepeat()) {
+    switch(event->key()) {
+      case Qt::Key_Enter:
+      case Qt::Key_Return:
+      case Qt::Key_Space:
+        Q_EMIT clicked(isChecked());
+        return;
+    }
   }
 }
 
 void IconButton::paintEvent(QPaintEvent* event) {
-  QPainter painter(this);
+  auto painter = QPainter(this);
   if(!underMouse() || !isEnabled()) {
     painter.fillRect(rect(), m_style.m_default_background_color);
   } else {
@@ -74,12 +71,8 @@ void IconButton::paintEvent(QPaintEvent* event) {
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
   if(hasFocus()) {
-    painter.setPen("#4B23A0");
-    auto path = QPainterPath();
-    path.addRoundedRect(0, 0, width() - scale_width(1),
-      height() - scale_height(1), scale_width(1), scale_height(1));
-    painter.setPen({QColor("#4B23A0"), static_cast<qreal>(scale_width(1))});
-    painter.drawPath(path);
+    painter.setPen({QColor("#4B23A0"), static_cast<double>(scale_width(1))});
+    painter.drawRect(rect().adjusted(0, 0, -scale_width(1), -scale_height(1)));
   }
 }
 
