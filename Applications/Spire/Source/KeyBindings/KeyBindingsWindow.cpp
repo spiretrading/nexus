@@ -1,8 +1,8 @@
-#include <QLabel>
+#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include <QKeyEvent>
+#include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
-#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
