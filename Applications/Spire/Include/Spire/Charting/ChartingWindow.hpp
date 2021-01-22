@@ -57,9 +57,9 @@ namespace Spire {
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
       DropDownMenu* m_period_dropdown;
-      ToggleButton* m_lock_grid_button;
-      ToggleButton* m_auto_scale_button;
-      ToggleButton* m_draw_line_button;
+      IconButton* m_lock_grid_button;
+      IconButton* m_auto_scale_button;
+      IconButton* m_draw_line_button;
       boost::signals2::scoped_connection m_auto_scale_button_connection;
       boost::signals2::scoped_connection m_draw_button_connection;
       bool m_is_chart_auto_scaled;

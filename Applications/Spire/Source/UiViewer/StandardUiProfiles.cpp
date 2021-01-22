@@ -6,7 +6,6 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/IconButton.hpp"
-#include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -127,6 +126,8 @@ UiProfile Spire::make_icon_button_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("tooltip",
     QString::fromUtf8("Tooltip")));
+  properties.push_back(make_standard_bool_property("checkable"));
+  properties.push_back(make_standard_bool_property("checked"));
   auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
     [] (auto& profile) {
       auto button = new IconButton(imageFromSvg(":/Icons/demo.svg",
@@ -137,37 +138,19 @@ UiProfile Spire::make_icon_button_profile() {
       tooltip.connect_changed_signal([=] (const auto& value) {
         button->setToolTip(value);
       });
-      QObject::connect(button, &IconButton::clicked,
-        profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
-      return button;
-    });
-  return profile;
-}
-
-UiProfile Spire::make_toggle_button_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_bool_property("checked"));
-  properties.push_back(make_standard_qstring_property("tooltip",
-    QString::fromUtf8("Tooltip")));
-  auto profile = UiProfile(QString::fromUtf8("ToggleButton"), properties,
-    [] (auto& profile) {
-      auto button = new ToggleButton(imageFromSvg(":/Icons/demo.svg",
-        scale(26, 26)));
-      apply_widget_properties(button, profile.get_properties());
+      auto& checkable = get<bool>("checkable", profile.get_properties());
+      checkable.connect_changed_signal([=] (auto is_checkable) {
+        button->setCheckable(is_checkable);
+        button->update();
+      });
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto is_checked) {
         button->setChecked(is_checked);
       });
-      QObject::connect(button, &ToggleButton::clicked, [&] {
-        checked.set(!checked.get());
+      QObject::connect(button, &IconButton::clicked, [&] (auto is_checked) {
+        checked.set(is_checked);
       });
-      auto& tooltip = get<QString>("tooltip", profile.get_properties());
-      button->setToolTip(tooltip.get());
-      tooltip.connect_changed_signal([=] (const auto& value) {
-        button->setToolTip(value);
-      });
-      QObject::connect(button, &ToggleButton::clicked,
+      QObject::connect(button, &IconButton::clicked,
         profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
       return button;
     });
