@@ -54,11 +54,12 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
     switch(event->key()) {
       case Qt::Key_Enter:
       case Qt::Key_Return:
-      case Qt::Key_Space:
+        nextCheckState();
         Q_EMIT clicked(isChecked());
         return;
     }
   }
+  QAbstractButton::keyPressEvent(event);
 }
 
 void IconButton::paintEvent(QPaintEvent* event) {
