@@ -15,8 +15,8 @@
 #include "Spire/Spire/LocalTechnicalsModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropdownMenu.hpp"
+#include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/SecurityWidget.hpp"
-#include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Charting/TrendLineEditor.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -36,7 +36,8 @@ namespace {
 
   auto create_button(const QString& icon, const QString& tooltip,
       QWidget* parent) {
-    auto button = new ToggleButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    button->setCheckable(true);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
     button->setDisabled(true);
@@ -106,11 +107,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(2));
   m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
     tr("Auto Scale"), m_button_header_widget);
-  m_auto_scale_button->set_toggled(true);
-  m_auto_scale_button_connection = m_auto_scale_button->connect_clicked_signal(
-    [=] {
-      on_auto_scale_button_click();
-    });
+  m_auto_scale_button->setChecked(true);
+  connect(m_auto_scale_button, &IconButton::clicked, this,
+    &ChartingWindow::on_auto_scale_button_click);
   button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -121,9 +120,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),
     m_button_header_widget);
-  m_draw_button_connection = m_draw_line_button->connect_clicked_signal([=] {
-    on_draw_line_button_click();
-  });
+  connect(m_draw_line_button, &IconButton::clicked, this,
+    &ChartingWindow::on_draw_line_button_click);
   button_header_layout->addWidget(m_draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
@@ -162,7 +160,7 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_lock_grid_button->setEnabled(true);
   m_auto_scale_button->setEnabled(true);
   m_draw_line_button->setEnabled(true);
-  m_draw_line_button->set_toggled(false);
+  m_draw_line_button->setChecked(false);
   m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
   m_trend_line_editor_widget->hide();
   m_trend_line_editor_widget->connect_color_signal(

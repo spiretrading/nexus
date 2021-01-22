@@ -126,15 +126,29 @@ UiProfile Spire::make_icon_button_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("tooltip",
     QString::fromUtf8("Tooltip")));
+  properties.push_back(make_standard_bool_property("checkable"));
+  properties.push_back(make_standard_bool_property("checked"));
   auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
     [] (auto& profile) {
       auto button = new IconButton(imageFromSvg(":/Icons/demo.svg",
         scale(26, 26)));
+      apply_widget_properties(button, profile.get_properties());
       auto& tooltip = get<QString>("tooltip", profile.get_properties());
       button->setToolTip(tooltip.get());
-      apply_widget_properties(button, profile.get_properties());
       tooltip.connect_changed_signal([=] (const auto& value) {
         button->setToolTip(value);
+      });
+      auto& checkable = get<bool>("checkable", profile.get_properties());
+      checkable.connect_changed_signal([=] (auto is_checkable) {
+        button->setCheckable(is_checkable);
+        button->update();
+      });
+      auto& checked = get<bool>("checked", profile.get_properties());
+      checked.connect_changed_signal([=] (auto is_checked) {
+        button->setChecked(is_checked);
+      });
+      QObject::connect(button, &IconButton::clicked, [&] (auto is_checked) {
+        checked.set(is_checked);
       });
       QObject::connect(button, &IconButton::clicked,
         profile.make_event_slot<bool>(QString::fromUtf8("clicked")));

@@ -18,11 +18,15 @@ namespace {
 }
 
 IconButton::Style::Style()
-    : m_default_color("#7F5EEC"),
-      m_hover_color("#4B23A0"),
+    : m_blur_color("#7F5EEC"),
+      m_checked_blur_color("#1FD37A"),
+      m_checked_color("#1FD37A"),
+      m_checked_hovered_color("#2CAC79"),
+      m_default_color("#7F5EEC"),
       m_disabled_color("#D0D0D0"),
-      m_hover_background_color("#E3E3E3"),
-      m_blur_color("#7F5EEC") {
+      m_hover_color("#4B23A0"),
+      m_default_background_color("#F5F5F5"),
+      m_hover_background_color("#E3E3E3") {
   m_default_background_color.setAlpha(0);
 }
 
@@ -50,11 +54,12 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
     switch(event->key()) {
       case Qt::Key_Enter:
       case Qt::Key_Return:
-      case Qt::Key_Space:
+        nextCheckState();
         Q_EMIT clicked(isChecked());
         return;
     }
   }
+  QAbstractButton::keyPressEvent(event);
 }
 
 void IconButton::paintEvent(QPaintEvent* event) {
@@ -82,6 +87,14 @@ QSize IconButton::sizeHint() const {
 
 const QColor& IconButton::get_current_icon_color() const {
   if(isEnabled()) {
+    if(isChecked()) {
+      if(underMouse()) {
+        return m_style.m_checked_hovered_color;
+      } else if(!window()->isActiveWindow()) {
+        return m_style.m_checked_blur_color;
+      }
+      return m_style.m_checked_color;
+    }
     if(underMouse()) {
       return m_style.m_hover_color;
     } else if(!window()->isActiveWindow()) {
