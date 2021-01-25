@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Checkbox.hpp"
@@ -6,6 +7,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -153,6 +155,50 @@ UiProfile Spire::make_icon_button_profile() {
       QObject::connect(button, &IconButton::clicked,
         profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_tooltip_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_bool_property("bottom_left", true));
+  properties.push_back(make_standard_int_property("x-offset"));
+  properties.push_back(make_standard_int_property("y-offset"));
+  properties.push_back(make_standard_qstring_property("tooltip-text",
+    QString::fromUtf8("Tooltip Text")));
+  auto profile = UiProfile(QString::fromUtf8("Tooltip"), properties,
+    [] (auto& profile) {
+      auto label = new QLabel("Hover me!");
+      label->setAttribute(Qt::WA_Hover);
+      label->resize(scale(100, 28));
+      label->setStyleSheet(R"(
+        QLabel {
+          background-color: #684BC7;
+          color: white;
+          qproperty-alignment: AlignCenter;
+        }
+
+        QLabel:disabled {
+          background-color: #F5F5F5;
+          color: #C8C8C8;
+        })");
+      apply_widget_properties(label, profile.get_properties());
+      auto& tooltip_text = get<QString>("tooltip-text",
+        profile.get_properties());
+      auto tooltip = make_text_tooltip(tooltip_text.get(), label);
+      auto is_bottom_left = get<bool>("bottom_left",
+        profile.get_properties()).get();
+      auto position = [&] {
+        if(is_bottom_left) {
+          return Tooltip::Position::BOTTOM_LEFT;
+        }
+        return Tooltip::Position::MOUSE;
+      }();
+      auto x_offset = get<int>("x-offset", profile.get_properties()).get();
+      auto y_offset = get<int>("y-offset", profile.get_properties()).get();
+      tooltip->set_position(position, x_offset, y_offset);
+      return label;
     });
   return profile;
 }
