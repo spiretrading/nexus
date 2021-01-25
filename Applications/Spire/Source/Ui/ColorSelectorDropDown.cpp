@@ -55,13 +55,12 @@ namespace {
   auto create_color_button(const QColor& color, QWidget* parent) {
     auto button = new FlatButton(parent);
     button->setFixedSize(BUTTON_WIDTH(), BUTTON_HEIGHT());
-    auto style = button->get_style();
-    style.m_background_color = color;
-    style.m_border_color = QColor("#C8C8C8");
-    button->set_style(style);
+    auto default_style = button->get_default_style();
+    default_style.m_background_color = color;
+    default_style.m_border_color = QColor("#C8C8C8");
+    auto style = default_style;
     style.m_border_color = QColor("#4B23A0");
-    button->set_hover_style(style);
-    button->set_focus_style(style);
+    button->set_style(default_style, style, style, button->get_disabled_style());
     return button;
   }
 }
@@ -230,10 +229,9 @@ void ColorSelectorDropDown::add_basic_color_button(int x, int y,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->setFocusPolicy(Qt::TabFocus);
-  m_button_clicked_connections.AddConnection(button->connect_clicked_signal(
-    [=] {
-      on_color_button_clicked(color);
-    }));
+  connect(button, &FlatButton::clicked, [=] {
+    on_color_button_clicked(color);
+  });
   m_basic_colors_layout->addWidget(button, x, y);
 }
 
@@ -241,17 +239,15 @@ void ColorSelectorDropDown::add_recent_color_button(int index,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->setFocusPolicy(Qt::TabFocus);
-  m_button_clicked_connections.AddConnection(button->connect_clicked_signal(
-    [=] {
-      on_color_button_clicked(color);
-    }));
+  connect(button, &FlatButton::clicked, [=] {
+    on_color_button_clicked(color);
+  });
   m_recent_colors_layout->insertWidget(index, button);
 }
 
 void ColorSelectorDropDown::update_recent_colors_layout() {
   while(m_recent_colors_layout->itemAt(0) != nullptr) {
     auto item = m_recent_colors_layout->takeAt(0);
-    m_button_clicked_connections.Disconnect(item->widget());
     item->widget()->deleteLater();
     delete item;
   }

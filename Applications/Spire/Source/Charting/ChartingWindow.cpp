@@ -15,8 +15,8 @@
 #include "Spire/Spire/LocalTechnicalsModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropdownMenu.hpp"
+#include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/SecurityWidget.hpp"
-#include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Charting/TrendLineEditor.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -36,7 +36,8 @@ namespace {
 
   auto create_button(const QString& icon, const QString& tooltip,
       QWidget* parent) {
-    auto button = new ToggleButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    button->setCheckable(true);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
     button->setDisabled(true);
@@ -107,9 +108,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_auto_scale_button = create_button(":/Icons/auto-scale.svg",
     tr("Auto Scale"), m_button_header_widget);
   m_auto_scale_button->setChecked(true);
-  connect(m_auto_scale_button, &ToggleButton::released, [=] {
-    on_auto_scale_button_click();
-  });
+  connect(m_auto_scale_button, &IconButton::clicked, this,
+    &ChartingWindow::on_auto_scale_button_click);
   button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -120,9 +120,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = create_button(":/Icons/draw.svg", tr("Draw Line"),
     m_button_header_widget);
-  connect(m_draw_line_button, &ToggleButton::released, [=] {
-    on_draw_line_button_click();
-  });
+  connect(m_draw_line_button, &IconButton::clicked, this,
+    &ChartingWindow::on_draw_line_button_click);
   button_header_layout->addWidget(m_draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);

@@ -18,9 +18,6 @@ namespace Spire {
 
   //! Returns a UiProfile for the IconButton.
   UiProfile make_icon_button_profile();
-
-  //! Returns a UiProfile for the ToggleButton.
-  UiProfile make_toggle_button_profile();
 }
 
 #endif

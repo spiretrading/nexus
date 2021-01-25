@@ -57,7 +57,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_changed_connection;
       boost::signals2::scoped_connection m_selected_connection;
       boost::signals2::scoped_connection m_recent_colors_connection;
-      Beam::SignalHandling::ConnectionGroup m_button_clicked_connections;
       QColor m_current_color;
       QColor m_original_color;
       QGridLayout* m_basic_colors_layout;

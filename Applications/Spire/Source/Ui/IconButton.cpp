@@ -18,11 +18,15 @@ namespace {
 }
 
 IconButton::Style::Style()
-    : m_default_color("#7F5EEC"),
-      m_hover_color("#4B23A0"),
+    : m_blur_color("#7F5EEC"),
+      m_checked_blur_color("#1FD37A"),
+      m_checked_color("#1FD37A"),
+      m_checked_hovered_color("#2CAC79"),
+      m_default_color("#7F5EEC"),
       m_disabled_color("#D0D0D0"),
-      m_hover_background_color("#E3E3E3"),
-      m_blur_color("#7F5EEC") {
+      m_hover_color("#4B23A0"),
+      m_default_background_color("#F5F5F5"),
+      m_hover_background_color("#E3E3E3") {
   m_default_background_color.setAlpha(0);
 }
 
@@ -46,22 +50,20 @@ IconButton::IconButton(QImage icon, Style style, QWidget* parent)
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    event->accept();
-    Q_EMIT released();
-    return;
+  if(!event->isAutoRepeat()) {
+    switch(event->key()) {
+      case Qt::Key_Enter:
+      case Qt::Key_Return:
+        nextCheckState();
+        Q_EMIT clicked(isChecked());
+        return;
+    }
   }
   QAbstractButton::keyPressEvent(event);
 }
 
-void IconButton::mouseMoveEvent(QMouseEvent* event) {
-  if(rect().contains(event->pos())) {
-    QAbstractButton::mouseMoveEvent(event);
-  }
-}
-
 void IconButton::paintEvent(QPaintEvent* event) {
-  QPainter painter(this);
+  auto painter = QPainter(this);
   if(!underMouse() || !isEnabled()) {
     painter.fillRect(rect(), m_style.m_default_background_color);
   } else {
@@ -74,12 +76,8 @@ void IconButton::paintEvent(QPaintEvent* event) {
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
   if(hasFocus()) {
-    painter.setPen("#4B23A0");
-    auto path = QPainterPath();
-    path.addRoundedRect(0, 0, width() - scale_width(1),
-      height() - scale_height(1), scale_width(1), scale_height(1));
-    painter.setPen({QColor("#4B23A0"), static_cast<qreal>(scale_width(1))});
-    painter.drawPath(path);
+    painter.setPen({QColor("#4B23A0"), static_cast<double>(scale_width(1))});
+    painter.drawRect(rect().adjusted(0, 0, -scale_width(1), -scale_height(1)));
   }
 }
 
@@ -89,6 +87,14 @@ QSize IconButton::sizeHint() const {
 
 const QColor& IconButton::get_current_icon_color() const {
   if(isEnabled()) {
+    if(isChecked()) {
+      if(underMouse()) {
+        return m_style.m_checked_hovered_color;
+      } else if(!window()->isActiveWindow()) {
+        return m_style.m_checked_blur_color;
+      }
+      return m_style.m_checked_color;
+    }
     if(underMouse()) {
       return m_style.m_hover_color;
     } else if(!window()->isActiveWindow()) {

@@ -17,6 +17,16 @@ namespace Spire {
         //! The icon's color when the parent window lacks focus.
         QColor m_blur_color;
 
+        //! The icon's color when the button is checked.
+        QColor m_checked_color;
+
+        //! The icon's color when the button is checked and the window lacks
+        //! focus.
+        QColor m_checked_blur_color;
+
+        //! The icon's color when the button is checked and hovered.
+        QColor m_checked_hovered_color;
+
         //! The icon's default color.
         QColor m_default_color;
 
@@ -53,7 +63,6 @@ namespace Spire {
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       QSize sizeHint() const override;
 
