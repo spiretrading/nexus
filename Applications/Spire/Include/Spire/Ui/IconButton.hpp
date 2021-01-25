@@ -62,6 +62,7 @@ namespace Spire {
       IconButton(QImage icon, Style style, QWidget* parent = nullptr);
 
     protected:
+      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       QSize sizeHint() const override;
@@ -69,6 +70,7 @@ namespace Spire {
     private:
       QImage m_icon;
       Style m_style;
+      Tooltip* m_tooltip;
 
       const QColor& get_current_icon_color() const;
   };

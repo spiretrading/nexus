@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace Spire;
 
@@ -12,6 +13,11 @@ namespace {
 
   const auto BOTTOM_LEFT_OFFSET() {
     static auto offset = QPoint(0, scale_height(3));
+    return offset;
+  }
+
+  const auto MOUSE_OFFSET() {
+    static auto offset = QPoint(scale_width(5), scale_height(5));
     return offset;
   }
 
@@ -33,8 +39,10 @@ namespace {
 Tooltip::Tooltip(QWidget* body, QWidget* parent)
       // TODO: better flag than Tool?
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
-        Qt::NoDropShadowWindowHint),
+        Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
       m_position(Position::BOTTOM_LEFT) {
+  setAttribute(Qt::WA_ShowWithoutActivating);
+  auto shadow = new DropShadow(true, true, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(body);
@@ -55,13 +63,14 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
       case QEvent::MouseButtonPress:
       case QEvent::MouseButtonRelease:
       case QEvent::Wheel:
-      case QEvent::WindowActivate:
       case QEvent::WindowDeactivate:
         m_show_timer.stop();
         hide();
         break;
       case QEvent::HoverLeave:
-        // TODO: still within boundaries? else, hide.
+        if(!rect().contains(mapFromGlobal(QCursor::pos()))) {
+          hide();
+        }
         break;
       case QEvent::ToolTip:
         return true;
@@ -85,7 +94,7 @@ QPoint Tooltip::get_position() const {
       return parentWidget()->mapToGlobal(parentWidget()->rect().bottomLeft()) +
         BOTTOM_LEFT_OFFSET();
     }
-    return QCursor::pos();
+    return QCursor::pos() + MOUSE_OFFSET();
   }();
   return position + m_position_offset;
 }

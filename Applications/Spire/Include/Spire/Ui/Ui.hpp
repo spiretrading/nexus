@@ -38,6 +38,7 @@ namespace Spire {
   class SecurityWidget;
   class TabWidget;
   class TitleBar;
+  class Tooltip;
   class TransitionWidget;
   class Window;
 
