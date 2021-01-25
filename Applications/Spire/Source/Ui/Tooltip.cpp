@@ -17,7 +17,7 @@ namespace {
   }
 
   const auto MOUSE_OFFSET() {
-    static auto offset = QPoint(scale_width(5), scale_height(5));
+    static auto offset = QPoint(scale_width(10), scale_height(10));
     return offset;
   }
 
@@ -37,7 +37,6 @@ namespace {
 }
 
 Tooltip::Tooltip(QWidget* body, QWidget* parent)
-      // TODO: better flag than Tool?
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
         Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
       m_position(Position::BOTTOM_LEFT) {
@@ -56,7 +55,9 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
   if(watched == parentWidget()) {
     switch(event->type()) {
       case QEvent::HoverEnter:
-        m_show_timer.start();
+        if(parentWidget()->isEnabled()) {
+          m_show_timer.start();
+        }
         break;
       case QEvent::FocusIn:
       case QEvent::FocusOut:
@@ -100,8 +101,10 @@ QPoint Tooltip::get_position() const {
 }
 
 void Tooltip::on_show_timeout() {
-  move(get_position());
-  show();
+  if(parentWidget()->underMouse()) {
+    move(get_position());
+    show();
+  }
 }
 
 Tooltip* Spire::make_text_tooltip(const QString& label, QWidget* parent) {
