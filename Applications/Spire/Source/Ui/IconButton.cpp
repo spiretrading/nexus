@@ -38,15 +38,6 @@ IconButton::IconButton(QImage icon, Style style, QWidget* parent)
       m_icon(std::move(icon)),
       m_style(std::move(style)) {
   setAttribute(Qt::WA_Hover);
-  setStyleSheet(QString(R"(
-    QToolTip {
-      background-color: white;
-      border: 1px solid #C8C8C8;
-      color: black;
-      font-family: Roboto;
-      font-size: %1px;
-      padding: %2px %3px %2px %3px;
-    })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {
