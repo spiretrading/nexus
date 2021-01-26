@@ -12,7 +12,7 @@ namespace {
   const auto DEFAULT_SHOW_DELAY_MS = 500;
 
   const auto BOTTOM_LEFT_OFFSET() {
-    static auto offset = QPoint(0, scale_height(3));
+    static auto offset = QPoint(0, scale_height(5));
     return offset;
   }
 
@@ -24,13 +24,14 @@ namespace {
   const auto& QLABEL_TOOLTIP_STYLE() {
     static auto style = QString(R"(
       QLabel {
-        background-color: #FFFFFF;
-        border: %1px solid #C8C8C8;
-        color: #000000;
-        font-size: %2px;
-        padding: %3px %4px;
+        background-color: #333333;
+        color: #FFFFFF;
+        font-family: Roboto;
+        font-size: %1px;
+        font-weight: 500;
+        padding: %2px %3px;
       }
-    )").arg(scale_width(1)).arg(scale_height(10)).arg(scale_width(4))
+    )").arg(scale_height(10)).arg(scale_width(6))
         .arg(scale_height(6));
     return style;
   }
@@ -59,19 +60,13 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
           m_show_timer.start();
         }
         break;
-      case QEvent::FocusIn:
       case QEvent::FocusOut:
-      case QEvent::MouseButtonPress:
+      case QEvent::HoverLeave:
+      case QEvent::KeyRelease:
       case QEvent::MouseButtonRelease:
-      case QEvent::Wheel:
       case QEvent::WindowDeactivate:
         m_show_timer.stop();
         hide();
-        break;
-      case QEvent::HoverLeave:
-        if(!rect().contains(mapFromGlobal(QCursor::pos()))) {
-          hide();
-        }
         break;
       case QEvent::ToolTip:
         return true;
