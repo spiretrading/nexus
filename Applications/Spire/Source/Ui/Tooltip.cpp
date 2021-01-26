@@ -60,10 +60,7 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
           m_show_timer.start();
         }
         break;
-      case QEvent::FocusOut:
       case QEvent::HoverLeave:
-      case QEvent::KeyRelease:
-      case QEvent::MouseButtonRelease:
       case QEvent::WindowDeactivate:
         m_show_timer.stop();
         hide();
