@@ -31,8 +31,7 @@ namespace {
         font-weight: 500;
         padding: %2px %3px;
       }
-    )").arg(scale_height(10)).arg(scale_width(6))
-        .arg(scale_height(6));
+    )").arg(scale_height(10)).arg(scale_width(6)).arg(scale_height(6));
     return style;
   }
 }
