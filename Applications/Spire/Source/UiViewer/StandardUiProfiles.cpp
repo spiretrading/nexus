@@ -171,18 +171,23 @@ UiProfile Spire::make_tooltip_profile() {
     [] (auto& profile) {
       auto label = new QLabel("Hover me!");
       label->setAttribute(Qt::WA_Hover);
+      label->setFocusPolicy(Qt::StrongFocus);
       label->resize(scale(100, 28));
-      label->setStyleSheet(R"(
+      label->setStyleSheet(QString(R"(
         QLabel {
           background-color: #684BC7;
           color: white;
           qproperty-alignment: AlignCenter;
         }
 
+        QLabel:focus {
+          border: %1px solid #000000;
+        }
+
         QLabel:disabled {
           background-color: #F5F5F5;
           color: #C8C8C8;
-        })");
+        })").arg(scale_width(2)));
       apply_widget_properties(label, profile.get_properties());
       auto& tooltip_text = get<QString>("tooltip-text",
         profile.get_properties());
