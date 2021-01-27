@@ -6,6 +6,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -139,6 +140,38 @@ UiProfile Spire::make_icon_button_profile() {
       QObject::connect(button, &IconButton::clicked,
         profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_text_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_bool_property("read-only"));
+  properties.push_back(make_standard_qstring_property("contents"));
+  properties.push_back(make_standard_qstring_property("placeholder",
+    QString::fromUtf8("Placeholder")));
+  auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
+    [] (auto& profile) {
+      auto text_box = new TextBox();
+      apply_widget_properties(text_box, profile.get_properties());
+      auto& read_only = get<bool>("read-only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        text_box->setReadOnly(is_read_only);
+      });
+      auto& contents = get<QString>("contents", profile.get_properties());
+      contents.connect_changed_signal([=] (const auto& text) {
+        text_box->set_text(text);
+      });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& text) {
+        text_box->setPlaceholderText(text);
+      });
+      text_box->connect_current_signal(profile.make_event_slot<QString>(
+        QString::fromUtf8("Current")));
+      text_box->connect_submit_signal(profile.make_event_slot<QString>(
+        QString::fromUtf8("Submit")));
+      return text_box;
     });
   return profile;
 }

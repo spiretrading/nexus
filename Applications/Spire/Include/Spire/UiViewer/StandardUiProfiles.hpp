@@ -18,6 +18,9 @@ namespace Spire {
 
   //! Returns a UiProfile for the IconButton.
   UiProfile make_icon_button_profile();
+
+  //! Returns a UiProfile for the TextBox.
+  UiProfile make_text_box_profile();
 }
 
 #endif

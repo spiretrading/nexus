@@ -90,6 +90,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_currency_combo_box_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
+  add(make_text_box_profile());
   m_widget_list->setCurrentRow(0);
 }
 
