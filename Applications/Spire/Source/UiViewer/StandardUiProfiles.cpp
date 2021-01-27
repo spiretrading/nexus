@@ -147,25 +147,19 @@ UiProfile Spire::make_icon_button_profile() {
 UiProfile Spire::make_text_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_bool_property("read-only"));
-  properties.push_back(make_standard_qstring_property("contents"));
-  properties.push_back(make_standard_qstring_property("placeholder",
-    QString::fromUtf8("Placeholder")));
+  properties.push_back(make_standard_bool_property("read_only"));
+  properties.push_back(make_standard_qstring_property("submission"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
       auto text_box = new TextBox();
       apply_widget_properties(text_box, profile.get_properties());
-      auto& read_only = get<bool>("read-only", profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_box->setReadOnly(is_read_only);
       });
-      auto& contents = get<QString>("contents", profile.get_properties());
-      contents.connect_changed_signal([=] (const auto& text) {
+      auto& submission = get<QString>("submission", profile.get_properties());
+      submission.connect_changed_signal([=] (const auto& text) {
         text_box->set_text(text);
-      });
-      auto& placeholder = get<QString>("placeholder", profile.get_properties());
-      placeholder.connect_changed_signal([=] (const auto& text) {
-        text_box->setPlaceholderText(text);
       });
       text_box->connect_current_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Current")));
