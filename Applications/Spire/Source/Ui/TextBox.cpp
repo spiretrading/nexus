@@ -11,7 +11,8 @@ TextBox::TextBox(QWidget* parent)
 
 TextBox::TextBox(const QString& text, QWidget* parent)
     : QLineEdit(text, parent),
-      m_text(text) {
+      m_text(text),
+      m_submitted_text(text) {
   setObjectName("text_box");
   setFrame(false);
   setStyleSheet(QString(R"(
@@ -61,6 +62,7 @@ QString TextBox::get_text() const {
 
 void TextBox::set_text(const QString& text) {
   m_text = text;
+  m_submitted_text = text;
   if(!isEnabled() || isReadOnly() || !hasFocus()) {
     elide_text();
   } else {
@@ -106,6 +108,8 @@ void TextBox::focusOutEvent(QFocusEvent* event) {
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
+    m_text = m_submitted_text;
+    QLineEdit::setText(m_text);
     m_current_signal(m_text);
   }
   QLineEdit::keyPressEvent(event);
@@ -122,7 +126,8 @@ QSize TextBox::sizeHint() const {
 
 void TextBox::on_editing_finished() {
   if(!isReadOnly()) {
-    m_submit_signal(m_text);
+    m_submitted_text = m_text;
+    m_submit_signal(m_submitted_text);
   }
 }
 

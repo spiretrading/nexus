@@ -54,6 +54,7 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
       QString m_text;
+      QString m_submitted_text;
 
       QString text() const = delete;
       void setText(const QString&) = delete;
