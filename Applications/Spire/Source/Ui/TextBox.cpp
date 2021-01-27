@@ -40,6 +40,10 @@ TextBox::TextBox(const QString& text, QWidget* parent)
       background-color: #F5F5F5;
       border-color: #C8C8C8;
       color: #C8C8C8;
+    }
+    #text_box:read-only:disabled {
+      background-color: #00000000;
+      border: none;
     })")
     .arg(scale_width(1))
     .arg(scale_width(12))
