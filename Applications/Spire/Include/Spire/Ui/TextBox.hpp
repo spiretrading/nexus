@@ -29,7 +29,7 @@ namespace Spire {
       explicit TextBox(const QString& text, QWidget* parent = nullptr);
 
       //! Gets the text.
-      QString get_text() const;
+      const QString& get_text() const;
 
       //! Sets the text.
       void set_text(const QString& text);
