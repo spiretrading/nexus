@@ -48,7 +48,6 @@ bool IconButton::event(QEvent* event) {
     delete_later(m_tooltip);
     if(!toolTip().isEmpty()) {
       m_tooltip = make_text_tooltip(toolTip(), this);
-      m_tooltip->set_position(Tooltip::Position::BOTTOM_LEFT);
     }
   }
   return QAbstractButton::event(event);
