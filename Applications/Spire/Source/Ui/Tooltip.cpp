@@ -107,8 +107,7 @@ void Tooltip::hideEvent(QHideEvent* event) {
 
 void Tooltip::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  auto body_rect = rect().marginsRemoved(get_margins());
-  painter.fillRect(body_rect, TOOLTIP_COLOR);
+  painter.fillRect(rect().marginsRemoved(get_margins()), TOOLTIP_COLOR);
   painter.fillPath(get_arrow_path(), TOOLTIP_COLOR);
 }
 
@@ -134,9 +133,8 @@ QPainterPath Tooltip::get_arrow_path() const {
       {x + ARROW_SIZE().width(), margins.top()}});
   }();
   if(get_body_orientation() == BodyOrientation::LEFT) {
-    polygon.translate(
-      width() - (2 * (ARROW_X_POSITION() + DROP_SHADOW_WIDTH())) -
-      ARROW_SIZE().width(), 0);
+    polygon.translate(width() - (2 * (ARROW_X_POSITION() +
+      DROP_SHADOW_WIDTH())) - ARROW_SIZE().width(), 0);
   }
   path.addPolygon(polygon);
   return path;
@@ -198,8 +196,7 @@ QPoint Tooltip::get_position() const {
     }
     return parent_pos.y() + scale_height(1);
   }();
-  auto body_orientation = get_body_orientation();
-  if(body_orientation == BodyOrientation::LEFT) {
+  if(get_body_orientation() == BodyOrientation::LEFT) {
     x -= width() - (DROP_SHADOW_WIDTH() + ARROW_SIZE().width() +
       (2 * ARROW_X_POSITION()));
   }
