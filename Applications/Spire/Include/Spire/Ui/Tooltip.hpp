@@ -20,7 +20,6 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
       void hideEvent(QHideEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
-      void showEvent(QShowEvent* event) override;
 
     private:
       enum class Orientation {
