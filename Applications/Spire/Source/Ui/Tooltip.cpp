@@ -70,6 +70,13 @@ Tooltip::Tooltip(QWidget* body, QWidget* parent)
   connect(&m_show_timer, &QTimer::timeout, this, &Tooltip::on_show_timeout);
   m_body->installEventFilter(this);
   parent->installEventFilter(this);
+  // TODO: Add drop shadow if this gets fixed:
+  //       https://bugreports.qt.io/browse/QTBUG-58602
+  //auto shadow = new QGraphicsDropShadowEffect(this);
+  //shadow->setColor(DROP_SHADOW_COLOR);
+  //shadow->setOffset(0, 0);
+  //shadow->setBlurRadius(scale_width(5));
+  //setGraphicsEffect(shadow);
 }
 
 bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
