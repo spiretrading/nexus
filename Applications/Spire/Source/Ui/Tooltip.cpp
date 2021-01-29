@@ -1,4 +1,5 @@
 #include "Spire/Ui/Tooltip.hpp"
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -136,14 +137,22 @@ QPainterPath Tooltip::get_arrow_path() const {
 }
 
 Tooltip::BodyOrientation Tooltip::get_body_orientation() const {
-  auto parent_pos = parentWidget()->mapToGlobal(
+  auto parent_position = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
-  auto screen_geometry = parentWidget()->screen()->availableGeometry();
-  if(parent_pos.x() + width() >
+  auto screen_geometry =
+    get_current_screen(parent_position)->availableGeometry();
+  if(parent_position.x() + width() >
       screen_geometry.x() + screen_geometry.width()) {
     return BodyOrientation::LEFT;
   }
   return BodyOrientation::RIGHT;
+}
+
+QScreen* Tooltip::get_current_screen(const QPoint& point) const {
+  if(auto screen = QGuiApplication::screenAt(point); screen != nullptr) {
+    return screen;
+  }
+  return parentWidget()->screen();
 }
 
 QMargins Tooltip::get_margins() const {
@@ -160,7 +169,8 @@ QMargins Tooltip::get_margins() const {
 Tooltip::Orientation Tooltip::get_orientation() const {
   auto parent_position = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
-  auto screen_size = parentWidget()->screen()->availableGeometry().size();
+  auto screen_size =
+    get_current_screen(parent_position)->availableGeometry().size();
   if((parent_position.y() + height()) > screen_size.height()) {
     if(parent_position.x() < 0) {
       return Orientation::TOP_RIGHT;

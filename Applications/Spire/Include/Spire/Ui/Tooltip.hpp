@@ -39,6 +39,7 @@ namespace Spire {
 
       QPainterPath get_arrow_path() const;
       BodyOrientation get_body_orientation() const;
+      QScreen* get_current_screen(const QPoint& point) const;
       QMargins get_margins() const;
       Orientation get_orientation() const;
       QPoint get_position() const;
