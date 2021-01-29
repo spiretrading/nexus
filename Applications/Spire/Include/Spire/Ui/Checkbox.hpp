@@ -29,20 +29,10 @@ namespace Spire {
       void set_read_only(bool is_read_only);
 
     protected:
-      void keyPressEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
       bool m_is_read_only;
-
-      QColor get_box_color() const;
-      QPoint get_box_position() const;
-      QColor get_check_color() const;
-      QPoint get_check_position() const;
-      QColor get_inner_box_color() const;
-      QRect get_inner_box_rect() const;
-      QPoint get_text_position() const;
   };
 }
 

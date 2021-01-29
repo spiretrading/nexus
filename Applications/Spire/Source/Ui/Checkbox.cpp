@@ -3,49 +3,20 @@
 #include <QFontMetrics>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QStylePainter>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 
 namespace {
-  auto BOX_SIZE() {
-    static auto size = scale(16, 16);
-    return size;
-  }
-
-  auto PADDING() {
-    static auto padding = scale_width(8);
-    return padding;
-  }
-
   const auto& CHECK_ICON() {
-    static auto icon = imageFromSvg(":/Icons/check.svg", scale(10, 8));
+    static auto icon = imageFromSvg(":/Icons/check.svg", scale(16, 16));
     return icon;
-  }
-
-  const auto& BOX_ENABLED_COLOR() {
-    static auto color = QColor("#FFFFFF");
-    return color;
-  }
-
-  const auto& BOX_DISABLED_COLOR() {
-    static auto color = QColor("#F5F5F5");
-    return color;
-  }
-
-  const auto& CHECK_ENABLED_COLOR() {
-    static auto color = QColor("#4B23A0");
-    return color;
   }
 
   const auto& CHECK_DISABLED_COLOR() {
     static auto color = QColor("#C8C8C8");
-    return color;
-  }
-
-  const auto& TEXT_COLOR() {
-    static auto color = QColor("#000000");
     return color;
   }
 }
@@ -56,99 +27,82 @@ Checkbox::Checkbox(QWidget* parent)
 Checkbox::Checkbox(const QString& label, QWidget* parent)
     : QCheckBox(label, parent),
       m_is_read_only(false) {
-  setAttribute(Qt::WA_Hover);
-  auto font = QFont("Roboto");
-  font.setPixelSize(scale_height(12));
-  setFont(font);
-}
-
-void Checkbox::keyPressEvent(QKeyEvent* event) {
-  if(m_is_read_only) {
-    event->accept();
-    return;
-  }
-  QCheckBox::keyPressEvent(event);
-}
-
-void Checkbox::mousePressEvent(QMouseEvent* event) {
-  event->accept();
-  if(m_is_read_only) {
-    return;
-  }
-  if(event->button() == Qt::LeftButton) {
-    setChecked(!isChecked());
-  }
-}
-
-void Checkbox::paintEvent(QPaintEvent* event) {
-  auto painter = QPainter(this);
-  painter.fillRect(QRect(get_box_position(), BOX_SIZE()), get_box_color());
-  painter.fillRect(get_inner_box_rect(), get_inner_box_color());
-  if(isChecked()) {
-    auto icon = QPixmap::fromImage(CHECK_ICON());
-    auto image_painter = QPainter(&icon);
-    image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    image_painter.fillRect(icon.rect(), get_check_color());
-    painter.drawPixmap(get_check_position(), icon);
-  }
-  if(!text().isEmpty()) {
-    painter.setPen(TEXT_COLOR());
-    painter.drawText(QRect(get_text_position(), size()), 0, text());
-  }
+  setObjectName("Checkbox");
+  setStyleSheet(QString(R"(
+    #Checkbox {
+      color: #000000;
+      font-family: "Roboto";
+      font-size: %1px;
+      outline: none;
+      spacing: %2px;
+    }
+    #Checkbox::indicator {
+      background-color: #FFFFFF;
+      border: %3px solid #C8C8C8;
+      height: %4px;
+      width: %5px;
+    }
+    #Checkbox::indicator:hover {
+      border-color: #4B23A0;
+    }
+    #Checkbox::indicator:focus {
+      border-color: #4B23A0;
+    }
+    #Checkbox::indicator:read-only {
+      background-color: #00000000;
+      border-color: #00000000;
+    }
+    #Checkbox:disabled {
+      color: #C8C8C8;
+    }
+    #Checkbox::indicator:disabled {
+      background-color: #F5F5F5;
+    }
+    #Checkbox::indicator:read-only:disabled {
+      background-color: #00000000;
+      border-color: #00000000;
+    })").arg(scale_width(12)).arg(scale_width(28)).arg(scale_width(1)).
+    arg(scale_height(16)).arg(scale_width(16)));
 }
 
 void Checkbox::set_read_only(bool is_read_only) {
   if(is_read_only != m_is_read_only) {
     m_is_read_only = is_read_only;
+    if(m_is_read_only) {
+      setAttribute(Qt::WA_TransparentForMouseEvents, true);
+      setFocusPolicy(Qt::NoFocus);
+    } else {
+      setAttribute(Qt::WA_TransparentForMouseEvents, false);
+      setFocusPolicy(Qt::StrongFocus);
+    }
     update();
   }
 }
 
-QColor Checkbox::get_box_color() const {
-  if(!isEnabled() || m_is_read_only || (!hasFocus() && !underMouse())) {
-    return CHECK_DISABLED_COLOR();
+void Checkbox::paintEvent(QPaintEvent* event) {
+  auto painter = QStylePainter(this);
+  auto option = QStyleOptionButton();
+  initStyleOption(&option);
+  if(m_is_read_only) {
+    option.state |= QStyle::State_ReadOnly;
   }
-  return CHECK_ENABLED_COLOR();
-}
-
-QPoint Checkbox::get_box_position() const {
-  auto box_y = (height() - BOX_SIZE().height()) / 2;
-  if(layoutDirection() == Qt::LeftToRight) {
-    return {0, box_y};
+  auto style = painter.style();
+  auto indicator_rect = style->subElementRect(QStyle::SE_CheckBoxIndicator,
+    &option, this);
+  auto label_rect = style->subElementRect(QStyle::SE_CheckBoxContents, &option,
+    this);
+  option.rect = indicator_rect;
+  painter.drawPrimitive(QStyle::PE_IndicatorCheckBox, option);
+  if(isChecked()) {
+    auto icon = QPixmap::fromImage(CHECK_ICON());
+    if(!isEnabled()) {
+      auto image_painter = QPainter(&icon);
+      image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+      image_painter.fillRect(icon.rect(), CHECK_DISABLED_COLOR());
+    }
+    painter.drawItemPixmap(indicator_rect, Qt::AlignCenter, icon);
   }
-  return {width() - BOX_SIZE().width(), box_y};
-}
-
-QColor Checkbox::get_check_color() const {
-  if(!isEnabled()) {
-    return CHECK_DISABLED_COLOR();
-  }
-  return CHECK_ENABLED_COLOR();
-}
-
-QPoint Checkbox::get_check_position() const {
-  auto box_pos = get_box_position();
-  return {box_pos.x() + ((BOX_SIZE().width() - CHECK_ICON().width()) / 2),
-    box_pos.y() + ((BOX_SIZE().height() - CHECK_ICON().height()) / 2)};
-}
-
-QColor Checkbox::get_inner_box_color() const {
-  if(!isEnabled() || m_is_read_only) {
-    return BOX_DISABLED_COLOR();
-  }
-  return BOX_ENABLED_COLOR();
-}
-
-QRect Checkbox::get_inner_box_rect() const {
-  return {get_box_position() + QPoint(scale_width(1), scale_height(1)),
-    BOX_SIZE().shrunkBy({scale_width(1), scale_height(1), scale_width(1),
-    scale_width(1)})};
-}
-
-QPoint Checkbox::get_text_position() const {
-  auto text_y = (height() - font().pixelSize()) / 2;
-  if(layoutDirection() == Qt::LeftToRight) {
-    return {BOX_SIZE().width() + PADDING(), text_y};
-  }
-  return {0, text_y};
+  auto font_metrics = fontMetrics();
+  painter.drawItemText(label_rect, Qt::AlignLeft | Qt::AlignVCenter, palette(),
+    true, font_metrics.elidedText(text(), Qt::ElideRight, label_rect.width()));
 }
