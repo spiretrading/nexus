@@ -1,9 +1,7 @@
 #include "Spire/Ui/Tooltip.hpp"
-#include <QCursor>
-#include <QEvent>
-#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
@@ -24,6 +22,16 @@ namespace {
   const auto ARROW_SIZE() {
     static auto size = scale(10, 5);
     return size;
+  }
+
+  const auto DROP_SHADOW_HEIGHT() {
+    static auto height = scale_height(DROP_SHADOW_SIZE);
+    return height;
+  }
+
+  const auto DROP_SHADOW_WIDTH() {
+    static auto width = scale_width(DROP_SHADOW_SIZE);
+    return width;
   }
 
   const auto Y_OFFSET() {
@@ -61,11 +69,6 @@ Tooltip::Tooltip(QWidget* body, QWidget* parent)
   connect(&m_show_timer, &QTimer::timeout, this, &Tooltip::on_show_timeout);
   m_body->installEventFilter(this);
   parent->installEventFilter(this);
-  auto shadow = new QGraphicsDropShadowEffect(this);
-  shadow->setColor(DROP_SHADOW_COLOR);
-  shadow->setOffset(0, 0);
-  shadow->setBlurRadius(scale_width(5));
-  setGraphicsEffect(shadow);
 }
 
 bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
@@ -80,9 +83,14 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
           m_show_timer.start();
         }
         break;
+      case QEvent::MouseMove:
+        if(!parentWidget()->rect().contains(
+            static_cast<QMouseEvent*>(event)->pos())) {
+          hide();
+        }
+        break;
       case QEvent::HoverLeave:
       case QEvent::WindowDeactivate:
-        m_show_timer.stop();
         hide();
         break;
       case QEvent::ToolTip:
@@ -90,6 +98,11 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void Tooltip::hideEvent(QHideEvent* event) {
+  m_show_timer.stop();
+  QWidget::hideEvent(event);
 }
 
 void Tooltip::paintEvent(QPaintEvent* event) {
@@ -108,8 +121,10 @@ QPainterPath Tooltip::get_arrow_path() const {
   auto path = QPainterPath();
   auto polygon = [&] () -> QPolygonF {
     auto margins = get_margins();
-    auto x = ARROW_X_POSITION() + scale_width(DROP_SHADOW_SIZE);
-    if(get_orientation() == Orientation::TOP) {
+    auto x = ARROW_X_POSITION() + DROP_SHADOW_WIDTH();
+    auto orientation = get_orientation();
+    if(orientation == Orientation::TOP_LEFT ||
+        orientation == Orientation::TOP_RIGHT) {
       return QVector<QPoint>({{x, height() - margins.bottom()},
         {x + (ARROW_SIZE().width() / 2), height() - Y_OFFSET()},
         {x + ARROW_SIZE().width(), height() - margins.bottom()}});
@@ -118,41 +133,77 @@ QPainterPath Tooltip::get_arrow_path() const {
       {x + (ARROW_SIZE().width() / 2), Y_OFFSET()},
       {x + ARROW_SIZE().width(), margins.top()}});
   }();
+  if(get_body_orientation() == BodyOrientation::LEFT) {
+    polygon.translate(
+      width() - (2 * (ARROW_X_POSITION() + DROP_SHADOW_WIDTH())) -
+      ARROW_SIZE().width(), 0);
+  }
   path.addPolygon(polygon);
   return path;
 }
 
-QMargins Tooltip::get_margins() const {
-  if(get_orientation() == Orientation::TOP) {
-    return {scale_width(DROP_SHADOW_SIZE), scale_height(DROP_SHADOW_SIZE),
-      scale_width(DROP_SHADOW_SIZE), Y_OFFSET() + ARROW_SIZE().height()};
+Tooltip::BodyOrientation Tooltip::get_body_orientation() const {
+  auto parent_pos = parentWidget()->mapToGlobal(
+    parentWidget()->rect().bottomLeft());
+  auto screen_width = parentWidget()->screen()->availableGeometry().width();
+  if(parent_pos.x() + width() > screen_width) {
+    return BodyOrientation::LEFT;
   }
-  return {scale_width(DROP_SHADOW_SIZE), Y_OFFSET() + ARROW_SIZE().height(),
-    scale_width(DROP_SHADOW_SIZE), scale_height(DROP_SHADOW_SIZE)};
+  return BodyOrientation::RIGHT;
+}
+
+QMargins Tooltip::get_margins() const {
+  auto orientation = get_orientation();
+  if(orientation == Orientation::TOP_LEFT ||
+      orientation == Orientation::TOP_RIGHT) {
+    return {DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(), DROP_SHADOW_WIDTH(),
+      Y_OFFSET() + ARROW_SIZE().height()};
+  }
+  return {DROP_SHADOW_WIDTH(), Y_OFFSET() + ARROW_SIZE().height(),
+    DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT()};
 }
 
 Tooltip::Orientation Tooltip::get_orientation() const {
   auto parent_position = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
-  auto screen_height = screen()->availableGeometry().height();
-  if((parent_position.y() + height()) > screen_height) {
-    return Orientation::TOP;
+  auto screen_size = screen()->availableGeometry().size();
+  if((parent_position.y() + height()) > screen_size.height()) {
+    if(parent_position.x() < 0) {
+      return Orientation::TOP_RIGHT;
+    }
+    return Orientation::TOP_LEFT;
+  } else if(parent_position.x() < 0) {
+    return Orientation::BOTTOM_RIGHT;
   }
-  return Orientation::BOTTOM;
+  return Orientation::BOTTOM_LEFT;
 }
 
 QPoint Tooltip::get_position() const {
-  auto parent_position = parentWidget()->mapToGlobal(
+  auto parent_pos = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
-  auto screen_height = screen()->size().height();
-  if(get_orientation() == Orientation::TOP) {
-    auto top_left = parentWidget()->mapToGlobal(
-      parentWidget()->rect().topLeft());
-    return top_left - QPoint(scale_width(DROP_SHADOW_SIZE),
-      height() + scale_height(1));
+  auto orientation = get_orientation();
+  auto x = [&] {
+    if(orientation == Orientation::BOTTOM_LEFT ||
+        orientation == Orientation::TOP_LEFT) {
+      return parent_pos.x() - DROP_SHADOW_WIDTH();
+    }
+    return parent_pos.x() + (parentWidget()->width() -
+      (2 * ARROW_X_POSITION()) - ARROW_SIZE().width() - DROP_SHADOW_WIDTH());
+  }();
+  auto y = [&] {
+    if(orientation == Orientation::TOP_LEFT ||
+        orientation == Orientation::TOP_RIGHT) {
+      return parent_pos.y() - parentWidget()->height() - height() -
+        scale_height(1);
+    }
+    return parent_pos.y() + scale_height(1);
+  }();
+  auto body_orientation = get_body_orientation();
+  if(body_orientation == BodyOrientation::LEFT) {
+    x -= width() - (DROP_SHADOW_WIDTH() + ARROW_SIZE().width() +
+      (2 * ARROW_X_POSITION()));
   }
-  return parent_position + QPoint(-scale_width(DROP_SHADOW_SIZE),
-    scale_height(1));
+  return {x, y};
 }
 
 void Tooltip::on_show_timeout() {

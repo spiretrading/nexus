@@ -18,13 +18,20 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
       enum class Orientation {
-        BOTTOM,
-        TOP
+        BOTTOM_LEFT,
+        BOTTOM_RIGHT,
+        TOP_LEFT,
+        TOP_RIGHT
+      };
+      enum class BodyOrientation {
+        LEFT,
+        RIGHT
       };
 
       QWidget* m_body;
@@ -32,6 +39,7 @@ namespace Spire {
       QTimer m_show_timer;
 
       QPainterPath get_arrow_path() const;
+      BodyOrientation get_body_orientation() const;
       QMargins get_margins() const;
       Orientation get_orientation() const;
       QPoint get_position() const;
