@@ -11,7 +11,7 @@ using namespace Spire;
 
 namespace {
   const auto DEFAULT_SHOW_DELAY_MS = 500;
-  const auto DROP_SHADOW_SIZE = 3;
+  const auto DROP_SHADOW_SIZE = 4;
   const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 89);
   const auto TOOLTIP_COLOR = QColor("#333333");
 
