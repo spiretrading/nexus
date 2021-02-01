@@ -122,3 +122,7 @@ void Checkbox::paintEvent(QPaintEvent* event) {
     font_metrics.elidedText(text(), Qt::ElideRight, label_rect.width(),
     Qt::TextShowMnemonic));
 }
+
+bool Checkbox::hitButton(const QPoint& pos) const {
+  return rect().contains(pos);
+}

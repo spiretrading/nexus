@@ -30,6 +30,7 @@ namespace Spire {
 
     protected:
       void paintEvent(QPaintEvent* event) override;
+      bool hitButton(const QPoint& pos) const override;
 
     private:
       bool m_is_read_only;
