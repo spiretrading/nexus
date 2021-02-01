@@ -30,17 +30,17 @@ Checkbox::Checkbox(const QString& label, QWidget* parent)
   setObjectName("Checkbox");
   setStyleSheet(QString(R"(
     #Checkbox {
+      background-color: #00000000;
       color: #000000;
       font-family: "Roboto";
       font-size: %1px;
       outline: none;
-      spacing: %2px;
     }
     #Checkbox::indicator {
       background-color: #FFFFFF;
-      border: %3px solid #C8C8C8;
-      height: %4px;
-      width: %5px;
+      border: %2px solid #C8C8C8;
+      height: %3px;
+      width: %4px;
     }
     #Checkbox::indicator:hover {
       border-color: #4B23A0;
@@ -61,7 +61,7 @@ Checkbox::Checkbox(const QString& label, QWidget* parent)
     #Checkbox::indicator:read-only:disabled {
       background-color: #00000000;
       border-color: #00000000;
-    })").arg(scale_width(12)).arg(scale_width(28)).arg(scale_width(1)).
+    })").arg(scale_width(12)).arg(scale_width(1)).
     arg(scale_height(16)).arg(scale_width(16)));
 }
 
@@ -89,8 +89,6 @@ void Checkbox::paintEvent(QPaintEvent* event) {
   auto style = painter.style();
   auto indicator_rect = style->subElementRect(QStyle::SE_CheckBoxIndicator,
     &option, this);
-  auto label_rect = style->subElementRect(QStyle::SE_CheckBoxContents, &option,
-    this);
   option.rect = indicator_rect;
   painter.drawPrimitive(QStyle::PE_IndicatorCheckBox, option);
   if(isChecked()) {
@@ -102,7 +100,22 @@ void Checkbox::paintEvent(QPaintEvent* event) {
     }
     painter.drawItemPixmap(indicator_rect, Qt::AlignCenter, icon);
   }
+  auto alignment = Qt::AlignLeft | Qt::AlignVCenter | Qt::TextShowMnemonic;
   auto font_metrics = fontMetrics();
-  painter.drawItemText(label_rect, Qt::AlignLeft | Qt::AlignVCenter, palette(),
-    true, font_metrics.elidedText(text(), Qt::ElideRight, label_rect.width()));
+  auto label_width = style->itemTextRect(font_metrics, QRect(), alignment, true,
+    text()).width();
+  auto contents_rect = contentsRect();
+  indicator_rect = style->visualRect(option.direction, contents_rect,
+    indicator_rect);
+  auto label_x = contents_rect.width() - label_width;
+  if(label_x <= indicator_rect.right()) {
+    label_x = indicator_rect.right() + 1;
+    label_width = contents_rect.right() - indicator_rect.right();
+  }
+  auto label_rect = QRect(label_x, contents_rect.y(), label_width,
+    contents_rect.height());
+  label_rect = style->visualRect(option.direction, contents_rect, label_rect);
+  painter.drawItemText(label_rect, alignment, palette(), true,
+    font_metrics.elidedText(text(), Qt::ElideRight, label_rect.width(),
+    Qt::TextShowMnemonic));
 }
