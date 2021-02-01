@@ -80,6 +80,9 @@ void Checkbox::set_read_only(bool is_read_only) {
 }
 
 void Checkbox::paintEvent(QPaintEvent* event) {
+  if(m_is_read_only && !isChecked()) {
+    return;
+  }
   auto painter = QStylePainter(this);
   auto option = QStyleOptionButton();
   initStyleOption(&option);
