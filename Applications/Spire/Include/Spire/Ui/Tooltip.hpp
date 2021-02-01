@@ -5,6 +5,7 @@
 
 namespace Spire {
 
+  //! Represents a Spire-styled tooltip.
   class Tooltip : public QWidget {
     public:
   
