@@ -62,8 +62,8 @@ Checkbox::Checkbox(const QString& label, QWidget* parent)
       background-color: #00000000;
       border-color: #00000000;
     })").
-    arg(scale_width(12)).arg(scale_width(1)).arg(scale_height(16)).
-    arg(scale_width(16)));
+      arg(scale_width(12)).arg(scale_width(1)).arg(scale_height(16)).
+      arg(scale_width(16)));
 }
 
 void Checkbox::set_read_only(bool is_read_only) {
