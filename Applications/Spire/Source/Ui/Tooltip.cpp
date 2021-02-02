@@ -16,12 +16,12 @@ namespace {
   const auto TOOLTIP_COLOR = QColor("#333333");
 
   const auto ARROW_X_POSITION() {
-    static auto x = scale_width(8);
+    static auto x = scale_width(6);
     return x;
   }
 
   const auto ARROW_SIZE() {
-    static auto size = scale(10, 5);
+    static auto size = scale(14, 7);
     return size;
   }
 
@@ -50,7 +50,7 @@ namespace {
         font-weight: 600;
         padding: %2px %3px;
       }
-    )").arg(scale_height(10)).arg(scale_width(6)).arg(scale_height(6));
+    )").arg(scale_height(10)).arg(scale_height(8)).arg(scale_width(8));
     return style;
   }
 }
