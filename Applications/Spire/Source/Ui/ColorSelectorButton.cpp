@@ -61,18 +61,28 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
 void ColorSelectorButton::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
   auto painter = QPainter(this);
-  if(hasFocus() || m_selector_widget->isActiveWindow() || underMouse()) {
-    painter.fillRect(event->rect(), QColor("#4B23A0"));
-  } else {
-    painter.fillRect(event->rect(), QColor("#C8C8C8"));
-  }
-  painter.setPen(Qt::white);
-  painter.drawRect(1, 1, width() - 3, height() - 3);
-  painter.fillRect(2, 2, width() - 4, height() - 4, m_current_color);
+  auto style_rect = rect();
+  painter.fillRect(style_rect, get_border_color());
+  adjust_style_rect(style_rect);
+  painter.fillRect(style_rect, Qt::white);
+  adjust_style_rect(style_rect);
+  painter.fillRect(style_rect, m_current_color);
 }
 
 QSize	ColorSelectorButton::sizeHint() const {
   return scale(100, 26);
+}
+
+void ColorSelectorButton::adjust_style_rect(QRect& rect) const {
+  rect.adjust(scale_width(1), scale_height(1), -scale_width(1),
+    -scale_height(1));
+}
+
+const QColor& ColorSelectorButton::get_border_color() const {
+  if(hasFocus() || m_selector_widget->isActiveWindow() || underMouse()) {
+    return "#4B23A0";
+  } else {
+  return "#C8C8C8";
 }
 
 void ColorSelectorButton::on_color_selected(const QColor& color) {
