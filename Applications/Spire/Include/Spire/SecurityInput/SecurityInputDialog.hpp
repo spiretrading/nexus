@@ -22,7 +22,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       explicit SecurityInputDialog(Beam::Ref<SecurityInputModel> model,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a security input dialog with an initial text value.
       /*!
@@ -33,7 +33,7 @@ namespace Spire {
       */
       SecurityInputDialog(Beam::Ref<SecurityInputModel> model,
         const QString& text, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       ~SecurityInputDialog();
 

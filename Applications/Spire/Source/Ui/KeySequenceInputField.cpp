@@ -1,5 +1,6 @@
 #include "Spire/Ui/KeySequenceInputField.hpp"
 #include <QKeyEvent>
+#include <QPainterPath>
 #include "Spire/KeyBindings/KeySequenceValidationModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
