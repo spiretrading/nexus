@@ -52,6 +52,35 @@ namespace Spire {
     \return The translated point.
   */
   QPoint translate(const QPoint& p) noexcept;
+
+  //! Scales the pixel width at the system's current DPI to 96 DPI.
+  /*!
+    \param width The width to convert.
+    \return The scaled width.
+  */
+  int unscale_width(int width) noexcept;
+
+  //! Scales the pixel height at the system's current DPI to 96 DPI.
+  /*!
+    \param height The height to convert.
+    \return The scaled height.
+  */
+  int unscale_height(int height) noexcept;
+
+  //! Scales a size at the system's current DPI to 96 DPI.
+  /*!
+    \param width The width to scale.
+    \param height The height to scale.
+    \return The scaled size.
+  */
+  QSize unscale(int width, int height) noexcept;
+
+  //! Scales a size at the system's current DPI to 96 DPI.
+  /*!
+    \param size The size to scale.
+    \return The scaled size.
+  */
+  QSize unscale(const QSize& size) noexcept;
 }
 
 #endif
