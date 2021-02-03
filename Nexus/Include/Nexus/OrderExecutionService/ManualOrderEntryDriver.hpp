@@ -110,7 +110,7 @@ namespace Nexus::OrderExecutionService {
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       orderInfo.m_submissionAccount);
     if(!isAdministrator) {
-      auto order = BuildRejectedOrder(orderInfo,
+      auto order = MakeRejectedOrder(orderInfo,
         "Insufficient permissions to execute a manual order.");
       auto result = order.get();
       m_orderIds.Insert(order->GetInfo().m_orderId);
@@ -120,13 +120,13 @@ namespace Nexus::OrderExecutionService {
     auto order = std::make_unique<PrimitiveOrder>(orderInfo);
     order->With([&] (auto status, const auto& reports) {
       auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
         OrderStatus::NEW, orderInfo.m_timestamp);
       order->Update(updatedReport);
     });
     order->With([&] (auto status, const auto& reports) {
       auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
         OrderStatus::FILLED, orderInfo.m_timestamp);
       updatedReport.m_lastQuantity = order->GetInfo().m_fields.m_quantity;
       updatedReport.m_lastPrice = order->GetInfo().m_fields.m_price;

@@ -17,8 +17,8 @@ using namespace Nexus::OrderExecutionService;
 namespace {
   const auto TIMESTAMP = ptime(date(1984, May, 6), seconds(10));
 
-  auto BuildOrderFields() {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields() {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
       DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
       Money::ONE);
@@ -28,20 +28,20 @@ namespace {
 TEST_SUITE("RejectSubmissionsComplianceRule") {
   TEST_CASE("add") {
     auto rule = RejectSubmissionsComplianceRule("message");
-    auto order = PrimitiveOrder({BuildOrderFields(), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields(), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Add(order));
   }
 
   TEST_CASE("submit") {
     auto rule = RejectSubmissionsComplianceRule("message");
-    auto order = PrimitiveOrder({BuildOrderFields(), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields(), 1, TIMESTAMP});
     REQUIRE_THROWS_WITH_AS(rule.Submit(order), "message",
       ComplianceCheckException);
   }
 
   TEST_CASE("cancel") {
     auto rule = RejectSubmissionsComplianceRule("message");
-    auto order = PrimitiveOrder({BuildOrderFields(), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields(), 1, TIMESTAMP});
     rule.Add(order);
     REQUIRE_NOTHROW(rule.Cancel(order));
   }

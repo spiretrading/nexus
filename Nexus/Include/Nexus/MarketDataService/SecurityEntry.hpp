@@ -92,9 +92,6 @@ namespace Nexus::MarketDataService {
       /** Returns the SecurityTechnicals. */
       const SecurityTechnicals& GetSecurityTechnicals() const;
 
-      /** Returns the SecurityTechnicals. */
-      SecurityTechnicals& GetSecurityTechnicals();
-
       /**
        * Returns the Security's current snapshot.
        * @return The real-time snapshot of the <i>security</i>.
@@ -333,10 +330,6 @@ namespace Nexus::MarketDataService {
 
   inline const SecurityTechnicals&
       SecurityEntry::GetSecurityTechnicals() const {
-    return m_technicals;
-  }
-
-  inline SecurityTechnicals& SecurityEntry::GetSecurityTechnicals() {
     return m_technicals;
   }
 

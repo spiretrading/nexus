@@ -91,7 +91,7 @@ namespace Nexus::Tests {
       Quantity quantity, LiquidityFlag liquidityFlag,
       CalculateFeeType&& calculateFee, Money expectedFee) {
     auto executionReport = OrderExecutionService::ExecutionReport::
-      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = price;
     executionReport.m_lastQuantity = quantity;
     executionReport.m_liquidityFlag = boost::lexical_cast<std::string>(
@@ -114,7 +114,7 @@ namespace Nexus::Tests {
       std::string liquidityFlag, CalculateFeeType&& calculateFee,
       Money expectedFee) {
     auto executionReport = OrderExecutionService::ExecutionReport::
-      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = fields.m_price;
     executionReport.m_lastQuantity = fields.m_quantity;
     executionReport.m_liquidityFlag = std::move(liquidityFlag);
@@ -134,7 +134,7 @@ namespace Nexus::Tests {
       const OrderExecutionService::OrderFields& orderFields,
       CalculateFeeType&& calculateFee, boost::rational<int> expectedRate) {
     auto executionReport = OrderExecutionService::ExecutionReport::
-      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = orderFields.m_price;
     executionReport.m_lastQuantity = orderFields.m_quantity;
     auto calculatedTotal = calculateFee(feeTable, executionReport);
@@ -157,7 +157,7 @@ namespace Nexus::Tests {
       const std::string& liquidityFlag, CalculateFeeType&& calculateFee,
       Money expectedFee) {
     auto executionReport = OrderExecutionService::ExecutionReport::
-      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = orderFields.m_price;
     executionReport.m_lastQuantity = orderFields.m_quantity;
     executionReport.m_liquidityFlag = liquidityFlag;
@@ -198,7 +198,7 @@ namespace Nexus::Tests {
       Quantity quantity, const std::string& liquidityFlag,
       CalculateFeeType&& calculateFee, Money expectedFee) {
     auto executionReport = OrderExecutionService::ExecutionReport::
-      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = price;
     executionReport.m_lastQuantity = quantity;
     executionReport.m_liquidityFlag = liquidityFlag;

@@ -14,13 +14,13 @@
 namespace Nexus::Compliance {
 
   /**
-   * Builds a ComplianceRule from a ComplianceRuleSchema.
+   * Returns a ComplianceRule from a ComplianceRuleSchema.
    * @param schema The ComplianceRuleSchema to build the ComplianceRule from.
    * @return The ComplianceRule represented by the <i>schema</i>.
    */
   template<typename MarketDataClient, typename DefinitionsClient,
     typename TimeClient>
-  std::unique_ptr<ComplianceRule> BuildComplianceRule(
+  std::unique_ptr<ComplianceRule> MakeComplianceRule(
       const ComplianceRuleSchema& schema, MarketDataClient& marketDataClient,
       DefinitionsClient& definitionsClient, TimeClient& timeClient) {
     if(schema.GetName() == "buying_power") {
@@ -62,7 +62,7 @@ namespace Nexus::Compliance {
       auto perAccountSchema = ComplianceRuleSchema(std::move(name),
         std::move(parameters));
       return std::make_unique<PerAccountComplianceRule>(perAccountSchema,
-        std::bind(&BuildComplianceRule<MarketDataClient, DefinitionsClient,
+        std::bind(&MakeComplianceRule<MarketDataClient, DefinitionsClient,
         TimeClient>, std::placeholders::_1, std::ref(marketDataClient),
         std::ref(definitionsClient), std::ref(timeClient)));
     }

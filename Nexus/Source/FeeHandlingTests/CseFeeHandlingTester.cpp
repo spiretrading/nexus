@@ -10,7 +10,7 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = CseFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     return feeTable;
@@ -19,19 +19,19 @@ namespace {
 
 TEST_SUITE("CseFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_feeTable, LookupFee,
       LIQUIDITY_FLAG_COUNT, CseFeeTable::PRICE_CLASS_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       &CalculateFee, Money::ZERO);
   }
 
   TEST_CASE("default_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       CseFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
@@ -39,7 +39,7 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("default_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       CseFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
@@ -47,7 +47,7 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("subdollar_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       CseFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
@@ -55,7 +55,7 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("subdollar_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       CseFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
@@ -63,7 +63,7 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("subdime_active") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       CseFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -71,7 +71,7 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("subdime_passive") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       CseFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
@@ -79,9 +79,9 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -92,7 +92,7 @@ TEST_SUITE("CseFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
@@ -104,7 +104,7 @@ TEST_SUITE("CseFeeHandling") {
       REQUIRE(calculatedFee == expectedFee);
     }
     {
-      auto executionReport = ExecutionReport::BuildInitialReport(0,
+      auto executionReport = ExecutionReport::MakeInitialReport(0,
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
@@ -117,7 +117,7 @@ TEST_SUITE("CseFeeHandling") {
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       CseFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,

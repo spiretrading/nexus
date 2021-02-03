@@ -45,10 +45,10 @@ namespace Nexus::Compliance {
   };
 
   /**
-   * Builds a ComplianceRuleSchema representing an
+   * Returns a ComplianceRuleSchema representing an
    * OrderCountPerSideComplianceRule.
    */
-  inline ComplianceRuleSchema BuildOrderCountPerSideComplianceRuleSchema() {
+  inline ComplianceRuleSchema MakeOrderCountPerSideComplianceRuleSchema() {
     auto symbols = std::vector<ComplianceValue>();
     symbols.push_back(Security());
     auto parameters = std::vector<ComplianceParameter>();

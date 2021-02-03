@@ -108,7 +108,7 @@ int main(int argc, const char** argv) {
         auto marketDataClient = std::make_shared<MarketDataClientBox>(
           std::in_place_type<
             MarketDataClient<IncomingMarketDataClientSessionBuilder>>,
-          BuildBasicMarketDataClientSessionBuilder<
+          MakeBasicMarketDataClientSessionBuilder<
             IncomingMarketDataClientSessionBuilder>(serviceLocatorClient.Get(),
               [=] (const auto& candidateEntry) {
                 auto candidateCountries = ExtractCountries(

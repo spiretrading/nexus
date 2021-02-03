@@ -73,19 +73,19 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto complianceRuleSchemas = std::vector<ComplianceRuleSchema>();
-    complianceRuleSchemas.push_back(BuildBuyingPowerComplianceRuleSchema());
+    complianceRuleSchemas.push_back(MakeBuyingPowerComplianceRuleSchema());
     complianceRuleSchemas.push_back(
-      BuildCancelRestrictionPeriodComplianceRuleSchema());
+      MakeCancelRestrictionPeriodComplianceRuleSchema());
     complianceRuleSchemas.push_back(
-      BuildOpposingOrderCancellationComplianceRuleSchema());
+      MakeOpposingOrderCancellationComplianceRuleSchema());
     complianceRuleSchemas.push_back(
-      BuildOpposingOrderSubmissionComplianceRuleSchema());
+      MakeOpposingOrderSubmissionComplianceRuleSchema());
     complianceRuleSchemas.push_back(
-      BuildOrderCountPerSideComplianceRuleSchema());
+      MakeOrderCountPerSideComplianceRuleSchema());
     complianceRuleSchemas.push_back(
-      BuildSubmissionRestrictionPeriodComplianceRuleSchema());
+      MakeSubmissionRestrictionPeriodComplianceRuleSchema());
     complianceRuleSchemas.push_back(
-      BuildSymbolRestrictionComplianceRuleSchema());
+      MakeSymbolRestrictionComplianceRuleSchema());
     auto minimumSpireClientVersion = Extract<std::string>(config,
       "minimum_spire_version");
     auto organizationName = Extract<std::string>(config, "organization",

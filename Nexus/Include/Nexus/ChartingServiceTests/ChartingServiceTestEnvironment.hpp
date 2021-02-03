@@ -38,7 +38,7 @@ namespace Nexus::ChartingService::Tests {
       ~ChartingServiceTestEnvironment();
 
       /**
-       * Builds a new ChartingClient.
+       * Returns a new ChartingClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the ChartingClient.
        */

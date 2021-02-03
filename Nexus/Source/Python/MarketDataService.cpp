@@ -259,29 +259,29 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(module& module) {
     def("__del__", [] (MarketDataServiceTestEnvironment& self) {
       self.Close();
     }, call_guard<GilRelease>()).
-    def("close", &MarketDataServiceTestEnvironment::Close,
-      call_guard<GilRelease>()).
-    def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
-      MarketCode, const OrderImbalance&)>(
-      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>()).
-    def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
-      const Security&, const BboQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>()).
-    def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
-      const Security&, const BookQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>()).
-    def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
-      const Security&, const MarketQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>()).
-    def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
-      const Security&, const TimeAndSale&)>(
-      &MarketDataServiceTestEnvironment::Publish), call_guard<GilRelease>()).
-    def("make_client",
+    def("get_data_store", &MarketDataServiceTestEnvironment::GetDataStore,
+      return_value_policy::copy).
+    def("get_registry", &MarketDataServiceTestEnvironment::GetRegistry,
+      return_value_policy::reference_internal).
+    def("get_registry_client",
+      &MarketDataServiceTestEnvironment::GetRegistryClient,
+      return_value_policy::copy).
+    def("get_feed_client", &MarketDataServiceTestEnvironment::GetFeedClient,
+      return_value_policy::copy).
+    def("make_registry_client",
       [] (MarketDataServiceTestEnvironment& self,
           ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonMarketDataClient(self.MakeClient(
+        return ToPythonMarketDataClient(self.MakeRegistryClient(
           std::move(serviceLocatorClient)));
-      }, call_guard<GilRelease>());
+      }, call_guard<GilRelease>()).
+    def("make_feed_client",
+      [] (MarketDataServiceTestEnvironment& self,
+          ServiceLocatorClientBox serviceLocatorClient) {
+        return ToPythonMarketDataFeedClient(self.MakeFeedClient(
+          std::move(serviceLocatorClient)));
+      }, call_guard<GilRelease>()).
+    def("close", &MarketDataServiceTestEnvironment::Close,
+      call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportMySqlHistoricalDataStore(module& module) {

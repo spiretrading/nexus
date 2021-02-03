@@ -72,11 +72,11 @@ namespace Nexus::Compliance {
       std::decay_t<TimeClient>>;
 
   /**
-   * Builds a ComplianceRuleSchema representing an
+   * Returns a ComplianceRuleSchema representing an
    * OpposingOrderSubmissionComplianceRule.
    */
   inline ComplianceRuleSchema
-      BuildOpposingOrderSubmissionComplianceRuleSchema() {
+      MakeOpposingOrderSubmissionComplianceRuleSchema() {
     auto parameters = std::vector<ComplianceParameter>();
     auto symbols = std::vector<ComplianceValue>();
     symbols.push_back(Security());
@@ -90,7 +90,7 @@ namespace Nexus::Compliance {
   }
 
   /**
-   * Builds an OpposingOrderSubmissionComplianceRule from a list of
+   * Returns an OpposingOrderSubmissionComplianceRule from a list of
    * ComplianceParameters.
    * @param parameters The list of ComplianceParameters used to build the rule.
    * @param timeClient Initializes the TimeClient.

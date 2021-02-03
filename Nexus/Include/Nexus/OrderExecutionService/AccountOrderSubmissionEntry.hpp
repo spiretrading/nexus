@@ -65,7 +65,7 @@ namespace Nexus::OrderExecutionService {
   AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
       DataStore& dataStore,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto query = Beam::Queries::BuildLatestQuery(account);
+    auto query = Beam::Queries::MakeLatestQuery(account);
     auto initialSequences = AccountOrderSubmissionEntry::InitialSequences();
     {
       auto results = dataStore.LoadOrderSubmissions(query);

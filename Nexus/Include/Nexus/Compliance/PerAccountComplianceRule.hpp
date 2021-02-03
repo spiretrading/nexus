@@ -29,7 +29,7 @@ namespace Nexus::Compliance {
       /**
        * Constructs a PerAccountComplianceRule.
        * @param schema The ComplianceRuleSchema to apply.
-       * @param builder Builds the compliance rule.
+       * @param builder Constructs the compliance rule.
        */
       PerAccountComplianceRule(ComplianceRuleSchema schema,
         ComplianceRuleBuilder complianceRuleBuilder);

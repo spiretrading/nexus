@@ -10,8 +10,8 @@
 namespace Nexus::Accounting {
 
   /**
-   * Builds a reactor that produces updates to a bookkeeper's inventory based on
-   * a series of execution reports.
+   * Returns a reactor that produces updates to a bookkeeper's inventory based
+   * on a series of execution reports.
    * @param orders The reactor producing the orders to monitor for execution
    *        reports.
    */

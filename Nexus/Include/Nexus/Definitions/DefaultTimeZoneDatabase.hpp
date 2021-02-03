@@ -4,9 +4,12 @@
 #include <boost/date_time/local_time/tz_database.hpp>
 
 namespace Nexus {
-namespace Details {
-  inline std::string BuildDefaultTimeZoneTable() {
-    return
+
+  /**
+   * Returns the default time zone table, typically used for testing purposes.
+   */
+  inline const std::string& GetDefaultTimeZoneTable() {
+    static auto database = std::string(
       "\"Africa/Abidjan\",\"GMT\",\"GMT\",\"\",\"\",\"+00:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Africa/Accra\",\"GMT\",\"GMT\",\"\",\"\",\"+00:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Africa/Addis_Ababa\",\"EAT\",\"EAT\",\"\",\"\",\"+03:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
@@ -527,22 +530,7 @@ namespace Details {
       "\"Pacific/Wallis\",\"WFT\",\"WFT\",\"\",\"\",\"+12:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Pacific/Yap\",\"CHUT\",\"CHUT\",\"\",\"\",\"+10:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Australian_Eastern_Standard_Time\",\"AEST\",\"AEST\",\"AEST\",\"AEST\",\"+10:00:00\",\"+01:00:00\",\"1;0;10\",\"+02:00:00\",\"1;0;4\",\"+03:00:00\"\n"
-      "\"Eastern_Time\",\"EST\",\"Eastern Standard Time\",\"EDT\",\"Eastern Daylight Time\",\"-05:00:00\",\"+01:00:00\",\"2;0;3\",\"+02:00:00\",\"1;0;11\",\"+02:00:00\"\n";
-  }
-
-  inline boost::local_time::tz_database BuildDefaultTimeZoneDatabase() {
-    auto database = boost::local_time::tz_database();
-    auto stream = std::stringstream(BuildDefaultTimeZoneTable());
-    database.load_from_stream(stream);
-    return database;
-  }
-}
-
-  /**
-   * Returns the default time zone table, typically used for testing purposes.
-   */
-  inline const std::string& GetDefaultTimeZoneTable() {
-    static auto database = Details::BuildDefaultTimeZoneTable();
+      "\"Eastern_Time\",\"EST\",\"Eastern Standard Time\",\"EDT\",\"Eastern Daylight Time\",\"-05:00:00\",\"+01:00:00\",\"2;0;3\",\"+02:00:00\",\"1;0;11\",\"+02:00:00\"\n");
     return database;
   }
 
@@ -551,7 +539,12 @@ namespace Details {
    * purposes.
    */
   inline const boost::local_time::tz_database& GetDefaultTimeZoneDatabase() {
-    static auto database = Details::BuildDefaultTimeZoneDatabase();
+    static auto database = [] {
+      auto database = boost::local_time::tz_database();
+      auto stream = std::stringstream(GetDefaultTimeZoneTable());
+      database.load_from_stream(stream);
+      return database;
+    }();
     return database;
   }
 }

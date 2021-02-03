@@ -53,7 +53,7 @@ namespace Nexus::MarketDataService {
        * Constructs a MarketDataRelayServlet.
        * @param clientTimeout The amount of time to wait before building another
        *        MarketDataClient.
-       * @param marketDataClientBuilder Builds MarketDataClients used to
+       * @param marketDataClientBuilder Constructs MarketDataClients used to
        *        distribute queries.
        * @param minMarketDataClients The minimum number of MarketDataClients to
        *        pool.
@@ -89,19 +89,20 @@ namespace Nexus::MarketDataService {
       template<typename T>
       using SecuritySubscriptions =
         Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
-      template<typename T>
-      using RealTimeSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<T, Beam::Threading::Mutex>;
+      using RealTimeMarketSubscriptionSet =
+        Beam::SynchronizedUnorderedSet<MarketCode, Beam::Threading::Mutex>;
+      using RealTimeSecuritySubscriptionSet = Beam::SynchronizedSet<
+        PreciseSecurityUnorderedSet, Beam::Threading::Mutex>;
       MarketSubscriptions<OrderImbalance> m_orderImbalanceSubscriptions;
       SecuritySubscriptions<BboQuote> m_bboQuoteSubscriptions;
       SecuritySubscriptions<BookQuote> m_bookQuoteSubscriptions;
       SecuritySubscriptions<MarketQuote> m_marketQuoteSubscriptions;
       SecuritySubscriptions<TimeAndSale> m_timeAndSaleSubscriptions;
-      RealTimeSubscriptionSet<MarketCode> m_orderImbalanceRealTimeSubscriptions;
-      RealTimeSubscriptionSet<Security> m_bboQuoteRealTimeSubscriptions;
-      RealTimeSubscriptionSet<Security> m_bookQuoteRealTimeSubscriptions;
-      RealTimeSubscriptionSet<Security> m_marketQuoteRealTimeSubscriptions;
-      RealTimeSubscriptionSet<Security> m_timeAndSaleRealTimeSubscriptions;
+      RealTimeMarketSubscriptionSet m_orderImbalanceRealTimeSubscriptions;
+      RealTimeSecuritySubscriptionSet m_bboQuoteRealTimeSubscriptions;
+      RealTimeSecuritySubscriptionSet m_bookQuoteRealTimeSubscriptions;
+      RealTimeSecuritySubscriptionSet m_marketQuoteRealTimeSubscriptions;
+      RealTimeSecuritySubscriptionSet m_timeAndSaleRealTimeSubscriptions;
       Beam::SynchronizedUnorderedSet<Security> m_primarySecurities;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_marketDataClients;
@@ -186,7 +187,7 @@ namespace Nexus::MarketDataService {
     QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::HandleQueryRequest<QueryOrderImbalancesService,
         MarketWideDataQuery, MarketSubscriptions<OrderImbalance>,
-        RealTimeSubscriptionSet<MarketCode>>, this, std::placeholders::_1,
+        RealTimeMarketSubscriptionSet>, this, std::placeholders::_1,
       std::placeholders::_2, std::ref(m_orderImbalanceSubscriptions),
       std::ref(m_orderImbalanceRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
@@ -197,7 +198,7 @@ namespace Nexus::MarketDataService {
     QueryBboQuotesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::HandleQueryRequest<QueryBboQuotesService,
         SecurityMarketDataQuery, SecuritySubscriptions<BboQuote>,
-        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+        RealTimeSecuritySubscriptionSet>, this, std::placeholders::_1,
       std::placeholders::_2, std::ref(m_bboQuoteSubscriptions),
       std::ref(m_bboQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
@@ -208,7 +209,7 @@ namespace Nexus::MarketDataService {
     QueryBookQuotesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::HandleQueryRequest<QueryBookQuotesService,
         SecurityMarketDataQuery, SecuritySubscriptions<BookQuote>,
-        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+        RealTimeSecuritySubscriptionSet>, this, std::placeholders::_1,
       std::placeholders::_2, std::ref(m_bookQuoteSubscriptions),
       std::ref(m_bookQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
@@ -219,7 +220,7 @@ namespace Nexus::MarketDataService {
     QueryMarketQuotesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::HandleQueryRequest<QueryMarketQuotesService,
         SecurityMarketDataQuery, SecuritySubscriptions<MarketQuote>,
-        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+        RealTimeSecuritySubscriptionSet>, this, std::placeholders::_1,
       std::placeholders::_2, std::ref(m_marketQuoteSubscriptions),
       std::ref(m_marketQuoteRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndMarketQuoteQueryMessage>(Store(slots),
@@ -230,7 +231,7 @@ namespace Nexus::MarketDataService {
     QueryTimeAndSalesService::AddRequestSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::HandleQueryRequest<QueryTimeAndSalesService,
         SecurityMarketDataQuery, SecuritySubscriptions<TimeAndSale>,
-        RealTimeSubscriptionSet<Security>>, this, std::placeholders::_1,
+        RealTimeSecuritySubscriptionSet>, this, std::placeholders::_1,
       std::placeholders::_2, std::ref(m_timeAndSaleSubscriptions),
       std::ref(m_timeAndSaleRealTimeSubscriptions)));
     Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
@@ -338,16 +339,17 @@ namespace Nexus::MarketDataService {
         request.SetResult(result);
         return;
       }
-      if(auto security = m_primarySecurities.FindValue(query.GetIndex())) {
-        if(security->GetMarket() != query.GetIndex().GetMarket()) {
-          request.SetResult(result);
-          return;
+      auto needsValidation = [&] {
+        if(auto security = m_primarySecurities.FindValue(query.GetIndex())) {
+          return security->GetMarket() != query.GetIndex().GetMarket();
         }
-      } else {
+        return true;
+      }();
+      if(needsValidation) {
         auto client = m_marketDataClients.Acquire();
         auto info = LoadSecurityInfo(query.GetIndex(), *client);
         if(info) {
-          m_primarySecurities.Insert(info->m_security);
+          m_primarySecurities.Update(info->m_security);
         }
         if(!info ||
             info->m_security.GetMarket() != query.GetIndex().GetMarket()) {
@@ -366,7 +368,7 @@ namespace Nexus::MarketDataService {
         auto initialValueQueue =
           std::make_shared<Beam::Queue<MarketDataType>>();
         QueryMarketDataClient(*queryEntry.m_marketDataClient,
-          Beam::Queries::BuildLatestQuery(query.GetIndex()),
+          Beam::Queries::MakeLatestQuery(query.GetIndex()),
           Beam::ScopedQueueWriter(initialValueQueue));
         auto initialValues = std::vector<MarketDataType>();
         Beam::Flush(initialValueQueue, std::back_inserter(initialValues));

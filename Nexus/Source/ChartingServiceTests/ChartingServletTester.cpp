@@ -54,13 +54,14 @@ TEST_SUITE("ChartingServlet") {
       auto price = (i + 1) * Money::ONE;
       auto timeAndSale = TimeAndSale(timestamp, price, i * 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "?"), "N");
-      m_environment.GetMarketDataEnvironment().Publish(security, timeAndSale);
+      m_environment.GetMarketDataEnvironment().GetFeedClient().Publish(
+        SecurityTimeAndSale(timeAndSale, security));
       expectedSeries.emplace_back(timestamp, timestamp + interval, price, price,
         price, price);
     }
-    auto result = m_protocolClient->SendRequest<
-      LoadSecurityTimePriceSeriesService>(security, startTime, endTime,
-        interval);
+    auto result =
+      m_protocolClient->SendRequest<LoadSecurityTimePriceSeriesService>(
+        security, startTime, endTime, interval);
     REQUIRE(result.series == expectedSeries);
   }
 }

@@ -67,7 +67,7 @@ namespace Nexus {
 
       TimeClient& GetTimeClient();
 
-      std::unique_ptr<Timer> BuildTimer(
+      std::unique_ptr<Timer> MakeTimer(
         boost::posix_time::time_duration expiry);
 
       void Close();
@@ -106,7 +106,7 @@ namespace Nexus {
           m_serviceLocatorClient)),
       m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
         Beam::Ref(m_environment->GetMarketDataService()),
-        m_environment->GetMarketDataEnvironment().MakeClient(
+        m_environment->GetMarketDataEnvironment().MakeRegistryClient(
           m_serviceLocatorClient))),
       m_chartingClient(m_environment->GetChartingEnvironment().MakeClient(
         m_serviceLocatorClient)),
@@ -175,7 +175,7 @@ namespace Nexus {
   }
 
   inline std::unique_ptr<BacktesterServiceClients::Timer>
-      BacktesterServiceClients::BuildTimer(
+      BacktesterServiceClients::MakeTimer(
         boost::posix_time::time_duration expiry) {
     return std::make_unique<Timer>(std::in_place_type<BacktesterTimer>, expiry,
       Beam::Ref(m_environment->GetEventHandler()));

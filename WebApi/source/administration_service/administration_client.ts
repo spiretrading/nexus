@@ -17,7 +17,7 @@ export abstract class AdministrationClient {
    *         second element is a matching DirectoryEntry belonging
    *         to that group, and the third element is the account's roles.
    */
-  public abstract async searchAccounts(prefix: string):
+  public abstract searchAccounts(prefix: string):
     Promise<[Beam.DirectoryEntry, Beam.DirectoryEntry, AccountRoles][]>;
 
   /**
@@ -26,7 +26,7 @@ export abstract class AdministrationClient {
    *        load.
    * @return The TradingGroup identified by the directoryEntry.
    */
-  public abstract async loadTradingGroup(directoryEntry: Beam.DirectoryEntry):
+  public abstract loadTradingGroup(directoryEntry: Beam.DirectoryEntry):
     Promise<TradingGroup>;
 
   /**
@@ -35,7 +35,7 @@ export abstract class AdministrationClient {
    * @return The list of DirectoryEntry's representing the trading groups
    *         managed by the specified account.
    */
-  public abstract async loadManagedTradingGroups(account: Beam.DirectoryEntry):
+  public abstract loadManagedTradingGroups(account: Beam.DirectoryEntry):
     Promise<Beam.DirectoryEntry[]>;
 
   /**
@@ -43,7 +43,7 @@ export abstract class AdministrationClient {
    * @param account The account whose trading group is to be loaded.
    * @return The directory of the <i>account</i>'s trading group.
    */
-  public abstract async loadParentTradingGroup(account: Beam.DirectoryEntry):
+  public abstract loadParentTradingGroup(account: Beam.DirectoryEntry):
     Promise<Beam.DirectoryEntry>;
 
   /**
@@ -51,7 +51,7 @@ export abstract class AdministrationClient {
    * @param account - The directory entry of the account.
    * @return The account's roles.
    */
-  public abstract async loadAccountRoles(account: Beam.DirectoryEntry):
+  public abstract loadAccountRoles(account: Beam.DirectoryEntry):
     Promise<AccountRoles>;
 
   /**
@@ -60,7 +60,7 @@ export abstract class AdministrationClient {
    * @param roles - The account's new roles.
    * @return The account's updated roles.
    */
-  public abstract async storeAccountRoles(account: Beam.DirectoryEntry,
+  public abstract storeAccountRoles(account: Beam.DirectoryEntry,
     roles: AccountRoles): Promise<AccountRoles>;
 
   /**
@@ -68,7 +68,7 @@ export abstract class AdministrationClient {
    * @param account - The directory entry of the account.
    * @return The account's identity.
    */
-  public abstract async loadAccountIdentity(account: Beam.DirectoryEntry):
+  public abstract loadAccountIdentity(account: Beam.DirectoryEntry):
     Promise<AccountIdentity>;
 
   /**
@@ -76,7 +76,7 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param identity - The account's new identity.
    */
-  public abstract async storeAccountIdentity(account: Beam.DirectoryEntry,
+  public abstract storeAccountIdentity(account: Beam.DirectoryEntry,
     identity: AccountIdentity): Promise<void>;
 
   /**
@@ -84,7 +84,7 @@ export abstract class AdministrationClient {
    * @param account - The account whose entitlements are to be loaded.
    * @return The account's entitlements.
    */
-  public abstract async loadAccountEntitlements(account: Beam.DirectoryEntry):
+  public abstract loadAccountEntitlements(account: Beam.DirectoryEntry):
     Promise<Beam.Set<Beam.DirectoryEntry>>;
 
   /**
@@ -92,7 +92,7 @@ export abstract class AdministrationClient {
    * @param id - The id of the modification to load.
    * @return The entitlement modification with the specified id.
    */
-  public abstract async loadEntitlementModification(id: number):
+  public abstract loadEntitlementModification(id: number):
     Promise<EntitlementModification>;
 
   /**
@@ -102,7 +102,7 @@ export abstract class AdministrationClient {
    * @param comment - The comment to associate with the request.
    * @return An object representing the request.
    */
-  public abstract async submitEntitlementModificationRequest(
+  public abstract submitEntitlementModificationRequest(
     account: Beam.DirectoryEntry, modification: EntitlementModification,
     comment: Message): Promise<AccountModificationRequest>;
 
@@ -111,7 +111,7 @@ export abstract class AdministrationClient {
    * @param account - The account to load.
    * @return The account's risk parameters.
    */
-  public abstract async loadRiskParameters(account: Beam.DirectoryEntry):
+  public abstract loadRiskParameters(account: Beam.DirectoryEntry):
     Promise<RiskParameters>;
 
   /**
@@ -119,7 +119,7 @@ export abstract class AdministrationClient {
    * @param id - The id of the modification to load.
    * @return The risk modification with the specified id.
    */
-  public abstract async loadRiskModification(id: number):
+  public abstract loadRiskModification(id: number):
     Promise<RiskModification>;
 
   /**
@@ -129,7 +129,7 @@ export abstract class AdministrationClient {
    * @param comment - The comment to associate with the request.
    * @return An object representing the request.
    */
-  public abstract async submitRiskModificationRequest(
+  public abstract submitRiskModificationRequest(
     account: Beam.DirectoryEntry, modification: RiskModification,
     comment: Message): Promise<AccountModificationRequest>;
 
@@ -138,7 +138,7 @@ export abstract class AdministrationClient {
    * @param name The name of the group.
    * @return The new group's DirectoryEntry.
    */
-  public abstract async createGroup(name: string): Promise<Beam.DirectoryEntry>;
+  public abstract createGroup(name: string): Promise<Beam.DirectoryEntry>;
 
   /**
    * Creates a new account.
@@ -148,7 +148,7 @@ export abstract class AdministrationClient {
    * @param roles The new account's roles.
    * @return The new account's DirectoryEntry.
    */
-  public abstract async createAccount(name: string, group: Beam.DirectoryEntry,
+  public abstract createAccount(name: string, group: Beam.DirectoryEntry,
     identity: AccountIdentity, roles: AccountRoles):
     Promise<Beam.DirectoryEntry>;
 
@@ -156,8 +156,8 @@ export abstract class AdministrationClient {
    * Connects to the service.
    * @throws ServiceError Indicates the connection failed.
    */
-  public abstract async open(): Promise<void>;
+  public abstract open(): Promise<void>;
 
   /** Disconnects from the service. */
-  public abstract async close(): Promise<void>;
+  public abstract close(): Promise<void>;
 }

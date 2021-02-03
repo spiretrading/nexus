@@ -36,8 +36,8 @@ namespace Nexus::Compliance {
       /**
        * Constructs a MapComplianceRule.
        * @param schema The ComplianceRuleSchema to apply.
-       * @param complianceRuleBuilder Builds the compliance rule.
-       * @param keyBuilder Builds the key.
+       * @param complianceRuleBuilder Returns the compliance rule.
+       * @param keyBuilder Returns the key.
        */
       MapComplianceRule(ComplianceRuleSchema schema,
         ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder);
@@ -57,9 +57,9 @@ namespace Nexus::Compliance {
   };
 
   /**
-   * Builds a MapComplianceRule that applies per Security.
+   * Returns a MapComplianceRule that applies per Security.
    * @param schema The ComplianceRuleSchema to apply.
-   * @param complianceRuleBuilder Builds the compliance rule.
+   * @param complianceRuleBuilder Returns the compliance rule.
    */
   inline std::unique_ptr<MapComplianceRule<Security>>
       MakeMapSecurityComplianceRule(ComplianceRuleSchema schema,

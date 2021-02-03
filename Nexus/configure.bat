@@ -49,7 +49,7 @@ IF NOT EXIST CMakeFiles (
     SET RUN_CMAKE=1
   ) ELSE (
     FOR /F %%i IN (
-        'ls -l --time-style=full-iso !DIRECTORY!CMakeLists.txt !DIRECTORY!Config\* ^| grep CMakeLists.txt ^| awk "{print $6 $7}"') DO (
+        'ls -l --time-style=full-iso !DIRECTORY!CMakeLists.txt !DIRECTORY!PreLoad.cmake !DIRECTORY!Config\* ^| grep "PreLoad\.cmake\|CMakeLists\.txt\|dependencies.*.cmake" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
           'ls -l --time-style=full-iso CMakeFiles\timestamp.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
@@ -66,7 +66,7 @@ IF "!RUN_CMAKE!" == "1" (
   ECHO timestamp > CMakeFiles\timestamp.txt
 )
 IF EXIST "!DIRECTORY!Include" (
-  DIR /a-d /b /s "!DIRECTORY!Include\*.hpp" > hpp_hash.txt
+  DIR /a-d /b /s "!DIRECTORY!Include\*" > hpp_hash.txt
   SET C=0
   FOR /F %%i IN ('certutil -hashfile hpp_hash.txt') DO (
     IF !C!==1 (
@@ -91,7 +91,7 @@ IF EXIST "!DIRECTORY!Include" (
   DEL hpp_hash.txt
 )
 IF EXIST "!DIRECTORY!Source" (
-  DIR /a-d /b /s "!DIRECTORY!Source\*.cpp" > cpp_hash.txt
+  DIR /a-d /b /s "!DIRECTORY!Source\*" > cpp_hash.txt
   SET C=0
   FOR /F %%i IN ('certutil -hashfile cpp_hash.txt') DO (
     IF !C!==1 (

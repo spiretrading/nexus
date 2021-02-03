@@ -91,7 +91,7 @@ namespace {
         DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
       m_container.emplace(Initialize(m_serviceLocatorEnvironment.GetRoot(),
         Initialize(m_accounts, m_administrationEnvironment.GetClient(),
-          m_marketDataServiceEnvironment.MakeClient(
+          m_marketDataServiceEnvironment.MakeRegistryClient(
             m_serviceLocatorEnvironment.GetRoot()),
           m_orderExecutionServiceEnvironment.MakeClient(
             m_serviceLocatorEnvironment.GetRoot()),
@@ -101,14 +101,16 @@ namespace {
           exchangeRates, GetDefaultMarketDatabase(),
           GetDefaultDestinationDatabase())), m_serverConnection,
         factory<std::unique_ptr<TriggerTimer>>());
-      m_marketDataServiceEnvironment.Publish(TSLA, BboQuote(
-        Quote(*Money::FromValue("1.00"), 100, Side::BID),
-        Quote(*Money::FromValue("1.01"), 100, Side::ASK),
-        second_clock::universal_time()));
-      m_marketDataServiceEnvironment.Publish(XIU, BboQuote(
-        Quote(*Money::FromValue("2.00"), 100, Side::BID),
-        Quote(*Money::FromValue("2.01"), 100, Side::ASK),
-        second_clock::universal_time()));
+      m_marketDataServiceEnvironment.GetFeedClient().Publish(
+        SecurityBboQuote(BboQuote(
+          Quote(*Money::FromValue("1.00"), 100, Side::BID),
+          Quote(*Money::FromValue("1.01"), 100, Side::ASK),
+          second_clock::universal_time()), TSLA));
+      m_marketDataServiceEnvironment.GetFeedClient().Publish(
+        SecurityBboQuote(BboQuote(
+          Quote(*Money::FromValue("2.00"), 100, Side::BID),
+          Quote(*Money::FromValue("2.01"), 100, Side::ASK),
+          second_clock::universal_time()), XIU));
     }
 
     Client MakeClient(std::string name) {
@@ -143,12 +145,12 @@ TEST_SUITE("RiskServlet") {
     auto subscriptionResponse =
       client.m_riskClient->SendRequest<SubscribeRiskPortfolioUpdatesService>();
     m_accounts->Push(client.m_serviceLocatorClient.GetAccount());
-    client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
+    client.m_orderExecutionClient->Submit(OrderFields::MakeLimitOrder(XIU,
       Side::BID, 200, Money::ONE));
     auto& receivedBid = *m_orders->Pop();
     Accept(receivedBid);
     receivedBid.With([&] (auto status, const auto& executionReports) {
-      auto report = ExecutionReport::BuildUpdatedReport(
+      auto report = ExecutionReport::MakeUpdatedReport(
         executionReports.back(), OrderStatus::PARTIALLY_FILLED,
         executionReports.back().m_timestamp);
       report.m_executionFee = Money::CENT;
@@ -173,12 +175,12 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(bidInventory.m_grossProfitAndLoss == Money::ZERO);
     REQUIRE(bidInventory.m_transactionCount == 1);
     REQUIRE(bidInventory.m_volume == 100);
-    client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
+    client.m_orderExecutionClient->Submit(OrderFields::MakeLimitOrder(XIU,
       Side::ASK, 200, Money::ONE + Money::CENT));
     auto& receivedAsk = *m_orders->Pop();
     Accept(receivedAsk);
     receivedAsk.With([&] (auto status, const auto& executionReports) {
-      auto report = ExecutionReport::BuildUpdatedReport(
+      auto report = ExecutionReport::MakeUpdatedReport(
         executionReports.back(), OrderStatus::FILLED,
         executionReports.back().m_timestamp);
       report.m_executionFee = Money::CENT;
