@@ -5,6 +5,7 @@
 #include <QResizeEvent>
 #include <QSpinBox>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -23,8 +24,12 @@ namespace {
     bool eventFilter(QObject* object, QEvent* event) override {
       if(event->type() == QEvent::Resize) {
         auto& resizeEvent = static_cast<QResizeEvent&>(*event);
-        m_width->set(resizeEvent.size().width());
-        m_height->set(resizeEvent.size().height());
+        if(scale_width(m_width->get()) != resizeEvent.size().width()) {
+          m_width->set(unscale_width(resizeEvent.size().width()));
+        }
+        if(scale_height(m_height->get()) != resizeEvent.size().height()) {
+          m_height->set(unscale_height(resizeEvent.size().height()));
+        }
       }
       return QObject::eventFilter(object, event);
     };
@@ -48,12 +53,16 @@ void Spire::apply_widget_properties(QWidget* widget,
   });
   width.connect_changed_signal([=] (auto value) {
     if(value != 0) {
-      widget->setFixedSize(value, widget->height());
+      if(unscale_width(widget->width()) != value) {
+        widget->setFixedWidth(scale_width(value));
+      }
     }
   });
   height.connect_changed_signal([=] (auto value) {
     if(value != 0) {
-      widget->setFixedSize(widget->width(), value);
+      if(unscale_height(widget->height()) != value) {
+        widget->setFixedHeight(scale_height(value));
+      }
     }
   });
   widget->installEventFilter(new SizeFilter(&width, &height, widget));
