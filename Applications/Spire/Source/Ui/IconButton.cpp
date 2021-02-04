@@ -62,19 +62,16 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
 
 void IconButton::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  auto style_rect = rect();
-  if(hasFocus()) {
-    painter.fillRect(style_rect, "#4B23A0");
-    style_rect.adjust(scale_width(1), scale_height(1), -scale_width(1),
-      -scale_height(1));
-  }
-  painter.fillRect(style_rect, get_background_color());
+  painter.fillRect(rect(), get_background_color());
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
   image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
   image_painter.fillRect(icon.rect(), get_current_icon_color());
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
+  if(hasFocus()) {
+    draw_border(rect(), "#4B23A0", &painter);
+  }
 }
 
 QSize IconButton::sizeHint() const {

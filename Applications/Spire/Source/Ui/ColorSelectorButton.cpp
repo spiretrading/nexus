@@ -8,6 +8,11 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  const auto DEFAULT_BORDER_COLOR = QColor("#C8C8C8");
+  const auto HOVER_FOCUS_BORDER_COLOR = QColor("#4B23A0");
+}
+
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
     QWidget* parent)
     : QWidget(parent) {
@@ -80,9 +85,9 @@ void ColorSelectorButton::adjust_style_rect(QRect& rect) const {
 
 const QColor& ColorSelectorButton::get_border_color() const {
   if(hasFocus() || m_selector_widget->isActiveWindow() || underMouse()) {
-    return "#4B23A0";
-  } else {
-  return "#C8C8C8";
+    return HOVER_FOCUS_BORDER_COLOR;
+  }
+  return DEFAULT_BORDER_COLOR;
 }
 
 void ColorSelectorButton::on_color_selected(const QColor& color) {
