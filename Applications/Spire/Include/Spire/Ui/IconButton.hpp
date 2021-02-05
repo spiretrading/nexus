@@ -70,6 +70,7 @@ namespace Spire {
       QImage m_icon;
       Style m_style;
 
+      const QColor& get_background_color() const;
       const QColor& get_current_icon_color() const;
   };
 }

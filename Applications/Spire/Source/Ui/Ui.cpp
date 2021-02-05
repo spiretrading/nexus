@@ -7,6 +7,17 @@
 
 using namespace Spire;
 
+void Spire::draw_border(const QRect& region, const QColor& color,
+    QPainter* painter) {
+  painter->save();
+  auto border_region = QRegion(region).subtracted(region.adjusted(
+    scale_width(1), scale_height(1), -scale_width(1), -scale_height(1)));
+  for(auto& rect : border_region) {
+    painter->fillRect(rect, color);
+  }
+  painter->restore();
+}
+
 QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
   return imageFromSvg(path, size, QRect(0, 0, size.width(), size.height()));
 }
