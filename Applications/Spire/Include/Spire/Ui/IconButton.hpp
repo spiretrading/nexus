@@ -72,6 +72,7 @@ namespace Spire {
       Style m_style;
       Tooltip* m_tooltip;
 
+      const QColor& get_background_color() const;
       const QColor& get_current_icon_color() const;
   };
 }

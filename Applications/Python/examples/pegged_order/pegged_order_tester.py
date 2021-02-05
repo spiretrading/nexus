@@ -16,7 +16,7 @@ class TestPeggedOrder(unittest.TestCase):
   # Expect the PeggedOrder to terminate.
   def test_rejection(self):
     security = nexus.parse_security('ABX.TSX')
-    order_fields = nexus.order_execution_service.OrderFields.build_limit_order(
+    order_fields = nexus.order_execution_service.OrderFields.make_limit_order(
       security, nexus.Side.BID, 1000, nexus.Money.ZERO)
     order = pegged_order.PeggedOrder(self.service_clients, order_fields,
       nexus.Money.CENT)
@@ -46,7 +46,7 @@ class TestPeggedOrder(unittest.TestCase):
   # Expect the PeggedOrder to terminate.
   def test_price_retreat(self):
     security = nexus.parse_security('ABX.TSX')
-    order_fields = nexus.order_execution_service.OrderFields.build_limit_order(
+    order_fields = nexus.order_execution_service.OrderFields.make_limit_order(
       security, nexus.Side.ASK, 1000, nexus.Money.ZERO)
     order = pegged_order.PeggedOrder(self.service_clients, order_fields,
       nexus.Money.CENT)

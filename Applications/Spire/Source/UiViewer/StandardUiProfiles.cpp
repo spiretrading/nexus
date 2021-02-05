@@ -28,6 +28,9 @@ UiProfile Spire::make_checkbox_profile() {
       auto& label = get<QString>("label", profile.get_properties());
       auto checkbox = new Checkbox(label.get());
       apply_widget_properties(checkbox, profile.get_properties());
+      label.connect_changed_signal([=] (const auto& value) {
+        checkbox->setText(value);
+      });
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto value) {
         if(value) {

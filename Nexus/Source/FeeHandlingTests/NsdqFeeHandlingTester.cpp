@@ -18,7 +18,7 @@ namespace {
     return Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
   }
 
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = NsdqFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     return feeTable;
@@ -27,7 +27,7 @@ namespace {
 
 TEST_SUITE("NsdqFeeHandling") {
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
+    auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       CalculateFee, Money::ZERO);
   }

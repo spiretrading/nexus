@@ -49,6 +49,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_change_connection;
       boost::signals2::scoped_connection m_selected_connection;
 
+      const QColor& get_border_color() const;
       void on_color_selected(const QColor& color);
   };
 }

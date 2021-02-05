@@ -87,7 +87,7 @@ QtPromise<void> ServicesBookViewModel::load() {
       low_slot = std::move(low_slot), open_slot = std::move(open_slot),
       close_slot = std::move(close_slot)] () mutable {
     loader->Call([&] {
-      auto query = BuildCurrentQuery(security);
+      auto query = MakeCurrentQuery(security);
       query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
       clients.GetMarketDataClient().QueryBboQuotes(query, std::move(bbo_slot));
       QueryRealTimeBookQuotesWithSnapshot(clients.GetMarketDataClient(),

@@ -20,14 +20,14 @@ using namespace Nexus::OrderExecutionService;
 namespace {
   const auto TIMESTAMP = ptime(date(1984, May, 6), seconds(10));
 
-  auto BuildOrderFields(std::string symbol) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(std::string symbol) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security(std::move(symbol), DefaultMarkets::TSX(),
       DefaultCountries::CA()), DefaultCurrencies::CAD(), Side::BID,
       DefaultDestinations::TSX(), 100, Money::ONE);
   }
 
-  auto BuildSecuritySet() {
+  auto MakeSecuritySet() {
     auto securities = SecuritySet();
     securities.Add(Security("A", DefaultMarkets::TSX(),
       DefaultCountries::CA()));
@@ -38,49 +38,49 @@ namespace {
 TEST_SUITE("SecurityFilterComplianceRule") {
   TEST_CASE("matching_add") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(BuildSecuritySet(),
+    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
       std::move(baseRule));
-    auto order = PrimitiveOrder({BuildOrderFields("A"), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields("A"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Add(order));
   }
 
   TEST_CASE("unmatching_add") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(BuildSecuritySet(),
+    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
       std::move(baseRule));
-    auto order = PrimitiveOrder({BuildOrderFields("B"), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields("B"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Add(order));
   }
 
   TEST_CASE("matching_submit") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(BuildSecuritySet(),
+    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
       std::move(baseRule));
-    auto order = PrimitiveOrder({BuildOrderFields("A"), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields("A"), 1, TIMESTAMP});
     REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
   }
 
   TEST_CASE("unmatching_submit") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(BuildSecuritySet(),
+    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
       std::move(baseRule));
-    auto order = PrimitiveOrder({BuildOrderFields("B"), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields("B"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Submit(order));
   }
 
   TEST_CASE("matching_cancel") {
     auto baseRule = std::make_unique<RejectCancelsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(BuildSecuritySet(),
+    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
       std::move(baseRule));
-    auto order = PrimitiveOrder({BuildOrderFields("A"), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields("A"), 1, TIMESTAMP});
     REQUIRE_THROWS_AS(rule.Cancel(order), ComplianceCheckException);
   }
 
   TEST_CASE("unmatching_cancel") {
     auto baseRule = std::make_unique<RejectCancelsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(BuildSecuritySet(),
+    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
       std::move(baseRule));
-    auto order = PrimitiveOrder({BuildOrderFields("B"), 1, TIMESTAMP});
+    auto order = PrimitiveOrder({MakeOrderFields("B"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Cancel(order));
   }
 }

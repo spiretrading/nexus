@@ -12,7 +12,7 @@ export abstract class ComplianceClient {
    * @return The list of all ComplianceRuleEntries assigned to the
    *         directoryEntry.
    */
-  public abstract async load(directoryEntry: Beam.DirectoryEntry):
+  public abstract load(directoryEntry: Beam.DirectoryEntry):
     Promise<ComplianceRuleEntry[]>;
 
   /**
@@ -22,7 +22,7 @@ export abstract class ComplianceClient {
    * @param schema The ComplianceRuleSchema specifying the rule to add.
    * @return The id of the new entry.
    */
-  public abstract async add(directoryEntry: Beam.DirectoryEntry,
+  public abstract add(directoryEntry: Beam.DirectoryEntry,
     state: ComplianceRuleEntry.State, schema: ComplianceRuleSchema):
     Promise<number>;
 
@@ -30,27 +30,27 @@ export abstract class ComplianceClient {
    * Updates an existing compliance rule.
    * @param entry The ComplianceRuleEntry to update.
    */
-  public abstract async update(entry: ComplianceRuleEntry): Promise<void>;
+  public abstract update(entry: ComplianceRuleEntry): Promise<void>;
 
   /**
    * Deletes a ComplianceRuleEntry.
    * @param id The ComplianceRuleId to delete.
    */
-  public abstract async delete(id: number): Promise<void>;
+  public abstract delete(id: number): Promise<void>;
 
   /**
    * Reports a compliance violation.
    * @param violationRecord The violation to report.
    */
-  public abstract async report(
+  public abstract report(
     violationRecord: ComplianceRuleViolationRecord): Promise<void>;
 
   /**
    * Connects to the service.
    * @throws ServiceError Indicates the connection failed.
    */
-  public abstract async open(): Promise<void>;
+  public abstract open(): Promise<void>;
 
   /** Disconnects from the service. */
-  public abstract async close(): Promise<void>;
+  public abstract close(): Promise<void>;
 }

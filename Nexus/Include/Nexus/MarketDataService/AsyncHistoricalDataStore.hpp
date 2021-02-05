@@ -5,7 +5,9 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/AsyncDataStore.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
+#include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
@@ -80,7 +82,7 @@ namespace Nexus::MarketDataService {
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         Queries::EvaluatorTranslator>;
       Beam::GetOptionalLocalPtr<D> m_dataStore;
-      Beam::SynchronizedUnorderedMap<Security, SecurityInfo> m_securityInfo;
+      LocalHistoricalDataStore m_securityInfo;
       DataStore<OrderImbalance> m_orderImbalanceDataStore;
       DataStore<BboQuote> m_bboQuoteDataStore;
       DataStore<BookQuote> m_bookQuoteDataStore;
@@ -112,7 +114,25 @@ namespace Nexus::MarketDataService {
   template<typename D>
   std::vector<SecurityInfo> AsyncHistoricalDataStore<D>::LoadSecurityInfo(
       const SecurityInfoQuery& query) {
-    return m_dataStore->LoadSecurityInfo(query);
+    auto localInfo = m_securityInfo.LoadSecurityInfo(query);
+    auto persistentInfo = m_dataStore->LoadSecurityInfo(query);
+    auto info = std::vector<SecurityInfo>();
+    Beam::MergeWithoutDuplicates(localInfo.begin(), localInfo.end(),
+      persistentInfo.begin(), persistentInfo.end(), std::back_inserter(info),
+      [] (const auto& left, const auto& right) {
+        return left.m_security < right.m_security;
+      });
+    if(static_cast<int>(info.size()) > query.GetSnapshotLimit().GetSize()) {
+      if(query.GetSnapshotLimit().GetType() ==
+          Beam::Queries::SnapshotLimit::Type::HEAD) {
+        info.erase(info.begin() + query.GetSnapshotLimit().GetSize(),
+          info.end());
+      } else {
+        info.erase(info.begin(),
+          info.begin() + (info.size() - query.GetSnapshotLimit().GetSize()));
+      }
+    }
+    return info;
   }
 
   template<typename D>
@@ -147,7 +167,7 @@ namespace Nexus::MarketDataService {
 
   template<typename D>
   void AsyncHistoricalDataStore<D>::Store(const SecurityInfo& info) {
-    m_securityInfo.Update(info.m_security, info);
+    m_securityInfo.Store(info);
     m_tasks.Push([=] {
       m_dataStore->Store(info);
     });

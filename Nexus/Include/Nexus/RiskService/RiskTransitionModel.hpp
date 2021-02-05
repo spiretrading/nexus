@@ -210,7 +210,7 @@ namespace Nexus::RiskService {
     for(auto& position : m_book.GetPositions()) {
       auto destination = m_destinations.GetPreferredDestination(
         position.m_security.GetMarket()).m_id;
-      auto orderFields = OrderExecutionService::OrderFields::BuildMarketOrder(
+      auto orderFields = OrderExecutionService::OrderFields::MakeMarketOrder(
         m_account, position.m_security,
         GetOpposite(GetSide(position.m_quantity)), destination,
         Abs(position.m_quantity));

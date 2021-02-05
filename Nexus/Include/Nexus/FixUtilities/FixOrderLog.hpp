@@ -272,7 +272,7 @@ namespace Details {
       const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
     if((*orderRecord)->m_executionReports.empty()) {
       auto initialExecutionReport =
-        OrderExecutionService::ExecutionReport::BuildInitialReport(
+        OrderExecutionService::ExecutionReport::MakeInitialReport(
         (*orderRecord)->m_info.m_orderId, (*orderRecord)->m_info.m_timestamp);
       auto properOrderRecord = orderRecord;
       (*properOrderRecord)->m_executionReports.push_back(
@@ -395,7 +395,7 @@ namespace Details {
         return false;
       }
       auto pendingCancelReport =
-        OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+        OrderExecutionService::ExecutionReport::MakeUpdatedReport(
           reports.back(), OrderStatus::PENDING_CANCEL, timestamp);
       order->Update(pendingCancelReport);
       return true;
@@ -448,7 +448,7 @@ namespace Details {
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::Reject(const OrderExecutionService::OrderInfo& info,
         const std::string& reason) {
-    auto order = std::shared_ptr(BuildRejectedOrder(info, reason));
+    auto order = std::shared_ptr(MakeRejectedOrder(info, reason));
     Beam::Threading::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_orderId, order));
     });
@@ -501,7 +501,7 @@ namespace Details {
         }
       }
       auto updatedReport =
-        OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+        OrderExecutionService::ExecutionReport::MakeUpdatedReport(
           reports.back(), *orderStatus, timestamp);
       updatedReport.m_lastQuantity = lastQuantity;
       updatedReport.m_lastPrice = lastPrice;

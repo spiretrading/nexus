@@ -8,6 +8,16 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  const auto DEFAULT_BORDER_COLOR = QColor("#C8C8C8");
+  const auto HOVER_FOCUS_BORDER_COLOR = QColor("#4B23A0");
+
+  void adjust_style_rect(QRect& rect) {
+    rect.adjust(scale_width(1), scale_height(1), -scale_width(1),
+      -scale_height(1));
+  }
+}
+
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
     QWidget* parent)
     : QWidget(parent) {
@@ -61,18 +71,23 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
 void ColorSelectorButton::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
   auto painter = QPainter(this);
-  if(hasFocus() || m_selector_widget->isActiveWindow() || underMouse()) {
-    painter.fillRect(event->rect(), QColor("#4B23A0"));
-  } else {
-    painter.fillRect(event->rect(), QColor("#C8C8C8"));
-  }
-  painter.setPen(Qt::white);
-  painter.drawRect(1, 1, width() - 3, height() - 3);
-  painter.fillRect(2, 2, width() - 4, height() - 4, m_current_color);
+  auto style_rect = rect();
+  painter.fillRect(style_rect, get_border_color());
+  adjust_style_rect(style_rect);
+  painter.fillRect(style_rect, Qt::white);
+  adjust_style_rect(style_rect);
+  painter.fillRect(style_rect, m_current_color);
 }
 
 QSize	ColorSelectorButton::sizeHint() const {
   return scale(100, 26);
+}
+
+const QColor& ColorSelectorButton::get_border_color() const {
+  if(hasFocus() || m_selector_widget->isActiveWindow() || underMouse()) {
+    return HOVER_FOCUS_BORDER_COLOR;
+  }
+  return DEFAULT_BORDER_COLOR;
 }
 
 void ColorSelectorButton::on_color_selected(const QColor& color) {

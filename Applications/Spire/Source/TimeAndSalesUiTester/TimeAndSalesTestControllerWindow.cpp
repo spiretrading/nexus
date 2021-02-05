@@ -45,9 +45,9 @@ TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(
   price_range_combo_box->addItem("Below Bid");
   price_range_combo_box->setCurrentIndex(2);
   connect(price_range_combo_box,
-    static_cast<void (QComboBox::*)(const QString&)>(
-    &QComboBox::currentIndexChanged),
-    [=] (auto i) { update_price_range(get_price_range(i)); });
+    qOverload<int>(&QComboBox::currentIndexChanged), [=] (auto i) {
+      update_price_range(get_price_range(price_range_combo_box->currentText()));
+    });
   layout->addWidget(price_range_combo_box, 1, 1);
   auto period_label = new QLabel("Period (ms):", this);
   layout->addWidget(period_label, 2, 0);

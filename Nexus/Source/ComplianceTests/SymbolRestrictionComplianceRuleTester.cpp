@@ -15,9 +15,9 @@ using namespace Nexus::Compliance;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
-  auto BuildOrderFields(std::string symbol, MarketCode market) {
+  auto MakeOrderFields(std::string symbol, MarketCode market) {
     auto& marketEntry = GetDefaultMarketDatabase().FromCode(market);
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security(std::move(symbol), market, marketEntry.m_countryCode),
       DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
       Money::ONE);
@@ -28,7 +28,7 @@ TEST_SUITE("SymbolRestrictionComplianceRule") {
   TEST_CASE("empty_restriction") {
     auto rule = SymbolRestrictionComplianceRule(
       std::vector<ComplianceParameter>());
-    auto order = PrimitiveOrder({BuildOrderFields("TST1",
+    auto order = PrimitiveOrder({MakeOrderFields("TST1",
       DefaultMarkets::TSX()), 1, second_clock::universal_time()});
     rule.Submit(order);
   }
@@ -41,17 +41,17 @@ TEST_SUITE("SymbolRestrictionComplianceRule") {
     parameters.emplace_back("symbols", symbols);
     auto rule = SymbolRestrictionComplianceRule(parameters);
     {
-      auto order = PrimitiveOrder({BuildOrderFields("TST1",
+      auto order = PrimitiveOrder({MakeOrderFields("TST1",
         DefaultMarkets::TSX()), 1, second_clock::universal_time()});
       REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
     }
     {
-      auto order = PrimitiveOrder({BuildOrderFields("TST2",
+      auto order = PrimitiveOrder({MakeOrderFields("TST2",
         DefaultMarkets::TSX()), 2, second_clock::universal_time()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }
     {
-      auto order = PrimitiveOrder({BuildOrderFields("TST1",
+      auto order = PrimitiveOrder({MakeOrderFields("TST1",
         DefaultMarkets::ASX()), 3, second_clock::universal_time()});
       REQUIRE_NOTHROW(rule.Submit(order));
     }

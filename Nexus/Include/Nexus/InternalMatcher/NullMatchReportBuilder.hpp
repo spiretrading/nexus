@@ -10,7 +10,7 @@ namespace Nexus::InternalMatcher {
    */
   class NullMatchReportBuilder {
     public:
-      void Build(const OrderExecutionService::OrderFields& passiveOrderFields,
+      void Make(const OrderExecutionService::OrderFields& passiveOrderFields,
         const OrderExecutionService::OrderFields& activeOrderFields,
         Beam::Out<OrderExecutionService::ExecutionReport>
         passiveExecutionReport,
@@ -18,7 +18,7 @@ namespace Nexus::InternalMatcher {
         activeExecutionReport);
   };
 
-  inline void NullMatchReportBuilder::Build(
+  inline void NullMatchReportBuilder::Make(
       const OrderExecutionService::OrderFields& passiveOrderFields,
       const OrderExecutionService::OrderFields& activeOrderFields,
       Beam::Out<OrderExecutionService::ExecutionReport> passiveExecutionReport,

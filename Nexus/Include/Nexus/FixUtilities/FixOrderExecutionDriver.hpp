@@ -195,7 +195,7 @@ namespace Nexus::FixUtilities {
     auto fixApplicationEntryIterator = m_fixApplications.find(
       info.m_fields.m_destination);
     if(fixApplicationEntryIterator == m_fixApplications.end()) {
-      auto order = OrderExecutionService::BuildRejectedOrder(info,
+      auto order = OrderExecutionService::MakeRejectedOrder(info,
         "Destination [" + info.m_fields.m_destination + "] not available");
       auto& submittedOrder = *order;
       Beam::Threading::With(m_orders,

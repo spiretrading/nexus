@@ -39,7 +39,7 @@ TEST_SUITE("BacktesterOrderExecutionClient") {
         Ref(testEnvironment)));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
     auto& orderExecutionClient = serviceClients.GetOrderExecutionClient();
-    auto& order = orderExecutionClient.Submit(OrderFields::BuildLimitOrder(
+    auto& order = orderExecutionClient.Submit(OrderFields::MakeLimitOrder(
       security, Side::BID, 100, 99 * Money::CENT));
     auto executionReports = std::make_shared<Queue<ExecutionReport>>();
     order.GetPublisher().Monitor(executionReports);

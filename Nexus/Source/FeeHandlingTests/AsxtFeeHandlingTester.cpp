@@ -15,20 +15,20 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
-  auto BuildOrderFields(Money price) {
-    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+  auto MakeOrderFields(Money price) {
+    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
       Security("TST", DefaultMarkets::ASX(), DefaultCountries::AU()),
       DefaultCurrencies::AUD(), Side::BID, DefaultDestinations::ASXT(), 100,
       price);
   }
 
-  auto BuildPeggedOrderFields(Money price) {
-    auto fields = BuildOrderFields(price);
+  auto MakePeggedOrderFields(Money price) {
+    auto fields = MakeOrderFields(price);
     fields.m_type = OrderType::PEGGED;
     return fields;
   }
 
-  auto BuildFeeTable() {
+  auto MakeFeeTable() {
     auto feeTable = AsxtFeeTable();
     feeTable.m_gstRate = 1;
     feeTable.m_tradeRate = 1;
@@ -44,8 +44,8 @@ namespace {
 
 TEST_SUITE("AsxtFeeHandling") {
   TEST_CASE("zero_quantity") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildOrderFields(Money::ONE);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakeOrderFields(Money::ONE);
     fields.m_quantity = 0;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,
@@ -54,8 +54,8 @@ TEST_SUITE("AsxtFeeHandling") {
   }
 
   TEST_CASE("regular_tier_one") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildOrderFields(5 * Money::CENT);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakeOrderFields(5 * Money::CENT);
     fields.m_quantity = 100;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,
@@ -68,8 +68,8 @@ TEST_SUITE("AsxtFeeHandling") {
   }
 
   TEST_CASE("regular_tier_two") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildOrderFields(50 * Money::CENT);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakeOrderFields(50 * Money::CENT);
     fields.m_quantity = 500;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,
@@ -82,8 +82,8 @@ TEST_SUITE("AsxtFeeHandling") {
   }
 
   TEST_CASE("regular_tier_three") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildOrderFields(Money::ONE);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakeOrderFields(Money::ONE);
     fields.m_quantity = 12000;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,
@@ -96,8 +96,8 @@ TEST_SUITE("AsxtFeeHandling") {
   }
 
   TEST_CASE("pegged_tier_one") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildPeggedOrderFields(5 * Money::CENT);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakePeggedOrderFields(5 * Money::CENT);
     fields.m_quantity = 6000;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,
@@ -110,8 +110,8 @@ TEST_SUITE("AsxtFeeHandling") {
   }
 
   TEST_CASE("pegged_tier_two") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildPeggedOrderFields(50 * Money::CENT);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakePeggedOrderFields(50 * Money::CENT);
     fields.m_quantity = 300;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,
@@ -124,8 +124,8 @@ TEST_SUITE("AsxtFeeHandling") {
   }
 
   TEST_CASE("pegged_tier_three") {
-    auto feeTable = BuildFeeTable();
-    auto fields = BuildPeggedOrderFields(Money::ONE);
+    auto feeTable = MakeFeeTable();
+    auto fields = MakePeggedOrderFields(Money::ONE);
     fields.m_quantity = 4400;
     TestNotionalValueFeeCalculation(feeTable, fields,
       std::bind(CalculateClearingFee, std::placeholders::_1, fields,

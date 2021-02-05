@@ -20,17 +20,15 @@ namespace {
 }
 
 IconButton::Style::Style()
-    : m_blur_color("#7F5EEC"),
-      m_checked_blur_color("#1FD37A"),
-      m_checked_color("#1FD37A"),
-      m_checked_hovered_color("#2CAC79"),
-      m_default_color("#7F5EEC"),
-      m_disabled_color("#D0D0D0"),
-      m_hover_color("#4B23A0"),
-      m_default_background_color("#F5F5F5"),
-      m_hover_background_color("#E3E3E3") {
-  m_default_background_color.setAlpha(0);
-}
+  : m_blur_color("#7F5EEC"),
+    m_checked_blur_color("#1FD37A"),
+    m_checked_color("#1FD37A"),
+    m_checked_hovered_color("#2CAC79"),
+    m_default_color("#7F5EEC"),
+    m_disabled_color("#D0D0D0"),
+    m_hover_color("#4B23A0"),
+    m_default_background_color("#F5F5F5"),
+    m_hover_background_color("#E3E3E3") {}
 
 IconButton::IconButton(QImage icon, QWidget* parent)
   : IconButton(icon, {}, parent) {}
@@ -68,11 +66,7 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
 
 void IconButton::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(!underMouse() || !isEnabled()) {
-    painter.fillRect(rect(), m_style.m_default_background_color);
-  } else {
-    painter.fillRect(rect(), m_style.m_hover_background_color);
-  }
+  painter.fillRect(rect(), get_background_color());
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
   image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -80,13 +74,19 @@ void IconButton::paintEvent(QPaintEvent* event) {
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
   if(hasFocus()) {
-    painter.setPen({QColor("#4B23A0"), static_cast<double>(scale_width(1))});
-    painter.drawRect(rect().adjusted(0, 0, -scale_width(1), -scale_height(1)));
+    draw_border(rect(), "#4B23A0", &painter);
   }
 }
 
 QSize IconButton::sizeHint() const {
   return DEFAULT_SIZE();
+}
+
+const QColor& IconButton::get_background_color() const {
+  if(!underMouse() || !isEnabled()) {
+    return m_style.m_default_background_color;
+  }
+  return m_style.m_hover_background_color;
 }
 
 const QColor& IconButton::get_current_icon_color() const {

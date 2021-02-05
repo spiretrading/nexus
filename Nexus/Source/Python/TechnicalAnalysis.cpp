@@ -32,12 +32,12 @@ void Nexus::Python::ExportTechnicalAnalysis(module& module) {
     ExportCandlestick<Candlestick<object, object>>(submodule, "Candlestick"));
   ExportCandlestick<TimePriceCandlestick>(submodule, "TimePriceCandlestick");
   submodule.def("get_default_market_center", &GetDefaultMarketCenter);
-  submodule.def("build_open_query", static_cast<
+  submodule.def("make_open_query", static_cast<
     SecurityMarketDataQuery (*)(Security, ptime, const MarketDatabase&,
-      const tz_database&, std::string)>(&BuildOpenQuery));
-  submodule.def("build_open_query", static_cast<
+      const tz_database&, std::string)>(&MakeOpenQuery));
+  submodule.def("make_open_query", static_cast<
     SecurityMarketDataQuery (*)(Security, ptime, const MarketDatabase&,
-      const tz_database&)>(&BuildOpenQuery));
+      const tz_database&)>(&MakeOpenQuery));
   submodule.def("load_open", static_cast<
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&, std::string)>(
@@ -62,12 +62,12 @@ void Nexus::Python::ExportTechnicalAnalysis(module& module) {
       QueryOpen(std::move(client), std::move(security), date, marketDatabase,
         timeZoneDatabase, std::move(queue));
     });
-  submodule.def("build_previous_close_query", static_cast<
+  submodule.def("make_previous_close_query", static_cast<
     SecurityMarketDataQuery (*)(Security, ptime, const MarketDatabase&,
-      const tz_database&, std::string)>(&BuildPreviousCloseQuery));
-  submodule.def("build_previous_close_query", static_cast<
+      const tz_database&, std::string)>(&MakePreviousCloseQuery));
+  submodule.def("make_previous_close_query", static_cast<
     SecurityMarketDataQuery (*)(Security, ptime, const MarketDatabase&,
-      const tz_database&)>(&BuildPreviousCloseQuery));
+      const tz_database&)>(&MakePreviousCloseQuery));
   submodule.def("load_previous_close", static_cast<
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&, std::string)>(
@@ -76,10 +76,10 @@ void Nexus::Python::ExportTechnicalAnalysis(module& module) {
     optional<TimeAndSale> (*)(MarketDataClientBox&, Security, ptime,
       const MarketDatabase&, const tz_database&)>(
         &LoadPreviousClose<MarketDataClientBox>), call_guard<GilRelease>());
-  submodule.def("build_daily_high_query", &BuildDailyHighQuery);
+  submodule.def("make_daily_high_query", &MakeDailyHighQuery);
   submodule.def("query_daily_high", &QueryDailyHigh<ChartingClientBox>);
-  submodule.def("build_daily_low_query", &BuildDailyLowQuery);
+  submodule.def("make_daily_low_query", &MakeDailyLowQuery);
   submodule.def("query_daily_low", &QueryDailyLow<ChartingClientBox>);
-  submodule.def("build_daily_volume_query", &BuildDailyVolumeQuery);
+  submodule.def("make_daily_volume_query", &MakeDailyVolumeQuery);
   submodule.def("query_daily_volume", &QueryDailyVolume<ChartingClientBox>);
 }

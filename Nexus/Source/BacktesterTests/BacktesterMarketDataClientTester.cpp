@@ -38,7 +38,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
     auto routines = RoutineTaskQueue();
     auto& marketDataClient = serviceClients.GetMarketDataClient();
-    auto query = BuildRealTimeQuery(security);
+    auto query = MakeRealTimeQuery(security);
     auto expectedTimestamp = startTime;
     auto finalTimestamp = startTime + seconds(COUNT - 4);
     auto queryCompleteMutex = Mutex();

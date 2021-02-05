@@ -60,7 +60,7 @@ if(UNIX)
     dl)
 endif()
 if(WIN32)
-  target_link_libraries(Python shlwapi)
+  target_link_libraries(Python crypt32 Secur32 shlwapi)
 endif()
 install(TARGETS Python CONFIGURATIONS Debug
   DESTINATION ${LIB_INSTALL_DIRECTORY}/Debug)

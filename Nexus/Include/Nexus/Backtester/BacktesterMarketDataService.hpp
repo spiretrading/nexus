@@ -273,7 +273,8 @@ namespace Nexus {
 
   template<typename I, typename T>
   void MarketDataEvent<I, T>::Execute() {
-    m_service->m_marketDataEnvironment->Publish(m_index, m_value);
+    m_service->m_marketDataEnvironment->GetFeedClient().Publish(
+      Beam::Queries::IndexedValue(m_value, m_index));
   }
 }
 

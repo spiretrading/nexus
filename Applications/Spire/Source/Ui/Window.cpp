@@ -14,6 +14,10 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  auto RESIZE_AREA() {
+    return scale(5, 5);
+  }
+
   auto ICON_SIZE() {
     return scale(26, 26);
   }
@@ -26,7 +30,6 @@ namespace {
 
 Window::Window(QWidget* parent)
     : QWidget(parent),
-      m_resize_area_width(5),
       m_is_resizeable(true),
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
@@ -83,52 +86,53 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
+    auto resize_area = RESIZE_AREA();
     if(m_is_resizeable) {
       if(x >= window_rect.left &&
-          x < window_rect.left + m_resize_area_width &&
+          x < window_rect.left + resize_area.width() &&
           y < window_rect.bottom &&
-          y >= window_rect.bottom - m_resize_area_width) {
+          y >= window_rect.bottom - resize_area.height()) {
         *result = HTBOTTOMLEFT;
         return true;
       }
       if(x < window_rect.right &&
-          x >= window_rect.right - m_resize_area_width &&
+          x >= window_rect.right - resize_area.width() &&
           y < window_rect.bottom &&
-          y >= window_rect.bottom - m_resize_area_width) {
+          y >= window_rect.bottom - resize_area.height()) {
         *result = HTBOTTOMRIGHT;
         return true;
       }
       if(x >= window_rect.left &&
-          x < window_rect.left + m_resize_area_width &&
+          x < window_rect.left + resize_area.width() &&
           y >= window_rect.top &&
-          y < window_rect.top + m_resize_area_width) {
+          y < window_rect.top + resize_area.height()) {
         *result = HTTOPLEFT;
         return true;
       }
       if(x < window_rect.right &&
-          x >= window_rect.right - m_resize_area_width &&
+          x >= window_rect.right - resize_area.width() &&
           y >= window_rect.top &&
-          y < window_rect.top + m_resize_area_width) {
+          y < window_rect.top + resize_area.height()) {
         *result = HTTOPRIGHT;
         return true;
       }
       if(x >= window_rect.left &&
-          x < window_rect.left + m_resize_area_width) {
+          x < window_rect.left + resize_area.width()) {
         *result = HTLEFT;
         return true;
       }
       if(x < window_rect.right &&
-          x >= window_rect.right - m_resize_area_width) {
+          x >= window_rect.right - resize_area.width()) {
         *result = HTRIGHT;
         return true;
       }
       if(y < window_rect.bottom &&
-          y >= window_rect.bottom - m_resize_area_width) {
+          y >= window_rect.bottom - resize_area.height()) {
         *result = HTBOTTOM;
         return true;
       }
       if(y >= window_rect.top &&
-          y < window_rect.top + m_resize_area_width) {
+          y < window_rect.top + resize_area.height()) {
         *result = HTTOP;
         return true;
       }

@@ -40,13 +40,15 @@ namespace Nexus::MarketDataService {
 
       void Add(const SecurityInfo& securityInfo);
 
-      void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance);
+      void Publish(const MarketOrderImbalance& orderImbalance);
 
-      void PublishBboQuote(const SecurityBboQuote& bboQuote);
+      void Publish(const SecurityBboQuote& bboQuote);
 
-      void PublishMarketQuote(const SecurityMarketQuote& marketQuote);
+      void Publish(const SecurityMarketQuote& marketQuote);
 
-      void SetBookQuote(const SecurityBookQuote& bookQuote);
+      void Publish(const SecurityBookQuote& bookQuote);
+
+      void Publish(const SecurityTimeAndSale& timeAndSale);
 
       void AddOrder(const Security& security, MarketCode market,
         const std::string& mpid, bool isPrimaryMpid, const std::string& id,
@@ -64,8 +66,6 @@ namespace Nexus::MarketDataService {
 
       void DeleteOrder(const std::string& id,
         boost::posix_time::ptime timestamp);
-
-      void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale);
 
       void Close();
 
@@ -113,31 +113,38 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  void ToPythonMarketDataFeedClient<C>::PublishOrderImbalance(
+  void ToPythonMarketDataFeedClient<C>::Publish(
       const MarketOrderImbalance& orderImbalance) {
     auto release = Beam::Python::GilRelease();
-    m_client->PublishOrderImbalance(orderImbalance);
+    m_client->Publish(orderImbalance);
   }
 
   template<typename C>
-  void ToPythonMarketDataFeedClient<C>::PublishBboQuote(
+  void ToPythonMarketDataFeedClient<C>::Publish(
       const SecurityBboQuote& bboQuote) {
     auto release = Beam::Python::GilRelease();
-    m_client->PublishBboQuote(bboQuote);
+    m_client->Publish(bboQuote);
   }
 
   template<typename C>
-  void ToPythonMarketDataFeedClient<C>::PublishMarketQuote(
+  void ToPythonMarketDataFeedClient<C>::Publish(
       const SecurityMarketQuote& marketQuote) {
     auto release = Beam::Python::GilRelease();
-    m_client->PublishMarketQuote(marketQuote);
+    m_client->Publish(marketQuote);
   }
 
   template<typename C>
-  void ToPythonMarketDataFeedClient<C>::SetBookQuote(
+  void ToPythonMarketDataFeedClient<C>::Publish(
       const SecurityBookQuote& bookQuote) {
     auto release = Beam::Python::GilRelease();
-    m_client->SetBookQuote(bookQuote);
+    m_client->Publish(bookQuote);
+  }
+
+  template<typename C>
+  void ToPythonMarketDataFeedClient<C>::Publish(
+      const SecurityTimeAndSale& timeAndSale) {
+    auto release = Beam::Python::GilRelease();
+    m_client->Publish(timeAndSale);
   }
 
   template<typename C>
@@ -176,13 +183,6 @@ namespace Nexus::MarketDataService {
       boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
     m_client->DeleteOrder(id, timestamp);
-  }
-
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::PublishTimeAndSale(
-      const SecurityTimeAndSale& timeAndSale) {
-    auto release = Beam::Python::GilRelease();
-    m_client->PublishTimeAndSale(timeAndSale);
   }
 
   template<typename C>

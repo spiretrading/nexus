@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;

@@ -73,21 +73,32 @@ namespace Nexus::OrderExecutionService {
       void Close();
 
     private:
+      template<bool IsLive>
+      struct Translator : Queries::SqlTranslator {
+        using Queries::SqlTranslator::SqlTranslator;
+
+        void Visit(
+          const Beam::Queries::MemberAccessExpression& expression) override;
+      };
       template<typename V, typename I>
-      using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
-        Queries::SqlTranslator>;
+      using DataStore =
+        Beam::Queries::SqlDataStore<Connection, V, I, Queries::SqlTranslator>;
+      template<bool IsLive>
+      using IsLiveDataStore = Beam::Queries::SqlDataStore<Connection,
+        Viper::Row<OrderInfo>, Viper::Row<Beam::ServiceLocator::DirectoryEntry>,
+        Translator<IsLive>>;
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_accountEntries;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
       Beam::DatabaseConnectionPool<Connection> m_writerPool;
       DataStore<Viper::Row<OrderInfo>,
-        Viper::Row<Beam::ServiceLocator::DirectoryEntry>> m_submissionDataStore;
-      DataStore<Viper::Row<OrderInfo>,
         Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
-        m_statusSubmissionDataStore;
+          m_submissionsDataStore;
+      IsLiveDataStore<true> m_liveSubmissionsDataStore;
+      IsLiveDataStore<false> m_terminalSubmissionsDataStore;
       DataStore<Viper::Row<ExecutionReport>,
         Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
-        m_executionReportDataStore;
+          m_executionReportsDataStore;
       Viper::Row<OrderId> m_liveOrdersRow;
       Beam::IO::OpenState m_openState;
 
@@ -100,7 +111,7 @@ namespace Nexus::OrderExecutionService {
   /**
    * Makes an OrderExecutionDataStore replicated among multiple database
    * instances.
-   * @param connectionBuilders Builds the connections to the SQL database to
+   * @param connectionBuilders Constructs the connections to the SQL database to
    *        replicate.
    * @param accountSourceFunction The function used to load DirectoryEntries.
    */
@@ -140,13 +151,17 @@ namespace Nexus::OrderExecutionService {
           connection->open();
           return connection;
         }),
-        m_submissionDataStore("submissions", GetOrderInfoRow(), GetAccountRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
-        m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
+        m_submissionsDataStore("submissions", GetOrderInfoRow(),
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
+        m_liveSubmissionsDataStore("live_submissions", GetOrderInfoRow(),
           GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Queries::SqlConnectionOption::NONE),
-        m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
-          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)) {
+        m_terminalSubmissionsDataStore("terminal_submissions",
+          GetOrderInfoRow(), GetAccountRow(), Beam::Ref(m_readerPool),
+          Beam::Ref(m_writerPool), Beam::Queries::SqlConnectionOption::NONE),
+        m_executionReportsDataStore("execution_reports",
+          GetExecutionReportRow(), GetAccountRow(), Beam::Ref(m_readerPool),
+          Beam::Ref(m_writerPool)) {
     m_liveOrdersRow = Viper::Row<OrderId>().
       add_column("order_id").
       set_primary_key("order_id");
@@ -154,11 +169,15 @@ namespace Nexus::OrderExecutionService {
       auto writerConnection = m_writerPool.Acquire();
       writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
         "live_orders"));
-      if(!writerConnection->has_table("status_submissions")) {
-        writerConnection->execute("CREATE VIEW status_submissions AS "
-          "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
-          "is_live FROM submissions LEFT JOIN live_orders ON "
-          "submissions.order_id = live_orders.order_id");
+      if(!writerConnection->has_table("live_submissions")) {
+        writerConnection->execute("CREATE VIEW live_submissions AS "
+          "SELECT * FROM submissions WHERE order_id IN ("
+          "SELECT order_id FROM live_orders)");
+      }
+      if(!writerConnection->has_table("terminal_submissions")) {
+        writerConnection->execute("CREATE VIEW terminal_submissions AS "
+          "SELECT * FROM submissions WHERE order_id NOT IN ("
+          "SELECT order_id FROM live_orders)");
       }
     } catch(const std::exception&) {
       Close();
@@ -182,7 +201,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   boost::optional<SequencedAccountOrderRecord>
       SqlOrderExecutionDataStore<C>::LoadOrder(OrderId id) {
-    auto orders = m_submissionDataStore.Load(Viper::sym("order_id") == id);
+    auto orders = m_submissionsDataStore.Load(Viper::sym("order_id") == id);
     if(orders.empty()) {
       return boost::none;
     }
@@ -197,9 +216,16 @@ namespace Nexus::OrderExecutionService {
       LoadOrderSubmissions(const AccountQuery& query) {
     auto orderInfo = [&] {
       if(HasLiveCheck(query.GetFilter())) {
-        return m_statusSubmissionDataStore.Load(query);
+        auto liveSubmissions = m_liveSubmissionsDataStore.Load(query);
+        auto terminalSubmissions = m_terminalSubmissionsDataStore.Load(query);
+        auto submissions = std::vector<SequencedOrderInfo>();
+        Beam::MergeWithoutDuplicates(liveSubmissions.begin(),
+          liveSubmissions.end(), terminalSubmissions.begin(),
+          terminalSubmissions.end(), std::back_inserter(submissions),
+          Beam::Queries::SequenceComparator());
+        return submissions;
       } else {
-        return m_submissionDataStore.Load(query);
+        return m_submissionsDataStore.Load(query);
       }
     }();
     auto orderRecords = std::vector<SequencedOrderRecord>();
@@ -212,13 +238,13 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   std::vector<SequencedExecutionReport> SqlOrderExecutionDataStore<C>::
       LoadExecutionReports(const AccountQuery& query) {
-    return m_executionReportDataStore.Load(query);
+    return m_executionReportsDataStore.Load(query);
   }
 
   template<typename C>
   void SqlOrderExecutionDataStore<C>::Store(
       const SequencedAccountOrderInfo& orderInfo) {
-    m_submissionDataStore.Store(orderInfo);
+    m_submissionsDataStore.Store(orderInfo);
     auto connection = m_writerPool.Acquire();
     connection->execute(Viper::insert(m_liveOrdersRow, "live_orders",
       &(*orderInfo)->m_orderId));
@@ -230,11 +256,10 @@ namespace Nexus::OrderExecutionService {
     if(orderInfo.empty()) {
       return;
     }
-    m_submissionDataStore.Store(orderInfo);
+    m_submissionsDataStore.Store(orderInfo);
     auto orderIds = std::vector<OrderId>();
     std::transform(orderInfo.begin(), orderInfo.end(),
-      std::back_inserter(orderIds),
-      [] (auto& orderInfo) {
+      std::back_inserter(orderIds), [] (auto& orderInfo) {
         return (*orderInfo)->m_orderId;
       });
     auto connection = m_writerPool.Acquire();
@@ -245,7 +270,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SqlOrderExecutionDataStore<C>::Store(
       const SequencedAccountExecutionReport& executionReport) {
-    m_executionReportDataStore.Store(executionReport);
+    m_executionReportsDataStore.Store(executionReport);
     if(IsTerminal((*executionReport)->m_status)) {
       auto connection = m_writerPool.Acquire();
       connection->execute(Viper::erase("live_orders",
@@ -256,14 +281,14 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SqlOrderExecutionDataStore<C>::Store(
       const std::vector<SequencedAccountExecutionReport>& executionReports) {
-    m_executionReportDataStore.Store(executionReports);
+    m_executionReportsDataStore.Store(executionReports);
     auto eraseCondition = Viper::literal(false);
     auto hasErase = false;
     for(auto& executionReport : executionReports) {
       if(IsTerminal((*executionReport)->m_status)) {
         hasErase = true;
-        eraseCondition = eraseCondition || Viper::sym("order_id") ==
-          (*executionReport)->m_id;
+        eraseCondition = eraseCondition ||
+          Viper::sym("order_id") == (*executionReport)->m_id;
       }
     }
     if(hasErase) {
@@ -277,9 +302,10 @@ namespace Nexus::OrderExecutionService {
     if(m_openState.SetClosing()) {
       return;
     }
-    m_executionReportDataStore.Close();
-    m_statusSubmissionDataStore.Close();
-    m_submissionDataStore.Close();
+    m_executionReportsDataStore.Close();
+    m_terminalSubmissionsDataStore.Close();
+    m_liveSubmissionsDataStore.Close();
+    m_submissionsDataStore.Close();
     m_writerPool.Close();
     m_readerPool.Close();
     m_openState.Close();
@@ -288,19 +314,31 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   SequencedOrderRecord SqlOrderExecutionDataStore<C>::LoadRecord(
       SequencedOrderInfo info) {
-    info->m_fields.m_account = m_accountEntries.Load(
-      info->m_fields.m_account.m_id);
-    info->m_submissionAccount = m_accountEntries.Load(
-      info->m_submissionAccount.m_id);
-    auto sequencedExecutionReports = m_executionReportDataStore.Load(
+    info->m_fields.m_account =
+      m_accountEntries.Load(info->m_fields.m_account.m_id);
+    info->m_submissionAccount =
+      m_accountEntries.Load(info->m_submissionAccount.m_id);
+    auto sequencedExecutionReports = m_executionReportsDataStore.Load(
       Viper::sym("order_id") == info->m_orderId);
     auto executionReports = std::vector<ExecutionReport>();
     for(auto& executionReport : sequencedExecutionReports) {
       executionReports.push_back(std::move(*executionReport));
     }
     auto sequence = info.GetSequence();
-    return Beam::Queries::SequencedValue(OrderRecord(std::move(*info),
-      std::move(executionReports)), sequence);
+    return Beam::Queries::SequencedValue(
+      OrderRecord(std::move(*info), std::move(executionReports)), sequence);
+  }
+
+  template<typename C>
+  template<bool IsLive>
+  void SqlOrderExecutionDataStore<C>::Translator<IsLive>::Visit(
+      const Beam::Queries::MemberAccessExpression& expression) {
+    if(expression.GetExpression()->GetType() == Queries::OrderInfoType() &&
+        expression.GetName() == "is_live") {
+      GetTranslation() = Viper::literal(IsLive);
+    } else {
+      Queries::SqlTranslator::Visit(expression);
+    }
   }
 }
 

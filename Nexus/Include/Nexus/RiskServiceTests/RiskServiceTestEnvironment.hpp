@@ -58,7 +58,7 @@ namespace Nexus::RiskService::Tests {
       ~RiskServiceTestEnvironment();
 
       /**
-       * Builds a new RiskClient.
+       * Returns a new RiskClient.
        * @param serviceLocatorClient The ServiceLocatorClient used to
        *        authenticate the RiskClient.
        */

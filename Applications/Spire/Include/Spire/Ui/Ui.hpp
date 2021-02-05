@@ -43,6 +43,15 @@ namespace Spire {
   class TransitionWidget;
   class Window;
 
+  //! Draws a border inside the given region.
+  /*!
+    \param region The region to draw a border inside of.
+    \param color The border's color.
+    \param painter The QPainter instance that draws the border.
+  */
+  void draw_border(const QRect& region, const QColor& color,
+    QPainter* painter);
+
   //! Builds a QImage from an SVG resource where the size of the SVG is equal
   //! to the image as a whole.
   /*!

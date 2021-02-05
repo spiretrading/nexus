@@ -14,7 +14,7 @@ namespace Nexus::InternalMatcher {
   struct MatchReportBuilder : Beam::Concept<MatchReportBuilder> {
 
     /**
-     * Builds ExecutionReports that are the result of an internal match.
+     * Returns ExecutionReports that are the result of an internal match.
      * @param passiveOrderFields The OrderFields represented by the passive side
      *        of the internal match.
      * @param activeOrderFields The OrderFields represented by the active side
@@ -24,7 +24,7 @@ namespace Nexus::InternalMatcher {
      * @param activeExecutionReport Stores the ExecutionReport of the active
      *        order.
      */
-    void Build(const OrderExecutionService::OrderFields& passiveOrderFields,
+    void Make(const OrderExecutionService::OrderFields& passiveOrderFields,
       const OrderExecutionService::OrderFields& activeOrderFields,
       Beam::Out<OrderExecutionService::ExecutionReport> passiveExecutionReport,
       Beam::Out<OrderExecutionService::ExecutionReport> activeExecutionReport);

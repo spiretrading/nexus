@@ -16,7 +16,7 @@ ServicesTimeAndSalesModel::ServicesTimeAndSalesModel(Security security,
     const Definitions& definitions, ServiceClientsBox clients)
     : m_security(std::move(security)),
       m_clients(std::move(clients)) {
-  auto query = BuildRealTimeQuery(m_security);
+  auto query = MakeRealTimeQuery(m_security);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_clients.GetMarketDataClient().QueryBboQuotes(query,
     m_event_handler.get_slot<SequencedBboQuote>(
