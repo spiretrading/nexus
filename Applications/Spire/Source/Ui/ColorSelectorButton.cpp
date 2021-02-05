@@ -11,6 +11,11 @@ using namespace Spire;
 namespace {
   const auto DEFAULT_BORDER_COLOR = QColor("#C8C8C8");
   const auto HOVER_FOCUS_BORDER_COLOR = QColor("#4B23A0");
+
+  void adjust_style_rect(QRect& rect) {
+    rect.adjust(scale_width(1), scale_height(1), -scale_width(1),
+      -scale_height(1));
+  }
 }
 
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
@@ -76,11 +81,6 @@ void ColorSelectorButton::paintEvent(QPaintEvent* event) {
 
 QSize	ColorSelectorButton::sizeHint() const {
   return scale(100, 26);
-}
-
-void ColorSelectorButton::adjust_style_rect(QRect& rect) const {
-  rect.adjust(scale_width(1), scale_height(1), -scale_width(1),
-    -scale_height(1));
 }
 
 const QColor& ColorSelectorButton::get_border_color() const {

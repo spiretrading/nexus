@@ -12,7 +12,7 @@ void Spire::draw_border(const QRect& region, const QColor& color,
   painter->save();
   auto border_region = QRegion(region).subtracted(region.adjusted(
     scale_width(1), scale_height(1), -scale_width(1), -scale_height(1)));
-  for(const auto& rect : border_region) {
+  for(auto& rect : border_region) {
     painter->fillRect(rect, color);
   }
   painter->restore();
