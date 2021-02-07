@@ -1,6 +1,7 @@
 #include "Spire/Ui/Window.hpp"
 #include <QEvent>
 #include <QGuiApplication>
+#include <QPainter>
 #include <QScreen>
 #include <QVBoxLayout>
 #include <QWindow>
@@ -9,6 +10,9 @@
 #include <windowsx.h>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TitleBar.hpp"
+
+Q_GUI_EXPORT HBITMAP qt_pixmapToWinHBITMAP(
+  const QPixmap &p, int hbitmapFormat = 0);
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -32,8 +36,7 @@ Window::Window(QWidget* parent)
     : QWidget(parent),
       m_is_resizeable(true),
       m_title_bar(nullptr) {
-  setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
-    Qt::WindowSystemMenuHint);
+  setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   setObjectName("spire_window");
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   installEventFilter(m_title_bar);
@@ -79,6 +82,73 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCCALCSIZE) {
+    if(static_cast<bool>(msg->wParam)) {
+      auto parameters = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
+      auto& requested_client_area = parameters->rgrc[0];
+      requested_client_area.right -=
+        GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+      requested_client_area.left +=
+        GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+      requested_client_area.bottom -=
+        GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+      *result = 0;
+      return true;
+    }
+  } else if(msg->message == WM_NCPAINT) {
+    auto winId = reinterpret_cast<HWND>(effectiveWinId());
+//    DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+    RECT winRect1;
+    RECT winRectCl;
+    ::GetWindowRect(winId, &winRect1);
+    ::GetClientRect(winId, &winRectCl);
+    HDC hDeviceContext = ::GetWindowDC(winId);
+    LONG lStyle = ::GetWindowLong(winId, GWL_STYLE);
+
+    POINT ptTopLeft = {winRectCl.left, winRectCl.top};
+    POINT ptBottomRight = {winRectCl.right, winRectCl.bottom};
+
+    ::ClientToScreen(winId, &ptTopLeft);
+    ::ClientToScreen(winId, &ptBottomRight);
+    winRectCl.left = ptTopLeft.x - winRect1.left;
+    winRectCl.top = ptTopLeft.y - winRect1.top;
+    winRectCl.right = ptBottomRight.x - winRect1.left;
+    winRectCl.bottom = ptBottomRight.y - winRect1.top;
+
+    winRect1.right = winRect1.right - winRect1.left;
+    winRect1.bottom = winRect1.bottom - winRect1.top;
+    winRect1.top = 0;
+    winRect1.left = 0;
+
+    HRGN hRgnOuter = ::CreateRectRgn(winRect1.left, winRect1.top, winRect1.right, winRect1.bottom);
+    HRGN hRgnInner = ::CreateRectRgn(winRectCl.left, winRectCl.top, winRectCl.right, winRectCl.bottom);
+    HRGN hRgnCombine = ::CreateRectRgn(winRect1.left, winRect1.top, winRect1.right, winRect1.bottom);
+
+    ::CombineRgn(hRgnCombine, hRgnOuter, hRgnInner, RGN_DIFF);
+    ::SelectClipRgn(hDeviceContext, hRgnCombine);
+
+    QPixmap pix(winRect1.right, winRect1.bottom);
+    QPainter paint(&pix);
+    QRect rc(0,0,winRect1.right, winRect1.bottom);
+
+    paint.fillRect(rc, QColor(28,28,28));
+    QLinearGradient grad(0,0,0,40);
+    grad.setColorAt(0, QColor(255,255,255,180));
+    grad.setColorAt(0.33, QColor(255,255,255,80));
+    grad.setColorAt(0.33, QColor(255,255,255,0));
+    grad.setColorAt(1, QColor(255,255,255,0));
+    paint.fillRect(QRect(0,0,winRect1.right, 40), grad);
+
+    HBITMAP hBmp = qt_pixmapToWinHBITMAP(pix);
+    HDC hDC = ::CreateCompatibleDC(hDeviceContext);
+    ::SelectObject(hDC, hBmp);
+    ::BitBlt(hDeviceContext, winRect1.left, winRect1.top, winRect1.right, winRect1.bottom, hDC, 0, 0, SRCCOPY);
+    ::DeleteDC(hDC);
+    ::DeleteObject(hBmp);
+
+    ::DeleteObject(hRgnOuter);
+    ::DeleteObject(hRgnInner);
+    ::DeleteObject(hRgnCombine);
+    ::ReleaseDC(winId, hDeviceContext);
     *result = 0;
     return true;
   } else if(msg->message == WM_NCHITTEST) {
@@ -202,7 +272,7 @@ void Window::set_window_attributes(bool is_resizeable) {
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  const auto shadow = MARGINS{ 1, 1, 1, 1 };
+  const auto shadow = MARGINS{1, 1, 1, 1};
   DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
     &shadow);
 }
