@@ -32,12 +32,10 @@ namespace {
 
 Window::Window(QWidget* parent)
     : QWidget(parent),
-      m_is_resizable(true),
-      m_title_bar(nullptr) {
+      m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   setObjectName("spire_window");
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
-  installEventFilter(m_title_bar);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
@@ -157,7 +155,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
     auto pos = m_title_bar->mapFromGlobal({x, y});
     if(m_title_bar->get_title_label()->geometry().contains(pos)) {
-      DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
       *result = HTCAPTION;
       return true;
     }
@@ -183,10 +180,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
-}
-
-void Window::showEvent(QShowEvent* event) {
-  QTimer::singleShot(0, this, [=] { on_screen_changed(nullptr); });
 }
 
 void Window::resize_body(const QSize& size) {

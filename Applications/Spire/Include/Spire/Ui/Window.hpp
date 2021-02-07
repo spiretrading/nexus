@@ -50,7 +50,6 @@ namespace Spire {
       bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
-      void showEvent(QShowEvent* event) override;
 
     private:
       mutable ClosedSignal m_closed_signal;
