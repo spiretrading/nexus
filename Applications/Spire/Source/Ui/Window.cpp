@@ -3,6 +3,7 @@
 #include <QGuiApplication>
 #include <QPainter>
 #include <QScreen>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWindow>
 #include <dwmapi.h>
@@ -11,15 +12,12 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
-Q_GUI_EXPORT HBITMAP qt_pixmapToWinHBITMAP(
-  const QPixmap &p, int hbitmapFormat = 0);
-
 using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
   auto RESIZE_AREA() {
-    return scale(5, 5);
+    return scale(8, 8);
   }
 
   auto ICON_SIZE() {
@@ -34,7 +32,7 @@ namespace {
 
 Window::Window(QWidget* parent)
     : QWidget(parent),
-      m_is_resizeable(true),
+      m_is_resizable(true),
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   setObjectName("spire_window");
@@ -42,8 +40,8 @@ Window::Window(QWidget* parent)
   installEventFilter(m_title_bar);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
-  layout->setContentsMargins(scale_width(1), scale_height(1),
-    scale_width(1), scale_height(1));
+  layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
+    scale_height(1));
   layout->addWidget(m_title_bar);
 }
 
@@ -71,7 +69,7 @@ void Window::closeEvent(QCloseEvent* event) {
 
 bool Window::event(QEvent* event) {
   if(event->type() == QEvent::WinIdChange) {
-    set_window_attributes(m_is_resizeable);
+    set_window_attributes(m_is_resizable);
     connect(windowHandle(), &QWindow::screenChanged, this,
       &Window::on_screen_changed);
   }
@@ -81,7 +79,11 @@ bool Window::event(QEvent* event) {
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
-  if(msg->message == WM_NCCALCSIZE) {
+  if(msg->message == WM_NCACTIVATE) {
+    RedrawWindow(msg->hwnd, NULL, NULL, RDW_UPDATENOW);
+    *result = -1;
+    return true;
+  } else if(msg->message == WM_NCCALCSIZE) {
     if(static_cast<bool>(msg->wParam)) {
       auto parameters = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
       auto& requested_client_area = parameters->rgrc[0];
@@ -95,61 +97,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       return true;
     }
   } else if(msg->message == WM_NCPAINT) {
-    auto winId = reinterpret_cast<HWND>(effectiveWinId());
-//    DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
-    RECT winRect1;
-    RECT winRectCl;
-    ::GetWindowRect(winId, &winRect1);
-    ::GetClientRect(winId, &winRectCl);
-    HDC hDeviceContext = ::GetWindowDC(winId);
-    LONG lStyle = ::GetWindowLong(winId, GWL_STYLE);
-
-    POINT ptTopLeft = {winRectCl.left, winRectCl.top};
-    POINT ptBottomRight = {winRectCl.right, winRectCl.bottom};
-
-    ::ClientToScreen(winId, &ptTopLeft);
-    ::ClientToScreen(winId, &ptBottomRight);
-    winRectCl.left = ptTopLeft.x - winRect1.left;
-    winRectCl.top = ptTopLeft.y - winRect1.top;
-    winRectCl.right = ptBottomRight.x - winRect1.left;
-    winRectCl.bottom = ptBottomRight.y - winRect1.top;
-
-    winRect1.right = winRect1.right - winRect1.left;
-    winRect1.bottom = winRect1.bottom - winRect1.top;
-    winRect1.top = 0;
-    winRect1.left = 0;
-
-    HRGN hRgnOuter = ::CreateRectRgn(winRect1.left, winRect1.top, winRect1.right, winRect1.bottom);
-    HRGN hRgnInner = ::CreateRectRgn(winRectCl.left, winRectCl.top, winRectCl.right, winRectCl.bottom);
-    HRGN hRgnCombine = ::CreateRectRgn(winRect1.left, winRect1.top, winRect1.right, winRect1.bottom);
-
-    ::CombineRgn(hRgnCombine, hRgnOuter, hRgnInner, RGN_DIFF);
-    ::SelectClipRgn(hDeviceContext, hRgnCombine);
-
-    QPixmap pix(winRect1.right, winRect1.bottom);
-    QPainter paint(&pix);
-    QRect rc(0,0,winRect1.right, winRect1.bottom);
-
-    paint.fillRect(rc, QColor(28,28,28));
-    QLinearGradient grad(0,0,0,40);
-    grad.setColorAt(0, QColor(255,255,255,180));
-    grad.setColorAt(0.33, QColor(255,255,255,80));
-    grad.setColorAt(0.33, QColor(255,255,255,0));
-    grad.setColorAt(1, QColor(255,255,255,0));
-    paint.fillRect(QRect(0,0,winRect1.right, 40), grad);
-
-    HBITMAP hBmp = qt_pixmapToWinHBITMAP(pix);
-    HDC hDC = ::CreateCompatibleDC(hDeviceContext);
-    ::SelectObject(hDC, hBmp);
-    ::BitBlt(hDeviceContext, winRect1.left, winRect1.top, winRect1.right, winRect1.bottom, hDC, 0, 0, SRCCOPY);
-    ::DeleteDC(hDC);
-    ::DeleteObject(hBmp);
-
-    ::DeleteObject(hRgnOuter);
-    ::DeleteObject(hRgnInner);
-    ::DeleteObject(hRgnCombine);
-    ::ReleaseDC(winId, hDeviceContext);
-    *result = 0;
+    *result = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
     return true;
   } else if(msg->message == WM_NCHITTEST) {
     auto window_rect = RECT{};
@@ -157,7 +105,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
     auto resize_area = RESIZE_AREA();
-    if(m_is_resizeable) {
+    if(m_is_resizable) {
       if(x >= window_rect.left &&
           x < window_rect.left + resize_area.width() &&
           y < window_rect.bottom &&
@@ -209,6 +157,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
     auto pos = m_title_bar->mapFromGlobal({x, y});
     if(m_title_bar->get_title_label()->geometry().contains(pos)) {
+      DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
       *result = HTCAPTION;
       return true;
     }
@@ -236,6 +185,10 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   return QWidget::nativeEvent(eventType, message, result);
 }
 
+void Window::showEvent(QShowEvent* event) {
+  QTimer::singleShot(0, this, [=] { on_screen_changed(nullptr); });
+}
+
 void Window::resize_body(const QSize& size) {
   resize({size.width(), size.height() + m_title_bar->height()});
 }
@@ -244,7 +197,8 @@ void Window::on_screen_changed(QScreen* screen) {
   // TODO: Workaround for this change:
   // https://github.com/qt/qtbase/commit/d2fd9b1b9818b3ec88487967e010f66e92952f55
   auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-  auto rect = RECT{ 0, 0, 1, 1 };
+  auto rect = RECT{};
+  GetWindowRect(hwnd, &rect);
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
 }
 
@@ -254,25 +208,22 @@ void Window::set_fixed_body_size(const QSize& size) {
 }
 
 void Window::set_window_attributes(bool is_resizeable) {
-  m_is_resizeable = is_resizeable;
-  if(m_is_resizeable &&
+  m_is_resizable = is_resizeable;
+  auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
+  if(m_is_resizable &&
       maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)
-      | WS_THICKFRAME | WS_CAPTION);
-  } else if(m_is_resizeable) {
+    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
+      WS_THICKFRAME | WS_CAPTION);
+  } else if(m_is_resizable) {
     setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)
-      | WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
+    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
+      WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  const auto shadow = MARGINS{1, 1, 1, 1};
-  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
-    &shadow);
+  const auto shadow = MARGINS{1, 0, 0, 0};
+  DwmExtendFrameIntoClientArea(hwnd, &shadow);
 }
