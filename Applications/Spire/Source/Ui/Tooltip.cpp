@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -123,17 +124,18 @@ QPainterPath Tooltip::get_arrow_path() const {
   auto path = QPainterPath();
   auto polygon = [&] () -> QPolygonF {
     auto margins = get_margins();
-    auto x = ARROW_X_POSITION() + DROP_SHADOW_WIDTH();
+    auto left_x = ARROW_X_POSITION() + DROP_SHADOW_WIDTH();
+    auto tip_x = left_x + (ARROW_SIZE().width() / 2);
+    auto right_x = left_x + ARROW_SIZE().width();
     auto orientation = get_orientation();
     if(orientation == Orientation::TOP_LEFT ||
         orientation == Orientation::TOP_RIGHT) {
-      return QVector<QPoint>({{x, height() - margins.bottom()},
-        {x + (ARROW_SIZE().width() / 2), height() - Y_OFFSET()},
-        {x + ARROW_SIZE().width(), height() - margins.bottom()}});
+      return QVector<QPoint>({{left_x, height() - margins.bottom()},
+        {tip_x, height() - Y_OFFSET()},
+        {right_x, height() - margins.bottom()}});
     }
-    return QVector<QPoint>({{x, margins.top()},
-      {x + (ARROW_SIZE().width() / 2), Y_OFFSET()},
-      {x + ARROW_SIZE().width(), margins.top()}});
+    return QVector<QPoint>({{left_x, margins.top()}, {tip_x, Y_OFFSET()},
+      {right_x, margins.top()}});
   }();
   if(get_body_orientation() == BodyOrientation::LEFT) {
     polygon.translate(width() - (2 * (ARROW_X_POSITION() +
