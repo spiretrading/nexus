@@ -58,12 +58,14 @@ IF NOT EXIST qt-5.15.2 (
   IF !ERRORLEVEL! EQU 0 (
     PUSHD qt-5.15.2
     git checkout 5.15.2
-    perl init-repository --module-subset=default
+    perl init-repository --module-subset=qtbase,qtsvg,qttools,qttranslations
     CALL configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
     SET CL=/MP
     nmake
+    DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
+    COPY NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     POPD
   ) ELSE (
     RD /S /Q qt-5.15.2
