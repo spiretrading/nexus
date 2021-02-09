@@ -1,6 +1,7 @@
 #ifndef SPIRE_TEXT_BOX_HPP
 #define SPIRE_TEXT_BOX_HPP
 #include <QLineEdit>
+#include <QTimeLine>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -34,6 +35,9 @@ namespace Spire {
       //! Sets the text.
       void set_text(const QString& text);
 
+      //! Plays the input warning indicator.
+      void play_warning();
+
       //! Connects a slot to the current signal.
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const;
@@ -55,12 +59,17 @@ namespace Spire {
       mutable SubmitSignal m_submit_signal;
       QString m_text;
       QString m_submitted_text;
+      QString m_style_sheet;
+      QTimeLine m_warning_time_line;
 
       QString text() const = delete;
       void setText(const QString&) = delete;
       void on_editing_finished();
       void on_selection_changed();
       void on_text_edited(const QString& text);
+      void on_warning_timeout();
+      void on_warning_fade_out(int frame);
+      void on_warning_finished();
       void elide_text();
   };
 }
