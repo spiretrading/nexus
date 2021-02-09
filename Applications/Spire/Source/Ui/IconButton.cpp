@@ -88,14 +88,14 @@ const QColor& IconButton::get_background_color() const {
 const QColor& IconButton::get_current_icon_color() const {
   if(isEnabled()) {
     if(isChecked()) {
-      if(underMouse()) {
+      if(underMouse() || isDown()) {
         return m_style.m_checked_hovered_color;
       } else if(!window()->isActiveWindow()) {
         return m_style.m_checked_blur_color;
       }
       return m_style.m_checked_color;
     }
-    if(underMouse()) {
+    if(underMouse() || isDown()) {
       return m_style.m_hover_color;
     } else if(!window()->isActiveWindow()) {
       return m_style.m_blur_color;
@@ -103,4 +103,13 @@ const QColor& IconButton::get_current_icon_color() const {
     return m_style.m_default_color;
   }
   return m_style.m_disabled_color;
+}
+
+const IconButton::Style& IconButton::get_style() const {
+  return m_style;
+}
+
+void IconButton::set_style(const Style& style) {
+  m_style = style;
+  update();
 }
