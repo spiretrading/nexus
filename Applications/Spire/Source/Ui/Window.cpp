@@ -77,6 +77,7 @@ bool Window::event(QEvent* event) {
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
+  qDebug() << window()->frameGeometry() << Qt::hex << msg->message;
   if(msg->message == WM_NCACTIVATE) {
     RedrawWindow(msg->hwnd, NULL, NULL, RDW_UPDATENOW);
     *result = -1;
@@ -217,6 +218,16 @@ void Window::set_window_attributes(bool is_resizeable) {
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  const auto shadow = MARGINS{1, 0, 0, 0};
+  auto shadow = MARGINS{1, 0, 0, 0};
   DwmExtendFrameIntoClientArea(hwnd, &shadow);
+  auto window_geometry = frameGeometry();
+  auto borderWidth = GetSystemMetrics(SM_CXFRAME) +
+    GetSystemMetrics(SM_CXPADDEDBORDER);
+  auto borderHeight = GetSystemMetrics(SM_CYFRAME) +
+    GetSystemMetrics(SM_CXPADDEDBORDER);
+  auto internal_height = layout()->contentsRect().height();
+  MoveWindow(hwnd, window_geometry.x() - borderWidth + 1,
+    window_geometry.y() + borderHeight + m_title_bar->height() -
+      scale_height(3),
+    width() + 2 * borderWidth, internal_height + borderHeight, true);
 }
