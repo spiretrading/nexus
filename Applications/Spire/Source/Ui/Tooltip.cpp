@@ -116,6 +116,7 @@ void Tooltip::hideEvent(QHideEvent* event) {
 
 void Tooltip::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
   painter.fillRect(rect().marginsRemoved(get_margins()), TOOLTIP_COLOR);
   painter.fillPath(get_arrow_path(), TOOLTIP_COLOR);
 }
