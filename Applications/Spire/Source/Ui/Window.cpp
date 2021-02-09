@@ -12,6 +12,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -77,13 +78,15 @@ bool Window::event(QEvent* event) {
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
-  qDebug() << window()->frameGeometry() << Qt::hex << msg->message;
   if(msg->message == WM_NCACTIVATE) {
     RedrawWindow(msg->hwnd, NULL, NULL, RDW_UPDATENOW);
     *result = -1;
     return true;
   } else if(msg->message == WM_NCCALCSIZE) {
     if(static_cast<bool>(msg->wParam)) {
+      if(!m_frame_size) {
+        m_frame_size = size();
+      }
       auto parameters = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
       auto& requested_client_area = parameters->rgrc[0];
       requested_client_area.right -=
@@ -95,9 +98,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       *result = 0;
       return true;
     }
-  } else if(msg->message == WM_NCPAINT) {
-    *result = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
-    return true;
   } else if(msg->message == WM_NCHITTEST) {
     auto window_rect = RECT{};
     GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
@@ -220,6 +220,10 @@ void Window::set_window_attributes(bool is_resizeable) {
   }
   auto shadow = MARGINS{1, 0, 0, 0};
   DwmExtendFrameIntoClientArea(hwnd, &shadow);
+  if(m_frame_size && size() != m_frame_size) {
+    resize(*m_frame_size);
+    m_frame_size = none;
+  }
   auto window_geometry = frameGeometry();
   auto borderWidth = GetSystemMetrics(SM_CXFRAME) +
     GetSystemMetrics(SM_CXPADDEDBORDER);

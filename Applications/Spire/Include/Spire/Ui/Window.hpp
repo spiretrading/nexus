@@ -1,5 +1,6 @@
 #ifndef SPIRE_WINDOW_HPP
 #define SPIRE_WINDOW_HPP
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
@@ -55,6 +56,7 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       TitleBar* m_title_bar;
       bool m_is_resizable;
+      boost::optional<QSize> m_frame_size;
 
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
