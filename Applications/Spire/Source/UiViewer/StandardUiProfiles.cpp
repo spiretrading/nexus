@@ -165,7 +165,7 @@ UiProfile Spire::make_icon_button_profile() {
       });
       QObject::connect(button, &IconButton::clicked,
         profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
-      auto update_color_property = [&] (const auto& property_name,
+      auto initialize_color_property = [&] (const auto& property_name,
           auto member_pointer) {
         auto& property = get<QColor>(property_name, profile.get_properties());
         property.set(button->get_style().*member_pointer);
@@ -175,21 +175,21 @@ UiProfile Spire::make_icon_button_profile() {
           button->set_style(style);
         });
       };
-      update_color_property("blur-color", &IconButton::Style::m_blur_color);
-      update_color_property("checked-color",
+      initialize_color_property("blur-color", &IconButton::Style::m_blur_color);
+      initialize_color_property("checked-color",
         &IconButton::Style::m_checked_color);
-      update_color_property("checked-blur-color",
+      initialize_color_property("checked-blur-color",
         &IconButton::Style::m_checked_blur_color);
-      update_color_property("checked-hover-color",
+      initialize_color_property("checked-hover-color",
         &IconButton::Style::m_checked_hovered_color);
-      update_color_property("default-color",
+      initialize_color_property("default-color",
         &IconButton::Style::m_default_color);
-      update_color_property("disabled-color",
+      initialize_color_property("disabled-color",
         &IconButton::Style::m_disabled_color);
-      update_color_property("hover-color", &IconButton::Style::m_hover_color);
-      update_color_property("default-bg-color",
+      initialize_color_property("hover-color", &IconButton::Style::m_hover_color);
+      initialize_color_property("default-bg-color",
         &IconButton::Style::m_default_background_color);
-      update_color_property("hover-bg-color",
+      initialize_color_property("hover-bg-color",
         &IconButton::Style::m_hover_background_color);
       return button;
     });
