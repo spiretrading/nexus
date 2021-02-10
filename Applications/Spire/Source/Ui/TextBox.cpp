@@ -39,9 +39,9 @@ namespace {
       get_fade_out_step(start_color.blue(), end_color.blue())};
   }
 
-  const auto background_color_step = get_color_step(BACKGROUND_WARNING_COLOR,
+  const auto BACKGROUND_COLOR_STEP = get_color_step(BACKGROUND_WARNING_COLOR,
     BACKGROUND_COLOR);
-  const auto border_color_step = get_color_step(BORDER_WARNING_COLOR,
+  const auto BORDER_COLOR_STEP = get_color_step(BORDER_WARNING_COLOR,
     BORDER_COLOR);
 
   auto get_fade_out_color(const QColor& color, const std::array<int, 3>& steps,
@@ -221,9 +221,9 @@ void TextBox::on_warning_timeout() {
 
 void TextBox::on_warning_fade_out(int frame) {
   auto background_color = get_fade_out_color(BACKGROUND_WARNING_COLOR,
-    background_color_step, frame);
+    BACKGROUND_COLOR_STEP, frame);
   auto border_color = get_fade_out_color(BORDER_WARNING_COLOR,
-    border_color_step, frame);
+    BORDER_COLOR_STEP, frame);
   setStyleSheet(m_style_sheet +
    get_warning_style_sheet(background_color, border_color));
 }
