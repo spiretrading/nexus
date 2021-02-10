@@ -67,7 +67,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  resize(scale(775, 500));
+  resize(scale(775, 580));
   m_body = new QSplitter(Qt::Horizontal, this);
   m_body->setObjectName("ui_viewer_body");
   m_body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");

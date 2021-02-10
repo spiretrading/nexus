@@ -132,6 +132,15 @@ UiProfile Spire::make_icon_button_profile() {
     QString::fromUtf8("Tooltip")));
   properties.push_back(make_standard_bool_property("checkable"));
   properties.push_back(make_standard_bool_property("checked"));
+  properties.push_back(make_standard_qcolor_property("blur-color"));
+  properties.push_back(make_standard_qcolor_property("checked-color"));
+  properties.push_back(make_standard_qcolor_property("checked-blur-color"));
+  properties.push_back(make_standard_qcolor_property("checked-hover-color"));
+  properties.push_back(make_standard_qcolor_property("default-color"));
+  properties.push_back(make_standard_qcolor_property("disabled-color"));
+  properties.push_back(make_standard_qcolor_property("hover-color"));
+  properties.push_back(make_standard_qcolor_property("default-bg-color"));
+  properties.push_back(make_standard_qcolor_property("hover-bg-color"));
   auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
     [] (auto& profile) {
       auto button = new IconButton(imageFromSvg(":/Icons/demo.svg",
@@ -156,6 +165,32 @@ UiProfile Spire::make_icon_button_profile() {
       });
       QObject::connect(button, &IconButton::clicked,
         profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
+      auto update_color_property = [&] (const auto& property_name,
+          auto member_pointer) {
+        auto& property = get<QColor>(property_name, profile.get_properties());
+        property.set(button->get_style().*member_pointer);
+        property.connect_changed_signal([=] (const auto& color) {
+          auto style = button->get_style();
+          style.*member_pointer = color;
+          button->set_style(style);
+        });
+      };
+      update_color_property("blur-color", &IconButton::Style::m_blur_color);
+      update_color_property("checked-color",
+        &IconButton::Style::m_checked_color);
+      update_color_property("checked-blur-color",
+        &IconButton::Style::m_checked_blur_color);
+      update_color_property("checked-hover-color",
+        &IconButton::Style::m_checked_hovered_color);
+      update_color_property("default-color",
+        &IconButton::Style::m_default_color);
+      update_color_property("disabled-color",
+        &IconButton::Style::m_disabled_color);
+      update_color_property("hover-color", &IconButton::Style::m_hover_color);
+      update_color_property("default-bg-color",
+        &IconButton::Style::m_default_background_color);
+      update_color_property("hover-bg-color",
+        &IconButton::Style::m_hover_background_color);
       return button;
     });
   return profile;
