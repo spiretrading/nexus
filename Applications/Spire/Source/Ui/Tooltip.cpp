@@ -178,14 +178,14 @@ QMargins Tooltip::get_margins() const {
 Tooltip::Orientation Tooltip::get_orientation() const {
   auto parent_position = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
-  auto screen_size =
-    get_current_screen(parent_position)->availableGeometry().size();
-  if((parent_position.y() + height()) > screen_size.height()) {
-    if(parent_position.x() < 0) {
+  auto screen_geometry =
+    get_current_screen(parent_position)->availableGeometry();
+  if((parent_position.y() + height()) > screen_geometry.height()) {
+    if(parent_position.x() < screen_geometry.x()) {
       return Orientation::TOP_RIGHT;
     }
     return Orientation::TOP_LEFT;
-  } else if(parent_position.x() < 0) {
+  } else if(parent_position.x() < screen_geometry.x()) {
     return Orientation::BOTTOM_RIGHT;
   }
   return Orientation::BOTTOM_LEFT;
