@@ -180,7 +180,8 @@ Tooltip::Orientation Tooltip::get_orientation() const {
     parentWidget()->rect().bottomLeft());
   auto screen_geometry =
     get_current_screen(parent_position)->availableGeometry();
-  if((parent_position.y() + height()) > screen_geometry.height()) {
+  if((parent_position.y() + height()) >
+      screen_geometry.y() + screen_geometry.height()) {
     if(parent_position.x() < screen_geometry.x()) {
       return Orientation::TOP_RIGHT;
     }
