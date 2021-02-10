@@ -13,7 +13,7 @@ namespace {
   const auto BORDER_COLOR = QColor("#C8C8C8");
   const auto BORDER_WARNING_COLOR = QColor("#B71C1C");
   const auto WARNING_FADE_OUT_TIME_LINE_FRAME = 10;
-  const auto WARNING_FADE_OUT_TIME_MS = 350;
+  const auto WARNING_FADE_OUT_TIME_MS = 300;
   const auto WARNING_SHOW_DELAY_MS = 250;
   const auto WARNING_PROPERTY_NAME = "warning";
 
@@ -111,6 +111,7 @@ TextBox::TextBox(const QString& text, QWidget* parent)
   setStyleSheet(m_style_sheet);
   m_warning_time_line.setDuration(WARNING_FADE_OUT_TIME_MS);
   m_warning_time_line.setFrameRange(0, WARNING_FADE_OUT_TIME_LINE_FRAME);
+  m_warning_time_line.setEasingCurve(QEasingCurve::Linear);
   connect(&m_warning_time_line, &QTimeLine::frameChanged, this,
     &TextBox::on_warning_fade_out);
   connect(&m_warning_time_line, &QTimeLine::finished, this,
