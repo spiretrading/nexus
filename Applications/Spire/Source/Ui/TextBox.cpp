@@ -31,10 +31,10 @@ namespace {
 
   auto get_fade_out_step(int start, int end) {
     return (end - start) / WARNING_FADE_OUT_TIME_LINE_FRAME;
-  };
+  }
 
   auto get_color_step(const QColor& start_color, const QColor& end_color) {
-    return std::array<int, 3>{get_fade_out_step(start_color.red(), end_color.red()),
+    return std::array{get_fade_out_step(start_color.red(), end_color.red()),
       get_fade_out_step(start_color.green(), end_color.green()),
       get_fade_out_step(start_color.blue(), end_color.blue())};
   }
@@ -48,7 +48,7 @@ namespace {
       int frame) {
     return QColor(color.red() + steps[0] * frame,
       color.green() + steps[1] * frame, color.blue() + steps[2] * frame);
-  };
+  }
 }
 
 TextBox::TextBox(QWidget* parent)
@@ -225,7 +225,7 @@ void TextBox::on_warning_fade_out(int frame) {
   auto border_color = get_fade_out_color(BORDER_WARNING_COLOR,
     BORDER_COLOR_STEP, frame);
   setStyleSheet(m_style_sheet +
-   get_warning_style_sheet(background_color, border_color));
+    get_warning_style_sheet(background_color, border_color));
 }
 
 void TextBox::on_warning_finished() {
