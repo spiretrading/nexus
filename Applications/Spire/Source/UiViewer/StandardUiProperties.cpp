@@ -157,8 +157,11 @@ std::shared_ptr<TypedUiProperty<QColor>> Spire::make_standard_qcolor_property(
       QObject::connect(setter, &QLineEdit::textChanged,
         [&] (const auto& text) {
           auto color = QColor(text.toUpper());
-          if(color.isValid()) {
-            property.set(color);
+          if(text.length() == 7) {
+            auto color = QColor(text.toUpper());
+            if(color.isValid()) {
+              property.set(color);
+            }
           }
         });
       return setter;
