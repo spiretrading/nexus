@@ -61,6 +61,15 @@ namespace Spire {
       */
       IconButton(QImage icon, Style style, QWidget* parent = nullptr);
 
+      //! Returns the IconButton's Style.
+      const Style& get_style() const;
+
+      //! Sets the IconButton's Style.
+      /*!
+        \param style The current Style.
+      */
+      void set_style(const Style& style);
+
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;

@@ -104,3 +104,12 @@ const QColor& IconButton::get_current_icon_color() const {
   }
   return m_style.m_disabled_color;
 }
+
+const IconButton::Style& IconButton::get_style() const {
+  return m_style;
+}
+
+void IconButton::set_style(const Style& style) {
+  m_style = style;
+  update();
+}
