@@ -200,18 +200,74 @@ UiProfile Spire::make_text_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("read_only"));
+  properties.push_back(make_standard_int_property("font_size"));
+  properties.push_back(make_standard_int_property("font_weight"));
+  properties.push_back(make_standard_bool_property("align_left"));
+  properties.push_back(make_standard_bool_property("align_right"));
+  properties.push_back(make_standard_bool_property("align_center"));
   properties.push_back(make_standard_qstring_property("submission"));
+  properties.push_back(make_standard_bool_property("playing_warning"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
       auto text_box = new TextBox();
       apply_widget_properties(text_box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
-      read_only.connect_changed_signal([=] (auto is_read_only) {
+      read_only.connect_changed_signal([text_box] (auto is_read_only) {
         text_box->setReadOnly(is_read_only);
       });
+      auto font = text_box->font();
+      auto& font_size = get<int>("font_size", profile.get_properties());
+      font_size.set(unscale_width(font.pixelSize()));
+      font_size.connect_changed_signal([text_box] (auto value) {
+        auto font = text_box->font();
+        font.setPixelSize(scale_width(value));
+        text_box->setFont(font);
+      });
+      auto& font_weight = get<int>("font_weight", profile.get_properties());
+      font_weight.set(font.weight());
+      font_weight.connect_changed_signal([text_box] (auto value) {
+        if(value < 0 || value > 99)
+          return;
+        auto font = text_box->font();
+        font.setWeight(value);
+        text_box->setFont(font);
+      });
+      auto& align_left = get<bool>("align_left", profile.get_properties());
+      auto& align_right = get<bool>("align_right", profile.get_properties());
+      auto& align_center = get<bool>("align_center", profile.get_properties());
+      align_left.connect_changed_signal([&, text_box] (auto is_align_left) {
+        if(is_align_left) {
+          text_box->setAlignment(Qt::AlignLeft);
+          align_right.set(false);
+          align_center.set(false);
+        }
+      });
+      align_right.connect_changed_signal([&, text_box] (auto is_align_right) {
+        if(is_align_right) {
+          text_box->setAlignment(Qt::AlignRight);
+          align_left.set(false);
+          align_center.set(false);
+        }
+      });
+      align_center.connect_changed_signal([&, text_box] (auto is_align_center) {
+        if(is_align_center) {
+          text_box->setAlignment(Qt::AlignCenter);
+          align_left.set(false);
+          align_right.set(false);
+        }
+      });
+      align_left.set(true);
       auto& submission = get<QString>("submission", profile.get_properties());
-      submission.connect_changed_signal([=] (const auto& text) {
+      submission.connect_changed_signal([text_box] (const auto& text) {
         text_box->set_text(text);
+      });
+      auto& warning = get<bool>("playing_warning", profile.get_properties());
+      warning.connect_changed_signal([&warning, text_box]
+          (auto is_playing_warning) {
+        if(is_playing_warning) {
+          text_box->play_warning();
+          warning.set(false);
+        }
       });
       text_box->connect_current_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Current")));
