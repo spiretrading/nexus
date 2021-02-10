@@ -1,4 +1,5 @@
 #include "Spire/Ui/TextBox.hpp"
+#include <array>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QTimer>
@@ -17,7 +18,7 @@ namespace {
   const auto WARNING_SHOW_DELAY_MS = 250;
   const auto WARNING_PROPERTY_NAME = "warning";
 
-  const auto WARNING_STYLE_SHEET(const QColor& background_color,
+  auto get_warning_style_sheet(const QColor& background_color,
       const QColor& border_color) {
     return QString(R"(
       #TextBox[%1=true] {
@@ -28,40 +29,26 @@ namespace {
         arg(border_color.name(QColor::HexArgb));
   }
 
-  auto FADE_OUT_STEP(int start, int end) {
+  auto get_fade_out_step(int start, int end) {
     return (end - start) / WARNING_FADE_OUT_TIME_LINE_FRAME;
   };
 
-  auto RED_COLOR_STEP(const QColor& start_color, const QColor& end_color) {
-    return FADE_OUT_STEP(start_color.red(), end_color.red());
-  };
+  auto get_color_step(const QColor& start_color, const QColor& end_color) {
+    return std::array<int, 3>{get_fade_out_step(start_color.red(), end_color.red()),
+      get_fade_out_step(start_color.green(), end_color.green()),
+      get_fade_out_step(start_color.blue(), end_color.blue())};
+  }
 
-  auto GREEN_COLOR_STEP(const QColor& start_color, const QColor& end_color) {
-    return FADE_OUT_STEP(start_color.green(), end_color.green());
-  };
-
-  auto BLUE_COLOR_STEP(const QColor& start_color, const QColor& end_color) {
-    return FADE_OUT_STEP(start_color.blue(), end_color.blue());
-  };
-
-  auto FADE_OUT_COLOR(const QColor& color, int red_step, int green_step,
-      int blue_step, int frame) {
-    return QColor(color.red() + red_step * frame,
-      color.green() + green_step * frame, color.blue() + blue_step * frame);
-  };
-
-  const auto BACKGROUND_RED_STEP = RED_COLOR_STEP(BACKGROUND_WARNING_COLOR,
+  const auto background_color_step = get_color_step(BACKGROUND_WARNING_COLOR,
     BACKGROUND_COLOR);
-  const auto BACKGROUND_GREEN_STEP = GREEN_COLOR_STEP(BACKGROUND_WARNING_COLOR,
-    BACKGROUND_COLOR);
-  const auto BACKGROUND_BLUE_STEP = BLUE_COLOR_STEP(BACKGROUND_WARNING_COLOR,
-    BACKGROUND_COLOR);
-  const auto BORDER_RED_STEP = RED_COLOR_STEP(BORDER_WARNING_COLOR,
+  const auto border_color_step = get_color_step(BORDER_WARNING_COLOR,
     BORDER_COLOR);
-  const auto BORDER_GREEN_STEP = GREEN_COLOR_STEP(BORDER_WARNING_COLOR,
-    BORDER_COLOR);
-  const auto BORDER_BLUE_STEP = BLUE_COLOR_STEP(BORDER_WARNING_COLOR,
-    BORDER_COLOR);
+
+  auto get_fade_out_color(const QColor& color, const std::array<int, 3>& steps,
+      int frame) {
+    return QColor(color.red() + steps[0] * frame,
+      color.green() + steps[1] * frame, color.blue() + steps[2] * frame);
+  };
 }
 
 TextBox::TextBox(QWidget* parent)
@@ -142,7 +129,7 @@ void TextBox::play_warning() {
     return;
   }
   setStyleSheet(m_style_sheet +
-    WARNING_STYLE_SHEET(BACKGROUND_WARNING_COLOR, BORDER_WARNING_COLOR));
+    get_warning_style_sheet(BACKGROUND_WARNING_COLOR, BORDER_WARNING_COLOR));
   setProperty(WARNING_PROPERTY_NAME, true);
   style()->unpolish(this);
   style()->polish(this);
@@ -233,12 +220,12 @@ void TextBox::on_warning_timeout() {
 }
 
 void TextBox::on_warning_fade_out(int frame) {
-  auto background_color = FADE_OUT_COLOR(BACKGROUND_WARNING_COLOR,
-    BACKGROUND_RED_STEP, BACKGROUND_GREEN_STEP, BACKGROUND_BLUE_STEP, frame);
-  auto border_color = FADE_OUT_COLOR(BORDER_WARNING_COLOR, BORDER_RED_STEP,
-    BORDER_GREEN_STEP, BORDER_BLUE_STEP, frame);
+  auto background_color = get_fade_out_color(BACKGROUND_WARNING_COLOR,
+    background_color_step, frame);
+  auto border_color = get_fade_out_color(BORDER_WARNING_COLOR,
+    border_color_step, frame);
   setStyleSheet(m_style_sheet +
-    WARNING_STYLE_SHEET(background_color, border_color));
+   get_warning_style_sheet(background_color, border_color));
 }
 
 void TextBox::on_warning_finished() {
