@@ -83,8 +83,7 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
     on_close_button_press();
   });
   m_layout->addWidget(m_close_button);
-  connect(window(), &QWidget::windowTitleChanged,
-    [=] (auto& title) {on_window_title_change(title);});
+  connect_window_signals();
 }
 
 void TitleBar::set_icon(const QImage& icon) {
@@ -109,8 +108,7 @@ QLabel* TitleBar::get_title_label() const {
 
 void TitleBar::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ParentChange) {
-    connect(window(), &QWidget::windowTitleChanged,
-      [=] (auto& title) {on_window_title_change(title);});
+    connect_window_signals();
   }
 }
 
@@ -146,6 +144,12 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
 
 void TitleBar::resizeEvent(QResizeEvent* event) {
   on_window_title_change(window()->windowTitle());
+}
+
+void TitleBar::connect_window_signals() {
+  connect(window(), &QWidget::windowTitleChanged,
+    [=] (auto& title) {on_window_title_change(title);});
+  window()->installEventFilter(this);
 }
 
 void TitleBar::on_window_title_change(const QString& title) {
