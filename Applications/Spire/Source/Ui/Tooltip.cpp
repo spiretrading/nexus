@@ -16,27 +16,27 @@ namespace {
   const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 89);
   const auto TOOLTIP_COLOR = QColor("#333333");
 
-  const auto ARROW_X_POSITION() {
+  auto ARROW_X_POSITION() {
     static auto x = scale_width(6);
     return x;
   }
 
-  const auto ARROW_SIZE() {
+  auto ARROW_SIZE() {
     static auto size = scale(14, 7);
     return size;
   }
 
-  const auto DROP_SHADOW_HEIGHT() {
+  auto DROP_SHADOW_HEIGHT() {
     static auto height = scale_height(DROP_SHADOW_SIZE);
     return height;
   }
 
-  const auto DROP_SHADOW_WIDTH() {
+  auto DROP_SHADOW_WIDTH() {
     static auto width = scale_width(DROP_SHADOW_SIZE);
     return width;
   }
 
-  const auto Y_OFFSET() {
+  auto Y_OFFSET() {
     static auto offset = scale_height(3);
     return offset;
   }
@@ -72,13 +72,6 @@ Tooltip::Tooltip(QWidget* body, QWidget* parent)
   connect(&m_show_timer, &QTimer::timeout, this, &Tooltip::on_show_timeout);
   m_body->installEventFilter(this);
   parent->installEventFilter(this);
-  // TODO: Add drop shadow if this gets fixed:
-  //       https://bugreports.qt.io/browse/QTBUG-58602
-  //auto shadow = new QGraphicsDropShadowEffect(this);
-  //shadow->setColor(DROP_SHADOW_COLOR);
-  //shadow->setOffset(0, 0);
-  //shadow->setBlurRadius(scale_width(5));
-  //setGraphicsEffect(shadow);
 }
 
 bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
@@ -159,7 +152,7 @@ Tooltip::BodyOrientation Tooltip::get_body_orientation() const {
 }
 
 QScreen* Tooltip::get_current_screen(const QPoint& point) const {
-  if(auto screen = QGuiApplication::screenAt(point); screen != nullptr) {
+  if(auto screen = QGuiApplication::screenAt(point)) {
     return screen;
   }
   return parentWidget()->screen();

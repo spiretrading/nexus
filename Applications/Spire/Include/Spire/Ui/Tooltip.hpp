@@ -1,5 +1,5 @@
-#ifndef SPIRE_TOOLIP_HPP
-#define SPIRE_TOOLIP_HPP
+#ifndef SPIRE_TOOLTIP_HPP
+#define SPIRE_TOOLTIP_HPP
 #include <QTimer>
 #include <QWidget>
 
