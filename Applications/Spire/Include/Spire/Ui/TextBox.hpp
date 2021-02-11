@@ -10,6 +10,16 @@ namespace Spire {
   class TextBox : public QLineEdit {
     public:
 
+      //! Represents the padding of the text inside TextBox.
+      struct Padding {
+
+        //! The amount of padding set to the left of the text.
+        int m_left_padding;
+
+        //! The amount of padding set to the right of the text.
+        int m_right_padding;
+      };
+
       //! Signals that the current text changed.
       using CurrentSignal = Signal<void (const QString& text)>;
 
@@ -35,6 +45,12 @@ namespace Spire {
       //! Sets the text.
       void set_text(const QString& text);
 
+      //! Gets the padding of the text.
+      const Padding& get_padding() const;
+
+      //! Sets the padding of the text.
+      void set_padding(const Padding& padding);
+
       //! Plays the input warning indicator.
       void play_warning();
 
@@ -59,6 +75,7 @@ namespace Spire {
       mutable SubmitSignal m_submit_signal;
       QString m_text;
       QString m_submitted_text;
+      Padding m_padding;
       QString m_style_sheet;
       QTimeLine m_warning_time_line;
 
