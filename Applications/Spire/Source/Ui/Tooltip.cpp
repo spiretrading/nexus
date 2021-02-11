@@ -58,7 +58,8 @@ namespace {
 
 Tooltip::Tooltip(QWidget* body, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
-        Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
+        Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus |
+        Qt::MSWindowsFixedSizeDialogHint),
       m_body(body) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TransparentForMouseEvents);
