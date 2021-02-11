@@ -49,9 +49,8 @@ namespace {
         border: none;
       })").
         arg(BACKGROUND_COLOR.name(QColor::HexArgb)).arg(scale_width(1)).
-        arg(BORDER_COLOR.name(QColor::HexArgb)).
-        arg(scale_width(padding.m_left_padding)).
-        arg(scale_width(padding.m_right_padding));
+        arg(BORDER_COLOR.name(QColor::HexArgb)).arg(padding.m_left_padding).
+        arg(padding.m_right_padding);
   }
 
   auto get_warning_style_sheet(const QColor& background_color,
@@ -94,7 +93,7 @@ TextBox::TextBox(const QString& text, QWidget* parent)
     : QLineEdit(text, parent),
       m_text(text),
       m_submitted_text(text),
-      m_padding({8, 8}) {
+      m_padding({scale_width(8), scale_width(8)}) {
   setObjectName("TextBox");
   setFrame(false);
   auto font = QFont("Roboto");

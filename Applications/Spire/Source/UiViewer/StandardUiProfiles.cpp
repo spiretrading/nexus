@@ -260,17 +260,17 @@ UiProfile Spire::make_text_box_profile() {
       });
       align_left.set(true);
       auto& left_padding = get<int>("left_padding", profile.get_properties());
-      left_padding.set(text_box->get_padding().m_left_padding);
+      left_padding.set(unscale_width(text_box->get_padding().m_left_padding));
       left_padding.connect_changed_signal([text_box] (auto value) {
         auto padding = text_box->get_padding();
-        padding.m_left_padding = value;
+        padding.m_left_padding = scale_width(value);
         text_box->set_padding(padding);
       });
       auto& right_padding = get<int>("right_padding", profile.get_properties());
-      right_padding.set(text_box->get_padding().m_right_padding);
+      right_padding.set(unscale_width(text_box->get_padding().m_right_padding));
       right_padding.connect_changed_signal([text_box] (auto value) {
         auto padding = text_box->get_padding();
-        padding.m_right_padding = value;
+        padding.m_right_padding = scale_width(value);
         text_box->set_padding(padding);
       });
       auto& submission = get<QString>("submission", profile.get_properties());
