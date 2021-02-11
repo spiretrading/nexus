@@ -205,6 +205,8 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_bool_property("align_left"));
   properties.push_back(make_standard_bool_property("align_right"));
   properties.push_back(make_standard_bool_property("align_center"));
+  properties.push_back(make_standard_int_property("left_padding"));
+  properties.push_back(make_standard_int_property("right_padding"));
   properties.push_back(make_standard_qstring_property("submission"));
   properties.push_back(make_standard_bool_property("playing_warning"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
@@ -257,6 +259,20 @@ UiProfile Spire::make_text_box_profile() {
         }
       });
       align_left.set(true);
+      auto& left_padding = get<int>("left_padding", profile.get_properties());
+      left_padding.set(text_box->get_padding().m_left_padding);
+      left_padding.connect_changed_signal([text_box] (auto value) {
+        auto padding = text_box->get_padding();
+        padding.m_left_padding = value;
+        text_box->set_padding(padding);
+      });
+      auto& right_padding = get<int>("right_padding", profile.get_properties());
+      right_padding.set(text_box->get_padding().m_right_padding);
+      right_padding.connect_changed_signal([text_box] (auto value) {
+        auto padding = text_box->get_padding();
+        padding.m_right_padding = value;
+        text_box->set_padding(padding);
+      });
       auto& submission = get<QString>("submission", profile.get_properties());
       submission.connect_changed_signal([text_box] (const auto& text) {
         text_box->set_text(text);
