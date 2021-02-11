@@ -21,6 +21,9 @@ namespace Spire {
 
   //! Returns a UiProfile for the TextBox.
   UiProfile make_text_box_profile();
+
+  //! Returns a UiProfile for the Tooltip.
+  UiProfile make_tooltip_profile();
 }
 
 #endif

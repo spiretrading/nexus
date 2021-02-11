@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QStyleOption>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/Tooltip.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -34,17 +36,19 @@ IconButton::IconButton(QImage icon, QWidget* parent)
 IconButton::IconButton(QImage icon, Style style, QWidget* parent)
     : QAbstractButton(parent),
       m_icon(std::move(icon)),
-      m_style(std::move(style)) {
+      m_style(std::move(style)),
+      m_tooltip(nullptr) {
   setAttribute(Qt::WA_Hover);
-  setStyleSheet(QString(R"(
-    QToolTip {
-      background-color: white;
-      border: 1px solid #C8C8C8;
-      color: black;
-      font-family: Roboto;
-      font-size: %1px;
-      padding: %2px %3px %2px %3px;
-    })").arg(scale_height(10)).arg(scale_height(2)).arg(scale_width(6)));
+}
+
+bool IconButton::event(QEvent* event) {
+  if(event->type() == QEvent::ToolTipChange) {
+    delete_later(m_tooltip);
+    if(!toolTip().isEmpty()) {
+      m_tooltip = make_text_tooltip(toolTip(), this);
+    }
+  }
+  return QAbstractButton::event(event);
 }
 
 void IconButton::keyPressEvent(QKeyEvent* event) {

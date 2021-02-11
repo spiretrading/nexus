@@ -39,6 +39,7 @@ namespace Spire {
   class TabWidget;
   class TextBox;
   class TitleBar;
+  class Tooltip;
   class TransitionWidget;
   class Window;
 

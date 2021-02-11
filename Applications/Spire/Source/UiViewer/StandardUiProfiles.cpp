@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Checkbox.hpp"
@@ -7,6 +8,7 @@
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -274,6 +276,41 @@ UiProfile Spire::make_text_box_profile() {
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
       return text_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_tooltip_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_qstring_property("tooltip-text",
+    QString::fromUtf8("Tooltip Text")));
+  auto profile = UiProfile(QString::fromUtf8("Tooltip"), properties,
+    [] (auto& profile) {
+      auto label = new QLabel("Hover me!");
+      label->setAttribute(Qt::WA_Hover);
+      label->setFocusPolicy(Qt::StrongFocus);
+      label->resize(scale(100, 28));
+      label->setStyleSheet(QString(R"(
+        QLabel {
+          background-color: #684BC7;
+          color: white;
+          qproperty-alignment: AlignCenter;
+        }
+
+        QLabel:focus {
+          border: %1px solid #000000;
+        }
+
+        QLabel:disabled {
+          background-color: #F5F5F5;
+          color: #C8C8C8;
+        })").arg(scale_width(2)));
+      apply_widget_properties(label, profile.get_properties());
+      auto& tooltip_text = get<QString>("tooltip-text",
+        profile.get_properties());
+      auto tooltip = make_text_tooltip(tooltip_text.get(), label);
+      return label;
     });
   return profile;
 }
