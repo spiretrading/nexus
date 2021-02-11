@@ -18,6 +18,41 @@ namespace {
   const auto WARNING_SHOW_DELAY_MS = 250;
   const auto WARNING_PROPERTY_NAME = "warning";
 
+  auto get_text_box_style_sheet(const TextBox::Padding& padding) {
+    return QString(R"(
+      #TextBox {
+        background-color: %1;
+        border: %2px solid %3;
+        color: #000000;
+        padding-left: %4px;
+        padding-right: %5px;
+      }
+      #TextBox:hover {
+        border-color: #4B23A0;
+      }
+      #TextBox:focus {
+        border-color: #4B23A0;
+      }
+      #TextBox:read-only {
+        background-color: #00000000;
+        border: none;
+        padding-left: 0px;
+        padding-right: 0px;
+      }
+      #TextBox:disabled {
+        background-color: #F5F5F5;
+        border-color: #C8C8C8;
+        color: #C8C8C8;
+      }
+      #TextBox:read-only:disabled {
+        background-color: #00000000;
+        border: none;
+      })").
+        arg(BACKGROUND_COLOR.name(QColor::HexArgb)).arg(scale_width(1)).
+        arg(BORDER_COLOR.name(QColor::HexArgb)).arg(padding.m_left_padding).
+        arg(padding.m_right_padding);
+  }
+
   auto get_warning_style_sheet(const QColor& background_color,
       const QColor& border_color) {
     return QString(R"(
@@ -57,44 +92,15 @@ TextBox::TextBox(QWidget* parent)
 TextBox::TextBox(const QString& text, QWidget* parent)
     : QLineEdit(text, parent),
       m_text(text),
-      m_submitted_text(text) {
+      m_submitted_text(text),
+      m_padding({scale_width(8), scale_width(8)}) {
   setObjectName("TextBox");
   setFrame(false);
   auto font = QFont("Roboto");
   font.setPixelSize(scale_width(12));
   font.setWeight(QFont::Normal);
   setFont(font);
-  m_style_sheet = QString(R"(
-    #TextBox {
-      background-color: %1;
-      border: %2px solid %3;
-      color: #000000;
-      padding-left: %5px;
-      padding-right: %5px;
-    }
-    #TextBox:hover {
-      border-color: #4B23A0;
-    }
-    #TextBox:focus {
-      border-color: #4B23A0;
-    }
-    #TextBox:read-only {
-      background-color: #00000000;
-      border: none;
-      padding-left: 0px;
-      padding-right: 0px;
-    }
-    #TextBox:disabled {
-      background-color: #F5F5F5;
-      border-color: #C8C8C8;
-      color: #C8C8C8;
-    }
-    #TextBox:read-only:disabled {
-      background-color: #00000000;
-      border: none;
-    })").
-      arg(BACKGROUND_COLOR.name(QColor::HexArgb)).arg(scale_width(1)).
-      arg(BORDER_COLOR.name(QColor::HexArgb)).arg(scale_width(8));
+  m_style_sheet = get_text_box_style_sheet(m_padding);
   setStyleSheet(m_style_sheet);
   m_warning_time_line.setDuration(WARNING_FADE_OUT_TIME_MS);
   m_warning_time_line.setFrameRange(0, WARNING_FADE_OUT_TIME_LINE_FRAME);
@@ -124,6 +130,16 @@ void TextBox::set_text(const QString& text) {
   }
 }
 
+const TextBox::Padding& TextBox::get_padding() const {
+  return m_padding;
+}
+
+void TextBox::set_padding(const Padding& padding) {
+  m_padding = padding;
+  m_style_sheet = get_text_box_style_sheet(m_padding);
+  setStyleSheet(m_style_sheet);
+}
+
 void TextBox::play_warning() {
   if(!isEnabled() || isReadOnly() || property(WARNING_PROPERTY_NAME).toBool()) {
     return;
@@ -150,6 +166,7 @@ void TextBox::changeEvent(QEvent* event) {
   switch(event->type()) {
     case QEvent::ReadOnlyChange:
     case QEvent::FontChange:
+    case QEvent::StyleChange:
       elide_text();
       break;
   }
