@@ -39,7 +39,8 @@ Window::Window(QWidget* parent)
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
-  set_default_margins();
+  layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
+    scale_height(1));
   layout->addWidget(m_title_bar);
 }
 
@@ -167,10 +168,10 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         window()->height() / 2}))->geometry().topLeft();
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
         std::abs(abs_pos.y() - pos.y()));
-      layout()->setContentsMargins(pos.x() - scale_width(1),
+      setContentsMargins(pos.x() - scale_width(1),
         pos.y() + scale_height(1), pos.x() - scale_width(1), 0);
     } else if(msg->wParam == SIZE_RESTORED) {
-      set_default_margins();
+      setContentsMargins({});
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
@@ -194,11 +195,6 @@ void Window::on_screen_changed(QScreen* screen) {
   auto rect = RECT{};
   GetWindowRect(hwnd, &rect);
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
-}
-
-void Window::set_default_margins() {
-  layout()->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
-    scale_height(1));
 }
 
 void Window::set_fixed_body_size(const QSize& size) {

@@ -59,7 +59,6 @@ namespace Spire {
       boost::optional<QSize> m_frame_size;
 
       void on_screen_changed(QScreen* screen);
-      void set_default_margins();
       void set_window_attributes(bool is_resizeable);
   };
 }
