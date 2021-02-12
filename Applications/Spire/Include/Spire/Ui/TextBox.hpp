@@ -39,11 +39,17 @@ namespace Spire {
       */
       explicit TextBox(const QString& text, QWidget* parent = nullptr);
 
-      //! Gets the text.
-      const QString& get_text() const;
+      //! Gets the current text.
+      const QString& get_current_text() const;
 
-      //! Sets the text.
-      void set_text(const QString& text);
+      //! Sets the current text.
+      void set_current_text(const QString& text);
+
+      //! Gets the submitted text.
+      const QString& get_submitted_text() const;
+
+      //! Sets the submitted text.
+      void set_submitted_text(const QString& text);
 
       //! Gets the padding of the text.
       const Padding& get_padding() const;

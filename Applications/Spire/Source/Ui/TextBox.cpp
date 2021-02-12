@@ -116,18 +116,25 @@ TextBox::TextBox(const QString& text, QWidget* parent)
   connect(this, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
 }
 
-const QString& TextBox::get_text() const {
+const QString& TextBox::get_current_text() const {
   return m_text;
 }
 
-void TextBox::set_text(const QString& text) {
+void TextBox::set_current_text(const QString& text) {
   m_text = text;
-  m_submitted_text = text;
   if(!isEnabled() || isReadOnly() || !hasFocus()) {
     elide_text();
   } else {
     QLineEdit::setText(m_text);
   }
+}
+
+const QString& TextBox::get_submitted_text() const {
+  return m_submitted_text;
+}
+
+void TextBox::set_submitted_text(const QString& text) {
+  m_submitted_text = text;
 }
 
 const TextBox::Padding& TextBox::get_padding() const {

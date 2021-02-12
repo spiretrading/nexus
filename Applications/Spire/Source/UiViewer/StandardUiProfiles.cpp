@@ -209,6 +209,7 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_bool_property("align_center"));
   properties.push_back(make_standard_int_property("left_padding"));
   properties.push_back(make_standard_int_property("right_padding"));
+  properties.push_back(make_standard_qstring_property("current"));
   properties.push_back(make_standard_qstring_property("submission"));
   properties.push_back(make_standard_bool_property("playing_warning"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
@@ -275,9 +276,13 @@ UiProfile Spire::make_text_box_profile() {
         padding.m_right_padding = scale_width(value);
         text_box->set_padding(padding);
       });
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([text_box] (const auto& text) {
+        text_box->set_current_text(text);
+      });
       auto& submission = get<QString>("submission", profile.get_properties());
       submission.connect_changed_signal([text_box] (const auto& text) {
-        text_box->set_text(text);
+        text_box->set_submitted_text(text);
       });
       auto& warning = get<bool>("playing_warning", profile.get_properties());
       warning.connect_changed_signal([&warning, text_box]
@@ -289,8 +294,14 @@ UiProfile Spire::make_text_box_profile() {
       });
       text_box->connect_current_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Current")));
+      text_box->connect_current_signal([&current] (const QString& text) {
+        current.set(text);
+      });
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
+      text_box->connect_submit_signal([&submission] (const QString& text) {
+        submission.set(text);
+      });
       return text_box;
     });
   return profile;
