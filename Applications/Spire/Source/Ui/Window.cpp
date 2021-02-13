@@ -168,8 +168,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         window()->height() / 2}))->geometry().topLeft();
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
         std::abs(abs_pos.y() - pos.y()));
-      setContentsMargins(pos.x() - scale_width(1),
-        pos.y() + scale_height(1), pos.x() - scale_width(1), 0);
+      setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
     } else if(msg->wParam == SIZE_RESTORED) {
       setContentsMargins({});
     }
