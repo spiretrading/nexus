@@ -42,6 +42,7 @@ namespace Spire {
       IconButton* m_restore_button;
       IconButton* m_close_button;
 
+      void connect_window_signals();
       void on_window_title_change(const QString& title);
       void on_minimize_button_press();
       void on_maximize_button_press();
