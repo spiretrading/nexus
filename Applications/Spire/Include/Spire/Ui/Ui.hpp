@@ -8,6 +8,8 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class Box;
+  class Button;
   class CalendarDayWidget;
   class CalendarModel;
   class CalendarWidget;

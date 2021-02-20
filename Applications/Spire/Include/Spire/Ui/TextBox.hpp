@@ -1,7 +1,9 @@
 #ifndef SPIRE_TEXT_BOX_HPP
 #define SPIRE_TEXT_BOX_HPP
+#include <array>
 #include <QLineEdit>
 #include <QTimeLine>
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -10,14 +12,36 @@ namespace Spire {
   class TextBox : public QLineEdit {
     public:
 
-      //! Represents the padding of the text inside TextBox.
-      struct Padding {
+      //! Represents the box style with font properties.
+      struct Style : public Box::Style {
 
-        //! The amount of padding set to the left of the text.
-        int m_left_padding;
+        //! The font.
+        boost::optional<QFont> m_font;
 
-        //! The amount of padding set to the right of the text.
-        int m_right_padding;
+        //! The text color.
+        boost::optional<QColor> m_text_color;
+      };
+
+      //! Represents a collection of styles for the text box.
+      struct Styles {
+
+        //! The default style.
+        Style m_style;
+
+        //! The style of the text box when hovered.
+        Style m_hover_style;
+
+        //! The style of the text box when focused with the keyboard.
+        Style m_focus_style;
+
+        //! The style of the text box when it's disabled.
+        Style m_disabled_style;
+
+        //! The style of the text box when it's read only.
+        Style m_read_only_style;
+
+        //! The style of the text box when the input warning indicator is playing.
+        Style m_warning_style;
       };
 
       //! Signals that the current text changed.
@@ -45,11 +69,11 @@ namespace Spire {
       //! Sets the text.
       void set_text(const QString& text);
 
-      //! Gets the padding of the text.
-      const Padding& get_padding() const;
+      //! Gets a selection of styles.
+      const Styles& get_styles() const;
 
-      //! Sets the padding of the text.
-      void set_padding(const Padding& padding);
+      //! Sets styles to the text box.
+      void set_styles(const Styles& styles);
 
       //! Plays the input warning indicator.
       void play_warning();
@@ -75,9 +99,11 @@ namespace Spire {
       mutable SubmitSignal m_submit_signal;
       QString m_text;
       QString m_submitted_text;
-      Padding m_padding;
       QString m_style_sheet;
+      Styles m_styles;
       QTimeLine m_warning_time_line;
+      std::array<int, 3> m_warning_background_color_step;
+      std::array<int, 3> m_warning_border_color_step;
 
       QString text() const = delete;
       void setText(const QString&) = delete;
