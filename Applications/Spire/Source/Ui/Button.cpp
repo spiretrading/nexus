@@ -17,9 +17,6 @@ Button::Button(TextBox* text_box, QWidget* parent)
   layout->addWidget(m_text_box);
   setLayout(layout);
   m_text_box->installEventFilter(this);
-  connect(m_text_box, &TextBox::selectionChanged, [=] {
-    m_text_box->deselect();
-  });
 }
 
 TextBox* Button::get_text_box() const {
@@ -38,9 +35,12 @@ connection Button::connect_clicked_signal(
 bool Button::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_text_box) {
     switch(event->type()) {
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseMove:
     case QEvent::MouseButtonRelease:
+    case QEvent::MouseButtonDblClick:
       event->ignore();
-      break;
+      return true;
     }
   } 
   return Box::eventFilter(watched, event);

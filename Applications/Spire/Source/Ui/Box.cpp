@@ -101,7 +101,13 @@ void Box::set_disabled_style(const Style& disabled_style) {
 void Box::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     if(isEnabled()) {
-      resize_box(m_style);
+      if(m_is_hover) {
+        resize_box(m_hover_style);
+      } else if(hasFocus()) {
+        resize_box(m_focus_style);
+      } else {
+        resize_box(m_style);
+      }
     } else {
       resize_box(m_disabled_style);
     }
@@ -125,7 +131,11 @@ bool Box::event(QEvent* event) {
       }
       break;
     case QEvent::FocusIn:
-      resize_box(m_focus_style);
+      if(m_is_hover) {
+        resize_box(m_hover_style);
+      } else {
+        resize_box(m_focus_style);
+      }
       break;
     case QEvent::FocusOut:
       if(m_is_hover) {

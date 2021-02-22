@@ -239,7 +239,7 @@ UiProfile Spire::make_flat_button_profile() {
         property.connect_changed_signal([=] (const auto& text) {
           auto ok = true;
           auto value = text.toFloat(&ok);
-          if(ok && value >= 0 && value <= 1.0) {
+          if(ok) {
             auto style = (button->*get_style_pointer)();
             (boost::get<QSizeF>(style.m_size.get_ptr())->*set_pointer)(value);
             (button->*set_style_pointer)(style);
