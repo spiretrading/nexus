@@ -19,12 +19,20 @@ Button::Button(TextBox* text_box, QWidget* parent)
   m_text_box->installEventFilter(this);
 }
 
-TextBox* Button::get_text_box() const {
-  return m_text_box;
+const QString& Button::get_text() const {
+  return m_text_box->get_text();
 }
 
 void Button::set_text(const QString& label) {
   m_text_box->set_text(label);
+}
+
+const TextBox::Styles& Button::get_text_styles() const {
+  return m_text_box->get_styles();
+}
+
+void Button::set_text_styles(const TextBox::Styles& styles) {
+  m_text_box->set_styles(styles);
 }
 
 connection Button::connect_clicked_signal(

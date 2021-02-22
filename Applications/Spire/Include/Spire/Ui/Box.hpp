@@ -7,11 +7,11 @@
 
 namespace Spire {
 
-  //! Represents a box object with a spcific styling.
+  //! Represents a box container with a spcific styling.
   class Box : public QWidget {
     public:
 
-      //! Represents the box style.
+      //! Represents the styling of the box.
       struct Style {
 
         //! The size of the box in pixels or as a percentage of its container.
@@ -30,9 +30,9 @@ namespace Spire {
         QColor m_border_color;
       };
 
-      //! Constructs a Box object.
+      //! Constructs a Box widget.
       /*!
-        \param parent The parent to the Box object.
+        \param parent The parent to the Box widget.
       */
       explicit Box(QWidget* parent = nullptr);
 

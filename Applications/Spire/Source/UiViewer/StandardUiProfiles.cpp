@@ -168,31 +168,30 @@ UiProfile Spire::make_flat_button_profile() {
       initialize_color_property("disabled-border-color",
         &Button::get_disabled_style, &Button::set_disabled_style,
         &Box::Style::m_border_color);
-      auto text_box = button->get_text_box();
-      auto text_styles = text_box->get_styles();
+      auto text_styles = button->get_text_styles();
       auto& text_color = get<QColor>("text-color", profile.get_properties());
       text_color.set(*(text_styles.m_style.m_text_color));
       text_color.connect_changed_signal([=] (const auto& color) {
-        auto styles = text_box->get_styles();
+        auto styles = button->get_text_styles();
         styles.m_style.m_text_color = color;
-        text_box->set_styles(styles);
+        button->set_text_styles(styles);
       });
       auto font = *(text_styles.m_style.m_font);
       auto& font_size = get<int>("font-size", profile.get_properties());
       font_size.set(unscale_width(font.pixelSize()));
-      font_size.connect_changed_signal([text_box] (auto value) {
-        auto styles = text_box->get_styles();
+      font_size.connect_changed_signal([=] (auto value) {
+        auto styles = button->get_text_styles();
         styles.m_style.m_font->setPixelSize(scale_width(value));
-        text_box->set_styles(styles);
+        button->set_text_styles(styles);
       });
       auto& font_weight = get<int>("font-weight", profile.get_properties());
       font_weight.set(font.weight());
-      font_weight.connect_changed_signal([text_box] (auto value) {
+      font_weight.connect_changed_signal([=] (auto value) {
         if(value < 0 || value > 99)
           return;
-        auto styles = text_box->get_styles();
+        auto styles = button->get_text_styles();
         styles.m_style.m_font->setWeight(value);
-        text_box->set_styles(styles);
+        button->set_text_styles(styles);
       });
       auto initialize_size_property = [&] (const auto& property_name,
           auto get_style_pointer, auto set_style_pointer, auto get_pointer,
