@@ -115,18 +115,37 @@ UiProfile Spire::make_flat_button_profile() {
   properties.push_back(make_standard_qcolor_property("background-color"));
   properties.push_back(make_standard_qcolor_property("border-color"));
   properties.push_back(make_standard_qcolor_property("text-color"));
+  properties.push_back(make_standard_int_property("border-width"));
+  properties.push_back(make_standard_int_property("padding"));
   properties.push_back(make_standard_int_property("font-size"));
   properties.push_back(make_standard_int_property("font-weight"));
-  properties.push_back(make_standard_qcolor_property("hover-background-color"));
-  properties.push_back(make_standard_qcolor_property("hover-border-color"));
-  properties.push_back(make_standard_qcolor_property("focus-background-color"));
-  properties.push_back(make_standard_qcolor_property("focus-border-color"));
-  properties.push_back(make_standard_qcolor_property("disabled-background-color"));
-  properties.push_back(make_standard_qcolor_property("disabled-border-color"));
   properties.push_back(make_standard_int_property("hover-width"));
   properties.push_back(make_standard_int_property("hover-height"));
-  properties.push_back(make_standard_qstring_property("focus-relative-width"));
-  properties.push_back(make_standard_qstring_property("focus-relative-height"));
+  properties.push_back(make_standard_qcolor_property("hover-background-color"));
+  properties.push_back(make_standard_qcolor_property("hover-border-color"));
+  properties.push_back(make_standard_qcolor_property("hover-text-color"));
+  properties.push_back(make_standard_int_property("hover-border-width"));
+  properties.push_back(make_standard_int_property("hover-padding"));
+  properties.push_back(make_standard_int_property("hover-font-size"));
+  properties.push_back(make_standard_int_property("hover-font-weight"));
+  properties.push_back(make_standard_int_property("focus-width"));
+  properties.push_back(make_standard_int_property("focus-height"));
+  properties.push_back(make_standard_qcolor_property("focus-background-color"));
+  properties.push_back(make_standard_qcolor_property("focus-border-color"));
+  properties.push_back(make_standard_qcolor_property("focus-text-color"));
+  properties.push_back(make_standard_int_property("focus-border-width"));
+  properties.push_back(make_standard_int_property("focus-padding"));
+  properties.push_back(make_standard_int_property("focus-font-size"));
+  properties.push_back(make_standard_int_property("focus-font-weight"));
+  properties.push_back(make_standard_qstring_property("disabled-relative-width"));
+  properties.push_back(make_standard_qstring_property("disabled-relative-height"));
+  properties.push_back(make_standard_qcolor_property("disabled-background-color"));
+  properties.push_back(make_standard_qcolor_property("disabled-border-color"));
+  properties.push_back(make_standard_qcolor_property("disabled-text-color"));
+  properties.push_back(make_standard_int_property("disabled-border-width"));
+  properties.push_back(make_standard_int_property("disabled-padding"));
+  properties.push_back(make_standard_int_property("disabled-font-size"));
+  properties.push_back(make_standard_int_property("disabled-font-weight"));
   auto profile = UiProfile(QString::fromUtf8("FlatButton"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
@@ -168,31 +187,32 @@ UiProfile Spire::make_flat_button_profile() {
       initialize_color_property("disabled-border-color",
         &Button::get_disabled_style, &Button::set_disabled_style,
         &Box::Style::m_border_color);
-      auto text_styles = button->get_text_styles();
-      auto& text_color = get<QColor>("text-color", profile.get_properties());
-      text_color.set(*(text_styles.m_style.m_text_color));
-      text_color.connect_changed_signal([=] (const auto& color) {
-        auto styles = button->get_text_styles();
-        styles.m_style.m_text_color = color;
-        button->set_text_styles(styles);
-      });
-      auto font = *(text_styles.m_style.m_font);
-      auto& font_size = get<int>("font-size", profile.get_properties());
-      font_size.set(unscale_width(font.pixelSize()));
-      font_size.connect_changed_signal([=] (auto value) {
-        auto styles = button->get_text_styles();
-        styles.m_style.m_font->setPixelSize(scale_width(value));
-        button->set_text_styles(styles);
-      });
-      auto& font_weight = get<int>("font-weight", profile.get_properties());
-      font_weight.set(font.weight());
-      font_weight.connect_changed_signal([=] (auto value) {
-        if(value < 0 || value > 99)
-          return;
-        auto styles = button->get_text_styles();
-        styles.m_style.m_font->setWeight(value);
-        button->set_text_styles(styles);
-      });
+      auto initialize_text_color_property = [&] (const auto& property_name,
+          auto get_style_pointer, auto set_style_pointer, auto member_pointer) {
+        auto& property = get<QColor>(property_name, profile.get_properties());
+        auto style = (button->*get_style_pointer)();
+        if(!(style.*member_pointer)) {
+          style.*member_pointer = button->get_text_style().*member_pointer;
+          (button->*set_style_pointer)(style);
+        }
+        property.set(*((button->*get_style_pointer)().*member_pointer));
+        property.connect_changed_signal([=] (const auto& color) {
+          auto style = (button->*get_style_pointer)();
+          style.*member_pointer = color;
+          (button->*set_style_pointer)(style);
+        });
+      };
+      initialize_text_color_property("text-color", &Button::get_text_style,
+        &Button::set_text_style, &TextBox::Style::m_text_color);
+      initialize_text_color_property("hover-text-color",
+        &Button::get_text_hover_style, &Button::set_text_hover_style,
+        &TextBox::Style::m_text_color);
+      initialize_text_color_property("focus-text-color",
+        &Button::get_text_focus_style, &Button::set_text_focus_style,
+        &TextBox::Style::m_text_color);
+      initialize_text_color_property("disabled-text-color",
+        &Button::get_text_disabled_style, &Button::set_text_disabled_style,
+        &TextBox::Style::m_text_color);
       auto initialize_size_property = [&] (const auto& property_name,
           auto get_style_pointer, auto set_style_pointer, auto get_pointer,
           auto set_pointer, auto scale_pointer, auto unscale_pointer) {
@@ -226,13 +246,21 @@ UiProfile Spire::make_flat_button_profile() {
       initialize_size_property("hover-height", &Button::get_hover_style,
         &Button::set_hover_style, &QSize::height, &QSize::setHeight,
         &scale_height, &unscale_height);
+      initialize_size_property("focus-width", &Button::get_focus_style,
+        &Button::set_focus_style, &QSize::width, &QSize::setWidth, &scale_width,
+        &unscale_width);
+      initialize_size_property("focus-height", &Button::get_focus_style,
+        &Button::set_focus_style, &QSize::height, &QSize::setHeight,
+        &scale_height, &unscale_height);
       auto initialize_relative_size_property = [&] (const auto& property_name,
           auto get_style_pointer, auto set_style_pointer, auto get_pointer,
           auto set_pointer) {
         auto& property = get<QString>(property_name, profile.get_properties());
         auto style = (button->*get_style_pointer)();
-        style.m_size = QSizeF(-1.0, -1.0);
-        (button->*set_style_pointer)(style);
+        if(!style.m_size) {
+          style.m_size = QSizeF(-1.0, -1.0);
+          (button->*set_style_pointer)(style);
+        }
         property.set(QString().setNum((boost::get<QSizeF>(
           style.m_size.get_ptr())->*get_pointer)(), 'f', 2));
         property.connect_changed_signal([=] (const auto& text) {
@@ -245,12 +273,115 @@ UiProfile Spire::make_flat_button_profile() {
           }
         });
       };
-      initialize_relative_size_property("focus-relative-width",
-        &Button::get_focus_style, &Button::set_focus_style, &QSizeF::width,
+      initialize_relative_size_property("disabled-relative-width",
+        &Button::get_disabled_style, &Button::set_disabled_style, &QSizeF::width,
         &QSizeF::setWidth);
-      initialize_relative_size_property("focus-relative-height",
-        &Button::get_focus_style, &Button::set_focus_style, &QSizeF::height,
+      initialize_relative_size_property("disabled-relative-height",
+        &Button::get_disabled_style, &Button::set_disabled_style, &QSizeF::height,
         &QSizeF::setHeight);
+      auto initialize_font_size_property = [&] (const auto& property_name,
+          auto get_style_pointer, auto set_style_pointer, auto get_pointer,
+          auto set_pointer, auto scale_pointer, auto unscale_pointer) {
+        auto& property = get<int>(property_name, profile.get_properties());
+        auto style = (button->*get_style_pointer)();
+        if(!style.m_font) {
+          style.m_font = button->get_text_style().m_font;
+          (button->*set_style_pointer)(style);
+        }
+        property.set((*unscale_pointer)((*(style.m_font).*get_pointer)()));
+        property.connect_changed_signal([=] (const auto& value) {
+          auto style = (button->*get_style_pointer)();
+          (*(style.m_font).*set_pointer)((*scale_pointer)(value));
+          (button->*set_style_pointer)(style);
+        });
+      };
+      initialize_font_size_property("font-size", &Button::get_text_style,
+        &Button::set_text_style, &QFont::pixelSize, &QFont::setPixelSize,
+        &scale_width, &unscale_width);
+      initialize_font_size_property("hover-font-size",
+        &Button::get_text_hover_style, &Button::set_text_hover_style,
+        &QFont::pixelSize, &QFont::setPixelSize, &scale_width, &unscale_width);
+      initialize_font_size_property("focus-font-size",
+        &Button::get_text_focus_style, &Button::set_text_focus_style,
+        &QFont::pixelSize, &QFont::setPixelSize, &scale_width, &unscale_width);
+      initialize_font_size_property("disabled-font-size",
+        &Button::get_text_disabled_style, &Button::set_text_disabled_style,
+        &QFont::pixelSize, &QFont::setPixelSize, &scale_width, &unscale_width);
+      auto initialize_font_weight_property = [&] (const auto& property_name,
+          auto get_style_pointer, auto set_style_pointer, auto get_pointer,
+          auto set_pointer) {
+        auto& property = get<int>(property_name, profile.get_properties());
+        auto style = (button->*get_style_pointer)();
+        if(!style.m_font) {
+          style.m_font = button->get_text_style().m_font;
+          (button->*set_style_pointer)(style);
+        }
+        property.set((*(style.m_font).*get_pointer)());
+        property.connect_changed_signal([=] (const auto& value) {
+          if(value < 0 || value > 99)
+            return;
+          auto style = (button->*get_style_pointer)();
+          (*(style.m_font).*set_pointer)(value);
+          (button->*set_style_pointer)(style);
+        });
+      };
+      initialize_font_weight_property("font-weight", &Button::get_text_style,
+        &Button::set_text_style, &QFont::weight, &QFont::setWeight);
+      initialize_font_weight_property("hover-font-weight",
+        &Button::get_text_hover_style, &Button::set_text_hover_style,
+        &QFont::weight, &QFont::setWeight);
+      initialize_font_weight_property("focus-font-weight",
+        &Button::get_text_focus_style, &Button::set_text_focus_style,
+        &QFont::weight, &QFont::setWeight);
+      initialize_font_weight_property("disabled-font-weight",
+        &Button::get_text_disabled_style, &Button::set_text_disabled_style,
+        &QFont::weight, &QFont::setWeight);
+      auto initialize_border_padding_property = [&] (const auto& property_name,
+          auto member_pointer, auto get_style_pointer, auto set_style_pointer,
+          auto scale_pointer, auto unscale_pointer) {
+        auto& property = get<int>(property_name, profile.get_properties());
+        auto style = (button->*get_style_pointer)();
+        if(!(style.*member_pointer)) {
+          style.*member_pointer = QMargins(0, 0, 0, 0);
+          (button->*set_style_pointer)(style);
+        }
+        auto width = (style.*member_pointer)->left();
+        if(width != 1) {
+          width = (*unscale_pointer)(width);
+        }
+        property.set(width);
+        property.connect_changed_signal([=] (const auto& value) {
+          if(value < 0) {
+            return;
+          }
+          auto style = (button->*get_style_pointer)();
+          auto width = (*scale_pointer)(value);
+          style.*member_pointer = QMargins(width, width, width, width);
+          (button->*set_style_pointer)(style);
+        });
+      };
+      initialize_border_padding_property("border-width", &Box::Style::m_borders,
+        &Button::get_style, &Button::set_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("hover-border-width",
+        &Box::Style::m_borders, &Button::get_hover_style,
+        &Button::set_hover_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("focus-border-width",
+        &Box::Style::m_borders, &Button::get_focus_style,
+        &Button::set_focus_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("disabled-border-width",
+        &Box::Style::m_borders, &Button::get_disabled_style,
+        &Button::set_disabled_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("padding", &Box::Style::m_paddings,
+        &Button::get_style, &Button::set_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("hover-padding",
+        &Box::Style::m_paddings, &Button::get_hover_style,
+        &Button::set_hover_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("focus-padding",
+        &Box::Style::m_paddings, &Button::get_focus_style,
+        &Button::set_focus_style, &scale_width, &unscale_width);
+      initialize_border_padding_property("disabled-padding",
+        &Box::Style::m_paddings, &Button::get_disabled_style,
+        &Button::set_disabled_style, &scale_width, &unscale_width);
       button->connect_clicked_signal(profile.make_event_slot(
         QString::fromUtf8("ClickedSignal")));
       return button;

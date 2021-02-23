@@ -17,6 +17,10 @@ Button::Button(TextBox* text_box, QWidget* parent)
   layout->addWidget(m_text_box);
   setLayout(layout);
   m_text_box->installEventFilter(this);
+  setFocusProxy(m_text_box);
+  connect(m_text_box, &QLineEdit::selectionChanged, [=] {
+    m_text_box->deselect();
+  });
 }
 
 const QString& Button::get_text() const {
@@ -27,11 +31,43 @@ void Button::set_text(const QString& label) {
   m_text_box->set_text(label);
 }
 
-const TextBox::Styles& Button::get_text_styles() const {
-  return m_text_box->get_styles();
+const TextBox::Style& Button::get_text_style() const {
+  return m_text_box->get_styles().m_read_only_style;
 }
 
-void Button::set_text_styles(const TextBox::Styles& styles) {
+void Button::set_text_style(const TextBox::Style& style) {
+  auto styles = m_text_box->get_styles();
+  styles.m_read_only_style = style;
+  m_text_box->set_styles(styles);
+}
+
+const TextBox::Style& Button::get_text_hover_style() const {
+  return m_text_box->get_styles().m_read_only_hover_style;
+}
+
+void Button::set_text_hover_style(const TextBox::Style& style) {
+  auto styles = m_text_box->get_styles();
+  styles.m_read_only_hover_style = style;
+  m_text_box->set_styles(styles);
+}
+
+const TextBox::Style& Button::get_text_focus_style() const {
+  return m_text_box->get_styles().m_read_only_focus_style;
+}
+
+void Button::set_text_focus_style(const TextBox::Style& style) {
+  auto styles = m_text_box->get_styles();
+  styles.m_read_only_focus_style = style;
+  m_text_box->set_styles(styles);
+}
+
+const TextBox::Style& Button::get_text_disabled_style() const {
+  return m_text_box->get_styles().m_read_only_disabled_style;
+}
+
+void Button::set_text_disabled_style(const TextBox::Style& style) {
+  auto styles = m_text_box->get_styles();
+  styles.m_read_only_disabled_style = style;
   m_text_box->set_styles(styles);
 }
 
@@ -49,6 +85,10 @@ bool Button::eventFilter(QObject* watched, QEvent* event) {
     case QEvent::MouseButtonDblClick:
       event->ignore();
       return true;
+    case QEvent::FocusIn:
+    case QEvent::FocusOut:
+      Box::event(event);
+      break;
     }
   } 
   return Box::eventFilter(watched, event);
@@ -84,11 +124,22 @@ Button* Spire::make_button(const QString& label, QWidget* parent) {
   text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(text_box, parent);
   button->setFocusPolicy(Qt::StrongFocus);
-  auto text_styles = text_box->get_styles();
-  text_styles.m_style.m_text_color = QColor("#000000");
-  text_styles.m_hover_style.m_text_color = QColor("#FFFFFF");
-  text_styles.m_disabled_style.m_text_color = QColor("#C8C8C8");
-  text_box->set_styles(text_styles);
+  auto text_style = button->get_text_style();
+  text_style.m_background_color = QColor("#00000000");
+  text_style.m_text_color = QColor("#000000");
+  button->set_text_style(text_style);
+  auto text_hover_style = button->get_text_hover_style();
+  text_hover_style.m_background_color = QColor("#00000000");
+  text_hover_style.m_text_color = QColor("#FFFFFF");
+  button->set_text_hover_style(text_hover_style);
+  auto text_focus_style = button->get_text_focus_style();
+  text_focus_style.m_background_color = QColor("#00000000");
+  text_focus_style.m_text_color = QColor("#000000");
+  button->set_text_focus_style(text_focus_style);
+  auto text_disabled_style = button->get_text_disabled_style();
+  text_disabled_style.m_background_color = QColor("#00000000");
+  text_disabled_style.m_text_color = QColor("#C8C8C8");
+  button->set_text_disabled_style(text_disabled_style);
   auto style = button->get_style();
   style.m_background_color = QColor("#EBEBEB");
   style.m_borders = {{0, 0, 0, 0}};
@@ -101,7 +152,7 @@ Button* Spire::make_button(const QString& label, QWidget* parent) {
   auto focus_style = button->get_focus_style();
   focus_style.m_background_color = QColor("#EBEBEB");
   focus_style.m_border_color = QColor("#4B23A0");
-  hover_style.m_borders = {{scale_width(1), scale_height(1), scale_width(1),
+  focus_style.m_borders = {{scale_width(1), scale_height(1), scale_width(1),
     scale_height(1)}};
   button->set_focus_style(focus_style);
   auto disabled_style = button->get_disabled_style();

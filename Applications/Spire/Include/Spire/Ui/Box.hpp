@@ -74,6 +74,8 @@ namespace Spire {
 
       QSize get_size(const Style& style) const;
       void resize_box(const Style& style);
+      void update_box();
+      void change_padding(const Style& style);
       void update_style();
   };
 }

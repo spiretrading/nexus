@@ -37,8 +37,17 @@ namespace Spire {
         //! The style of the text box when it's disabled.
         Style m_disabled_style;
 
-        //! The style of the text box when it's read only.
+        //! The style of the text box when it's read-only.
         Style m_read_only_style;
+
+        //! The style of the text box when it's read-only and hovered.
+        Style m_read_only_hover_style;
+
+        //! The style of the text box when it's read-only and focused.
+        Style m_read_only_focus_style;
+
+        //! The style of the text box when it's read-only and disabled.
+        Style m_read_only_disabled_style;
 
         //! The style of the text box when the input warning indicator is playing.
         Style m_warning_style;
@@ -92,11 +101,13 @@ namespace Spire {
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      bool event(QEvent* event) override;
       QSize sizeHint() const override;
 
     private:
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
+      bool m_is_hover;
       QString m_text;
       QString m_submitted_text;
       QString m_style_sheet;
@@ -114,6 +125,8 @@ namespace Spire {
       void on_warning_fade_out(int frame);
       void on_warning_finished();
       void elide_text();
+      void update_font(const Style& style);
+      void update_font();
   };
 }
 

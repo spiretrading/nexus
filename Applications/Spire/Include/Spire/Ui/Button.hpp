@@ -26,11 +26,29 @@ namespace Spire {
       //! Sets the text of the button.
       void set_text(const QString& label);
 
-      //! Gets styles of the text.
-      const TextBox::Styles& get_text_styles() const;
+      //! Gets the default text style.
+      const TextBox::Style& get_text_style() const;
 
-      //! Sets styles to the text.
-      void set_text_styles(const TextBox::Styles& styles);
+      //! Sets the default text style.
+      void set_text_style(const TextBox::Style& style);
+
+      //! Gets the text style of the button when hovered.
+      const TextBox::Style& get_text_hover_style() const;
+
+      //! Sets the text style of the button when hovered.
+      void set_text_hover_style(const TextBox::Style& style);
+
+      //! Gets the text style of the button when focused.
+      const TextBox::Style& get_text_focus_style() const;
+
+      //! Sets the text style of the button when focused.
+      void set_text_focus_style(const TextBox::Style& style);
+
+      //! Gets the text style of the button when it's disabled.
+      const TextBox::Style& get_text_disabled_style() const;
+
+      //! Sets the text style of the button when disabled.
+      void set_text_disabled_style(const TextBox::Style& style);
 
       //! Connects a slot to the click signal.
       boost::signals2::connection connect_clicked_signal(

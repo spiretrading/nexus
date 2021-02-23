@@ -28,22 +28,12 @@ namespace {
       )").arg(style.m_borders->bottom()).arg(style.m_borders->left()).
         arg(style.m_borders->right()).arg(style.m_borders->top());
     }
-    auto padding_sheet = QString();
-    if(style.m_paddings) {
-      padding_sheet = QString(R"(
-        padding-bottom: %1px;
-        padding-left: %2px;
-        padding-right: %3px;
-        padding-top: %4px;
-      )").arg(style.m_paddings->bottom()).arg(style.m_paddings->left()).
-        arg(style.m_paddings->right()).arg(style.m_paddings->top());
-    }
     auto closing_bracket = QString("}");
     auto style_sheet = QString();
     style_sheet.reserve(default_sheet.length() + border_sheet.length() +
-      padding_sheet.length() + closing_bracket.length());
+      closing_bracket.length());
     return style_sheet.append(default_sheet).append(border_sheet).
-      append(padding_sheet).append(closing_bracket);
+      append(closing_bracket);
   }
 }
 
@@ -100,17 +90,7 @@ void Box::set_disabled_style(const Style& disabled_style) {
 
 void Box::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    if(isEnabled()) {
-      if(m_is_hover) {
-        resize_box(m_hover_style);
-      } else if(hasFocus()) {
-        resize_box(m_focus_style);
-      } else {
-        resize_box(m_style);
-      }
-    } else {
-      resize_box(m_disabled_style);
-    }
+    update_box();
   }
   QWidget::changeEvent(event);
 }
@@ -120,29 +100,15 @@ bool Box::event(QEvent* event) {
     switch(event->type()) {
     case QEvent::HoverEnter:
       m_is_hover = true;
-      resize_box(m_hover_style);
+      update_box();
       break;
     case QEvent::HoverLeave:
       m_is_hover = false;
-      if(hasFocus()) {
-        resize_box(m_focus_style);
-      } else {
-        resize_box(m_style);
-      }
+      update_box();
       break;
     case QEvent::FocusIn:
-      if(m_is_hover) {
-        resize_box(m_hover_style);
-      } else {
-        resize_box(m_focus_style);
-      }
-      break;
     case QEvent::FocusOut:
-      if(m_is_hover) {
-        resize_box(m_hover_style);
-      } else {
-        resize_box(m_style);
-      }
+      update_box();
       break;
     }
   }
@@ -192,6 +158,36 @@ void Box::resize_box(const Style& style) {
   }
 }
 
+void Box::change_padding(const Style& style) {
+  if(style.m_paddings) {
+    if(auto box_layout = layout()) {
+      if(style.m_borders) {
+        box_layout->setContentsMargins(*style.m_paddings + *style.m_borders);
+      } else {
+        box_layout->setContentsMargins(*style.m_paddings);
+      }
+    }
+  }
+}
+
+void Box::update_box() {
+  auto update = [=] (const Style& style) {
+    resize_box(style);
+    change_padding(style);
+  };
+  if(isEnabled()) {
+    if(m_is_hover) {
+      update(m_hover_style);
+    } else if(hasFocus()) {
+      update(m_focus_style);
+    } else {
+      update(m_style);
+    }
+  } else {
+    update(m_disabled_style);
+  }
+}
+
 void Box::update_style() {
   auto default_style_sheet = create_style_sheet("", get_style());
   auto hover_style_sheet = create_style_sheet(":hover", get_hover_style());
@@ -207,5 +203,5 @@ void Box::update_style() {
   setStyleSheet(style_sheet.append(default_style_sheet).
     append(hover_style_sheet).append(focus_hover_style_sheet).
     append(focus_style_sheet).append(disabled_style_sheet));
-  resize_box(m_style);
+  update_box();
 }

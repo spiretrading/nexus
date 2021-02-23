@@ -49,36 +49,13 @@ namespace {
         color: %1;
       )").arg(style.m_text_color->name(QColor::HexArgb));
     }
-    auto font_sheet = QString();
-    if(style.m_font) {
-      auto weight = [&style] () -> QString {
-        switch(style.m_font->weight()) {
-        case QFont::Normal:
-          return "normal";
-        case QFont::Medium:
-          return "500";
-        case QFont::Bold:
-          return "bold";
-        case QFont::Black:
-          return "900";
-        default:
-          return QString::number(100 + style.m_font->weight() * 8);
-        }
-      }();
-      font_sheet = QString(R"(
-        font-family: "%1";
-        font-size: %2px;
-        font-weight: %3;
-      )").arg(style.m_font->family()).arg(style.m_font->pixelSize()).arg(weight);
-    }
     auto closing_bracket = QString("}");
     auto style_sheet = QString();
     style_sheet.reserve(default_sheet.length() + border_sheet.length() +
-      padding_sheet.length() + text_color_sheet.length() + font_sheet.length() +
+      padding_sheet.length() + text_color_sheet.length() +
       closing_bracket.length());
     return style_sheet.append(default_sheet).append(border_sheet).
-      append(padding_sheet).append(text_color_sheet).append(font_sheet).
-      append(closing_bracket);
+      append(padding_sheet).append(text_color_sheet).append(closing_bracket);
   }
 
   auto create_text_box_style_sheet(const TextBox::Styles& styles) {
@@ -89,16 +66,23 @@ namespace {
       styles.m_disabled_style);
     auto read_only_style_sheet = create_style_sheet(":read-only",
       styles.m_read_only_style);
+    auto read_only_hover_style_sheet = create_style_sheet(":read-only:hover",
+      styles.m_read_only_hover_style);
+    auto read_only_focus_style_sheet = create_style_sheet(":read-only:focus",
+      styles.m_read_only_focus_style);
     auto read_only_disabled_style_sheet = create_style_sheet(
-      ":read-only:disabled", styles.m_read_only_style);
+      ":read-only:disabled", styles.m_read_only_disabled_style);
     auto style_sheet = QString();
     style_sheet.reserve(default_style_sheet.length() +
       hover_style_sheet.length() + focus_style_sheet.length() +
       disabled_style_sheet.length() + read_only_style_sheet.length() +
+      read_only_hover_style_sheet.length() +
+      read_only_focus_style_sheet.length() +
       read_only_disabled_style_sheet.length());
     return style_sheet.append(default_style_sheet).
       append(hover_style_sheet).append(focus_style_sheet).
       append(disabled_style_sheet).append(read_only_style_sheet).
+      append(read_only_focus_style_sheet).append(read_only_hover_style_sheet).
       append(read_only_disabled_style_sheet);
   }
 
@@ -135,6 +119,7 @@ TextBox::TextBox(QWidget* parent)
 
 TextBox::TextBox(const QString& text, QWidget* parent)
     : QLineEdit(text, parent),
+      m_is_hover(false),
       m_text(text),
       m_submitted_text(text) {
   setObjectName("TextBox");
@@ -158,6 +143,12 @@ TextBox::TextBox(const QString& text, QWidget* parent)
   m_styles.m_read_only_style.m_background_color = QColor("#00000000");
   m_styles.m_read_only_style.m_borders = {{0, 0, 0, 0}};
   m_styles.m_read_only_style.m_paddings = {{0, 0, 0, 0}};
+  m_styles.m_read_only_style.m_font = font;
+  m_styles.m_read_only_disabled_style = m_styles.m_read_only_style;
+  m_styles.m_read_only_hover_style = m_styles.m_hover_style;
+  m_styles.m_read_only_hover_style.m_background_color = QColor("#00000000");
+  m_styles.m_read_only_focus_style = m_styles.m_focus_style;
+  m_styles.m_read_only_focus_style.m_background_color = QColor("#00000000");
   m_styles.m_disabled_style.m_background_color = QColor("#F5F5F5");
   m_styles.m_disabled_style.m_border_color = QColor("#C8C8C8");
   m_styles.m_disabled_style.m_text_color = QColor("#C8C8C8");
@@ -205,6 +196,7 @@ void TextBox::set_styles(const Styles& styles) {
     m_styles.m_style.m_background_color);
   m_warning_border_color_step = get_color_step(
     m_styles.m_warning_style.m_border_color, m_styles.m_style.m_border_color);
+  update_font();
 }
 
 void TextBox::play_warning() {
@@ -233,9 +225,15 @@ connection TextBox::connect_submit_signal(
 void TextBox::changeEvent(QEvent* event) {
   switch(event->type()) {
     case QEvent::ReadOnlyChange:
+      update_font();
+      elide_text();
+      break;
     case QEvent::FontChange:
     case QEvent::StyleChange:
       elide_text();
+      break;
+    case QEvent::EnabledChange:
+      update_font();
       break;
   }
   QLineEdit::changeEvent(event);
@@ -249,6 +247,7 @@ void TextBox::focusInEvent(QFocusEvent* event) {
       QLineEdit::setText(m_text);
     }
   }
+  update_font();
   QLineEdit::focusInEvent(event);
 }
 
@@ -257,6 +256,7 @@ void TextBox::focusOutEvent(QFocusEvent* event) {
   if(reason != Qt::ActiveWindowFocusReason && reason != Qt::PopupFocusReason) {
     elide_text();
   }
+  update_font();
   QLineEdit::focusOutEvent(event);
 }
 
@@ -272,6 +272,22 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
 void TextBox::resizeEvent(QResizeEvent* event) {
   elide_text();
   QLineEdit::resizeEvent(event);
+}
+
+bool TextBox::event(QEvent* event) {
+  if(isEnabled()) {
+    switch(event->type()) {
+    case QEvent::HoverEnter:
+      m_is_hover = true;
+      update_font();
+      break;
+    case QEvent::HoverLeave:
+      m_is_hover = false;
+      update_font();
+      break;
+    }
+  }
+  return QLineEdit::event(event);
 }
 
 QSize TextBox::sizeHint() const {
@@ -327,4 +343,44 @@ void TextBox::elide_text() {
   auto rect = style()->subElementRect(QStyle::SE_LineEditContents, &panel, this);
   QLineEdit::setText(font_metrics.elidedText(m_text, Qt::ElideRight,
     rect.width()));
+}
+
+void TextBox::update_font(const TextBox::Style& style) {
+  if(style.m_font) {
+    if(font() != style.m_font) {
+      setFont(*style.m_font);
+    }
+  } else {
+    if(m_styles.m_style.m_font) {
+      update_font(m_styles.m_style);
+    }
+  }
+}
+
+void TextBox::update_font() {
+  if(isReadOnly()) {
+    if(isEnabled()) {
+      if(m_is_hover) {
+        update_font(m_styles.m_read_only_hover_style);
+      } else if(hasFocus()) {
+        update_font(m_styles.m_read_only_focus_style);
+      } else {
+        update_font(m_styles.m_read_only_style);
+      }
+    } else {
+      update_font(m_styles.m_read_only_disabled_style);
+    }
+  } else {
+    if(isEnabled()) {
+      if(m_is_hover) {
+        update_font(m_styles.m_hover_style);
+      } else if(hasFocus()) {
+        update_font(m_styles.m_focus_style);
+      } else {
+        update_font(m_styles.m_style);
+      }
+    } else {
+      update_font(m_styles.m_disabled_style);
+    }
+  }
 }
