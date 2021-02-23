@@ -1,7 +1,6 @@
 #include "Spire/Ui/Box.hpp"
 #include <QEvent>
 #include <QLayout>
-#include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
@@ -37,7 +36,7 @@ namespace {
   }
 }
 
-Box::Box(QWidget* parent) 
+Box::Box(QWidget* parent)
     : QWidget(parent),
       m_is_hover(false) {
   setObjectName("Box");
@@ -58,6 +57,7 @@ const Box::Style& Box::get_style() const {
 
 void Box::set_style(const Style& style) {
   m_style = style;
+  process_style(style);
   update_style();
 }
 
@@ -67,6 +67,7 @@ const Box::Style& Box::get_hover_style() const {
 
 void Box::set_hover_style(const Style& hover_style) {
   m_hover_style = hover_style;
+  process_hover_style(hover_style);
   update_style();
 }
 
@@ -76,6 +77,7 @@ const Box::Style& Box::get_focus_style() const {
 
 void Box::set_focus_style(const Style& focus_style) {
   m_focus_style = focus_style;
+  process_focus_style(focus_style);
   update_style();
 }
 
@@ -85,6 +87,7 @@ const Box::Style& Box::get_disabled_style() const {
 
 void Box::set_disabled_style(const Style& disabled_style) {
   m_disabled_style = disabled_style;
+  process_disabled_style(disabled_style);
   update_style();
 }
 
@@ -123,6 +126,14 @@ QSize Box::sizeHint() const {
   return scale(180, 26);
 }
 
+void Box::process_style(const Style& style) {}
+
+void Box::process_hover_style(const Style& hover_style) {}
+
+void Box::process_focus_style(const Style& focus_style) {}
+
+void Box::process_disabled_style(const Style& disabled_style) {}
+
 QSize Box::get_size(const Style& style) const {
   if(style.m_size) {
     if(auto size = get<QSize>(style.m_size.get_ptr())) {
@@ -141,7 +152,7 @@ QSize Box::get_size(const Style& style) const {
         }
       }
     }
-  } 
+  }
   return QSize(-1, -1);
 }
 
@@ -158,33 +169,17 @@ void Box::resize_box(const Style& style) {
   }
 }
 
-void Box::change_padding(const Style& style) {
-  if(style.m_paddings) {
-    if(auto box_layout = layout()) {
-      if(style.m_borders) {
-        box_layout->setContentsMargins(*style.m_paddings + *style.m_borders);
-      } else {
-        box_layout->setContentsMargins(*style.m_paddings);
-      }
-    }
-  }
-}
-
 void Box::update_box() {
-  auto update = [=] (const Style& style) {
-    resize_box(style);
-    change_padding(style);
-  };
   if(isEnabled()) {
     if(m_is_hover) {
-      update(m_hover_style);
+      resize_box(m_hover_style);
     } else if(hasFocus()) {
-      update(m_focus_style);
+      resize_box(m_focus_style);
     } else {
-      update(m_style);
+      resize_box(m_style);
     }
   } else {
-    update(m_disabled_style);
+    resize_box(m_disabled_style);
   }
 }
 

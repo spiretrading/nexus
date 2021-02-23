@@ -58,6 +58,10 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void process_style(const Style& style) override;
+      void process_hover_style(const Style& hover_style) override;
+      void process_focus_style(const Style& focus_style) override;
+      void process_disabled_style(const Style& disabled_style) override;
 
     private:
       mutable ClickedSignal m_clicked_signal;

@@ -249,6 +249,9 @@ void TextBox::focusInEvent(QFocusEvent* event) {
   }
   update_font();
   QLineEdit::focusInEvent(event);
+  if(isReadOnly() && !hasSelectedText()) {
+    elide_text();
+  }
 }
 
 void TextBox::focusOutEvent(QFocusEvent* event) {
@@ -278,12 +281,16 @@ bool TextBox::event(QEvent* event) {
   if(isEnabled()) {
     switch(event->type()) {
     case QEvent::HoverEnter:
-      m_is_hover = true;
-      update_font();
-      break;
     case QEvent::HoverLeave:
-      m_is_hover = false;
+      if(event->type() == QEvent::HoverEnter) {
+        m_is_hover = true;
+      } else {
+        m_is_hover = false;
+      }
       update_font();
+      if(isReadOnly() && !hasSelectedText()) {
+        elide_text();
+      }
       break;
     }
   }

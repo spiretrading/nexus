@@ -7,6 +7,18 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  void update_text_padding(const Box::Style& style, TextBox::Style& text_style) {
+    if(style.m_paddings) {
+      if(style.m_borders) {
+        text_style.m_paddings = *style.m_paddings + *style.m_borders;
+      } else {
+        text_style.m_paddings = *style.m_paddings;
+      }
+    }
+  }
+}
+
 Button::Button(TextBox* text_box, QWidget* parent)
     : Box(parent),
       m_text_box(text_box) {
@@ -90,7 +102,7 @@ bool Button::eventFilter(QObject* watched, QEvent* event) {
       Box::event(event);
       break;
     }
-  } 
+  }
   return Box::eventFilter(watched, event);
 }
 
@@ -113,6 +125,30 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
     m_clicked_signal();
   }
   Box::mouseReleaseEvent(event);
+}
+
+void Button::process_style(const Style& style) {
+  auto text_style = get_text_style();
+  update_text_padding(style, text_style);
+  set_text_style(text_style);
+}
+
+void Button::process_hover_style(const Style& hover_style) {
+  auto text_style = get_text_hover_style();
+  update_text_padding(hover_style, text_style);
+  set_text_hover_style(text_style);
+}
+
+void Button::process_focus_style(const Style& focus_style) {
+  auto text_style = get_text_focus_style();
+  update_text_padding(focus_style, text_style);
+  set_text_focus_style(text_style);
+}
+
+void Button::process_disabled_style(const Style& disabled_style) {
+  auto text_style = get_text_disabled_style();
+  update_text_padding(disabled_style, text_style);
+  set_text_disabled_style(text_style);
 }
 
 Button* Spire::make_button(const QString& label, QWidget* parent) {

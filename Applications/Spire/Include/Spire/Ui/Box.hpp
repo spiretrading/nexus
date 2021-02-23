@@ -64,6 +64,10 @@ namespace Spire {
       void changeEvent(QEvent* event) override;
       bool event(QEvent* event) override;
       QSize sizeHint() const override;
+      virtual void process_style(const Style& style);
+      virtual void process_hover_style(const Style& hover_style);
+      virtual void process_focus_style(const Style& focus_style);
+      virtual void process_disabled_style(const Style& disabled_style);
 
     private:
       Style m_style;
@@ -75,7 +79,6 @@ namespace Spire {
       QSize get_size(const Style& style) const;
       void resize_box(const Style& style);
       void update_box();
-      void change_padding(const Style& style);
       void update_style();
   };
 }
