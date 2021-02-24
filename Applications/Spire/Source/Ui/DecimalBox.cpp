@@ -97,6 +97,9 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
   layout->setContentsMargins({});
   m_text_box = new TextBox(to_string(initial), this);
   update_input_validator();
+  auto padding = m_text_box->get_padding();
+  padding.m_right_padding = scale_width(26);
+  m_text_box->set_padding(padding);
   setFocusProxy(m_text_box);
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
