@@ -92,7 +92,9 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
       m_modifiers(std::move(modifiers)),
       m_decimal_places(DEFAULT_DECIMAL_PLACES),
       m_has_trailing_zeros(false),
-      m_validator(nullptr) {
+      m_validator(nullptr),
+      m_trailing_zero_regex(QString("[%1].[0]*$").arg(
+        QLocale().decimalPoint())) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(to_string(initial), this);
@@ -108,9 +110,9 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submit) { on_submit(); });
   m_text_box->installEventFilter(this);
-  m_up_button = create_button(":/Icons/arrow-up.svg", this);
+  m_up_button = create_button(":/Icons/arrow-up.svg", m_text_box);
   connect(m_up_button, &IconButton::clicked, this, &DecimalBox::increment);
-  m_down_button = create_button(":/Icons/arrow-down.svg", this);
+  m_down_button = create_button(":/Icons/arrow-down.svg", m_text_box);
   connect(m_down_button, &IconButton::clicked, this, &DecimalBox::decrement);
   update_button_positions();
 }
@@ -187,7 +189,8 @@ int DecimalBox::get_decimal_places() const {
 
 void DecimalBox::set_decimal_places(int decimal_places) {
   m_decimal_places = decimal_places;
-  // TODO: update, potentially call set_trailing_zeros to update
+  update_input_validator();
+  update_trailing_zeros();
 }
 
 bool DecimalBox::has_trailing_zeros() const {
@@ -196,11 +199,7 @@ bool DecimalBox::has_trailing_zeros() const {
 
 void DecimalBox::set_trailing_zeros(bool has_trailing_zeros) {
   m_has_trailing_zeros = has_trailing_zeros;
-  if(m_has_trailing_zeros) {
-    // TODO: ensure trailing zeros
-  } else {
-    // TODO: trim trailing zeros
-  }
+  update_trailing_zeros();
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
@@ -223,12 +222,14 @@ void DecimalBox::decrement() {
   setFocus();
   auto current = get_current();
   set_current(clamp(current -= get_increment(), m_minimum, m_maximum));
+  update_trailing_zeros();
 }
 
 void DecimalBox::increment() {
   setFocus();
   auto increment = get_increment();
   set_current(clamp(increment += get_current(), m_minimum, m_maximum));
+  update_trailing_zeros();
 }
 
 DecimalBox::Decimal DecimalBox::get_increment() const {
@@ -267,9 +268,35 @@ void DecimalBox::update_input_validator() {
   m_text_box->setValidator(m_validator);
 }
 
+void DecimalBox::update_trailing_zeros() {
+  auto current_text = m_text_box->get_text();
+  if(!m_has_trailing_zeros) {
+    m_text_box->set_text(current_text.remove(m_trailing_zero_regex));
+    return;
+  }
+  auto point_index = current_text.indexOf(QLocale().decimalPoint());
+  if(point_index == -1 && m_decimal_places > 0) {
+    current_text.append(QLocale().decimalPoint());
+  }
+  auto zero_count = [&] {
+    if(point_index == -1) {
+      return m_decimal_places;
+    }
+    return m_decimal_places - (current_text.length() - point_index) + 1;
+  }();
+  if(zero_count > 0) {
+    m_text_box->set_text(current_text.leftJustified(
+      current_text.length() + zero_count, '0'));
+  } else {
+    m_text_box->set_text(current_text.left(
+      current_text.length() + zero_count));
+  }
+}
+
 void DecimalBox::on_submit() {
   auto current = get_current();
   if(m_minimum <= current && current <= m_maximum) {
+    update_trailing_zeros();
     m_submission = current;
     m_submit_signal(m_submission);
   } else {

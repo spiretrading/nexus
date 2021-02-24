@@ -132,6 +132,7 @@ namespace Spire {
       bool m_has_trailing_zeros;
       TextBox* m_text_box;
       QRegExpValidator* m_validator;
+      QRegExp m_trailing_zero_regex;
       IconButton* m_up_button;
       IconButton* m_down_button;
       boost::signals2::scoped_connection m_current_connection;
@@ -142,6 +143,7 @@ namespace Spire {
       Decimal get_increment() const;
       void update_button_positions();
       void update_input_validator();
+      void update_trailing_zeros();
       void on_submit();
   };
 }
