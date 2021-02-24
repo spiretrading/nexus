@@ -142,7 +142,7 @@ namespace Spire {
       Decimal get_increment() const;
       void update_button_positions();
       void update_input_validator();
-      void on_submit() const;
+      void on_submit();
   };
 }
 

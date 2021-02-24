@@ -187,7 +187,7 @@ int DecimalBox::get_decimal_places() const {
 
 void DecimalBox::set_decimal_places(int decimal_places) {
   m_decimal_places = decimal_places;
-  // TODO: update
+  // TODO: update, potentially call set_trailing_zeros to update
 }
 
 bool DecimalBox::has_trailing_zeros() const {
@@ -196,7 +196,11 @@ bool DecimalBox::has_trailing_zeros() const {
 
 void DecimalBox::set_trailing_zeros(bool has_trailing_zeros) {
   m_has_trailing_zeros = has_trailing_zeros;
-  // TODO: update
+  if(m_has_trailing_zeros) {
+    // TODO: ensure trailing zeros
+  } else {
+    // TODO: trim trailing zeros
+  }
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
@@ -216,11 +220,13 @@ connection DecimalBox::connect_submit_signal(
 }
 
 void DecimalBox::decrement() {
+  setFocus();
   auto current = get_current();
   set_current(clamp(current -= get_increment(), m_minimum, m_maximum));
 }
 
 void DecimalBox::increment() {
+  setFocus();
   auto increment = get_increment();
   set_current(clamp(increment += get_current(), m_minimum, m_maximum));
 }
@@ -261,11 +267,10 @@ void DecimalBox::update_input_validator() {
   m_text_box->setValidator(m_validator);
 }
 
-void DecimalBox::on_submit() const {
+void DecimalBox::on_submit() {
   auto current = get_current();
   if(m_minimum <= current && current <= m_maximum) {
-    // TODO: why does this assignment fail?
-    //m_submission = current;
+    m_submission = current;
     m_submit_signal(m_submission);
   } else {
     m_text_box->set_text(to_string(m_submission));
