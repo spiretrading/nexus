@@ -2,6 +2,7 @@
 #define SPIRE_DECIMAL_BOX_HPP
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <QHash>
+#include <QRegularExpression>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -45,7 +46,7 @@ namespace Spire {
       //! Return the current value.
       Decimal get_current() const;
 
-      //! Sets the current value.
+      //! Sets the current value iff the value is within [minimum, maximum].
       /*!
         \param current The current value.
       */
@@ -116,15 +117,32 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
+
     private:
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
+      Decimal m_submission;
       Decimal m_minimum;
       Decimal m_maximum;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       int m_decimal_places;
       bool m_has_trailing_zeros;
       TextBox* m_text_box;
+      QRegExpValidator* m_validator;
+      IconButton* m_up_button;
+      IconButton* m_down_button;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_submit_connection;
+
+      void decrement();
+      void increment();
+      Decimal get_increment() const;
+      void update_button_positions();
+      void update_input_validator();
+      void on_submit() const;
   };
 }
 

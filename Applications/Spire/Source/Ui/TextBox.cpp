@@ -94,6 +94,7 @@ TextBox::TextBox(const QString& text, QWidget* parent)
       m_text(text),
       m_submitted_text(text),
       m_padding({scale_width(8), scale_width(8)}) {
+  setContextMenuPolicy(Qt::NoContextMenu);
   setObjectName("TextBox");
   setFrame(false);
   auto font = QFont("Roboto");

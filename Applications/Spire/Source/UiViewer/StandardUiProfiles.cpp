@@ -128,6 +128,7 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("10")));
   properties.push_back(make_standard_qstring_property("shift-increment",
     QString::fromUtf8("20")));
+  properties.push_back(make_standard_bool_property("read-only", false));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto& current = get<QString>("current", profile.get_properties());
@@ -145,44 +146,65 @@ UiProfile Spire::make_decimal_box_profile() {
         profile.get_properties());
       auto& shift_increment = get<QString>("shift-increment",
         profile.get_properties());
-      auto parse_decimal = [] (auto decimal) {
-        return DecimalBox::Decimal(decimal.toStdString().c_str());
+      auto parse_decimal = [] (auto decimal) ->
+          std::optional<DecimalBox::Decimal> {
+        try {
+          return DecimalBox::Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
       };
       auto modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
-        {{Qt::NoModifier, parse_decimal(default_increment.get())},
-        {Qt::AltModifier, parse_decimal(alt_increment.get())},
-        {Qt::ControlModifier, parse_decimal(ctrl_increment.get())},
-        {Qt::ShiftModifier, parse_decimal(shift_increment.get())}});
-      auto decimal_box = new DecimalBox(parse_decimal(current.get()),
-        parse_decimal(minimum.get()), parse_decimal(maximum.get()),
+        {{Qt::NoModifier, *parse_decimal(default_increment.get())},
+        {Qt::AltModifier, *parse_decimal(alt_increment.get())},
+        {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
+        {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
+      auto decimal_box = new DecimalBox(*parse_decimal(current.get()),
+        *parse_decimal(minimum.get()), *parse_decimal(maximum.get()),
         modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_current(parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_current(*decimal);
+        }
       });
       minimum.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_minimum(parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_minimum(*decimal);
+        }
       });
       maximum.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_maximum(parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_maximum(*decimal);
+        }
       });
       decimal_places.connect_changed_signal([=] (auto decimal_places) {
-        decimal_box->set_decimal_places(decimal_places);
+        if(decimal_places >= 0) {
+          decimal_box->set_decimal_places(decimal_places);
+        }
       });
       trailing_zeros.connect_changed_signal([=] (auto has_trailing_zeros) {
         decimal_box->set_trailing_zeros(has_trailing_zeros);
       });
       default_increment.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_increment(Qt::NoModifier, parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_increment(Qt::NoModifier, *decimal);
+        }
       });
       alt_increment.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_increment(Qt::AltModifier, parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_increment(Qt::AltModifier, *decimal);
+        }
       });
       ctrl_increment.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_increment(Qt::ControlModifier, parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_increment(Qt::ControlModifier, *decimal);
+        }
       });
       shift_increment.connect_changed_signal([=] (const auto& value) {
-        decimal_box->set_increment(Qt::ShiftModifier, parse_decimal(value));
+        if(auto decimal = parse_decimal(value)) {
+          decimal_box->set_increment(Qt::ShiftModifier, *decimal);
+        }
       });
       decimal_box->connect_current_signal(
         profile.make_event_slot<DecimalBox::Decimal>(
@@ -190,6 +212,10 @@ UiProfile Spire::make_decimal_box_profile() {
       decimal_box->connect_submit_signal(
         profile.make_event_slot<DecimalBox::Decimal>(
         QString::fromUtf8("Submit")));
+      auto& read_only = get<bool>("read-only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto value) {
+        decimal_box->set_read_only(value);
+      });
       return decimal_box;
     });
   return profile;
