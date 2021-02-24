@@ -219,17 +219,13 @@ connection DecimalBox::connect_submit_signal(
 }
 
 void DecimalBox::decrement() {
-  setFocus();
-  auto current = get_current();
-  set_current(clamp(current -= get_increment(), m_minimum, m_maximum));
-  update_trailing_zeros();
+  auto increment = get_increment();
+  increment.negate();
+  step_by(increment);
 }
 
 void DecimalBox::increment() {
-  setFocus();
-  auto increment = get_increment();
-  set_current(clamp(increment += get_current(), m_minimum, m_maximum));
-  update_trailing_zeros();
+  step_by(get_increment());
 }
 
 DecimalBox::Decimal DecimalBox::get_increment() const {
@@ -243,6 +239,14 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
     return m_modifiers[Qt::NoModifier];
   }
   return Decimal(0);
+}
+
+void DecimalBox::step_by(Decimal value) {
+  setFocus();
+  set_current(clamp(value += get_current(), m_minimum, m_maximum));
+  m_up_button->setDisabled(get_current() == m_maximum);
+  m_down_button->setDisabled(get_current() == m_minimum);
+  update_trailing_zeros();
 }
 
 void DecimalBox::update_button_positions() {
@@ -301,6 +305,7 @@ void DecimalBox::on_submit() {
     m_submit_signal(m_submission);
   } else {
     m_text_box->set_text(to_string(m_submission));
+    update_trailing_zeros();
     m_text_box->play_warning();
   }
 }

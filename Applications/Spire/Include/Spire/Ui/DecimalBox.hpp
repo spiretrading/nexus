@@ -141,6 +141,7 @@ namespace Spire {
       void decrement();
       void increment();
       Decimal get_increment() const;
+      void step_by(Decimal value);
       void update_button_positions();
       void update_input_validator();
       void update_trailing_zeros();

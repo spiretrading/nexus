@@ -118,7 +118,7 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("-100")));
   properties.push_back(make_standard_qstring_property("maximum",
     QString::fromUtf8("100")));
-  properties.push_back(make_standard_int_property("decimal-places", 6));
+  properties.push_back(make_standard_int_property("decimal-places", 2));
   properties.push_back(make_standard_bool_property("trailing-zeros", true));
   properties.push_back(make_standard_qstring_property("default-increment",
     QString::fromUtf8("1")));
