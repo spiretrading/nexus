@@ -234,9 +234,10 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
   auto modifiers = std::bitset<std::numeric_limits<int>::digits>(
     modifier_flags);
   if(modifiers.count() != 1) {
-    return m_modifiers[Qt::NoModifier];
+    return get_increment(Qt::NoModifier);
   }
-  return m_modifiers[static_cast<Qt::KeyboardModifier>(modifiers.to_ulong())];
+  return get_increment(
+    static_cast<Qt::KeyboardModifier>(modifiers.to_ulong()));
 }
 
 void DecimalBox::step_by(Decimal value) {
