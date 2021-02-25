@@ -111,9 +111,9 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submit) { on_submit(); });
   m_text_box->installEventFilter(this);
-  m_up_button = create_button(":/Icons/arrow-up.svg", m_text_box);
+  m_up_button = create_button(":/Icons/arrow-up.svg", this);
   connect(m_up_button, &IconButton::clicked, this, &DecimalBox::increment);
-  m_down_button = create_button(":/Icons/arrow-down.svg", m_text_box);
+  m_down_button = create_button(":/Icons/arrow-down.svg", this);
   connect(m_down_button, &IconButton::clicked, this, &DecimalBox::decrement);
   update_button_positions();
 }
