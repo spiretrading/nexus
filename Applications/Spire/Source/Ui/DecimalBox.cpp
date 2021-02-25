@@ -1,4 +1,5 @@
 #include "Spire/Ui/DecimalBox.hpp"
+#include <bitset>
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
@@ -229,16 +230,13 @@ void DecimalBox::increment() {
 }
 
 DecimalBox::Decimal DecimalBox::get_increment() const {
-  if(qApp->keyboardModifiers().testFlag(Qt::ShiftModifier)) {
-    return m_modifiers[Qt::ShiftModifier];
-  } else if(qApp->keyboardModifiers().testFlag(Qt::ControlModifier)) {
-    return m_modifiers[Qt::ControlModifier];
-  } else if(qApp->keyboardModifiers().testFlag(Qt::AltModifier)) {
-    return m_modifiers[Qt::AltModifier];
-  } else if(m_modifiers[Qt::NoModifier] != Decimal()) {
+  auto modifier_flags = static_cast<int>(qApp->keyboardModifiers());
+  auto modifiers = std::bitset<std::numeric_limits<int>::digits>(
+    modifier_flags);
+  if(modifiers.count() != 1) {
     return m_modifiers[Qt::NoModifier];
   }
-  return Decimal(0);
+  return m_modifiers[static_cast<Qt::KeyboardModifier>(modifiers.to_ulong())];
 }
 
 void DecimalBox::step_by(Decimal value) {
@@ -306,6 +304,7 @@ void DecimalBox::on_submit() {
   } else {
     m_text_box->set_text(to_string(m_submission));
     update_trailing_zeros();
+    // TODO: emit current signal?
     m_text_box->play_warning();
   }
 }
