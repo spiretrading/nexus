@@ -94,7 +94,7 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
       m_decimal_places(DEFAULT_DECIMAL_PLACES),
       m_has_trailing_zeros(false),
       m_validator(nullptr),
-      m_trailing_zero_regex(QString("[%1].[0]*$").arg(
+      m_trailing_zero_regex(QString("[%1]?[0]*$").arg(
         QLocale().decimalPoint())) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -255,24 +255,18 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::update_input_validator() {
-  auto decimal_regex = [&] () -> QString {
-    if(m_decimal_places == 0) {
-      return {};
-    }
-    return QString("[%1]?[0-9]{0,%2}").arg(QLocale().decimalPoint()).
-      arg(m_decimal_places);
-  }();
   if(m_validator) {
     delete_later(m_validator);
   }
   m_validator = new QRegExpValidator(
-    QRegExp(QString("^[-]?[0-9]*%1$").arg(decimal_regex)), m_text_box);
+    QRegExp(QString("^[-]?[0-9]*[%1]?[0-9]{0,%2}").arg(
+      QLocale().decimalPoint()).arg(m_decimal_places)), m_text_box);
   m_text_box->setValidator(m_validator);
 }
 
 void DecimalBox::update_trailing_zeros() {
   auto current_text = m_text_box->get_text();
-  if(!m_has_trailing_zeros) {
+  if(!m_has_trailing_zeros || m_decimal_places == 0) {
     m_text_box->set_text(current_text.remove(m_trailing_zero_regex));
     return;
   }
