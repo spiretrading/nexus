@@ -1,7 +1,7 @@
 #ifndef SPIRE_STYLES_PROPERTY_HPP
 #define SPIRE_STYLES_PROPERTY_HPP
 #include <any>
-#include <iostream>
+#include <typeindex>
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/BasicProperty.hpp"
@@ -16,6 +16,13 @@ namespace Spire::Styles {
       /** Stores a BasicProperty. */
       template<typename T, typename G>
       Property(BasicProperty<T, G> property);
+
+      /** Returns the underlying property's type. */
+      std::type_index get_type() const;
+
+      /** Casts the underlying property to a specified type. */
+      template<typename U>
+      const U& as() const;
 
       /**
        * Applies a callable to the underlying property stored.
@@ -44,6 +51,11 @@ namespace Spire::Styles {
   template<typename T, typename G>
   Property::Property(BasicProperty<T, G> property)
     : m_property(std::move(property)) {}
+
+  template<typename U>
+  const U& Property::as() const {
+    return std::any_cast<const U&>(m_property);
+  }
 
   template<typename F>
   decltype(auto) Property::visit(F&& f) const {

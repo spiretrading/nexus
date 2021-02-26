@@ -24,5 +24,14 @@ TEST_SUITE("Block") {
       });
     }
     REQUIRE(visits == 2);
+    block.set(BackgroundColor(QColor::fromRgb(0, 0, 255)));
+    auto background = find<BackgroundColor>(block);
+    REQUIRE(background.is_initialized());
+    REQUIRE(background->get_expression().as<QColor>() ==
+      QColor::fromRgb(0, 0, 255));
+    block.remove<BackgroundColor>();
+    REQUIRE(block.get_properties().size() == 1);
+    REQUIRE_NOTHROW(block.get_properties().front().visit(
+      [&] (const BorderColor& color) {}));
   }
 }
