@@ -10,7 +10,8 @@ namespace Spire::Styles {
   class Property;
   class Rule;
   class Selector;
-  template<typename T> class StateSelector;
+  template<typename T, typename G> class StateSelector;
+  class StyleSheet;
 }
 
 #endif

@@ -1,14 +1,16 @@
 #ifndef SPIRE_STATE_SELECTOR_HPP
 #define SPIRE_STATE_SELECTOR_HPP
+#include <utility>
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
   /**
    * Represents a selector for a given state.
-   * @param <T> A unique type tag.
+   * @param <T> The data associated with the state.
+   * @param <G> A unique type tag.
    */
-  template<typename T>
+  template<typename T, typename G>
   class StateSelector {
     public:
 
