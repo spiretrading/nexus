@@ -9,7 +9,7 @@ TEST_SUITE("Block") {
   TEST_CASE("modify_properties") {
     auto block = Block();
     block.set(BackgroundColor(QColor::fromRgb(255, 0, 0)));
-    block.set(BorderColor(QColor::fromRgb(0, 255, 0)));
+    block.set(BorderTopColor(QColor::fromRgb(0, 255, 0)));
     auto visits = 0;
     for(auto& property : block.get_properties()) {
       property.visit([&] (const BackgroundColor& color) {
@@ -17,7 +17,7 @@ TEST_SUITE("Block") {
           QColor::fromRgb(255, 0, 0));
         ++visits;
       },
-      [&] (const BorderColor& color) {
+      [&] (const BorderTopColor& color) {
         REQUIRE(color.get_expression().as<QColor>() ==
           QColor::fromRgb(0, 255, 0));
         ++visits;
@@ -32,6 +32,15 @@ TEST_SUITE("Block") {
     block.remove<BackgroundColor>();
     REQUIRE(block.get_properties().size() == 1);
     REQUIRE_NOTHROW(block.get_properties().front().visit(
-      [&] (const BorderColor& color) {}));
+      [&] (const BorderTopColor& color) {}));
+  }
+
+  TEST_CASE("modify_composite_properties") {
+    auto block = Block();
+    block.set(border(1, QColor::fromRgb(0, 0, 255)));
+    auto border_color = find<BorderColor>(block);
+    REQUIRE(border_color.is_initialized());
+    REQUIRE(border_color->get<BorderTopColor>().get_expression().as<QColor>() ==
+      QColor::fromRgb(0, 0, 255));
   }
 }

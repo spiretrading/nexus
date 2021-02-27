@@ -76,10 +76,6 @@ namespace Spire::Styles {
     }
     return visit(std::forward<G>(g)...);
   }
-
-  template<typename... T>
-  class CompositeProperty {
-  };
 }
 
 #endif
