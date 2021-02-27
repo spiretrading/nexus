@@ -5,7 +5,6 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/Property.hpp"
-#include "Spire/Styles/Rule.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {

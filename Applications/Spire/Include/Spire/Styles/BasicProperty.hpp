@@ -6,7 +6,11 @@
 
 namespace Spire::Styles {
 
-  /** Represents the declaration of a style property from an Expression. */
+  /**
+   * Represents the declaration of a style property from an Expression.
+   * @param <T> The property's type.
+   * @param <G> A unique type tag.
+   */
   template<typename T, typename G>
   class BasicProperty {
     public:
@@ -14,7 +18,7 @@ namespace Spire::Styles {
       /** The type of the property's value. */
       using Type = T;
 
-      /** A unique tag used to identify the type of property. */
+      /** A unique tag used to identify the property. */
       using Tag = G;
 
       /** The type of Expression assigned to this property. */
