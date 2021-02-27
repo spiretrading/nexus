@@ -15,13 +15,7 @@ namespace Spire::Styles {
     public:
 
       /** Constructs an empty Block. */
-      Block();
-
-      /** Constructs a Block with a specified rule. */
-      Block(Rule rule);
-
-      /** Returns the Block's Rule. */
-      const Rule& get_rule() const;
+      Block() = default;
 
       /** Returns the list of Properties contained within this Block. */
       const std::vector<Property>& get_properties() const;
@@ -51,7 +45,6 @@ namespace Spire::Styles {
       void remove(const CompositeProperty<T...>& property);
 
     private:
-      Rule m_rule;
       std::vector<Property> m_properties;
   };
 
