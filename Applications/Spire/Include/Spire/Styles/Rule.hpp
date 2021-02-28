@@ -30,6 +30,9 @@ namespace Spire::Styles {
       /** Returns the styling block. */
       const Block& get_block() const;
 
+      /** Returns the styling block. */
+      Block& get_block();
+
     private:
       Selector m_selector;
       Block m_block;

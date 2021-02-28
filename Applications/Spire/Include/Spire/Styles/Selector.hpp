@@ -21,8 +21,15 @@ namespace Spire::Styles {
        * Constructs a Selector for a StateSelector.
        * @param state The state to represent.
        */
-      template<typename T>
-      Selector(StateSelector<T> state);
+      template<typename T, typename G>
+      Selector(StateSelector<T, G> state);
+
+      /**
+       * Constructs a Selector for a StateSelector.
+       * @param state The state to represent.
+       */
+      template<typename G>
+      Selector(StateSelector<void, G> state);
 
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;
@@ -30,6 +37,9 @@ namespace Spire::Styles {
       /** Casts the underlying selector to a specified type. */
       template<typename U>
       const U& as() const;
+
+      /** Tests if another Selector matches this one. */
+      bool is_match(const Selector& selector) const;
 
       /**
        * Applies a callable to the underlying selector.
@@ -53,11 +63,27 @@ namespace Spire::Styles {
         using type = std::decay_t<U>;
       };
       std::any m_selector;
+      std::function<bool (const Selector&)> m_matcher;
   };
 
-  template<typename T>
-  Selector::Selector(StateSelector<T> state)
-    : m_selector(std::move(selector)) {}
+  template<typename T, typename G>
+  Selector::Selector(StateSelector<T, G> state)
+    : m_selector(std::move(selector)),
+      m_matcher([this] (const Selector& selector) {
+        if(selector.get_type() != typeid(StateSelector<T, G>)) {
+          return false;
+        }
+        auto& left = as<StateSelector<T, G>();
+        auto& right = selector.as<StateSelector<T, G>>();
+        return left.get_data() == right.get_data();
+      }) {}
+
+  template<typename G>
+  Selector::Selector(StateSelector<void, G> state)
+    : m_selector(std::move(selector)),
+      m_matcher([this] (const Selector& selector) {
+        return selector.get_type() == typeid(StateSelector<void, G>);
+      }) {}
 
   template<typename U>
   const U& Selector::as() const {

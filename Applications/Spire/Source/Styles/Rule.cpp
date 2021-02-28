@@ -18,3 +18,7 @@ const Selector& Rule::get_selector() const {
 const Block& Rule::get_block() const {
   return m_block;
 }
+
+Block& Rule::get_block() {
+  return m_block;
+}
