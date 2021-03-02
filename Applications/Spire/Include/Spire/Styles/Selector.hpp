@@ -37,6 +37,18 @@ namespace Spire::Styles {
        */
       Selector(NotSelector selector);
 
+      /**
+       * Constructs a Selector for an AndSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(AndSelector selector);
+
+      /**
+       * Constructs a Selector for an OrSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(OrSelector selector);
+
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;
 

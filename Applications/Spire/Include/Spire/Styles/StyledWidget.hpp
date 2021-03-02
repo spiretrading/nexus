@@ -1,9 +1,11 @@
 #ifndef SPIRE_STYLES_STYLED_WIDGET_HPP
 #define SPIRE_STYLES_STYLED_WIDGET_HPP
 #include <QWidget>
+#include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Styles/BoxSelectors.hpp"
 #include "Spire/Styles/BoxStyles.hpp"
 #include "Spire/Styles/NotSelector.hpp"
+#include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 

@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_NOT_SELECTOR_HPP
 #define SPIRE_STYLES_NOT_SELECTOR_HPP
+#include <utility>
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
