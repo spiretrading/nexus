@@ -71,10 +71,12 @@ namespace {
 
   auto create_button(const QString& icon, QWidget* parent) {
     auto style = IconButton::Style();
+    style.m_default_color = QColor("#333333");
     style.m_default_background_color = QColor("#FFFFFF");
     style.m_hover_background_color = QColor("#EBEBEB");
     style.m_hover_color = QColor("#4B23A0");
     style.m_disabled_color = QColor("#C8C8C8");
+    style.m_blur_color = style.m_default_color;
     auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
       parent);
     button->setFocusPolicy(Qt::NoFocus);
@@ -201,6 +203,11 @@ bool DecimalBox::has_trailing_zeros() const {
 void DecimalBox::set_trailing_zeros(bool has_trailing_zeros) {
   m_has_trailing_zeros = has_trailing_zeros;
   update_trailing_zeros();
+}
+
+void DecimalBox::set_buttons_visible(bool are_visible) {
+  m_up_button->setVisible(are_visible);
+  m_down_button->setVisible(are_visible);
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {

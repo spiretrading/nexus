@@ -129,6 +129,7 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_qstring_property("shift-increment",
     QString::fromUtf8("20")));
   properties.push_back(make_standard_bool_property("read-only", false));
+  properties.push_back(make_standard_bool_property("buttons-visible", true));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto& current = get<QString>("current", profile.get_properties());
@@ -215,6 +216,11 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& read_only = get<bool>("read-only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
         decimal_box->set_read_only(value);
+      });
+      auto& buttons_visible = get<bool>("buttons-visible",
+        profile.get_properties());
+      buttons_visible.connect_changed_signal([=] (auto value) {
+        decimal_box->set_buttons_visible(value);
       });
       return decimal_box;
     });

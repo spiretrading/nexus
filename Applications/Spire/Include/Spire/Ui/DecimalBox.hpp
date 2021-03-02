@@ -103,6 +103,12 @@ namespace Spire {
       */
       void set_trailing_zeros(bool has_trailing_zeros);
 
+      //! Sets if the increment and decrement buttons are visible.
+      /*!
+        \param are_visible True iff the buttons are visible.
+      */
+      void set_buttons_visible(bool are_visible);
+
       //! Sets the read-only state.
       /*!
         \param is_read_only True iff the DecimalBox should be read-only.
