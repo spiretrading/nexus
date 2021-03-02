@@ -7,6 +7,7 @@ namespace Spire::Styles {
   class Block;
   template<typename... T> class CompositeProperty;
   template<typename T> class Expression;
+  class NotSelector;
   class Property;
   class Rule;
   class Selector;

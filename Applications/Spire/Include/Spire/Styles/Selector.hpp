@@ -31,6 +31,12 @@ namespace Spire::Styles {
       template<typename G>
       Selector(StateSelector<void, G> state);
 
+      /**
+       * Constructs a Selector for a NotSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(NotSelector selector);
+
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;
 
@@ -87,7 +93,7 @@ namespace Spire::Styles {
 
   template<typename U>
   const U& Selector::as() const {
-    return std::any_cast<const U&>(m_property);
+    return std::any_cast<const U&>(m_selector);
   }
 
   template<typename F>

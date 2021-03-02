@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Styles/BoxSelectors.hpp"
 #include "Spire/Styles/BoxStyles.hpp"
+#include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 

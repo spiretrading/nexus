@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/StyledWidget.hpp"
 
 using namespace Spire;
@@ -26,10 +27,10 @@ int main(int argc, char** argv) {
   auto widget = new Box();
   auto style = widget->get_style();
   style.get(Any()).get_block().set(BackgroundColor(QColor::fromRgb(255, 0, 0)));
-  style.get(Active()).get_block().set(
-    BackgroundColor(QColor::fromRgb(100, 100, 100)));
   style.get(Hovered()).get_block().set(
     BackgroundColor(QColor::fromRgb(0, 255, 0)));
+  style.get(!Active()).get_block().set(
+    BackgroundColor(QColor::fromRgb(100, 100, 100)));
   widget->set_style(style);
   widget->show();
   application->exec();

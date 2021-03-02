@@ -47,6 +47,9 @@ bool StyledWidget::test_selector(const Selector& selector) const {
       },
       [&] (Hovered) {
         return underMouse();
+      },
+      [&] (const NotSelector& selector) {
+        return !test_selector(selector.get_selector());
       });
   } catch(const std::bad_any_cast&) {
     return false;
