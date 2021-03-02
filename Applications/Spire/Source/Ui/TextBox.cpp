@@ -1,155 +1,95 @@
 #include "Spire/Ui/TextBox.hpp"
-#include <array>
 #include <QEvent>
+#include <QHBoxLayout>
 #include <QKeyEvent>
-#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  const auto BACKGROUND_COLOR = QColor("#FFFFFF");
-  const auto BACKGROUND_WARNING_COLOR = QColor("#FFF1F1");
-  const auto BORDER_COLOR = QColor("#C8C8C8");
-  const auto BORDER_WARNING_COLOR = QColor("#B71C1C");
-  const auto WARNING_FADE_OUT_TIME_LINE_FRAME = 10;
-  const auto WARNING_FADE_OUT_TIME_MS = 300;
-  const auto WARNING_SHOW_DELAY_MS = 250;
-  const auto WARNING_PROPERTY_NAME = "warning";
-
-  auto get_text_box_style_sheet(const TextBox::Padding& padding) {
+  auto create_default_text_box_style_sheet() {
     return QString(R"(
-      #TextBox {
-        background-color: %1;
-        border: %2px solid %3;
+      QLineEdit {
+        background-color: #FFFFFF;
+        border: %1px solid #C8C8C8;
         color: #000000;
-        padding-left: %4px;
-        padding-right: %5px;
+        font-family: "Roboto";
+        font-size: %2px;
+        font-weight: normal;
+        padding-left: %3px;
+        padding-right: %3px;
       }
-      #TextBox:hover {
+      QLineEdit:hover {
         border-color: #4B23A0;
       }
-      #TextBox:focus {
+      QLineEdit:focus {
         border-color: #4B23A0;
       }
-      #TextBox:read-only {
+      QLineEdit:read-only {
         background-color: #00000000;
         border: none;
         padding-left: 0px;
         padding-right: 0px;
       }
-      #TextBox:disabled {
+      QLineEdit:disabled {
         background-color: #F5F5F5;
         border-color: #C8C8C8;
         color: #C8C8C8;
       }
-      #TextBox:read-only:disabled {
+      QLineEdit:read-only:disabled {
         background-color: #00000000;
         border: none;
-      })").
-        arg(BACKGROUND_COLOR.name(QColor::HexArgb)).arg(scale_width(1)).
-        arg(BORDER_COLOR.name(QColor::HexArgb)).arg(padding.m_left_padding).
-        arg(padding.m_right_padding);
-  }
-
-  auto get_warning_style_sheet(const QColor& background_color,
-      const QColor& border_color) {
-    return QString(R"(
-      #TextBox[%1=true] {
-        background-color: %2;
-        border-color: %3;
-      })").
-        arg(WARNING_PROPERTY_NAME).arg(background_color.name(QColor::HexArgb)).
-        arg(border_color.name(QColor::HexArgb));
-  }
-
-  auto get_fade_out_step(int start, int end) {
-    return (end - start) / WARNING_FADE_OUT_TIME_LINE_FRAME;
-  }
-
-  auto get_color_step(const QColor& start_color, const QColor& end_color) {
-    return std::array{get_fade_out_step(start_color.red(), end_color.red()),
-      get_fade_out_step(start_color.green(), end_color.green()),
-      get_fade_out_step(start_color.blue(), end_color.blue())};
-  }
-
-  const auto BACKGROUND_COLOR_STEP = get_color_step(BACKGROUND_WARNING_COLOR,
-    BACKGROUND_COLOR);
-  const auto BORDER_COLOR_STEP = get_color_step(BORDER_WARNING_COLOR,
-    BORDER_COLOR);
-
-  auto get_fade_out_color(const QColor& color, const std::array<int, 3>& steps,
-      int frame) {
-    return QColor(color.red() + steps[0] * frame,
-      color.green() + steps[1] * frame, color.blue() + steps[2] * frame);
+      })").arg(scale_width(1)).arg(scale_width(12)).arg(scale_width(8));
   }
 }
 
 TextBox::TextBox(QWidget* parent)
   : TextBox("", parent) {}
 
-TextBox::TextBox(const QString& text, QWidget* parent)
-    : QLineEdit(text, parent),
-      m_text(text),
-      m_submitted_text(text),
-      m_padding({scale_width(8), scale_width(8)}) {
-  setObjectName("TextBox");
-  setFrame(false);
-  auto font = QFont("Roboto");
-  font.setPixelSize(scale_width(12));
-  font.setWeight(QFont::Normal);
-  setFont(font);
-  m_style_sheet = get_text_box_style_sheet(m_padding);
-  setStyleSheet(m_style_sheet);
-  m_warning_time_line.setDuration(WARNING_FADE_OUT_TIME_MS);
-  m_warning_time_line.setFrameRange(0, WARNING_FADE_OUT_TIME_LINE_FRAME);
-  m_warning_time_line.setEasingCurve(QEasingCurve::Linear);
-  connect(&m_warning_time_line, &QTimeLine::frameChanged, this,
-    &TextBox::on_warning_fade_out);
-  connect(&m_warning_time_line, &QTimeLine::finished, this,
-    &TextBox::on_warning_finished);
-  connect(this, &QLineEdit::editingFinished, this,
+TextBox::TextBox(const QString& current, QWidget* parent)
+    : QWidget(parent),
+      m_current(current) {
+  m_line_edit = new QLineEdit(m_current, this);
+  m_line_edit->setFrame(false);
+  m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->addWidget(m_line_edit);
+  setLayout(layout);
+  m_line_edit->installEventFilter(this);
+  setStyleSheet(create_default_text_box_style_sheet());
+  setFocusProxy(m_line_edit);
+  connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
-  connect(this, &QLineEdit::selectionChanged, this,
+  connect(m_line_edit, &QLineEdit::selectionChanged, this,
     &TextBox::on_selection_changed);
-  connect(this, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
+  connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
 }
 
-const QString& TextBox::get_text() const {
-  return m_text;
+const QString& TextBox::get_current() const {
+  return m_current;
 }
 
-void TextBox::set_text(const QString& text) {
-  m_text = text;
-  m_submitted_text = text;
-  if(!isEnabled() || isReadOnly() || !hasFocus()) {
+void TextBox::set_current(const QString& value) {
+  m_current = value;
+  if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
   } else {
-    QLineEdit::setText(m_text);
+    m_line_edit->setText(m_current);
   }
 }
 
-const TextBox::Padding& TextBox::get_padding() const {
-  return m_padding;
+const QString& TextBox::get_submission() const {
+  return m_submission;
 }
 
-void TextBox::set_padding(const Padding& padding) {
-  m_padding = padding;
-  m_style_sheet = get_text_box_style_sheet(m_padding);
-  setStyleSheet(m_style_sheet);
+void TextBox::set_read_only(bool read_only) {
+  m_line_edit->setReadOnly(read_only);
 }
 
-void TextBox::play_warning() {
-  if(!isEnabled() || isReadOnly() || property(WARNING_PROPERTY_NAME).toBool()) {
-    return;
-  }
-  setStyleSheet(m_style_sheet +
-    get_warning_style_sheet(BACKGROUND_WARNING_COLOR, BORDER_WARNING_COLOR));
-  setProperty(WARNING_PROPERTY_NAME, true);
-  style()->unpolish(this);
-  style()->polish(this);
-  QTimer::singleShot(WARNING_SHOW_DELAY_MS, this, &TextBox::on_warning_timeout);
+bool TextBox::is_read_only() const {
+  return m_line_edit->isReadOnly();
 }
 
 connection TextBox::connect_current_signal(
@@ -162,48 +102,52 @@ connection TextBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-void TextBox::changeEvent(QEvent* event) {
-  switch(event->type()) {
-    case QEvent::ReadOnlyChange:
-    case QEvent::FontChange:
+bool TextBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_line_edit) {
+    switch(event->type()) {
     case QEvent::StyleChange:
+      if(m_old_style_sheet != styleSheet()) {
+        m_old_style_sheet = styleSheet();
+        elide_text();
+      }
+      break;
+    case QEvent::ReadOnlyChange:
+    case QEvent::EnabledChange:
       elide_text();
       break;
-  }
-  QLineEdit::changeEvent(event);
-}
-
-void TextBox::focusInEvent(QFocusEvent* event) {
-  if(!isReadOnly()) {
-    auto reason = event->reason();
-    if(reason != Qt::ActiveWindowFocusReason &&
-      reason != Qt::PopupFocusReason) {
-      QLineEdit::setText(m_text);
+    case QEvent::FocusIn:
+      if(!is_read_only()) {
+        auto reason = static_cast<QFocusEvent*>(event)->reason();
+        if(reason != Qt::ActiveWindowFocusReason &&
+            reason != Qt::PopupFocusReason) {
+          m_line_edit->setText(m_current);
+        }
+      }
+      break;
+    case QEvent::FocusOut:
+      {
+        auto reason = static_cast<QFocusEvent*>(event)->reason();
+        if(reason != Qt::ActiveWindowFocusReason &&
+            reason != Qt::PopupFocusReason) {
+          elide_text();
+        }
+      }
+      break;
+    case QEvent::KeyPress:
+      if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
+        m_current = m_submission;
+        m_line_edit->setText(m_current);
+        m_current_signal(m_current);
+      }
+      break;
     }
   }
-  QLineEdit::focusInEvent(event);
-}
-
-void TextBox::focusOutEvent(QFocusEvent* event) {
-  auto reason = event->reason();
-  if(reason != Qt::ActiveWindowFocusReason && reason != Qt::PopupFocusReason) {
-    elide_text();
-  }
-  QLineEdit::focusOutEvent(event);
-}
-
-void TextBox::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape) {
-    m_text = m_submitted_text;
-    QLineEdit::setText(m_text);
-    m_current_signal(m_text);
-  }
-  QLineEdit::keyPressEvent(event);
+  return QWidget::eventFilter(watched, event);
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
   elide_text();
-  QLineEdit::resizeEvent(event);
+  QWidget::resizeEvent(event);
 }
 
 QSize TextBox::sizeHint() const {
@@ -211,52 +155,42 @@ QSize TextBox::sizeHint() const {
 }
 
 void TextBox::on_editing_finished() {
-  if(!isReadOnly()) {
-    m_submitted_text = m_text;
-    m_submit_signal(m_submitted_text);
+  if(!is_read_only()) {
+    m_submission = m_current;
+    m_submit_signal(m_submission);
   }
 }
 
 void TextBox::on_selection_changed() {
-  if(isReadOnly()) {
-    auto text = selectedText();
+  if(is_read_only()) {
+    auto text = m_line_edit->selectedText();
     if(text.endsWith(QChar(0x2026)) || text.endsWith(QStringLiteral("..."))) {
-      QLineEdit::setText(m_text);
-      setSelection(0, m_text.length());
+      m_line_edit->setText(m_current);
+      m_line_edit->setSelection(0, m_current.length());
     }
   }
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  m_text = text;
-  m_current_signal(m_text);
-}
-
-void TextBox::on_warning_timeout() {
-  m_warning_time_line.start();
-}
-
-void TextBox::on_warning_fade_out(int frame) {
-  auto background_color = get_fade_out_color(BACKGROUND_WARNING_COLOR,
-    BACKGROUND_COLOR_STEP, frame);
-  auto border_color = get_fade_out_color(BORDER_WARNING_COLOR,
-    BORDER_COLOR_STEP, frame);
-  setStyleSheet(m_style_sheet +
-    get_warning_style_sheet(background_color, border_color));
-}
-
-void TextBox::on_warning_finished() {
-  setProperty(WARNING_PROPERTY_NAME, false);
-  style()->unpolish(this);
-  style()->polish(this);
+  m_current = text;
+  m_current_signal(m_current);
 }
 
 void TextBox::elide_text() {
-  auto font_metrics = fontMetrics();
-  auto panel = QStyleOptionFrame();
-  initStyleOption(&panel);
-  auto rect = style()->subElementRect(QStyle::SE_LineEditContents, &panel, this);
-  QLineEdit::setText(font_metrics.elidedText(m_text, Qt::ElideRight,
+  auto font_metrics = m_line_edit->fontMetrics();
+  auto option = QStyleOptionFrame();
+  option.initFrom(m_line_edit);
+  option.rect = m_line_edit->contentsRect();
+  option.lineWidth = 0;
+  option.midLineWidth = 0;
+  option.state |= QStyle::State_Sunken;
+  if(is_read_only()) {
+    option.state |= QStyle::State_ReadOnly;
+  }
+  option.features = QStyleOptionFrame::None;
+  auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
+    &option, m_line_edit);
+  m_line_edit->setText(font_metrics.elidedText(m_current, Qt::ElideRight,
     rect.width()));
-  setCursorPosition(0);
+  m_line_edit->setCursorPosition(0);
 }
