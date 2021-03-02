@@ -20,7 +20,7 @@ const StyleSheet& StyledWidget::get_style() const {
 
 void StyledWidget::set_style(const StyleSheet& style) {
   m_style = style;
-  update();
+  style_updated();
 }
 
 Block StyledWidget::compute_style() const {
@@ -36,10 +36,23 @@ Block StyledWidget::compute_style() const {
 bool StyledWidget::test_selector(const Selector& selector) const {
   try {
     return selector.visit(
+      [&] (Any) {
+        return true;
+      },
+      [&] (Active) {
+        return isActiveWindow();
+      },
+      [&] (Disabled) {
+        return !isEnabled();
+      },
       [&] (Hovered) {
         return underMouse();
       });
   } catch(const std::bad_any_cast&) {
     return false;
   }
+}
+
+void StyledWidget::style_updated() {
+  update();
 }

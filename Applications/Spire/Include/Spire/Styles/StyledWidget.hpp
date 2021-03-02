@@ -48,6 +48,9 @@ namespace Spire::Styles {
        */
       virtual bool test_selector(const Selector& selector) const;
 
+      /** Indicates the StyleSheet has been updated. */
+      virtual void style_updated();
+
     private:
       StyleSheet m_style;
   };

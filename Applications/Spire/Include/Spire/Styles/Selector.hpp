@@ -68,7 +68,7 @@ namespace Spire::Styles {
 
   template<typename T, typename G>
   Selector::Selector(StateSelector<T, G> state)
-    : m_selector(std::move(selector)),
+    : m_selector(std::move(state)),
       m_matcher([this] (const Selector& selector) {
         if(selector.get_type() != typeid(StateSelector<T, G>)) {
           return false;
@@ -80,7 +80,7 @@ namespace Spire::Styles {
 
   template<typename G>
   Selector::Selector(StateSelector<void, G> state)
-    : m_selector(std::move(selector)),
+    : m_selector(std::move(state)),
       m_matcher([this] (const Selector& selector) {
         return selector.get_type() == typeid(StateSelector<void, G>);
       }) {}
