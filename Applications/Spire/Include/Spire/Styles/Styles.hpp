@@ -11,6 +11,7 @@ namespace Spire::Styles {
   class Rule;
   class Selector;
   template<typename T, typename G> class StateSelector;
+  class StyledWidget;
   class StyleSheet;
 }
 

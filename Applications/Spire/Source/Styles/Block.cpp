@@ -3,8 +3,12 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-const std::vector<Property>& Block::get_properties() const {
+const std::vector<Property>& Block::get_properties() const& {
   return m_properties;
+}
+
+std::vector<Property>&& Block::get_properties() && {
+  return std::move(m_properties);
 }
 
 void Block::set(Property property) {
@@ -24,5 +28,11 @@ void Block::remove(const Property& property) {
     });
   if(i != m_properties.end()) {
     m_properties.erase(i);
+  }
+}
+
+void Spire::Styles::merge(Block& block, Block other) {
+  for(auto& property : std::move(other).get_properties()) {
+    block.set(std::move(property));
   }
 }

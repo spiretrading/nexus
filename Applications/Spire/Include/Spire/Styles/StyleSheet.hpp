@@ -9,6 +9,8 @@ namespace Spire::Styles {
     public:
       StyleSheet();
 
+      const std::vector<Rule>& get_rules() const;
+
       boost::optional<const Rule&> find(const Selector& selector) const;
 
       Rule& get(const Selector& selector);

@@ -8,6 +8,10 @@ StyleSheet::StyleSheet() {
   m_rules.emplace_back(Any(), Block());
 }
 
+const std::vector<Rule>& StyleSheet::get_rules() const {
+  return m_rules;
+}
+
 optional<const Rule&> StyleSheet::find(const Selector& selector) const {
   for(auto& rule : m_rules) {
     if(rule.get_selector().is_match(selector)) {

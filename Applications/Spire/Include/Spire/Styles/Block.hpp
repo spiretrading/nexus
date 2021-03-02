@@ -17,7 +17,10 @@ namespace Spire::Styles {
       Block() = default;
 
       /** Returns the list of Properties contained within this Block. */
-      const std::vector<Property>& get_properties() const;
+      const std::vector<Property>& get_properties() const&;
+
+      /** Returns the list of Properties contained within this Block. */
+      std::vector<Property>&& get_properties() &&;
 
       /** Sets a Property, overwriting any previously matching Property. */
       void set(Property property);
@@ -46,6 +49,12 @@ namespace Spire::Styles {
     private:
       std::vector<Property> m_properties;
   };
+
+  /** Merges a Block in place by another by overwriting all properties.
+   * @param block The Block being updated and overwritten by the merge.
+   * @param other The Block providing the properties to merge and overwrite.
+   */
+  void merge(Block& block, Block other);
 
   /**
    * Finds a property of a given type within a Block.

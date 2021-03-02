@@ -94,8 +94,8 @@ namespace Spire::Styles {
   decltype(auto) Selector::visit(F&& f) const {
     using Parameter = typename TypeExtractor<
       Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if(m_property.type() == typeid(Parameter)) {
-      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_property));
+    if(m_selector.type() == typeid(Parameter)) {
+      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
     }
     throw std::bad_any_cast();
   }
@@ -104,8 +104,8 @@ namespace Spire::Styles {
   decltype(auto) Selector::visit(F&& f, G&&... g) const {
     using Parameter = typename TypeExtractor<
       Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if(m_property.type() == typeid(Parameter)) {
-      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_property));
+    if(m_selector.type() == typeid(Parameter)) {
+      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
     }
     return visit(std::forward<G>(g)...);
   }
