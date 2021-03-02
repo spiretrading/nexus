@@ -69,6 +69,7 @@ namespace Spire {
       void on_selection_changed();
       void on_text_edited(const QString& text);
       void elide_text();
+      void update_display_text();
   };
 }
 

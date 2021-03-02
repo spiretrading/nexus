@@ -72,11 +72,7 @@ const QString& TextBox::get_current() const {
 
 void TextBox::set_current(const QString& value) {
   m_current = value;
-  if(!isEnabled() || is_read_only() || !hasFocus()) {
-    elide_text();
-  } else {
-    m_line_edit->setText(m_current);
-  }
+  update_display_text();
 }
 
 const QString& TextBox::get_submission() const {
@@ -107,19 +103,19 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     case QEvent::StyleChange:
       if(m_old_style_sheet != styleSheet()) {
         m_old_style_sheet = styleSheet();
-        elide_text();
+        update_display_text();
       }
       break;
     case QEvent::ReadOnlyChange:
     case QEvent::EnabledChange:
-      elide_text();
+      update_display_text();
       break;
     case QEvent::FocusIn:
       if(!is_read_only()) {
         auto reason = static_cast<QFocusEvent*>(event)->reason();
         if(reason != Qt::ActiveWindowFocusReason &&
             reason != Qt::PopupFocusReason) {
-          m_line_edit->setText(m_current);
+          update_display_text();
         }
       }
       break;
@@ -128,7 +124,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
         auto reason = static_cast<QFocusEvent*>(event)->reason();
         if(reason != Qt::ActiveWindowFocusReason &&
             reason != Qt::PopupFocusReason) {
-          elide_text();
+          update_display_text();
         }
       }
       break;
@@ -145,7 +141,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
-  elide_text();
+  update_display_text();
   QWidget::resizeEvent(event);
 }
 
@@ -192,4 +188,14 @@ void TextBox::elide_text() {
   m_line_edit->setText(font_metrics.elidedText(m_current, Qt::ElideRight,
     rect.width()));
   m_line_edit->setCursorPosition(0);
+}
+
+void TextBox::update_display_text() {
+  if(!isEnabled() || is_read_only() || !hasFocus()) {
+    elide_text();
+  } else {
+    if(m_line_edit->text() != m_current) {
+      m_line_edit->setText(m_current);
+    }
+  }
 }
