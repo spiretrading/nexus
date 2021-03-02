@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
     BackgroundColor(QColor::fromRgb(0, 255, 0)));
   style.get(!Active()).get_block().set(
     BackgroundColor(QColor::fromRgb(100, 100, 100)));
+  style.get(Hovered() && !Active()).get_block().set(
+    BackgroundColor(QColor::fromRgb(0, 0, 255)));
   widget->set_style(style);
   widget->show();
   application->exec();
