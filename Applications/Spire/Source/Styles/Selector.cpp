@@ -1,5 +1,6 @@
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
+#include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
 
@@ -45,6 +46,18 @@ Selector::Selector(OrSelector selector)
       auto& right = selector.as<OrSelector>();
       return left.get_left().is_match(right.get_left()) &&
         left.get_right().is_match(right.get_right());
+    }) {}
+
+Selector::Selector(DescendantSelector selector)
+  : m_selector(std::move(selector)),
+    m_matcher([this] (const Selector& selector) {
+      if(selector.get_type() != typeid(DescendantSelector)) {
+        return false;
+      }
+      auto& left = as<DescendantSelector>();
+      auto& right = selector.as<DescendantSelector>();
+      return left.get_ancestor().is_match(right.get_ancestor()) &&
+        left.get_descendant().is_match(right.get_descendant());
     }) {}
 
 std::type_index Selector::get_type() const {

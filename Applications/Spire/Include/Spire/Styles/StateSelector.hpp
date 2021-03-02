@@ -6,7 +6,7 @@
 namespace Spire::Styles {
 
   /**
-   * Represents a selector for a given state.
+   * Selects a widget that is in a given state.
    * @param <T> The type data associated with the state.
    * @param <G> A unique type tag.
    */

@@ -4,7 +4,7 @@
 
 namespace Spire::Styles {
 
-  /** A selector that matches any component. */
+  /** Selects all widgets unconditionally. */
   class Any {};
 }
 

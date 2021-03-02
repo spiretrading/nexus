@@ -10,7 +10,7 @@
 
 namespace Spire::Styles {
 
-  /** Defines what widget a style rule applies to. */
+  /** Selects the widget to apply a style rule to. */
   class Selector {
     public:
 
@@ -48,6 +48,12 @@ namespace Spire::Styles {
        * @param selector The selector to represent.
        */
       Selector(OrSelector selector);
+
+      /**
+       * Constructs a Selector for a DescendantSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(DescendantSelector selector);
 
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;

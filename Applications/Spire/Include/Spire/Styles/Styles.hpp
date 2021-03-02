@@ -7,6 +7,7 @@ namespace Spire::Styles {
   template<typename T, typename G> class BasicProperty;
   class Block;
   template<typename... T> class CompositeProperty;
+  class DescendantSelector;
   template<typename T> class Expression;
   class NotSelector;
   class OrSelector;

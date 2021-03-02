@@ -5,13 +5,13 @@
 
 namespace Spire::Styles {
 
-  /** Whether the widget is or belongs to the active window. */
+  /** Selects the widget that is or belongs to the active window. */
   using Active = StateSelector<void, struct ActiveSelectorTag>;
 
-  /** Whether the widget is disabled. */
+  /** Selects the disabled widget. */
   using Disabled = StateSelector<void, struct DisabledSelectorTag>;
 
-  /** Whether the widget is being hovered. */
+  /** Selects the hovered widget. */
   using Hovered = StateSelector<void, struct StateSelectorTag>;
 }
 

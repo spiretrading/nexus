@@ -6,17 +6,14 @@
 
 namespace Spire::Styles {
 
-  /**
-   * Implements a selector that evaluates to the logical conjunction of its
-   * operands
-   */
+  /** Selects a widget that is selected by two selectors. */
   class AndSelector {
     public:
 
       /**
-       * Constructs an AndSelector as the conjunction of its operands.
-       * @param left The left hand operand.
-       * @param right The right hand operand.
+       * Constructs an AndSelector.
+       * @param left The left hand selector to match.
+       * @param right The right hand selector to match.
        */
       explicit AndSelector(Selector left, Selector right);
 
@@ -33,8 +30,8 @@ namespace Spire::Styles {
 
   /**
    * Provides an operator for the AndSelector.
-   * @param left The left hand operand.
-   * @param right The right hand operand.
+   * @param left The left hand selector.
+   * @param right The right hand selector.
    */
   template<typename T, typename U, typename = std::enable_if_t<
     std::is_constructible_v<Selector, const T&> &&

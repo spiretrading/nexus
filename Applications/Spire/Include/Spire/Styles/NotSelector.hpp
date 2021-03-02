@@ -6,12 +6,12 @@
 
 namespace Spire::Styles {
 
-  /** Implements a selector that negates another selector. */
+  /** Selects a widget that isn't selected by a selector. */
   class NotSelector {
     public:
 
       /**
-       * Constructs a NotSelector that negates its operand.
+       * Constructs a NotSelector.
        * @param selector The selector to negate.
        */
       explicit NotSelector(Selector selector);

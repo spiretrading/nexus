@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QHBoxLayout>
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/StyledWidget.hpp"
@@ -24,16 +25,16 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto widget = new Box();
-  auto style = widget->get_style();
+  auto box = new Box();
+  auto style = box->get_style();
   style.get(Any()).get_block().set(BackgroundColor(QColor::fromRgb(255, 0, 0)));
-  style.get(Hovered()).get_block().set(
+  style.get((Active() && !Hovered()) || (!Active() >> Hovered())).get_block().set(
     BackgroundColor(QColor::fromRgb(0, 255, 0)));
-  style.get(!Active()).get_block().set(
-    BackgroundColor(QColor::fromRgb(100, 100, 100)));
-  style.get(Hovered() && !Active()).get_block().set(
-    BackgroundColor(QColor::fromRgb(0, 0, 255)));
-  widget->set_style(style);
-  widget->show();
+  box->set_style(style);
+  auto container = new QWidget();
+  auto l = new QHBoxLayout();
+  l->addWidget(box);
+  container->setLayout(l);
+  container->show();
   application->exec();
 }

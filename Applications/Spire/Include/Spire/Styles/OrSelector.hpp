@@ -6,17 +6,14 @@
 
 namespace Spire::Styles {
 
-  /**
-   * Implements a selector that evaluates to the logical disjunction of its
-   * operands
-   */
+  /** Selects a widget that is selected by at least one of two selectors. */
   class OrSelector {
     public:
 
       /**
-       * Constructs an OrSelector as the disjunction of its operands.
-       * @param left The left hand operand.
-       * @param right The right hand operand.
+       * Constructs an OrSelector.
+       * @param left The left hand selector.
+       * @param right The right hand selector.
        */
       explicit OrSelector(Selector left, Selector right);
 
@@ -33,8 +30,8 @@ namespace Spire::Styles {
 
   /**
    * Provides an operator for the OrSelector.
-   * @param left The left hand operand.
-   * @param right The right hand operand.
+   * @param left The left hand selector.
+   * @param right The right hand selector.
    */
   template<typename T, typename U, typename = std::enable_if_t<
     std::is_constructible_v<Selector, const T&> &&
