@@ -5,50 +5,52 @@ using namespace Spire::Styles;
 
 namespace {
   bool base_test_selector(const QWidget& widget, const Selector& selector) {
-    try {
-      return selector.visit(
-        [&] (Any) {
-          return true;
-        },
-        [&] (Active) {
-          return widget.isActiveWindow();
-        },
-        [&] (Disabled) {
-          return !widget.isEnabled();
-        },
-        [&] (Hovered) {
-          return widget.underMouse();
-        },
-        [&] (const NotSelector& selector) {
-          return !test_selector(widget, selector.get_selector());
-        },
-        [&] (const AndSelector& selector) {
-          return test_selector(widget, selector.get_left()) &&
-            test_selector(widget, selector.get_right());
-        },
-        [&] (const OrSelector& selector) {
-          return test_selector(widget, selector.get_left()) ||
-            test_selector(widget, selector.get_right());
-        },
-        [&] (const DescendantSelector& selector) {
-          if(!test_selector(widget, selector.get_descendant())) {
-            return false;
-          }
-          auto p = widget.parentWidget();
-          while(p != nullptr) {
-            if(test_selector(*p, selector.get_ancestor())) {
-              return true;
-            }
-            p = p->parentWidget();
-          }
+    return selector.visit(
+      [&] (Any) {
+        return true;
+      },
+      [&] (Active) {
+        return widget.isActiveWindow();
+      },
+      [&] (Disabled) {
+        return !widget.isEnabled();
+      },
+      [&] (Hover) {
+        return widget.underMouse();
+      },
+      [&] (Focus) {
+        return widget.hasFocus();
+      },
+      [&] (const NotSelector& selector) {
+        return !test_selector(widget, selector.get_selector());
+      },
+      [&] (const AndSelector& selector) {
+        return test_selector(widget, selector.get_left()) &&
+          test_selector(widget, selector.get_right());
+      },
+      [&] (const OrSelector& selector) {
+        return test_selector(widget, selector.get_left()) ||
+          test_selector(widget, selector.get_right());
+      },
+      [&] (const DescendantSelector& selector) {
+        if(!test_selector(widget, selector.get_descendant())) {
           return false;
-        },
-        [&] (const IsASelector& selector) {
-          return selector.is_instance(widget);
-        });
-    } catch(const std::bad_any_cast&) {
-      return false;
-    }
+        }
+        auto p = widget.parentWidget();
+        while(p != nullptr) {
+          if(test_selector(*p, selector.get_ancestor())) {
+            return true;
+          }
+          p = p->parentWidget();
+        }
+        return false;
+      },
+      [&] (const IsASelector& selector) {
+        return selector.is_instance(widget);
+      },
+      [] {
+        return false;
+      });
   }
 }
 

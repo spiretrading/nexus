@@ -12,7 +12,10 @@ namespace Spire::Styles {
   using Disabled = StateSelector<void, struct DisabledSelectorTag>;
 
   /** Selects the hovered widget. */
-  using Hovered = StateSelector<void, struct StateSelectorTag>;
+  using Hover = StateSelector<void, struct HoverSelectorTag>;
+
+  /** Selects the focused widget. */
+  using Focus = StateSelector<void, struct FocusSelectorTag>;
 }
 
 #endif

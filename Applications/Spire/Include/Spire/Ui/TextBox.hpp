@@ -2,12 +2,30 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLineEdit>
 #include <QTimeLine>
+#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Sets the element's font. */
+  using Font = BasicProperty<QFont, struct FontTag>;
+
+  /** Sets the color of the text. */
+  using TextColor = BasicProperty<QColor, struct TextColorTag>;
+
+  /** Styles a widget's text. */
+  using TextStyle = CompositeProperty<Font, TextColor>;
+
+  /** Selects a read-only widget. */
+  using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
+
+  /** Styles a widget's text. */
+  TextStyle text_style(QFont font, QColor color);
+}
 
   //! Displays a one-line text box.
-  class TextBox : public QWidget {
+  class TextBox : public Styles::StyledWidget {
     public:
 
       //! Signals that the current text changed.
@@ -53,7 +71,10 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     protected:
+      void style_updated() override;
+      bool test_selector(const Styles::Selector& selector) const override;
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       QSize sizeHint() const override;
 

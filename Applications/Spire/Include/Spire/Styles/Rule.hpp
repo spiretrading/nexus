@@ -33,10 +33,23 @@ namespace Spire::Styles {
       /** Returns the styling block. */
       Block& get_block();
 
+      /** Sets a property on the Block. */
+      Rule& set(Property property);
+
+      /** Sets a property on the Block. */
+      template<typename... T>
+      Rule& set(CompositeProperty<T...> property);
+
     private:
       Selector m_selector;
       Block m_block;
   };
+
+  template<typename... T>
+  Rule& Rule::set(CompositeProperty<T...> property) {
+    m_block.set(std::move(property));
+    return *this;
+  }
 }
 
 #endif

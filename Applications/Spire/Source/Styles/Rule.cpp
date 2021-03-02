@@ -22,3 +22,8 @@ const Block& Rule::get_block() const {
 Block& Rule::get_block() {
   return m_block;
 }
+
+Rule& Rule::set(Property property) {
+  get_block().set(std::move(property));
+  return *this;
+}

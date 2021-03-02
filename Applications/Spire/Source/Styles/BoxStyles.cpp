@@ -14,3 +14,7 @@ BorderColor Spire::Styles::border_color(Expression<QColor> color) {
 Border Spire::Styles::border(Expression<int> size, Expression<QColor> color) {
   return Border(border_size(size), border_color(color));
 }
+
+HorizontalPadding Spire::Styles::horizontal_padding(int size) {
+  return HorizontalPadding(PaddingRight(size), PaddingLeft(size));
+}

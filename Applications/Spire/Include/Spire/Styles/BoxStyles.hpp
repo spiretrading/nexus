@@ -46,16 +46,19 @@ namespace Spire::Styles {
   using Border = CompositeProperty<BorderSize, BorderColor>;
 
   /** Sets the size of the top padding. */
-  using PaddingTopSize = BasicProperty<int, struct PaddingTopSizeTag>;
+  using PaddingTop = BasicProperty<int, struct PaddingTopTag>;
 
   /** Sets the size of the right padding. */
-  using PaddingRightSize = BasicProperty<int, struct PaddingRightSizeTag>;
+  using PaddingRight = BasicProperty<int, struct PaddingRightTag>;
 
   /** Sets the size of the bottom padding. */
-  using PaddingBottomSize = BasicProperty<int, struct PaddingBottomSizeTag>;
+  using PaddingBottom = BasicProperty<int, struct PaddingBottomTag>;
 
   /** Sets the size of the left padding. */
-  using PaddingLeftSize = BasicProperty<int, struct PaddingLeftSizeTag>;
+  using PaddingLeft = BasicProperty<int, struct PaddingLeftTag>;
+
+  /** Sets the size of the left and right padding. */
+  using HorizontalPadding = CompositeProperty<PaddingRight, PaddingLeft>;
 
   /**
    * Applies a single size to all four corners of a border.
@@ -75,6 +78,12 @@ namespace Spire::Styles {
    * @param color The color to apply to all borders.
    */
   Border border(Expression<int> size, Expression<QColor> color);
+
+  /**
+   * Applies equal padding to the left and right of a widget.
+   * @param size The size of the horizontal padding.
+   */
+  HorizontalPadding horizontal_padding(int size);
 }
 
 #endif

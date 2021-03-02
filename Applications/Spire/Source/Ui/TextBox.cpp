@@ -6,49 +6,42 @@
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
-  auto create_default_text_box_style_sheet() {
-    return QString(R"(
-      QLineEdit {
-        background-color: #FFFFFF;
-        border: %1px solid #C8C8C8;
-        color: #000000;
-        font-family: "Roboto";
-        font-size: %2px;
-        font-weight: normal;
-        padding-left: %3px;
-        padding-right: %3px;
-      }
-      QLineEdit:hover {
-        border-color: #4B23A0;
-      }
-      QLineEdit:focus {
-        border-color: #4B23A0;
-      }
-      QLineEdit:read-only {
-        background-color: #00000000;
-        border: none;
-        padding-left: 0px;
-        padding-right: 0px;
-      }
-      QLineEdit:disabled {
-        background-color: #F5F5F5;
-        border-color: #C8C8C8;
-        color: #C8C8C8;
-      }
-      QLineEdit:read-only:disabled {
-        background-color: #00000000;
-        border: none;
-      })").arg(scale_width(1)).arg(scale_width(12)).arg(scale_width(8));
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(
+        text_style(QFont("Roboto", scale_width(12)), QColor::fromRgb(0, 0, 0))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Hover() || Focus()).
+      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    style.get(ReadOnly()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_size(0)).
+      set(horizontal_padding(0));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(ReadOnly() && Disabled()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_size(0));
+    return style;
   }
 }
 
+TextStyle Spire::Styles::text_style(QFont font, QColor color) {
+  return TextStyle(Font(std::move(font)), TextColor(std::move(color)));
+}
+
 TextBox::TextBox(QWidget* parent)
-  : TextBox("", parent) {}
+  : TextBox({}, parent) {}
 
 TextBox::TextBox(const QString& current, QWidget* parent)
-    : QWidget(parent),
+    : StyledWidget(parent),
       m_current(current) {
   m_line_edit = new QLineEdit(m_current, this);
   m_line_edit->setFrame(false);
@@ -58,7 +51,7 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   layout->addWidget(m_line_edit);
   setLayout(layout);
   m_line_edit->installEventFilter(this);
-  setStyleSheet(create_default_text_box_style_sheet());
+  set_style(DEFAULT_STYLE());
   setFocusProxy(m_line_edit);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
@@ -102,47 +95,126 @@ connection TextBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+void TextBox::style_updated() {
+  elide_text();
+}
+
+bool TextBox::test_selector(const Styles::Selector& selector) const {
+  return selector.visit(
+    [&] (ReadOnly) {
+      return is_read_only();
+    },
+    [&] {
+      return StyledWidget::test_selector(selector);
+    });
+}
+
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_line_edit) {
     switch(event->type()) {
-    case QEvent::StyleChange:
-      if(m_old_style_sheet != styleSheet()) {
-        m_old_style_sheet = styleSheet();
+      case QEvent::ReadOnlyChange:
+      case QEvent::EnabledChange:
         elide_text();
-      }
-      break;
-    case QEvent::ReadOnlyChange:
-    case QEvent::EnabledChange:
-      elide_text();
-      break;
-    case QEvent::FocusIn:
-      if(!is_read_only()) {
-        auto reason = static_cast<QFocusEvent*>(event)->reason();
-        if(reason != Qt::ActiveWindowFocusReason &&
-            reason != Qt::PopupFocusReason) {
+        break;
+      case QEvent::FocusIn:
+        if(!is_read_only()) {
+          auto reason = static_cast<QFocusEvent*>(event)->reason();
+          if(reason != Qt::ActiveWindowFocusReason &&
+              reason != Qt::PopupFocusReason) {
+            m_line_edit->setText(m_current);
+          }
+        }
+        break;
+      case QEvent::FocusOut:
+        {
+          auto reason = static_cast<QFocusEvent*>(event)->reason();
+          if(reason != Qt::ActiveWindowFocusReason &&
+              reason != Qt::PopupFocusReason) {
+            elide_text();
+          }
+        }
+        break;
+      case QEvent::KeyPress:
+        if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
+          m_current = m_submission;
           m_line_edit->setText(m_current);
+          m_current_signal(m_current);
         }
+        break;
       }
-      break;
-    case QEvent::FocusOut:
-      {
-        auto reason = static_cast<QFocusEvent*>(event)->reason();
-        if(reason != Qt::ActiveWindowFocusReason &&
-            reason != Qt::PopupFocusReason) {
-          elide_text();
-        }
-      }
-      break;
-    case QEvent::KeyPress:
-      if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
-        m_current = m_submission;
-        m_line_edit->setText(m_current);
-        m_current_signal(m_current);
-      }
-      break;
-    }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void TextBox::paintEvent(QPaintEvent* event) {
+  auto computed_style = compute_style();
+  auto style = QString("QLineEdit {");
+  style += "border-style: solid;";
+  for(auto& property : computed_style.get_properties()) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        style += "background-color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const BorderTopSize& size) {
+        style += "border-top-width: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const BorderRightSize& size) {
+        style += "border-right-width: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const BorderBottomSize& size) {
+        style += "border-bottom-width: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const BorderLeftSize& size) {
+        style += "border-left-width: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const BorderTopColor& color) {
+        style += "border-top-color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const BorderRightColor& color) {
+        style += "border-right-color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const BorderBottomColor& color) {
+        style += "border-bottom-color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const BorderLeftColor& color) {
+        style += "border-left-color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const TextColor& color) {
+        style += "color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const Font& font) {
+        setFont(font.get_expression().as<QFont>());
+      },
+      [&] (const PaddingTop& size) {
+        style += "padding-top: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const PaddingRight& size) {
+        style += "padding-right: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const PaddingBottom& size) {
+        style += "padding-bottom: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const PaddingLeft& size) {
+        style += "padding-left: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      });
+  }
+  style += "}";
+  m_line_edit->setStyleSheet(style);
+  StyledWidget::paintEvent(event);
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {

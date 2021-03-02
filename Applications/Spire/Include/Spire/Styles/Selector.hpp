@@ -122,12 +122,16 @@ namespace Spire::Styles {
 
   template<typename F>
   decltype(auto) Selector::visit(F&& f) const {
-    using Parameter = typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if(m_selector.type() == typeid(Parameter)) {
-      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
+    if constexpr(std::is_invocable_v<std::decay_t<F>>) {
+      return std::forward<F>(f)();
+    } else {
+      using Parameter = typename TypeExtractor<
+        Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+      if(m_selector.type() == typeid(Parameter)) {
+        return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
+      }
+      throw std::bad_any_cast();
     }
-    throw std::bad_any_cast();
   }
 
   template<typename F, typename... G>
