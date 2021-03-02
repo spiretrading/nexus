@@ -3,6 +3,52 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  bool base_test_selector(const QWidget& widget, const Selector& selector) {
+    try {
+      return selector.visit(
+        [&] (Any) {
+          return true;
+        },
+        [&] (Active) {
+          return widget.isActiveWindow();
+        },
+        [&] (Disabled) {
+          return !widget.isEnabled();
+        },
+        [&] (Hovered) {
+          return widget.underMouse();
+        },
+        [&] (const NotSelector& selector) {
+          return !test_selector(widget, selector.get_selector());
+        },
+        [&] (const AndSelector& selector) {
+          return test_selector(widget, selector.get_left()) &&
+            test_selector(widget, selector.get_right());
+        },
+        [&] (const OrSelector& selector) {
+          return test_selector(widget, selector.get_left()) ||
+            test_selector(widget, selector.get_right());
+        },
+        [&] (const DescendantSelector& selector) {
+          if(!test_selector(widget, selector.get_descendant())) {
+            return false;
+          }
+          auto p = widget.parentWidget();
+          while(p != nullptr) {
+            if(test_selector(*p, selector.get_ancestor())) {
+              return true;
+            }
+            p = p->parentWidget();
+          }
+          return false;
+        });
+    } catch(const std::bad_any_cast&) {
+      return false;
+    }
+  }
+}
+
 StyledWidget::StyledWidget(QWidget* parent, Qt::WindowFlags flags)
   : StyledWidget({}, parent, flags) {}
 
@@ -31,7 +77,7 @@ Block StyledWidget::compute_style() const {
 }
 
 bool StyledWidget::test_selector(const Selector& selector) const {
-  return Styles::test_selector(*this, selector);
+  return base_test_selector(*this, selector);
 }
 
 void StyledWidget::style_updated() {
@@ -40,45 +86,8 @@ void StyledWidget::style_updated() {
 
 bool Spire::Styles::test_selector(const QWidget& widget,
     const Selector& selector) {
-  try {
-    return selector.visit(
-      [&] (Any) {
-        return true;
-      },
-      [&] (Active) {
-        return widget.isActiveWindow();
-      },
-      [&] (Disabled) {
-        return !widget.isEnabled();
-      },
-      [&] (Hovered) {
-        return widget.underMouse();
-      },
-      [&] (const NotSelector& selector) {
-        return !test_selector(widget, selector.get_selector());
-      },
-      [&] (const AndSelector& selector) {
-        return test_selector(widget, selector.get_left()) &&
-          test_selector(widget, selector.get_right());
-      },
-      [&] (const OrSelector& selector) {
-        return test_selector(widget, selector.get_left()) ||
-          test_selector(widget, selector.get_right());
-      },
-      [&] (const DescendantSelector& selector) {
-        if(!test_selector(widget, selector.get_descendant())) {
-          return false;
-        }
-        auto p = widget.parentWidget();
-        while(p != nullptr) {
-          if(test_selector(*p, selector.get_ancestor())) {
-            return true;
-          }
-          p = p->parentWidget();
-        }
-        return false;
-      });
-  } catch(const std::bad_any_cast&) {
-    return false;
+  if(auto styled_widget = dynamic_cast<const StyledWidget*>(&widget)) {
+    return styled_widget->test_selector(selector);
   }
+  return base_test_selector(widget, selector);
 }

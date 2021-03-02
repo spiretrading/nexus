@@ -57,8 +57,17 @@ namespace Spire::Styles {
 
     private:
       StyleSheet m_style;
+
+      friend bool test_selector(const QWidget& widget,
+        const Selector& selector);
   };
 
+  /**
+   * Tests if a Selector applies to a QWidget.
+   * @param widget The widget to test.
+   * @param selector The Selector to test.
+   * @return <code>true</code> iff the <i>selector</i> applies to <i>widget</i>.
+   */
   bool test_selector(const QWidget& widget, const Selector& selector);
 }
 
