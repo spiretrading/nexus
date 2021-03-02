@@ -50,6 +50,12 @@ namespace Spire::Styles {
       Selector(OrSelector selector);
 
       /**
+       * Constructs a Selector for an IsASelector.
+       * @param selector The selector to represent.
+       */
+      Selector(IsASelector selector);
+
+      /**
        * Constructs a Selector for a DescendantSelector.
        * @param selector The selector to represent.
        */

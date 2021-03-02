@@ -42,6 +42,9 @@ namespace {
             p = p->parentWidget();
           }
           return false;
+        },
+        [&] (const IsASelector& selector) {
+          return selector.is_instance(widget);
         });
     } catch(const std::bad_any_cast&) {
       return false;

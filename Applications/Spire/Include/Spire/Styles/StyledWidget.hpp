@@ -5,6 +5,7 @@
 #include "Spire/Styles/BoxSelectors.hpp"
 #include "Spire/Styles/BoxStyles.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
+#include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
