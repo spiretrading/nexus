@@ -129,7 +129,8 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       }
       break;
     case QEvent::KeyPress:
-      if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
+      if(!is_read_only() && static_cast<QKeyEvent*>(event)->key() ==
+          Qt::Key_Escape) {
         m_current = m_submission;
         m_line_edit->setText(m_current);
         m_current_signal(m_current);
