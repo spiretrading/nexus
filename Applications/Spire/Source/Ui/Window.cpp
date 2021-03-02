@@ -55,9 +55,9 @@ void Window::set_svg_icon(const QString& icon_path) {
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
-      setStyleSheet("#spire_window { background-color: #A0A0A0; }");
+      setStyleSheet("#spire_window { background-color: red; }");
     } else {
-      setStyleSheet("#spire_window { background-color: #C8C8C8; }");
+      setStyleSheet("#spire_window { background-color: aqua; }");
     }
   }
 }
@@ -96,13 +96,18 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         //qDebug() << "top; " << requested_client_area.top;
         //qDebug() << "right; " << requested_client_area.right;
         //qDebug() << "bottom; " << requested_client_area.bottom;
+        //qDebug() << "right: " << GetSystemMetrics(SM_CXFRAME) +
+        //  GetSystemMetrics(SM_CXPADDEDBORDER);
         requested_client_area.right -=
           GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
         //qDebug() << "SM_CXFRAME: " << GetSystemMetrics(SM_CXFRAME);
         //qDebug() << "CDBORDER: " << GetSystemMetrics(SM_CXPADDEDBORDER);
+        //qDebug() << "left: " << GetSystemMetrics(SM_CXFRAME) +
+        //  GetSystemMetrics(SM_CXPADDEDBORDER);
         requested_client_area.left +=
-          GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER) -
-          1;
+          GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+        //qDebug() << "bottom: " << GetSystemMetrics(SM_CYFRAME) +
+        //  GetSystemMetrics(SM_CXPADDEDBORDER);
         requested_client_area.bottom -=
           GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
       //}
@@ -180,14 +185,49 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         window()->height() / 2}))->geometry().topLeft();
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
         std::abs(abs_pos.y() - pos.y()));
-      qDebug() << pos;
-      setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
+      //qDebug() << pos;
+      // TODO: should the y margin just be the resize border size?
+      setContentsMargins(0, pos.y(), 0, 0);
+      //layout()->setContentsMargins({});
     } else if(msg->wParam == SIZE_RESTORED) {
+      //layout()->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
+      //  scale_height(1));
       setContentsMargins({});
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
     //qDebug() << "WM_GETMINMAXINFO";
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+    //qDebug() << "mmi position:";
+    //qDebug() << mmi->ptMaxPosition.x;
+    //qDebug() << mmi->ptMaxPosition.y;
+    //qDebug() << "mmi size:";
+    //qDebug() << mmi->ptMaxSize.x;
+    //qDebug() << mmi->ptMaxSize.y;
+    auto geom = QGuiApplication::screenAt(mapToGlobal({window()->width() / 2,
+      window()->height() / 2}))->availableGeometry();
+
+        //qDebug() << "right: " << GetSystemMetrics(SM_CXFRAME) +
+        //  GetSystemMetrics(SM_CXPADDEDBORDER);
+        //requested_client_area.right -=
+        //  GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+        ////qDebug() << "SM_CXFRAME: " << GetSystemMetrics(SM_CXFRAME);
+        ////qDebug() << "CDBORDER: " << GetSystemMetrics(SM_CXPADDEDBORDER);
+        //qDebug() << "left: " << GetSystemMetrics(SM_CXFRAME) +
+        //  GetSystemMetrics(SM_CXPADDEDBORDER);
+        //requested_client_area.left +=
+        //  GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+        //qDebug() << "bottom: " << GetSystemMetrics(SM_CYFRAME) +
+        //  GetSystemMetrics(SM_CXPADDEDBORDER);
+        //requested_client_area.bottom -=
+        //  GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+
+    //mmi->ptMaxPosition.x = 0 - (GetSystemMetrics(SM_CXFRAME) +
+    //  GetSystemMetrics(SM_CXPADDEDBORDER));
+    //mmi->ptMaxPosition.y = 0;
+    //mmi->ptMaxSize.x = geom.width();
+    //mmi->ptMaxSize.y = geom.height();
+    //mmi->ptMaxPosition.x = 0;
+    //mmi->ptMaxPosition.y = 0;
     mmi->ptMaxTrackSize.x = maximumSize().width();
     mmi->ptMaxTrackSize.y = maximumSize().height();
     mmi->ptMinTrackSize.x = minimumSize().width();
@@ -233,8 +273,8 @@ void Window::set_window_attributes(bool is_resizeable) {
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  //auto shadow = MARGINS{50, 50, 50, 50};
-  //DwmExtendFrameIntoClientArea(hwnd, &shadow);
+  auto shadow = MARGINS{10, 10, 10, 10};
+  DwmExtendFrameIntoClientArea(hwnd, &shadow);
   if(m_frame_size && size() != m_frame_size) {
     resize(*m_frame_size);
     m_frame_size = none;
