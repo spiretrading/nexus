@@ -56,7 +56,6 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_line_edit);
-  setLayout(layout);
   m_line_edit->installEventFilter(this);
   setStyleSheet(create_default_text_box_style_sheet());
   setFocusProxy(m_line_edit);
