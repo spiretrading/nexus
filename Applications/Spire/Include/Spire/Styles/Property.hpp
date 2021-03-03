@@ -61,7 +61,9 @@ namespace Spire::Styles {
   decltype(auto) Property::visit(F&& f) const {
     using Parameter = typename TypeExtractor<
       Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if(m_property.type() == typeid(Parameter)) {
+    if constexpr(std::is_invocable_v<std::decay_t<F>>) {
+      return std::forward<F>(f)();
+    } else if(m_property.type() == typeid(Parameter)) {
       return std::forward<F>(f)(std::any_cast<const Parameter&>(m_property));
     }
     throw std::bad_any_cast();
