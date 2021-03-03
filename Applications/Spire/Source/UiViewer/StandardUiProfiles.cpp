@@ -215,6 +215,9 @@ UiProfile Spire::make_text_box_profile() {
       current.connect_changed_signal([text_box] (const auto& text) {
         text_box->set_current(text);
       });
+      text_box->connect_current_signal([&] (const QString& value) {
+        current.set(value);
+      });
       text_box->connect_current_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(

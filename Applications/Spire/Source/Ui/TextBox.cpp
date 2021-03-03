@@ -11,11 +11,13 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(12));
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(
-        text_style(QFont("Roboto", scale_width(12)), QColor::fromRgb(0, 0, 0))).
+      set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(horizontal_padding(scale_width(8)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
@@ -25,7 +27,8 @@ namespace {
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_size(0));
@@ -187,7 +190,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
       [&] (const Font& font) {
-        setFont(font.get_expression().as<QFont>());
+        m_line_edit->setFont(font.get_expression().as<QFont>());
       },
       [&] (const PaddingTop& size) {
         style += "padding-top: " + QString::number(
@@ -207,7 +210,9 @@ void TextBox::paintEvent(QPaintEvent* event) {
       });
   }
   style += "}";
-  m_line_edit->setStyleSheet(style);
+  if(style != m_line_edit->styleSheet()) {
+    m_line_edit->setStyleSheet(style);
+  }
   StyledWidget::paintEvent(event);
 }
 
