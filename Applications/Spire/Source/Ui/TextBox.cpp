@@ -61,8 +61,6 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   setFocusProxy(m_line_edit);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
-  connect(m_line_edit, &QLineEdit::selectionChanged, this,
-    &TextBox::on_selection_changed);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
 }
 
@@ -111,11 +109,11 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       update_display_text();
       break;
     case QEvent::FocusIn:
-      if(!is_read_only()) {
+      {
         auto reason = static_cast<QFocusEvent*>(event)->reason();
         if(reason != Qt::ActiveWindowFocusReason &&
             reason != Qt::PopupFocusReason) {
-          update_display_text();
+          m_line_edit->setText(m_current);
         }
       }
       break;
@@ -124,7 +122,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
         auto reason = static_cast<QFocusEvent*>(event)->reason();
         if(reason != Qt::ActiveWindowFocusReason &&
             reason != Qt::PopupFocusReason) {
-          update_display_text();
+          elide_text();
         }
       }
       break;
@@ -154,16 +152,6 @@ void TextBox::on_editing_finished() {
   if(!is_read_only()) {
     m_submission = m_current;
     m_submit_signal(m_submission);
-  }
-}
-
-void TextBox::on_selection_changed() {
-  if(is_read_only()) {
-    auto text = m_line_edit->selectedText();
-    if(text.endsWith(QChar(0x2026)) || text.endsWith(QStringLiteral("..."))) {
-      m_line_edit->setText(m_current);
-      m_line_edit->setSelection(0, m_current.length());
-    }
   }
 }
 
