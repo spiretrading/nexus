@@ -91,7 +91,8 @@ connection TextBox::connect_submit_signal(
 }
 
 void TextBox::style_updated() {
-  elide_text();
+  update_display_text();
+  StyledWidget::style_updated();
 }
 
 bool TextBox::test_selector(const Styles::Selector& selector) const {
@@ -136,7 +137,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       }
       break;
   }
-  return QWidget::eventFilter(watched, event);
+  return StyledWidget::eventFilter(watched, event);
 }
 
 void TextBox::paintEvent(QPaintEvent* event) {
@@ -212,7 +213,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
 
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
-  QWidget::resizeEvent(event);
+  StyledWidget::resizeEvent(event);
 }
 
 QSize TextBox::sizeHint() const {
@@ -263,9 +264,7 @@ void TextBox::elide_text() {
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else {
-    if(m_line_edit->text() != m_current) {
-      m_line_edit->setText(m_current);
-    }
+  } else if(m_line_edit->text() != m_current) {
+    m_line_edit->setText(m_current);
   }
 }
