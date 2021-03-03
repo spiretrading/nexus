@@ -87,7 +87,6 @@ namespace Styles {
       QString m_old_style_sheet;
 
       void on_editing_finished();
-      void on_selection_changed();
       void on_text_edited(const QString& text);
       void elide_text();
       void update_display_text();
