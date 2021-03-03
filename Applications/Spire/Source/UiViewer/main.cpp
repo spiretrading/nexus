@@ -5,6 +5,7 @@
 using namespace Spire;
 
 int main(int argc, char** argv) {
+  //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("UI Viewer"));

@@ -9,6 +9,7 @@
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
+#include <Windows.h>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
@@ -28,6 +29,79 @@ namespace {
   auto make_svg_window_icon(const QString& icon_path) {
     return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
       scale(10, 10)));
+  }
+
+  auto maximized(HWND hwnd) -> bool {
+    auto placement = WINDOWPLACEMENT{};
+    if (!::GetWindowPlacement(hwnd, &placement)) {
+      return false;
+    }
+    return placement.showCmd == SW_MAXIMIZE;
+  }
+
+  auto adjust_maximized_client_rect(HWND window, RECT& rect) -> void {
+    if (!maximized(window)) {
+      rect.right -= GetSystemMetrics(SM_CXFRAME) +
+        GetSystemMetrics(SM_CXPADDEDBORDER);
+      rect.left += GetSystemMetrics(SM_CXFRAME) +
+        GetSystemMetrics(SM_CXPADDEDBORDER);
+      rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
+        GetSystemMetrics(SM_CXPADDEDBORDER);
+      return;
+    }
+    auto monitor = ::MonitorFromWindow(window, MONITOR_DEFAULTTONULL);
+    if (!monitor) {
+      return;
+    }
+    auto monitor_info = MONITORINFO{};
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (::GetMonitorInfoW(monitor, &monitor_info)) {
+      rect = monitor_info.rcWork;
+    }
+  }
+
+  auto hit_test(HWND hwnd, POINT cursor) -> LRESULT {
+    // identify borders and corners to allow resizing the window.
+    // Note: On Windows 10, windows behave differently and
+    // allow resizing outside the visible window frame.
+    // This implementation does not replicate that behavior.
+    const POINT border{
+        ::GetSystemMetrics(SM_CXFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER),
+        ::GetSystemMetrics(SM_CYFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER)
+    };
+    auto window_rect = RECT{};
+    if (!::GetWindowRect(hwnd, &window_rect)) {
+        return HTNOWHERE;
+    }
+
+    const auto drag = true ? HTCAPTION : HTCLIENT;
+
+    enum region_mask {
+        client = 0b0000,
+        left   = 0b0001,
+        right  = 0b0010,
+        top    = 0b0100,
+        bottom = 0b1000,
+    };
+
+    const auto result =
+        left    * (cursor.x <  (window_rect.left   + border.x)) |
+        right   * (cursor.x >= (window_rect.right  - border.x)) |
+        top     * (cursor.y <  (window_rect.top    + border.y)) |
+        bottom  * (cursor.y >= (window_rect.bottom - border.y));
+
+    switch (result) {
+        case left          : return true ? HTLEFT        : drag;
+        case right         : return true ? HTRIGHT       : drag;
+        case top           : return true ? HTTOP         : drag;
+        case bottom        : return true ? HTBOTTOM      : drag;
+        case top | left    : return true ? HTTOPLEFT     : drag;
+        case top | right   : return true ? HTTOPRIGHT    : drag;
+        case bottom | left : return true ? HTBOTTOMLEFT  : drag;
+        case bottom | right: return true ? HTBOTTOMRIGHT : drag;
+        case client        : return drag;
+        default            : return HTNOWHERE;
+    }
   }
 }
 
@@ -84,155 +158,68 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     return true;
   } else if(msg->message == WM_NCCALCSIZE) {
     if(static_cast<bool>(msg->wParam)) {
-      //qDebug() << "WM_NCCALCSIZE";
       if(!m_frame_size) {
         m_frame_size = size();
       }
-      // TODO: doesn't work to fix the overlap
-      //if(!IsZoomed(msg->hwnd)) {
-        auto parameters = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
-        auto& requested_client_area = parameters->rgrc[0];
-        //qDebug() << "left; " << requested_client_area.left;
-        //qDebug() << "top; " << requested_client_area.top;
-        //qDebug() << "right; " << requested_client_area.right;
-        //qDebug() << "bottom; " << requested_client_area.bottom;
-        //qDebug() << "right: " << GetSystemMetrics(SM_CXFRAME) +
-        //  GetSystemMetrics(SM_CXPADDEDBORDER);
-        requested_client_area.right -=
-          GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-        //qDebug() << "SM_CXFRAME: " << GetSystemMetrics(SM_CXFRAME);
-        //qDebug() << "CDBORDER: " << GetSystemMetrics(SM_CXPADDEDBORDER);
-        //qDebug() << "left: " << GetSystemMetrics(SM_CXFRAME) +
-        //  GetSystemMetrics(SM_CXPADDEDBORDER);
-        requested_client_area.left +=
-          GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-        //qDebug() << "bottom: " << GetSystemMetrics(SM_CYFRAME) +
-        //  GetSystemMetrics(SM_CXPADDEDBORDER);
-        requested_client_area.bottom -=
-          GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-      //}
+      auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
+      adjust_maximized_client_rect(msg->hwnd, params.rgrc[0]);
       *result = 0;
       return true;
     }
   } else if(msg->message == WM_NCHITTEST) {
-    auto window_rect = RECT{};
-    GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
-    auto x = GET_X_LPARAM(msg->lParam);
-    auto y = GET_Y_LPARAM(msg->lParam);
-    auto resize_area = RESIZE_AREA();
-    if(m_is_resizable) {
-      if(x >= window_rect.left &&
-          x < window_rect.left + resize_area.width() &&
-          y < window_rect.bottom &&
-          y >= window_rect.bottom - resize_area.height()) {
-        *result = HTBOTTOMLEFT;
-        return true;
-      }
-      if(x < window_rect.right &&
-          x >= window_rect.right - resize_area.width() &&
-          y < window_rect.bottom &&
-          y >= window_rect.bottom - resize_area.height()) {
-        *result = HTBOTTOMRIGHT;
-        return true;
-      }
-      if(x >= window_rect.left &&
-          x < window_rect.left + resize_area.width() &&
-          y >= window_rect.top &&
-          y < window_rect.top + resize_area.height()) {
-        *result = HTTOPLEFT;
-        return true;
-      }
-      if(x < window_rect.right &&
-          x >= window_rect.right - resize_area.width() &&
-          y >= window_rect.top &&
-          y < window_rect.top + resize_area.height()) {
-        *result = HTTOPRIGHT;
-        return true;
-      }
-      if(x >= window_rect.left &&
-          x < window_rect.left + resize_area.width()) {
-        *result = HTLEFT;
-        return true;
-      }
-      if(x < window_rect.right &&
-          x >= window_rect.right - resize_area.width()) {
-        *result = HTRIGHT;
-        return true;
-      }
-      if(y < window_rect.bottom &&
-          y >= window_rect.bottom - resize_area.height()) {
-        *result = HTBOTTOM;
-        return true;
-      }
-      if(y >= window_rect.top &&
-          y < window_rect.top + resize_area.height()) {
-        *result = HTTOP;
-        return true;
-      }
-    }
-    auto pos = m_title_bar->mapFromGlobal({x, y});
-    if(m_title_bar->get_title_label()->geometry().contains(pos)) {
-      *result = HTCAPTION;
-      return true;
-    }
-    *result = HTCLIENT;
+    *result = hit_test(reinterpret_cast<HWND>(effectiveWinId()),
+      POINT{GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam)});
     return true;
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
-      //qDebug() << "WM_SIZE maximized";
       auto abs_pos = mapToGlobal(m_title_bar->pos());
       auto pos = QGuiApplication::screenAt(mapToGlobal({window()->width() / 2,
         window()->height() / 2}))->geometry().topLeft();
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
         std::abs(abs_pos.y() - pos.y()));
-      //qDebug() << pos;
-      // TODO: should the y margin just be the resize border size?
-      setContentsMargins(0, pos.y(), 0, 0);
-      //layout()->setContentsMargins({});
+      layout()->setContentsMargins({});
     } else if(msg->wParam == SIZE_RESTORED) {
-      //layout()->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
-      //  scale_height(1));
+      layout()->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
+        scale_height(1));
       setContentsMargins({});
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
-    //qDebug() << "WM_GETMINMAXINFO";
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
-    //qDebug() << "mmi position:";
-    //qDebug() << mmi->ptMaxPosition.x;
-    //qDebug() << mmi->ptMaxPosition.y;
-    //qDebug() << "mmi size:";
-    //qDebug() << mmi->ptMaxSize.x;
-    //qDebug() << mmi->ptMaxSize.y;
-    auto geom = QGuiApplication::screenAt(mapToGlobal({window()->width() / 2,
-      window()->height() / 2}))->availableGeometry();
-
-        //qDebug() << "right: " << GetSystemMetrics(SM_CXFRAME) +
-        //  GetSystemMetrics(SM_CXPADDEDBORDER);
-        //requested_client_area.right -=
-        //  GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-        ////qDebug() << "SM_CXFRAME: " << GetSystemMetrics(SM_CXFRAME);
-        ////qDebug() << "CDBORDER: " << GetSystemMetrics(SM_CXPADDEDBORDER);
-        //qDebug() << "left: " << GetSystemMetrics(SM_CXFRAME) +
-        //  GetSystemMetrics(SM_CXPADDEDBORDER);
-        //requested_client_area.left +=
-        //  GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-        //qDebug() << "bottom: " << GetSystemMetrics(SM_CYFRAME) +
-        //  GetSystemMetrics(SM_CXPADDEDBORDER);
-        //requested_client_area.bottom -=
-        //  GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-
-    //mmi->ptMaxPosition.x = 0 - (GetSystemMetrics(SM_CXFRAME) +
-    //  GetSystemMetrics(SM_CXPADDEDBORDER));
-    //mmi->ptMaxPosition.y = 0;
-    //mmi->ptMaxSize.x = geom.width();
-    //mmi->ptMaxSize.y = geom.height();
-    //mmi->ptMaxPosition.x = 0;
-    //mmi->ptMaxPosition.y = 0;
     mmi->ptMaxTrackSize.x = maximumSize().width();
     mmi->ptMaxTrackSize.y = maximumSize().height();
     mmi->ptMinTrackSize.x = minimumSize().width();
     mmi->ptMinTrackSize.y = minimumSize().height();
     return true;
+  } else if(msg->message == WM_NCPAINT) {
+    //auto hdc = HDC{};
+    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
+    //hdc = GetDCEx(hwnd, (HRGN)msg->wParam, DCX_WINDOW|DCX_INTERSECTRGN);
+    //HBRUSH TransperrantBrush = (HBRUSH)::GetStockObject(NULL_BRUSH);
+    auto window_rect = RECT{};
+    GetWindowRect(hwnd, &window_rect);
+    //::FillRect(hdc, &window_rect, TransperrantBrush);
+    //Rectangle(hdc, window_rect.left, window_rect.top, 
+    //    window_rect.right, window_rect.bottom); 
+    //ReleaseDC(hwnd, hdc);
+    //if (IsGlass())
+    //  return DefWindowProc(hwnd, message, w_param, l_param);
+    //GetWindowRect(hwnd, &wr);
+    //if (!msg->wParam || w_param == 1) {
+    //  dirty = wr;
+    //  dirty.left = dirty.top = 0;
+    //} else {
+    //  GetRgnBox(reinterpret_cast<HRGN>(msg->wParam), &dirty_box);
+    //  if (!IntersectRect(&dirty, &dirty_box, &wr))
+    //    return 0;
+    //  OffsetRect(&dirty, -wr.left, -wr.top);
+    //}
+    //auto hdc = GetWindowDC(hwnd);
+    ////auto br = CreateSolidBrush(RGB(255,0,0));
+    //HBRUSH br = (HBRUSH)::GetStockObject(NULL_BRUSH);
+    //FillRect(hdc, &window_rect, br);
+    //DeleteObject(br);
+    //ReleaseDC(hwnd, hdc);
+    //return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
 }
@@ -256,25 +243,28 @@ void Window::set_fixed_body_size(const QSize& size) {
 }
 
 void Window::set_window_attributes(bool is_resizeable) {
-  //qDebug() << "set attributes";
   m_is_resizable = is_resizeable;
   auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
   if(m_is_resizable &&
       maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
-      WS_THICKFRAME | WS_CAPTION);
+      WS_THICKFRAME | WS_CAPTION | WS_EX_TRANSPARENT);
   } else if(m_is_resizable) {
     setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
     ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
-      WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
+      WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION | WS_EX_TRANSPARENT);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  auto shadow = MARGINS{10, 10, 10, 10};
-  DwmExtendFrameIntoClientArea(hwnd, &shadow);
+  //DWMNCRENDERINGPOLICY ncrp = DWMNCRP_LAST;
+  //// Disable non-client area rendering on the window.
+  //::DwmSetWindowAttribute(hwnd,
+  //    DWMWA_NCRENDERING_POLICY,
+  //    &ncrp,
+  //    sizeof(ncrp));
   if(m_frame_size && size() != m_frame_size) {
     resize(*m_frame_size);
     m_frame_size = none;
@@ -285,7 +275,6 @@ void Window::set_window_attributes(bool is_resizeable) {
   auto borderHeight = GetSystemMetrics(SM_CYFRAME) +
     GetSystemMetrics(SM_CXPADDEDBORDER);
   auto internal_height = layout()->contentsRect().height();
-  //qDebug() << internal_height;
   MoveWindow(hwnd, window_geometry.x() - borderWidth + 1,
     window_geometry.y() + borderHeight + m_title_bar->height() -
       scale_height(3),
