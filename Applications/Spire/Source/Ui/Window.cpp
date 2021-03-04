@@ -89,30 +89,28 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       }
       auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
       auto placement = WINDOWPLACEMENT{};
-      if (!GetWindowPlacement(hwnd, &placement)) {
-        return true;
-      }
-      auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(
-        msg->lParam)->rgrc[0];
-      if(IsZoomed(hwnd) || (IsIconic(hwnd) &&
-          placement.flags & WPF_RESTORETOMAXIMIZED)) {
-        auto monitor = MonitorFromRect(&placement.rcNormalPosition,
-          MONITOR_DEFAULTTONEAREST);
-        if(!monitor) {
-          return true;
+      if (GetWindowPlacement(hwnd, &placement)) {
+        auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(
+          msg->lParam)->rgrc[0];
+        if(IsZoomed(hwnd) || (IsIconic(hwnd) &&
+            placement.flags & WPF_RESTORETOMAXIMIZED)) {
+          auto monitor = MonitorFromRect(&placement.rcNormalPosition,
+            MONITOR_DEFAULTTONEAREST);
+          if(monitor) {
+            auto monitor_info = MONITORINFO{};
+            monitor_info.cbSize = sizeof(monitor_info);
+            if (GetMonitorInfoW(monitor, &monitor_info)) {
+              rect = monitor_info.rcWork;
+            }
+          }
+        } else {
+          rect.right -= GetSystemMetrics(SM_CXFRAME) +
+            GetSystemMetrics(SM_CXPADDEDBORDER);
+          rect.left += GetSystemMetrics(SM_CXFRAME) +
+            GetSystemMetrics(SM_CXPADDEDBORDER);
+          rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
+            GetSystemMetrics(SM_CXPADDEDBORDER);
         }
-        auto monitor_info = MONITORINFO{};
-        monitor_info.cbSize = sizeof(monitor_info);
-        if (GetMonitorInfoW(monitor, &monitor_info)) {
-          rect = monitor_info.rcWork;
-        }
-      } else {
-        rect.right -= GetSystemMetrics(SM_CXFRAME) +
-          GetSystemMetrics(SM_CXPADDEDBORDER);
-        rect.left += GetSystemMetrics(SM_CXFRAME) +
-          GetSystemMetrics(SM_CXPADDEDBORDER);
-        rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
-          GetSystemMetrics(SM_CXPADDEDBORDER);
       }
       *result = 0;
       return true;
