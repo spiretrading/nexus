@@ -61,6 +61,24 @@ namespace Spire::Styles {
        */
       Selector(AncestorSelector selector);
 
+      /**
+       * Constructs a Selector for a ParentSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(ParentSelector selector);
+
+      /**
+       * Constructs a Selector for a DescendantSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(DescendantSelector selector);
+
+      /**
+       * Constructs a Selector for a ChildSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(ChildSelector selector);
+
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;
 

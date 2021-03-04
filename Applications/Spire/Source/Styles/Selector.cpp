@@ -1,9 +1,12 @@
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
+#include "Spire/Styles/ChildSelector.hpp"
+#include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
+#include "Spire/Styles/ParentSelector.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -70,6 +73,42 @@ Selector::Selector(AncestorSelector selector)
       auto& right = selector.as<AncestorSelector>();
       return left.get_base().is_match(right.get_base()) &&
         left.get_ancestor().is_match(right.get_ancestor());
+    }) {}
+
+Selector::Selector(ParentSelector selector)
+  : m_selector(std::move(selector)),
+    m_matcher([this] (const Selector& selector) {
+      if(selector.get_type() != typeid(ParentSelector)) {
+        return false;
+      }
+      auto& left = as<ParentSelector>();
+      auto& right = selector.as<ParentSelector>();
+      return left.get_base().is_match(right.get_base()) &&
+        left.get_parent().is_match(right.get_parent());
+    }) {}
+
+Selector::Selector(DescendantSelector selector)
+  : m_selector(std::move(selector)),
+    m_matcher([this] (const Selector& selector) {
+      if(selector.get_type() != typeid(DescendantSelector)) {
+        return false;
+      }
+      auto& left = as<DescendantSelector>();
+      auto& right = selector.as<DescendantSelector>();
+      return left.get_base().is_match(right.get_base()) &&
+        left.get_descendant().is_match(right.get_descendant());
+    }) {}
+
+Selector::Selector(ChildSelector selector)
+  : m_selector(std::move(selector)),
+    m_matcher([this] (const Selector& selector) {
+      if(selector.get_type() != typeid(ChildSelector)) {
+        return false;
+      }
+      auto& left = as<ChildSelector>();
+      auto& right = selector.as<ChildSelector>();
+      return left.get_base().is_match(right.get_base()) &&
+        left.get_child().is_match(right.get_child());
     }) {}
 
 std::type_index Selector::get_type() const {

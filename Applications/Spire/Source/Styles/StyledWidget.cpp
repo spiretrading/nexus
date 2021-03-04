@@ -1,4 +1,5 @@
 #include "Spire/Styles/StyledWidget.hpp"
+#include <deque>
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -42,6 +43,52 @@ namespace {
             return true;
           }
           p = p->parentWidget();
+        }
+        return false;
+      },
+      [&] (const ParentSelector& selector) {
+        if(!test_selector(widget, selector.get_base())) {
+          return false;
+        }
+        if(auto p = widget.parentWidget()) {
+          return test_selector(*p, selector.get_parent());
+        }
+        return false;
+      },
+      [&] (const DescendantSelector& selector) {
+        if(!test_selector(widget, selector.get_base())) {
+          return false;
+        }
+        auto descendants = std::deque<QWidget*>();
+        for(auto child : widget.children()) {
+          if(auto c = qobject_cast<QWidget*>(child)) {
+            descendants.push_back(c);
+          }
+        }
+        while(!descendants.empty()) {
+          auto descendant = descendants.front();
+          descendants.pop_front();
+          if(test_selector(*descendant, selector.get_descendant())) {
+            return true;
+          }
+          for(auto child : descendant->children()) {
+            if(auto c = qobject_cast<QWidget*>(child)) {
+              descendants.push_back(c);
+            }
+          }
+        }
+        return false;
+      },
+      [&] (const ChildSelector& selector) {
+        if(!test_selector(widget, selector.get_base())) {
+          return false;
+        }
+        for(auto child : widget.children()) {
+          if(auto c = qobject_cast<QWidget*>(child)) {
+            if(test_selector(*c, selector.get_child())) {
+              return true;
+            }
+          }
         }
         return false;
       },

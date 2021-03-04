@@ -1,13 +1,16 @@
 #ifndef SPIRE_STYLES_STYLED_WIDGET_HPP
 #define SPIRE_STYLES_STYLED_WIDGET_HPP
 #include <QWidget>
+#include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Styles/BoxSelectors.hpp"
 #include "Spire/Styles/BoxStyles.hpp"
-#include "Spire/Styles/AncestorSelector.hpp"
+#include "Spire/Styles/ChildSelector.hpp"
+#include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
+#include "Spire/Styles/ParentSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
