@@ -87,13 +87,13 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       if(!m_frame_size) {
         m_frame_size = size();
       }
-      auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(
-        msg->lParam)->rgrc[0];
       auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
       auto placement = WINDOWPLACEMENT{};
       if (!GetWindowPlacement(hwnd, &placement)) {
         return true;
       }
+      auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(
+        msg->lParam)->rgrc[0];
       if(IsZoomed(hwnd) || (IsIconic(hwnd) &&
           placement.flags & WPF_RESTORETOMAXIMIZED)) {
         auto monitor = MonitorFromRect(&placement.rcNormalPosition,
