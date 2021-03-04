@@ -97,16 +97,16 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           GetSystemMetrics(SM_CXPADDEDBORDER);
         rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
           GetSystemMetrics(SM_CXPADDEDBORDER);
-        return true;
-      }
-      auto monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
-      if (!monitor) {
-        return false;
-      }
-      auto monitor_info = MONITORINFO{};
-      monitor_info.cbSize = sizeof(monitor_info);
-      if (::GetMonitorInfoW(monitor, &monitor_info)) {
-        rect = monitor_info.rcWork;
+      } else {
+        auto monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
+        if (!monitor) {
+          return false;
+        }
+        auto monitor_info = MONITORINFO{};
+        monitor_info.cbSize = sizeof(monitor_info);
+        if (::GetMonitorInfoW(monitor, &monitor_info)) {
+          rect = monitor_info.rcWork;
+        }
       }
       *result = 0;
       return true;
