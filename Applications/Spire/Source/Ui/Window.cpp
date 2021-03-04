@@ -9,7 +9,6 @@
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
-#include <Windows.h>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
