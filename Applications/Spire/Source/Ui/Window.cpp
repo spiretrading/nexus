@@ -90,23 +90,29 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(
         msg->lParam)->rgrc[0];
       auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-      if (!IsZoomed(hwnd)) {
+      auto placement = WINDOWPLACEMENT{};
+      if (!GetWindowPlacement(hwnd, &placement)) {
+        return true;
+      }
+      if(IsZoomed(hwnd) || (IsIconic(hwnd) &&
+          placement.flags & WPF_RESTORETOMAXIMIZED)) {
+        auto monitor = MonitorFromRect(&placement.rcNormalPosition,
+          MONITOR_DEFAULTTONEAREST);
+        if(!monitor) {
+          return true;
+        }
+        auto monitor_info = MONITORINFO{};
+        monitor_info.cbSize = sizeof(monitor_info);
+        if (GetMonitorInfoW(monitor, &monitor_info)) {
+          rect = monitor_info.rcWork;
+        }
+      } else {
         rect.right -= GetSystemMetrics(SM_CXFRAME) +
           GetSystemMetrics(SM_CXPADDEDBORDER);
         rect.left += GetSystemMetrics(SM_CXFRAME) +
           GetSystemMetrics(SM_CXPADDEDBORDER);
         rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
           GetSystemMetrics(SM_CXPADDEDBORDER);
-      } else {
-        auto monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
-        if (!monitor) {
-          return false;
-        }
-        auto monitor_info = MONITORINFO{};
-        monitor_info.cbSize = sizeof(monitor_info);
-        if (::GetMonitorInfoW(monitor, &monitor_info)) {
-          rect = monitor_info.rcWork;
-        }
       }
       *result = 0;
       return true;
