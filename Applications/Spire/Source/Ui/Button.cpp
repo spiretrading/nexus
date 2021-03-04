@@ -1,4 +1,5 @@
 #include "Spire/Ui/Button.hpp"
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QEvent>
@@ -46,9 +47,9 @@ bool Button::eventFilter(QObject* watched, QEvent* event) {
     case QEvent::MouseButtonPress:
     case QEvent::MouseMove:
     case QEvent::MouseButtonRelease:
-    case QEvent::MouseButtonDblClick:
-      event->ignore();
-      return true;
+      auto mouse_event = new QMouseEvent(*static_cast<QMouseEvent*>(event));
+      QApplication::postEvent(this, mouse_event);
+      break;
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -117,6 +118,9 @@ Button* Spire::make_label_button(const QString& label, const QFont& font,
   text_box->setFocusPolicy(Qt::NoFocus);
   text_box->setContextMenuPolicy(Qt::NoContextMenu);
   text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  QObject::connect(text_box, &TextBox::selectionChanged, [=] {
+    text_box->deselect();
+  });
   auto button = new Button(text_box, parent);
   button->setStyleSheet(QString(R"(
     #Button {
