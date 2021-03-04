@@ -32,8 +32,8 @@ namespace {
         return test_selector(widget, selector.get_left()) ||
           test_selector(widget, selector.get_right());
       },
-      [&] (const DescendantSelector& selector) {
-        if(!test_selector(widget, selector.get_descendant())) {
+      [&] (const AncestorSelector& selector) {
+        if(!test_selector(widget, selector.get_base())) {
           return false;
         }
         auto p = widget.parentWidget();

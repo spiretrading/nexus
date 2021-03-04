@@ -1,6 +1,6 @@
 #include "Spire/Styles/Selector.hpp"
+#include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
-#include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
@@ -52,7 +52,7 @@ Selector::Selector(OrSelector selector)
 Selector::Selector(IsASelector selector)
   : m_selector(std::move(selector)),
     m_matcher([this] (const Selector& selector) {
-      if(selector.get_type() != typeid(DescendantSelector)) {
+      if(selector.get_type() != typeid(IsASelector)) {
         return false;
       }
       auto& left = as<IsASelector>();
@@ -60,16 +60,16 @@ Selector::Selector(IsASelector selector)
       return left.get_type() == right.get_type();
     }) {}
 
-Selector::Selector(DescendantSelector selector)
+Selector::Selector(AncestorSelector selector)
   : m_selector(std::move(selector)),
     m_matcher([this] (const Selector& selector) {
-      if(selector.get_type() != typeid(DescendantSelector)) {
+      if(selector.get_type() != typeid(AncestorSelector)) {
         return false;
       }
-      auto& left = as<DescendantSelector>();
-      auto& right = selector.as<DescendantSelector>();
-      return left.get_ancestor().is_match(right.get_ancestor()) &&
-        left.get_descendant().is_match(right.get_descendant());
+      auto& left = as<AncestorSelector>();
+      auto& right = selector.as<AncestorSelector>();
+      return left.get_base().is_match(right.get_base()) &&
+        left.get_ancestor().is_match(right.get_ancestor());
     }) {}
 
 std::type_index Selector::get_type() const {
