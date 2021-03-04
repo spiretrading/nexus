@@ -52,7 +52,6 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_line_edit);
-  m_line_edit->installEventFilter(this);
   set_style(DEFAULT_STYLE());
   setFocusProxy(m_line_edit);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
@@ -75,6 +74,7 @@ const QString& TextBox::get_submission() const {
 
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
+  update_display_text();
 }
 
 bool TextBox::is_read_only() const {
@@ -106,39 +106,45 @@ bool TextBox::test_selector(const Styles::Selector& selector) const {
     });
 }
 
-bool TextBox::eventFilter(QObject* watched, QEvent* event) {
-  switch(event->type()) {
-    case QEvent::ReadOnlyChange:
-    case QEvent::EnabledChange:
-      update_display_text();
-      break;
-    case QEvent::FocusIn:
-      {
-        auto reason = static_cast<QFocusEvent*>(event)->reason();
-        if(reason != Qt::ActiveWindowFocusReason &&
-            reason != Qt::PopupFocusReason) {
-          m_line_edit->setText(m_current);
-        }
-      }
-      break;
-    case QEvent::FocusOut:
-      {
-        auto reason = static_cast<QFocusEvent*>(event)->reason();
-        if(reason != Qt::ActiveWindowFocusReason &&
-            reason != Qt::PopupFocusReason) {
-          elide_text();
-        }
-      }
-      break;
-    case QEvent::KeyPress:
-      if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
-        m_current = m_submission;
-        m_line_edit->setText(m_current);
-        m_current_signal(m_current);
-      }
-      break;
+void TextBox::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::EnabledChange) {
+    update_display_text();
   }
-  return StyledWidget::eventFilter(watched, event);
+  StyledWidget::changeEvent(event);
+}
+
+void TextBox::enterEvent(QEvent* event) {
+  update();
+}
+
+void TextBox::leaveEvent(QEvent* event) {
+  update();
+}
+
+void TextBox::focusInEvent(QFocusEvent* event){
+  if(event->reason() != Qt::ActiveWindowFocusReason &&
+      event->reason() != Qt::PopupFocusReason) {
+    m_line_edit->setText(m_current);
+  }
+  StyledWidget::focusInEvent(event);
+}
+
+void TextBox::focusOutEvent(QFocusEvent* event) {
+  if(event->lostFocus() && event->reason() != Qt::ActiveWindowFocusReason &&
+      event->reason() != Qt::PopupFocusReason) {
+    elide_text();
+  }
+  StyledWidget::focusOutEvent(event);
+}
+
+void TextBox::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    m_current = m_submission;
+    m_line_edit->setText(m_current);
+    m_current_signal(m_current);
+  } else {
+    StyledWidget::keyPressEvent(event);
+  }
 }
 
 void TextBox::paintEvent(QPaintEvent* event) {

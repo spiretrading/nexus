@@ -73,7 +73,12 @@ namespace Styles {
     protected:
       void style_updated() override;
       bool test_selector(const Styles::Selector& selector) const override;
-      bool eventFilter(QObject* watched, QEvent* event) override;
+      void changeEvent(QEvent* event) override;
+      void enterEvent(QEvent* event) override;
+      void leaveEvent(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       QSize sizeHint() const override;
