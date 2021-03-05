@@ -20,6 +20,8 @@ namespace Styles {
       */
       explicit Icon(QImage icon, QWidget* parent = nullptr);
 
+      QSize sizeHint() const override;
+
     protected:
       void paintEvent(QPaintEvent* event) override;
 

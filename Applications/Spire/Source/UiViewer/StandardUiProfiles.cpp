@@ -127,69 +127,13 @@ UiProfile Spire::make_flat_button_profile() {
 UiProfile Spire::make_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_qstring_property("tooltip",
-    QString::fromUtf8("Tooltip")));
-  properties.push_back(make_standard_bool_property("checkable"));
-  properties.push_back(make_standard_bool_property("checked"));
-  properties.push_back(make_standard_qcolor_property("blur-color"));
-  properties.push_back(make_standard_qcolor_property("checked-color"));
-  properties.push_back(make_standard_qcolor_property("checked-blur-color"));
-  properties.push_back(make_standard_qcolor_property("checked-hover-color"));
-  properties.push_back(make_standard_qcolor_property("default-color"));
-  properties.push_back(make_standard_qcolor_property("disabled-color"));
-  properties.push_back(make_standard_qcolor_property("hover-color"));
-  properties.push_back(make_standard_qcolor_property("default-bg-color"));
-  properties.push_back(make_standard_qcolor_property("hover-bg-color"));
   auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
     [] (auto& profile) {
-      auto button = new IconButton(imageFromSvg(":/Icons/demo.svg",
+      auto button = make_icon_button(imageFromSvg(":/Icons/demo.svg",
         scale(26, 26)));
       apply_widget_properties(button, profile.get_properties());
-      auto& tooltip = get<QString>("tooltip", profile.get_properties());
-      button->setToolTip(tooltip.get());
-      tooltip.connect_changed_signal([=] (const auto& value) {
-        button->setToolTip(value);
-      });
-      auto& checkable = get<bool>("checkable", profile.get_properties());
-      checkable.connect_changed_signal([=] (auto is_checkable) {
-        button->setCheckable(is_checkable);
-        button->update();
-      });
-      auto& checked = get<bool>("checked", profile.get_properties());
-      checked.connect_changed_signal([=] (auto is_checked) {
-        button->setChecked(is_checked);
-      });
-      QObject::connect(button, &IconButton::clicked, [&] (auto is_checked) {
-        checked.set(is_checked);
-      });
-      QObject::connect(button, &IconButton::clicked,
-        profile.make_event_slot<bool>(QString::fromUtf8("clicked")));
-      auto initialize_color_property = [&] (const auto& property_name,
-          auto member_pointer) {
-        auto& property = get<QColor>(property_name, profile.get_properties());
-        property.set(button->get_style().*member_pointer);
-        property.connect_changed_signal([=] (const auto& color) {
-          auto style = button->get_style();
-          style.*member_pointer = color;
-          button->set_style(style);
-        });
-      };
-      initialize_color_property("blur-color", &IconButton::Style::m_blur_color);
-      initialize_color_property("checked-color",
-        &IconButton::Style::m_checked_color);
-      initialize_color_property("checked-blur-color",
-        &IconButton::Style::m_checked_blur_color);
-      initialize_color_property("checked-hover-color",
-        &IconButton::Style::m_checked_hovered_color);
-      initialize_color_property("default-color",
-        &IconButton::Style::m_default_color);
-      initialize_color_property("disabled-color",
-        &IconButton::Style::m_disabled_color);
-      initialize_color_property("hover-color", &IconButton::Style::m_hover_color);
-      initialize_color_property("default-bg-color",
-        &IconButton::Style::m_default_background_color);
-      initialize_color_property("hover-bg-color",
-        &IconButton::Style::m_hover_background_color);
+      button->connect_clicked_signal(profile.make_event_slot(
+        QString::fromUtf8("ClickedSignal")));
       return button;
     });
   return profile;

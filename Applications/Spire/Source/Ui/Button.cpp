@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -85,6 +86,19 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
     m_clicked_signal();
   }
   QWidget::mouseReleaseEvent(event);
+}
+
+Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
+  auto button = new Button(new Icon(icon, parent), parent);
+  auto style = StyleSheet();
+  style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+  style.get(Any() < Hover()).
+    set(BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
+  style.get(Any() < Focus()).set(
+    border(scale_width(1), QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  button->set_style(std::move(style));
+  return button;
 }
 
 Button* Spire::make_label_button(const QString& label, QWidget* parent) {

@@ -36,6 +36,8 @@ namespace Spire {
       bool m_is_down;
   };
 
+  Button* make_icon_button(QImage icon, QWidget* parent = nullptr);
+
   Button* make_label_button(const QString& label, QWidget* parent = nullptr);
 }
 
