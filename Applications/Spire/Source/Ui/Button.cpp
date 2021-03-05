@@ -92,7 +92,8 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   auto button = new Button(new Icon(icon, parent), parent);
   auto style = StyleSheet();
   style.get(Any()).
-    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+    set(border_size(0));
   style.get(Any() < Hover()).
     set(BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
   style.get(Any() < Focus()).set(
