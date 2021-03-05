@@ -17,6 +17,9 @@ namespace Styles {
   /** Styles a widget's text. */
   using TextStyle = CompositeProperty<Font, TextColor>;
 
+  /** Sets the text alignment. */
+  using TextAlign = BasicProperty<Qt::Alignment, struct TextAlignTag>;
+
   /** Selects a read-only widget. */
   using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
 

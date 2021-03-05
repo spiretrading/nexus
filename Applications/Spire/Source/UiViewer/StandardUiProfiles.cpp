@@ -3,11 +3,11 @@
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
@@ -232,16 +232,13 @@ UiProfile Spire::make_flat_button_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("label",
     QString::fromUtf8("Click me!")));
-  auto profile = UiProfile(QString::fromUtf8("FlatButton"), properties,
+  auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
-      auto button = new FlatButton(label.get());
+      auto button = make_label_button(label.get());
       apply_widget_properties(button, profile.get_properties());
-      label.connect_changed_signal([=] (const auto& value) {
-        button->setText(value);
-      });
-      QObject::connect(button, &FlatButton::clicked,
-        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      button->connect_clicked_signal(profile.make_event_slot(
+        QString::fromUtf8("ClickedSignal")));
       return button;
     });
   return profile;

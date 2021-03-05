@@ -17,7 +17,7 @@ namespace {
         return !widget.isEnabled();
       },
       [&] (Hover) {
-        return widget.underMouse();
+        return widget.isEnabled() && widget.underMouse();
       },
       [&] (Focus) {
         return widget.hasFocus();
@@ -120,10 +120,16 @@ void StyledWidget::set_style(const StyleSheet& style) {
 
 Block StyledWidget::compute_style() const {
   auto block = Block();
-  for(auto& rule : m_style.get_rules()) {
-    if(test_selector(rule.get_selector())) {
-      merge(block, rule.get_block());
+  auto widget = static_cast<const QObject*>(this);
+  while(widget) {
+    if(auto styled_widget = dynamic_cast<const StyledWidget*>(widget)) {
+      for(auto& rule : styled_widget->m_style.get_rules()) {
+        if(test_selector(rule.get_selector())) {
+          merge(block, rule.get_block());
+        }
+      }
     }
+    widget = widget->parent();
   }
   return block;
 }
