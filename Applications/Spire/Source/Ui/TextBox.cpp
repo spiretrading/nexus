@@ -18,6 +18,7 @@ namespace {
       set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(text_style(font, QColor::fromRgb(0, 0, 0))).
+      set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(horizontal_padding(scale_width(8)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
@@ -192,6 +193,10 @@ void TextBox::paintEvent(QPaintEvent* event) {
       [&] (const TextColor& color) {
         style += "color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const TextAlign& alignment) {
+        m_line_edit->setAlignment(
+          alignment.get_expression().as<Qt::Alignment>());
       },
       [&] (const Font& font) {
         m_line_edit->setFont(font.get_expression().as<QFont>());

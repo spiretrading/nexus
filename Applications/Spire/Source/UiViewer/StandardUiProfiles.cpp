@@ -115,10 +115,7 @@ UiProfile Spire::make_flat_button_profile() {
   auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
-      auto font = QFont("Roboto");
-      font.setPixelSize(scale_width(12));
-      font.setWeight(QFont::Normal);
-      auto button = make_label_button(label.get(), font);
+      auto button = make_label_button(label.get());
       apply_widget_properties(button, profile.get_properties());
       button->connect_clicked_signal(profile.make_event_slot(
         QString::fromUtf8("ClickedSignal")));

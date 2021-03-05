@@ -111,17 +111,17 @@ namespace Spire::Styles {
         using type = std::decay_t<U>;
       };
       std::any m_selector;
-      std::function<bool (const Selector&)> m_matcher;
+      std::function<bool (const Selector&, const Selector&)> m_matcher;
   };
 
   template<typename T, typename G>
   Selector::Selector(StateSelector<T, G> state)
     : m_selector(std::move(state)),
-      m_matcher([this] (const Selector& selector) {
+      m_matcher([] (const Selector& self, const Selector& selector) {
         if(selector.get_type() != typeid(StateSelector<T, G>)) {
           return false;
         }
-        auto& left = as<StateSelector<T, G>();
+        auto& left = self.as<StateSelector<T, G>();
         auto& right = selector.as<StateSelector<T, G>>();
         return left.get_data() == right.get_data();
       }) {}
@@ -129,7 +129,7 @@ namespace Spire::Styles {
   template<typename G>
   Selector::Selector(StateSelector<void, G> state)
     : m_selector(std::move(state)),
-      m_matcher([this] (const Selector& selector) {
+      m_matcher([] (const Selector& self, const Selector& selector) {
         return selector.get_type() == typeid(StateSelector<void, G>);
       }) {}
 
