@@ -1,12 +1,12 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
-#include <QWidget>
+#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Represents a button built upon a box.
-  class Button : public QWidget {
+  class Button : public Styles::StyledWidget {
     public:
 
       //! Signals that the button is clicked.
@@ -24,7 +24,6 @@ namespace Spire {
         const ClickedSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event);
       void focusOutEvent(QFocusEvent* event);
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
@@ -37,8 +36,7 @@ namespace Spire {
       bool m_is_down;
   };
 
-  Button* make_label_button(const QString& label, const QFont& font,
-    QWidget* parent = nullptr);
+  Button* make_label_button(const QString& label, QWidget* parent = nullptr);
 }
 
 #endif

@@ -1,58 +1,36 @@
 #include "Spire/Ui/Button.hpp"
-#include <QApplication>
 #include <QHBoxLayout>
 #include <QMouseEvent>
-#include <QEvent>
-#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 Button::Button(QWidget* component, QWidget* parent)
-    : QWidget(parent),
+    : StyledWidget(parent),
       m_component(component),
       m_is_down(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_component);
-  m_component->installEventFilter(this);
   setFocusPolicy(Qt::StrongFocus);
-  setObjectName("Button");
-  setStyleSheet(QString(R"(
-    #Button {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8;
-    }
-    #Button:hover {
-      border-color: #4B23A0;
-    }
-    #Button:focus {
-      border-color: #4B23A0;
-    }
-    #Button:disabled {
-      background-color: #F5F5F5;
-      border-color: #C8C8C8;
-    })").arg(scale_width(1)));
+  auto style = get_style();
+  style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+    set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  style.get(Hover() || Focus()).set(
+    border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  style.get(Disabled()).
+    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+    set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  set_style(std::move(style));
 }
 
 connection Button::connect_clicked_signal(
     const ClickedSignal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
-}
-
-bool Button::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_component) {
-    switch(event->type()) {
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseMove:
-    case QEvent::MouseButtonRelease:
-      auto mouse_event = new QMouseEvent(*static_cast<QMouseEvent*>(event));
-      QApplication::postEvent(this, mouse_event);
-      break;
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void Button::focusOutEvent(QFocusEvent* event) {
@@ -109,34 +87,24 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
   QWidget::mouseReleaseEvent(event);
 }
 
-Button* Spire::make_label_button(const QString& label, const QFont& font,
-    QWidget* parent) {
+Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   auto text_box = new TextBox(label);
-  text_box->setReadOnly(true);
-  text_box->setAlignment(Qt::AlignCenter);
-  text_box->setFont(font);
-  text_box->setFocusPolicy(Qt::NoFocus);
-  text_box->setContextMenuPolicy(Qt::NoContextMenu);
-  text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  QObject::connect(text_box, &TextBox::selectionChanged, [=] {
-    text_box->deselect();
-  });
+  text_box->set_read_only(true);
+  text_box->setDisabled(true);
   auto button = new Button(text_box, parent);
-  button->setStyleSheet(QString(R"(
-    #Button {
-      background-color: #EBEBEB;
-      border: none;
-    }
-    #Button:hover {
-      background-color: #4B23A0;
-      color: #FFFFFF;
-    }
-    #Button:focus {
-      border: %1px solid #4B23A0;
-    }
-    #Button:disabled {
-      background-color: #EBEBEB;
-      border: none;
-    })").arg(scale_width(1)));
+  auto style = StyleSheet();
+  style.get(Any()).
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
+    set(border_size(0));
+  style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
+  style.get(Any() < Hover()).
+    set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
+    set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
+  style.get(Any() < Focus()).set(
+    border(scale_width(1), QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  style.get(Any() < Disabled()).set(
+    TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  button->set_style(std::move(style));
   return button;
 }
