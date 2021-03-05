@@ -46,7 +46,8 @@ TextBox::TextBox(QWidget* parent)
 
 TextBox::TextBox(const QString& current, QWidget* parent)
     : StyledWidget(parent),
-      m_current(current) {
+      m_current(current),
+      m_submission(m_current) {
   m_line_edit = new QLineEdit(m_current, this);
   m_line_edit->setFrame(false);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

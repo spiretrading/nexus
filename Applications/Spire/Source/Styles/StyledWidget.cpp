@@ -17,7 +17,8 @@ namespace {
         return !widget.isEnabled();
       },
       [&] (Hover) {
-        return widget.isEnabled() && widget.underMouse();
+        return widget.isEnabled() && widget.rect().contains(
+          widget.mapFromGlobal(QCursor::pos()));
       },
       [&] (Focus) {
         return widget.hasFocus();

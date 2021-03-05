@@ -3,14 +3,14 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <QHash>
 #include <QRegularExpression>
-#include <QWidget>
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Represents a widget for inputting decimal values.
-  class DecimalBox : public QWidget {
+  class DecimalBox : public Styles::StyledWidget {
     public:
 
       //! The maximum precision of the Decimal type.

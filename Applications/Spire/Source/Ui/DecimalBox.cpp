@@ -10,6 +10,7 @@
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   const auto DEFAULT_DECIMAL_PLACES = 6;
@@ -86,9 +87,8 @@ namespace {
 }
 
 DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
-    QHash<Qt::KeyboardModifier, Decimal> modifiers,
-    QWidget* parent)
-    : QWidget(parent),
+    QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+    : StyledWidget(parent),
       m_submission(initial),
       m_minimum(minimum),
       m_maximum(maximum),
@@ -102,9 +102,9 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
   layout->setContentsMargins({});
   m_text_box = new TextBox(to_string(initial), this);
   update_input_validator();
-  auto padding = m_text_box->get_padding();
-  padding.m_right_padding = scale_width(26);
-  m_text_box->set_padding(padding);
+  auto style = m_text_box->get_style();
+  style.get(Any()).set(PaddingRight(scale_width(26)));
+  m_text_box->set_style(std::move(style));
   setFocusProxy(m_text_box);
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
@@ -140,13 +140,11 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 }
 
 DecimalBox::Decimal DecimalBox::get_current() const {
-  return to_decimal(m_text_box->get_text());
+  return to_decimal(m_text_box->get_current());
 }
 
 void DecimalBox::set_current(Decimal current) {
-  if(m_minimum <= current && current <= m_maximum) {
-    m_text_box->set_text(to_string(current));
-  }
+  m_text_box->set_current(to_string(current));
 }
 
 DecimalBox::Decimal DecimalBox::get_minimum() const {
@@ -155,9 +153,6 @@ DecimalBox::Decimal DecimalBox::get_minimum() const {
 
 void DecimalBox::set_minimum(Decimal minimum) {
   m_minimum = minimum;
-  if(to_decimal(m_text_box->get_text()) < m_minimum) {
-    m_text_box->set_text(to_string(m_minimum));
-  }
 }
 
 DecimalBox::Decimal DecimalBox::get_maximum() const {
@@ -166,19 +161,15 @@ DecimalBox::Decimal DecimalBox::get_maximum() const {
 
 void DecimalBox::set_maximum(Decimal maximum) {
   m_maximum = maximum;
-  if(to_decimal(m_text_box->get_text()) > m_maximum) {
-    m_text_box->set_text(to_string(m_maximum));
-  }
 }
 
 DecimalBox::Decimal DecimalBox::get_increment(
     Qt::KeyboardModifier modifier) const {
-  static auto SENTINEL = Decimal(0);
-  auto increment = m_modifiers[modifier];
-  if(increment == Decimal()) {
-    return SENTINEL;
+  auto increment = m_modifiers.find(modifier);
+  if(increment == m_modifiers.end()) {
+    return get_increment(Qt::NoModifier);
   }
-  return increment;
+  return increment.value();
 }
 
 void DecimalBox::set_increment(Qt::KeyboardModifier modifier,
@@ -211,7 +202,7 @@ void DecimalBox::set_buttons_visible(bool are_visible) {
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
-  m_text_box->setReadOnly(is_read_only);
+  m_text_box->set_read_only(is_read_only);
   m_up_button->setVisible(!is_read_only);
   m_down_button->setVisible(!is_read_only);
 }
@@ -269,13 +260,13 @@ void DecimalBox::update_input_validator() {
   m_validator = new QRegExpValidator(
     QRegExp(QString("^[-]?[0-9]*[%1]?[0-9]{0,%2}").arg(
       QLocale().decimalPoint()).arg(m_decimal_places)), m_text_box);
-  m_text_box->setValidator(m_validator);
+// TODO  m_text_box->setValidator(m_validator);
 }
 
 void DecimalBox::update_trailing_zeros() {
-  auto current_text = m_text_box->get_text();
+  auto current_text = m_text_box->get_current();
   if(!m_has_trailing_zeros || m_decimal_places == 0) {
-    m_text_box->set_text(current_text.remove(m_trailing_zero_regex));
+    m_text_box->set_current(current_text.remove(m_trailing_zero_regex));
     return;
   }
   auto point_index = current_text.indexOf(QLocale().decimalPoint());
@@ -289,10 +280,10 @@ void DecimalBox::update_trailing_zeros() {
     return m_decimal_places - (current_text.length() - point_index) + 1;
   }();
   if(zero_count > 0) {
-    m_text_box->set_text(current_text.leftJustified(
+    m_text_box->set_current(current_text.leftJustified(
       current_text.length() + zero_count, '0'));
   } else {
-    m_text_box->set_text(current_text.left(
+    m_text_box->set_current(current_text.left(
       current_text.length() + zero_count));
   }
 }
@@ -304,9 +295,9 @@ void DecimalBox::on_submit() {
     m_submission = current;
     m_submit_signal(m_submission);
   } else {
-    m_text_box->set_text(to_string(m_submission));
+    m_text_box->set_current(to_string(m_submission));
     update_trailing_zeros();
     // TODO: emit current signal?
-    m_text_box->play_warning();
+//    m_text_box->play_warning();
   }
 }
