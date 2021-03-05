@@ -30,6 +30,10 @@ file(GLOB security_input_header_files ../../Include/Spire/SecurityInput/*.hpp)
 file(GLOB security_input_source_files ../../Source/SecurityInput/*.cpp)
 source_group("SecurityInput\\Header Files" FILES ${security_input_header_files})
 source_group("SecurityInput\\Source Files" FILES ${security_input_source_files})
+file(GLOB styles_header_files ../../Include/Spire/Styles/*.hpp)
+file(GLOB styles_source_files ../../Source/Styles/*.cpp)
+source_group("Styles\\Header Files" FILES ${styles_header_files})
+source_group("Styles\\Source Files" FILES ${styles_source_files})
 file(GLOB time_and_sales_header_files ../../Include/Spire/TimeAndSales/*.hpp)
 file(GLOB time_and_sales_source_files ../../Source/TimeAndSales/*.cpp)
 source_group("TimeAndSales\\Header Files" FILES ${time_and_sales_header_files})
@@ -45,11 +49,13 @@ source_group("Ui\\Source Files" FILES ${ui_source_files})
 file(GLOB header_files ${book_view_header_files} ${charting_header_files}
   ${common_header_files} ${key_bindings_header_files} ${login_header_files}
   ${order_imbalance_indicator_header_files} ${security_input_header_files}
-  ${time_and_sales_header_files} ${toolbar_header_files} ${ui_header_files})
+  ${styles_header_files} ${time_and_sales_header_files} ${toolbar_header_files}
+  ${ui_header_files})
 file(GLOB source_files ${book_view_source_files} ${charting_source_files}
   ${common_source_files} ${key_bindings_source_files} ${login_source_files}
   ${order_imbalance_indicator_source_files} ${security_input_source_files}
-  ${time_and_sales_source_files} ${toolbar_source_files} ${ui_source_files})
+  ${styles_source_files} ${time_and_sales_source_files} ${toolbar_source_files}
+  ${ui_source_files})
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
