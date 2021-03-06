@@ -50,6 +50,7 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   m_line_edit = new QLineEdit(m_current, this);
   m_line_edit->setFrame(false);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_line_edit->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_line_edit);
@@ -92,6 +93,10 @@ connection TextBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+QSize TextBox::sizeHint() const {
+  return scale(160, 30);
+}
+
 void TextBox::style_updated() {
   update_display_text();
   StyledWidget::style_updated();
@@ -107,6 +112,24 @@ bool TextBox::test_selector(const Styles::Selector& selector) const {
     });
 }
 
+bool TextBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::FocusIn) {
+    auto focusEvent = static_cast<QFocusEvent*>(event);
+    if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
+        focusEvent->reason() != Qt::PopupFocusReason) {
+      m_line_edit->setText(m_current);
+    }
+  } else if(event->type() == QEvent::FocusOut) {
+    auto focusEvent = static_cast<QFocusEvent*>(event);
+    if(focusEvent->lostFocus() &&
+        focusEvent->reason() != Qt::ActiveWindowFocusReason &&
+        focusEvent->reason() != Qt::PopupFocusReason) {
+      elide_text();
+    }
+  }
+  return StyledWidget::eventFilter(watched, event);
+}
+
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_display_text();
@@ -120,22 +143,6 @@ void TextBox::enterEvent(QEvent* event) {
 
 void TextBox::leaveEvent(QEvent* event) {
   update();
-}
-
-void TextBox::focusInEvent(QFocusEvent* event){
-  if(event->reason() != Qt::ActiveWindowFocusReason &&
-      event->reason() != Qt::PopupFocusReason) {
-    m_line_edit->setText(m_current);
-  }
-  StyledWidget::focusInEvent(event);
-}
-
-void TextBox::focusOutEvent(QFocusEvent* event) {
-  if(event->lostFocus() && event->reason() != Qt::ActiveWindowFocusReason &&
-      event->reason() != Qt::PopupFocusReason) {
-    elide_text();
-  }
-  StyledWidget::focusOutEvent(event);
 }
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
@@ -228,10 +235,6 @@ void TextBox::paintEvent(QPaintEvent* event) {
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
   StyledWidget::resizeEvent(event);
-}
-
-QSize TextBox::sizeHint() const {
-  return scale(160, 30);
 }
 
 void TextBox::on_editing_finished() {
