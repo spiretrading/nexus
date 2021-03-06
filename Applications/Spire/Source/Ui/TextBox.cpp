@@ -24,7 +24,7 @@ namespace {
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_size(0)).
+      set(border_color(QColor::fromRgb(0, 0, 0, 0))).
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
@@ -32,7 +32,7 @@ namespace {
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_size(0));
+      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     return style;
   }
 }
