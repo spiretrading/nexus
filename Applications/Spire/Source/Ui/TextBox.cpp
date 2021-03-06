@@ -69,6 +69,7 @@ const QString& TextBox::get_current() const {
 void TextBox::set_current(const QString& value) {
   m_current = value;
   update_display_text();
+  m_current_signal(m_current);
 }
 
 const QString& TextBox::get_submission() const {
@@ -118,6 +119,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     auto focusEvent = static_cast<QFocusEvent*>(event);
     if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
+      auto blocker = QSignalBlocker(m_line_edit);
       m_line_edit->setText(m_current);
     }
   } else if(event->type() == QEvent::FocusOut) {
@@ -148,9 +150,9 @@ void TextBox::leaveEvent(QEvent* event) {
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
-    m_current = m_submission;
-    m_line_edit->setText(m_current);
-    m_current_signal(m_current);
+    if(m_submission != m_current) {
+      set_current(m_submission);
+    }
   } else {
     StyledWidget::keyPressEvent(event);
   }
@@ -246,8 +248,7 @@ void TextBox::on_editing_finished() {
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  m_current = text;
-  m_current_signal(m_current);
+  set_current(text);
 }
 
 void TextBox::elide_text() {
@@ -264,6 +265,7 @@ void TextBox::elide_text() {
   option.features = QStyleOptionFrame::None;
   auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
     &option, m_line_edit);
+  auto blocker = QSignalBlocker(m_line_edit);
   m_line_edit->setText(font_metrics.elidedText(m_current, Qt::ElideRight,
     rect.width()));
   m_line_edit->setCursorPosition(0);
@@ -272,7 +274,8 @@ void TextBox::elide_text() {
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else if(m_line_edit->text() != m_current) {
+  } else {
+    auto blocker = QSignalBlocker(m_line_edit);
     m_line_edit->setText(m_current);
   }
 }

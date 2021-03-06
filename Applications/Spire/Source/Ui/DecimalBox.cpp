@@ -1,6 +1,7 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include <bitset>
-#include <QApplication>
+#include <boost/signals2/shared_connection_block.hpp>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -41,10 +42,10 @@ namespace {
 
   auto clamp(DecimalBox::Decimal value, DecimalBox::Decimal min,
       DecimalBox::Decimal max) {
-    return std::clamp(value, min, max, [] (const DecimalBox::Decimal& a,
-        const DecimalBox::Decimal& b) {
-      return a < b;
-    });
+    return std::clamp(value, min, max,
+      [] (const auto& a, const auto& b) {
+        return a < b;
+      });
   }
 
   DecimalBox::Decimal to_decimal(const QString& text) {
@@ -56,8 +57,8 @@ namespace {
   }
 
   QString to_string(DecimalBox::Decimal value) {
-    return QString::fromStdString(value.str(DecimalBox::PRECISION,
-      std::ios_base::dec));
+    return QString::fromStdString(
+      value.str(DecimalBox::PRECISION, std::ios_base::dec));
   }
 
   auto BUTTON_RIGHT_PADDING() {
@@ -78,8 +79,8 @@ namespace {
     style.m_hover_color = QColor("#4B23A0");
     style.m_disabled_color = QColor("#C8C8C8");
     style.m_blur_color = style.m_default_color;
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
-      parent);
+    auto button =
+      new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style, parent);
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -118,25 +119,6 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
   m_down_button = create_button(":/Icons/arrow-down.svg", this);
   connect(m_down_button, &IconButton::clicked, this, &DecimalBox::decrement);
   update_button_positions();
-}
-
-bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
-    auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
-      if(e->key() == Qt::Key_Up) {
-        increment();
-      } else {
-        decrement();
-      }
-    }
-  }
-  return QWidget::eventFilter(watched, event);
-}
-
-void DecimalBox::resizeEvent(QResizeEvent* event) {
-  update_button_positions();
-  QWidget::resizeEvent(event);
 }
 
 DecimalBox::Decimal DecimalBox::get_current() const {
@@ -217,6 +199,23 @@ connection DecimalBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent*>(event);
+    if(keyEvent->key() == Qt::Key_Up) {
+      increment();
+    } else if(keyEvent->key() == Qt::Key_Down) {
+      decrement();
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void DecimalBox::resizeEvent(QResizeEvent* event) {
+  update_button_positions();
+  QWidget::resizeEvent(event);
+}
+
 void DecimalBox::decrement() {
   auto increment = get_increment();
   increment.negate();
@@ -229,8 +228,8 @@ void DecimalBox::increment() {
 
 DecimalBox::Decimal DecimalBox::get_increment() const {
   auto modifier_flags = static_cast<int>(qApp->keyboardModifiers());
-  auto modifiers = std::bitset<std::numeric_limits<int>::digits>(
-    modifier_flags);
+  auto modifiers =
+    std::bitset<std::numeric_limits<int>::digits>(modifier_flags);
   if(modifiers.count() != 1) {
     return get_increment(Qt::NoModifier);
   }
@@ -266,6 +265,7 @@ void DecimalBox::update_input_validator() {
 void DecimalBox::update_trailing_zeros() {
   auto current_text = m_text_box->get_current();
   if(!m_has_trailing_zeros || m_decimal_places == 0) {
+    auto block = shared_connection_block(m_current_connection);
     m_text_box->set_current(current_text.remove(m_trailing_zero_regex));
     return;
   }
@@ -280,9 +280,11 @@ void DecimalBox::update_trailing_zeros() {
     return m_decimal_places - (current_text.length() - point_index) + 1;
   }();
   if(zero_count > 0) {
+    auto block = shared_connection_block(m_current_connection);
     m_text_box->set_current(current_text.leftJustified(
       current_text.length() + zero_count, '0'));
   } else {
+    auto block = shared_connection_block(m_current_connection);
     m_text_box->set_current(current_text.left(
       current_text.length() + zero_count));
   }

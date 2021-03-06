@@ -207,12 +207,20 @@ UiProfile Spire::make_decimal_box_profile() {
           decimal_box->set_increment(Qt::ShiftModifier, *decimal);
         }
       });
+      auto current_slot = profile.make_event_slot<QString>(
+        QString::fromUtf8("Current"));
       decimal_box->connect_current_signal(
-        profile.make_event_slot<DecimalBox::Decimal>(
-        QString::fromUtf8("Current")));
+        [=] (const DecimalBox::Decimal& current) {
+          current_slot(QString::fromStdString(
+            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        });
+      auto submit_slot = profile.make_event_slot<QString>(
+        QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(
-        profile.make_event_slot<DecimalBox::Decimal>(
-        QString::fromUtf8("Submit")));
+        [=] (const DecimalBox::Decimal& submission) {
+          submit_slot(QString::fromStdString(
+            submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        });
       auto& read_only = get<bool>("read-only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
         decimal_box->set_read_only(value);
@@ -273,8 +281,10 @@ UiProfile Spire::make_text_box_profile() {
         text_box->set_read_only(is_read_only);
       });
       auto& current = get<QString>("current", profile.get_properties());
-      current.connect_changed_signal([text_box] (const auto& text) {
-        text_box->set_current(text);
+      current.connect_changed_signal([text_box] (const auto& current) {
+        if(text_box->get_current() != current) {
+          text_box->set_current(current);
+        }
       });
       text_box->connect_current_signal([&] (const QString& value) {
         current.set(value);
