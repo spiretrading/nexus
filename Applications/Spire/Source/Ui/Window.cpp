@@ -83,23 +83,21 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     *result = -1;
     return true;
   } else if(msg->message == WM_NCCALCSIZE) {
-    if(static_cast<bool>(msg->wParam)) {
+    if(msg->wParam != 0) {
       if(!m_frame_size) {
         m_frame_size = size();
       }
       auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-      auto placement = WINDOWPLACEMENT{};
-      if (GetWindowPlacement(hwnd, &placement)) {
-        auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(
-          msg->lParam)->rgrc[0];
-        if(IsZoomed(hwnd) || (IsIconic(hwnd) &&
-            placement.flags & WPF_RESTORETOMAXIMIZED)) {
-          auto monitor = MonitorFromRect(&placement.rcNormalPosition,
-            MONITOR_DEFAULTTONEAREST);
-          if(monitor) {
-            auto monitor_info = MONITORINFO{};
+      auto placement = WINDOWPLACEMENT();
+      if(GetWindowPlacement(hwnd, &placement)) {
+        auto& rect = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam)->rgrc[0];
+        if(IsZoomed(hwnd) ||
+            (IsIconic(hwnd) && placement.flags & WPF_RESTORETOMAXIMIZED)) {
+          if(auto monitor = MonitorFromRect(
+              &placement.rcNormalPosition, MONITOR_DEFAULTTONEAREST)) {
+            auto monitor_info = MONITORINFO();
             monitor_info.cbSize = sizeof(monitor_info);
-            if (GetMonitorInfoW(monitor, &monitor_info)) {
+            if(GetMonitorInfoW(monitor, &monitor_info)) {
               rect = monitor_info.rcWork;
             }
           }
@@ -116,7 +114,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       return true;
     }
   } else if(msg->message == WM_NCHITTEST) {
-    auto window_rect = RECT{};
+    auto window_rect = RECT();
     GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
@@ -182,8 +180,8 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     if(msg->wParam == SIZE_MAXIMIZED) {
       layout()->setContentsMargins({});
     } else if(msg->wParam == SIZE_RESTORED) {
-      layout()->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
-        scale_height(1));
+      layout()->setContentsMargins(scale_width(1), scale_height(1),
+        scale_width(1), scale_height(1));
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
@@ -204,7 +202,7 @@ void Window::on_screen_changed(QScreen* screen) {
   // TODO: Workaround for this change:
   // https://github.com/qt/qtbase/commit/d2fd9b1b9818b3ec88487967e010f66e92952f55
   auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-  auto rect = RECT{};
+  auto rect = RECT();
   GetWindowRect(hwnd, &rect);
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
 }
