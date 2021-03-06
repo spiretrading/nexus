@@ -15,7 +15,7 @@ namespace Spire {
       //! Constructs a Button.
       /*!
         \param component The widget is displayed insdie.
-        \param parent The parent widget to the Box.
+        \param parent The parent widget.
       */
       explicit Button(QWidget* component, QWidget* parent = nullptr);
 
@@ -36,6 +36,18 @@ namespace Spire {
       bool m_is_down;
   };
 
+  /**
+   * Returns a newly constructed Button displaying an Icon.
+   * @param icon The icon used within the button.
+   * @param parent The parent widget.
+   */
+  Button* make_icon_button(QImage icon, QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed Button displaying a text label.
+   * @param label The button's text label.
+   * @param parent The parent widget.
+   */
   Button* make_label_button(const QString& label, QWidget* parent = nullptr);
 }
 
