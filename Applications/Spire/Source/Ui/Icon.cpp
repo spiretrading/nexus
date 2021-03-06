@@ -1,6 +1,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -36,12 +37,17 @@ QSize Icon::sizeHint() const {
 
 void Icon::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  auto computed_style = compute_style();
+  painter.fillRect(rect(), Styles::find<BackgroundColor>(
+    computed_style)->get_expression().as<QColor>());
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
   image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-  auto computed_style = compute_style();
   image_painter.fillRect(icon.rect(),
     Styles::find<Fill>(computed_style)->get_expression().as<QColor>());
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
+  if(auto border_color = Styles::find<BorderTopColor>(computed_style)) {
+    draw_border(rect(), border_color->get_expression().as<QColor>(), &painter);
+  }
 }
