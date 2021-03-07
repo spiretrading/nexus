@@ -272,6 +272,7 @@ UiProfile Spire::make_text_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("read_only"));
   properties.push_back(make_standard_qstring_property("current"));
+  properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
       auto text_box = new TextBox();
@@ -286,6 +287,14 @@ UiProfile Spire::make_text_box_profile() {
           text_box->set_current(current);
         }
       });
+      auto& warning = get<bool>("display_warning", profile.get_properties());
+      warning.connect_changed_signal(
+        [&warning, text_box] (auto is_playing_warning) {
+          if(is_playing_warning) {
+            display_warning_indicator(*text_box);
+            warning.set(false);
+          }
+        });
       text_box->connect_current_signal([&] (const QString& value) {
         current.set(value);
       });
