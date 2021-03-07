@@ -99,6 +99,12 @@ namespace Styles {
       void elide_text();
       void update_display_text();
   };
+
+  /**
+   * Displays a red warning indicator on a StyledWidget.
+   * @param widget The widget to display the warning indicator over.
+   */
+  void display_warning_indicator(Styles::StyledWidget& widget);
 }
 
 #endif

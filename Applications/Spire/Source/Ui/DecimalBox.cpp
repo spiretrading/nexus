@@ -299,7 +299,6 @@ void DecimalBox::on_submit() {
   } else {
     m_text_box->set_current(to_string(m_submission));
     update_trailing_zeros();
-    // TODO: emit current signal?
-//    m_text_box->play_warning();
+    display_warning_indicator(*m_text_box);
   }
 }
