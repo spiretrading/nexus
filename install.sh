@@ -100,7 +100,7 @@ sudo -u $username python3 setup.py -l "$local_interface" \
 sudo -u $username ./install_python.sh
 pushd ServiceLocator/Application
 sudo -u $username ./start_server.sh
-sleep 1
+sleep 10
 popd
 admin_input="
 mkdir administrators
