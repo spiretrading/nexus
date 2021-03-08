@@ -165,7 +165,7 @@ void TextBox::style_updated() {
       });
   }
   placeholder_style += "}";
-  if(placeholder_style != m_line_edit->styleSheet()) {
+  if(placeholder_style != m_placeholder->styleSheet()) {
     m_placeholder->setStyleSheet(placeholder_style);
   }
   update_display_text();
@@ -204,6 +204,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_display_text();
+    update_placeholder_text();
   }
   StyledWidget::changeEvent(event);
 }
@@ -358,22 +359,22 @@ void TextBox::update_placeholder_text() {
     auto rect = m_placeholder->contentsRect();
     auto m = font_metrics.horizontalAdvance(QLatin1Char('x')) / 2 -
       m_placeholder->margin();
-    auto text_direction = Qt::LeftToRight;
-    if(m_placeholder_text.isRightToLeft()) {
-      text_direction = Qt::RightToLeft;
-    }
+    auto text_direction = [=] () -> Qt::LayoutDirection {
+      if(m_placeholder_text.isRightToLeft()) {
+        return Qt::RightToLeft;
+      } else {
+        return Qt::LeftToRight;
+      }
+    }();
     const int align = QStyle::visualAlignment(text_direction,
       QFlag(m_placeholder->alignment()));
     if(align & Qt::AlignLeft) {
       rect.setLeft(rect.left() + m);
-    }
-    if(align & Qt::AlignRight) {
+    } else if(align & Qt::AlignRight) {
       rect.setRight(rect.right() - m);
-    }
-    if(align & Qt::AlignTop) {
+    } else if(align & Qt::AlignTop) {
       rect.setTop(rect.top() + m);
-    }
-    if(align & Qt::AlignBottom) {
+    } else if(align & Qt::AlignBottom) {
       rect.setBottom(rect.bottom() - m);
     }
     auto placeholder_text = font_metrics.elidedText(m_placeholder_text,
