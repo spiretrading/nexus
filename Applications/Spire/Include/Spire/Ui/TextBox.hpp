@@ -1,5 +1,6 @@
 #ifndef SPIRE_TEXT_BOX_HPP
 #define SPIRE_TEXT_BOX_HPP
+#include <QLabel>
 #include <QLineEdit>
 #include <QTimeLine>
 #include "Spire/Styles/StyledWidget.hpp"
@@ -22,6 +23,9 @@ namespace Styles {
 
   /** Selects a read-only widget. */
   using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
+
+  /** Selects the placeholder. */
+  using Placeholder = StateSelector<void, struct PlaceholderTag>;
 
   /** Styles a widget's text. */
   TextStyle text_style(QFont font, QColor color);
@@ -59,6 +63,9 @@ namespace Styles {
       //! Returns the last submitted value.
       const QString& get_submission() const;
 
+      //! Sets the placeholder value.
+      void set_placeholder(const QString& value);
+
       //! Sets whether the box is read-only.
       void set_read_only(bool read_only);
 
@@ -90,14 +97,17 @@ namespace Styles {
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
       QLineEdit* m_line_edit;
+      QLabel* m_placeholder;
       QString m_current;
       QString m_submission;
-      QString m_old_style_sheet;
+      QString m_placeholder_text;
 
       void on_editing_finished();
       void on_text_edited(const QString& text);
+      void on_text_changed(const QString& text);
       void elide_text();
       void update_display_text();
+      void update_placeholder_text();
   };
 }
 

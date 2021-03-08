@@ -144,6 +144,7 @@ UiProfile Spire::make_text_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("read_only"));
   properties.push_back(make_standard_qstring_property("current"));
+  properties.push_back(make_standard_qstring_property("placeholder"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
       auto text_box = new TextBox();
@@ -155,6 +156,10 @@ UiProfile Spire::make_text_box_profile() {
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([text_box] (const auto& text) {
         text_box->set_current(text);
+      });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([text_box] (const auto& text) {
+        text_box->set_placeholder(text);
       });
       text_box->connect_current_signal([&] (const QString& value) {
         current.set(value);

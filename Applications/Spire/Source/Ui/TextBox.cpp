@@ -33,6 +33,12 @@ namespace {
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(Placeholder()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(horizontal_padding(scale_width(8))).
+      set(text_style(font, QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+    style.get(Placeholder() && Disabled()).
+      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
 }
@@ -54,11 +60,19 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_line_edit);
+  m_placeholder = new QLabel(m_line_edit);
+  m_placeholder->setTextFormat(Qt::PlainText);
+  m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
+  m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto line_edit_layout = new QHBoxLayout(m_line_edit);
+  line_edit_layout->setContentsMargins(0, 0, 0, 0);
+  line_edit_layout->addWidget(m_placeholder);
   set_style(DEFAULT_STYLE());
   setFocusProxy(m_line_edit);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
+  connect(m_line_edit, &QLineEdit::textChanged, this, &TextBox::on_text_changed);
 }
 
 const QString& TextBox::get_current() const {
@@ -74,9 +88,15 @@ const QString& TextBox::get_submission() const {
   return m_submission;
 }
 
+void TextBox::set_placeholder(const QString& value) {
+  m_placeholder_text = value;
+  update_placeholder_text();
+}
+
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
   update_display_text();
+  update_placeholder_text();
 }
 
 bool TextBox::is_read_only() const {
@@ -98,7 +118,58 @@ QSize TextBox::sizeHint() const {
 }
 
 void TextBox::style_updated() {
+  auto style = get_style();
+  auto placeholder_style = QString("QLabel {");
+  for(auto& property : style.get(Placeholder()).get_block().get_properties()) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        placeholder_style += "background-color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const TextColor& color) {
+        placeholder_style += "color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const TextAlign& alignment) {
+        m_placeholder->setAlignment(
+          alignment.get_expression().as<Qt::Alignment>());
+      },
+      [&] (const Font& font) {
+        m_placeholder->setFont(font.get_expression().as<QFont>());
+      },
+      [&] (const PaddingTop& size) {
+        placeholder_style += "padding-top: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const PaddingRight& size) {
+        placeholder_style += "padding-right: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const PaddingBottom& size) {
+        placeholder_style += "padding-bottom: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      },
+      [&] (const PaddingLeft& size) {
+        placeholder_style += "padding-left: " + QString::number(
+          size.get_expression().as<int>()) + "px;";
+      });
+  }
+  placeholder_style += "}";
+  placeholder_style += "QLabel:disabled {";
+  for(auto& property : style.get(Placeholder() && Disabled()).get_block().
+      get_properties()) {
+    property.visit(
+      [&] (const TextColor& color) {
+        placeholder_style += "color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      });
+  }
+  placeholder_style += "}";
+  if(placeholder_style != m_line_edit->styleSheet()) {
+    m_placeholder->setStyleSheet(placeholder_style);
+  }
   update_display_text();
+  update_placeholder_text();
   StyledWidget::style_updated();
 }
 
@@ -234,6 +305,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
 
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
+  update_placeholder_text();
   StyledWidget::resizeEvent(event);
 }
 
@@ -247,6 +319,10 @@ void TextBox::on_editing_finished() {
 void TextBox::on_text_edited(const QString& text) {
   m_current = text;
   m_current_signal(m_current);
+}
+
+void TextBox::on_text_changed(const QString& text) {
+  update_placeholder_text();
 }
 
 void TextBox::elide_text() {
@@ -273,5 +349,40 @@ void TextBox::update_display_text() {
     elide_text();
   } else if(m_line_edit->text() != m_current) {
     m_line_edit->setText(m_current);
+  }
+}
+
+void TextBox::update_placeholder_text() {
+  if(m_current.isEmpty() && !m_placeholder_text.isEmpty()) {
+    auto font_metrics = m_placeholder->fontMetrics();
+    auto rect = m_placeholder->contentsRect();
+    auto m = font_metrics.horizontalAdvance(QLatin1Char('x')) / 2 -
+      m_placeholder->margin();
+    auto text_direction = Qt::LeftToRight;
+    if(m_placeholder_text.isRightToLeft()) {
+      text_direction = Qt::RightToLeft;
+    }
+    const int align = QStyle::visualAlignment(text_direction,
+      QFlag(m_placeholder->alignment()));
+    if(align & Qt::AlignLeft) {
+      rect.setLeft(rect.left() + m);
+    }
+    if(align & Qt::AlignRight) {
+      rect.setRight(rect.right() - m);
+    }
+    if(align & Qt::AlignTop) {
+      rect.setTop(rect.top() + m);
+    }
+    if(align & Qt::AlignBottom) {
+      rect.setBottom(rect.bottom() - m);
+    }
+    auto placeholder_text = font_metrics.elidedText(m_placeholder_text,
+      Qt::ElideRight, rect.width());
+    if(is_read_only() && placeholder_text != m_placeholder_text) {
+      placeholder_text.clear();
+    }
+    m_placeholder->setText(placeholder_text);
+  } else {
+    m_placeholder->setText("");
   }
 }
