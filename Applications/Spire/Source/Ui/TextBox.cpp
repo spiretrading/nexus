@@ -354,7 +354,7 @@ void TextBox::update_display_text() {
 }
 
 void TextBox::update_placeholder_text() {
-  if(m_current.isEmpty() && !m_placeholder_text.isEmpty()) {
+  if(m_current.isEmpty() && !m_placeholder_text.isEmpty() && !is_read_only()) {
     auto font_metrics = m_placeholder->fontMetrics();
     auto rect = m_placeholder->contentsRect();
     auto m = font_metrics.horizontalAdvance(QLatin1Char('x')) / 2 -
@@ -379,9 +379,6 @@ void TextBox::update_placeholder_text() {
     }
     auto placeholder_text = font_metrics.elidedText(m_placeholder_text,
       Qt::ElideRight, rect.width());
-    if(is_read_only() && placeholder_text != m_placeholder_text) {
-      placeholder_text.clear();
-    }
     m_placeholder->setText(placeholder_text);
   } else {
     m_placeholder->setText("");
