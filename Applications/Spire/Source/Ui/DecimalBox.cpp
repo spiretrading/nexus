@@ -87,22 +87,22 @@ namespace {
   }
 }
 
-DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
+DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : StyledWidget(parent),
-      m_submission(initial),
+      m_current(to_string(current)),
+      m_submission(current),
       m_minimum(minimum),
       m_maximum(maximum),
       m_modifiers(std::move(modifiers)),
-      m_decimal_places(DEFAULT_DECIMAL_PLACES),
       m_has_trailing_zeros(false),
       m_validator(nullptr),
       m_trailing_zero_regex(QString("[%1]?[0]*$").arg(
         QLocale().decimalPoint())) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_text_box = new TextBox(to_string(initial), this);
-  update_input_validator();
+  m_text_box = new TextBox(m_current, this);
+  set_decimal_places(DEFAULT_DECIMAL_PLACES);
   auto style = m_text_box->get_style();
   style.get(Any()).set(PaddingRight(scale_width(26)));
   m_text_box->set_style(std::move(style));
@@ -110,9 +110,9 @@ DecimalBox::DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
   m_current_connection = m_text_box->connect_current_signal(
-    [=] (const auto& current) { m_current_signal(to_decimal(current)); });
+    [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
-    [=] (const auto& submit) { on_submit(); });
+    [=] (const auto& submit) { on_submit(submit); });
   m_text_box->installEventFilter(this);
   m_up_button = create_button(":/Icons/arrow-up.svg", this);
   connect(m_up_button, &IconButton::clicked, this, &DecimalBox::increment);
@@ -165,7 +165,8 @@ int DecimalBox::get_decimal_places() const {
 
 void DecimalBox::set_decimal_places(int decimal_places) {
   m_decimal_places = decimal_places;
-  update_input_validator();
+  m_validator = QRegExp(QString("^[-]?[0-9]*[%1]?[0-9]{0,%2}").arg(
+    QLocale().decimalPoint()).arg(m_decimal_places));
   update_trailing_zeros();
 }
 
@@ -239,9 +240,8 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
 
 void DecimalBox::step_by(Decimal value) {
   setFocus();
-  set_current(clamp(value += get_current(), m_minimum, m_maximum));
-  m_up_button->setDisabled(get_current() == m_maximum);
-  m_down_button->setDisabled(get_current() == m_minimum);
+  value += get_current();
+  set_current(clamp(value, m_minimum, m_maximum));
   update_trailing_zeros();
 }
 
@@ -250,16 +250,6 @@ void DecimalBox::update_button_positions() {
     BUTTON_SIZE().width(), height() / 2);
   m_up_button->move(button_pos.x(), button_pos.y() - m_up_button->height());
   m_down_button->move(button_pos);
-}
-
-void DecimalBox::update_input_validator() {
-  if(m_validator) {
-    delete_later(m_validator);
-  }
-  m_validator = new QRegExpValidator(
-    QRegExp(QString("^[-]?[0-9]*[%1]?[0-9]{0,%2}").arg(
-      QLocale().decimalPoint()).arg(m_decimal_places)), m_text_box);
-// TODO  m_text_box->setValidator(m_validator);
 }
 
 void DecimalBox::update_trailing_zeros() {
@@ -277,24 +267,36 @@ void DecimalBox::update_trailing_zeros() {
     if(point_index == -1) {
       return m_decimal_places;
     }
-    return m_decimal_places - (current_text.length() - point_index) + 1;
+    return m_decimal_places - current_text.length() + point_index + 1;
   }();
+  auto blocker = shared_connection_block(m_current_connection);
   if(zero_count > 0) {
-    auto block = shared_connection_block(m_current_connection);
     m_text_box->set_current(current_text.leftJustified(
       current_text.length() + zero_count, '0'));
   } else {
-    auto block = shared_connection_block(m_current_connection);
     m_text_box->set_current(current_text.left(
       current_text.length() + zero_count));
   }
 }
 
-void DecimalBox::on_submit() {
-  auto current = get_current();
-  if(m_minimum <= current && current <= m_maximum) {
+void DecimalBox::on_current(const QString& current) {
+  if(m_validator.exactMatch(current)) {
+    m_current = current;
+    auto value = to_decimal(current);
+    m_up_button->setDisabled(value >= m_maximum);
+    m_down_button->setDisabled(value <= m_minimum);
+    m_current_signal(value);
+  } else {
+    auto blocker = shared_connection_block(m_current_connection);
+    m_text_box->set_current(m_current);
+  }
+}
+
+void DecimalBox::on_submit(const QString& submission) {
+  auto value = to_decimal(submission);
+  if(m_minimum <= value && value <= m_maximum) {
     update_trailing_zeros();
-    m_submission = current;
+    m_submission = value;
     m_submit_signal(m_submission);
   } else {
     m_text_box->set_current(to_string(m_submission));

@@ -169,6 +169,13 @@ UiProfile Spire::make_decimal_box_profile() {
           decimal_box->set_current(*decimal);
         }
       });
+      auto current_slot = profile.make_event_slot<QString>(
+        QString::fromUtf8("Current"));
+      decimal_box->connect_current_signal(
+        [=] (const DecimalBox::Decimal& current) {
+          current_slot(QString::fromStdString(
+            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        });
       minimum.connect_changed_signal([=] (const auto& value) {
         if(auto decimal = parse_decimal(value)) {
           decimal_box->set_minimum(*decimal);
@@ -207,13 +214,6 @@ UiProfile Spire::make_decimal_box_profile() {
           decimal_box->set_increment(Qt::ShiftModifier, *decimal);
         }
       });
-      auto current_slot = profile.make_event_slot<QString>(
-        QString::fromUtf8("Current"));
-      decimal_box->connect_current_signal(
-        [=] (const DecimalBox::Decimal& current) {
-          current_slot(QString::fromStdString(
-            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
-        });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(

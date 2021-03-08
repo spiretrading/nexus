@@ -268,7 +268,8 @@ void TextBox::on_editing_finished() {
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  set_current(text);
+  m_current = text;
+  m_current_signal(m_current);
 }
 
 void TextBox::elide_text() {

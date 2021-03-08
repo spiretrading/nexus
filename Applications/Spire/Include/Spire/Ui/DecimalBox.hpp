@@ -33,20 +33,20 @@ namespace Spire {
 
       //! Constructs a DecimalBox with 6 decimal places and no trailing zeros.
       /*!
-        \param initial The initial value to display.
+        \param current The current value to display.
         \param minimum The minimum acceptable value.
         \param maximum The maximum acceptable value.
         \param modifiers The initial keyboard modifier increments.
         \param parent The parent widget.
       */
-      DecimalBox(Decimal initial, Decimal minimum, Decimal maximum,
+      DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
       //! Return the current value.
       Decimal get_current() const;
 
-      //! Sets the current value iff the value is within [minimum, maximum].
+      //! Sets the current value.
       /*!
         \param current The current value.
       */
@@ -130,6 +130,7 @@ namespace Spire {
     private:
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
+      QString m_current;
       Decimal m_submission;
       Decimal m_minimum;
       Decimal m_maximum;
@@ -137,7 +138,7 @@ namespace Spire {
       int m_decimal_places;
       bool m_has_trailing_zeros;
       TextBox* m_text_box;
-      QRegExpValidator* m_validator;
+      QRegExp m_validator;
       QRegExp m_trailing_zero_regex;
       IconButton* m_up_button;
       IconButton* m_down_button;
@@ -149,9 +150,9 @@ namespace Spire {
       Decimal get_increment() const;
       void step_by(Decimal value);
       void update_button_positions();
-      void update_input_validator();
       void update_trailing_zeros();
-      void on_submit();
+      void on_current(const QString& current);
+      void on_submit(const QString& submission);
   };
 }
 
