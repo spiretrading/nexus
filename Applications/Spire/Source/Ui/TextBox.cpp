@@ -60,7 +60,6 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   layout->addWidget(m_line_edit);
   m_placeholder = new QLabel(this);
   m_placeholder->setCursor(m_line_edit->cursor());
-  m_placeholder->setAttribute(Qt::WA_TranslucentBackground);
   m_placeholder->setTextFormat(Qt::PlainText);
   m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -190,8 +189,8 @@ void TextBox::paintEvent(QPaintEvent* event) {
   auto computed_style = compute_style();
   auto placeholder_style = QString(
     R"(QLabel {
-      background-color: rgba(0,0,0,0%);
-      border-color: red;)");
+      background: transparent;
+      border-color: transparent;)");
   auto line_edit_style = QString("QLineEdit {");
   line_edit_style += "border-style: solid;";
   for(auto& property : computed_style.get_properties()) {
