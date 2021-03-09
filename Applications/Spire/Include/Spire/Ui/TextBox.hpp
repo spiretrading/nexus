@@ -89,6 +89,7 @@ namespace Styles {
       void changeEvent(QEvent* event) override;
       void enterEvent(QEvent* event) override;
       void leaveEvent(QEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -105,6 +106,9 @@ namespace Styles {
       void on_editing_finished();
       void on_text_edited(const QString& text);
       void on_text_changed(const QString& text);
+      bool is_placeholder_shown() const;
+      QString get_elided_text(const QFontMetrics& font_metrics,
+        const QString& text) const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
