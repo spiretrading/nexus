@@ -165,7 +165,7 @@ int DecimalBox::get_decimal_places() const {
 
 void DecimalBox::set_decimal_places(int decimal_places) {
   m_decimal_places = decimal_places;
-  m_validator = QRegExp(QString("^[-]?[0-9]*[%1]?[0-9]{0,%2}").arg(
+  m_validator = QRegExp(QString("^[-]?[0-9]*([%1][0-9]{0,%2})?").arg(
     QLocale().decimalPoint()).arg(m_decimal_places));
   update_trailing_zeros();
 }
