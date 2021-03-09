@@ -140,8 +140,8 @@ namespace Spire {
       TextBox* m_text_box;
       QRegExp m_validator;
       QRegExp m_trailing_zero_regex;
-      IconButton* m_up_button;
-      IconButton* m_down_button;
+      Button* m_up_button;
+      Button* m_down_button;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
 

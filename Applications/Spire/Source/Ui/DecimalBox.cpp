@@ -6,7 +6,8 @@
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -72,15 +73,18 @@ namespace {
   }
 
   auto create_button(const QString& icon, QWidget* parent) {
-    auto style = IconButton::Style();
-    style.m_default_color = QColor("#333333");
-    style.m_default_background_color = QColor("#FFFFFF");
-    style.m_hover_background_color = QColor("#EBEBEB");
-    style.m_hover_color = QColor("#4B23A0");
-    style.m_disabled_color = QColor("#C8C8C8");
-    style.m_blur_color = style.m_default_color;
-    auto button =
-      new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style, parent);
+    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
+    auto style = button->get_style();
+    style.get(Any()).
+      set(BackgroundColor(QColor("#FFFFFF"))).
+      set(Fill(QColor("#333333")));
+    style.get(Hover()).
+      set(BackgroundColor(QColor("#EBEBEB"))).
+      set(Fill(QColor("#4B23A0")));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor("#00000000"))).
+      set(Fill(QColor("#C8C8C8")));
+    button->set_style(std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -115,9 +119,9 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
     [=] (const auto& submit) { on_submit(submit); });
   m_text_box->installEventFilter(this);
   m_up_button = create_button(":/Icons/arrow-up.svg", this);
-  connect(m_up_button, &IconButton::clicked, this, &DecimalBox::increment);
+  m_up_button->connect_clicked_signal([=] { increment(); });
   m_down_button = create_button(":/Icons/arrow-down.svg", this);
-  connect(m_down_button, &IconButton::clicked, this, &DecimalBox::decrement);
+  m_down_button->connect_clicked_signal([=] { decrement(); });
   update_button_positions();
 }
 
