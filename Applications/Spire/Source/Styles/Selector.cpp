@@ -7,6 +7,7 @@
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/ParentSelector.hpp"
+#include "Spire/Styles/VoidSelector.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -109,6 +110,12 @@ Selector::Selector(ChildSelector selector)
       auto& right = selector.as<ChildSelector>();
       return left.get_base().is_match(right.get_base()) &&
         left.get_child().is_match(right.get_child());
+    }) {}
+
+Selector::Selector(VoidSelector selector)
+  : m_selector(std::move(selector)),
+    m_matcher([] (const Selector& self, const Selector& selector) {
+      return false;
     }) {}
 
 std::type_index Selector::get_type() const {

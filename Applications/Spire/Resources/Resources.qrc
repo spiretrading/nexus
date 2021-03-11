@@ -19,7 +19,6 @@
         <file>Fonts/Roboto/Roboto-Thin.ttf</file>
         <file>Fonts/Roboto/Roboto-ThinItalic.ttf</file>
         <file>Icons/logo.gif</file>
-        <file>Icons/arrow-down.svg</file>
         <file>Icons/search.svg</file>
         <file>Icons/36.png</file>
         <file>Icons/124.png</file>
@@ -28,7 +27,6 @@
         <file>Icons/check-with-box.svg</file>
         <file>Icons/column-border.png</file>
         <file>Icons/pre-loader.gif</file>
-        <file>Icons/arrow-up.svg</file>
         <file>Icons/spire-icon-48x48.png</file>
         <file>Icons/arrow-right-black.svg</file>
         <file>Icons/arrow-right-white.svg</file>
@@ -98,5 +96,7 @@
         <file>Icons/lock-grid.svg</file>
         <file>Icons/chart-cursor.svg</file>
         <file>Icons/delete-row.svg</file>
+        <file>Icons/arrow-down.svg</file>
+        <file>Icons/arrow-up.svg</file>
     </qresource>
 </RCC>

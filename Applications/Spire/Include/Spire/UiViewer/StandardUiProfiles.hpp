@@ -13,6 +13,9 @@ namespace Spire {
   //! Returns a UiProfile for the CurrencyComboBox.
   UiProfile make_currency_combo_box_profile();
 
+  //! Returns a UiProfile for the DecimalBox.
+  UiProfile make_decimal_box_profile();
+
   //! Returns a UiProfile for the FlatButton.
   UiProfile make_flat_button_profile();
 

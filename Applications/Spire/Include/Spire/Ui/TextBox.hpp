@@ -25,7 +25,7 @@ namespace Styles {
   using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
 
   /** Selects the placeholder. */
-  using Placeholder = StateSelector<void, struct PlaceholderTag>;
+  using Placeholder = PseudoElement<void, struct PlaceholderTag>;
 
   /** Styles a widget's text. */
   TextStyle text_style(QFont font, QColor color);
@@ -84,7 +84,8 @@ namespace Styles {
 
     protected:
       void style_updated() override;
-      bool test_selector(const Styles::Selector& selector) const override;
+      bool test_selector(const Styles::Selector& element,
+        const Styles::Selector& selector) const override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void enterEvent(QEvent* event) override;
@@ -113,6 +114,12 @@ namespace Styles {
       void update_display_text();
       void update_placeholder_text();
   };
+
+  /**
+   * Displays a red warning indicator on a StyledWidget.
+   * @param widget The widget to display the warning indicator over.
+   */
+  void display_warning_indicator(Styles::StyledWidget& widget);
 }
 
 #endif

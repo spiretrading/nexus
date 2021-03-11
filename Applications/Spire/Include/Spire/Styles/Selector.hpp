@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/Any.hpp"
+#include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -30,6 +31,20 @@ namespace Spire::Styles {
        */
       template<typename G>
       Selector(StateSelector<void, G> state);
+
+      /**
+       * Constructs a Selector for a PseudoElement.
+       * @param element The pseudo-element to represent.
+       */
+      template<typename T, typename G>
+      Selector(PseudoElement<T, G> element);
+
+      /**
+       * Constructs a Selector for a PseudoElement.
+       * @param element The pseudo-element to represent.
+       */
+      template<typename G>
+      Selector(PseudoElement<void, G> element);
 
       /**
        * Constructs a Selector for a NotSelector.
@@ -78,6 +93,9 @@ namespace Spire::Styles {
        * @param selector The selector to represent.
        */
       Selector(ChildSelector selector);
+
+      /** Constructs a VoidSelector. */
+      Selector(VoidSelector selector);
 
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;
@@ -131,6 +149,25 @@ namespace Spire::Styles {
     : m_selector(std::move(state)),
       m_matcher([] (const Selector& self, const Selector& selector) {
         return selector.get_type() == typeid(StateSelector<void, G>);
+      }) {}
+
+  template<typename T, typename G>
+  Selector::Selector(PseudoElement<T, G> state)
+    : m_selector(std::move(state)),
+      m_matcher([] (const Selector& self, const Selector& selector) {
+        if(selector.get_type() != typeid(PseudoElement<T, G>)) {
+          return false;
+        }
+        auto& left = self.as<PseudoElement<T, G>();
+        auto& right = selector.as<PseudoElement<T, G>>();
+        return left.get_data() == right.get_data();
+      }) {}
+
+  template<typename G>
+  Selector::Selector(PseudoElement<void, G> state)
+    : m_selector(std::move(state)),
+      m_matcher([] (const Selector& self, const Selector& selector) {
+        return selector.get_type() == typeid(PseudoElement<void, G>);
       }) {}
 
   template<typename U>

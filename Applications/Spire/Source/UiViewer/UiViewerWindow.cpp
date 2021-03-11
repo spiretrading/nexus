@@ -88,6 +88,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_checkbox_profile());
   add(make_color_selector_button_profile());
   add(make_currency_combo_box_profile());
+  add(make_decimal_box_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
   add(make_text_box_profile());

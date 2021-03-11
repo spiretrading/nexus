@@ -33,6 +33,9 @@ namespace Spire {
         //! The icon's disabled color.
         QColor m_disabled_color;
 
+        //! The icon's disabled background color.
+        QColor m_disabled_background_color;
+
         //! The icon's hover color.
         QColor m_hover_color;
 

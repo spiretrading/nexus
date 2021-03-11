@@ -22,12 +22,13 @@ namespace {
 IconButton::Style::Style()
   : m_blur_color("#7F5EEC"),
     m_checked_blur_color("#1FD37A"),
-    m_checked_color("#1FD37A"),
+    m_checked_color(m_checked_blur_color),
     m_checked_hovered_color("#2CAC79"),
-    m_default_color("#7F5EEC"),
+    m_default_color(m_blur_color),
     m_disabled_color("#D0D0D0"),
+    m_disabled_background_color("#F5F5F5"),
     m_hover_color("#4B23A0"),
-    m_default_background_color("#F5F5F5"),
+    m_default_background_color(m_disabled_background_color),
     m_hover_background_color("#E3E3E3") {}
 
 IconButton::IconButton(QImage icon, QWidget* parent)
@@ -83,7 +84,9 @@ QSize IconButton::sizeHint() const {
 }
 
 const QColor& IconButton::get_background_color() const {
-  if(!underMouse() || !isEnabled()) {
+  if(!isEnabled()) {
+    return m_style.m_disabled_background_color;
+  } else if(!underMouse()) {
     return m_style.m_default_background_color;
   }
   return m_style.m_hover_background_color;

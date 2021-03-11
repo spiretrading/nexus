@@ -1,11 +1,13 @@
 #include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/VoidSelector.hpp"
 #include <deque>
 
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  bool base_test_selector(const QWidget& widget, const Selector& selector) {
+  bool base_test_selector(const QWidget& widget, const Selector& element,
+      const Selector& selector) {
     return selector.visit(
       [&] (Any) {
         return true;
@@ -17,29 +19,30 @@ namespace {
         return !widget.isEnabled();
       },
       [&] (Hover) {
-        return widget.isEnabled() && widget.underMouse();
+        return widget.isEnabled() && widget.rect().contains(
+          widget.mapFromGlobal(QCursor::pos()));
       },
       [&] (Focus) {
         return widget.hasFocus();
       },
       [&] (const NotSelector& selector) {
-        return !test_selector(widget, selector.get_selector());
+        return !test_selector(widget, element, selector.get_selector());
       },
       [&] (const AndSelector& selector) {
-        return test_selector(widget, selector.get_left()) &&
-          test_selector(widget, selector.get_right());
+        return test_selector(widget, element, selector.get_left()) &&
+          test_selector(widget, element, selector.get_right());
       },
       [&] (const OrSelector& selector) {
-        return test_selector(widget, selector.get_left()) ||
-          test_selector(widget, selector.get_right());
+        return test_selector(widget, element, selector.get_left()) ||
+          test_selector(widget, element, selector.get_right());
       },
       [&] (const AncestorSelector& selector) {
-        if(!test_selector(widget, selector.get_base())) {
+        if(!test_selector(widget, element, selector.get_base())) {
           return false;
         }
         auto p = widget.parentWidget();
         while(p != nullptr) {
-          if(test_selector(*p, selector.get_ancestor())) {
+          if(test_selector(*p, element, selector.get_ancestor())) {
             return true;
           }
           p = p->parentWidget();
@@ -47,16 +50,16 @@ namespace {
         return false;
       },
       [&] (const ParentSelector& selector) {
-        if(!test_selector(widget, selector.get_base())) {
+        if(!test_selector(widget, element, selector.get_base())) {
           return false;
         }
         if(auto p = widget.parentWidget()) {
-          return test_selector(*p, selector.get_parent());
+          return test_selector(*p, element, selector.get_parent());
         }
         return false;
       },
       [&] (const DescendantSelector& selector) {
-        if(!test_selector(widget, selector.get_base())) {
+        if(!test_selector(widget, element, selector.get_base())) {
           return false;
         }
         auto descendants = std::deque<QWidget*>();
@@ -68,7 +71,7 @@ namespace {
         while(!descendants.empty()) {
           auto descendant = descendants.front();
           descendants.pop_front();
-          if(test_selector(*descendant, selector.get_descendant())) {
+          if(test_selector(*descendant, element, selector.get_descendant())) {
             return true;
           }
           for(auto child : descendant->children()) {
@@ -80,12 +83,12 @@ namespace {
         return false;
       },
       [&] (const ChildSelector& selector) {
-        if(!test_selector(widget, selector.get_base())) {
+        if(!test_selector(widget, element, selector.get_base())) {
           return false;
         }
         for(auto child : widget.children()) {
           if(auto c = qobject_cast<QWidget*>(child)) {
-            if(test_selector(*c, selector.get_child())) {
+            if(test_selector(*c, element, selector.get_child())) {
               return true;
             }
           }
@@ -95,8 +98,8 @@ namespace {
       [&] (const IsASelector& selector) {
         return selector.is_instance(widget);
       },
-      [] {
-        return false;
+      [&] {
+        return selector.is_match(element);
       });
   }
 }
@@ -119,12 +122,16 @@ void StyledWidget::set_style(const StyleSheet& style) {
 }
 
 Block StyledWidget::compute_style() const {
+  return compute_style(VoidSelector());
+}
+
+Block StyledWidget::compute_style(const Selector& element) const {
   auto block = Block();
   auto widget = static_cast<const QObject*>(this);
   while(widget) {
     if(auto styled_widget = dynamic_cast<const StyledWidget*>(widget)) {
       for(auto& rule : styled_widget->m_style.get_rules()) {
-        if(test_selector(rule.get_selector())) {
+        if(test_selector(element, rule.get_selector())) {
           merge(block, rule.get_block());
         }
       }
@@ -134,8 +141,9 @@ Block StyledWidget::compute_style() const {
   return block;
 }
 
-bool StyledWidget::test_selector(const Selector& selector) const {
-  return base_test_selector(*this, selector);
+bool StyledWidget::test_selector(const Selector& element,
+    const Selector& selector) const {
+  return base_test_selector(*this, element, selector);
 }
 
 void StyledWidget::style_updated() {
@@ -144,8 +152,13 @@ void StyledWidget::style_updated() {
 
 bool Spire::Styles::test_selector(const QWidget& widget,
     const Selector& selector) {
+  return test_selector(widget, VoidSelector(), selector);
+}
+
+bool Spire::Styles::test_selector(const QWidget& widget,
+    const Selector& element, const Selector& selector) {
   if(auto styled_widget = dynamic_cast<const StyledWidget*>(&widget)) {
-    return styled_widget->test_selector(selector);
+    return styled_widget->test_selector(element, selector);
   }
-  return base_test_selector(widget, selector);
+  return base_test_selector(widget, element, selector);
 }

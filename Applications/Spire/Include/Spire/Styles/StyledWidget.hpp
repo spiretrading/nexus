@@ -11,6 +11,7 @@
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/ParentSelector.hpp"
+#include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
@@ -46,15 +47,20 @@ namespace Spire::Styles {
       /** Returns a Block containing this immediate widget's computed style. */
       Block compute_style() const;
 
+      /** Returns a Block containing the computed style for a pseudo-element. */
+      Block compute_style(const Selector& element) const;
+
     protected:
 
       /**
-       * Tests if a Selector applies to this StyledWidget.
+       * Tests if a Selector applies to this StyledWidget's pseudo-element.
+       * @param element The pseudo-element to test.
        * @param selector The Selector to test.
        * @return <code>true</code> iff the <i>selector</i> applies to this
-       *         StyledWidget.
+       *         StyledWidget's <i>element</i>.
        */
-      virtual bool test_selector(const Selector& selector) const;
+      virtual bool test_selector(const Selector& element,
+        const Selector& selector) const;
 
       /** Indicates the StyleSheet has been updated. */
       virtual void style_updated();
@@ -62,7 +68,7 @@ namespace Spire::Styles {
     private:
       StyleSheet m_style;
 
-      friend bool test_selector(const QWidget& widget,
+      friend bool test_selector(const QWidget& widget, const Selector& element,
         const Selector& selector);
   };
 
@@ -73,6 +79,17 @@ namespace Spire::Styles {
    * @return <code>true</code> iff the <i>selector</i> applies to <i>widget</i>.
    */
   bool test_selector(const QWidget& widget, const Selector& selector);
+
+  /**
+   * Tests if a Selector applies to a QWidget's pseudo-element.
+   * @param widget The widget to test.
+   * @param element The pseudo-element to select.
+   * @param selector The Selector to test.
+   * @return <code>true</code> iff the <i>selector</i> applies to the
+   *         <i>widget</i>'s pseudo-element.
+   */
+  bool test_selector(const QWidget& widget, const Selector& element,
+    const Selector& selector);
 }
 
 #endif

@@ -16,11 +16,13 @@ namespace Spire::Styles {
   class OrSelector;
   class ParentSelector;
   class Property;
+  template<typename T, typename G> class PseudoElement;
   class Rule;
   class Selector;
   template<typename T, typename G> class StateSelector;
   class StyledWidget;
   class StyleSheet;
+  class VoidSelector;
 }
 
 #endif
