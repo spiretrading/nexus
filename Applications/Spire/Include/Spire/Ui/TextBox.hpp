@@ -108,7 +108,6 @@ namespace Styles {
 
       void on_editing_finished();
       void on_text_edited(const QString& text);
-      void on_text_changed(const QString& text);
       bool is_placeholder_shown() const;
       QString get_elided_text(const QFontMetrics& font_metrics,
         const QString& text) const;

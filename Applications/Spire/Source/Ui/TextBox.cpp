@@ -91,8 +91,6 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
-  connect(m_line_edit, &QLineEdit::textChanged, this,
-    &TextBox::on_text_changed);
 }
 
 const QString& TextBox::get_current() const {
@@ -161,7 +159,6 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     auto focusEvent = static_cast<QFocusEvent*>(event);
     if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
-      auto blocker = QSignalBlocker(m_line_edit);
       m_line_edit->setText(m_current);
     }
   } else if(event->type() == QEvent::FocusOut) {
@@ -412,10 +409,6 @@ void TextBox::on_text_edited(const QString& text) {
   m_current_signal(m_current);
 }
 
-void TextBox::on_text_changed(const QString& text) {
-  update_placeholder_text();
-}
-
 bool TextBox::is_placeholder_shown() const {
   return !is_read_only() && m_current.isEmpty() &&
     !m_placeholder_text.isEmpty();
@@ -439,7 +432,6 @@ QString TextBox::get_elided_text(const QFontMetrics& font_metrics,
 }
 
 void TextBox::elide_text() {
-  auto blocker = QSignalBlocker(m_line_edit);
   m_line_edit->setText(get_elided_text(m_line_edit->fontMetrics(), m_current));
   m_line_edit->setCursorPosition(0);
 }
@@ -448,7 +440,6 @@ void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
   } else {
-    auto blocker = QSignalBlocker(m_line_edit);
     m_line_edit->setText(m_current);
   }
 }
