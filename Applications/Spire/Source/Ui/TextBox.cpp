@@ -284,6 +284,10 @@ void TextBox::paintEvent(QPaintEvent* event) {
   if(is_placeholder_shown()) {
     for(auto& property : placeholder_computed_style.get_properties()) {
       property.visit(
+        [&] (const BackgroundColor& color) {
+          line_edit_style += "background-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        },
         [&] (const BorderTopSize& size) {
           placeholder_style += "border-top-width: " + QString::number(
             size.get_expression().as<int>()) + "px;";
@@ -299,6 +303,22 @@ void TextBox::paintEvent(QPaintEvent* event) {
         [&] (const BorderLeftSize& size) {
           placeholder_style += "border-left-width: " + QString::number(
             size.get_expression().as<int>()) + "px;";
+        },
+        [&] (const BorderTopColor& color) {
+          line_edit_style += "border-top-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        },
+        [&] (const BorderRightColor& color) {
+          line_edit_style += "border-right-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        },
+        [&] (const BorderBottomColor& color) {
+          line_edit_style += "border-bottom-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        },
+        [&] (const BorderLeftColor& color) {
+          line_edit_style += "border-left-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
         },
         [&] (const TextColor& color) {
           placeholder_style += "color: " +
