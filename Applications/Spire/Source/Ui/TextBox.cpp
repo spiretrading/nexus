@@ -72,6 +72,7 @@ TextBox::TextBox(const QString& current, QWidget* parent)
       m_submission(m_current) {
   m_line_edit = new QLineEdit(m_current, this);
   m_line_edit->setFrame(false);
+  m_line_edit->setTextMargins(-1, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
@@ -80,6 +81,8 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   m_placeholder = new QLabel(this);
   m_placeholder->setCursor(m_line_edit->cursor());
   m_placeholder->setTextFormat(Qt::PlainText);
+  m_placeholder->setMargin(0);
+  m_placeholder->setIndent(0);
   m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit->stackUnder(m_placeholder);
@@ -214,6 +217,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
       border-color: transparent;)");
   auto line_edit_style = QString("QLineEdit {");
   line_edit_style += "border-style: solid;";
+  auto is_line_edit_updated = false;
   for(auto& property : line_edit_computed_style.get_properties()) {
     property.visit(
       [&] (const BackgroundColor& color) {
@@ -257,11 +261,20 @@ void TextBox::paintEvent(QPaintEvent* event) {
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
       [&] (const TextAlign& alignment) {
-        m_line_edit->setAlignment(
-          alignment.get_expression().as<Qt::Alignment>());
+        auto computed_alignment =
+          alignment.get_expression().as<Qt::Alignment>();
+        if(computed_alignment != m_line_edit->alignment()) {
+          m_line_edit->setAlignment(computed_alignment);
+          is_line_edit_updated = true;
+        }
       },
       [&] (const Font& font) {
-        m_line_edit->setFont(font.get_expression().as<QFont>());
+        auto computed_font = font.get_expression().as<QFont>();
+        if(m_line_edit_font != computed_font) {
+          m_line_edit_font = computed_font;
+          m_line_edit->setFont(computed_font);
+          is_line_edit_updated = true;
+        }
       },
       [&] (const PaddingTop& size) {
         line_edit_style += "padding-top: " + QString::number(
@@ -277,10 +290,11 @@ void TextBox::paintEvent(QPaintEvent* event) {
       },
       [&] (const PaddingLeft& size) {
         line_edit_style += "padding-left: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
+          size.get_expression().as<int>() - scale_width(1)) + "px;";
       },
       [] {});
   }
+  auto is_placeholder_updated = false;
   if(is_placeholder_shown()) {
     for(auto& property : placeholder_computed_style.get_properties()) {
       property.visit(
@@ -325,11 +339,20 @@ void TextBox::paintEvent(QPaintEvent* event) {
             color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
         },
         [&] (const TextAlign& alignment) {
-          m_placeholder->setAlignment(
-            alignment.get_expression().as<Qt::Alignment>());
+          auto computed_alignment =
+            alignment.get_expression().as<Qt::Alignment>();
+          if(computed_alignment != m_placeholder->alignment()) {
+            m_placeholder->setAlignment(computed_alignment);
+            is_placeholder_updated = true;
+          }
         },
         [&] (const Font& font) {
-          m_placeholder->setFont(font.get_expression().as<QFont>());
+          auto computed_font = font.get_expression().as<QFont>();
+          if(m_placeholder_font != computed_font) {
+            m_placeholder_font = computed_font;
+            m_placeholder->setFont(computed_font);
+            is_placeholder_updated = true;
+          }
         },
         [&] (const PaddingTop& size) {
           placeholder_style += "padding-top: " + QString::number(
@@ -353,10 +376,18 @@ void TextBox::paintEvent(QPaintEvent* event) {
   line_edit_style += "}";
   if(line_edit_style != m_line_edit->styleSheet()) {
     m_line_edit->setStyleSheet(line_edit_style);
+    is_line_edit_updated = true;
+  }
+  if(is_line_edit_updated) {
+    elide_text();
   }
   placeholder_style += "}";
   if(placeholder_style != m_placeholder->styleSheet()) {
     m_placeholder->setStyleSheet(placeholder_style);
+    is_placeholder_updated = true;
+  }
+  if(is_placeholder_updated) {
+    update_placeholder_text();
   }
   StyledWidget::paintEvent(event);
 }

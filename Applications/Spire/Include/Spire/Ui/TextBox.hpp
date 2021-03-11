@@ -99,7 +99,9 @@ namespace Styles {
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
       QLineEdit* m_line_edit;
+      QFont m_line_edit_font;
       QLabel* m_placeholder;
+      QFont m_placeholder_font;
       QString m_current;
       QString m_submission;
       QString m_placeholder_text;
