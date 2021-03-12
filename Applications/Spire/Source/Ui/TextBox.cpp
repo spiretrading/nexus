@@ -432,7 +432,21 @@ QString TextBox::get_elided_text(const QFontMetrics& font_metrics,
 }
 
 void TextBox::elide_text() {
-  m_line_edit->setText(get_elided_text(m_line_edit->fontMetrics(), m_current));
+  auto font_metrics = m_line_edit->fontMetrics();
+  auto option = QStyleOptionFrame();
+  option.initFrom(m_line_edit);
+  option.rect = m_line_edit->contentsRect();
+  option.lineWidth = 0;
+  option.midLineWidth = 0;
+  option.state |= QStyle::State_Sunken;
+  if(is_read_only()) {
+    option.state |= QStyle::State_ReadOnly;
+  }
+  option.features = QStyleOptionFrame::None;
+  auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
+    &option, m_line_edit);
+  m_line_edit->setText(font_metrics.elidedText(m_current, Qt::ElideRight,
+    rect.width()));
   m_line_edit->setCursorPosition(0);
 }
 
@@ -446,8 +460,31 @@ void TextBox::update_display_text() {
 
 void TextBox::update_placeholder_text() {
   if(is_placeholder_shown()) {
-    m_placeholder->setText(get_elided_text(m_placeholder->fontMetrics(),
-      m_placeholder_text));
+    auto font_metrics = m_placeholder->fontMetrics();
+    auto rect = m_placeholder->contentsRect();
+    auto m = font_metrics.horizontalAdvance(QLatin1Char('x')) / 2 -
+      m_placeholder->margin();
+    auto text_direction = [=] () -> Qt::LayoutDirection {
+      if(m_placeholder_text.isRightToLeft()) {
+        return Qt::RightToLeft;
+      } else {
+        return Qt::LeftToRight;
+      }
+    }();
+    const int align = QStyle::visualAlignment(text_direction,
+      QFlag(m_placeholder->alignment()));
+    if(align & Qt::AlignLeft) {
+      rect.setLeft(rect.left() + m);
+    } else if(align & Qt::AlignRight) {
+      rect.setRight(rect.right() - m);
+    } else if(align & Qt::AlignTop) {
+      rect.setTop(rect.top() + m);
+    } else if(align & Qt::AlignBottom) {
+      rect.setBottom(rect.bottom() - m);
+    }
+    auto placeholder_text = font_metrics.elidedText(m_placeholder_text,
+      Qt::ElideRight, rect.width());
+    m_placeholder->setText(placeholder_text);
     m_placeholder->show();
   } else {
     m_placeholder->hide();
