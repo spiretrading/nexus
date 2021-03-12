@@ -159,14 +159,16 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     auto focusEvent = static_cast<QFocusEvent*>(event);
     if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
-      m_line_edit->setText(m_current);
+      if(m_line_edit->text() != m_current) {
+        m_line_edit->setText(m_current);
+      }
     }
   } else if(event->type() == QEvent::FocusOut) {
     auto focusEvent = static_cast<QFocusEvent*>(event);
     if(focusEvent->lostFocus() &&
         focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
-      elide_text();
+      update_display_text();
     }
   }
   return StyledWidget::eventFilter(watched, event);
@@ -218,8 +220,10 @@ void TextBox::paintEvent(QPaintEvent* event) {
   for(auto& property : line_edit_computed_style.get_properties()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        line_edit_style += "background-color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        if(!is_placeholder_shown()) {
+          line_edit_style += "background-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        }
       },
       [&] (const BorderTopSize& size) {
         line_edit_style += "border-top-width: " + QString::number(
@@ -238,20 +242,28 @@ void TextBox::paintEvent(QPaintEvent* event) {
           size.get_expression().as<int>()) + "px;";
       },
       [&] (const BorderTopColor& color) {
-        line_edit_style += "border-top-color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        if(!is_placeholder_shown()) {
+          line_edit_style += "border-top-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        }
       },
       [&] (const BorderRightColor& color) {
-        line_edit_style += "border-right-color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        if(!is_placeholder_shown()) {
+          line_edit_style += "border-right-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        }
       },
       [&] (const BorderBottomColor& color) {
-        line_edit_style += "border-bottom-color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        if(!is_placeholder_shown()) {
+          line_edit_style += "border-bottom-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        }
       },
       [&] (const BorderLeftColor& color) {
-        line_edit_style += "border-left-color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        if(!is_placeholder_shown()) {
+          line_edit_style += "border-left-color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        }
       },
       [&] (const TextColor& color) {
         line_edit_style += "color: " +
@@ -376,7 +388,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
     is_line_edit_updated = true;
   }
   if(is_line_edit_updated) {
-    elide_text();
+    update_display_text();
   }
   placeholder_style += "}";
   if(placeholder_style != m_placeholder->styleSheet()) {
@@ -445,15 +457,18 @@ void TextBox::elide_text() {
   option.features = QStyleOptionFrame::None;
   auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
     &option, m_line_edit);
-  m_line_edit->setText(font_metrics.elidedText(m_current, Qt::ElideRight,
-    rect.width()));
-  m_line_edit->setCursorPosition(0);
+  auto elided_text = font_metrics.elidedText(m_current, Qt::ElideRight,
+    rect.width());
+  if(elided_text != m_line_edit->text()) {
+    m_line_edit->setText(elided_text);
+    m_line_edit->setCursorPosition(0);
+  }
 }
 
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else {
+  } else if(m_line_edit->text() != m_current) {
     m_line_edit->setText(m_current);
   }
 }
@@ -471,7 +486,7 @@ void TextBox::update_placeholder_text() {
         return Qt::LeftToRight;
       }
     }();
-    const int align = QStyle::visualAlignment(text_direction,
+    auto align = QStyle::visualAlignment(text_direction,
       QFlag(m_placeholder->alignment()));
     if(align & Qt::AlignLeft) {
       rect.setLeft(rect.left() + m);
