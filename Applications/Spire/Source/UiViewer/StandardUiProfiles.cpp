@@ -3,6 +3,7 @@
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
@@ -16,6 +17,18 @@
 
 using namespace Nexus;
 using namespace Spire;
+
+UiProfile Spire::make_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("Box"), properties,
+    [] (auto& profile) {
+      auto box = new Box();
+      apply_widget_properties(box, profile.get_properties());
+      return box;
+    });
+  return profile;
+}
 
 UiProfile Spire::make_checkbox_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
