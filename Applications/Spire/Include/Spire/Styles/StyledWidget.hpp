@@ -4,7 +4,6 @@
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Styles/BoxSelectors.hpp"
-#include "Spire/Styles/BoxStyles.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"

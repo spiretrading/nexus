@@ -89,7 +89,7 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   auto content_layout = new QHBoxLayout(m_content_layer);
   content_layout->setContentsMargins(0, 0, 0, 0);
   content_layout->addWidget(m_line_edit);
-  m_box = new Box(*m_content_layer, this);
+  m_box = new Box(m_content_layer, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);

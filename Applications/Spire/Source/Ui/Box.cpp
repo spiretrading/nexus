@@ -20,11 +20,32 @@ namespace {
   }
 }
 
-Box::Box(QWidget& body, QWidget* parent)
-  : Box(&body, parent) {}
+BorderSize Spire::Styles::border_size(Expression<int> size) {
+  return BorderSize(size, size, size, size);
+}
 
-Box::Box(QWidget* parent)
-  : Box(nullptr, parent) {}
+BorderColor Spire::Styles::border_color(Expression<QColor> color) {
+  return BorderColor(color, color, color, color);
+}
+
+Border Spire::Styles::border(Expression<int> size, Expression<QColor> color) {
+  return Border(border_size(size), border_color(color));
+}
+
+HorizontalPadding Spire::Styles::horizontal_padding(int size) {
+  return HorizontalPadding(PaddingRight(size), PaddingLeft(size));
+}
+
+Box::Box(QWidget* body, QWidget* parent)
+  : StyledWidget(parent),
+    m_body(body) {
+  setObjectName("Box");
+  set_style(DEFAULT_STYLE());
+  if(m_body) {
+    m_body->setParent(this);
+    setFocusProxy(m_body);
+  }
+}
 
 void Box::enterEvent(QEvent* event) {
   update();
@@ -113,15 +134,4 @@ void Box::paintEvent(QPaintEvent* event) {
     }
   }
   StyledWidget::paintEvent(event);
-}
-
-Box::Box(QWidget* body, QWidget* parent)
-  : StyledWidget(parent),
-    m_body(body) {
-  setObjectName("Box");
-  set_style(DEFAULT_STYLE());
-  if(m_body) {
-    m_body->setParent(this);
-    setFocusProxy(m_body);
-  }
 }

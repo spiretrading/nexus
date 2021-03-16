@@ -1,7 +1,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;

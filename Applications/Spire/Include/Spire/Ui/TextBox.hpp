@@ -5,7 +5,7 @@
 #include <QTimeLine>
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/StyledWidget.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Box.hpp"
 
 namespace Spire {
 namespace Styles {
