@@ -4,7 +4,9 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -70,15 +72,13 @@ TextBox::TextBox(const QString& current, QWidget* parent)
     : StyledWidget(parent),
       m_current(current),
       m_submission(m_current) {
-  m_line_edit = new QLineEdit(m_current, this);
+  m_content_layer = new QWidget(this);
+  m_line_edit = new QLineEdit(m_current, m_content_layer);
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-1, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit->installEventFilter(this);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(m_line_edit);
-  m_placeholder = new QLabel(this);
+  m_placeholder = new QLabel(m_content_layer);
   m_placeholder->setCursor(m_line_edit->cursor());
   m_placeholder->setTextFormat(Qt::PlainText);
   m_placeholder->setMargin(0);
@@ -86,6 +86,13 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit->stackUnder(m_placeholder);
+  auto content_layout = new QHBoxLayout(m_content_layer);
+  content_layout->setContentsMargins(0, 0, 0, 0);
+  content_layout->addWidget(m_line_edit);
+  m_box = new Box(*m_content_layer, this);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->addWidget(m_box);
   set_style(DEFAULT_STYLE());
   setFocusProxy(m_line_edit);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
@@ -182,14 +189,6 @@ void TextBox::changeEvent(QEvent* event) {
   StyledWidget::changeEvent(event);
 }
 
-void TextBox::enterEvent(QEvent* event) {
-  update();
-}
-
-void TextBox::leaveEvent(QEvent* event) {
-  update();
-}
-
 void TextBox::mousePressEvent(QMouseEvent* event) {
   if(is_placeholder_shown()) {
     m_line_edit->setFocus();
@@ -213,58 +212,16 @@ void TextBox::paintEvent(QPaintEvent* event) {
   auto placeholder_style = QString(
     R"(QLabel {
       background: transparent;
-      border-color: transparent;)");
-  auto line_edit_style = QString("QLineEdit {");
-  line_edit_style += "border-style: solid;";
+      border-width: 0px;
+      padding: 0px;)");
+  auto line_edit_style = QString(
+    R"(QLineEdit {
+      background: transparent;
+      border-width: 0px;
+      padding: 0px;)");
   auto is_line_edit_updated = false;
   for(auto& property : line_edit_computed_style.get_properties()) {
     property.visit(
-      [&] (const BackgroundColor& color) {
-        if(!is_placeholder_shown()) {
-          line_edit_style += "background-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        }
-      },
-      [&] (const BorderTopSize& size) {
-        line_edit_style += "border-top-width: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const BorderRightSize& size) {
-        line_edit_style += "border-right-width: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const BorderBottomSize& size) {
-        line_edit_style += "border-bottom-width: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const BorderLeftSize& size) {
-        line_edit_style += "border-left-width: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const BorderTopColor& color) {
-        if(!is_placeholder_shown()) {
-          line_edit_style += "border-top-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        }
-      },
-      [&] (const BorderRightColor& color) {
-        if(!is_placeholder_shown()) {
-          line_edit_style += "border-right-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        }
-      },
-      [&] (const BorderBottomColor& color) {
-        if(!is_placeholder_shown()) {
-          line_edit_style += "border-bottom-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        }
-      },
-      [&] (const BorderLeftColor& color) {
-        if(!is_placeholder_shown()) {
-          line_edit_style += "border-left-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        }
-      },
       [&] (const TextColor& color) {
         line_edit_style += "color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
@@ -285,64 +242,12 @@ void TextBox::paintEvent(QPaintEvent* event) {
           is_line_edit_updated = true;
         }
       },
-      [&] (const PaddingTop& size) {
-        line_edit_style += "padding-top: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const PaddingRight& size) {
-        line_edit_style += "padding-right: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const PaddingBottom& size) {
-        line_edit_style += "padding-bottom: " + QString::number(
-          size.get_expression().as<int>()) + "px;";
-      },
-      [&] (const PaddingLeft& size) {
-        line_edit_style += "padding-left: " + QString::number(
-          size.get_expression().as<int>() - scale_width(1)) + "px;";
-      },
       [] {});
   }
   auto is_placeholder_updated = false;
   if(is_placeholder_shown()) {
     for(auto& property : placeholder_computed_style.get_properties()) {
       property.visit(
-        [&] (const BackgroundColor& color) {
-          line_edit_style += "background-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        },
-        [&] (const BorderTopSize& size) {
-          placeholder_style += "border-top-width: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const BorderRightSize& size) {
-          placeholder_style += "border-right-width: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const BorderBottomSize& size) {
-          placeholder_style += "border-bottom-width: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const BorderLeftSize& size) {
-          placeholder_style += "border-left-width: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const BorderTopColor& color) {
-          line_edit_style += "border-top-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        },
-        [&] (const BorderRightColor& color) {
-          line_edit_style += "border-right-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        },
-        [&] (const BorderBottomColor& color) {
-          line_edit_style += "border-bottom-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        },
-        [&] (const BorderLeftColor& color) {
-          line_edit_style += "border-left-color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        },
         [&] (const TextColor& color) {
           placeholder_style += "color: " +
             color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
@@ -363,24 +268,19 @@ void TextBox::paintEvent(QPaintEvent* event) {
             is_placeholder_updated = true;
           }
         },
-        [&] (const PaddingTop& size) {
-          placeholder_style += "padding-top: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const PaddingRight& size) {
-          placeholder_style += "padding-right: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const PaddingBottom& size) {
-          placeholder_style += "padding-bottom: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
-        [&] (const PaddingLeft& size) {
-          placeholder_style += "padding-left: " + QString::number(
-            size.get_expression().as<int>()) + "px;";
-        },
         [] {});
     }
+    if(!m_default_box_style) {
+      auto style_sheet = StyleSheet();
+      style_sheet.get(
+        Any()).set_override(Rule::Override::EXCLUSIVE).get_block() =
+        std::move(placeholder_computed_style);
+      m_default_box_style = m_box->get_style();
+      m_box->set_style(std::move(style_sheet));
+    }
+  } else if(m_default_box_style) {
+    m_box->set_style(std::move(*m_default_box_style));
+    m_default_box_style = none;
   }
   line_edit_style += "}";
   if(line_edit_style != m_line_edit->styleSheet()) {
@@ -402,7 +302,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
-  m_placeholder->resize(event->size());
+  m_placeholder->resize(m_content_layer->size());
   update_display_text();
   update_placeholder_text();
   StyledWidget::resizeEvent(event);

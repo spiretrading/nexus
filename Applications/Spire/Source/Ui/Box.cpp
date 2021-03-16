@@ -36,7 +36,7 @@ void Box::leaveEvent(QEvent* event) {
 
 void Box::paintEvent(QPaintEvent* event) {
   auto computed_style = compute_style();
-  auto style = QString();
+  auto style = QString("#Box {");
   style += "border-style: solid;";
   auto body_geometry = QRect(0, 0, width(), height());
   for(auto& property : computed_style.get_properties()) {
@@ -105,6 +105,7 @@ void Box::paintEvent(QPaintEvent* event) {
       },
       [] {});
   }
+  style += "}";
   if(style != styleSheet()) {
     setStyleSheet(style);
     if(m_body) {
@@ -117,8 +118,10 @@ void Box::paintEvent(QPaintEvent* event) {
 Box::Box(QWidget* body, QWidget* parent)
   : StyledWidget(parent),
     m_body(body) {
+  setObjectName("Box");
   set_style(DEFAULT_STYLE());
   if(m_body) {
+    m_body->setParent(this);
     setFocusProxy(m_body);
   }
 }

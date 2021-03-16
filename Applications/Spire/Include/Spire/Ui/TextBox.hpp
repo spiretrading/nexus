@@ -3,6 +3,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QTimeLine>
+#include <boost/optional/optional.hpp>
 #include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -88,8 +89,6 @@ namespace Styles {
         const Styles::Selector& selector) const override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
-      void enterEvent(QEvent* event) override;
-      void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
@@ -98,6 +97,9 @@ namespace Styles {
     private:
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
+      Box* m_box;
+      boost::optional<Styles::StyleSheet> m_default_box_style;
+      QWidget* m_content_layer;
       QLineEdit* m_line_edit;
       QFont m_line_edit_font;
       QLabel* m_placeholder;

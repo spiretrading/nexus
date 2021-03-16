@@ -1,6 +1,7 @@
 #include "Spire/Styles/StyledWidget.hpp"
-#include "Spire/Styles/VoidSelector.hpp"
 #include <deque>
+#include <set>
+#include "Spire/Styles/VoidSelector.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -128,11 +129,27 @@ Block StyledWidget::compute_style() const {
 Block StyledWidget::compute_style(const Selector& element) const {
   auto block = Block();
   auto widget = static_cast<const QObject*>(this);
+  auto excluded = std::set<std::type_index>();
   while(widget) {
     if(auto styled_widget = dynamic_cast<const StyledWidget*>(widget)) {
       for(auto& rule : styled_widget->m_style.get_rules()) {
         if(test_selector(element, rule.get_selector())) {
-          merge(block, rule.get_block());
+          if(excluded.empty()) {
+            merge(block, rule.get_block());
+          } else {
+            for(auto& property : rule.get_block().get_properties()) {
+              if(excluded.find(property.get_type()) == excluded.end()) {
+                block.set(property);
+              }
+            }
+          }
+          if(rule.get_override() == Rule::Override::NONE) {
+            return block;
+          } else if(rule.get_override() == Rule::Override::EXCLUSIVE) {
+            for(auto& property : rule.get_block().get_properties()) {
+              excluded.insert(property.get_type());
+            }
+          }
         }
       }
     }
