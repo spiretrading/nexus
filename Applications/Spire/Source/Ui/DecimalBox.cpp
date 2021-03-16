@@ -101,7 +101,7 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
       m_modifiers(std::move(modifiers)),
       m_has_trailing_zeros(false),
       m_validator(nullptr),
-      m_trailing_zero_regex(QString("[%1]?[0]*$").arg(
+      m_trailing_zero_regex(QString("[%1][0]*$").arg(
         QLocale().decimalPoint())) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
