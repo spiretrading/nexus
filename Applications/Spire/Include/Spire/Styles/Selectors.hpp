@@ -1,5 +1,5 @@
-#ifndef SPIRE_STYLES_BOX_SELECTORS_HPP
-#define SPIRE_STYLES_BOX_SELECTORS_HPP
+#ifndef SPIRE_STYLES_SELECTORS_HPP
+#define SPIRE_STYLES_SELECTORS_HPP
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 

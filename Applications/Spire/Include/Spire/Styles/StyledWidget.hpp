@@ -3,7 +3,6 @@
 #include <QWidget>
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
-#include "Spire/Styles/BoxSelectors.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/ParentSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
+#include "Spire/Styles/Selectors.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
