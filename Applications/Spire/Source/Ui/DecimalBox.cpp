@@ -117,7 +117,7 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submit) { on_submit(submit); });
-  m_text_box->installEventFilter(this);
+  m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   m_up_button = create_button(":/Icons/arrow-up.svg", this);
   m_up_button->connect_clicked_signal([=] { increment(); });
   m_down_button = create_button(":/Icons/arrow-down.svg", this);
