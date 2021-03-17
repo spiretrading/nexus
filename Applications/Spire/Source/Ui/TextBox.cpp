@@ -256,6 +256,15 @@ void TextBox::paintEvent(QPaintEvent* event) {
       m_default_box_style = m_box->get_style();
       m_box->set_style(std::move(style_sheet));
     }
+  } else if(is_read_only()) {
+    if(!m_default_box_style) {
+      auto style_sheet = StyleSheet();
+      style_sheet.get(
+        Any()).set_override(Rule::Override::EXCLUSIVE).get_block() =
+        std::move(line_edit_computed_style);
+      m_default_box_style = m_box->get_style();
+      m_box->set_style(std::move(style_sheet));
+    }
   } else if(m_default_box_style) {
     m_box->set_style(std::move(*m_default_box_style));
     m_default_box_style = none;
