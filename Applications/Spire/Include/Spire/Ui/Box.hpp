@@ -104,6 +104,12 @@ namespace Styles {
     private:
       QWidget* m_body;
   };
+
+  /**
+   * Displays a red warning indicator on a StyledWidget.
+   * @param widget The widget to display the warning indicator over.
+   */
+  void display_warning_indicator(Styles::StyledWidget& widget);
 }
 
 #endif

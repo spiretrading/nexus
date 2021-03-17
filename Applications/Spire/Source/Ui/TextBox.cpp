@@ -1,10 +1,9 @@
 #include "Spire/Ui/TextBox.hpp"
-#include <array>
 #include <QHBoxLayout>
 #include <QKeyEvent>
-#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/LayeredWidget.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -41,24 +40,6 @@ namespace {
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
-
-  const auto WARNING_FRAME_COUNT = 10;
-
-  auto get_fade_out_step(int start, int end) {
-    return (end - start) / WARNING_FRAME_COUNT;
-  }
-
-  auto get_color_step(const QColor& start_color, const QColor& end_color) {
-    return std::array{get_fade_out_step(start_color.red(), end_color.red()),
-      get_fade_out_step(start_color.green(), end_color.green()),
-      get_fade_out_step(start_color.blue(), end_color.blue())};
-  }
-
-  auto get_fade_out_color(const QColor& color, const std::array<int, 3>& steps,
-      int frame) {
-    return QColor(color.red() + steps[0] * frame,
-      color.green() + steps[1] * frame, color.blue() + steps[2] * frame);
-  }
 }
 
 TextStyle Spire::Styles::text_style(QFont font, QColor color) {
@@ -72,24 +53,22 @@ TextBox::TextBox(const QString& current, QWidget* parent)
     : StyledWidget(parent),
       m_current(current),
       m_submission(m_current) {
-  m_content_layer = new QWidget(this);
-  m_line_edit = new QLineEdit(m_current, m_content_layer);
+  m_layers = new LayeredWidget(this);
+  m_line_edit = new QLineEdit(m_current);
   m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-1, 0, 0, 0);
+  m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit->installEventFilter(this);
-  m_placeholder = new QLabel(m_content_layer);
+  m_layers->add(m_line_edit);
+  m_placeholder = new QLabel();
   m_placeholder->setCursor(m_line_edit->cursor());
   m_placeholder->setTextFormat(Qt::PlainText);
   m_placeholder->setMargin(0);
   m_placeholder->setIndent(0);
   m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_line_edit->stackUnder(m_placeholder);
-  auto content_layout = new QHBoxLayout(m_content_layer);
-  content_layout->setContentsMargins(0, 0, 0, 0);
-  content_layout->addWidget(m_line_edit);
-  m_box = new Box(m_content_layer, this);
+  m_layers->add(m_placeholder);
+  m_box = new Box(m_layers);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
@@ -241,8 +220,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
           m_line_edit->setFont(computed_font);
           is_line_edit_updated = true;
         }
-      },
-      [] {});
+      });
   }
   auto is_placeholder_updated = false;
   if(is_placeholder_shown()) {
@@ -267,8 +245,7 @@ void TextBox::paintEvent(QPaintEvent* event) {
             m_placeholder->setFont(computed_font);
             is_placeholder_updated = true;
           }
-        },
-        [] {});
+        });
     }
     if(!m_default_box_style) {
       auto style_sheet = StyleSheet();
@@ -302,7 +279,6 @@ void TextBox::paintEvent(QPaintEvent* event) {
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
-  m_placeholder->resize(m_content_layer->size());
   update_display_text();
   update_placeholder_text();
   StyledWidget::resizeEvent(event);
@@ -379,7 +355,7 @@ void TextBox::update_placeholder_text() {
     auto rect = m_placeholder->contentsRect();
     auto m = font_metrics.horizontalAdvance(QLatin1Char('x')) / 2 -
       m_placeholder->margin();
-    auto text_direction = [=] () -> Qt::LayoutDirection {
+    auto text_direction = [&] {
       if(m_placeholder_text.isRightToLeft()) {
         return Qt::RightToLeft;
       } else {
@@ -404,56 +380,4 @@ void TextBox::update_placeholder_text() {
   } else {
     m_placeholder->hide();
   }
-}
-
-void Spire::display_warning_indicator(StyledWidget& widget) {
-  const auto WARNING_DURATION = 300;
-  const auto WARNING_FADE_OUT_DELAY = 250;
-  const auto WARNING_BACKGROUND_COLOR = QColor("#FFF1F1");
-  const auto WARNING_BORDER_COLOR = QColor("#B71C1C");
-  auto time_line = new QTimeLine(WARNING_DURATION, &widget);
-  time_line->setFrameRange(0, WARNING_FRAME_COUNT);
-  time_line->setEasingCurve(QEasingCurve::Linear);
-  auto computed_style = widget.compute_style();
-  auto computed_background_color = [&] {
-    if(auto color = find<BackgroundColor>(computed_style)) {
-      return color->get_expression().as<QColor>();
-    }
-    return QColor::fromRgb(0, 0, 0, 0);
-  }();
-  auto background_color_step =
-    get_color_step(WARNING_BACKGROUND_COLOR, computed_background_color);
-  auto computed_border_color = [&] {
-    if(auto border_color = find<BorderTopColor>(computed_style)) {
-      return border_color->get_expression().as<QColor>();
-    }
-    return QColor::fromRgb(0, 0, 0, 0);
-  }();
-  auto border_color_step =
-    get_color_step(WARNING_BORDER_COLOR, computed_border_color);
-  QObject::connect(time_line, &QTimeLine::frameChanged,
-    [=, &widget] (auto frame) {
-      auto frame_background_color = get_fade_out_color(WARNING_BACKGROUND_COLOR,
-        background_color_step, frame);
-      auto frame_border_color =
-        get_fade_out_color(WARNING_BORDER_COLOR, border_color_step, frame);
-      auto animated_style = widget.get_style();
-      animated_style.get(Any()).
-        set(BackgroundColor(frame_background_color)).
-        set(border_color(frame_border_color));
-      widget.set_style(std::move(animated_style));
-    });
-  auto style = widget.get_style();
-  QObject::connect(time_line, &QTimeLine::finished, [=, &widget] () mutable {
-    widget.set_style(std::move(style));
-    time_line->deleteLater();
-  });
-  auto animated_style = StyleSheet();
-  animated_style.get(Any()) = style.get(Any());
-  animated_style.get(Any()).set(BackgroundColor(WARNING_BACKGROUND_COLOR));
-  animated_style.get(Any()).set(border_color(WARNING_BORDER_COLOR));
-  widget.set_style(std::move(animated_style));
-  QTimer::singleShot(WARNING_FADE_OUT_DELAY, &widget, [=] {
-    time_line->start();
-  });
 }

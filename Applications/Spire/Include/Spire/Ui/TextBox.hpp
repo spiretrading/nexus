@@ -2,7 +2,6 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLabel>
 #include <QLineEdit>
-#include <QTimeLine>
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -99,7 +98,7 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       Box* m_box;
       boost::optional<Styles::StyleSheet> m_default_box_style;
-      QWidget* m_content_layer;
+      LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
       QFont m_line_edit_font;
       QLabel* m_placeholder;
@@ -117,12 +116,6 @@ namespace Styles {
       void update_display_text();
       void update_placeholder_text();
   };
-
-  /**
-   * Displays a red warning indicator on a StyledWidget.
-   * @param widget The widget to display the warning indicator over.
-   */
-  void display_warning_indicator(Styles::StyledWidget& widget);
 }
 
 #endif

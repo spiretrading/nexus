@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 #include "Spire/Styles/Block.hpp"
-#include "Spire/Styles/BoxStyles.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
