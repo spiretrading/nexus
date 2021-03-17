@@ -69,11 +69,12 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_layers->add(m_placeholder);
   m_box = new Box(m_layers);
+  m_box->setFocusProxy(m_line_edit);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
   set_style(DEFAULT_STYLE());
-  setFocusProxy(m_line_edit);
+  setFocusProxy(m_box);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
