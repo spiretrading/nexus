@@ -9,7 +9,7 @@ using namespace Spire::Styles;
 namespace {
   bool base_test_selector(const QWidget& widget, const Selector& element,
       const Selector& selector) {
-    return selector.visit(
+    auto is_selected = selector.visit(
       [&] (Any) {
         return true;
       },
@@ -102,6 +102,13 @@ namespace {
       [&] {
         return selector.is_match(element);
       });
+    if(is_selected) {
+      return true;
+    }
+    if(auto parent = widget.parentWidget()) {
+      return test_selector(*parent, element, selector);
+    }
+    return false;
   }
 }
 
