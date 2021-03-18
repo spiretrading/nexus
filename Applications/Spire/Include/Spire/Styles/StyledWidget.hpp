@@ -17,6 +17,22 @@
 
 namespace Spire::Styles {
 
+  /** Specifies whether an element is visible. */
+  enum class VisibilityOption {
+
+    /** The element is visible. */
+    VISIBLE,
+
+    /** The element is invisible. */
+    INVISIBLE,
+
+    /** The element is treated as if it has a width and height of 0. */
+    NONE
+  };
+
+  /** Sets the display mode. */
+  using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
+
   /** Base class for a QWidget styled according to a StyleSheet. */
   class StyledWidget : public QWidget {
     public:
@@ -50,6 +66,16 @@ namespace Spire::Styles {
       /** Returns a Block containing the computed style for a pseudo-element. */
       Block compute_style(const Selector& element) const;
 
+      /**
+       * Tests if a Selector applies to this StyledWidget's pseudo-element.
+       * @param element The pseudo-element to test.
+       * @param selector The Selector to test.
+       * @return <code>true</code> iff the <i>selector</i> applies to this
+       *         StyledWidget's <i>element</i>.
+       */
+      virtual bool test_selector(const Selector& element,
+        const Selector& selector) const;
+
     protected:
 
       /**
@@ -63,16 +89,6 @@ namespace Spire::Styles {
        * @param selector The disabled selector.
        */
       void disable(const Selector& selector);
-
-      /**
-       * Tests if a Selector applies to this StyledWidget's pseudo-element.
-       * @param element The pseudo-element to test.
-       * @param selector The Selector to test.
-       * @return <code>true</code> iff the <i>selector</i> applies to this
-       *         StyledWidget's <i>element</i>.
-       */
-      virtual bool test_selector(const Selector& element,
-        const Selector& selector) const;
 
       /** Indicates the StyleSheet has been updated. */
       virtual void style_updated();
@@ -89,6 +105,7 @@ namespace Spire::Styles {
         bool operator ()(const Selector& left, const Selector& right) const;
       };
       StyleSheet m_style;
+      VisibilityOption m_visibility;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
 

@@ -125,10 +125,6 @@ connection TextBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-QSize TextBox::sizeHint() const {
-  return scale(160, 30);
-}
-
 bool TextBox::test_selector(const Styles::Selector& element,
     const Styles::Selector& selector) const {
   return selector.visit(
@@ -138,6 +134,10 @@ bool TextBox::test_selector(const Styles::Selector& element,
     [&] {
       return StyledWidget::test_selector(element, selector);
     });
+}
+
+QSize TextBox::sizeHint() const {
+  return scale(160, 30);
 }
 
 void TextBox::style_updated() {

@@ -3,6 +3,7 @@
 #include <set>
 #include "Spire/Styles/SelectorRegistry.hpp"
 #include "Spire/Styles/VoidSelector.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -56,6 +57,9 @@ namespace {
           return false;
         }
         if(auto p = widget.parentWidget()) {
+          if(selector.get_parent().is_match(ReadOnly())) {
+            qDebug() << "hrell";
+          }
           return test_selector(*p, element, selector.get_parent());
         }
         return false;
@@ -122,7 +126,8 @@ StyledWidget::StyledWidget(QWidget* parent, Qt::WindowFlags flags)
 StyledWidget::StyledWidget(StyleSheet style, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
-      m_style(std::move(style)) {
+      m_style(std::move(style)),
+      m_visibility(VisibilityOption::VISIBLE) {
   SelectorRegistry::add(*this);
 }
 
@@ -184,6 +189,11 @@ Block StyledWidget::compute_style(const Selector& element) const {
   return block;
 }
 
+bool StyledWidget::test_selector(const Selector& element,
+    const Selector& selector) const {
+  return base_test_selector(*this, element, selector);
+}
+
 void StyledWidget::enable(const Selector& selector) {
   if(m_enabled_selectors.insert(selector).second) {
     SelectorRegistry::find(*this).notify();
@@ -198,16 +208,34 @@ void StyledWidget::disable(const Selector& selector) {
   }
 }
 
-bool StyledWidget::test_selector(const Selector& element,
-    const Selector& selector) const {
-  return base_test_selector(*this, element, selector);
-}
-
 void StyledWidget::style_updated() {
-  update();
+  selector_updated();
 }
 
 void StyledWidget::selector_updated() {
+  auto style = compute_style();
+  auto visibility_option = [&] {
+    if(auto visibility = Spire::Styles::find<Visibility>(style)) {
+      return visibility->get_expression().as<VisibilityOption>();
+    }
+    return VisibilityOption::VISIBLE;
+  }();
+  if(visibility_option != m_visibility) {
+    if(visibility_option == VisibilityOption::VISIBLE) {
+      show();
+    } else if(visibility_option == VisibilityOption::NONE) {
+      auto size = sizePolicy();
+      size.setRetainSizeWhenHidden(false);
+      setSizePolicy(size);
+      hide();
+    } else if(visibility_option == VisibilityOption::INVISIBLE) {
+      auto size = sizePolicy();
+      size.setRetainSizeWhenHidden(true);
+      setSizePolicy(size);
+      hide();
+    }
+    m_visibility = visibility_option;
+  }
   update();
 }
 

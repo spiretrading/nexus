@@ -80,11 +80,12 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      bool test_selector(const Styles::Selector& element,
+        const Styles::Selector& selector) const override;
+
       QSize sizeHint() const override;
 
     protected:
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
       void style_updated() override;
       void selector_updated() override;
       bool eventFilter(QObject* watched, QEvent* event) override;

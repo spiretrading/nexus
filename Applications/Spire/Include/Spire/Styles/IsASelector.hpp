@@ -2,6 +2,7 @@
 #define SPIRE_STYLES_IS_A_SELECTOR_HPP
 #include <functional>
 #include <typeindex>
+#include <type_traits>
 #include <QWidget>
 #include "Spire/Styles/Styles.hpp"
 
@@ -15,7 +16,7 @@ namespace Spire::Styles {
        * Constructs an IsASelector.
        */
       template<typename T>
-      IsASelector();
+      IsASelector(std::in_place_type_t<T>);
 
       /** Returns the selector's type. */
       const std::type_index& get_type() const;
@@ -34,11 +35,11 @@ namespace Spire::Styles {
    */
   template<typename T>
   auto is_a() {
-    return IsASelector<T>();
+    return IsASelector(std::in_place_type<T>);
   }
 
   template<typename T>
-  IsASelector::IsASelector()
+  IsASelector::IsASelector(std::in_place_type_t<T>)
     : m_type(typeid(T)),
       m_is_instance([] (const QWidget& widget) {
         return dynamic_cast<const T*>(&widget) != nullptr;
