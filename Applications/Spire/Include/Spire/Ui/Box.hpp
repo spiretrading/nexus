@@ -97,9 +97,8 @@ namespace Styles {
       explicit Box(QWidget* body, QWidget* parent = nullptr);
 
     protected:
-      void enterEvent(QEvent* event) override;
-      void leaveEvent(QEvent* event) override;
-      void paintEvent(QPaintEvent* event) override;
+      void style_updated() override;
+      void selector_updated() override;
 
     private:
       QWidget* m_body;

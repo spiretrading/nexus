@@ -1,6 +1,7 @@
 #include "Spire/Styles/StyledWidget.hpp"
 #include <deque>
 #include <set>
+#include "Spire/Styles/SelectorRegistry.hpp"
 #include "Spire/Styles/VoidSelector.hpp"
 
 using namespace Spire;
@@ -105,13 +106,25 @@ namespace {
   }
 }
 
+std::size_t StyledWidget::SelectorHash::operator ()(
+    const Selector& selector) const {
+  return selector.get_type().hash_code();
+}
+
+bool StyledWidget::SelectorEquality::operator ()(
+    const Selector& left, const Selector& right) const {
+  return left.is_match(right);
+}
+
 StyledWidget::StyledWidget(QWidget* parent, Qt::WindowFlags flags)
   : StyledWidget({}, parent, flags) {}
 
 StyledWidget::StyledWidget(StyleSheet style, QWidget* parent,
-  Qt::WindowFlags flags)
-  : m_style(std::move(style)),
-    QWidget(parent, flags) {}
+    Qt::WindowFlags flags)
+    : QWidget(parent, flags),
+      m_style(std::move(style)) {
+  SelectorRegistry::add(*this);
+}
 
 const StyleSheet& StyledWidget::get_style() const {
   return m_style;
@@ -119,7 +132,20 @@ const StyleSheet& StyledWidget::get_style() const {
 
 void StyledWidget::set_style(const StyleSheet& style) {
   m_style = style;
-  style_updated();
+  auto descendants = std::deque<QWidget*>();
+  descendants.push_back(this);
+  while(!descendants.empty()) {
+    auto descendant = descendants.front();
+    descendants.pop_front();
+    if(auto styled_descendant = dynamic_cast<StyledWidget*>(descendant)) {
+      styled_descendant->style_updated();
+    }
+    for(auto child : descendant->children()) {
+      if(auto widget = dynamic_cast<QWidget*>(child)) {
+        descendants.push_back(widget);
+      }
+    }
+  }
 }
 
 Block StyledWidget::compute_style() const {
@@ -158,12 +184,30 @@ Block StyledWidget::compute_style(const Selector& element) const {
   return block;
 }
 
+void StyledWidget::enable(const Selector& selector) {
+  if(m_enabled_selectors.insert(selector).second) {
+    SelectorRegistry::find(*this).notify();
+  }
+}
+
+void StyledWidget::disable(const Selector& selector) {
+  auto i = m_enabled_selectors.find(selector);
+  if(i != m_enabled_selectors.end()) {
+    m_enabled_selectors.erase(i);
+    SelectorRegistry::find(*this).notify();
+  }
+}
+
 bool StyledWidget::test_selector(const Selector& element,
     const Selector& selector) const {
   return base_test_selector(*this, element, selector);
 }
 
 void StyledWidget::style_updated() {
+  update();
+}
+
+void StyledWidget::selector_updated() {
   update();
 }
 

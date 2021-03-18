@@ -19,6 +19,7 @@ namespace Spire::Styles {
   template<typename T, typename G> class PseudoElement;
   class Rule;
   class Selector;
+  class SelectorRegistry;
   template<typename T, typename G> class StateSelector;
   class StyledWidget;
   class StyleSheet;

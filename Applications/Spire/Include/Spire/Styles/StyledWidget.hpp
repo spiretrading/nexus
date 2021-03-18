@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_STYLED_WIDGET_HPP
 #define SPIRE_STYLES_STYLED_WIDGET_HPP
 #include <QWidget>
+#include <unordered_set>
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
@@ -52,6 +53,18 @@ namespace Spire::Styles {
     protected:
 
       /**
+       * Indicates a selector is enabled for this widget.
+       * @param selector The enabled selector.
+       */
+      void enable(const Selector& selector);
+
+      /**
+       * Indicates a selector is no longer enabled for this widget.
+       * @param selector The disabled selector.
+       */
+      void disable(const Selector& selector);
+
+      /**
        * Tests if a Selector applies to this StyledWidget's pseudo-element.
        * @param element The pseudo-element to test.
        * @param selector The Selector to test.
@@ -64,8 +77,20 @@ namespace Spire::Styles {
       /** Indicates the StyleSheet has been updated. */
       virtual void style_updated();
 
+      /** Indicates a selector has been updated. */
+      virtual void selector_updated();
+
     private:
+      friend class SelectorRegistry;
+      struct SelectorHash {
+        std::size_t operator ()(const Selector& selector) const;
+      };
+      struct SelectorEquality {
+        bool operator ()(const Selector& left, const Selector& right) const;
+      };
       StyleSheet m_style;
+      std::unordered_set<Selector, SelectorHash, SelectorEquality>
+        m_enabled_selectors;
 
       friend bool test_selector(const QWidget& widget, const Selector& element,
         const Selector& selector);

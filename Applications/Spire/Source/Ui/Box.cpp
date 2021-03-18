@@ -68,15 +68,11 @@ Box::Box(QWidget* body, QWidget* parent)
   }
 }
 
-void Box::enterEvent(QEvent* event) {
-  update();
+void Box::style_updated() {
+  selector_updated();
 }
 
-void Box::leaveEvent(QEvent* event) {
-  update();
-}
-
-void Box::paintEvent(QPaintEvent* event) {
+void Box::selector_updated() {
   auto computed_style = compute_style();
   auto style = QString("#Box {");
   style += "border-style: solid;";
@@ -144,8 +140,7 @@ void Box::paintEvent(QPaintEvent* event) {
         auto computed_size = size.get_expression().as<int>();
         style += "padding-left: " + QString::number(computed_size) + "px;";
         body_geometry.setLeft(body_geometry.left() + computed_size);
-      },
-      [] {});
+      });
   }
   style += "}";
   if(style != styleSheet()) {
@@ -154,7 +149,7 @@ void Box::paintEvent(QPaintEvent* event) {
       m_body->setGeometry(body_geometry);
     }
   }
-  StyledWidget::paintEvent(event);
+  StyledWidget::selector_updated();
 }
 
 void Spire::display_warning_indicator(StyledWidget& widget) {

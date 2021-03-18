@@ -102,6 +102,11 @@ void TextBox::set_placeholder(const QString& value) {
 
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
+  if(read_only) {
+    enable(ReadOnly());
+  } else {
+    disable(ReadOnly());
+  }
   update_display_text();
   update_placeholder_text();
 }
