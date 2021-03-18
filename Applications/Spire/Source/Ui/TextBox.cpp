@@ -129,12 +129,6 @@ QSize TextBox::sizeHint() const {
   return scale(160, 30);
 }
 
-void TextBox::style_updated() {
-  update_display_text();
-  update_placeholder_text();
-  StyledWidget::style_updated();
-}
-
 bool TextBox::test_selector(const Styles::Selector& element,
     const Styles::Selector& selector) const {
   return selector.visit(
@@ -146,52 +140,11 @@ bool TextBox::test_selector(const Styles::Selector& element,
     });
 }
 
-bool TextBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusIn) {
-    auto focusEvent = static_cast<QFocusEvent*>(event);
-    if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
-        focusEvent->reason() != Qt::PopupFocusReason) {
-      if(m_line_edit->text() != m_current) {
-        m_line_edit->setText(m_current);
-      }
-    }
-  } else if(event->type() == QEvent::FocusOut) {
-    auto focusEvent = static_cast<QFocusEvent*>(event);
-    if(focusEvent->lostFocus() &&
-        focusEvent->reason() != Qt::ActiveWindowFocusReason &&
-        focusEvent->reason() != Qt::PopupFocusReason) {
-      update_display_text();
-    }
-  }
-  return StyledWidget::eventFilter(watched, event);
+void TextBox::style_updated() {
+  selector_updated();
 }
 
-void TextBox::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::EnabledChange) {
-    update_display_text();
-    update_placeholder_text();
-  }
-  StyledWidget::changeEvent(event);
-}
-
-void TextBox::mousePressEvent(QMouseEvent* event) {
-  if(is_placeholder_shown()) {
-    m_line_edit->setFocus();
-  }
-  StyledWidget::mousePressEvent(event);
-}
-
-void TextBox::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape) {
-    if(m_submission != m_current) {
-      set_current(m_submission);
-    }
-  } else {
-    StyledWidget::keyPressEvent(event);
-  }
-}
-
-void TextBox::paintEvent(QPaintEvent* event) {
+void TextBox::selector_updated() {
   auto line_edit_computed_style = compute_style();
   auto placeholder_computed_style = compute_style(Placeholder());
   auto placeholder_style = QString(
@@ -290,7 +243,52 @@ void TextBox::paintEvent(QPaintEvent* event) {
   if(is_placeholder_updated) {
     update_placeholder_text();
   }
-  StyledWidget::paintEvent(event);
+  StyledWidget::selector_updated();
+}
+
+bool TextBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::FocusIn) {
+    auto focusEvent = static_cast<QFocusEvent*>(event);
+    if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
+        focusEvent->reason() != Qt::PopupFocusReason) {
+      if(m_line_edit->text() != m_current) {
+        m_line_edit->setText(m_current);
+      }
+    }
+  } else if(event->type() == QEvent::FocusOut) {
+    auto focusEvent = static_cast<QFocusEvent*>(event);
+    if(focusEvent->lostFocus() &&
+        focusEvent->reason() != Qt::ActiveWindowFocusReason &&
+        focusEvent->reason() != Qt::PopupFocusReason) {
+      update_display_text();
+    }
+  }
+  return StyledWidget::eventFilter(watched, event);
+}
+
+void TextBox::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::EnabledChange) {
+    update_display_text();
+    update_placeholder_text();
+  }
+  StyledWidget::changeEvent(event);
+}
+
+void TextBox::mousePressEvent(QMouseEvent* event) {
+  if(is_placeholder_shown()) {
+    m_line_edit->setFocus();
+  }
+  StyledWidget::mousePressEvent(event);
+}
+
+void TextBox::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    if(m_submission != m_current) {
+      set_current(m_submission);
+    }
+  } else {
+    StyledWidget::keyPressEvent(event);
+  }
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {

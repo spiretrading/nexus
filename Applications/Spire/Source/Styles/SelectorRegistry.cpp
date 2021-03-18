@@ -2,6 +2,7 @@
 #include <deque>
 #include <unordered_map>
 #include <QEvent>
+#include <QTimer>
 #include "Spire/Styles/StyledWidget.hpp"
 
 using namespace Spire;
@@ -25,7 +26,9 @@ namespace {
           event->type() == QEvent::FocusOut ||
           event->type() == QEvent::Enter ||
           event->type() == QEvent::Leave ||
-          event->type() == QEvent::EnabledChange) {
+          event->type() == QEvent::EnabledChange ||
+          event->type() == QEvent::Show ||
+          event->type() == QEvent::Hide) {
         m_registry->notify();
       } else if(event->type() == QEvent::ChildAdded ||
           event->type() == QEvent::ChildRemoved) {
@@ -36,7 +39,7 @@ namespace {
           } else {
             child->removeEventFilter(this);
           }
-          m_registry->notify();
+          QTimer::singleShot(0, this, [=] { m_registry->notify(); });
         }
       } else if(event->type() == QEvent::ParentChange) {
         if(widget.window() != &m_registry->get_root()) {

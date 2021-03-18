@@ -99,6 +99,7 @@ namespace Styles {
     protected:
       void style_updated() override;
       void selector_updated() override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       QWidget* m_body;

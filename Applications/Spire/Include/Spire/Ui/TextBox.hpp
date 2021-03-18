@@ -83,14 +83,14 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      void style_updated() override;
       bool test_selector(const Styles::Selector& element,
         const Styles::Selector& selector) const override;
+      void style_updated() override;
+      void selector_updated() override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:

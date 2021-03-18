@@ -1,5 +1,6 @@
 #include "Spire/Ui/Box.hpp"
 #include <array>
+#include <QResizeEvent>
 #include <QTimer>
 #include <QTimeLine>
 #include "Spire/Spire/Dimensions.hpp"
@@ -150,6 +151,59 @@ void Box::selector_updated() {
     }
   }
   StyledWidget::selector_updated();
+}
+
+void Box::resizeEvent(QResizeEvent* event) {
+  if(m_body) {
+    if(event->oldSize().isValid()) {
+      auto body_geometry = m_body->geometry();
+      auto updated_geometry = QRect(body_geometry.topLeft(), QSize(0, 0));
+      updated_geometry.setRight(body_geometry.right() +
+        (event->size().width() - event->oldSize().width()));
+      updated_geometry.setBottom(body_geometry.bottom() +
+        (event->size().height() - event->oldSize().height()));
+      m_body->setGeometry(updated_geometry);
+    } else {
+      auto computed_style = compute_style();
+      auto body_geometry = QRect(0, 0, width(), height());
+      for(auto& property : computed_style.get_properties()) {
+        property.visit(
+          [&] (const BorderTopSize& size) {
+            body_geometry.setTop(
+              body_geometry.top() + size.get_expression().as<int>());
+          },
+          [&] (const BorderRightSize& size) {
+            body_geometry.setRight(
+              body_geometry.right() - size.get_expression().as<int>());
+          },
+          [&] (const BorderBottomSize& size) {
+            body_geometry.setBottom(
+              body_geometry.bottom() - size.get_expression().as<int>());
+          },
+          [&] (const BorderLeftSize& size) {
+            body_geometry.setLeft(
+              body_geometry.left() + size.get_expression().as<int>());
+          },
+          [&] (const PaddingTop& size) {
+            body_geometry.setTop(
+              body_geometry.top() + size.get_expression().as<int>());
+          },
+          [&] (const PaddingRight& size) {
+            body_geometry.setRight(
+              body_geometry.right() - size.get_expression().as<int>());
+          },
+          [&] (const PaddingBottom& size) {
+            body_geometry.setBottom(
+              body_geometry.bottom() - size.get_expression().as<int>());
+          },
+          [&] (const PaddingLeft& size) {
+            body_geometry.setLeft(
+              body_geometry.left() + size.get_expression().as<int>());
+          });
+      }
+      m_body->setGeometry(body_geometry);
+    }
+  }
 }
 
 void Spire::display_warning_indicator(StyledWidget& widget) {
