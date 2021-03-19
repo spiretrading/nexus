@@ -92,22 +92,31 @@ namespace Spire {
       */
       void set_decimal_places(int decimal_places);
 
-      //! Returns true iff the DecimalBox appends trailing zeros to the input,
-      //! up to the number of maximum decimal places.
-      bool has_trailing_zeros() const;
-
-      //! Sets if the DecimalBox should append trailing zeros.
+      //! Sets the number of leading zeros that are prepended to the current
+      //! value on submission.
       /*!
-        \param has_trailing_zeros True iff the DecimalBox appends trailing
-                                  zeros.
+        \param leading_zeros The number of leading zeros.
       */
-      void set_trailing_zeros(bool has_trailing_zeros);
+      void set_leading_zeros(int leading_zeros);
+
+      //! Sets the number of trailing zeros that are appended to the current
+      //! value on submission.
+      /*!
+        \param trailing_zeros The number of trailing zeros.
+      */
+      void set_trailing_zeros(int trailing_zeros);
 
       //! Sets the read-only state.
       /*!
         \param is_read_only True iff the DecimalBox should be read-only.
       */
       void set_read_only(bool is_read_only);
+
+      //! Sets if the warning style should be applied.
+      /*!
+        \param has_warning True iff the warning style should be applied.
+      */
+      void set_suppress_warnings(bool has_warning);
 
       //! Connets a slot to the current changed signal.
       boost::signals2::connection connect_current_signal(
@@ -123,6 +132,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void wheelEvent(QWheelEvent* event) override;
 
     private:
       mutable CurrentSignal m_current_signal;
@@ -133,12 +143,14 @@ namespace Spire {
       Decimal m_maximum;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       int m_decimal_places;
-      bool m_has_trailing_zeros;
+      int m_leading_zeros;
+      int m_trailing_zeros;
       TextBox* m_text_box;
       QRegExp m_validator;
       QRegExp m_trailing_zero_regex;
       Button* m_up_button;
       Button* m_down_button;
+      bool m_has_suppressed_warning;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
 
@@ -147,7 +159,7 @@ namespace Spire {
       Decimal get_increment() const;
       void step_by(Decimal value);
       void update_button_positions();
-      void update_trailing_zeros();
+      void update_padded_zeros();
       void on_current(const QString& current);
       void on_submit(const QString& submission);
   };

@@ -133,7 +133,8 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_qstring_property("maximum",
     QString::fromUtf8("100")));
   properties.push_back(make_standard_int_property("decimal-places", 2));
-  properties.push_back(make_standard_bool_property("trailing-zeros", true));
+  properties.push_back(make_standard_int_property("leading-zeros", 2));
+  properties.push_back(make_standard_int_property("trailing-zeros", 2));
   properties.push_back(make_standard_qstring_property("default-increment",
     QString::fromUtf8("1")));
   properties.push_back(make_standard_qstring_property("alt-increment",
@@ -144,6 +145,8 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("20")));
   properties.push_back(make_standard_bool_property("read-only", false));
   properties.push_back(make_standard_bool_property("buttons-visible", true));
+  properties.push_back(make_standard_bool_property("suppress-warnings",
+    false));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto& current = get<QString>("current", profile.get_properties());
@@ -151,7 +154,9 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& maximum = get<QString>("maximum", profile.get_properties());
       auto& decimal_places = get<int>("decimal-places",
         profile.get_properties());
-      auto& trailing_zeros = get<bool>("trailing-zeros",
+      auto& leading_zeros = get<int>("leading-zeros",
+        profile.get_properties());
+      auto& trailing_zeros = get<int>("trailing-zeros",
         profile.get_properties());
       auto& default_increment = get<QString>("default-increment",
         profile.get_properties());
@@ -201,12 +206,13 @@ UiProfile Spire::make_decimal_box_profile() {
         }
       });
       decimal_places.connect_changed_signal([=] (auto decimal_places) {
-        if(decimal_places >= 0) {
-          decimal_box->set_decimal_places(decimal_places);
-        }
+        decimal_box->set_decimal_places(decimal_places);
       });
-      trailing_zeros.connect_changed_signal([=] (auto has_trailing_zeros) {
-        decimal_box->set_trailing_zeros(has_trailing_zeros);
+      leading_zeros.connect_changed_signal([=] (auto leading_zeros) {
+        decimal_box->set_leading_zeros(leading_zeros);
+      });
+      trailing_zeros.connect_changed_signal([=] (auto trailing_zeros) {
+        decimal_box->set_trailing_zeros(trailing_zeros);
       });
       default_increment.connect_changed_signal([=] (const auto& value) {
         if(auto decimal = parse_decimal(value)) {
@@ -250,6 +256,11 @@ UiProfile Spire::make_decimal_box_profile() {
             Visibility(VisibilityOption::INVISIBLE));
         }
         decimal_box->set_style(std::move(style));
+      });
+      auto& suppress_warnings = get<bool>("suppress-warnings",
+        profile.get_properties());
+      suppress_warnings.connect_changed_signal([=] (auto value) {
+        decimal_box->set_suppress_warnings(value);
       });
       return decimal_box;
     });
