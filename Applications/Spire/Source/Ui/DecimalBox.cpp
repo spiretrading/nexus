@@ -109,7 +109,8 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
   m_text_box = new TextBox(m_current, this);
   set_decimal_places(DEFAULT_DECIMAL_PLACES);
   auto style = m_text_box->get_style();
-  style.get(Any()).set(PaddingRight(scale_width(26)));
+  style.get(is_a<Button>() % is_a<TextBox>()).set(
+    PaddingRight(scale_width(26)));
   m_text_box->set_style(std::move(style));
   setFocusProxy(m_text_box);
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

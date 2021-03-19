@@ -70,6 +70,8 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   m_layers->add(m_placeholder);
   m_box = new Box(m_layers);
   m_box->setFocusProxy(m_line_edit);
+  setCursor(m_line_edit->cursor());
+  setFocusPolicy(m_line_edit->focusPolicy());
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
