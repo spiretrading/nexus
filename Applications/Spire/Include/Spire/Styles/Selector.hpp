@@ -4,7 +4,6 @@
 #include <typeindex>
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
-#include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -93,6 +92,12 @@ namespace Spire::Styles {
        * @param selector The selector to represent.
        */
       Selector(ChildSelector selector);
+
+      /**
+       * Constructs a Selector for a SiblingSelector.
+       * @param selector The selector to represent.
+       */
+      Selector(SiblingSelector selector);
 
       /** Constructs a VoidSelector. */
       Selector(VoidSelector selector);

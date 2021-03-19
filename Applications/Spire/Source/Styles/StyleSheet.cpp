@@ -1,4 +1,5 @@
 #include "Spire/Styles/StyleSheet.hpp"
+#include "Spire/Styles/Any.hpp"
 
 using namespace boost;
 using namespace Spire;

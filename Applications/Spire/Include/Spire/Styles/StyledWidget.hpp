@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
+#include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Styles/ParentSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Styles/Selectors.hpp"
+#include "Spire/Styles/SiblingSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 

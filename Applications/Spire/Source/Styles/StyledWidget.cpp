@@ -1,6 +1,7 @@
 #include "Spire/Styles/StyledWidget.hpp"
 #include <deque>
 #include <set>
+#include <QLayout>
 #include "Spire/Styles/SelectorRegistry.hpp"
 #include "Spire/Styles/VoidSelector.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -95,6 +96,30 @@ namespace {
               return true;
             }
           }
+        }
+        return false;
+      },
+      [&] (const SiblingSelector& selector) {
+        if(widget.parentWidget() == nullptr) {
+          return false;
+        }
+        if(!test_selector(widget, element, selector.get_sibling())) {
+          return false;
+        }
+        auto siblings = widget.parent()->children();
+        auto i = 0;
+        while(i != siblings.size()) {
+          auto child = siblings[i];
+          if(child != &widget) {
+            if(auto c = qobject_cast<QWidget*>(child)) {
+              if(test_selector(*c, element, selector.get_base())) {
+                return true;
+              }
+            } else if(auto layout = qobject_cast<QLayout*>(child)) {
+              siblings.append(layout->children());
+            }
+          }
+          ++i;
         }
         return false;
       },
