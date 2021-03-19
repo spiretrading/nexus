@@ -57,9 +57,6 @@ namespace {
           return false;
         }
         if(auto p = widget.parentWidget()) {
-          if(selector.get_parent().is_match(ReadOnly())) {
-            qDebug() << "hrell";
-          }
           return test_selector(*p, element, selector.get_parent());
         }
         return false;

@@ -244,7 +244,7 @@ UiProfile Spire::make_decimal_box_profile() {
       buttons_visible.connect_changed_signal([=] (auto value) {
         auto style = decimal_box->get_style();
         if(value) {
-          style.get(is_a<Button>()).set(Visibility(VisibilityOption::VISIBLE));
+          style.get(is_a<Button>()).get_block().remove<Visibility>();
         } else {
           style.get(is_a<Button>()).set(
             Visibility(VisibilityOption::INVISIBLE));
