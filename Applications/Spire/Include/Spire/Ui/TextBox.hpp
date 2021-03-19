@@ -2,9 +2,9 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLabel>
 #include <QLineEdit>
-#include <QTimeLine>
+#include <boost/optional/optional.hpp>
 #include "Spire/Styles/StyledWidget.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Box.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -80,24 +80,26 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      bool test_selector(const Styles::Selector& element,
+        const Styles::Selector& selector) const override;
+
       QSize sizeHint() const override;
 
     protected:
       void style_updated() override;
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
+      void selector_updated() override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
-      void enterEvent(QEvent* event) override;
-      void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
+      Box* m_box;
+      boost::optional<Styles::StyleSheet> m_default_box_style;
+      LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
       QFont m_line_edit_font;
       QLabel* m_placeholder;
@@ -115,12 +117,6 @@ namespace Styles {
       void update_display_text();
       void update_placeholder_text();
   };
-
-  /**
-   * Displays a red warning indicator on a StyledWidget.
-   * @param widget The widget to display the warning indicator over.
-   */
-  void display_warning_indicator(Styles::StyledWidget& widget);
 }
 
 #endif

@@ -66,7 +66,9 @@ namespace Spire::Styles {
     } else if(m_property.type() == typeid(Parameter)) {
       return std::forward<F>(f)(std::any_cast<const Parameter&>(m_property));
     }
-    throw std::bad_any_cast();
+    if constexpr(!std::is_invocable_r_v<void, F, const Parameter&>) {
+      throw std::bad_any_cast();
+    }
   }
 
   template<typename F, typename... G>

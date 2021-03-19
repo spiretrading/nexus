@@ -50,7 +50,8 @@ namespace Spire::Styles {
       std::vector<Property> m_properties;
   };
 
-  /** Merges a Block in place by another by overwriting all properties.
+  /**
+   * Merges a Block in place by another by overwriting all properties.
    * @param block The Block being updated and overwritten by the merge.
    * @param other The Block providing the properties to merge and overwrite.
    */

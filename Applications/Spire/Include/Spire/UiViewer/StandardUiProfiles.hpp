@@ -4,6 +4,9 @@
 
 namespace Spire {
 
+  //! Returns a UiProfile for the Box.
+  UiProfile make_box_profile();
+
   //! Returns a UiProfile for the CheckBox.
   UiProfile make_checkbox_profile();
 

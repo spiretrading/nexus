@@ -1,12 +1,14 @@
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
+#include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/ParentSelector.hpp"
+#include "Spire/Styles/SiblingSelector.hpp"
 #include "Spire/Styles/VoidSelector.hpp"
 
 using namespace Spire;
@@ -110,6 +112,18 @@ Selector::Selector(ChildSelector selector)
       auto& right = selector.as<ChildSelector>();
       return left.get_base().is_match(right.get_base()) &&
         left.get_child().is_match(right.get_child());
+    }) {}
+
+Selector::Selector(SiblingSelector selector)
+  : m_selector(std::move(selector)),
+    m_matcher([] (const Selector& self, const Selector& selector) {
+      if(selector.get_type() != typeid(SiblingSelector)) {
+        return false;
+      }
+      auto& left = self.as<SiblingSelector>();
+      auto& right = selector.as<SiblingSelector>();
+      return left.get_base().is_match(right.get_base()) &&
+        left.get_sibling().is_match(right.get_sibling());
     }) {}
 
 Selector::Selector(VoidSelector selector)

@@ -3,6 +3,7 @@
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
@@ -16,6 +17,19 @@
 
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
+
+UiProfile Spire::make_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("Box"), properties,
+    [] (auto& profile) {
+      auto box = new Box(nullptr, nullptr);
+      apply_widget_properties(box, profile.get_properties());
+      return box;
+    });
+  return profile;
+}
 
 UiProfile Spire::make_checkbox_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
@@ -228,7 +242,14 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& buttons_visible = get<bool>("buttons-visible",
         profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
-        decimal_box->set_buttons_visible(value);
+        auto style = decimal_box->get_style();
+        if(value) {
+          style.get(is_a<Button>()).get_block().remove<Visibility>();
+        } else {
+          style.get(is_a<Button>()).set(
+            Visibility(VisibilityOption::INVISIBLE));
+        }
+        decimal_box->set_style(std::move(style));
       });
       return decimal_box;
     });

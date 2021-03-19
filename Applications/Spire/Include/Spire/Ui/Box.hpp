@@ -1,11 +1,10 @@
-#ifndef SPIRE_STYLES_BOX_STYLES_HPP
-#define SPIRE_STYLES_BOX_STYLES_HPP
-#include <QColor>
-#include "Spire/Styles/CompositeProperty.hpp"
-#include "Spire/Styles/Property.hpp"
-#include "Spire/Styles/Styles.hpp"
+#ifndef SPIRE_BOX_HPP
+#define SPIRE_BOX_HPP
+#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Ui/Ui.hpp"
 
-namespace Spire::Styles {
+namespace Spire {
+namespace Styles {
 
   /** Sets the background color of an element. */
   using BackgroundColor = BasicProperty<QColor, struct BackgroundColorTag>;
@@ -84,6 +83,33 @@ namespace Spire::Styles {
    * @param size The size of the horizontal padding.
    */
   HorizontalPadding horizontal_padding(int size);
+}
+
+  /** Implements a StyledWidget displaying a component within a styled box. */
+  class Box : public Styles::StyledWidget {
+    public:
+
+      /**
+       * Constructs a Box.
+       * @param body The component to display within the Box.
+       * @param parent The parent widget.
+       */
+      explicit Box(QWidget* body, QWidget* parent = nullptr);
+
+    protected:
+      void style_updated() override;
+      void selector_updated() override;
+      void resizeEvent(QResizeEvent* event) override;
+
+    private:
+      QWidget* m_body;
+  };
+
+  /**
+   * Displays a red warning indicator on a StyledWidget.
+   * @param widget The widget to display the warning indicator over.
+   */
+  void display_warning_indicator(Styles::StyledWidget& widget);
 }
 
 #endif

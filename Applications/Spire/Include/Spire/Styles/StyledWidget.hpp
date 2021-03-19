@@ -1,10 +1,10 @@
 #ifndef SPIRE_STYLES_STYLED_WIDGET_HPP
 #define SPIRE_STYLES_STYLED_WIDGET_HPP
 #include <QWidget>
+#include <unordered_set>
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
-#include "Spire/Styles/BoxSelectors.hpp"
-#include "Spire/Styles/BoxStyles.hpp"
+#include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
@@ -12,10 +12,28 @@
 #include "Spire/Styles/OrSelector.hpp"
 #include "Spire/Styles/ParentSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
+#include "Spire/Styles/Selectors.hpp"
+#include "Spire/Styles/SiblingSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
 namespace Spire::Styles {
+
+  /** Specifies whether an element is visible. */
+  enum class VisibilityOption {
+
+    /** The element is visible. */
+    VISIBLE,
+
+    /** The element is invisible. */
+    INVISIBLE,
+
+    /** The element is treated as if it has a width and height of 0. */
+    NONE
+  };
+
+  /** Sets the display mode. */
+  using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
 
   /** Base class for a QWidget styled according to a StyleSheet. */
   class StyledWidget : public QWidget {
@@ -50,8 +68,6 @@ namespace Spire::Styles {
       /** Returns a Block containing the computed style for a pseudo-element. */
       Block compute_style(const Selector& element) const;
 
-    protected:
-
       /**
        * Tests if a Selector applies to this StyledWidget's pseudo-element.
        * @param element The pseudo-element to test.
@@ -62,11 +78,38 @@ namespace Spire::Styles {
       virtual bool test_selector(const Selector& element,
         const Selector& selector) const;
 
+    protected:
+
+      /**
+       * Indicates a selector is enabled for this widget.
+       * @param selector The enabled selector.
+       */
+      void enable(const Selector& selector);
+
+      /**
+       * Indicates a selector is no longer enabled for this widget.
+       * @param selector The disabled selector.
+       */
+      void disable(const Selector& selector);
+
       /** Indicates the StyleSheet has been updated. */
       virtual void style_updated();
 
+      /** Indicates a selector has been updated. */
+      virtual void selector_updated();
+
     private:
+      friend class SelectorRegistry;
+      struct SelectorHash {
+        std::size_t operator ()(const Selector& selector) const;
+      };
+      struct SelectorEquality {
+        bool operator ()(const Selector& left, const Selector& right) const;
+      };
       StyleSheet m_style;
+      VisibilityOption m_visibility;
+      std::unordered_set<Selector, SelectorHash, SelectorEquality>
+        m_enabled_selectors;
 
       friend bool test_selector(const QWidget& widget, const Selector& element,
         const Selector& selector);

@@ -84,6 +84,7 @@ namespace {
     style.get(Disabled()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
+    style.get(Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
     button->set_style(std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
@@ -183,15 +184,8 @@ void DecimalBox::set_trailing_zeros(bool has_trailing_zeros) {
   update_trailing_zeros();
 }
 
-void DecimalBox::set_buttons_visible(bool are_visible) {
-  m_up_button->setVisible(are_visible);
-  m_down_button->setVisible(are_visible);
-}
-
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
-  m_up_button->setVisible(!is_read_only);
-  m_down_button->setVisible(!is_read_only);
 }
 
 connection DecimalBox::connect_current_signal(
@@ -202,6 +196,11 @@ connection DecimalBox::connect_current_signal(
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+bool DecimalBox::test_selector(
+    const Selector& element, const Selector& selector) const {
+  return m_text_box->test_selector(element, selector);
 }
 
 bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
