@@ -24,6 +24,8 @@ namespace Spire::Styles {
       /** Tests if a widget is an instance of the selector's type. */
       bool is_instance(const QWidget& widget) const;
 
+      bool is_match(const IsASelector& selector) const;
+
     private:
       std::type_index m_type;
       std::function<bool (const QWidget&)> m_is_instance;

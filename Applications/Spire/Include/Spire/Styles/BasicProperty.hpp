@@ -33,6 +33,10 @@ namespace Spire::Styles {
       /** Returns the property's Expression. */
       const Expression& get_expression() const;
 
+      bool operator ==(const BasicProperty& property) const;
+
+      bool operator !=(const BasicProperty& property) const;
+
     private:
       Expression m_expression;
   };
@@ -45,6 +49,16 @@ namespace Spire::Styles {
   const typename BasicProperty<T, G>::Expression&
       BasicProperty<T, G>::get_expression() const {
     return m_expression;
+  }
+
+  template<typename T, typename G>
+  bool BasicProperty<T, G>::operator ==(const BasicProperty& property) const {
+    return m_expression == property.get_expression();
+  }
+
+  template<typename T, typename G>
+  bool BasicProperty<T, G>::operator !=(const BasicProperty& property) const {
+    return !(*this == property);
   }
 }
 

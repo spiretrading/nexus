@@ -23,6 +23,8 @@ namespace Spire::Styles {
       /** Returns the parent selector. */
       const Selector& get_parent() const;
 
+      bool is_match(const ParentSelector& selector) const;
+
     private:
       Selector m_base;
       Selector m_parent;

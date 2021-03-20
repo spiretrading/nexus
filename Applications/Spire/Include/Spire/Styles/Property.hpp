@@ -34,6 +34,10 @@ namespace Spire::Styles {
       template<typename F, typename... G>
       decltype(auto) visit(F&& f, G&&... g) const;
 
+      bool operator ==(const Property& property) const;
+
+      bool operator !=(const Property& property) const;
+
     private:
       template<typename T>
       struct TypeExtractor {};
@@ -46,11 +50,19 @@ namespace Spire::Styles {
         using type = std::decay_t<U>;
       };
       std::any m_property;
+      std::function<bool (const Property&, const Property&)> m_is_equal;
   };
 
   template<typename T, typename G>
   Property::Property(BasicProperty<T, G> property)
-    : m_property(std::move(property)) {}
+    : m_property(std::move(property)),
+      m_is_equal([] (const Property& left, const Property& right) {
+        if(left.get_type() != right.get_type()) {
+          return false;
+        }
+        return left.as<BasicProperty<T, G>>() ==
+          right.as<BasicProperty<T, G>>();
+      }) {}
 
   template<typename U>
   const U& Property::as() const {

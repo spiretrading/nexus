@@ -23,6 +23,8 @@ namespace Spire::Styles {
       /** Returns the sibling selector. */
       const Selector& get_sibling() const;
 
+      bool is_match(const SiblingSelector& selector) const;
+
     private:
       Selector m_base;
       Selector m_sibling;
@@ -33,12 +35,7 @@ namespace Spire::Styles {
    * @param base The base selector.
    * @param sibling The sibling selector.
    */
-  template<typename T, typename U, typename = std::enable_if_t<
-    std::is_constructible_v<Selector, const T&> &&
-    std::is_constructible_v<Selector, const U&>>>
-  auto operator %(T base, U sibling) {
-    return SiblingSelector(std::move(base), std::move(sibling));
-  }
+  SiblingSelector operator %(Selector base, Selector sibling);
 }
 
 #endif

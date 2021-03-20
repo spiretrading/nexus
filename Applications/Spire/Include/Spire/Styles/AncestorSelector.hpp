@@ -23,6 +23,8 @@ namespace Spire::Styles {
       /** Returns the ancestor selector. */
       const Selector& get_ancestor() const;
 
+      bool is_match(const AncestorSelector& selector) const;
+
     private:
       Selector m_base;
       Selector m_ancestor;
@@ -33,12 +35,7 @@ namespace Spire::Styles {
    * @param base The selector for the base widget.
    * @param ancestor The selector for the ancestor.
    */
-  template<typename T, typename U, typename = std::enable_if_t<
-    std::is_constructible_v<Selector, const T&> &&
-    std::is_constructible_v<Selector, const U&>>>
-  auto operator <<(T base, U ancestor) {
-    return AncestorSelector(std::move(base), std::move(ancestor));
-  }
+  AncestorSelector operator <<(Selector base, Selector ancestor);
 }
 
 #endif

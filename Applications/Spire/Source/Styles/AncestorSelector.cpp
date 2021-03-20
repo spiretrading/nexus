@@ -14,3 +14,12 @@ const Selector& AncestorSelector::get_base() const {
 const Selector& AncestorSelector::get_ancestor() const {
   return m_ancestor;
 }
+
+bool AncestorSelector::is_match(const AncestorSelector& selector) const {
+  return m_base.is_match(selector.get_base()) &&
+    m_ancestor.is_match(selector.get_ancestor());
+}
+
+AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
+  return AncestorSelector(std::move(base), std::move(ancestor));
+}

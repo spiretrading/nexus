@@ -19,6 +19,8 @@ namespace Spire::Styles {
       /** Returns the selector being negated. */
       const Selector& get_selector() const;
 
+      bool is_match(const NotSelector& selector) const;
+
     private:
       Selector m_selector;
   };
@@ -27,11 +29,7 @@ namespace Spire::Styles {
    * Provides an operator for negating a selector.
    * @param selector The selector to negate.
    */
-  template<typename T,
-    typename = std::enable_if_t<std::is_constructible_v<Selector, const T&>>>
-  auto operator !(T selector) {
-    return NotSelector(std::move(selector));
-  }
+  NotSelector operator !(Selector selector);
 }
 
 #endif
