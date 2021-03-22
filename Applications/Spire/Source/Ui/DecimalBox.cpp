@@ -311,16 +311,22 @@ void DecimalBox::on_current(const QString& current) {
     if(auto point_index = current.indexOf(QLocale().decimalPoint());
         point_index != -1 &&
         current.length() > (point_index + m_decimal_places + 1)) {
-      m_current = current.left(current.length() - 1);
+      m_current = current.left(point_index + m_decimal_places + 1);
+      auto line_edit = m_text_box->findChild<QLineEdit*>();
+      auto old_cursor_index = line_edit->cursorPosition();
+      m_text_box->set_current(m_current);
+      line_edit->setCursorPosition(old_cursor_index);
     } else {
       m_current = current;
+      m_text_box->set_current(m_current);
     }
     auto value = to_decimal(m_current);
     m_up_button->setDisabled(value >= m_maximum);
     m_down_button->setDisabled(value <= m_minimum);
     m_current_signal(value);
+  } else {
+    m_text_box->set_current(m_current);
   }
-  m_text_box->set_current(m_current);
 }
 
 void DecimalBox::on_submit(const QString& submission) {
