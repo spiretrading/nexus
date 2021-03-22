@@ -274,30 +274,32 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::update_padded_zeros() {
-  auto current_text = m_text_box->get_current();
-  if(!m_trailing_zeros || m_decimal_places == 0) {
-    auto block = shared_connection_block(m_current_connection);
-    m_text_box->set_current(current_text.remove(m_trailing_zero_regex));
-    return;
-  }
-  auto point_index = current_text.indexOf(QLocale().decimalPoint());
-  if(point_index == -1 && m_decimal_places > 0) {
-    current_text.append(QLocale().decimalPoint());
-  }
-  auto zero_count = [&] {
-    if(point_index == -1) {
-      return m_decimal_places;
+  auto sign = [&] {
+    if(get_current().isneg()) {
+      return QString(QLocale().negativeSign());
     }
-    return m_decimal_places - current_text.length() + point_index + 1;
+    return QString();
+  }();
+  auto integer = [&] {
+    if(get_current().extract_integer_part().isnan()) {
+      return QString(m_leading_zeros, '0');
+    }
+    return to_string(get_current().extract_integer_part()).remove(
+      QLocale().negativeSign()).rightJustified(m_leading_zeros, '0');
+  }();
+  auto decimal = [&] {
+    if(m_decimal_places <= 0) {
+      return QString();
+    }
+    auto decimal = to_string(get_current()).remove(QRegExp("^-*[0-9]*"));
+    if(decimal == "nan" || decimal.isEmpty()) {
+      decimal.clear();
+      decimal.append(QLocale().decimalPoint());
+    }
+    return decimal.leftJustified(m_trailing_zeros + 1, '0');
   }();
   auto blocker = shared_connection_block(m_current_connection);
-  if(zero_count > 0) {
-    m_text_box->set_current(current_text.leftJustified(
-      current_text.length() + zero_count, '0'));
-  } else {
-    m_text_box->set_current(current_text.left(
-      current_text.length() + zero_count));
-  }
+  m_text_box->set_current(QString("%1%2%3").arg(sign, integer, decimal));
 }
 
 void DecimalBox::on_current(const QString& current) {
