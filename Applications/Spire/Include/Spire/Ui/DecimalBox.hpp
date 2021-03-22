@@ -147,7 +147,6 @@ namespace Spire {
       int m_trailing_zeros;
       TextBox* m_text_box;
       QRegExp m_validator;
-      QRegExp m_trailing_zero_regex;
       Button* m_up_button;
       Button* m_down_button;
       bool m_has_suppressed_warning;

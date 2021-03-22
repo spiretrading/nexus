@@ -102,8 +102,7 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
       m_modifiers(std::move(modifiers)),
       m_leading_zeros(0),
       m_trailing_zeros(0),
-      m_validator(nullptr),
-      m_trailing_zero_regex(QString("[%1][0]*$").arg(
+      m_validator(QString("^[-]?[0-9]*([%1][0-9]*)?").arg(
         QLocale().decimalPoint())),
       m_has_suppressed_warning(true) {
   auto layout = new QHBoxLayout(this);
@@ -174,8 +173,6 @@ int DecimalBox::get_decimal_places() const {
 
 void DecimalBox::set_decimal_places(int decimal_places) {
   m_decimal_places = decimal_places;
-  m_validator = QRegExp(QString("^[-]?[0-9]*([%1][0-9]{0,%2})?").arg(
-    QLocale().decimalPoint()).arg(m_decimal_places));
   update_padded_zeros();
 }
 
@@ -309,16 +306,21 @@ void DecimalBox::update_padded_zeros() {
 }
 
 void DecimalBox::on_current(const QString& current) {
+  auto blocker = shared_connection_block(m_current_connection);
   if(m_validator.exactMatch(current)) {
-    m_current = current;
-    auto value = to_decimal(current);
+    if(auto point_index = current.indexOf(QLocale().decimalPoint());
+        point_index != -1 &&
+        current.length() > (point_index + m_decimal_places + 1)) {
+      m_current = current.left(current.length() - 1);
+    } else {
+      m_current = current;
+    }
+    auto value = to_decimal(m_current);
     m_up_button->setDisabled(value >= m_maximum);
     m_down_button->setDisabled(value <= m_minimum);
     m_current_signal(value);
-  } else {
-    auto blocker = shared_connection_block(m_current_connection);
-    m_text_box->set_current(m_current);
   }
+  m_text_box->set_current(m_current);
 }
 
 void DecimalBox::on_submit(const QString& submission) {
