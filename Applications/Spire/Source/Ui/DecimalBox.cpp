@@ -142,6 +142,7 @@ DecimalBox::Decimal DecimalBox::get_minimum() const {
 
 void DecimalBox::set_minimum(Decimal minimum) {
   m_minimum = minimum;
+  m_down_button->setDisabled(get_current() <= m_minimum);
 }
 
 DecimalBox::Decimal DecimalBox::get_maximum() const {
@@ -150,6 +151,7 @@ DecimalBox::Decimal DecimalBox::get_maximum() const {
 
 void DecimalBox::set_maximum(Decimal maximum) {
   m_maximum = maximum;
+  m_up_button->setDisabled(get_current() >= m_maximum);
 }
 
 DecimalBox::Decimal DecimalBox::get_increment(
