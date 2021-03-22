@@ -1,5 +1,6 @@
 #include "Spire/Ui/Box.hpp"
 #include <array>
+#include <QHBoxLayout>
 #include <QResizeEvent>
 #include <QTimer>
 #include <QTimeLine>
@@ -58,15 +59,30 @@ HorizontalPadding Spire::Styles::horizontal_padding(int size) {
   return HorizontalPadding(PaddingRight(size), PaddingLeft(size));
 }
 
+VerticalPadding Spire::Styles::vertical_padding(int size) {
+  return VerticalPadding(PaddingTop(size), PaddingBottom(size));
+}
+
+Padding Spire::Styles::padding(int size) {
+  return Padding(PaddingTop(size), PaddingRight(size), PaddingBottom(size),
+    PaddingLeft(size));
+}
+
 Box::Box(QWidget* body, QWidget* parent)
   : StyledWidget(parent),
     m_body(body) {
   setObjectName("Box");
-  set_style(DEFAULT_STYLE());
   if(m_body) {
-    m_body->setParent(this);
+    m_container = new QWidget(this);
+    auto layout = new QHBoxLayout(m_container);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_body);
+    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
+  } else {
+    m_container = nullptr;
   }
+  set_style(DEFAULT_STYLE());
 }
 
 void Box::style_updated() {
@@ -141,67 +157,76 @@ void Box::selector_updated() {
         auto computed_size = size.get_expression().as<int>();
         style += "padding-left: " + QString::number(computed_size) + "px;";
         body_geometry.setLeft(body_geometry.left() + computed_size);
+      },
+      [&] (BodyAlign alignment) {
+        if(m_body) {
+          auto current_alignment = m_container->layout()->alignment();
+          auto computed_alignment =
+            alignment.get_expression().as<Qt::Alignment>();
+          if(current_alignment != computed_alignment) {
+            m_container->layout()->setAlignment(computed_alignment);
+            m_container->layout()->update();
+          }
+        }
       });
   }
   style += "}";
   if(style != styleSheet()) {
     setStyleSheet(style);
     if(m_body) {
-      m_body->setGeometry(body_geometry);
+      m_container->setGeometry(body_geometry);
     }
   }
   StyledWidget::selector_updated();
 }
 
+void Box::enterEvent(QEvent* event) {
+  enable(Hover());
+}
+
+void Box::leaveEvent(QEvent* event) {
+  disable(Hover());
+}
+
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
-    if(event->oldSize().isValid()) {
-      auto body_geometry = m_body->geometry();
-      auto updated_geometry = QRect(body_geometry.topLeft(), QSize(0, 0));
-      updated_geometry.setRight(body_geometry.right() +
-        (event->size().width() - event->oldSize().width()));
-      updated_geometry.setBottom(body_geometry.bottom() +
-        (event->size().height() - event->oldSize().height()));
-      m_body->setGeometry(updated_geometry);
-    } else {
-      auto computed_style = compute_style();
-      auto body_geometry = QRect(0, 0, width(), height());
-      for(auto& property : computed_style.get_properties()) {
-        property.visit(
-          [&] (const BorderTopSize& size) {
-            body_geometry.setTop(
-              body_geometry.top() + size.get_expression().as<int>());
-          },
-          [&] (const BorderRightSize& size) {
-            body_geometry.setRight(
-              body_geometry.right() - size.get_expression().as<int>());
-          },
-          [&] (const BorderBottomSize& size) {
-            body_geometry.setBottom(
-              body_geometry.bottom() - size.get_expression().as<int>());
-          },
-          [&] (const BorderLeftSize& size) {
-            body_geometry.setLeft(
-              body_geometry.left() + size.get_expression().as<int>());
-          },
-          [&] (const PaddingTop& size) {
-            body_geometry.setTop(
-              body_geometry.top() + size.get_expression().as<int>());
-          },
-          [&] (const PaddingRight& size) {
-            body_geometry.setRight(
-              body_geometry.right() - size.get_expression().as<int>());
-          },
-          [&] (const PaddingBottom& size) {
-            body_geometry.setBottom(
-              body_geometry.bottom() - size.get_expression().as<int>());
-          },
-          [&] (const PaddingLeft& size) {
-            body_geometry.setLeft(
-              body_geometry.left() + size.get_expression().as<int>());
-          });
-      }
-      m_body->setGeometry(body_geometry);
+    auto computed_style = compute_style();
+    auto body_geometry = QRect(0, 0, width(), height());
+    for(auto& property : computed_style.get_properties()) {
+      property.visit(
+        [&] (const BorderTopSize& size) {
+          body_geometry.setTop(
+            body_geometry.top() + size.get_expression().as<int>());
+        },
+        [&] (const BorderRightSize& size) {
+          body_geometry.setRight(
+            body_geometry.right() - size.get_expression().as<int>());
+        },
+        [&] (const BorderBottomSize& size) {
+          body_geometry.setBottom(
+            body_geometry.bottom() - size.get_expression().as<int>());
+        },
+        [&] (const BorderLeftSize& size) {
+          body_geometry.setLeft(
+            body_geometry.left() + size.get_expression().as<int>());
+        },
+        [&] (const PaddingTop& size) {
+          body_geometry.setTop(
+            body_geometry.top() + size.get_expression().as<int>());
+        },
+        [&] (const PaddingRight& size) {
+          body_geometry.setRight(
+            body_geometry.right() - size.get_expression().as<int>());
+        },
+        [&] (const PaddingBottom& size) {
+          body_geometry.setBottom(
+            body_geometry.bottom() - size.get_expression().as<int>());
+        },
+        [&] (const PaddingLeft& size) {
+          body_geometry.setLeft(
+            body_geometry.left() + size.get_expression().as<int>());
+        });
+      m_container->setGeometry(body_geometry);
     }
   }
 }
