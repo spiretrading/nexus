@@ -259,6 +259,9 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
 }
 
 void DecimalBox::step_by(Decimal value) {
+  if(m_text_box->is_read_only() || !isEnabled()) {
+    return;
+  }
   setFocus();
   value += get_current();
   set_current(clamp(value, m_minimum, m_maximum));
