@@ -298,7 +298,11 @@ void DecimalBox::update_padded_zeros() {
       decimal.clear();
       decimal.append(QLocale().decimalPoint());
     }
-    return decimal.leftJustified(m_trailing_zeros + 1, '0');
+    decimal = decimal.leftJustified(m_trailing_zeros + 1, '0');
+    if(decimal.endsWith(QLocale().decimalPoint())) {
+      return QString();
+    }
+    return decimal;
   }();
   auto blocker = shared_connection_block(m_current_connection);
   m_text_box->set_current(QString("%1%2%3").arg(sign, integer, decimal));
