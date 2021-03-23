@@ -213,12 +213,12 @@ bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
       decrement();
     }
   }
-  return QWidget::eventFilter(watched, event);
+  return StyledWidget::eventFilter(watched, event);
 }
 
 void DecimalBox::resizeEvent(QResizeEvent* event) {
   update_button_positions();
-  QWidget::resizeEvent(event);
+  StyledWidget::resizeEvent(event);
 }
 
 void DecimalBox::decrement() {
