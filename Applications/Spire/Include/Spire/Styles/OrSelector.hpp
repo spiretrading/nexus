@@ -23,6 +23,8 @@ namespace Spire::Styles {
       /** Returns the right hand selector. */
       const Selector& get_right() const;
 
+      bool is_match(const OrSelector& selector) const;
+
     private:
       Selector m_left;
       Selector m_right;
@@ -33,12 +35,7 @@ namespace Spire::Styles {
    * @param left The left hand selector.
    * @param right The right hand selector.
    */
-  template<typename T, typename U, typename = std::enable_if_t<
-    std::is_constructible_v<Selector, const T&> &&
-    std::is_constructible_v<Selector, const U&>>>
-  auto operator ||(T left, U right) {
-    return OrSelector(std::move(left), std::move(right));
-  }
+  OrSelector operator ||(Selector left, Selector right);
 }
 
 #endif

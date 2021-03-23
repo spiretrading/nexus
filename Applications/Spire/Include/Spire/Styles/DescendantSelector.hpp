@@ -23,6 +23,8 @@ namespace Spire::Styles {
       /** Returns the descendant selector. */
       const Selector& get_descendant() const;
 
+      bool is_match(const DescendantSelector& selector) const;
+
     private:
       Selector m_base;
       Selector m_descendant;
@@ -33,12 +35,7 @@ namespace Spire::Styles {
    * @param base The selector for the base widget.
    * @param descendant The selector for the descendant.
    */
-  template<typename T, typename U, typename = std::enable_if_t<
-    std::is_constructible_v<Selector, const T&> &&
-    std::is_constructible_v<Selector, const U&>>>
-  auto operator >>(T base, U descendant) {
-    return DescendantSelector(std::move(base), std::move(descendant));
-  }
+  DescendantSelector operator >>(Selector base, Selector descendant);
 }
 
 #endif

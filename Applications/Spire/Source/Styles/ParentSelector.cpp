@@ -14,3 +14,8 @@ const Selector& ParentSelector::get_base() const {
 const Selector& ParentSelector::get_parent() const {
   return m_parent;
 }
+
+bool ParentSelector::is_match(const ParentSelector& selector) const {
+  return m_base.is_match(selector.get_base()) &&
+    m_parent.is_match(selector.get_parent());
+}

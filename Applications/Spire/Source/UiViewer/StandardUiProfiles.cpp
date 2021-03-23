@@ -251,8 +251,7 @@ UiProfile Spire::make_decimal_box_profile() {
         if(value) {
           style.get(is_a<Button>()).get_block().remove<Visibility>();
         } else {
-          style.get(is_a<Button>()).set(
-            Visibility(VisibilityOption::INVISIBLE));
+          style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
         }
         decimal_box->set_style(std::move(style));
       });

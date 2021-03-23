@@ -29,6 +29,8 @@ namespace Spire::Styles {
       /** Returns the associated data. */
       const Type& get_data() const;
 
+      bool is_match(const StateSelector& selector) const;
+
     private:
       Type m_data;
   };
@@ -37,6 +39,8 @@ namespace Spire::Styles {
   class StateSelector<void, G> {
     public:
       using Tag = G;
+
+      bool is_match(const StateSelector& selector) const;
   };
 
   template<typename T, typename G>
@@ -47,6 +51,16 @@ namespace Spire::Styles {
   const typename StateSelector<T, G>::Type&
       StateSelector<T, G>::get_data() const {
     return m_data;
+  }
+
+  template<typename T, typename G>
+  bool StateSelector<T, G>::is_match(const StateSelector& selector) const {
+    return m_data == selector.m_data;
+  }
+
+  template<typename G>
+  bool StateSelector<void, G>::is_match(const StateSelector& selector) const {
+    return true;
   }
 }
 

@@ -23,6 +23,8 @@ namespace Spire::Styles {
       /** Returns the child selector. */
       const Selector& get_child() const;
 
+      bool is_match(const ChildSelector& selector) const;
+
     private:
       Selector m_base;
       Selector m_child;
@@ -33,12 +35,7 @@ namespace Spire::Styles {
    * @param base The selector for the base widget.
    * @param child The selector for the child.
    */
-  template<typename T, typename U, typename = std::enable_if_t<
-    std::is_constructible_v<Selector, const T&> &&
-    std::is_constructible_v<Selector, const U&>>>
-  auto operator >(T base, U child) {
-    return ChildSelector(std::move(base), std::move(child));
-  }
+  ChildSelector operator >(Selector base, Selector child);
 }
 
 #endif

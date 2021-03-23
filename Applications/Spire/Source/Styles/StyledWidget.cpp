@@ -87,17 +87,11 @@ namespace {
         return false;
       },
       [&] (const ChildSelector& selector) {
-        if(!test_selector(widget, element, selector.get_base())) {
+        auto parent = widget.parentWidget();
+        if(!parent || !test_selector(widget, element, selector.get_child())) {
           return false;
         }
-        for(auto child : widget.children()) {
-          if(auto c = qobject_cast<QWidget*>(child)) {
-            if(test_selector(*c, element, selector.get_child())) {
-              return true;
-            }
-          }
-        }
-        return false;
+        return test_selector(*parent, element, selector.get_base());
       },
       [&] (const SiblingSelector& selector) {
         if(widget.parentWidget() == nullptr) {
@@ -125,6 +119,17 @@ namespace {
       },
       [&] (const IsASelector& selector) {
         return selector.is_instance(widget);
+      },
+      [&] (const PropertyMatchSelector& selector) {
+        if(auto styled_widget = dynamic_cast<const StyledWidget*>(&widget)) {
+          auto block = styled_widget->compute_style();
+          for(auto& property : block.get_properties()) {
+            if(property == selector.get_property()) {
+              return true;
+            }
+          }
+        }
+        return false;
       },
       [&] {
         return selector.is_match(element);

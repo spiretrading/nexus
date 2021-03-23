@@ -29,6 +29,8 @@ namespace Spire::Styles {
       /** Returns the associated data. */
       const Type& get_data() const;
 
+      bool is_match(const PseudoElement& element) const;
+
     private:
       Type m_data;
   };
@@ -37,6 +39,8 @@ namespace Spire::Styles {
   class PseudoElement<void, G> {
     public:
       using Tag = G;
+
+      bool is_match(const PseudoElement& element) const;
   };
 
   template<typename T, typename G>
@@ -47,6 +51,16 @@ namespace Spire::Styles {
   const typename PseudoElement<T, G>::Type&
       PseudoElement<T, G>::get_data() const {
     return m_data;
+  }
+
+  template<typename T, typename G>
+  bool PseudoElement<T, G>::is_match(const PseudoElement& element) const {
+    return m_data == element.m_data;
+  }
+
+  template<typename G>
+  bool PseudoElement<void, G>::is_match(const PseudoElement& element) const {
+    return true;
   }
 }
 

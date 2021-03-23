@@ -5,7 +5,10 @@
 namespace Spire::Styles {
 
   /** Selector that never matches anything. */
-  class VoidSelector {};
+  class VoidSelector {
+    public:
+      bool is_match(const VoidSelector& selector) const;
+  };
 }
 
 #endif

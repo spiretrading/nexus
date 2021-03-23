@@ -70,6 +70,8 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   m_layers->add(m_placeholder);
   m_box = new Box(m_layers);
   m_box->setFocusProxy(m_line_edit);
+  setCursor(m_line_edit->cursor());
+  setFocusPolicy(m_line_edit->focusPolicy());
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
@@ -230,6 +232,8 @@ void TextBox::selector_updated() {
   line_edit_style += "}";
   if(line_edit_style != m_line_edit->styleSheet()) {
     m_line_edit->setStyleSheet(line_edit_style);
+    m_line_edit->style()->unpolish(this);
+    m_line_edit->style()->polish(this);
     is_line_edit_updated = true;
   }
   if(is_line_edit_updated) {
@@ -238,6 +242,8 @@ void TextBox::selector_updated() {
   placeholder_style += "}";
   if(placeholder_style != m_placeholder->styleSheet()) {
     m_placeholder->setStyleSheet(placeholder_style);
+    m_placeholder->style()->unpolish(this);
+    m_placeholder->style()->polish(this);
     is_placeholder_updated = true;
   }
   if(is_placeholder_updated) {

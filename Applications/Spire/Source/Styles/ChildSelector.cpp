@@ -14,3 +14,12 @@ const Selector& ChildSelector::get_base() const {
 const Selector& ChildSelector::get_child() const {
   return m_child;
 }
+
+bool ChildSelector::is_match(const ChildSelector& selector) const {
+  return m_base.is_match(selector.get_base()) &&
+    m_child.is_match(selector.get_child());
+}
+
+ChildSelector Spire::Styles::operator >(Selector base, Selector child) {
+  return ChildSelector(std::move(base), std::move(child));
+}

@@ -59,6 +59,16 @@ namespace Styles {
   /** Sets the size of the left and right padding. */
   using HorizontalPadding = CompositeProperty<PaddingRight, PaddingLeft>;
 
+  /** Sets the size of the top and bottom padding. */
+  using VerticalPadding = CompositeProperty<PaddingTop, PaddingBottom>;
+
+  /** Composes all paddings into a single property. */
+  using Padding = CompositeProperty<PaddingTop, PaddingRight, PaddingBottom,
+    PaddingLeft>;
+
+  /** Sets the alignment of the body. */
+  using BodyAlign = BasicProperty<Qt::Alignment, struct BodyAlignTag>;
+
   /**
    * Applies a single size to all four corners of a border.
    * @param size The size to apply to all borders.
@@ -83,6 +93,18 @@ namespace Styles {
    * @param size The size of the horizontal padding.
    */
   HorizontalPadding horizontal_padding(int size);
+
+  /**
+   * Applies equal padding to the top and bottom of a widget.
+   * @param size The size of the vertical padding.
+   */
+  VerticalPadding vertical_padding(int size);
+
+  /**
+   * Applies equal padding to an entire widget.
+   * @param size The size of the padding.
+   */
+  Padding padding(int size);
 }
 
   /** Implements a StyledWidget displaying a component within a styled box. */
@@ -99,9 +121,12 @@ namespace Styles {
     protected:
       void style_updated() override;
       void selector_updated() override;
+      void enterEvent(QEvent* event) override;
+      void leaveEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      QWidget* m_container;
       QWidget* m_body;
   };
 

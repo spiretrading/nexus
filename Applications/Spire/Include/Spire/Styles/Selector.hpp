@@ -4,103 +4,30 @@
 #include <typeindex>
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
-#include "Spire/Styles/PseudoElement.hpp"
-#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+  template<typename T, typename = void>
+  struct is_selector_t : std::false_type {};
+
+  template<typename T>
+  struct is_selector_t<T, std::enable_if_t<std::is_same_v<
+    decltype(std::declval<T>().is_match(std::declval<T>())), bool>>> :
+    std::true_type {};
+
+  template<typename T>
+  constexpr auto is_selector_v = is_selector_t<T>::value;
 
   /** Selects the widget to apply a style rule to. */
   class Selector {
     public:
 
-      /** Constructs a Selector for any component. */
-      Selector(Any any);
+      template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
+      Selector(T selector);
 
-      /**
-       * Constructs a Selector for a StateSelector.
-       * @param state The state to represent.
-       */
-      template<typename T, typename G>
-      Selector(StateSelector<T, G> state);
+      Selector(const Selector&) = default;
 
-      /**
-       * Constructs a Selector for a StateSelector.
-       * @param state The state to represent.
-       */
-      template<typename G>
-      Selector(StateSelector<void, G> state);
-
-      /**
-       * Constructs a Selector for a PseudoElement.
-       * @param element The pseudo-element to represent.
-       */
-      template<typename T, typename G>
-      Selector(PseudoElement<T, G> element);
-
-      /**
-       * Constructs a Selector for a PseudoElement.
-       * @param element The pseudo-element to represent.
-       */
-      template<typename G>
-      Selector(PseudoElement<void, G> element);
-
-      /**
-       * Constructs a Selector for a NotSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(NotSelector selector);
-
-      /**
-       * Constructs a Selector for an AndSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(AndSelector selector);
-
-      /**
-       * Constructs a Selector for an OrSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(OrSelector selector);
-
-      /**
-       * Constructs a Selector for an IsASelector.
-       * @param selector The selector to represent.
-       */
-      Selector(IsASelector selector);
-
-      /**
-       * Constructs a Selector for an AncestorSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(AncestorSelector selector);
-
-      /**
-       * Constructs a Selector for a ParentSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(ParentSelector selector);
-
-      /**
-       * Constructs a Selector for a DescendantSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(DescendantSelector selector);
-
-      /**
-       * Constructs a Selector for a ChildSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(ChildSelector selector);
-
-      /**
-       * Constructs a Selector for a SiblingSelector.
-       * @param selector The selector to represent.
-       */
-      Selector(SiblingSelector selector);
-
-      /** Constructs a VoidSelector. */
-      Selector(VoidSelector selector);
+      Selector(Selector&&) = default;
 
       /** Returns the underlying selector's type. */
       std::type_index get_type() const;
@@ -122,6 +49,10 @@ namespace Spire::Styles {
       template<typename F, typename... G>
       decltype(auto) visit(F&& f, G&&... g) const;
 
+      Selector& operator =(const Selector&) = default;
+
+      Selector& operator =(Selector&&) = default;
+
     private:
       template<typename T>
       struct TypeExtractor {};
@@ -137,42 +68,16 @@ namespace Spire::Styles {
       std::function<bool (const Selector&, const Selector&)> m_matcher;
   };
 
-  template<typename T, typename G>
-  Selector::Selector(StateSelector<T, G> state)
-    : m_selector(std::move(state)),
+  template<typename T, typename>
+  Selector::Selector(T selector)
+    : m_selector(std::move(selector)),
       m_matcher([] (const Selector& self, const Selector& selector) {
-        if(selector.get_type() != typeid(StateSelector<T, G>)) {
+        if(selector.get_type() != typeid(T)) {
           return false;
         }
-        auto& left = self.as<StateSelector<T, G>();
-        auto& right = selector.as<StateSelector<T, G>>();
-        return left.get_data() == right.get_data();
-      }) {}
-
-  template<typename G>
-  Selector::Selector(StateSelector<void, G> state)
-    : m_selector(std::move(state)),
-      m_matcher([] (const Selector& self, const Selector& selector) {
-        return selector.get_type() == typeid(StateSelector<void, G>);
-      }) {}
-
-  template<typename T, typename G>
-  Selector::Selector(PseudoElement<T, G> state)
-    : m_selector(std::move(state)),
-      m_matcher([] (const Selector& self, const Selector& selector) {
-        if(selector.get_type() != typeid(PseudoElement<T, G>)) {
-          return false;
-        }
-        auto& left = self.as<PseudoElement<T, G>();
-        auto& right = selector.as<PseudoElement<T, G>>();
-        return left.get_data() == right.get_data();
-      }) {}
-
-  template<typename G>
-  Selector::Selector(PseudoElement<void, G> state)
-    : m_selector(std::move(state)),
-      m_matcher([] (const Selector& self, const Selector& selector) {
-        return selector.get_type() == typeid(PseudoElement<void, G>);
+        auto& left = self.as<T>();
+        auto& right = selector.as<T>();
+        return left.is_match(right);
       }) {}
 
   template<typename U>

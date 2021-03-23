@@ -5,7 +5,10 @@
 namespace Spire::Styles {
 
   /** Selects all widgets unconditionally. */
-  class Any {};
+  class Any {
+    public:
+      bool is_match(const Any& selector) const;
+  };
 }
 
 #endif
