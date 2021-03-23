@@ -228,7 +228,13 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 
 void DecimalBox::wheelEvent(QWheelEvent* event) {
   if(hasFocus()) {
-    if(event->angleDelta().y() > 0) {
+    auto angle_delta = [&] {
+      if(event->modifiers().testFlag(Qt::AltModifier)) {
+        return event->angleDelta().x();
+      }
+      return event->angleDelta().y();
+    }();
+    if(angle_delta > 0) {
       increment();
     } else {
       decrement();
