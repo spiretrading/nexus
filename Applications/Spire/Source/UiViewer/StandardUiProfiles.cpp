@@ -145,8 +145,7 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("20")));
   properties.push_back(make_standard_bool_property("read-only", false));
   properties.push_back(make_standard_bool_property("buttons-visible", true));
-  properties.push_back(make_standard_bool_property("suppress-warnings",
-    false));
+  properties.push_back(make_standard_bool_property("has-warning", true));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto& current = get<QString>("current", profile.get_properties());
@@ -257,10 +256,10 @@ UiProfile Spire::make_decimal_box_profile() {
         }
         decimal_box->set_style(std::move(style));
       });
-      auto& suppress_warnings = get<bool>("suppress-warnings",
+      auto& has_warning = get<bool>("has-warning",
         profile.get_properties());
-      suppress_warnings.connect_changed_signal([=] (auto value) {
-        decimal_box->set_suppress_warnings(value);
+      has_warning.connect_changed_signal([=] (auto value) {
+        decimal_box->set_warning(value);
       });
       return decimal_box;
     });

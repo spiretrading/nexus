@@ -104,7 +104,7 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
       m_trailing_zeros(0),
       m_validator(QString("^[-]?[0-9]*([%1][0-9]*)?").arg(
         QLocale().decimalPoint())),
-      m_has_suppressed_warning(true) {
+      m_has_warning(true) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_current, this);
@@ -190,8 +190,8 @@ void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
 }
 
-void DecimalBox::set_suppress_warnings(bool has_suppressed_warning) {
-  m_has_suppressed_warning = has_suppressed_warning;
+void DecimalBox::set_warning(bool has_warning) {
+  m_has_warning = has_warning;
 }
 
 connection DecimalBox::connect_current_signal(
@@ -347,7 +347,7 @@ void DecimalBox::on_submit(const QString& submission) {
   } else {
     m_text_box->set_current(to_string(m_submission));
     update_padded_zeros();
-    if(!m_has_suppressed_warning) {
+    if(m_has_warning) {
       display_warning_indicator(*m_text_box);
     }
   }

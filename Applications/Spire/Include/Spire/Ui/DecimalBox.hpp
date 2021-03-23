@@ -116,7 +116,7 @@ namespace Spire {
       /*!
         \param has_warning True iff the warning style should be applied.
       */
-      void set_suppress_warnings(bool has_warning);
+      void set_warning(bool has_warning);
 
       //! Connets a slot to the current changed signal.
       boost::signals2::connection connect_current_signal(
@@ -149,7 +149,7 @@ namespace Spire {
       QRegExp m_validator;
       Button* m_up_button;
       Button* m_down_button;
-      bool m_has_suppressed_warning;
+      bool m_has_warning;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
 
