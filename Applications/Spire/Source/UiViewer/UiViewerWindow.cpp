@@ -92,10 +92,9 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_decimal_box_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
+  add(make_scroll_bar_profile());
   add(make_text_box_profile());
   add(make_tooltip_profile());
-  add(make_vertical_scroll_bar_profile());
-  add(make_horizontal_scroll_bar_profile());
   m_widget_list->setCurrentRow(0);
 }
 

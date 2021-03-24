@@ -26,20 +26,14 @@ namespace Spire {
   //! Returns a UiProfile for the IconButton.
   UiProfile make_icon_button_profile();
 
+  //! Returns a UiProfile for the ScrollBar.
+  UiProfile make_scroll_bar_profile();
+
   //! Returns a UiProfile for the TextBox.
   UiProfile make_text_box_profile();
 
   //! Returns a UiProfile for the Tooltip.
   UiProfile make_tooltip_profile();
-
-  //! Returns a UiProfile for the ScrollBar.
-  UiProfile make_scroll_bar_profile(Qt::Orientation orientation);
-
-  //! Returns a UiProfile for the vertical ScrollBar.
-  UiProfile make_vertical_scroll_bar_profile();
-
-  //! Returns a UiProfile for the horizontal ScrollBar.
-  UiProfile make_horizontal_scroll_bar_profile();
 }
 
 #endif
