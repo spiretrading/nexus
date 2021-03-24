@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/LocalValueModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -24,26 +25,6 @@ namespace {
       auto state = m_model->set_current(input);
       input = m_model->get_current();
       return state;
-    }
-  };
-
-  struct AnyModel : TextModel {
-    QString m_current;
-    mutable CurrentSignal m_current_signal;
-
-    const Type& get_current() const override {
-      return m_current;
-    }
-
-    QValidator::State set_current(const Type& value) {
-      m_current = value.toUpper();
-      m_current_signal(m_current);
-      return QValidator::State::Acceptable;
-    }
-
-    connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
     }
   };
 
@@ -83,11 +64,14 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
 }
 
 TextBox::TextBox(QWidget* parent)
-  : TextBox({}, parent) {}
+  : TextBox(std::make_shared<LocalTextModel>(), parent) {}
 
-TextBox::TextBox(const QString& current, QWidget* parent)
+TextBox::TextBox(QString current, QWidget* parent)
+  : TextBox(std::make_shared<LocalTextModel>(std::move(current)), parent) {}
+
+TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : StyledWidget(parent),
-      m_model(std::make_shared<AnyModel>()),
+      m_model(std::move(model)),
       m_submission(m_model->get_current()) {
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());

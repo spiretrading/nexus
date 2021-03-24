@@ -28,6 +28,8 @@ namespace Spire {
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
+  template<typename T> class LocalValueModel;
+  using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;

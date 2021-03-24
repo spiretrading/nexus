@@ -106,7 +106,7 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
         QLocale().decimalPoint())) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_text_box = new TextBox(m_current, this);
+// TODO  m_text_box = new TextBox(m_current, this);
   set_decimal_places(DEFAULT_DECIMAL_PLACES);
   auto style = m_text_box->get_style();
   style.get((is_a<Button>() && !matches(Visibility(VisibilityOption::NONE))) %

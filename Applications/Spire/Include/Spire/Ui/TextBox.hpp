@@ -46,18 +46,26 @@ namespace Styles {
       //! Signals that the text is submitted.
       using SubmitSignal = Signal<void (const QString& text)>;
 
-      //! Constructs a TextBox with an empty current value.
+      //! Constructs a TextBox using a LocalTextModel.
       /*!
         \param parent The parent widget.
       */
       explicit TextBox(QWidget* parent = nullptr);
 
-      //! Constructs a TextBox.
+      //! Constructs a TextBox using a LocalTextModel and initial current value.
       /*!
-        \param current The current value.
+        \param current The initial current value.
         \param parent The parent widget.
       */
-      explicit TextBox(const QString& current, QWidget* parent = nullptr);
+      explicit TextBox(QString current, QWidget* parent = nullptr);
+
+      //! Constructs a TextBox.
+      /*!
+        \param model The current value's model.
+        \param parent The parent widget.
+      */
+      explicit TextBox(std::shared_ptr<TextModel> model,
+        QWidget* parent = nullptr);
 
       //! Returns the model.
       const std::shared_ptr<TextModel>& get_model() const;
