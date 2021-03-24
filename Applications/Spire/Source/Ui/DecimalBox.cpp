@@ -200,6 +200,11 @@ connection DecimalBox::connect_current_signal(
   return m_current_signal.connect(slot);
 }
 
+connection DecimalBox::connect_invalid_signal(
+    const InvalidSignal::slot_type& slot) const {
+  return m_invalid_signal.connect(slot);
+}
+
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -346,6 +351,7 @@ void DecimalBox::on_submit(const QString& submission) {
     m_submission = value;
     m_submit_signal(m_submission);
   } else {
+    m_invalid_signal();
     m_text_box->set_current(to_string(m_submission));
     update_padded_zeros();
     if(m_has_warning) {

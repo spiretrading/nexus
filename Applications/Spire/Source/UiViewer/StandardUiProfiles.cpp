@@ -233,6 +233,9 @@ UiProfile Spire::make_decimal_box_profile() {
           decimal_box->set_increment(Qt::ShiftModifier, *decimal);
         }
       });
+      auto invalid_slot = profile.make_event_slot(
+        QString::fromUtf8("Invalid"));
+      decimal_box->connect_invalid_signal([=] { invalid_slot(); });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(

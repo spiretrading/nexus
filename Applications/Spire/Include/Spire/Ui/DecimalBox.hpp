@@ -25,6 +25,9 @@ namespace Spire {
       */
       using CurrentSignal = Signal<void (Decimal value)>;
 
+      //! Signals that a submission was rejected.
+      using InvalidSignal = Signal<void ()>;
+
       //! Signals that submission value has changed.
       /*!
         \param value The submission value.
@@ -118,9 +121,13 @@ namespace Spire {
       */
       void set_warning(bool has_warning);
 
-      //! Connets a slot to the current changed signal.
+      //! Connects a slot to the current changed signal.
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const;
+
+      //! Connects a slot to the invalid signal.
+      boost::signals2::connection connect_invalid_signal(
+        const InvalidSignal::slot_type& slot) const;
 
       //! Connects a slot to the value submission signal.
       boost::signals2::connection connect_submit_signal(
@@ -136,6 +143,7 @@ namespace Spire {
 
     private:
       mutable CurrentSignal m_current_signal;
+      mutable InvalidSignal m_invalid_signal;
       mutable SubmitSignal m_submit_signal;
       QString m_current;
       Decimal m_submission;
