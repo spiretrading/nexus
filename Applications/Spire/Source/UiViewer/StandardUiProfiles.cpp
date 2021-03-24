@@ -303,9 +303,9 @@ UiProfile Spire::make_text_box_profile() {
         text_box->set_read_only(is_read_only);
       });
       auto& current = get<QString>("current", profile.get_properties());
-      current.connect_changed_signal([text_box] (const auto& current) {
-        if(text_box->get_current() != current) {
-          text_box->set_current(current);
+      current.connect_changed_signal([=] (const auto& current) {
+        if(text_box->get_model()->get_current() != current) {
+          text_box->get_model()->set_current(current);
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -320,11 +320,11 @@ UiProfile Spire::make_text_box_profile() {
             warning.set(false);
           }
         });
-      text_box->connect_current_signal([&] (const QString& value) {
+      text_box->get_model()->connect_current_signal([&] (const auto& value) {
         current.set(value);
       });
-      text_box->connect_current_signal(profile.make_event_slot<QString>(
-        QString::fromUtf8("Current")));
+      text_box->get_model()->connect_current_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
       return text_box;

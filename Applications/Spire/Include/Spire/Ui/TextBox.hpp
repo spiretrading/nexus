@@ -5,6 +5,8 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/ValueModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -31,6 +33,9 @@ namespace Styles {
   TextStyle text_style(QFont font, QColor color);
 }
 
+  /** The type of model used by the TextBox. */
+  using TextModel = ValueModel<QString>;
+
   //! Displays a one-line text box.
   class TextBox : public Styles::StyledWidget {
     public:
@@ -54,11 +59,8 @@ namespace Styles {
       */
       explicit TextBox(const QString& current, QWidget* parent = nullptr);
 
-      //! Returns the current value.
-      const QString& get_current() const;
-
-      //! Sets the current value.
-      void set_current(const QString& value);
+      //! Returns the model.
+      const std::shared_ptr<TextModel>& get_model() const;
 
       //! Returns the last submitted value.
       const QString& get_submission() const;
@@ -71,10 +73,6 @@ namespace Styles {
 
       //! Returns <code>true</code> iff this box is read-only.
       bool is_read_only() const;
-
-      //! Connects a slot to the CurrentSignal.
-      boost::signals2::connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const;
 
       //! Connects a slot to the SubmitSignal.
       boost::signals2::connection connect_submit_signal(
@@ -95,7 +93,6 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      mutable CurrentSignal m_current_signal;
       mutable SubmitSignal m_submit_signal;
       Box* m_box;
       boost::optional<Styles::StyleSheet> m_default_box_style;
@@ -104,10 +101,12 @@ namespace Styles {
       QFont m_line_edit_font;
       QLabel* m_placeholder;
       QFont m_placeholder_font;
-      QString m_current;
+      std::shared_ptr<TextModel> m_model;
+      boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
 
+      void on_current(const QString& current);
       void on_editing_finished();
       void on_text_edited(const QString& text);
       bool is_placeholder_shown() const;

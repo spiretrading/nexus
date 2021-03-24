@@ -115,8 +115,8 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
   setFocusProxy(m_text_box);
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
-  m_current_connection = m_text_box->connect_current_signal(
-    [=] (const auto& current) { on_current(current); });
+//  m_current_connection = m_text_box->connect_current_signal(
+// TODO    [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submit) { on_submit(submit); });
   m_text_box->installEventFilter(this);
@@ -128,11 +128,12 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
 }
 
 DecimalBox::Decimal DecimalBox::get_current() const {
-  return to_decimal(m_text_box->get_current());
+  return 0;
+// TODO  return to_decimal(m_text_box->get_current());
 }
 
 void DecimalBox::set_current(Decimal current) {
-  m_text_box->set_current(to_string(current));
+// TODO  m_text_box->set_current(to_string(current));
 }
 
 DecimalBox::Decimal DecimalBox::get_minimum() const {
@@ -257,6 +258,7 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::update_trailing_zeros() {
+#if 0 // TODO
   auto current_text = m_text_box->get_current();
   if(!m_has_trailing_zeros || m_decimal_places == 0) {
     auto block = shared_connection_block(m_current_connection);
@@ -275,12 +277,13 @@ void DecimalBox::update_trailing_zeros() {
   }();
   auto blocker = shared_connection_block(m_current_connection);
   if(zero_count > 0) {
-    m_text_box->set_current(current_text.leftJustified(
-      current_text.length() + zero_count, '0'));
+// TODO    m_text_box->set_current(current_text.leftJustified(
+//      current_text.length() + zero_count, '0'));
   } else {
-    m_text_box->set_current(current_text.left(
-      current_text.length() + zero_count));
+// TODO    m_text_box->set_current(current_text.left(
+//      current_text.length() + zero_count));
   }
+#endif
 }
 
 void DecimalBox::on_current(const QString& current) {
@@ -292,7 +295,7 @@ void DecimalBox::on_current(const QString& current) {
     m_current_signal(value);
   } else {
     auto blocker = shared_connection_block(m_current_connection);
-    m_text_box->set_current(m_current);
+// TODO    m_text_box->set_current(m_current);
   }
 }
 
@@ -303,7 +306,7 @@ void DecimalBox::on_submit(const QString& submission) {
     m_submission = value;
     m_submit_signal(m_submission);
   } else {
-    m_text_box->set_current(to_string(m_submission));
+// TODO    m_text_box->set_current(to_string(m_submission));
     update_trailing_zeros();
     display_warning_indicator(*m_text_box);
   }

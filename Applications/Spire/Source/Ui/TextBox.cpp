@@ -11,6 +11,42 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  struct TextValidator : QValidator {
+    std::shared_ptr<TextModel> m_model;
+
+    TextValidator(std::shared_ptr<TextModel> model)
+      : m_model(std::move(model)) {}
+
+    QValidator::State	validate(QString& input, int& pos) const override {
+      if(input == m_model->get_current()) {
+        return m_model->get_state();
+      }
+      auto state = m_model->set_current(input);
+      input = m_model->get_current();
+      return state;
+    }
+  };
+
+  struct AnyModel : TextModel {
+    QString m_current;
+    mutable CurrentSignal m_current_signal;
+
+    const Type& get_current() const override {
+      return m_current;
+    }
+
+    QValidator::State set_current(const Type& value) {
+      m_current = value.toUpper();
+      m_current_signal(m_current);
+      return QValidator::State::Acceptable;
+    }
+
+    connection connect_current_signal(
+        const CurrentSignal::slot_type& slot) const {
+      return m_current_signal.connect(slot);
+    }
+  };
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -51,13 +87,14 @@ TextBox::TextBox(QWidget* parent)
 
 TextBox::TextBox(const QString& current, QWidget* parent)
     : StyledWidget(parent),
-      m_current(current),
-      m_submission(m_current) {
+      m_model(std::make_shared<AnyModel>()),
+      m_submission(m_model->get_current()) {
   m_layers = new LayeredWidget(this);
-  m_line_edit = new QLineEdit(m_current);
+  m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_line_edit->setValidator(new TextValidator(m_model));
   m_line_edit->installEventFilter(this);
   m_layers->add(m_line_edit);
   m_placeholder = new QLabel();
@@ -80,17 +117,12 @@ TextBox::TextBox(const QString& current, QWidget* parent)
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
+  m_current_connection = m_model->connect_current_signal(
+    [=] (const auto& value) { on_current(value); });
 }
 
-const QString& TextBox::get_current() const {
-  return m_current;
-}
-
-void TextBox::set_current(const QString& value) {
-  m_current = value;
-  update_display_text();
-  update_placeholder_text();
-  m_current_signal(m_current);
+const std::shared_ptr<TextModel>& TextBox::get_model() const {
+  return m_model;
 }
 
 const QString& TextBox::get_submission() const {
@@ -115,11 +147,6 @@ void TextBox::set_read_only(bool read_only) {
 
 bool TextBox::is_read_only() const {
   return m_line_edit->isReadOnly();
-}
-
-connection TextBox::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
 }
 
 connection TextBox::connect_submit_signal(
@@ -257,8 +284,8 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     auto focusEvent = static_cast<QFocusEvent*>(event);
     if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
-      if(m_line_edit->text() != m_current) {
-        m_line_edit->setText(m_current);
+      if(m_line_edit->text() != m_model->get_current()) {
+        m_line_edit->setText(m_model->get_current());
       }
     }
   } else if(event->type() == QEvent::FocusOut) {
@@ -289,8 +316,8 @@ void TextBox::mousePressEvent(QMouseEvent* event) {
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
-    if(m_submission != m_current) {
-      set_current(m_submission);
+    if(m_submission != m_model->get_current()) {
+      m_model->set_current(m_submission);
     }
   } else {
     StyledWidget::keyPressEvent(event);
@@ -303,21 +330,25 @@ void TextBox::resizeEvent(QResizeEvent* event) {
   StyledWidget::resizeEvent(event);
 }
 
+void TextBox::on_current(const QString& current) {
+  update_display_text();
+  update_placeholder_text();
+}
+
 void TextBox::on_editing_finished() {
   if(!is_read_only()) {
-    m_submission = m_current;
+    m_submission = m_model->get_current();
     m_submit_signal(m_submission);
   }
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  m_current = text;
+  m_model->set_current(text);
   update_placeholder_text();
-  m_current_signal(m_current);
 }
 
 bool TextBox::is_placeholder_shown() const {
-  return !is_read_only() && m_current.isEmpty() &&
+  return !is_read_only() && m_model->get_current().isEmpty() &&
     !m_placeholder_text.isEmpty();
 }
 
@@ -352,8 +383,8 @@ void TextBox::elide_text() {
   option.features = QStyleOptionFrame::None;
   auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
     &option, m_line_edit);
-  auto elided_text = font_metrics.elidedText(m_current, Qt::ElideRight,
-    rect.width());
+  auto elided_text = font_metrics.elidedText(m_model->get_current(),
+    Qt::ElideRight, rect.width());
   if(elided_text != m_line_edit->text()) {
     m_line_edit->setText(elided_text);
     m_line_edit->setCursorPosition(0);
@@ -363,8 +394,8 @@ void TextBox::elide_text() {
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else if(m_line_edit->text() != m_current) {
-    m_line_edit->setText(m_current);
+  } else if(m_line_edit->text() != m_model->get_current()) {
+    m_line_edit->setText(m_model->get_current());
   }
 }
 
