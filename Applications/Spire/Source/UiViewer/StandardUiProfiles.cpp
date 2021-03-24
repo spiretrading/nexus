@@ -146,7 +146,6 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_bool_property("buttons-visible", true));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
-      auto& current = get<QString>("current", profile.get_properties());
       auto& minimum = get<QString>("minimum", profile.get_properties());
       auto& maximum = get<QString>("maximum", profile.get_properties());
       auto& decimal_places = get<int>("decimal-places",
@@ -174,59 +173,23 @@ UiProfile Spire::make_decimal_box_profile() {
         {Qt::AltModifier, *parse_decimal(alt_increment.get())},
         {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
         {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
-      auto decimal_box = new DecimalBox(*parse_decimal(current.get()),
-        *parse_decimal(minimum.get()), *parse_decimal(maximum.get()),
-        modifiers);
+      auto decimal_box = new DecimalBox(modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
-      current.connect_changed_signal([=] (const auto& value) {
+      auto& current_slot = get<QString>("current", profile.get_properties());
+      current_slot.connect_changed_signal([=] (const auto& value) {
         if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_current(*decimal);
+          if(decimal_box->get_model()->get_current().compare(*decimal) != 0) {
+            decimal_box->get_model()->set_current(*decimal);
+          }
         }
       });
-      auto current_slot = profile.make_event_slot<QString>(
-        QString::fromUtf8("Current"));
-      decimal_box->connect_current_signal(
-        [=] (const DecimalBox::Decimal& current) {
-          current_slot(QString::fromStdString(
-            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
+      decimal_box->get_model()->connect_current_signal(
+        [&] (const DecimalBox::Decimal& current) {
+//          current_slot(QString::fromStdString(
+// TODO            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
-      minimum.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_minimum(*decimal);
-        }
-      });
-      maximum.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_maximum(*decimal);
-        }
-      });
-      decimal_places.connect_changed_signal([=] (auto decimal_places) {
-        if(decimal_places >= 0) {
-          decimal_box->set_decimal_places(decimal_places);
-        }
-      });
       trailing_zeros.connect_changed_signal([=] (auto has_trailing_zeros) {
         decimal_box->set_trailing_zeros(has_trailing_zeros);
-      });
-      default_increment.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_increment(Qt::NoModifier, *decimal);
-        }
-      });
-      alt_increment.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_increment(Qt::AltModifier, *decimal);
-        }
-      });
-      ctrl_increment.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_increment(Qt::ControlModifier, *decimal);
-        }
-      });
-      shift_increment.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          decimal_box->set_increment(Qt::ShiftModifier, *decimal);
-        }
       });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));

@@ -8,6 +8,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -92,22 +93,24 @@ namespace {
   }
 }
 
-DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
+DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
+  QWidget* parent)
+  : DecimalBox(std::make_shared<LocalValueModel<Decimal>>(),
+      std::move(modifiers), parent) {}
+
+DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : StyledWidget(parent),
-      m_current(to_string(current)),
-      m_submission(current),
-      m_minimum(minimum),
-      m_maximum(maximum),
+      m_model(std::move(model)),
+      m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)),
       m_has_trailing_zeros(false),
-      m_validator(nullptr),
       m_trailing_zero_regex(QString("[%1]?[0]*$").arg(
         QLocale().decimalPoint())) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
 // TODO  m_text_box = new TextBox(m_current, this);
-  set_decimal_places(DEFAULT_DECIMAL_PLACES);
+//  set_decimal_places(DEFAULT_DECIMAL_PLACES);
   auto style = m_text_box->get_style();
   style.get((is_a<Button>() && !matches(Visibility(VisibilityOption::NONE))) %
     is_a<TextBox>() > is_a<Box>()).set(PaddingRight(scale_width(26)));
@@ -127,54 +130,8 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
   update_button_positions();
 }
 
-DecimalBox::Decimal DecimalBox::get_current() const {
-  return 0;
-// TODO  return to_decimal(m_text_box->get_current());
-}
-
-void DecimalBox::set_current(Decimal current) {
-// TODO  m_text_box->set_current(to_string(current));
-}
-
-DecimalBox::Decimal DecimalBox::get_minimum() const {
-  return m_minimum;
-}
-
-void DecimalBox::set_minimum(Decimal minimum) {
-  m_minimum = minimum;
-}
-
-DecimalBox::Decimal DecimalBox::get_maximum() const {
-  return m_maximum;
-}
-
-void DecimalBox::set_maximum(Decimal maximum) {
-  m_maximum = maximum;
-}
-
-DecimalBox::Decimal DecimalBox::get_increment(
-    Qt::KeyboardModifier modifier) const {
-  auto increment = m_modifiers.find(modifier);
-  if(increment == m_modifiers.end()) {
-    return get_increment(Qt::NoModifier);
-  }
-  return increment.value();
-}
-
-void DecimalBox::set_increment(Qt::KeyboardModifier modifier,
-    Decimal increment) {
-  m_modifiers[modifier] = increment;
-}
-
-int DecimalBox::get_decimal_places() const {
-  return m_decimal_places;
-}
-
-void DecimalBox::set_decimal_places(int decimal_places) {
-  m_decimal_places = decimal_places;
-  m_validator = QRegExp(QString("^[-]?[0-9]*([%1][0-9]{0,%2})?").arg(
-    QLocale().decimalPoint()).arg(m_decimal_places));
-  update_trailing_zeros();
+const std::shared_ptr<DecimalBox::DecimalModel>& DecimalBox::get_model() const {
+  return m_model;
 }
 
 bool DecimalBox::has_trailing_zeros() const {
@@ -188,11 +145,6 @@ void DecimalBox::set_trailing_zeros(bool has_trailing_zeros) {
 
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
-}
-
-connection DecimalBox::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
 }
 
 connection DecimalBox::connect_submit_signal(
@@ -237,17 +189,20 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
   auto modifiers =
     std::bitset<std::numeric_limits<int>::digits>(modifier_flags);
   if(modifiers.count() != 1) {
-    return get_increment(Qt::NoModifier);
+    auto increment = m_modifiers.find(
+      static_cast<Qt::KeyboardModifier>(modifiers.to_ulong()));
+    if(increment == m_modifiers.end()) {
+      return m_modifiers.find(Qt::NoModifier).value();
+    }
   }
-  return get_increment(
-    static_cast<Qt::KeyboardModifier>(modifiers.to_ulong()));
+  return m_modifiers.find(
+    static_cast<Qt::KeyboardModifier>(modifiers.to_ulong())).value();
 }
 
 void DecimalBox::step_by(Decimal value) {
   setFocus();
-  value += get_current();
-  set_current(clamp(value, m_minimum, m_maximum));
-  update_trailing_zeros();
+  value += m_model->get_current();
+  m_model->set_current(value);
 }
 
 void DecimalBox::update_button_positions() {
@@ -287,6 +242,7 @@ void DecimalBox::update_trailing_zeros() {
 }
 
 void DecimalBox::on_current(const QString& current) {
+#if 0
   if(m_validator.exactMatch(current)) {
     m_current = current;
     auto value = to_decimal(current);
@@ -297,9 +253,11 @@ void DecimalBox::on_current(const QString& current) {
     auto blocker = shared_connection_block(m_current_connection);
 // TODO    m_text_box->set_current(m_current);
   }
+#endif
 }
 
 void DecimalBox::on_submit(const QString& submission) {
+#if 0
   auto value = to_decimal(submission);
   if(m_minimum <= value && value <= m_maximum) {
     update_trailing_zeros();
@@ -310,4 +268,5 @@ void DecimalBox::on_submit(const QString& submission) {
     update_trailing_zeros();
     display_warning_indicator(*m_text_box);
   }
+#endif
 }
