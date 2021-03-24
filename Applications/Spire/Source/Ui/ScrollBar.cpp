@@ -30,6 +30,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_scroll_bar = new QScrollBar(orientation, this);
+  m_scroll_bar->setContextMenuPolicy(Qt::NoContextMenu);
   m_scroll_bar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_scroll_bar);
   set_style(DEFAULT_STYLE());
