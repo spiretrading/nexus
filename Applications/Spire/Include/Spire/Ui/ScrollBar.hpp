@@ -7,18 +7,6 @@
 namespace Spire {
 namespace Styles {
 
-  /** Sets the width. */
-  using Width = BasicProperty<int, struct WidthTag>;
-
-  /** Sets the heigth. */
-  using Height = BasicProperty<int, struct HeightTag>;
-
-  /** Sets the minimum width. */
-  using MinWidth = BasicProperty<int, struct MinWidthTag>;
-
-  /** Sets the minimum heigth. */
-  using MinHeight = BasicProperty<int, struct MinHeightTag>;
-
   /** Selects the thumb. */
   using ScrollBarThumb = PseudoElement<void, struct ScrollBarThumbTag>;
 }

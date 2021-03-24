@@ -16,9 +16,7 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(Height(scale_height(SCROLL_BAR_SIZE))).
-      set(Width(scale_width(SCROLL_BAR_SIZE)));
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
     style.get(ScrollBarThumb()).
       set(BackgroundColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
@@ -99,17 +97,6 @@ void ScrollBar::selector_updated() {
         scroll_bar_style += "background: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
-      [&] (const Height& height) {
-        if(get_orientation() == Qt::Horizontal) {
-          auto h = height.get_expression().as<int>();
-          resize(size().width(), height.get_expression().as<int>());
-        }
-      },
-      [&] (const Width& width) {
-        if(get_orientation() == Qt::Vertical) {
-          resize(width.get_expression().as<int>(), size().height());
-        }
-      },
       [] {});
   }
   scroll_bar_style += "}";
@@ -118,18 +105,6 @@ void ScrollBar::selector_updated() {
       [&] (const BackgroundColor& color) {
         thumb_style += "background: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      },
-      [&] (const MinHeight& height) {
-        if(get_orientation() == Qt::Vertical) {
-          thumb_style += "min-height: " + QString::number(
-            height.get_expression().as<int>()) + "px;";
-        }
-      },
-      [&] (const MinWidth& width) {
-        if(get_orientation() == Qt::Horizontal) {
-          thumb_style += "min-width: " + QString::number(
-            width.get_expression().as<int>()) + "px;";
-        }
       },
       [] {});
   }
