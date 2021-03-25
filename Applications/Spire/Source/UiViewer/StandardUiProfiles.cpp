@@ -1,6 +1,7 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <QHash>
 #include <QLabel>
+#include <QMetaEnum>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -10,6 +11,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -296,6 +298,66 @@ UiProfile Spire::make_icon_button_profile() {
       button->connect_clicked_signal(profile.make_event_slot(
         QString::fromUtf8("ClickedSignal")));
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_scroll_bar_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_bool_property("enabled", true));
+  properties.push_back(make_standard_bool_property("vertical", true));
+  properties.push_back(make_standard_int_property("start-range", 0));
+  properties.push_back(make_standard_int_property("end-range", 400));
+  properties.push_back(make_standard_int_property("page-size", 100));
+  properties.push_back(make_standard_int_property("line-size", 26));
+  properties.push_back(make_standard_int_property("position", 0));
+  auto profile = UiProfile(QString::fromUtf8("ScrollBar"), properties,
+    [] (auto& profile) {
+      auto& vertical = get<bool>("vertical", profile.get_properties());
+      auto orientation = [&] {
+        if(vertical.get()) {
+          return Qt::Vertical;
+        } else {
+          return Qt::Horizontal;
+        }
+      }();
+      auto scroll_bar = new ScrollBar(orientation);
+      if(orientation == Qt::Vertical) {
+        scroll_bar->resize(scale_width(13), scale_height(200));
+      } else {
+        scroll_bar->resize(scale_width(200), scale_height(13));
+      }
+      auto& enabled = get<bool>("enabled", profile.get_properties());
+      enabled.connect_changed_signal([scroll_bar] (auto value) {
+        scroll_bar->setEnabled(value);
+      });
+      auto& start_range = get<int>("start-range", profile.get_properties());
+      start_range.connect_changed_signal([scroll_bar] (auto value) {
+        auto range = scroll_bar->get_range();
+        range.m_start = value;
+        scroll_bar->set_range(range);
+      });
+      auto& end_range = get<int>("end-range", profile.get_properties());
+      end_range.connect_changed_signal([scroll_bar] (auto value) {
+        auto range = scroll_bar->get_range();
+        range.m_end = value;
+        scroll_bar->set_range(range);
+      });
+      auto& page_size = get<int>("page-size", profile.get_properties());
+      page_size.connect_changed_signal([scroll_bar] (auto value) {
+        scroll_bar->set_page_size(value);
+      });
+      auto& line_size = get<int>("line-size", profile.get_properties());
+      line_size.connect_changed_signal([scroll_bar] (auto value) {
+        scroll_bar->set_line_size(value);
+      });
+      auto& position = get<int>("position", profile.get_properties());
+      position.connect_changed_signal([scroll_bar] (auto value) {
+        scroll_bar->set_position(value);
+      });
+      scroll_bar->connect_position_signal(profile.make_event_slot<int>(
+        QString::fromUtf8("Position")));
+      return scroll_bar;
     });
   return profile;
 }
