@@ -24,6 +24,11 @@ namespace {
 
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     : StyledWidget(parent) {
+  if(orientation == Qt::Vertical) {
+    m_thumb_min_size = scale_height(50);
+  } else {
+    m_thumb_min_size = scale_width(50);
+  }
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_scroll_bar = new QScrollBar(orientation, this);
@@ -76,6 +81,15 @@ void ScrollBar::set_position(int position) {
   m_scroll_bar->setValue(position);
 }
 
+int ScrollBar::get_thumb_min_size() const {
+  return m_thumb_min_size;
+}
+
+void ScrollBar::set_thumb_min_size(int size) {
+  m_thumb_min_size = size;
+  style_updated();
+}
+
 connection ScrollBar::connect_position_signal(
     const PositionSignal::slot_type& slot) const {
   return m_position_signal.connect(slot);
@@ -105,7 +119,14 @@ void ScrollBar::selector_updated() {
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       });
   }
-  thumb_style += "}";
+  auto thumb_min_size_style = [=] {
+    if(get_orientation() == Qt::Vertical) {
+      return QString("min-height: %1px;").arg(m_thumb_min_size);
+    } else {
+      return QString("min-width: %1px;").arg(m_thumb_min_size);
+    }
+  }();
+  thumb_style += thumb_min_size_style + "}";
   auto style = scroll_bar_style + thumb_style;
   style += QString(R"(
     QScrollBar::add-page:%1, QScrollBar::sub-page:%1 {
