@@ -1,5 +1,4 @@
 #include "Spire/Ui/ScrollBar.hpp"
-#include <QApplication>
 #include <QHBoxLayout>
 #include <QMetaEnum>
 #include "Spire/Ui/Box.hpp"
@@ -54,11 +53,11 @@ void ScrollBar::set_range(int start, int end) {
 }
 
 int ScrollBar::get_line_size() const {
-  return QApplication::wheelScrollLines();
+  return m_scroll_bar->singleStep();
 }
 
 void ScrollBar::set_line_size(int size) {
-  QApplication::setWheelScrollLines(size);
+  m_scroll_bar->setSingleStep(size);
 }
 
 int ScrollBar::get_page_size() const {
