@@ -336,9 +336,11 @@ void DecimalBox::on_current(const QString& current) {
       m_text_box->set_current(m_current);
     }
     auto value = to_decimal(m_current);
-    m_up_button->setDisabled(value >= m_maximum);
-    m_down_button->setDisabled(value <= m_minimum);
-    m_current_signal(value);
+    if(!value.isnan()) {
+      m_up_button->setDisabled(value >= m_maximum);
+      m_down_button->setDisabled(value <= m_minimum);
+      m_current_signal(value);
+    }
   } else {
     m_text_box->set_current(m_current);
   }
