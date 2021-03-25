@@ -96,8 +96,7 @@ void ScrollBar::selector_updated() {
       [&] (const BackgroundColor& color) {
         scroll_bar_style += "background: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      },
-      [] {});
+      });
   }
   scroll_bar_style += "}";
   for(auto& property : thumb_computed_style.get_properties()) {
@@ -105,8 +104,7 @@ void ScrollBar::selector_updated() {
       [&] (const BackgroundColor& color) {
         thumb_style += "background: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      },
-      [] {});
+      });
   }
   thumb_style += "}";
   auto style = scroll_bar_style + thumb_style;
