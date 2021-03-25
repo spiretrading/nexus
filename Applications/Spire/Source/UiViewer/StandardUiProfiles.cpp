@@ -10,6 +10,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -173,7 +174,12 @@ UiProfile Spire::make_decimal_box_profile() {
          {Qt::AltModifier, *parse_decimal(alt_increment.get())},
          {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
          {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
-      auto decimal_box = new DecimalBox(modifiers);
+      auto model =
+        std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
+      model->set_minimum(DecimalBox::Decimal(-100));
+      model->set_maximum(DecimalBox::Decimal(100));
+      model->set_increment(DecimalBox::Decimal("0.01"));
+      auto decimal_box = new DecimalBox(model, modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {

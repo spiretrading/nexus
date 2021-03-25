@@ -6,7 +6,7 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/ValueModel.hpp"
+#include "Spire/Ui/ScalarValueModel.hpp"
 
 namespace Spire {
 
@@ -18,10 +18,11 @@ namespace Spire {
       static constexpr auto PRECISION = 15;
 
       //! Represents the floating point type used by the DecimalBox.
-      using Decimal = boost::multiprecision::cpp_dec_float<PRECISION>;
+      using Decimal = boost::multiprecision::number<
+        boost::multiprecision::cpp_dec_float<PRECISION>>;
 
       /** Type of model used by the DecimalBox. */
-      using DecimalModel = ValueModel<Decimal>;
+      using DecimalModel = ScalarValueModel<Decimal>;
 
       //! Signals that submission value has changed.
       /*!

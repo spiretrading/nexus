@@ -8,7 +8,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/LocalValueModel.hpp"
+#include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -22,7 +22,7 @@ namespace {
     try {
       return DecimalBox::Decimal(text.toStdString().c_str());
     } catch (const std::runtime_error&) {
-      return DecimalBox::Decimal::nan();
+      return DecimalBox::Decimal::backend_type::nan();
     }
   }
 
@@ -111,7 +111,7 @@ namespace {
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
-  : DecimalBox(std::make_shared<LocalValueModel<Decimal>>(),
+  : DecimalBox(std::make_shared<LocalScalarValueModel<Decimal>>(),
       std::move(modifiers), parent) {}
 
 DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
@@ -190,9 +190,7 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 }
 
 void DecimalBox::decrement() {
-  auto increment = get_increment();
-  increment.negate();
-  step_by(increment);
+  step_by(-get_increment());
 }
 
 void DecimalBox::increment() {
@@ -257,17 +255,10 @@ void DecimalBox::update_trailing_zeros() {
 }
 
 void DecimalBox::on_current(const Decimal& current) {
-  auto increment = current;
-  increment += Decimal("0.00000000000001");
-  auto c = current;
-  auto blocker = shared_connection_block(m_current_connection);
-  if(m_model->set_current(increment) != QValidator::State::Invalid) {
-    m_model->set_current(c);
-    m_up_button->setDisabled(false);
-  } else {
-    m_up_button->setDisabled(true);
-  }
-//  m_down_button->setDisabled(value <= m_minimum);
+  m_up_button->setEnabled(!m_model->get_maximum() ||
+    m_model->get_current() < m_model->get_maximum());
+  m_down_button->setEnabled(!m_model->get_minimum() ||
+    m_model->get_current() > m_model->get_minimum());
 }
 
 void DecimalBox::on_submit(const QString& submission) {

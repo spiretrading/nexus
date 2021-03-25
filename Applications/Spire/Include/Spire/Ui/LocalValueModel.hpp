@@ -29,10 +29,10 @@ namespace Spire {
 
       const Type& get_current() const override;
 
-      QValidator::State set_current(const Type& value);
+      QValidator::State set_current(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const;
+        const typename CurrentSignal::slot_type& slot) const override;
 
     private:
       mutable typename CurrentSignal m_current_signal;

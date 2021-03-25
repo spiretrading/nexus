@@ -7,7 +7,7 @@ namespace Spire {
 
   /**
    * Base class used to model a single value.
-   * @param <T> The type of value being model.
+   * @param <T> The type of value being modeled.
    */
   template<typename T>
   class ValueModel {
