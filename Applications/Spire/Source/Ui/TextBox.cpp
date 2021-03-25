@@ -327,7 +327,6 @@ void TextBox::on_editing_finished() {
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  m_model->set_current(text);
   update_placeholder_text();
 }
 

@@ -89,6 +89,7 @@ namespace Spire {
       QRegExp m_trailing_zero_regex;
       Button* m_up_button;
       Button* m_down_button;
+      boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
 
       void decrement();
@@ -97,7 +98,7 @@ namespace Spire {
       void step_by(Decimal value);
       void update_button_positions();
       void update_trailing_zeros();
-      void on_current(const QString& current);
+      void on_current(const Decimal& current);
       void on_submit(const QString& submission);
   };
 }

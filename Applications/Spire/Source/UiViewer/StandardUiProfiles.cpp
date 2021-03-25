@@ -170,23 +170,25 @@ UiProfile Spire::make_decimal_box_profile() {
       };
       auto modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
         {{Qt::NoModifier, *parse_decimal(default_increment.get())},
-        {Qt::AltModifier, *parse_decimal(alt_increment.get())},
-        {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
-        {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
+         {Qt::AltModifier, *parse_decimal(alt_increment.get())},
+         {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
+         {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
       auto decimal_box = new DecimalBox(modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
-      auto& current_slot = get<QString>("current", profile.get_properties());
-      current_slot.connect_changed_signal([=] (const auto& value) {
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& value) {
         if(auto decimal = parse_decimal(value)) {
           if(decimal_box->get_model()->get_current().compare(*decimal) != 0) {
             decimal_box->get_model()->set_current(*decimal);
           }
         }
       });
+      auto current_slot = profile.make_event_slot<QString>(
+        QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
-        [&] (const DecimalBox::Decimal& current) {
-//          current_slot(QString::fromStdString(
-// TODO            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=] (const DecimalBox::Decimal& current) {
+          current_slot(QString::fromStdString(
+            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
       trailing_zeros.connect_changed_signal([=] (auto has_trailing_zeros) {
         decimal_box->set_trailing_zeros(has_trailing_zeros);
