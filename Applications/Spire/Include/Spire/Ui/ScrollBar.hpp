@@ -66,6 +66,12 @@ namespace Styles {
       //! Scrolls to a position.
       void set_position(int position);
 
+      //! Returns the minimum size of the thumb.
+      int get_thumb_min_size() const;
+
+      //! Sets the minimum size of the thumb.
+      void set_thumb_min_size(int size);
+
       //! Connects a slot to the PositionSignal.
       boost::signals2::connection connect_position_signal(
         const PositionSignal::slot_type& slot) const;
@@ -76,6 +82,7 @@ namespace Styles {
     private:
       mutable PositionSignal m_position_signal;
       QScrollBar* m_scroll_bar;
+      int m_thumb_min_size;
   };
 }
 

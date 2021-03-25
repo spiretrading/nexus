@@ -294,10 +294,11 @@ UiProfile Spire::make_scroll_bar_profile() {
   properties.push_back(make_standard_bool_property("enabled", true));
   properties.push_back(make_standard_bool_property("vertical", true));
   properties.push_back(make_standard_int_property("start-range", 0));
-  properties.push_back(make_standard_int_property("end-range", 400));
+  properties.push_back(make_standard_int_property("end-range", 1000));
   properties.push_back(make_standard_int_property("page-size", 100));
-  properties.push_back(make_standard_int_property("line-size", 26));
+  properties.push_back(make_standard_int_property("line-size", 10));
   properties.push_back(make_standard_int_property("position", 0));
+  properties.push_back(make_standard_int_property("thumb-min-size", 50));
   auto profile = UiProfile(QString::fromUtf8("ScrollBar"), properties,
     [] (auto& profile) {
       auto& vertical = get<bool>("vertical", profile.get_properties());
@@ -341,6 +342,17 @@ UiProfile Spire::make_scroll_bar_profile() {
       auto& position = get<int>("position", profile.get_properties());
       position.connect_changed_signal([scroll_bar] (auto value) {
         scroll_bar->set_position(value);
+      });
+      auto& thumb_min_size = get<int>("thumb-min-size", profile.get_properties());
+      thumb_min_size.connect_changed_signal([scroll_bar] (auto value) {
+        auto min_size = [=] {
+          if(scroll_bar->get_orientation() == Qt::Vertical) {
+            return scale_height(value);
+          } else {
+            return scale_width(value);
+          }
+        }();
+        scroll_bar->set_thumb_min_size(min_size);
       });
       scroll_bar->connect_position_signal(profile.make_event_slot<int>(
         QString::fromUtf8("Position")));
