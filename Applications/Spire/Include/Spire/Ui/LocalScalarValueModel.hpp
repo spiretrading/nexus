@@ -109,9 +109,14 @@ namespace Spire {
         m_maximum && value > *m_maximum) {
       return QValidator::State::Invalid;
     }
-    if(value != m_model.get_current() &&
-        abs(value - m_model.get_current()) < m_increment) {
-      return QValidator::State::Invalid;
+    if constexpr(std::numeric_limits<Type>::is_integer) {
+      if(value != m_model.get_current() && (value % m_increment) != 0) {
+        return QValidator::State::Invalid;
+      }
+    } else {
+      if(value != m_model.get_current() && fmod(value, m_increment) != 0) {
+        return QValidator::State::Invalid;
+      }
     }
     return m_model.set_current(value);
   }
