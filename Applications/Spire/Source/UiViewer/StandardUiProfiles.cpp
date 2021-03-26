@@ -133,32 +133,19 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("-100")));
   properties.push_back(make_standard_qstring_property("maximum",
     QString::fromUtf8("100")));
-  properties.push_back(make_standard_int_property("decimal-places", 2));
-  properties.push_back(make_standard_bool_property("trailing-zeros", true));
-  properties.push_back(make_standard_qstring_property("default-increment",
+  properties.push_back(make_standard_int_property("decimal_places", 2));
+  properties.push_back(make_standard_qstring_property("default_increment",
     QString::fromUtf8("1")));
-  properties.push_back(make_standard_qstring_property("alt-increment",
+  properties.push_back(make_standard_qstring_property("alt_increment",
     QString::fromUtf8("5")));
-  properties.push_back(make_standard_qstring_property("ctrl-increment",
+  properties.push_back(make_standard_qstring_property("ctrl_increment",
     QString::fromUtf8("10")));
-  properties.push_back(make_standard_qstring_property("shift-increment",
+  properties.push_back(make_standard_qstring_property("shift_increment",
     QString::fromUtf8("20")));
-  properties.push_back(make_standard_bool_property("read-only", false));
-  properties.push_back(make_standard_bool_property("buttons-visible", true));
+  properties.push_back(make_standard_bool_property("read_only", false));
+  properties.push_back(make_standard_bool_property("buttons_visible", true));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
-      auto& minimum = get<QString>("minimum", profile.get_properties());
-      auto& maximum = get<QString>("maximum", profile.get_properties());
-      auto& decimal_places = get<int>("decimal-places",
-        profile.get_properties());
-      auto& default_increment = get<QString>("default-increment",
-        profile.get_properties());
-      auto& alt_increment = get<QString>("alt-increment",
-        profile.get_properties());
-      auto& ctrl_increment = get<QString>("ctrl-increment",
-        profile.get_properties());
-      auto& shift_increment = get<QString>("shift-increment",
-        profile.get_properties());
       auto parse_decimal = [] (auto decimal) ->
           std::optional<DecimalBox::Decimal> {
         try {
@@ -167,16 +154,38 @@ UiProfile Spire::make_decimal_box_profile() {
           return {};
         }
       };
+      auto model =
+        std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
+      auto& minimum = get<QString>("minimum", profile.get_properties());
+      minimum.connect_changed_signal([=] (const auto& value) {
+        if(auto minimum = parse_decimal(value)) {
+          model->set_minimum(*minimum);
+        }
+      });
+      auto& maximum = get<QString>("maximum", profile.get_properties());
+      maximum.connect_changed_signal([=] (const auto& value) {
+        if(auto maximum = parse_decimal(value)) {
+          model->set_maximum(*maximum);
+        }
+      });
+      auto& decimal_places = get<int>("decimal_places",
+        profile.get_properties());
+      decimal_places.connect_changed_signal([=] (auto value) {
+        model->set_increment(pow(DecimalBox::Decimal(10), -value));
+      });
+      auto& default_increment = get<QString>("default_increment",
+        profile.get_properties());
+      auto& alt_increment = get<QString>("alt_increment",
+        profile.get_properties());
+      auto& ctrl_increment = get<QString>("ctrl_increment",
+        profile.get_properties());
+      auto& shift_increment = get<QString>("shift_increment",
+        profile.get_properties());
       auto modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
         {{Qt::NoModifier, *parse_decimal(default_increment.get())},
          {Qt::AltModifier, *parse_decimal(alt_increment.get())},
          {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
          {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
-      auto model =
-        std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
-      model->set_minimum(DecimalBox::Decimal(20));
-      model->set_maximum(DecimalBox::Decimal(40));
-      model->set_increment(DecimalBox::Decimal("0.01"));
       auto decimal_box = new DecimalBox(model, modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());
@@ -201,11 +210,11 @@ UiProfile Spire::make_decimal_box_profile() {
           submit_slot(QString::fromStdString(
             submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
-      auto& read_only = get<bool>("read-only", profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
         decimal_box->set_read_only(value);
       });
-      auto& buttons_visible = get<bool>("buttons-visible",
+      auto& buttons_visible = get<bool>("buttons_visible",
         profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
         auto style = decimal_box->get_style();

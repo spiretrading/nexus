@@ -11,18 +11,17 @@
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto DEFAULT_DECIMAL_PLACES = 6;
-
-  DecimalBox::Decimal to_decimal(const QString& text) {
+  optional<DecimalBox::Decimal> to_decimal(const QString& text) {
     try {
       return DecimalBox::Decimal(text.toStdString().c_str());
     } catch (const std::runtime_error&) {
-      return DecimalBox::Decimal::backend_type::nan();
+      return none;
     }
   }
 
@@ -62,7 +61,7 @@ namespace {
 
   struct DecimalToTextModel : TextModel {
     static const inline QRegExp m_validator =
-      QRegExp(QRegExp("^[-]?[0-9]*(\\.[0-9]*)?"));
+      QRegExp(QRegExp("^[-|\\+]?[0-9]*(\\.[0-9]*)?"));
     std::shared_ptr<DecimalBox::DecimalModel> m_model;
     QString m_current;
     scoped_connection m_current_connection;
@@ -87,19 +86,20 @@ namespace {
     QValidator::State set_current(const QString& value) override {
       if(!m_validator.exactMatch(value)) {
         return QValidator::State::Invalid;
-      }
-      auto blocker = shared_connection_block(m_current_connection);
-      if(value.isEmpty()) {
+      } else if(value.isEmpty() || value == "-" || value == "+") {
         m_current = value;
         m_current_signal(m_current);
         return QValidator::State::Intermediate;
+      } else if(auto decimal = to_decimal(value)) {
+        auto blocker = shared_connection_block(m_current_connection);
+        auto state = m_model->set_current(*decimal);
+        if(state != QValidator::State::Invalid) {
+          m_current = value;
+          m_current_signal(m_current);
+        }
+        return state;
       }
-      auto state = m_model->set_current(to_decimal(value));
-      if(state != QValidator::State::Invalid) {
-        m_current = value;
-        m_current_signal(m_current);
-      }
-      return state;
+      return QValidator::State::Invalid;
     }
 
     connection connect_current_signal(

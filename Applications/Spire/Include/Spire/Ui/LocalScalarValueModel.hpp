@@ -21,7 +21,7 @@ namespace Spire {
       using CurrentSignal = typename ScalarValueModel<T>::CurrentSignal;
 
       /** Constructs a default model. */
-      LocalScalarValueModel() = default;
+      LocalScalarValueModel();
 
       /**
        * Constructs a model with an initial current value.
@@ -60,6 +60,10 @@ namespace Spire {
       boost::optional<Type> m_maximum;
       Type m_increment;
   };
+
+  template<typename T>
+  LocalScalarValueModel<T>::LocalScalarValueModel()
+    : m_state(m_model.get_state()) {}
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel(Type current)
