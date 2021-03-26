@@ -149,9 +149,7 @@ DecimalBox::Decimal DecimalBox::get_minimum() const {
 
 void DecimalBox::set_minimum(Decimal minimum) {
   m_minimum = minimum;
-  if(!get_current().isnan()) {
-    m_down_button->setDisabled(get_current() <= m_minimum);
-  }
+  update_button_state();
 }
 
 DecimalBox::Decimal DecimalBox::get_maximum() const {
@@ -160,9 +158,7 @@ DecimalBox::Decimal DecimalBox::get_maximum() const {
 
 void DecimalBox::set_maximum(Decimal maximum) {
   m_maximum = maximum;
-  if(!get_current().isnan()) {
-    m_up_button->setDisabled(get_current() >= m_maximum);
-  }
+  update_button_state();
 }
 
 DecimalBox::Decimal DecimalBox::get_increment(
@@ -310,6 +306,12 @@ void DecimalBox::step_by(Decimal value) {
   update_padded_zeros();
 }
 
+void DecimalBox::update_button_state() {
+  m_up_button->setEnabled(get_current().isnan() || get_current() <= m_maximum);
+  m_down_button->setEnabled(get_current().isnan() ||
+    m_minimum <= get_current());
+}
+
 void DecimalBox::update_button_positions() {
   auto button_pos = QPoint(width() - BUTTON_RIGHT_PADDING() -
     BUTTON_SIZE().width(), height() / 2);
@@ -377,9 +379,8 @@ void DecimalBox::on_current(const QString& current) {
       m_text_box->set_current(m_current);
     }
     auto value = to_decimal(m_current);
+    update_button_state();
     if(!value.isnan()) {
-      m_up_button->setDisabled(value >= m_maximum);
-      m_down_button->setDisabled(value <= m_minimum);
       m_current_signal(value);
     }
   } else {

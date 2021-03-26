@@ -171,6 +171,7 @@ namespace Spire {
       void increment();
       Decimal get_increment() const;
       void step_by(Decimal value);
+      void update_button_state();
       void update_button_positions();
       void update_padded_zeros();
       void on_current(const QString& current);
