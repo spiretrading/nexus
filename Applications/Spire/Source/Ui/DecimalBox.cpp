@@ -60,16 +60,19 @@ namespace {
   }
 
   struct DecimalToTextModel : TextModel {
-    static const inline QRegExp m_validator =
-      QRegExp(QRegExp("^[-|\\+]?[0-9]*(\\.[0-9]*)?"));
     std::shared_ptr<DecimalBox::DecimalModel> m_model;
     QString m_current;
+    int m_decimal_places;
+    QRegExp m_validator;
     scoped_connection m_current_connection;
     mutable CurrentSignal m_current_signal;
 
     DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
       : m_model(std::move(model)),
         m_current(to_string(m_model->get_current())),
+        m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
+        m_validator(
+          QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(m_decimal_places)),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) {
             on_current(current);
@@ -84,6 +87,12 @@ namespace {
     }
 
     QValidator::State set_current(const QString& value) override {
+      auto decimal_places = -log10(m_model->get_increment()).convert_to<int>();
+      if(decimal_places != m_decimal_places) {
+        m_validator = QRegExp(
+          QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(m_decimal_places));
+        m_decimal_places = decimal_places;
+      }
       if(!m_validator.exactMatch(value)) {
         return QValidator::State::Invalid;
       } else if(value.isEmpty() || value == "-" || value == "+") {
