@@ -58,6 +58,9 @@ namespace {
   }
 
   QString to_string(DecimalBox::Decimal value) {
+    if(value.isnan()) {
+      return {};
+    }
     return QString::fromStdString(
       value.str(DecimalBox::PRECISION, std::ios_base::dec));
   }
@@ -129,7 +132,11 @@ DecimalBox::DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
 }
 
 DecimalBox::Decimal DecimalBox::get_current() const {
-  return to_decimal(m_text_box->get_current());
+  try {
+    return to_decimal(m_text_box->get_current());
+  } catch(const std::exception&) {
+    return Decimal::nan();
+  }
 }
 
 void DecimalBox::set_current(Decimal current) {
@@ -142,7 +149,9 @@ DecimalBox::Decimal DecimalBox::get_minimum() const {
 
 void DecimalBox::set_minimum(Decimal minimum) {
   m_minimum = minimum;
-  m_down_button->setDisabled(get_current() <= m_minimum);
+  if(!get_current().isnan()) {
+    m_down_button->setDisabled(get_current() <= m_minimum);
+  }
 }
 
 DecimalBox::Decimal DecimalBox::get_maximum() const {
@@ -151,7 +160,9 @@ DecimalBox::Decimal DecimalBox::get_maximum() const {
 
 void DecimalBox::set_maximum(Decimal maximum) {
   m_maximum = maximum;
-  m_up_button->setDisabled(get_current() >= m_maximum);
+  if(!get_current().isnan()) {
+    m_up_button->setDisabled(get_current() >= m_maximum);
+  }
 }
 
 DecimalBox::Decimal DecimalBox::get_increment(
@@ -185,6 +196,10 @@ void DecimalBox::set_leading_zeros(int leading_zeros) {
 void DecimalBox::set_trailing_zeros(int trailing_zeros) {
   m_trailing_zeros = trailing_zeros;
   update_padded_zeros();
+}
+
+void DecimalBox::set_placeholder(const QString& placeholder) {
+  m_text_box->set_placeholder(placeholder);
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
@@ -303,6 +318,9 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::update_padded_zeros() {
+  if(get_current().isnan()) {
+    return;
+  }
   auto sign = [&] {
     if(get_current().isneg()) {
       return QString(QLocale().negativeSign());
@@ -314,7 +332,8 @@ void DecimalBox::update_padded_zeros() {
       return QString(m_leading_zeros, '0');
     }
     return to_string(get_current().extract_integer_part()).remove(
-      QLocale().negativeSign()).rightJustified(m_leading_zeros, '0');
+      QRegExp(QString("^[%1]?[0]*").arg(QLocale().negativeSign()))).
+      rightJustified(m_leading_zeros, '0');
   }();
   auto decimal = [&] {
     if(m_decimal_places <= 0) {

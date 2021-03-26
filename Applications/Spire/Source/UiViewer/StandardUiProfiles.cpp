@@ -145,6 +145,7 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("10")));
   properties.push_back(make_standard_qstring_property("shift-increment",
     QString::fromUtf8("20")));
+  properties.push_back(make_standard_qstring_property("placeholder"));
   properties.push_back(make_standard_bool_property("read-only", false));
   properties.push_back(make_standard_bool_property("buttons-visible", true));
   properties.push_back(make_standard_bool_property("has-warning", true));
@@ -245,6 +246,11 @@ UiProfile Spire::make_decimal_box_profile() {
           submit_slot(QString::fromStdString(
             submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
+      auto& placeholder = get<QString>("placeholder",
+        profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        decimal_box->set_placeholder(placeholder);
+      });
       auto& read_only = get<bool>("read-only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
         decimal_box->set_read_only(value);

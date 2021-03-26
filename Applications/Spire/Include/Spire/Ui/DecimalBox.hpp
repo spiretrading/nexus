@@ -109,6 +109,12 @@ namespace Spire {
       */
       void set_trailing_zeros(int trailing_zeros);
 
+      //! Sets the placeholder text.
+      /*!
+        \param placeholder The placeholder text.
+      */
+      void set_placeholder(const QString& placeholder);
+
       //! Sets the read-only state.
       /*!
         \param is_read_only True iff the DecimalBox should be read-only.
