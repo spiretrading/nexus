@@ -20,11 +20,18 @@ namespace {
 
     QValidator::State	validate(QString& input, int& pos) const override {
       if(input == m_model->get_current()) {
-        return m_model->get_state();
+        auto state = m_model->get_state();
+        if(state == QValidator::State::Invalid) {
+          return state;
+        }
+        return QValidator::State::Acceptable;
       }
       auto state = m_model->set_current(input);
       input = m_model->get_current();
-      return state;
+      if(state == QValidator::State::Invalid) {
+        return state;
+      }
+      return QValidator::State::Acceptable;
     }
   };
 
@@ -321,8 +328,13 @@ void TextBox::on_current(const QString& current) {
 
 void TextBox::on_editing_finished() {
   if(!is_read_only()) {
-    m_submission = m_model->get_current();
-    m_submit_signal(m_submission);
+    if(m_model->get_state() == QValidator::Acceptable) {
+      m_submission = m_model->get_current();
+      m_submit_signal(m_submission);
+    } else {
+      m_model->set_current(m_submission);
+      display_warning_indicator(*this);
+    }
   }
 }
 

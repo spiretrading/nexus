@@ -151,8 +151,6 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& maximum = get<QString>("maximum", profile.get_properties());
       auto& decimal_places = get<int>("decimal-places",
         profile.get_properties());
-      auto& trailing_zeros = get<bool>("trailing-zeros",
-        profile.get_properties());
       auto& default_increment = get<QString>("default-increment",
         profile.get_properties());
       auto& alt_increment = get<QString>("alt-increment",
@@ -176,8 +174,8 @@ UiProfile Spire::make_decimal_box_profile() {
          {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
       auto model =
         std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
-      model->set_minimum(DecimalBox::Decimal(-100));
-      model->set_maximum(DecimalBox::Decimal(100));
+      model->set_minimum(DecimalBox::Decimal(20));
+      model->set_maximum(DecimalBox::Decimal(40));
       model->set_increment(DecimalBox::Decimal("0.01"));
       auto decimal_box = new DecimalBox(model, modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
@@ -196,9 +194,6 @@ UiProfile Spire::make_decimal_box_profile() {
           current_slot(QString::fromStdString(
             current.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
-      trailing_zeros.connect_changed_signal([=] (auto has_trailing_zeros) {
-        decimal_box->set_trailing_zeros(has_trailing_zeros);
-      });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(

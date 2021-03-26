@@ -1,6 +1,7 @@
 #ifndef SPIRE_LOCAL_SCALAR_VALUE_MODEL_HPP
 #define SPIRE_LOCAL_SCALAR_VALUE_MODEL_HPP
 #include <utility>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/optional/optional.hpp>
 #include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -43,6 +44,8 @@ namespace Spire {
 
       Type get_increment() const override;
 
+      QValidator::State get_state() const override;
+
       const Type& get_current() const override;
 
       QValidator::State set_current(const Type& value) override;
@@ -52,6 +55,7 @@ namespace Spire {
 
     private:
       LocalValueModel<Type> m_model;
+      QValidator::State m_state;
       boost::optional<Type> m_minimum;
       boost::optional<Type> m_maximum;
       Type m_increment;
@@ -59,7 +63,8 @@ namespace Spire {
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel(Type current)
-    : m_model(std::move(current)) {}
+    : m_model(std::move(current)),
+      m_state(m_model.get_state()) {}
 
   template<typename T>
   void LocalScalarValueModel<T>::set_minimum(
@@ -97,6 +102,11 @@ namespace Spire {
   }
 
   template<typename T>
+  QValidator::State LocalScalarValueModel<T>::get_state() const {
+    return m_state;
+  }
+
+  template<typename T>
   const typename LocalScalarValueModel<T>::Type&
       LocalScalarValueModel<T>::get_current() const {
     return m_model.get_current();
@@ -114,26 +124,12 @@ namespace Spire {
         return QValidator::State::Invalid;
       }
     }
-    auto& min = [&] () -> Type& {
-      if(m_minimum) {
-        return *m_minimum;
-      }
-      return value;
-    }();
-    auto& max = [&] () -> Type& {
-      if(m_maximum) {
-        return *m_maximum;
-      }
-      return value;
-    }();
-    if(value < min) {
+    m_state = m_model.set_current(value);
+    if(m_minimum && value < *m_minimum ||
+        m_maximum && value > *m_maximum) {
+      m_state = QValidator::Intermediate;
     }
-    if(value > max) {
-      return QValidator::State::Invalid;
-    }
-    if(value < min) {
-    }
-    return m_model.set_current(value);
+    return m_state;
   }
 
   template<typename T>
