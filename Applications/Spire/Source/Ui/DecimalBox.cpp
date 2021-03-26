@@ -274,6 +274,21 @@ void DecimalBox::step_by(Decimal value) {
   if(m_text_box->is_read_only() || !isEnabled()) {
     return;
   }
+  if(get_current().isnan()) {
+    if(m_minimum <= 0 && 0 <= m_maximum) {
+      auto blocker = shared_connection_block(m_current_connection);
+      m_text_box->set_current(to_string(0));
+    } else {
+      m_current = [&] {
+        if(m_minimum > 0) {
+          return to_string(m_minimum);
+        }
+        return to_string(m_maximum);
+      }();
+      m_text_box->set_current(m_current);
+      return;
+    }
+  }
   setFocus();
   value += get_current();
   set_current(clamp(value, m_minimum, m_maximum));
