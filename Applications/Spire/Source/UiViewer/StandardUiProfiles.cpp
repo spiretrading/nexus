@@ -172,7 +172,7 @@ UiProfile Spire::make_decimal_box_profile() {
         try {
           return DecimalBox::Decimal(decimal.toStdString().c_str());
         } catch(const std::exception&) {
-          return {};
+          return DecimalBox::Decimal::nan();
         }
       };
       auto modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
