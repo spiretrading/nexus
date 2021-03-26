@@ -321,37 +321,44 @@ void DecimalBox::update_padded_zeros() {
   if(get_current().isnan()) {
     return;
   }
-  auto sign = [&] {
-    if(get_current().isneg()) {
-      return QString(QLocale().negativeSign());
+  auto current = [&] {
+    if(get_current().iszero() && m_leading_zeros == 0 &&
+        m_trailing_zeros == 0) {
+      return QString("0");
     }
-    return QString();
-  }();
-  auto integer = [&] {
-    if(get_current().extract_integer_part().isnan()) {
-      return QString(m_leading_zeros, '0');
-    }
-    return to_string(get_current().extract_integer_part()).remove(
-      QRegExp(QString("^[%1]?[0]*").arg(QLocale().negativeSign()))).
-      rightJustified(m_leading_zeros, '0');
-  }();
-  auto decimal = [&] {
-    if(m_decimal_places <= 0) {
+    auto sign = [&] {
+      if(get_current().isneg()) {
+        return QString(QLocale().negativeSign());
+      }
       return QString();
-    }
-    auto decimal = to_string(get_current()).remove(QRegExp("^-*[0-9]*"));
-    if(decimal == "nan" || decimal.isEmpty()) {
-      decimal.clear();
-      decimal.append(QLocale().decimalPoint());
-    }
-    decimal = decimal.leftJustified(m_trailing_zeros + 1, '0');
-    if(decimal.endsWith(QLocale().decimalPoint())) {
-      return QString();
-    }
-    return decimal;
+    }();
+    auto integer = [&] {
+      if(get_current().extract_integer_part().isnan()) {
+        return QString(m_leading_zeros, '0');
+      }
+      return to_string(get_current().extract_integer_part()).remove(
+        QRegExp(QString("^[%1]?[0]*").arg(QLocale().negativeSign()))).
+        rightJustified(m_leading_zeros, '0');
+    }();
+    auto decimal = [&] {
+      if(m_decimal_places <= 0) {
+        return QString();
+      }
+      auto decimal = to_string(get_current()).remove(QRegExp("^-*[0-9]*"));
+      if(decimal == "nan" || decimal.isEmpty()) {
+        decimal.clear();
+        decimal.append(QLocale().decimalPoint());
+      }
+      decimal = decimal.leftJustified(m_trailing_zeros + 1, '0');
+      if(decimal.endsWith(QLocale().decimalPoint())) {
+        return QString();
+      }
+      return decimal;
+    }();
+    return QString("%1%2%3").arg(sign, integer, decimal);
   }();
   auto blocker = shared_connection_block(m_current_connection);
-  m_text_box->set_current(QString("%1%2%3").arg(sign, integer, decimal));
+  m_text_box->set_current(current);
 }
 
 void DecimalBox::on_current(const QString& current) {
