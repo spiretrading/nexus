@@ -105,10 +105,6 @@ namespace Spire {
   template<typename T>
   QValidator::State LocalScalarValueModel<T>::set_current(const Type& value) {
     using namespace std;
-    if(m_minimum && value < *m_minimum ||
-        m_maximum && value > *m_maximum) {
-      return QValidator::State::Invalid;
-    }
     if constexpr(std::numeric_limits<Type>::is_integer) {
       if(value != m_model.get_current() && (value % m_increment) != 0) {
         return QValidator::State::Invalid;
@@ -117,6 +113,25 @@ namespace Spire {
       if(value != m_model.get_current() && fmod(value, m_increment) != 0) {
         return QValidator::State::Invalid;
       }
+    }
+    auto& min = [&] () -> Type& {
+      if(m_minimum) {
+        return *m_minimum;
+      }
+      return value;
+    }();
+    auto& max = [&] () -> Type& {
+      if(m_maximum) {
+        return *m_maximum;
+      }
+      return value;
+    }();
+    if(value < min) {
+    }
+    if(value > max) {
+      return QValidator::State::Invalid;
+    }
+    if(value < min) {
     }
     return m_model.set_current(value);
   }
