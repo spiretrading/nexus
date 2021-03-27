@@ -26,6 +26,9 @@ namespace Spire {
   //! Returns a UiProfile for the IconButton.
   UiProfile make_icon_button_profile();
 
+  //! Returns a UiProfile for the IntegerBox.
+  UiProfile make_integer_box_profile();
+
   //! Returns a UiProfile for the ScrollBar.
   UiProfile make_scroll_bar_profile();
 

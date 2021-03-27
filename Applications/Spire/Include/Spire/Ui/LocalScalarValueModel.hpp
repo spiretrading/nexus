@@ -63,12 +63,16 @@ namespace Spire {
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel()
-    : m_state(m_model.get_state()) {}
+    : m_state(m_model.get_state()),
+      m_increment(
+        std::numeric_limits<Type>::max() / std::numeric_limits<Type>::max()) {}
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel(Type current)
     : m_model(std::move(current)),
-      m_state(m_model.get_state()) {}
+      m_state(m_model.get_state()),
+      m_increment(
+        std::numeric_limits<Type>::max() / std::numeric_limits<Type>::max()) {}
 
   template<typename T>
   void LocalScalarValueModel<T>::set_minimum(

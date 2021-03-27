@@ -19,7 +19,7 @@ namespace Spire {
       using CurrentSignal = typename ValueModel<T>::CurrentSignal;
 
       /** Constructs a default model. */
-      LocalValueModel() = default;
+      LocalValueModel();
 
       /**
        * Constructs a model with an initial current value.
@@ -38,6 +38,10 @@ namespace Spire {
       mutable typename CurrentSignal m_current_signal;
       Type m_current;
   };
+
+  template<typename T>
+  LocalValueModel<T>::LocalValueModel()
+    : m_current() {}
 
   template<typename T>
   LocalValueModel<T>::LocalValueModel(Type current)

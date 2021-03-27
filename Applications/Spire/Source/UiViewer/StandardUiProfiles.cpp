@@ -11,6 +11,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -295,6 +296,88 @@ UiProfile Spire::make_icon_button_profile() {
       button->connect_clicked_signal(profile.make_event_slot(
         QString::fromUtf8("ClickedSignal")));
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_integer_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_int_property("current", 1));
+  properties.push_back(make_standard_int_property("minimum", -100));
+  properties.push_back(make_standard_int_property("maximum", 100));
+  properties.push_back(make_standard_int_property("default_increment", 1));
+  properties.push_back(make_standard_int_property("alt_increment", 5));
+  properties.push_back(make_standard_int_property("ctrl_increment", 10));
+  properties.push_back(make_standard_int_property("shift_increment", 20));
+  properties.push_back(make_standard_qstring_property("placeholder"));
+  properties.push_back(make_standard_bool_property("read_only", false));
+  properties.push_back(make_standard_bool_property("buttons_visible", true));
+  properties.push_back(make_standard_bool_property("is_warning_displayed",
+    true));
+  auto profile = UiProfile(QString::fromUtf8("IntegerBox"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<LocalIntegerModel>();
+      auto& minimum = get<int>("minimum", profile.get_properties());
+      minimum.connect_changed_signal([=] (auto value) {
+        model->set_minimum(value);
+      });
+      auto& maximum = get<int>("maximum", profile.get_properties());
+      maximum.connect_changed_signal([=] (auto value) {
+        model->set_maximum(value);
+      });
+      auto& default_increment = get<int>("default_increment",
+        profile.get_properties());
+      auto& alt_increment = get<int>("alt_increment", profile.get_properties());
+      auto& ctrl_increment = get<int>("ctrl_increment",
+        profile.get_properties());
+      auto& shift_increment = get<int>("shift_increment",
+        profile.get_properties());
+      auto modifiers = QHash<Qt::KeyboardModifier, int>(
+        {{Qt::NoModifier, default_increment.get()},
+         {Qt::AltModifier, alt_increment.get()},
+         {Qt::ControlModifier, ctrl_increment.get()},
+         {Qt::ShiftModifier, shift_increment.get()}});
+      auto integer_box = new IntegerBox(model, modifiers);
+      apply_widget_properties(integer_box, profile.get_properties());
+      auto& current = get<int>("current", profile.get_properties());
+      current.connect_changed_signal([=] (auto value) {
+        if(integer_box->get_model()->get_current() != value) {
+          integer_box->get_model()->set_current(value);
+        }
+      });
+      integer_box->get_model()->connect_current_signal(
+        profile.make_event_slot<int>(QString::fromUtf8("Current")));
+      integer_box->connect_submit_signal(
+        profile.make_event_slot<int>(QString::fromUtf8("Submit")));
+      integer_box->connect_reject_signal(
+        profile.make_event_slot<int>(QString::fromUtf8("Reject")));
+      auto& placeholder = get<QString>("placeholder",
+        profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        integer_box->set_placeholder(placeholder);
+      });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto value) {
+        integer_box->set_read_only(value);
+      });
+      auto& buttons_visible = get<bool>("buttons_visible",
+        profile.get_properties());
+      buttons_visible.connect_changed_signal([=] (auto value) {
+        auto style = integer_box->get_style();
+        if(value) {
+          style.get(is_a<Button>()).get_block().remove<Visibility>();
+        } else {
+          style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+        }
+        integer_box->set_style(std::move(style));
+      });
+      auto& is_warning_displayed = get<bool>("is_warning_displayed",
+        profile.get_properties());
+      is_warning_displayed.connect_changed_signal([=] (auto value) {
+        integer_box->set_warning_displayed(value);
+      });
+      return integer_box;
     });
   return profile;
 }

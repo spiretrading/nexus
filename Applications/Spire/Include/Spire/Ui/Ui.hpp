@@ -25,11 +25,13 @@ namespace Spire {
   class DropShadow;
   class FlatButton;
   class IconButton;
+  class IntegerBox;
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
+  using LocalIntegerModel = LocalScalarValueModel<int>;
   using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
@@ -38,6 +40,8 @@ namespace Spire {
   class RangeInputSlider;
   class RangeInputWidget;
   class RealSpinBox;
+  template<typename T> class ScalarValueModel;
+  using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;
@@ -50,8 +54,8 @@ namespace Spire {
   class Tooltip;
   class TransitionWidget;
   template<typename T> class ValueModel;
-  class Window;
   using TextModel = ValueModel<QString>;
+  class Window;
 
   //! Draws a border inside the given region.
   /*!

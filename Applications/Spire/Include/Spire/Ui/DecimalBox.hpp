@@ -5,8 +5,8 @@
 #include <QRegularExpression>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/StyledWidget.hpp"
-#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/ScalarValueModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {

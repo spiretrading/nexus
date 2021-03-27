@@ -92,6 +92,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_decimal_box_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
+  add(make_integer_box_profile());
   add(make_scroll_bar_profile());
   add(make_text_box_profile());
   add(make_tooltip_profile());
