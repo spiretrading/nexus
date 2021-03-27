@@ -149,7 +149,6 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     [=] (const auto& submission) { on_submit(submission); });
   m_reject_connection = m_text_box->connect_reject_signal(
     [=] (const auto& value) { on_reject(value); });
-  m_text_box->installEventFilter(this);
   m_up_button = create_button(":/Icons/arrow-up.svg", this);
   m_up_button->connect_clicked_signal([=] { increment(); });
   m_down_button = create_button(":/Icons/arrow-down.svg", this);
@@ -196,18 +195,14 @@ bool DecimalBox::test_selector(
   return m_text_box->test_selector(element, selector);
 }
 
-bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
-    if(!is_read_only()) {
-      auto keyEvent = static_cast<QKeyEvent*>(event);
-      if(keyEvent->key() == Qt::Key_Up) {
-        increment();
-      } else if(keyEvent->key() == Qt::Key_Down) {
-        decrement();
-      }
+void DecimalBox::keyPressEvent(QKeyEvent* event) {
+  if(!is_read_only()) {
+    if(event->key() == Qt::Key_Up) {
+      increment();
+    } else if(event->key() == Qt::Key_Down) {
+      decrement();
     }
   }
-  return StyledWidget::eventFilter(watched, event);
 }
 
 void DecimalBox::resizeEvent(QResizeEvent* event) {

@@ -286,9 +286,9 @@ void TextBox::selector_updated() {
 
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    auto focusEvent = static_cast<QFocusEvent*>(event);
-    if(focusEvent->reason() != Qt::ActiveWindowFocusReason &&
-        focusEvent->reason() != Qt::PopupFocusReason) {
+    auto focus_event = static_cast<QFocusEvent*>(event);
+    if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
+        focus_event->reason() != Qt::PopupFocusReason) {
       if(m_line_edit->text() != m_model->get_current()) {
         m_line_edit->setText(m_model->get_current());
       }
@@ -299,6 +299,13 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
         focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
       update_display_text();
+    }
+  } else if(event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    if(key_event.key() == Qt::Key_Up ||
+        key_event.key() == Qt::Key_Down) {
+      key_event.ignore();
+      return true;
     }
   }
   return StyledWidget::eventFilter(watched, event);
