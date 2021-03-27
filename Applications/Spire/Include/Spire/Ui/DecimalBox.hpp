@@ -9,6 +9,15 @@
 #include "Spire/Ui/ScalarValueModel.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  //! The number of leading zeros added as padding to a number.
+  using LeadingZeros = BasicProperty<int, struct LeadingZerosTag>;
+
+  //! The number of trailing zeros added as padding to the fractional part of a
+  //! number.
+  using TrailingZeros = BasicProperty<int, struct TrailingZerosTag>;
+}
 
   //! Represents a widget for inputting decimal values.
   class DecimalBox : public Styles::StyledWidget {
@@ -75,12 +84,6 @@ namespace Spire {
       //! Sets whether a warning is displayed when a submission is rejected.
       void set_warning_displayed(bool is_displayed);
 
-      //! Sets the number of trailing zeros used as padding.
-      /*!
-        \param trailing_zeros The number of trailing zeros.
-      */
-      void set_trailing_zeros(int trailing_zeros);
-
       //! Connects a slot to the value submission signal.
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -93,6 +96,7 @@ namespace Spire {
         const Styles::Selector& selector) const override;
 
     protected:
+      void selector_updated() override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;

@@ -108,7 +108,6 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      void style_updated() override;
       void selector_updated() override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;

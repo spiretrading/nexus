@@ -174,10 +174,6 @@ QSize TextBox::sizeHint() const {
   return scale(160, 30);
 }
 
-void TextBox::style_updated() {
-  selector_updated();
-}
-
 void TextBox::selector_updated() {
   auto line_edit_computed_style = compute_style();
   auto placeholder_computed_style = compute_style(Placeholder());

@@ -65,6 +65,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   std::shared_ptr<DecimalBox::DecimalModel> m_model;
   QString m_current;
   int m_decimal_places;
+  int m_leading_zeros;
   int m_trailing_zeros;
   QRegExp m_validator;
   scoped_connection m_current_connection;
@@ -73,6 +74,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       : m_model(std::move(model)),
         m_current(to_string(m_model->get_current())),
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
+        m_leading_zeros(0),
         m_trailing_zeros(0),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) {
@@ -81,7 +83,19 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     update_validator();
   }
 
+  void set_leading_zeros(int leading_zeros) {
+    if(leading_zeros == m_leading_zeros) {
+      return;
+    }
+    m_leading_zeros = leading_zeros;
+    update_validator();
+    update_padding();
+  }
+
   void set_trailing_zeros(int trailing_zeros) {
+    if(trailing_zeros == m_trailing_zeros) {
+      return;
+    }
     m_trailing_zeros = trailing_zeros;
     update_validator();
     update_padding();
@@ -137,24 +151,47 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   void update_padding() {
-    static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9])*)(\\.([0-9]*))?");
+    static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9]*))(\\.([0-9]*))?");
+    static const auto LEADING_DIGITS_CAPTURE_GROUP = 2;
     static const auto TRAILING_CAPTURE_GROUP = 3;
     static const auto TRAILING_DIGITS_CAPTURE_GROUP = 4;
-    if(m_trailing_zeros != 0) {
-      if(DECIMAL_PATTERN.indexIn(m_current, 0) != -1) {
-        auto captures = DECIMAL_PATTERN.capturedTexts();
+    if(DECIMAL_PATTERN.indexIn(m_current, 0) != -1) {
+      auto captures = DECIMAL_PATTERN.capturedTexts();
+      if(m_trailing_zeros != 0) {
         if(captures[TRAILING_CAPTURE_GROUP].isEmpty()) {
           m_current += ".";
         }
-        auto& trailing_digits = captures[TRAILING_DIGITS_CAPTURE_GROUP];
-        if(trailing_digits.length() < m_trailing_zeros) {
-          for(auto i = trailing_digits.length(); i < m_trailing_zeros; ++i) {
-            m_current += "0";
-          }
-          m_current_signal(m_current);
-        }
+      }
+      if(update_leading_zeros(captures[LEADING_DIGITS_CAPTURE_GROUP]) ||
+          update_trailing_zeros(captures[TRAILING_DIGITS_CAPTURE_GROUP])) {
+        m_current_signal(m_current);
       }
     }
+  }
+
+  bool update_leading_zeros(const QString& digits) {
+    if(digits.length() < m_leading_zeros) {
+      for(auto i = digits.length(); i < m_leading_zeros; ++i) {
+        m_current = "0" + m_current;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  bool update_trailing_zeros(const QString& digits) {
+    if(digits.length() < m_trailing_zeros) {
+      for(auto i = digits.length(); i < m_trailing_zeros; ++i) {
+        m_current += "0";
+      }
+      return true;
+    }
+    auto delta = digits.length() - std::max(m_trailing_zeros, m_decimal_places);
+    if(delta > 0) {
+      m_current.chop(delta);
+      return true;
+    }
+    return false;
   }
 
   void on_current(const DecimalBox::Decimal& current) {
@@ -222,10 +259,6 @@ void DecimalBox::set_warning_displayed(bool is_displayed) {
   m_text_box->set_warning_displayed(is_displayed);
 }
 
-void DecimalBox::set_trailing_zeros(int trailing_zeros) {
-  m_adaptor_model->set_trailing_zeros(trailing_zeros);
-}
-
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -239,6 +272,18 @@ connection DecimalBox::connect_reject_signal(
 bool DecimalBox::test_selector(
     const Selector& element, const Selector& selector) const {
   return m_text_box->test_selector(element, selector);
+}
+
+void DecimalBox::selector_updated() {
+  auto style = compute_style();
+  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
+    m_adaptor_model->set_leading_zeros(
+      leading_zeros->get_expression().as<int>());
+  }
+  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
+    m_adaptor_model->set_trailing_zeros(
+      trailing_zeros->get_expression().as<int>());
+  }
 }
 
 void DecimalBox::keyPressEvent(QKeyEvent* event) {
