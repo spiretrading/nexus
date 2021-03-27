@@ -154,9 +154,9 @@ connection TextBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-connection TextBox::connect_rejected_signal(
-    const RejectedSignal::slot_type& slot) const {
-  return m_rejected_signal.connect(slot);
+connection TextBox::connect_reject_signal(
+    const RejectSignal::slot_type& slot) const {
+  return m_reject_signal.connect(slot);
 }
 
 bool TextBox::test_selector(const Styles::Selector& element,
@@ -346,9 +346,8 @@ void TextBox::on_editing_finished() {
       m_submission = m_model->get_current();
       m_submit_signal(m_submission);
     } else {
-      auto value = m_model->get_current();
+      m_reject_signal(m_model->get_current());
       m_model->set_current(m_submission);
-      m_rejected_signal(value);
       if(is_warning_displayed()) {
         display_warning_indicator(*this);
       }

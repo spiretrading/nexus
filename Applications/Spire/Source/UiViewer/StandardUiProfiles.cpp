@@ -213,6 +213,13 @@ UiProfile Spire::make_decimal_box_profile() {
           submit_slot(QString::fromStdString(
             submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
+      auto reject_slot = profile.make_event_slot<QString>(
+        QString::fromUtf8("Reject"));
+      decimal_box->connect_reject_signal(
+        [=] (const DecimalBox::Decimal& value) {
+          reject_slot(QString::fromStdString(
+            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        });
       auto& placeholder = get<QString>("placeholder",
         profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& placeholder) {
@@ -315,8 +322,8 @@ UiProfile Spire::make_text_box_profile() {
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
-      text_box->connect_rejected_signal(profile.make_event_slot<QString>(
-        QString::fromUtf8("Rejected")));
+      text_box->connect_reject_signal(profile.make_event_slot<QString>(
+        QString::fromUtf8("Reject")));
       return text_box;
     });
   return profile;

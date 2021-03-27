@@ -28,7 +28,13 @@ namespace Spire {
       /*!
         \param value The submission value.
       */
-      using SubmitSignal = Signal<void (Decimal value)>;
+      using SubmitSignal = Signal<void (const Decimal& value)>;
+
+      /**
+       * Signals that the current value was rejected as a submission.
+       * @param value The value that was rejected.
+       */
+      using RejectSignal = Signal<void (const Decimal& value)>;
 
       //! Constructs a DecimalBox with a LocalValueModel.
       /*!
@@ -73,6 +79,10 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      //! Connects a slot to the RejectSignal.
+      boost::signals2::connection connect_reject_signal(
+        const RejectSignal::slot_type& slot) const;
+
       bool test_selector(const Styles::Selector& element,
         const Styles::Selector& selector) const override;
 
@@ -83,6 +93,7 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
+      mutable RejectSignal m_reject_signal;
       std::shared_ptr<DecimalModel> m_model;
       Decimal m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
@@ -92,6 +103,7 @@ namespace Spire {
       Button* m_down_button;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
+      boost::signals2::scoped_connection m_reject_connection;
 
       void decrement();
       void increment();
@@ -100,6 +112,7 @@ namespace Spire {
       void update_button_positions();
       void on_current(const Decimal& current);
       void on_submit(const QString& submission);
+      void on_reject(const QString& value);
   };
 }
 

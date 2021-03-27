@@ -50,7 +50,7 @@ namespace Styles {
        * Signals that the current value was rejected as a submission.
        * @param value The value that was rejected.
        */
-      using RejectedSignal = Signal<void (const QString& value)>;
+      using RejectSignal = Signal<void (const QString& value)>;
 
       //! Constructs a TextBox using a LocalTextModel.
       /*!
@@ -99,8 +99,8 @@ namespace Styles {
         const SubmitSignal::slot_type& slot) const;
 
       //! Connects a slot to the RejectedSignal.
-      boost::signals2::connection connect_rejected_signal(
-        const RejectedSignal::slot_type& slot) const;
+      boost::signals2::connection connect_reject_signal(
+        const RejectSignal::slot_type& slot) const;
 
       bool test_selector(const Styles::Selector& element,
         const Styles::Selector& selector) const override;
@@ -118,7 +118,7 @@ namespace Styles {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      mutable RejectedSignal m_rejected_signal;
+      mutable RejectSignal m_reject_signal;
       Box* m_box;
       boost::optional<Styles::StyleSheet> m_default_box_style;
       LayeredWidget* m_layers;

@@ -147,6 +147,8 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
+  m_reject_connection = m_text_box->connect_reject_signal(
+    [=] (const auto& value) { on_reject(value); });
   m_text_box->installEventFilter(this);
   m_up_button = create_button(":/Icons/arrow-up.svg", this);
   m_up_button->connect_clicked_signal([=] { increment(); });
@@ -182,6 +184,11 @@ void DecimalBox::set_warning_displayed(bool is_displayed) {
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+connection DecimalBox::connect_reject_signal(
+    const RejectSignal::slot_type& slot) const {
+  return m_reject_signal.connect(slot);
 }
 
 bool DecimalBox::test_selector(
@@ -275,4 +282,8 @@ void DecimalBox::on_current(const Decimal& current) {
 void DecimalBox::on_submit(const QString& submission) {
   m_submission = m_model->get_current();
   m_submit_signal(m_submission);
+}
+
+void DecimalBox::on_reject(const QString& value) {
+  m_reject_signal(to_decimal(value).value_or(Decimal(0)));
 }
