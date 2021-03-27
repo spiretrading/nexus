@@ -51,6 +51,9 @@ namespace Spire {
       //! Returns the current value model.
       const std::shared_ptr<DecimalModel>& get_model() const;
 
+      //! Returns <code>true</code> iff this box is read-only.
+      bool is_read_only() const;
+
       //! Sets the read-only state.
       /*!
         \param is_read_only True iff the DecimalBox should be read-only.
@@ -67,6 +70,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void wheelEvent(QWheelEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;

@@ -159,6 +159,10 @@ const std::shared_ptr<DecimalBox::DecimalModel>& DecimalBox::get_model() const {
   return m_model;
 }
 
+bool DecimalBox::is_read_only() const {
+  return m_text_box->is_read_only();
+}
+
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
 }
@@ -175,11 +179,13 @@ bool DecimalBox::test_selector(
 
 bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
-    auto keyEvent = static_cast<QKeyEvent*>(event);
-    if(keyEvent->key() == Qt::Key_Up) {
-      increment();
-    } else if(keyEvent->key() == Qt::Key_Down) {
-      decrement();
+    if(!is_read_only()) {
+      auto keyEvent = static_cast<QKeyEvent*>(event);
+      if(keyEvent->key() == Qt::Key_Up) {
+        increment();
+      } else if(keyEvent->key() == Qt::Key_Down) {
+        decrement();
+      }
     }
   }
   return StyledWidget::eventFilter(watched, event);
@@ -188,6 +194,23 @@ bool DecimalBox::eventFilter(QObject* watched, QEvent* event) {
 void DecimalBox::resizeEvent(QResizeEvent* event) {
   update_button_positions();
   StyledWidget::resizeEvent(event);
+}
+
+void DecimalBox::wheelEvent(QWheelEvent* event) {
+  if(hasFocus() && !is_read_only()) {
+    auto angle_delta = [&] {
+      if(event->modifiers().testFlag(Qt::AltModifier)) {
+        return event->angleDelta().x();
+      }
+      return event->angleDelta().y();
+    }();
+    if(angle_delta > 0) {
+      increment();
+    } else {
+      decrement();
+    }
+  }
+  StyledWidget::wheelEvent(event);
 }
 
 void DecimalBox::decrement() {
@@ -231,10 +254,10 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::on_current(const Decimal& current) {
-  m_up_button->setEnabled(!m_model->get_maximum() ||
-    m_model->get_current() < m_model->get_maximum());
-  m_down_button->setEnabled(!m_model->get_minimum() ||
-    m_model->get_current() > m_model->get_minimum());
+  m_up_button->setEnabled(!is_read_only() && (!m_model->get_maximum() ||
+    m_model->get_current() < m_model->get_maximum()));
+  m_down_button->setEnabled(!is_read_only() && (!m_model->get_minimum() ||
+    m_model->get_current() > m_model->get_minimum()));
 }
 
 void DecimalBox::on_submit(const QString& submission) {

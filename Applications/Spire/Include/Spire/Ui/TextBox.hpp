@@ -40,11 +40,17 @@ namespace Styles {
   class TextBox : public Styles::StyledWidget {
     public:
 
-      //! Signals that the current text changed.
-      using CurrentSignal = Signal<void (const QString& text)>;
+      /**
+       * Signals that the current value is being submitted.
+       * @param submission The submitted value.
+       */
+      using SubmitSignal = Signal<void (const QString& submission)>;
 
-      //! Signals that the text is submitted.
-      using SubmitSignal = Signal<void (const QString& text)>;
+      /**
+       * Signals that the current value was rejected as a submission.
+       * @param value The value that was rejected.
+       */
+      using RejectedSignal = Signal<void (const QString& value)>;
 
       //! Constructs a TextBox using a LocalTextModel.
       /*!
@@ -76,15 +82,25 @@ namespace Styles {
       //! Sets the placeholder value.
       void set_placeholder(const QString& value);
 
+      //! Returns <code>true</code> iff this box is read-only.
+      bool is_read_only() const;
+
       //! Sets whether the box is read-only.
       void set_read_only(bool read_only);
 
-      //! Returns <code>true</code> iff this box is read-only.
-      bool is_read_only() const;
+      //! Returns whether a warning is displayed when a submission is rejected.
+      bool is_warning_displayed() const;
+
+      //! Sets whether a warning is displayed when a submission is rejected.
+      void set_warning_displayed(bool is_displayed);
 
       //! Connects a slot to the SubmitSignal.
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
+
+      //! Connects a slot to the RejectedSignal.
+      boost::signals2::connection connect_rejected_signal(
+        const RejectedSignal::slot_type& slot) const;
 
       bool test_selector(const Styles::Selector& element,
         const Styles::Selector& selector) const override;
@@ -102,6 +118,7 @@ namespace Styles {
 
     private:
       mutable SubmitSignal m_submit_signal;
+      mutable RejectedSignal m_rejected_signal;
       Box* m_box;
       boost::optional<Styles::StyleSheet> m_default_box_style;
       LayeredWidget* m_layers;
@@ -109,6 +126,7 @@ namespace Styles {
       QFont m_line_edit_font;
       QLabel* m_placeholder;
       QFont m_placeholder_font;
+      bool m_is_warning_displayed;
       std::shared_ptr<TextModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;

@@ -125,6 +125,10 @@ void TextBox::set_placeholder(const QString& value) {
   update_placeholder_text();
 }
 
+bool TextBox::is_read_only() const {
+  return m_line_edit->isReadOnly();
+}
+
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
   if(read_only) {
@@ -136,13 +140,22 @@ void TextBox::set_read_only(bool read_only) {
   update_placeholder_text();
 }
 
-bool TextBox::is_read_only() const {
-  return m_line_edit->isReadOnly();
+bool TextBox::is_warning_displayed() const {
+  return m_is_warning_displayed;
+}
+
+void TextBox::set_warning_displayed(bool is_displayed) {
+  m_is_warning_displayed = is_displayed;
 }
 
 connection TextBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+connection TextBox::connect_rejected_signal(
+    const RejectedSignal::slot_type& slot) const {
+  return m_rejected_signal.connect(slot);
 }
 
 bool TextBox::test_selector(const Styles::Selector& element,
@@ -332,8 +345,12 @@ void TextBox::on_editing_finished() {
       m_submission = m_model->get_current();
       m_submit_signal(m_submission);
     } else {
+      auto value = m_model->get_current();
       m_model->set_current(m_submission);
-      display_warning_indicator(*this);
+      m_rejected_signal(value);
+      if(is_warning_displayed()) {
+        display_warning_indicator(*this);
+      }
     }
   }
 }
