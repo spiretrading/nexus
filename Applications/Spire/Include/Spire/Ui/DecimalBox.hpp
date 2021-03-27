@@ -75,6 +75,12 @@ namespace Spire {
       //! Sets whether a warning is displayed when a submission is rejected.
       void set_warning_displayed(bool is_displayed);
 
+      //! Sets the number of trailing zeros used as padding.
+      /*!
+        \param trailing_zeros The number of trailing zeros.
+      */
+      void set_trailing_zeros(int trailing_zeros);
+
       //! Connects a slot to the value submission signal.
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -92,9 +98,11 @@ namespace Spire {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
+      struct DecimalToTextModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<DecimalModel> m_model;
+      std::shared_ptr<DecimalToTextModel> m_adaptor_model;
       Decimal m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       TextBox* m_text_box;

@@ -58,70 +58,111 @@ namespace {
     button->setFixedSize(BUTTON_SIZE());
     return button;
   }
+}
 
-  struct DecimalToTextModel : TextModel {
-    std::shared_ptr<DecimalBox::DecimalModel> m_model;
-    QString m_current;
-    int m_decimal_places;
-    QRegExp m_validator;
-    scoped_connection m_current_connection;
-    mutable CurrentSignal m_current_signal;
+struct DecimalBox::DecimalToTextModel : TextModel {
+  mutable CurrentSignal m_current_signal;
+  std::shared_ptr<DecimalBox::DecimalModel> m_model;
+  QString m_current;
+  int m_decimal_places;
+  int m_trailing_zeros;
+  QRegExp m_validator;
+  scoped_connection m_current_connection;
 
-    DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
+  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
       : m_model(std::move(model)),
         m_current(to_string(m_model->get_current())),
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
-        m_validator(
-          QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(m_decimal_places)),
+        m_trailing_zeros(0),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) {
             on_current(current);
-          })) {}
+          })) {
+    update_validator();
+  }
 
-    QValidator::State get_state() const override {
-      return m_model->get_state();
+  void set_trailing_zeros(int trailing_zeros) {
+    m_trailing_zeros = trailing_zeros;
+    update_validator();
+    update_padding();
+  }
+
+  QValidator::State get_state() const override {
+    return m_model->get_state();
+  }
+
+  const QString& get_current() const {
+    return m_current;
+  }
+
+  QValidator::State set_current(const QString& value) override {
+    auto decimal_places = -log10(m_model->get_increment()).convert_to<int>();
+    if(decimal_places != m_decimal_places) {
+      update_validator();
+      m_decimal_places = decimal_places;
     }
-
-    const QString& get_current() const {
-      return m_current;
-    }
-
-    QValidator::State set_current(const QString& value) override {
-      auto decimal_places = -log10(m_model->get_increment()).convert_to<int>();
-      if(decimal_places != m_decimal_places) {
-        m_validator = QRegExp(
-          QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(m_decimal_places));
-        m_decimal_places = decimal_places;
-      }
-      if(!m_validator.exactMatch(value)) {
-        return QValidator::State::Invalid;
-      } else if(value.isEmpty() || value == "-" || value == "+") {
+    if(!m_validator.exactMatch(value)) {
+      return QValidator::State::Invalid;
+    } else if(value.isEmpty() || value == "-" || value == "+") {
+      m_current = value;
+      m_current_signal(m_current);
+      return QValidator::State::Intermediate;
+    } else if(auto decimal = to_decimal(value)) {
+      auto blocker = shared_connection_block(m_current_connection);
+      auto state = m_model->set_current(*decimal);
+      if(state != QValidator::State::Invalid) {
         m_current = value;
         m_current_signal(m_current);
-        return QValidator::State::Intermediate;
-      } else if(auto decimal = to_decimal(value)) {
-        auto blocker = shared_connection_block(m_current_connection);
-        auto state = m_model->set_current(*decimal);
-        if(state != QValidator::State::Invalid) {
-          m_current = value;
+      }
+      return state;
+    }
+    return QValidator::State::Invalid;
+  }
+
+  connection connect_current_signal(
+      const typename CurrentSignal::slot_type& slot) const override {
+    return m_current_signal.connect(slot);
+  }
+
+  void update_validator() {
+    if(m_trailing_zeros > m_decimal_places) {
+      auto delta = m_trailing_zeros - m_decimal_places;
+      m_validator =
+        QRegExp(QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1}0{0,%2})?").arg(
+          m_decimal_places).arg(delta));
+    } else {
+      m_validator = QRegExp(
+        QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(m_decimal_places));
+    }
+  }
+
+  void update_padding() {
+    static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9])*)(\\.([0-9]*))?");
+    static const auto TRAILING_CAPTURE_GROUP = 3;
+    static const auto TRAILING_DIGITS_CAPTURE_GROUP = 4;
+    if(m_trailing_zeros != 0) {
+      if(DECIMAL_PATTERN.indexIn(m_current, 0) != -1) {
+        auto captures = DECIMAL_PATTERN.capturedTexts();
+        if(captures[TRAILING_CAPTURE_GROUP].isEmpty()) {
+          m_current += ".";
+        }
+        auto& trailing_digits = captures[TRAILING_DIGITS_CAPTURE_GROUP];
+        if(trailing_digits.length() < m_trailing_zeros) {
+          for(auto i = trailing_digits.length(); i < m_trailing_zeros; ++i) {
+            m_current += "0";
+          }
           m_current_signal(m_current);
         }
-        return state;
       }
-      return QValidator::State::Invalid;
     }
+  }
 
-    connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override {
-      return m_current_signal.connect(slot);
-    }
-
-    void on_current(const DecimalBox::Decimal& current) {
-      m_current = to_string(current);
-      m_current_signal(m_current);
-    }
-  };
-}
+  void on_current(const DecimalBox::Decimal& current) {
+    m_current = to_string(current);
+    update_padding();
+    m_current_signal(m_current);
+  }
+};
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
@@ -132,11 +173,12 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : StyledWidget(parent),
       m_model(std::move(model)),
+      m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
       m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_text_box = new TextBox(std::make_shared<DecimalToTextModel>(m_model), this);
+  m_text_box = new TextBox(m_adaptor_model, this);
   auto style = m_text_box->get_style();
   style.get((is_a<Button>() && !matches(Visibility(VisibilityOption::NONE))) %
     is_a<TextBox>() > is_a<Box>()).set(PaddingRight(scale_width(26)));
@@ -178,6 +220,10 @@ bool DecimalBox::is_warning_displayed() const {
 
 void DecimalBox::set_warning_displayed(bool is_displayed) {
   m_text_box->set_warning_displayed(is_displayed);
+}
+
+void DecimalBox::set_trailing_zeros(int trailing_zeros) {
+  m_adaptor_model->set_trailing_zeros(trailing_zeros);
 }
 
 connection DecimalBox::connect_submit_signal(
@@ -276,6 +322,7 @@ void DecimalBox::on_current(const Decimal& current) {
 
 void DecimalBox::on_submit(const QString& submission) {
   m_submission = m_model->get_current();
+  m_adaptor_model->update_padding();
   m_submit_signal(m_submission);
 }
 

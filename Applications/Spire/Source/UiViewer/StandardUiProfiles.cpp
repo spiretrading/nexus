@@ -134,6 +134,7 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_qstring_property("maximum",
     QString::fromUtf8("100")));
   properties.push_back(make_standard_int_property("decimal_places", 2));
+  properties.push_back(make_standard_int_property("trailing_zeros", 2));
   properties.push_back(make_standard_qstring_property("default_increment",
     QString::fromUtf8("1")));
   properties.push_back(make_standard_qstring_property("alt_increment",
@@ -191,6 +192,11 @@ UiProfile Spire::make_decimal_box_profile() {
          {Qt::ShiftModifier, *parse_decimal(shift_increment.get())}});
       auto decimal_box = new DecimalBox(model, modifiers);
       apply_widget_properties(decimal_box, profile.get_properties());
+      auto& trailing_zeros = get<int>("trailing_zeros",
+        profile.get_properties());
+      trailing_zeros.connect_changed_signal([=] (auto value) {
+        decimal_box->set_trailing_zeros(value);
+      });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
         if(auto decimal = parse_decimal(value)) {
