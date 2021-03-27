@@ -6,8 +6,18 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/ScalarValueModel.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  //! The number of leading zeros added as padding to a number.
+  using LeadingZeros = BasicProperty<int, struct LeadingZerosTag>;
+
+  //! The number of trailing zeros added as padding to the fractional part of a
+  //! number.
+  using TrailingZeros = BasicProperty<int, struct TrailingZerosTag>;
+}
 
   //! Represents a widget for inputting decimal values.
   class DecimalBox : public Styles::StyledWidget {
@@ -17,91 +27,50 @@ namespace Spire {
       static constexpr auto PRECISION = 15;
 
       //! Represents the floating point type used by the DecimalBox.
-      using Decimal = boost::multiprecision::cpp_dec_float<PRECISION>;
+      using Decimal = boost::multiprecision::number<
+        boost::multiprecision::cpp_dec_float<PRECISION>>;
 
-      //! Signals that the current value has changed.
-      /*!
-        \param value The current value.
-      */
-      using CurrentSignal = Signal<void (Decimal value)>;
+      /** Type of model used by the DecimalBox. */
+      using DecimalModel = ScalarValueModel<Decimal>;
 
       //! Signals that submission value has changed.
       /*!
         \param value The submission value.
       */
-      using SubmitSignal = Signal<void (Decimal value)>;
+      using SubmitSignal = Signal<void (const Decimal& value)>;
 
-      //! Constructs a DecimalBox with 6 decimal places and no trailing zeros.
+      /**
+       * Signals that the current value was rejected as a submission.
+       * @param value The value that was rejected.
+       */
+      using RejectSignal = Signal<void (const Decimal& value)>;
+
+      //! Constructs a DecimalBox with a LocalValueModel.
       /*!
-        \param current The current value to display.
-        \param minimum The minimum acceptable value.
-        \param maximum The maximum acceptable value.
         \param modifiers The initial keyboard modifier increments.
         \param parent The parent widget.
       */
-      DecimalBox(Decimal current, Decimal minimum, Decimal maximum,
+      explicit DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
+        QWidget* parent = nullptr);
+
+      //! Constructs a DecimalBox with 6 decimal places and no trailing zeros.
+      /*!
+        \param model The model used for the current value.
+        \param modifiers The initial keyboard modifier increments.
+        \param parent The parent widget.
+      */
+      DecimalBox(std::shared_ptr<DecimalModel> model,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
-      //! Return the current value.
-      Decimal get_current() const;
+      //! Returns the current value model.
+      const std::shared_ptr<DecimalModel>& get_model() const;
 
-      //! Sets the current value.
-      /*!
-        \param current The current value.
-      */
-      void set_current(Decimal current);
+      //! Sets the placeholder value.
+      void set_placeholder(const QString& value);
 
-      //! Returns the minimum value.
-      Decimal get_minimum() const;
-
-      //! Sets the minimum value.
-      /*!
-        \param minimum The minimum value.
-      */
-      void set_minimum(Decimal minimum);
-
-      //! Returns the maximum value.
-      Decimal get_maximum() const;
-
-      //! Sets the maximum value.
-      /*!
-        \param maximum The maximum value.
-      */
-      void set_maximum(Decimal maximum);
-
-      //! Returns the increment for the given keyboard modifier.
-      /*!
-        \param modifier The keyboard modifier.
-      */
-      Decimal get_increment(Qt::KeyboardModifier modifier) const;
-
-      //! Sets the increment for the given keyboard modifier.
-      /*!
-        \param modifier The keyboard modifier.
-        \param increment The increment value.
-      */
-      void set_increment(Qt::KeyboardModifier modifier, Decimal increment);
-
-      //! Returns the maximum accepted decimal places.
-      int get_decimal_places() const;
-
-      //! Sets the maximum accepted decimal places.
-      /*!
-        \param decimal_places The maximum decimal places.
-      */
-      void set_decimal_places(int decimal_places);
-
-      //! Returns true iff the DecimalBox appends trailing zeros to the input,
-      //! up to the number of maximum decimal places.
-      bool has_trailing_zeros() const;
-
-      //! Sets if the DecimalBox should append trailing zeros.
-      /*!
-        \param has_trailing_zeros True iff the DecimalBox appends trailing
-                                  zeros.
-      */
-      void set_trailing_zeros(bool has_trailing_zeros);
+      //! Returns <code>true</code> iff this box is read-only.
+      bool is_read_only() const;
 
       //! Sets the read-only state.
       /*!
@@ -109,47 +78,53 @@ namespace Spire {
       */
       void set_read_only(bool is_read_only);
 
-      //! Connets a slot to the current changed signal.
-      boost::signals2::connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const;
+      //! Returns whether a warning is displayed when a submission is rejected.
+      bool is_warning_displayed() const;
+
+      //! Sets whether a warning is displayed when a submission is rejected.
+      void set_warning_displayed(bool is_displayed);
 
       //! Connects a slot to the value submission signal.
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      //! Connects a slot to the RejectSignal.
+      boost::signals2::connection connect_reject_signal(
+        const RejectSignal::slot_type& slot) const;
+
       bool test_selector(const Styles::Selector& element,
         const Styles::Selector& selector) const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
+      void selector_updated() override;
+      void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void wheelEvent(QWheelEvent* event) override;
 
     private:
-      mutable CurrentSignal m_current_signal;
+      struct DecimalToTextModel;
       mutable SubmitSignal m_submit_signal;
-      QString m_current;
+      mutable RejectSignal m_reject_signal;
+      std::shared_ptr<DecimalModel> m_model;
+      std::shared_ptr<DecimalToTextModel> m_adaptor_model;
       Decimal m_submission;
-      Decimal m_minimum;
-      Decimal m_maximum;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
-      int m_decimal_places;
-      bool m_has_trailing_zeros;
       TextBox* m_text_box;
       QRegExp m_validator;
-      QRegExp m_trailing_zero_regex;
       Button* m_up_button;
       Button* m_down_button;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
+      boost::signals2::scoped_connection m_reject_connection;
 
       void decrement();
       void increment();
       Decimal get_increment() const;
-      void step_by(Decimal value);
+      void step_by(const Decimal& value);
       void update_button_positions();
-      void update_trailing_zeros();
-      void on_current(const QString& current);
+      void on_current(const Decimal& current);
       void on_submit(const QString& submission);
+      void on_reject(const QString& value);
   };
 }
 

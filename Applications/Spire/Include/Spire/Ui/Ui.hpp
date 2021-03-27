@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QRect>
 #include <QSize>
+#include <QString>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -27,6 +28,9 @@ namespace Spire {
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
+  template<typename T> class LocalScalarValueModel;
+  template<typename T> class LocalValueModel;
+  using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;
@@ -45,7 +49,9 @@ namespace Spire {
   class TitleBar;
   class Tooltip;
   class TransitionWidget;
+  template<typename T> class ValueModel;
   class Window;
+  using TextModel = ValueModel<QString>;
 
   //! Draws a border inside the given region.
   /*!
