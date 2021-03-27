@@ -142,8 +142,11 @@ UiProfile Spire::make_decimal_box_profile() {
     QString::fromUtf8("10")));
   properties.push_back(make_standard_qstring_property("shift_increment",
     QString::fromUtf8("20")));
+  properties.push_back(make_standard_qstring_property("placeholder"));
   properties.push_back(make_standard_bool_property("read_only", false));
   properties.push_back(make_standard_bool_property("buttons_visible", true));
+  properties.push_back(make_standard_bool_property("is_warning_displayed",
+    true));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto parse_decimal = [] (auto decimal) ->
@@ -210,6 +213,11 @@ UiProfile Spire::make_decimal_box_profile() {
           submit_slot(QString::fromStdString(
             submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
+      auto& placeholder = get<QString>("placeholder",
+        profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        decimal_box->set_placeholder(placeholder);
+      });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
         decimal_box->set_read_only(value);
@@ -224,6 +232,11 @@ UiProfile Spire::make_decimal_box_profile() {
           style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
         }
         decimal_box->set_style(std::move(style));
+      });
+      auto& is_warning_displayed = get<bool>("is_warning_displayed",
+        profile.get_properties());
+      is_warning_displayed.connect_changed_signal([=] (auto value) {
+        decimal_box->set_warning_displayed(value);
       });
       return decimal_box;
     });
@@ -302,6 +315,8 @@ UiProfile Spire::make_text_box_profile() {
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
+      text_box->connect_rejected_signal(profile.make_event_slot<QString>(
+        QString::fromUtf8("Rejected")));
       return text_box;
     });
   return profile;

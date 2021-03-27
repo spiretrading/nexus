@@ -159,12 +159,24 @@ const std::shared_ptr<DecimalBox::DecimalModel>& DecimalBox::get_model() const {
   return m_model;
 }
 
+void DecimalBox::set_placeholder(const QString& value) {
+  m_text_box->set_placeholder(value);
+}
+
 bool DecimalBox::is_read_only() const {
   return m_text_box->is_read_only();
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
+}
+
+bool DecimalBox::is_warning_displayed() const {
+  return m_text_box->is_warning_displayed();
+}
+
+void DecimalBox::set_warning_displayed(bool is_displayed) {
+  m_text_box->set_warning_displayed(is_displayed);
 }
 
 connection DecimalBox::connect_submit_signal(

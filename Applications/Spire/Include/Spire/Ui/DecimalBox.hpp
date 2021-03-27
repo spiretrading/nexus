@@ -51,6 +51,9 @@ namespace Spire {
       //! Returns the current value model.
       const std::shared_ptr<DecimalModel>& get_model() const;
 
+      //! Sets the placeholder value.
+      void set_placeholder(const QString& value);
+
       //! Returns <code>true</code> iff this box is read-only.
       bool is_read_only() const;
 
@@ -59,6 +62,12 @@ namespace Spire {
         \param is_read_only True iff the DecimalBox should be read-only.
       */
       void set_read_only(bool is_read_only);
+
+      //! Returns whether a warning is displayed when a submission is rejected.
+      bool is_warning_displayed() const;
+
+      //! Sets whether a warning is displayed when a submission is rejected.
+      void set_warning_displayed(bool is_displayed);
 
       //! Connects a slot to the value submission signal.
       boost::signals2::connection connect_submit_signal(

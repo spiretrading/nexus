@@ -78,6 +78,7 @@ TextBox::TextBox(QString current, QWidget* parent)
 
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : StyledWidget(parent),
+      m_is_warning_displayed(true),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
   m_layers = new LayeredWidget(this);
