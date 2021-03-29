@@ -162,18 +162,31 @@ struct DecimalBox::DecimalToTextModel : TextModel {
           m_current += ".";
         }
       }
-      if(update_leading_zeros(captures[LEADING_DIGITS_CAPTURE_GROUP]) ||
-          update_trailing_zeros(captures[TRAILING_DIGITS_CAPTURE_GROUP])) {
+      auto has_update =
+        update_leading_zeros(captures[LEADING_DIGITS_CAPTURE_GROUP]);
+      has_update |=
+        update_trailing_zeros(captures[TRAILING_DIGITS_CAPTURE_GROUP]);
+      if(has_update) {
         m_current_signal(m_current);
       }
     }
   }
 
   bool update_leading_zeros(const QString& digits) {
-    if(digits.length() < m_leading_zeros) {
-      for(auto i = digits.length(); i < m_leading_zeros; ++i) {
-        m_current = "0" + m_current;
+    auto leading_zeros = std::max(1, m_leading_zeros);
+    if(digits.length() < leading_zeros) {
+      auto padding = QString("0");
+      auto insert_index = [&] {
+        if(!m_current.isEmpty() &&
+            (m_current[0] == '-' || m_current[0] == '+')) {
+          return 1;
+        }
+        return 0;
+      }();
+      for(auto i = digits.length() + 1; i < leading_zeros; ++i) {
+        padding += '0';
       }
+      m_current.insert(insert_index, padding);
       return true;
     }
     return false;
@@ -366,9 +379,12 @@ void DecimalBox::on_current(const Decimal& current) {
 }
 
 void DecimalBox::on_submit(const QString& submission) {
-  m_submission = m_model->get_current();
-  m_adaptor_model->update_padding();
-  m_submit_signal(m_submission);
+  static auto VALIDATOR = QRegExp("^([-|\\+]?[0-9]+(\\.[0-9]*)?)|(-\\.)");
+  if(VALIDATOR.exactMatch(submission)) {
+    m_submission = m_model->get_current();
+    m_adaptor_model->update_padding();
+    m_submit_signal(m_submission);
+  }
 }
 
 void DecimalBox::on_reject(const QString& value) {
