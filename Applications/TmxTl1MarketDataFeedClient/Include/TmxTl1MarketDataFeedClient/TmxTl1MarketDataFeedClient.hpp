@@ -99,20 +99,20 @@ namespace Nexus::MarketDataService {
   template<typename M, typename S>
   boost::optional<boost::posix_time::ptime>
       TmxTl1MarketDataFeedClient<M, S>::ParseTimestamp(const char* token) {
-    auto value = std::string(token, 20);
+    auto value = std::string(token, 23);
     auto y = boost::lexical_cast<int>(value.substr(0, 4));
     auto m = boost::lexical_cast<int>(value.substr(4, 2));
     auto d = boost::lexical_cast<int>(value.substr(6, 2));
     auto hr = boost::lexical_cast<int>(value.substr(8, 2));
     auto mn = boost::lexical_cast<int>(value.substr(10, 2));
     auto sec = boost::lexical_cast<int>(value.substr(12, 2));
-    auto mill = boost::lexical_cast<int>(value.substr(14, 2));
+    auto ns = boost::lexical_cast<int>(value.substr(14, 9));
     auto timestamp = boost::posix_time::ptime(
       boost::gregorian::date(static_cast<unsigned short>(y),
       static_cast<unsigned short>(m), static_cast<unsigned short>(d)),
       boost::posix_time::hours(hr) + boost::posix_time::minutes(mn) +
       boost::posix_time::seconds(sec) +
-      boost::posix_time::milliseconds(10 * mill));
+      boost::posix_time::microseconds(ns / 1000));
     return timestamp + m_config.m_timeOffset;
   }
 
@@ -147,12 +147,12 @@ namespace Nexus::MarketDataService {
   template<typename M, typename S>
   void TmxTl1MarketDataFeedClient<M, S>::HandleEquityQuoteMessage(
       const StampProtocol::StampPacket& message) {
-    constexpr auto SYMBOL_SIZE = 8;
+    constexpr auto SYMBOL_SIZE = 12;
     constexpr auto PRICE_SIZE = 9;
     constexpr auto PRICE_INTEGRAL_SIZE = 6;
     constexpr auto PRICE_FRACTIONAL_SIZE = 3;
     constexpr auto VOLUME_SIZE = 9;
-    constexpr auto TIMESTAMP_SIZE = 20;
+    constexpr auto TIMESTAMP_SIZE = 23;
     auto remainingSize = message.m_messageSize;
     auto token = message.m_message;
     if(remainingSize < SYMBOL_SIZE) {
@@ -227,6 +227,7 @@ namespace Nexus::MarketDataService {
       }
       if(m_config.m_isLoggingMessages) {
         std::cout << message->m_header.m_sequenceNumber << ": " <<
+          message->m_header.m_messageType << " " <<
           std::string(message->m_message, message->m_messageSize) << "\n";
       }
       if(message->m_header.m_messageType == "E ") {
