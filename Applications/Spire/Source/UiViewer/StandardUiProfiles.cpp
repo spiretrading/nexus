@@ -217,6 +217,11 @@ UiProfile Spire::make_decimal_box_profile() {
           }
         }
       });
+      decimal_box->get_model()->connect_current_signal(
+        [&] (const auto& value) {
+          current.set(QString::fromStdString(
+            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        });
       auto current_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
