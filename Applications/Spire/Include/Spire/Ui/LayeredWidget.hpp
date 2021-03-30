@@ -9,10 +9,17 @@ namespace Spire {
   /** Displays multiple widgets layered ontop of one another. */
   class LayeredWidget : public QWidget {
     public:
-      using QWidget::QWidget;
+
+      /**
+       * Constructs an empty LayeredWidget.
+       * @param parent The parent widget.
+       */
+      explicit LayeredWidget(QWidget* parent = nullptr);
 
       /** Adds a layer on top of all other widgets. */
       void add(QWidget* widget);
+
+      QSize sizeHint() const override;
 
     protected:
       void resizeEvent(QResizeEvent* event) override;

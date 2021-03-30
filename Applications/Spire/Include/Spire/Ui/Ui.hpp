@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QRect>
 #include <QSize>
+#include <QString>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -24,9 +25,14 @@ namespace Spire {
   class DropShadow;
   class FlatButton;
   class IconButton;
+  class IntegerBox;
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
+  template<typename T> class LocalScalarValueModel;
+  template<typename T> class LocalValueModel;
+  using LocalIntegerModel = LocalScalarValueModel<int>;
+  using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;
@@ -34,8 +40,11 @@ namespace Spire {
   class RangeInputSlider;
   class RangeInputWidget;
   class RealSpinBox;
+  template<typename T> class ScalarValueModel;
+  using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
   class ScrollArea;
+  class ScrollBar;
   class ScrollBarStyle;
   class SecurityStack;
   class SecurityWidget;
@@ -44,6 +53,8 @@ namespace Spire {
   class TitleBar;
   class Tooltip;
   class TransitionWidget;
+  template<typename T> class ValueModel;
+  using TextModel = ValueModel<QString>;
   class Window;
 
   //! Draws a border inside the given region.

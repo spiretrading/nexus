@@ -141,6 +141,25 @@ std::shared_ptr<TypedUiProperty<int>> Spire::make_standard_int_property(
     });
 }
 
+std::shared_ptr<TypedUiProperty<std::int64_t>>
+    Spire::make_standard_int64_property(QString name, std::int64_t value) {
+  return std::make_shared<StandardUiProperty<std::int64_t>>(std::move(name),
+    value,
+    [] (QWidget* parent, StandardUiProperty<std::int64_t>& property) {
+      auto setter = new QSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<int>::min());
+      setter->setMaximum(std::numeric_limits<int>::max());
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<int>(value));
+      });
+      QObject::connect(setter, qOverload<int>(&QSpinBox::valueChanged),
+        [&] (auto value) {
+          property.set(value);
+        });
+      return setter;
+    });
+}
+
 std::shared_ptr<TypedUiProperty<QColor>> Spire::make_standard_qcolor_property(
     QString name) {
   return make_standard_qcolor_property(std::move(name), QColorConstants::White);
