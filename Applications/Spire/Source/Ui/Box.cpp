@@ -173,6 +173,8 @@ void Box::selector_updated() {
   style += "}";
   if(style != styleSheet()) {
     setStyleSheet(style);
+    this->style()->unpolish(this);
+    this->style()->polish(this);
     if(m_body) {
       m_container->setGeometry(body_geometry);
     }
@@ -229,6 +231,7 @@ void Box::resizeEvent(QResizeEvent* event) {
       m_container->setGeometry(body_geometry);
     }
   }
+  StyledWidget::resizeEvent(event);
 }
 
 void Spire::display_warning_indicator(StyledWidget& widget) {
