@@ -54,7 +54,9 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   m_second_field->set_warning_displayed(false);
   m_second_field->set_placeholder("ss.sss");
   auto second_style = m_second_field->get_style();
-  second_style.get(Any()).set(border_size(0)).set(LeadingZeros(2)).set(TrailingZeros(3));
+  second_style.get(Any()).
+    set(border_size(0)).
+    set(LeadingZeros(2)).set(TrailingZeros(3));
   second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_second_field->set_style(std::move(second_style));
   auto m_colon1 = new TextBox(":");
@@ -63,7 +65,8 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   m_colon1->setFixedWidth(scale_width(10));
   auto colon_style = m_colon1->get_style();
   colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  colon_style.get(ReadOnly() && Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0))).
+  colon_style.get(ReadOnly() && Disabled()).
+    set(TextColor(QColor::fromRgb(0, 0, 0))).
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
   m_colon1->set_style(std::move(colon_style));
   auto m_colon2 = new TextBox(":");
@@ -80,7 +83,9 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   m_minute_field->setFocusProxy(center_widget);
   m_box = new Box(center_widget);
   auto box_style = m_box->get_style();
-  box_style.get(Any()).set(PaddingLeft(scale_width(4))).set(PaddingRight(scale_width(4)));
+  box_style.get(Any()).
+    set(PaddingLeft(scale_width(4))).
+    set(PaddingRight(scale_width(4)));
   m_box->set_style(box_style);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -102,8 +107,10 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   m_second_field->get_model()->connect_current_signal([=] (const auto& current) {
     auto seconds_value = current.convert_to<float>();
     auto duration = m_model->get_current();
-    auto current_seconds = duration - hours(duration.hours()) - minutes(duration.minutes());
-    auto changes = static_cast<long>(seconds_value * 1000) - current_seconds.total_milliseconds();
+    auto current_seconds = duration - hours(duration.hours()) -
+      minutes(duration.minutes());
+    auto changes = static_cast<long>(seconds_value * 1000) -
+      current_seconds.total_milliseconds();
     if(changes != 0) {
       m_model->set_current(m_model->get_current() + milliseconds(changes));
     }
@@ -137,12 +144,11 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
     }
     auto current_seconds = current - hours(current_hours) -
       minutes(current_minutes);
-    auto current_milliseconds = current_seconds.total_milliseconds();
-    auto seconds_value = m_second_field->get_model()->get_current().
-      convert_to<float>();
-    if(static_cast<long>(seconds_value * 1000) != current_milliseconds) {
-      m_second_field->get_model()->set_current(
-        static_cast<float>(current_milliseconds) / 1000);
+    auto current_milliseconds = DecimalBox::Decimal(
+      current_seconds.total_milliseconds());
+    auto seconds_value = m_second_field->get_model()->get_current();
+    if(seconds_value * 1000 != current_milliseconds) {
+      m_second_field->get_model()->set_current(current_milliseconds / 1000);
     }
   });
 }
@@ -174,16 +180,18 @@ QSize DurationBox::sizeHint() const {
 }
 
 void DurationBox::on_submit() {
-  if(m_model->get_current() >= *m_model->get_minimum() &&
-    m_model->get_current() <= *m_model->get_maximum()) {
-    m_submission = m_model->get_current();
-    m_submit_signal(m_submission);
-  } else {
+  auto minimum = m_model->get_minimum();
+  auto maximum = m_model->get_maximum();
+  if(minimum && m_model->get_current() < *minimum ||
+    maximum && m_model->get_current() > *maximum) {
     m_reject_signal(m_model->get_current());
     m_model->set_current(m_submission);
     if(m_is_warning_displayed) {
       display_warning_indicator(*m_box);
     }
+  } else {
+    m_submission = m_model->get_current();
+    m_submit_signal(m_submission);
   }
 }
 
