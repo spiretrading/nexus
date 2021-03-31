@@ -23,12 +23,14 @@ namespace Spire {
   class DropDownMenuItem;
   class DropDownMenuList;
   class DropShadow;
+  class DurationBox;
   class FlatButton;
   class IconButton;
   class IntegerBox;
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
+  class LocalDurationModel;
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
   using LocalIntegerModel = LocalScalarValueModel<int>;

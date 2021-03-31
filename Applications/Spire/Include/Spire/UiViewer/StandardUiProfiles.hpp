@@ -20,6 +20,9 @@ namespace Spire {
   //! Returns a UiProfile for the DecimalBox.
   UiProfile make_decimal_box_profile();
 
+  //! Returns a UiProfile for the DurationBox.
+  UiProfile make_duration_box_profile();
+
   //! Returns a UiProfile for the FlatButton.
   UiProfile make_flat_button_profile();
 

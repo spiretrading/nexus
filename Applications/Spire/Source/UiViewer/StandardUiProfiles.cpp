@@ -10,6 +10,7 @@
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
@@ -264,6 +265,56 @@ UiProfile Spire::make_decimal_box_profile() {
         decimal_box->set_warning_displayed(value);
       });
       return decimal_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_duration_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_qstring_property("current", ""));
+  properties.push_back(make_standard_qstring_property("minimum", "00:00:00.000"));
+  properties.push_back(make_standard_qstring_property("maximum", "24:00:00.000"));
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
+    [] (auto& profile) {
+      auto parse_duration = [] (auto duration) -> boost::optional<Duration> {
+        try {
+          return boost::posix_time::duration_from_string(
+            duration.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      auto model = std::make_shared<LocalDurationModel>();
+      auto duration_box = new DurationBox(model);
+      apply_widget_properties(duration_box, profile.get_properties());
+      auto& minimum = get<QString>("minimum", profile.get_properties());
+      minimum.connect_changed_signal([=] (auto value) {
+        if(auto minimum_value = parse_duration(value)) {
+          model->set_minimum(minimum_value);
+        }
+      });
+      auto& maximum = get<QString>("maximum", profile.get_properties());
+      maximum.connect_changed_signal([=] (auto value) {
+        if(auto maximum_value = parse_duration(value)) {
+          model->set_maximum(maximum_value);
+        }
+      });
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (auto value) {
+        if(auto current_value = parse_duration(value)) {
+          if(duration_box->get_model()->get_current() != *current_value) {
+            duration_box->get_model()->set_current(*current_value);
+          }
+        }
+      });
+      duration_box->get_model()->connect_current_signal(
+        profile.make_event_slot<Duration>(QString::fromUtf8("Current")));
+      duration_box->connect_submit_signal(
+        profile.make_event_slot<Duration>(QString::fromUtf8("Submit")));
+      duration_box->connect_reject_signal(
+        profile.make_event_slot<Duration>(QString::fromUtf8("Reject")));
+      return duration_box;
     });
   return profile;
 }
