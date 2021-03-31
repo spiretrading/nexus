@@ -1,6 +1,6 @@
 #include "Spire/Ui/ScrollBar.hpp"
 #include <QHBoxLayout>
-#include <QMetaEnum>
+#include <QMouseEvent>
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -10,84 +10,126 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto SCROLL_BAR_SIZE = 13;
+  int get_position(Qt::Orientation orientation, const QPoint& point) {
+    if(orientation == Qt::Orientation::Vertical) {
+      return point.y();
+    }
+    return point.x();
+  }
 
-  auto DEFAULT_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-    style.get(ScrollBarThumb()).
-      set(BackgroundColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    return style;
+  int get_position(Qt::Orientation orientation, const QPointF& point) {
+    if(orientation == Qt::Orientation::Vertical) {
+      return static_cast<int>(point.y());
+    }
+    return static_cast<int>(point.x());
+  }
+
+  int get_size(Qt::Orientation orientation, const QSize& size) {
+    if(orientation == Qt::Orientation::Vertical) {
+      return size.height();
+    }
+    return size.width();
   }
 }
 
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
-    : StyledWidget(parent) {
-  if(orientation == Qt::Vertical) {
-    m_thumb_min_size = scale_height(50);
+    : StyledWidget(parent),
+      m_orientation(orientation),
+      m_range{0, 100},
+      m_line_size(1),
+      m_page_size(20),
+      m_position(0),
+      m_is_dragging(false),
+      m_thumb_position(0) {
+  m_thumb = new Box(nullptr, nullptr);
+  auto thumb_style = StyleSheet();
+  thumb_style.get(Any()).set_override(Rule::Override::NONE).
+    set(BackgroundColor(QColor("#C8C8C8")));
+  m_thumb->set_style(std::move(thumb_style));
+  if(m_orientation == Qt::Orientation::Vertical) {
+    m_thumb->setFixedHeight(scale_height(20));
+    m_thumb->setSizePolicy(
+      QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
   } else {
-    m_thumb_min_size = scale_width(50);
+    m_thumb->setFixedWidth(scale_width(20));
+    m_thumb->setSizePolicy(QSizePolicy::Policy::Fixed,
+      QSizePolicy::Policy::Expanding);
   }
+  m_track = new Box(m_thumb, this);
+  auto track_style = m_track->get_style();
+  track_style.get(Any()).set(border(0, QColor(0, 0, 0)));
+  if(m_orientation == Qt::Orientation::Vertical) {
+    track_style.get(Any()).set(PaddingTop(m_thumb_position));
+    track_style.get(Any()).set(PaddingLeft(0));
+  } else {
+    track_style.get(Any()).set(PaddingTop(0));
+    track_style.get(Any()).set(PaddingLeft(m_thumb_position));
+  }
+  track_style.get(Any()).set(PaddingRight(0));
+  track_style.get(Any()).set(PaddingBottom(0));
+  m_track->set_style(std::move(track_style));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_scroll_bar = new QScrollBar(orientation, this);
-  m_scroll_bar->setContextMenuPolicy(Qt::NoContextMenu);
-  m_scroll_bar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  layout->addWidget(m_scroll_bar);
-  set_style(DEFAULT_STYLE());
-  connect(m_scroll_bar, &QScrollBar::valueChanged, [=] (auto value) {
-    m_position_signal(value);
-  });
+  layout->addWidget(m_track);
+  if(m_orientation == Qt::Orientation::Vertical) {
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+  } else {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  }
 }
 
 Qt::Orientation ScrollBar::get_orientation() {
-  return m_scroll_bar->orientation();
+  return m_orientation;
 }
 
 ScrollBar::Range ScrollBar::get_range() const {
-  return {m_scroll_bar->minimum(), m_scroll_bar->maximum()};
+  return m_range;
 }
 
 void ScrollBar::set_range(const Range& range) {
-  m_scroll_bar->setRange(range.m_start, range.m_end);
+  m_range = range;
+  if(m_position < m_range.m_start) {
+    set_position(m_range.m_start);
+  } else if(m_position > m_range.m_end) {
+    set_position(m_range.m_end);
+  }
 }
 
 void ScrollBar::set_range(int start, int end) {
-  m_scroll_bar->setRange(start, end);
+  return set_range({start, end});
 }
 
 int ScrollBar::get_line_size() const {
-  return m_scroll_bar->singleStep();
+  return m_line_size;
 }
 
 void ScrollBar::set_line_size(int size) {
-  m_scroll_bar->setSingleStep(size);
+  m_line_size = size;
 }
 
 int ScrollBar::get_page_size() const {
-  return m_scroll_bar->pageStep();
+  return m_page_size;
 }
 
 void ScrollBar::set_page_size(int size) {
-  m_scroll_bar->setPageStep(size);
+  m_page_size = size;
 }
 
 int ScrollBar::get_position() const {
-  return m_scroll_bar->value();
+  return m_position;
 }
 
 void ScrollBar::set_position(int position) {
-  m_scroll_bar->setValue(position);
-}
-
-int ScrollBar::get_thumb_min_size() const {
-  return m_thumb_min_size;
-}
-
-void ScrollBar::set_thumb_min_size(int size) {
-  m_thumb_min_size = size;
-  style_updated();
+  position = std::clamp(position, m_range.m_start, m_range.m_end);
+  if(position == m_position) {
+    return;
+  }
+  m_position = position;
+  auto region = get_size(m_orientation, size()) -
+    get_size(m_orientation, m_thumb->size());
+  update_thumb(region *
+    (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start));
+  m_position_signal(m_position);
 }
 
 connection ScrollBar::connect_position_signal(
@@ -95,47 +137,56 @@ connection ScrollBar::connect_position_signal(
   return m_position_signal.connect(slot);
 }
 
-void ScrollBar::selector_updated() {
-  auto scroll_bar_computed_style = compute_style();
-  auto thumb_computed_style = compute_style(ScrollBarThumb());
-  auto orientation = QMetaEnum::fromType<Qt::Orientation>().valueToKey(
-    get_orientation());
-  auto scroll_bar_style = QString(R"(
-    QScrollBar:%1 {
-      padding: 0px;)").arg(orientation);
-  auto thumb_style = QString("QScrollBar::handle:%1 {").arg(orientation);
-  for(auto& property : scroll_bar_computed_style.get_properties()) {
-    property.visit(
-      [&] (const BackgroundColor& color) {
-        scroll_bar_style += "background: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      });
+QSize ScrollBar::sizeHint() const {
+  if(m_orientation == Qt::Orientation::Vertical) {
+    return scale(24, 1);
+  } else {
+    return scale(1, 24);
   }
-  scroll_bar_style += "}";
-  for(auto& property : thumb_computed_style.get_properties()) {
-    property.visit(
-      [&] (const BackgroundColor& color) {
-        thumb_style += "background: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      });
+}
+
+void ScrollBar::mouseMoveEvent(QMouseEvent* event) {
+  if(m_is_dragging) {
+    auto position = ::get_position(m_orientation, event->windowPos());
+    if(position != m_drag_position) {
+      auto delta = std::min(get_size(m_orientation, size()) -
+        get_size(m_orientation, m_thumb->size()) - m_thumb_position,
+        std::max(-m_thumb_position, position - m_drag_position));
+      auto updated_thumb_position =
+        static_cast<double>(m_thumb_position + delta);
+      auto region = get_size(m_orientation, size()) -
+        get_size(m_orientation, m_thumb->size());
+      set_position(static_cast<int>(
+        std::ceil((updated_thumb_position * (m_range.m_end - m_range.m_start) +
+        region * m_range.m_start) / region)));
+      m_drag_position += delta;
+    }
   }
-  auto thumb_min_size_style = [=] {
-    if(get_orientation() == Qt::Vertical) {
-      return QString("min-height: %1px;").arg(m_thumb_min_size);
-    } else {
-      return QString("min-width: %1px;").arg(m_thumb_min_size);
-    }
-  }();
-  thumb_style += thumb_min_size_style + "}";
-  auto style = scroll_bar_style + thumb_style;
-  style += QString(R"(
-    QScrollBar::add-page:%1, QScrollBar::sub-page:%1 {
-      background: none;
-    }
-    QScrollBar::add-line:%1, QScrollBar::sub-line:%1 {
-      width: 0px;
-      height: 0px;
-    })").arg(orientation);
-  setStyleSheet(style);
-  StyledWidget::selector_updated();
+  StyledWidget::mouseMoveEvent(event);
+}
+
+void ScrollBar::mousePressEvent(QMouseEvent* event) {
+  if(m_thumb->frameGeometry().contains(event->pos())) {
+    m_drag_position = ::get_position(m_orientation, event->windowPos());
+    m_is_dragging = true;
+  }
+  StyledWidget::mousePressEvent(event);
+}
+
+void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
+  if(m_thumb->frameGeometry().contains(event->pos())) {
+    m_is_dragging = false;
+  }
+  StyledWidget::mouseReleaseEvent(event);
+}
+
+void ScrollBar::update_thumb(int position) {
+  m_thumb_position = position;
+  auto track_style = m_track->get_style();
+  if(m_orientation == Qt::Orientation::Vertical) {
+    track_style.get(Any()).set(PaddingTop(m_thumb_position));
+  } else {
+    track_style.get(Any()).set(PaddingLeft(m_thumb_position));
+  }
+  m_track->set_style(std::move(track_style));
 }

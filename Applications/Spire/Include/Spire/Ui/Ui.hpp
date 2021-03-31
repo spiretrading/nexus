@@ -45,7 +45,6 @@ namespace Spire {
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;
-  class ScrollBarStyle;
   class SecurityStack;
   class SecurityWidget;
   class TabWidget;
