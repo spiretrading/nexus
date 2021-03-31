@@ -28,7 +28,9 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   center_layout->setSpacing(0);
   auto hour_model = std::make_shared<LocalIntegerModel>();
   hour_model->set_minimum(0);
-  m_hour_field = new IntegerBox(hour_model, QHash<Qt::KeyboardModifier, int>());
+  auto hour_modifiers = QHash<Qt::KeyboardModifier, int>(
+    {{Qt::NoModifier, 1}});
+  m_hour_field = new IntegerBox(hour_model, hour_modifiers);
   m_hour_field->setFixedWidth(scale_width(24));
   m_hour_field->set_warning_displayed(false);
   m_hour_field->set_placeholder("hh");
@@ -41,8 +43,9 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   auto minute_model = std::make_shared<LocalIntegerModel>();
   minute_model->set_minimum(0);
   minute_model->set_maximum(59);
-  m_minute_field = new IntegerBox(minute_model,
-    QHash<Qt::KeyboardModifier, int>());
+  auto minute_modifiers = QHash<Qt::KeyboardModifier, int>(
+    {{Qt::NoModifier, 1}});
+  m_minute_field = new IntegerBox(minute_model, minute_modifiers);
   m_minute_field->setFixedWidth(scale_width(28));
   m_minute_field->set_warning_displayed(false);
   m_minute_field->set_placeholder("mm");
@@ -55,8 +58,9 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   second_model->set_minimum(DecimalBox::Decimal(0));
   second_model->set_maximum(DecimalBox::Decimal(59.999));
   second_model->set_increment(pow(DecimalBox::Decimal(10), -3));
-  m_second_field = new DecimalBox(second_model,
-    QHash<Qt::KeyboardModifier, DecimalBox::Decimal>());
+  auto second_modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
+    {{Qt::NoModifier, 1.0}});
+  m_second_field = new DecimalBox(second_model, second_modifiers);
   m_second_field->setFixedWidth(scale_width(44));
   m_second_field->set_warning_displayed(false);
   m_second_field->set_placeholder("ss.sss");

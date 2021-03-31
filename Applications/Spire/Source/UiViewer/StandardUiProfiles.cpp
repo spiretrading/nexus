@@ -271,10 +271,10 @@ UiProfile Spire::make_decimal_box_profile() {
 
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("current", ""));
   properties.push_back(make_standard_qstring_property("minimum", "00:00:00.000"));
   properties.push_back(make_standard_qstring_property("maximum", "24:00:00.000"));
-  populate_widget_properties(properties);
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
     [] (auto& profile) {
       auto parse_duration = [] (auto duration) -> boost::optional<Duration> {
