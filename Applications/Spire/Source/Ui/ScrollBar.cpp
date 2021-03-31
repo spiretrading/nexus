@@ -35,29 +35,47 @@ namespace {
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     : StyledWidget(parent),
       m_orientation(orientation),
+      m_range{0, 100},
+      m_line_size(1),
+      m_page_size(20),
+      m_position(0),
       m_is_dragging(false),
-      m_thumb_start(0) {
+      m_thumb_position(0) {
   m_thumb = new Box(nullptr, nullptr);
   auto thumb_style = StyleSheet();
   thumb_style.get(Any()).set_override(Rule::Override::NONE).
     set(BackgroundColor(QColor("#C8C8C8")));
   m_thumb->set_style(std::move(thumb_style));
-  m_thumb->setFixedHeight(scale_height(20));
-  m_thumb->setSizePolicy(
-    QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
-  m_thumb->installEventFilter(this);
+  if(m_orientation == Qt::Orientation::Vertical) {
+    m_thumb->setFixedHeight(scale_height(20));
+    m_thumb->setSizePolicy(
+      QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
+  } else {
+    m_thumb->setFixedWidth(scale_width(20));
+    m_thumb->setSizePolicy(QSizePolicy::Policy::Fixed,
+      QSizePolicy::Policy::Expanding);
+  }
   m_track = new Box(m_thumb, this);
   auto track_style = m_track->get_style();
   track_style.get(Any()).set(border(0, QColor(0, 0, 0)));
-  track_style.get(Any()).set(PaddingTop(m_thumb_start));
+  if(m_orientation == Qt::Orientation::Vertical) {
+    track_style.get(Any()).set(PaddingTop(m_thumb_position));
+    track_style.get(Any()).set(PaddingLeft(0));
+  } else {
+    track_style.get(Any()).set(PaddingTop(0));
+    track_style.get(Any()).set(PaddingLeft(m_thumb_position));
+  }
   track_style.get(Any()).set(PaddingRight(0));
   track_style.get(Any()).set(PaddingBottom(0));
-  track_style.get(Any()).set(PaddingLeft(0));
   m_track->set_style(std::move(track_style));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_track);
-  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+  if(m_orientation == Qt::Orientation::Vertical) {
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+  } else {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  }
 }
 
 Qt::Orientation ScrollBar::get_orientation() {
@@ -70,6 +88,11 @@ ScrollBar::Range ScrollBar::get_range() const {
 
 void ScrollBar::set_range(const Range& range) {
   m_range = range;
+  if(m_position < m_range.m_start) {
+    set_position(m_range.m_start);
+  } else if(m_position > m_range.m_end) {
+    set_position(m_range.m_end);
+  }
 }
 
 void ScrollBar::set_range(int start, int end) {
@@ -97,7 +120,16 @@ int ScrollBar::get_position() const {
 }
 
 void ScrollBar::set_position(int position) {
+  position = std::clamp(position, m_range.m_start, m_range.m_end);
+  if(position == m_position) {
+    return;
+  }
   m_position = position;
+  auto region = get_size(m_orientation, size()) -
+    get_size(m_orientation, m_thumb->size());
+  update_thumb(region *
+    (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start));
+  m_position_signal(m_position);
 }
 
 connection ScrollBar::connect_position_signal(
@@ -107,35 +139,54 @@ connection ScrollBar::connect_position_signal(
 
 QSize ScrollBar::sizeHint() const {
   if(m_orientation == Qt::Orientation::Vertical) {
-    return QSize(24, 1);
+    return scale(24, 1);
   } else {
-    return QSize(1, 24);
+    return scale(1, 24);
   }
 }
 
-bool ScrollBar::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::MouseButtonPress) {
-    auto& mouse_event = *static_cast<QMouseEvent*>(event);
-    m_drag_position = ::get_position(m_orientation, mouse_event.windowPos());
-    m_is_dragging = true;
-  } else if(event->type() == QEvent::MouseButtonRelease) {
-    m_is_dragging = false;
-  } else if(event->type() == QEvent::MouseMove) {
-    if(m_is_dragging) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      auto position = ::get_position(m_orientation, mouse_event.windowPos());
-      auto delta = position - m_drag_position;
-      if(position != m_drag_position) {
-        delta = std::min(get_size(m_orientation, size()) -
-          get_size(m_orientation, m_thumb->size()) - m_thumb_start,
-          std::max(-m_thumb_start, delta));
-        m_thumb_start += delta;
-        auto track_style = m_track->get_style();
-        track_style.get(Any()).set(PaddingTop(m_thumb_start));
-        m_track->set_style(std::move(track_style));
-        m_drag_position += delta;
-      }
+void ScrollBar::mouseMoveEvent(QMouseEvent* event) {
+  if(m_is_dragging) {
+    auto position = ::get_position(m_orientation, event->windowPos());
+    if(position != m_drag_position) {
+      auto delta = std::min(get_size(m_orientation, size()) -
+        get_size(m_orientation, m_thumb->size()) - m_thumb_position,
+        std::max(-m_thumb_position, position - m_drag_position));
+      auto updated_thumb_position =
+        static_cast<double>(m_thumb_position + delta);
+      auto region = get_size(m_orientation, size()) -
+        get_size(m_orientation, m_thumb->size());
+      set_position(static_cast<int>(
+        std::ceil((updated_thumb_position * (m_range.m_end - m_range.m_start) +
+        region * m_range.m_start) / region)));
+      m_drag_position += delta;
     }
   }
-  return StyledWidget::eventFilter(watched, event);
+  StyledWidget::mouseMoveEvent(event);
+}
+
+void ScrollBar::mousePressEvent(QMouseEvent* event) {
+  if(m_thumb->frameGeometry().contains(event->pos())) {
+    m_drag_position = ::get_position(m_orientation, event->windowPos());
+    m_is_dragging = true;
+  }
+  StyledWidget::mousePressEvent(event);
+}
+
+void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
+  if(m_thumb->frameGeometry().contains(event->pos())) {
+    m_is_dragging = false;
+  }
+  StyledWidget::mouseReleaseEvent(event);
+}
+
+void ScrollBar::update_thumb(int position) {
+  m_thumb_position = position;
+  auto track_style = m_track->get_style();
+  if(m_orientation == Qt::Orientation::Vertical) {
+    track_style.get(Any()).set(PaddingTop(m_thumb_position));
+  } else {
+    track_style.get(Any()).set(PaddingLeft(m_thumb_position));
+  }
+  m_track->set_style(std::move(track_style));
 }

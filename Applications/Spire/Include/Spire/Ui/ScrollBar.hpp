@@ -67,7 +67,9 @@ namespace Spire {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable PositionSignal m_position_signal;
@@ -80,7 +82,9 @@ namespace Spire {
       Box* m_track;
       bool m_is_dragging;
       int m_drag_position;
-      int m_thumb_start;
+      int m_thumb_position;
+
+      void update_thumb(int position);
   };
 }
 

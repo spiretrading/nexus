@@ -384,7 +384,7 @@ UiProfile Spire::make_integer_box_profile() {
 
 UiProfile Spire::make_scroll_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_bool_property("enabled", true));
+  populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("vertical", true));
   properties.push_back(make_standard_int_property("start_range", 0));
   properties.push_back(make_standard_int_property("end_range", 1000));
@@ -403,14 +403,10 @@ UiProfile Spire::make_scroll_bar_profile() {
       }();
       auto scroll_bar = new ScrollBar(orientation);
       if(orientation == Qt::Vertical) {
-        scroll_bar->resize(scale_width(13), scale_height(200));
+        scroll_bar->resize(scale(13, 200));
       } else {
-        scroll_bar->resize(scale_width(200), scale_height(13));
+        scroll_bar->resize(scale(200, 13));
       }
-      auto& enabled = get<bool>("enabled", profile.get_properties());
-      enabled.connect_changed_signal([scroll_bar] (auto value) {
-        scroll_bar->setEnabled(value);
-      });
       auto& start_range = get<int>("start_range", profile.get_properties());
       start_range.connect_changed_signal([scroll_bar] (auto value) {
         auto range = scroll_bar->get_range();
