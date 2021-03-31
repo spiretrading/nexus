@@ -24,6 +24,14 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
     1, 1, QSizePolicy::Minimum, QSizePolicy::Minimum), 1, 1);
 }
 
+ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
+  return *m_vertical_scroll_bar;
+}
+
+ScrollBar& ScrollableLayer::get_horizontal_scroll_bar() {
+  return *m_horizontal_scroll_bar;
+}
+
 void ScrollableLayer::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Up) {
     scroll_line_up(*m_vertical_scroll_bar);

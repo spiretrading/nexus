@@ -18,6 +18,12 @@ namespace Spire {
        */
       explicit ScrollableLayer(QWidget* parent = nullptr);
 
+      /** Returns the vertical ScrollBar. */
+      ScrollBar& get_vertical_scroll_bar();
+
+      /** Returns the horizontal ScrollBar. */
+      ScrollBar& get_horizontal_scroll_bar();
+
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;

@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  /** Implements a scrollbar. */
+  /** Implements a scroll bar. */
   class ScrollBar : public Styles::StyledWidget {
     public:
 

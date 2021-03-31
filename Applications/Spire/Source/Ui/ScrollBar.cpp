@@ -177,8 +177,12 @@ void ScrollBar::resizeEvent(QResizeEvent* event) {
 void ScrollBar::update_thumb() {
   auto region =
     get_size(m_orientation, size()) - get_size(m_orientation, m_thumb->size());
-  m_thumb_position =
-    region * (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
+  if(m_range.m_end <= m_range.m_start) {
+    m_thumb_position = 0;
+  } else {
+    m_thumb_position = region *
+      (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
+  }
   auto track_style = m_track->get_style();
   if(m_orientation == Qt::Orientation::Vertical) {
     track_style.get(Any()).set(PaddingTop(m_thumb_position));
