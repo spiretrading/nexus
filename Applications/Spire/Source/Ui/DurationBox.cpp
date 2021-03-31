@@ -29,6 +29,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   auto hour_model = std::make_shared<LocalIntegerModel>();
   hour_model->set_minimum(0);
   m_hour_field = new IntegerBox(hour_model, QHash<Qt::KeyboardModifier, int>());
+  m_hour_field->setFixedWidth(scale_width(24));
   m_hour_field->set_warning_displayed(false);
   m_hour_field->set_placeholder("hh");
   auto hour_style = m_hour_field->get_style();
@@ -42,6 +43,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   minute_model->set_maximum(59);
   m_minute_field = new IntegerBox(minute_model,
     QHash<Qt::KeyboardModifier, int>());
+  m_minute_field->setFixedWidth(scale_width(28));
   m_minute_field->set_warning_displayed(false);
   m_minute_field->set_placeholder("mm");
   auto minute_style = m_minute_field->get_style();
@@ -55,6 +57,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   second_model->set_increment(pow(DecimalBox::Decimal(10), -3));
   m_second_field = new DecimalBox(second_model,
     QHash<Qt::KeyboardModifier, DecimalBox::Decimal>());
+  m_second_field->setFixedWidth(scale_width(44));
   m_second_field->set_warning_displayed(false);
   m_second_field->set_placeholder("ss.sss");
   auto second_style = m_second_field->get_style();
@@ -66,7 +69,6 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   auto m_colon1 = new TextBox(":");
   m_colon1->setEnabled(false);
   m_colon1->set_read_only(true);
-  m_colon1->setFixedWidth(scale_width(10));
   auto colon_style = m_colon1->get_style();
   colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   colon_style.get(ReadOnly() && Disabled()).
@@ -76,13 +78,12 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   auto m_colon2 = new TextBox(":");
   m_colon2->setEnabled(false);
   m_colon2->set_read_only(true);
-  m_colon2->setFixedWidth(scale_width(10));
   m_colon2->set_style(std::move(colon_style));
-  center_layout->addWidget(m_hour_field, 1);
-  center_layout->addWidget(m_colon1, 0);
-  center_layout->addWidget(m_minute_field, 1);
-  center_layout->addWidget(m_colon2, 0);
-  center_layout->addWidget(m_second_field, 2);
+  center_layout->addWidget(m_hour_field);
+  center_layout->addWidget(m_colon1);
+  center_layout->addWidget(m_minute_field);
+  center_layout->addWidget(m_colon2);
+  center_layout->addWidget(m_second_field);
   m_box = new Box(center_widget);
   auto box_style = m_box->get_style();
   box_style.get(Any()).
