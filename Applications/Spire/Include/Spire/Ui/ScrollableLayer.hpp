@@ -1,0 +1,31 @@
+#ifndef SPIRE_SCROLLABLE_LAYER_HPP
+#define SPIRE_SCROLLABLE_LAYER_HPP
+#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Ui/Ui.hpp"
+
+namespace Spire {
+
+  /**
+   * Implements a widget that is used as a layer containing a vertical and
+   * horizontal scroll bar.
+   */
+  class ScrollableLayer : public Styles::StyledWidget {
+    public:
+
+      /**
+       * Constructs a ScrollableLayer.
+       * @param parent The parent widget.
+       */
+      explicit ScrollableLayer(QWidget* parent = nullptr);
+
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+      void wheelEvent(QWheelEvent* event) override;
+
+    private:
+      ScrollBar* m_vertical_scroll_bar;
+      ScrollBar* m_horizontal_scroll_bar;
+  };
+}
+
+#endif

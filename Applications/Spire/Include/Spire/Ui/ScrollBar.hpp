@@ -70,6 +70,7 @@ namespace Spire {
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable PositionSignal m_position_signal;
@@ -84,8 +85,45 @@ namespace Spire {
       int m_drag_position;
       int m_thumb_position;
 
-      void update_thumb(int position);
+      void update_thumb();
   };
+
+  /**
+   * Scrolls up by a number of lines.
+   * @param scroll_bar The ScrollBar to scroll by lines.
+   * @param lines The number of lines to scroll by.
+   */
+  void scroll_line_up(ScrollBar& scroll_bar, int lines = 1);
+
+  /**
+   * Scrolls down by a number of lines.
+   * @param scroll_bar The ScrollBar to scroll by lines.
+   */
+  void scroll_line_down(ScrollBar& scroll_bar, int lines = 1);
+
+  /**
+   * Scrolls up by a number of pages.
+   * @param scroll_bar The ScrollBar to scroll by pages.
+   */
+  void scroll_page_up(ScrollBar& scroll_bar, int pages = 1);
+
+  /**
+   * Scrolls down by a number of pages.
+   * @param scroll_bar The ScrollBar to scroll by pages.
+   */
+  void scroll_page_down(ScrollBar& scroll_bar, int pages = 1);
+
+  /**
+   * Scrolls to the start of a ScrollBar's range.
+   * @param scroll_bar The ScrollBar to scroll to the start.
+   */
+  void scroll_to_start(ScrollBar& scroll_bar);
+
+  /**
+   * Scrolls to the end of a ScrollBar's range.
+   * @param scroll_bar The ScrollBar to scroll to the end.
+   */
+  void scroll_to_end(ScrollBar& scroll_bar);
 }
 
 #endif
