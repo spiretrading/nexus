@@ -57,6 +57,7 @@ namespace Spire {
         const typename CurrentSignal::slot_type& slot) const override;
 
     private:
+      QValidator::State m_state;
       boost::optional<Duration> m_minimum;
       boost::optional<Duration> m_maximum;
   };

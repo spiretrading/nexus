@@ -27,7 +27,7 @@ optional<Duration> LocalDurationModel::get_maximum() const {
 }
 
 QValidator::State LocalDurationModel::get_state() const {
-  return LocalValueModel<Duration>::get_state();
+  return m_state;
 }
 
 const Duration& LocalDurationModel::get_current() const {
@@ -35,14 +35,17 @@ const Duration& LocalDurationModel::get_current() const {
 }
 
 QValidator::State LocalDurationModel::set_current(const Duration& value) {
-  if(value != get_current() && value.is_special()) {
-    return QValidator::State::Invalid;
-  }
-  auto m_state = LocalValueModel<Duration>::set_current(value);
-  if(m_minimum && value < *m_minimum ||
+  if(value.is_special()) {
+    m_state = QValidator::State::Invalid;
+  } else {
+    if(m_minimum && value < *m_minimum ||
       m_maximum && value > *m_maximum) {
-    m_state = QValidator::Intermediate;
+      m_state = QValidator::Intermediate;
+    } else {
+      m_state = QValidator::Acceptable;
+    }
   }
+  LocalValueModel<Duration>::set_current(value);
   return m_state;
 }
 

@@ -93,26 +93,38 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
   m_hour_field->get_model()->connect_current_signal([=] (const auto& current) {
-    auto changes = hours(current) - hours(m_model->get_current().hours());
-    if(changes != hours(0)) {
-      m_model->set_current(m_model->get_current() + changes);
+    if(m_model->get_state() == QValidator::State::Invalid) {
+      m_model->set_current(hours(current));
+    } else {
+      auto changes = hours(current) - hours(m_model->get_current().hours());
+      if(changes != hours(0)) {
+        m_model->set_current(m_model->get_current() + changes);
+      }
     }
   });
   m_minute_field->get_model()->connect_current_signal([=] (const auto& current) {
-    auto changes = minutes(current) - minutes(m_model->get_current().minutes());
-    if(changes != minutes(0)) {
-      m_model->set_current(m_model->get_current() + changes);
+    if(m_model->get_state() == QValidator::State::Invalid) {
+      m_model->set_current(minutes(current));
+    } else {
+      auto changes = minutes(current) - minutes(m_model->get_current().minutes());
+      if(changes != minutes(0)) {
+        m_model->set_current(m_model->get_current() + changes);
+      }
     }
   });
   m_second_field->get_model()->connect_current_signal([=] (const auto& current) {
     auto seconds_value = current.convert_to<float>();
-    auto duration = m_model->get_current();
-    auto current_seconds = duration - hours(duration.hours()) -
-      minutes(duration.minutes());
-    auto changes = static_cast<long>(seconds_value * 1000) -
-      current_seconds.total_milliseconds();
-    if(changes != 0) {
-      m_model->set_current(m_model->get_current() + milliseconds(changes));
+    if(m_model->get_state() == QValidator::State::Invalid) {
+      m_model->set_current(milliseconds(static_cast<long>(seconds_value * 1000)));
+    } else {
+      auto duration = m_model->get_current();
+      auto current_seconds = duration - hours(duration.hours()) -
+        minutes(duration.minutes());
+      auto changes = static_cast<long>(seconds_value * 1000) -
+        current_seconds.total_milliseconds();
+      if(changes != 0) {
+        m_model->set_current(m_model->get_current() + milliseconds(changes));
+      }
     }
   });
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
@@ -134,20 +146,21 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
     on_reject();
   });
   m_model->connect_current_signal([=] (const auto& current) {
-    auto current_hours = static_cast<int>(current.hours());
-    if(m_hour_field->get_model()->get_current() != current_hours) {
+    if(m_model->get_state() == QValidator::State::Invalid) {
+      clear_leading_trailing_zeros();
+      m_hour_field->findChild<QLineEdit*>()->setText("");
+      m_minute_field->findChild<QLineEdit*>()->setText("");
+      m_second_field->findChild<QLineEdit*>()->setText("");
+    } else {
+      set_leading_trailing_zeros();
+      auto current_hours = static_cast<int>(current.hours());
       m_hour_field->get_model()->set_current(current_hours);
-    }
-    auto current_minutes = static_cast<int>(current.minutes());
-    if(m_minute_field->get_model()->get_current() != current_minutes) {
+      auto current_minutes = static_cast<int>(current.minutes());
       m_minute_field->get_model()->set_current(current_minutes);
-    }
-    auto current_seconds = current - hours(current_hours) -
-      minutes(current_minutes);
-    auto current_milliseconds = DecimalBox::Decimal(
-      current_seconds.total_milliseconds());
-    auto seconds_value = m_second_field->get_model()->get_current();
-    if(seconds_value * 1000 != current_milliseconds) {
+      auto current_seconds = current - hours(current_hours) -
+        minutes(current_minutes);
+      auto current_milliseconds = DecimalBox::Decimal(
+        current_seconds.total_milliseconds());
       m_second_field->get_model()->set_current(current_milliseconds / 1000);
     }
   });
@@ -201,4 +214,22 @@ void DurationBox::on_reject() {
   if(m_is_warning_displayed) {
     display_warning_indicator(*m_box);
   }
+}
+
+void DurationBox::clear_leading_trailing_zeros() {
+  auto minute_style = m_minute_field->get_style();
+  minute_style.get(Any()).set(LeadingZeros(0));
+  m_minute_field->set_style(std::move(minute_style));
+  auto second_style = m_second_field->get_style();
+  second_style.get(Any()).set(LeadingZeros(0)).set(TrailingZeros(0));
+  m_second_field->set_style(std::move(second_style));
+}
+
+void DurationBox::set_leading_trailing_zeros() {
+  auto minute_style = m_minute_field->get_style();
+  minute_style.get(Any()).set(LeadingZeros(2));
+  m_minute_field->set_style(std::move(minute_style));
+  auto second_style = m_second_field->get_style();
+  second_style.get(Any()).set(LeadingZeros(2)).set(TrailingZeros(3));
+  m_second_field->set_style(std::move(second_style));
 }
