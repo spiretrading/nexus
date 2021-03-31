@@ -73,6 +73,9 @@ namespace Spire {
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
       bool m_is_warning_displayed;
+      bool m_is_hour_field_inputting;
+      bool m_is_minute_field_inputting;
+      bool m_is_second_field_inputting;
 
       void on_submit();
       void on_reject();

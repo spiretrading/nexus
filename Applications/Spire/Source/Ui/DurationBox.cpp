@@ -17,7 +17,10 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
     : StyledWidget(parent),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
-      m_is_warning_displayed(true) {
+      m_is_warning_displayed(true),
+      m_is_hour_field_inputting(false),
+      m_is_minute_field_inputting(false),
+      m_is_second_field_inputting(false) {
   auto center_widget = new QWidget(this);
   center_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto center_layout = new QHBoxLayout(center_widget);
@@ -93,6 +96,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
   m_hour_field->get_model()->connect_current_signal([=] (const auto& current) {
+    m_is_hour_field_inputting = true;
     if(m_model->get_state() == QValidator::State::Invalid) {
       m_model->set_current(hours(current));
     } else {
@@ -101,8 +105,10 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
         m_model->set_current(m_model->get_current() + changes);
       }
     }
+    m_is_hour_field_inputting = false;
   });
   m_minute_field->get_model()->connect_current_signal([=] (const auto& current) {
+    m_is_minute_field_inputting = true;
     if(m_model->get_state() == QValidator::State::Invalid) {
       m_model->set_current(minutes(current));
     } else {
@@ -111,8 +117,10 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
         m_model->set_current(m_model->get_current() + changes);
       }
     }
+    m_is_minute_field_inputting = false;
   });
   m_second_field->get_model()->connect_current_signal([=] (const auto& current) {
+    m_is_second_field_inputting = true;
     auto seconds_value = current.convert_to<float>();
     if(m_model->get_state() == QValidator::State::Invalid) {
       m_model->set_current(milliseconds(static_cast<long>(seconds_value * 1000)));
@@ -126,6 +134,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
         m_model->set_current(m_model->get_current() + milliseconds(changes));
       }
     }
+    m_is_second_field_inputting = false;
   });
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
     on_submit();
@@ -153,15 +162,18 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
       m_second_field->findChild<QLineEdit*>()->setText("");
     } else {
       set_leading_trailing_zeros();
-      auto current_hours = static_cast<int>(current.hours());
-      m_hour_field->get_model()->set_current(current_hours);
-      auto current_minutes = static_cast<int>(current.minutes());
-      m_minute_field->get_model()->set_current(current_minutes);
-      auto current_seconds = current - hours(current_hours) -
-        minutes(current_minutes);
-      auto current_milliseconds = DecimalBox::Decimal(
-        current_seconds.total_milliseconds());
-      m_second_field->get_model()->set_current(current_milliseconds / 1000);
+      if(!m_is_hour_field_inputting && !m_is_minute_field_inputting &&
+          !m_is_second_field_inputting) {
+        auto current_hours = static_cast<int>(current.hours());
+        m_hour_field->get_model()->set_current(current_hours);
+        auto current_minutes = static_cast<int>(current.minutes());
+        m_minute_field->get_model()->set_current(current_minutes);
+        auto current_seconds = current - hours(current_hours) -
+          minutes(current_minutes);
+        auto current_milliseconds = DecimalBox::Decimal(
+          current_seconds.total_milliseconds());
+        m_second_field->get_model()->set_current(current_milliseconds / 1000);
+      }
     }
   });
 }
