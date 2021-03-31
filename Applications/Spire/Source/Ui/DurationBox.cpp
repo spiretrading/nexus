@@ -157,12 +157,10 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   });
   m_model->connect_current_signal([=] (const auto& current) {
     if(m_model->get_state() == QValidator::State::Invalid) {
-      clear_leading_trailing_zeros();
       m_hour_field->findChild<QLineEdit*>()->setText("");
       m_minute_field->findChild<QLineEdit*>()->setText("");
       m_second_field->findChild<QLineEdit*>()->setText("");
     } else {
-      set_leading_trailing_zeros();
       if(!m_is_hour_field_inputting && !m_is_minute_field_inputting &&
           !m_is_second_field_inputting) {
         auto current_hours = static_cast<int>(current.hours());
@@ -227,22 +225,4 @@ void DurationBox::on_reject() {
   if(m_is_warning_displayed) {
     display_warning_indicator(*m_box);
   }
-}
-
-void DurationBox::clear_leading_trailing_zeros() {
-  auto minute_style = m_minute_field->get_style();
-  minute_style.get(Any()).set(LeadingZeros(0));
-  m_minute_field->set_style(std::move(minute_style));
-  auto second_style = m_second_field->get_style();
-  second_style.get(Any()).set(LeadingZeros(0)).set(TrailingZeros(0));
-  m_second_field->set_style(std::move(second_style));
-}
-
-void DurationBox::set_leading_trailing_zeros() {
-  auto minute_style = m_minute_field->get_style();
-  minute_style.get(Any()).set(LeadingZeros(2));
-  m_minute_field->set_style(std::move(minute_style));
-  auto second_style = m_second_field->get_style();
-  second_style.get(Any()).set(LeadingZeros(2)).set(TrailingZeros(3));
-  m_second_field->set_style(std::move(second_style));
 }

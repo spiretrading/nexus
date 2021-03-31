@@ -79,8 +79,6 @@ namespace Spire {
 
       void on_submit();
       void on_reject();
-      void clear_leading_trailing_zeros();
-      void set_leading_trailing_zeros();
   };
 }
 
