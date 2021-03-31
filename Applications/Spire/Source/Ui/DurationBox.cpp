@@ -19,6 +19,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
       m_submission(m_model->get_current()),
       m_is_warning_displayed(true) {
   auto center_widget = new QWidget(this);
+  center_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto center_layout = new QHBoxLayout(center_widget);
   center_layout->setContentsMargins({});
   center_layout->setSpacing(0);
@@ -79,16 +80,15 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   center_layout->addWidget(m_minute_field, 1);
   center_layout->addWidget(m_colon2, 0);
   center_layout->addWidget(m_second_field, 2);
-  m_hour_field->setFocusProxy(center_widget);
-  m_minute_field->setFocusProxy(center_widget);
   m_box = new Box(center_widget);
   auto box_style = m_box->get_style();
   box_style.get(Any()).
+    set(BodyAlign(Qt::AlignCenter)).
     set(PaddingLeft(scale_width(4))).
     set(PaddingRight(scale_width(4)));
   m_box->set_style(box_style);
   auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setContentsMargins({});
   layout->addWidget(m_box);
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
