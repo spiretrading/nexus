@@ -72,11 +72,21 @@ namespace Spire {
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
+      TextBox* m_colon1;
+      TextBox* m_colon2;
       bool m_is_warning_displayed;
       bool m_is_hour_field_inputting;
       bool m_is_minute_field_inputting;
       bool m_is_second_field_inputting;
 
+      void create_hour_field();
+      void create_minute_field();
+      void create_second_field();
+      void create_colon_fields();
+      void on_hour_field_current(int current);
+      void on_minute_field_current(int current);
+      void on_second_field_current(const DecimalBox::Decimal& current);
+      void on_current(const Duration& current);
       void on_submit();
       void on_reject();
   };

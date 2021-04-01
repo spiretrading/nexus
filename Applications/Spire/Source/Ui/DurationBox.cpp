@@ -21,74 +21,21 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
       m_is_hour_field_inputting(false),
       m_is_minute_field_inputting(false),
       m_is_second_field_inputting(false) {
-  auto center_widget = new QWidget(this);
-  center_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto center_layout = new QHBoxLayout(center_widget);
-  center_layout->setContentsMargins({});
-  center_layout->setSpacing(0);
-  auto hour_model = std::make_shared<LocalIntegerModel>();
-  hour_model->set_minimum(0);
-  auto hour_modifiers = QHash<Qt::KeyboardModifier, int>(
-    {{Qt::NoModifier, 1}});
-  m_hour_field = new IntegerBox(hour_model, hour_modifiers);
-  m_hour_field->setFixedWidth(scale_width(24));
-  m_hour_field->set_warning_displayed(false);
-  m_hour_field->set_placeholder("hh");
-  auto hour_style = m_hour_field->get_style();
-  hour_style.get(is_a<TextBox>() > is_a<Box>()).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set(border_size(0));
-  hour_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_hour_field->set_style(std::move(hour_style));
-  auto minute_model = std::make_shared<LocalIntegerModel>();
-  minute_model->set_minimum(0);
-  minute_model->set_maximum(59);
-  auto minute_modifiers = QHash<Qt::KeyboardModifier, int>(
-    {{Qt::NoModifier, 1}});
-  m_minute_field = new IntegerBox(minute_model, minute_modifiers);
-  m_minute_field->setFixedWidth(scale_width(28));
-  m_minute_field->set_warning_displayed(false);
-  m_minute_field->set_placeholder("mm");
-  auto minute_style = m_minute_field->get_style();
-  minute_style.get(Any()).set(LeadingZeros(2));
-  minute_style.get(is_a<TextBox>() > is_a<Box>()).set(border_size(0));
-  minute_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_minute_field->set_style(std::move(minute_style));
-  auto second_model = std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
-  second_model->set_minimum(DecimalBox::Decimal(0));
-  second_model->set_maximum(DecimalBox::Decimal(59.999));
-  second_model->set_increment(pow(DecimalBox::Decimal(10), -3));
-  auto second_modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
-    {{Qt::NoModifier, 1.0}});
-  m_second_field = new DecimalBox(second_model, second_modifiers);
-  m_second_field->setFixedWidth(scale_width(44));
-  m_second_field->set_warning_displayed(false);
-  m_second_field->set_placeholder("ss.sss");
-  auto second_style = m_second_field->get_style();
-  second_style.get(Any()).
-    set(border_size(0)).
-    set(LeadingZeros(2)).set(TrailingZeros(3));
-  second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_second_field->set_style(std::move(second_style));
-  auto m_colon1 = new TextBox(":");
-  m_colon1->setEnabled(false);
-  m_colon1->set_read_only(true);
-  auto colon_style = m_colon1->get_style();
-  colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  colon_style.get(ReadOnly() && Disabled()).
-    set(TextColor(QColor::fromRgb(0, 0, 0))).
-    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  m_colon1->set_style(std::move(colon_style));
-  auto m_colon2 = new TextBox(":");
-  m_colon2->setEnabled(false);
-  m_colon2->set_read_only(true);
-  m_colon2->set_style(std::move(colon_style));
-  center_layout->addWidget(m_hour_field);
-  center_layout->addWidget(m_colon1);
-  center_layout->addWidget(m_minute_field);
-  center_layout->addWidget(m_colon2);
-  center_layout->addWidget(m_second_field);
-  m_box = new Box(center_widget);
+  auto container = new QWidget(this);
+  container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  create_hour_field();
+  create_minute_field();
+  create_second_field();
+  create_colon_fields();
+  auto container_layout = new QHBoxLayout(container);
+  container_layout->setContentsMargins({});
+  container_layout->setSpacing(0);
+  container_layout->addWidget(m_hour_field);
+  container_layout->addWidget(m_colon1);
+  container_layout->addWidget(m_minute_field);
+  container_layout->addWidget(m_colon2);
+  container_layout->addWidget(m_second_field);
+  m_box = new Box(container);
   auto box_style = m_box->get_style();
   box_style.get(Any()).
     set(BodyAlign(Qt::AlignCenter)).
@@ -101,46 +48,16 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
   m_hour_field->get_model()->connect_current_signal([=] (const auto& current) {
-    m_is_hour_field_inputting = true;
-    if(m_model->get_state() == QValidator::State::Invalid) {
-      m_model->set_current(hours(current));
-    } else {
-      auto changes = hours(current) - hours(m_model->get_current().hours());
-      if(changes != hours(0)) {
-        m_model->set_current(m_model->get_current() + changes);
-      }
-    }
-    m_is_hour_field_inputting = false;
+    on_hour_field_current(current);
   });
-  m_minute_field->get_model()->connect_current_signal([=] (const auto& current) {
-    m_is_minute_field_inputting = true;
-    if(m_model->get_state() == QValidator::State::Invalid) {
-      m_model->set_current(minutes(current));
-    } else {
-      auto changes = minutes(current) - minutes(m_model->get_current().minutes());
-      if(changes != minutes(0)) {
-        m_model->set_current(m_model->get_current() + changes);
-      }
-    }
-    m_is_minute_field_inputting = false;
-  });
-  m_second_field->get_model()->connect_current_signal([=] (const auto& current) {
-    m_is_second_field_inputting = true;
-    auto seconds_value = current.convert_to<float>();
-    if(m_model->get_state() == QValidator::State::Invalid) {
-      m_model->set_current(milliseconds(static_cast<long>(seconds_value * 1000)));
-    } else {
-      auto duration = m_model->get_current();
-      auto current_seconds = duration - hours(duration.hours()) -
-        minutes(duration.minutes());
-      auto changes = static_cast<long>(seconds_value * 1000) -
-        current_seconds.total_milliseconds();
-      if(changes != 0) {
-        m_model->set_current(m_model->get_current() + milliseconds(changes));
-      }
-    }
-    m_is_second_field_inputting = false;
-  });
+  m_minute_field->get_model()->connect_current_signal(
+    [=] (const auto& current) {
+      on_minute_field_current(current);
+    });
+  m_second_field->get_model()->connect_current_signal(
+    [=] (const auto& current) {
+      on_second_field_current(current);
+    });
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
     on_submit();
   });
@@ -160,24 +77,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
     on_reject();
   });
   m_model->connect_current_signal([=] (const auto& current) {
-    if(m_model->get_state() == QValidator::State::Invalid) {
-      m_hour_field->findChild<QLineEdit*>()->setText("");
-      m_minute_field->findChild<QLineEdit*>()->setText("");
-      m_second_field->findChild<QLineEdit*>()->setText("");
-    } else {
-      if(!m_is_hour_field_inputting && !m_is_minute_field_inputting &&
-          !m_is_second_field_inputting) {
-        auto current_hours = static_cast<int>(current.hours());
-        m_hour_field->get_model()->set_current(current_hours);
-        auto current_minutes = static_cast<int>(current.minutes());
-        m_minute_field->get_model()->set_current(current_minutes);
-        auto current_seconds = current - hours(current_hours) -
-          minutes(current_minutes);
-        auto current_milliseconds = DecimalBox::Decimal(
-          current_seconds.total_milliseconds());
-        m_second_field->get_model()->set_current(current_milliseconds / 1000);
-      }
-    }
+    on_current(current);
   });
 }
 
@@ -205,6 +105,140 @@ connection DurationBox::connect_submit_signal(
 
 QSize DurationBox::sizeHint() const {
   return scale(126, 26);
+}
+
+void DurationBox::create_hour_field() {
+  auto hour_model = std::make_shared<LocalIntegerModel>();
+  hour_model->set_minimum(0);
+  auto hour_modifiers = QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}});
+  m_hour_field = new IntegerBox(hour_model, hour_modifiers);
+  m_hour_field->setFixedWidth(scale_width(24));
+  m_hour_field->set_placeholder("hh");
+  m_hour_field->set_warning_displayed(false);
+  auto hour_style = m_hour_field->get_style();
+  hour_style.get(is_a<TextBox>() > is_a<Box>()).
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set(border_size(0));
+  hour_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+  m_hour_field->set_style(std::move(hour_style));
+}
+
+void DurationBox::create_minute_field() {
+  auto minute_model = std::make_shared<LocalIntegerModel>();
+  minute_model->set_minimum(0);
+  minute_model->set_maximum(59);
+  auto minute_modifiers = QHash<Qt::KeyboardModifier, int>(
+    {{Qt::NoModifier, 1}});
+  m_minute_field = new IntegerBox(minute_model, minute_modifiers);
+  m_minute_field->setFixedWidth(scale_width(28));
+  m_minute_field->set_placeholder("mm");
+  m_minute_field->set_warning_displayed(false);
+  auto minute_style = m_minute_field->get_style();
+  minute_style.get(Any()).set(LeadingZeros(2));
+  minute_style.get(is_a<TextBox>() > is_a<Box>()).set(border_size(0));
+  minute_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+  m_minute_field->set_style(std::move(minute_style));
+}
+
+void DurationBox::create_second_field() {
+  auto second_model =
+    std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
+  second_model->set_minimum(DecimalBox::Decimal(0));
+  second_model->set_maximum(DecimalBox::Decimal(59.999));
+  second_model->set_increment(pow(DecimalBox::Decimal(10), -3));
+  auto second_modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
+    {{Qt::NoModifier, 1.0}});
+  m_second_field = new DecimalBox(second_model, second_modifiers);
+  m_second_field->setFixedWidth(scale_width(44));
+  m_second_field->set_placeholder("ss.sss");
+  m_second_field->set_warning_displayed(false);
+  auto second_style = m_second_field->get_style();
+  second_style.get(Any()).
+    set(border_size(0)).
+    set(LeadingZeros(2)).set(TrailingZeros(3));
+  second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+  m_second_field->set_style(std::move(second_style));
+}
+
+void DurationBox::create_colon_fields() {
+  m_colon1 = new TextBox(":");
+  m_colon1->setEnabled(false);
+  m_colon1->set_read_only(true);
+  auto colon_style = m_colon1->get_style();
+  colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  colon_style.get(ReadOnly() && Disabled()).
+    set(TextColor(QColor::fromRgb(0, 0, 0))).
+    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
+  m_colon1->set_style(std::move(colon_style));
+  m_colon2 = new TextBox(":");
+  m_colon2->setEnabled(false);
+  m_colon2->set_read_only(true);
+  m_colon2->set_style(std::move(colon_style));
+}
+
+void DurationBox::on_hour_field_current(int current) {
+  m_is_hour_field_inputting = true;
+  if(m_model->get_state() == QValidator::State::Invalid) {
+    m_model->set_current(hours(current));
+  } else {
+    auto changes = hours(current) - hours(m_model->get_current().hours());
+    if(changes != hours(0)) {
+      m_model->set_current(m_model->get_current() + changes);
+    }
+  }
+  m_is_hour_field_inputting = false;
+}
+
+void DurationBox::on_minute_field_current(int current) {
+  m_is_minute_field_inputting = true;
+  if(m_model->get_state() == QValidator::State::Invalid) {
+    m_model->set_current(minutes(current));
+  } else {
+    auto changes = minutes(current) - minutes(m_model->get_current().minutes());
+    if(changes != minutes(0)) {
+      m_model->set_current(m_model->get_current() + changes);
+    }
+  }
+  m_is_minute_field_inputting = false;
+}
+
+void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
+  m_is_second_field_inputting = true;
+  auto seconds_value = current.convert_to<float>();
+  if(m_model->get_state() == QValidator::State::Invalid) {
+    m_model->set_current(milliseconds(static_cast<long>(seconds_value * 1000)));
+  } else {
+    auto duration = m_model->get_current();
+    auto current_seconds = duration - hours(duration.hours()) -
+      minutes(duration.minutes());
+    auto changes = static_cast<long>(seconds_value * 1000) -
+      current_seconds.total_milliseconds();
+    if(changes != 0) {
+      m_model->set_current(m_model->get_current() + milliseconds(changes));
+    }
+  }
+  m_is_second_field_inputting = false;
+}
+
+void DurationBox::on_current(const Duration& current) {
+  if(m_model->get_state() == QValidator::State::Invalid) {
+    m_hour_field->findChild<QLineEdit*>()->setText("");
+    m_minute_field->findChild<QLineEdit*>()->setText("");
+    m_second_field->findChild<QLineEdit*>()->setText("");
+  } else {
+    if(!m_is_hour_field_inputting && !m_is_minute_field_inputting &&
+      !m_is_second_field_inputting) {
+      auto current_hours = static_cast<int>(current.hours());
+      m_hour_field->get_model()->set_current(current_hours);
+      auto current_minutes = static_cast<int>(current.minutes());
+      m_minute_field->get_model()->set_current(current_minutes);
+      auto current_seconds = current - hours(current_hours) -
+        minutes(current_minutes);
+      auto current_milliseconds = DecimalBox::Decimal(
+        current_seconds.total_milliseconds());
+      m_second_field->get_model()->set_current(current_milliseconds / 1000);
+    }
+  }
 }
 
 void DurationBox::on_submit() {
