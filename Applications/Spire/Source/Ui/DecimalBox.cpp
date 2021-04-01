@@ -110,10 +110,11 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   QValidator::State set_current(const QString& value) override {
-    auto decimal_places = -log10(m_model->get_increment()).convert_to<int>();
+    auto decimal_places = static_cast<int>(
+      std::ceil(-log10(m_model->get_increment()).convert_to<double>()));
     if(decimal_places != m_decimal_places) {
-      update_validator();
       m_decimal_places = decimal_places;
+      update_validator();
     }
     if(!m_validator.exactMatch(value)) {
       return QValidator::State::Invalid;
