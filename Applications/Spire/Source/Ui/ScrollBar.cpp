@@ -50,14 +50,12 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   auto track_style = m_track->get_style();
   track_style.get(Any()).set(border(0, QColor(0, 0, 0)));
   if(m_orientation == Qt::Orientation::Vertical) {
-    m_thumb->setFixedHeight(scale_height(20));
     m_thumb->setSizePolicy(
       QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
     track_style.get(Any()).set(PaddingTop(m_thumb_position));
     track_style.get(Any()).set(PaddingLeft(0));
   } else {
-    m_thumb->setFixedWidth(scale_width(20));
     m_thumb->setSizePolicy(QSizePolicy::Policy::Fixed,
       QSizePolicy::Policy::Expanding);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -70,6 +68,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_track);
+  update_thumb();
 }
 
 Qt::Orientation ScrollBar::get_orientation() {
@@ -109,6 +108,7 @@ int ScrollBar::get_page_size() const {
 
 void ScrollBar::set_page_size(int size) {
   m_page_size = size;
+  update_thumb();
 }
 
 int ScrollBar::get_position() const {
@@ -175,12 +175,29 @@ void ScrollBar::resizeEvent(QResizeEvent* event) {
 }
 
 void ScrollBar::update_thumb() {
-  auto region =
-    get_size(m_orientation, size()) - get_size(m_orientation, m_thumb->size());
+  auto track_size = get_size(m_orientation, size());
+  auto thumb_size = get_size(m_orientation, m_thumb->size());
+  auto region = m_page_size + m_range.m_end - m_range.m_start + 1;
+  auto min_size = [&] {
+    if(m_orientation == Qt::Orientation::Vertical) {
+      return scale_height(20);
+    }
+    return scale_width(20);
+  }();
+  auto expected_size = std::max(static_cast<int>(std::ceil(
+    static_cast<double>(track_size) * m_page_size / region)), min_size);
+  if(thumb_size != expected_size) {
+    thumb_size = expected_size;
+    if(m_orientation == Qt::Orientation::Vertical) {
+      m_thumb->setFixedHeight(thumb_size);
+    } else {
+      m_thumb->setFixedWidth(thumb_size);
+    }
+  }
   if(m_range.m_end <= m_range.m_start) {
     m_thumb_position = 0;
   } else {
-    m_thumb_position = region *
+    m_thumb_position = (track_size - thumb_size) *
       (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
   }
   auto track_style = m_track->get_style();
