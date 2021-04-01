@@ -356,9 +356,12 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
 
 void DecimalBox::step_by(const Decimal& value) {
   setFocus();
-  auto next = std::clamp(Decimal(m_model->get_current() + value),
-    m_model->get_minimum().value_or(value),
-    m_model->get_maximum().value_or(value));
+  auto next = Decimal(m_model->get_current() + value);
+  if(m_model->get_minimum() && next < m_model->get_minimum()) {
+    next = *m_model->get_minimum();
+  } else if(m_model->get_maximum() && next > m_model->get_maximum()) {
+    next = *m_model->get_maximum();
+  }
   if(next != m_model->get_current()) {
     m_model->set_current(next);
   }
