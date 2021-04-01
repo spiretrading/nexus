@@ -30,17 +30,16 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   auto container_layout = new QHBoxLayout(container);
   container_layout->setContentsMargins({});
   container_layout->setSpacing(0);
-  container_layout->addWidget(m_hour_field);
+  container_layout->addWidget(m_hour_field, 6);
   container_layout->addWidget(m_colon1);
-  container_layout->addWidget(m_minute_field);
+  container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(m_colon2);
-  container_layout->addWidget(m_second_field);
+  container_layout->addWidget(m_second_field, 11);
   m_box = new Box(container);
   auto box_style = m_box->get_style();
   box_style.get(Any()).
     set(BodyAlign(Qt::AlignCenter)).
-    set(PaddingLeft(scale_width(4))).
-    set(PaddingRight(scale_width(4)));
+    set(horizontal_padding(scale_width(0)));
   m_box->set_style(box_style);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -112,7 +111,7 @@ void DurationBox::create_hour_field() {
   hour_model->set_minimum(0);
   auto hour_modifiers = QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}});
   m_hour_field = new IntegerBox(hour_model, hour_modifiers);
-  m_hour_field->setFixedWidth(scale_width(24));
+  m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
   auto hour_style = m_hour_field->get_style();
@@ -130,7 +129,7 @@ void DurationBox::create_minute_field() {
   auto minute_modifiers = QHash<Qt::KeyboardModifier, int>(
     {{Qt::NoModifier, 1}});
   m_minute_field = new IntegerBox(minute_model, minute_modifiers);
-  m_minute_field->setFixedWidth(scale_width(28));
+  m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
   auto minute_style = m_minute_field->get_style();
@@ -151,7 +150,7 @@ void DurationBox::create_second_field() {
   auto second_modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
     {{Qt::NoModifier, 1.0}});
   m_second_field = new DecimalBox(second_model, second_modifiers);
-  m_second_field->setFixedWidth(scale_width(44));
+  m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);
   auto second_style = m_second_field->get_style();
@@ -166,6 +165,7 @@ void DurationBox::create_second_field() {
 
 void DurationBox::create_colon_fields() {
   m_colon1 = new TextBox(":");
+  m_colon1->setFixedWidth(scale_width(10));
   m_colon1->setEnabled(false);
   m_colon1->set_read_only(true);
   auto colon_style = m_colon1->get_style();
@@ -175,6 +175,7 @@ void DurationBox::create_colon_fields() {
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
   m_colon1->set_style(std::move(colon_style));
   m_colon2 = new TextBox(":");
+  m_colon2->setFixedWidth(scale_width(10));
   m_colon2->setEnabled(false);
   m_colon2->set_read_only(true);
   m_colon2->set_style(std::move(colon_style));
