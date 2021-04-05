@@ -107,10 +107,8 @@ QSize DurationBox::sizeHint() const {
 }
 
 void DurationBox::create_hour_field() {
-  auto hour_model = std::make_shared<LocalIntegerModel>();
-  hour_model->set_minimum(0);
-  auto hour_modifiers = QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}});
-  m_hour_field = new IntegerBox(hour_model, hour_modifiers);
+  m_hour_field = new IntegerBox(m_model->get_hour_model(),
+    QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}}));
   m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
@@ -124,12 +122,8 @@ void DurationBox::create_hour_field() {
 }
 
 void DurationBox::create_minute_field() {
-  auto minute_model = std::make_shared<LocalIntegerModel>();
-  minute_model->set_minimum(0);
-  minute_model->set_maximum(59);
-  auto minute_modifiers = QHash<Qt::KeyboardModifier, int>(
-    {{Qt::NoModifier, 1}});
-  m_minute_field = new IntegerBox(minute_model, minute_modifiers);
+  m_minute_field = new IntegerBox(m_model->get_minute_model(),
+    QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}}));
   m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
@@ -144,14 +138,8 @@ void DurationBox::create_minute_field() {
 }
 
 void DurationBox::create_second_field() {
-  auto second_model =
-    std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
-  second_model->set_minimum(DecimalBox::Decimal(0));
-  second_model->set_maximum(DecimalBox::Decimal(59.999));
-  second_model->set_increment(pow(DecimalBox::Decimal(10), -3));
-  auto second_modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
-    {{Qt::NoModifier, 1.0}});
-  m_second_field = new DecimalBox(second_model, second_modifiers);
+  m_second_field = new DecimalBox(m_model->get_second_model(),
+    QHash<Qt::KeyboardModifier, DecimalBox::Decimal>({{Qt::NoModifier, 1.0}}));
   m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);

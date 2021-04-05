@@ -1,6 +1,7 @@
 #ifndef SPIRE_LOCAL_DURATION_MODEL_HPP
 #define SPIRE_LOCAL_DURATION_MODEL_HPP
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -53,6 +54,16 @@ namespace Spire {
        */
       QValidator::State set_current(const Duration& value) override;
 
+      //! Returns the hour model.
+      const std::shared_ptr<LocalIntegerModel>& get_hour_model() const;
+
+      //! Returns the minute model.
+      const std::shared_ptr<LocalIntegerModel>& get_minute_model() const;
+
+      //! Returns the second model.
+      const std::shared_ptr<LocalScalarValueModel<DecimalBox::Decimal>>&
+        get_second_model() const;
+
       boost::signals2::connection connect_current_signal(
         const typename CurrentSignal::slot_type& slot) const override;
 
@@ -60,6 +71,9 @@ namespace Spire {
       QValidator::State m_state;
       boost::optional<Duration> m_minimum;
       boost::optional<Duration> m_maximum;
+      std::shared_ptr<LocalIntegerModel> m_hour_model;
+      std::shared_ptr<LocalIntegerModel> m_minute_model;
+      std::shared_ptr<LocalScalarValueModel<DecimalBox::Decimal>> m_second_model;
   };
 }
 

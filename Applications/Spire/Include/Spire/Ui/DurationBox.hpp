@@ -1,6 +1,5 @@
 #ifndef SPIRE_DURATION_BOX_HPP
 #define SPIRE_DURATION_BOX_HPP
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
