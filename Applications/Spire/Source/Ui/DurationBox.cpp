@@ -117,7 +117,8 @@ void DurationBox::create_hour_field() {
   auto hour_style = m_hour_field->get_style();
   hour_style.get(Any()).
     set(border_size(0)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set_override(Rule::Override::EXCLUSIVE);
   hour_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_hour_field->set_style(std::move(hour_style));
 }
@@ -136,7 +137,8 @@ void DurationBox::create_minute_field() {
   minute_style.get(Any()).
     set(border_size(0)).
     set(LeadingZeros(2)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set_override(Rule::Override::EXCLUSIVE);
   minute_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_minute_field->set_style(std::move(minute_style));
 }
@@ -158,7 +160,8 @@ void DurationBox::create_second_field() {
     set(border_size(0)).
     set(LeadingZeros(2)).
     set(TrailingZeros(3)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set_override(Rule::Override::EXCLUSIVE);
   second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_second_field->set_style(std::move(second_style));
 }
