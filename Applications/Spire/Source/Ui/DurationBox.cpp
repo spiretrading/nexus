@@ -10,6 +10,30 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+class DurationBox::InternalBox : public Box {
+  public:
+
+  explicit InternalBox(QWidget* body, QWidget* parent = nullptr)
+    : Box(body, parent) {}
+
+  virtual bool test_selector(const Selector& element,
+      const Selector& selector) const {
+    return selector.visit(
+      [&] (Focus) {
+        auto children = findChildren<StyledWidget*>();
+        foreach(auto child, children) {
+          if(child->hasFocus()) {
+            return true;
+          }
+        }
+        return false;
+      },
+      [&] {
+        return Box::test_selector(element, selector);
+      });
+  }
+};
+
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalDurationModel>(), parent) {}
 
@@ -35,7 +59,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(m_colon2);
   container_layout->addWidget(m_second_field, 11);
-  m_box = new Box(container);
+  m_box = new InternalBox(container);
   auto box_style = m_box->get_style();
   box_style.get(Any()).
     set(BodyAlign(Qt::AlignCenter)).

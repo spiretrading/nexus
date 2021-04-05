@@ -63,11 +63,12 @@ namespace Spire {
       QSize sizeHint() const override;
 
     private:
+      class InternalBox;
       mutable RejectSignal m_reject_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<LocalDurationModel> m_model;
       Duration m_submission;
-      Box* m_box;
+      InternalBox* m_box;
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;

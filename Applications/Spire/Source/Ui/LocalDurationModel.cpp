@@ -6,7 +6,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 LocalDurationModel::LocalDurationModel()
-  : LocalDurationModel(boost::posix_time::not_a_date_time) {}
+  : LocalDurationModel({0, 0, 0, 0}) {}
 
 LocalDurationModel::LocalDurationModel(const Duration& current)
     : m_state(LocalValueModel<Duration>::get_state()),
