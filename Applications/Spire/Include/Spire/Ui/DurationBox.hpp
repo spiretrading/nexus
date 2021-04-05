@@ -95,7 +95,17 @@ namespace Spire {
    * @param time The time displayed in the time box.
    * @param parent The parent widget.
    */
-  DurationBox* make_time_box(const Duration& time, QWidget* parent = nullptr);
+  DurationBox* make_time_box(boost::posix_time::time_duration time,
+    QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed time box without a default time.
+   * @param parent The parent widget.
+   */
+  DurationBox* make_time_box(QWidget* parent = nullptr);
+
+  //! Returns a model which represents a time of day
+  std::shared_ptr<LocalDurationModel> make_time_of_day_model();
 }
 
 #endif

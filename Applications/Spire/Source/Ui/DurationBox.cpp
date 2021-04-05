@@ -263,11 +263,22 @@ void DurationBox::on_reject() {
   }
 }
 
-DurationBox* Spire::make_time_box(const Duration& time, QWidget* parent) {
-  auto model = std::make_shared<LocalDurationModel>();
-  auto hour_model = model->get_hour_model();
-  hour_model->set_maximum(23);
+DurationBox* Spire::make_time_box(time_duration time, QWidget* parent) {
+  auto model = make_time_of_day_model();
   auto time_box = new DurationBox(model, parent);
   model->set_current(time);
   return time_box;
+}
+
+DurationBox* Spire::make_time_box(QWidget* parent) {
+  return make_time_box(not_a_date_time, parent);
+}
+
+std::shared_ptr<LocalDurationModel> Spire::make_time_of_day_model() {
+  auto model = std::make_shared<LocalDurationModel>();
+  auto hour_model = model->get_hour_model();
+  hour_model->set_maximum(23);
+  model->set_minimum({{0, 0, 0, 0}});
+  model->set_maximum({{24, 0, 0, 0}});
+  return model;
 }
