@@ -262,3 +262,12 @@ void DurationBox::on_reject() {
     display_warning_indicator(*m_box);
   }
 }
+
+DurationBox* Spire::make_time_box(const Duration& time, QWidget* parent) {
+  auto model = std::make_shared<LocalDurationModel>();
+  auto hour_model = model->get_hour_model();
+  hour_model->set_maximum(23);
+  auto time_box = new DurationBox(model, parent);
+  model->set_current(time);
+  return time_box;
+}

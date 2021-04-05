@@ -89,6 +89,13 @@ namespace Spire {
       void on_submit();
       void on_reject();
   };
+
+  /**
+   * Returns a newly constructed time box.
+   * @param time The time displayed in the time box.
+   * @param parent The parent widget.
+   */
+  DurationBox* make_time_box(const Duration& time, QWidget* parent = nullptr);
 }
 
 #endif
