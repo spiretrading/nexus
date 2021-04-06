@@ -47,7 +47,7 @@ namespace Spire {
       QValidator::State get_state() const;
 
       /** Returns the current value. */
-      const boost::posix_time::time_duration& get_current() const;
+      const boost::posix_time::time_duration& get_current() const override;
 
       /**
        * Sets the current value. By default this operation is a no-op that

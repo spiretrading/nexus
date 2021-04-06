@@ -246,7 +246,7 @@ void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
   m_is_second_field_inputting = false;
 }
 
-void DurationBox::on_current(const time_duration& current) {
+void DurationBox::on_current(time_duration current) {
   if(m_model->get_state() == QValidator::State::Invalid) {
     m_hour_field->findChild<QLineEdit*>()->setText("");
     m_minute_field->findChild<QLineEdit*>()->setText("");
