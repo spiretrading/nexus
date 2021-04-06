@@ -7,16 +7,15 @@
 
 namespace Spire {
 
-  //! Represents the time duration.
-  using Duration = boost::posix_time::time_duration;
-
   /**
    * Implements a LocalDurationModel by storing and updating a time duration.
    */
-  class LocalDurationModel : public LocalValueModel<Duration> {
+  class LocalDurationModel :
+      public LocalValueModel<boost::posix_time::time_duration> {
     public:
 
-      using CurrentSignal = typename LocalValueModel<Duration>::CurrentSignal;
+      using CurrentSignal = typename
+        LocalValueModel<boost::posix_time::time_duration>::CurrentSignal;
 
       /** Constructs a default model. */
       LocalDurationModel();
@@ -25,19 +24,21 @@ namespace Spire {
        * Constructs a model with an initial current value.
        * @param current The initial current value.
        */
-      LocalDurationModel(const Duration& current);
+      LocalDurationModel(boost::posix_time::time_duration current);
 
       /** Sets the minimum value assignable to current. */
-      void set_minimum(const boost::optional<Duration>& minimum);
+      void set_minimum(
+        const boost::optional<boost::posix_time::time_duration>& minimum);
 
       /** Sets the maximum value assignable to current. */
-      void set_maximum(const boost::optional<Duration>& maximum);
+      void set_maximum(
+        const boost::optional<boost::posix_time::time_duration>& maximum);
 
       /** Returns the minimum duration or none if there is no minimum. */
-      boost::optional<Duration> get_minimum() const;
+      boost::optional<boost::posix_time::time_duration> get_minimum() const;
 
       /** Returns the maximum duration or none if there is no maximum. */
-      boost::optional<Duration> get_maximum() const;
+      boost::optional<boost::posix_time::time_duration> get_maximum() const;
 
       /**
        * Returns the state of the current value, by default this is
@@ -46,13 +47,14 @@ namespace Spire {
       QValidator::State get_state() const;
 
       /** Returns the current value. */
-      const Duration& get_current() const;
+      const boost::posix_time::time_duration& get_current() const;
 
       /**
        * Sets the current value. By default this operation is a no-op that
        * always returns <i>QValidator::State::Invalid</i>.
        */
-      QValidator::State set_current(const Duration& value) override;
+      QValidator::State set_current(
+        const boost::posix_time::time_duration& value) override;
 
       //! Returns the hour model.
       const std::shared_ptr<LocalIntegerModel>& get_hour_model() const;
@@ -69,8 +71,8 @@ namespace Spire {
 
     private:
       QValidator::State m_state;
-      boost::optional<Duration> m_minimum;
-      boost::optional<Duration> m_maximum;
+      boost::optional<boost::posix_time::time_duration> m_minimum;
+      boost::optional<boost::posix_time::time_duration> m_maximum;
       std::shared_ptr<LocalIntegerModel> m_hour_model;
       std::shared_ptr<LocalIntegerModel> m_minute_model;
       std::shared_ptr<LocalScalarValueModel<DecimalBox::Decimal>> m_second_model;

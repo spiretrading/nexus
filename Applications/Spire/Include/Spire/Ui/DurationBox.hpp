@@ -18,13 +18,15 @@ namespace Spire {
        * Signals that the current value was rejected as a submission.
        * @param value The value that was rejected.
        */
-      using RejectSignal = Signal<void (const Duration& value)>;
+      using RejectSignal =
+        Signal<void (const boost::posix_time::time_duration& value)>;
 
       //! Signals that submission value has changed.
       /*!
         \param value The submission value.
       */
-      using SubmitSignal = Signal<void (const Duration& value)>;
+      using SubmitSignal =
+        Signal<void (const boost::posix_time::time_duration& value)>;
 
       //! Constructs a DurationBox.
       /*!
@@ -67,7 +69,7 @@ namespace Spire {
       mutable RejectSignal m_reject_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<LocalDurationModel> m_model;
-      Duration m_submission;
+      boost::posix_time::time_duration m_submission;
       InternalBox* m_box;
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
@@ -86,7 +88,7 @@ namespace Spire {
       void on_hour_field_current(int current);
       void on_minute_field_current(int current);
       void on_second_field_current(const DecimalBox::Decimal& current);
-      void on_current(const Duration& current);
+      void on_current(const boost::posix_time::time_duration& current);
       void on_submit();
       void on_reject();
   };

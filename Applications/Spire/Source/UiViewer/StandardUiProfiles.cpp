@@ -20,6 +20,7 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -281,7 +282,8 @@ UiProfile Spire::make_duration_box_profile() {
     true));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
     [] (auto& profile) {
-      auto parse_duration = [] (auto duration) -> boost::optional<Duration> {
+      auto parse_duration = [] (auto duration) ->
+          boost::optional<time_duration> {
         try {
           return boost::posix_time::duration_from_string(
             duration.toStdString().c_str());
@@ -321,11 +323,11 @@ UiProfile Spire::make_duration_box_profile() {
         duration_box->set_warning_displayed(value);
       });
       duration_box->get_model()->connect_current_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Current")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Current")));
       duration_box->connect_submit_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Submit")));
       duration_box->connect_reject_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Reject")));
       return duration_box;
     });
   return profile;
