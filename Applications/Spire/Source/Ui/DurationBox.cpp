@@ -300,9 +300,8 @@ DurationBox* Spire::make_time_box(QWidget* parent) {
 
 std::shared_ptr<LocalDurationModel> Spire::make_time_of_day_model() {
   auto model = std::make_shared<LocalDurationModel>();
-  auto hour_model = model->get_hour_model();
-  hour_model->set_maximum(23);
-  model->set_minimum({{0, 0, 0, 0}});
-  model->set_maximum({{24, 0, 0, 0}});
+  model->get_hour_model()->set_maximum(23);
+  model->set_minimum(hours(0));
+  model->set_maximum(hours(24));
   return model;
 }
