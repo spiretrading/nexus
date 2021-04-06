@@ -10,6 +10,30 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+class DurationBox::InternalBox : public Box {
+  public:
+
+  explicit InternalBox(QWidget* body, QWidget* parent = nullptr)
+    : Box(body, parent) {}
+
+  virtual bool test_selector(const Selector& element,
+      const Selector& selector) const {
+    return selector.visit(
+      [&] (Focus) {
+        auto children = findChildren<StyledWidget*>();
+        foreach(auto child, children) {
+          if(child->hasFocus()) {
+            return true;
+          }
+        }
+        return false;
+      },
+      [&] {
+        return Box::test_selector(element, selector);
+      });
+  }
+};
+
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalDurationModel>(), parent) {}
 
@@ -35,7 +59,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(m_colon2);
   container_layout->addWidget(m_second_field, 11);
-  m_box = new Box(container);
+  m_box = new InternalBox(container);
   auto box_style = m_box->get_style();
   box_style.get(Any()).
     set(BodyAlign(Qt::AlignCenter)).
@@ -180,7 +204,7 @@ void DurationBox::on_hour_field_current(int current) {
     auto duration = m_model->get_current();
     if(duration.hours() != current) {
       auto current_minutes = minutes(m_minute_field->get_model()->get_current());
-      auto current_seconds = milliseconds(static_cast<Duration::sec_type>(
+      auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
         m_second_field->get_model()->get_current().convert_to<double>() * 1000));
       m_model->set_current(hours(current) + current_minutes + current_seconds);
     }
@@ -196,7 +220,7 @@ void DurationBox::on_minute_field_current(int current) {
     auto duration = m_model->get_current();
     if(duration.minutes() != current) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
-      auto current_seconds = milliseconds(static_cast<Duration::sec_type>(
+      auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
         m_second_field->get_model()->get_current().convert_to<double>() * 1000));
       m_model->set_current(current_hours + minutes(current) + current_seconds);
     }
@@ -207,7 +231,7 @@ void DurationBox::on_minute_field_current(int current) {
 void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
   m_is_second_field_inputting = true;
   auto seconds_value =
-    static_cast<Duration::sec_type>(current.convert_to<double>() * 1000);
+    static_cast<time_duration::sec_type>(current.convert_to<double>() * 1000);
   if(m_model->get_state() == QValidator::State::Invalid) {
     m_model->set_current(milliseconds(seconds_value));
   } else {
@@ -222,7 +246,7 @@ void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
   m_is_second_field_inputting = false;
 }
 
-void DurationBox::on_current(const Duration& current) {
+void DurationBox::on_current(const time_duration& current) {
   if(m_model->get_state() == QValidator::State::Invalid) {
     m_hour_field->findChild<QLineEdit*>()->setText("");
     m_minute_field->findChild<QLineEdit*>()->setText("");

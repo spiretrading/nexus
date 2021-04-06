@@ -20,6 +20,7 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -281,7 +282,8 @@ UiProfile Spire::make_duration_box_profile() {
     true));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
     [] (auto& profile) {
-      auto parse_duration = [] (auto duration) -> boost::optional<Duration> {
+      auto parse_duration = [] (auto duration) ->
+          boost::optional<time_duration> {
         try {
           return boost::posix_time::duration_from_string(
             duration.toStdString().c_str());
@@ -321,11 +323,11 @@ UiProfile Spire::make_duration_box_profile() {
         duration_box->set_warning_displayed(value);
       });
       duration_box->get_model()->connect_current_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Current")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Current")));
       duration_box->connect_submit_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Submit")));
       duration_box->connect_reject_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Reject")));
       return duration_box;
     });
   return profile;
@@ -567,12 +569,12 @@ UiProfile Spire::make_text_box_profile() {
 UiProfile Spire::make_time_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_qstring_property("current", "12:12:12"));
+  properties.push_back(make_standard_qstring_property("current", ""));
   properties.push_back(make_standard_bool_property("is_warning_displayed",
     true));
   auto profile = UiProfile(QString::fromUtf8("TimeBox"), properties,
     [] (auto& profile) {
-      auto parse_time = [] (auto time) -> Duration {
+      auto parse_time = [] (auto time) -> time_duration {
         try {
           return boost::posix_time::duration_from_string(
             time.toStdString().c_str());
@@ -595,11 +597,11 @@ UiProfile Spire::make_time_box_profile() {
         time_box->set_warning_displayed(value);
       });
       time_box->get_model()->connect_current_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Current")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Current")));
       time_box->connect_submit_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Submit")));
       time_box->connect_reject_signal(
-        profile.make_event_slot<Duration>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<time_duration>(QString::fromUtf8("Reject")));
       return time_box;
     });
   return profile;
