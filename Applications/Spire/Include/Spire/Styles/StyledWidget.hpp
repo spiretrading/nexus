@@ -57,6 +57,8 @@ namespace Spire::Styles {
       explicit StyledWidget(StyleSheet style, QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
+      ~StyledWidget() override;
+
       /** Returns the style. */
       const StyleSheet& get_style() const;
 
@@ -68,6 +70,19 @@ namespace Spire::Styles {
 
       /** Returns a Block containing the computed style for a pseudo-element. */
       Block compute_style(const Selector& element) const;
+
+      /**
+       * Specifies that all styles applied to this widget are also applied to
+       * another widget.
+       * @param widget The widget to propagate styles to.
+       */
+      void propagate_style(StyledWidget& widget);
+
+      /**
+       * Stops propagating styles from this widget to another.
+       * @param widget The widget to stop propagating styles to.
+       */
+      void unpropagate_style(StyledWidget& widget);
 
       /**
        * Tests if a Selector applies to this StyledWidget's pseudo-element.
@@ -109,6 +124,8 @@ namespace Spire::Styles {
       };
       StyleSheet m_style;
       VisibilityOption m_visibility;
+      std::unordered_set<StyledWidget*> m_sources;
+      std::unordered_set<StyledWidget*> m_destinations;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
 

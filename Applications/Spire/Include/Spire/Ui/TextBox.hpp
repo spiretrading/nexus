@@ -119,7 +119,6 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       Box* m_box;
-      boost::optional<Styles::StyleSheet> m_default_box_style;
       LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
       QFont m_line_edit_font;

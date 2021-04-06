@@ -158,6 +158,12 @@ StyledWidget::StyledWidget(StyleSheet style, QWidget* parent,
   SelectorRegistry::add(*this);
 }
 
+StyledWidget::~StyledWidget() {
+  while(!m_destinations.empty()) {
+    unpropagate_style(**m_destinations.begin());
+  }
+}
+
 const StyleSheet& StyledWidget::get_style() const {
   return m_style;
 }
@@ -186,34 +192,27 @@ Block StyledWidget::compute_style() const {
 
 Block StyledWidget::compute_style(const Selector& element) const {
   auto block = Block();
-  auto widget = static_cast<const QObject*>(this);
-  auto excluded = std::set<std::type_index>();
-  while(widget) {
-    if(auto styled_widget = dynamic_cast<const StyledWidget*>(widget)) {
-      for(auto& rule : styled_widget->m_style.get_rules()) {
-        if(test_selector(element, rule.get_selector())) {
-          if(excluded.empty()) {
-            merge(block, rule.get_block());
-          } else {
-            for(auto& property : rule.get_block().get_properties()) {
-              if(excluded.find(property.get_type()) == excluded.end()) {
-                block.set(property);
-              }
-            }
-          }
-          if(rule.get_override() == Rule::Override::NONE) {
-            return block;
-          } else if(rule.get_override() == Rule::Override::EXCLUSIVE) {
-            for(auto& property : rule.get_block().get_properties()) {
-              excluded.insert(property.get_type());
-            }
-          }
-        }
+  for(auto& rule : m_style.get_rules()) {
+    if(test_selector(element, rule.get_selector())) {
+      for(auto& property : rule.get_block().get_properties()) {
+        block.set(property);
       }
     }
-    widget = widget->parent();
+  }
+  for(auto& source : m_sources) {
+    merge(block, source->compute_style(element));
   }
   return block;
+}
+
+void StyledWidget::propagate_style(StyledWidget& widget) {
+  m_destinations.insert(&widget);
+  widget.m_sources.insert(this);
+}
+
+void StyledWidget::unpropagate_style(StyledWidget& widget) {
+  widget.m_sources.erase(this);
+  m_destinations.erase(&widget);
 }
 
 bool StyledWidget::test_selector(const Selector& element,

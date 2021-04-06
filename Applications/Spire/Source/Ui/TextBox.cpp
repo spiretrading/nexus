@@ -106,6 +106,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layout->addWidget(m_box);
   set_style(DEFAULT_STYLE());
   setFocusProxy(m_box);
+  propagate_style(*m_box);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
@@ -236,26 +237,6 @@ void TextBox::selector_updated() {
           }
         });
     }
-    if(!m_default_box_style) {
-      auto style_sheet = StyleSheet();
-      style_sheet.get(
-        Any()).set_override(Rule::Override::EXCLUSIVE).get_block() =
-        std::move(placeholder_computed_style);
-      m_default_box_style = m_box->get_style();
-      m_box->set_style(std::move(style_sheet));
-    }
-  } else if(is_read_only()) {
-    if(!m_default_box_style) {
-      auto style_sheet = StyleSheet();
-      style_sheet.get(
-        Any()).set_override(Rule::Override::EXCLUSIVE).get_block() =
-        std::move(line_edit_computed_style);
-      m_default_box_style = m_box->get_style();
-      m_box->set_style(std::move(style_sheet));
-    }
-  } else if(m_default_box_style) {
-    m_box->set_style(std::move(*m_default_box_style));
-    m_default_box_style = none;
   }
   line_edit_style += "}";
   if(line_edit_style != m_line_edit->styleSheet()) {
