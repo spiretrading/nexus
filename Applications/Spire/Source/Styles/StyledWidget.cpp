@@ -205,13 +205,13 @@ Block StyledWidget::compute_style(const Selector& element) const {
   return block;
 }
 
-void StyledWidget::propagate_style(StyledWidget& widget) {
+void StyledWidget::propagate_style(QWidget& widget) {
   m_destinations.insert(&widget);
-  widget.m_sources.insert(this);
+  dynamic_cast<StyledWidget*>(&widget)->m_sources.insert(this);
 }
 
-void StyledWidget::unpropagate_style(StyledWidget& widget) {
-  widget.m_sources.erase(this);
+void StyledWidget::unpropagate_style(QWidget& widget) {
+  dynamic_cast<StyledWidget*>(&widget)->m_sources.erase(this);
   m_destinations.erase(&widget);
 }
 

@@ -76,13 +76,13 @@ namespace Spire::Styles {
        * another widget.
        * @param widget The widget to propagate styles to.
        */
-      void propagate_style(StyledWidget& widget);
+      void propagate_style(QWidget& widget);
 
       /**
        * Stops propagating styles from this widget to another.
        * @param widget The widget to stop propagating styles to.
        */
-      void unpropagate_style(StyledWidget& widget);
+      void unpropagate_style(QWidget& widget);
 
       /**
        * Tests if a Selector applies to this StyledWidget's pseudo-element.
@@ -125,7 +125,7 @@ namespace Spire::Styles {
       StyleSheet m_style;
       VisibilityOption m_visibility;
       std::unordered_set<StyledWidget*> m_sources;
-      std::unordered_set<StyledWidget*> m_destinations;
+      std::unordered_set<QWidget*> m_destinations;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
 

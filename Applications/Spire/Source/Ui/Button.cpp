@@ -18,6 +18,7 @@ Button::Button(QWidget* component, QWidget* parent)
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_component);
   setFocusPolicy(Qt::StrongFocus);
+  propagate_style(*m_component);
   auto style = get_style();
   style.get(Any()).
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
@@ -95,10 +96,8 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   style.get(Any()).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Any() < Hover()).
-    set(BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
-  style.get(Any() < Focus()).set(
-    border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  style.get(Hover()).set(BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
+  style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   button->set_style(std::move(style));
   return button;
 }
@@ -113,14 +112,12 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
-  style.get(Any() < Hover()).
+  style.get(Hover()).
     set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
     set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Any() < Focus()).set(
-    border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  style.get(Any() < Disabled()).set(
-    TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+//  style.get(Disabled() < Any()).set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  style.get(Any() < Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
   button->set_style(std::move(style));
   return button;
 }
