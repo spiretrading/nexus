@@ -1,5 +1,6 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -82,13 +83,19 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
       on_second_field_current(current);
     });
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
-    on_submit();
+    if(m_hour_field->hasFocus()) {
+      on_submit();
+    }
   });
   m_minute_field->connect_submit_signal([=] (const auto& submission) {
-    on_submit();
+    if(m_minute_field->hasFocus()) {
+      on_submit();
+    }
   });
   m_second_field->connect_submit_signal([=] (const auto& submission) {
-    on_submit();
+    if(m_second_field->hasFocus()) {
+      on_submit();
+    }
   });
   m_hour_field->connect_reject_signal([=] (const auto& value) {
     on_reject();
@@ -130,6 +137,19 @@ QSize DurationBox::sizeHint() const {
   return scale(126, 26);
 }
 
+bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::FocusOut) {
+    if(!m_hour_field->hasFocus() && !m_minute_field->hasFocus() &&
+        !m_second_field->hasFocus() &&
+        m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
+        m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
+        m_second_field->get_model()->get_state() == QValidator::Acceptable) {
+      on_submit();
+    }
+  }
+  return StyledWidget::eventFilter(watched, event);
+}
+
 void DurationBox::create_hour_field() {
   m_hour_field = new IntegerBox(m_model->get_hour_model(),
     QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}}));
@@ -143,6 +163,7 @@ void DurationBox::create_hour_field() {
     set_override(Rule::Override::EXCLUSIVE);
   hour_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_hour_field->set_style(std::move(hour_style));
+  m_hour_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
 void DurationBox::create_minute_field() {
@@ -159,6 +180,7 @@ void DurationBox::create_minute_field() {
     set_override(Rule::Override::EXCLUSIVE);
   minute_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_minute_field->set_style(std::move(minute_style));
+  m_minute_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
 void DurationBox::create_second_field() {
@@ -176,6 +198,7 @@ void DurationBox::create_second_field() {
     set_override(Rule::Override::EXCLUSIVE);
   second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
   m_second_field->set_style(std::move(second_style));
+  m_second_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
 void DurationBox::create_colon_fields() {
@@ -274,8 +297,10 @@ void DurationBox::on_submit() {
     maximum && m_model->get_current() > *maximum) {
     on_reject();
   } else {
-    m_submission = m_model->get_current();
-    m_submit_signal(m_submission);
+    if(m_submission != m_model->get_current()) {
+      m_submission = m_model->get_current();
+      m_submit_signal(m_submission);
+    }
   }
 }
 

@@ -64,6 +64,9 @@ namespace Spire {
 
       QSize sizeHint() const override;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       class InternalBox;
       mutable RejectSignal m_reject_signal;
