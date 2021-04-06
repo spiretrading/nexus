@@ -6,7 +6,7 @@
 
 namespace Spire::Styles {
 
-  /** Selects a widget if an ancestor is selected. */
+  /** Selects all matching ancestors. */
   class AncestorSelector {
     public:
 
@@ -36,6 +36,9 @@ namespace Spire::Styles {
    * @param ancestor The selector for the ancestor.
    */
   AncestorSelector operator <<(Selector base, Selector ancestor);
+
+  std::vector<QWidget*> select(const AncestorSelector& selector,
+    QWidget& source);
 }
 
 #endif

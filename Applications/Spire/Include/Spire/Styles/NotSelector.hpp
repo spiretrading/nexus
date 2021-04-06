@@ -30,6 +30,8 @@ namespace Spire::Styles {
    * @param selector The selector to negate.
    */
   NotSelector operator !(Selector selector);
+
+  std::vector<QWidget*> select(const NotSelector& selector, QWidget& source);
 }
 
 #endif

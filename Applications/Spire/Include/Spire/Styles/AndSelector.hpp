@@ -36,6 +36,8 @@ namespace Spire::Styles {
    * @param right The right hand selector.
    */
   AndSelector operator &&(Selector left, Selector right);
+
+  std::vector<QWidget*> select(const AndSelector& selector, QWidget& source);
 }
 
 #endif

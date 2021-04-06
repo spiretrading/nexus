@@ -36,6 +36,8 @@ namespace Spire::Styles {
    * @param child The selector for the child.
    */
   ChildSelector operator >(Selector base, Selector child);
+
+  std::vector<QWidget*> select(const ChildSelector& selector, QWidget& source);
 }
 
 #endif

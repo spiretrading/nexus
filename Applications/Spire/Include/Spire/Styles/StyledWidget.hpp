@@ -65,7 +65,7 @@ namespace Spire::Styles {
       /** Sets the style and update's the QWidget. */
       void set_style(const StyleSheet& style);
 
-      /** Returns a Block containing this immediate widget's computed style. */
+      /** Returns a Block containing this widget's computed style. */
       Block compute_style() const;
 
       /** Returns a Block containing the computed style for a pseudo-element. */
@@ -84,16 +84,6 @@ namespace Spire::Styles {
        */
       void unpropagate_style(QWidget& widget);
 
-      /**
-       * Tests if a Selector applies to this StyledWidget's pseudo-element.
-       * @param element The pseudo-element to test.
-       * @param selector The Selector to test.
-       * @return <code>true</code> iff the <i>selector</i> applies to this
-       *         StyledWidget's <i>element</i>.
-       */
-      virtual bool test_selector(const Selector& element,
-        const Selector& selector) const;
-
     protected:
 
       /**
@@ -108,11 +98,11 @@ namespace Spire::Styles {
        */
       void disable(const Selector& selector);
 
-      /** Indicates the StyleSheet has been updated. */
-      virtual void style_updated();
-
-      /** Indicates a selector has been updated. */
-      virtual void selector_updated();
+      /**
+       * Applies the computed style to this widget.
+       * Called whenever there's a change to the computed style.
+       */
+      virtual void apply_style();
 
     private:
       friend class SelectorRegistry;
@@ -129,28 +119,9 @@ namespace Spire::Styles {
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
 
-      friend bool test_selector(const QWidget& widget, const Selector& element,
-        const Selector& selector);
+      void apply(const StyledWidget& source, const Block& block);
+      void apply_rules();
   };
-
-  /**
-   * Tests if a Selector applies to a QWidget.
-   * @param widget The widget to test.
-   * @param selector The Selector to test.
-   * @return <code>true</code> iff the <i>selector</i> applies to <i>widget</i>.
-   */
-  bool test_selector(const QWidget& widget, const Selector& selector);
-
-  /**
-   * Tests if a Selector applies to a QWidget's pseudo-element.
-   * @param widget The widget to test.
-   * @param element The pseudo-element to select.
-   * @param selector The Selector to test.
-   * @return <code>true</code> iff the <i>selector</i> applies to the
-   *         <i>widget</i>'s pseudo-element.
-   */
-  bool test_selector(const QWidget& widget, const Selector& element,
-    const Selector& selector);
 }
 
 #endif

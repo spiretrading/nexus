@@ -4,11 +4,11 @@
 #include <QLayout>
 #include "Spire/Styles/SelectorRegistry.hpp"
 #include "Spire/Styles/VoidSelector.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
 
+#if 0
 namespace {
   bool base_test_selector(const QWidget& widget, const Selector& element,
       const Selector& selector) {
@@ -136,6 +136,7 @@ namespace {
       });
   }
 }
+#endif
 
 std::size_t StyledWidget::SelectorHash::operator ()(
     const Selector& selector) const {
@@ -151,12 +152,10 @@ StyledWidget::StyledWidget(QWidget* parent, Qt::WindowFlags flags)
   : StyledWidget({}, parent, flags) {}
 
 StyledWidget::StyledWidget(StyleSheet style, QWidget* parent,
-    Qt::WindowFlags flags)
-    : QWidget(parent, flags),
-      m_style(std::move(style)),
-      m_visibility(VisibilityOption::VISIBLE) {
-  SelectorRegistry::add(*this);
-}
+  Qt::WindowFlags flags)
+  : QWidget(parent, flags),
+    m_style(std::move(style)),
+    m_visibility(VisibilityOption::VISIBLE) {}
 
 StyledWidget::~StyledWidget() {
   while(!m_destinations.empty()) {
@@ -170,20 +169,7 @@ const StyleSheet& StyledWidget::get_style() const {
 
 void StyledWidget::set_style(const StyleSheet& style) {
   m_style = style;
-  auto descendants = std::deque<QWidget*>();
-  descendants.push_back(this);
-  while(!descendants.empty()) {
-    auto descendant = descendants.front();
-    descendants.pop_front();
-    if(auto styled_descendant = dynamic_cast<StyledWidget*>(descendant)) {
-      styled_descendant->style_updated();
-    }
-    for(auto child : descendant->children()) {
-      if(auto widget = dynamic_cast<QWidget*>(child)) {
-        descendants.push_back(widget);
-      }
-    }
-  }
+  apply_rules();
 }
 
 Block StyledWidget::compute_style() const {
@@ -191,18 +177,25 @@ Block StyledWidget::compute_style() const {
 }
 
 Block StyledWidget::compute_style(const Selector& element) const {
+#if 0
   auto block = Block();
-  for(auto& rule : m_style.get_rules()) {
-    if(test_selector(element, rule.get_selector())) {
-      for(auto& property : rule.get_block().get_properties()) {
-        block.set(property);
+  auto widget = static_cast<const QObject*>(this);
+  while(widget) {
+    if(auto styled_widget = dynamic_cast<const StyledWidget*>(widget)) {
+      for(auto& rule : styled_widget->m_style.get_rules()) {
+        if(test_selector(styled_widget, element, rule.get_selector())) {
+          merge(block, rule.get_block());
+        }
       }
     }
+    widget = widget->parent();
   }
   for(auto& source : m_sources) {
     merge(block, source->compute_style(element));
   }
   return block;
+#endif
+  return {};
 }
 
 void StyledWidget::propagate_style(QWidget& widget) {
@@ -215,14 +208,9 @@ void StyledWidget::unpropagate_style(QWidget& widget) {
   m_destinations.erase(&widget);
 }
 
-bool StyledWidget::test_selector(const Selector& element,
-    const Selector& selector) const {
-  return base_test_selector(*this, element, selector);
-}
-
 void StyledWidget::enable(const Selector& selector) {
   if(m_enabled_selectors.insert(selector).second) {
-    SelectorRegistry::find(*this).notify();
+    apply_rules();
   }
 }
 
@@ -230,15 +218,11 @@ void StyledWidget::disable(const Selector& selector) {
   auto i = m_enabled_selectors.find(selector);
   if(i != m_enabled_selectors.end()) {
     m_enabled_selectors.erase(i);
-    SelectorRegistry::find(*this).notify();
+    apply_rules();
   }
 }
 
-void StyledWidget::style_updated() {
-  selector_updated();
-}
-
-void StyledWidget::selector_updated() {
+void StyledWidget::apply_style() {
   auto style = compute_style();
   auto visibility_option = [&] {
     if(auto visibility = Spire::Styles::find<Visibility>(style)) {
@@ -265,15 +249,14 @@ void StyledWidget::selector_updated() {
   update();
 }
 
-bool Spire::Styles::test_selector(const QWidget& widget,
-    const Selector& selector) {
-  return test_selector(widget, VoidSelector(), selector);
+void StyledWidget::apply(const StyledWidget& source, const Block& block) {
 }
 
-bool Spire::Styles::test_selector(const QWidget& widget,
-    const Selector& element, const Selector& selector) {
-  if(auto styled_widget = dynamic_cast<const StyledWidget*>(&widget)) {
-    return styled_widget->test_selector(element, selector);
+void StyledWidget::apply_rules() {
+  for(auto& rule : m_style.get_rules()) {
+    auto selection = select(*this, rule.get_selector());
+    for(auto& selected : selection) {
+      selected->apply(*this, rule.get_block());
+    }
   }
-  return base_test_selector(widget, element, selector);
 }

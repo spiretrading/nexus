@@ -36,6 +36,9 @@ namespace Spire::Styles {
    * @param descendant The selector for the descendant.
    */
   DescendantSelector operator >>(Selector base, Selector descendant);
+
+  std::vector<QWidget*> select(const DescendantSelector& selector,
+    QWidget& source);
 }
 
 #endif

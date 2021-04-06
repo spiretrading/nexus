@@ -1,4 +1,7 @@
 #include "Spire/Styles/DescendantSelector.hpp"
+#include <deque>
+#include <set>
+#include <QWidget>
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -23,4 +26,32 @@ bool DescendantSelector::is_match(const DescendantSelector& selector) const {
 DescendantSelector Spire::Styles::operator >>(
     Selector base, Selector descendant) {
   return DescendantSelector(std::move(base), std::move(descendant));
+}
+
+std::vector<QWidget*> Spire::Styles::select(const DescendantSelector& selector,
+    QWidget& source) {
+  auto selection = std::set<QWidget*>();
+  auto bases = select(selector.get_base(), source);
+  for(auto base : bases) {
+    auto descendants = std::deque<QWidget*>();
+    for(auto child : base->children()) {
+      if(child->isWidgetType()) {
+        descendants.push_back(static_cast<QWidget*>(child));
+      }
+    }
+    while(!descendants.empty()) {
+      auto descendant = descendants.front();
+      descendants.pop_front();
+      auto descendant_selection = select(selector.get_descendant(),
+        *static_cast<QWidget*>(descendant));
+      selection.insert(
+        descendant_selection.begin(), descendant_selection.end());
+      for(auto child : descendant->children()) {
+        if(child->isWidgetType()) {
+          descendants.push_back(static_cast<QWidget*>(child));
+        }
+      }
+    }
+  }
+  return std::vector(selection.begin(), selection.end());
 }

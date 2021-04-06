@@ -3,8 +3,11 @@
 #include <any>
 #include <typeindex>
 #include <type_traits>
+#include <vector>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/Styles.hpp"
+
+class QWidget;
 
 namespace Spire::Styles {
   template<typename T, typename = void>
@@ -67,6 +70,17 @@ namespace Spire::Styles {
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_matcher;
   };
+
+  /**
+   * Returns all widgets that are selected by a Selector relative to a source.
+   * @param selector The Selector implementing the rule used to select matching
+   *        StyledWidgets.
+   * @param source The QWidget used as the reference point for selection.
+   *        This is usually the StyledWidget that the <i>selector</i> belongs
+   *        to.
+   * @return The list of all widgets that were selected.
+   */
+  std::vector<QWidget*> select(const Selector& selector, QWidget& source);
 
   template<typename T, typename>
   Selector::Selector(T selector)

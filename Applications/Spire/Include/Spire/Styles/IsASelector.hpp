@@ -40,6 +40,8 @@ namespace Spire::Styles {
     return IsASelector(std::in_place_type<T>);
   }
 
+  std::vector<QWidget*> select(const IsASelector& selector, QWidget& source);
+
   template<typename T>
   IsASelector::IsASelector(std::in_place_type_t<T>)
     : m_type(typeid(T)),

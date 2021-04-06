@@ -14,3 +14,11 @@ bool IsASelector::is_instance(const QWidget& widget) const {
 bool IsASelector::is_match(const IsASelector& selector) const {
   return get_type() == selector.get_type();
 }
+
+std::vector<QWidget*> Spire::Styles::select(const IsASelector& selector,
+    QWidget& source) {
+  if(selector.is_instance(source)) {
+    return std::vector{&source};
+  }
+  return {};
+}
