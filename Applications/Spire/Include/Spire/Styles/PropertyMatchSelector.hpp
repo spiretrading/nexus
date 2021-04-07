@@ -4,6 +4,8 @@
 #include "Spire/Styles/Property.hpp"
 #include "Spire/Styles/Styles.hpp"
 
+class QWidget;
+
 namespace Spire::Styles {
 
   /** Selects a widget whose style contains a matching property. */
@@ -31,6 +33,9 @@ namespace Spire::Styles {
    * @param property The property to match.
    */
   PropertyMatchSelector matches(Property property);
+
+  std::vector<QWidget*> select(
+    const PropertyMatchSelector& selector, QWidget& source);
 }
 
 #endif

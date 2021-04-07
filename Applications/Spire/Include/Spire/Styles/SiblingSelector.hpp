@@ -36,6 +36,9 @@ namespace Spire::Styles {
    * @param sibling The sibling selector.
    */
   SiblingSelector operator %(Selector base, Selector sibling);
+
+  std::vector<QWidget*> select(
+    const SiblingSelector& selector, QWidget& source);
 }
 
 #endif

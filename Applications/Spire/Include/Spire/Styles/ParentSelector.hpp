@@ -41,6 +41,8 @@ namespace Spire::Styles {
   auto operator <(T base, U parent) {
     return ParentSelector(std::move(base), std::move(parent));
   }
+
+  std::vector<QWidget*> select(const ParentSelector& selector, QWidget& source);
 }
 
 #endif

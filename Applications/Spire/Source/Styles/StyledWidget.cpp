@@ -172,6 +172,10 @@ void StyledWidget::set_style(const StyleSheet& style) {
   apply_rules();
 }
 
+bool StyledWidget::is_enabled(const Selector& selector) const {
+  return m_enabled_selectors.find(selector) != m_enabled_selectors.end();
+}
+
 Block StyledWidget::compute_style() const {
   return compute_style(VoidSelector());
 }
@@ -253,10 +257,12 @@ void StyledWidget::apply(const StyledWidget& source, const Block& block) {
 }
 
 void StyledWidget::apply_rules() {
+#if 0
   for(auto& rule : m_style.get_rules()) {
     auto selection = select(*this, rule.get_selector());
     for(auto& selected : selection) {
       selected->apply(*this, rule.get_block());
     }
   }
+#endif
 }

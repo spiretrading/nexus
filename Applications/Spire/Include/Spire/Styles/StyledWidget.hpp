@@ -65,6 +65,9 @@ namespace Spire::Styles {
       /** Sets the style and update's the QWidget. */
       void set_style(const StyleSheet& style);
 
+      /** Returns <code>true</code> iff a Selector is enabled. */
+      bool is_enabled(const Selector& selector) const;
+
       /** Returns a Block containing this widget's computed style. */
       Block compute_style() const;
 

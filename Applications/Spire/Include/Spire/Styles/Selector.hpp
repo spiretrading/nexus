@@ -67,8 +67,10 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
+      friend std::vector<QWidget*> select(const Selector&, QWidget&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_matcher;
+      std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_select;
   };
 
   /**
@@ -92,6 +94,9 @@ namespace Spire::Styles {
         auto& left = self.as<T>();
         auto& right = selector.as<T>();
         return left.is_match(right);
+      }),
+      m_select([] (const Selector& self, QWidget& widget) {
+        return select(self.as<T>(), widget);
       }) {}
 
   template<typename U>

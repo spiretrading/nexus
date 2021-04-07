@@ -1,4 +1,7 @@
 #include "Spire/Styles/SiblingSelector.hpp"
+#include <unordered_set>
+#include <QLayout>
+#include <QWidget>
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -22,4 +25,30 @@ bool SiblingSelector::is_match(const SiblingSelector& selector) const {
 
 SiblingSelector Spire::Styles::operator %(Selector base, Selector sibling) {
   return SiblingSelector(std::move(base), std::move(sibling));
+}
+
+std::vector<QWidget*> Spire::Styles::select(
+    const SiblingSelector& selector, QWidget& source) {
+  if(!source.parentWidget()) {
+    return {};
+  }
+  auto bases = select(selector.get_base(), source);
+  auto selection = std::unordered_set<QWidget*>();
+  for(auto base : bases) {
+    auto siblings = source.parent()->children();
+    auto i = 0;
+    while(i != siblings.size()) {
+      auto child = siblings[i];
+      if(child != &source) {
+        if(auto c = qobject_cast<QWidget*>(child)) {
+          auto child_selection = select(selector.get_sibling(), *c);
+          selection.insert(child_selection.begin(), child_selection.end());
+        } else if(auto layout = qobject_cast<QLayout*>(child)) {
+          siblings.append(layout->children());
+        }
+      }
+      ++i;
+    }
+  }
+  return std::vector(selection.begin(), selection.end());
 }

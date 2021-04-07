@@ -37,8 +37,8 @@ namespace Spire::Styles {
    */
   AncestorSelector operator <<(Selector base, Selector ancestor);
 
-  std::vector<QWidget*> select(const AncestorSelector& selector,
-    QWidget& source);
+  std::vector<QWidget*> select(
+    const AncestorSelector& selector, QWidget& source);
 }
 
 #endif

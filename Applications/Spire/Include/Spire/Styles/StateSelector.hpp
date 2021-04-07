@@ -1,6 +1,7 @@
 #ifndef SPIRE_STATE_SELECTOR_HPP
 #define SPIRE_STATE_SELECTOR_HPP
 #include <utility>
+#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
@@ -42,6 +43,17 @@ namespace Spire::Styles {
 
       bool is_match(const StateSelector& selector) const;
   };
+
+  template<typename T, typename G>
+  std::vector<QWidget*> select(
+      const StateSelector<T, G>& selector, QWidget& source) {
+    if(auto styled_widget = dynamic_cast<StyledWidget*>(&source)) {
+      if(styled_widget->is_enabled(selector)) {
+        return {&source};
+      }
+    }
+    return {};
+  }
 
   template<typename T, typename G>
   StateSelector<T, G>::StateSelector(Type data)

@@ -1,6 +1,6 @@
 #include "Spire/Styles/DescendantSelector.hpp"
 #include <deque>
-#include <set>
+#include <unordered_set>
 #include <QWidget>
 
 using namespace Spire;
@@ -30,7 +30,7 @@ DescendantSelector Spire::Styles::operator >>(
 
 std::vector<QWidget*> Spire::Styles::select(const DescendantSelector& selector,
     QWidget& source) {
-  auto selection = std::set<QWidget*>();
+  auto selection = std::unordered_set<QWidget*>();
   auto bases = select(selector.get_base(), source);
   for(auto base : bases) {
     auto descendants = std::deque<QWidget*>();
