@@ -46,25 +46,11 @@ Block StyledWidget::compute_style() const {
 }
 
 Block StyledWidget::compute_style(const Selector& element) const {
-#if 0
   auto block = Block();
-  auto widget = static_cast<const QObject*>(this);
-  while(widget) {
-    if(auto styled_widget = dynamic_cast<const StyledWidget*>(widget)) {
-      for(auto& rule : styled_widget->m_style.get_rules()) {
-        if(test_selector(styled_widget, element, rule.get_selector())) {
-          merge(block, rule.get_block());
-        }
-      }
-    }
-    widget = widget->parent();
-  }
-  for(auto& source : m_sources) {
-    merge(block, source->compute_style(element));
+  for(auto& entry : m_blocks) {
+    merge(block, entry->m_block);
   }
   return block;
-#endif
-  return {};
 }
 
 void StyledWidget::propagate_style(QWidget& widget) {
@@ -118,17 +104,31 @@ void StyledWidget::apply_style() {
   update();
 }
 
-void StyledWidget::apply(const StyledWidget& source, const Block& block) {
+void StyledWidget::apply(const StyledWidget& source, Block block) {
+  auto i = m_source_to_block.find(&source);
+  if(i == m_source_to_block.end()) {
+    auto entry = std::make_shared<BlockEntry>();
+    entry->m_source = &source;
+    entry->m_priority = 0;
+    m_blocks.push_back(entry);
+    i = m_source_to_block.insert(i, std::pair(&source, std::move(entry)));
+  }
+  i->second->m_block = std::move(block);
+  apply_style();
 }
 
 void StyledWidget::apply_rules() {
+  auto blocks = std::unordered_map<StyledWidget*, Block>();
   for(auto& rule : m_style.get_rules()) {
     auto selection = select(rule.get_selector(), *this);
     for(auto& selected : selection) {
       if(auto styled_widget = dynamic_cast<StyledWidget*>(selected)) {
-        styled_widget->apply(*this, rule.get_block());
+        merge(blocks[styled_widget], rule.get_block());
       }
     }
+  }
+  for(auto& block : blocks) {
+    block.first->apply(*this, std::move(block.second));
   }
 }
 

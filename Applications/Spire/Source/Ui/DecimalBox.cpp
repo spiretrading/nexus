@@ -283,12 +283,7 @@ connection DecimalBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-bool DecimalBox::test_selector(
-    const Selector& element, const Selector& selector) const {
-  return m_text_box->test_selector(element, selector);
-}
-
-void DecimalBox::selector_updated() {
+void DecimalBox::apply_style() {
   auto style = compute_style();
   if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
     m_adaptor_model->set_leading_zeros(

@@ -160,22 +160,11 @@ connection TextBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-bool TextBox::test_selector(const Styles::Selector& element,
-    const Styles::Selector& selector) const {
-  return selector.visit(
-    [&] (ReadOnly) {
-      return is_read_only();
-    },
-    [&] {
-      return StyledWidget::test_selector(element, selector);
-    });
-}
-
 QSize TextBox::sizeHint() const {
   return scale(160, 30);
 }
 
-void TextBox::selector_updated() {
+void TextBox::apply_style() {
   auto line_edit_computed_style = compute_style();
   auto placeholder_computed_style = compute_style(Placeholder());
   auto placeholder_style = QString(
@@ -258,7 +247,7 @@ void TextBox::selector_updated() {
   if(is_placeholder_updated) {
     update_placeholder_text();
   }
-  StyledWidget::selector_updated();
+  StyledWidget::apply_style();
 }
 
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {

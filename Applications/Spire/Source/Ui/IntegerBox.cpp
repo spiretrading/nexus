@@ -129,11 +129,6 @@ connection IntegerBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-bool IntegerBox::test_selector(
-    const Selector& element, const Selector& selector) const {
-  return m_decimal_box->test_selector(element, selector);
-}
-
 void IntegerBox::on_submit(const DecimalBox::Decimal& submission) {
   m_submission = m_model->get_current();
   m_submit_signal(m_submission);

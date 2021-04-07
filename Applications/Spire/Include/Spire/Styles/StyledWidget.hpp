@@ -128,14 +128,22 @@ namespace Spire::Styles {
       struct SelectorEquality {
         bool operator ()(const Selector& left, const Selector& right) const;
       };
+      struct BlockEntry {
+        const StyledWidget* m_source;
+        int m_priority;
+        Block m_block;
+      };
       StyleSheet m_style;
       VisibilityOption m_visibility;
       std::unordered_set<StyledWidget*> m_sources;
       std::unordered_set<QWidget*> m_destinations;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
+      std::unordered_map<const StyledWidget*, std::shared_ptr<BlockEntry>>
+        m_source_to_block;
+      std::vector<std::shared_ptr<BlockEntry>> m_blocks;
 
-      void apply(const StyledWidget& source, const Block& block);
+      void apply(const StyledWidget& source, Block block);
       void apply_rules();
   };
 

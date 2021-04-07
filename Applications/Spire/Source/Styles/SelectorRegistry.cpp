@@ -91,7 +91,7 @@ QWidget& SelectorRegistry::get_root() const {
 void SelectorRegistry::notify() {
   for_each_bfs(*m_root, [&] (QWidget& widget) {
     if(auto styled_widget = dynamic_cast<StyledWidget*>(&widget)) {
-      styled_widget->selector_updated();
+// TODO      styled_widget->selector_updated();
     }
   });
 }

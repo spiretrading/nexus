@@ -85,11 +85,7 @@ Box::Box(QWidget* body, QWidget* parent)
   set_style(DEFAULT_STYLE());
 }
 
-void Box::style_updated() {
-  selector_updated();
-}
-
-void Box::selector_updated() {
+void Box::apply_style() {
   auto computed_style = compute_style();
   auto style = QString("#Box {");
   style += "border-style: solid;";
@@ -179,7 +175,7 @@ void Box::selector_updated() {
       m_container->setGeometry(body_geometry);
     }
   }
-  StyledWidget::selector_updated();
+  StyledWidget::apply_style();
 }
 
 void Box::enterEvent(QEvent* event) {

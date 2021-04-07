@@ -119,8 +119,7 @@ namespace Styles {
       explicit Box(QWidget* body, QWidget* parent = nullptr);
 
     protected:
-      void style_updated() override;
-      void selector_updated() override;
+      void apply_style() override;
       void enterEvent(QEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;

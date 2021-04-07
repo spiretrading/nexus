@@ -70,9 +70,6 @@ namespace Spire {
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
-
     private:
       struct IntegerToDecimalModel;
       mutable SubmitSignal m_submit_signal;

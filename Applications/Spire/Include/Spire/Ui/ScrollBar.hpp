@@ -76,9 +76,6 @@ namespace Styles {
       boost::signals2::connection connect_position_signal(
         const PositionSignal::slot_type& slot) const;
 
-    protected:
-      void selector_updated() override;
-
     private:
       mutable PositionSignal m_position_signal;
       QScrollBar* m_scroll_bar;

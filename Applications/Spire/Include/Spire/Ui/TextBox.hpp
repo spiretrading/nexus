@@ -102,13 +102,10 @@ namespace Styles {
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
-
       QSize sizeHint() const override;
 
     protected:
-      void selector_updated() override;
+      void apply_style() override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
