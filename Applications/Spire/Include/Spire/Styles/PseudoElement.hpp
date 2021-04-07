@@ -44,6 +44,12 @@ namespace Spire::Styles {
   };
 
   template<typename T, typename G>
+  std::vector<QWidget*> select(const PseudoElement<T, G>& selector,
+      QWidget& source) {
+    return {};
+  }
+
+  template<typename T, typename G>
   PseudoElement<T, G>::PseudoElement(Type data)
     : m_data(std::move(data)) {}
 

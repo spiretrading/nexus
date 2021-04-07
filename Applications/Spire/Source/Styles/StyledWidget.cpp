@@ -1,4 +1,5 @@
 #include "Spire/Styles/StyledWidget.hpp"
+#include <QApplication>
 #include <QEvent>
 
 using namespace Spire;
@@ -8,8 +9,11 @@ struct StyledWidget::StyleEventFilter : QObject {
   StyledWidget* m_widget;
 
   StyleEventFilter(StyledWidget& widget)
-    : QObject(&widget),
-      m_widget(&widget) {}
+      : QObject(&widget),
+        m_widget(&widget) {
+    connect(qApp, &QApplication::focusChanged, this,
+      &StyleEventFilter::on_focus_changed);
+  }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::FocusIn) {
@@ -32,6 +36,14 @@ struct StyledWidget::StyleEventFilter : QObject {
       m_widget->disable(Active());
     }
     return QObject::eventFilter(watched, event);
+  }
+
+  void on_focus_changed(QWidget* old, QWidget* now) {
+    if(m_widget->focusProxy() == now) {
+      m_widget->enable(Focus());
+    } else if(old == m_widget->focusProxy()) {
+      m_widget->disable(Focus());
+    }
   }
 };
 
@@ -76,7 +88,15 @@ void StyledWidget::set_style(const StyleSheet& style) {
 }
 
 bool StyledWidget::is_enabled(const Selector& selector) const {
-  return m_enabled_selectors.find(selector) != m_enabled_selectors.end();
+  if(m_enabled_selectors.find(selector) != m_enabled_selectors.end()) {
+    return true;
+  }
+  for(auto& source : m_sources) {
+    if(source->is_enabled(selector)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Block StyledWidget::compute_style() const {
@@ -156,6 +176,11 @@ void StyledWidget::apply(const StyledWidget& source, Block block) {
   }
   i->second->m_block = std::move(block);
   apply_style();
+  for(auto destination : m_destinations) {
+    if(auto styled_widget = dynamic_cast<StyledWidget*>(destination)) {
+      styled_widget->apply_style();
+    }
+  }
 }
 
 void StyledWidget::apply_rules() {
