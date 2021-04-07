@@ -19,8 +19,7 @@ namespace Spire {
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
     
-      void NameItemDelegate::paint(QPainter* painter,
-        const QStyleOptionViewItem& option,
+      void paint(QPainter* painter, const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
       void setEditorData(QWidget *editor,

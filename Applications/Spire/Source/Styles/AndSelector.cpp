@@ -38,7 +38,7 @@ std::vector<QWidget*> Spire::Styles::select(
     }
     return {};
   }
-  auto& [small, big] = [&] () {
+  auto [small, big] = [&] () {
     if(left_selection.size() < right_selection.size()) {
       return std::tie(left_selection, right_selection);
     }

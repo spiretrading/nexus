@@ -88,6 +88,9 @@ Block StyledWidget::compute_style(const Selector& element) const {
   for(auto& entry : m_blocks) {
     merge(block, entry->m_block);
   }
+  for(auto& source : m_sources) {
+    merge(block, source->compute_style(element));
+  }
   return block;
 }
 

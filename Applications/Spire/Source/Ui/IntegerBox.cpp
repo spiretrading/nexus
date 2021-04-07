@@ -23,14 +23,14 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
 
   optional<DecimalBox::Decimal> get_minimum() const {
     if(auto minimum = m_model->get_minimum()) {
-      return *minimum;
+      return DecimalBox::Decimal(*minimum);
     }
     return none;
   }
 
   optional<DecimalBox::Decimal> get_maximum() const {
     if(auto maximum = m_model->get_maximum()) {
-      return *maximum;
+      return DecimalBox::Decimal(*maximum);
     }
     return none;
   }

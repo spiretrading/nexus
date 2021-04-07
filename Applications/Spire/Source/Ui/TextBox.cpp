@@ -166,7 +166,7 @@ QSize TextBox::sizeHint() const {
 
 void TextBox::apply_style() {
   auto line_edit_computed_style = compute_style();
-  auto placeholder_computed_style = compute_style(Placeholder());
+  auto placeholder_computed_style = Block();
   auto placeholder_style = QString(
     R"(QLabel {
       background: transparent;
