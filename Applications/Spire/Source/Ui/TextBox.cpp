@@ -33,6 +33,10 @@ namespace {
       }
       return QValidator::State::Acceptable;
     }
+
+    void fixup(QString& input) const override {
+      input = m_model->get_current();
+    }
   };
 
   auto DEFAULT_STYLE() {
