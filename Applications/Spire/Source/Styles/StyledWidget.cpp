@@ -1,142 +1,7 @@
 #include "Spire/Styles/StyledWidget.hpp"
-#include <deque>
-#include <set>
-#include <QLayout>
-#include "Spire/Styles/SelectorRegistry.hpp"
-#include "Spire/Styles/VoidSelector.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
-
-#if 0
-namespace {
-  bool base_test_selector(const QWidget& widget, const Selector& element,
-      const Selector& selector) {
-    return selector.visit(
-      [&] (Any) {
-        return true;
-      },
-      [&] (Active) {
-        return widget.isActiveWindow();
-      },
-      [&] (Disabled) {
-        return !widget.isEnabled();
-      },
-      [&] (Hover) {
-        return widget.isEnabled() && widget.rect().contains(
-          widget.mapFromGlobal(QCursor::pos()));
-      },
-      [&] (Focus) {
-        return widget.hasFocus();
-      },
-      [&] (const NotSelector& selector) {
-        return !test_selector(widget, element, selector.get_selector());
-      },
-      [&] (const AndSelector& selector) {
-        return test_selector(widget, element, selector.get_left()) &&
-          test_selector(widget, element, selector.get_right());
-      },
-      [&] (const OrSelector& selector) {
-        return test_selector(widget, element, selector.get_left()) ||
-          test_selector(widget, element, selector.get_right());
-      },
-      [&] (const AncestorSelector& selector) {
-        if(!test_selector(widget, element, selector.get_base())) {
-          return false;
-        }
-        auto p = widget.parentWidget();
-        while(p != nullptr) {
-          if(test_selector(*p, element, selector.get_ancestor())) {
-            return true;
-          }
-          p = p->parentWidget();
-        }
-        return false;
-      },
-      [&] (const ParentSelector& selector) {
-        if(!test_selector(widget, element, selector.get_base())) {
-          return false;
-        }
-        if(auto p = widget.parentWidget()) {
-          return test_selector(*p, element, selector.get_parent());
-        }
-        return false;
-      },
-      [&] (const DescendantSelector& selector) {
-        if(!test_selector(widget, element, selector.get_base())) {
-          return false;
-        }
-        auto descendants = std::deque<QWidget*>();
-        for(auto child : widget.children()) {
-          if(auto c = qobject_cast<QWidget*>(child)) {
-            descendants.push_back(c);
-          }
-        }
-        while(!descendants.empty()) {
-          auto descendant = descendants.front();
-          descendants.pop_front();
-          if(test_selector(*descendant, element, selector.get_descendant())) {
-            return true;
-          }
-          for(auto child : descendant->children()) {
-            if(auto c = qobject_cast<QWidget*>(child)) {
-              descendants.push_back(c);
-            }
-          }
-        }
-        return false;
-      },
-      [&] (const ChildSelector& selector) {
-        auto parent = widget.parentWidget();
-        if(!parent || !test_selector(widget, element, selector.get_child())) {
-          return false;
-        }
-        return test_selector(*parent, element, selector.get_base());
-      },
-      [&] (const SiblingSelector& selector) {
-        if(widget.parentWidget() == nullptr) {
-          return false;
-        }
-        if(!test_selector(widget, element, selector.get_sibling())) {
-          return false;
-        }
-        auto siblings = widget.parent()->children();
-        auto i = 0;
-        while(i != siblings.size()) {
-          auto child = siblings[i];
-          if(child != &widget) {
-            if(auto c = qobject_cast<QWidget*>(child)) {
-              if(test_selector(*c, element, selector.get_base())) {
-                return true;
-              }
-            } else if(auto layout = qobject_cast<QLayout*>(child)) {
-              siblings.append(layout->children());
-            }
-          }
-          ++i;
-        }
-        return false;
-      },
-      [&] (const IsASelector& selector) {
-        return selector.is_instance(widget);
-      },
-      [&] (const PropertyMatchSelector& selector) {
-        if(auto styled_widget = dynamic_cast<const StyledWidget*>(&widget)) {
-          auto block = styled_widget->compute_style();
-          for(auto& property : block.get_properties()) {
-            if(property == selector.get_property()) {
-              return true;
-            }
-          }
-        }
-        return false;
-      },
-      [&] {
-        return selector.is_match(element);
-      });
-  }
-}
-#endif
 
 std::size_t StyledWidget::SelectorHash::operator ()(
     const Selector& selector) const {
@@ -257,12 +122,45 @@ void StyledWidget::apply(const StyledWidget& source, const Block& block) {
 }
 
 void StyledWidget::apply_rules() {
-#if 0
   for(auto& rule : m_style.get_rules()) {
-    auto selection = select(*this, rule.get_selector());
+    auto selection = select(rule.get_selector(), *this);
     for(auto& selected : selection) {
-      selected->apply(*this, rule.get_block());
+      if(auto styled_widget = dynamic_cast<StyledWidget*>(selected)) {
+        styled_widget->apply(*this, rule.get_block());
+      }
     }
   }
-#endif
+}
+
+std::vector<QWidget*> Spire::Styles::select(
+    const Active& selector, QWidget& source) {
+  if(source.isActiveWindow()) {
+    return {&source};
+  }
+  return {};
+}
+
+std::vector<QWidget*> Spire::Styles::select(
+    const Disabled& selector, QWidget& source) {
+  if(!source.isEnabled()) {
+    return {&source};
+  }
+  return {};
+}
+
+std::vector<QWidget*> Spire::Styles::select(
+    const Hover& selector, QWidget& source) {
+  if(source.isEnabled() &&
+      source.rect().contains(source.mapFromGlobal(QCursor::pos()))) {
+    return {&source};
+  }
+  return {};
+}
+
+std::vector<QWidget*> Spire::Styles::select(
+    const Focus& selector, QWidget& source) {
+  if(source.hasFocus()) {
+    return {&source};
+  }
+  return {};
 }

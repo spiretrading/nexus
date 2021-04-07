@@ -13,12 +13,25 @@
 #include "Spire/Styles/ParentSelector.hpp"
 #include "Spire/Styles/PropertyMatchSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
-#include "Spire/Styles/Selectors.hpp"
 #include "Spire/Styles/SiblingSelector.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
+#include "Spire/Styles/VoidSelector.hpp"
 
 namespace Spire::Styles {
+
+  /** Selects the widget that is or belongs to the active window. */
+  using Active = StateSelector<void, struct ActiveSelectorTag>;
+
+  /** Selects the disabled widget. */
+  using Disabled = StateSelector<void, struct DisabledSelectorTag>;
+
+  /** Selects the hovered widget. */
+  using Hover = StateSelector<void, struct HoverSelectorTag>;
+
+  /** Selects the focused widget. */
+  using Focus = StateSelector<void, struct FocusSelectorTag>;
 
   /** Specifies whether an element is visible. */
   enum class VisibilityOption {
@@ -125,6 +138,14 @@ namespace Spire::Styles {
       void apply(const StyledWidget& source, const Block& block);
       void apply_rules();
   };
+
+  std::vector<QWidget*> select(const Active& selector, QWidget& source);
+
+  std::vector<QWidget*> select(const Disabled& selector, QWidget& source);
+
+  std::vector<QWidget*> select(const Hover& selector, QWidget& source);
+
+  std::vector<QWidget*> select(const Focus& selector, QWidget& source);
 }
 
 #endif
