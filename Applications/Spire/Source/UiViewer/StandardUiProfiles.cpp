@@ -26,11 +26,20 @@ using namespace Spire::Styles;
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
       auto box = new Box(nullptr);
       box->resize(scale(100, 100));
       apply_widget_properties(box, profile.get_properties());
+      auto& warning = get<bool>("display_warning", profile.get_properties());
+      warning.connect_changed_signal(
+        [&warning, box] (auto is_playing_warning) {
+          if(is_playing_warning) {
+            display_warning_indicator(*box);
+            warning.set(false);
+          }
+        });
       return box;
     });
   return profile;
