@@ -28,7 +28,8 @@ UiProfile Spire::make_box_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
-      auto box = new Box(nullptr, nullptr);
+      auto box = new Box(nullptr);
+      box->resize(scale(100, 100));
       apply_widget_properties(box, profile.get_properties());
       return box;
     });

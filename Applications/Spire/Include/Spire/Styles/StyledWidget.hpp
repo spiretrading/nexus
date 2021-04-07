@@ -139,6 +139,7 @@ namespace Spire::Styles {
       std::unordered_set<QWidget*> m_destinations;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
+      std::unordered_set<StyledWidget*> m_dependents;
       std::unordered_map<const StyledWidget*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;

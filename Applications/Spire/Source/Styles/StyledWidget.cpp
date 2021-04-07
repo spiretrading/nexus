@@ -23,6 +23,9 @@ StyledWidget::StyledWidget(StyleSheet style, QWidget* parent,
     m_visibility(VisibilityOption::VISIBLE) {}
 
 StyledWidget::~StyledWidget() {
+  for(auto dependent : m_dependents) {
+    dependent->apply(*this, {});
+  }
   while(!m_destinations.empty()) {
     unpropagate_style(**m_destinations.begin());
   }
@@ -127,8 +130,15 @@ void StyledWidget::apply_rules() {
       }
     }
   }
+  auto previous_dependents = std::move(m_dependents);
   for(auto& block : blocks) {
+    m_dependents.insert(block.first);
     block.first->apply(*this, std::move(block.second));
+  }
+  for(auto previous_dependent : previous_dependents) {
+    if(m_dependents.find(previous_dependent) == m_dependents.end()) {
+      previous_dependent->apply(*this, {});
+    }
   }
 }
 
