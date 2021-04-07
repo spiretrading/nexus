@@ -71,17 +71,12 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   layout->addWidget(m_box);
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
-  m_hour_field->get_model()->connect_current_signal([=] (const auto& current) {
-    on_hour_field_current(current);
-  });
+  m_hour_field->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_hour_field_current(current); });
   m_minute_field->get_model()->connect_current_signal(
-    [=] (const auto& current) {
-      on_minute_field_current(current);
-    });
+    [=] (const auto& current) { on_minute_field_current(current); });
   m_second_field->get_model()->connect_current_signal(
-    [=] (const auto& current) {
-      on_second_field_current(current);
-    });
+    [=] (const auto& current) { on_second_field_current(current); });
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
     if(m_hour_field->hasFocus()) {
       on_submit();
@@ -97,18 +92,14 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
       on_submit();
     }
   });
-  m_hour_field->connect_reject_signal([=] (const auto& value) {
-    on_reject();
-  });
-  m_minute_field->connect_reject_signal([=] (const auto& value) {
-    on_reject();
-  });
-  m_second_field->connect_reject_signal([=] (const auto& value) {
-    on_reject();
-  });
-  m_model->connect_current_signal([=] (const auto& current) {
-    on_current(current);
-  });
+  m_hour_field->connect_reject_signal(
+    [=] (const auto& value) { on_reject(); });
+  m_minute_field->connect_reject_signal(
+    [=] (const auto& value) { on_reject(); });
+  m_second_field->connect_reject_signal(
+    [=] (const auto& value) { on_reject(); });
+  m_model->connect_current_signal(
+    [=] (const auto& current) { on_current(current); });
 }
 
 const std::shared_ptr<LocalDurationModel>& DurationBox::get_model() const {
