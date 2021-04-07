@@ -122,6 +122,7 @@ namespace Spire::Styles {
 
     private:
       friend class SelectorRegistry;
+      struct StyleEventFilter;
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
       };
@@ -149,11 +150,8 @@ namespace Spire::Styles {
   };
 
   std::vector<QWidget*> select(const Active& selector, QWidget& source);
-
   std::vector<QWidget*> select(const Disabled& selector, QWidget& source);
-
   std::vector<QWidget*> select(const Hover& selector, QWidget& source);
-
   std::vector<QWidget*> select(const Focus& selector, QWidget& source);
 }
 

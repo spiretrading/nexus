@@ -1,7 +1,39 @@
 #include "Spire/Styles/StyledWidget.hpp"
+#include <QEvent>
 
 using namespace Spire;
 using namespace Spire::Styles;
+
+struct StyledWidget::StyleEventFilter : QObject {
+  StyledWidget* m_widget;
+
+  StyleEventFilter(StyledWidget& widget)
+    : QObject(&widget),
+      m_widget(&widget) {}
+
+  bool eventFilter(QObject* watched, QEvent* event) override {
+    if(event->type() == QEvent::FocusIn) {
+      m_widget->enable(Focus());
+    } else if(event->type() == QEvent::FocusOut) {
+      m_widget->disable(Focus());
+    } else if(event->type() == QEvent::Enter) {
+      m_widget->enable(Hover());
+    } else if(event->type() == QEvent::Leave) {
+      m_widget->disable(Hover());
+    } else if(event->type() == QEvent::EnabledChange) {
+      if(!m_widget->isEnabled()) {
+        m_widget->enable(Disabled());
+      } else {
+        m_widget->disable(Disabled());
+      }
+    } else if(event->type() == QEvent::WindowActivate) {
+      m_widget->enable(Active());
+    } else if(event->type() == QEvent::WindowDeactivate) {
+      m_widget->disable(Active());
+    }
+    return QObject::eventFilter(watched, event);
+  }
+};
 
 std::size_t StyledWidget::SelectorHash::operator ()(
     const Selector& selector) const {
@@ -17,10 +49,13 @@ StyledWidget::StyledWidget(QWidget* parent, Qt::WindowFlags flags)
   : StyledWidget({}, parent, flags) {}
 
 StyledWidget::StyledWidget(StyleSheet style, QWidget* parent,
-  Qt::WindowFlags flags)
-  : QWidget(parent, flags),
-    m_style(std::move(style)),
-    m_visibility(VisibilityOption::VISIBLE) {}
+    Qt::WindowFlags flags)
+    : QWidget(parent, flags),
+      m_style(std::move(style)),
+      m_visibility(VisibilityOption::VISIBLE) {
+  auto filter = new StyleEventFilter(*this);
+  installEventFilter(filter);
+}
 
 StyledWidget::~StyledWidget() {
   for(auto dependent : m_dependents) {

@@ -178,14 +178,6 @@ void Box::apply_style() {
   StyledWidget::apply_style();
 }
 
-void Box::enterEvent(QEvent* event) {
-  enable(Hover());
-}
-
-void Box::leaveEvent(QEvent* event) {
-  disable(Hover());
-}
-
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     auto computed_style = compute_style();
