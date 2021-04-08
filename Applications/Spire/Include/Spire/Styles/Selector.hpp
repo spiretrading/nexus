@@ -68,21 +68,51 @@ namespace Spire::Styles {
         using type = std::decay_t<U>;
       };
       friend std::vector<QWidget*> select(const Selector&, QWidget&);
+      friend std::vector<QWidget*> build_reach(const Selector&, QWidget&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_matcher;
       std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_select;
+      std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_reach;
   };
 
   /**
-   * Returns all widgets that are selected by a Selector relative to a source.
-   * @param selector The Selector implementing the rule used to select matching
-   *        StyledWidgets.
+   * Returns all selected widgets relative to a source.
+   * @param selector The Selector to use.
    * @param source The QWidget used as the reference point for selection.
    *        This is usually the StyledWidget that the <i>selector</i> belongs
    *        to.
    * @return The list of all widgets that were selected.
    */
   std::vector<QWidget*> select(const Selector& selector, QWidget& source);
+
+  template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
+  std::vector<QWidget*> select(const T& selector, QWidget& source) {
+    static_assert(
+      false, "All selector types must implement a select function.");
+  }
+
+  /**
+   * Returns the list of all widgets that could be selected by one of the rules
+   * belonging to a StyleSheet.
+   * @param style The StyleSheet to compute the list of.
+   * @param source The widget that the <i>style</i> belongs to.
+   * @return A list of all widgets that could be selected by the <i>style</i>.
+   */
+  std::vector<QWidget*> build_reach(const StyleSheet& style, QWidget& source);
+
+  /**
+   * Returns the list of all widgets that could be selected by a Selector.
+   * @param selector The Selector to compute the list of.
+   * @param source The widget that the <i>selector</i> belongs to.
+   * @return A list of all widgets that could be selected by the
+   *         <i>selector</i>.
+   */
+  std::vector<QWidget*> build_reach(const Selector& selector, QWidget& source);
+
+  template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
+  std::vector<QWidget*> build_reach(const T& selector, QWidget& source) {
+    return {&source};
+  }
 
   template<typename T, typename>
   Selector::Selector(T selector)
@@ -97,6 +127,9 @@ namespace Spire::Styles {
       }),
       m_select([] (const Selector& self, QWidget& widget) {
         return select(self.as<T>(), widget);
+      }),
+      m_reach([] (const Selector& self, QWidget& widget) {
+        return build_reach(self.as<T>(), widget);
       }) {}
 
   template<typename U>

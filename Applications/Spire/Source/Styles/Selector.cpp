@@ -1,4 +1,6 @@
 #include "Spire/Styles/Selector.hpp"
+#include <unordered_set>
+#include "Spire/Styles/StyleSheet.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -14,4 +16,19 @@ bool Selector::is_match(const Selector& selector) const {
 std::vector<QWidget*> Spire::Styles::select(
     const Selector& selector, QWidget& source) {
   return selector.m_select(selector, source);
+}
+
+std::vector<QWidget*> Spire::Styles::build_reach(
+    const Selector& selector, QWidget& source) {
+  return selector.m_reach(selector, source);
+}
+
+std::vector<QWidget*> Spire::Styles::build_reach(
+    const StyleSheet& style, QWidget& source) {
+  auto reach = std::unordered_set<QWidget*>();
+  for(auto& rule : style.get_rules()) {
+    auto sub_reach = build_reach(rule.get_selector(), source);
+    reach.insert(sub_reach.begin(), sub_reach.end());
+  }
+  return std::vector(reach.begin(), reach.end());
 }
