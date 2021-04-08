@@ -116,6 +116,7 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      struct TextValidator;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       Box* m_box;
@@ -130,6 +131,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
+      TextValidator* m_text_validator;
 
       void on_current(const QString& current);
       void on_editing_finished();

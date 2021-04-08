@@ -12,29 +12,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  struct TextValidator : QValidator {
-    std::shared_ptr<TextModel> m_model;
-
-    TextValidator(std::shared_ptr<TextModel> model)
-      : m_model(std::move(model)) {}
-
-    QValidator::State	validate(QString& input, int& pos) const override {
-      if(input == m_model->get_current()) {
-        auto state = m_model->get_state();
-        if(state == QValidator::State::Invalid) {
-          return state;
-        }
-        return QValidator::State::Acceptable;
-      }
-      auto state = m_model->set_current(input);
-      input = m_model->get_current();
-      if(state == QValidator::State::Invalid) {
-        return state;
-      }
-      return QValidator::State::Acceptable;
-    }
-  };
-
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -66,6 +43,35 @@ namespace {
   }
 }
 
+struct TextBox::TextValidator : QValidator {
+  std::shared_ptr<TextModel> m_model;
+  bool m_is_text_elided;
+
+  TextValidator(std::shared_ptr<TextModel> model, QObject* parent = nullptr)
+    : QValidator(parent),
+      m_model(std::move(model)),
+      m_is_text_elided(false) {}
+
+  QValidator::State validate(QString& input, int& pos) const override {
+    if(m_is_text_elided) {
+      return QValidator::State::Acceptable;
+    }
+    if(input == m_model->get_current()) {
+      auto state = m_model->get_state();
+      if(state == QValidator::State::Invalid) {
+        return state;
+      }
+      return QValidator::State::Acceptable;
+    }
+    auto state = m_model->set_current(input);
+    input = m_model->get_current();
+    if(state == QValidator::State::Invalid) {
+      return state;
+    }
+    return QValidator::State::Acceptable;
+  }
+};
+
 TextStyle Spire::Styles::text_style(QFont font, QColor color) {
   return TextStyle(Font(std::move(font)), TextColor(std::move(color)));
 }
@@ -86,7 +92,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_line_edit->setValidator(new TextValidator(m_model));
+  m_text_validator = new TextValidator(m_model, this);
+  m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
   m_layers->add(m_line_edit);
   m_placeholder = new QLabel();
@@ -285,6 +292,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     auto focus_event = static_cast<QFocusEvent*>(event);
     if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
         focus_event->reason() != Qt::PopupFocusReason) {
+      m_text_validator->m_is_text_elided = false;
       if(m_line_edit->text() != m_model->get_current()) {
         m_line_edit->setText(m_model->get_current());
       }
@@ -401,6 +409,7 @@ void TextBox::elide_text() {
   auto elided_text = font_metrics.elidedText(m_model->get_current(),
     Qt::ElideRight, rect.width());
   if(elided_text != m_line_edit->text()) {
+    m_text_validator->m_is_text_elided = true;
     m_line_edit->setText(elided_text);
     m_line_edit->setCursorPosition(0);
   }
