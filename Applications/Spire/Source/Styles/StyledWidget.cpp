@@ -81,8 +81,8 @@ StyledWidget::~StyledWidget() {
   for(auto dependent : m_dependents) {
     dependent->apply(*this, {});
   }
-  while(!m_destinations.empty()) {
-    unpropagate_style(*m_destinations.front());
+  while(!m_proxies.empty()) {
+    remove_proxy(*m_proxies.front());
   }
 }
 
@@ -106,15 +106,7 @@ void StyledWidget::set_style(const StyleSheet& style) {
 }
 
 bool StyledWidget::is_enabled(const Selector& selector) const {
-  if(m_enabled_selectors.find(selector) != m_enabled_selectors.end()) {
-    return true;
-  }
-  for(auto& source : m_sources) {
-    if(source->is_enabled(selector)) {
-      return true;
-    }
-  }
-  return false;
+  return m_enabled_selectors.find(selector) != m_enabled_selectors.end();
 }
 
 Block StyledWidget::compute_style() const {
@@ -126,34 +118,34 @@ Block StyledWidget::compute_style(const Selector& element) const {
   for(auto& entry : m_blocks) {
     merge(block, entry->m_block);
   }
-  for(auto& source : m_sources) {
-    merge(block, source->compute_style(element));
+  for(auto principal : m_principals) {
+    merge(block, principal->compute_style(element));
   }
   return block;
 }
 
-void StyledWidget::propagate_style(QWidget& widget) {
+void StyledWidget::add_proxy(QWidget& widget) {
   if(auto styled_widget = dynamic_cast<StyledWidget*>(&widget)) {
-    auto i = std::find(m_destinations.begin(), m_destinations.end(),
-      styled_widget);
-    if(i == m_destinations.end()) {
-      m_destinations.push_back(styled_widget);
-      styled_widget->m_sources.push_back(this);
-      styled_widget->apply_rules();
+    auto i = std::find(m_proxies.begin(), m_proxies.end(), styled_widget);
+    if(i == m_proxies.end()) {
+      m_proxies.push_back(styled_widget);
+      styled_widget->m_principals.push_back(this);
+      styled_widget->apply_proxy_styles();
     }
   }
 }
 
-void StyledWidget::unpropagate_style(QWidget& widget) {
-  auto i = std::find(m_destinations.begin(), m_destinations.end(), &widget);
-  if(i == m_destinations.end()) {
+void StyledWidget::remove_proxy(QWidget& widget) {
+  auto i = std::find(m_proxies.begin(), m_proxies.end(), &widget);
+  if(i == m_proxies.end()) {
     return;
   }
   auto styled_widget = *i;
-  styled_widget->m_sources.erase(std::find(styled_widget->m_sources.begin(),
-    styled_widget->m_sources.end(), this));
-  m_destinations.erase(i);
-  styled_widget->apply_rules();
+  styled_widget->m_principals.erase(
+    std::find(styled_widget->m_principals.begin(),
+    styled_widget->m_principals.end(), this));
+  m_proxies.erase(i);
+  styled_widget->apply_proxy_styles();
 }
 
 void StyledWidget::enable(const Selector& selector) {
@@ -164,9 +156,7 @@ void StyledWidget::enable(const Selector& selector) {
 }
 
 void StyledWidget::disable(const Selector& selector) {
-  auto i = m_enabled_selectors.find(selector);
-  if(i != m_enabled_selectors.end()) {
-    m_enabled_selectors.erase(i);
+  if(m_enabled_selectors.erase(selector) != 0) {
     m_enable_signal();
     apply_rules();
   }
@@ -209,10 +199,7 @@ void StyledWidget::apply(const StyledWidget& source, Block block) {
     i = m_source_to_block.insert(i, std::pair(&source, std::move(entry)));
   }
   i->second->m_block = std::move(block);
-  for(auto destination : m_destinations) {
-    destination->apply_rules();
-  }
-  apply_style();
+  apply_proxy_styles();
 }
 
 void StyledWidget::apply_rules() {
@@ -234,6 +221,13 @@ void StyledWidget::apply_rules() {
     if(m_dependents.find(previous_dependent) == m_dependents.end()) {
       previous_dependent->apply(*this, {});
     }
+  }
+}
+
+void StyledWidget::apply_proxy_styles() {
+  apply_style();
+  for(auto proxy : m_proxies) {
+    proxy->apply_proxy_styles();
   }
 }
 

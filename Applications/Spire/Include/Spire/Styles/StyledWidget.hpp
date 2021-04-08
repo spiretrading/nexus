@@ -93,15 +93,15 @@ namespace Spire::Styles {
       /**
        * Specifies that all styles applied to this widget are also applied to
        * another widget.
-       * @param widget The widget to propagate styles to.
+       * @param widget The widget to proxy styles to.
        */
-      void propagate_style(QWidget& widget);
+      void add_proxy(QWidget& widget);
 
       /**
-       * Stops propagating styles from this widget to another.
-       * @param widget The widget to stop propagating styles to.
+       * Stops proxying styles from this widget to another.
+       * @param widget The widget to stop proxying styles to.
        */
-      void unpropagate_style(QWidget& widget);
+      void remove_proxy(QWidget& widget);
 
     protected:
 
@@ -141,8 +141,8 @@ namespace Spire::Styles {
       mutable EnableSignal m_enable_signal;
       StyleSheet m_style;
       VisibilityOption m_visibility;
-      std::vector<StyledWidget*> m_sources;
-      std::vector<StyledWidget*> m_destinations;
+      std::vector<StyledWidget*> m_principals;
+      std::vector<StyledWidget*> m_proxies;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
       std::unordered_set<StyledWidget*> m_dependents;
@@ -153,6 +153,7 @@ namespace Spire::Styles {
 
       void apply(const StyledWidget& source, Block block);
       void apply_rules();
+      void apply_proxy_styles();
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
       void on_enable();

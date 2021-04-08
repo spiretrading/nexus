@@ -106,7 +106,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layout->addWidget(m_box);
   set_style(DEFAULT_STYLE());
   setFocusProxy(m_box);
-  propagate_style(*m_box);
+  add_proxy(*m_box);
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);

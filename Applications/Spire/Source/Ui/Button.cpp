@@ -18,7 +18,7 @@ Button::Button(QWidget* component, QWidget* parent)
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_component);
   setFocusPolicy(Qt::StrongFocus);
-  propagate_style(*m_component);
+  add_proxy(*m_component);
 }
 
 connection Button::connect_clicked_signal(
