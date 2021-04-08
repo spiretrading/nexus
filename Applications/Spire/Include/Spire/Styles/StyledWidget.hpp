@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <unordered_set>
 #include <vector>
+#include <boost/signals2/connection.hpp>
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Styles/Any.hpp"
@@ -135,6 +137,8 @@ namespace Spire::Styles {
         int m_priority;
         Block m_block;
       };
+      using EnableSignal = Signal<void ()>;
+      mutable EnableSignal m_enable_signal;
       StyleSheet m_style;
       VisibilityOption m_visibility;
       std::vector<StyledWidget*> m_sources;
@@ -142,12 +146,16 @@ namespace Spire::Styles {
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
       std::unordered_set<StyledWidget*> m_dependents;
+      std::vector<boost::signals2::scoped_connection> m_enable_connections;
       std::unordered_map<const StyledWidget*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
 
       void apply(const StyledWidget& source, Block block);
       void apply_rules();
+      boost::signals2::connection connect_enable_signal(
+        const EnableSignal::slot_type& slot) const;
+      void on_enable();
   };
 
   std::vector<QWidget*> select(const Active& selector, QWidget& source);

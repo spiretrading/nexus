@@ -2,6 +2,8 @@
 #include <QApplication>
 #include <QEvent>
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -39,10 +41,16 @@ struct StyledWidget::StyleEventFilter : QObject {
   }
 
   void on_focus_changed(QWidget* old, QWidget* now) {
-    if(m_widget->focusProxy() == now) {
-      m_widget->enable(Focus());
-    } else if(old == m_widget->focusProxy()) {
-      m_widget->disable(Focus());
+    auto proxy = m_widget->focusProxy();
+    while(proxy) {
+      if(proxy == now) {
+        m_widget->enable(Focus());
+        break;
+      } else if(proxy == old) {
+        m_widget->disable(Focus());
+        break;
+      }
+      proxy = proxy->focusProxy();
     }
   }
 };
@@ -84,6 +92,16 @@ const StyleSheet& StyledWidget::get_style() const {
 
 void StyledWidget::set_style(const StyleSheet& style) {
   m_style = style;
+  m_enable_connections.clear();
+  auto reach = build_reach(m_style, *this);
+  for(auto widget : reach) {
+    if(auto styled_widget = dynamic_cast<StyledWidget*>(widget)) {
+      if(widget != this) {
+        m_enable_connections.push_back(
+          styled_widget->connect_enable_signal([=] { on_enable(); }));
+      }
+    }
+  }
   apply_rules();
 }
 
@@ -140,6 +158,7 @@ void StyledWidget::unpropagate_style(QWidget& widget) {
 
 void StyledWidget::enable(const Selector& selector) {
   if(m_enabled_selectors.insert(selector).second) {
+    m_enable_signal();
     apply_rules();
   }
 }
@@ -148,6 +167,7 @@ void StyledWidget::disable(const Selector& selector) {
   auto i = m_enabled_selectors.find(selector);
   if(i != m_enabled_selectors.end()) {
     m_enabled_selectors.erase(i);
+    m_enable_signal();
     apply_rules();
   }
 }
@@ -215,6 +235,15 @@ void StyledWidget::apply_rules() {
       previous_dependent->apply(*this, {});
     }
   }
+}
+
+connection StyledWidget::connect_enable_signal(
+    const EnableSignal::slot_type& slot) const {
+  return m_enable_signal.connect(slot);
+}
+
+void StyledWidget::on_enable() {
+  apply_rules();
 }
 
 std::vector<QWidget*> Spire::Styles::select(
