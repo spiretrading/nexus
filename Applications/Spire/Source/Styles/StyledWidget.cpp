@@ -209,10 +209,10 @@ void StyledWidget::apply(const StyledWidget& source, Block block) {
     i = m_source_to_block.insert(i, std::pair(&source, std::move(entry)));
   }
   i->second->m_block = std::move(block);
-  apply_style();
   for(auto destination : m_destinations) {
-    destination->apply_style();
+    destination->apply_rules();
   }
+  apply_style();
 }
 
 void StyledWidget::apply_rules() {
