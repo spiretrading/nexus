@@ -2,6 +2,7 @@
 #define SPIRE_STYLES_STYLED_WIDGET_HPP
 #include <QWidget>
 #include <unordered_set>
+#include <vector>
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Styles/Any.hpp"
@@ -136,8 +137,8 @@ namespace Spire::Styles {
       };
       StyleSheet m_style;
       VisibilityOption m_visibility;
-      std::unordered_set<StyledWidget*> m_sources;
-      std::unordered_set<QWidget*> m_destinations;
+      std::vector<StyledWidget*> m_sources;
+      std::vector<StyledWidget*> m_destinations;
       std::unordered_set<Selector, SelectorHash, SelectorEquality>
         m_enabled_selectors;
       std::unordered_set<StyledWidget*> m_dependents;

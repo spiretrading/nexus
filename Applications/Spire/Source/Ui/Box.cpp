@@ -10,20 +10,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto DEFAULT_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(horizontal_padding(scale_width(8)));
-    style.get(Hover() || Focus()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-    style.get(Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    return style;
-  }
-
   const auto WARNING_FRAME_COUNT = 10;
 
   auto get_fade_out_step(int start, int end) {
@@ -75,14 +61,13 @@ Box::Box(QWidget* body, QWidget* parent)
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins({});
     layout->addWidget(m_body);
     layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
   } else {
     m_container = nullptr;
   }
-  set_style(DEFAULT_STYLE());
 }
 
 void Box::apply_style() {

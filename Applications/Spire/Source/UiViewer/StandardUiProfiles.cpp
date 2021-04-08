@@ -1,7 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
-#include <QHash>
 #include <QLabel>
-#include <QMetaEnum>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -31,15 +29,25 @@ UiProfile Spire::make_box_profile() {
     [] (auto& profile) {
       auto box = new Box(nullptr);
       box->resize(scale(100, 100));
+      auto style = StyleSheet();
+      style.get(Any()).
+        set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+        set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(horizontal_padding(scale_width(8)));
+      style.get(Hover() || Focus()).
+        set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+        set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      box->set_style(std::move(style));
       apply_widget_properties(box, profile.get_properties());
       auto& warning = get<bool>("display_warning", profile.get_properties());
-      warning.connect_changed_signal(
-        [&warning, box] (auto is_playing_warning) {
-          if(is_playing_warning) {
-            display_warning_indicator(*box);
-            warning.set(false);
-          }
-        });
+      warning.connect_changed_signal([&warning, box] (auto is_playing_warning) {
+        if(is_playing_warning) {
+          display_warning_indicator(*box);
+          warning.set(false);
+        }
+      });
       return box;
     });
   return profile;

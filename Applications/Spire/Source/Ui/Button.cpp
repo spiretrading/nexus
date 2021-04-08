@@ -19,16 +19,6 @@ Button::Button(QWidget* component, QWidget* parent)
   layout->addWidget(m_component);
   setFocusPolicy(Qt::StrongFocus);
   propagate_style(*m_component);
-  auto style = get_style();
-  style.get(Any()).
-    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-    set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  style.get(Hover() || Focus()).set(
-    border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  style.get(Disabled()).
-    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-    set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  set_style(std::move(style));
 }
 
 connection Button::connect_clicked_signal(
@@ -116,7 +106,8 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
     set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
   style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-//  style.get(Disabled() < Any()).set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  style.get(Disabled() < Any())
+    .set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
   style.get(Any() < Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
   button->set_style(std::move(style));
   return button;
