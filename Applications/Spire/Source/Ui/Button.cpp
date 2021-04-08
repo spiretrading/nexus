@@ -106,9 +106,8 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
     set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
   style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  style.get(Disabled() < Any())
-    .set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  style.get(Any() < Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
+  style.get(Disabled()).set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  style.get(Any() > Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
   button->set_style(std::move(style));
   return button;
 }
