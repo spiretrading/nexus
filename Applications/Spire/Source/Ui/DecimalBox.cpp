@@ -265,11 +265,6 @@ bool DecimalBox::is_read_only() const {
 
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
-  if(is_read_only) {
-    enable(ReadOnly());
-  } else {
-    disable(ReadOnly());
-  }
 }
 
 bool DecimalBox::is_warning_displayed() const {

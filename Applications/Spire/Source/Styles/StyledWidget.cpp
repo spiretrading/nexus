@@ -1,4 +1,5 @@
 #include "Spire/Styles/StyledWidget.hpp"
+#include <deque>
 #include <QApplication>
 #include <QEvent>
 
@@ -106,7 +107,15 @@ void StyledWidget::set_style(const StyleSheet& style) {
 }
 
 bool StyledWidget::is_enabled(const Selector& selector) const {
-  return m_enabled_selectors.find(selector) != m_enabled_selectors.end();
+  if(m_enabled_selectors.find(selector) != m_enabled_selectors.end()) {
+    return true;
+  }
+  for(auto proxy : m_proxies) {
+    if(proxy->is_enabled(selector)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Block StyledWidget::compute_style() const {
@@ -143,7 +152,7 @@ void StyledWidget::remove_proxy(QWidget& widget) {
   auto styled_widget = *i;
   styled_widget->m_principals.erase(
     std::find(styled_widget->m_principals.begin(),
-    styled_widget->m_principals.end(), this));
+      styled_widget->m_principals.end(), this));
   m_proxies.erase(i);
   styled_widget->apply_proxy_styles();
 }
@@ -152,6 +161,9 @@ void StyledWidget::enable(const Selector& selector) {
   if(m_enabled_selectors.insert(selector).second) {
     m_enable_signal();
     apply_rules();
+    for(auto principal : m_principals) {
+      principal->apply_rules();
+    }
   }
 }
 
@@ -159,6 +171,9 @@ void StyledWidget::disable(const Selector& selector) {
   if(m_enabled_selectors.erase(selector) != 0) {
     m_enable_signal();
     apply_rules();
+    for(auto principal : m_principals) {
+      principal->apply_rules();
+    }
   }
 }
 
@@ -204,11 +219,19 @@ void StyledWidget::apply(const StyledWidget& source, Block block) {
 
 void StyledWidget::apply_rules() {
   auto blocks = std::unordered_map<StyledWidget*, Block>();
-  for(auto& rule : m_style.get_rules()) {
-    auto selection = select(rule.get_selector(), *this);
-    for(auto& selected : selection) {
-      if(auto styled_widget = dynamic_cast<StyledWidget*>(selected)) {
-        merge(blocks[styled_widget], rule.get_block());
+  auto principals = std::deque<StyledWidget*>();
+  principals.push_back(this);
+  while(!principals.empty()) {
+    auto principal = principals.front();
+    principals.pop_front();
+    principals.insert(principals.end(), principal->m_principals.begin(),
+      principal->m_principals.end());
+    for(auto& rule : principal->m_style.get_rules()) {
+      auto selection = select(rule.get_selector(), *this);
+      for(auto& selected : selection) {
+        if(auto styled_widget = dynamic_cast<StyledWidget*>(selected)) {
+          merge(blocks[styled_widget], rule.get_block());
+        }
       }
     }
   }
@@ -221,6 +244,9 @@ void StyledWidget::apply_rules() {
     if(m_dependents.find(previous_dependent) == m_dependents.end()) {
       previous_dependent->apply(*this, {});
     }
+  }
+  for(auto proxy : m_proxies) {
+    proxy->apply_rules();
   }
 }
 
