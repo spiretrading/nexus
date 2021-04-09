@@ -408,8 +408,10 @@ void TextBox::elide_text() {
     &option, m_line_edit);
   auto elided_text = font_metrics.elidedText(m_model->get_current(),
     Qt::ElideRight, rect.width());
-  if(elided_text != m_line_edit->text()) {
+  if(elided_text != m_model->get_current()) {
     m_text_validator->m_is_text_elided = true;
+  }
+  if(elided_text != m_line_edit->text()) {
     m_line_edit->setText(elided_text);
     m_line_edit->setCursorPosition(0);
   }
