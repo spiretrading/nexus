@@ -1,5 +1,5 @@
 #include "Spire/Styles/ChildSelector.hpp"
-#include <set>
+#include <unordered_set>
 #include <QWidget>
 
 using namespace Spire;
@@ -28,7 +28,7 @@ ChildSelector Spire::Styles::operator >(Selector base, Selector child) {
 
 std::vector<QWidget*> Spire::Styles::select(const ChildSelector& selector,
     QWidget& source) {
-  auto selection = std::set<QWidget*>();
+  auto selection = std::unordered_set<QWidget*>();
   auto bases = select(selector.get_base(), source);
   for(auto base : bases) {
     for(auto& child : base->children()) {
@@ -40,4 +40,21 @@ std::vector<QWidget*> Spire::Styles::select(const ChildSelector& selector,
     }
   }
   return std::vector(selection.begin(), selection.end());
+}
+
+std::vector<QWidget*> Spire::Styles::build_reach(
+    const ChildSelector& selector, QWidget& source) {
+  auto reach = std::unordered_set<QWidget*>();
+  auto bases = build_reach(selector.get_base(), source);
+  reach.insert(bases.begin(), bases.end());
+  for(auto base : bases) {
+    for(auto& child : base->children()) {
+      if(child->isWidgetType()) {
+        auto child_reach = build_reach(selector.get_child(),
+          *static_cast<QWidget*>(child));
+        reach.insert(child_reach.begin(), child_reach.end());
+      }
+    }
+  }
+  return std::vector(reach.begin(), reach.end());
 }

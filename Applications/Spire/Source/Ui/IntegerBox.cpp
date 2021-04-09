@@ -87,6 +87,7 @@ IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
     adapted_modifiers.insert(modifier.key(), modifier.value());
   }
   m_decimal_box = new DecimalBox(m_adaptor_model, adapted_modifiers, this);
+  add_proxy(*m_decimal_box);
   setFocusProxy(m_decimal_box);
   layout->addWidget(m_decimal_box);
   m_submit_connection = m_decimal_box->connect_submit_signal(

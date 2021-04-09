@@ -43,6 +43,9 @@ namespace Spire::Styles {
   }
 
   std::vector<QWidget*> select(const ParentSelector& selector, QWidget& source);
+
+  std::vector<QWidget*> build_reach(
+    const ParentSelector& selector, QWidget& source);
 }
 
 #endif

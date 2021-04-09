@@ -38,6 +38,9 @@ namespace Spire::Styles {
   ChildSelector operator >(Selector base, Selector child);
 
   std::vector<QWidget*> select(const ChildSelector& selector, QWidget& source);
+
+  std::vector<QWidget*> build_reach(
+    const ChildSelector& selector, QWidget& source);
 }
 
 #endif

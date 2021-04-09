@@ -270,9 +270,10 @@ UiProfile Spire::make_decimal_box_profile() {
       buttons_visible.connect_changed_signal([=] (auto value) {
         auto style = decimal_box->get_style();
         if(value) {
-          style.get(is_a<Button>()).get_block().remove<Visibility>();
+          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
-          style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+          style.get(Any() > is_a<Button>()).set(
+            Visibility(VisibilityOption::NONE));
         }
         decimal_box->set_style(std::move(style));
       });
@@ -384,9 +385,10 @@ UiProfile Spire::make_integer_box_profile() {
       buttons_visible.connect_changed_signal([=] (auto value) {
         auto style = integer_box->get_style();
         if(value) {
-          style.get(is_a<Button>()).get_block().remove<Visibility>();
+          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
-          style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+          style.get(Any() > is_a<Button>()).set(
+            Visibility(VisibilityOption::NONE));
         }
         integer_box->set_style(std::move(style));
       });
