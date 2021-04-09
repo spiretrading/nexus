@@ -85,6 +85,9 @@ StyledWidget::~StyledWidget() {
   while(!m_proxies.empty()) {
     remove_proxy(*m_proxies.front());
   }
+  while(!m_principals.empty()) {
+    m_principals.front()->remove_proxy(*this);
+  }
 }
 
 const StyleSheet& StyledWidget::get_style() const {
