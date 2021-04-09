@@ -28,7 +28,12 @@ AndSelector Spire::Styles::operator &&(Selector left, Selector right) {
 std::vector<QWidget*> Spire::Styles::select(
     const AndSelector& selector, QWidget& source) {
   auto left_selection = select(selector.get_left(), source);
-  auto right_selection = select(selector.get_right(), source);
+  auto right_selection = std::vector<QWidget*>();
+  for(auto base : left_selection) {
+    auto base_selection = select(selector.get_right(), *base);
+    right_selection.insert(right_selection.end(), base_selection.begin(),
+      base_selection.end());
+  }
   if(left_selection.empty() || right_selection.empty()) {
     return {};
   }

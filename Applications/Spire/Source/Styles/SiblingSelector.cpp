@@ -39,7 +39,7 @@ std::vector<QWidget*> Spire::Styles::select(
     auto i = 0;
     while(i != siblings.size()) {
       auto child = siblings[i];
-      if(child != &source) {
+      if(child != base) {
         if(auto c = qobject_cast<QWidget*>(child)) {
           auto child_selection = select(selector.get_sibling(), *c);
           selection.insert(child_selection.begin(), child_selection.end());

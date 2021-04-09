@@ -232,8 +232,9 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
   auto style = m_text_box->get_style();
-  style.get((is_a<Button>() && !matches(Visibility(VisibilityOption::NONE))) %
-    is_a<TextBox>() > is_a<Box>()).set(PaddingRight(scale_width(26)));
+  style.get(((Any() % is_a<Button>()) &&
+    !matches(Visibility(VisibilityOption::NONE))) % is_a<TextBox>()).set(
+    PaddingRight(scale_width(26)));
   m_text_box->set_style(std::move(style));
   add_proxy(*m_text_box);
   setFocusProxy(m_text_box);
