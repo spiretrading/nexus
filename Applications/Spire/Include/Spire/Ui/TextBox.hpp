@@ -2,8 +2,7 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLabel>
 #include <QLineEdit>
-#include <boost/optional/optional.hpp>
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -37,7 +36,7 @@ namespace Styles {
   using TextModel = ValueModel<QString>;
 
   //! Displays a one-line text box.
-  class TextBox : public Styles::StyledWidget {
+  class TextBox : public QWidget {
     public:
 
       /**
@@ -105,7 +104,6 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      void apply_style() override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -115,6 +113,8 @@ namespace Styles {
     private:
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
+      std::shared_ptr<TextModel> m_model;
+      Styles::Stylist m_stylist;
       Box* m_box;
       LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
@@ -122,20 +122,20 @@ namespace Styles {
       QLabel* m_placeholder;
       QFont m_placeholder_font;
       bool m_is_warning_displayed;
-      std::shared_ptr<TextModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
 
-      void on_current(const QString& current);
-      void on_editing_finished();
-      void on_text_edited(const QString& text);
       bool is_placeholder_shown() const;
       QString get_elided_text(const QFontMetrics& font_metrics,
         const QString& text) const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
+      void on_current(const QString& current);
+      void on_editing_finished();
+      void on_text_edited(const QString& text);
+      void on_style();
   };
 }
 

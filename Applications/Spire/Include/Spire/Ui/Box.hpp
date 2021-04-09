@@ -1,6 +1,6 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -107,8 +107,8 @@ namespace Styles {
   Padding padding(int size);
 }
 
-  /** Implements a StyledWidget displaying a component within a styled box. */
-  class Box : public Styles::StyledWidget {
+  /** Implements a containter displaying a component within a styled box. */
+  class Box : public QWidget {
     public:
 
       /**
@@ -119,19 +119,21 @@ namespace Styles {
       explicit Box(QWidget* body, QWidget* parent = nullptr);
 
     protected:
-      void apply_style() override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
       QWidget* m_container;
       QWidget* m_body;
+      Styles::Stylist m_stylist;
+
+      void on_style();
   };
 
   /**
-   * Displays a red warning indicator on a StyledWidget.
+   * Displays a red warning indicator on a widget.
    * @param widget The widget to display the warning indicator over.
    */
-  void display_warning_indicator(Styles::StyledWidget& widget);
+  void display_warning_indicator(QWidget& widget);
 }
 
 #endif

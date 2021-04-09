@@ -1,12 +1,11 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
-#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Represents a button built upon a box.
-  class Button : public Styles::StyledWidget {
+  class Button : public QWidget {
     public:
 
       //! Signals that the button is clicked.

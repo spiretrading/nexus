@@ -11,14 +11,14 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 Button::Button(QWidget* component, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
       m_component(component),
       m_is_down(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_component);
   setFocusPolicy(Qt::StrongFocus);
-  add_proxy(*m_component);
+  proxy_style(*this, *component);
 }
 
 connection Button::connect_clicked_signal(
@@ -88,7 +88,7 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
   style.get(Hover()).set(BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
   style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  button->set_style(std::move(style));
+  set_style(*button, std::move(style));
   return button;
 }
 
@@ -108,6 +108,6 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   style.get(Disabled()).set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
   style.get(Any() > Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
-  button->set_style(std::move(style));
+  set_style(*button, std::move(style));
   return button;
 }

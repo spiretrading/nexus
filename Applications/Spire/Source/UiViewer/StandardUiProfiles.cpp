@@ -39,7 +39,7 @@ UiProfile Spire::make_box_profile() {
       style.get(Disabled()).
         set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
         set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-      box->set_style(std::move(style));
+      set_style(*box, std::move(style));
       apply_widget_properties(box, profile.get_properties());
       auto& warning = get<bool>("display_warning", profile.get_properties());
       warning.connect_changed_signal([&warning, box] (auto is_playing_warning) {

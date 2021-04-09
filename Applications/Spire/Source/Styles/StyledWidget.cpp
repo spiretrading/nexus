@@ -269,6 +269,7 @@ void StyledWidget::on_enable() {
   apply_rules();
 }
 
+#if 0
 std::vector<QWidget*> Spire::Styles::select(
     const Active& selector, QWidget& source) {
   if(source.isActiveWindow()) {
@@ -301,3 +302,4 @@ std::vector<QWidget*> Spire::Styles::select(
   }
   return {};
 }
+#endif

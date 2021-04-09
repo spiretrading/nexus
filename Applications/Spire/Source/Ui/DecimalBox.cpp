@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
@@ -42,7 +43,7 @@ namespace {
 
   auto create_button(const QString& icon, QWidget* parent) {
     auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
-    auto style = button->get_style();
+    auto style = get_style(*button);
     style.get(Any()).
       set(BackgroundColor(QColor("#FFFFFF"))).
       set(Fill(QColor("#333333")));
@@ -54,7 +55,7 @@ namespace {
       set(Fill(QColor("#C8C8C8")));
     style.get((Any() < ReadOnly()) > is_a<Button>()).
       set(Visibility(VisibilityOption::NONE));
-    button->set_style(std::move(style));
+    set_style(*button, std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -231,11 +232,11 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
-  auto style = m_text_box->get_style();
+  auto style = Spire::Styles::get_style(*m_text_box);
   style.get(((Any() % is_a<Button>()) &&
     !matches(Visibility(VisibilityOption::NONE))) % is_a<TextBox>()).set(
       PaddingRight(scale_width(26)));
-  m_text_box->set_style(std::move(style));
+  Spire::Styles::set_style(*m_text_box, std::move(style));
   add_proxy(*m_text_box);
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);

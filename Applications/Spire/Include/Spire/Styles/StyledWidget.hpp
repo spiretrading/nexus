@@ -20,37 +20,10 @@
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Styles/VoidSelector.hpp"
 
 namespace Spire::Styles {
-
-  /** Selects the widget that is or belongs to the active window. */
-  using Active = StateSelector<void, struct ActiveSelectorTag>;
-
-  /** Selects the disabled widget. */
-  using Disabled = StateSelector<void, struct DisabledSelectorTag>;
-
-  /** Selects the hovered widget. */
-  using Hover = StateSelector<void, struct HoverSelectorTag>;
-
-  /** Selects the focused widget. */
-  using Focus = StateSelector<void, struct FocusSelectorTag>;
-
-  /** Specifies whether an element is visible. */
-  enum class VisibilityOption {
-
-    /** The element is visible. */
-    VISIBLE,
-
-    /** The element is invisible. */
-    INVISIBLE,
-
-    /** The element is treated as if it has a width and height of 0. */
-    NONE
-  };
-
-  /** Sets the display mode. */
-  using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
 
   /** Base class for a QWidget styled according to a StyleSheet. */
   class StyledWidget : public QWidget {
@@ -158,11 +131,6 @@ namespace Spire::Styles {
         const EnableSignal::slot_type& slot) const;
       void on_enable();
   };
-
-  std::vector<QWidget*> select(const Active& selector, QWidget& source);
-  std::vector<QWidget*> select(const Disabled& selector, QWidget& source);
-  std::vector<QWidget*> select(const Hover& selector, QWidget& source);
-  std::vector<QWidget*> select(const Focus& selector, QWidget& source);
 }
 
 #endif

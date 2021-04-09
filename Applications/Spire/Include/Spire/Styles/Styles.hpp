@@ -24,6 +24,7 @@ namespace Spire::Styles {
   template<typename T, typename G> class StateSelector;
   class StyledWidget;
   class StyleSheet;
+  class Stylist;
   class VoidSelector;
 }
 

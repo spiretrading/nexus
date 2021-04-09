@@ -77,7 +77,8 @@ TextBox::TextBox(QString current, QWidget* parent)
   : TextBox(std::make_shared<LocalTextModel>(std::move(current)), parent) {}
 
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
+      m_stylist(*this),
       m_is_warning_displayed(true),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
@@ -104,9 +105,10 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
-  set_style(DEFAULT_STYLE());
   setFocusProxy(m_box);
-  add_proxy(*m_box);
+  m_stylist.add_proxy(*m_box);
+  m_stylist.connect_style_signal([=] { on_style(); });
+  m_stylist.set_style(DEFAULT_STYLE());
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
@@ -134,9 +136,9 @@ bool TextBox::is_read_only() const {
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
   if(read_only) {
-    enable(ReadOnly());
+    m_stylist.match(ReadOnly());
   } else {
-    disable(ReadOnly());
+    m_stylist.unmatch(ReadOnly());
   }
   update_display_text();
   update_placeholder_text();
@@ -164,92 +166,6 @@ QSize TextBox::sizeHint() const {
   return scale(160, 30);
 }
 
-void TextBox::apply_style() {
-  auto line_edit_computed_style = compute_style();
-  auto placeholder_computed_style = Block();
-  auto placeholder_style = QString(
-    R"(QLabel {
-      background: transparent;
-      border-width: 0px;
-      padding: 0px;)");
-  auto line_edit_style = QString(
-    R"(QLineEdit {
-      background: transparent;
-      border-width: 0px;
-      padding: 0px;)");
-  auto is_line_edit_updated = false;
-  for(auto& property : line_edit_computed_style.get_properties()) {
-    property.visit(
-      [&] (const TextColor& color) {
-        line_edit_style += "color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      },
-      [&] (const TextAlign& alignment) {
-        auto computed_alignment =
-          alignment.get_expression().as<Qt::Alignment>();
-        if(computed_alignment != m_line_edit->alignment()) {
-          m_line_edit->setAlignment(computed_alignment);
-          is_line_edit_updated = true;
-        }
-      },
-      [&] (const Font& font) {
-        auto computed_font = font.get_expression().as<QFont>();
-        if(m_line_edit_font != computed_font) {
-          m_line_edit_font = computed_font;
-          m_line_edit->setFont(computed_font);
-          is_line_edit_updated = true;
-        }
-      });
-  }
-  auto is_placeholder_updated = false;
-  if(is_placeholder_shown()) {
-    for(auto& property : placeholder_computed_style.get_properties()) {
-      property.visit(
-        [&] (const TextColor& color) {
-          placeholder_style += "color: " +
-            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-        },
-        [&] (const TextAlign& alignment) {
-          auto computed_alignment =
-            alignment.get_expression().as<Qt::Alignment>();
-          if(computed_alignment != m_placeholder->alignment()) {
-            m_placeholder->setAlignment(computed_alignment);
-            is_placeholder_updated = true;
-          }
-        },
-        [&] (const Font& font) {
-          auto computed_font = font.get_expression().as<QFont>();
-          if(m_placeholder_font != computed_font) {
-            m_placeholder_font = computed_font;
-            m_placeholder->setFont(computed_font);
-            is_placeholder_updated = true;
-          }
-        });
-    }
-  }
-  line_edit_style += "}";
-  if(line_edit_style != m_line_edit->styleSheet()) {
-    m_line_edit->setStyleSheet(line_edit_style);
-    m_line_edit->style()->unpolish(this);
-    m_line_edit->style()->polish(this);
-    is_line_edit_updated = true;
-  }
-  if(is_line_edit_updated) {
-    update_display_text();
-  }
-  placeholder_style += "}";
-  if(placeholder_style != m_placeholder->styleSheet()) {
-    m_placeholder->setStyleSheet(placeholder_style);
-    m_placeholder->style()->unpolish(this);
-    m_placeholder->style()->polish(this);
-    is_placeholder_updated = true;
-  }
-  if(is_placeholder_updated) {
-    update_placeholder_text();
-  }
-  StyledWidget::apply_style();
-}
-
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
     auto focus_event = static_cast<QFocusEvent*>(event);
@@ -274,7 +190,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       return true;
     }
   }
-  return StyledWidget::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
 }
 
 void TextBox::changeEvent(QEvent* event) {
@@ -282,14 +198,14 @@ void TextBox::changeEvent(QEvent* event) {
     update_display_text();
     update_placeholder_text();
   }
-  StyledWidget::changeEvent(event);
+  QWidget::changeEvent(event);
 }
 
 void TextBox::mousePressEvent(QMouseEvent* event) {
   if(is_placeholder_shown()) {
     m_line_edit->setFocus();
   }
-  StyledWidget::mousePressEvent(event);
+  QWidget::mousePressEvent(event);
 }
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
@@ -298,38 +214,14 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
       m_model->set_current(m_submission);
     }
   } else {
-    StyledWidget::keyPressEvent(event);
+    QWidget::keyPressEvent(event);
   }
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
   update_placeholder_text();
-  StyledWidget::resizeEvent(event);
-}
-
-void TextBox::on_current(const QString& current) {
-  update_display_text();
-  update_placeholder_text();
-}
-
-void TextBox::on_editing_finished() {
-  if(!is_read_only()) {
-    if(m_model->get_state() == QValidator::Acceptable) {
-      m_submission = m_model->get_current();
-      m_submit_signal(m_submission);
-    } else {
-      m_reject_signal(m_model->get_current());
-      m_model->set_current(m_submission);
-      if(is_warning_displayed()) {
-        display_warning_indicator(*this);
-      }
-    }
-  }
-}
-
-void TextBox::on_text_edited(const QString& text) {
-  update_placeholder_text();
+  QWidget::resizeEvent(event);
 }
 
 bool TextBox::is_placeholder_shown() const {
@@ -414,5 +306,114 @@ void TextBox::update_placeholder_text() {
     m_placeholder->show();
   } else {
     m_placeholder->hide();
+  }
+}
+
+void TextBox::on_current(const QString& current) {
+  update_display_text();
+  update_placeholder_text();
+}
+
+void TextBox::on_editing_finished() {
+  if(!is_read_only()) {
+    if(m_model->get_state() == QValidator::Acceptable) {
+      m_submission = m_model->get_current();
+      m_submit_signal(m_submission);
+    } else {
+      m_reject_signal(m_model->get_current());
+      m_model->set_current(m_submission);
+      if(is_warning_displayed()) {
+        display_warning_indicator(*this);
+      }
+    }
+  }
+}
+
+void TextBox::on_text_edited(const QString& text) {
+  update_placeholder_text();
+}
+
+void TextBox::on_style() {
+  auto line_edit_computed_style = m_stylist.compute_style();
+  auto placeholder_computed_style = Block();
+  auto placeholder_style = QString(
+    R"(QLabel {
+      background: transparent;
+      border-width: 0px;
+      padding: 0px;)");
+  auto line_edit_style = QString(
+    R"(QLineEdit {
+      background: transparent;
+      border-width: 0px;
+      padding: 0px;)");
+  auto is_line_edit_updated = false;
+  for(auto& property : line_edit_computed_style.get_properties()) {
+    property.visit(
+      [&] (const TextColor& color) {
+        line_edit_style += "color: " +
+          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const TextAlign& alignment) {
+        auto computed_alignment =
+          alignment.get_expression().as<Qt::Alignment>();
+        if(computed_alignment != m_line_edit->alignment()) {
+          m_line_edit->setAlignment(computed_alignment);
+          is_line_edit_updated = true;
+        }
+      },
+      [&] (const Font& font) {
+        auto computed_font = font.get_expression().as<QFont>();
+        if(m_line_edit_font != computed_font) {
+          m_line_edit_font = computed_font;
+          m_line_edit->setFont(computed_font);
+          is_line_edit_updated = true;
+        }
+      });
+  }
+  auto is_placeholder_updated = false;
+  if(is_placeholder_shown()) {
+    for(auto& property : placeholder_computed_style.get_properties()) {
+      property.visit(
+        [&] (const TextColor& color) {
+          placeholder_style += "color: " +
+            color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        },
+        [&] (const TextAlign& alignment) {
+          auto computed_alignment =
+            alignment.get_expression().as<Qt::Alignment>();
+          if(computed_alignment != m_placeholder->alignment()) {
+            m_placeholder->setAlignment(computed_alignment);
+            is_placeholder_updated = true;
+          }
+        },
+        [&] (const Font& font) {
+          auto computed_font = font.get_expression().as<QFont>();
+          if(m_placeholder_font != computed_font) {
+            m_placeholder_font = computed_font;
+            m_placeholder->setFont(computed_font);
+            is_placeholder_updated = true;
+          }
+        });
+    }
+  }
+  line_edit_style += "}";
+  if(line_edit_style != m_line_edit->styleSheet()) {
+    m_line_edit->setStyleSheet(line_edit_style);
+    m_line_edit->style()->unpolish(this);
+    m_line_edit->style()->polish(this);
+    is_line_edit_updated = true;
+  }
+  if(is_line_edit_updated) {
+    update_display_text();
+  }
+  placeholder_style += "}";
+  if(placeholder_style != m_placeholder->styleSheet()) {
+    m_placeholder->setStyleSheet(placeholder_style);
+    m_placeholder->style()->unpolish(this);
+    m_placeholder->style()->polish(this);
+    is_placeholder_updated = true;
+  }
+  if(is_placeholder_updated) {
+    update_placeholder_text();
   }
 }
