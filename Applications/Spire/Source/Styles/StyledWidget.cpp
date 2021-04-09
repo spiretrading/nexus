@@ -99,8 +99,8 @@ void StyledWidget::set_style(const StyleSheet& style) {
   m_enable_connections.clear();
   auto reach = build_reach(m_style, *this);
   for(auto widget : reach) {
-    if(auto styled_widget = dynamic_cast<StyledWidget*>(widget)) {
-      if(widget != this) {
+    if(widget != this) {
+      if(auto styled_widget = dynamic_cast<StyledWidget*>(widget)) {
         m_enable_connections.push_back(
           styled_widget->connect_enable_signal([=] { on_enable(); }));
       }

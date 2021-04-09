@@ -234,7 +234,7 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   auto style = m_text_box->get_style();
   style.get(((Any() % is_a<Button>()) &&
     !matches(Visibility(VisibilityOption::NONE))) % is_a<TextBox>()).set(
-    PaddingRight(scale_width(26)));
+      PaddingRight(scale_width(26)));
   m_text_box->set_style(std::move(style));
   add_proxy(*m_text_box);
   setFocusProxy(m_text_box);
