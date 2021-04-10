@@ -2,7 +2,6 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLabel>
 #include <QLineEdit>
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -114,7 +113,6 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_model;
-      Styles::Stylist m_stylist;
       Box* m_box;
       LayeredWidget* m_layers;
       QLineEdit* m_line_edit;

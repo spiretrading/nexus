@@ -69,17 +69,6 @@ bool Stylist::SelectorEquality::operator ()(
   return left.is_match(right);
 }
 
-Stylist::Stylist(QWidget& widget)
-  : Stylist({}, widget) {}
-
-Stylist::Stylist(StyleSheet style, QWidget& widget)
-    : m_widget(&widget),
-      m_style(std::move(style)),
-      m_visibility(VisibilityOption::VISIBLE) {
-  stylists[m_widget] = this;
-  m_widget->installEventFilter(new StyleEventFilter(*this));
-}
-
 Stylist::~Stylist() {
   for(auto dependent : m_dependents) {
     auto& stylist = find_stylist(*dependent);
@@ -180,6 +169,13 @@ void Stylist::unmatch(const Selector& selector) {
 connection Stylist::connect_style_signal(
     const StyleSignal::slot_type& slot) const {
   return m_style_signal.connect(slot);
+}
+
+Stylist::Stylist(QWidget& widget)
+    : m_widget(&widget),
+      m_visibility(VisibilityOption::VISIBLE) {
+  stylists[m_widget] = this;
+  m_widget->installEventFilter(new StyleEventFilter(*this));
 }
 
 void Stylist::apply(const QWidget& source, Block block) {
@@ -295,6 +291,23 @@ void Spire::Styles::set_style(QWidget& widget, const StyleSheet& style) {
   find_stylist(widget).set_style(style);
 }
 
+Block Spire::Styles::compute_style(QWidget& widget) {
+  return find_stylist(widget).compute_style();
+}
+
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
+}
+
+void Spire::Styles::match(QWidget& widget, const Selector& selector) {
+  find_stylist(widget).match(selector);
+}
+
+void Spire::Styles::unmatch(QWidget& widget, const Selector& selector) {
+  find_stylist(widget).unmatch(selector);
+}
+
+connection Spire::Styles::connect_style_signal(const QWidget& widget,
+    const Stylist::StyleSignal::slot_type& slot) {
+  return find_stylist(widget).connect_style_signal(slot);
 }

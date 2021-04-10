@@ -27,7 +27,6 @@ namespace Styles {
 
     private:
       QImage m_icon;
-      Styles::Stylist m_stylist;
   };
 }
 

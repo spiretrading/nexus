@@ -103,7 +103,6 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<DecimalModel> m_model;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
-      Styles::Stylist m_stylist;
       Decimal m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       TextBox* m_text_box;

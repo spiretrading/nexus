@@ -62,19 +62,6 @@ namespace Spire::Styles {
        */
       using StyleSignal = Signal<void ()>;
 
-      /**
-       * Constructs a Stylist for a widget with an empty StyleSheet.
-       * @param widget The widget to style.
-       */
-      explicit Stylist(QWidget& parent);
-
-      /**
-       * Constructs a Stylist.
-       * @param style The initial StyleSheet.
-       * @param widget The widget to style.
-       */
-      Stylist(StyleSheet style, QWidget& widget);
-
       ~Stylist();
 
       /** Returns the style. */
@@ -103,14 +90,14 @@ namespace Spire::Styles {
       void remove_proxy(QWidget& widget);
 
       /**
-       * Indicates this widget matches a Selector.
+       * Directs this Stylist to match a Selector.
        * @param selector The selector to match.
        */
       void match(const Selector& selector);
 
       /**
-       * Indicates this widget no longer matches a Selector.
-       * @param selector The disabled selector.
+       * Directs this Stylist to no longer match a Selector.
+       * @param selector The selector to no longer match.
        */
       void unmatch(const Selector& selector);
 
@@ -132,6 +119,7 @@ namespace Spire::Styles {
         Block m_block;
       };
       using EnableSignal = Signal<void ()>;
+      friend Stylist& find_stylist(QWidget& widget);
       mutable StyleSignal m_style_signal;
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
@@ -147,6 +135,7 @@ namespace Spire::Styles {
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
 
+      explicit Stylist(QWidget& parent);
       Stylist(const Stylist&) = delete;
       Stylist& operator =(const Stylist&) = delete;
       void apply(const QWidget& source, Block block);
@@ -170,12 +159,33 @@ namespace Spire::Styles {
   /** Sets the styling of a QWidget. */
   void set_style(QWidget& widget, const StyleSheet& style);
 
+  /** Returns a Block containing a widget's computed style. */
+  Block compute_style(QWidget& widget);
+
   /**
    * Specifies that a QWidget will proxy its style to another QWidget.
    * @param principal The QWidget forwarding its style.
    * @param destination The QWidget receiving the style.
    */
   void proxy_style(QWidget& source, QWidget& destination);
+
+  /**
+   * Indicates a widget no longer matches a Selector.
+   * @param widget The widget to match.
+   * @param selector The selector to match.
+   */
+  void match(QWidget& widget, const Selector& selector);
+
+  /**
+   * Indicates a widget no longer matches a Selector.
+   * @param widget The widget to unmatch.
+   * @param selector The selector to no longer match.
+   */
+  void unmatch(QWidget& widget, const Selector& selector);
+
+  /** Connects a slot to a QWidget's StyleSignal. */
+  boost::signals2::connection connect_style_signal(const QWidget& widget,
+    const Stylist::StyleSignal::slot_type& slot);
 }
 
 #endif

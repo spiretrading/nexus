@@ -124,7 +124,6 @@ namespace Styles {
     private:
       QWidget* m_container;
       QWidget* m_body;
-      Styles::Stylist m_stylist;
 
       void on_style();
   };

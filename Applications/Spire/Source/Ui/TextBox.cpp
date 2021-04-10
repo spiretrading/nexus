@@ -78,7 +78,6 @@ TextBox::TextBox(QString current, QWidget* parent)
 
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
-      m_stylist(*this),
       m_is_warning_displayed(true),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
@@ -106,9 +105,9 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
   setFocusProxy(m_box);
-  m_stylist.add_proxy(*m_box);
-  m_stylist.connect_style_signal([=] { on_style(); });
-  m_stylist.set_style(DEFAULT_STYLE());
+  proxy_style(*this, *m_box);
+  connect_style_signal(*this, [=] { on_style(); });
+  set_style(*this, DEFAULT_STYLE());
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
@@ -136,9 +135,9 @@ bool TextBox::is_read_only() const {
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
   if(read_only) {
-    m_stylist.match(ReadOnly());
+    match(*this, ReadOnly());
   } else {
-    m_stylist.unmatch(ReadOnly());
+    unmatch(*this, ReadOnly());
   }
   update_display_text();
   update_placeholder_text();
@@ -334,7 +333,7 @@ void TextBox::on_text_edited(const QString& text) {
 }
 
 void TextBox::on_style() {
-  auto line_edit_computed_style = m_stylist.compute_style();
+  auto line_edit_computed_style = compute_style(*this);
   auto placeholder_computed_style = Block();
   auto placeholder_style = QString(
     R"(QLabel {

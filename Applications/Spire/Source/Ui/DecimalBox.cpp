@@ -226,7 +226,6 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     : QWidget(parent),
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
-      m_stylist(*this),
       m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)) {
   auto layout = new QHBoxLayout(this);
@@ -237,8 +236,8 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     !matches(Visibility(VisibilityOption::NONE))) % is_a<TextBox>()).set(
       PaddingRight(scale_width(26)));
   set_style(*m_text_box, std::move(style));
-  m_stylist.add_proxy(*m_text_box);
-  m_stylist.connect_style_signal([=] { on_style(); });
+  proxy_style(*this, *m_text_box);
+  connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
   m_current_connection = m_model->connect_current_signal(
@@ -384,7 +383,7 @@ void DecimalBox::on_reject(const QString& value) {
 }
 
 void DecimalBox::on_style() {
-  auto style = m_stylist.compute_style();
+  auto style = compute_style(*this);
   if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
     m_adaptor_model->set_leading_zeros(
       leading_zeros->get_expression().as<int>());

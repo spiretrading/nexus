@@ -56,8 +56,7 @@ Padding Spire::Styles::padding(int size) {
 
 Box::Box(QWidget* body, QWidget* parent)
   : QWidget(parent),
-    m_body(body),
-    m_stylist(*this) {
+    m_body(body) {
   setObjectName("Box");
   if(m_body) {
     m_container = new QWidget(this);
@@ -69,12 +68,12 @@ Box::Box(QWidget* body, QWidget* parent)
   } else {
     m_container = nullptr;
   }
-  m_stylist.connect_style_signal([=] { on_style(); });
+  connect_style_signal(*this, [=] { on_style(); });
 }
 
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
-    auto computed_style = m_stylist.compute_style();
+    auto computed_style = compute_style(*this);
     auto body_geometry = QRect(0, 0, width(), height());
     for(auto& property : computed_style.get_properties()) {
       property.visit(
@@ -117,7 +116,7 @@ void Box::resizeEvent(QResizeEvent* event) {
 }
 
 void Box::on_style() {
-  auto computed_style = m_stylist.compute_style();
+  auto computed_style = compute_style(*this);
   auto style = QString("#Box {");
   style += "border-style: solid;";
   auto body_geometry = QRect(0, 0, width(), height());
@@ -216,8 +215,7 @@ void Spire::display_warning_indicator(QWidget& widget) {
   auto time_line = new QTimeLine(WARNING_DURATION, &widget);
   time_line->setFrameRange(0, WARNING_FRAME_COUNT);
   time_line->setEasingCurve(QEasingCurve::Linear);
-  auto& stylist = find_stylist(widget);
-  auto computed_style = stylist.compute_style();
+  auto computed_style = compute_style(widget);
   auto computed_background_color = [&] {
     if(auto color = find<BackgroundColor>(computed_style)) {
       return color->get_expression().as<QColor>();
