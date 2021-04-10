@@ -75,7 +75,7 @@ IntegerBox::IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
 
 IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
     QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<IntegerToDecimalModel>(m_model)),
       m_submission(m_model->get_current()) {
@@ -87,7 +87,7 @@ IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
     adapted_modifiers.insert(modifier.key(), modifier.value());
   }
   m_decimal_box = new DecimalBox(m_adaptor_model, adapted_modifiers, this);
-  add_proxy(*m_decimal_box);
+  proxy_style(*this, *m_decimal_box);
   setFocusProxy(m_decimal_box);
   layout->addWidget(m_decimal_box);
   m_submit_connection = m_decimal_box->connect_submit_signal(

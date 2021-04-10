@@ -4,7 +4,7 @@
 #include <QHash>
 #include <QRegularExpression>
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -20,7 +20,7 @@ namespace Styles {
 }
 
   //! Represents a widget for inputting decimal values.
-  class DecimalBox : public Styles::StyledWidget {
+  class DecimalBox : public QWidget {
     public:
 
       //! The maximum precision of the Decimal type.
@@ -93,7 +93,6 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
-      void apply_style() override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
@@ -104,6 +103,7 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<DecimalModel> m_model;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
+      Styles::Stylist m_stylist;
       Decimal m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       TextBox* m_text_box;
@@ -122,6 +122,7 @@ namespace Styles {
       void on_current(const Decimal& current);
       void on_submit(const QString& submission);
       void on_reject(const QString& value);
+      void on_style();
   };
 }
 

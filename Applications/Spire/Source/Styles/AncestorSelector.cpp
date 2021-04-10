@@ -1,6 +1,6 @@
 #include "Spire/Styles/AncestorSelector.hpp"
-#include <set>
-#include "Spire/Styles/StyledWidget.hpp"
+#include <unordered_set>
+#include <QWidget>
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -28,7 +28,7 @@ AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
 
 std::vector<QWidget*> Spire::Styles::select(
     const AncestorSelector& selector, QWidget& source) {
-  auto selection = std::set<QWidget*>();
+  auto selection = std::unordered_set<QWidget*>();
   auto bases = select(selector.get_base(), source);
   for(auto base : bases) {
     auto ancestor = base->parentWidget();

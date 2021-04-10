@@ -1,7 +1,7 @@
 #ifndef SPIRE_SCROLL_BAR_HPP
 #define SPIRE_SCROLL_BAR_HPP
 #include <QScrollBar>
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -12,7 +12,7 @@ namespace Styles {
 }
 
   //! Displays a vertical or horizontal scroll bar.
-  class ScrollBar : public Styles::StyledWidget {
+  class ScrollBar : public QWidget {
     public:
 
       //! Signals a change in the scrollbar's position.

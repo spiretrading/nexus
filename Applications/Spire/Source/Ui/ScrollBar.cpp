@@ -23,7 +23,7 @@ namespace {
 }
 
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
-    : StyledWidget(parent) {
+    : QWidget(parent) {
   if(orientation == Qt::Vertical) {
     m_thumb_min_size = scale_height(50);
   } else {
@@ -35,7 +35,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   m_scroll_bar->setContextMenuPolicy(Qt::NoContextMenu);
   m_scroll_bar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_scroll_bar);
-  set_style(DEFAULT_STYLE());
+//  set_style(DEFAULT_STYLE());
   connect(m_scroll_bar, &QScrollBar::valueChanged, [=] (auto value) {
     m_position_signal(value);
   });

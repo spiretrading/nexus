@@ -216,16 +216,16 @@ UiProfile Spire::make_decimal_box_profile() {
       apply_widget_properties(decimal_box, profile.get_properties());
       auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
       leading_zeros.connect_changed_signal([=] (auto value) {
-        auto style = decimal_box->get_style();
+        auto style = get_style(*decimal_box);
         style.get(Any()).set(LeadingZeros(value));
-        decimal_box->set_style(std::move(style));
+        set_style(*decimal_box, std::move(style));
       });
       auto& trailing_zeros = get<int>("trailing_zeros",
         profile.get_properties());
       trailing_zeros.connect_changed_signal([=] (auto value) {
-        auto style = decimal_box->get_style();
+        auto style = get_style(*decimal_box);
         style.get(Any()).set(TrailingZeros(value));
-        decimal_box->set_style(std::move(style));
+        set_style(*decimal_box, std::move(style));
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
@@ -268,14 +268,14 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& buttons_visible = get<bool>("buttons_visible",
         profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
-        auto style = decimal_box->get_style();
+        auto style = get_style(*decimal_box);
         if(value) {
           style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
           style.get(Any() > is_a<Button>()).set(
             Visibility(VisibilityOption::NONE));
         }
-        decimal_box->set_style(std::move(style));
+        set_style(*decimal_box, std::move(style));
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
         profile.get_properties());
@@ -383,14 +383,14 @@ UiProfile Spire::make_integer_box_profile() {
       auto& buttons_visible = get<bool>("buttons_visible",
         profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
-        auto style = integer_box->get_style();
+        auto style = get_style(*integer_box);
         if(value) {
           style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
           style.get(Any() > is_a<Button>()).set(
             Visibility(VisibilityOption::NONE));
         }
-        integer_box->set_style(std::move(style));
+        set_style(*integer_box, std::move(style));
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
         profile.get_properties());

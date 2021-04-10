@@ -79,8 +79,7 @@ namespace Spire::Styles {
    * Returns all selected widgets relative to a source.
    * @param selector The Selector to use.
    * @param source The QWidget used as the reference point for selection.
-   *        This is usually the StyledWidget that the <i>selector</i> belongs
-   *        to.
+   *        This is usually the QWidget that the <i>selector</i> belongs to.
    * @return The list of all widgets that were selected.
    */
   std::vector<QWidget*> select(const Selector& selector, QWidget& source);
