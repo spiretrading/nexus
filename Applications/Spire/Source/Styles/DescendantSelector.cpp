@@ -2,6 +2,7 @@
 #include <deque>
 #include <unordered_set>
 #include <QWidget>
+#include "Spire/Styles/DisambiguateSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -37,6 +38,8 @@ std::vector<Stylist*> Spire::Styles::select(const DescendantSelector& selector,
     Stylist& source) {
   auto selection = std::unordered_set<Stylist*>();
   auto bases = select(selector.get_base(), source);
+  auto is_disambiguated = selector.get_base().get_type() ==
+    typeid(DisambiguateSelector);
   for(auto base : bases) {
     auto descendants = std::deque<QWidget*>();
     for(auto child : base->get_widget().children()) {
@@ -49,8 +52,15 @@ std::vector<Stylist*> Spire::Styles::select(const DescendantSelector& selector,
       descendants.pop_front();
       auto descendant_selection = select(selector.get_descendant(),
         find_stylist(*static_cast<QWidget*>(descendant)));
-      selection.insert(
-        descendant_selection.begin(), descendant_selection.end());
+      if(!descendant_selection.empty()) {
+        if(is_disambiguated) {
+          selection.insert(base);
+          break;
+        } else {
+          selection.insert(
+            descendant_selection.begin(), descendant_selection.end());
+        }
+      }
       for(auto child : descendant->children()) {
         if(child->isWidgetType()) {
           descendants.push_back(static_cast<QWidget*>(child));

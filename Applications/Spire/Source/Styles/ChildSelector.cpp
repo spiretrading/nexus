@@ -1,6 +1,7 @@
 #include "Spire/Styles/ChildSelector.hpp"
 #include <unordered_set>
 #include <QWidget>
+#include "Spire/Styles/DisambiguateSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -34,18 +35,38 @@ std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
     Stylist& source) {
   auto selection = std::unordered_set<Stylist*>();
   auto bases = select(selector.get_base(), source);
+  auto is_disambiguated = selector.get_base().get_type() ==
+    typeid(DisambiguateSelector);
   for(auto base : bases) {
+    auto is_base_selected = false;
     for(auto& child : base->get_widget().children()) {
       if(child->isWidgetType()) {
         auto child_selection = select(selector.get_child(),
           find_stylist(*static_cast<QWidget*>(child)));
-        selection.insert(child_selection.begin(), child_selection.end());
+        if(!child_selection.empty()) {
+          if(is_disambiguated) {
+            selection.insert(base);
+            is_base_selected = true;
+            break;
+          } else {
+            selection.insert(child_selection.begin(), child_selection.end());
+          }
+        }
       }
     }
-    for(auto& pseudo_element : get_pseudo_elements(base->get_widget())) {
-      if(auto stylist = find_stylist(base->get_widget(), pseudo_element)) {
-        auto child_selection = select(selector.get_child(), *stylist);
-        selection.insert(child_selection.begin(), child_selection.end());
+    if(!is_disambiguated || !is_base_selected) {
+      for(auto& pseudo_element : get_pseudo_elements(base->get_widget())) {
+        if(auto stylist = find_stylist(base->get_widget(), pseudo_element)) {
+          auto child_selection = select(selector.get_child(), *stylist);
+          if(!child_selection.empty()) {
+            if(is_disambiguated) {
+              selection.insert(base);
+              break;
+            } else {
+              selection.insert(child_selection.begin(), child_selection.end());
+            }
+          }
+        }
       }
     }
   }

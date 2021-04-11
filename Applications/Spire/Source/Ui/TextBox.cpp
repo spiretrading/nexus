@@ -61,7 +61,7 @@ namespace {
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
     style.get(Disabled() > Placeholder()).
-      set(TextColor(QColor::fromRgb(0xFF, 0, 0)));
+      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
 }

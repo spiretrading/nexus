@@ -10,6 +10,7 @@ namespace Spire::Styles {
   class ChildSelector;
   template<typename... T> class CompositeProperty;
   class DescendantSelector;
+  class DisambiguateSelector;
   template<typename T> class Expression;
   class IsASelector;
   class NotSelector;

@@ -11,6 +11,7 @@
 #include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
+#include "Spire/Styles/DisambiguateSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"

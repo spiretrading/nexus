@@ -52,8 +52,7 @@ namespace {
     style.get(Disabled()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
-    style.get((Any() < ReadOnly()) > is_a<Button>()).
-      set(Visibility(VisibilityOption::NONE));
+    style.get(+Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
     set_style(*button, std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
@@ -232,8 +231,8 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
   auto style = Spire::Styles::get_style(*m_text_box);
-  style.get(((Any() % is_a<Button>()) &&
-    !matches(Visibility(VisibilityOption::NONE))) % is_a<TextBox>()).set(
+  style.get(+Any() %
+    (is_a<Button>() && !matches(Visibility(VisibilityOption::NONE)))).set(
       PaddingRight(scale_width(26)));
   set_style(*m_text_box, std::move(style));
   proxy_style(*this, *m_text_box);

@@ -164,6 +164,7 @@ void Stylist::match(const Selector& selector) {
     m_enable_signal();
     apply_rules();
     for(auto principal : m_principals) {
+      principal->m_enable_signal();
       principal->apply_rules();
     }
   }
@@ -174,6 +175,7 @@ void Stylist::unmatch(const Selector& selector) {
     m_enable_signal();
     apply_rules();
     for(auto principal : m_principals) {
+      principal->m_enable_signal();
       principal->apply_rules();
     }
   }
