@@ -144,6 +144,7 @@ namespace Spire::Styles {
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
       Stylist& operator =(const Stylist&) = delete;
+      void remove_dependent(Stylist& dependent);
       void apply(Stylist& source, Block block);
       void apply_rules();
       void apply_style();
