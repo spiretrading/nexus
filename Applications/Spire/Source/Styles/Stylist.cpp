@@ -161,9 +161,13 @@ void Stylist::remove_proxy(QWidget& widget) {
 
 void Stylist::match(const Selector& selector) {
   if(m_matching_selectors.insert(selector).second) {
-    m_enable_signal();
-    apply_rules();
-    for(auto principal : m_principals) {
+    auto principals = std::deque<Stylist*>();
+    principals.push_back(this);
+    while(!principals.empty()) {
+      auto principal = principals.front();
+      principals.pop_front();
+      principals.insert(principals.end(), principal->m_principals.begin(),
+        principal->m_principals.end());
       principal->m_enable_signal();
       principal->apply_rules();
     }
@@ -172,9 +176,13 @@ void Stylist::match(const Selector& selector) {
 
 void Stylist::unmatch(const Selector& selector) {
   if(m_matching_selectors.erase(selector) != 0) {
-    m_enable_signal();
-    apply_rules();
-    for(auto principal : m_principals) {
+    auto principals = std::deque<Stylist*>();
+    principals.push_back(this);
+    while(!principals.empty()) {
+      auto principal = principals.front();
+      principals.pop_front();
+      principals.insert(principals.end(), principal->m_principals.begin(),
+        principal->m_principals.end());
       principal->m_enable_signal();
       principal->apply_rules();
     }
