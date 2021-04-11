@@ -60,8 +60,8 @@ namespace {
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
-    style.get(Placeholder() && Disabled()).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(Disabled() > Placeholder()).
+      set(TextColor(QColor::fromRgb(0xFF, 0, 0)));
     return style;
   }
 }
@@ -108,6 +108,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   proxy_style(*this, *m_box);
   add_pseudo_element(*this, Placeholder());
   connect_style_signal(*this, [=] { on_style(); });
+  connect_style_signal(*this, Placeholder(), [=] { on_placeholder_style(); });
   set_style(*this, DEFAULT_STYLE());
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
@@ -334,23 +335,17 @@ void TextBox::on_text_edited(const QString& text) {
 }
 
 void TextBox::on_style() {
-  auto line_edit_computed_style = compute_style(*this);
-  auto placeholder_computed_style = compute_style(*this, Placeholder());
-  auto placeholder_style = QString(
-    R"(QLabel {
-      background: transparent;
-      border-width: 0px;
-      padding: 0px;)");
-  auto line_edit_style = QString(
+  auto style = QString(
     R"(QLineEdit {
       background: transparent;
       border-width: 0px;
       padding: 0px;)");
-  auto is_line_edit_updated = false;
-  for(auto& property : line_edit_computed_style.get_properties()) {
+  auto has_update = false;
+  auto computed_style = compute_style(*this);
+  for(auto& property : computed_style.get_properties()) {
     property.visit(
       [&] (const TextColor& color) {
-        line_edit_style += "color: " +
+        style += "color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
       [&] (const TextAlign& alignment) {
@@ -358,7 +353,7 @@ void TextBox::on_style() {
           alignment.get_expression().as<Qt::Alignment>();
         if(computed_alignment != m_line_edit->alignment()) {
           m_line_edit->setAlignment(computed_alignment);
-          is_line_edit_updated = true;
+          has_update = true;
         }
       },
       [&] (const Font& font) {
@@ -366,15 +361,34 @@ void TextBox::on_style() {
         if(m_line_edit_font != computed_font) {
           m_line_edit_font = computed_font;
           m_line_edit->setFont(computed_font);
-          is_line_edit_updated = true;
+          has_update = true;
         }
       });
   }
-  auto is_placeholder_updated = false;
-  for(auto& property : placeholder_computed_style.get_properties()) {
+  style += "}";
+  if(style != m_line_edit->styleSheet()) {
+    m_line_edit->setStyleSheet(style);
+    m_line_edit->style()->unpolish(this);
+    m_line_edit->style()->polish(this);
+    has_update = true;
+  }
+  if(has_update) {
+    update_display_text();
+  }
+}
+
+void TextBox::on_placeholder_style() {
+  auto style = QString(
+    R"(QLabel {
+      background: transparent;
+      border-width: 0px;
+      padding: 0px;)");
+  auto has_update = false;
+  auto computed_style = compute_style(*this, Placeholder());
+  for(auto& property : computed_style.get_properties()) {
     property.visit(
       [&] (const TextColor& color) {
-        placeholder_style += "color: " +
+        style += "color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
       [&] (const TextAlign& alignment) {
@@ -382,7 +396,7 @@ void TextBox::on_style() {
           alignment.get_expression().as<Qt::Alignment>();
         if(computed_alignment != m_placeholder->alignment()) {
           m_placeholder->setAlignment(computed_alignment);
-          is_placeholder_updated = true;
+          has_update = true;
         }
       },
       [&] (const Font& font) {
@@ -390,28 +404,18 @@ void TextBox::on_style() {
         if(m_placeholder_font != computed_font) {
           m_placeholder_font = computed_font;
           m_placeholder->setFont(computed_font);
-          is_placeholder_updated = true;
+          has_update = true;
         }
       });
   }
-  line_edit_style += "}";
-  if(line_edit_style != m_line_edit->styleSheet()) {
-    m_line_edit->setStyleSheet(line_edit_style);
-    m_line_edit->style()->unpolish(this);
-    m_line_edit->style()->polish(this);
-    is_line_edit_updated = true;
-  }
-  if(is_line_edit_updated) {
-    update_display_text();
-  }
-  placeholder_style += "}";
-  if(placeholder_style != m_placeholder->styleSheet()) {
-    m_placeholder->setStyleSheet(placeholder_style);
+  style += "}";
+  if(style != m_placeholder->styleSheet()) {
+    m_placeholder->setStyleSheet(style);
     m_placeholder->style()->unpolish(this);
     m_placeholder->style()->polish(this);
-    is_placeholder_updated = true;
+    has_update = true;
   }
-  if(is_placeholder_updated) {
+  if(has_update) {
     update_placeholder_text();
   }
 }

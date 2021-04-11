@@ -335,6 +335,17 @@ Block Spire::Styles::compute_style(
   return {};
 }
 
+std::vector<PseudoElement> Spire::Styles::get_pseudo_elements(
+    const QWidget& source) {
+  auto pseudo_elements = std::vector<PseudoElement>();
+  for(auto& pseudo_stylist : pseudo_stylists) {
+    if(pseudo_stylist.first.first == &source) {
+      pseudo_elements.push_back(pseudo_stylist.first.second);
+    }
+  }
+  return pseudo_elements;
+}
+
 void Spire::Styles::add_pseudo_element(QWidget& source,
     const PseudoElement& pseudo_element) {
   auto stylist = pseudo_stylists.find(std::pair(&source, pseudo_element));
@@ -365,4 +376,13 @@ void Spire::Styles::unmatch(QWidget& widget, const Selector& selector) {
 connection Spire::Styles::connect_style_signal(const QWidget& widget,
     const Stylist::StyleSignal::slot_type& slot) {
   return find_stylist(widget).connect_style_signal(slot);
+}
+
+connection Spire::Styles::connect_style_signal(const QWidget& widget,
+    const PseudoElement& pseudo_element,
+    const Stylist::StyleSignal::slot_type& slot) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    return stylist->connect_style_signal(slot);
+  }
+  return {};
 }

@@ -134,6 +134,7 @@ namespace Styles {
       void on_editing_finished();
       void on_text_edited(const QString& text);
       void on_style();
+      void on_placeholder_style();
   };
 }
 

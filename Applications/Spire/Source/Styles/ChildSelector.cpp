@@ -42,6 +42,12 @@ std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
         selection.insert(child_selection.begin(), child_selection.end());
       }
     }
+    for(auto& pseudo_element : get_pseudo_elements(base->get_widget())) {
+      if(auto stylist = find_stylist(base->get_widget(), pseudo_element)) {
+        auto child_selection = select(selector.get_child(), *stylist);
+        selection.insert(child_selection.begin(), child_selection.end());
+      }
+    }
   }
   return std::vector(selection.begin(), selection.end());
 }

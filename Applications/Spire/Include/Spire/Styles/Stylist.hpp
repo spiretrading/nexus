@@ -182,6 +182,9 @@ namespace Spire::Styles {
    */
   Block compute_style(QWidget& widget, const PseudoElement& pseudo_element);
 
+  /** Returns all of a QWidget's PseudoElements. */
+  std::vector<PseudoElement> get_pseudo_elements(const QWidget& source);
+
   /** Associates a PseudoElement with a QWidget. */
   void add_pseudo_element(QWidget& source, const PseudoElement& pseudo_element);
 
@@ -209,6 +212,11 @@ namespace Spire::Styles {
   /** Connects a slot to a QWidget's StyleSignal. */
   boost::signals2::connection connect_style_signal(
     const QWidget& widget, const Stylist::StyleSignal::slot_type& slot);
+
+  /** Connects a slot to a QWidget's StyleSignal. */
+  boost::signals2::connection connect_style_signal(
+    const QWidget& widget, const PseudoElement& pseudo_element,
+    const Stylist::StyleSignal::slot_type& slot);
 }
 
 #endif
