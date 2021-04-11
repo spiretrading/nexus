@@ -16,7 +16,8 @@ namespace Spire::Styles {
   class OrSelector;
   class ParentSelector;
   class Property;
-  template<typename T, typename G> class PseudoElement;
+  class PseudoElement;
+  template<typename T, typename G> class PseudoElementSelector;
   class Rule;
   class Selector;
   class SelectorRegistry;
@@ -24,7 +25,6 @@ namespace Spire::Styles {
   template<typename T, typename G> class StateSelector;
   class StyleSheet;
   class Stylist;
-  class VoidSelector;
 }
 
 #endif

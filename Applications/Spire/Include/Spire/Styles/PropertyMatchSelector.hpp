@@ -1,10 +1,7 @@
 #ifndef SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
 #define SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
-#include <utility>
 #include "Spire/Styles/Property.hpp"
 #include "Spire/Styles/Styles.hpp"
-
-class QWidget;
 
 namespace Spire::Styles {
 
@@ -21,7 +18,9 @@ namespace Spire::Styles {
       /** Returns the property that must match. */
       const Property& get_property() const;
 
-      bool is_match(const PropertyMatchSelector& selector) const;
+      bool operator ==(const PropertyMatchSelector& selector) const;
+
+      bool operator !=(const PropertyMatchSelector& selector) const;
 
     private:
       Property m_property;
@@ -34,8 +33,8 @@ namespace Spire::Styles {
    */
   PropertyMatchSelector matches(Property property);
 
-  std::vector<QWidget*> select(
-    const PropertyMatchSelector& selector, QWidget& source);
+  std::vector<Stylist*> select(
+    const PropertyMatchSelector& selector, Stylist& source);
 }
 
 #endif

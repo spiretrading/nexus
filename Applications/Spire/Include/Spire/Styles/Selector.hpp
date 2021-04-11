@@ -15,8 +15,8 @@ namespace Spire::Styles {
 
   template<typename T>
   struct is_selector_t<T, std::enable_if_t<std::is_same_v<
-    decltype(std::declval<T>().is_match(std::declval<T>())), bool>>> :
-    std::true_type {};
+    decltype(select(std::declval<T>(), std::declval<Stylist>())),
+    std::vector<Stylist*>>>> : std::true_type {};
 
   template<typename T>
   constexpr auto is_selector_v = is_selector_t<T>::value;
@@ -39,9 +39,6 @@ namespace Spire::Styles {
       template<typename U>
       const U& as() const;
 
-      /** Tests if another Selector matches this one. */
-      bool is_match(const Selector& selector) const;
-
       /**
        * Applies a callable to the underlying selector.
        * @param f The callable to apply.
@@ -51,6 +48,10 @@ namespace Spire::Styles {
 
       template<typename F, typename... G>
       decltype(auto) visit(F&& f, G&&... g) const;
+
+      bool operator ==(const Selector& selector) const;
+
+      bool operator !=(const Selector& selector) const;
 
       Selector& operator =(const Selector&) = default;
 
@@ -67,28 +68,22 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
-      friend std::vector<QWidget*> select(const Selector&, QWidget&);
+      friend std::vector<Stylist*> select(const Selector&, Stylist&);
       friend std::vector<QWidget*> build_reach(const Selector&, QWidget&);
       std::any m_selector;
-      std::function<bool (const Selector&, const Selector&)> m_matcher;
-      std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_select;
+      std::function<bool (const Selector&, const Selector&)> m_is_equal;
+      std::function<std::vector<Stylist*> (const Selector&, Stylist&)> m_select;
       std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_reach;
   };
 
   /**
-   * Returns all selected widgets relative to a source.
+   * Returns all selected Stylists relative to a source.
    * @param selector The Selector to use.
-   * @param source The QWidget used as the reference point for selection.
-   *        This is usually the QWidget that the <i>selector</i> belongs to.
-   * @return The list of all widgets that were selected.
+   * @param source The Stylist used as the reference point for selection.
+   *        This is usually the Stylist that the <i>selector</i> belongs to.
+   * @return The list of all Stylists that were selected.
    */
-  std::vector<QWidget*> select(const Selector& selector, QWidget& source);
-
-  template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
-  std::vector<QWidget*> select(const T& selector, QWidget& source) {
-    static_assert(
-      false, "All selector types must implement a select function.");
-  }
+  std::vector<Stylist*> select(const Selector& selector, Stylist& source);
 
   /**
    * Returns the list of all widgets that could be selected by one of the rules
@@ -116,16 +111,14 @@ namespace Spire::Styles {
   template<typename T, typename>
   Selector::Selector(T selector)
     : m_selector(std::move(selector)),
-      m_matcher([] (const Selector& self, const Selector& selector) {
+      m_is_equal([] (const Selector& self, const Selector& selector) {
         if(selector.get_type() != typeid(T)) {
           return false;
         }
-        auto& left = self.as<T>();
-        auto& right = selector.as<T>();
-        return left.is_match(right);
+        return self.as<T>() == selector.as<T>();
       }),
-      m_select([] (const Selector& self, QWidget& widget) {
-        return select(self.as<T>(), widget);
+      m_select([] (const Selector& self, Stylist& source) {
+        return select(self.as<T>(), source);
       }),
       m_reach([] (const Selector& self, QWidget& widget) {
         return build_reach(self.as<T>(), widget);

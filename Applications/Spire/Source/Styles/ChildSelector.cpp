@@ -1,6 +1,7 @@
 #include "Spire/Styles/ChildSelector.hpp"
 #include <unordered_set>
 #include <QWidget>
+#include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -17,24 +18,27 @@ const Selector& ChildSelector::get_child() const {
   return m_child;
 }
 
-bool ChildSelector::is_match(const ChildSelector& selector) const {
-  return m_base.is_match(selector.get_base()) &&
-    m_child.is_match(selector.get_child());
+bool ChildSelector::operator ==(const ChildSelector& selector) const {
+  return m_base == selector.get_base() && m_child == selector.get_child();
+}
+
+bool ChildSelector::operator !=(const ChildSelector& selector) const {
+  return !(*this == selector);
 }
 
 ChildSelector Spire::Styles::operator >(Selector base, Selector child) {
   return ChildSelector(std::move(base), std::move(child));
 }
 
-std::vector<QWidget*> Spire::Styles::select(const ChildSelector& selector,
-    QWidget& source) {
-  auto selection = std::unordered_set<QWidget*>();
+std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
+    Stylist& source) {
+  auto selection = std::unordered_set<Stylist*>();
   auto bases = select(selector.get_base(), source);
   for(auto base : bases) {
-    for(auto& child : base->children()) {
+    for(auto& child : base->get_widget().children()) {
       if(child->isWidgetType()) {
         auto child_selection = select(selector.get_child(),
-          *static_cast<QWidget*>(child));
+          find_stylist(*static_cast<QWidget*>(child)));
         selection.insert(child_selection.begin(), child_selection.end());
       }
     }

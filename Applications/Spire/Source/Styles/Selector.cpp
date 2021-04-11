@@ -9,12 +9,16 @@ std::type_index Selector::get_type() const {
   return m_selector.type();
 }
 
-bool Selector::is_match(const Selector& selector) const {
-  return m_matcher(*this, selector);
+bool Selector::operator ==(const Selector& selector) const {
+  return m_is_equal(*this, selector);
 }
 
-std::vector<QWidget*> Spire::Styles::select(
-    const Selector& selector, QWidget& source) {
+bool Selector::operator !=(const Selector& selector) const {
+  return !(*this == selector);
+}
+
+std::vector<Stylist*> Spire::Styles::select(
+    const Selector& selector, Stylist& source) {
   return selector.m_select(selector, source);
 }
 

@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <unordered_set>
 #include <vector>
+#include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/AncestorSelector.hpp"
@@ -20,7 +21,6 @@
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
-#include "Spire/Styles/VoidSelector.hpp"
 
 namespace Spire::Styles {
 
@@ -63,6 +63,12 @@ namespace Spire::Styles {
       using StyleSignal = Signal<void ()>;
 
       ~Stylist();
+
+      /** Returns the QWidget being styled. */
+      QWidget& get_widget();
+
+      /** Returns the PseudoElement represented. */
+      const boost::optional<PseudoElement>& get_pseudo_element() const;
 
       /** Returns the style. */
       const StyleSheet& get_style() const;
@@ -110,35 +116,34 @@ namespace Spire::Styles {
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
       };
-      struct SelectorEquality {
-        bool operator ()(const Selector& left, const Selector& right) const;
-      };
       struct BlockEntry {
-        const QWidget* m_source;
+        Stylist* m_source;
         int m_priority;
         Block m_block;
       };
       using EnableSignal = Signal<void ()>;
       friend Stylist& find_stylist(QWidget& widget);
+      friend void add_pseudo_element(QWidget& source,
+        const PseudoElement& pseudo_element);
       mutable StyleSignal m_style_signal;
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
+      boost::optional<PseudoElement> m_pseudo_element;
       StyleSheet m_style;
       VisibilityOption m_visibility;
-      std::vector<QWidget*> m_principals;
-      std::vector<QWidget*> m_proxies;
-      std::unordered_set<Selector, SelectorHash, SelectorEquality>
-        m_matching_selectors;
-      std::unordered_set<QWidget*> m_dependents;
+      std::vector<Stylist*> m_principals;
+      std::vector<Stylist*> m_proxies;
+      std::unordered_set<Selector, SelectorHash> m_matching_selectors;
+      std::unordered_set<Stylist*> m_dependents;
       std::vector<boost::signals2::scoped_connection> m_enable_connections;
-      std::unordered_map<const QWidget*, std::shared_ptr<BlockEntry>>
+      std::unordered_map<const Stylist*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
 
-      explicit Stylist(QWidget& parent);
+      Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
       Stylist& operator =(const Stylist&) = delete;
-      void apply(const QWidget& source, Block block);
+      void apply(Stylist& source, Block block);
       void apply_rules();
       void apply_style();
       void apply_proxy_styles();
@@ -153,6 +158,16 @@ namespace Spire::Styles {
   /** Returns the Stylist associated with a widget. */
   Stylist& find_stylist(QWidget& widget);
 
+  /** Finds the Stylist associated with a widget's pseudo-element. */
+  const Stylist* find_stylist(
+    const QWidget& widget, const PseudoElement& pseudo_element);
+
+  /** Returns the Stylist associated with a widget. */
+  Stylist& find_stylist(QWidget& widget);
+
+  /** Finds the Stylist associated with a widget's pseudo-element. */
+  Stylist* find_stylist(QWidget& widget, const PseudoElement& pseudo_element);
+
   /** Returns a QWidget's styling. */
   const StyleSheet& get_style(const QWidget& widget);
 
@@ -161,6 +176,14 @@ namespace Spire::Styles {
 
   /** Returns a Block containing a widget's computed style. */
   Block compute_style(QWidget& widget);
+
+  /**
+   * Returns a Block containing the computed style of a widget's pseudoelement.
+   */
+  Block compute_style(QWidget& widget, const PseudoElement& pseudo_element);
+
+  /** Associates a PseudoElement with a QWidget. */
+  void add_pseudo_element(QWidget& source, const PseudoElement& pseudo_element);
 
   /**
    * Specifies that a QWidget will proxy its style to another QWidget.
@@ -184,8 +207,8 @@ namespace Spire::Styles {
   void unmatch(QWidget& widget, const Selector& selector);
 
   /** Connects a slot to a QWidget's StyleSignal. */
-  boost::signals2::connection connect_style_signal(const QWidget& widget,
-    const Stylist::StyleSignal::slot_type& slot);
+  boost::signals2::connection connect_style_signal(
+    const QWidget& widget, const Stylist::StyleSignal::slot_type& slot);
 }
 
 #endif

@@ -1,6 +1,5 @@
 #ifndef SPIRE_STYLES_PARENT_SELECTOR_HPP
 #define SPIRE_STYLES_PARENT_SELECTOR_HPP
-#include <utility>
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -15,7 +14,7 @@ namespace Spire::Styles {
        * @param base The selector for the base widget.
        * @param parent The selector for the parent.
        */
-      explicit ParentSelector(Selector base, Selector parent);
+      ParentSelector(Selector base, Selector parent);
 
       /** Returns the base selector. */
       const Selector& get_base() const;
@@ -23,7 +22,9 @@ namespace Spire::Styles {
       /** Returns the parent selector. */
       const Selector& get_parent() const;
 
-      bool is_match(const ParentSelector& selector) const;
+      bool operator ==(const ParentSelector& selector) const;
+
+      bool operator !=(const ParentSelector& selector) const;
 
     private:
       Selector m_base;
@@ -42,7 +43,7 @@ namespace Spire::Styles {
     return ParentSelector(std::move(base), std::move(parent));
   }
 
-  std::vector<QWidget*> select(const ParentSelector& selector, QWidget& source);
+  std::vector<Stylist*> select(const ParentSelector& selector, Stylist& source);
 
   std::vector<QWidget*> build_reach(
     const ParentSelector& selector, QWidget& source);

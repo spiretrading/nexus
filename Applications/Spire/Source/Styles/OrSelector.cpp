@@ -16,17 +16,20 @@ const Selector& OrSelector::get_right() const {
   return m_right;
 }
 
-bool OrSelector::is_match(const OrSelector& selector) const {
-  return m_left.is_match(selector.get_left()) &&
-    m_right.is_match(selector.get_right());
+bool OrSelector::operator ==(const OrSelector& selector) const {
+  return m_left == selector.get_left() && m_right == selector.get_right();
+}
+
+bool OrSelector::operator !=(const OrSelector& selector) const {
+  return !(*this == selector);
 }
 
 OrSelector Spire::Styles::operator ||(Selector left, Selector right) {
   return OrSelector(std::move(left), std::move(right));
 }
 
-std::vector<QWidget*> Spire::Styles::select(
-    const OrSelector& selector, QWidget& source) {
+std::vector<Stylist*> Spire::Styles::select(
+    const OrSelector& selector, Stylist& source) {
   auto left_selection = select(selector.get_left(), source);
   if(left_selection.empty()) {
     return select(selector.get_right(), source);

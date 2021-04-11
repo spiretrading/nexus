@@ -16,19 +16,22 @@ const Selector& AndSelector::get_right() const {
   return m_right;
 }
 
-bool AndSelector::is_match(const AndSelector& selector) const {
-  return m_left.is_match(selector.get_left()) &&
-    m_right.is_match(selector.get_right());
+bool AndSelector::operator ==(const AndSelector& selector) const {
+  return m_left == selector.get_left() && m_right == selector.get_right();
+}
+
+bool AndSelector::operator !=(const AndSelector& selector) const {
+  return !(*this == selector);
 }
 
 AndSelector Spire::Styles::operator &&(Selector left, Selector right) {
   return AndSelector(std::move(left), std::move(right));
 }
 
-std::vector<QWidget*> Spire::Styles::select(
-    const AndSelector& selector, QWidget& source) {
+std::vector<Stylist*> Spire::Styles::select(
+    const AndSelector& selector, Stylist& source) {
   auto left_selection = select(selector.get_left(), source);
-  auto right_selection = std::vector<QWidget*>();
+  auto right_selection = std::vector<Stylist*>();
   for(auto base : left_selection) {
     auto base_selection = select(selector.get_right(), *base);
     right_selection.insert(right_selection.end(), base_selection.begin(),
@@ -50,7 +53,7 @@ std::vector<QWidget*> Spire::Styles::select(
     return std::tie(right_selection, left_selection);
   }();
   auto small_set = std::unordered_set(small.begin(), small.end());
-  auto selection = std::vector<QWidget*>();
+  auto selection = std::vector<Stylist*>();
   for(auto& candidate : big) {
     if(small_set.find(candidate) != small_set.end()) {
       selection.push_back(candidate);

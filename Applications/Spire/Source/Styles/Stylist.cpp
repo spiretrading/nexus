@@ -2,6 +2,8 @@
 #include <deque>
 #include <QApplication>
 #include <QEvent>
+#include <boost/functional/hash.hpp>
+#include "Spire/Styles/PseudoElement.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -9,7 +11,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  std::unordered_map<QWidget*, Stylist*> stylists;
+  std::unordered_map<std::pair<QWidget*, PseudoElement>, Stylist*,
+    boost::hash<std::pair<QWidget*, PseudoElement>>> pseudo_stylists;
 }
 
 struct Stylist::StyleEventFilter : QObject {
@@ -64,22 +67,34 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
   return selector.get_type().hash_code();
 }
 
-bool Stylist::SelectorEquality::operator ()(
-    const Selector& left, const Selector& right) const {
-  return left.is_match(right);
-}
-
 Stylist::~Stylist() {
+  for(auto& block : m_source_to_block) {
+    auto source = block.second->m_source;
+    source->m_dependents.erase(this);
+  }
   for(auto dependent : m_dependents) {
-    auto& stylist = find_stylist(*dependent);
-    stylist.apply(*dependent, {});
+    dependent->apply(*this, {});
+    dependent->m_source_to_block.erase(this);
+    dependent->m_blocks.erase(
+      std::find_if(dependent->m_blocks.begin(), dependent->m_blocks.end(),
+        [&] (const auto& block) {
+          return block->m_source == this;
+        }));
   }
   while(!m_proxies.empty()) {
-    remove_proxy(*m_proxies.front());
+    remove_proxy(*m_proxies.front()->m_widget);
   }
   while(!m_principals.empty()) {
-    find_stylist(*m_principals.front()).remove_proxy(*m_widget);
+    m_principals.front()->remove_proxy(*m_widget);
   }
+}
+
+QWidget& Stylist::get_widget() {
+  return *m_widget;
+}
+
+const optional<PseudoElement>& Stylist::get_pseudo_element() const {
+  return m_pseudo_element;
 }
 
 const StyleSheet& Stylist::get_style() const {
@@ -104,7 +119,7 @@ bool Stylist::is_match(const Selector& selector) const {
     return true;
   }
   for(auto proxy : m_proxies) {
-    if(find_stylist(*proxy).is_match(selector)) {
+    if(proxy->is_match(selector)) {
       return true;
     }
   }
@@ -117,29 +132,29 @@ Block Stylist::compute_style() const {
     merge(block, entry->m_block);
   }
   for(auto principal : m_principals) {
-    merge(block, find_stylist(*principal).compute_style());
+    merge(block, principal->compute_style());
   }
   return block;
 }
 
 void Stylist::add_proxy(QWidget& widget) {
-  auto i = std::find(m_proxies.begin(), m_proxies.end(), &widget);
+  auto& stylist = find_stylist(widget);
+  auto i = std::find(m_proxies.begin(), m_proxies.end(), &stylist);
   if(i == m_proxies.end()) {
-    m_proxies.push_back(&widget);
-    auto& stylist = find_stylist(widget);
-    stylist.m_principals.push_back(m_widget);
+    m_proxies.push_back(&stylist);
+    stylist.m_principals.push_back(this);
     stylist.apply_proxy_styles();
   }
 }
 
 void Stylist::remove_proxy(QWidget& widget) {
-  auto i = std::find(m_proxies.begin(), m_proxies.end(), &widget);
+  auto& stylist = find_stylist(widget);
+  auto i = std::find(m_proxies.begin(), m_proxies.end(), &stylist);
   if(i == m_proxies.end()) {
     return;
   }
-  auto& stylist = find_stylist(**i);
   stylist.m_principals.erase(std::find(stylist.m_principals.begin(),
-    stylist.m_principals.end(), m_widget));
+    stylist.m_principals.end(), this));
   m_proxies.erase(i);
   stylist.apply_proxy_styles();
 }
@@ -149,8 +164,7 @@ void Stylist::match(const Selector& selector) {
     m_enable_signal();
     apply_rules();
     for(auto principal : m_principals) {
-      auto& stylist = find_stylist(*principal);
-      stylist.apply_rules();
+      principal->apply_rules();
     }
   }
 }
@@ -160,8 +174,7 @@ void Stylist::unmatch(const Selector& selector) {
     m_enable_signal();
     apply_rules();
     for(auto principal : m_principals) {
-      auto& stylist = find_stylist(*principal);
-      stylist.apply_rules();
+      principal->apply_rules();
     }
   }
 }
@@ -171,14 +184,16 @@ connection Stylist::connect_style_signal(
   return m_style_signal.connect(slot);
 }
 
-Stylist::Stylist(QWidget& widget)
+Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
+      m_pseudo_element(std::move(pseudo_element)),
       m_visibility(VisibilityOption::VISIBLE) {
-  stylists[m_widget] = this;
-  m_widget->installEventFilter(new StyleEventFilter(*this));
+  if(!m_pseudo_element) {
+    m_widget->installEventFilter(new StyleEventFilter(*this));
+  }
 }
 
-void Stylist::apply(const QWidget& source, Block block) {
+void Stylist::apply(Stylist& source, Block block) {
   auto i = m_source_to_block.find(&source);
   if(i == m_source_to_block.end()) {
     auto entry = std::make_shared<BlockEntry>();
@@ -193,39 +208,40 @@ void Stylist::apply(const QWidget& source, Block block) {
 
 void Stylist::apply_rules() {
   auto blocks = std::unordered_map<Stylist*, Block>();
-  auto principals = std::deque<QWidget*>();
-  principals.push_back(m_widget);
+  auto principals = std::deque<Stylist*>();
+  principals.push_back(this);
   while(!principals.empty()) {
     auto principal = principals.front();
-    auto& stylist = find_stylist(*principal);
     principals.pop_front();
-    principals.insert(principals.end(), stylist.m_principals.begin(),
-      stylist.m_principals.end());
-    for(auto& rule : stylist.m_style.get_rules()) {
-      auto selection = select(rule.get_selector(), *m_widget);
+    principals.insert(principals.end(), principal->m_principals.begin(),
+      principal->m_principals.end());
+    for(auto& rule : principal->m_style.get_rules()) {
+      auto selection = select(rule.get_selector(), *this);
       for(auto& selected : selection) {
-        merge(blocks[&find_stylist(*selected)], rule.get_block());
+        merge(blocks[selected], rule.get_block());
       }
     }
   }
   auto previous_dependents = std::move(m_dependents);
   for(auto& block : blocks) {
-    m_dependents.insert(block.first->m_widget);
-    block.first->apply(*m_widget, std::move(block.second));
+    m_dependents.insert(block.first);
+    block.first->apply(*this, std::move(block.second));
   }
   for(auto previous_dependent : previous_dependents) {
     if(m_dependents.find(previous_dependent) == m_dependents.end()) {
-      auto& stylist = find_stylist(*previous_dependent);
-      stylist.apply(*m_widget, {});
+      previous_dependent->apply(*this, {});
     }
   }
   for(auto proxy : m_proxies) {
-    find_stylist(*proxy).apply_rules();
+    proxy->apply_rules();
   }
 }
 
 void Stylist::apply_style() {
   m_style_signal();
+  if(m_pseudo_element) {
+    return;
+  }
   auto style = compute_style();
   auto visibility_option = [&] {
     if(auto visibility = Spire::Styles::find<Visibility>(style)) {
@@ -254,7 +270,7 @@ void Stylist::apply_style() {
 void Stylist::apply_proxy_styles() {
   apply_style();
   for(auto proxy : m_proxies) {
-    find_stylist(*proxy).apply_proxy_styles();
+    proxy->apply_proxy_styles();
   }
 }
 
@@ -271,16 +287,32 @@ const Stylist& Spire::Styles::find_stylist(const QWidget& widget) {
   return find_stylist(const_cast<QWidget&>(widget));
 }
 
+const Stylist* Spire::Styles::find_stylist(const QWidget& widget,
+    const PseudoElement& pseudo_element) {
+  return find_stylist(const_cast<QWidget&>(widget), pseudo_element);
+}
+
 Stylist& Spire::Styles::find_stylist(QWidget& widget) {
+  static auto stylists = std::unordered_map<QWidget*, Stylist*>();
   auto stylist = stylists.find(&widget);
   if(stylist == stylists.end()) {
-    auto entry = new Stylist(widget);
+    auto entry = new Stylist(widget, none);
     stylist = stylists.insert(std::pair(&widget, entry)).first;
-    QObject::connect(&widget, &QObject::destroyed, [=] (QObject*) {
+    QObject::connect(&widget, &QObject::destroyed, [=, &widget] (QObject*) {
+      stylists.erase(&widget);
       delete entry;
     });
   }
   return *stylist->second;
+}
+
+Stylist* Spire::Styles::find_stylist(QWidget& widget,
+    const PseudoElement& pseudo_element) {
+  auto stylist = pseudo_stylists.find(std::pair(&widget, pseudo_element));
+  if(stylist != pseudo_stylists.end()) {
+    return &*stylist->second;
+  }
+  return nullptr;
 }
 
 const StyleSheet& Spire::Styles::get_style(const QWidget& widget) {
@@ -293,6 +325,29 @@ void Spire::Styles::set_style(QWidget& widget, const StyleSheet& style) {
 
 Block Spire::Styles::compute_style(QWidget& widget) {
   return find_stylist(widget).compute_style();
+}
+
+Block Spire::Styles::compute_style(
+    QWidget& widget, const PseudoElement& pseudo_element) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    return stylist->compute_style();
+  }
+  return {};
+}
+
+void Spire::Styles::add_pseudo_element(QWidget& source,
+    const PseudoElement& pseudo_element) {
+  auto stylist = pseudo_stylists.find(std::pair(&source, pseudo_element));
+  if(stylist != pseudo_stylists.end()) {
+    return;
+  }
+  auto entry = new Stylist(source, pseudo_element);
+  stylist = pseudo_stylists.insert(
+    std::pair(std::pair(&source, pseudo_element), entry)).first;
+  QObject::connect(&source, &QObject::destroyed, [=, &source] (QObject*) {
+    pseudo_stylists.erase(std::pair(&source, pseudo_element));
+    delete entry;
+  });
 }
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {

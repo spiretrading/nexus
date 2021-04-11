@@ -1,6 +1,5 @@
 #ifndef SPIRE_STYLES_OR_SELECTOR_HPP
 #define SPIRE_STYLES_OR_SELECTOR_HPP
-#include <utility>
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -15,7 +14,7 @@ namespace Spire::Styles {
        * @param left The left hand selector.
        * @param right The right hand selector.
        */
-      explicit OrSelector(Selector left, Selector right);
+      OrSelector(Selector left, Selector right);
 
       /** Returns the left hand selector. */
       const Selector& get_left() const;
@@ -23,7 +22,9 @@ namespace Spire::Styles {
       /** Returns the right hand selector. */
       const Selector& get_right() const;
 
-      bool is_match(const OrSelector& selector) const;
+      bool operator ==(const OrSelector& selector) const;
+
+      bool operator !=(const OrSelector& selector) const;
 
     private:
       Selector m_left;
@@ -37,7 +38,7 @@ namespace Spire::Styles {
    */
   OrSelector operator ||(Selector left, Selector right);
 
-  std::vector<QWidget*> select(const OrSelector& selector, QWidget& source);
+  std::vector<Stylist*> select(const OrSelector& selector, Stylist& source);
 }
 
 #endif

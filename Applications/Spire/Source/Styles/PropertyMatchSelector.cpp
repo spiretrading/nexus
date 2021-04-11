@@ -11,18 +11,23 @@ const Property& PropertyMatchSelector::get_property() const {
   return m_property;
 }
 
-bool PropertyMatchSelector::is_match(
+bool PropertyMatchSelector::operator ==(
     const PropertyMatchSelector& selector) const {
   return m_property == selector.m_property;
+}
+
+bool PropertyMatchSelector::operator !=(
+    const PropertyMatchSelector& selector) const {
+  return !(*this == selector);
 }
 
 PropertyMatchSelector Spire::Styles::matches(Property property) {
   return PropertyMatchSelector(std::move(property));
 }
 
-std::vector<QWidget*> Spire::Styles::select(
-    const PropertyMatchSelector& selector, QWidget& source) {
-  auto block = find_stylist(source).compute_style();
+std::vector<Stylist*> Spire::Styles::select(
+    const PropertyMatchSelector& selector, Stylist& source) {
+  auto block = source.compute_style();
   for(auto& property : block.get_properties()) {
     if(property == selector.get_property()) {
       return {&source};

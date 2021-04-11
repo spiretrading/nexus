@@ -25,7 +25,7 @@ namespace Styles {
   using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
 
   /** Selects the placeholder. */
-  using Placeholder = PseudoElement<void, struct PlaceholderTag>;
+  using Placeholder = PseudoElementSelector<void, struct PlaceholderTag>;
 
   /** Styles a widget's text. */
   TextStyle text_style(QFont font, QColor color);

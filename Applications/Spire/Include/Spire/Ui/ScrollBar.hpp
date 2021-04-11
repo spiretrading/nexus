@@ -8,7 +8,7 @@ namespace Spire {
 namespace Styles {
 
   /** Selects the thumb. */
-  using ScrollBarThumb = PseudoElement<void, struct ScrollBarThumbTag>;
+  using ScrollBarThumb = PseudoElementSelector<void, struct ScrollBarThumbTag>;
 }
 
   //! Displays a vertical or horizontal scroll bar.
