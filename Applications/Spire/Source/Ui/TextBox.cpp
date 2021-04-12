@@ -108,7 +108,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   proxy_style(*this, *m_box);
   add_pseudo_element(*this, Placeholder());
   connect_style_signal(*this, [=] { on_style(); });
-  connect_style_signal(*this, Placeholder(), [=] { on_placeholder_style(); });
+  connect_style_signal(*this, Placeholder(), [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
@@ -335,17 +335,17 @@ void TextBox::on_text_edited(const QString& text) {
 }
 
 void TextBox::on_style() {
-  auto style = QString(
+  auto computed_style = compute_style(*this);
+  auto line_edit_style = QString(
     R"(QLineEdit {
       background: transparent;
       border-width: 0px;
       padding: 0px;)");
-  auto has_update = false;
-  auto computed_style = compute_style(*this);
+  auto is_line_edit_updated = false;
   for(auto& property : computed_style.get_properties()) {
     property.visit(
       [&] (const TextColor& color) {
-        style += "color: " +
+        line_edit_style += "color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
       [&] (const TextAlign& alignment) {
@@ -353,7 +353,7 @@ void TextBox::on_style() {
           alignment.get_expression().as<Qt::Alignment>();
         if(computed_alignment != m_line_edit->alignment()) {
           m_line_edit->setAlignment(computed_alignment);
-          has_update = true;
+          is_line_edit_updated = true;
         }
       },
       [&] (const Font& font) {
@@ -361,34 +361,21 @@ void TextBox::on_style() {
         if(m_line_edit_font != computed_font) {
           m_line_edit_font = computed_font;
           m_line_edit->setFont(computed_font);
-          has_update = true;
+          is_line_edit_updated = true;
         }
       });
   }
-  style += "}";
-  if(style != m_line_edit->styleSheet()) {
-    m_line_edit->setStyleSheet(style);
-    m_line_edit->style()->unpolish(this);
-    m_line_edit->style()->polish(this);
-    has_update = true;
-  }
-  if(has_update) {
-    update_display_text();
-  }
-}
-
-void TextBox::on_placeholder_style() {
-  auto style = QString(
+  merge(computed_style, compute_style(*this, Placeholder()));
+  auto placeholder_style = QString(
     R"(QLabel {
       background: transparent;
       border-width: 0px;
       padding: 0px;)");
-  auto has_update = false;
-  auto computed_style = compute_style(*this, Placeholder());
+  auto is_placeholder_updated = false;
   for(auto& property : computed_style.get_properties()) {
     property.visit(
       [&] (const TextColor& color) {
-        style += "color: " +
+        placeholder_style += "color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
       [&] (const TextAlign& alignment) {
@@ -396,7 +383,7 @@ void TextBox::on_placeholder_style() {
           alignment.get_expression().as<Qt::Alignment>();
         if(computed_alignment != m_placeholder->alignment()) {
           m_placeholder->setAlignment(computed_alignment);
-          has_update = true;
+          is_placeholder_updated = true;
         }
       },
       [&] (const Font& font) {
@@ -404,18 +391,28 @@ void TextBox::on_placeholder_style() {
         if(m_placeholder_font != computed_font) {
           m_placeholder_font = computed_font;
           m_placeholder->setFont(computed_font);
-          has_update = true;
+          is_placeholder_updated = true;
         }
       });
   }
-  style += "}";
-  if(style != m_placeholder->styleSheet()) {
-    m_placeholder->setStyleSheet(style);
+  line_edit_style += "}";
+  if(line_edit_style != m_line_edit->styleSheet()) {
+    m_line_edit->setStyleSheet(line_edit_style);
+    m_line_edit->style()->unpolish(this);
+    m_line_edit->style()->polish(this);
+    is_line_edit_updated = true;
+  }
+  if(is_line_edit_updated) {
+    update_display_text();
+  }
+  placeholder_style += "}";
+  if(placeholder_style != m_placeholder->styleSheet()) {
+    m_placeholder->setStyleSheet(placeholder_style);
     m_placeholder->style()->unpolish(this);
     m_placeholder->style()->polish(this);
-    has_update = true;
+    is_placeholder_updated = true;
   }
-  if(has_update) {
+  if(is_placeholder_updated) {
     update_placeholder_text();
   }
 }
