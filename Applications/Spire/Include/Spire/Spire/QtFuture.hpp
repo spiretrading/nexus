@@ -44,6 +44,9 @@ namespace Spire {
   class QtFuture : public BaseQtFuture<T> {
     public:
 
+      //! The type of value to resolve to.
+      using Type = T;
+
       QtFuture(QtFuture&&) = default;
 
       QtFuture& operator =(QtFuture&&) = default;
@@ -107,11 +110,11 @@ namespace Spire {
 
   template<typename T>
   void QtFuture<T>::resolve(Type value) {
-    m_eval.SetResult(std::move(value));
+    this->m_eval.SetResult(std::move(value));
   }
 
   inline void QtFuture<void>::resolve() {
-    m_eval.SetResult();
+    this->m_eval.SetResult();
   }
 }
 

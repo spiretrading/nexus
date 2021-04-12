@@ -1,4 +1,8 @@
 #include "Spire/Styles/AncestorSelector.hpp"
+#include <unordered_set>
+#include <QWidget>
+#include "Spire/Styles/DisambiguateSelector.hpp"
+#include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -15,11 +19,40 @@ const Selector& AncestorSelector::get_ancestor() const {
   return m_ancestor;
 }
 
-bool AncestorSelector::is_match(const AncestorSelector& selector) const {
-  return m_base.is_match(selector.get_base()) &&
-    m_ancestor.is_match(selector.get_ancestor());
+bool AncestorSelector::operator ==(const AncestorSelector& selector) const {
+  return m_base == selector.get_base() && m_ancestor == selector.get_ancestor();
+}
+
+bool AncestorSelector::operator !=(const AncestorSelector& selector) const {
+  return !(*this == selector);
 }
 
 AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
   return AncestorSelector(std::move(base), std::move(ancestor));
+}
+
+std::vector<Stylist*> Spire::Styles::select(
+    const AncestorSelector& selector, Stylist& source) {
+  auto selection = std::unordered_set<Stylist*>();
+  auto bases = select(selector.get_base(), source);
+  auto is_disambiguated = selector.get_base().get_type() ==
+    typeid(DisambiguateSelector);
+  for(auto base : bases) {
+    auto ancestor = base->get_widget().parentWidget();
+    while(ancestor) {
+      auto ancestor_selection = select(selector.get_ancestor(),
+        find_stylist(*ancestor));
+      if(!ancestor_selection.empty()) {
+        if(is_disambiguated) {
+          selection.insert(base);
+          break;
+        } else {
+          selection.insert(
+            ancestor_selection.begin(), ancestor_selection.end());
+        }
+      }
+      ancestor = ancestor->parentWidget();
+    }
+  }
+  return std::vector(selection.begin(), selection.end());
 }
