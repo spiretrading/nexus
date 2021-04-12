@@ -130,6 +130,7 @@ namespace Spire::Styles {
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
+      std::unique_ptr<StyleEventFilter> m_style_event_filter;
       StyleSheet m_style;
       VisibilityOption m_visibility;
       std::vector<Stylist*> m_principals;
