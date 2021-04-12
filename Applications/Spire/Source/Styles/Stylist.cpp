@@ -68,11 +68,11 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 }
 
 Stylist::~Stylist() {
-  while(!m_dependents.empty()) {
-    remove_dependent(**m_dependents.begin());
-  }
   for(auto& block : m_source_to_block) {
     block.second->m_source->m_dependents.erase(this);
+  }
+  while(!m_dependents.empty()) {
+    remove_dependent(**m_dependents.begin());
   }
   while(!m_proxies.empty()) {
     remove_proxy(*m_proxies.front()->m_widget);
@@ -192,7 +192,8 @@ Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
       m_pseudo_element(std::move(pseudo_element)),
       m_visibility(VisibilityOption::VISIBLE) {
   if(!m_pseudo_element) {
-    m_widget->installEventFilter(new StyleEventFilter(*this));
+    m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
+    m_widget->installEventFilter(m_style_event_filter.get());
   }
 }
 
@@ -313,6 +314,7 @@ Stylist& Spire::Styles::find_stylist(QWidget& widget) {
     auto entry = new Stylist(widget, none);
     stylist = stylists.insert(std::pair(&widget, entry)).first;
     QObject::connect(&widget, &QObject::destroyed, [=, &widget] (QObject*) {
+      entry->m_style_event_filter = nullptr;
       delete entry;
       stylists.erase(&widget);
     });
@@ -370,6 +372,7 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
   stylist = pseudo_stylists.insert(
     std::pair(std::pair(&source, pseudo_element), entry)).first;
   QObject::connect(&source, &QObject::destroyed, [=, &source] (QObject*) {
+    entry->m_style_event_filter = nullptr;
     delete entry;
     pseudo_stylists.erase(std::pair(&source, pseudo_element));
   });
