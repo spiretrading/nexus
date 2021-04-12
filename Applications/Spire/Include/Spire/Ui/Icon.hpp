@@ -1,6 +1,6 @@
 #ifndef SPIRE_ICON_HPP
 #define SPIRE_ICON_HPP
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/Stylist.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -10,7 +10,7 @@ namespace Styles {
 }
 
   //! Displays an icon.
-  class Icon : public Styles::StyledWidget {
+  class Icon : public QWidget {
     public:
 
       //! Constructs an Icon.

@@ -1,6 +1,5 @@
 #ifndef SPIRE_STYLES_NOT_SELECTOR_HPP
 #define SPIRE_STYLES_NOT_SELECTOR_HPP
-#include <utility>
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -19,7 +18,9 @@ namespace Spire::Styles {
       /** Returns the selector being negated. */
       const Selector& get_selector() const;
 
-      bool is_match(const NotSelector& selector) const;
+      bool operator ==(const NotSelector& selector) const;
+
+      bool operator !=(const NotSelector& selector) const;
 
     private:
       Selector m_selector;
@@ -30,6 +31,8 @@ namespace Spire::Styles {
    * @param selector The selector to negate.
    */
   NotSelector operator !(Selector selector);
+
+  std::vector<Stylist*> select(const NotSelector& selector, Stylist& source);
 }
 
 #endif

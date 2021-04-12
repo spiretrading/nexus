@@ -73,14 +73,14 @@ namespace Spire {
       */
       RealSpinBoxAdapterModel(std::shared_ptr<SpinBoxModel<Type>> model);
 
-      RealSpinBox::Real get_increment(
+      RealSpinBoxModel::Real get_increment(
         Qt::KeyboardModifiers modifiers) const override;
 
-      RealSpinBox::Real get_initial() const override;
+      RealSpinBoxModel::Real get_initial() const override;
 
-      RealSpinBox::Real get_minimum() const override;
+      RealSpinBoxModel::Real get_minimum() const override;
 
-      RealSpinBox::Real get_maximum() const override;
+      RealSpinBoxModel::Real get_maximum() const override;
 
     private:
       std::shared_ptr<SpinBoxModel<Type>> m_model;

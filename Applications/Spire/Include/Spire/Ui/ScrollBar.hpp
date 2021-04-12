@@ -1,18 +1,18 @@
 #ifndef SPIRE_SCROLL_BAR_HPP
 #define SPIRE_SCROLL_BAR_HPP
 #include <QScrollBar>
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
 
   /** Selects the thumb. */
-  using ScrollBarThumb = PseudoElement<void, struct ScrollBarThumbTag>;
+  using ScrollBarThumb = PseudoElementSelector<void, struct ScrollBarThumbTag>;
 }
 
   //! Displays a vertical or horizontal scroll bar.
-  class ScrollBar : public Styles::StyledWidget {
+  class ScrollBar : public QWidget {
     public:
 
       //! Signals a change in the scrollbar's position.
@@ -75,9 +75,6 @@ namespace Styles {
       //! Connects a slot to the PositionSignal.
       boost::signals2::connection connect_position_signal(
         const PositionSignal::slot_type& slot) const;
-
-    protected:
-      void selector_updated() override;
 
     private:
       mutable PositionSignal m_position_signal;

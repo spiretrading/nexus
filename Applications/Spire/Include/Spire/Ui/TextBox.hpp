@@ -2,8 +2,6 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLabel>
 #include <QLineEdit>
-#include <boost/optional/optional.hpp>
-#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -27,7 +25,7 @@ namespace Styles {
   using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
 
   /** Selects the placeholder. */
-  using Placeholder = PseudoElement<void, struct PlaceholderTag>;
+  using Placeholder = PseudoElementSelector<void, struct PlaceholderTag>;
 
   /** Styles a widget's text. */
   TextStyle text_style(QFont font, QColor color);
@@ -37,7 +35,7 @@ namespace Styles {
   using TextModel = ValueModel<QString>;
 
   //! Displays a one-line text box.
-  class TextBox : public Styles::StyledWidget {
+  class TextBox : public QWidget {
     public:
 
       /**
@@ -102,13 +100,9 @@ namespace Styles {
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
-
       QSize sizeHint() const override;
 
     protected:
-      void selector_updated() override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -116,30 +110,32 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      struct TextValidator;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
+      std::shared_ptr<TextModel> m_model;
       Box* m_box;
-      boost::optional<Styles::StyleSheet> m_default_box_style;
       LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
       QFont m_line_edit_font;
       QLabel* m_placeholder;
       QFont m_placeholder_font;
       bool m_is_warning_displayed;
-      std::shared_ptr<TextModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
+      TextValidator* m_text_validator;
 
-      void on_current(const QString& current);
-      void on_editing_finished();
-      void on_text_edited(const QString& text);
       bool is_placeholder_shown() const;
       QString get_elided_text(const QFontMetrics& font_metrics,
         const QString& text) const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
+      void on_current(const QString& current);
+      void on_editing_finished();
+      void on_text_edited(const QString& text);
+      void on_style();
   };
 }
 

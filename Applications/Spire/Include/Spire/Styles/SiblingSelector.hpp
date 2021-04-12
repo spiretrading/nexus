@@ -1,6 +1,5 @@
 #ifndef SPIRE_STYLES_SIBLING_SELECTOR_HPP
 #define SPIRE_STYLES_SIBLING_SELECTOR_HPP
-#include <utility>
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -15,7 +14,7 @@ namespace Spire::Styles {
        * @param base The selector for the base widget.
        * @param sibling The selector for the sibling.
        */
-      explicit SiblingSelector(Selector base, Selector sibling);
+      SiblingSelector(Selector base, Selector sibling);
 
       /** Returns the base selector. */
       const Selector& get_base() const;
@@ -23,7 +22,9 @@ namespace Spire::Styles {
       /** Returns the sibling selector. */
       const Selector& get_sibling() const;
 
-      bool is_match(const SiblingSelector& selector) const;
+      bool operator ==(const SiblingSelector& selector) const;
+
+      bool operator !=(const SiblingSelector& selector) const;
 
     private:
       Selector m_base;
@@ -36,6 +37,9 @@ namespace Spire::Styles {
    * @param sibling The sibling selector.
    */
   SiblingSelector operator %(Selector base, Selector sibling);
+
+  std::vector<Stylist*> select(
+    const SiblingSelector& selector, Stylist& source);
 }
 
 #endif
