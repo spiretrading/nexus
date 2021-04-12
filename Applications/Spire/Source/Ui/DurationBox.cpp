@@ -155,6 +155,7 @@ void DurationBox::create_hour_field() {
   m_hour_field->set_warning_displayed(false);
   auto hour_style = get_style(*m_hour_field);
   hour_style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(border_size(0)).
     set(horizontal_padding(scale_width(0))).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
@@ -172,6 +173,7 @@ void DurationBox::create_minute_field() {
   m_minute_field->set_warning_displayed(false);
   auto minute_style = get_style(*m_minute_field);
   minute_style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(border_size(0)).
     set(horizontal_padding(scale_width(0))).
     set(LeadingZeros(2)).
@@ -190,10 +192,10 @@ void DurationBox::create_second_field() {
   m_second_field->set_warning_displayed(false);
   auto second_style = get_style(*m_second_field);
   second_style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(border_size(0)).
     set(horizontal_padding(scale_width(0))).
-    set(LeadingZeros(2)).
-    set(TrailingZeros(3)).
+    set(LeadingZeros(2)).set(TrailingZeros(3)).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   second_style.get(Any() > is_a<Button>()).set(
     Visibility(VisibilityOption::NONE));
@@ -256,9 +258,8 @@ void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
     m_model->set_current(milliseconds(milliseconds_value));
   } else {
     auto duration = m_model->get_current();
-    auto duration_milliseconds = duration.seconds() * 1000 +
-      duration.fractional_seconds() / 1000;
-    if(duration_milliseconds != milliseconds_value) {
+    if(duration.seconds() * 1000 + duration.fractional_seconds() / 1000 !=
+        milliseconds_value) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
       auto current_minutes =
         minutes(m_minute_field->get_model()->get_current());
@@ -308,6 +309,6 @@ void DurationBox::on_reject() {
   m_reject_signal(m_model->get_current());
   m_model->set_current(m_submission);
   if(m_is_warning_displayed) {
-    display_warning_indicator(*m_box);
+    display_warning_indicator(*this);
   }
 }
