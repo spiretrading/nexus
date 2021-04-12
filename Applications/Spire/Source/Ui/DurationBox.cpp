@@ -11,6 +11,23 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+      set(BodyAlign(Qt::AlignCenter)).
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(horizontal_padding(scale_width(4)));
+    style.get(Hover() || Focus()).
+      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    return style;
+  }
+}
+
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalDurationModel>(), parent) {}
 
@@ -37,15 +54,21 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model,
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(m_minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
+  auto container_style = get_style(*container);
+  container_style.get(Any() > DurationBox::Colon()).
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set(TextColor(QColor::fromRgb(0, 0, 0)));
+  container_style.get(Disabled() > Colon()).
+    set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  set_style(*container, container_style);
   m_box = new Box(container);
-  auto box_style = get_style(*m_box);
-  box_style.get(Any()).set(BodyAlign(Qt::AlignCenter));
-  set_style(*m_box, box_style);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_box);
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
+  proxy_style(*this, *m_box);
+  set_style(*this, DEFAULT_STYLE());
   m_hour_field->get_model()->connect_current_signal(
     [=] (const auto& current) { on_hour_field_current(current); });
   m_minute_field->get_model()->connect_current_signal(
@@ -125,6 +148,7 @@ void DurationBox::create_hour_field() {
   auto hour_style = get_style(*m_hour_field);
   hour_style.get(Any()).
     set(border_size(0)).
+    set(horizontal_padding(scale_width(0))).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   hour_style.get(Any() > is_a<Button>()).set(
     Visibility(VisibilityOption::NONE));
@@ -141,6 +165,7 @@ void DurationBox::create_minute_field() {
   auto minute_style = get_style(*m_minute_field);
   minute_style.get(Any()).
     set(border_size(0)).
+    set(horizontal_padding(scale_width(0))).
     set(LeadingZeros(2)).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   minute_style.get(Any() > is_a<Button>()).set(
@@ -158,6 +183,7 @@ void DurationBox::create_second_field() {
   auto second_style = get_style(*m_second_field);
   second_style.get(Any()).
     set(border_size(0)).
+    set(horizontal_padding(scale_width(0))).
     set(LeadingZeros(2)).
     set(TrailingZeros(3)).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
@@ -172,17 +198,12 @@ void DurationBox::create_colon_fields() {
   m_hour_minute_colon->setFixedWidth(scale_width(10));
   m_hour_minute_colon->setEnabled(false);
   m_hour_minute_colon->set_read_only(true);
-  auto colon_style = get_style(*m_hour_minute_colon);
-  colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  colon_style.get(ReadOnly() && Disabled()).
-    set(TextColor(QColor::fromRgb(0, 0, 0))).
-    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  set_style(*m_hour_minute_colon, std::move(colon_style));
   m_minute_second_colon = new TextBox(":");
   m_minute_second_colon->setFixedWidth(scale_width(10));
   m_minute_second_colon->setEnabled(false);
   m_minute_second_colon->set_read_only(true);
-  set_style(*m_minute_second_colon, std::move(colon_style));
+  find_stylist(*m_hour_minute_colon).match(Colon());
+  find_stylist(*m_minute_second_colon).match(Colon());
 }
 
 void DurationBox::on_hour_field_current(int current) {

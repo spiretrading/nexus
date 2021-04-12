@@ -67,6 +67,7 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      using Colon = Styles::StateSelector<void, struct DurationBoxColonTag>;
       mutable RejectSignal m_reject_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<LocalDurationModel> m_model;
