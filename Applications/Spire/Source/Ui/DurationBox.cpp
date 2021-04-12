@@ -11,35 +11,12 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-class DurationBox::InternalBox : public Box {
-  public:
-
-  explicit InternalBox(QWidget* body, QWidget* parent = nullptr)
-    : Box(body, parent) {}
-
-  virtual bool test_selector(const Selector& element,
-      const Selector& selector) const {
-    return selector.visit(
-      [&] (Focus) {
-        auto children = findChildren<StyledWidget*>();
-        foreach(auto child, children) {
-          if(child->hasFocus()) {
-            return true;
-          }
-        }
-        return false;
-      },
-      [&] {
-        return Box::test_selector(element, selector);
-      });
-  }
-};
-
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalDurationModel>(), parent) {}
 
-DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* parent)
-    : StyledWidget(parent),
+DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model,
+    QWidget* parent)
+    : QWidget(parent),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_warning_displayed(true),
@@ -56,16 +33,14 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   container_layout->setContentsMargins({});
   container_layout->setSpacing(0);
   container_layout->addWidget(m_hour_field, 6);
-  container_layout->addWidget(m_colon1);
+  container_layout->addWidget(m_hour_minute_colon);
   container_layout->addWidget(m_minute_field, 7);
-  container_layout->addWidget(m_colon2);
+  container_layout->addWidget(m_minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
-  m_box = new InternalBox(container);
-  auto box_style = m_box->get_style();
-  box_style.get(Any()).
-    set(BodyAlign(Qt::AlignCenter)).
-    set(horizontal_padding(scale_width(0)));
-  m_box->set_style(box_style);
+  m_box = new Box(container);
+  auto box_style = get_style(*m_box);
+  box_style.get(Any()).set(BodyAlign(Qt::AlignCenter));
+  set_style(*m_box, box_style);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_box);
@@ -138,7 +113,7 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
       on_submit();
     }
   }
-  return StyledWidget::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
 }
 
 void DurationBox::create_hour_field() {
@@ -147,13 +122,13 @@ void DurationBox::create_hour_field() {
   m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
-  auto hour_style = m_hour_field->get_style();
+  auto hour_style = get_style(*m_hour_field);
   hour_style.get(Any()).
     set(border_size(0)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set_override(Rule::Override::EXCLUSIVE);
-  hour_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_hour_field->set_style(std::move(hour_style));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  hour_style.get(Any() > is_a<Button>()).set(
+    Visibility(VisibilityOption::NONE));
+  set_style(*m_hour_field, std::move(hour_style));
   m_hour_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
@@ -163,14 +138,14 @@ void DurationBox::create_minute_field() {
   m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
-  auto minute_style = m_minute_field->get_style();
+  auto minute_style = get_style(*m_minute_field);
   minute_style.get(Any()).
     set(border_size(0)).
     set(LeadingZeros(2)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set_override(Rule::Override::EXCLUSIVE);
-  minute_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_minute_field->set_style(std::move(minute_style));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  minute_style.get(Any() > is_a<Button>()).set(
+    Visibility(VisibilityOption::NONE));
+  set_style(*m_minute_field, std::move(minute_style));
   m_minute_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
@@ -180,34 +155,34 @@ void DurationBox::create_second_field() {
   m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);
-  auto second_style = m_second_field->get_style();
+  auto second_style = get_style(*m_second_field);
   second_style.get(Any()).
     set(border_size(0)).
     set(LeadingZeros(2)).
     set(TrailingZeros(3)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set_override(Rule::Override::EXCLUSIVE);
-  second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_second_field->set_style(std::move(second_style));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  second_style.get(Any() > is_a<Button>()).set(
+    Visibility(VisibilityOption::NONE));
+  set_style(*m_second_field, std::move(second_style));
   m_second_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
 void DurationBox::create_colon_fields() {
-  m_colon1 = new TextBox(":");
-  m_colon1->setFixedWidth(scale_width(10));
-  m_colon1->setEnabled(false);
-  m_colon1->set_read_only(true);
-  auto colon_style = m_colon1->get_style();
+  m_hour_minute_colon = new TextBox(":");
+  m_hour_minute_colon->setFixedWidth(scale_width(10));
+  m_hour_minute_colon->setEnabled(false);
+  m_hour_minute_colon->set_read_only(true);
+  auto colon_style = get_style(*m_hour_minute_colon);
   colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   colon_style.get(ReadOnly() && Disabled()).
     set(TextColor(QColor::fromRgb(0, 0, 0))).
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  m_colon1->set_style(std::move(colon_style));
-  m_colon2 = new TextBox(":");
-  m_colon2->setFixedWidth(scale_width(10));
-  m_colon2->setEnabled(false);
-  m_colon2->set_read_only(true);
-  m_colon2->set_style(std::move(colon_style));
+  set_style(*m_hour_minute_colon, std::move(colon_style));
+  m_minute_second_colon = new TextBox(":");
+  m_minute_second_colon->setFixedWidth(scale_width(10));
+  m_minute_second_colon->setEnabled(false);
+  m_minute_second_colon->set_read_only(true);
+  set_style(*m_minute_second_colon, std::move(colon_style));
 }
 
 void DurationBox::on_hour_field_current(int current) {
@@ -217,7 +192,8 @@ void DurationBox::on_hour_field_current(int current) {
   } else {
     auto duration = m_model->get_current();
     if(duration.hours() != current) {
-      auto current_minutes = minutes(m_minute_field->get_model()->get_current());
+      auto current_minutes =
+        minutes(m_minute_field->get_model()->get_current());
       auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
         m_second_field->get_model()->get_current().convert_to<double>() * 1000));
       m_model->set_current(hours(current) + current_minutes + current_seconds);
@@ -235,7 +211,8 @@ void DurationBox::on_minute_field_current(int current) {
     if(duration.minutes() != current) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
       auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
-        m_second_field->get_model()->get_current().convert_to<double>() * 1000));
+        m_second_field->get_model()->get_current().convert_to<double>() *
+        1000));
       m_model->set_current(current_hours + minutes(current) + current_seconds);
     }
   }
@@ -252,7 +229,8 @@ void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
     auto duration = m_model->get_current();
     if(duration.total_microseconds() != seconds_value) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
-      auto current_minutes = minutes(m_minute_field->get_model()->get_current());
+      auto current_minutes =
+        minutes(m_minute_field->get_model()->get_current());
       m_model->set_current(current_hours + current_minutes +
         milliseconds(seconds_value));
     }
