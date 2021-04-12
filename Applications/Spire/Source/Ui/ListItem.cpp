@@ -1,5 +1,5 @@
 #include "Spire/Ui/ListItem.hpp"
-#include <QFocusEvent>
+#include <QEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 ListItem::ListItem(QWidget* component, QWidget* parent)
-    : StyledWidget(parent) {
+    : QWidget(parent) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -18,18 +18,21 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   setFocusProxy(m_button);
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
-  auto style = m_button->get_style();
-  style.get(Any()).set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Hover()).set(BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
-  style.get(Focus()).set(BackgroundColor(QColor::fromRgb(0x68, 0x4B, 0xC7)));
-  m_button->set_style(std::move(style));
+  auto style = get_style(*m_button);
+  style.get(Any() > Button::Body()).set(
+    BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
+  style.get(Hover() > Button::Body()).set(
+    BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
+  style.get(Focus() > Button::Body()).set(
+    BackgroundColor(QColor::fromRgb(0x68, 0x4B, 0xC7)));
+  set_style(*m_button, std::move(style));
 }
 
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
     m_current_signal();
   }
-  return StyledWidget::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
 }
 
 connection ListItem::connect_current_signal(
