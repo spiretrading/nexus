@@ -5,37 +5,33 @@
 
 namespace Spire {
 
-  //! Represents an item in a list.
-  class ListItem : public Styles::StyledWidget {
+  /** Represents an item in a list. */
+  class ListItem : public QWidget {
     public:
 
-      //! Signals that the item received focus.
+      /** Signals that the item received focus. */
       using CurrentSignal = Signal<void ()>;
   
-      //! Signals that the item was submitted.
+      /** Signals that the item was submitted. */
       using SubmitSignal = Signal<void ()>;
   
-      //! Constructs a ListItem.
-      /*!
-        \param component The component to display.
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a ListItem.
+       * @param component The component to display.
+       * @param parent The parent widget.
+       */
       explicit ListItem(QWidget* component, QWidget* parent = nullptr);
   
-      //! Connects a slot to the current signal.
+      /** Connects a slot to the current signal. */
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const;
   
-      //! Connects a slot to the submit signal.
+      /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void paintEvent(QPaintEvent* event) override {
-        
-        StyledWidget::paintEvent(event);
-      }
 
     private:
       mutable SubmitSignal m_current_signal;
