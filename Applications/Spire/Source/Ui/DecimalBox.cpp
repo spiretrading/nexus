@@ -43,13 +43,13 @@ namespace {
   auto create_button(const QString& icon, QWidget* parent) {
     auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
     auto style = get_style(*button);
-    style.get(Any()).
+    style.get(Any() > Button::Body()).
       set(BackgroundColor(QColor("#FFFFFF"))).
       set(Fill(QColor("#333333")));
-    style.get(Hover()).
+    style.get(Hover() > Button::Body()).
       set(BackgroundColor(QColor("#EBEBEB"))).
       set(Fill(QColor("#4B23A0")));
-    style.get(Disabled()).
+    style.get(Disabled() > Button::Body()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
     style.get(+Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
