@@ -10,6 +10,7 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -398,6 +399,29 @@ UiProfile Spire::make_integer_box_profile() {
         integer_box->set_warning_displayed(value);
       });
       return integer_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
+    [] (auto& profile) {
+      auto text_box = new TextBox("Test Component");
+      text_box->setAttribute(Qt::WA_TranslucentBackground);
+      text_box->set_read_only(true);
+      text_box->setDisabled(true);
+      auto text_box_style = get_style(*text_box);
+      text_box_style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
+      set_style(*text_box, std::move(text_box_style));
+      auto list_item = new ListItem(text_box);
+      apply_widget_properties(list_item, profile.get_properties());
+      list_item->connect_current_signal(profile.make_event_slot(
+        QString::fromUtf8("Current")));
+      list_item->connect_submit_signal(profile.make_event_slot(
+        QString::fromUtf8("Submit")));
+      return list_item;
     });
   return profile;
 }
