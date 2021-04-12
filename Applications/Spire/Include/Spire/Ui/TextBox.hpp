@@ -110,6 +110,7 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      struct TextValidator;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_model;
@@ -123,6 +124,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
+      TextValidator* m_text_validator;
 
       bool is_placeholder_shown() const;
       QString get_elided_text(const QFontMetrics& font_metrics,
