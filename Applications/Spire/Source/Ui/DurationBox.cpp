@@ -55,12 +55,12 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model,
   container_layout->addWidget(m_minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
   auto container_style = get_style(*container);
-  container_style.get(Any() > DurationBox::Colon()).
+  container_style.get(Any() > Colon()).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
     set(TextColor(QColor::fromRgb(0, 0, 0)));
   container_style.get(Disabled() > Colon()).
     set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  set_style(*container, container_style);
+  set_style(*container, std::move(container_style));
   m_box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -127,13 +127,21 @@ QSize DurationBox::sizeHint() const {
 }
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusOut) {
+  if(event->type() == QEvent::FocusIn) {
+    auto style = get_style(*this);
+    style.get(Any()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    set_style(*this, std::move(style));
+  } else if(event->type() == QEvent::FocusOut) {
     if(!m_hour_field->hasFocus() && !m_minute_field->hasFocus() &&
-        !m_second_field->hasFocus() &&
-        m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
-        m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
-        m_second_field->get_model()->get_state() == QValidator::Acceptable) {
-      on_submit();
+        !m_second_field->hasFocus()) {
+      auto style = get_style(*this);
+      style.get(Any()).set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set_style(*this, std::move(style));
+      if(m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
+          m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
+          m_second_field->get_model()->get_state() == QValidator::Acceptable) {
+        on_submit();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
