@@ -10,21 +10,22 @@ namespace Spire::Styles {
   class ChildSelector;
   template<typename... T> class CompositeProperty;
   class DescendantSelector;
+  class DisambiguateSelector;
   template<typename T> class Expression;
   class IsASelector;
   class NotSelector;
   class OrSelector;
   class ParentSelector;
   class Property;
-  template<typename T, typename G> class PseudoElement;
+  class PseudoElement;
+  template<typename T, typename G> class PseudoElementSelector;
   class Rule;
   class Selector;
   class SelectorRegistry;
   class SiblingSelector;
   template<typename T, typename G> class StateSelector;
-  class StyledWidget;
   class StyleSheet;
-  class VoidSelector;
+  class Stylist;
 }
 
 #endif

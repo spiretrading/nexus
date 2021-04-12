@@ -1,6 +1,5 @@
 #ifndef SPIRE_STYLES_DESCENDANT_SELECTOR_HPP
 #define SPIRE_STYLES_DESCENDANT_SELECTOR_HPP
-#include <utility>
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -15,7 +14,7 @@ namespace Spire::Styles {
        * @param base The selector for the base widget.
        * @param descendant The selector for the descendant.
        */
-      explicit DescendantSelector(Selector base, Selector descendant);
+      DescendantSelector(Selector base, Selector descendant);
 
       /** Returns the base selector. */
       const Selector& get_base() const;
@@ -23,7 +22,9 @@ namespace Spire::Styles {
       /** Returns the descendant selector. */
       const Selector& get_descendant() const;
 
-      bool is_match(const DescendantSelector& selector) const;
+      bool operator ==(const DescendantSelector& selector) const;
+
+      bool operator !=(const DescendantSelector& selector) const;
 
     private:
       Selector m_base;
@@ -36,6 +37,9 @@ namespace Spire::Styles {
    * @param descendant The selector for the descendant.
    */
   DescendantSelector operator >>(Selector base, Selector descendant);
+
+  std::vector<Stylist*> select(
+    const DescendantSelector& selector, Stylist& source);
 }
 
 #endif

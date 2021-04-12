@@ -42,18 +42,18 @@ namespace {
 
   auto create_button(const QString& icon, QWidget* parent) {
     auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
-    auto style = button->get_style();
-    style.get(Any()).
+    auto style = get_style(*button);
+    style.get(Any() > Button::Body()).
       set(BackgroundColor(QColor("#FFFFFF"))).
       set(Fill(QColor("#333333")));
-    style.get(Hover()).
+    style.get(Hover() > Button::Body()).
       set(BackgroundColor(QColor("#EBEBEB"))).
       set(Fill(QColor("#4B23A0")));
-    style.get(Disabled()).
+    style.get(Disabled() > Button::Body()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
-    style.get(Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
-    button->set_style(std::move(style));
+    style.get(+Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
+    set_style(*button, std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -110,10 +110,11 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   QValidator::State set_current(const QString& value) override {
-    auto decimal_places = -log10(m_model->get_increment()).convert_to<int>();
+    auto decimal_places = static_cast<int>(
+      std::ceil(-log10(m_model->get_increment()).convert_to<double>()));
     if(decimal_places != m_decimal_places) {
-      update_validator();
       m_decimal_places = decimal_places;
+      update_validator();
     }
     if(!m_validator.exactMatch(value)) {
       return QValidator::State::Invalid;
@@ -221,7 +222,7 @@ DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
 
 DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
       m_submission(m_model->get_current()),
@@ -229,10 +230,13 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
-  auto style = m_text_box->get_style();
-  style.get((is_a<Button>() && !matches(Visibility(VisibilityOption::NONE))) %
-    is_a<TextBox>() > is_a<Box>()).set(PaddingRight(scale_width(26)));
-  m_text_box->set_style(std::move(style));
+  auto style = Spire::Styles::get_style(*m_text_box);
+  style.get(+Any() %
+    (is_a<Button>() && !matches(Visibility(VisibilityOption::NONE)))).set(
+      PaddingRight(scale_width(26)));
+  set_style(*m_text_box, std::move(style));
+  proxy_style(*this, *m_text_box);
+  connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
   m_current_connection = m_model->connect_current_signal(
@@ -282,23 +286,6 @@ connection DecimalBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-bool DecimalBox::test_selector(
-    const Selector& element, const Selector& selector) const {
-  return m_text_box->test_selector(element, selector);
-}
-
-void DecimalBox::selector_updated() {
-  auto style = compute_style();
-  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
-    m_adaptor_model->set_leading_zeros(
-      leading_zeros->get_expression().as<int>());
-  }
-  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
-    m_adaptor_model->set_trailing_zeros(
-      trailing_zeros->get_expression().as<int>());
-  }
-}
-
 void DecimalBox::keyPressEvent(QKeyEvent* event) {
   if(!is_read_only()) {
     if(event->key() == Qt::Key_Up) {
@@ -311,7 +298,7 @@ void DecimalBox::keyPressEvent(QKeyEvent* event) {
 
 void DecimalBox::resizeEvent(QResizeEvent* event) {
   update_button_positions();
-  StyledWidget::resizeEvent(event);
+  QWidget::resizeEvent(event);
 }
 
 void DecimalBox::wheelEvent(QWheelEvent* event) {
@@ -328,7 +315,7 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
       decrement();
     }
   }
-  StyledWidget::wheelEvent(event);
+  QWidget::wheelEvent(event);
 }
 
 void DecimalBox::decrement() {
@@ -356,9 +343,12 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
 
 void DecimalBox::step_by(const Decimal& value) {
   setFocus();
-  auto next = std::clamp(Decimal(m_model->get_current() + value),
-    m_model->get_minimum().value_or(value),
-    m_model->get_maximum().value_or(value));
+  auto next = Decimal(m_model->get_current() + value);
+  if(m_model->get_minimum() && next < m_model->get_minimum()) {
+    next = *m_model->get_minimum();
+  } else if(m_model->get_maximum() && next > m_model->get_maximum()) {
+    next = *m_model->get_maximum();
+  }
   if(next != m_model->get_current()) {
     m_model->set_current(next);
   }
@@ -389,4 +379,16 @@ void DecimalBox::on_submit(const QString& submission) {
 
 void DecimalBox::on_reject(const QString& value) {
   m_reject_signal(to_decimal(value).value_or(Decimal(0)));
+}
+
+void DecimalBox::on_style() {
+  auto style = compute_style(*this);
+  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
+    m_adaptor_model->set_leading_zeros(
+      leading_zeros->get_expression().as<int>());
+  }
+  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
+    m_adaptor_model->set_trailing_zeros(
+      trailing_zeros->get_expression().as<int>());
+  }
 }

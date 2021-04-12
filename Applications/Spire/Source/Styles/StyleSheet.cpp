@@ -15,7 +15,7 @@ const std::vector<Rule>& StyleSheet::get_rules() const {
 
 optional<const Rule&> StyleSheet::find(const Selector& selector) const {
   for(auto& rule : m_rules) {
-    if(rule.get_selector().is_match(selector)) {
+    if(rule.get_selector() == selector) {
       return rule;
     }
   }

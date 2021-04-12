@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_EXPRESSION_HPP
 #define SPIRE_STYLES_EXPRESSION_HPP
 #include <any>
+#include <functional>
 #include <utility>
 #include "Spire/Styles/Styles.hpp"
 

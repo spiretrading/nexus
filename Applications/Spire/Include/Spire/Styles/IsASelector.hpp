@@ -16,7 +16,7 @@ namespace Spire::Styles {
        * Constructs an IsASelector.
        */
       template<typename T>
-      IsASelector(std::in_place_type_t<T>);
+      explicit IsASelector(std::in_place_type_t<T>);
 
       /** Returns the selector's type. */
       const std::type_index& get_type() const;
@@ -24,7 +24,9 @@ namespace Spire::Styles {
       /** Tests if a widget is an instance of the selector's type. */
       bool is_instance(const QWidget& widget) const;
 
-      bool is_match(const IsASelector& selector) const;
+      bool operator ==(const IsASelector& selector) const;
+
+      bool operator !=(const IsASelector& selector) const;
 
     private:
       std::type_index m_type;
@@ -39,6 +41,8 @@ namespace Spire::Styles {
   auto is_a() {
     return IsASelector(std::in_place_type<T>);
   }
+
+  std::vector<Stylist*> select(const IsASelector& selector, Stylist& source);
 
   template<typename T>
   IsASelector::IsASelector(std::in_place_type_t<T>)

@@ -2,6 +2,7 @@
 #define SPIRE_STATE_SELECTOR_HPP
 #include <utility>
 #include "Spire/Styles/Styles.hpp"
+#include "Spire/Styles/Stylist.hpp"
 
 namespace Spire::Styles {
 
@@ -29,7 +30,9 @@ namespace Spire::Styles {
       /** Returns the associated data. */
       const Type& get_data() const;
 
-      bool is_match(const StateSelector& selector) const;
+      bool operator ==(const StateSelector& selector) const;
+
+      bool operator !=(const StateSelector& selector) const;
 
     private:
       Type m_data;
@@ -40,8 +43,19 @@ namespace Spire::Styles {
     public:
       using Tag = G;
 
-      bool is_match(const StateSelector& selector) const;
+      bool operator ==(const StateSelector& selector) const;
+
+      bool operator !=(const StateSelector& selector) const;
   };
+
+  template<typename T, typename G>
+  std::vector<Stylist*> select(
+      const StateSelector<T, G>& selector, Stylist& source) {
+    if(source.is_match(selector)) {
+      return {&source};
+    }
+    return {};
+  }
 
   template<typename T, typename G>
   StateSelector<T, G>::StateSelector(Type data)
@@ -54,13 +68,25 @@ namespace Spire::Styles {
   }
 
   template<typename T, typename G>
-  bool StateSelector<T, G>::is_match(const StateSelector& selector) const {
+  bool StateSelector<T, G>::operator ==(const StateSelector& selector) const {
     return m_data == selector.m_data;
   }
 
+  template<typename T, typename G>
+  bool StateSelector<T, G>::operator !=(const StateSelector& selector) const {
+    return !(*this == selector);
+  }
+
   template<typename G>
-  bool StateSelector<void, G>::is_match(const StateSelector& selector) const {
+  bool StateSelector<void, G>::operator ==(
+      const StateSelector& selector) const {
     return true;
+  }
+
+  template<typename G>
+  bool StateSelector<void, G>::operator !=(
+      const StateSelector& selector) const {
+    return !(*this == selector);
   }
 }
 

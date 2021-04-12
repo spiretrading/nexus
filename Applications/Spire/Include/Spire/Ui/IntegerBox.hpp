@@ -1,7 +1,6 @@
 #ifndef SPIRE_INTEGER_BOX_HPP
 #define SPIRE_INTEGER_BOX_HPP
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/ScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -9,7 +8,7 @@
 namespace Spire {
 
   //! Represents a widget for inputting integer values.
-  class IntegerBox : public Styles::StyledWidget {
+  class IntegerBox : public QWidget {
     public:
 
       //! Signals that submission value has changed.
@@ -69,9 +68,6 @@ namespace Spire {
       //! Connects a slot to the RejectSignal.
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
-
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
 
     private:
       struct IntegerToDecimalModel;

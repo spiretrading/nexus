@@ -1,25 +1,32 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  //! Represents a button built upon a box.
-  class Button : public Styles::StyledWidget {
+  /** Represents a button built upon a box. */
+  class Button : public QWidget {
     public:
 
-      //! Signals that the button is clicked.
+      /** Signals that the button is clicked. */
       using ClickedSignal = Signal<void ()>;
 
-      //! Constructs a Button.
-      /*!
-        \param component The widget is displayed insdie.
-        \param parent The parent widget.
-      */
-      explicit Button(QWidget* component, QWidget* parent = nullptr);
+      /** Selects the body for styling. */
+      using Body = Styles::StateSelector<void, struct ButtonBodyTag>;
 
-      //! Connects a slot to the click signal.
+      /**
+       * Constructs a Button.
+       * @param body The widget contained by the button.
+       * @param parent The parent widget.
+       */
+      explicit Button(QWidget* body, QWidget* parent = nullptr);
+
+      const QWidget& get_body() const;
+
+      QWidget& get_body();
+
+      /** Connects a slot to the click signal. */
       boost::signals2::connection connect_clicked_signal(
         const ClickedSignal::slot_type& slot) const;
 
@@ -32,7 +39,7 @@ namespace Spire {
 
     private:
       mutable ClickedSignal m_clicked_signal;
-      QWidget* m_component;
+      QWidget* m_body;
       bool m_is_down;
   };
 
