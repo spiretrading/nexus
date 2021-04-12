@@ -250,18 +250,20 @@ void DurationBox::on_minute_field_current(int current) {
 
 void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
   m_is_second_field_inputting = true;
-  auto seconds_value =
+  auto milliseconds_value =
     static_cast<time_duration::sec_type>(current.convert_to<double>() * 1000);
   if(m_model->get_state() == QValidator::State::Invalid) {
-    m_model->set_current(milliseconds(seconds_value));
+    m_model->set_current(milliseconds(milliseconds_value));
   } else {
     auto duration = m_model->get_current();
-    if(duration.total_microseconds() != seconds_value) {
+    auto duration_milliseconds = duration.seconds() * 1000 +
+      duration.fractional_seconds() / 1000;
+    if(duration_milliseconds != milliseconds_value) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
       auto current_minutes =
         minutes(m_minute_field->get_model()->get_current());
       m_model->set_current(current_hours + current_minutes +
-        milliseconds(seconds_value));
+        milliseconds(milliseconds_value));
     }
   }
   m_is_second_field_inputting = false;
