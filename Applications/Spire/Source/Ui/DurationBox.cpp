@@ -11,35 +11,29 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-class DurationBox::InternalBox : public Box {
-  public:
-
-  explicit InternalBox(QWidget* body, QWidget* parent = nullptr)
-    : Box(body, parent) {}
-
-  virtual bool test_selector(const Selector& element,
-      const Selector& selector) const {
-    return selector.visit(
-      [&] (Focus) {
-        auto children = findChildren<StyledWidget*>();
-        foreach(auto child, children) {
-          if(child->hasFocus()) {
-            return true;
-          }
-        }
-        return false;
-      },
-      [&] {
-        return Box::test_selector(element, selector);
-      });
+namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+      set(BodyAlign(Qt::AlignCenter)).
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(horizontal_padding(scale_width(4)));
+    style.get(Hover() || Focus()).
+      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    return style;
   }
-};
+}
 
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalDurationModel>(), parent) {}
 
-DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* parent)
-    : StyledWidget(parent),
+DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model,
+    QWidget* parent)
+    : QWidget(parent),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_warning_displayed(true),
@@ -56,32 +50,31 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
   container_layout->setContentsMargins({});
   container_layout->setSpacing(0);
   container_layout->addWidget(m_hour_field, 6);
-  container_layout->addWidget(m_colon1);
+  container_layout->addWidget(m_hour_minute_colon);
   container_layout->addWidget(m_minute_field, 7);
-  container_layout->addWidget(m_colon2);
+  container_layout->addWidget(m_minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
-  m_box = new InternalBox(container);
-  auto box_style = m_box->get_style();
-  box_style.get(Any()).
-    set(BodyAlign(Qt::AlignCenter)).
-    set(horizontal_padding(scale_width(0)));
-  m_box->set_style(box_style);
+  auto container_style = get_style(*container);
+  container_style.get(Any() > Colon()).
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    set(TextColor(QColor::fromRgb(0, 0, 0)));
+  container_style.get(Disabled() > Colon()).
+    set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  set_style(*container, std::move(container_style));
+  m_box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_box);
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_box);
-  m_hour_field->get_model()->connect_current_signal([=] (const auto& current) {
-    on_hour_field_current(current);
-  });
+  proxy_style(*this, *m_box);
+  set_style(*this, DEFAULT_STYLE());
+  m_hour_field->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_hour_field_current(current); });
   m_minute_field->get_model()->connect_current_signal(
-    [=] (const auto& current) {
-      on_minute_field_current(current);
-    });
+    [=] (const auto& current) { on_minute_field_current(current); });
   m_second_field->get_model()->connect_current_signal(
-    [=] (const auto& current) {
-      on_second_field_current(current);
-    });
+    [=] (const auto& current) { on_second_field_current(current); });
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
     if(m_hour_field->hasFocus()) {
       on_submit();
@@ -97,18 +90,14 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model, QWidget* par
       on_submit();
     }
   });
-  m_hour_field->connect_reject_signal([=] (const auto& value) {
-    on_reject();
-  });
-  m_minute_field->connect_reject_signal([=] (const auto& value) {
-    on_reject();
-  });
-  m_second_field->connect_reject_signal([=] (const auto& value) {
-    on_reject();
-  });
-  m_model->connect_current_signal([=] (const auto& current) {
-    on_current(current);
-  });
+  m_hour_field->connect_reject_signal(
+    [=] (const auto& value) { on_reject(); });
+  m_minute_field->connect_reject_signal(
+    [=] (const auto& value) { on_reject(); });
+  m_second_field->connect_reject_signal(
+    [=] (const auto& value) { on_reject(); });
+  m_model->connect_current_signal(
+    [=] (const auto& current) { on_current(current); });
 }
 
 const std::shared_ptr<LocalDurationModel>& DurationBox::get_model() const {
@@ -138,16 +127,24 @@ QSize DurationBox::sizeHint() const {
 }
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusOut) {
+  if(event->type() == QEvent::FocusIn) {
+    auto style = get_style(*this);
+    style.get(Any()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    set_style(*this, std::move(style));
+  } else if(event->type() == QEvent::FocusOut) {
     if(!m_hour_field->hasFocus() && !m_minute_field->hasFocus() &&
-        !m_second_field->hasFocus() &&
-        m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
-        m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
-        m_second_field->get_model()->get_state() == QValidator::Acceptable) {
-      on_submit();
+        !m_second_field->hasFocus()) {
+      auto style = get_style(*this);
+      style.get(Any()).set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set_style(*this, std::move(style));
+      if(m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
+          m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
+          m_second_field->get_model()->get_state() == QValidator::Acceptable) {
+        on_submit();
+      }
     }
   }
-  return StyledWidget::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
 }
 
 void DurationBox::create_hour_field() {
@@ -156,13 +153,15 @@ void DurationBox::create_hour_field() {
   m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
-  auto hour_style = m_hour_field->get_style();
+  auto hour_style = get_style(*m_hour_field);
   hour_style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(border_size(0)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set_override(Rule::Override::EXCLUSIVE);
-  hour_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_hour_field->set_style(std::move(hour_style));
+    set(horizontal_padding(scale_width(0))).
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  hour_style.get(Any() > is_a<Button>()).set(
+    Visibility(VisibilityOption::NONE));
+  set_style(*m_hour_field, std::move(hour_style));
   m_hour_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
@@ -172,14 +171,16 @@ void DurationBox::create_minute_field() {
   m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
-  auto minute_style = m_minute_field->get_style();
+  auto minute_style = get_style(*m_minute_field);
   minute_style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(border_size(0)).
+    set(horizontal_padding(scale_width(0))).
     set(LeadingZeros(2)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set_override(Rule::Override::EXCLUSIVE);
-  minute_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_minute_field->set_style(std::move(minute_style));
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  minute_style.get(Any() > is_a<Button>()).set(
+    Visibility(VisibilityOption::NONE));
+  set_style(*m_minute_field, std::move(minute_style));
   m_minute_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
@@ -189,34 +190,30 @@ void DurationBox::create_second_field() {
   m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);
-  auto second_style = m_second_field->get_style();
+  auto second_style = get_style(*m_second_field);
   second_style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(border_size(0)).
-    set(LeadingZeros(2)).
-    set(TrailingZeros(3)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set_override(Rule::Override::EXCLUSIVE);
-  second_style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
-  m_second_field->set_style(std::move(second_style));
+    set(horizontal_padding(scale_width(0))).
+    set(LeadingZeros(2)).set(TrailingZeros(3)).
+    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+  second_style.get(Any() > is_a<Button>()).set(
+    Visibility(VisibilityOption::NONE));
+  set_style(*m_second_field, std::move(second_style));
   m_second_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
 void DurationBox::create_colon_fields() {
-  m_colon1 = new TextBox(":");
-  m_colon1->setFixedWidth(scale_width(10));
-  m_colon1->setEnabled(false);
-  m_colon1->set_read_only(true);
-  auto colon_style = m_colon1->get_style();
-  colon_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  colon_style.get(ReadOnly() && Disabled()).
-    set(TextColor(QColor::fromRgb(0, 0, 0))).
-    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  m_colon1->set_style(std::move(colon_style));
-  m_colon2 = new TextBox(":");
-  m_colon2->setFixedWidth(scale_width(10));
-  m_colon2->setEnabled(false);
-  m_colon2->set_read_only(true);
-  m_colon2->set_style(std::move(colon_style));
+  m_hour_minute_colon = new TextBox(":");
+  m_hour_minute_colon->setFixedWidth(scale_width(10));
+  m_hour_minute_colon->setEnabled(false);
+  m_hour_minute_colon->set_read_only(true);
+  m_minute_second_colon = new TextBox(":");
+  m_minute_second_colon->setFixedWidth(scale_width(10));
+  m_minute_second_colon->setEnabled(false);
+  m_minute_second_colon->set_read_only(true);
+  find_stylist(*m_hour_minute_colon).match(Colon());
+  find_stylist(*m_minute_second_colon).match(Colon());
 }
 
 void DurationBox::on_hour_field_current(int current) {
@@ -226,7 +223,8 @@ void DurationBox::on_hour_field_current(int current) {
   } else {
     auto duration = m_model->get_current();
     if(duration.hours() != current) {
-      auto current_minutes = minutes(m_minute_field->get_model()->get_current());
+      auto current_minutes =
+        minutes(m_minute_field->get_model()->get_current());
       auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
         m_second_field->get_model()->get_current().convert_to<double>() * 1000));
       m_model->set_current(hours(current) + current_minutes + current_seconds);
@@ -244,7 +242,8 @@ void DurationBox::on_minute_field_current(int current) {
     if(duration.minutes() != current) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
       auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
-        m_second_field->get_model()->get_current().convert_to<double>() * 1000));
+        m_second_field->get_model()->get_current().convert_to<double>() *
+        1000));
       m_model->set_current(current_hours + minutes(current) + current_seconds);
     }
   }
@@ -253,17 +252,19 @@ void DurationBox::on_minute_field_current(int current) {
 
 void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
   m_is_second_field_inputting = true;
-  auto seconds_value =
+  auto milliseconds_value =
     static_cast<time_duration::sec_type>(current.convert_to<double>() * 1000);
   if(m_model->get_state() == QValidator::State::Invalid) {
-    m_model->set_current(milliseconds(seconds_value));
+    m_model->set_current(milliseconds(milliseconds_value));
   } else {
     auto duration = m_model->get_current();
-    if(duration.total_microseconds() != seconds_value) {
+    if(duration.seconds() * 1000 + duration.fractional_seconds() / 1000 !=
+        milliseconds_value) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
-      auto current_minutes = minutes(m_minute_field->get_model()->get_current());
+      auto current_minutes =
+        minutes(m_minute_field->get_model()->get_current());
       m_model->set_current(current_hours + current_minutes +
-        milliseconds(seconds_value));
+        milliseconds(milliseconds_value));
     }
   }
   m_is_second_field_inputting = false;
@@ -308,7 +309,7 @@ void DurationBox::on_reject() {
   m_reject_signal(m_model->get_current());
   m_model->set_current(m_submission);
   if(m_is_warning_displayed) {
-    display_warning_indicator(*m_box);
+    display_warning_indicator(*this);
   }
 }
 

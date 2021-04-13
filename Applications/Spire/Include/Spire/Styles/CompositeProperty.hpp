@@ -67,15 +67,6 @@ namespace Spire::Styles {
     (f(std::move(property.get<T>())), ...);
   }
 
-  /**
-   * Instantiates a callable with every component of a CompositeProperty.
-   * @param f The callable to instantiate.
-   */
-  template<typename... T, typename F>
-  void for_each(std::in_place_type_t<CompositeProperty<T...>>, const F& f) {
-    (f<T>(), ...);
-  }
-
   template<typename... T>
   CompositeProperty<T...>::CompositeProperty(T... properties)
     : m_properties(std::move(properties)...) {}

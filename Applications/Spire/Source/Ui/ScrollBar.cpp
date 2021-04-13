@@ -23,7 +23,7 @@ namespace {
 }
 
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
-    : StyledWidget(parent) {
+    : QWidget(parent) {
   if(orientation == Qt::Vertical) {
     m_thumb_min_size = scale_height(50);
   } else {
@@ -35,7 +35,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   m_scroll_bar->setContextMenuPolicy(Qt::NoContextMenu);
   m_scroll_bar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_scroll_bar);
-  set_style(DEFAULT_STYLE());
+//  set_style(DEFAULT_STYLE());
   connect(m_scroll_bar, &QScrollBar::valueChanged, [=] (auto value) {
     m_position_signal(value);
   });
@@ -87,55 +87,9 @@ int ScrollBar::get_thumb_min_size() const {
 
 void ScrollBar::set_thumb_min_size(int size) {
   m_thumb_min_size = size;
-  style_updated();
 }
 
 connection ScrollBar::connect_position_signal(
     const PositionSignal::slot_type& slot) const {
   return m_position_signal.connect(slot);
-}
-
-void ScrollBar::selector_updated() {
-  auto scroll_bar_computed_style = compute_style();
-  auto thumb_computed_style = compute_style(ScrollBarThumb());
-  auto orientation = QMetaEnum::fromType<Qt::Orientation>().valueToKey(
-    get_orientation());
-  auto scroll_bar_style = QString(R"(
-    QScrollBar:%1 {
-      padding: 0px;)").arg(orientation);
-  auto thumb_style = QString("QScrollBar::handle:%1 {").arg(orientation);
-  for(auto& property : scroll_bar_computed_style.get_properties()) {
-    property.visit(
-      [&] (const BackgroundColor& color) {
-        scroll_bar_style += "background: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      });
-  }
-  scroll_bar_style += "}";
-  for(auto& property : thumb_computed_style.get_properties()) {
-    property.visit(
-      [&] (const BackgroundColor& color) {
-        thumb_style += "background: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
-      });
-  }
-  auto thumb_min_size_style = [=] {
-    if(get_orientation() == Qt::Vertical) {
-      return QString("min-height: %1px;").arg(m_thumb_min_size);
-    } else {
-      return QString("min-width: %1px;").arg(m_thumb_min_size);
-    }
-  }();
-  thumb_style += thumb_min_size_style + "}";
-  auto style = scroll_bar_style + thumb_style;
-  style += QString(R"(
-    QScrollBar::add-page:%1, QScrollBar::sub-page:%1 {
-      background: none;
-    }
-    QScrollBar::add-line:%1, QScrollBar::sub-line:%1 {
-      width: 0px;
-      height: 0px;
-    })").arg(orientation);
-  setStyleSheet(style);
-  StyledWidget::selector_updated();
 }

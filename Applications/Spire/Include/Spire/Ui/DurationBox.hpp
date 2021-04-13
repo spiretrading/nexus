@@ -1,6 +1,5 @@
 #ifndef SPIRE_DURATION_BOX_HPP
 #define SPIRE_DURATION_BOX_HPP
-#include "Spire/Styles/StyledWidget.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -11,7 +10,7 @@
 namespace Spire {
 
   //! Represents a widget for inputting a time duration.
-  class DurationBox : public Styles::StyledWidget {
+  class DurationBox : public QWidget {
     public:
 
       /**
@@ -68,17 +67,17 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      class InternalBox;
+      using Colon = Styles::StateSelector<void, struct DurationBoxColonTag>;
       mutable RejectSignal m_reject_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<LocalDurationModel> m_model;
       boost::posix_time::time_duration m_submission;
-      InternalBox* m_box;
+      Box* m_box;
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
-      TextBox* m_colon1;
-      TextBox* m_colon2;
+      TextBox* m_hour_minute_colon;
+      TextBox* m_minute_second_colon;
       bool m_is_warning_displayed;
       bool m_is_hour_field_inputting;
       bool m_is_minute_field_inputting;

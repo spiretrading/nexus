@@ -17,10 +17,10 @@ namespace {
 }
 
 Icon::Icon(QImage icon, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
       m_icon(std::move(icon)) {
   setAttribute(Qt::WA_Hover);
-  set_style(DEFAULT_STYLE());
+  set_style(*this, DEFAULT_STYLE());
 }
 
 QSize Icon::sizeHint() const {
@@ -30,7 +30,7 @@ QSize Icon::sizeHint() const {
 
 void Icon::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  auto computed_style = compute_style();
+  auto computed_style = compute_style(*this);
   auto background_color = [&] {
     if(auto background_color = Styles::find<BackgroundColor>(computed_style)) {
       return background_color->get_expression().as<QColor>();

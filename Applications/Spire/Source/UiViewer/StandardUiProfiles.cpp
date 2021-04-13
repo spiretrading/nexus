@@ -1,7 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
-#include <QHash>
 #include <QLabel>
-#include <QMetaEnum>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -13,6 +11,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -28,10 +27,30 @@ using namespace Spire::Styles;
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
-      auto box = new Box(nullptr, nullptr);
+      auto box = new Box(nullptr);
+      box->resize(scale(100, 100));
+      auto style = StyleSheet();
+      style.get(Any()).
+        set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+        set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(horizontal_padding(scale_width(8)));
+      style.get(Hover() || Focus()).
+        set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+        set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set_style(*box, std::move(style));
       apply_widget_properties(box, profile.get_properties());
+      auto& warning = get<bool>("display_warning", profile.get_properties());
+      warning.connect_changed_signal([&warning, box] (auto is_playing_warning) {
+        if(is_playing_warning) {
+          display_warning_indicator(*box);
+          warning.set(false);
+        }
+      });
       return box;
     });
   return profile;
@@ -200,16 +219,16 @@ UiProfile Spire::make_decimal_box_profile() {
       apply_widget_properties(decimal_box, profile.get_properties());
       auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
       leading_zeros.connect_changed_signal([=] (auto value) {
-        auto style = decimal_box->get_style();
+        auto style = get_style(*decimal_box);
         style.get(Any()).set(LeadingZeros(value));
-        decimal_box->set_style(std::move(style));
+        set_style(*decimal_box, std::move(style));
       });
       auto& trailing_zeros = get<int>("trailing_zeros",
         profile.get_properties());
       trailing_zeros.connect_changed_signal([=] (auto value) {
-        auto style = decimal_box->get_style();
+        auto style = get_style(*decimal_box);
         style.get(Any()).set(TrailingZeros(value));
-        decimal_box->set_style(std::move(style));
+        set_style(*decimal_box, std::move(style));
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
@@ -252,13 +271,14 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& buttons_visible = get<bool>("buttons_visible",
         profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
-        auto style = decimal_box->get_style();
+        auto style = get_style(*decimal_box);
         if(value) {
-          style.get(is_a<Button>()).get_block().remove<Visibility>();
+          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
-          style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+          style.get(Any() > is_a<Button>()).set(
+            Visibility(VisibilityOption::NONE));
         }
-        decimal_box->set_style(std::move(style));
+        set_style(*decimal_box, std::move(style));
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
         profile.get_properties());
@@ -429,13 +449,14 @@ UiProfile Spire::make_integer_box_profile() {
       auto& buttons_visible = get<bool>("buttons_visible",
         profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
-        auto style = integer_box->get_style();
+        auto style = get_style(*integer_box);
         if(value) {
-          style.get(is_a<Button>()).get_block().remove<Visibility>();
+          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
-          style.get(is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+          style.get(Any() > is_a<Button>()).set(
+            Visibility(VisibilityOption::NONE));
         }
-        integer_box->set_style(std::move(style));
+        set_style(*integer_box, std::move(style));
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
         profile.get_properties());
@@ -443,6 +464,29 @@ UiProfile Spire::make_integer_box_profile() {
         integer_box->set_warning_displayed(value);
       });
       return integer_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
+    [] (auto& profile) {
+      auto text_box = new TextBox("Test Component");
+      text_box->setAttribute(Qt::WA_TranslucentBackground);
+      text_box->set_read_only(true);
+      text_box->setDisabled(true);
+      auto text_box_style = get_style(*text_box);
+      text_box_style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
+      set_style(*text_box, std::move(text_box_style));
+      auto list_item = new ListItem(text_box);
+      apply_widget_properties(list_item, profile.get_properties());
+      list_item->connect_current_signal(profile.make_event_slot(
+        QString::fromUtf8("Current")));
+      list_item->connect_submit_signal(profile.make_event_slot(
+        QString::fromUtf8("Submit")));
+      return list_item;
     });
   return profile;
 }
