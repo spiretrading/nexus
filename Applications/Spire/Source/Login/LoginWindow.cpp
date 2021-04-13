@@ -59,7 +59,6 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   set_style(*m_close_button, CLOSE_BUTTON_STYLE());
   m_close_button->setFixedSize(BUTTON_SIZE());
   m_close_button->setFocusPolicy(Qt::NoFocus);
-  m_close_button->installEventFilter(this);
   m_close_button->connect_clicked_signal([=] {
     window()->close();
   });
@@ -105,7 +104,6 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_username_line_edit = new QLineEdit(this);
   connect(m_username_line_edit, &QLineEdit::textEdited,
     [=] {on_input_updated();});
-  m_username_line_edit->installEventFilter(this);
   m_username_line_edit->setPlaceholderText(tr("Username"));
   m_username_line_edit->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
@@ -128,7 +126,6 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     [=] {on_input_updated();});
   connect(m_password_line_edit, &QLineEdit::textEdited,
     [=] {on_password_updated();});
-  m_password_line_edit->installEventFilter(this);
   m_password_line_edit->setEchoMode(QLineEdit::Password);
   m_password_line_edit->setPlaceholderText(tr("Password"));
   m_password_line_edit->setSizePolicy(QSizePolicy::Expanding,
@@ -178,7 +175,6 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_sign_in_button = new FlatButton(tr("Sign In"), this);
   connect(m_sign_in_button, &FlatButton::clicked,
     this, &LoginWindow::try_login);
-  m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_sign_in_button->set_font_properties(scale_height(14), QFont::Bold);
