@@ -137,7 +137,6 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     QLineEdit {
       background-color: white;
       border: 0px;
-      border: 0px;
       font-family: Roboto;
       font-size: %2px;
       padding-left: %1px;
