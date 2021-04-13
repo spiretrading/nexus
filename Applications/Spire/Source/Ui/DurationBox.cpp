@@ -1,6 +1,6 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include <QHBoxLayout>
-#include <QKeyEvent>
+#include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -25,6 +25,11 @@ namespace {
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
+  }
+
+  auto get_milliseconds(time_duration duration) {
+    return (duration - hours(duration.hours()) - minutes(duration.minutes())).
+      total_milliseconds();
   }
 }
 
@@ -221,8 +226,7 @@ void DurationBox::on_hour_field_current(int current) {
   if(m_model->get_state() == QValidator::State::Invalid) {
     m_model->set_current(hours(current));
   } else {
-    auto duration = m_model->get_current();
-    if(duration.hours() != current) {
+    if(m_model->get_current().hours() != current) {
       auto current_minutes =
         minutes(m_minute_field->get_model()->get_current());
       auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
@@ -238,12 +242,10 @@ void DurationBox::on_minute_field_current(int current) {
   if(m_model->get_state() == QValidator::State::Invalid) {
     m_model->set_current(minutes(current));
   } else {
-    auto duration = m_model->get_current();
-    if(duration.minutes() != current) {
+    if(m_model->get_current().minutes() != current) {
       auto current_hours = hours(m_hour_field->get_model()->get_current());
       auto current_seconds = milliseconds(static_cast<time_duration::sec_type>(
-        m_second_field->get_model()->get_current().convert_to<double>() *
-        1000));
+        m_second_field->get_model()->get_current().convert_to<double>() * 1000));
       m_model->set_current(current_hours + minutes(current) + current_seconds);
     }
   }
@@ -257,13 +259,9 @@ void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
   if(m_model->get_state() == QValidator::State::Invalid) {
     m_model->set_current(milliseconds(milliseconds_value));
   } else {
-    auto duration = m_model->get_current();
-    if(duration.seconds() * 1000 + duration.fractional_seconds() / 1000 !=
-        milliseconds_value) {
-      auto current_hours = hours(m_hour_field->get_model()->get_current());
-      auto current_minutes =
-        minutes(m_minute_field->get_model()->get_current());
-      m_model->set_current(current_hours + current_minutes +
+    if(get_milliseconds(m_model->get_current()) != milliseconds_value) {
+      m_model->set_current(hours(m_hour_field->get_model()->get_current()) +
+        minutes(m_minute_field->get_model()->get_current()) +
         milliseconds(milliseconds_value));
     }
   }
@@ -278,15 +276,11 @@ void DurationBox::on_current(time_duration current) {
   } else {
     if(!m_is_hour_field_inputting && !m_is_minute_field_inputting &&
         !m_is_second_field_inputting) {
-      auto current_hours = static_cast<int>(current.hours());
-      m_hour_field->get_model()->set_current(current_hours);
-      auto current_minutes = static_cast<int>(current.minutes());
-      m_minute_field->get_model()->set_current(current_minutes);
-      auto current_seconds = current - hours(current_hours) -
-        minutes(current_minutes);
-      auto current_milliseconds = DecimalBox::Decimal(
-        current_seconds.total_milliseconds());
-      m_second_field->get_model()->set_current(current_milliseconds / 1000);
+      m_hour_field->get_model()->set_current(static_cast<int>(current.hours()));
+      m_minute_field->get_model()->set_current(
+        static_cast<int>(current.minutes()));
+      m_second_field->get_model()->set_current(
+        DecimalBox::Decimal(get_milliseconds(current)) / 1000);
     }
   }
 }

@@ -14,6 +14,7 @@ namespace Spire {
       public LocalValueModel<boost::posix_time::time_duration> {
     public:
 
+      /** Signals a change to the current value. */
       using CurrentSignal = typename
         LocalValueModel<boost::posix_time::time_duration>::CurrentSignal;
 
@@ -40,32 +41,30 @@ namespace Spire {
       /** Returns the maximum duration or none if there is no maximum. */
       boost::optional<boost::posix_time::time_duration> get_maximum() const;
 
-      /**
-       * Returns the state of the current value, by default this is
-       * <i>QValidator::State::Acceptable</i>
-       */
+      /**  Returns the state of the current value. */
       QValidator::State get_state() const;
 
       /** Returns the current value. */
       const boost::posix_time::time_duration& get_current() const override;
 
       /**
-       * Sets the current value. By default this operation is a no-op that
-       * always returns <i>QValidator::State::Invalid</i>.
+       * Sets the current value.
+       * @param current The current duration.
        */
       QValidator::State set_current(
         const boost::posix_time::time_duration& value) override;
 
-      //! Returns the hour model.
+      /** Returns the hour model. */
       const std::shared_ptr<LocalIntegerModel>& get_hour_model() const;
 
-      //! Returns the minute model.
+      /** Returns the minute model. */
       const std::shared_ptr<LocalIntegerModel>& get_minute_model() const;
 
-      //! Returns the second model.
+      /** Returns the second model. */
       const std::shared_ptr<LocalScalarValueModel<DecimalBox::Decimal>>&
         get_second_model() const;
 
+      /** Connects a slot to the CurrentSignal. */
       boost::signals2::connection connect_current_signal(
         const typename CurrentSignal::slot_type& slot) const override;
 
