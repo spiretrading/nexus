@@ -4,18 +4,34 @@
 #include <QVBoxLayout>
 #include "Spire/Login/ChromaHashWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/FlatButton.hpp"
-#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Icon.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   auto BUTTON_SIZE() {
     static auto size = scale(32, 26);
     return size;
+  }
+
+  auto CLOSE_BUTTON_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any() > Button::Body()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(Fill(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
+    style.get(!Active() > Button::Body()).
+      set(Fill(QColor::fromRgb(0xBA, 0xB3, 0xD9)));
+    style.get(Hover() > Button::Body()).
+      set(BackgroundColor(QColor::fromRgb(0x32, 0x14, 0x71))).
+      set(Fill(QColor::fromRgb(0xE6, 0x3F, 0x45)));
+    return style;
   }
 }
 
@@ -38,19 +54,17 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(352);
-  auto exit_button_style = IconButton::Style();
-  exit_button_style.m_default_color = "#E2E0FF";
-  exit_button_style.m_hover_color = "#E63F45";
-  exit_button_style.m_blur_color = "#BAB3D9";
-  exit_button_style.m_hover_background_color = "#321471";
-  m_exit_button = new IconButton(imageFromSvg(":/Icons/close.svg",
-    BUTTON_SIZE()), exit_button_style, this);
-  m_exit_button->setFixedSize(BUTTON_SIZE());
-  m_exit_button->setFocusPolicy(Qt::NoFocus);
-  m_exit_button->installEventFilter(this);
-  connect(m_exit_button, &IconButton::clicked, [=] { window()->close(); });
-  title_bar_layout->addWidget(m_exit_button);
-  title_bar_layout->setStretchFactor(m_exit_button, 32);
+  m_close_button = make_icon_button(imageFromSvg(":/Icons/close.svg",
+    BUTTON_SIZE()), this);
+  set_style(*m_close_button, CLOSE_BUTTON_STYLE());
+  m_close_button->setFixedSize(BUTTON_SIZE());
+  m_close_button->setFocusPolicy(Qt::NoFocus);
+  m_close_button->installEventFilter(this);
+  m_close_button_connection = m_close_button->connect_clicked_signal([=] {
+    window()->close();
+  });
+  title_bar_layout->addWidget(m_close_button);
+  title_bar_layout->setStretchFactor(m_close_button, 32);
   body_layout->addLayout(title_bar_layout);
   body_layout->setStretchFactor(title_bar_layout, 2600);
   auto padding_layout = new QHBoxLayout();
@@ -122,6 +136,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_password_line_edit->setStyleSheet(QString(R"(
     QLineEdit {
       background-color: white;
+      border: 0px;
       border: 0px;
       font-family: Roboto;
       font-size: %2px;
