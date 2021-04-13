@@ -60,7 +60,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_close_button->setFixedSize(BUTTON_SIZE());
   m_close_button->setFocusPolicy(Qt::NoFocus);
   m_close_button->installEventFilter(this);
-  m_close_button_connection = m_close_button->connect_clicked_signal([=] {
+  m_close_button->connect_clicked_signal([=] {
     window()->close();
   });
   title_bar_layout->addWidget(m_close_button);

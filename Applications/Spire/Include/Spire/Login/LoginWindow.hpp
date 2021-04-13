@@ -83,7 +83,6 @@ namespace Spire {
       QLineEdit* m_password_line_edit;
       FlatButton* m_sign_in_button;
       Button* m_close_button;
-      boost::signals2::scoped_connection m_close_button_connection;
       bool m_is_dragging;
       QPoint m_last_pos;
       ChromaHashWidget* m_chroma_hash_widget;
