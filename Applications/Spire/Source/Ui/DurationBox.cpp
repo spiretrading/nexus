@@ -31,6 +31,13 @@ namespace {
     return (duration - hours(duration.hours()) - minutes(duration.minutes())).
       total_milliseconds();
   }
+
+  template<typename T>
+  auto create_modifiers() {
+    return QHash<Qt::KeyboardModifier, T>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+       {Qt::ShiftModifier, 20}});
+  }
 }
 
 DurationBox::DurationBox(QWidget* parent)
@@ -154,7 +161,7 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
 
 void DurationBox::create_hour_field() {
   m_hour_field = new IntegerBox(m_model->get_hour_model(),
-    QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}}));
+    create_modifiers<int>());
   m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
@@ -172,7 +179,7 @@ void DurationBox::create_hour_field() {
 
 void DurationBox::create_minute_field() {
   m_minute_field = new IntegerBox(m_model->get_minute_model(),
-    QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1}}));
+    create_modifiers<int>());
   m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
@@ -191,7 +198,7 @@ void DurationBox::create_minute_field() {
 
 void DurationBox::create_second_field() {
   m_second_field = new DecimalBox(m_model->get_second_model(),
-    QHash<Qt::KeyboardModifier, DecimalBox::Decimal>({{Qt::NoModifier, 1.0}}));
+    create_modifiers<DecimalBox::Decimal>());
   m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);
