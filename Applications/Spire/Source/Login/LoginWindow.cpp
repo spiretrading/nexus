@@ -8,8 +8,8 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/FlatButton.hpp"
-#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
