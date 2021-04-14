@@ -56,7 +56,8 @@ namespace {
 
   QValidator::State is_acceptable(const DecimalBox::Decimal& value,
       optional<DecimalBox::Decimal> min, optional<DecimalBox::Decimal> max) {
-    if(max && *max >= 0 && value > *max || min && *min <= 0 && value < *min) {
+    if(max && *max >= 0 && value > *max ||
+        min && (*min <= 0 && value < *min || *min > 0 && value < 0)) {
       return QValidator::State::Invalid;
     }
     if(min && value < *min) {
