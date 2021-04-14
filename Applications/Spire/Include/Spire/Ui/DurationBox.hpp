@@ -82,6 +82,10 @@ namespace Spire {
       bool m_is_hour_field_inputting;
       bool m_is_minute_field_inputting;
       bool m_is_second_field_inputting;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_hour_current_connection;
+      boost::signals2::scoped_connection m_minute_current_connection;
+      boost::signals2::scoped_connection m_second_current_connection;
 
       void create_hour_field();
       void create_minute_field();
