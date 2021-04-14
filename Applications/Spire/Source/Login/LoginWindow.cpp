@@ -37,7 +37,7 @@ namespace {
 
   auto INPUT_STYLE(StyleSheet style) {
     style.get(Any()).set(border(scale_width(0), QColor::fromRgb(0, 0, 0, 0)));
-    auto font_style = Styles::find<TextStyle>(style.find(Any())->get_block());
+    auto font_style = find<TextStyle>(style.find(Any())->get_block());
     if(font_style) {
       auto font = font_style->get<Font>().get_expression().as<QFont>();
       font.setPixelSize(scale_height(14));
@@ -62,7 +62,8 @@ namespace {
     style.get(Disabled() > Button::Body()).
       set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
       set(TextColor(QColor(0x8D, 0x78, 0xEC)));
-    auto font_style = Styles::find<TextStyle>(style.find(Any())->get_block());
+    auto font_style = find<TextStyle>(
+      style.find(Any() > Button::Body())->get_block());
     if(font_style) {
       auto font = font_style->get<Font>().get_expression().as<QFont>();
       font.setPixelSize(scale_height(14));
