@@ -70,11 +70,21 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
 
 IntegerBox::IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
   QWidget* parent)
+  : IntegerBox(std::move(modifiers), InitialDisplay::CURRENT, parent) {}
+
+IntegerBox::IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
+  InitialDisplay initial_display, QWidget* parent)
   : IntegerBox(std::make_shared<LocalScalarValueModel<int>>(),
-      std::move(modifiers), parent) {}
+      std::move(modifiers), initial_display, parent) {}
 
 IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
-    QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
+  QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
+  : IntegerBox(std::move(model), std::move(modifiers), InitialDisplay::CURRENT,
+      parent) {}
+
+IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
+    QHash<Qt::KeyboardModifier, int> modifiers, InitialDisplay initial_display,
+    QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<IntegerToDecimalModel>(m_model)),
@@ -86,7 +96,8 @@ IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
       modifier != modifiers.end(); ++modifier) {
     adapted_modifiers.insert(modifier.key(), modifier.value());
   }
-  m_decimal_box = new DecimalBox(m_adaptor_model, adapted_modifiers, this);
+  m_decimal_box = new DecimalBox(m_adaptor_model, adapted_modifiers,
+    initial_display, this);
   proxy_style(*this, *m_decimal_box);
   setFocusProxy(m_decimal_box);
   layout->addWidget(m_decimal_box);

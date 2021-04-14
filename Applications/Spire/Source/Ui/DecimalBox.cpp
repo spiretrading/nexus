@@ -53,6 +53,33 @@ namespace {
     button->setFixedSize(BUTTON_SIZE());
     return button;
   }
+
+  QValidator::State is_acceptable(const DecimalBox::Decimal& value,
+      optional<DecimalBox::Decimal> min, optional<DecimalBox::Decimal> max) {
+    if(max && *max >= 0 && value > *max || min && *min <= 0 && value < *min) {
+      return QValidator::State::Invalid;
+    }
+    if(min && value < *min) {
+      if(value == 0 || abs(*min - value) < 10) {
+        return QValidator::State::Invalid;
+      }
+      auto adjustment = value;
+      while(*min - adjustment > 10) {
+        adjustment *= 10;
+      }
+      if(abs(*min - adjustment) < 10) {
+        return QValidator::State::Intermediate;
+      }
+      return QValidator::State::Invalid;
+    } else if(max && value > *max) {
+      if(min) {
+        return is_acceptable(-value, optional<DecimalBox::Decimal>(-*min),
+          optional<DecimalBox::Decimal>(-*max));
+      }
+      return is_acceptable(-value, none, optional<DecimalBox::Decimal>(-*max));
+    }
+    return QValidator::State::Acceptable;
+  }
 }
 
 struct DecimalBox::DecimalToTextModel : TextModel {
@@ -66,17 +93,20 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   bool m_is_rejected;
   scoped_connection m_current_connection;
 
-  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
+  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model,
+      InitialDisplay initial_display)
       : m_model(std::move(model)),
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
         m_leading_zeros(0),
         m_trailing_zeros(0),
-        m_current(to_string(m_model->get_current())),
         m_is_rejected(false),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) {
             on_current(current);
           })) {
+    if(initial_display == InitialDisplay::CURRENT) {
+      m_current = to_string(m_model->get_current());
+    }
     update_validator();
   }
 
@@ -86,6 +116,9 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
     m_leading_zeros = leading_zeros;
     update_validator();
+    if(m_current.isEmpty()) {
+      return;
+    }
     auto displayed_value = to_string(m_model->get_current());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
@@ -99,6 +132,9 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
     m_trailing_zeros = trailing_zeros;
     update_validator();
+    if(m_current.isEmpty()) {
+      return;
+    }
     auto displayed_value = to_string(m_model->get_current());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
@@ -142,13 +178,36 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       m_is_rejected = false;
       return QValidator::State::Invalid;
     } else if(value.isEmpty() || value == "-" || value == "+") {
+      if(value == "-" &&
+          m_model->get_minimum() && *m_model->get_minimum() >= 0) {
+        return QValidator::State::Invalid;
+      } else if(value == "+" &&
+          m_model->get_maximum() && *m_model->get_maximum() < 0) {
+        return QValidator::State::Invalid;
+      }
+      auto origin = [&] {
+        if(is_acceptable(0, m_model->get_minimum(), m_model->get_maximum()) ==
+            QValidator::State::Acceptable) {
+          return DecimalBox::Decimal(0);
+        } else if(!m_model->get_minimum()) {
+          return *m_model->get_maximum();
+        }
+        return *m_model->get_minimum();
+      }();
+      auto blocker = shared_connection_block(m_current_connection);
+      m_model->set_current(origin);
       m_current = value;
       m_current_signal(m_current);
       m_is_rejected = false;
       return QValidator::State::Intermediate;
     } else if(auto decimal = to_decimal(value)) {
+      auto state =
+        is_acceptable(*decimal, m_model->get_minimum(), m_model->get_maximum());
+      if(state == QValidator::State::Invalid) {
+        return QValidator::State::Invalid;
+      }
       auto blocker = shared_connection_block(m_current_connection);
-      auto state = m_model->set_current(*decimal);
+      state = m_model->set_current(*decimal);
       if(state != QValidator::State::Invalid) {
         if(m_is_rejected) {
           m_current = to_string(*decimal);
@@ -170,7 +229,9 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   void update_validator() {
-    if(m_trailing_zeros > m_decimal_places) {
+    if(m_decimal_places <= 0) {
+      m_validator = QRegExp(QString("^[-|\\+]?[0-9]*"));
+    } else if(m_trailing_zeros > m_decimal_places) {
       auto delta = m_trailing_zeros - m_decimal_places;
       m_validator =
         QRegExp(QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1}0{0,%2})?").arg(
@@ -245,14 +306,25 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
+  : DecimalBox(std::move(modifiers), InitialDisplay::CURRENT, parent) {}
+
+DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
+  InitialDisplay initial_display, QWidget* parent)
   : DecimalBox(std::make_shared<LocalScalarValueModel<Decimal>>(),
-      std::move(modifiers), parent) {}
+      std::move(modifiers), initial_display, parent) {}
 
 DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
-    QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+  QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+  : DecimalBox(std::move(model), std::move(modifiers), InitialDisplay::CURRENT,
+      parent) {}
+
+DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
+    QHash<Qt::KeyboardModifier, Decimal> modifiers,
+    InitialDisplay initial_display, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
-      m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
+      m_adaptor_model(
+        std::make_shared<DecimalToTextModel>(m_model, initial_display)),
       m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)) {
   auto layout = new QHBoxLayout(this);
