@@ -46,6 +46,32 @@ namespace {
     }
     return style;
   }
+
+  auto SIGN_IN_BUTTON_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any() > Button::Body()).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+      set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
+      set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
+      set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
+    style.get(Hover() > Button::Body()).
+      set(BackgroundColor(QColor(0x8D, 0x78, 0xEC))).
+      set(border(scale_width(1), QColor(0x8D, 0x78, 0xEC)));
+    style.get(Focus() > Button::Body()).
+      set(border(scale_width(1), QColor(0x8D, 0x78, 0xEC)));
+    style.get(Disabled() > Button::Body()).
+      set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
+      set(TextColor(QColor(0x8D, 0x78, 0xEC)));
+    auto font_style = Styles::find<TextStyle>(style.find(Any())->get_block());
+    if(font_style) {
+      auto font = font_style->get<Font>().get_expression().as<QFont>();
+      font.setPixelSize(scale_height(14));
+      font.setWeight(550);
+      style.get(Any()).set(text_style(font,
+        font_style->get<TextColor>().get_expression().as<QColor>()));
+    }
+    return style;
+  }
 }
 
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
@@ -179,17 +205,11 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   button_layout->addWidget(build_label);
   button_layout->setStretchFactor(build_label, 57);
   button_layout->addStretch(103);
-  m_sign_in_button = new FlatButton(tr("Sign In"), this);
-  connect(m_sign_in_button, &FlatButton::clicked,
-    this, &LoginWindow::try_login);
+  m_sign_in_button = make_label_button(tr("Sign In"), this);
+  set_style(*m_sign_in_button, SIGN_IN_BUTTON_STYLE());
+  m_sign_in_button->connect_clicked_signal([=] { try_login(); });
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_sign_in_button->set_font_properties(scale_height(14), QFont::Bold);
-  m_sign_in_button->set_style(
-    {QColor("#684BC7"), QColor("#684BC7"), QColor("#E2E0FF")},
-    {QColor("#8D78EC"), QColor("#8D78EC"), QColor("#E2E0FF")},
-    {QColor("#684BC7"), QColor("#8D78EC"), QColor("#E2E0FF")},
-    {QColor("#4B23A0"), QColor("#684BC7"), QColor("#8D78EC")});
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
   button_layout->setStretchFactor(m_sign_in_button, 120);
@@ -218,7 +238,8 @@ void LoginWindow::set_state(State s) {
       m_username_text_box->setEnabled(false);
       m_password_line_edit->setEnabled(false);
       m_status_label->setText("");
-      m_sign_in_button->setText(tr("Cancel"));
+      static_cast<TextBox&>(m_sign_in_button->get_body()).get_model()->
+        set_current(tr("Cancel"));
       m_logo_widget->movie()->start();
       break;
     }
@@ -305,7 +326,8 @@ void LoginWindow::reset_visuals() {
   m_username_text_box->setEnabled(true);
   m_password_line_edit->setEnabled(true);
   m_sign_in_button->setFocus();
-  m_sign_in_button->setText(tr("Sign In"));
+  static_cast<TextBox&>(m_sign_in_button->get_body()).get_model()->set_current(
+    tr("Sign In"));
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
 }

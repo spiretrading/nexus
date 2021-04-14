@@ -81,7 +81,7 @@ namespace Spire {
       QLabel* m_status_label;
       TextBox* m_username_text_box;
       QLineEdit* m_password_line_edit;
-      FlatButton* m_sign_in_button;
+      Button* m_sign_in_button;
       Button* m_close_button;
       bool m_is_dragging;
       QPoint m_last_pos;
