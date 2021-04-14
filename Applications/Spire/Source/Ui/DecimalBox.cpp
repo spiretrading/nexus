@@ -71,7 +71,7 @@ namespace {
         return QValidator::State::Intermediate;
       }
       return QValidator::State::Invalid;
-    } else if(*max && value > *max) {
+    } else if(max && value > *max) {
       if(min) {
         return is_acceptable(-value, optional<DecimalBox::Decimal>(-*min),
           optional<DecimalBox::Decimal>(-*max));
