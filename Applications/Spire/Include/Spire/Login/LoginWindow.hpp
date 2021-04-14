@@ -78,7 +78,7 @@ namespace Spire {
       State m_state;
       DropShadow* m_shadow;
       QLabel* m_logo_widget;
-      QLabel* m_status_label;
+      TextBox* m_status_label;
       QLineEdit* m_username_line_edit;
       QLineEdit* m_password_line_edit;
       FlatButton* m_sign_in_button;

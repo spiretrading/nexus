@@ -9,6 +9,7 @@
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -21,6 +22,11 @@ namespace {
     return size;
   }
 
+  auto BUILD_LABEL_STYLE(StyleSheet style) {
+    style.get(ReadOnly()).set(TextColor(QColor(0xFF, 0xFF, 0xFF)));
+    return style;
+  }
+
   auto CLOSE_BUTTON_STYLE() {
     auto style = StyleSheet();
     style.get(Any() > Button::Body()).
@@ -31,6 +37,13 @@ namespace {
     style.get(Hover() > Button::Body()).
       set(BackgroundColor(QColor::fromRgb(0x32, 0x14, 0x71))).
       set(Fill(QColor::fromRgb(0xE6, 0x3F, 0x45)));
+    return style;
+  }
+
+  auto STATUS_LABEL_STYLE(StyleSheet style) {
+    style.get(ReadOnly()).
+      set(TextColor(QColor(0xFA, 0xEB, 0x96))).
+      set(TextAlign({Qt::AlignCenter}));
     return style;
   }
 }
@@ -90,14 +103,9 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   content_layout->addLayout(logo_layout);
   content_layout->setStretchFactor(logo_layout, 50);
   content_layout->addStretch(23);
-  m_status_label = new QLabel(this);
-  m_status_label->setStyleSheet(QString(R"(
-    QLabel {
-      color: #FAEB96;
-      font-family: Roboto;
-      font-size: %1px;
-      qproperty-alignment: AlignCenter;
-    })").arg(scale_height(12)));
+  m_status_label = new TextBox(this);
+  m_status_label->set_read_only(true);
+  set_style(*m_status_label, STATUS_LABEL_STYLE(get_style(*m_status_label)));
   content_layout->addWidget(m_status_label);
   content_layout->setStretchFactor(m_status_label, 14);
   content_layout->addStretch(20);
@@ -160,23 +168,16 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  auto build_label = new QLabel(QString(tr("Build ")) +
+  auto build_label = new TextBox(QString(tr("Build ")) +
     QString::fromStdString(version), this);
-  build_label->setStyleSheet(QString(R"(
-    QLabel {
-      color: white;
-      font-family: Roboto;
-      font-size: %1px;
-    })").arg(scale_height(12)));
-  build_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  build_label->set_read_only(true);
+  set_style(*build_label, BUILD_LABEL_STYLE(get_style(*build_label)));
   button_layout->addWidget(build_label);
-  button_layout->setStretchFactor(build_label, 57);
-  button_layout->addStretch(103);
+  button_layout->setStretchFactor(build_label, 160);
   m_sign_in_button = new FlatButton(tr("Sign In"), this);
+  m_sign_in_button->setFixedSize(scale(120, 30));
   connect(m_sign_in_button, &FlatButton::clicked,
     this, &LoginWindow::try_login);
-  m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   m_sign_in_button->set_font_properties(scale_height(14), QFont::Bold);
   m_sign_in_button->set_style(
     {QColor("#684BC7"), QColor("#684BC7"), QColor("#E2E0FF")},
@@ -185,7 +186,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     {QColor("#4B23A0"), QColor("#684BC7"), QColor("#8D78EC")});
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
-  button_layout->setStretchFactor(m_sign_in_button, 120);
+  button_layout->setStretchFactor(m_sign_in_button, 2);
   content_layout->addLayout(button_layout);
   content_layout->setStretchFactor(button_layout, 30);
   content_layout->addStretch(48);
@@ -210,7 +211,7 @@ void LoginWindow::set_state(State s) {
     case State::LOGGING_IN: {
       m_username_line_edit->setEnabled(false);
       m_password_line_edit->setEnabled(false);
-      m_status_label->setText("");
+      m_status_label->get_model()->set_current("");
       m_sign_in_button->setText(tr("Cancel"));
       m_logo_widget->movie()->start();
       break;
@@ -221,12 +222,13 @@ void LoginWindow::set_state(State s) {
       break;
     }
     case State::INCORRECT_CREDENTIALS: {
-      m_status_label->setText(tr("Incorrect username or password."));
+      m_status_label->get_model()->set_current(
+        tr("Incorrect username or password."));
       reset_visuals();
       break;
     }
     case State::SERVER_UNAVAILABLE: {
-      m_status_label->setText(tr("Server is unavailable."));
+      m_status_label->get_model()->set_current(tr("Server is unavailable."));
       reset_visuals();
       break;
     }
@@ -290,7 +292,7 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void LoginWindow::reset_all() {
-  m_status_label->setText("");
+  m_status_label->get_model()->set_current("");
   reset_visuals();
 }
 
