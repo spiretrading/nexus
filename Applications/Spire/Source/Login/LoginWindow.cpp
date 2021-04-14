@@ -40,6 +40,18 @@ namespace {
     return style;
   }
 
+  auto INPUT_STYLE(StyleSheet style) {
+    style.get(Any()).set(border(scale_width(0), QColor::fromRgb(0, 0, 0, 0)));
+    auto font_style = Styles::find<TextStyle>(style.find(Any())->get_block());
+    if(font_style) {
+      auto font = font_style->get<Font>().get_expression().as<QFont>();
+      font.setPixelSize(scale_height(14));
+      style.get(Any()).set(text_style(font,
+        font_style->get<TextColor>().get_expression().as<QColor>()));
+    }
+    return style;
+  }
+
   auto STATUS_LABEL_STYLE(StyleSheet style) {
     style.get(ReadOnly()).
       set(TextColor(QColor(0xFA, 0xEB, 0x96))).
@@ -109,22 +121,16 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   content_layout->addWidget(m_status_label);
   content_layout->setStretchFactor(m_status_label, 14);
   content_layout->addStretch(20);
-  m_username_line_edit = new QLineEdit(this);
-  connect(m_username_line_edit, &QLineEdit::textEdited,
-    [=] {on_input_updated();});
-  m_username_line_edit->setPlaceholderText(tr("Username"));
-  m_username_line_edit->setSizePolicy(QSizePolicy::Expanding,
+  m_username_text_box = new TextBox(this);
+  m_username_text_box->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_input_updated(); });
+  m_username_text_box->set_placeholder(tr("Username"));
+  m_username_text_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_username_line_edit->setStyleSheet(QString(R"(
-    QLineEdit {
-      background-color: white;
-      border: 0px;
-      font-family: Roboto;
-      font-size: %2px;
-      padding-left: %1px;
-    })").arg(scale_width(10)).arg(scale_height(14)));
-  content_layout->addWidget(m_username_line_edit);
-  content_layout->setStretchFactor(m_username_line_edit, 30);
+  set_style(*m_username_text_box,
+    INPUT_STYLE(get_style(*m_username_text_box)));
+  content_layout->addWidget(m_username_text_box);
+  content_layout->setStretchFactor(m_username_text_box, 30);
   content_layout->addStretch(15);
   auto password_layout = new QHBoxLayout();
   password_layout->setContentsMargins({});
@@ -145,7 +151,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
       font-family: Roboto;
       font-size: %2px;
       padding-left: %1px;
-    })").arg(scale_width(10)).arg(scale_height(14)));
+    })").arg(scale_width(6)).arg(scale_height(14)));
   password_layout->addWidget(m_password_line_edit);
   password_layout->setStretchFactor(m_password_line_edit, 246);
   auto ch_outer_widget = new QWidget(this);
@@ -195,7 +201,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   padding_layout->addStretch(52);
   body_layout->addLayout(padding_layout);
   body_layout->setStretchFactor(padding_layout, 320);
-  setTabOrder(m_username_line_edit, m_password_line_edit);
+  setTabOrder(m_username_text_box, m_password_line_edit);
   setTabOrder(m_password_line_edit, m_sign_in_button);
   set_state(State::NONE);
 }
@@ -209,7 +215,7 @@ void LoginWindow::set_state(State s) {
       break;
     }
     case State::LOGGING_IN: {
-      m_username_line_edit->setEnabled(false);
+      m_username_text_box->setEnabled(false);
       m_password_line_edit->setEnabled(false);
       m_status_label->get_model()->set_current("");
       m_sign_in_button->setText(tr("Cancel"));
@@ -251,16 +257,16 @@ void LoginWindow::keyPressEvent(QKeyEvent* event) {
     window()->close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     if(m_password_line_edit->hasFocus()) {
-      if(!m_username_line_edit->text().isEmpty()) {
+      if(!m_username_text_box->get_model()->get_current().isEmpty()) {
         try_login();
       }
     }
   } else if(m_password_line_edit->hasFocus()) {
     return;
-  } else if(!m_username_line_edit->hasFocus() &&
-      m_username_line_edit->text().isEmpty()) {
-    m_username_line_edit->setText(event->text());
-    m_username_line_edit->setFocus();
+  } else if(!m_username_text_box->hasFocus() &&
+      m_username_text_box->get_model()->get_current().isEmpty()) {
+    m_username_text_box->get_model()->set_current(event->text());
+    m_username_text_box->setFocus();
   }
 }
 
@@ -297,7 +303,7 @@ void LoginWindow::reset_all() {
 }
 
 void LoginWindow::reset_visuals() {
-  m_username_line_edit->setEnabled(true);
+  m_username_text_box->setEnabled(true);
   m_password_line_edit->setEnabled(true);
   m_sign_in_button->setFocus();
   m_sign_in_button->setText(tr("Sign In"));
@@ -307,10 +313,11 @@ void LoginWindow::reset_visuals() {
 
 void LoginWindow::try_login() {
   if(m_state != State::LOGGING_IN) {
-    if(m_username_line_edit->text().isEmpty()) {
+    if(m_username_text_box->get_model()->get_current().isEmpty()) {
       set_state(State::INCORRECT_CREDENTIALS);
     } else {
-      m_login_signal(m_username_line_edit->text().toStdString(),
+      m_login_signal(
+        m_username_text_box->get_model()->get_current().toStdString(),
         m_password_line_edit->text().toStdString());
       set_state(State::LOGGING_IN);
     }
@@ -321,7 +328,7 @@ void LoginWindow::try_login() {
 }
 
 void LoginWindow::on_input_updated() {
-  if(!m_username_line_edit->text().isEmpty()) {
+  if(!m_username_text_box->get_model()->get_current().isEmpty()) {
     m_sign_in_button->setEnabled(true);
   } else {
     m_sign_in_button->setEnabled(false);

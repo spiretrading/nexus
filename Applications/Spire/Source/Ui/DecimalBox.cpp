@@ -64,10 +64,13 @@ namespace {
         return QValidator::State::Invalid;
       }
       auto adjustment = value;
-      while(*min - adjustment > 10) {
+      while(*min - adjustment >= 10) {
         adjustment *= 10;
       }
       if(abs(*min - adjustment) < 10) {
+        return QValidator::State::Intermediate;
+      }
+      if(is_acceptable(adjustment, min, max)) {
         return QValidator::State::Intermediate;
       }
       return QValidator::State::Invalid;
