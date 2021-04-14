@@ -161,7 +161,7 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
 
 void DurationBox::create_hour_field() {
   m_hour_field = new IntegerBox(m_model->get_hour_model(),
-    create_modifiers<int>());
+    create_modifiers<int>(), IntegerBox::InitialDisplay::EMPTY);
   m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
@@ -179,7 +179,7 @@ void DurationBox::create_hour_field() {
 
 void DurationBox::create_minute_field() {
   m_minute_field = new IntegerBox(m_model->get_minute_model(),
-    create_modifiers<int>());
+    create_modifiers<int>(), IntegerBox::InitialDisplay::EMPTY);
   m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
@@ -198,7 +198,7 @@ void DurationBox::create_minute_field() {
 
 void DurationBox::create_second_field() {
   m_second_field = new DecimalBox(m_model->get_second_model(),
-    create_modifiers<DecimalBox::Decimal>());
+    create_modifiers<DecimalBox::Decimal>(), DecimalBox::InitialDisplay::EMPTY);
   m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);
@@ -276,19 +276,14 @@ void DurationBox::on_second_field_current(const DecimalBox::Decimal& current) {
 }
 
 void DurationBox::on_current(time_duration current) {
-  if(m_model->get_state() == QValidator::State::Invalid) {
-    m_hour_field->findChild<QLineEdit*>()->setText("");
-    m_minute_field->findChild<QLineEdit*>()->setText("");
-    m_second_field->findChild<QLineEdit*>()->setText("");
-  } else {
-    if(!m_is_hour_field_inputting && !m_is_minute_field_inputting &&
-        !m_is_second_field_inputting) {
-      m_hour_field->get_model()->set_current(static_cast<int>(current.hours()));
-      m_minute_field->get_model()->set_current(
-        static_cast<int>(current.minutes()));
-      m_second_field->get_model()->set_current(
-        DecimalBox::Decimal(get_milliseconds(current)) / 1000);
-    }
+  if(m_model->get_state() != QValidator::State::Invalid &&
+      !m_is_hour_field_inputting && !m_is_minute_field_inputting &&
+      !m_is_second_field_inputting) {
+    m_hour_field->get_model()->set_current(static_cast<int>(current.hours()));
+    m_minute_field->get_model()->set_current(
+      static_cast<int>(current.minutes()));
+    m_second_field->get_model()->set_current(
+      DecimalBox::Decimal(get_milliseconds(current)) / 1000);
   }
 }
 
