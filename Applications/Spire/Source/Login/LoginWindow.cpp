@@ -23,7 +23,7 @@ namespace {
   }
 
   auto BUILD_LABEL_STYLE(StyleSheet style) {
-    style.get(ReadOnly()).set(TextColor(QColor(0xFF, 0xFF, 0xFF)));
+    style.get(Disabled()).set(TextColor(QColor(0xFF, 0xFF, 0xFF)));
     return style;
   }
 
@@ -53,7 +53,7 @@ namespace {
   }
 
   auto STATUS_LABEL_STYLE(StyleSheet style) {
-    style.get(ReadOnly()).
+    style.get(Disabled()).
       set(TextColor(QColor(0xFA, 0xEB, 0x96))).
       set(TextAlign({Qt::AlignCenter}));
     return style;
@@ -117,6 +117,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   content_layout->addStretch(23);
   m_status_label = new TextBox(this);
   m_status_label->set_read_only(true);
+  m_status_label->setDisabled(true);
   set_style(*m_status_label, STATUS_LABEL_STYLE(get_style(*m_status_label)));
   content_layout->addWidget(m_status_label);
   content_layout->setStretchFactor(m_status_label, 14);
@@ -177,6 +178,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto build_label = new TextBox(QString(tr("Build ")) +
     QString::fromStdString(version), this);
   build_label->set_read_only(true);
+  build_label->setDisabled(true);
   set_style(*build_label, BUILD_LABEL_STYLE(get_style(*build_label)));
   button_layout->addWidget(build_label);
   button_layout->setStretchFactor(build_label, 160);
