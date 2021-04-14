@@ -115,10 +115,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   content_layout->setStretchFactor(m_status_label, 14);
   content_layout->addStretch(20);
   m_username_text_box = new TextBox(this);
-  m_username_text_box->get_model()->
-    connect_current_signal([=] (const auto& current) {
-      on_input_updated();
-    });
+  m_username_text_box->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_input_updated(); });
   m_username_text_box->installEventFilter(this);
   m_username_text_box->set_placeholder(tr("Username"));
   m_username_text_box->setSizePolicy(QSizePolicy::Expanding,
