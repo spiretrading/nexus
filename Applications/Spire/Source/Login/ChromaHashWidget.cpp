@@ -8,6 +8,7 @@ using namespace Spire;
 
 ChromaHashWidget::ChromaHashWidget(QWidget* parent)
     : QWidget(parent) {
+  setStyleSheet("background-color: white;");
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
