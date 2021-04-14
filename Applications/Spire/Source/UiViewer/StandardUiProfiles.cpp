@@ -332,9 +332,6 @@ UiProfile Spire::make_duration_box_profile() {
           if(duration_box->get_model()->get_current() != *current_value) {
             duration_box->get_model()->set_current(*current_value);
           }
-        } else {
-            duration_box->get_model()->set_current(
-              boost::posix_time::not_a_date_time);
         }
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",

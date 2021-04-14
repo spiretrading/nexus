@@ -296,10 +296,8 @@ void DurationBox::on_submit() {
     maximum && m_model->get_current() > *maximum) {
     on_reject();
   } else {
-    if(m_submission != m_model->get_current()) {
-      m_submission = m_model->get_current();
-      m_submit_signal(m_submission);
-    }
+    m_submission = m_model->get_current();
+    m_submit_signal(m_submission);
   }
 }
 
