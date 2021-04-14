@@ -80,7 +80,6 @@ namespace Spire {
       QLabel* m_logo_widget;
       QLabel* m_status_label;
       TextBox* m_username_text_box;
-      boost::signals2::scoped_connection m_username_connection;
       QLineEdit* m_password_line_edit;
       FlatButton* m_sign_in_button;
       Button* m_close_button;
