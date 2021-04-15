@@ -27,11 +27,11 @@ namespace Styles {
   /** Selects the placeholder. */
   using Placeholder = PseudoElementSelector<void, struct PlaceholderTag>;
 
-  /** Styles a widget's text. */
-  TextStyle text_style(QFont font, QColor color);
-
   /** Sets the echo mode. */
   using EchoMode = BasicProperty<QLineEdit::EchoMode, struct EchoModeTag>;
+
+  /** Styles a widget's text. */
+  TextStyle text_style(QFont font, QColor color);
 }
 
   /** The type of model used by the TextBox. */
