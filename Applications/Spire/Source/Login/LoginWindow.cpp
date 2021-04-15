@@ -46,6 +46,12 @@ namespace {
     }
     return style;
   }
+
+  auto PASSWORD_INPUT_STYLE(StyleSheet style) {
+    style = INPUT_STYLE(style);
+    style.get(Any()).set(EchoMode(QLineEdit::EchoMode::Password));
+    return style;
+  }
 }
 
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
@@ -128,25 +134,19 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto password_layout = new QHBoxLayout();
   password_layout->setContentsMargins({});
   password_layout->setSpacing(0);
-  m_password_line_edit = new QLineEdit(this);
-  connect(m_password_line_edit, &QLineEdit::textEdited,
-    [=] {on_input_updated();});
-  connect(m_password_line_edit, &QLineEdit::textEdited,
-    [=] {on_password_updated();});
-  m_password_line_edit->setEchoMode(QLineEdit::Password);
-  m_password_line_edit->setPlaceholderText(tr("Password"));
-  m_password_line_edit->setSizePolicy(QSizePolicy::Expanding,
+  m_password_text_box = new TextBox(this);
+  set_style(*m_password_text_box, PASSWORD_INPUT_STYLE(get_style(
+    *m_password_text_box)));
+  m_password_text_box->get_model()->connect_current_signal(
+    [=] (const auto& current) {
+      on_input_updated();
+      on_password_updated();
+    });
+  m_password_text_box->set_placeholder(tr("Password"));
+  m_password_text_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_password_line_edit->setStyleSheet(QString(R"(
-    QLineEdit {
-      background-color: white;
-      border: 0px;
-      font-family: Roboto;
-      font-size: %2px;
-      padding-left: %1px;
-    })").arg(scale_width(6)).arg(scale_height(14)));
-  password_layout->addWidget(m_password_line_edit);
-  password_layout->setStretchFactor(m_password_line_edit, 246);
+  password_layout->addWidget(m_password_text_box);
+  password_layout->setStretchFactor(m_password_text_box, 246);
   auto ch_outer_widget = new QWidget(this);
   ch_outer_widget->setContentsMargins(scale_width(2), scale_height(2),
     scale_width(2), scale_height(2));
@@ -201,8 +201,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   padding_layout->addStretch(52);
   body_layout->addLayout(padding_layout);
   body_layout->setStretchFactor(padding_layout, 320);
-  setTabOrder(m_username_text_box, m_password_line_edit);
-  setTabOrder(m_password_line_edit, m_sign_in_button);
+  setTabOrder(m_username_text_box, m_password_text_box);
+  setTabOrder(m_password_text_box, m_sign_in_button);
   set_state(State::NONE);
 }
 
@@ -216,7 +216,7 @@ void LoginWindow::set_state(State s) {
     }
     case State::LOGGING_IN: {
       m_username_text_box->setEnabled(false);
-      m_password_line_edit->setEnabled(false);
+      m_password_text_box->setEnabled(false);
       m_status_label->setText("");
       m_sign_in_button->setText(tr("Cancel"));
       m_logo_widget->movie()->start();
@@ -255,12 +255,12 @@ void LoginWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     window()->close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_password_line_edit->hasFocus()) {
+    if(m_password_text_box->hasFocus()) {
       if(!m_username_text_box->get_model()->get_current().isEmpty()) {
         try_login();
       }
     }
-  } else if(m_password_line_edit->hasFocus()) {
+  } else if(m_password_text_box->hasFocus()) {
     return;
   } else if(!m_username_text_box->hasFocus() &&
       m_username_text_box->get_model()->get_current().isEmpty()) {
@@ -303,7 +303,7 @@ void LoginWindow::reset_all() {
 
 void LoginWindow::reset_visuals() {
   m_username_text_box->setEnabled(true);
-  m_password_line_edit->setEnabled(true);
+  m_password_text_box->setEnabled(true);
   m_sign_in_button->setFocus();
   m_sign_in_button->setText(tr("Sign In"));
   m_logo_widget->movie()->stop();
@@ -317,7 +317,7 @@ void LoginWindow::try_login() {
     } else {
       m_login_signal(
         m_username_text_box->get_model()->get_current().toStdString(),
-        m_password_line_edit->text().toStdString());
+        m_password_text_box->get_model()->get_current().toStdString());
       set_state(State::LOGGING_IN);
     }
   } else {
@@ -335,5 +335,6 @@ void LoginWindow::on_input_updated() {
 }
 
 void LoginWindow::on_password_updated() {
-  m_chroma_hash_widget->set_text(m_password_line_edit->text());
+  m_chroma_hash_widget->set_text(
+    m_password_text_box->get_model()->get_current());
 }
