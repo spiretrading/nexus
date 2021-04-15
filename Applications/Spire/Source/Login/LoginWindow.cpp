@@ -42,13 +42,36 @@ namespace {
 
   auto INPUT_STYLE(StyleSheet style) {
     style.get(Any()).set(border(scale_width(0), QColor::fromRgb(0, 0, 0, 0)));
-    auto font_style = Styles::find<TextStyle>(style.find(Any())->get_block());
+    auto font_style = find<TextStyle>(style.find(Any())->get_block());
     if(font_style) {
       auto font = font_style->get<Font>().get_expression().as<QFont>();
       font.setPixelSize(scale_height(14));
       style.get(Any()).set(text_style(font,
         font_style->get<TextColor>().get_expression().as<QColor>()));
     }
+    return style;
+  }
+
+  auto SIGN_IN_BUTTON_STYLE() {
+    auto style = StyleSheet();
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Bold);
+    font.setPixelSize(scale_width(14));
+    style.get(Any() > Button::Body()).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+      set(text_style(font, QColor(0, 0, 0))).
+      set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
+      set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
+      set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
+    style.get(Hover() > Button::Body()).
+      set(BackgroundColor(QColor(0x8D, 0x78, 0xEC))).
+      set(border_color(QColor(0x8D, 0x78, 0xEC)));
+    style.get(Focus() > Button::Body()).
+      set(border_color(QColor(0x8D, 0x78, 0xEC)));
+    style.get(Disabled() > Button::Body()).
+      set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
+      set(TextColor(QColor(0x8D, 0x78, 0xEC))).
+      set(border_color(QColor(0x68, 0x4B, 0xC7)));
     return style;
   }
 
@@ -70,7 +93,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_is_dragging(false) {
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  setFixedSize(scale(396, 358));
+  setFixedSize(scale(384, 346));
   m_shadow = new DropShadow(this);
   setObjectName("LoginWindow");
   setStyleSheet(R"(
@@ -78,13 +101,9 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
       background-color: #4B23A0;
       border: 1px solid #321471;
     })");
-  auto body_layout = new QVBoxLayout(this);
-  body_layout->setContentsMargins({});
-  body_layout->setSpacing(0);
-  auto title_bar_layout = new QHBoxLayout();
-  title_bar_layout->setContentsMargins({});
-  title_bar_layout->setSpacing(0);
-  title_bar_layout->addStretch(352);
+  auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
   m_close_button = make_icon_button(imageFromSvg(":/Icons/close.svg",
     BUTTON_SIZE()), this);
   set_style(*m_close_button, CLOSE_BUTTON_STYLE());
@@ -93,89 +112,54 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_close_button->connect_clicked_signal([=] {
     window()->close();
   });
-  title_bar_layout->addWidget(m_close_button);
-  title_bar_layout->setStretchFactor(m_close_button, 32);
-  body_layout->addLayout(title_bar_layout);
-  body_layout->setStretchFactor(title_bar_layout, 2600);
-  auto padding_layout = new QHBoxLayout();
-  padding_layout->setContentsMargins({});
-  padding_layout->setSpacing(0);
-  padding_layout->addStretch(52);
-  auto content_layout = new QVBoxLayout();
-  content_layout->setContentsMargins({});
-  content_layout->setSpacing(0);
-  content_layout->addStretch(30);
-  auto logo_layout = new QHBoxLayout();
-  logo_layout->setContentsMargins({});
-  logo_layout->setSpacing(0);
-  logo_layout->addStretch(73);
+  layout->addWidget(m_close_button, 0, Qt::AlignRight);
+  layout->addSpacing(scale_height(30));
   m_logo_widget = new QLabel(parent);
-  m_logo_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_logo_widget->setFixedSize(scale(134, 50));
   auto logo = new QMovie(":/Icons/logo.gif", QByteArray(), this);
   logo->setScaledSize(scale(134, 50));
   m_logo_widget->setMovie(logo);
   logo->start();
-  logo_layout->addWidget(m_logo_widget);
-  logo_layout->setStretchFactor(m_logo_widget, 134);
-  logo_layout->addStretch(73);
-  content_layout->addLayout(logo_layout);
-  content_layout->setStretchFactor(logo_layout, 50);
-  content_layout->addStretch(23);
+  layout->addWidget(m_logo_widget, 0, Qt::AlignCenter);
+  layout->addSpacing(scale_height(23));
   m_status_label = new TextBox(this);
   m_status_label->set_read_only(true);
   m_status_label->setDisabled(true);
   set_style(*m_status_label, STATUS_LABEL_STYLE(get_style(*m_status_label)));
-  content_layout->addWidget(m_status_label);
-  content_layout->setStretchFactor(m_status_label, 14);
-  content_layout->addStretch(20);
+  layout->addWidget(m_status_label, 0, Qt::AlignCenter);
+  layout->addSpacing(scale_height(20));
   m_username_text_box = new TextBox(this);
+  m_username_text_box->setFixedSize(scale(280, 30));
   m_username_text_box->get_model()->connect_current_signal(
     [=] (const auto& current) {
-      m_sign_in_button->setDisabled(
-        m_username_text_box->get_model()->get_current().isEmpty());
+      m_sign_in_button->setDisabled(current.isEmpty());
     });
   m_username_text_box->set_placeholder(tr("Username"));
-  m_username_text_box->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   set_style(*m_username_text_box,
     INPUT_STYLE(get_style(*m_username_text_box)));
-  content_layout->addWidget(m_username_text_box);
-  content_layout->setStretchFactor(m_username_text_box, 30);
-  content_layout->addStretch(15);
+  layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
+  layout->addSpacing(scale_height(15));
   auto password_layout = new QHBoxLayout();
-  password_layout->setContentsMargins({});
+  password_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
   password_layout->setSpacing(0);
   m_password_text_box = new TextBox(this);
+  m_password_text_box->set_placeholder(tr("Password"));
   set_style(*m_password_text_box, PASSWORD_INPUT_STYLE(get_style(
     *m_password_text_box)));
   m_password_text_box->get_model()->connect_current_signal(
     [=] (const auto& current) {
       m_chroma_hash_widget->set_text(current);
     });
-  m_password_text_box->set_placeholder(tr("Password"));
-  m_password_text_box->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   password_layout->addWidget(m_password_text_box);
-  password_layout->setStretchFactor(m_password_text_box, 246);
-  auto ch_outer_widget = new QWidget(this);
-  ch_outer_widget->setContentsMargins(scale_width(2), scale_height(2),
-    scale_width(2), scale_height(2));
-  ch_outer_widget->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
-  ch_outer_widget->setStyleSheet("background-color: white;");
-  auto ch_layout = new QHBoxLayout(ch_outer_widget);
-  ch_layout->setContentsMargins({});
-  ch_layout->setSpacing(0);
   m_chroma_hash_widget = new ChromaHashWidget(this);
-  ch_layout->addWidget(m_chroma_hash_widget);
-  password_layout->addWidget(ch_outer_widget);
-  password_layout->setStretchFactor(ch_outer_widget, 34);
-  password_layout->addStretch(1);
-  content_layout->addLayout(password_layout);
-  content_layout->setStretchFactor(password_layout, 30);
-  content_layout->addStretch(30);
+  m_chroma_hash_widget->setFixedSize(scale(34, 30));
+  m_chroma_hash_widget->setContentsMargins({scale_width(2), scale_height(2),
+    scale_width(2), scale_height(2)});
+  password_layout->addWidget(m_chroma_hash_widget);
+  layout->addLayout(password_layout);
+  layout->addSpacing(scale_height(30));
   auto button_layout = new QHBoxLayout();
-  button_layout->setContentsMargins({});
+  button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
   button_layout->setSpacing(0);
   auto build_label = new TextBox(QString(tr("Build ")) +
     QString::fromStdString(version), this);
@@ -183,28 +167,15 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   build_label->setDisabled(true);
   set_style(*build_label, BUILD_LABEL_STYLE(get_style(*build_label)));
   button_layout->addWidget(build_label);
-  button_layout->setStretchFactor(build_label, 160);
-  m_sign_in_button = new FlatButton(tr("Sign In"), this);
+  button_layout->addStretch(103);
+  m_sign_in_button = make_label_button(tr("Sign In"), this);
   m_sign_in_button->setFixedSize(scale(120, 30));
-  connect(m_sign_in_button, &FlatButton::clicked,
-    this, &LoginWindow::try_login);
-  m_sign_in_button->set_font_properties(scale_height(14), QFont::Bold);
-  m_sign_in_button->set_style(
-    {QColor("#684BC7"), QColor("#684BC7"), QColor("#E2E0FF")},
-    {QColor("#8D78EC"), QColor("#8D78EC"), QColor("#E2E0FF")},
-    {QColor("#684BC7"), QColor("#8D78EC"), QColor("#E2E0FF")},
-    {QColor("#4B23A0"), QColor("#684BC7"), QColor("#8D78EC")});
+  set_style(*m_sign_in_button, SIGN_IN_BUTTON_STYLE());
+  m_sign_in_button->connect_clicked_signal([=] { try_login(); });
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
-  button_layout->setStretchFactor(m_sign_in_button, 2);
-  content_layout->addLayout(button_layout);
-  content_layout->setStretchFactor(button_layout, 30);
-  content_layout->addStretch(48);
-  padding_layout->addLayout(content_layout);
-  padding_layout->setStretchFactor(content_layout, 280);
-  padding_layout->addStretch(52);
-  body_layout->addLayout(padding_layout);
-  body_layout->setStretchFactor(padding_layout, 320);
+  layout->addLayout(button_layout);
+  layout->addSpacing(scale_height(48));
   setTabOrder(m_username_text_box, m_password_text_box);
   setTabOrder(m_password_text_box, m_sign_in_button);
   set_state(State::NONE);
@@ -221,8 +192,9 @@ void LoginWindow::set_state(State s) {
     case State::LOGGING_IN: {
       m_username_text_box->setEnabled(false);
       m_password_text_box->setEnabled(false);
+      static_cast<TextBox&>(m_sign_in_button->get_body()).get_model()->
+        set_current(tr("Cancel"));
       m_status_label->get_model()->set_current("");
-      m_sign_in_button->setText(tr("Cancel"));
       m_logo_widget->movie()->start();
       break;
     }
@@ -310,7 +282,8 @@ void LoginWindow::reset_visuals() {
   m_username_text_box->setEnabled(true);
   m_password_text_box->setEnabled(true);
   m_sign_in_button->setFocus();
-  m_sign_in_button->setText(tr("Sign In"));
+  static_cast<TextBox&>(m_sign_in_button->get_body()).get_model()->set_current(
+    tr("Sign In"));
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
 }
