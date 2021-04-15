@@ -58,6 +58,19 @@ namespace Styles {
       using RejectSignal = Signal<void (const Decimal& value)>;
 
       /**
+       * Tests if a value is accepted by a DecimalBox, either because it is
+       * valid, or because additional digits appended to the current value will
+       * make it valid.
+       * @param value The value to validate.
+       * @param min The minimum allowable value.
+       * @param max The maximum allowable value.
+       * @return A value indicating the validation state.
+       */
+      static QValidator::State validate(const Decimal& value,
+        const boost::optional<Decimal>& min,
+        const boost::optional<Decimal>& max);
+
+      /**
        * Constructs a DecimalBox with a LocalValueModel.
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
