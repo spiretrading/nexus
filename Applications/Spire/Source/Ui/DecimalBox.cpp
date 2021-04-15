@@ -53,36 +53,6 @@ namespace {
     button->setFixedSize(BUTTON_SIZE());
     return button;
   }
-
-  QValidator::State is_acceptable(const DecimalBox::Decimal& value,
-      optional<DecimalBox::Decimal> min, optional<DecimalBox::Decimal> max) {
-    if(max && *max >= 0 && value > *max || min && *min <= 0 && value < *min) {
-      return QValidator::State::Invalid;
-    }
-    if(min && value < *min) {
-      if(value == 0 || abs(*min - value) < 10) {
-        return QValidator::State::Invalid;
-      }
-      auto adjustment = value;
-      while(*min - adjustment >= 10) {
-        adjustment *= 10;
-      }
-      if(abs(*min - adjustment) < 10) {
-        return QValidator::State::Intermediate;
-      }
-      if(is_acceptable(adjustment, min, max)) {
-        return QValidator::State::Intermediate;
-      }
-      return QValidator::State::Invalid;
-    } else if(max && value > *max) {
-      if(min) {
-        return is_acceptable(-value, optional<DecimalBox::Decimal>(-*min),
-          optional<DecimalBox::Decimal>(-*max));
-      }
-      return is_acceptable(-value, none, optional<DecimalBox::Decimal>(-*max));
-    }
-    return QValidator::State::Acceptable;
-  }
 }
 
 struct DecimalBox::DecimalToTextModel : TextModel {
@@ -189,7 +159,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         return QValidator::State::Invalid;
       }
       auto origin = [&] {
-        if(is_acceptable(0, m_model->get_minimum(), m_model->get_maximum()) ==
+        if(validate(0, m_model->get_minimum(), m_model->get_maximum()) ==
             QValidator::State::Acceptable) {
           return DecimalBox::Decimal(0);
         } else if(!m_model->get_minimum()) {
@@ -205,7 +175,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return QValidator::State::Intermediate;
     } else if(auto decimal = to_decimal(value)) {
       auto state =
-        is_acceptable(*decimal, m_model->get_minimum(), m_model->get_maximum());
+        validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
       if(state == QValidator::State::Invalid) {
         return QValidator::State::Invalid;
       }
@@ -306,6 +276,25 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     m_current_signal(m_current);
   }
 };
+
+QValidator::State DecimalBox::validate(const Decimal& value,
+    const optional<Decimal>& min, const optional<Decimal>& max) {
+  if(min && max && value >= min && value <= max ||
+      min && !max && value >= min || !min && max && value <= max ||
+      !min && !max) {
+    return QValidator::State::Acceptable;
+  } else if(max && *max >= 0 && value > *max ||
+      min && *min <= 0 && value < *min) {
+    return QValidator::State::Invalid;
+  } else if(min && *min - trunc(*min) != 0 || max && *max - trunc(*max) != 0) {
+    return QValidator::State::Intermediate;
+  } else if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
+      !min && validate(value, none, Decimal(trunc(*max / 10))) ||
+      validate(value, Decimal(trunc(*min / 10)), Decimal(trunc(*max / 10)))) {
+    return QValidator::State::Intermediate;
+  }
+  return QValidator::State::Invalid;
+}
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
