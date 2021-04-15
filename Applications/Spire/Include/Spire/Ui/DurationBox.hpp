@@ -8,6 +8,11 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects the colon field. */
+  using Colon = Styles::StateSelector<void, struct DurationBoxColonTag>;
+}
 
   //! Represents a widget for inputting a time duration.
   class DurationBox : public QWidget {
@@ -67,7 +72,6 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      using Colon = Styles::StateSelector<void, struct DurationBoxColonTag>;
       mutable RejectSignal m_reject_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<LocalDurationModel> m_model;

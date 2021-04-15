@@ -19,11 +19,62 @@ namespace {
       set(BodyAlign(Qt::AlignCenter)).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(horizontal_padding(scale_width(4)));
-    style.get(Hover() || Focus()).
+    style.get(Hover()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    return style;
+  }
+
+  auto FOCUS_IN_STYLE(StyleSheet style) {
+    style.get(Any()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    return style;
+  }
+
+  auto FOCUS_OUT_STYLE(StyleSheet style) {
+    style.get(Any()).set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    return style;
+  }
+
+  auto HOUR_FIELD_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_size(0)).
+      set(horizontal_padding(scale_width(0))).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    style.get(Any() > is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+    return style;
+  }
+
+  auto MINUTE_FIELD_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_size(0)).
+      set(horizontal_padding(scale_width(0))).
+      set(LeadingZeros(2)).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    style.get(Any() > is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+    return style;
+  }
+
+  auto SECOND_FIELD_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_size(0)).
+      set(horizontal_padding(scale_width(0))).
+      set(LeadingZeros(2)).set(TrailingZeros(3)).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    style.get(Any() > is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+    return style;
+  }
+
+  auto COLON_FIELD_STYLE(StyleSheet style) {
+    style.get(Any() > Colon()).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+      set(TextColor(QColor::fromRgb(0, 0, 0)));
+    style.get(Disabled() > Colon()).
+      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
 
@@ -66,13 +117,7 @@ DurationBox::DurationBox(std::shared_ptr<LocalDurationModel> model,
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(m_minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
-  auto container_style = get_style(*container);
-  container_style.get(Any() > Colon()).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set(TextColor(QColor::fromRgb(0, 0, 0)));
-  container_style.get(Disabled() > Colon()).
-    set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  set_style(*container, std::move(container_style));
+  set_style(*container, COLON_FIELD_STYLE(get_style(*container)));
   m_box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -142,15 +187,11 @@ QSize DurationBox::sizeHint() const {
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    auto style = get_style(*this);
-    style.get(Any()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-    set_style(*this, std::move(style));
+    set_style(*this, FOCUS_IN_STYLE(get_style(*this)));
   } else if(event->type() == QEvent::FocusOut) {
     if(!m_hour_field->hasFocus() && !m_minute_field->hasFocus() &&
         !m_second_field->hasFocus()) {
-      auto style = get_style(*this);
-      style.get(Any()).set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-      set_style(*this, std::move(style));
+      set_style(*this, FOCUS_OUT_STYLE(get_style(*this)));
       if(m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
           m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
           m_second_field->get_model()->get_state() == QValidator::Acceptable) {
@@ -167,15 +208,7 @@ void DurationBox::create_hour_field() {
   m_hour_field->setMinimumWidth(scale_width(24));
   m_hour_field->set_placeholder("hh");
   m_hour_field->set_warning_displayed(false);
-  auto hour_style = get_style(*m_hour_field);
-  hour_style.get(Any()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(border_size(0)).
-    set(horizontal_padding(scale_width(0))).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  hour_style.get(Any() > is_a<Button>()).set(
-    Visibility(VisibilityOption::NONE));
-  set_style(*m_hour_field, std::move(hour_style));
+  set_style(*m_hour_field, HOUR_FIELD_STYLE(get_style(*m_hour_field)));
   m_hour_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
@@ -185,16 +218,7 @@ void DurationBox::create_minute_field() {
   m_minute_field->setMinimumWidth(scale_width(28));
   m_minute_field->set_placeholder("mm");
   m_minute_field->set_warning_displayed(false);
-  auto minute_style = get_style(*m_minute_field);
-  minute_style.get(Any()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(border_size(0)).
-    set(horizontal_padding(scale_width(0))).
-    set(LeadingZeros(2)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  minute_style.get(Any() > is_a<Button>()).set(
-    Visibility(VisibilityOption::NONE));
-  set_style(*m_minute_field, std::move(minute_style));
+  set_style(*m_minute_field, MINUTE_FIELD_STYLE(get_style(*m_minute_field)));
   m_minute_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
@@ -204,16 +228,7 @@ void DurationBox::create_second_field() {
   m_second_field->setMinimumWidth(scale_width(44));
   m_second_field->set_placeholder("ss.sss");
   m_second_field->set_warning_displayed(false);
-  auto second_style = get_style(*m_second_field);
-  second_style.get(Any()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(border_size(0)).
-    set(horizontal_padding(scale_width(0))).
-    set(LeadingZeros(2)).set(TrailingZeros(3)).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-  second_style.get(Any() > is_a<Button>()).set(
-    Visibility(VisibilityOption::NONE));
-  set_style(*m_second_field, std::move(second_style));
+  set_style(*m_second_field, SECOND_FIELD_STYLE(get_style(*m_second_field)));
   m_second_field->findChild<QLineEdit*>()->installEventFilter(this);
 }
 
