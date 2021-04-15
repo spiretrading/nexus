@@ -277,8 +277,8 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 };
 
-QValidator::State DecimalBox::validate(Decimal value, optional<Decimal> min,
-    optional<Decimal> max) {
+QValidator::State DecimalBox::validate(const Decimal& value,
+    const optional<Decimal>& min, const optional<Decimal>& max) {
   if(min && max && value >= min && value <= max ||
       min && !max && value >= min || !min && max && value <= max ||
       !min && !max) {

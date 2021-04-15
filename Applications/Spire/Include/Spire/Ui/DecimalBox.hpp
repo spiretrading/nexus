@@ -66,8 +66,9 @@ namespace Styles {
        * @param max The maximum allowable value.
        * @return A value indicating the validation state.
        */
-      static QValidator::State validate(Decimal value,
-        boost::optional<Decimal> min, boost::optional<Decimal> max);
+      static QValidator::State validate(const Decimal& value,
+        const boost::optional<Decimal>& min,
+        const boost::optional<Decimal>& max);
 
       /**
        * Constructs a DecimalBox with a LocalValueModel.
