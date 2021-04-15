@@ -49,8 +49,12 @@ namespace {
 
   auto SIGN_IN_BUTTON_STYLE() {
     auto style = StyleSheet();
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Bold);
+    font.setPixelSize(scale_width(14));
     style.get(Any() > Button::Body()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+      set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
       set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
       set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
@@ -61,16 +65,8 @@ namespace {
       set(border(scale_width(1), QColor(0x8D, 0x78, 0xEC)));
     style.get(Disabled() > Button::Body()).
       set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
-      set(TextColor(QColor(0x8D, 0x78, 0xEC)));
-    auto font_style = find<TextStyle>(
-      style.find(Any() > Button::Body())->get_block());
-    if(font_style) {
-      auto font = font_style->get<Font>().get_expression().as<QFont>();
-      font.setPixelSize(scale_height(14));
-      font.setWeight(550);
-      style.get(Any()).set(text_style(font,
-        font_style->get<TextColor>().get_expression().as<QColor>()));
-    }
+      set(TextColor(QColor(0x8D, 0x78, 0xEC))).
+      set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7)));
     return style;
   }
 }
