@@ -80,7 +80,7 @@ namespace Spire {
       QLabel* m_logo_widget;
       TextBox* m_status_label;
       TextBox* m_username_text_box;
-      QLineEdit* m_password_line_edit;
+      TextBox* m_password_text_box;
       FlatButton* m_sign_in_button;
       Button* m_close_button;
       bool m_is_dragging;
@@ -90,8 +90,6 @@ namespace Spire {
       void reset_all();
       void reset_visuals();
       void try_login();
-      void on_input_updated();
-      void on_password_updated();
   };
 }
 
