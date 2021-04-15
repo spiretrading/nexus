@@ -130,7 +130,10 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   content_layout->addStretch(20);
   m_username_text_box = new TextBox(this);
   m_username_text_box->get_model()->connect_current_signal(
-    [=] (const auto& current) { on_input_updated(); });
+    [=] (const auto& current) {
+      m_sign_in_button->setDisabled(
+        m_username_text_box->get_model()->get_current().isEmpty());
+    });
   m_username_text_box->set_placeholder(tr("Username"));
   m_username_text_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
@@ -147,8 +150,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     *m_password_text_box)));
   m_password_text_box->get_model()->connect_current_signal(
     [=] (const auto& current) {
-      on_input_updated();
-      on_password_updated();
+      m_chroma_hash_widget->set_text(current);
     });
   m_password_text_box->set_placeholder(tr("Password"));
   m_password_text_box->setSizePolicy(QSizePolicy::Expanding,
@@ -327,17 +329,4 @@ void LoginWindow::try_login() {
     m_cancel_signal();
     set_state(State::CANCELLING);
   }
-}
-
-void LoginWindow::on_input_updated() {
-  if(!m_username_text_box->get_model()->get_current().isEmpty()) {
-    m_sign_in_button->setEnabled(true);
-  } else {
-    m_sign_in_button->setEnabled(false);
-  }
-}
-
-void LoginWindow::on_password_updated() {
-  m_chroma_hash_widget->set_text(
-    m_password_text_box->get_model()->get_current());
 }

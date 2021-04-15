@@ -90,8 +90,6 @@ namespace Spire {
       void reset_all();
       void reset_visuals();
       void try_login();
-      void on_input_updated();
-      void on_password_updated();
   };
 }
 
