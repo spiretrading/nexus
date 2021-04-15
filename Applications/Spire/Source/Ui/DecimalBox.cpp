@@ -277,20 +277,23 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 };
 
-QValidator::State DecimalBox::validate(const Decimal& value,
-    optional<Decimal> min, optional<Decimal> max) {
-  if(max && *max >= 0 && value > *max || min && *min <= 0 && value < *min) {
+QValidator::State DecimalBox::validate(Decimal value, optional<Decimal> min,
+    optional<Decimal> max) {
+  if(min && max && value >= min && value <= max ||
+      min && !max && value >= min || !min && max && value <= max ||
+      !min && !max) {
+    return QValidator::State::Acceptable;
+  } else if(max && *max >= 0 && value > *max ||
+      min && *min <= 0 && value < *min) {
     return QValidator::State::Invalid;
+  } else if(min && *min - trunc(*min) != 0 || max && *max - trunc(*max) != 0) {
+    return QValidator::State::Intermediate;
+  } else if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
+      !min && validate(value, none, Decimal(trunc(*max / 10))) ||
+      validate(value, Decimal(trunc(*min / 10)), Decimal(trunc(*max / 10)))) {
+    return QValidator::State::Intermediate;
   }
-  if(min && value < *min || max && value > *max) {
-    if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
-        !min && validate(value, none, Decimal(trunc(*max / 10))) ||
-        validate(value, Decimal(trunc(*min / 10)), Decimal(trunc(*max / 10)))) {
-      return QValidator::State::Intermediate;
-    }
-    return QValidator::State::Invalid;
-  }
-  return QValidator::State::Acceptable;
+  return QValidator::State::Invalid;
 }
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,

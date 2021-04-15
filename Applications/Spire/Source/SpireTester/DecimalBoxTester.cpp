@@ -59,6 +59,9 @@ TEST_SUITE("DecimalBox") {
     CHECK(DecimalBox::validate(
       3, DecimalBox::Decimal(5), DecimalBox::Decimal(100)) ==
         QValidator::Intermediate);
+    CHECK(DecimalBox::validate(
+      2900, DecimalBox::Decimal(29301), DecimalBox::Decimal(31700)) ==
+        QValidator::Invalid);
   }
 
   TEST_CASE("validate_negatives") {
@@ -68,14 +71,23 @@ TEST_SUITE("DecimalBox") {
     CHECK(DecimalBox::validate(
       -20, DecimalBox::Decimal(-50), DecimalBox::Decimal(-10)) ==
         QValidator::Acceptable);
+    CHECK(DecimalBox::validate(
+      -1, DecimalBox::Decimal(50), DecimalBox::Decimal(100)) ==
+        QValidator::Invalid);
   }
 
   TEST_CASE("validate_fractional") {
-    CHECK(DecimalBox::validate(
-      0.3, DecimalBox::Decimal(0.1), DecimalBox::Decimal(0.4)) ==
+    CHECK(DecimalBox::validate(DecimalBox::Decimal("0.3"),
+      DecimalBox::Decimal("0.1"), DecimalBox::Decimal("0.4")) ==
         QValidator::Acceptable);
-    CHECK(DecimalBox::validate(
-      0.2, DecimalBox::Decimal(0.29), DecimalBox::Decimal(0.31)) ==
+    CHECK(DecimalBox::validate(DecimalBox::Decimal("0.2"),
+      DecimalBox::Decimal("0.29"), DecimalBox::Decimal("0.31")) ==
         QValidator::Intermediate);
+    CHECK(DecimalBox::validate(DecimalBox::Decimal("0.02"),
+      DecimalBox::Decimal("0.29"), DecimalBox::Decimal("0.31")) ==
+        QValidator::Intermediate);
+    CHECK(DecimalBox::validate(DecimalBox::Decimal("0.32"),
+      DecimalBox::Decimal("0.29"), DecimalBox::Decimal("0.31")) ==
+        QValidator::Invalid);
   }
 }
