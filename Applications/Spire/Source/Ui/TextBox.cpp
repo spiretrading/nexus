@@ -374,6 +374,14 @@ void TextBox::on_style() {
           m_line_edit->setFont(computed_font);
           is_line_edit_updated = true;
         }
+      },
+      [&] (const EchoMode& echo_mode) {
+        auto computed_mode =
+          echo_mode.get_expression().as<QLineEdit::EchoMode>();
+        if(m_line_edit->echoMode() != computed_mode) {
+          m_line_edit->setEchoMode(computed_mode);
+          is_line_edit_updated = true;
+        }
       });
   }
   merge(computed_style, compute_style(*this, Placeholder()));

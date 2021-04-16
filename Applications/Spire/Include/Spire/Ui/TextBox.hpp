@@ -27,6 +27,9 @@ namespace Styles {
   /** Selects the placeholder. */
   using Placeholder = PseudoElementSelector<void, struct PlaceholderTag>;
 
+  /** Sets the echo mode. */
+  using EchoMode = BasicProperty<QLineEdit::EchoMode, struct EchoModeTag>;
+
   /** Styles a widget's text. */
   TextStyle text_style(QFont font, QColor color);
 }
