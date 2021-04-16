@@ -30,8 +30,8 @@ void LocalDurationModel::set_minimum(const optional<time_duration>& minimum) {
 
 void LocalDurationModel::set_maximum(const optional<time_duration>& maximum) {
   m_maximum = maximum;
-  if(maximum) {
-    m_hour_model->set_maximum(static_cast<int>(maximum->hours()));
+  if(m_maximum) {
+    m_hour_model->set_maximum(static_cast<int>(m_maximum->hours()));
   }
 }
 

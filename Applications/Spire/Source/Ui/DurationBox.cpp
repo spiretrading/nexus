@@ -318,6 +318,14 @@ void DurationBox::on_submit() {
 
 void DurationBox::on_reject() {
   m_reject_signal(m_model->get_current());
+  auto minimum = m_model->get_minimum();
+  if(minimum && m_submission < *minimum) {
+    m_submission = *minimum;
+  }
+  auto maximum = m_model->get_maximum();
+  if(maximum && m_submission > *maximum) {
+    m_submission = *maximum;
+  }
   m_model->set_current(m_submission);
   if(m_is_warning_displayed) {
     display_warning_indicator(*this);

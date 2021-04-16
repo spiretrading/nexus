@@ -295,9 +295,9 @@ UiProfile Spire::make_duration_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("current", ""));
   properties.push_back(make_standard_qstring_property("minimum",
-    "00:00:00.000"));
+    "10:10:10.000"));
   properties.push_back(make_standard_qstring_property("maximum",
-    "24:00:00.000"));
+    "20:20:20.000"));
   properties.push_back(make_standard_bool_property("is_warning_displayed",
     true));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
