@@ -27,8 +27,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
     Ref<SecurityInputModel> input_model, QWidget* parent)
     : Window(parent),
       m_table(nullptr) {
-  setMinimumSize(scale(180, 200));
-  resize_body(scale(180, 410));
   setObjectName("time_sales_window");
   setStyleSheet("#time_sales_window { background-color: #FFFFFF; }");
   setWindowTitle(tr("Time and Sales"));
@@ -65,7 +63,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
   m_item_delegate = new CustomVariantItemDelegate(this);
-  Window::layout()->addWidget(m_body);
+  set_body(m_body, scale(180, 410));
+  set_minimum_size(scale(180, 200));
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {

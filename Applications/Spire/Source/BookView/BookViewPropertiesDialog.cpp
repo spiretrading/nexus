@@ -30,7 +30,6 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  set_fixed_body_size(scale(482, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto body = new QWidget(this);
   body->setObjectName("book_view_properties_dialog_body");
@@ -64,7 +63,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   button_group_widget->connect_ok_signal([=] { accept(); });
   button_group_widget->connect_save_as_default_signal(
     [=] { m_save_default_signal(); });
-  Window::layout()->addWidget(body);
+  set_fixed_body(body, scale(482, 394));
 }
 
 BookViewProperties BookViewPropertiesDialog::get_properties() const {

@@ -45,7 +45,6 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
       m_model(model.Get()) {
-  set_fixed_body_size(scale(308, 76));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
@@ -119,7 +118,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->addLayout(button_layout);
   layout->setStretchFactor(button_layout, 26);
   layout->addStretch(8);
-  Window::layout()->addWidget(body);
+  set_fixed_body(body, scale(308, 76));
   m_entry_added_connection = m_model->connect_entry_added_signal(
     [=] (auto& e) {entry_added(e);});
   m_entry_removed_connection = m_model->connect_entry_removed_signal(
