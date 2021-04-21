@@ -40,6 +40,7 @@ namespace {
 
 Window::Window(QWidget* parent)
     : QWidget(parent),
+      m_body(nullptr),
       m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   setObjectName("spire_window");
@@ -57,6 +58,11 @@ void Window::set_icon(const QImage& icon) {
 
 void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
+}
+
+void Window::set_minimum_size(const QSize& size) {
+  setMinimumSize(size.width() + 2 * scale_width(1),
+    size.height() + m_title_bar->height() + 2 * scale_height(1));
 }
 
 void Window::changeEvent(QEvent* event) {
@@ -199,7 +205,33 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
 }
 
 void Window::resize_body(const QSize& size) {
-  resize(window_size(size));
+  if(!m_body) {
+    return;
+  }
+  resize(size.width() + 2 * scale_width(1),
+    size.height() + m_title_bar->height() + 2 * scale_height(1));
+}
+
+void Window::set_body(QWidget* body) {
+  set_body(body, body->size());
+}
+
+void Window::set_body(QWidget* body, const QSize& size) {
+  if(m_body) {
+    return;
+  }
+  m_body = body;
+  layout()->addWidget(m_body);
+  resize_body(size);
+}
+
+void Window::set_fixed_body(QWidget* body, const QSize& size) {
+  if(m_body) {
+    return;
+  }
+  set_window_attributes(false);
+  body->setFixedSize(size);
+  layout()->addWidget(body);
 }
 
 void Window::on_screen_changed(QScreen* screen) {
@@ -209,11 +241,6 @@ void Window::on_screen_changed(QScreen* screen) {
   auto rect = RECT();
   GetWindowRect(hwnd, &rect);
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
-}
-
-void Window::set_fixed_body_size(const QSize& size) {
-  set_window_attributes(false);
-  setFixedSize(window_size(size));
 }
 
 void Window::set_window_attributes(bool is_resizeable) {
@@ -247,11 +274,4 @@ void Window::set_window_attributes(bool is_resizeable) {
     window_geometry.y() + borderHeight + m_title_bar->height() -
       scale_height(3),
     width() + 2 * borderWidth, internal_height + borderHeight, true);
-}
-
-QSize Window::window_size(const QSize& body_size) const {
-  return {
-    body_size.width() + 2 * SYSTEM_BORDER_SIZE().width() + 2 * scale_width(1),
-    body_size.height() + m_title_bar->height() +
-      SYSTEM_BORDER_SIZE().height() + 2 * scale_height(1)};
 }
