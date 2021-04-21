@@ -25,6 +25,13 @@ namespace {
     return scale(26, 26);
   }
 
+  auto SYSTEM_BORDER_SIZE() {
+    static auto size = QSize(
+      GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER),
+      GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER));
+    return size;
+  }
+
   auto make_svg_window_icon(const QString& icon_path) {
     return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
       scale(10, 10)));
@@ -102,12 +109,9 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
             }
           }
         } else {
-          rect.right -= GetSystemMetrics(SM_CXFRAME) +
-            GetSystemMetrics(SM_CXPADDEDBORDER);
-          rect.left += GetSystemMetrics(SM_CXFRAME) +
-            GetSystemMetrics(SM_CXPADDEDBORDER);
-          rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
-            GetSystemMetrics(SM_CXPADDEDBORDER);
+          rect.right -= SYSTEM_BORDER_SIZE().width();
+          rect.left += SYSTEM_BORDER_SIZE().width();
+          rect.bottom -= SYSTEM_BORDER_SIZE().height();
         }
       }
       *result = 0;
@@ -195,7 +199,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
 }
 
 void Window::resize_body(const QSize& size) {
-  resize({size.width(), size.height() + m_title_bar->height()});
+  resize(window_size(size));
 }
 
 void Window::on_screen_changed(QScreen* screen) {
@@ -209,7 +213,7 @@ void Window::on_screen_changed(QScreen* screen) {
 
 void Window::set_fixed_body_size(const QSize& size) {
   set_window_attributes(false);
-  setFixedSize({size.width(), size.height() + m_title_bar->height()});
+  setFixedSize(window_size(size));
 }
 
 void Window::set_window_attributes(bool is_resizeable) {
@@ -229,7 +233,7 @@ void Window::set_window_attributes(bool is_resizeable) {
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  if(m_frame_size && size() != m_frame_size) {
+  if(m_is_resizable && m_frame_size && size() != m_frame_size) {
     resize(*m_frame_size);
     m_frame_size = none;
   }
@@ -243,4 +247,11 @@ void Window::set_window_attributes(bool is_resizeable) {
     window_geometry.y() + borderHeight + m_title_bar->height() -
       scale_height(3),
     width() + 2 * borderWidth, internal_height + borderHeight, true);
+}
+
+QSize Window::window_size(const QSize& body_size) const {
+  return {
+    body_size.width() + 2 * SYSTEM_BORDER_SIZE().width() + 2 * scale_width(1),
+    body_size.height() + m_title_bar->height() +
+      SYSTEM_BORDER_SIZE().height() + 2 * scale_height(1)};
 }

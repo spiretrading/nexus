@@ -60,6 +60,7 @@ namespace Spire {
 
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
+      QSize window_size(const QSize& body_size) const;
   };
 }
 
