@@ -10,20 +10,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto DEFAULT_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(horizontal_padding(scale_width(8)));
-    style.get(Hover() || Focus()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-    style.get(Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    return style;
-  }
-
   const auto WARNING_FRAME_COUNT = 10;
 
   auto get_fade_out_step(int start, int end) {
@@ -69,28 +55,68 @@ Padding Spire::Styles::padding(int size) {
 }
 
 Box::Box(QWidget* body, QWidget* parent)
-  : StyledWidget(parent),
+  : QWidget(parent),
     m_body(body) {
   setObjectName("Box");
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins({});
     layout->addWidget(m_body);
     layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
   } else {
     m_container = nullptr;
   }
-  set_style(DEFAULT_STYLE());
+  connect_style_signal(*this, [=] { on_style(); });
 }
 
-void Box::style_updated() {
-  selector_updated();
+void Box::resizeEvent(QResizeEvent* event) {
+  if(m_body) {
+    auto computed_style = compute_style(*this);
+    auto body_geometry = QRect(0, 0, width(), height());
+    for(auto& property : computed_style.get_properties()) {
+      property.visit(
+        [&] (const BorderTopSize& size) {
+          body_geometry.setTop(
+            body_geometry.top() + size.get_expression().as<int>());
+        },
+        [&] (const BorderRightSize& size) {
+          body_geometry.setRight(
+            body_geometry.right() - size.get_expression().as<int>());
+        },
+        [&] (const BorderBottomSize& size) {
+          body_geometry.setBottom(
+            body_geometry.bottom() - size.get_expression().as<int>());
+        },
+        [&] (const BorderLeftSize& size) {
+          body_geometry.setLeft(
+            body_geometry.left() + size.get_expression().as<int>());
+        },
+        [&] (const PaddingTop& size) {
+          body_geometry.setTop(
+            body_geometry.top() + size.get_expression().as<int>());
+        },
+        [&] (const PaddingRight& size) {
+          body_geometry.setRight(
+            body_geometry.right() - size.get_expression().as<int>());
+        },
+        [&] (const PaddingBottom& size) {
+          body_geometry.setBottom(
+            body_geometry.bottom() - size.get_expression().as<int>());
+        },
+        [&] (const PaddingLeft& size) {
+          body_geometry.setLeft(
+            body_geometry.left() + size.get_expression().as<int>());
+        });
+      m_container->setGeometry(body_geometry);
+    }
+  }
+  QWidget::resizeEvent(event);
 }
 
-void Box::selector_updated() {
-  auto computed_style = compute_style();
+void Box::on_style() {
+  auto computed_style = compute_style(*this);
   auto style = QString("#Box {");
   style += "border-style: solid;";
   auto body_geometry = QRect(0, 0, width(), height());
@@ -179,62 +205,9 @@ void Box::selector_updated() {
       m_container->setGeometry(body_geometry);
     }
   }
-  StyledWidget::selector_updated();
 }
 
-void Box::enterEvent(QEvent* event) {
-  enable(Hover());
-}
-
-void Box::leaveEvent(QEvent* event) {
-  disable(Hover());
-}
-
-void Box::resizeEvent(QResizeEvent* event) {
-  if(m_body) {
-    auto computed_style = compute_style();
-    auto body_geometry = QRect(0, 0, width(), height());
-    for(auto& property : computed_style.get_properties()) {
-      property.visit(
-        [&] (const BorderTopSize& size) {
-          body_geometry.setTop(
-            body_geometry.top() + size.get_expression().as<int>());
-        },
-        [&] (const BorderRightSize& size) {
-          body_geometry.setRight(
-            body_geometry.right() - size.get_expression().as<int>());
-        },
-        [&] (const BorderBottomSize& size) {
-          body_geometry.setBottom(
-            body_geometry.bottom() - size.get_expression().as<int>());
-        },
-        [&] (const BorderLeftSize& size) {
-          body_geometry.setLeft(
-            body_geometry.left() + size.get_expression().as<int>());
-        },
-        [&] (const PaddingTop& size) {
-          body_geometry.setTop(
-            body_geometry.top() + size.get_expression().as<int>());
-        },
-        [&] (const PaddingRight& size) {
-          body_geometry.setRight(
-            body_geometry.right() - size.get_expression().as<int>());
-        },
-        [&] (const PaddingBottom& size) {
-          body_geometry.setBottom(
-            body_geometry.bottom() - size.get_expression().as<int>());
-        },
-        [&] (const PaddingLeft& size) {
-          body_geometry.setLeft(
-            body_geometry.left() + size.get_expression().as<int>());
-        });
-      m_container->setGeometry(body_geometry);
-    }
-  }
-  StyledWidget::resizeEvent(event);
-}
-
-void Spire::display_warning_indicator(StyledWidget& widget) {
+void Spire::display_warning_indicator(QWidget& widget) {
   const auto WARNING_DURATION = 300;
   const auto WARNING_FADE_OUT_DELAY = 250;
   const auto WARNING_BACKGROUND_COLOR = QColor("#FFF1F1");
@@ -242,7 +215,7 @@ void Spire::display_warning_indicator(StyledWidget& widget) {
   auto time_line = new QTimeLine(WARNING_DURATION, &widget);
   time_line->setFrameRange(0, WARNING_FRAME_COUNT);
   time_line->setEasingCurve(QEasingCurve::Linear);
-  auto computed_style = widget.compute_style();
+  auto computed_style = compute_style(widget);
   auto computed_background_color = [&] {
     if(auto color = find<BackgroundColor>(computed_style)) {
       return color->get_expression().as<QColor>();
@@ -265,22 +238,22 @@ void Spire::display_warning_indicator(StyledWidget& widget) {
         background_color_step, frame);
       auto frame_border_color =
         get_fade_out_color(WARNING_BORDER_COLOR, border_color_step, frame);
-      auto animated_style = widget.get_style();
+      auto animated_style = get_style(widget);
       animated_style.get(Any()).
         set(BackgroundColor(frame_background_color)).
         set(border_color(frame_border_color));
-      widget.set_style(std::move(animated_style));
+      set_style(widget, std::move(animated_style));
     });
-  auto style = widget.get_style();
+  auto style = get_style(widget);
   QObject::connect(time_line, &QTimeLine::finished, [=, &widget] () mutable {
-    widget.set_style(std::move(style));
+    set_style(widget, std::move(style));
     time_line->deleteLater();
   });
   auto animated_style = StyleSheet();
   animated_style.get(Any()) = style.get(Any());
   animated_style.get(Any()).set(BackgroundColor(WARNING_BACKGROUND_COLOR));
   animated_style.get(Any()).set(border_color(WARNING_BORDER_COLOR));
-  widget.set_style(std::move(animated_style));
+  set_style(widget, std::move(animated_style));
   QTimer::singleShot(WARNING_FADE_OUT_DELAY, &widget, [=] {
     time_line->start();
   });

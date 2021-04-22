@@ -6,10 +6,9 @@
 #include "Spire/Ui/ScrollableLayer.hpp"
 
 using namespace Spire;
-using namespace Spire::Styles;
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
       m_body(body) {
   m_layers = new LayeredWidget(this);
   auto container = new QWidget();
@@ -35,7 +34,7 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
     setMaximumSize(m_body->size());
     update_ranges();
   }
-  return StyledWidget::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
 }
 
 void ScrollBox::resizeEvent(QResizeEvent* event) {

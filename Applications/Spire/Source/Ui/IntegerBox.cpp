@@ -23,14 +23,14 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
 
   optional<DecimalBox::Decimal> get_minimum() const {
     if(auto minimum = m_model->get_minimum()) {
-      return *minimum;
+      return DecimalBox::Decimal(*minimum);
     }
     return none;
   }
 
   optional<DecimalBox::Decimal> get_maximum() const {
     if(auto maximum = m_model->get_maximum()) {
-      return *maximum;
+      return DecimalBox::Decimal(*maximum);
     }
     return none;
   }
@@ -70,12 +70,22 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
 
 IntegerBox::IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
   QWidget* parent)
+  : IntegerBox(std::move(modifiers), InitialDisplay::CURRENT, parent) {}
+
+IntegerBox::IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
+  InitialDisplay initial_display, QWidget* parent)
   : IntegerBox(std::make_shared<LocalScalarValueModel<int>>(),
-      std::move(modifiers), parent) {}
+      std::move(modifiers), initial_display, parent) {}
 
 IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
-    QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
-    : StyledWidget(parent),
+  QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
+  : IntegerBox(std::move(model), std::move(modifiers), InitialDisplay::CURRENT,
+      parent) {}
+
+IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
+    QHash<Qt::KeyboardModifier, int> modifiers, InitialDisplay initial_display,
+    QWidget* parent)
+    : QWidget(parent),
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<IntegerToDecimalModel>(m_model)),
       m_submission(m_model->get_current()) {
@@ -86,7 +96,9 @@ IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
       modifier != modifiers.end(); ++modifier) {
     adapted_modifiers.insert(modifier.key(), modifier.value());
   }
-  m_decimal_box = new DecimalBox(m_adaptor_model, adapted_modifiers, this);
+  m_decimal_box = new DecimalBox(m_adaptor_model, adapted_modifiers,
+    initial_display, this);
+  proxy_style(*this, *m_decimal_box);
   setFocusProxy(m_decimal_box);
   layout->addWidget(m_decimal_box);
   m_submit_connection = m_decimal_box->connect_submit_signal(
@@ -127,11 +139,6 @@ connection IntegerBox::connect_submit_signal(
 connection IntegerBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
-}
-
-bool IntegerBox::test_selector(
-    const Selector& element, const Selector& selector) const {
-  return m_decimal_box->test_selector(element, selector);
 }
 
 void IntegerBox::on_submit(const DecimalBox::Decimal& submission) {

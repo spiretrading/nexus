@@ -1,6 +1,6 @@
 #ifndef SPIRE_SCROLLABLE_LAYER_HPP
 #define SPIRE_SCROLLABLE_LAYER_HPP
-#include "Spire/Styles/StyledWidget.hpp"
+#include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -9,7 +9,7 @@ namespace Spire {
    * Implements a widget that is used as a layer containing a vertical and
    * horizontal scroll bar.
    */
-  class ScrollableLayer : public Styles::StyledWidget {
+  class ScrollableLayer : public QWidget {
     public:
 
       /**

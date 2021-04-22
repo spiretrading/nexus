@@ -1,12 +1,12 @@
 #ifndef SPIRE_SCROLL_BAR_HPP
 #define SPIRE_SCROLL_BAR_HPP
-#include "Spire/Styles/StyledWidget.hpp"
+#include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   /** Implements a scroll bar. */
-  class ScrollBar : public Styles::StyledWidget {
+  class ScrollBar : public QWidget {
     public:
 
       /** Signals a change in the scrollbar's position. */

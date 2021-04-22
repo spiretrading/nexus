@@ -1,6 +1,6 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
-#include "Spire/Styles/StyledWidget.hpp"
+#include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -9,7 +9,7 @@ namespace Spire {
    * A widget that serves as a container for another widget, with scroll bars
    * displayed on overflow.
    */
-  class ScrollBox : public Styles::StyledWidget {
+  class ScrollBox : public QWidget {
     public:
 
       /**

@@ -4,39 +4,51 @@
 #include <QHash>
 #include <QRegularExpression>
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Styles/StyledWidget.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
 
-  //! The number of leading zeros added as padding to a number.
+  /** The number of leading zeros added as padding to a number. */
   using LeadingZeros = BasicProperty<int, struct LeadingZerosTag>;
 
-  //! The number of trailing zeros added as padding to the fractional part of a
-  //! number.
+  /**
+   * The number of trailing zeros added as padding to the fractional part of a
+   * number.
+   */
   using TrailingZeros = BasicProperty<int, struct TrailingZerosTag>;
 }
 
-  //! Represents a widget for inputting decimal values.
-  class DecimalBox : public Styles::StyledWidget {
+  /** Represents a widget for inputting decimal values. */
+  class DecimalBox : public QWidget {
     public:
 
-      //! The maximum precision of the Decimal type.
+      /** Indicates what is initially displayed in the DecimalBox. */
+      enum class InitialDisplay {
+
+        /** The model's current value is displayed (default). */
+        CURRENT,
+
+        /** The input box is initially empty. */
+        EMPTY
+      };
+
+      /** The maximum precision of the Decimal type. */
       static constexpr auto PRECISION = 15;
 
-      //! Represents the floating point type used by the DecimalBox.
+      /** Represents the floating point type used by the DecimalBox. */
       using Decimal = boost::multiprecision::number<
         boost::multiprecision::cpp_dec_float<PRECISION>>;
 
       /** Type of model used by the DecimalBox. */
       using DecimalModel = ScalarValueModel<Decimal>;
 
-      //! Signals that submission value has changed.
-      /*!
-        \param value The submission value.
-      */
+      /**
+       * Signals that submission value has changed.
+       * @param value The submission value.
+       */
       using SubmitSignal = Signal<void (const Decimal& value)>;
 
       /**
@@ -45,58 +57,89 @@ namespace Styles {
        */
       using RejectSignal = Signal<void (const Decimal& value)>;
 
-      //! Constructs a DecimalBox with a LocalValueModel.
-      /*!
-        \param modifiers The initial keyboard modifier increments.
-        \param parent The parent widget.
-      */
+      /**
+       * Tests if a value is accepted by a DecimalBox, either because it is
+       * valid, or because additional digits appended to the current value will
+       * make it valid.
+       * @param value The value to validate.
+       * @param min The minimum allowable value.
+       * @param max The maximum allowable value.
+       * @return A value indicating the validation state.
+       */
+      static QValidator::State validate(const Decimal& value,
+        const boost::optional<Decimal>& min,
+        const boost::optional<Decimal>& max);
+
+      /**
+       * Constructs a DecimalBox with a LocalValueModel.
+       * @param modifiers The initial keyboard modifier increments.
+       * @param parent The parent widget.
+       */
       explicit DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
-      //! Constructs a DecimalBox with 6 decimal places and no trailing zeros.
-      /*!
-        \param model The model used for the current value.
-        \param modifiers The initial keyboard modifier increments.
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a DecimalBox with a LocalValueModel.
+       * @param modifiers The initial keyboard modifier increments.
+       * @param initial_display How to initially display the input box.
+       * @param parent The parent widget.
+       */
+      DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
+        InitialDisplay initial_display, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DecimalBox with 6 decimal places and no trailing zeros.
+       * @param model The model used for the current value.
+       * @param modifiers The initial keyboard modifier increments.
+       * @param parent The parent widget.
+       */
       DecimalBox(std::shared_ptr<DecimalModel> model,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
-      //! Returns the current value model.
+      /**
+       * Constructs a DecimalBox with 6 decimal places and no trailing zeros.
+       * @param model The model used for the current value.
+       * @param modifiers The initial keyboard modifier increments.
+       * @param initial_display How to initially display the input box.
+       * @param parent The parent widget.
+       */
+      DecimalBox(std::shared_ptr<DecimalModel> model,
+        QHash<Qt::KeyboardModifier, Decimal> modifiers,
+        InitialDisplay initial_display, QWidget* parent = nullptr);
+
+      /** Returns the current value model. */
       const std::shared_ptr<DecimalModel>& get_model() const;
 
-      //! Sets the placeholder value.
+      /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
 
-      //! Returns <code>true</code> iff this box is read-only.
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
-      //! Sets the read-only state.
-      /*!
-        \param is_read_only True iff the DecimalBox should be read-only.
-      */
+      /**
+       * Sets the read-only state.
+       * @param is_read_only True iff the DecimalBox should be read-only.
+       */
       void set_read_only(bool is_read_only);
 
-      //! Returns whether a warning is displayed when a submission is rejected.
+      /**
+       * Returns whether a warning is displayed when a submission is rejected.
+       */
       bool is_warning_displayed() const;
 
-      //! Sets whether a warning is displayed when a submission is rejected.
+      /** Sets whether a warning is displayed when a submission is rejected. */
       void set_warning_displayed(bool is_displayed);
 
-      //! Connects a slot to the value submission signal.
+      /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-      //! Connects a slot to the RejectSignal.
+      /** Connects a slot to the RejectSignal. */
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
-      bool test_selector(const Styles::Selector& element,
-        const Styles::Selector& selector) const override;
-
     protected:
-      void selector_updated() override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
@@ -125,6 +168,7 @@ namespace Styles {
       void on_current(const Decimal& current);
       void on_submit(const QString& submission);
       void on_reject(const QString& value);
+      void on_style();
   };
 }
 

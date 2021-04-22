@@ -33,7 +33,7 @@ namespace {
 }
 
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
-    : StyledWidget(parent),
+    : QWidget(parent),
       m_orientation(orientation),
       m_range{0, 100},
       m_line_size(1),
@@ -43,12 +43,13 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
       m_thumb_position(0) {
   m_thumb = new Box(nullptr, nullptr);
   auto thumb_style = StyleSheet();
-  thumb_style.get(Any()).set_override(Rule::Override::NONE).
-    set(BackgroundColor(QColor("#C8C8C8")));
-  m_thumb->set_style(std::move(thumb_style));
+  thumb_style.get(Any()).set(BackgroundColor(QColor("#C8C8C8")));
+  set_style(*m_thumb, std::move(thumb_style));
   m_track = new Box(m_thumb, this);
-  auto track_style = m_track->get_style();
-  track_style.get(Any()).set(border(0, QColor(0, 0, 0)));
+  auto track_style = get_style(*m_track);
+  track_style.get(Any()).
+    set(border(0, QColor(0, 0, 0))).
+    set(BackgroundColor(QColor("#FFFFFF")));
   if(m_orientation == Qt::Orientation::Vertical) {
     m_thumb->setSizePolicy(
       QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
@@ -64,7 +65,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   }
   track_style.get(Any()).set(PaddingRight(0));
   track_style.get(Any()).set(PaddingBottom(0));
-  m_track->set_style(std::move(track_style));
+  set_style(*m_track, std::move(track_style));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_track);
@@ -154,7 +155,7 @@ void ScrollBar::mouseMoveEvent(QMouseEvent* event) {
       m_drag_position += delta;
     }
   }
-  StyledWidget::mouseMoveEvent(event);
+  QWidget::mouseMoveEvent(event);
 }
 
 void ScrollBar::mousePressEvent(QMouseEvent* event) {
@@ -162,12 +163,12 @@ void ScrollBar::mousePressEvent(QMouseEvent* event) {
     m_drag_position = ::get_position(m_orientation, event->windowPos());
     m_is_dragging = true;
   }
-  StyledWidget::mousePressEvent(event);
+  QWidget::mousePressEvent(event);
 }
 
 void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
-  StyledWidget::mouseReleaseEvent(event);
+  QWidget::mouseReleaseEvent(event);
 }
 
 void ScrollBar::resizeEvent(QResizeEvent* event) {
@@ -200,13 +201,13 @@ void ScrollBar::update_thumb() {
     m_thumb_position = (track_size - thumb_size) *
       (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
   }
-  auto track_style = m_track->get_style();
+  auto track_style = get_style(*m_track);
   if(m_orientation == Qt::Orientation::Vertical) {
     track_style.get(Any()).set(PaddingTop(m_thumb_position));
   } else {
     track_style.get(Any()).set(PaddingLeft(m_thumb_position));
   }
-  m_track->set_style(std::move(track_style));
+  set_style(*m_track, std::move(track_style));
 }
 
 void Spire::scroll_line_up(ScrollBar& scroll_bar, int lines) {

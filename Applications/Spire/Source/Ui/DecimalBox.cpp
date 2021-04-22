@@ -25,11 +25,6 @@ namespace {
     }
   }
 
-  QString to_string(DecimalBox::Decimal value) {
-    return QString::fromStdString(
-      value.str(DecimalBox::PRECISION, std::ios_base::dec));
-  }
-
   auto BUTTON_RIGHT_PADDING() {
     static auto padding = scale_width(6);
     return padding;
@@ -42,18 +37,18 @@ namespace {
 
   auto create_button(const QString& icon, QWidget* parent) {
     auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
-    auto style = button->get_style();
-    style.get(Any()).
+    auto style = get_style(*button);
+    style.get(Any() > Button::Body()).
       set(BackgroundColor(QColor("#FFFFFF"))).
       set(Fill(QColor("#333333")));
-    style.get(Hover()).
+    style.get(Hover() > Button::Body()).
       set(BackgroundColor(QColor("#EBEBEB"))).
       set(Fill(QColor("#4B23A0")));
-    style.get(Disabled()).
+    style.get(Disabled() > Button::Body()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
-    style.get(Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
-    button->set_style(std::move(style));
+    style.get(+Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
+    set_style(*button, std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -63,23 +58,28 @@ namespace {
 struct DecimalBox::DecimalToTextModel : TextModel {
   mutable CurrentSignal m_current_signal;
   std::shared_ptr<DecimalBox::DecimalModel> m_model;
-  QString m_current;
   int m_decimal_places;
   int m_leading_zeros;
   int m_trailing_zeros;
+  QString m_current;
   QRegExp m_validator;
+  bool m_is_rejected;
   scoped_connection m_current_connection;
 
-  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
+  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model,
+      InitialDisplay initial_display)
       : m_model(std::move(model)),
-        m_current(to_string(m_model->get_current())),
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
         m_leading_zeros(0),
         m_trailing_zeros(0),
+        m_is_rejected(false),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) {
             on_current(current);
           })) {
+    if(initial_display == InitialDisplay::CURRENT) {
+      m_current = to_string(m_model->get_current());
+    }
     update_validator();
   }
 
@@ -89,7 +89,14 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
     m_leading_zeros = leading_zeros;
     update_validator();
-    update_padding();
+    if(m_current.isEmpty()) {
+      return;
+    }
+    auto displayed_value = to_string(m_model->get_current());
+    if(displayed_value != m_current) {
+      m_current = std::move(displayed_value);
+      m_current_signal(m_current);
+    }
   }
 
   void set_trailing_zeros(int trailing_zeros) {
@@ -98,7 +105,27 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
     m_trailing_zeros = trailing_zeros;
     update_validator();
-    update_padding();
+    if(m_current.isEmpty()) {
+      return;
+    }
+    auto displayed_value = to_string(m_model->get_current());
+    if(displayed_value != m_current) {
+      m_current = std::move(displayed_value);
+      m_current_signal(m_current);
+    }
+  }
+
+  DecimalBox::Decimal submit() {
+    auto displayed_value = to_string(m_model->get_current());
+    if(displayed_value != m_current) {
+      m_current = std::move(displayed_value);
+      m_current_signal(m_current);
+    }
+    return m_model->get_current();
+  }
+
+  void reject() {
+    m_is_rejected = true;
   }
 
   QValidator::State get_state() const override {
@@ -110,26 +137,62 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   QValidator::State set_current(const QString& value) override {
-    auto decimal_places = -log10(m_model->get_increment()).convert_to<int>();
+    auto decimal_places = 0;
+    auto i = m_model->get_increment();
+    while(i < 1) {
+      i *= 10;
+      ++decimal_places;
+    }
     if(decimal_places != m_decimal_places) {
-      update_validator();
       m_decimal_places = decimal_places;
+      update_validator();
     }
     if(!m_validator.exactMatch(value)) {
+      m_is_rejected = false;
       return QValidator::State::Invalid;
     } else if(value.isEmpty() || value == "-" || value == "+") {
+      if(value == "-" &&
+          m_model->get_minimum() && *m_model->get_minimum() >= 0) {
+        return QValidator::State::Invalid;
+      } else if(value == "+" &&
+          m_model->get_maximum() && *m_model->get_maximum() < 0) {
+        return QValidator::State::Invalid;
+      }
+      auto origin = [&] {
+        if(validate(0, m_model->get_minimum(), m_model->get_maximum()) ==
+            QValidator::State::Acceptable) {
+          return DecimalBox::Decimal(0);
+        } else if(!m_model->get_minimum()) {
+          return *m_model->get_maximum();
+        }
+        return *m_model->get_minimum();
+      }();
+      auto blocker = shared_connection_block(m_current_connection);
+      m_model->set_current(origin);
       m_current = value;
       m_current_signal(m_current);
+      m_is_rejected = false;
       return QValidator::State::Intermediate;
     } else if(auto decimal = to_decimal(value)) {
+      auto state =
+        validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
+      if(state == QValidator::State::Invalid) {
+        return QValidator::State::Invalid;
+      }
       auto blocker = shared_connection_block(m_current_connection);
-      auto state = m_model->set_current(*decimal);
+      state = m_model->set_current(*decimal);
       if(state != QValidator::State::Invalid) {
-        m_current = value;
+        if(m_is_rejected) {
+          m_current = to_string(*decimal);
+        } else {
+          m_current = value;
+        }
         m_current_signal(m_current);
       }
+      m_is_rejected = false;
       return state;
     }
+    m_is_rejected = false;
     return QValidator::State::Invalid;
   }
 
@@ -139,7 +202,9 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   void update_validator() {
-    if(m_trailing_zeros > m_decimal_places) {
+    if(m_decimal_places <= 0) {
+      m_validator = QRegExp(QString("^[-|\\+]?[0-9]*"));
+    } else if(m_trailing_zeros > m_decimal_places) {
       auto delta = m_trailing_zeros - m_decimal_places;
       m_validator =
         QRegExp(QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1}0{0,%2})?").arg(
@@ -150,35 +215,12 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
   }
 
-  void update_padding() {
-    static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9]*))(\\.([0-9]*))?");
-    static const auto LEADING_DIGITS_CAPTURE_GROUP = 2;
-    static const auto TRAILING_CAPTURE_GROUP = 3;
-    static const auto TRAILING_DIGITS_CAPTURE_GROUP = 4;
-    if(DECIMAL_PATTERN.indexIn(m_current, 0) != -1) {
-      auto captures = DECIMAL_PATTERN.capturedTexts();
-      if(m_trailing_zeros != 0) {
-        if(captures[TRAILING_CAPTURE_GROUP].isEmpty()) {
-          m_current += ".";
-        }
-      }
-      auto has_update =
-        update_leading_zeros(captures[LEADING_DIGITS_CAPTURE_GROUP]);
-      has_update |=
-        update_trailing_zeros(captures[TRAILING_DIGITS_CAPTURE_GROUP]);
-      if(has_update) {
-        m_current_signal(m_current);
-      }
-    }
-  }
-
-  bool update_leading_zeros(const QString& digits) {
+  bool update_leading_zeros(QString& source, const QString& digits) const {
     auto leading_zeros = std::max(1, m_leading_zeros);
     if(digits.length() < leading_zeros) {
       auto padding = QString("0");
       auto insert_index = [&] {
-        if(!m_current.isEmpty() &&
-            (m_current[0] == '-' || m_current[0] == '+')) {
+        if(!source.isEmpty() && (source[0] == '-' || source[0] == '+')) {
           return 1;
         }
         return 0;
@@ -186,53 +228,107 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       for(auto i = digits.length() + 1; i < leading_zeros; ++i) {
         padding += '0';
       }
-      m_current.insert(insert_index, padding);
+      source.insert(insert_index, padding);
       return true;
     }
     return false;
   }
 
-  bool update_trailing_zeros(const QString& digits) {
+  bool update_trailing_zeros(QString& source, const QString& digits) const {
     if(digits.length() < m_trailing_zeros) {
       for(auto i = digits.length(); i < m_trailing_zeros; ++i) {
-        m_current += "0";
+        source += "0";
       }
       return true;
     }
     auto delta = digits.length() - std::max(m_trailing_zeros, m_decimal_places);
     if(delta > 0) {
-      m_current.chop(delta);
+      source.chop(delta);
       return true;
     }
     return false;
   }
 
+  QString to_string(const DecimalBox::Decimal& value) const {
+    static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9]*))(\\.([0-9]*))?");
+    static const auto LEADING_DIGITS_CAPTURE_GROUP = 2;
+    static const auto TRAILING_CAPTURE_GROUP = 3;
+    static const auto TRAILING_DIGITS_CAPTURE_GROUP = 4;
+    auto s = QString::fromStdString(
+      value.str(DecimalBox::PRECISION, std::ios_base::dec));
+    if(DECIMAL_PATTERN.indexIn(s, 0) != -1) {
+      auto captures = DECIMAL_PATTERN.capturedTexts();
+      if(m_trailing_zeros != 0) {
+        if(captures[TRAILING_CAPTURE_GROUP].isEmpty()) {
+          s += ".";
+        }
+      }
+      auto has_update =
+        update_leading_zeros(s, captures[LEADING_DIGITS_CAPTURE_GROUP]);
+      has_update |=
+        update_trailing_zeros(s, captures[TRAILING_DIGITS_CAPTURE_GROUP]);
+    }
+    return s;
+  }
+
   void on_current(const DecimalBox::Decimal& current) {
     m_current = to_string(current);
-    update_padding();
     m_current_signal(m_current);
   }
 };
 
+QValidator::State DecimalBox::validate(const Decimal& value,
+    const optional<Decimal>& min, const optional<Decimal>& max) {
+  if(min && max && value >= min && value <= max ||
+      min && !max && value >= min || !min && max && value <= max ||
+      !min && !max) {
+    return QValidator::State::Acceptable;
+  } else if(max && *max >= 0 && value > *max ||
+      min && *min <= 0 && value < *min) {
+    return QValidator::State::Invalid;
+  } else if(min && *min - trunc(*min) != 0 || max && *max - trunc(*max) != 0) {
+    return QValidator::State::Intermediate;
+  } else if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
+      !min && validate(value, none, Decimal(trunc(*max / 10))) ||
+      validate(value, Decimal(trunc(*min / 10)), Decimal(trunc(*max / 10)))) {
+    return QValidator::State::Intermediate;
+  }
+  return QValidator::State::Invalid;
+}
+
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
+  : DecimalBox(std::move(modifiers), InitialDisplay::CURRENT, parent) {}
+
+DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
+  InitialDisplay initial_display, QWidget* parent)
   : DecimalBox(std::make_shared<LocalScalarValueModel<Decimal>>(),
-      std::move(modifiers), parent) {}
+      std::move(modifiers), initial_display, parent) {}
 
 DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
-    QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
-    : StyledWidget(parent),
+  QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+  : DecimalBox(std::move(model), std::move(modifiers), InitialDisplay::CURRENT,
+      parent) {}
+
+DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
+    QHash<Qt::KeyboardModifier, Decimal> modifiers,
+    InitialDisplay initial_display, QWidget* parent)
+    : QWidget(parent),
       m_model(std::move(model)),
-      m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
+      m_adaptor_model(
+        std::make_shared<DecimalToTextModel>(m_model, initial_display)),
       m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
-  auto style = m_text_box->get_style();
-  style.get((is_a<Button>() && !matches(Visibility(VisibilityOption::NONE))) %
-    is_a<TextBox>() > is_a<Box>()).set(PaddingRight(scale_width(26)));
-  m_text_box->set_style(std::move(style));
+  auto style = Spire::Styles::get_style(*m_text_box);
+  style.get(+Any() %
+    (is_a<Button>() && !matches(Visibility(VisibilityOption::NONE)))).set(
+      PaddingRight(scale_width(26)));
+  set_style(*m_text_box, std::move(style));
+  proxy_style(*this, *m_text_box);
+  connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
   m_current_connection = m_model->connect_current_signal(
@@ -282,23 +378,6 @@ connection DecimalBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-bool DecimalBox::test_selector(
-    const Selector& element, const Selector& selector) const {
-  return m_text_box->test_selector(element, selector);
-}
-
-void DecimalBox::selector_updated() {
-  auto style = compute_style();
-  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
-    m_adaptor_model->set_leading_zeros(
-      leading_zeros->get_expression().as<int>());
-  }
-  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
-    m_adaptor_model->set_trailing_zeros(
-      trailing_zeros->get_expression().as<int>());
-  }
-}
-
 void DecimalBox::keyPressEvent(QKeyEvent* event) {
   if(!is_read_only()) {
     if(event->key() == Qt::Key_Up) {
@@ -311,7 +390,7 @@ void DecimalBox::keyPressEvent(QKeyEvent* event) {
 
 void DecimalBox::resizeEvent(QResizeEvent* event) {
   update_button_positions();
-  StyledWidget::resizeEvent(event);
+  QWidget::resizeEvent(event);
 }
 
 void DecimalBox::wheelEvent(QWheelEvent* event) {
@@ -328,7 +407,7 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
       decrement();
     }
   }
-  StyledWidget::wheelEvent(event);
+  QWidget::wheelEvent(event);
 }
 
 void DecimalBox::decrement() {
@@ -356,9 +435,12 @@ DecimalBox::Decimal DecimalBox::get_increment() const {
 
 void DecimalBox::step_by(const Decimal& value) {
   setFocus();
-  auto next = std::clamp(Decimal(m_model->get_current() + value),
-    m_model->get_minimum().value_or(value),
-    m_model->get_maximum().value_or(value));
+  auto next = Decimal(m_model->get_current() + value);
+  if(m_model->get_minimum() && next < m_model->get_minimum()) {
+    next = *m_model->get_minimum();
+  } else if(m_model->get_maximum() && next > m_model->get_maximum()) {
+    next = *m_model->get_maximum();
+  }
   if(next != m_model->get_current()) {
     m_model->set_current(next);
   }
@@ -381,12 +463,24 @@ void DecimalBox::on_current(const Decimal& current) {
 void DecimalBox::on_submit(const QString& submission) {
   static auto VALIDATOR = QRegExp("^([-|\\+]?[0-9]+(\\.[0-9]*)?)|(-\\.)");
   if(VALIDATOR.exactMatch(submission)) {
-    m_submission = m_model->get_current();
-    m_adaptor_model->update_padding();
+    m_submission = m_adaptor_model->submit();
     m_submit_signal(m_submission);
   }
 }
 
 void DecimalBox::on_reject(const QString& value) {
   m_reject_signal(to_decimal(value).value_or(Decimal(0)));
+  m_adaptor_model->reject();
+}
+
+void DecimalBox::on_style() {
+  auto style = compute_style(*this);
+  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
+    m_adaptor_model->set_leading_zeros(
+      leading_zeros->get_expression().as<int>());
+  }
+  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
+    m_adaptor_model->set_trailing_zeros(
+      trailing_zeros->get_expression().as<int>());
+  }
 }

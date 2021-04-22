@@ -5,10 +5,9 @@
 #include "Spire/Ui/ScrollBar.hpp"
 
 using namespace Spire;
-using namespace Spire::Styles;
 
 ScrollableLayer::ScrollableLayer(QWidget* parent)
-  : StyledWidget(parent),
+  : QWidget(parent),
     m_vertical_scroll_bar(new ScrollBar(Qt::Orientation::Vertical, this)),
     m_horizontal_scroll_bar(new ScrollBar(Qt::Orientation::Horizontal, this)) {
   m_vertical_scroll_bar->set_range(0, 1000);
@@ -20,8 +19,8 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
     1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 0);
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
-  layout->addItem(new QSpacerItem(
-    1, 1, QSizePolicy::Minimum, QSizePolicy::Minimum), 1, 1);
+  layout->addItem(
+    new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Minimum), 1, 1);
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
