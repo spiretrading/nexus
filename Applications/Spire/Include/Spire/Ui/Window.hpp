@@ -31,11 +31,11 @@ namespace Spire {
       */
       void set_svg_icon(const QString& icon_path);
 
-      //! Sets the Window's minimum size.
+      //! Sets the Window body's minimum size.
       /*!
-        \param size The Window's minimum size.
+        \param size The body's minimum size.
       */
-      void set_minimum_size(const QSize& size);
+      void set_minimum_body_size(const QSize& size);
 
     protected:
 
@@ -82,6 +82,7 @@ namespace Spire {
       bool m_is_resizable;
       boost::optional<QSize> m_frame_size;
 
+      QSize adjusted_window_size(const QSize& body_size);
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
   };

@@ -60,9 +60,8 @@ void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
 }
 
-void Window::set_minimum_size(const QSize& size) {
-  setMinimumSize(size.width() + 2 * scale_width(1),
-    size.height() + m_title_bar->height() + 2 * scale_height(1));
+void Window::set_minimum_body_size(const QSize& size) {
+  setMinimumSize(adjusted_window_size(size));
 }
 
 void Window::changeEvent(QEvent* event) {
@@ -195,10 +194,19 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
-    mmi->ptMaxTrackSize.x = maximumSize().width();
-    mmi->ptMaxTrackSize.y = maximumSize().height();
-    mmi->ptMinTrackSize.x = minimumSize().width();
-    mmi->ptMinTrackSize.y = minimumSize().height();
+    if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+      mmi->ptMaxTrackSize.x = maximumSize().width() +
+        2 * SYSTEM_BORDER_SIZE().width();
+      mmi->ptMaxTrackSize.y = maximumSize().height() +
+        SYSTEM_BORDER_SIZE().height();
+    } else {
+      mmi->ptMaxTrackSize.x = maximumSize().width();
+      mmi->ptMaxTrackSize.y = maximumSize().height();
+    }
+    mmi->ptMinTrackSize.x = minimumSize().width() +
+      2 * SYSTEM_BORDER_SIZE().width();
+    mmi->ptMinTrackSize.y = minimumSize().height() +
+      SYSTEM_BORDER_SIZE().height();
     return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
@@ -208,8 +216,7 @@ void Window::resize_body(const QSize& size) {
   if(!m_body) {
     return;
   }
-  resize(size.width() + 2 * scale_width(1),
-    size.height() + m_title_bar->height() + 2 * scale_height(1));
+  resize(adjusted_window_size(size));
 }
 
 void Window::set_body(QWidget* body) {
@@ -232,6 +239,11 @@ void Window::set_fixed_body(QWidget* body, const QSize& size) {
   set_window_attributes(false);
   body->setFixedSize(size);
   layout()->addWidget(body);
+}
+
+QSize Window::adjusted_window_size(const QSize& body_size) {
+  return {body_size.width() + 2 * scale_width(1),
+    body_size.height() + m_title_bar->height() + 2 * scale_height(1)};
 }
 
 void Window::on_screen_changed(QScreen* screen) {

@@ -64,7 +64,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   set_properties(properties);
   m_item_delegate = new CustomVariantItemDelegate(this);
   set_body(m_body, scale(180, 410));
-  set_minimum_size(scale(180, 200));
+  set_minimum_body_size(scale(180, 200));
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {

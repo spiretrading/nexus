@@ -137,7 +137,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(m_draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
   set_body(body, scale(400, 320));
-  set_minimum_size(scale(400, 320));
+  set_minimum_body_size(scale(400, 320));
 }
 
 void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
