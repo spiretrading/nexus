@@ -23,7 +23,6 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  set_fixed_body_size(scale(482, 272));
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowTitle(tr("Properties"));
   auto body = new QWidget(this);
@@ -147,7 +146,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   buttons_layout->addWidget(buttons_widget);
   layout->addLayout(buttons_layout);
   layout->setStretchFactor(buttons_layout, 60);
-  Window::layout()->addWidget(body);
+  set_fixed_body(body, scale(482, 272));
   set_properties(properties);
 }
 

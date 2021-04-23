@@ -16,7 +16,6 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
     : Window(parent),
       m_key_bindings(std::move(key_bindings)),
       m_last_focus_was_key(false) {
-  set_fixed_body_size(scale(871, 442));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setWindowTitle(tr("Key Bindings"));
@@ -26,7 +25,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
-  Window::layout()->addWidget(body);
+  set_fixed_body(body, scale(871, 442));
   m_tab_widget = new TabWidget(TabWidget::PaddingStyle::NONE, this);
   layout->addWidget(m_tab_widget);
   auto task_keys_widget = new QWidget(m_tab_widget);
