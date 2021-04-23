@@ -4,6 +4,7 @@
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <qt_windows.h>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -318,7 +319,8 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
       m_adaptor_model(
         std::make_shared<DecimalToTextModel>(m_model, initial_display)),
       m_submission(m_model->get_current()),
-      m_modifiers(std::move(modifiers)) {
+      m_modifiers(std::move(modifiers)),
+      m_mouse_wheel_orientation(Qt::Vertical) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
@@ -396,10 +398,13 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 void DecimalBox::wheelEvent(QWheelEvent* event) {
   if(hasFocus() && !is_read_only()) {
     auto angle_delta = [&] {
-      if(event->modifiers().testFlag(Qt::AltModifier)) {
+      if(m_mouse_wheel_orientation == Qt::Horizontal) {
+        return -event->angleDelta().x();
+      } else if(event->modifiers().testFlag(Qt::AltModifier)) {
         return event->angleDelta().x();
+      } else {
+        return event->angleDelta().y();
       }
-      return event->angleDelta().y();
     }();
     if(angle_delta > 0) {
       increment();
@@ -408,6 +413,24 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
     }
   }
   QWidget::wheelEvent(event);
+}
+
+bool DecimalBox::event(QEvent* event) {
+  if(event->type() == QEvent::Show) {
+    setAttribute(Qt::WA_NativeWindow);
+  }
+  return QWidget::event(event);
+}
+
+bool DecimalBox::nativeEvent(const QByteArray& eventType, void* message,
+    long* result) {
+  auto msg = reinterpret_cast<MSG*>(message);
+  if(msg->message == WM_MOUSEHWHEEL) {
+    m_mouse_wheel_orientation = Qt::Horizontal;
+  } else if(msg->message == WM_MOUSEWHEEL) {
+    m_mouse_wheel_orientation = Qt::Vertical;
+  }
+  return false;
 }
 
 void DecimalBox::decrement() {

@@ -143,6 +143,9 @@ namespace Styles {
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
+      bool event(QEvent* event) override;
+      bool nativeEvent(const QByteArray& eventType, void* message,
+        long* result) override;
 
     private:
       struct DecimalToTextModel;
@@ -156,6 +159,7 @@ namespace Styles {
       QRegExp m_validator;
       Button* m_up_button;
       Button* m_down_button;
+      Qt::Orientation m_mouse_wheel_orientation;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;
