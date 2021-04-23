@@ -22,10 +22,11 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   set_svg_icon(":/Icons/key-bindings.svg");
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
+  body->setFixedSize(scale(871, 442));
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
-  set_fixed_body(body, scale(871, 442));
+  set_body(body);
   m_tab_widget = new TabWidget(TabWidget::PaddingStyle::NONE, this);
   layout->addWidget(m_tab_widget);
   auto task_keys_widget = new QWidget(m_tab_widget);

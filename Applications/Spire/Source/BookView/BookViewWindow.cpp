@@ -37,8 +37,9 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  set_body(m_security_widget, scale(220, 410));
-  set_minimum_body_size(scale(220, 380));
+  m_security_widget->resize(scale(220, 410));
+  m_security_widget->setMinimumSize(scale(220, 380));
+  set_body(m_security_widget);
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {

@@ -31,19 +31,7 @@ namespace Spire {
       */
       void set_svg_icon(const QString& icon_path);
 
-      //! Sets the Window body's minimum size.
-      /*!
-        \param size The body's minimum size.
-      */
-      void set_minimum_body_size(const QSize& size);
-
     protected:
-
-      //! Resizes the Window's body iff the body is not null.
-      /*!
-        \param size The size of the Window's body.
-      */
-      void resize_body(const QSize& size);
 
       //! Sets the Window's body widget iff there is no existing body.
       /*!
@@ -51,27 +39,10 @@ namespace Spire {
       */
       void set_body(QWidget* body);
 
-      //! Sets the Window's body widget with an initial size iff there is no
-      //! existing body.
-      /*!
-        \param body The body widget.
-        \param size The body's initial size.
-      */
-      void set_body(QWidget* body, const QSize& size);
-
-      //! Sets the Window to have a fixed size body iff there is no existing
-      //! body. This removes the maximize button and resize cursors.
-      //! The Window's layout automatically adjusts to include the size of the
-      //! body.
-      /*!
-        \param body The window's body widget.
-        \param size The fixed size of the Window's body.
-      */
-      void set_fixed_body(QWidget* body, const QSize& size);
-
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
 

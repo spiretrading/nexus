@@ -52,6 +52,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   auto body = new QWidget(this);
   body->setObjectName("toolbar_window_body");
   body->setStyleSheet("#toolbar_window_body { background-color: #F5F5F5; }");
+  body->setFixedSize(scale(308, 76));
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -118,7 +119,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->addLayout(button_layout);
   layout->setStretchFactor(button_layout, 26);
   layout->addStretch(8);
-  set_fixed_body(body, scale(308, 76));
+  set_body(body);
   m_entry_added_connection = m_model->connect_entry_added_signal(
     [=] (auto& e) {entry_added(e);});
   m_entry_removed_connection = m_model->connect_entry_removed_signal(

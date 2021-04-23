@@ -29,6 +29,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   body->setObjectName("time_sales_properties_dialog");
   body->setStyleSheet(
     "#time_sales_properties_dialog { background-color: #F5F5F5; }");
+  body->setFixedSize(scale(482, 272));
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);
@@ -146,7 +147,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   buttons_layout->addWidget(buttons_widget);
   layout->addLayout(buttons_layout);
   layout->setStretchFactor(buttons_layout, 60);
-  set_fixed_body(body, scale(482, 272));
+  set_body(body);
   set_properties(properties);
 }
 

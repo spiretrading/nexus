@@ -60,10 +60,6 @@ void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
 }
 
-void Window::set_minimum_body_size(const QSize& size) {
-  setMinimumSize(adjusted_window_size(size));
-}
-
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
@@ -85,6 +81,15 @@ bool Window::event(QEvent* event) {
       &Window::on_screen_changed);
   }
   return QWidget::event(event);
+}
+
+bool Window::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    if(watched == m_body && !isMaximized()) {
+      resize(adjusted_window_size(m_body->size()));
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
@@ -212,33 +217,18 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   return QWidget::nativeEvent(eventType, message, result);
 }
 
-void Window::resize_body(const QSize& size) {
-  if(!m_body) {
-    return;
-  }
-  resize(adjusted_window_size(size));
-}
-
 void Window::set_body(QWidget* body) {
-  set_body(body, body->size());
-}
-
-void Window::set_body(QWidget* body, const QSize& size) {
   if(m_body) {
     return;
   }
   m_body = body;
-  layout()->addWidget(m_body);
-  resize_body(size);
-}
-
-void Window::set_fixed_body(QWidget* body, const QSize& size) {
-  if(m_body) {
-    return;
+  if(body->maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+    set_window_attributes(false);
+  } else {
+    resize(adjusted_window_size(body->size()));
   }
-  set_window_attributes(false);
-  body->setFixedSize(size);
-  layout()->addWidget(body);
+  layout()->addWidget(m_body);
+  m_body->installEventFilter(this);
 }
 
 QSize Window::adjusted_window_size(const QSize& body_size) {

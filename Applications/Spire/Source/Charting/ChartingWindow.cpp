@@ -59,6 +59,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   auto body = new QWidget(this);
   setObjectName("charting_window_body");
   body->setStyleSheet("#charting_window_body { background-color: #FFFFFF; }");
+  body->resize(400, 320);
+  body->setMinimumSize(scale(400, 320));
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -136,8 +138,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(m_auto_scale_button, m_draw_line_button);
   setTabOrder(m_draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
-  set_body(body, scale(400, 320));
-  set_minimum_body_size(scale(400, 320));
+  set_body(body);
 }
 
 void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
