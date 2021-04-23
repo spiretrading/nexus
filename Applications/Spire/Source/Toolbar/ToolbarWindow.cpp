@@ -50,7 +50,6 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
       m_model(model.Get()) {
-  set_fixed_body_size(scale(308, 76));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
@@ -58,6 +57,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   auto body = new QWidget(this);
   body->setObjectName("toolbar_window_body");
   body->setStyleSheet("#toolbar_window_body { background-color: #F5F5F5; }");
+  body->setFixedSize(scale(308, 76));
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), scale_height(8), scale_width(8),
     scale_height(8));
@@ -114,7 +114,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
-  Window::layout()->addWidget(body);
+  set_body(body);
   m_entry_added_connection = m_model->connect_entry_added_signal(
     [=] (auto& e) {entry_added(e);});
   m_entry_removed_connection = m_model->connect_entry_removed_signal(
