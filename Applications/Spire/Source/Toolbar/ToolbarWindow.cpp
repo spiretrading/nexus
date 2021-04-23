@@ -64,7 +64,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->setSpacing(scale_height(10));
   auto combo_box_layout = new QHBoxLayout();
   combo_box_layout->setContentsMargins({});
-  combo_box_layout->setSpacing(scale_width(8));
+  combo_box_layout->setSpacing(scale_width(16));
   layout->addLayout(combo_box_layout);
   m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
     tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
@@ -79,7 +79,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   combo_box_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
-  button_layout->setSpacing(scale_width(1));
+  button_layout->setSpacing(scale_width(7));
   m_account_button = create_button(":/Icons/toolbar_icons/account.svg",
     tr("Account"), body);
   button_layout->addWidget(m_account_button);
@@ -108,6 +108,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_order_imbalances_button = create_button(
     ":/Icons/toolbar_icons/imbalance-indicator.svg", tr("Order Imbalances"),
     body);
+  button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = create_button(":/Icons/toolbar_icons/blotter.svg",
     tr("Blotter"), body);
