@@ -35,6 +35,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   body->setObjectName("book_view_properties_dialog_body");
   body->setStyleSheet(R"(#book_view_properties_dialog_body {
     background-color: #F5F5F5; })");
+  body->setFixedSize(scale(482, 394));
   setWindowTitle(tr("Properties"));
   set_svg_icon(":/Icons/bookview.svg");
   auto layout = new QVBoxLayout(body);
@@ -63,7 +64,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   button_group_widget->connect_ok_signal([=] { accept(); });
   button_group_widget->connect_save_as_default_signal(
     [=] { m_save_default_signal(); });
-  set_fixed_body(body, scale(482, 394));
+  set_body(body);
 }
 
 BookViewProperties BookViewPropertiesDialog::get_properties() const {

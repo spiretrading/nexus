@@ -33,6 +33,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   m_body = new QWidget(this);
+  m_body->resize(scale(180, 410));
+  m_body->setMinimumSize(scale(180, 200));
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -63,8 +65,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
   m_item_delegate = new CustomVariantItemDelegate(this);
-  set_body(m_body, scale(180, 410));
-  set_minimum_body_size(scale(180, 200));
+  set_body(m_body);
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
