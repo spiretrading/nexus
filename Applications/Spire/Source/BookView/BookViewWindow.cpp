@@ -32,14 +32,14 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_transition_widget(nullptr),
       m_bbo_quote_panel(nullptr),
       m_table(nullptr) {
-  setMinimumSize(scale(220, 280));
-  resize_body(scale(220, 410));
   setWindowTitle(tr("Book View"));
   set_svg_icon(":/Icons/bookview.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  layout()->addWidget(m_security_widget);
+  m_security_widget->resize(scale(220, 410));
+  m_security_widget->setMinimumSize(scale(220, 380));
+  set_body(m_security_widget);
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
