@@ -3,7 +3,7 @@
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/ToolbarMenu.hpp"
-#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
@@ -35,11 +35,7 @@ namespace {
 
   auto create_button(const QString& icon, const QString& tooltip,
       QWidget* parent) {
-    auto style = IconButton::Style();
-    style.m_default_color = QColor("#7F5EEC");
-    style.m_blur_color = QColor("#7F5EEC");
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
-      parent);
+    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
     return button;
@@ -63,7 +59,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->setSpacing(scale_height(10));
   auto combo_box_layout = new QHBoxLayout();
   combo_box_layout->setContentsMargins({});
-  combo_box_layout->setSpacing(scale_width(8));
+  combo_box_layout->setSpacing(scale_width(16));
   layout->addLayout(combo_box_layout);
   m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
     tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
@@ -78,7 +74,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   combo_box_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
-  button_layout->setSpacing(scale_width(1));
+  button_layout->setSpacing(scale_width(7));
   m_account_button = create_button(":/Icons/toolbar_icons/account.svg",
     tr("Account"), body);
   button_layout->addWidget(m_account_button);
@@ -90,13 +86,15 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   button_layout->addWidget(m_canvas_button);
   m_book_view_button = create_button(":/Icons/toolbar_icons/bookview.svg",
     tr("Book View"), body);
-  connect(m_book_view_button, &IconButton::clicked,
-    [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
+  m_book_view_button->connect_clicked_signal([=] {
+    on_open_window(RecentlyClosedModel::Type::BOOK_VIEW);
+  });
   button_layout->addWidget(m_book_view_button);
   m_time_and_sales_button = create_button(
     ":/Icons/toolbar_icons/time-sales.svg", tr("Time and Sales"), body);
-  connect(m_time_and_sales_button, &IconButton::clicked,
-    [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
+  m_time_and_sales_button->connect_clicked_signal([=] {
+    on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE);
+  });
   button_layout->addWidget(m_time_and_sales_button);
   m_chart_button = create_button(":/Icons/toolbar_icons/chart.svg",
     tr("Chart"), body);
