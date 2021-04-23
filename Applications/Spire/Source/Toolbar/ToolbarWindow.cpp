@@ -18,6 +18,11 @@ namespace {
     return size;
   }
 
+  auto DROP_DOWN_SIZE() {
+    static auto size = scale(138, 26);
+    return size;
+  }
+
   auto ICON_SIZE() {
     static auto icon_size = scale(10, 10);
     return icon_size;
@@ -54,36 +59,27 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   body->setStyleSheet("#toolbar_window_body { background-color: #F5F5F5; }");
   body->setFixedSize(scale(308, 76));
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  layout->addStretch(8);
+  layout->setContentsMargins(scale_width(8), scale_height(8), scale_width(8),
+    scale_height(8));
+  layout->setSpacing(scale_height(10));
   auto combo_box_layout = new QHBoxLayout();
   combo_box_layout->setContentsMargins({});
-  combo_box_layout->setSpacing(0);
+  combo_box_layout->setSpacing(scale_width(16));
   layout->addLayout(combo_box_layout);
-  layout->setStretchFactor(combo_box_layout, 26);
-  layout->addStretch(10);
-  combo_box_layout->addStretch(8);
   m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
     tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
     body);
+  m_window_manager_button->setFixedSize(DROP_DOWN_SIZE());
   m_window_manager_button->set_next_activated(false);
-  m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   combo_box_layout->addWidget(m_window_manager_button);
-  combo_box_layout->setStretchFactor(m_window_manager_button, 138);
-  combo_box_layout->addStretch(16);
   m_recently_closed_button = new ToolbarMenu(tr("Recently Closed"), body);
-  m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  m_recently_closed_button->setFixedSize(DROP_DOWN_SIZE());
   m_recently_closed_button->connect_index_selected_signal(
     [=] (auto index) { on_item_selected(index); });
   combo_box_layout->addWidget(m_recently_closed_button);
-  combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
-  combo_box_layout->addStretch(8);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
-  button_layout->setSpacing(0);
+  button_layout->setSpacing(scale_width(7));
   m_account_button = create_button(":/Icons/toolbar_icons/account.svg",
     tr("Account"), body);
   button_layout->addWidget(m_account_button);
@@ -112,13 +108,13 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_order_imbalances_button = create_button(
     ":/Icons/toolbar_icons/imbalance-indicator.svg", tr("Order Imbalances"),
     body);
+  button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = create_button(":/Icons/toolbar_icons/blotter.svg",
     tr("Blotter"), body);
+  button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
-  layout->setStretchFactor(button_layout, 26);
-  layout->addStretch(8);
   set_body(body);
   m_entry_added_connection = m_model->connect_entry_added_signal(
     [=] (auto& e) {entry_added(e);});
