@@ -106,6 +106,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_order_imbalances_button = create_button(
     ":/Icons/toolbar_icons/imbalance-indicator.svg", tr("Order Imbalances"),
     body);
+  button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = create_button(":/Icons/toolbar_icons/blotter.svg",
     tr("Blotter"), body);
