@@ -29,6 +29,7 @@ namespace Spire {
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
+  template<typename T> class ListModel;
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
   using LocalIntegerModel = LocalScalarValueModel<int>;
