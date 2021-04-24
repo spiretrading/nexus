@@ -87,7 +87,15 @@ namespace Details {
        * @throws <code>std::out_of_range</code> iff row or column is out of
        *         range.
        */
-      virtual const std::any& get(int row, int column) const = 0;
+      virtual const std::any& at(int row, int column) const = 0;
+
+      /**
+       * Returns the value at a specified row and column.
+       * @throws <code>std::out_of_range</code> iff row or column is out of
+       *         range.
+       */
+      template<typename T>
+      const T& get(int row, int column) const;
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
@@ -102,6 +110,11 @@ namespace Details {
       TableModel(const TableModel&) = delete;
       TableModel& operator =(const TableModel&) = delete;
   };
+
+  template<typename T>
+  const T& TableModel::get(int row, int column) const {
+    return std::any_cast<const T&>(at(row, column));
+  }
 }
 
 #endif

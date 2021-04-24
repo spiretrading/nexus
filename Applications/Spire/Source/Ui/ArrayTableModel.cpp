@@ -24,7 +24,7 @@ int ArrayTableModel::get_column_size() const {
   return -1;
 }
 
-const std::any& ArrayTableModel::get(int row, int column) const {
+const std::any& ArrayTableModel::at(int row, int column) const {
   static const auto dummy = std::any();
   return dummy;
 }

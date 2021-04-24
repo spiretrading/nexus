@@ -74,7 +74,7 @@ namespace Spire {
 
       int get_column_size() const override;
 
-      const std::any& get(int row, int column) const override;
+      const std::any& at(int row, int column) const override;
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
