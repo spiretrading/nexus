@@ -95,6 +95,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_integer_box_profile());
   add(make_list_item_profile());
   add(make_scroll_bar_profile());
+  add(make_scroll_box_profile());
   add(make_text_box_profile());
   add(make_tooltip_profile());
   m_widget_list->setCurrentRow(0);

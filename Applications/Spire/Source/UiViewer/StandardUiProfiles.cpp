@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <QImageReader>
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -13,6 +14,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -478,6 +480,33 @@ UiProfile Spire::make_scroll_bar_profile() {
       scroll_bar->connect_position_signal(profile.make_event_slot<int>(
         QString::fromUtf8("Position")));
       return scroll_bar;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_scroll_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto display_policy_property = define_enum_property<ScrollBox::DisplayPolicy>(
+    {{"NEVER", ScrollBox::DisplayPolicy::NEVER},
+     {"ALWAYS", ScrollBox::DisplayPolicy::ALWAYS},
+     {"ON_OVERFLOW", ScrollBox::DisplayPolicy::ON_OVERFLOW},
+     {"ON_ENGAGE", ScrollBox::DisplayPolicy::ON_ENGAGE}});
+  properties.push_back(make_standard_enum_property(
+    "horizontal_display_policy", display_policy_property));
+  properties.push_back(make_standard_enum_property(
+    "vertical_display_policy", display_policy_property));
+  auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
+    [] (auto& profile) {
+      auto label = new QLabel();
+      auto reader = QImageReader(":/Icons/color-picker-display.png");
+      auto image = QPixmap::fromImage(reader.read());
+      image = image.scaled(QSize(2000, 2000));
+      label->setPixmap(std::move(image));
+      auto scroll_box = new ScrollBox(label);
+      scroll_box->resize(scale(320, 240));
+      apply_widget_properties(scroll_box, profile.get_properties());
+      return scroll_box;
     });
   return profile;
 }
