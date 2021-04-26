@@ -50,6 +50,7 @@ namespace Spire {
   class SecurityStack;
   class SecurityWidget;
   class TabWidget;
+  class TableModel;
   class TextBox;
   class TitleBar;
   class Tooltip;

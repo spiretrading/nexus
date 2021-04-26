@@ -30,12 +30,12 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  set_fixed_body_size(scale(482, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto body = new QWidget(this);
   body->setObjectName("book_view_properties_dialog_body");
   body->setStyleSheet(R"(#book_view_properties_dialog_body {
     background-color: #F5F5F5; })");
+  body->setFixedSize(scale(482, 394));
   setWindowTitle(tr("Properties"));
   set_svg_icon(":/Icons/bookview.svg");
   auto layout = new QVBoxLayout(body);
@@ -64,7 +64,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   button_group_widget->connect_ok_signal([=] { accept(); });
   button_group_widget->connect_save_as_default_signal(
     [=] { m_save_default_signal(); });
-  Window::layout()->addWidget(body);
+  set_body(body);
 }
 
 BookViewProperties BookViewPropertiesDialog::get_properties() const {
