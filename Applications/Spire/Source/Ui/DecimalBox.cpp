@@ -430,7 +430,7 @@ bool DecimalBox::nativeEvent(const QByteArray& eventType, void* message,
   } else if(msg->message == WM_MOUSEWHEEL) {
     m_mouse_wheel_orientation = Qt::Vertical;
   }
-  return false;
+  return QWidget::nativeEvent(eventType, message, result);
 }
 
 void DecimalBox::decrement() {
