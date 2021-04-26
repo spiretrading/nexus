@@ -48,7 +48,7 @@ namespace Spire {
        * @param source - The index of the row to move.
        * @param destination - The index to move the row to.
        * @throws <code>std::out_of_range</code> - The source or destination are
-       * not within this table's range.
+       *         not within this table's range.
        */
       void move(int source, int destination);
 
@@ -60,21 +60,14 @@ namespace Spire {
        */
       void remove(int index);
 
-      /**
-       * Sets the value at a specified row and column.
-       * @param row - The row to set.
-       * @param column - The column to set.
-       * @param value - The value to set at the specified row and column.
-       * @throws <code>std::out_of_range</code> - The row or column is not
-       *         within this table's range.
-       */
-      void set(int row, int column, const std::any& value);
-
       int get_row_size() const override;
 
       int get_column_size() const override;
 
       const std::any& at(int row, int column) const override;
+
+      QValidator::State set(int row, int column,
+        const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;

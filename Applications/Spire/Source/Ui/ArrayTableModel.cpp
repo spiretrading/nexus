@@ -14,8 +14,6 @@ void ArrayTableModel::move(int source, int destination) {}
 
 void ArrayTableModel::remove(int index) {}
 
-void ArrayTableModel::set(int row, int column, const std::any& value) {}
-
 int ArrayTableModel::get_row_size() const {
   return -1;
 }
@@ -27,6 +25,11 @@ int ArrayTableModel::get_column_size() const {
 const std::any& ArrayTableModel::at(int row, int column) const {
   static const auto dummy = std::any();
   return dummy;
+}
+
+QValidator::State ArrayTableModel::set(int row, int column,
+    const std::any& value) {
+  return QValidator::State::Invalid;
 }
 
 connection ArrayTableModel::connect_operation_signal(

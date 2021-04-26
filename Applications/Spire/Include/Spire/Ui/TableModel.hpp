@@ -5,6 +5,7 @@
 #include <boost/mpl/back.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/variant/recursive_variant.hpp>
+#include <QValidator>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -96,6 +97,17 @@ namespace Details {
        */
       template<typename T>
       const T& get(int row, int column) const;
+
+      /**
+       * Sets the value at a specified row and column.
+       * @param row - The row to set.
+       * @param column - The column to set.
+       * @param value - The value to set at the specified row and column.
+       * @return The state of the value at the <i>row</i> and <i>column</i>, or
+       *         <code>QValidator::State::Invalid</code> iff row or column is
+       *         out of range.
+       */
+      virtual QValidator::State set(int row, int column, const std::any& value);
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
