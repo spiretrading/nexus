@@ -321,6 +321,8 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
       m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)),
       m_mouse_wheel_orientation(Qt::Vertical) {
+  setAttribute(Qt::WA_NativeWindow);
+  setAttribute(Qt::WA_DontCreateNativeAncestors);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
@@ -413,13 +415,6 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
     }
   }
   QWidget::wheelEvent(event);
-}
-
-bool DecimalBox::event(QEvent* event) {
-  if(event->type() == QEvent::Show) {
-    setAttribute(Qt::WA_NativeWindow);
-  }
-  return QWidget::event(event);
 }
 
 bool DecimalBox::nativeEvent(const QByteArray& eventType, void* message,

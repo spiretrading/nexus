@@ -143,7 +143,6 @@ namespace Styles {
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
-      bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
 
