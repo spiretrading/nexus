@@ -401,7 +401,7 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
   if(hasFocus() && !is_read_only()) {
     auto angle_delta = [&] {
       if(m_mouse_wheel_orientation == Qt::Horizontal) {
-        return -event->angleDelta().x();
+        return 0;
       } else if(event->modifiers().testFlag(Qt::AltModifier)) {
         return event->angleDelta().x();
       } else {
@@ -410,7 +410,7 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
     }();
     if(angle_delta > 0) {
       increment();
-    } else {
+    } else if(angle_delta < 0) {
       decrement();
     }
   }
