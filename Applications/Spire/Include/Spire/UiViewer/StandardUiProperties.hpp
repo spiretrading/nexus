@@ -1,5 +1,8 @@
 #ifndef SPIRE_STANDARD_UI_PROPERTY_HPP
 #define SPIRE_STANDARD_UI_PROPERTY_HPP
+#include <utility>
+#include <vector>
+#include <QComboBox>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Spire/UiViewer/TypedUiProperty.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
@@ -90,6 +93,64 @@ namespace Spire {
   */
   std::shared_ptr<TypedUiProperty<Nexus::CurrencyId>>
     make_standard_currency_property(QString name, Nexus::CurrencyId value);
+
+  /**
+   * Helper function to perform type deduction on an initializer list for
+   * a list of pairs associating with each enum constant, its display name.
+   * @param definition The initializer list of the form
+   *        <code>{{NAME, VALUE}...}</code>.
+   */
+  template<typename E>
+  std::vector<std::pair<QString, E>> define_enum(
+      std::vector<std::pair<QString, E>> definition) {
+    return definition;
+  }
+
+  //! Returns a standard TypedUiProperty for an enumerator type.
+  /*!
+    \param name The name of the property.
+    \param value The property's initial value.
+    \param definition A list of pairs associating with each enum constant, its
+           display name.
+  */
+  template<typename E>
+  std::shared_ptr<TypedUiProperty<E>> make_standard_enum_property(
+      QString name, E value, std::vector<std::pair<QString, E>> definition) {
+    return std::make_shared<StandardUiProperty<E>>(std::move(name), value,
+      [definition = std::move(definition)] (
+          QWidget* parent, StandardUiProperty<E>& property) {
+        auto setter = new QComboBox(parent);
+        for(auto& entry : definition) {
+          setter->addItem(entry.first);
+        }
+        property.connect_changed_signal([=] (auto value) {
+          auto i = std::find_if(definition.begin(), definition.end(),
+            [&] (const auto& e) { return value == e.second; });
+          auto index = std::distance(definition.begin(), i);
+          setter->setCurrentIndex(static_cast<int>(index));
+        });
+        QObject::connect(setter,
+          QOverload<int>::of(&QComboBox::currentIndexChanged),
+          [&, definition] (auto index) {
+            property.set(definition[index].second);
+          });
+        return setter;
+      });
+  }
+
+  //! Returns a standard TypedUiProperty for an enumerator type.
+  /*!
+    \param name The name of the property.
+    \param definition A list of pairs associating with each enum constant, its
+           display name.
+  */
+  template<typename E>
+  std::shared_ptr<TypedUiProperty<E>> make_standard_enum_property(
+      QString name, std::vector<std::pair<QString, E>> definition) {
+    auto value = definition.front().second;
+    return make_standard_enum_property<E>(
+      std::move(name), value, std::move(definition));
+  }
 
   //! Returns a standard TypedUiProperty<int> with an initial value of <i>0</i>.
   /*!

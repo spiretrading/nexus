@@ -10,7 +10,6 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   : QWidget(parent),
     m_vertical_scroll_bar(new ScrollBar(Qt::Orientation::Vertical, this)),
     m_horizontal_scroll_bar(new ScrollBar(Qt::Orientation::Horizontal, this)) {
-  m_vertical_scroll_bar->set_range(0, 1000);
   auto layout = new QGridLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -20,7 +19,7 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
   layout->addItem(
-    new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Minimum), 1, 1);
+    new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum), 1, 1);
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {

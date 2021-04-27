@@ -41,6 +41,8 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
   m_horizontal_display_policy = policy;
   if(m_horizontal_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_horizontal_scroll_bar().hide();
+  } else if(m_horizontal_display_policy == DisplayPolicy::ALWAYS) {
+    m_scrollable_layer->get_horizontal_scroll_bar().show();
   }
 }
 
@@ -55,6 +57,8 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
   m_vertical_display_policy = policy;
   if(m_vertical_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_vertical_scroll_bar().hide();
+  } else if(m_vertical_display_policy == DisplayPolicy::ALWAYS) {
+    m_scrollable_layer->get_vertical_scroll_bar().show();
   }
 }
 

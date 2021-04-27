@@ -487,7 +487,7 @@ UiProfile Spire::make_scroll_bar_profile() {
 UiProfile Spire::make_scroll_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto display_policy_property = define_enum_property<ScrollBox::DisplayPolicy>(
+  auto display_policy_property = define_enum<ScrollBox::DisplayPolicy>(
     {{"NEVER", ScrollBox::DisplayPolicy::NEVER},
      {"ALWAYS", ScrollBox::DisplayPolicy::ALWAYS},
      {"ON_OVERFLOW", ScrollBox::DisplayPolicy::ON_OVERFLOW},
@@ -506,6 +506,17 @@ UiProfile Spire::make_scroll_box_profile() {
       auto scroll_box = new ScrollBox(label);
       scroll_box->resize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
+      auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
+        "horizontal_display_policy", profile.get_properties());
+      horizontal_display_policy.connect_changed_signal(
+        [scroll_box] (auto value) {
+          scroll_box->set_horizontal(value);
+        });
+      auto& vertical_display_policy = get<ScrollBox::DisplayPolicy>(
+        "vertical_display_policy", profile.get_properties());
+      vertical_display_policy.connect_changed_signal([scroll_box] (auto value) {
+        scroll_box->set_vertical(value);
+      });
       return scroll_box;
     });
   return profile;
