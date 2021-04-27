@@ -2,9 +2,11 @@
 #include <QApplication>
 #include <QGridLayout>
 #include <QKeyEvent>
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 ScrollableLayer::ScrollableLayer(QWidget* parent)
   : QWidget(parent),
@@ -18,8 +20,12 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
     1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 0);
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
-  layout->addItem(
-    new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum), 1, 1);
+  auto corner_box = new Box(nullptr);
+  auto style = get_style(*corner_box);
+  style.get(Any()).set(BackgroundColor(QColor(0xFF, 0xFF, 0xFF)));
+  set_style(*corner_box, std::move(style));
+  corner_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+  layout->addWidget(corner_box, 1, 1);
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
