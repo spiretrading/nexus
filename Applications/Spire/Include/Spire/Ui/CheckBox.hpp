@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/ValueModel.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -22,27 +23,23 @@ namespace Styles {
       */
       using CheckedSignal = Signal<void (bool is_checked)>;
 
-      //! Constructs a Checkbox without a label.
+      //! Constructs a Checkbox using a LocalCheckModel.
       /*!
         \param parent The parent widget.
       */
       explicit CheckBox(QWidget* parent = nullptr);
   
-      //! Constructs a Checkbox with a label.
+      //! Constructs a Checkbox using a LocalCheckModel and an initial checked
+      //! state.
       /*!
-        \param label The text to display next to the check box.
+        \param model The check state's model.
         \param parent The parent widget.
       */
-      explicit CheckBox(const QString& label, QWidget* parent = nullptr);
-  
-      //! Returns true iff the CheckBox is checked.
-      bool is_checked() const;
+      explicit CheckBox(std::shared_ptr<BoolModel> model,
+        QWidget* parent = nullptr);
 
-      //! Sets the checked state of the Checkbox.
-      /*!
-        \param is_checked True iff the CheckBox is checked.
-      */
-      void set_checked(bool is_checked);
+      //! Returns the model.
+      const std::shared_ptr<BoolModel>& get_model() const;
 
       //! Sets the text of the label.
       /*!
@@ -71,8 +68,10 @@ namespace Styles {
       Icon* m_check;
       TextBox* m_label;
       QHBoxLayout* m_body_layout;
-      bool m_is_checked;
+      std::shared_ptr<BoolModel> m_model;
       bool m_is_read_only;
+
+      void on_checked(bool is_checked);
   };
 }
 

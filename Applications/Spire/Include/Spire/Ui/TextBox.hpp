@@ -34,9 +34,6 @@ namespace Styles {
   TextStyle text_style(QFont font, QColor color);
 }
 
-  /** The type of model used by the TextBox. */
-  using TextModel = ValueModel<QString>;
-
   //! Displays a one-line text box.
   class TextBox : public QWidget {
     public:

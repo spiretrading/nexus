@@ -87,6 +87,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_is_warning_displayed(true),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
+  std::shared_ptr<TextModel> m = std::make_shared<LocalTextModel>();
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);

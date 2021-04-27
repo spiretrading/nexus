@@ -32,6 +32,7 @@ namespace Spire {
   class LayeredWidget;
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
+  using LocalBooleanModel = LocalValueModel<bool>;
   using LocalIntegerModel = LocalScalarValueModel<int>;
   using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
@@ -56,6 +57,7 @@ namespace Spire {
   class Tooltip;
   class TransitionWidget;
   template<typename T> class ValueModel;
+  using BoolModel = ValueModel<bool>;
   using TextModel = ValueModel<QString>;
   class Window;
 

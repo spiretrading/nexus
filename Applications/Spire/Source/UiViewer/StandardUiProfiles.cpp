@@ -64,15 +64,18 @@ UiProfile Spire::make_checkbox_profile() {
   properties.push_back(make_standard_bool_property("left-to-right", true));
   auto profile = UiProfile(QString::fromUtf8("Checkbox"), properties,
     [] (auto& profile) {
+      auto checkbox = new CheckBox();
       auto& label = get<QString>("label", profile.get_properties());
-      auto checkbox = new CheckBox(label.get());
+      checkbox->set_label(label.get());
       apply_widget_properties(checkbox, profile.get_properties());
       label.connect_changed_signal([=] (const auto& value) {
         checkbox->set_label(value);
       });
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto value) {
-        checkbox->set_checked(value);
+        if(checkbox->get_model()->get_current() != value) {
+          checkbox->get_model()->set_current(value);
+        }
       });
       checkbox->connect_checked_signal([&] (auto is_checked) {
         checked.set(is_checked);

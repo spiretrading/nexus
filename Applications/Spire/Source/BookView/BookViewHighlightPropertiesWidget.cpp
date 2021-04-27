@@ -75,22 +75,23 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->setContentsMargins({});
   market_highlight_layout->setSpacing(0);
   market_highlight_layout->addStretch(26);
-  m_highlight_none_checkbox = new CheckBox(tr("Highlight None"), this);
+  m_highlight_none_checkbox = new CheckBox(this);
+  m_highlight_none_checkbox->set_label(tr("Highlight None"));
   m_highlight_none_checkbox->connect_checked_signal([=] (auto is_checked) {
     on_highlight_none_checkbox_checked(is_checked);
   });
   market_highlight_layout->addWidget(m_highlight_none_checkbox, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_top_level_checkbox = new CheckBox(tr("Highlight Top Level"),
-    this);
+  m_highlight_top_level_checkbox = new CheckBox(this);
+  m_highlight_top_level_checkbox->set_label(tr("Highlight Top Level"));
   m_highlight_top_level_checkbox->connect_checked_signal(
     [=] (auto is_checked) {
       on_highlight_top_level_checkbox_checked(is_checked);
     });
   market_highlight_layout->addWidget(m_highlight_top_level_checkbox, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_all_levels_checkbox = new CheckBox(
-    tr("Highlight All Levels"), this);
+  m_highlight_all_levels_checkbox = new CheckBox(this);
+  m_highlight_all_levels_checkbox->set_label(tr("Highlight All Levels"));
   m_highlight_all_levels_checkbox->connect_checked_signal(
     [=] (auto is_checked) {
       on_highlight_all_levels_checkbox_checked(is_checked);
@@ -131,14 +132,17 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  m_hide_orders_checkbox = new CheckBox(tr("Hide Orders"), this);
+  m_hide_orders_checkbox = new CheckBox(this);
+  m_hide_orders_checkbox->set_label(tr("Hide Orders"));
   orders_layout->addWidget(m_hide_orders_checkbox, 16);
   orders_layout->addStretch(10);
-  m_display_orders_checkbox = new CheckBox(tr("Display Orders"), this);
+  m_display_orders_checkbox = new CheckBox(this);
+  m_display_orders_checkbox->set_label(tr("Display Orders"));
   orders_layout->addWidget(m_display_orders_checkbox, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_checkbox = new CheckBox(tr("Highlight Orders"), this);
-  m_highlight_orders_checkbox->set_checked(true);
+  m_highlight_orders_checkbox = new CheckBox(this);
+  m_highlight_orders_checkbox->set_label(tr("Highlight Orders"));
+  m_highlight_orders_checkbox->get_model()->set_current(true);
   orders_layout->addWidget(m_highlight_orders_checkbox, 16);
   auto orders_checkbox_button_group = new QButtonGroup(this);
   //orders_checkbox_button_group->addButton(m_hide_orders_checkbox);
@@ -168,10 +172,10 @@ void BookViewHighlightPropertiesWidget::apply(
         *highlight);
     }
   }
-  if(m_highlight_orders_checkbox->is_checked()) {
+  if(m_highlight_orders_checkbox->get_model()->get_current()) {
     properties.set_order_highlight(
       BookViewProperties::OrderHighlight::HIGHLIGHT_ORDERS);
-  } else if(m_display_orders_checkbox->is_checked()) {
+  } else if(m_display_orders_checkbox->get_model()->get_current()) {
     properties.set_order_highlight(
       BookViewProperties::OrderHighlight::DISPLAY_ORDERS);
   } else {
@@ -194,13 +198,13 @@ void BookViewHighlightPropertiesWidget::update_market_widgets() {
   if(selected_item.is_initialized()) {
     m_market_highlight_color_button->set_color(selected_item->m_color);
     if(selected_item->m_highlight_all_levels) {
-      m_highlight_all_levels_checkbox->set_checked(true);
+      m_highlight_all_levels_checkbox->get_model()->set_current(true);
     } else {
-      m_highlight_top_level_checkbox->set_checked(true);
+      m_highlight_top_level_checkbox->get_model()->set_current(true);
     }
   } else {
     m_market_highlight_color_button->set_color(Qt::white);
-    m_highlight_none_checkbox->set_checked(true);
+    m_highlight_none_checkbox->get_model()->set_current(true);
   }
   update_market_list_stylesheet(m_markets_list_widget->currentRow());
 }
