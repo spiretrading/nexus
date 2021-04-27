@@ -44,6 +44,7 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
   } else if(m_horizontal_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_horizontal_scroll_bar().show();
   }
+  update_ranges();
 }
 
 ScrollBox::DisplayPolicy ScrollBox::get_vertical_display_policy() const {
@@ -60,6 +61,7 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
   } else if(m_vertical_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_vertical_scroll_bar().show();
   }
+  update_ranges();
 }
 
 void ScrollBox::set(DisplayPolicy policy) {
@@ -109,7 +111,22 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  setMaximumSize(m_body->size() + QSize(bar_width, bar_height));
+  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
+  setMaximumSize(viewport_size);
+  if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
+    if(viewport_size.height() <= height()) {
+      m_scrollable_layer->get_vertical_scroll_bar().hide();
+    } else {
+      m_scrollable_layer->get_vertical_scroll_bar().show();
+    }
+  }
+  if(m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
+    if(viewport_size.width() <= width()) {
+      m_scrollable_layer->get_horizontal_scroll_bar().hide();
+    } else {
+      m_scrollable_layer->get_horizontal_scroll_bar().show();
+    }
+  }
   auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
   auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
