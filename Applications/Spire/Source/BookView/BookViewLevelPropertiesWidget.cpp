@@ -147,8 +147,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] (const auto& font) { update_band_list_font(font); });
   font_layout->addWidget(change_font_widget);
   font_layout->addSpacing(scale_height(48));
-  m_show_grid_lines_checkbox = new Checkbox(tr("Show Grid"), this);
-  m_show_grid_lines_checkbox->setChecked(properties.get_show_grid());
+  m_show_grid_lines_checkbox = new CheckBox(tr("Show Grid"), this);
+  m_show_grid_lines_checkbox->set_checked(properties.get_show_grid());
   m_show_grid_lines_checkbox->setFixedSize(scale(78, 16));
   font_layout->addWidget(m_show_grid_lines_checkbox);
   font_layout->addStretch(1);
@@ -164,7 +164,7 @@ void BookViewLevelPropertiesWidget::apply(
   properties.set_book_quote_foreground_color(
     m_band_list_widget->currentItem()->foreground().color());
   properties.set_book_quote_font(m_band_list_widget->currentItem()->font());
-  properties.set_show_grid(m_show_grid_lines_checkbox->isChecked());
+  properties.set_show_grid(m_show_grid_lines_checkbox->is_checked());
   auto& colors = properties.get_book_quote_background_colors();
   colors.clear();
   for(auto i = 0; i < m_band_list_widget->count(); ++i) {

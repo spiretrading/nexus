@@ -65,24 +65,20 @@ UiProfile Spire::make_checkbox_profile() {
   auto profile = UiProfile(QString::fromUtf8("Checkbox"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
-      auto checkbox = new Checkbox(label.get());
+      auto checkbox = new CheckBox(label.get());
       apply_widget_properties(checkbox, profile.get_properties());
       label.connect_changed_signal([=] (const auto& value) {
-        checkbox->setText(value);
+        checkbox->set_label(value);
       });
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto value) {
-        if(value) {
-          checkbox->setCheckState(Qt::Checked);
-        } else {
-          checkbox->setCheckState(Qt::Unchecked);
-        }
+        checkbox->set_checked(value);
       });
-      QObject::connect(checkbox, &Checkbox::stateChanged, [&] (auto value) {
-        checked.set(value == Qt::Checked);
+      checkbox->connect_checked_signal([&] (auto is_checked) {
+        checked.set(is_checked);
       });
-      QObject::connect(checkbox, &Checkbox::stateChanged,
-        profile.make_event_slot<int>(QString::fromUtf8("stateChanged")));
+      checkbox->connect_checked_signal(
+        profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
       auto& read_only = get<bool>("read-only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         checkbox->set_read_only(is_read_only);

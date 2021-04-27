@@ -115,7 +115,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(1);
-  m_show_grid_checkbox = new Checkbox(tr("Show Grid"), this);
+  m_show_grid_checkbox = new CheckBox(tr("Show Grid"), this);
   m_show_grid_checkbox->setFixedSize(scale(78, 16));
   color_settings_layout->addWidget(m_show_grid_checkbox);
   style_layout->addLayout(color_settings_layout);
@@ -184,7 +184,7 @@ TimeAndSalesProperties
     below_bid_item->background().color());
   properties.set_text_color(PriceRange::BELOW_BID,
     below_bid_item->foreground().color());
-  properties.m_show_grid = m_show_grid_checkbox->isChecked();
+  properties.m_show_grid = m_show_grid_checkbox->is_checked();
   properties.m_font = m_band_list->font();
   return properties;
 }
@@ -277,7 +277,7 @@ void TimeAndSalesPropertiesDialog::set_properties(
     set_color_settings_stylesheet(0);
   }
   m_edit_font_widget->set_font(m_properties.m_font);
-  m_show_grid_checkbox->setChecked(m_properties.m_show_grid);
+  m_show_grid_checkbox->set_checked(m_properties.m_show_grid);
 }
 
 void TimeAndSalesPropertiesDialog::update_band_list_stylesheet(

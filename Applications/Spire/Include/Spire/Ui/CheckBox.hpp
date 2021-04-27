@@ -13,7 +13,7 @@ namespace Styles {
 }
 
   //! Represents a Spire-styled checkbox.
-  class Checkbox : public QWidget {
+  class CheckBox : public QWidget {
     public:
 
       /**
@@ -26,15 +26,18 @@ namespace Styles {
       /*!
         \param parent The parent widget.
       */
-      explicit Checkbox(QWidget* parent = nullptr);
+      explicit CheckBox(QWidget* parent = nullptr);
   
       //! Constructs a Checkbox with a label.
       /*!
         \param label The text to display next to the check box.
         \param parent The parent widget.
       */
-      explicit Checkbox(const QString& label, QWidget* parent = nullptr);
+      explicit CheckBox(const QString& label, QWidget* parent = nullptr);
   
+      //! Returns true iff the CheckBox is checked.
+      bool is_checked() const;
+
       //! Sets the checked state of the Checkbox.
       /*!
         \param is_checked True iff the CheckBox is checked.
