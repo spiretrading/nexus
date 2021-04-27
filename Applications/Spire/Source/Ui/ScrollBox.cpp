@@ -11,11 +11,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
   m_layers = new LayeredWidget(this);
-  auto container = new QWidget();
+  auto viewport = new QWidget();
   m_body->installEventFilter(this);
-  m_body->setParent(container);
-  m_body->move(0, 0);
-  m_layers->add(container);
+  m_body->setParent(viewport);
+  m_layers->add(viewport);
   m_scrollable_layer = new ScrollableLayer();
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
     [=] (auto position) { on_vertical_scroll(position); });
@@ -27,6 +26,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_layers);
+  setFocusPolicy(Qt::StrongFocus);
   update_ranges();
 }
 
@@ -84,6 +84,10 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
     update_ranges();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void ScrollBox::keyPressEvent(QKeyEvent* event) {
+  m_scrollable_layer->keyPressEvent(event);
 }
 
 void ScrollBox::resizeEvent(QResizeEvent* event) {

@@ -24,8 +24,8 @@ namespace Spire {
       /** Returns the horizontal ScrollBar. */
       ScrollBar& get_horizontal_scroll_bar();
 
-    protected:
       void keyPressEvent(QKeyEvent* event) override;
+
       void wheelEvent(QWheelEvent* event) override;
 
     private:
