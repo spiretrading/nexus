@@ -84,7 +84,7 @@ void ArrayTableModel::remove(int index) {
 }
 
 int ArrayTableModel::get_row_size() const {
-  return m_data.size();
+  return static_cast<int>(m_data.size());
 }
 
 int ArrayTableModel::get_column_size() const {

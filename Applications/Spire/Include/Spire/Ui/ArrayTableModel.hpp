@@ -90,7 +90,7 @@ namespace Spire {
         this_->m_transaction.m_operations.clear();
       }
     } BOOST_SCOPE_EXIT_END
-    return transaction();
+    return std::forward<F>(transaction)();
   }
 }
 
