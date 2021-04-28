@@ -10,6 +10,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto INITIAL_TRACK_SCROLL_TIMEOUT_MS = 300;
+  const auto REPEAT_TRACK_SCROLL_TIMEOUT_MS = 50;
+
   int get_position(Qt::Orientation orientation, const QPoint& point) {
     if(orientation == Qt::Orientation::Vertical) {
       return point.y();
@@ -40,7 +43,9 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
       m_page_size(20),
       m_position(0),
       m_is_dragging(false),
-      m_thumb_position(0) {
+      m_thumb_position(0),
+      m_track_scroll_direction(0),
+      m_track_scroll_timer(this) {
   m_thumb = new Box(nullptr, nullptr);
   auto thumb_style = StyleSheet();
   thumb_style.get(Any()).set(BackgroundColor(QColor("#C8C8C8")));
@@ -69,6 +74,9 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_track);
+  m_track_scroll_timer.setSingleShot(true);
+  connect(
+    &m_track_scroll_timer, &QTimer::timeout, this, &ScrollBar::scroll_page);
   update_thumb();
 }
 
@@ -162,12 +170,27 @@ void ScrollBar::mousePressEvent(QMouseEvent* event) {
   if(m_thumb->rect().contains(m_thumb->mapFromGlobal(event->globalPos()))) {
     m_drag_position = ::get_position(m_orientation, event->windowPos());
     m_is_dragging = true;
+  } else if(::get_position(m_orientation, event->globalPos()) < ::get_position(
+      m_orientation, m_thumb->mapToGlobal(m_thumb->pos()))) {
+    m_track_scroll_direction = -1;
+    scroll_page_up(*this);
+    m_track_scroll_timer.setInterval(INITIAL_TRACK_SCROLL_TIMEOUT_MS);
+    m_track_scroll_timer.start();
+  } else {
+    m_track_scroll_direction = 1;
+    scroll_page_down(*this);
+    m_track_scroll_timer.setInterval(INITIAL_TRACK_SCROLL_TIMEOUT_MS);
+    m_track_scroll_timer.start();
   }
   QWidget::mousePressEvent(event);
 }
 
 void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
+  if(m_track_scroll_direction != 0) {
+    m_track_scroll_timer.stop();
+    m_track_scroll_direction = 0;
+  }
   QWidget::mouseReleaseEvent(event);
 }
 
@@ -208,6 +231,26 @@ void ScrollBar::update_thumb() {
     track_style.get(Any()).set(PaddingLeft(m_thumb_position));
   }
   set_style(*m_track, std::move(track_style));
+}
+
+void ScrollBar::scroll_page() {
+  if(m_track->rect().contains(m_track->mapFromGlobal(QCursor::pos()))) {
+    auto cursor_position = ::get_position(m_orientation, QCursor::pos());
+    auto thumb_position =
+      ::get_position(m_orientation, m_thumb->mapToGlobal(m_thumb->pos()));
+    if(m_track_scroll_direction == -1) {
+      if(cursor_position < thumb_position) {
+        scroll_page_up(*this);
+      }
+    } else if(m_track_scroll_direction == 1) {
+      if(cursor_position >
+          thumb_position + get_size(m_orientation, m_thumb->size())) {
+        scroll_page_down(*this);
+      }
+    }
+  }
+  m_track_scroll_timer.setInterval(REPEAT_TRACK_SCROLL_TIMEOUT_MS);
+  m_track_scroll_timer.start();
 }
 
 void Spire::scroll_line_up(ScrollBar& scroll_bar, int lines) {

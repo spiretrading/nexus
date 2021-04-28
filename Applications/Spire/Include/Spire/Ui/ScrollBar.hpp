@@ -1,5 +1,6 @@
 #ifndef SPIRE_SCROLL_BAR_HPP
 #define SPIRE_SCROLL_BAR_HPP
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
@@ -84,8 +85,11 @@ namespace Spire {
       bool m_is_dragging;
       int m_drag_position;
       int m_thumb_position;
+      int m_track_scroll_direction;
+      QTimer m_track_scroll_timer;
 
       void update_thumb();
+      void scroll_page();
   };
 
   /**
