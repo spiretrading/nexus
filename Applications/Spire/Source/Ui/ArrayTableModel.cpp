@@ -6,7 +6,8 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-ArrayTableModel::ArrayTableModel() : m_transaction_level(0) {}
+ArrayTableModel::ArrayTableModel()
+  : m_transaction_level(0) {}
 
 void ArrayTableModel::push(const std::vector<std::any>& row) {
   if(!m_data.empty() && row.size() != get_column_size()) {

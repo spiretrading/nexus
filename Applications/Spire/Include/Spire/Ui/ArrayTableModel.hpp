@@ -82,7 +82,7 @@ namespace Spire {
 
   template<typename F>
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
-    m_transaction_level++;
+    ++m_transaction_level;
     BOOST_SCOPE_EXIT(this_) {
       this_->m_transaction_level--;
       if(this_->m_transaction_level == 0) {
