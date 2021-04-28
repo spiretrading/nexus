@@ -33,7 +33,10 @@ struct Stylist::StyleEventFilter : QObject {
     } else if(event->type() == QEvent::Enter) {
       m_stylist->match(Hover());
     } else if(event->type() == QEvent::Leave) {
-      m_stylist->unmatch(Hover());
+      auto widget = static_cast<QWidget*>(watched);
+      if(!widget->rect().contains(widget->mapFromGlobal(QCursor::pos()))) {
+        m_stylist->unmatch(Hover());
+      }
     } else if(event->type() == QEvent::EnabledChange) {
       if(!m_stylist->m_widget->isEnabled()) {
         m_stylist->match(Disabled());
