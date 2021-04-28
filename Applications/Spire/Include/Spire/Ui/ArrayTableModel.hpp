@@ -1,5 +1,6 @@
 #ifndef SPIRE_ARRAY_TABLE_MODEL_HPP
 #define SPIRE_ARRAY_TABLE_MODEL_HPP
+#include <boost/scope_exit.hpp>
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -37,11 +38,11 @@ namespace Spire {
        * @param row The row to insert.
        * @param index The index to insert the row at.
        * @throws <code>std::out_of_range</code> - This model is not empty and
-       *         <code>model.get_column_size() != get_column_size()</code>.
+       *         <code>row.size() != get_column_size()</code>.
        * @throws <code>std::out_of_range</code> -
-       *         <code>index < 0 or index >= get_row_size()</code>.
+       *         <code>index < 0 or index > get_row_size()</code>.
        */
-      void insert(const TableModel& model, int index);
+      void insert(const std::vector<std::any>& row, int index);
 
       /**
        * Moves a row.
@@ -71,10 +72,25 @@ namespace Spire {
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
+
+    private:
+      mutable OperationSignal m_operation_signal;
+      std::vector<std::vector<std::any>> m_data;
+      Transaction m_transaction;
+      int m_transaction_level;
   };
 
   template<typename F>
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
+    m_transaction_level++;
+    BOOST_SCOPE_EXIT(this_) {
+      this_->m_transaction_level--;
+      if(this_->m_transaction_level == 0) {
+        this_->m_operation_signal(this_->m_transaction);
+        this_->m_transaction.m_operations.clear();
+      }
+    } BOOST_SCOPE_EXIT_END
+    return transaction();
   }
 }
 

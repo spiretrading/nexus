@@ -77,6 +77,183 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE_THROWS(model.remove(2));
   }
 
+  TEST_CASE("move") {
+    auto model = ArrayTableModel();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        REQUIRE(false);
+      }));
+    REQUIRE_THROWS(model.move(1, 3));
+    auto signal_count = 0;
+    connection = model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
+        REQUIRE(add_operation->m_index == model.get_row_size() - 1);
+      });
+    REQUIRE_NOTHROW(model.push({1, 2, 3}));
+    REQUIRE(signal_count == 1);
+    REQUIRE_NOTHROW(model.push({4, 5, 6}));
+    REQUIRE(signal_count == 2);
+    REQUIRE_NOTHROW(model.push({7, 8, 9}));
+    REQUIRE(signal_count == 3);
+    REQUIRE_NOTHROW(model.push({10, 11, 12}));
+    REQUIRE(signal_count == 4);
+    REQUIRE(model.get_row_size() == 4);
+    auto source = 0;
+    auto destination = 0;
+    connection = scoped_connection(model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto move_operation = get<TableModel::MoveOperation>(&operation);
+        REQUIRE(move_operation != nullptr);
+        REQUIRE(move_operation->m_source == source);
+        REQUIRE(move_operation->m_destination == destination);
+      }));
+    REQUIRE_THROWS(model.move(0, 4));
+    REQUIRE(signal_count == 4);
+    REQUIRE_THROWS(model.move(5, 1));
+    REQUIRE(signal_count == 4);
+    source = 2;
+    destination = 2;
+    REQUIRE_NOTHROW(model.move(source, destination));
+    REQUIRE(model.get<int>(0, 0) == 1);
+    REQUIRE(model.get<int>(1, 0) == 4);
+    REQUIRE(model.get<int>(2, 0) == 7);
+    REQUIRE(model.get<int>(3, 0) == 10);
+    source = 0;
+    destination = 3;
+    REQUIRE_NOTHROW(model.move(source, destination));
+    REQUIRE(signal_count == 5);
+    REQUIRE(model.get<int>(0, 0) == 4);
+    REQUIRE(model.get<int>(0, 1) == 5);
+    REQUIRE(model.get<int>(1, 0) == 7);
+    REQUIRE(model.get<int>(1, 1) == 8);
+    REQUIRE(model.get<int>(2, 0) == 10);
+    REQUIRE(model.get<int>(2, 1) == 11);
+    REQUIRE(model.get<int>(3, 0) == 1);
+    REQUIRE(model.get<int>(3, 1) == 2);
+    source = 3;
+    destination = 1;
+    REQUIRE_NOTHROW(model.move(source, destination));
+    REQUIRE(signal_count == 6);
+    REQUIRE(model.get<int>(0, 0) == 4);
+    REQUIRE(model.get<int>(0, 1) == 5);
+    REQUIRE(model.get<int>(1, 0) == 1);
+    REQUIRE(model.get<int>(1, 1) == 2);
+    REQUIRE(model.get<int>(2, 0) == 7);
+    REQUIRE(model.get<int>(2, 1) == 8);
+    REQUIRE(model.get<int>(3, 0) == 10);
+    REQUIRE(model.get<int>(3, 1) == 11);
+  }
+
+  TEST_CASE("insert") {
+    auto model = ArrayTableModel();
+    auto signal_count = 0;
+    auto index = 0;
+    auto connection = model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
+        REQUIRE(add_operation->m_index == index);
+      });
+    index = 0;
+    REQUIRE_NOTHROW(model.insert({}, index));
+    REQUIRE(model.get_row_size() == 0);
+    REQUIRE(signal_count == 0);
+    REQUIRE_NOTHROW(model.insert({1, 2, 3}, index));
+    REQUIRE(model.get_row_size() == 1);
+    REQUIRE(signal_count == 1);
+    index = 0;
+    REQUIRE_NOTHROW(model.insert({4, 5, 6}, index));
+    REQUIRE(model.get_row_size() == 2);
+    REQUIRE(signal_count == 2);
+    REQUIRE(model.get<int>(0, 0) == 4);
+    REQUIRE(model.get<int>(0, 1) == 5);
+    REQUIRE(model.get<int>(1, 0) == 1);
+    REQUIRE(model.get<int>(1, 1) == 2);
+    index = -1;
+    REQUIRE_THROWS(model.insert({7, 8, 9}, index));
+    REQUIRE(model.get_row_size() == 2);
+    REQUIRE(signal_count == 2);
+    index = 2;
+    REQUIRE_NOTHROW(model.insert({7, 8, 9}, index));
+    REQUIRE(model.get_row_size() == 3);
+    REQUIRE(signal_count == 3);
+    REQUIRE(model.get<int>(0, 0) == 4);
+    REQUIRE(model.get<int>(1, 0) == 1);
+    REQUIRE(model.get<int>(2, 0) == 7);
+    REQUIRE(model.get<int>(2, 1) == 8);
+    index = 1;
+    REQUIRE_THROWS(model.insert({10}, index));
+    REQUIRE(model.get_row_size() == 3);
+    REQUIRE(signal_count == 3);
+    REQUIRE_NOTHROW(model.insert({10, 11, 12}, index));
+    REQUIRE(model.get_row_size() == 4);
+    REQUIRE(signal_count == 4);
+    REQUIRE(model.get<int>(0, 0) == 4);
+    REQUIRE(model.get<int>(1, 0) == 10);
+    REQUIRE(model.get<int>(2, 0) == 1);
+    REQUIRE(model.get<int>(3, 0) == 7);
+  }
+
+  TEST_CASE("update") {
+    auto model = ArrayTableModel();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        REQUIRE(false);
+      }));
+    REQUIRE(model.set(1, 3, 0) == QValidator::State::Invalid);
+    auto signal_count = 0;
+    connection = model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
+        REQUIRE(add_operation->m_index == model.get_row_size() - 1);
+      });
+    REQUIRE_NOTHROW(model.push({1, 2, 3}));
+    REQUIRE(signal_count == 1);
+    REQUIRE_NOTHROW(model.push({4, 5, 6}));
+    REQUIRE(signal_count == 2);
+    REQUIRE_NOTHROW(model.push({7, 8, 9}));
+    REQUIRE(signal_count == 3);
+    auto row = 0;
+    auto column = 0;
+    connection = scoped_connection(model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto update_operation = get<TableModel::UpdateOperation>(&operation);
+        REQUIRE(update_operation != nullptr);
+        REQUIRE(update_operation->m_row == row);
+        REQUIRE(update_operation->m_column == column);
+      }));
+    row = 0;
+    column = 0;
+    REQUIRE(model.set(row, column, 0) == QValidator::State::Acceptable);
+    REQUIRE(model.get_row_size() == 3);
+    REQUIRE(signal_count == 4);
+    REQUIRE(model.get<int>(row, column) == 0);
+    row = 1;
+    column = 1;
+    REQUIRE(model.set(row, column, 10) == QValidator::State::Acceptable);
+    REQUIRE(model.get_row_size() == 3);
+    REQUIRE(signal_count == 5);
+    REQUIRE(model.get<int>(row, column) == 10);
+    row = 2;
+    column = 2;
+    REQUIRE(model.set(row, column, 0) == QValidator::State::Acceptable);
+    REQUIRE(model.get_row_size() == 3);
+    REQUIRE(signal_count == 6);
+    REQUIRE(model.get<int>(row, column) == 0);
+    row = 3;
+    column = 3;
+    REQUIRE(model.set(row, column, 0) == QValidator::State::Invalid);
+    REQUIRE(signal_count == 6);
+  }
+
   TEST_CASE("subtransactions") {
     auto model = ArrayTableModel();
     auto signal_count = 0;
