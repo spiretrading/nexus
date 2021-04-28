@@ -107,6 +107,13 @@ void UiViewerWindow::add(UiProfile profile) {
   m_profiles.insert(std::pair(std::move(name), std::move(profile)));
 }
 
+void UiViewerWindow::update_table(const UiProfile& profile) {
+  auto table = make_table(profile, m_reset_button, m_rebuild_button);
+  auto previous_table = m_body->replaceWidget(PROPERTIES_INDEX, table);
+  delete previous_table;
+  table->show();
+}
+
 void UiViewerWindow::on_event(const QString& name,
     const std::vector<std::any>& arguments) {
   ++m_line_count;
@@ -135,10 +142,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     profile.reset();
   }
   auto& profile = m_profiles.at(current->text());
-  auto table = make_table(profile, m_reset_button, m_rebuild_button);
-  auto previous_table = m_body->replaceWidget(PROPERTIES_INDEX, table);
-  delete previous_table;
-  table->show();
+  update_table(profile);
   auto stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
   m_center_stage->setWidget(profile.get_widget());
@@ -164,7 +168,8 @@ void UiViewerWindow::on_reset() {
 
 void UiViewerWindow::on_rebuild() {
   auto& profile = m_profiles.at(m_widget_list->currentItem()->text());
-  profile.rebuild();
+  profile.remove_widget();
+  update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
   m_center_stage->setWidget(profile.get_widget());
   delete previous_widget;

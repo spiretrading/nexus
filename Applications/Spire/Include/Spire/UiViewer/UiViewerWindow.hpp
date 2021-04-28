@@ -35,6 +35,7 @@ namespace Spire {
       std::unordered_map<QString, UiProfile> m_profiles;
 
       void add(UiProfile profile);
+      void update_table(const UiProfile& profile);
       void on_event(const QString& name,
         const std::vector<std::any>& arguments);
       void on_item_selected(const QListWidgetItem* current,
