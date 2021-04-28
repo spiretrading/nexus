@@ -55,8 +55,8 @@ Padding Spire::Styles::padding(int size) {
 }
 
 Box::Box(QWidget* body, QWidget* parent)
-  : QWidget(parent),
-    m_body(body) {
+    : QWidget(parent),
+      m_body(body) {
   setObjectName("Box");
   if(m_body) {
     m_container = new QWidget(this);
