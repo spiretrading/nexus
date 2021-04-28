@@ -241,9 +241,11 @@ UiProfile Spire::make_decimal_box_profile() {
       auto current_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
-        [=] (const DecimalBox::Decimal& current) {
+        [=, &current] (const DecimalBox::Decimal& value) {
           current_slot(QString::fromStdString(
-            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
+            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
+          current.set(QString::fromStdString(
+            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
         });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
