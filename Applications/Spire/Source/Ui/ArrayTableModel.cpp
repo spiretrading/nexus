@@ -20,7 +20,7 @@ void ArrayTableModel::push(const std::vector<std::any>& row) {
   if(m_transaction_level > 0) {
     m_transaction.m_operations.push_back(std::move(operation));
   } else {
-    m_operation_signal(std::move(operation));
+    m_operation_signal(operation);
   }
 }
 
@@ -39,7 +39,7 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
   if(m_transaction_level > 0) {
     m_transaction.m_operations.push_back(std::move(operation));
   } else {
-    m_operation_signal(std::move(operation));
+    m_operation_signal(operation);
   }
 }
 
@@ -65,7 +65,7 @@ void ArrayTableModel::move(int source, int destination) {
   if(m_transaction_level > 0) {
     m_transaction.m_operations.push_back(std::move(operation));
   } else {
-    m_operation_signal(std::move(operation));
+    m_operation_signal(operation);
   }
 }
 
@@ -78,7 +78,7 @@ void ArrayTableModel::remove(int index) {
   if(m_transaction_level > 0) {
     m_transaction.m_operations.push_back(std::move(operation));
   } else {
-    m_operation_signal(std::move(operation));
+    m_operation_signal(operation);
   }
 }
 
@@ -113,7 +113,7 @@ QValidator::State ArrayTableModel::set(int row, int column,
   if(m_transaction_level > 0) {
     m_transaction.m_operations.push_back(std::move(operation));
   } else {
-    m_operation_signal(std::move(operation));
+    m_operation_signal(operation);
   }
   return QValidator::State::Acceptable;
 }
