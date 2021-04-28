@@ -1,6 +1,5 @@
 #ifndef SPIRE_CHECKBOX_HPP
 #define SPIRE_CHECKBOX_HPP
-#include <QHBoxLayout>
 #include <QWidget>
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -65,11 +64,11 @@ namespace Styles {
 
     private:
       mutable CheckedSignal m_checked_signal;
-      Icon* m_check;
-      TextBox* m_label;
-      QHBoxLayout* m_body_layout;
       std::shared_ptr<BoolModel> m_model;
       bool m_is_read_only;
+      QWidget* m_body;
+      Icon* m_check;
+      TextBox* m_label;
 
       void on_checked(bool is_checked);
   };

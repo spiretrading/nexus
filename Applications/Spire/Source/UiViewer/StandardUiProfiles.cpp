@@ -64,7 +64,7 @@ UiProfile Spire::make_checkbox_profile() {
     QString::fromUtf8("Click me!")));
   properties.push_back(make_standard_bool_property("read-only"));
   properties.push_back(make_standard_bool_property("left-to-right", true));
-  auto profile = UiProfile(QString::fromUtf8("Checkbox"), properties,
+  auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
     [] (auto& profile) {
       auto checkbox = new CheckBox();
       auto& label = get<QString>("label", profile.get_properties());

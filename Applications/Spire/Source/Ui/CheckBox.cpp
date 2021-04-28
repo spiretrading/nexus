@@ -19,20 +19,39 @@ namespace {
     return icon;
   }
 
-  auto DEFAULT_STYLE() {
+  auto DEFAULT_STYLE(Qt::LayoutDirection direction) {
     auto style = StyleSheet();
-    return style;
-  }
-
-  auto create_check(bool is_checked, QWidget* parent) {
-    auto check = [=] {
-      if(is_checked) {
-        return new Icon(CHECK_ICON(), parent);
+    auto alignment = [=] {
+      if(direction == Qt::LeftToRight) {
+        return Qt::AlignRight;
       }
-      return new Icon({}, parent);
+      return Qt::AlignLeft;
     }();
-    check->setFixedSize(scale(16, 16));
-    return check;
+    style.get(Any() > is_a<Icon>()).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33))).
+      set(border(scale_width(1), QColor::fromRgb(0xC8C8C8)));
+    style.get((Focus() || Hover()) > is_a<Icon>())
+      .set(border_color(QColor(0x4B, 0x23, 0xA0)));
+    style.get(Checked() > is_a<Icon>()).
+      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
+    style.get(ReadOnly() > is_a<Icon>()).
+      set(BackgroundColor(QColor(0, 0, 0, 0))).
+      set(border_color(QColor(0, 0, 0, 0)));
+    style.get(Disabled() > is_a<Icon>()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+    style.get(!Checked() > is_a<Icon>()).
+      set(Fill(QColor(0, 0, 0, 0)));
+    style.get((Disabled() && Checked()) > is_a<Icon>()).
+      set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(Any() > is_a<TextBox>()).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(TextColor(QColor(0, 0, 0))).
+      set(TextAlign(alignment | Qt::AlignVCenter));
+    style.get((ReadOnly() && !Checked()) > is_a<TextBox>()).
+      set(TextColor(QColor(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(0, 0, 0, 0)));
+    return style;
   }
 }
 
@@ -43,33 +62,37 @@ CheckBox::CheckBox(std::shared_ptr<BoolModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
       m_is_read_only(false) {
-  set_style(*this, DEFAULT_STYLE());
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  auto body = new QWidget(this);
-  auto button = new Button(body, this);
+  m_body = new QWidget(this);
+  set_style(*m_body, DEFAULT_STYLE(layoutDirection()));
+  auto button = new Button(m_body, this);
+  setFocusProxy(button);
   button->connect_clicked_signal([=] {
     m_model->set_current(!m_model->get_current());
   });
   layout->addWidget(button);
-  m_body_layout = new QHBoxLayout(body);
-  m_body_layout->setContentsMargins({});
-  m_body_layout->setSpacing(0);
-  m_check = create_check(m_model->get_current(), this);
-  m_body_layout->addWidget(m_check);
+  auto body_layout = new QHBoxLayout(m_body);
+  body_layout->setContentsMargins({});
+  body_layout->setSpacing(0);
+  auto check = new Icon(CHECK_ICON(), parent);
+  check->setFixedSize(scale(16, 16));
+  check->setFocusPolicy(Qt::NoFocus);
+  body_layout->addWidget(check);
   m_label = new TextBox(this);
   m_label->set_read_only(true);
   m_label->setDisabled(true);
-  m_body_layout->addWidget(m_label);
+  body_layout->addWidget(m_label);
   m_model->connect_current_signal([=] (auto is_checked) {
     on_checked(is_checked);
   });
+  on_checked(m_model->get_current());
 }
 
 void CheckBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::LayoutDirectionChange) {
-    // TODO: update text alignment
+    set_style(*m_body, DEFAULT_STYLE(layoutDirection()));
   }
 }
 
@@ -87,11 +110,12 @@ void CheckBox::set_read_only(bool is_read_only) {
     if(m_is_read_only) {
       setAttribute(Qt::WA_TransparentForMouseEvents);
       setFocusPolicy(Qt::NoFocus);
+      find_stylist(*m_body).match(ReadOnly());
     } else {
       setAttribute(Qt::WA_TransparentForMouseEvents, false);
       setFocusPolicy(Qt::StrongFocus);
+      find_stylist(*m_body).unmatch(ReadOnly());
     }
-    // TODO: required?
     update();
   }
 }
@@ -106,12 +130,14 @@ connection CheckBox::connect_checked_signal(
 }
 
 void CheckBox::on_checked(bool is_checked) {
-  delete_later(m_check);
-  m_check = create_check(is_checked, this);
-  if(m_body_layout->direction() == Qt::LeftToRight) {
-    m_body_layout->insertWidget(0, m_check);
+  auto& stylist = find_stylist(*m_body);
+  if(is_checked) {
+    stylist.match(Checked());
+    stylist.unmatch(!Checked());
   } else {
-    m_body_layout->addWidget(m_check);
+    stylist.unmatch(Checked());
+    stylist.match(!Checked());
   }
+  update();
   m_checked_signal(is_checked);
 }
