@@ -103,14 +103,14 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(model.get_row_size() == 4);
     auto source = 0;
     auto destination = 0;
-    connection = scoped_connection(model.connect_operation_signal(
+    connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         auto move_operation = get<TableModel::MoveOperation>(&operation);
         REQUIRE(move_operation != nullptr);
         REQUIRE(move_operation->m_source == source);
         REQUIRE(move_operation->m_destination == destination);
-      }));
+      });
     REQUIRE_THROWS(model.move(0, 4));
     REQUIRE(signal_count == 4);
     REQUIRE_THROWS(model.move(5, 1));
@@ -222,14 +222,14 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(signal_count == 3);
     auto row = 0;
     auto column = 0;
-    connection = scoped_connection(model.connect_operation_signal(
+    connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         auto update_operation = get<TableModel::UpdateOperation>(&operation);
         REQUIRE(update_operation != nullptr);
         REQUIRE(update_operation->m_row == row);
         REQUIRE(update_operation->m_column == column);
-      }));
+      });
     row = 0;
     column = 0;
     REQUIRE(model.set(row, column, 0) == QValidator::State::Acceptable);
@@ -257,7 +257,7 @@ TEST_SUITE("ArrayTableModel") {
   TEST_CASE("subtransactions") {
     auto model = ArrayTableModel();
     auto signal_count = 0;
-    model.connect_operation_signal(
+    auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         auto transaction = get<TableModel::Transaction>(&operation);
@@ -269,7 +269,7 @@ TEST_SUITE("ArrayTableModel") {
         REQUIRE(get<TableModel::AddOperation>(&operations[2]));
         REQUIRE(get<TableModel::RemoveOperation>(&operations[3]));
         REQUIRE(get<TableModel::AddOperation>(&operations[4]));
-      });
+      }));
     model.transact([&] {
       model.push({1, 2, 3});
       model.transact([&] {
@@ -282,5 +282,21 @@ TEST_SUITE("ArrayTableModel") {
       });
     });
     REQUIRE(signal_count == 1);
+    connection = model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        model.push({7, 8, 9});
+        auto transaction = get<TableModel::Transaction>(&operation);
+        REQUIRE(transaction != nullptr);
+        REQUIRE(transaction->m_operations.size() == 2);
+        auto& operations = transaction->m_operations;
+        REQUIRE(get<TableModel::AddOperation>(&operations[0]));
+        REQUIRE(get<TableModel::AddOperation>(&operations[1]));
+      });
+    model.transact([&] {
+      model.push({1, 2, 3});
+      model.push({4, 5, 6});
+    });
+    REQUIRE(signal_count == 2);
   }
 }

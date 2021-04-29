@@ -78,18 +78,23 @@ namespace Spire {
       std::vector<std::vector<std::any>> m_data;
       Transaction m_transaction;
       int m_transaction_level;
+      bool m_is_operation_locked;
   };
 
   template<typename F>
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
     ++m_transaction_level;
-    BOOST_SCOPE_EXIT(this_) {
-      this_->m_transaction_level--;
-      if(this_->m_transaction_level == 0) {
-        this_->m_operation_signal(this_->m_transaction);
-        this_->m_transaction.m_operations.clear();
+    BOOST_SCOPE_EXIT_ALL(this) {
+      this->m_transaction_level--;
+      if(this->m_transaction_level == 0 && !this->m_is_operation_locked) {
+        this->m_is_operation_locked = true;
+        BOOST_SCOPE_EXIT_ALL(this) {
+          this->m_transaction.m_operations.clear();
+          this->m_is_operation_locked = false;
+        };
+        this->m_operation_signal(this->m_transaction);
       }
-    } BOOST_SCOPE_EXIT_END
+    };
     return std::forward<F>(transaction)();
   }
 }

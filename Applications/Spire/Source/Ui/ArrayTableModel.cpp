@@ -7,9 +7,17 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ArrayTableModel::ArrayTableModel()
-  : m_transaction_level(0) {}
+  : m_transaction_level(0),
+    m_is_operation_locked(false) {}
 
 void ArrayTableModel::push(const std::vector<std::any>& row) {
+  if(m_is_operation_locked) {
+    return;
+  }
+  m_is_operation_locked = true;
+  BOOST_SCOPE_EXIT_ALL(this) {
+    this->m_is_operation_locked = false;
+  };
   if(!m_data.empty() && row.size() != get_column_size()) {
     throw std::out_of_range("row.size() != get_column_size()");
   }
@@ -26,6 +34,13 @@ void ArrayTableModel::push(const std::vector<std::any>& row) {
 }
 
 void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
+  if(m_is_operation_locked) {
+    return;
+  }
+  m_is_operation_locked = true;
+  BOOST_SCOPE_EXIT_ALL(this) {
+    this->m_is_operation_locked = false;
+  };
   if(!row.empty() && !m_data.empty() && row.size() != get_column_size()) {
     throw std::out_of_range("row.size() != get_column_size()");
   }
@@ -45,6 +60,13 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
 }
 
 void ArrayTableModel::move(int source, int destination) {
+  if(m_is_operation_locked) {
+    return;
+  }
+  m_is_operation_locked = true;
+  BOOST_SCOPE_EXIT_ALL(this) {
+    this->m_is_operation_locked = false;
+  };
   if(source < 0 || source >= get_row_size() || destination < 0 ||
       destination >= get_row_size()) {
     throw std::out_of_range("The source or destination is out of range.");
@@ -71,6 +93,13 @@ void ArrayTableModel::move(int source, int destination) {
 }
 
 void ArrayTableModel::remove(int index) {
+  if(m_is_operation_locked) {
+    return;
+  }
+  m_is_operation_locked = true;
+  BOOST_SCOPE_EXIT_ALL(this) {
+    this->m_is_operation_locked = false;
+  };
   if(index < 0 || index >= get_row_size()) {
     throw std::out_of_range("The index is out of range.");
   }
@@ -105,6 +134,13 @@ const std::any& ArrayTableModel::at(int row, int column) const {
 
 QValidator::State ArrayTableModel::set(int row, int column,
     const std::any& value) {
+  if(m_is_operation_locked) {
+    return QValidator::State::Invalid;
+  }
+  m_is_operation_locked = true;
+  BOOST_SCOPE_EXIT_ALL(this) {
+    this->m_is_operation_locked = false;
+  };
   if(row < 0 || row >= get_row_size() || column < 0 ||
       column >= get_column_size()) {
     return QValidator::State::Invalid;
