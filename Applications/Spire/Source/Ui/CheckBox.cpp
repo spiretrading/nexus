@@ -31,7 +31,7 @@ namespace {
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(Fill(QColor::fromRgb(0x33, 0x33, 0x33))).
       set(border(scale_width(1), QColor::fromRgb(0xC8C8C8)));
-    style.get((Focus() || Hover()) > is_a<Icon>())
+    style.get((Focus() || (Hover() && !Disabled())) > is_a<Icon>())
       .set(border_color(QColor(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly() > is_a<Icon>()).
       set(BackgroundColor(QColor(0, 0, 0, 0))).
