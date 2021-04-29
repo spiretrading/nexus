@@ -33,22 +33,25 @@ namespace {
       set(border(scale_width(1), QColor::fromRgb(0xC8C8C8)));
     style.get((Focus() || (Hover() && !Disabled())) > is_a<Icon>())
       .set(border_color(QColor(0x4B, 0x23, 0xA0)));
+    style.get(Disabled() > is_a<Icon>()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
     style.get(ReadOnly() > is_a<Icon>()).
       set(BackgroundColor(QColor(0, 0, 0, 0))).
       set(border_color(QColor(0, 0, 0, 0)));
-    style.get(Disabled() > is_a<Icon>()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
     style.get(!Checked() > is_a<Icon>()).
       set(Fill(QColor(0, 0, 0, 0)));
     style.get((Disabled() && Checked()) > is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(Any() > is_a<TextBox>()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(TextColor(QColor(0, 0, 0))).
       set(TextAlign(alignment | Qt::AlignVCenter));
-    style.get((ReadOnly() && !Checked()) > is_a<TextBox>()).
-      set(TextColor(QColor(0, 0, 0, 0))).
+    style.get(Disabled() > is_a<TextBox>()).
       set(BackgroundColor(QColor(0, 0, 0, 0)));
+    style.get(ReadOnly() > is_a<TextBox>()).
+      set(BackgroundColor(QColor(0, 0, 0, 0)));
+    style.get((ReadOnly() && !Checked()) > is_a<TextBox>()).
+      set(TextColor(QColor(0, 0, 0, 0)));
     return style;
   }
 }
