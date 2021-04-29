@@ -317,5 +317,16 @@ TEST_SUITE("ArrayTableModel") {
       model.push({4, 5, 6});
     });
     REQUIRE(signal_count == 2);
+    connection = model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
+        REQUIRE(add_operation->m_index == model.get_row_size() - 1);
+      });
+    model.transact([&] {
+      model.push({1, 2, 3});
+    });
+    REQUIRE(signal_count == 3);
   }
 }

@@ -92,7 +92,11 @@ namespace Spire {
           this->m_transaction.m_operations.clear();
           this->m_is_operation_locked = false;
         };
-        this->m_operation_signal(this->m_transaction);
+        if(this->m_transaction.m_operations.size() == 1) {
+          this->m_operation_signal(this->m_transaction.m_operations[0]);
+        } else {
+          this->m_operation_signal(this->m_transaction);
+        }
       }
     };
     return std::forward<F>(transaction)();
