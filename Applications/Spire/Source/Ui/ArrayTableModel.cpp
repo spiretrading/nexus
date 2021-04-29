@@ -11,26 +11,7 @@ ArrayTableModel::ArrayTableModel()
     m_is_operation_locked(false) {}
 
 void ArrayTableModel::push(const std::vector<std::any>& row) {
-  if(m_is_operation_locked) {
-    return;
-  }
-  m_is_operation_locked = true;
-  BOOST_SCOPE_EXIT_ALL(this) {
-    this->m_is_operation_locked = false;
-  };
-  if(!m_data.empty() && row.size() != get_column_size()) {
-    throw std::out_of_range("row.size() != get_column_size()");
-  }
-  if(row.empty()) {
-    return;
-  }
-  m_data.push_back(row);
-  auto operation = AddOperation{static_cast<int>(m_data.size()) - 1};
-  if(m_transaction_level > 0) {
-    m_transaction.m_operations.push_back(std::move(operation));
-  } else {
-    m_operation_signal(operation);
-  }
+  insert(row, get_row_size());
 }
 
 void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
@@ -46,9 +27,6 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
   }
   if(index < 0 || index > get_row_size()) {
     throw std::out_of_range("The index is out of range.");
-  }
-  if(row.empty()) {
-    return;
   }
   m_data.insert(std::next(m_data.begin(), index), row);
   auto operation = AddOperation{index};

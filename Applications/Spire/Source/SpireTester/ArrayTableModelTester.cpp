@@ -152,7 +152,30 @@ TEST_SUITE("ArrayTableModel") {
     auto model = ArrayTableModel();
     auto signal_count = 0;
     auto index = 0;
-    auto connection = model.connect_operation_signal(
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
+        REQUIRE(add_operation->m_index == index);
+      }));
+    index = 0;
+    REQUIRE_NOTHROW(model.insert({}, index));
+    REQUIRE(model.get_row_size() == 1);
+    REQUIRE(signal_count == 1);
+    REQUIRE_THROWS(model.insert({1, 2, 3}, index));
+    REQUIRE(model.get_row_size() == 1);
+    REQUIRE(signal_count == 1);
+    connection = model.connect_operation_signal(
+      [&] (const TableModel::Operation& operation) {
+        ++signal_count;
+        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
+        REQUIRE(remove_operation != nullptr);
+      });
+    REQUIRE_NOTHROW(model.remove(index));
+    REQUIRE(signal_count == 2);
+    signal_count = 0;
+    connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         auto add_operation = get<TableModel::AddOperation>(&operation);
@@ -160,13 +183,9 @@ TEST_SUITE("ArrayTableModel") {
         REQUIRE(add_operation->m_index == index);
       });
     index = 0;
-    REQUIRE_NOTHROW(model.insert({}, index));
-    REQUIRE(model.get_row_size() == 0);
-    REQUIRE(signal_count == 0);
     REQUIRE_NOTHROW(model.insert({1, 2, 3}, index));
     REQUIRE(model.get_row_size() == 1);
     REQUIRE(signal_count == 1);
-    index = 0;
     REQUIRE_NOTHROW(model.insert({4, 5, 6}, index));
     REQUIRE(model.get_row_size() == 2);
     REQUIRE(signal_count == 2);

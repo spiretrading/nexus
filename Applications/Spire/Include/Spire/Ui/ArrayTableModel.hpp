@@ -85,7 +85,7 @@ namespace Spire {
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
     ++m_transaction_level;
     BOOST_SCOPE_EXIT_ALL(this) {
-      this->m_transaction_level--;
+      --this->m_transaction_level;
       if(this->m_transaction_level == 0 && !this->m_is_operation_locked) {
         this->m_is_operation_locked = true;
         BOOST_SCOPE_EXIT_ALL(this) {
