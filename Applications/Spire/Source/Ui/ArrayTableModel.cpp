@@ -6,22 +6,21 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+ArrayTableModel::ScopeExit::ScopeExit(std::function<void()> f)
+  : m_f(std::move(f)) {}
+
+ArrayTableModel::ScopeExit::~ScopeExit() {
+  m_f();
+}
+
 ArrayTableModel::ArrayTableModel()
-  : m_transaction_level(0),
-    m_is_operation_locked(false) {}
+  : m_transaction_level(0) {}
 
 void ArrayTableModel::push(const std::vector<std::any>& row) {
   insert(row, get_row_size());
 }
 
 void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
-  if(m_is_operation_locked) {
-    return;
-  }
-  m_is_operation_locked = true;
-  BOOST_SCOPE_EXIT_ALL(this) {
-    this->m_is_operation_locked = false;
-  };
   if(!row.empty() && !m_data.empty() && row.size() != get_column_size()) {
     throw std::out_of_range("row.size() != get_column_size()");
   }
@@ -29,22 +28,10 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
     throw std::out_of_range("The index is out of range.");
   }
   m_data.insert(std::next(m_data.begin(), index), row);
-  auto operation = AddOperation{index};
-  if(m_transaction_level > 0) {
-    m_transaction.m_operations.push_back(std::move(operation));
-  } else {
-    m_operation_signal(operation);
-  }
+  push(AddOperation{index});
 }
 
 void ArrayTableModel::move(int source, int destination) {
-  if(m_is_operation_locked) {
-    return;
-  }
-  m_is_operation_locked = true;
-  BOOST_SCOPE_EXIT_ALL(this) {
-    this->m_is_operation_locked = false;
-  };
   if(source < 0 || source >= get_row_size() || destination < 0 ||
       destination >= get_row_size()) {
     throw std::out_of_range("The source or destination is out of range.");
@@ -62,32 +49,15 @@ void ArrayTableModel::move(int source, int destination) {
       std::next(m_data.begin(), source), std::next(m_data.begin(), source + 1));
   }
   m_data[destination] = std::move(source_row);
-  auto operation = MoveOperation{source, destination};
-  if(m_transaction_level > 0) {
-    m_transaction.m_operations.push_back(std::move(operation));
-  } else {
-    m_operation_signal(operation);
-  }
+  push(MoveOperation{source, destination});
 }
 
 void ArrayTableModel::remove(int index) {
-  if(m_is_operation_locked) {
-    return;
-  }
-  m_is_operation_locked = true;
-  BOOST_SCOPE_EXIT_ALL(this) {
-    this->m_is_operation_locked = false;
-  };
   if(index < 0 || index >= get_row_size()) {
     throw std::out_of_range("The index is out of range.");
   }
   m_data.erase(std::next(m_data.begin(), index));
-  auto operation = RemoveOperation{index};
-  if(m_transaction_level > 0) {
-    m_transaction.m_operations.push_back(std::move(operation));
-  } else {
-    m_operation_signal(operation);
-  }
+  push(RemoveOperation{index});
 }
 
 int ArrayTableModel::get_row_size() const {
@@ -98,7 +68,7 @@ int ArrayTableModel::get_column_size() const {
   if(m_data.empty()) {
     return 0;
   } else {
-    return m_data[0].size();
+    return m_data.front().size();
   }
 }
 
@@ -112,28 +82,24 @@ const std::any& ArrayTableModel::at(int row, int column) const {
 
 QValidator::State ArrayTableModel::set(int row, int column,
     const std::any& value) {
-  if(m_is_operation_locked) {
-    return QValidator::State::Invalid;
-  }
-  m_is_operation_locked = true;
-  BOOST_SCOPE_EXIT_ALL(this) {
-    this->m_is_operation_locked = false;
-  };
   if(row < 0 || row >= get_row_size() || column < 0 ||
       column >= get_column_size()) {
     return QValidator::State::Invalid;
   }
   m_data[row][column] = value;
-  auto operation = UpdateOperation{row, column};
-  if(m_transaction_level > 0) {
-    m_transaction.m_operations.push_back(std::move(operation));
-  } else {
-    m_operation_signal(operation);
-  }
+  push(UpdateOperation{row, column});
   return QValidator::State::Acceptable;
 }
 
 connection ArrayTableModel::connect_operation_signal(
     const typename OperationSignal::slot_type& slot) const {
   return m_operation_signal.connect(slot);
+}
+
+void ArrayTableModel::push(Operation&& operation) {
+  if(m_transaction_level > 0) {
+    m_transaction.m_operations.push_back(std::move(operation));
+  } else {
+    m_operation_signal(operation);
+  }
 }

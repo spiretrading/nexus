@@ -1,6 +1,5 @@
 #ifndef SPIRE_ARRAY_TABLE_MODEL_HPP
 #define SPIRE_ARRAY_TABLE_MODEL_HPP
-#include <boost/scope_exit.hpp>
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -74,31 +73,36 @@ namespace Spire {
         const typename OperationSignal::slot_type& slot) const override;
 
     private:
+      struct ScopeExit {
+        std::function<void ()> m_f;
+        ScopeExit(std::function<void()> f);
+        ~ScopeExit();
+      };
       mutable OperationSignal m_operation_signal;
       std::vector<std::vector<std::any>> m_data;
       Transaction m_transaction;
       int m_transaction_level;
-      bool m_is_operation_locked;
+
+      void push(Operation&& operation);
   };
 
   template<typename F>
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
     ++m_transaction_level;
-    BOOST_SCOPE_EXIT_ALL(this) {
-      --this->m_transaction_level;
-      if(this->m_transaction_level == 0 && !this->m_is_operation_locked) {
-        this->m_is_operation_locked = true;
-        BOOST_SCOPE_EXIT_ALL(this) {
-          this->m_transaction.m_operations.clear();
-          this->m_is_operation_locked = false;
-        };
-        if(this->m_transaction.m_operations.size() == 1) {
-          this->m_operation_signal(this->m_transaction.m_operations[0]);
-        } else {
-          this->m_operation_signal(this->m_transaction);
-        }
+    auto on_exit = ScopeExit([&] {
+      --m_transaction_level;
+      if(m_transaction_level != 0) {
+        return;
       }
-    };
+      auto transaction = std::move(m_transaction);
+      if(transaction.m_operations.empty()) {
+        return;
+      } else if(transaction.m_operations.size() == 1) {
+        m_operation_signal(transaction.m_operations.front());
+      } else {
+        m_operation_signal(transaction);
+      }
+    });
     return std::forward<F>(transaction)();
   }
 }

@@ -304,7 +304,10 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        model.push({7, 8, 9});
+        connection.disconnect();
+        model.transact([&] {
+          model.push({7, 8, 9});
+        });
         auto transaction = get<TableModel::Transaction>(&operation);
         REQUIRE(transaction != nullptr);
         REQUIRE(transaction->m_operations.size() == 2);
