@@ -148,8 +148,7 @@ namespace Details {
    */
   template<typename F>
   void visit(const TableModel::Operation& operation, F&& f){
-    if(operation.type() == typeid(TableModel::Transaction)) {
-      auto transaction = boost::get<TableModel::Transaction>(&operation);
+    if(auto transaction = boost::get<TableModel::Transaction>(&operation)) {
       for(const auto& transaction_operation : transaction->m_operations) {
         visit(transaction_operation, std::forward<F>(f));
       }
@@ -172,8 +171,7 @@ namespace Details {
 
   template<typename F, typename... G>
   void visit(const TableModel::Operation& operation, F&& f, G&&... g) {
-    if(operation.type() == typeid(TableModel::Transaction)) {
-      auto transaction = boost::get<TableModel::Transaction>(&operation);
+    if(auto transaction = boost::get<TableModel::Transaction>(&operation)) {
       for(const auto& transaction_operation : transaction->m_operations) {
         visit(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
       }
