@@ -117,7 +117,6 @@ void CheckBox::set_read_only(bool is_read_only) {
       setFocusPolicy(Qt::StrongFocus);
       find_stylist(*this).unmatch(ReadOnly());
     }
-    update();
   }
 }
 

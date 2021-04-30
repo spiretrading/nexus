@@ -8,27 +8,27 @@
 namespace Spire {
 namespace Styles {
 
-  /** Selects a checked Checkbox. */
+  /** Selects a checked CheckBox. */
   using Checked = StateSelector<void, struct CheckedTag>;
 }
 
-  //! Represents a Spire-styled checkbox.
+  //! Represents a Spire-styled CheckBox.
   class CheckBox : public QWidget {
     public:
 
       /**
       * Signals that the checked state has changed.
-      * @param is_checked True iff the Checkbox is checked.
+      * @param is_checked True iff the CheckBox is checked.
       */
       using CheckedSignal = Signal<void (bool is_checked)>;
 
-      //! Constructs a Checkbox using a LocalCheckModel.
+      //! Constructs a CheckBox using a LocalCheckModel.
       /*!
         \param parent The parent widget.
       */
       explicit CheckBox(QWidget* parent = nullptr);
   
-      //! Constructs a Checkbox using a LocalCheckModel and an initial checked
+      //! Constructs a CheckBox using a LocalCheckModel and an initial checked
       //! state.
       /*!
         \param model The check state's model.
@@ -46,9 +46,9 @@ namespace Styles {
       */
       void set_label(const QString& label);
 
-      //! Sets the read-only state of the Checkbox.
+      //! Sets the read-only state of the CheckBox.
       /*!
-        \param is_read_only Sets the Checkbox to read-only iff is_read_only is
+        \param is_read_only Sets the CheckBox to read-only iff is_read_only is
                 true.
       */
       void set_read_only(bool is_read_only);
