@@ -21,6 +21,7 @@ Icon::Icon(QImage icon, QWidget* parent)
       m_icon(std::move(icon)) {
   setAttribute(Qt::WA_Hover);
   set_style(*this, DEFAULT_STYLE());
+  connect_style_signal(*this, [=] { update(); });
 }
 
 QSize Icon::sizeHint() const {
