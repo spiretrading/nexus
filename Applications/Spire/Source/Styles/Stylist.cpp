@@ -164,8 +164,8 @@ void Stylist::match(const Selector& selector) {
       principals.pop_front();
       principals.insert(principals.end(), principal->m_principals.begin(),
         principal->m_principals.end());
-      principal->m_enable_signal();
       principal->apply_rules();
+      principal->m_enable_signal();
     }
   }
 }
@@ -179,8 +179,8 @@ void Stylist::unmatch(const Selector& selector) {
       principals.pop_front();
       principals.insert(principals.end(), principal->m_principals.begin(),
         principal->m_principals.end());
-      principal->m_enable_signal();
       principal->apply_rules();
+      principal->m_enable_signal();
     }
   }
 }

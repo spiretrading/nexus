@@ -37,11 +37,11 @@ namespace Spire {
        * @param row The row to insert.
        * @param index The index to insert the row at.
        * @throws <code>std::out_of_range</code> - This model is not empty and
-       *         <code>model.get_column_size() != get_column_size()</code>.
+       *         <code>row.size() != get_column_size()</code>.
        * @throws <code>std::out_of_range</code> -
-       *         <code>index < 0 or index >= get_row_size()</code>.
+       *         <code>index < 0 or index > get_row_size()</code>.
        */
-      void insert(const TableModel& model, int index);
+      void insert(const std::vector<std::any>& row, int index);
 
       /**
        * Moves a row.
@@ -71,10 +71,39 @@ namespace Spire {
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
+
+    private:
+      struct ScopeExit {
+        std::function<void ()> m_f;
+        ScopeExit(std::function<void()> f);
+        ~ScopeExit();
+      };
+      mutable OperationSignal m_operation_signal;
+      std::vector<std::vector<std::any>> m_data;
+      Transaction m_transaction;
+      int m_transaction_level;
+
+      void push(Operation&& operation);
   };
 
   template<typename F>
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
+    ++m_transaction_level;
+    auto on_exit = ScopeExit([&] {
+      --m_transaction_level;
+      if(m_transaction_level != 0) {
+        return;
+      }
+      auto transaction = std::move(m_transaction);
+      if(transaction.m_operations.empty()) {
+        return;
+      } else if(transaction.m_operations.size() == 1) {
+        m_operation_signal(transaction.m_operations.front());
+      } else {
+        m_operation_signal(transaction);
+      }
+    });
+    return std::forward<F>(transaction)();
   }
 }
 
