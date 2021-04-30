@@ -12,7 +12,7 @@ TEST_SUITE("TableModel") {
     auto index = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        model.visit(operation,
+        visit(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == index);
           },
@@ -45,7 +45,7 @@ TEST_SUITE("TableModel") {
     auto index = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        model.visit(operation,
+        visit(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == index);
           },
@@ -72,7 +72,7 @@ TEST_SUITE("TableModel") {
     auto default_operation_count = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        model.visit(operation,
+        visit(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == index);
           },
@@ -106,7 +106,7 @@ TEST_SUITE("TableModel") {
     model.push({4, 5, 6});
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& transaction) {
-        model.visit(transaction,
+        visit(transaction,
           [&] (const TableModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == 1);
           },
@@ -138,7 +138,7 @@ TEST_SUITE("TableModel") {
     auto model = ArrayTableModel();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& transaction) {
-        model.visit(transaction,
+        visit(transaction,
           [&] (const TableModel::RemoveOperation& remove_operation) {
             REQUIRE(remove_operation.m_index == 1);
           });
@@ -167,7 +167,7 @@ TEST_SUITE("TableModel") {
     auto default_operation_count = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& transaction) {
-        model.visit(transaction,
+        visit(transaction,
           [&] (const TableModel::RemoveOperation& remove_operation) {
             REQUIRE(remove_operation.m_index == 1);
           },
@@ -199,7 +199,7 @@ TEST_SUITE("TableModel") {
     auto model = ArrayTableModel();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& transaction) {
-        model.visit(transaction,
+        visit(transaction,
           [&] (const TableModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == 0);
           },
@@ -222,7 +222,7 @@ TEST_SUITE("TableModel") {
     auto model = ArrayTableModel();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& transaction) {
-        model.visit(transaction,
+        visit(transaction,
           [&] (const TableModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == 0);
           });
@@ -236,7 +236,7 @@ TEST_SUITE("TableModel") {
     auto model = ArrayTableModel();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& transaction) {
-        model.visit(transaction,
+        visit(transaction,
           [&] (const auto& operation) {
             auto add_operation = get<TableModel::AddOperation>(&operation);
             REQUIRE(add_operation != nullptr);

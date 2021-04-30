@@ -114,33 +114,12 @@ namespace Details {
       virtual boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const = 0;
 
-      /**
-       * Applies a callable to the underlying operation.
-       * @param f The callable to apply.
-       */
-      template<typename F>
-      void visit(const Operation& operation, F&& f) const;
-
-      template<typename F, typename... G>
-      void visit(const Operation& operation, F&& f, G&&... g) const;
-
     protected:
 
       /** Constructs an empty model. */
       TableModel() = default;
 
     private:
-      template<typename T>
-      struct TypeExtractor {};
-      template<typename T>
-      struct TypeExtractor<Beam::TypeSequence<T>> {
-        using type = std::decay_t<T>;
-      };
-      template<typename T, typename U>
-      struct TypeExtractor<Beam::TypeSequence<T, U>> {
-        using type = std::decay_t<U>;
-      };
-
       TableModel(const TableModel&) = delete;
       TableModel& operator =(const TableModel&) = delete;
   };
@@ -150,17 +129,34 @@ namespace Details {
     return std::any_cast<const T&>(at(row, column));
   }
 
+  template<typename T>
+  struct TypeExtractor {};
+
+  template<typename T>
+  struct TypeExtractor<Beam::TypeSequence<T>> {
+    using type = std::decay_t<T>;
+  };
+
+  template<typename T, typename U>
+  struct TypeExtractor<Beam::TypeSequence<T, U>> {
+    using type = std::decay_t<U>;
+  };
+
+  /**
+   * Applies a callable to the underlying operation.
+   * @param f The callable to apply.
+   */
   template<typename F>
-  void TableModel::visit(const TableModel::Operation& operation, F&& f) const {
-    if(operation.type() == typeid(Transaction)) {
-      auto transaction = boost::get<Transaction>(&operation);
+  void visit(const TableModel::Operation& operation, F&& f){
+    if(operation.type() == typeid(TableModel::Transaction)) {
+      auto transaction = boost::get<TableModel::Transaction>(&operation);
       for(const auto& transaction_operation : transaction->m_operations) {
         visit(transaction_operation, std::forward<F>(f));
       }
     } else {
       if constexpr(std::is_invocable_v<std::decay_t<F>>) {
         std::forward<F>(f)();
-      } else if constexpr(std::is_invocable_r_v<void, F, const Operation&>) {
+      } else if constexpr(std::is_invocable_r_v<void, F, const TableModel::Operation&>) {
         std::forward<F>(f)(operation);
       } else {
         using Parameter = typename TypeExtractor<
@@ -175,15 +171,14 @@ namespace Details {
   }
 
   template<typename F, typename... G>
-  void TableModel::visit(
-      const TableModel::Operation& operation, F&& f, G&&... g) const {
-    if(operation.type() == typeid(Transaction)) {
-      auto transaction = boost::get<Transaction>(&operation);
+  void visit(const TableModel::Operation& operation, F&& f, G&&... g) {
+    if(operation.type() == typeid(TableModel::Transaction)) {
+      auto transaction = boost::get<TableModel::Transaction>(&operation);
       for(const auto& transaction_operation : transaction->m_operations) {
         visit(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
       }
     } else {
-      if constexpr(std::is_invocable_r_v<void, F, const Operation&>) {
+      if constexpr(std::is_invocable_r_v<void, F, const TableModel::Operation&>) {
         std::forward<F>(f)(operation);
       } else {
         using Parameter = typename TypeExtractor<
