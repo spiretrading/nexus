@@ -66,14 +66,14 @@ CheckBox::CheckBox(std::shared_ptr<BoolModel> model, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_body = new QWidget(this);
-  auto button = new Button(m_body, this);
+  auto body = new QWidget(this);
+  auto button = new Button(body, this);
   setFocusProxy(button);
   button->connect_clicked_signal([=] {
     m_model->set_current(!m_model->get_current());
   });
   layout->addWidget(button);
-  auto body_layout = new QHBoxLayout(m_body);
+  auto body_layout = new QHBoxLayout(body);
   body_layout->setContentsMargins({});
   body_layout->setSpacing(0);
   auto check = new Icon(CHECK_ICON(), parent);
@@ -93,7 +93,7 @@ CheckBox::CheckBox(std::shared_ptr<BoolModel> model, QWidget* parent)
 
 void CheckBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::LayoutDirectionChange) {
-    set_style(*m_body, DEFAULT_STYLE(layoutDirection()));
+    set_style(*this, DEFAULT_STYLE(layoutDirection()));
   }
 }
 

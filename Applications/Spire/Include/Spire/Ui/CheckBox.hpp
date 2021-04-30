@@ -66,7 +66,6 @@ namespace Styles {
       mutable CheckedSignal m_checked_signal;
       std::shared_ptr<BoolModel> m_model;
       bool m_is_read_only;
-      QWidget* m_body;
       Icon* m_check;
       TextBox* m_label;
 
