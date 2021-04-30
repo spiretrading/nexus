@@ -153,7 +153,8 @@ namespace Details {
         visit(transaction_operation, std::forward<F>(f));
       }
     } else {
-      if constexpr(std::is_invocable_r_v<void, F, const TableModel::Operation&>) {
+      if constexpr(std::is_invocable_r_v<
+          void, F, const TableModel::Operation&>) {
         std::forward<F>(f)(operation);
       } else {
         using Parameter = typename TypeExtractor<
@@ -174,7 +175,8 @@ namespace Details {
         visit(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
       }
     } else {
-      if constexpr(std::is_invocable_r_v<void, F, const TableModel::Operation&>) {
+      if constexpr(std::is_invocable_r_v<
+          void, F, const TableModel::Operation&>) {
         std::forward<F>(f)(operation);
       } else {
         using Parameter = typename TypeExtractor<
