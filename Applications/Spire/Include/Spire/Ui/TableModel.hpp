@@ -153,9 +153,7 @@ namespace Details {
         visit(transaction_operation, std::forward<F>(f));
       }
     } else {
-      if constexpr(std::is_invocable_v<std::decay_t<F>>) {
-        std::forward<F>(f)();
-      } else if constexpr(std::is_invocable_r_v<void, F, const TableModel::Operation&>) {
+      if constexpr(std::is_invocable_r_v<void, F, const TableModel::Operation&>) {
         std::forward<F>(f)(operation);
       } else {
         using Parameter = typename TypeExtractor<
