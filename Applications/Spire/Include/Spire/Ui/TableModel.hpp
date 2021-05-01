@@ -2,8 +2,6 @@
 #define SPIRE_TABLE_MODEL_HPP
 #include <any>
 #include <vector>
-#include <Beam/Utilities/Functional.hpp>
-#include <boost/mpl/back.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <QValidator>
@@ -129,63 +127,52 @@ namespace Details {
     return std::any_cast<const T&>(at(row, column));
   }
 
-  template<typename T>
-  struct TypeExtractor {};
-
-  template<typename T>
-  struct TypeExtractor<Beam::TypeSequence<T>> {
-    using type = std::decay_t<T>;
-  };
-
-  template<typename T, typename U>
-  struct TypeExtractor<Beam::TypeSequence<T, U>> {
-    using type = std::decay_t<U>;
-  };
-
   /**
-   * Applies a callable to the underlying operation.
-   * @param f The callable to apply.
+   * Applies a callable to a TableModel::Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
    */
   template<typename F>
-  void visit(const TableModel::Operation& operation, F&& f){
+  void visit(const TableModel::Operation& operation, F&& f) {
+    static_assert(std::is_invocable_v<F, const TableModel::AddOperation&> ||
+      std::is_invocable_v<F, const TableModel::RemoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::MoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::UpdateOperation&>);
     if(auto transaction = boost::get<TableModel::Transaction>(&operation)) {
       for(auto& transaction_operation : transaction->m_operations) {
         visit(transaction_operation, std::forward<F>(f));
       }
     } else {
-      if constexpr(std::is_invocable_r_v<
-          void, F, const TableModel::Operation&>) {
-        std::forward<F>(f)(operation);
-      } else {
-        using Parameter = typename TypeExtractor<
-          Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-        if(operation.type() == typeid(Parameter)) {
-          std::forward<F>(f)(boost::get<Parameter>(operation));
-        } else if constexpr(!std::is_invocable_r_v<void, F, const Parameter&>) {
-          throw std::bad_any_cast();
+      boost::apply_visitor([&] (const auto& operation) {
+        using Parameter = std::decay_t<decltype(operation)>;
+        if constexpr(std::is_invocable_v<F, Parameter>) {
+          std::forward<F>(f)(operation);
         }
-      }
+      }, operation);
     }
   }
 
   template<typename F, typename... G>
   void visit(const TableModel::Operation& operation, F&& f, G&&... g) {
+    static_assert(std::is_invocable_v<F, const TableModel::AddOperation&> ||
+      std::is_invocable_v<F, const TableModel::RemoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::MoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::UpdateOperation&>);
     if(auto transaction = boost::get<TableModel::Transaction>(&operation)) {
       for(auto& transaction_operation : transaction->m_operations) {
         visit(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
       }
     } else {
-      if constexpr(std::is_invocable_r_v<
-          void, F, const TableModel::Operation&>) {
-        std::forward<F>(f)(operation);
-      } else {
-        using Parameter = typename TypeExtractor<
-          Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-        if(operation.type() == typeid(Parameter)) {
-          std::forward<F>(f)(boost::get<Parameter>(operation));
-        } else {
-          visit(operation, std::forward<G>(g)...);
+      auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+        using Parameter = std::decay_t<decltype(operation)>;
+        if constexpr(std::is_invocable_v<F, Parameter>) {
+          std::forward<F>(f)(operation);
+          return true;
         }
+        return false;
+      }, operation);
+      if(!is_visited) {
+        visit(operation, std::forward<G>(g)...);
       }
     }
   }
