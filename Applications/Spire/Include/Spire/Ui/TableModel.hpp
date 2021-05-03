@@ -1,8 +1,17 @@
 #ifndef SPIRE_TABLE_MODEL_HPP
 #define SPIRE_TABLE_MODEL_HPP
 #include <any>
+#include <type_traits>
+#include <utility>
 #include <vector>
+#include <boost/mpl/advance.hpp>
+#include <boost/mpl/begin_end.hpp>
+#include <boost/mpl/deref.hpp>
+#include <boost/mpl/int.hpp>
+#include <boost/mpl/size.hpp>
 #include <boost/signals2/connection.hpp>
+#include <boost/variant/apply_visitor.hpp>
+#include <boost/variant/get.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <QValidator>
 #include "Spire/Ui/Ui.hpp"

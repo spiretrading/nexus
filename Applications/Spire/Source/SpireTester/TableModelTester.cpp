@@ -1,4 +1,3 @@
-#include <boost/variant/get.hpp>
 #include <doctest/doctest.h>
 #include "Spire/Ui/TableModel.hpp"
 
