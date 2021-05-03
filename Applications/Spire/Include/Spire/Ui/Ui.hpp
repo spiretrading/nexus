@@ -56,6 +56,7 @@ namespace Spire {
   class Tooltip;
   class TransitionWidget;
   template<typename T> class ValueModel;
+  using BooleanModel = ValueModel<bool>;
   using TextModel = ValueModel<QString>;
   class Window;
 
