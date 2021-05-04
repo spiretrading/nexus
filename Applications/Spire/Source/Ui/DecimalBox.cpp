@@ -463,10 +463,12 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::on_current(const optional<Decimal>& current) {
-  m_up_button->setEnabled(!is_read_only() && (!m_model->get_maximum() ||
-    m_model->get_current() < m_model->get_maximum()));
-  m_down_button->setEnabled(!is_read_only() && (!m_model->get_minimum() ||
-    m_model->get_current() > m_model->get_minimum()));
+  m_up_button->setEnabled(
+    !is_read_only() && (!m_model->get_maximum() || !m_model->get_current() ||
+      m_model->get_current() < m_model->get_maximum()));
+  m_down_button->setEnabled(
+    !is_read_only() && (!m_model->get_minimum() || !m_model->get_current() ||
+      m_model->get_current() > m_model->get_minimum()));
 }
 
 void DecimalBox::on_submit(const QString& submission) {
