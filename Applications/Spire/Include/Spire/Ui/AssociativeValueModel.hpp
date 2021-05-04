@@ -133,9 +133,7 @@ namespace Spire {
       set_associated_model_value(value, false);
       return;
     }
-    if(value != m_current) {
-      set_associated_model_value(m_current, false);
-    }
+    set_associated_model_value(m_current, false);
     m_is_blocked = true;
     set_current(value);
     m_is_blocked = false;
