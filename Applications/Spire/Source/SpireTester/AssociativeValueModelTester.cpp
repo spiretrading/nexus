@@ -147,5 +147,7 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(model.get_current() == "model2");
     bool_model1->set_current(true);
     REQUIRE(model.get_current() == "model1");
+    REQUIRE(bool_model1->get_current() == true);
+    REQUIRE(bool_model2->get_current() == false);
   }
 }

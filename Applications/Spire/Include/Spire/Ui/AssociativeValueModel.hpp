@@ -97,9 +97,6 @@ namespace Spire {
   template <typename T>
   QValidator::State AssociativeValueModel<T>::set_current(const T& value) {
     if(m_models.find(value) != m_models.end()) {
-      if(value != m_current && m_models.find(m_current) != m_models.end()) {
-        set_associated_model_value(m_current, false);
-      }
       m_current = value;
       set_associated_model_value(m_current, true);
       m_current_signal(m_current);
@@ -117,10 +114,11 @@ namespace Spire {
   template <typename T>
   void AssociativeValueModel<T>::set_associated_model_value(const T& value,
       bool model_value) {
-    const auto& model = m_models[value];
-    auto blocker = boost::signals2::shared_connection_block(
-      model.m_connection);
-    model.m_model->set_current(model_value);
+    if(auto iterator = m_models.find(value); iterator != m_models.end()) {
+      auto blocker = boost::signals2::shared_connection_block(
+        iterator->second.m_connection);
+      iterator->second.m_model->set_current(model_value);
+    }
   }
 
   template <typename T>
@@ -132,7 +130,11 @@ namespace Spire {
       return;
     }
     if(m_is_blocked) {
+      set_associated_model_value(value, false);
       return;
+    }
+    if(value != m_current) {
+      set_associated_model_value(m_current, false);
     }
     m_is_blocked = true;
     set_current(value);
