@@ -233,8 +233,10 @@ UiProfile Spire::make_decimal_box_profile() {
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        if(value == "null") {
-          decimal_box->get_model()->set_current(none);
+        if(value == QString::fromUtf8("null")) {
+          if(decimal_box->get_model()->get_current()) {
+            decimal_box->get_model()->set_current(none);
+          }
         } else if(auto decimal = parse_decimal(value)) {
           if(decimal_box->get_model()->get_current() != *decimal) {
             decimal_box->get_model()->set_current(*decimal);
@@ -245,12 +247,15 @@ UiProfile Spire::make_decimal_box_profile() {
         QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
         [=, &current] (const optional<DecimalBox::Decimal>& value) {
-          if(value) {
-            current.set(QString::fromStdString(
-              value->str(DecimalBox::PRECISION, std::ios_base::dec)));
-          } else {
-            current.set("null");
-          }
+          auto text = [&] {
+            if(value) {
+              return QString::fromStdString(
+                value->str(DecimalBox::PRECISION, std::ios_base::dec));
+            }
+            return QString::fromUtf8("null");
+          }();
+          current.set(text);
+          current_slot(text);
         });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
@@ -260,7 +265,7 @@ UiProfile Spire::make_decimal_box_profile() {
             submit_slot(QString::fromStdString(
               submission->str(DecimalBox::PRECISION, std::ios_base::dec)));
           } else {
-            submit_slot("null");
+            submit_slot(QString::fromUtf8("null"));
           }
         });
       auto reject_slot = profile.make_event_slot<QString>(
@@ -271,7 +276,7 @@ UiProfile Spire::make_decimal_box_profile() {
             reject_slot(QString::fromStdString(
               value->str(DecimalBox::PRECISION, std::ios_base::dec)));
           } else {
-            reject_slot("null");
+            reject_slot(QString::fromUtf8("null"));
           }
         });
       auto& placeholder = get<QString>("placeholder",

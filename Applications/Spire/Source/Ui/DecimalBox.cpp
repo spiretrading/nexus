@@ -153,24 +153,8 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       m_is_rejected = false;
       return QValidator::State::Invalid;
     } else if(value.isEmpty() || value == "-" || value == "+") {
-      if(value == "-" &&
-          m_model->get_minimum() && *m_model->get_minimum() >= 0) {
-        return QValidator::State::Invalid;
-      } else if(value == "+" &&
-          m_model->get_maximum() && *m_model->get_maximum() < 0) {
-        return QValidator::State::Invalid;
-      }
-      auto origin = [&] {
-        if(validate(0, m_model->get_minimum(), m_model->get_maximum()) ==
-            QValidator::State::Acceptable) {
-          return DecimalBox::Decimal(0);
-        } else if(!m_model->get_minimum()) {
-          return *m_model->get_maximum();
-        }
-        return *m_model->get_minimum();
-      }();
       auto blocker = shared_connection_block(m_current_connection);
-      m_model->set_current(origin);
+      m_model->set_current(none);
       m_current = value;
       m_current_signal(m_current);
       m_is_rejected = false;
@@ -451,7 +435,8 @@ void DecimalBox::step_by(const Decimal& value) {
       return *m_model->get_current();
     } else if(!m_model->get_minimum() && !m_model->get_maximum() ||
         !m_model->get_minimum() && *m_model->get_maximum() >= 0 ||
-        !m_model->get_maximum() && *m_model->get_minimum() <= 0) {
+        !m_model->get_maximum() && *m_model->get_minimum() <= 0 ||
+        *m_model->get_minimum() <= 0 && *m_model->get_maximum() >= 0) {
       return Decimal(0);
     } else if(abs(*m_model->get_minimum()) < abs(*m_model->get_maximum())) {
       return *m_model->get_minimum();
