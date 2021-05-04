@@ -15,15 +15,13 @@ namespace Spire {
        * Signals that submission value has changed.
        * @param value The submission value.
        */
-      using SubmitSignal = Signal<void (int value)>;
+      using SubmitSignal = Signal<void (boost::optional<int> value)>;
 
       /**
        * Signals that the current value was rejected as a submission.
        * @param value The value that was rejected.
        */
-      using RejectSignal = Signal<void (int value)>;
-
-      using InitialDisplay = DecimalBox::InitialDisplay;
+      using RejectSignal = Signal<void (boost::optional<int> value)>;
 
       /**
        * Constructs an IntegerBox with a LocalValueModel.
@@ -34,36 +32,16 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       /**
-       * Constructs an IntegerBox with a LocalValueModel.
-       * @param modifiers The initial keyboard modifier increments.
-       * @param initial_display How to initially display the input box.
-       * @param parent The parent widget.
-       */
-      IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
-        InitialDisplay initial_display, QWidget* parent = nullptr);
-
-      /**
        * Constructs an IntegerBox.
        * @param model The model used for the current value.
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
-      IntegerBox(std::shared_ptr<IntegerModel> model,
+      IntegerBox(std::shared_ptr<OptionalIntegerModel> model,
         QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent = nullptr);
 
-      /**
-       * Constructs an IntegerBox.
-       * @param model The model used for the current value.
-       * @param modifiers The initial keyboard modifier increments.
-       * @param initial_display How to initially display the input box.
-       * @param parent The parent widget.
-       */
-      IntegerBox(std::shared_ptr<IntegerModel> model,
-        QHash<Qt::KeyboardModifier, int> modifiers,
-        InitialDisplay initial_display, QWidget* parent = nullptr);
-
       /** Returns the current value model. */
-      const std::shared_ptr<IntegerModel>& get_model() const;
+      const std::shared_ptr<OptionalIntegerModel>& get_model() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -97,16 +75,16 @@ namespace Spire {
       struct IntegerToDecimalModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<IntegerModel> m_model;
+      std::shared_ptr<OptionalIntegerModel> m_model;
       std::shared_ptr<IntegerToDecimalModel> m_adaptor_model;
-      int m_submission;
+      boost::optional<int> m_submission;
       DecimalBox* m_decimal_box;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;
 
-      void on_submit(const DecimalBox::Decimal& submission);
-      void on_reject(const DecimalBox::Decimal& value);
+      void on_submit(const boost::optional<DecimalBox::Decimal>& submission);
+      void on_reject(const boost::optional<DecimalBox::Decimal>& value);
   };
 }
 
