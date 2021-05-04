@@ -10,6 +10,8 @@ namespace Spire {
   class AssociativeValueModel : public ValueModel<T> {
     public:
 
+      AssociativeValueModel();
+
       void associate(const std::shared_ptr<BooleanModel>& model,
         const T& value);
 
@@ -35,16 +37,24 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       T m_current;
       std::unordered_map<T, Model> m_models;
+      bool m_is_blocked;
 
       void set_associated_model_value(const T& value, bool model_value);
       void on_current(const T& value, bool is_selected);
   };
 
   template <typename T>
+  AssociativeValueModel<T>::AssociativeValueModel()
+    : m_is_blocked(false) {}
+
+  template <typename T>
   void AssociativeValueModel<T>::associate(
       const std::shared_ptr<BooleanModel>& model, const T& value) {
     if(m_models.find(value) != m_models.end()) {
       return;
+    }
+    if(model->get_current() == true) {
+      model->set_current(false);
     }
     m_models[value] = {model, model->connect_current_signal(
       [=] (auto is_selected) { on_current(value, is_selected); })};
@@ -115,7 +125,18 @@ namespace Spire {
 
   template <typename T>
   void AssociativeValueModel<T>::on_current(const T& value, bool is_selected) {
+    if(value == m_current) {
+      if(!is_selected) {
+        set_associated_model_value(m_current, true);
+      }
+      return;
+    }
+    if(m_is_blocked) {
+      return;
+    }
+    m_is_blocked = true;
     set_current(value);
+    m_is_blocked = false;
   }
 }
 
