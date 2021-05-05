@@ -39,7 +39,7 @@ std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
     typeid(DisambiguateSelector);
   for(auto base : bases) {
     auto is_base_selected = false;
-    for(auto& child : base->get_widget().children()) {
+    for(auto child : base->get_widget().children()) {
       if(child->isWidgetType()) {
         auto child_selection = select(selector.get_child(),
           find_stylist(*static_cast<QWidget*>(child)));
@@ -79,7 +79,7 @@ std::vector<QWidget*> Spire::Styles::build_reach(
   auto bases = build_reach(selector.get_base(), source);
   reach.insert(bases.begin(), bases.end());
   for(auto base : bases) {
-    for(auto& child : base->children()) {
+    for(auto child : base->children()) {
       if(child->isWidgetType()) {
         auto child_reach = build_reach(selector.get_child(),
           *static_cast<QWidget*>(child));

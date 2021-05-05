@@ -6,8 +6,8 @@
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/IntegerSpinBox.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
@@ -129,10 +129,11 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_gradient_end_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
-  auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
+  auto apply_gradient_button = make_label_button(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedSize(BUTTON_SIZE());
-  connect(apply_gradient_button, &FlatButton::clicked,
-    this, &BookViewLevelPropertiesWidget::on_gradient_apply_button_clicked);
+  apply_gradient_button->connect_clicked_signal([=] {
+    on_gradient_apply_button_clicked();
+  });
   band_properties_layout->addWidget(apply_gradient_button);
   horizontal_layout->addLayout(band_properties_layout);
   horizontal_layout->addSpacing(scale_width(18));

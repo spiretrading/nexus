@@ -52,15 +52,15 @@ namespace Spire {
       std::vector<RecentlyClosedModel::Entry> m_entries;
       StaticDropDownMenu* m_window_manager_button;
       ToolbarMenu* m_recently_closed_button;
-      IconButton* m_account_button;
-      IconButton* m_key_bindings_button;
-      IconButton* m_canvas_button;
-      IconButton* m_book_view_button;
-      IconButton* m_time_and_sales_button;
-      IconButton* m_chart_button;
-      IconButton* m_dashboard_button;
-      IconButton* m_order_imbalances_button;
-      IconButton* m_blotter_button;
+      Button* m_account_button;
+      Button* m_key_bindings_button;
+      Button* m_canvas_button;
+      Button* m_book_view_button;
+      Button* m_time_and_sales_button;
+      Button* m_chart_button;
+      Button* m_dashboard_button;
+      Button* m_order_imbalances_button;
+      Button* m_blotter_button;
 
       void entry_added(const RecentlyClosedModel::Entry& e);
       void entry_removed(const RecentlyClosedModel::Entry& e);

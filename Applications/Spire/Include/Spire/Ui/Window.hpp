@@ -33,31 +33,27 @@ namespace Spire {
 
     protected:
 
-      //! Resizes the Window, adding the TitleBar's height to provided size.
+      //! Sets the Window's body widget iff there is no existing body.
       /*!
-        \param size The size of the Window's body.
+        \param body The body widget.
       */
-      void resize_body(const QSize& size);
-
-      //! Sets the Window to have a fixed size, removing the maximize button
-      //! and resize cursors. Adds the TitleBar's height to the provided size.
-      /*!
-        \param size The fixed size of the Window's body.
-      */
-      void set_fixed_body_size(const QSize& size);
+      void set_body(QWidget* body);
 
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
 
     private:
       mutable ClosedSignal m_closed_signal;
       TitleBar* m_title_bar;
+      QWidget* m_body;
       bool m_is_resizable;
       boost::optional<QSize> m_frame_size;
 
+      QSize adjusted_window_size(const QSize& body_size);
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
   };

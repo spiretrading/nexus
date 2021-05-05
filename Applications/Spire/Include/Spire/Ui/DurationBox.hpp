@@ -1,70 +1,71 @@
 #ifndef SPIRE_DURATION_BOX_HPP
 #define SPIRE_DURATION_BOX_HPP
-#include "Spire/Ui/Box.hpp"
+#include <memory>
+#include <QWidget>
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
-#include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/LocalDurationModel.hpp"
-#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
 
   /** Selects the colon field. */
-  using Colon = Styles::StateSelector<void, struct DurationBoxColonTag>;
+  using Colon = StateSelector<void, struct DurationBoxColonTag>;
 }
 
-  //! Represents a widget for inputting a time duration.
+  /** Displays a widget for inputting a time duration. */
   class DurationBox : public QWidget {
     public:
 
       /**
-       * Signals that the current value was rejected as a submission.
-       * @param value The value that was rejected.
+       * Signals the current value is being submitted.
+       * @param submission The value being submitted.
        */
-      using RejectSignal =
-        Signal<void (boost::posix_time::time_duration value)>;
+      using SubmitSignal = Signal<void (
+        const boost::optional<boost::posix_time::time_duration>& submission)>;
 
-      //! Signals that submission value has changed.
-      /*!
-        \param value The submission value.
-      */
-      using SubmitSignal =
-        Signal<void (boost::posix_time::time_duration value)>;
+      /**
+       * Signals the current value was rejected as a submission.
+       * @param rejection The value that was rejected.
+       */
+      using RejectSignal = Signal<void (
+        const boost::optional<boost::posix_time::time_duration>& rejection)>;
 
-      //! Constructs a DurationBox.
-      /*!
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a DurationBox using a local model.
+       * @param parent The parent widget.
+       */
       explicit DurationBox(QWidget* parent = nullptr);
 
-      //! Constructs a DurationBox.
-      /*!
-        \param model The model used for the current value.
-        \param parent The parent widget.
-      */
-      explicit DurationBox(std::shared_ptr<LocalDurationModel> model,
+      /**
+       * Constructs a DurationBox.
+       * @param model The model used for the current value.
+       * @param parent The parent widget.
+       */
+      explicit DurationBox(std::shared_ptr<OptionalDurationModel> model,
         QWidget* parent = nullptr);
 
-      //! Returns the current value model.
-      const std::shared_ptr<LocalDurationModel>& get_model() const;
+      /** Returns the model used for the current value. */
+      const std::shared_ptr<OptionalDurationModel>& get_model() const;
 
-      //! Returns whether a warning is displayed when a submission is rejected.
+      /**
+       * Returns whether a warning is displayed when a submission is rejected.
+       */
       bool is_warning_displayed() const;
 
-      //! Sets whether a warning is displayed when a submission is rejected.
-      /*!
-        \param is_displayed True iff the warning style should be displayed.
-      */
+      /**
+       * Sets whether a warning is displayed when a submission is rejected.
+       * @param is_displayed True iff the warning style should be displayed.
+       */
       void set_warning_displayed(bool is_displayed);
 
-      //! Connects a slot to the RejectSignal.
-      boost::signals2::connection connect_reject_signal(
-        const RejectSignal::slot_type& slot) const;
-
-       //! Connects a slot to the value submission signal.
+      /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
+
+      /** Connects a slot to the RejectSignal. */
+      boost::signals2::connection connect_reject_signal(
+        const RejectSignal::slot_type& slot) const;
 
       QSize sizeHint() const override;
 
@@ -72,10 +73,10 @@ namespace Styles {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      mutable RejectSignal m_reject_signal;
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<LocalDurationModel> m_model;
-      boost::posix_time::time_duration m_submission;
+      mutable RejectSignal m_reject_signal;
+      std::shared_ptr<OptionalDurationModel> m_model;
+      boost::optional<boost::posix_time::time_duration> m_submission;
       Box* m_box;
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
@@ -83,22 +84,11 @@ namespace Styles {
       TextBox* m_hour_minute_colon;
       TextBox* m_minute_second_colon;
       bool m_is_warning_displayed;
-      bool m_is_hour_field_inputting;
-      bool m_is_minute_field_inputting;
-      bool m_is_second_field_inputting;
-      boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_hour_current_connection;
-      boost::signals2::scoped_connection m_minute_current_connection;
-      boost::signals2::scoped_connection m_second_current_connection;
 
       void create_hour_field();
       void create_minute_field();
       void create_second_field();
-      void create_colon_fields();
-      void on_hour_field_current(int current);
-      void on_minute_field_current(int current);
-      void on_second_field_current(const DecimalBox::Decimal& current);
-      void on_current(boost::posix_time::time_duration current);
+      void create_colons();
       void on_submit();
       void on_reject();
   };

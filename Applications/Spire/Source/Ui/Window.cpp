@@ -25,6 +25,13 @@ namespace {
     return scale(26, 26);
   }
 
+  auto SYSTEM_BORDER_SIZE() {
+    static auto size = QSize(
+      GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER),
+      GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER));
+    return size;
+  }
+
   auto make_svg_window_icon(const QString& icon_path) {
     return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
       scale(10, 10)));
@@ -33,6 +40,7 @@ namespace {
 
 Window::Window(QWidget* parent)
     : QWidget(parent),
+      m_body(nullptr),
       m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   setObjectName("spire_window");
@@ -75,6 +83,15 @@ bool Window::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+bool Window::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    if(watched == m_body && !isMaximized()) {
+      resize(adjusted_window_size(m_body->size()));
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
@@ -102,12 +119,9 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
             }
           }
         } else {
-          rect.right -= GetSystemMetrics(SM_CXFRAME) +
-            GetSystemMetrics(SM_CXPADDEDBORDER);
-          rect.left += GetSystemMetrics(SM_CXFRAME) +
-            GetSystemMetrics(SM_CXPADDEDBORDER);
-          rect.bottom -= GetSystemMetrics(SM_CYFRAME) +
-            GetSystemMetrics(SM_CXPADDEDBORDER);
+          rect.right -= SYSTEM_BORDER_SIZE().width();
+          rect.left += SYSTEM_BORDER_SIZE().width();
+          rect.bottom -= SYSTEM_BORDER_SIZE().height();
         }
       }
       *result = 0;
@@ -185,17 +199,41 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
-    mmi->ptMaxTrackSize.x = maximumSize().width();
-    mmi->ptMaxTrackSize.y = maximumSize().height();
-    mmi->ptMinTrackSize.x = minimumSize().width();
-    mmi->ptMinTrackSize.y = minimumSize().height();
+    if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+      mmi->ptMaxTrackSize.x = maximumSize().width() +
+        2 * SYSTEM_BORDER_SIZE().width();
+      mmi->ptMaxTrackSize.y = maximumSize().height() +
+        SYSTEM_BORDER_SIZE().height();
+    } else {
+      mmi->ptMaxTrackSize.x = maximumSize().width();
+      mmi->ptMaxTrackSize.y = maximumSize().height();
+    }
+    mmi->ptMinTrackSize.x = minimumSize().width() +
+      2 * SYSTEM_BORDER_SIZE().width();
+    mmi->ptMinTrackSize.y = minimumSize().height() +
+      SYSTEM_BORDER_SIZE().height();
     return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
 }
 
-void Window::resize_body(const QSize& size) {
-  resize({size.width(), size.height() + m_title_bar->height()});
+void Window::set_body(QWidget* body) {
+  if(m_body) {
+    return;
+  }
+  m_body = body;
+  if(body->maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+    set_window_attributes(false);
+  } else {
+    resize(adjusted_window_size(body->size()));
+  }
+  layout()->addWidget(m_body);
+  m_body->installEventFilter(this);
+}
+
+QSize Window::adjusted_window_size(const QSize& body_size) {
+  return {body_size.width() + 2 * scale_width(1),
+    body_size.height() + m_title_bar->height() + 2 * scale_height(1)};
 }
 
 void Window::on_screen_changed(QScreen* screen) {
@@ -205,11 +243,6 @@ void Window::on_screen_changed(QScreen* screen) {
   auto rect = RECT();
   GetWindowRect(hwnd, &rect);
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
-}
-
-void Window::set_fixed_body_size(const QSize& size) {
-  set_window_attributes(false);
-  setFixedSize({size.width(), size.height() + m_title_bar->height()});
 }
 
 void Window::set_window_attributes(bool is_resizeable) {
@@ -229,7 +262,7 @@ void Window::set_window_attributes(bool is_resizeable) {
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
-  if(m_frame_size && size() != m_frame_size) {
+  if(m_is_resizable && m_frame_size && size() != m_frame_size) {
     resize(*m_frame_size);
     m_frame_size = none;
   }

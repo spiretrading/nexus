@@ -1,6 +1,7 @@
 #ifndef SPIRE_DECIMAL_BOX_HPP
 #define SPIRE_DECIMAL_BOX_HPP
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/optional/optional.hpp>
 #include <QHash>
 #include <QRegularExpression>
 #include "Spire/Spire/Spire.hpp"
@@ -25,16 +26,6 @@ namespace Styles {
   class DecimalBox : public QWidget {
     public:
 
-      /** Indicates what is initially displayed in the DecimalBox. */
-      enum class InitialDisplay {
-
-        /** The model's current value is displayed (default). */
-        CURRENT,
-
-        /** The input box is initially empty. */
-        EMPTY
-      };
-
       /** The maximum precision of the Decimal type. */
       static constexpr auto PRECISION = 15;
 
@@ -43,19 +34,19 @@ namespace Styles {
         boost::multiprecision::cpp_dec_float<PRECISION>>;
 
       /** Type of model used by the DecimalBox. */
-      using DecimalModel = ScalarValueModel<Decimal>;
+      using DecimalModel = ScalarValueModel<boost::optional<Decimal>>;
 
       /**
        * Signals that submission value has changed.
        * @param value The submission value.
        */
-      using SubmitSignal = Signal<void (const Decimal& value)>;
+      using SubmitSignal = Signal<void (const boost::optional<Decimal>& value)>;
 
       /**
        * Signals that the current value was rejected as a submission.
        * @param value The value that was rejected.
        */
-      using RejectSignal = Signal<void (const Decimal& value)>;
+      using RejectSignal = Signal<void (const boost::optional<Decimal>& value)>;
 
       /**
        * Tests if a value is accepted by a DecimalBox, either because it is
@@ -79,15 +70,6 @@ namespace Styles {
         QWidget* parent = nullptr);
 
       /**
-       * Constructs a DecimalBox with a LocalValueModel.
-       * @param modifiers The initial keyboard modifier increments.
-       * @param initial_display How to initially display the input box.
-       * @param parent The parent widget.
-       */
-      DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
-        InitialDisplay initial_display, QWidget* parent = nullptr);
-
-      /**
        * Constructs a DecimalBox with 6 decimal places and no trailing zeros.
        * @param model The model used for the current value.
        * @param modifiers The initial keyboard modifier increments.
@@ -96,17 +78,6 @@ namespace Styles {
       DecimalBox(std::shared_ptr<DecimalModel> model,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
-
-      /**
-       * Constructs a DecimalBox with 6 decimal places and no trailing zeros.
-       * @param model The model used for the current value.
-       * @param modifiers The initial keyboard modifier increments.
-       * @param initial_display How to initially display the input box.
-       * @param parent The parent widget.
-       */
-      DecimalBox(std::shared_ptr<DecimalModel> model,
-        QHash<Qt::KeyboardModifier, Decimal> modifiers,
-        InitialDisplay initial_display, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
       const std::shared_ptr<DecimalModel>& get_model() const;
@@ -143,6 +114,8 @@ namespace Styles {
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
+      bool nativeEvent(const QByteArray& eventType, void* message,
+        long* result) override;
 
     private:
       struct DecimalToTextModel;
@@ -150,12 +123,13 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<DecimalModel> m_model;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
-      Decimal m_submission;
+      boost::optional<Decimal> m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       TextBox* m_text_box;
       QRegExp m_validator;
       Button* m_up_button;
       Button* m_down_button;
+      Qt::Orientation m_mouse_wheel_orientation;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;
@@ -165,7 +139,7 @@ namespace Styles {
       Decimal get_increment() const;
       void step_by(const Decimal& value);
       void update_button_positions();
-      void on_current(const Decimal& current);
+      void on_current(const boost::optional<Decimal>& current);
       void on_submit(const QString& submission);
       void on_reject(const QString& value);
       void on_style();

@@ -16,17 +16,17 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
     : Window(parent),
       m_key_bindings(std::move(key_bindings)),
       m_last_focus_was_key(false) {
-  set_fixed_body_size(scale(871, 442));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
+  body->setFixedSize(scale(871, 442));
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
-  Window::layout()->addWidget(body);
+  set_body(body);
   m_tab_widget = new TabWidget(TabWidget::PaddingStyle::NONE, this);
   layout->addWidget(m_tab_widget);
   auto task_keys_widget = new QWidget(m_tab_widget);

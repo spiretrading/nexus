@@ -29,11 +29,11 @@ QWidget* UiProfile::get_widget() {
   return m_widget;
 }
 
-void UiProfile::rebuild() {
+void UiProfile::remove_widget() {
   for(auto& property : m_properties) {
     property->disconnect();
   }
-  m_widget = m_factory(*this);
+  m_widget = nullptr;
 }
 
 void UiProfile::reset() {
