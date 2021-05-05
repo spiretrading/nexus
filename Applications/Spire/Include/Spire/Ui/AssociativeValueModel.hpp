@@ -1,6 +1,7 @@
 #ifndef SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #define SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
-#include <optional>
+#include <boost/container_hash/extensions.hpp>
+#include <boost/variant/detail/hash_variant.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
@@ -142,49 +143,50 @@ namespace Spire {
   }
 
   template <typename T>
-  class AssociativeValueModel<std::optional<T>> :
-      public ValueModel<std::optional<T>> {
+  class AssociativeValueModel<boost::optional<T>> :
+      public ValueModel<boost::optional<T>> {
     public:
 
       AssociativeValueModel();
 
       void associate(const std::shared_ptr<BooleanModel>& model,
-        const std::optional<T>& value);
+        const boost::optional<T>& value);
 
       std::shared_ptr<BooleanModel> make_association(
-        const std::optional<T>& value);
+        const boost::optional<T>& value);
 
       std::shared_ptr<BooleanModel> find(
-        const std::optional<T>& value) const;
+        const boost::optional<T>& value) const;
 
       QValidator::State get_state() const;
 
-      const std::optional<T>& get_current() const;
+      const boost::optional<T>& get_current() const;
 
-      QValidator::State set_current(const std::optional<T>& value);
+      QValidator::State set_current(const boost::optional<T>& value);
 
       boost::signals2::connection connect_current_signal(
-        const typename ValueModel<std::optional<T>>::CurrentSignal::slot_type& slot) const;
+        const typename ValueModel<boost::optional<T>>::CurrentSignal::slot_type& slot) const;
 
     private:
-      mutable typename ValueModel<std::optional<T>>::CurrentSignal m_current_signal;
-      std::optional<T> m_current;
-      std::unordered_map<std::optional<T>, AssociatedBooleanModel> m_models;
+      mutable typename ValueModel<boost::optional<T>>::CurrentSignal m_current_signal;
+      boost::optional<T> m_current;
+      std::unordered_map<boost::optional<T>, AssociatedBooleanModel,
+        boost::detail::variant::variant_hasher> m_models;
       bool m_is_blocked;
 
-      void set_associated_model_value(const std::optional<T>& value,
+      void set_associated_model_value(const boost::optional<T>& value,
         bool model_value);
-      void on_current(const std::optional<T>& value, bool is_selected);
+      void on_current(const boost::optional<T>& value, bool is_selected);
   };
 
   template <typename T>
-  AssociativeValueModel<std::optional<T>>::AssociativeValueModel()
+  AssociativeValueModel<boost::optional<T>>::AssociativeValueModel()
     : m_is_blocked(false) {}
 
   template <typename T>
-  void AssociativeValueModel<std::optional<T>>::associate(
+  void AssociativeValueModel<boost::optional<T>>::associate(
       const std::shared_ptr<BooleanModel>& model,
-      const std::optional<T>& value) {
+      const boost::optional<T>& value) {
     if(!value) {
       throw std::invalid_argument(
         "Associated BooleanModel must have a corresponding value.");
@@ -206,8 +208,8 @@ namespace Spire {
 
   template <typename T>
   std::shared_ptr<BooleanModel>
-      AssociativeValueModel<std::optional<T>>::make_association(
-      const std::optional<T>& value) {
+      AssociativeValueModel<boost::optional<T>>::make_association(
+      const boost::optional<T>& value) {
     auto model = std::make_shared<LocalBooleanModel>(false);
     associate(model, value);
     return model;
@@ -215,8 +217,8 @@ namespace Spire {
 
   template <typename T>
   std::shared_ptr<BooleanModel>
-      AssociativeValueModel<std::optional<T>>::find(
-      const std::optional<T>& value) const {
+      AssociativeValueModel<boost::optional<T>>::find(
+      const boost::optional<T>& value) const {
     auto iterator = m_models.find(value);
     if(iterator == m_models.end()) {
       return nullptr;
@@ -226,7 +228,7 @@ namespace Spire {
 
   template <typename T>
   QValidator::State
-      AssociativeValueModel<std::optional<T>>::get_state() const {
+      AssociativeValueModel<boost::optional<T>>::get_state() const {
     if(!m_models.empty()) {
       return QValidator::Acceptable;
     }
@@ -234,17 +236,17 @@ namespace Spire {
   }
 
   template <typename T>
-  const std::optional<T>&
-      AssociativeValueModel<std::optional<T>>::get_current() const {
+  const boost::optional<T>&
+      AssociativeValueModel<boost::optional<T>>::get_current() const {
     return m_current;
   }
 
   template <typename T>
-  QValidator::State AssociativeValueModel<std::optional<T>>::set_current(
-      const std::optional<T>& value) {
+  QValidator::State AssociativeValueModel<boost::optional<T>>::set_current(
+      const boost::optional<T>& value) {
     if(!value && m_current) {
       set_associated_model_value(m_current, false);
-      m_current_signal(std::nullopt);
+      m_current_signal(boost::none);
       return QValidator::Acceptable;
     } else if(auto iterator = m_models.find(value); iterator != m_models.end()) {
       set_associated_model_value(m_current, false);
@@ -258,14 +260,14 @@ namespace Spire {
 
   template <typename T>
   boost::signals2::connection
-      AssociativeValueModel<std::optional<T>>::connect_current_signal(
-      const typename ValueModel<std::optional<T>>::CurrentSignal::slot_type& slot) const {
+      AssociativeValueModel<boost::optional<T>>::connect_current_signal(
+      const typename ValueModel<boost::optional<T>>::CurrentSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 
   template <typename T>
-  void AssociativeValueModel<std::optional<T>>::set_associated_model_value(
-      const std::optional<T>& value, bool model_value) {
+  void AssociativeValueModel<boost::optional<T>>::set_associated_model_value(
+      const boost::optional<T>& value, bool model_value) {
     if(auto iterator = m_models.find(value); iterator != m_models.end()) {
       auto blocker = boost::signals2::shared_connection_block(
         iterator->second.m_connection);
@@ -274,8 +276,8 @@ namespace Spire {
   }
 
   template <typename T>
-  void AssociativeValueModel<std::optional<T>>::on_current(
-      const std::optional<T>& value, bool is_selected) {
+  void AssociativeValueModel<boost::optional<T>>::on_current(
+      const boost::optional<T>& value, bool is_selected) {
     if(m_is_blocked && is_selected) {
       set_associated_model_value(value, false);
       return;
