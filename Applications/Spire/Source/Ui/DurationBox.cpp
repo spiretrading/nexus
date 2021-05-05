@@ -16,6 +16,46 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  template<typename Model, typename M1, typename M2>
+  QValidator::State set_current(Model& model, const typename Model::Type& value,
+      std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
+        const optional<time_duration>& update) {
+    auto current = [&] () -> optional<time_duration> {
+      if(!value) {
+        auto s1 = m1.lock();
+        auto s2 = m2.lock();
+        if((!s1 || !s1->get_current()) && (!s2 || !s2->get_current())) {
+          return none;
+        }
+      }
+      return update;
+    }();
+    auto blocker = shared_connection_block(model.m_source_connection);
+    if(model.m_source->set_current(current) != QValidator::State::Invalid) {
+      auto state = QValidator::State::Acceptable;
+      model.m_state = state;
+      model.m_current = value;
+      model.m_current_signal(model.m_current);
+      return state;
+    }
+    return QValidator::State::Invalid;
+  }
+
+  template<typename Model, typename F>
+  void on_current(Model& model, const boost::optional<time_duration>& current,
+      F&& f) {
+    if(current) {
+      auto field = std::forward<F>(f)(*current);
+      if(!field && !model.m_current) {
+        return;
+      }
+      model.m_current = field;
+    } else {
+      model.m_current = none;
+    }
+    model.m_current_signal(model.m_current);
+  }
+
   struct HourModel : ScalarValueModel<optional<int>> {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
@@ -54,22 +94,9 @@ namespace {
     }
 
     QValidator::State set_current(const Type& value) {
-      auto update = [&] () -> optional<time_duration> {
-        if(!value) {
-          auto minutes = m_minutes.lock();
-          auto seconds = m_seconds.lock();
-          if((!minutes || !minutes->get_current()) &&
-              (!seconds || !seconds->get_current())) {
-            return none;
-          }
-        }
-        return m_source->get_current().get_value_or(hours(0)) +
-          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0));
-      }();
-      if(m_source->set_current(update) != QValidator::State::Invalid) {
-        return m_state;
-      }
-      return QValidator::State::Invalid;
+      return ::set_current(*this, value, m_minutes, m_seconds,
+        m_source->get_current().get_value_or(hours(0)) +
+          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
 
     connection connect_current_signal(
@@ -78,17 +105,8 @@ namespace {
     }
 
     void on_current(const optional<time_duration>& current) {
-      if(current) {
-        auto hours = static_cast<int>(current->hours());
-        if(hours != 0 || m_current) {
-          m_current = hours;
-        }
-        return;
-      } else {
-        m_current = none;
-      }
-      m_state = QValidator::State::Acceptable;
-      m_current_signal(m_current);
+      ::on_current(*this, current,
+        [] (auto current) { return static_cast<int>(current.hours()); });
     }
   };
 
@@ -130,22 +148,9 @@ namespace {
     }
 
     QValidator::State set_current(const Type& value) {
-      auto update = [&] () -> optional<time_duration> {
-        if(!value) {
-          auto hours = m_hours.lock();
-          auto seconds = m_seconds.lock();
-          if((!hours || !hours->get_current()) &&
-              (!seconds || !seconds->get_current())) {
-            return none;
-          }
-        }
-        return m_source->get_current().get_value_or(minutes(0)) +
-          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0));
-      }();
-      if(m_source->set_current(update) != QValidator::State::Invalid) {
-        return m_state;
-      }
-      return QValidator::State::Invalid;
+      return ::set_current(*this, value, m_hours, m_seconds,
+        m_source->get_current().get_value_or(minutes(0)) +
+          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
 
     connection connect_current_signal(
@@ -154,17 +159,8 @@ namespace {
     }
 
     void on_current(const optional<time_duration>& current) {
-      if(current) {
-        auto minutes = static_cast<int>(current->minutes());
-        if(minutes != 0 || m_current) {
-          m_current = minutes;
-        }
-        return;
-      } else {
-        m_current = none;
-      }
-      m_state = QValidator::State::Acceptable;
-      m_current_signal(m_current);
+      ::on_current(*this, current,
+        [] (auto current) { return static_cast<int>(current.minutes()); });
     }
   };
 
@@ -211,23 +207,10 @@ namespace {
     }
 
     QValidator::State set_current(const Type& value) {
-      auto update = [&] () -> optional<time_duration> {
-        if(!value) {
-          auto hours = m_hours.lock();
-          auto minutes = m_minutes.lock();
-          if((!hours || !hours->get_current()) &&
-              (!minutes || !minutes->get_current())) {
-            return none;
-          }
-        }
-        return m_source->get_current().get_value_or(seconds(0)) +
+      return ::set_current(*this, value, m_hours, m_minutes,
+        m_source->get_current().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
-            to_seconds(m_current.get_value_or(0));
-      }();
-      if(m_source->set_current(update) != QValidator::State::Invalid) {
-        return m_state;
-      }
-      return QValidator::State::Invalid;
+            to_seconds(m_current.get_value_or(0)));
     }
 
     connection connect_current_signal(
@@ -236,18 +219,10 @@ namespace {
     }
 
     void on_current(const optional<time_duration>& current) {
-      if(current) {
-        auto seconds = DecimalBox::Decimal((*current - hours(current->hours()) -
-          minutes(current->minutes())).total_milliseconds()) / 1000;
-        if(seconds != 0 || m_current) {
-          m_current = seconds;
-        }
-        return;
-      } else {
-        m_current = none;
-      }
-      m_state = QValidator::State::Acceptable;
-      m_current_signal(m_current);
+      ::on_current(*this, current, [] (auto current) {
+        return DecimalBox::Decimal((current - hours(current.hours()) -
+          minutes(current.minutes())).total_milliseconds()) / 1000;
+      });
     }
   };
 
@@ -258,21 +233,12 @@ namespace {
       set(BodyAlign(Qt::AlignCenter)).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(horizontal_padding(scale_width(4)));
+    style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(Hover()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    return style;
-  }
-
-  auto FOCUS_IN_STYLE(StyleSheet style) {
-    style.get(Any()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-    return style;
-  }
-
-  auto FOCUS_OUT_STYLE(StyleSheet style) {
-    style.get(Any()).set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
 
@@ -348,7 +314,7 @@ namespace {
 
   auto make_second_field(
       std::shared_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> model,
-      QWidget& event_filter) {
+        QWidget& event_filter) {
     auto field =
       new DecimalBox(std::move(model), create_modifiers<DecimalBox::Decimal>());
     field->setMinimumWidth(scale_width(44));
@@ -461,44 +427,43 @@ QSize DurationBox::sizeHint() const {
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    set_style(*this, FOCUS_IN_STYLE(get_style(*this)));
+    find_stylist(*this).match(Focus());
   } else if(event->type() == QEvent::FocusOut) {
     if(!m_hour_field->hasFocus() && !m_minute_field->hasFocus() &&
         !m_second_field->hasFocus()) {
-      set_style(*this, FOCUS_OUT_STYLE(get_style(*this)));
-      if(m_hour_field->get_model()->get_state() == QValidator::Acceptable &&
-          m_minute_field->get_model()->get_state() == QValidator::Acceptable &&
-          m_second_field->get_model()->get_state() == QValidator::Acceptable) {
-        on_submit();
-      }
+      find_stylist(*this).unmatch(Focus());
+      on_submit();
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void DurationBox::on_submit() {
-  auto minimum = m_model->get_minimum();
-  auto maximum = m_model->get_maximum();
-  if(minimum && m_model->get_current() < *minimum ||
-      maximum && m_model->get_current() > *maximum) {
+  if(m_model->get_state() != QValidator::State::Acceptable) {
     on_reject();
   } else {
     m_submission = m_model->get_current();
-    m_submit_signal(m_submission);
+    if(m_submission) {
+      if(!m_hour_field->get_model()->get_current()) {
+        m_hour_field->get_model()->set_current(0);
+      }
+      if(!m_minute_field->get_model()->get_current()) {
+        m_minute_field->get_model()->set_current(0);
+      }
+      if(!m_second_field->get_model()->get_current()) {
+        m_second_field->get_model()->set_current(DecimalBox::Decimal(0));
+      }
+    }
+    auto submission = m_submission;
+    m_submit_signal(submission);
   }
 }
 
 void DurationBox::on_reject() {
-  m_reject_signal(m_model->get_current());
-  auto minimum = m_model->get_minimum();
-  if(minimum && m_submission < *minimum) {
-    m_submission = *minimum;
-  }
-  auto maximum = m_model->get_maximum();
-  if(maximum && m_submission > *maximum) {
-    m_submission = *maximum;
-  }
-  m_model->set_current(m_submission);
+  auto current = m_model->get_current();
+  auto submission = m_submission;
+  m_reject_signal(current);
+  m_model->set_current(submission);
   if(m_is_warning_displayed) {
     display_warning_indicator(*this);
   }
