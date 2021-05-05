@@ -163,7 +163,6 @@ TEST_SUITE("AssociativeValueModel") {
     auto bool_model3 = std::make_shared<LocalBooleanModel>(false);
     model.associate(bool_model1, std::string("model1"));
     model.associate(bool_model2, std::string("model2"));
-    REQUIRE_THROWS(model.associate(bool_model3, boost::none));
     REQUIRE(bool_model1->get_current() == false);
     REQUIRE(bool_model2->get_current() == false);
     REQUIRE(model.get_current() == boost::none);
@@ -181,7 +180,6 @@ TEST_SUITE("AssociativeValueModel") {
     auto model = AssociativeValueModel<boost::optional<std::string>>();
     auto bool_model1 = model.make_association(std::string("model1"));
     auto bool_model2 = model.make_association(std::string("model2"));
-    REQUIRE_THROWS(model.make_association({}));
     REQUIRE(bool_model1->get_current() == false);
     REQUIRE(bool_model2->get_current() == false);
     REQUIRE(model.get_current() == boost::none);
