@@ -224,6 +224,8 @@ namespace Details {
         set_associated_model_value(m_current, true);
       }
       return;
+    } else if(!is_selected) {
+      return;
     }
     if(m_is_blocked) {
       set_associated_model_value(value, false);
