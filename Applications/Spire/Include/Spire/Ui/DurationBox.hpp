@@ -77,18 +77,11 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDurationModel> m_model;
       boost::optional<boost::posix_time::time_duration> m_submission;
-      Box* m_box;
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
-      TextBox* m_hour_minute_colon;
-      TextBox* m_minute_second_colon;
       bool m_is_warning_displayed;
 
-      void create_hour_field();
-      void create_minute_field();
-      void create_second_field();
-      void create_colons();
       void on_submit();
       void on_reject();
   };

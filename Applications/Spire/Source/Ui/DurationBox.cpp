@@ -19,6 +19,8 @@ namespace {
   struct HourModel : ScalarValueModel<optional<int>> {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
+    std::weak_ptr<OptionalIntegerModel> m_minutes;
+    std::weak_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> m_seconds;
     optional<int> m_current;
     QValidator::State m_state;
     scoped_connection m_source_connection;
@@ -52,15 +54,19 @@ namespace {
     }
 
     QValidator::State set_current(const Type& value) {
-      auto source_current = m_source->get_current();
-      auto self_current = hours(m_current.get_value_or(0));
-      auto updated_current = hours(value.get_value_or(0));
-      if(source_current) {
-        *source_current += updated_current - self_current;
-      } else {
-        source_current = updated_current - self_current;
-      }
-      if(m_source->set_current(source_current) != QValidator::State::Invalid) {
+      auto update = [&] () -> optional<time_duration> {
+        if(!value) {
+          auto minutes = m_minutes.lock();
+          auto seconds = m_seconds.lock();
+          if((!minutes || !minutes->get_current()) &&
+              (!seconds || !seconds->get_current())) {
+            return none;
+          }
+        }
+        return m_source->get_current().get_value_or(hours(0)) +
+          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0));
+      }();
+      if(m_source->set_current(update) != QValidator::State::Invalid) {
         return m_state;
       }
       return QValidator::State::Invalid;
@@ -73,7 +79,11 @@ namespace {
 
     void on_current(const optional<time_duration>& current) {
       if(current) {
-        m_current = static_cast<int>(current->hours());
+        auto hours = static_cast<int>(current->hours());
+        if(hours != 0 || m_current) {
+          m_current = hours;
+        }
+        return;
       } else {
         m_current = none;
       }
@@ -85,13 +95,18 @@ namespace {
   struct MinuteModel : ScalarValueModel<optional<int>> {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
+    std::weak_ptr<OptionalIntegerModel> m_hours;
+    std::weak_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> m_seconds;
     optional<int> m_current;
+    QValidator::State m_state;
+    scoped_connection m_source_connection;
 
     MinuteModel(std::shared_ptr<OptionalDurationModel> source)
-        : m_source(std::move(source)) {
-      m_source->connect_current_signal([=] (const auto& current) {
-        on_current(current);
-      });
+        : m_source(std::move(source)),
+          m_state(m_source->get_state()),
+          m_source_connection(m_source->connect_current_signal(
+            [=] (const auto& current) { on_current(current); })) {
+      on_current(m_source->get_current());
     }
 
     optional<int> get_minimum() const {
@@ -107,7 +122,7 @@ namespace {
     }
 
     QValidator::State get_state() const {
-      return QValidator::State::Invalid;
+      return m_state;
     }
 
     const optional<int>& get_current() const {
@@ -115,6 +130,21 @@ namespace {
     }
 
     QValidator::State set_current(const Type& value) {
+      auto update = [&] () -> optional<time_duration> {
+        if(!value) {
+          auto hours = m_hours.lock();
+          auto seconds = m_seconds.lock();
+          if((!hours || !hours->get_current()) &&
+              (!seconds || !seconds->get_current())) {
+            return none;
+          }
+        }
+        return m_source->get_current().get_value_or(minutes(0)) +
+          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0));
+      }();
+      if(m_source->set_current(update) != QValidator::State::Invalid) {
+        return m_state;
+      }
       return QValidator::State::Invalid;
     }
 
@@ -125,23 +155,39 @@ namespace {
 
     void on_current(const optional<time_duration>& current) {
       if(current) {
-        set_current(static_cast<int>(current->minutes()));
+        auto minutes = static_cast<int>(current->minutes());
+        if(minutes != 0 || m_current) {
+          m_current = minutes;
+        }
+        return;
       } else {
-        set_current(none);
+        m_current = none;
       }
+      m_state = QValidator::State::Acceptable;
+      m_current_signal(m_current);
     }
   };
 
   struct SecondModel : ScalarValueModel<optional<DecimalBox::Decimal>> {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
+    std::weak_ptr<OptionalIntegerModel> m_hours;
+    std::weak_ptr<OptionalIntegerModel> m_minutes;
     optional<DecimalBox::Decimal> m_current;
+    QValidator::State m_state;
+    scoped_connection m_source_connection;
+
+    static auto to_seconds(const DecimalBox::Decimal& decimal) {
+      return milliseconds(static_cast<time_duration::sec_type>(
+        (1000 * decimal).convert_to<double>()));
+    }
 
     SecondModel(std::shared_ptr<OptionalDurationModel> source)
-        : m_source(std::move(source)) {
-      m_source->connect_current_signal([=] (const auto& current) {
-        on_current(current);
-      });
+        : m_source(std::move(source)),
+          m_state(m_source->get_state()),
+          m_source_connection(m_source->connect_current_signal(
+            [=] (const auto& current) { on_current(current); })) {
+      on_current(m_source->get_current());
     }
 
     optional<DecimalBox::Decimal> get_minimum() const {
@@ -153,11 +199,11 @@ namespace {
     }
 
     DecimalBox::Decimal get_increment() const {
-      return 1;
+      return DecimalBox::Decimal("0.001");
     }
 
     QValidator::State get_state() const {
-      return QValidator::State::Invalid;
+      return m_state;
     }
 
     const optional<DecimalBox::Decimal>& get_current() const {
@@ -165,6 +211,22 @@ namespace {
     }
 
     QValidator::State set_current(const Type& value) {
+      auto update = [&] () -> optional<time_duration> {
+        if(!value) {
+          auto hours = m_hours.lock();
+          auto minutes = m_minutes.lock();
+          if((!hours || !hours->get_current()) &&
+              (!minutes || !minutes->get_current())) {
+            return none;
+          }
+        }
+        return m_source->get_current().get_value_or(seconds(0)) +
+          to_seconds(value.get_value_or(0)) -
+            to_seconds(m_current.get_value_or(0));
+      }();
+      if(m_source->set_current(update) != QValidator::State::Invalid) {
+        return m_state;
+      }
       return QValidator::State::Invalid;
     }
 
@@ -175,12 +237,17 @@ namespace {
 
     void on_current(const optional<time_duration>& current) {
       if(current) {
-        auto seconds = (*current - hours(current->hours()) -
-          minutes(current->minutes())).total_milliseconds() / 1000;
-        set_current(DecimalBox::Decimal(seconds));
+        auto seconds = DecimalBox::Decimal((*current - hours(current->hours()) -
+          minutes(current->minutes())).total_milliseconds()) / 1000;
+        if(seconds != 0 || m_current) {
+          m_current = seconds;
+        }
+        return;
       } else {
-        set_current(none);
+        m_current = none;
       }
+      m_state = QValidator::State::Acceptable;
+      m_current_signal(m_current);
     }
   };
 
@@ -256,6 +323,50 @@ namespace {
       {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
        {Qt::ShiftModifier, 20}});
   }
+
+  auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
+      QWidget& event_filter) {
+    auto field = new IntegerBox(std::move(model), create_modifiers<int>());
+    field->setMinimumWidth(scale_width(24));
+    field->set_placeholder("hh");
+    field->set_warning_displayed(false);
+    set_style(*field, HOUR_FIELD_STYLE(get_style(*field)));
+    field->findChild<QLineEdit*>()->installEventFilter(&event_filter);
+    return field;
+  }
+
+  auto make_minute_field(std::shared_ptr<OptionalIntegerModel> model,
+      QWidget& event_filter) {
+    auto field = new IntegerBox(std::move(model), create_modifiers<int>());
+    field->setMinimumWidth(scale_width(28));
+    field->set_placeholder("mm");
+    field->set_warning_displayed(false);
+    set_style(*field, MINUTE_FIELD_STYLE(get_style(*field)));
+    field->findChild<QLineEdit*>()->installEventFilter(&event_filter);
+    return field;
+  }
+
+  auto make_second_field(
+      std::shared_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> model,
+      QWidget& event_filter) {
+    auto field =
+      new DecimalBox(std::move(model), create_modifiers<DecimalBox::Decimal>());
+    field->setMinimumWidth(scale_width(44));
+    field->set_placeholder("ss.sss");
+    field->set_warning_displayed(false);
+    set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
+    field->findChild<QLineEdit*>()->installEventFilter(&event_filter);
+    return field;
+  }
+
+  auto make_colon() {
+    auto colon = new TextBox(":");
+    colon->setFixedWidth(scale_width(10));
+    colon->setEnabled(false);
+    colon->set_read_only(true);
+    find_stylist(*colon).match(Colon());
+    return colon;
+  }
 }
 
 DurationBox::DurationBox(QWidget* parent)
@@ -269,26 +380,36 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
       m_is_warning_displayed(true) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  create_hour_field();
-  create_minute_field();
-  create_second_field();
-  create_colons();
+  auto hour_model = std::make_shared<HourModel>(m_model);
+  auto minute_model = std::make_shared<MinuteModel>(m_model);
+  auto second_model = std::make_shared<SecondModel>(m_model);
+  hour_model->m_minutes = minute_model;
+  hour_model->m_seconds = second_model;
+  minute_model->m_hours = hour_model;
+  minute_model->m_seconds = second_model;
+  second_model->m_hours = hour_model;
+  second_model->m_minutes = minute_model;
+  m_hour_field = make_hour_field(std::move(hour_model), *this);
+  m_minute_field = make_minute_field(std::move(minute_model), *this);
+  m_second_field = make_second_field(std::move(second_model), *this);
+  auto hour_minute_colon = make_colon();
+  auto minute_second_colon = make_colon();
   auto container_layout = new QHBoxLayout(container);
   container_layout->setContentsMargins({});
   container_layout->setSpacing(0);
   container_layout->addWidget(m_hour_field, 6);
-  container_layout->addWidget(m_hour_minute_colon);
+  container_layout->addWidget(hour_minute_colon);
   container_layout->addWidget(m_minute_field, 7);
-  container_layout->addWidget(m_minute_second_colon);
+  container_layout->addWidget(minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
   set_style(*container, COLON_FIELD_STYLE(get_style(*container)));
-  m_box = new Box(container);
+  auto box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(m_box);
+  layout->addWidget(box);
   setFocusPolicy(Qt::StrongFocus);
-  setFocusProxy(m_box);
-  proxy_style(*this, *m_box);
+  setFocusProxy(box);
+  proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
     if(m_hour_field->hasFocus()) {
@@ -353,49 +474,6 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void DurationBox::create_hour_field() {
-  m_hour_field = new IntegerBox(std::make_shared<HourModel>(m_model),
-    create_modifiers<int>());
-  m_hour_field->setMinimumWidth(scale_width(24));
-  m_hour_field->set_placeholder("hh");
-  m_hour_field->set_warning_displayed(false);
-  set_style(*m_hour_field, HOUR_FIELD_STYLE(get_style(*m_hour_field)));
-  m_hour_field->findChild<QLineEdit*>()->installEventFilter(this);
-}
-
-void DurationBox::create_minute_field() {
-  m_minute_field = new IntegerBox(std::make_shared<MinuteModel>(m_model),
-    create_modifiers<int>());
-  m_minute_field->setMinimumWidth(scale_width(28));
-  m_minute_field->set_placeholder("mm");
-  m_minute_field->set_warning_displayed(false);
-  set_style(*m_minute_field, MINUTE_FIELD_STYLE(get_style(*m_minute_field)));
-  m_minute_field->findChild<QLineEdit*>()->installEventFilter(this);
-}
-
-void DurationBox::create_second_field() {
-  m_second_field = new DecimalBox(std::make_shared<SecondModel>(m_model),
-    create_modifiers<DecimalBox::Decimal>());
-  m_second_field->setMinimumWidth(scale_width(44));
-  m_second_field->set_placeholder("ss.sss");
-  m_second_field->set_warning_displayed(false);
-  set_style(*m_second_field, SECOND_FIELD_STYLE(get_style(*m_second_field)));
-  m_second_field->findChild<QLineEdit*>()->installEventFilter(this);
-}
-
-void DurationBox::create_colons() {
-  m_hour_minute_colon = new TextBox(":");
-  m_hour_minute_colon->setFixedWidth(scale_width(10));
-  m_hour_minute_colon->setEnabled(false);
-  m_hour_minute_colon->set_read_only(true);
-  m_minute_second_colon = new TextBox(":");
-  m_minute_second_colon->setFixedWidth(scale_width(10));
-  m_minute_second_colon->setEnabled(false);
-  m_minute_second_colon->set_read_only(true);
-  find_stylist(*m_hour_minute_colon).match(Colon());
-  find_stylist(*m_minute_second_colon).match(Colon());
 }
 
 void DurationBox::on_submit() {
