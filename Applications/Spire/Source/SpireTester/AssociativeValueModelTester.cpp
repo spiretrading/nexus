@@ -24,6 +24,10 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE_FALSE(bool_model1->get_current());
     REQUIRE(bool_model2->get_current());
     REQUIRE(model.get_current() == "model2");
+    bool_model1->set_current(false);
+    REQUIRE_FALSE(bool_model1->get_current());
+    REQUIRE(bool_model2->get_current());
+    REQUIRE(model.get_current() == "model2");
   }
 
   TEST_CASE("make_association") {
@@ -171,6 +175,10 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE_FALSE(bool_model2->get_current());
     REQUIRE(*model.get_current() == "model1");
     bool_model2->set_current(true);
+    REQUIRE_FALSE(bool_model1->get_current());
+    REQUIRE(bool_model2->get_current());
+    REQUIRE(*model.get_current() == "model2");
+    bool_model1->set_current(false);
     REQUIRE_FALSE(bool_model1->get_current());
     REQUIRE(bool_model2->get_current());
     REQUIRE(*model.get_current() == "model2");
