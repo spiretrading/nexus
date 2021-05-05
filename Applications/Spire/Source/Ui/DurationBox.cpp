@@ -290,6 +290,14 @@ namespace {
        {Qt::ShiftModifier, 20}});
   }
 
+  QWidget* find_focus_proxy(QWidget& widget) {
+    auto proxy = &widget;
+    while(proxy->focusProxy()) {
+      proxy = proxy->focusProxy();
+    }
+    return proxy;
+  }
+
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
       QWidget& event_filter) {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
@@ -297,7 +305,7 @@ namespace {
     field->set_placeholder("hh");
     field->set_warning_displayed(false);
     set_style(*field, HOUR_FIELD_STYLE(get_style(*field)));
-    field->findChild<QLineEdit*>()->installEventFilter(&event_filter);
+    find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
 
@@ -308,7 +316,7 @@ namespace {
     field->set_placeholder("mm");
     field->set_warning_displayed(false);
     set_style(*field, MINUTE_FIELD_STYLE(get_style(*field)));
-    field->findChild<QLineEdit*>()->installEventFilter(&event_filter);
+    find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
 
@@ -321,7 +329,7 @@ namespace {
     field->set_placeholder("ss.sss");
     field->set_warning_displayed(false);
     set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
-    field->findChild<QLineEdit*>()->installEventFilter(&event_filter);
+    find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
 
