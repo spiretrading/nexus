@@ -1,7 +1,5 @@
 #ifndef SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #define SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
-#include <boost/container_hash/extensions.hpp>
-#include <boost/variant/detail/hash_variant.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
@@ -168,13 +166,13 @@ namespace Spire {
         const typename ValueModel<boost::optional<T>>::CurrentSignal::slot_type& slot) const;
 
     private:
-      mutable typename ValueModel<boost::optional<T>>::CurrentSignal m_current_signal;
+      mutable typename ValueModel<boost::optional<T>>::CurrentSignal
+        m_current_signal;
       boost::optional<T> m_current;
-      std::unordered_map<boost::optional<T>, AssociatedBooleanModel,
-        boost::detail::variant::variant_hasher> m_models;
+      std::unordered_map<T, AssociatedBooleanModel> m_models;
       bool m_is_blocked;
 
-      void set_associated_model_value(const boost::optional<T>& value,
+      void set_associated_model_value(const T& value,
         bool model_value);
       void on_current(const boost::optional<T>& value, bool is_selected);
   };
@@ -191,15 +189,15 @@ namespace Spire {
       throw std::invalid_argument(
         "Associated BooleanModel must have a corresponding value.");
     }
-    if(m_models.find(value) != m_models.end()) {
+    if(m_models.find(*value) != m_models.end()) {
       return;
     }
 
-    m_models[value] = {model, model->connect_current_signal(
+    m_models[*value] = {model, model->connect_current_signal(
       [=] (auto is_selected) { on_current(value, is_selected); })};
     if(model->get_current() == true) {
       if(m_current) {
-        set_associated_model_value(value, false);
+        set_associated_model_value(*value, false);
       } else {
         set_current(value);
       }
@@ -219,11 +217,14 @@ namespace Spire {
   std::shared_ptr<BooleanModel>
       AssociativeValueModel<boost::optional<T>>::find(
       const boost::optional<T>& value) const {
-    auto iterator = m_models.find(value);
-    if(iterator == m_models.end()) {
+    if(!value) {
       return nullptr;
     }
-    return iterator->second.m_model;
+    
+    if(auto iterator = m_models.find(*value); iterator != m_models.end()) {
+      return iterator->second.m_model;
+    }
+    return nullptr;
   }
 
   template <typename T>
@@ -244,18 +245,15 @@ namespace Spire {
   template <typename T>
   QValidator::State AssociativeValueModel<boost::optional<T>>::set_current(
       const boost::optional<T>& value) {
-    if(!value && m_current) {
-      set_associated_model_value(m_current, false);
-      m_current_signal(boost::none);
-      return QValidator::Acceptable;
-    } else if(auto iterator = m_models.find(value); iterator != m_models.end()) {
-      set_associated_model_value(m_current, false);
-      m_current = value;
-      set_associated_model_value(m_current, true);
-      m_current_signal(m_current);
-      return QValidator::Acceptable;
+    if(value && m_models.find(*value) == m_models.end()) {
+      return QValidator::Invalid;
     }
-    return QValidator::Invalid;
+    if(m_current) {
+      set_associated_model_value(*m_current, false);
+    }
+    m_current = value;
+    m_current_signal(m_current);
+    return QValidator::Acceptable;
   }
 
   template <typename T>
@@ -267,7 +265,7 @@ namespace Spire {
 
   template <typename T>
   void AssociativeValueModel<boost::optional<T>>::set_associated_model_value(
-      const boost::optional<T>& value, bool model_value) {
+      const T& value, bool model_value) {
     if(auto iterator = m_models.find(value); iterator != m_models.end()) {
       auto blocker = boost::signals2::shared_connection_block(
         iterator->second.m_connection);
@@ -279,7 +277,7 @@ namespace Spire {
   void AssociativeValueModel<boost::optional<T>>::on_current(
       const boost::optional<T>& value, bool is_selected) {
     if(m_is_blocked && is_selected) {
-      set_associated_model_value(value, false);
+      set_associated_model_value(*value, false);
       return;
     }
     if(is_selected) {

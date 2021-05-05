@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <boost/optional/optional_io.hpp>
 #include "Spire/Ui/AssociativeValueModel.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
 
@@ -218,7 +219,7 @@ TEST_SUITE("AssociativeValueModel") {
     model.associate(bool_model1, std::string("model1"));
     REQUIRE(model.get_current() == boost::none);
     bool_model1->set_current(true);
-    REQUIRE(model.get_current() == std::string("model1"));
+    REQUIRE(*model.get_current() == "model1");
   }
 
   TEST_CASE("optional_set_current") {
@@ -248,13 +249,13 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(signal_count == 0);
     auto bool_model2 = std::make_shared<LocalBooleanModel>(true);
     model.associate(bool_model2, std::string("model2"));
-    REQUIRE(current_value == std::string("model2"));
+    REQUIRE(*current_value == "model2");
     REQUIRE(signal_count == 1);
     bool_model1->set_current(true);
-    REQUIRE(current_value == std::string("model1"));
+    REQUIRE(*current_value == "model1");
     REQUIRE(signal_count == 2);
     model.set_current(std::string("model2"));
-    REQUIRE(current_value == std::string("model2"));
+    REQUIRE(*current_value == "model2");
     REQUIRE(signal_count == 3);
     model.set_current(boost::none);
     REQUIRE(current_value == boost::none);
@@ -268,18 +269,18 @@ TEST_SUITE("AssociativeValueModel") {
     model.associate(bool_model1, std::string("model1"));
     model.associate(bool_model2, std::string("model2"));
     model.connect_current_signal([=] (const auto& current) {
-      if(current == "model1") {
+      if(*current == "model1") {
         bool_model2->set_current(true);
       } else {
         bool_model1->set_current(true);
       }
     });
     bool_model2->set_current(true);
-    REQUIRE(model.get_current() == std::string("model2"));
+    REQUIRE(*model.get_current() == "model2");
     bool_model2->set_current(false);
-    REQUIRE(model.get_current() == std::string("model2"));
+    REQUIRE(*model.get_current() == "model2");
     bool_model1->set_current(true);
-    REQUIRE(model.get_current() == std::string("model1"));
+    REQUIRE(*model.get_current() == "model1");
     REQUIRE(bool_model1->get_current() == true);
     REQUIRE(bool_model2->get_current() == false);
   }
