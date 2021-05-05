@@ -13,8 +13,8 @@ namespace Details {
 }
 
   /** 
-  * Associates multiple BooleanModels, ensuring that only a single model
-  * has a value of true.
+  * Associates BooleanModels with corresponding values, and ensures that
+  * only a single model has a value of true at one time.
   */
   template <typename T>
   class AssociativeValueModel : public ValueModel<T> {
@@ -241,7 +241,6 @@ namespace Details {
     if(m_models.find(value) != m_models.end()) {
       return;
     }
-
     m_models[value] = {model, model->connect_current_signal(
       [=] (auto is_selected) { on_current(value, is_selected); })};
     if(model->get_current() == true) {
