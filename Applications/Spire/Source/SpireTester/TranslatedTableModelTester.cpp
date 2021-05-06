@@ -199,10 +199,10 @@ TEST_SUITE("TranslatedTableModel") {
       });
     });
     REQUIRE(signal_count == 1);
-    REQUIRE(translation.get<int>(0, 0) == 1);
+    REQUIRE(translation.get<int>(0, 0) == 9);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
-    REQUIRE(translation.get<int>(3, 0) == 9);
+    REQUIRE(translation.get<int>(3, 0) == 1);
     REQUIRE(source->get<int>(0, 0) == 4);
     REQUIRE(source->get<int>(1, 0) == 1);
     REQUIRE(source->get<int>(2, 0) == 2);
@@ -264,7 +264,7 @@ TEST_SUITE("TranslatedTableModel") {
         ++signal_count;
         auto add_operation = get<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
-        REQUIRE(add_operation->m_index == translation.get_row_size() - 1);
+        REQUIRE(add_operation->m_index == 3);
       }));
     source->insert({6}, 2);
     REQUIRE(signal_count == 1);
@@ -276,8 +276,8 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
-    REQUIRE(translation.get<int>(3, 0) == 9);
-    REQUIRE(translation.get<int>(4, 0) == 6);
+    REQUIRE(translation.get<int>(3, 0) == 6);
+    REQUIRE(translation.get<int>(4, 0) == 9);
     REQUIRE(translation.get_row_size() == 5);
   }
 
@@ -441,7 +441,7 @@ TEST_SUITE("TranslatedTableModel") {
           },
           [&] (const TableModel::RemoveOperation& remove_operation) {
             ++remove_count;
-            REQUIRE(remove_operation.m_index == 0);
+            REQUIRE(remove_operation.m_index == 1);
           },
           [&] (const TableModel::UpdateOperation& update_operation) {
             ++update_count;
@@ -461,7 +461,7 @@ TEST_SUITE("TranslatedTableModel") {
       });
       source->move(3, 0);
     });
-    REQUIRE(signal_count == 5);
+    REQUIRE(signal_count == 1);
     REQUIRE(add_count == 3);
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 1);
@@ -471,9 +471,9 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(source->get<int>(2, 0) == 6);
     REQUIRE(source->get<int>(3, 0) == 4);
     REQUIRE(source->get_row_size() == 4);
-    REQUIRE(translation.get<int>(0, 0) == 10);
-    REQUIRE(translation.get<int>(1, 0) == 4);
-    REQUIRE(translation.get<int>(2, 0) == 6);
+    REQUIRE(translation.get<int>(0, 0) == 6);
+    REQUIRE(translation.get<int>(1, 0) == 10);
+    REQUIRE(translation.get<int>(2, 0) == 4);
     REQUIRE(translation.get<int>(3, 0) == 0);
     REQUIRE(translation.get_row_size() == 4);
   }

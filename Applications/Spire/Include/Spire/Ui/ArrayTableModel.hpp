@@ -1,6 +1,7 @@
 #ifndef SPIRE_ARRAY_TABLE_MODEL_HPP
 #define SPIRE_ARRAY_TABLE_MODEL_HPP
 #include "Spire/Ui/TableModel.hpp"
+#include "Spire/Ui/TableModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -10,7 +11,7 @@ namespace Spire {
     public:
 
       /** Constructs an empty ArrayTableModel. */
-      ArrayTableModel();
+      ArrayTableModel() = default;
 
       /**
        * Takes a callable function and invokes it. All operations performed on
@@ -73,37 +74,13 @@ namespace Spire {
         const typename OperationSignal::slot_type& slot) const override;
 
     private:
-      struct ScopeExit {
-        std::function<void ()> m_f;
-        ScopeExit(std::function<void()> f);
-        ~ScopeExit();
-      };
-      mutable OperationSignal m_operation_signal;
       std::vector<std::vector<std::any>> m_data;
-      Transaction m_transaction;
-      int m_transaction_level;
-
-      void push(Operation&& operation);
+      TableModelTransactionLog m_transaction;
   };
 
   template<typename F>
   decltype(auto) ArrayTableModel::transact(F&& transaction) {
-    ++m_transaction_level;
-    auto on_exit = ScopeExit([&] {
-      --m_transaction_level;
-      if(m_transaction_level != 0) {
-        return;
-      }
-      auto transaction = std::move(m_transaction);
-      if(transaction.m_operations.empty()) {
-        return;
-      } else if(transaction.m_operations.size() == 1) {
-        m_operation_signal(transaction.m_operations.front());
-      } else {
-        m_operation_signal(transaction);
-      }
-    });
-    return std::forward<F>(transaction)();
+    return m_transaction.transact(std::forward<F>(transaction));
   }
 }
 
