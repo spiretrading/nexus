@@ -219,7 +219,7 @@ namespace {
     }
 
     void on_current(const optional<time_duration>& current) {
-      ::on_current(*this, current, [] (auto current) {
+      ::on_current(*this, current, [] (auto current) -> DecimalBox::Decimal {
         return DecimalBox::Decimal((current - hours(current.hours()) -
           minutes(current.minutes())).total_milliseconds()) / 1000;
       });
