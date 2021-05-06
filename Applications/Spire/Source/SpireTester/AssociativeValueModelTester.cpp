@@ -125,7 +125,7 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(signal_count == 2);
   }
 
-  TEST_CASE("default_model_values") {
+  TEST_CASE("default_instance_values") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
     model.associate(bool_model1, "model1");
@@ -136,6 +136,21 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(model.get_current() == "model1");
     REQUIRE(bool_model1->get_current());
     REQUIRE_FALSE(bool_model2->get_current());
+  }
+
+  TEST_CASE("default_value") {
+    auto model = AssociativeValueModel<std::string>();
+    auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
+    auto bool_model2 = std::make_shared<LocalBooleanModel>(false);
+    model.associate(bool_model1, "model1");
+    model.associate(bool_model2, "model2");
+    model.set_default_value("model2");
+    REQUIRE(bool_model1->get_current());
+    REQUIRE_FALSE(bool_model2->get_current());
+    bool_model1->set_current(false);
+    REQUIRE(model.get_current() == "model2");
+    REQUIRE_FALSE(bool_model1->get_current());
+    REQUIRE(bool_model2->get_current());
   }
 
   TEST_CASE("reentrant") {

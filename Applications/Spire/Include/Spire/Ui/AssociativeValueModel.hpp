@@ -54,8 +54,7 @@ namespace Details {
 
       /**
       * Sets which value should become current if all associated models have
-      * a value of false. If the the given value is none, the default value
-      * is ignored and the most recently true model is reverted back to true.
+      * a value of false.
       * @param value The default value.
       * @return Acceptable if default value was set successfully, Invalid
       *         otherwise.
