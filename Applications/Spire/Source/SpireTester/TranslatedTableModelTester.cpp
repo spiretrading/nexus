@@ -1,3 +1,4 @@
+#include <deque>
 #include <doctest/doctest.h>
 #include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/TranslatedTableModel.hpp"
@@ -6,56 +7,53 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  template<typename... F>
+  decltype(auto) test_operation(
+      const TableModel::Operation& operation, F&&... f) {
+    return visit(
+      operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
+  }
+}
+
 TEST_SUITE("TranslatedTableModel") {
   TEST_CASE("translate") {
     auto source = std::make_shared<ArrayTableModel>();
-    auto empty_translation = TranslatedTableModel(source);
-    REQUIRE(empty_translation.get_row_size() == 0);
-    REQUIRE(empty_translation.get_column_size() == 0);
     source->push({4});
     source->push({2});
     source->push({9});
     source->push({1});
-    auto signal_count = 0;
-    auto source_row = 0;
-    auto destination_row = 0;
     auto translation = TranslatedTableModel(source);
-    auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto move_operation = get<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source_row);
-        REQUIRE(move_operation->m_destination == destination_row);
-      }));
-    source_row = 3;
-    destination_row = 0;
-    REQUIRE_NOTHROW(translation.move(source_row, destination_row));
-    REQUIRE(signal_count == 1);
+    auto operations = std::deque<TableModel::Operation>();
+    translation.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    REQUIRE_NOTHROW(translation.move(3, 0));
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
+      REQUIRE(operation.m_source == 3);
+      REQUIRE(operation.m_destination == 0);
+    });
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 4);
     REQUIRE(translation.get<int>(2, 0) == 2);
     REQUIRE(translation.get<int>(3, 0) == 9);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 1);
-    source_row = 0;
-    destination_row = 6;
-    REQUIRE_THROWS(translation.move(source_row, destination_row));
-    REQUIRE(signal_count == 1);
-    source_row = 1;
-    destination_row = 2;
-    REQUIRE_NOTHROW(translation.move(source_row, destination_row));
-    REQUIRE(signal_count == 2);
+    REQUIRE_THROWS(translation.move(6, 2));
+    REQUIRE(operations.empty());
+    REQUIRE_NOTHROW(translation.move(1, 2));
+    REQUIRE(operations.size() == 1);
+    operation = operations.front();
+    operations.pop_front();
+    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
+      REQUIRE(operation.m_source == 1);
+      REQUIRE(operation.m_destination == 2);
+    });
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
     REQUIRE(translation.get<int>(3, 0) == 9);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 1);
   }
 
   TEST_CASE("transaction") {
@@ -66,15 +64,11 @@ TEST_SUITE("TranslatedTableModel") {
     source->push({9});
     source->push({1});
     source->push({6});
-    auto signal_count = 0;
     auto translation = TranslatedTableModel(source);
-    auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto transaction = get<TableModel::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 4);
-      }));
+    auto operations = std::deque<TableModel::Operation>();
+    translation.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
     translation.transact([&] {
       translation.move(4, 0);
       translation.transact([&] {
@@ -85,19 +79,20 @@ TEST_SUITE("TranslatedTableModel") {
         translation.move(4, 3);
       });
     });
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    auto move_count = 0;
+    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
+      ++move_count;
+    });
+    REQUIRE(move_count == 4);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
     REQUIRE(translation.get<int>(3, 0) == 6);
     REQUIRE(translation.get<int>(4, 0) == 9);
     REQUIRE(translation.get<int>(5, 0) == 10);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 10);
-    REQUIRE(source->get<int>(3, 0) == 9);
-    REQUIRE(source->get<int>(4, 0) == 1);
-    REQUIRE(source->get<int>(5, 0) == 6);
   }
 
   TEST_CASE("transaction_with_one_operation") {
@@ -107,25 +102,24 @@ TEST_SUITE("TranslatedTableModel") {
     source->push({6});
     auto signal_count = 0;
     auto translation = TranslatedTableModel(source);
-    auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto move_operation = get<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == 0);
-        REQUIRE(move_operation->m_destination == 2);
-      }));
+    auto operations = std::deque<TableModel::Operation>();
+    translation.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
     translation.transact([&] {
       translation.move(0, 2);
-      translation.transact([&] {});
+      translation.transact([] {});
     });
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
+      REQUIRE(operation.m_source == 0);
+      REQUIRE(operation.m_destination == 2);
+    });
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 6);
     REQUIRE(translation.get<int>(2, 0) == 4);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 1);
-    REQUIRE(source->get<int>(2, 0) == 6);
   }
 
   TEST_CASE("transaction_reentrant") {
@@ -165,12 +159,6 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(3, 0) == 6);
     REQUIRE(translation.get<int>(4, 0) == 9);
     REQUIRE(translation.get<int>(5, 0) == 10);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 10);
-    REQUIRE(source->get<int>(3, 0) == 9);
-    REQUIRE(source->get<int>(4, 0) == 1);
-    REQUIRE(source->get<int>(5, 0) == 6);
   }
 
   TEST_CASE("transaction_mixing_with_source_operation") {
@@ -203,10 +191,6 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
     REQUIRE(translation.get<int>(3, 0) == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 1);
-    REQUIRE(source->get<int>(2, 0) == 2);
-    REQUIRE(source->get<int>(3, 0) == 9);
   }
 
   TEST_CASE("push_from_source") {
@@ -232,11 +216,6 @@ TEST_SUITE("TranslatedTableModel") {
       }));
     source->push({6});
     REQUIRE(signal_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 1);
-    REQUIRE(source->get<int>(4, 0) == 6);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -268,11 +247,6 @@ TEST_SUITE("TranslatedTableModel") {
       }));
     source->insert({6}, 2);
     REQUIRE(signal_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 6);
-    REQUIRE(source->get<int>(3, 0) == 9);
-    REQUIRE(source->get<int>(4, 0) == 1);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -301,24 +275,45 @@ TEST_SUITE("TranslatedTableModel") {
       }));
     source->move(1, 3);
     REQUIRE(signal_count == 0);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 9);
-    REQUIRE(source->get<int>(2, 0) == 1);
-    REQUIRE(source->get<int>(3, 0) == 2);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
     REQUIRE(translation.get<int>(3, 0) == 9);
     source->move(2, 0);
     REQUIRE(signal_count == 0);
-    REQUIRE(source->get<int>(0, 0) == 1);
-    REQUIRE(source->get<int>(1, 0) == 4);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 2);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
     REQUIRE(translation.get<int>(3, 0) == 9);
+  }
+
+  TEST_CASE("trivial_move") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({std::string("A")});
+    source->push({std::string("B")});
+    source->push({std::string("C")});
+    auto translation = TranslatedTableModel(source);
+    auto operations = std::deque<TableModel::Operation>();
+    translation.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    source->move(0, 2);
+    REQUIRE(operations.size() == 0);
+    source->set(2, 0, std::string("D"));
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    visit(operation,
+      [&] (const TableModel::UpdateOperation& operation) {
+        REQUIRE(operation.m_row == 0);
+        REQUIRE(operation.m_column == 0);
+      },
+      [] (const auto&) {
+        REQUIRE(false);
+      });
+    REQUIRE(translation.get<std::string>(0, 0) == "D");
+    REQUIRE(translation.get<std::string>(1, 0) == "B");
+    REQUIRE(translation.get<std::string>(2, 0) == "C");
   }
 
   TEST_CASE("remove_from_source") {
@@ -346,9 +341,6 @@ TEST_SUITE("TranslatedTableModel") {
     removed_row = 2;
     source->remove(0);
     REQUIRE(signal_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 2);
-    REQUIRE(source->get<int>(1, 0) == 9);
-    REQUIRE(source->get<int>(2, 0) == 1);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 9);
@@ -357,8 +349,6 @@ TEST_SUITE("TranslatedTableModel") {
     removed_row = 0;
     source->remove(2);
     REQUIRE(signal_count == 2);
-    REQUIRE(source->get<int>(0, 0) == 2);
-    REQUIRE(source->get<int>(1, 0) == 9);
     REQUIRE(translation.get<int>(0, 0) == 2);
     REQUIRE(translation.get<int>(1, 0) == 9);
     REQUIRE(translation.get_row_size() == 2);
@@ -384,10 +374,6 @@ TEST_SUITE("TranslatedTableModel") {
         REQUIRE(update_operation->m_row == updated_row);
         REQUIRE(update_operation->m_column == 0);
       }));
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 1);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -395,10 +381,6 @@ TEST_SUITE("TranslatedTableModel") {
     updated_row = 0;
     source->set(3, 0, 10);
     REQUIRE(signal_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 10);
     REQUIRE(translation.get<int>(0, 0) == 10);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -406,14 +388,21 @@ TEST_SUITE("TranslatedTableModel") {
     updated_row = 2;
     source->set(0, 0, 0);
     REQUIRE(signal_count == 2);
-    REQUIRE(source->get<int>(0, 0) == 0);
-    REQUIRE(source->get<int>(1, 0) == 2);
-    REQUIRE(source->get<int>(2, 0) == 9);
-    REQUIRE(source->get<int>(3, 0) == 10);
     REQUIRE(translation.get<int>(0, 0) == 10);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 0);
     REQUIRE(translation.get<int>(3, 0) == 9);
+  }
+
+  TEST_CASE("set_translation") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({2});
+    source->push({1});
+    auto translation = TranslatedTableModel(source);
+    translation.move(1, 0);
+    translation.set(0, 0, 10);
+    REQUIRE(source->get<int>(0, 0) == 2);
+    REQUIRE(source->get<int>(1, 0) == 10);
   }
 
   TEST_CASE("transaction_from_source") {
@@ -466,11 +455,6 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 1);
     REQUIRE(update_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 0);
-    REQUIRE(source->get<int>(1, 0) == 10);
-    REQUIRE(source->get<int>(2, 0) == 6);
-    REQUIRE(source->get<int>(3, 0) == 4);
-    REQUIRE(source->get_row_size() == 4);
     REQUIRE(translation.get<int>(0, 0) == 6);
     REQUIRE(translation.get<int>(1, 0) == 10);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -514,34 +498,26 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(signal_count == 1);
     REQUIRE(add_count == 1);
     REQUIRE(translation.get_row_size() == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
     REQUIRE(translation.get<int>(0, 0) == 4);
     source->push({2});
     REQUIRE(signal_count == 2);
     REQUIRE(add_count == 2);
     REQUIRE(translation.get_row_size() == 2);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(0, 0) == 4);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE_NOTHROW(translation.move(1, 0));
     REQUIRE(signal_count == 3);
     REQUIRE(move_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(0, 0) == 2);
     REQUIRE(translation.get<int>(1, 0) == 4);
     source->set(1, 0, 0);
     REQUIRE(signal_count == 4);
     REQUIRE(update_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 4);
-    REQUIRE(source->get<int>(1, 0) == 0);
     REQUIRE(translation.get<int>(0, 0) == 0);
     REQUIRE(translation.get<int>(1, 0) == 4);
     source->remove(0);
     REQUIRE(signal_count == 5);
     REQUIRE(remove_count == 1);
-    REQUIRE(source->get<int>(0, 0) == 0);
     REQUIRE(translation.get<int>(0, 0) == 0);
     REQUIRE(translation.get_row_size() == 1);
   }

@@ -48,9 +48,17 @@ int TranslatedTableModel::get_column_size() const {
 
 const std::any& TranslatedTableModel::at(int row, int column) const {
   if(row < 0 || row >= get_row_size()) {
-    throw std::out_of_range("The row or column is out of range.");
+    throw std::out_of_range("The row is out of range.");
   }
   return m_source->at(m_translation[row], column);
+}
+
+QValidator::State TranslatedTableModel::set(
+    int row, int column, const std::any& value) {
+  if(row < 0 || row >= get_row_size()) {
+    throw std::out_of_range("The row is out of range.");
+  }
+  return m_source->set(m_translation[row], column, value);
 }
 
 connection TranslatedTableModel::connect_operation_signal(
@@ -89,30 +97,23 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
         m_transaction.push(AddOperation{reverse_index});
       },
       [&] (const MoveOperation& operation) {
-        if(operation.m_source < operation.m_destination) {
-          std::transform(m_translation.begin(), m_translation.end(),
-            m_translation.begin(),
-            [&] (auto index) {
-              if(index > operation.m_source &&
-                  index <= operation.m_destination) {
-                return index - 1;
-              } else if(index == operation.m_source) {
-                return operation.m_destination;
-              }
-              return index;
-            });
-        } else {
-          std::transform(m_translation.begin(), m_translation.end(),
-            m_translation.begin(),
-            [&] (auto index) {
-              if(index >= operation.m_destination &&
-                  index < operation.m_source) {
-                return index + 1;
-              } else if(index == operation.m_source) {
-                return operation.m_destination;
-              }
-              return index;
-            });
+        auto direction = [&] {
+          if(operation.m_source < operation.m_destination) {
+            return 1;
+          }
+          return -1;
+        }();
+        for(auto i = 0; i != static_cast<int>(m_translation.size()); ++i) {
+          auto& row = m_translation[i];
+          if(direction * row > direction * operation.m_source &&
+              direction * row <= direction * operation.m_destination) {
+            row -= direction;
+          } else if(row == operation.m_source) {
+            row = operation.m_destination;
+          }
+        }
+        for(auto i = 0; i != static_cast<int>(m_translation.size()); ++i) {
+          m_reverse_translation[m_translation[i]] = i;
         }
       },
       [&] (const RemoveOperation& operation) {
