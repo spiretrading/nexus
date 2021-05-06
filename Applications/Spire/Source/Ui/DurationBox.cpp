@@ -1,7 +1,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QHBoxLayout>
-#include <QEvent>
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -441,6 +441,41 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
         !m_second_field->hasFocus()) {
       find_stylist(*this).unmatch(Focus());
       on_submit();
+    }
+  } else if(event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    auto field = [&] () -> QWidget* {
+      if(m_minute_field->hasFocus()) {
+        return m_minute_field;
+      } else if(m_second_field->hasFocus()) {
+        return m_second_field;
+      } else if(m_hour_field->hasFocus()) {
+        return m_hour_field;
+      }
+      return nullptr;
+    }();
+    if(key_event.key() == Qt::Key_Left &&
+        (field == m_minute_field || field == m_second_field)) {
+      if(auto editor = field->findChild<QLineEdit*>()) {
+        if(editor->cursorPosition() == 0) {
+          if(field == m_minute_field) {
+            m_hour_field->setFocus();
+          } else {
+            m_minute_field->setFocus();
+          }
+        }
+      }
+    } else if(key_event.key() == Qt::Key_Right &&
+        (field == m_hour_field || field == m_minute_field)) {
+      if(auto editor = field->findChild<QLineEdit*>()) {
+        if(editor->cursorPosition() == editor->text().size()) {
+          if(field == m_hour_field) {
+            m_minute_field->setFocus();
+          } else {
+            m_second_field->setFocus();
+          }
+        }
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
