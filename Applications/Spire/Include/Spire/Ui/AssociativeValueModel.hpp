@@ -87,10 +87,17 @@ namespace Details {
         const typename CurrentSignal::slot_type& slot) const override;
 
     private:
+      struct OptionalHash {
+        std::size_t operator()(const Type& value) const {
+          return addressof(value);
+        }
+      };
+
       mutable CurrentSignal m_current_signal;
       Type m_current;
       std::unique_ptr<Type> m_default_value;
-      std::unordered_map<Type, Details::AssociatedBooleanModel> m_models;
+      std::unordered_map<Type, Details::AssociatedBooleanModel, OptionalHash>
+        m_models;
       bool m_is_blocked;
 
       void set_associated_model_value(const Type& value, bool model_value);
@@ -212,11 +219,11 @@ namespace Details {
   }
 
   template<typename T>
-  std::shared_ptr<AssociativeValueModel<std::optional<T>>>
+  std::shared_ptr<AssociativeValueModel<boost::optional<T>>>
       make_nullable_associative_model() {
-    auto model = std::make_shared<AssociativeValueModel<std::optional<T>>>();
-    model->associate(std::make_shared<LocalBooleanModel>(true), std::nullopt);
-    model->set_default_value(std::nullopt);
+    auto model = std::make_shared<AssociativeValueModel<boost::optional<T>>>();
+    model->associate(std::make_shared<LocalBooleanModel>(true), boost::none);
+    model->set_default_value(boost::none);
     return model;
   }
 }

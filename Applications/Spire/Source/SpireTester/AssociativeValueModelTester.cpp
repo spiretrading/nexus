@@ -180,14 +180,14 @@ TEST_SUITE("AssociativeValueModel") {
     auto model = make_nullable_associative_model<std::string>();
     auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
     auto bool_model2 = std::make_shared<LocalBooleanModel>(false);
-    model->associate(bool_model1, "model1");
-    model->associate(bool_model2, "model2");
-    REQUIRE(model->get_current() == std::nullopt);
+    model->associate(bool_model1, std::string("model1"));
+    model->associate(bool_model2, std::string("model2"));
+    REQUIRE_FALSE(model->get_current());
     bool_model1->set_current(true);
-    REQUIRE(model->get_current() == "model1");
+    REQUIRE(model->get_current() == std::string("model1"));
     REQUIRE_FALSE(bool_model2->get_current());
     bool_model1->set_current(false);
-    REQUIRE(model->get_current() == std::nullopt);
+    REQUIRE_FALSE(model->get_current());
     REQUIRE_FALSE(bool_model1->get_current());
     REQUIRE_FALSE(bool_model2->get_current());
   }
