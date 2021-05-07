@@ -29,6 +29,15 @@ namespace Details {
       AssociativeValueModel();
 
       /**
+      * Constructs an AssociativeValueModel with a default value. The default
+      * value is the value that will become current if all associated models
+      * have a value of false. If the provided value is none, there is no
+      * default value.
+      * @param default_value The default value.
+      */
+      AssociativeValueModel(const boost::optional<T>& default_value);
+
+      /**
        * Associates a BooleanModel iff it's not already associated.
        * If there are no existing models the BooleanModel is set to true,
        * otherwise, it's set to false.
@@ -53,15 +62,6 @@ namespace Details {
        *         found.
        */
       std::shared_ptr<BooleanModel> find(const Type& value) const;
-
-      /**
-      * Sets which value should become current if all associated models have
-      * a value of false.
-      * @param value The default value.
-      * @return Acceptable if default value was set successfully, Invalid
-      *         otherwise.
-      */
-      QValidator::State set_default_value(const Type& value);
 
       /**
        * Returns Acceptable if the model's current value is valid, Invalid
@@ -91,7 +91,7 @@ namespace Details {
     private:
       mutable CurrentSignal m_current_signal;
       Type m_current;
-      std::unique_ptr<Type> m_default_value;
+      boost::optional<Type> m_default_value;
       std::unordered_map<Type, std::shared_ptr<BooleanModel>, Hash> m_models;
       bool m_is_blocked;
 
@@ -101,18 +101,24 @@ namespace Details {
 
   template<typename T, typename U>
   AssociativeValueModel<T, U>::AssociativeValueModel()
-    : m_is_blocked(false) {}
+    : AssociativeValueModel(boost::none) {}
+
+  template<typename T, typename U>
+  AssociativeValueModel<T, U>::AssociativeValueModel(
+      const boost::optional<T>& default_value)
+    : m_is_blocked(false),
+      m_default_value(default_value) {}
 
   template<typename T, typename U>
   void AssociativeValueModel<T, U>::associate(
       const std::shared_ptr<BooleanModel>& model, const T& value) {
-    if(m_models.find(value) != m_models.end()) {
+    auto inserted_model = m_models.insert({value, model});
+    if(!inserted_model.second) {
       return;
     }
     if(model->get_current()) {
       model->set_current(false);
     }
-    m_models.insert_or_assign(value, model);
     model->connect_current_signal([=] (auto is_selected) {
       on_current(value, is_selected);
     });
@@ -140,17 +146,6 @@ namespace Details {
   }
 
   template<typename T, typename U>
-  QValidator::State AssociativeValueModel<T, U>::set_default_value(
-      const Type& value) {
-    m_default_value.reset();
-    if(m_models.find(value) != m_models.end()) {
-      m_default_value = std::make_unique<Type>(value);
-      return QValidator::Acceptable;
-    }
-    return QValidator::Invalid;
-  }
-
-  template<typename T, typename U>
   QValidator::State AssociativeValueModel<T, U>::get_state() const {
     if(m_models.find(m_current) != m_models.end()) {
       return QValidator::Acceptable;
@@ -159,8 +154,9 @@ namespace Details {
   }
 
   template<typename T, typename U>
-  const T& AssociativeValueModel<T, U>::get_current() const {
-    return m_current;
+  const typename AssociativeValueModel<T, U>::Type&
+    AssociativeValueModel<T, U>::get_current() const {
+      return m_current;
   }
 
   template<typename T, typename U>
@@ -229,9 +225,9 @@ namespace Details {
   std::shared_ptr<AssociativeValueModel<boost::optional<T>, Details::OptionalHash<T>>>
       make_nullable_associative_model() {
     auto model =
-      std::make_shared<AssociativeValueModel<boost::optional<T>, U>>();
+      std::make_shared<AssociativeValueModel<boost::optional<T>, U>>(
+        boost::optional<T>(boost::none));
     model->associate(std::make_shared<LocalBooleanModel>(true), boost::none);
-    model->set_default_value(boost::none);
     return model;
   }
 }
