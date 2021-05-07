@@ -176,6 +176,36 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE_FALSE(bool_model2->get_current());
   }
 
+  TEST_CASE("default_reentrant") {
+    auto model = AssociativeValueModel<std::string>();
+    auto null_model = std::make_shared<LocalBooleanModel>(false);
+    auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
+    auto bool_model2 = std::make_shared<LocalBooleanModel>(false);
+    model.associate(null_model, "null");
+    model.associate(bool_model1, "model1");
+    model.associate(bool_model2, "model2");
+    model.set_default_value("null");
+    model.connect_current_signal([=] (const auto& current) {
+      if(current == std::string("model1")) {
+        bool_model2->set_current(true);
+      } else {
+        bool_model1->set_current(true);
+      }
+    });
+    bool_model2->set_current(true);
+    REQUIRE(model.get_current() == "model2");
+    bool_model1->set_current(true);
+    REQUIRE(model.get_current() == "model1");
+    REQUIRE(bool_model1->get_current());
+    REQUIRE_FALSE(null_model->get_current());
+    REQUIRE_FALSE(bool_model2->get_current());
+    bool_model1->set_current(false);
+    REQUIRE(model.get_current() == "null");
+    REQUIRE(null_model->get_current());
+    REQUIRE_FALSE(bool_model1->get_current());
+    REQUIRE_FALSE(bool_model2->get_current());
+  }
+
   TEST_CASE("nullable_model") {
     auto model = make_nullable_associative_model<std::string>();
     auto bool_model1 = std::make_shared<LocalBooleanModel>(false);

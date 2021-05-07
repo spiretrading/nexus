@@ -89,7 +89,7 @@ namespace Details {
     private:
       struct OptionalHash {
         std::size_t operator()(const Type& value) const {
-          return addressof(value);
+          return 0;
         }
       };
 
@@ -202,7 +202,9 @@ namespace Details {
       if(!is_selected && !m_default_value) {
         set_associated_model_value(m_current, true);
       } else if(m_default_value) {
+        m_is_blocked = true;
         set_current(*m_default_value);
+        m_is_blocked = false;
       }
       return;
     } else if(!is_selected) {
