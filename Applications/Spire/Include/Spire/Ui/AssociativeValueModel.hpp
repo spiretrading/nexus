@@ -1,6 +1,6 @@
 #ifndef SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #define SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
-#include <optional>
+#include <functional>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
@@ -11,17 +11,24 @@ namespace Details {
     std::shared_ptr<BooleanModel> m_model;
     boost::signals2::scoped_connection m_connection;
   };
+
+  template <typename T, typename U = boost::optional<T>>
+  struct OptionalHash {
+    std::size_t operator()(const U& value) const;
+  };
 }
 
   /** 
    * Associates BooleanModels with corresponding values, and ensures that
    * only a single model has a value of true at one time.
    */
-  template<typename T>
+  template<typename T, typename U = std::hash<T>>
   class AssociativeValueModel : public ValueModel<T> {
     public:
 
       using Type = T;
+
+      using Hash = U;
 
       /** Constructs an AssociativeValueModel. */
       AssociativeValueModel();
@@ -87,29 +94,22 @@ namespace Details {
         const typename CurrentSignal::slot_type& slot) const override;
 
     private:
-      struct OptionalHash {
-        std::size_t operator()(const Type& value) const {
-          return 0;
-        }
-      };
-
       mutable CurrentSignal m_current_signal;
       Type m_current;
       std::unique_ptr<Type> m_default_value;
-      std::unordered_map<Type, Details::AssociatedBooleanModel, OptionalHash>
-        m_models;
+      std::unordered_map<Type, Details::AssociatedBooleanModel, Hash> m_models;
       bool m_is_blocked;
 
       void set_associated_model_value(const Type& value, bool model_value);
       void on_current(const Type& value, bool is_selected);
   };
 
-  template<typename T>
-  AssociativeValueModel<T>::AssociativeValueModel()
+  template<typename T, typename U>
+  AssociativeValueModel<T, U>::AssociativeValueModel()
     : m_is_blocked(false) {}
 
-  template<typename T>
-  void AssociativeValueModel<T>::associate(
+  template<typename T, typename U>
+  void AssociativeValueModel<T, U>::associate(
       const std::shared_ptr<BooleanModel>& model, const T& value) {
     if(m_models.find(value) != m_models.end()) {
       return;
@@ -126,16 +126,16 @@ namespace Details {
     }
   }
 
-  template<typename T>
-  std::shared_ptr<BooleanModel> AssociativeValueModel<T>::make_association(
+  template<typename T, typename U>
+  std::shared_ptr<BooleanModel> AssociativeValueModel<T, U>::make_association(
       const T& value) {
     auto model = std::make_shared<LocalBooleanModel>(false);
     associate(model, value);
     return model;
   }
 
-  template<typename T>
-  std::shared_ptr<BooleanModel> AssociativeValueModel<T>::find(
+  template<typename T, typename U>
+  std::shared_ptr<BooleanModel> AssociativeValueModel<T, U>::find(
       const T& value) const {
     auto iterator = m_models.find(value);
     if(iterator == m_models.end()) {
@@ -144,8 +144,8 @@ namespace Details {
     return iterator->second.m_model;
   }
 
-  template <typename T>
-  QValidator::State AssociativeValueModel<T>::set_default_value(
+  template<typename T, typename U>
+  QValidator::State AssociativeValueModel<T, U>::set_default_value(
       const Type& value) {
     m_default_value.reset();
     if(m_models.find(value) != m_models.end()) {
@@ -155,21 +155,21 @@ namespace Details {
     return QValidator::Invalid;
   }
 
-  template<typename T>
-  QValidator::State AssociativeValueModel<T>::get_state() const {
+  template<typename T, typename U>
+  QValidator::State AssociativeValueModel<T, U>::get_state() const {
     if(m_models.find(m_current) != m_models.end()) {
       return QValidator::Acceptable;
     }
     return QValidator::Invalid;
   }
 
-  template<typename T>
-  const T& AssociativeValueModel<T>::get_current() const {
+  template<typename T, typename U>
+  const T& AssociativeValueModel<T, U>::get_current() const {
     return m_current;
   }
 
-  template<typename T>
-  QValidator::State AssociativeValueModel<T>::set_current(const T& value) {
+  template<typename T, typename U>
+  QValidator::State AssociativeValueModel<T, U>::set_current(const T& value) {
     if(m_models.find(value) == m_models.end()) {
       return QValidator::Invalid;
     }
@@ -180,14 +180,14 @@ namespace Details {
     return QValidator::Acceptable;
   }
 
-  template<typename T>
-  boost::signals2::connection AssociativeValueModel<T>::connect_current_signal(
+  template<typename T, typename U>
+  boost::signals2::connection AssociativeValueModel<T, U>::connect_current_signal(
       const typename CurrentSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 
-  template<typename T>
-  void AssociativeValueModel<T>::set_associated_model_value(const T& value,
+  template<typename T, typename U>
+  void AssociativeValueModel<T, U>::set_associated_model_value(const T& value,
       bool model_value) {
     if(auto iterator = m_models.find(value); iterator != m_models.end()) {
       auto blocker = boost::signals2::shared_connection_block(
@@ -196,8 +196,8 @@ namespace Details {
     }
   }
 
-  template<typename T>
-  void AssociativeValueModel<T>::on_current(const T& value, bool is_selected) {
+  template<typename T, typename U>
+  void AssociativeValueModel<T, U>::on_current(const T& value, bool is_selected) {
     if(value == m_current) {
       if(!is_selected && !m_default_value) {
         set_associated_model_value(m_current, true);
@@ -220,10 +220,19 @@ namespace Details {
     m_is_blocked = false;
   }
 
-  template<typename T>
-  std::shared_ptr<AssociativeValueModel<boost::optional<T>>>
+  template <typename T, typename U>
+  std::size_t Details::OptionalHash<T, U>::operator ()(const U& value) const {
+    if(!value) {
+        return -3333;
+    }
+    return std::hash<T>{}(*value);
+  };
+
+  template<typename T, typename U = Details::OptionalHash<T>>
+  std::shared_ptr<AssociativeValueModel<boost::optional<T>, Details::OptionalHash<T>>>
       make_nullable_associative_model() {
-    auto model = std::make_shared<AssociativeValueModel<boost::optional<T>>>();
+    auto model =
+      std::make_shared<AssociativeValueModel<boost::optional<T>, U>>();
     model->associate(std::make_shared<LocalBooleanModel>(true), boost::none);
     model->set_default_value(boost::none);
     return model;
