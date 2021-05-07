@@ -7,12 +7,7 @@
 
 namespace Spire {
 namespace Details {
-  struct AssociatedBooleanModel {
-    std::shared_ptr<BooleanModel> m_model;
-    boost::signals2::scoped_connection m_connection;
-  };
-
-  template <typename T, typename U = boost::optional<T>>
+  template<typename T, typename U = boost::optional<T>>
   struct OptionalHash {
     std::size_t operator()(const U& value) const;
   };
@@ -97,7 +92,7 @@ namespace Details {
       mutable CurrentSignal m_current_signal;
       Type m_current;
       std::unique_ptr<Type> m_default_value;
-      std::unordered_map<Type, Details::AssociatedBooleanModel, Hash> m_models;
+      std::unordered_map<Type, std::shared_ptr<BooleanModel>, Hash> m_models;
       bool m_is_blocked;
 
       void set_associated_model_value(const Type& value, bool model_value);
@@ -117,10 +112,10 @@ namespace Details {
     if(model->get_current()) {
       model->set_current(false);
     }
-    m_models.insert_or_assign(value, Details::AssociatedBooleanModel{model,
-      model->connect_current_signal([=] (auto is_selected) {
-        on_current(value, is_selected);
-      })});
+    m_models.insert_or_assign(value, model);
+    model->connect_current_signal([=] (auto is_selected) {
+      on_current(value, is_selected);
+    });
     if(get_state() == QValidator::Invalid) {
       set_current(value);
     }
@@ -141,7 +136,7 @@ namespace Details {
     if(iterator == m_models.end()) {
       return nullptr;
     }
-    return iterator->second.m_model;
+    return iterator->second;
   }
 
   template<typename T, typename U>
@@ -173,8 +168,9 @@ namespace Details {
     if(m_models.find(value) == m_models.end()) {
       return QValidator::Invalid;
     }
-    set_associated_model_value(m_current, false);
+    auto previous = m_current;
     m_current = value;
+    set_associated_model_value(previous, false);
     set_associated_model_value(m_current, true);
     m_current_signal(m_current);
     return QValidator::Acceptable;
@@ -190,37 +186,38 @@ namespace Details {
   void AssociativeValueModel<T, U>::set_associated_model_value(const T& value,
       bool model_value) {
     if(auto iterator = m_models.find(value); iterator != m_models.end()) {
-      auto blocker = boost::signals2::shared_connection_block(
-        iterator->second.m_connection);
-      iterator->second.m_model->set_current(model_value);
+      iterator->second->set_current(model_value);
     }
   }
 
   template<typename T, typename U>
   void AssociativeValueModel<T, U>::on_current(const T& value, bool is_selected) {
-    if(value == m_current) {
-      if(!is_selected && !m_default_value) {
-        set_associated_model_value(m_current, true);
-      } else if(m_default_value) {
-        m_is_blocked = true;
-        set_current(*m_default_value);
-        m_is_blocked = false;
-      }
-      return;
-    } else if(!is_selected) {
+    if(value == m_current && is_selected ||
+        value != m_current && !is_selected) {
       return;
     }
     if(m_is_blocked) {
-      set_associated_model_value(value, false);
+      if(is_selected) {
+        set_associated_model_value(value, false);
+      }
       return;
     }
-    set_associated_model_value(m_current, false);
+    if(m_current == value && !is_selected) {
+      if(m_default_value) {
+        m_is_blocked = true;
+        set_current(*m_default_value);
+        m_is_blocked = false;
+      } else {
+        set_associated_model_value(m_current, true);
+      }
+      return;
+    }
     m_is_blocked = true;
     set_current(value);
     m_is_blocked = false;
   }
 
-  template <typename T, typename U>
+  template<typename T, typename U>
   std::size_t Details::OptionalHash<T, U>::operator ()(const U& value) const {
     if(!value) {
         return -3333;
