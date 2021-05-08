@@ -124,3 +124,10 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   set_style(*button, std::move(style));
   return button;
 }
+
+std::vector<Stylist*> PathFinder<Button, Body>::operator ()(
+    Button& button, const Body& body) const {
+  auto stylists = std::vector<Stylist*>();
+  stylists.push_back(&find_stylist(button.get_body()));
+  return stylists;
+}

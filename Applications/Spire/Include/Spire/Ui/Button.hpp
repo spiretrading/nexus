@@ -1,5 +1,6 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
+#include "Spire/Styles/PathSelector.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -56,6 +57,13 @@ namespace Spire {
    * @param parent The parent widget.
    */
   Button* make_label_button(const QString& label, QWidget* parent = nullptr);
+}
+
+namespace Spire::Styles {
+  template<>
+  struct PathFinder<Button, Body> : PathFinderRegistry<Button, Body> {
+    std::vector<Stylist*> operator ()(Button& button, const Body& body) const;
+  };
 }
 
 #endif
