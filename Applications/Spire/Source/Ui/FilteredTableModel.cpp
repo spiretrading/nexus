@@ -8,7 +8,7 @@ FilteredTableModel::FilteredTableModel(std::shared_ptr<TableModel> source,
   std::function<bool(const TableModel&, int)> filter)
     : m_source(source),
       m_filter(filter) {
-  for(auto i = 0; i != static_cast<int>(m_source->get_row_size()); ++i) {
+  for(auto i = 0; i != m_source->get_row_size(); ++i) {
     if(!m_filter(*m_source.get(), i)) {
       m_filtered_data.push_back(i);
     }
