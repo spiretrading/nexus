@@ -70,8 +70,9 @@ void FilteredTableModel::on_operation(const Operation& operation) {
           std::for_each(i, m_filtered_data.end(),
             [] (int& value) { ++value; });
           if(!m_filter(*m_source, operation.m_index)) {
-            m_transaction.push(AddOperation{m_filtered_data.insert(i,
-              operation.m_index) - m_filtered_data.begin()});
+            m_transaction.push(AddOperation{
+              static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
+              m_filtered_data.begin())});
           }
         }
       },
@@ -93,8 +94,9 @@ void FilteredTableModel::on_operation(const Operation& operation) {
             }
           }
           *destination = operation.m_destination;
-          m_transaction.push(MoveOperation{source - m_filtered_data.begin(),
-            destination - m_filtered_data.begin()});
+          m_transaction.push(MoveOperation{
+            static_cast<int>(source - m_filtered_data.begin()),
+            static_cast<int>(destination - m_filtered_data.begin())});
         } else if(operation.m_source < operation.m_destination) {
             auto destination = std::upper_bound(source, m_filtered_data.end(),
               operation.m_destination);
@@ -109,7 +111,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         auto [is_find, i] = find(operation.m_index);
         std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
         if(is_find) {
-          auto index = i - m_filtered_data.begin();
+          auto index = static_cast<int>(i - m_filtered_data.begin());
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation{index});
         }
@@ -118,14 +120,16 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         auto [is_find, i] = find(operation.m_row);
         if(!m_filter(*m_source, operation.m_row)) {
           if(is_find) {
-            m_transaction.push(UpdateOperation{i - m_filtered_data.begin(),
+            m_transaction.push(UpdateOperation{
+              static_cast<int>(i - m_filtered_data.begin()),
               operation.m_column});
           } else {
-            m_transaction.push(AddOperation{m_filtered_data.insert(i,
-              operation.m_row) - m_filtered_data.begin()});
+            m_transaction.push(AddOperation{
+              static_cast<int>(m_filtered_data.insert(i, operation.m_row) -
+              m_filtered_data.begin())});
           }
         } else if(is_find) {
-          auto index = i - m_filtered_data.begin();
+          auto index = static_cast<int>(i - m_filtered_data.begin());
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation{index});
         }
