@@ -29,7 +29,7 @@ namespace Spire {
   class AssociativeValueModel : public ValueModel<T> {
     public:
 
-      using Type = T;
+      using Type = typename ValueModel<T>::Type;
 
       /** Constructs an AssociativeValueModel. */
       AssociativeValueModel();
@@ -40,7 +40,7 @@ namespace Spire {
       * have a value of false.
       * @param default_value The default value.
       */
-      AssociativeValueModel(T default_value);
+      AssociativeValueModel(Type default_value);
 
       /**
        * Associates a BooleanModel iff it's not already associated.
@@ -110,13 +110,13 @@ namespace Spire {
     : m_is_blocked(false) {}
 
   template<typename T>
-  AssociativeValueModel<T>::AssociativeValueModel(T default_value)
+  AssociativeValueModel<T>::AssociativeValueModel(Type default_value)
     : m_is_blocked(false),
       m_default_value(std::move(default_value)) {}
 
   template<typename T>
   void AssociativeValueModel<T>::associate(
-      const std::shared_ptr<BooleanModel>& model, const T& value) {
+      const std::shared_ptr<BooleanModel>& model, const Type& value) {
     auto inserted_model = m_models.insert({value, model});
     if(!inserted_model.second) {
       return;
@@ -133,7 +133,7 @@ namespace Spire {
 
   template<typename T>
   std::shared_ptr<BooleanModel> AssociativeValueModel<T>::make_association(
-      const T& value) {
+      const Type& value) {
     auto model = std::make_shared<LocalBooleanModel>(false);
     associate(model, value);
     return model;
@@ -141,7 +141,7 @@ namespace Spire {
 
   template<typename T>
   std::shared_ptr<BooleanModel> AssociativeValueModel<T>::find(
-      const T& value) const {
+      const Type& value) const {
     auto iterator = m_models.find(value);
     if(iterator == m_models.end()) {
       return nullptr;
@@ -164,7 +164,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State AssociativeValueModel<T>::set_current(const T& value) {
+  QValidator::State AssociativeValueModel<T>::set_current(const Type& value) {
     if(m_models.find(value) == m_models.end()) {
       return QValidator::Invalid;
     }
@@ -183,7 +183,7 @@ namespace Spire {
   }
 
   template<typename T>
-  void AssociativeValueModel<T>::set_associated_model_value(const T& value,
+  void AssociativeValueModel<T>::set_associated_model_value(const Type& value,
       bool model_value) {
     if(auto iterator = m_models.find(value); iterator != m_models.end()) {
       iterator->second->set_current(model_value);
@@ -191,7 +191,8 @@ namespace Spire {
   }
 
   template<typename T>
-  void AssociativeValueModel<T>::on_current(const T& value, bool is_selected) {
+  void AssociativeValueModel<T>::on_current(const Type& value,
+      bool is_selected) {
     if(value == m_current && is_selected ||
         value != m_current && !is_selected) {
       return;
