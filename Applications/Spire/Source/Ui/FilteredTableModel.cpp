@@ -47,12 +47,12 @@ connection FilteredTableModel::connect_operation_signal(
 
 std::tuple<bool, std::vector<int>::iterator> FilteredTableModel::find(
     int index) {
-  auto iter = std::lower_bound(m_filtered_data.begin(), m_filtered_data.end(),
+  auto i = std::lower_bound(m_filtered_data.begin(), m_filtered_data.end(),
     index);
-  if(iter != m_filtered_data.end() && *iter == index) {
-    return std::make_tuple(true, iter); 
+  if(i != m_filtered_data.end() && *i == index) {
+    return std::make_tuple(true, i);
   }
-  return std::make_tuple(false, iter);
+  return std::make_tuple(false, i);
 }
 
 void FilteredTableModel::on_operation(const Operation& operation) {
@@ -66,11 +66,11 @@ void FilteredTableModel::on_operation(const Operation& operation) {
               static_cast<int>(m_filtered_data.size()) - 1});
           }
         } else {
-          auto iter = std::get<1>(find(operation.m_index));
-          std::for_each(iter, m_filtered_data.end(),
+          auto i = std::get<1>(find(operation.m_index));
+          std::for_each(i, m_filtered_data.end(),
             [] (int& value) { ++value; });
           if(!m_filter(*m_source, operation.m_index)) {
-            m_transaction.push(AddOperation{m_filtered_data.insert(iter,
+            m_transaction.push(AddOperation{m_filtered_data.insert(i,
               operation.m_index) - m_filtered_data.begin()});
           }
         }
@@ -83,14 +83,14 @@ void FilteredTableModel::on_operation(const Operation& operation) {
           if(operation.m_source < operation.m_destination) {
             destination = std::upper_bound(source, m_filtered_data.end(),
               operation.m_destination) - 1;
-            for(auto iter = source; iter != destination; ++iter) {
-              *iter = *(iter + 1) - 1;
+            for(auto i = source; i != destination; ++i) {
+              *i = *(i + 1) - 1;
             }
           } else {
             destination = std::lower_bound(m_filtered_data.begin(), source,
               operation.m_destination);
-            for(auto iter = source; iter != destination; --iter) {
-              *iter = *(iter - 1) + 1;
+            for(auto i = source; i != destination; --i) {
+              *i = *(i - 1) + 1;
             }
           }
           *destination = operation.m_destination;
@@ -110,29 +110,29 @@ void FilteredTableModel::on_operation(const Operation& operation) {
       },
       [&] (const RemoveOperation& operation) {
         auto data = find(operation.m_index);
-        auto iter = std::get<1>(data);
-        std::for_each(iter, m_filtered_data.end(), [] (int& value) { --value; });
+        auto i = std::get<1>(data);
+        std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
         if(std::get<0>(data)) {
-          auto index = iter - m_filtered_data.begin();
-          m_filtered_data.erase(iter);
+          auto index = i - m_filtered_data.begin();
+          m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation{index});
         }
       },
       [&] (const UpdateOperation& operation) {
         auto data = find(operation.m_row);
-        auto iter = std::get<1>(data);
+        auto i = std::get<1>(data);
         if(!m_filter(*m_source, operation.m_row)) {
           if(std::get<0>(data)) {
-            m_transaction.push(UpdateOperation{iter - m_filtered_data.begin(),
+            m_transaction.push(UpdateOperation{i - m_filtered_data.begin(),
               operation.m_column});
           } else {
-            m_transaction.push(AddOperation{m_filtered_data.insert(iter,
+            m_transaction.push(AddOperation{m_filtered_data.insert(i,
               operation.m_row) - m_filtered_data.begin()});
           }
         } else {
           if(std::get<0>(data)) {
-            auto index = iter - m_filtered_data.begin();
-            m_filtered_data.erase(iter);
+            auto index = i - m_filtered_data.begin();
+            m_filtered_data.erase(i);
             m_transaction.push(RemoveOperation{index});
           }
         }
