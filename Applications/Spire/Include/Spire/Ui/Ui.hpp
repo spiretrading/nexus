@@ -64,7 +64,7 @@ namespace Spire {
   class TransitionWidget;
   class TranslatedTableModel;
   template<typename T> class ValueModel;
-  using BoolModel = ValueModel<bool>;
+  using BooleanModel = ValueModel<bool>;
   using TextModel = ValueModel<QString>;
   class Window;
 
