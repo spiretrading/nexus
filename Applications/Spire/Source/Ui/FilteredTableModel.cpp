@@ -76,9 +76,8 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         }
       },
       [&] (const MoveOperation& operation) {
-        auto source_row = find(operation.m_source);
-        auto source = std::get<1>(source_row);
-        if(std::get<0>(source_row)) {
+        auto [is_find, source] = find(operation.m_source);
+        if(is_find) {
           auto destination = source;
           if(operation.m_source < operation.m_destination) {
             destination = std::upper_bound(source, m_filtered_data.end(),
@@ -96,45 +95,39 @@ void FilteredTableModel::on_operation(const Operation& operation) {
           *destination = operation.m_destination;
           m_transaction.push(MoveOperation{source - m_filtered_data.begin(),
             destination - m_filtered_data.begin()});
-        } else {
-          if(operation.m_source < operation.m_destination) {
+        } else if(operation.m_source < operation.m_destination) {
             auto destination = std::upper_bound(source, m_filtered_data.end(),
               operation.m_destination);
             std::for_each(source, destination, [] (int& value) { --value; });
-          } else {
-            auto destination = std::lower_bound(m_filtered_data.begin(), source,
-              operation.m_destination);
-            std::for_each(destination, source, [] (int& value) { ++value; });
-          }
+        } else {
+          auto destination = std::lower_bound(m_filtered_data.begin(), source,
+            operation.m_destination);
+          std::for_each(destination, source, [] (int& value) { ++value; });
         }
       },
       [&] (const RemoveOperation& operation) {
-        auto data = find(operation.m_index);
-        auto i = std::get<1>(data);
+        auto [is_find, i] = find(operation.m_index);
         std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
-        if(std::get<0>(data)) {
+        if(is_find) {
           auto index = i - m_filtered_data.begin();
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation{index});
         }
       },
       [&] (const UpdateOperation& operation) {
-        auto data = find(operation.m_row);
-        auto i = std::get<1>(data);
+        auto [is_find, i] = find(operation.m_row);
         if(!m_filter(*m_source, operation.m_row)) {
-          if(std::get<0>(data)) {
+          if(is_find) {
             m_transaction.push(UpdateOperation{i - m_filtered_data.begin(),
               operation.m_column});
           } else {
             m_transaction.push(AddOperation{m_filtered_data.insert(i,
               operation.m_row) - m_filtered_data.begin()});
           }
-        } else {
-          if(std::get<0>(data)) {
-            auto index = i - m_filtered_data.begin();
-            m_filtered_data.erase(i);
-            m_transaction.push(RemoveOperation{index});
-          }
+        } else if(is_find) {
+          auto index = i - m_filtered_data.begin();
+          m_filtered_data.erase(i);
+          m_transaction.push(RemoveOperation{index});
         }
       });
   });
