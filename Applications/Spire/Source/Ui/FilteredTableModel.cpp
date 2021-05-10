@@ -77,8 +77,8 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         }
       },
       [&] (const MoveOperation& operation) {
-        auto [is_find, source] = find(operation.m_source);
-        if(is_find) {
+        auto [is_found, source] = find(operation.m_source);
+        if(is_found) {
           auto destination = source;
           if(operation.m_source < operation.m_destination) {
             destination = std::upper_bound(source, m_filtered_data.end(),
@@ -108,18 +108,18 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         }
       },
       [&] (const RemoveOperation& operation) {
-        auto [is_find, i] = find(operation.m_index);
+        auto [is_found, i] = find(operation.m_index);
         std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
-        if(is_find) {
+        if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation{index});
         }
       },
       [&] (const UpdateOperation& operation) {
-        auto [is_find, i] = find(operation.m_row);
+        auto [is_found, i] = find(operation.m_row);
         if(!m_filter(*m_source, operation.m_row)) {
-          if(is_find) {
+          if(is_found) {
             m_transaction.push(UpdateOperation{
               static_cast<int>(i - m_filtered_data.begin()),
               operation.m_column});
@@ -128,7 +128,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
               static_cast<int>(m_filtered_data.insert(i, operation.m_row) -
               m_filtered_data.begin())});
           }
-        } else if(is_find) {
+        } else if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation{index});
