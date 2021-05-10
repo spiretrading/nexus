@@ -2,6 +2,7 @@
 #define SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #include <functional>
 #include <boost/functional/hash.hpp>
+#include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
@@ -13,7 +14,7 @@ namespace std {
       if(!value) {
         return -3333;
       }
-      return boost::hash_value(value.get());
+      return boost::hash_value(*value);
     }
   };
 }
@@ -36,11 +37,10 @@ namespace Spire {
       /**
       * Constructs an AssociativeValueModel with a default value. The default
       * value is the value that will become current if all associated models
-      * have a value of false. If the provided value is none, there is no
-      * default value.
+      * have a value of false.
       * @param default_value The default value.
       */
-      AssociativeValueModel(const boost::optional<T>& default_value);
+      AssociativeValueModel(T default_value);
 
       /**
        * Associates a BooleanModel iff it's not already associated.
@@ -98,6 +98,7 @@ namespace Spire {
       Type m_current;
       boost::optional<Type> m_default_value;
       std::unordered_map<Type, std::shared_ptr<BooleanModel>> m_models;
+      std::vector<boost::signals2::scoped_connection> m_connections;
       bool m_is_blocked;
 
       void set_associated_model_value(const Type& value, bool model_value);
@@ -106,13 +107,12 @@ namespace Spire {
 
   template<typename T>
   AssociativeValueModel<T>::AssociativeValueModel()
-    : AssociativeValueModel(boost::none) {}
+    : m_is_blocked(false) {}
 
   template<typename T>
-  AssociativeValueModel<T>::AssociativeValueModel(
-      const boost::optional<T>& default_value)
+  AssociativeValueModel<T>::AssociativeValueModel(T default_value)
     : m_is_blocked(false),
-      m_default_value(default_value) {}
+      m_default_value(std::move(default_value)) {}
 
   template<typename T>
   void AssociativeValueModel<T>::associate(
@@ -124,9 +124,8 @@ namespace Spire {
     if(model->get_current()) {
       model->set_current(false);
     }
-    model->connect_current_signal([=] (auto is_selected) {
-      on_current(value, is_selected);
-    });
+    m_connections.push_back(model->connect_current_signal(
+      [=] (auto is_selected) { on_current(value, is_selected); }));
     if(get_state() == QValidator::Invalid) {
       set_current(value);
     }
@@ -160,8 +159,8 @@ namespace Spire {
 
   template<typename T>
   const typename AssociativeValueModel<T>::Type&
-    AssociativeValueModel<T>::get_current() const {
-      return m_current;
+      AssociativeValueModel<T>::get_current() const {
+    return m_current;
   }
 
   template<typename T>

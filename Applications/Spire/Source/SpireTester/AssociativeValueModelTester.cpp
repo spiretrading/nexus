@@ -139,7 +139,7 @@ TEST_SUITE("AssociativeValueModel") {
   }
 
   TEST_CASE("default_value") {
-    auto model = AssociativeValueModel<std::string>(std::string("model2"));
+    auto model = AssociativeValueModel<std::string>("model2");
     auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
     auto bool_model2 = std::make_shared<LocalBooleanModel>(false);
     model.associate(bool_model1, "model1");
@@ -176,7 +176,7 @@ TEST_SUITE("AssociativeValueModel") {
   }
 
   TEST_CASE("default_reentrant") {
-    auto model = AssociativeValueModel<std::string>(std::string("null"));
+    auto model = AssociativeValueModel<std::string>("null");
     auto null_model = std::make_shared<LocalBooleanModel>(false);
     auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
     auto bool_model2 = std::make_shared<LocalBooleanModel>(false);
