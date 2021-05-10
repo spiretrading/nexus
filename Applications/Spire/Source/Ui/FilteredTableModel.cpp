@@ -9,7 +9,7 @@ FilteredTableModel::FilteredTableModel(std::shared_ptr<TableModel> source,
     : m_source(source),
       m_filter(filter) {
   for(auto i = 0; i != m_source->get_row_size(); ++i) {
-    if(!m_filter(*m_source.get(), i)) {
+    if(!m_filter(*m_source, i)) {
       m_filtered_data.push_back(i);
     }
   }
@@ -60,7 +60,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
     visit(operation,
       [&] (const AddOperation& operation) {
         if(operation.m_index >= m_source->get_row_size() - 1) {
-          if(!m_filter(*m_source.get(), operation.m_index)) {
+          if(!m_filter(*m_source, operation.m_index)) {
             m_filtered_data.push_back(operation.m_index);
             m_transaction.push(AddOperation{
               static_cast<int>(m_filtered_data.size()) - 1});
@@ -69,7 +69,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
           auto iter = std::get<1>(find(operation.m_index));
           std::for_each(iter, m_filtered_data.end(),
             [] (int& value) { ++value; });
-          if(!m_filter(*m_source.get(), operation.m_index)) {
+          if(!m_filter(*m_source, operation.m_index)) {
             m_transaction.push(AddOperation{m_filtered_data.insert(iter,
               operation.m_index) - m_filtered_data.begin()});
           }
@@ -121,7 +121,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
       [&] (const UpdateOperation& operation) {
         auto data = find(operation.m_row);
         auto iter = std::get<1>(data);
-        if(!m_filter(*m_source.get(), operation.m_row)) {
+        if(!m_filter(*m_source, operation.m_row)) {
           if(std::get<0>(data)) {
             m_transaction.push(UpdateOperation{iter - m_filtered_data.begin(),
               operation.m_column});
