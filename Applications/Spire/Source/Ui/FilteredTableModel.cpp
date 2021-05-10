@@ -50,9 +50,9 @@ std::tuple<bool, std::vector<int>::iterator> FilteredTableModel::find(
   auto i = std::lower_bound(m_filtered_data.begin(), m_filtered_data.end(),
     index);
   if(i != m_filtered_data.end() && *i == index) {
-    return std::make_tuple(true, i);
+    return {true, i};
   }
-  return std::make_tuple(false, i);
+  return {false, i};
 }
 
 void FilteredTableModel::on_operation(const Operation& operation) {
