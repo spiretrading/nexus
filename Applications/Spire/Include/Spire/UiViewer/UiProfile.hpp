@@ -3,12 +3,21 @@
 #include <any>
 #include <functional>
 #include <memory>
+#include <type_traits>
 #include <vector>
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/UiViewer/UiProperty.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
 namespace Spire {
+namespace Details {
+  template<typename T>
+  struct is_optional : std::false_type {};
+
+  template<typename T>
+  struct is_optional<boost::optional<T>> : std::true_type {};
+}
 
   //! Stores the information needed to display a single widget in the UI Viewer.
   class UiProfile {
@@ -76,7 +85,18 @@ namespace Spire {
       const QString& name) {
     return [m_event_signal = m_event_signal, name] (const auto&... args) {
       auto values = std::vector<std::any>();
-      (values.push_back(args), ...);
+      (values.push_back(
+        [&] () -> std::any {
+          if constexpr(
+              Details::is_optional<std::decay_t<decltype(args)>>::value) {
+            if(args) {
+              return *args;
+            }
+            return nullptr;
+          } else {
+            return args;
+          }
+        }()), ...);
       (*m_event_signal)(name, values);
     };
   }

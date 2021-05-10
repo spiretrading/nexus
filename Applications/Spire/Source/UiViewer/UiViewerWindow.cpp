@@ -128,7 +128,11 @@ void UiViewerWindow::on_event(const QString& name,
       } else {
         prepend_comma = true;
       }
-      log += displayTextAny(argument);
+      if(argument.type() == typeid(std::nullptr_t)) {
+        log += QString::fromUtf8("null");
+      } else {
+        log += displayTextAny(argument);
+      }
     }
     log += ")";
   }

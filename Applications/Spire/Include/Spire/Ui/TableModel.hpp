@@ -1,9 +1,17 @@
 #ifndef SPIRE_TABLE_MODEL_HPP
 #define SPIRE_TABLE_MODEL_HPP
 #include <any>
+#include <type_traits>
+#include <utility>
 #include <vector>
-#include <boost/mpl/back.hpp>
+#include <boost/mpl/advance.hpp>
+#include <boost/mpl/begin_end.hpp>
+#include <boost/mpl/deref.hpp>
+#include <boost/mpl/int.hpp>
+#include <boost/mpl/size.hpp>
 #include <boost/signals2/connection.hpp>
+#include <boost/variant/apply_visitor.hpp>
+#include <boost/variant/get.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <QValidator>
 #include "Spire/Ui/Ui.hpp"
@@ -126,6 +134,56 @@ namespace Details {
   template<typename T>
   const T& TableModel::get(int row, int column) const {
     return std::any_cast<const T&>(at(row, column));
+  }
+
+  /**
+   * Applies a callable to a TableModel::Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
+   */
+  template<typename F>
+  void visit(const TableModel::Operation& operation, F&& f) {
+    static_assert(std::is_invocable_v<F, const TableModel::AddOperation&> ||
+      std::is_invocable_v<F, const TableModel::RemoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::MoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::UpdateOperation&>);
+    if(auto transaction = boost::get<TableModel::Transaction>(&operation)) {
+      for(auto& transaction_operation : transaction->m_operations) {
+        visit(transaction_operation, std::forward<F>(f));
+      }
+    } else {
+      boost::apply_visitor([&] (const auto& operation) {
+        using Parameter = std::decay_t<decltype(operation)>;
+        if constexpr(std::is_invocable_v<F, Parameter>) {
+          std::forward<F>(f)(operation);
+        }
+      }, operation);
+    }
+  }
+
+  template<typename F, typename... G>
+  void visit(const TableModel::Operation& operation, F&& f, G&&... g) {
+    static_assert(std::is_invocable_v<F, const TableModel::AddOperation&> ||
+      std::is_invocable_v<F, const TableModel::RemoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::MoveOperation&> ||
+      std::is_invocable_v<F, const TableModel::UpdateOperation&>);
+    if(auto transaction = boost::get<TableModel::Transaction>(&operation)) {
+      for(auto& transaction_operation : transaction->m_operations) {
+        visit(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
+      }
+    } else {
+      auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+        using Parameter = std::decay_t<decltype(operation)>;
+        if constexpr(std::is_invocable_v<F, Parameter>) {
+          std::forward<F>(f)(operation);
+          return true;
+        }
+        return false;
+      }, operation);
+      if(!is_visited) {
+        visit(operation, std::forward<G>(g)...);
+      }
+    }
   }
 }
 
