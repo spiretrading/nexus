@@ -14,7 +14,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({9});
     source->push({1});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 3;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
@@ -32,7 +32,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({4});
     source->push({2});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 4;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 4);
@@ -76,7 +76,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({4});
     source->push({2});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 3;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 1);
@@ -137,7 +137,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({9});
     source->push({1});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 3;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
@@ -183,7 +183,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({1});
     source->push({3});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 3;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
@@ -263,7 +263,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({9});
     source->push({1});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 3;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
@@ -346,7 +346,7 @@ TEST_SUITE("FilteredTableModel") {
     source->push({9});
     source->push({1});
     auto filtered_model = FilteredTableModel(source,
-      [&] (const TableModel& model, int row) {
+      [] (const TableModel& model, int row) {
         return model.get<int>(row, 0) > 3;
       });
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
