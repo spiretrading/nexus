@@ -96,6 +96,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_integer_box_profile());
   add(make_list_item_profile());
   add(make_scroll_bar_profile());
+  add(make_scroll_box_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_tooltip_profile());
@@ -106,6 +107,13 @@ void UiViewerWindow::add(UiProfile profile) {
   auto name = profile.get_name();
   m_widget_list->addItem(name);
   m_profiles.insert(std::pair(std::move(name), std::move(profile)));
+}
+
+void UiViewerWindow::update_table(const UiProfile& profile) {
+  auto table = make_table(profile, m_reset_button, m_rebuild_button);
+  auto previous_table = m_body->replaceWidget(PROPERTIES_INDEX, table);
+  delete previous_table;
+  table->show();
 }
 
 void UiViewerWindow::on_event(const QString& name,
@@ -122,7 +130,11 @@ void UiViewerWindow::on_event(const QString& name,
       } else {
         prepend_comma = true;
       }
-      log += displayTextAny(argument);
+      if(argument.type() == typeid(std::nullptr_t)) {
+        log += QString::fromUtf8("null");
+      } else {
+        log += displayTextAny(argument);
+      }
     }
     log += ")";
   }
@@ -136,10 +148,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     profile.reset();
   }
   auto& profile = m_profiles.at(current->text());
-  auto table = make_table(profile, m_reset_button, m_rebuild_button);
-  auto previous_table = m_body->replaceWidget(PROPERTIES_INDEX, table);
-  delete previous_table;
-  table->show();
+  update_table(profile);
   auto stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
   m_center_stage->setWidget(profile.get_widget());
@@ -165,7 +174,8 @@ void UiViewerWindow::on_reset() {
 
 void UiViewerWindow::on_rebuild() {
   auto& profile = m_profiles.at(m_widget_list->currentItem()->text());
-  profile.rebuild();
+  profile.remove_widget();
+  update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
   m_center_stage->setWidget(profile.get_widget());
   delete previous_widget;

@@ -9,15 +9,15 @@ using namespace Spire::Styles;
 
 struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
   mutable CurrentSignal m_current_signal;
-  std::shared_ptr<IntegerModel> m_model;
-  DecimalBox::Decimal m_current;
+  std::shared_ptr<OptionalIntegerModel> m_model;
+  optional<DecimalBox::Decimal> m_current;
   scoped_connection m_current_connection;
 
-  IntegerToDecimalModel(std::shared_ptr<IntegerModel> model)
+  IntegerToDecimalModel(std::shared_ptr<OptionalIntegerModel> model)
     : m_model(std::move(model)),
       m_current(m_model->get_current()),
       m_current_connection(m_model->connect_current_signal(
-        [=] (auto current) {
+        [=] (const auto& current) {
           on_current(current);
         })) {}
 
@@ -43,12 +43,18 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
     return m_model->get_state();
   }
 
-  const DecimalBox::Decimal& get_current() const {
+  const optional<DecimalBox::Decimal>& get_current() const {
     return m_current;
   }
 
-  QValidator::State set_current(const DecimalBox::Decimal& value) override {
-    auto state = m_model->set_current(value.convert_to<int>());
+  QValidator::State set_current(
+      const optional<DecimalBox::Decimal>& value) override {
+    auto state = [&] {
+      if(value) {
+        return m_model->set_current(value->convert_to<int>());
+      }
+      return m_model->set_current(none);
+    }();
     if(state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
     }
@@ -62,7 +68,7 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
     return m_current_signal.connect(slot);
   }
 
-  void on_current(int current) {
+  void on_current(const optional<int>& current) {
     m_current = current;
     m_current_signal(m_current);
   }
@@ -70,10 +76,10 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
 
 IntegerBox::IntegerBox(QHash<Qt::KeyboardModifier, int> modifiers,
   QWidget* parent)
-  : IntegerBox(std::make_shared<LocalScalarValueModel<int>>(),
+  : IntegerBox(std::make_shared<LocalScalarValueModel<optional<int>>>(),
       std::move(modifiers), parent) {}
 
-IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
+IntegerBox::IntegerBox(std::shared_ptr<OptionalIntegerModel> model,
     QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
@@ -96,7 +102,7 @@ IntegerBox::IntegerBox(std::shared_ptr<IntegerModel> model,
     [=] (const auto& value) { on_reject(value); });
 }
 
-const std::shared_ptr<IntegerModel>& IntegerBox::get_model() const {
+const std::shared_ptr<OptionalIntegerModel>& IntegerBox::get_model() const {
   return m_model;
 }
 
@@ -130,11 +136,15 @@ connection IntegerBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-void IntegerBox::on_submit(const DecimalBox::Decimal& submission) {
+void IntegerBox::on_submit(const optional<DecimalBox::Decimal>& submission) {
   m_submission = m_model->get_current();
   m_submit_signal(m_submission);
 }
 
-void IntegerBox::on_reject(const DecimalBox::Decimal& value) {
-  m_reject_signal(value.convert_to<int>());
+void IntegerBox::on_reject(const optional<DecimalBox::Decimal>& value) {
+  if(value) {
+    m_reject_signal(value->convert_to<int>());
+  } else {
+    m_reject_signal(none);
+  }
 }

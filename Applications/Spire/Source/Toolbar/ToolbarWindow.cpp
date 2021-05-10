@@ -3,7 +3,7 @@
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/ToolbarMenu.hpp"
-#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
@@ -15,6 +15,11 @@ using namespace Spire;
 namespace {
   auto BUTTON_SIZE() {
     static auto size = scale(26, 26);
+    return size;
+  }
+
+  auto DROP_DOWN_SIZE() {
+    static auto size = scale(138, 26);
     return size;
   }
 
@@ -30,11 +35,7 @@ namespace {
 
   auto create_button(const QString& icon, const QString& tooltip,
       QWidget* parent) {
-    auto style = IconButton::Style();
-    style.m_default_color = QColor("#7F5EEC");
-    style.m_blur_color = QColor("#7F5EEC");
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()), style,
-      parent);
+    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
     button->setFixedSize(BUTTON_SIZE());
     button->setToolTip(tooltip);
     return button;
@@ -45,7 +46,6 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
       m_model(model.Get()) {
-  set_fixed_body_size(scale(308, 76));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
@@ -53,37 +53,29 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   auto body = new QWidget(this);
   body->setObjectName("toolbar_window_body");
   body->setStyleSheet("#toolbar_window_body { background-color: #F5F5F5; }");
+  body->setFixedSize(scale(308, 76));
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  layout->addStretch(8);
+  layout->setContentsMargins(scale_width(8), scale_height(8), scale_width(8),
+    scale_height(8));
+  layout->setSpacing(scale_height(10));
   auto combo_box_layout = new QHBoxLayout();
   combo_box_layout->setContentsMargins({});
-  combo_box_layout->setSpacing(0);
+  combo_box_layout->setSpacing(scale_width(16));
   layout->addLayout(combo_box_layout);
-  layout->setStretchFactor(combo_box_layout, 26);
-  layout->addStretch(10);
-  combo_box_layout->addStretch(8);
   m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
     tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
     body);
+  m_window_manager_button->setFixedSize(DROP_DOWN_SIZE());
   m_window_manager_button->set_next_activated(false);
-  m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   combo_box_layout->addWidget(m_window_manager_button);
-  combo_box_layout->setStretchFactor(m_window_manager_button, 138);
-  combo_box_layout->addStretch(16);
   m_recently_closed_button = new ToolbarMenu(tr("Recently Closed"), body);
-  m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  m_recently_closed_button->setFixedSize(DROP_DOWN_SIZE());
   m_recently_closed_button->connect_index_selected_signal(
     [=] (auto index) { on_item_selected(index); });
   combo_box_layout->addWidget(m_recently_closed_button);
-  combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
-  combo_box_layout->addStretch(8);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
-  button_layout->setSpacing(0);
+  button_layout->setSpacing(scale_width(7));
   m_account_button = create_button(":/Icons/toolbar_icons/account.svg",
     tr("Account"), body);
   button_layout->addWidget(m_account_button);
@@ -95,13 +87,15 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   button_layout->addWidget(m_canvas_button);
   m_book_view_button = create_button(":/Icons/toolbar_icons/bookview.svg",
     tr("Book View"), body);
-  connect(m_book_view_button, &IconButton::clicked,
-    [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
+  m_book_view_button->connect_clicked_signal([=] {
+    on_open_window(RecentlyClosedModel::Type::BOOK_VIEW);
+  });
   button_layout->addWidget(m_book_view_button);
   m_time_and_sales_button = create_button(
     ":/Icons/toolbar_icons/time-sales.svg", tr("Time and Sales"), body);
-  connect(m_time_and_sales_button, &IconButton::clicked,
-    [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
+  m_time_and_sales_button->connect_clicked_signal([=] {
+    on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE);
+  });
   button_layout->addWidget(m_time_and_sales_button);
   m_chart_button = create_button(":/Icons/toolbar_icons/chart.svg",
     tr("Chart"), body);
@@ -112,14 +106,14 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_order_imbalances_button = create_button(
     ":/Icons/toolbar_icons/imbalance-indicator.svg", tr("Order Imbalances"),
     body);
+  button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = create_button(":/Icons/toolbar_icons/blotter.svg",
     tr("Blotter"), body);
+  button_layout->addSpacing(scale_width(1));
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
-  layout->setStretchFactor(button_layout, 26);
-  layout->addStretch(8);
-  Window::layout()->addWidget(body);
+  set_body(body);
   m_entry_added_connection = m_model->connect_entry_added_signal(
     [=] (auto& e) {entry_added(e);});
   m_entry_removed_connection = m_model->connect_entry_removed_signal(

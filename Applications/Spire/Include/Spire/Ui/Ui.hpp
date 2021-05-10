@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
+#include <boost/optional/optional.hpp>
 #include <QHeaderView>
 #include <QImage>
 #include <QLineEdit>
@@ -24,6 +25,7 @@ namespace Spire {
   class DropDownMenuList;
   class DropShadow;
   class DurationBox;
+  class FilteredTableModel;
   class FlatButton;
   class IconButton;
   class IntegerBox;
@@ -34,6 +36,7 @@ namespace Spire {
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
   using LocalIntegerModel = LocalScalarValueModel<int>;
+  using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
   using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
@@ -43,18 +46,23 @@ namespace Spire {
   class RangeInputWidget;
   class RealSpinBox;
   template<typename T> class ScalarValueModel;
+  using OptionalIntegerModel = ScalarValueModel<boost::optional<int>>;
   using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;
-  class ScrollBarStyle;
+  class ScrollBox;
+  class ScrollableLayer;
   class SecurityStack;
   class SecurityWidget;
   class TabWidget;
+  class TableModel;
+  class TableModelTransactionLog;
   class TextBox;
   class TitleBar;
   class Tooltip;
   class TransitionWidget;
+  class TranslatedTableModel;
   template<typename T> class ValueModel;
   using TextModel = ValueModel<QString>;
   class Window;

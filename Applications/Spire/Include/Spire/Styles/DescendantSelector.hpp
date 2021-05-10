@@ -40,6 +40,9 @@ namespace Spire::Styles {
 
   std::vector<Stylist*> select(
     const DescendantSelector& selector, Stylist& source);
+
+  std::vector<QWidget*> build_reach(
+    const DescendantSelector& selector, QWidget& source);
 }
 
 #endif

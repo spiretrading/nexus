@@ -70,3 +70,25 @@ std::vector<Stylist*> Spire::Styles::select(const DescendantSelector& selector,
   }
   return std::vector(selection.begin(), selection.end());
 }
+
+std::vector<QWidget*> Spire::Styles::build_reach(
+    const DescendantSelector& selector, QWidget& source) {
+  auto reach = std::unordered_set<QWidget*>();
+  auto bases = build_reach(selector.get_base(), source);
+  reach.insert(bases.begin(), bases.end());
+  auto descendants = std::deque<QWidget*>();
+  descendants.insert(descendants.end(), bases.begin(), bases.end());
+  while(!descendants.empty()) {
+    auto base = descendants.front();
+    descendants.pop_front();
+    for(auto child : base->children()) {
+      if(child->isWidgetType()) {
+        auto widget = static_cast<QWidget*>(child);
+        descendants.push_back(widget);
+        auto child_reach = build_reach(selector.get_descendant(), *widget);
+        reach.insert(child_reach.begin(), child_reach.end());
+      }
+    }
+  }
+  return std::vector(reach.begin(), reach.end());
+}

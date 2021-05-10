@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <QImageReader>
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -14,11 +15,13 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
@@ -183,8 +186,8 @@ UiProfile Spire::make_decimal_box_profile() {
           return {};
         }
       };
-      auto model =
-        std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
+      auto model = std::make_shared<
+        LocalScalarValueModel<optional<DecimalBox::Decimal>>>();
       auto& minimum = get<QString>("minimum", profile.get_properties());
       minimum.connect_changed_signal([=] (const auto& value) {
         if(auto minimum = parse_decimal(value)) {
@@ -232,8 +235,12 @@ UiProfile Spire::make_decimal_box_profile() {
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          if(decimal_box->get_model()->get_current().compare(*decimal) != 0) {
+        if(value == QString::fromUtf8("null")) {
+          if(decimal_box->get_model()->get_current()) {
+            decimal_box->get_model()->set_current(none);
+          }
+        } else if(auto decimal = parse_decimal(value)) {
+          if(decimal_box->get_model()->get_current() != *decimal) {
             decimal_box->get_model()->set_current(*decimal);
           }
         }
@@ -241,23 +248,38 @@ UiProfile Spire::make_decimal_box_profile() {
       auto current_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
-        [=] (const DecimalBox::Decimal& current) {
-          current_slot(QString::fromStdString(
-            current.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=, &current] (const optional<DecimalBox::Decimal>& value) {
+          auto text = [&] {
+            if(value) {
+              return QString::fromStdString(
+                value->str(DecimalBox::PRECISION, std::ios_base::dec));
+            }
+            return QString::fromUtf8("null");
+          }();
+          current.set(text);
+          current_slot(text);
         });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(
-        [=] (const DecimalBox::Decimal& submission) {
-          submit_slot(QString::fromStdString(
-            submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=] (const optional<DecimalBox::Decimal>& submission) {
+          if(submission) {
+            submit_slot(QString::fromStdString(
+              submission->str(DecimalBox::PRECISION, std::ios_base::dec)));
+          } else {
+            submit_slot(QString::fromUtf8("null"));
+          }
         });
       auto reject_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Reject"));
       decimal_box->connect_reject_signal(
-        [=] (const DecimalBox::Decimal& value) {
-          reject_slot(QString::fromStdString(
-            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=] (const optional<DecimalBox::Decimal>& value) {
+          if(value) {
+            reject_slot(QString::fromStdString(
+              value->str(DecimalBox::PRECISION, std::ios_base::dec)));
+          } else {
+            reject_slot(QString::fromUtf8("null"));
+          }
         });
       auto& placeholder = get<QString>("placeholder",
         profile.get_properties());
@@ -402,7 +424,7 @@ UiProfile Spire::make_integer_box_profile() {
     true));
   auto profile = UiProfile(QString::fromUtf8("IntegerBox"), properties,
     [] (auto& profile) {
-      auto model = std::make_shared<LocalIntegerModel>();
+      auto model = std::make_shared<LocalOptionalIntegerModel>();
       auto& minimum = get<int>("minimum", profile.get_properties());
       minimum.connect_changed_signal([=] (auto value) {
         model->set_minimum(value);
@@ -432,11 +454,11 @@ UiProfile Spire::make_integer_box_profile() {
         }
       });
       integer_box->get_model()->connect_current_signal(
-        profile.make_event_slot<int>(QString::fromUtf8("Current")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       integer_box->connect_submit_signal(
-        profile.make_event_slot<int>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Submit")));
       integer_box->connect_reject_signal(
-        profile.make_event_slot<int>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Reject")));
       auto& placeholder = get<QString>("placeholder",
         profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& placeholder) {
@@ -493,14 +515,13 @@ UiProfile Spire::make_list_item_profile() {
 
 UiProfile Spire::make_scroll_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_bool_property("enabled", true));
+  populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("vertical", true));
-  properties.push_back(make_standard_int_property("start-range", 0));
-  properties.push_back(make_standard_int_property("end-range", 1000));
-  properties.push_back(make_standard_int_property("page-size", 100));
-  properties.push_back(make_standard_int_property("line-size", 10));
+  properties.push_back(make_standard_int_property("start_range", 0));
+  properties.push_back(make_standard_int_property("end_range", 1000));
+  properties.push_back(make_standard_int_property("page_size", 100));
+  properties.push_back(make_standard_int_property("line_size", 10));
   properties.push_back(make_standard_int_property("position", 0));
-  properties.push_back(make_standard_int_property("thumb-min-size", 50));
   auto profile = UiProfile(QString::fromUtf8("ScrollBar"), properties,
     [] (auto& profile) {
       auto& vertical = get<bool>("vertical", profile.get_properties());
@@ -513,31 +534,27 @@ UiProfile Spire::make_scroll_bar_profile() {
       }();
       auto scroll_bar = new ScrollBar(orientation);
       if(orientation == Qt::Vertical) {
-        scroll_bar->resize(scale_width(13), scale_height(200));
+        scroll_bar->resize(scale(13, 200));
       } else {
-        scroll_bar->resize(scale_width(200), scale_height(13));
+        scroll_bar->resize(scale(200, 13));
       }
-      auto& enabled = get<bool>("enabled", profile.get_properties());
-      enabled.connect_changed_signal([scroll_bar] (auto value) {
-        scroll_bar->setEnabled(value);
-      });
-      auto& start_range = get<int>("start-range", profile.get_properties());
+      auto& start_range = get<int>("start_range", profile.get_properties());
       start_range.connect_changed_signal([scroll_bar] (auto value) {
         auto range = scroll_bar->get_range();
         range.m_start = value;
         scroll_bar->set_range(range);
       });
-      auto& end_range = get<int>("end-range", profile.get_properties());
+      auto& end_range = get<int>("end_range", profile.get_properties());
       end_range.connect_changed_signal([scroll_bar] (auto value) {
         auto range = scroll_bar->get_range();
         range.m_end = value;
         scroll_bar->set_range(range);
       });
-      auto& page_size = get<int>("page-size", profile.get_properties());
+      auto& page_size = get<int>("page_size", profile.get_properties());
       page_size.connect_changed_signal([scroll_bar] (auto value) {
         scroll_bar->set_page_size(value);
       });
-      auto& line_size = get<int>("line-size", profile.get_properties());
+      auto& line_size = get<int>("line_size", profile.get_properties());
       line_size.connect_changed_signal([scroll_bar] (auto value) {
         scroll_bar->set_line_size(value);
       });
@@ -545,20 +562,47 @@ UiProfile Spire::make_scroll_bar_profile() {
       position.connect_changed_signal([scroll_bar] (auto value) {
         scroll_bar->set_position(value);
       });
-      auto& thumb_min_size = get<int>("thumb-min-size", profile.get_properties());
-      thumb_min_size.connect_changed_signal([scroll_bar] (auto value) {
-        auto min_size = [=] {
-          if(scroll_bar->get_orientation() == Qt::Vertical) {
-            return scale_height(value);
-          } else {
-            return scale_width(value);
-          }
-        }();
-        scroll_bar->set_thumb_min_size(min_size);
-      });
       scroll_bar->connect_position_signal(profile.make_event_slot<int>(
         QString::fromUtf8("Position")));
       return scroll_bar;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_scroll_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto display_policy_property = define_enum<ScrollBox::DisplayPolicy>(
+    {{"NEVER", ScrollBox::DisplayPolicy::NEVER},
+     {"ALWAYS", ScrollBox::DisplayPolicy::ALWAYS},
+     {"ON_OVERFLOW", ScrollBox::DisplayPolicy::ON_OVERFLOW},
+     {"ON_ENGAGE", ScrollBox::DisplayPolicy::ON_ENGAGE}});
+  properties.push_back(make_standard_enum_property(
+    "horizontal_display_policy", display_policy_property));
+  properties.push_back(make_standard_enum_property(
+    "vertical_display_policy", display_policy_property));
+  auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
+    [] (auto& profile) {
+      auto label = new QLabel();
+      auto reader = QImageReader(":/Icons/color-picker-display.png");
+      auto image = QPixmap::fromImage(reader.read());
+      image = image.scaled(QSize(2000, 2000));
+      label->setPixmap(std::move(image));
+      auto scroll_box = new ScrollBox(label);
+      scroll_box->resize(scale(320, 240));
+      apply_widget_properties(scroll_box, profile.get_properties());
+      auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
+        "horizontal_display_policy", profile.get_properties());
+      horizontal_display_policy.connect_changed_signal(
+        [scroll_box] (auto value) {
+          scroll_box->set_horizontal(value);
+        });
+      auto& vertical_display_policy = get<ScrollBox::DisplayPolicy>(
+        "vertical_display_policy", profile.get_properties());
+      vertical_display_policy.connect_changed_signal([scroll_box] (auto value) {
+        scroll_box->set_vertical(value);
+      });
+      return scroll_box;
     });
   return profile;
 }

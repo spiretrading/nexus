@@ -1,5 +1,6 @@
 #ifndef SPIRE_VALUE_MODEL_HPP
 #define SPIRE_VALUE_MODEL_HPP
+#include <boost/signals2/connection.hpp>
 #include <QValidator>
 #include "Spire/Ui/Ui.hpp"
 
