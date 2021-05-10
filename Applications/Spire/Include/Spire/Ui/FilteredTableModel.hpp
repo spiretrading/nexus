@@ -9,8 +9,9 @@
 
 namespace Spire {
 
-  /** Implements a TableModel that provides a view over a source model by
-   *  filtering out some rows.
+  /**
+   * Implements a TableModel that provides a view over a source model by
+   * filtering out some rows.
    */
   class FilteredTableModel : public TableModel {
     public:
