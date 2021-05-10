@@ -24,6 +24,7 @@ namespace Spire {
   class DropDownMenuItem;
   class DropDownMenuList;
   class DropShadow;
+  class FilteredTableModel;
   class FlatButton;
   class IconButton;
   class IntegerBox;
