@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
 #include <QHeaderView>
 #include <QImage>
@@ -18,12 +19,14 @@ namespace Spire {
   class CheckBox;
   class ColonWidget;
   class DateInputWidget;
+  class DecimalBox;
   class DecimalSpinBox;
   class Dialog;
   class DropDownMenu;
   class DropDownMenuItem;
   class DropDownMenuList;
   class DropShadow;
+  class DurationBox;
   class FilteredTableModel;
   class FlatButton;
   class Icon;
@@ -35,7 +38,11 @@ namespace Spire {
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
   using LocalBooleanModel = LocalValueModel<bool>;
+  using LocalDurationModel =
+    LocalScalarValueModel<boost::posix_time::time_duration>;
   using LocalIntegerModel = LocalScalarValueModel<int>;
+  using LocalOptionalDurationModel =
+    LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
   using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
   using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
@@ -46,7 +53,10 @@ namespace Spire {
   class RangeInputWidget;
   class RealSpinBox;
   template<typename T> class ScalarValueModel;
+  using OptionalDurationModel =
+    ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
   using OptionalIntegerModel = ScalarValueModel<boost::optional<int>>;
+  using DurationModel = ScalarValueModel<boost::posix_time::time_duration>;
   using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
   class ScrollArea;

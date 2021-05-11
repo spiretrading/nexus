@@ -59,7 +59,7 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
       return QValidator::State::Invalid;
     }
     m_current = value;
-    m_current_signal(m_current);
+    m_current_signal(value);
     return state;
   }
 
@@ -70,7 +70,11 @@ struct IntegerBox::IntegerToDecimalModel : DecimalBox::DecimalModel {
 
   void on_current(const optional<int>& current) {
     m_current = current;
-    m_current_signal(m_current);
+    if(current) {
+      m_current_signal(DecimalBox::Decimal(*current));
+    } else {
+      m_current_signal(none);
+    }
   }
 };
 

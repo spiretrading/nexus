@@ -65,16 +65,22 @@ namespace Spire {
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel()
-    : m_state(m_model.get_state()),
-      m_increment(std::numeric_limits<Scalar>::max() /
-        std::numeric_limits<Scalar>::max()) {}
+      : m_state(m_model.get_state()) {
+    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
+      m_increment =
+        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+    }
+  }
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel(Type current)
-    : m_model(std::move(current)),
-      m_state(m_model.get_state()),
-      m_increment(std::numeric_limits<Scalar>::max() /
-        std::numeric_limits<Scalar>::max()) {}
+      : m_model(std::move(current)),
+        m_state(m_model.get_state()) {
+    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
+      m_increment =
+        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+    }
+  }
 
   template<typename T>
   void LocalScalarValueModel<T>::set_minimum(
@@ -130,7 +136,7 @@ namespace Spire {
         if(*value != m_model.get_current() && (*value % m_increment) != 0) {
           return QValidator::State::Invalid;
         }
-      } else {
+      } else if constexpr(std::numeric_limits<Type>::is_specialized) {
         if(*value != m_model.get_current() && fmod(*value, m_increment) != 0) {
           return QValidator::State::Invalid;
         }
@@ -138,8 +144,7 @@ namespace Spire {
     }
     m_state = m_model.set_current(value);
     if(value) {
-      if(m_minimum && *value < *m_minimum ||
-          m_maximum && *value > *m_maximum) {
+      if(m_minimum && *value < *m_minimum || m_maximum && *value > *m_maximum) {
         m_state = QValidator::Intermediate;
       }
     }

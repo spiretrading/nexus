@@ -56,7 +56,7 @@ namespace Spire {
   template<typename T>
   QValidator::State LocalValueModel<T>::set_current(const Type& value) {
     m_current = value;
-    m_current_signal(m_current);
+    m_current_signal(value);
     return QValidator::State::Acceptable;
   }
 
