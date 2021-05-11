@@ -4,8 +4,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace std {
   template<typename T>
@@ -40,7 +40,7 @@ namespace Spire {
       * have a value of false.
       * @param default_value The default value.
       */
-      AssociativeValueModel(Type default_value);
+      explicit AssociativeValueModel(Type default_value);
 
       /**
        * Associates a BooleanModel iff it's not already associated.
@@ -142,11 +142,11 @@ namespace Spire {
   template<typename T>
   std::shared_ptr<BooleanModel> AssociativeValueModel<T>::find(
       const Type& value) const {
-    auto iterator = m_models.find(value);
-    if(iterator == m_models.end()) {
+    auto i = m_models.find(value);
+    if(i == m_models.end()) {
       return nullptr;
     }
-    return iterator->second;
+    return i->second;
   }
 
   template<typename T>
@@ -185,8 +185,8 @@ namespace Spire {
   template<typename T>
   void AssociativeValueModel<T>::set_associated_model_value(const Type& value,
       bool model_value) {
-    if(auto iterator = m_models.find(value); iterator != m_models.end()) {
-      iterator->second->set_current(model_value);
+    if(auto i = m_models.find(value); i != m_models.end()) {
+      i->second->set_current(model_value);
     }
   }
 
@@ -222,8 +222,7 @@ namespace Spire {
   std::shared_ptr<AssociativeValueModel<boost::optional<T>>>
       make_nullable_associative_model() {
     auto model =
-      std::make_shared<AssociativeValueModel<boost::optional<T>>>(
-        boost::optional<T>(boost::none));
+      std::make_shared<AssociativeValueModel<boost::optional<T>>>(boost::none);
     model->associate(std::make_shared<LocalBooleanModel>(true), boost::none);
     return model;
   }
