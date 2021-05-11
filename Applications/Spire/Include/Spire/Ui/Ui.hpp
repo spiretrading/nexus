@@ -27,6 +27,7 @@ namespace Spire {
   class DropDownMenuList;
   class DropShadow;
   class DurationBox;
+  class FilteredTableModel;
   class FlatButton;
   class IconButton;
   class IntegerBox;
@@ -64,10 +65,12 @@ namespace Spire {
   class SecurityWidget;
   class TabWidget;
   class TableModel;
+  class TableModelTransactionLog;
   class TextBox;
   class TitleBar;
   class Tooltip;
   class TransitionWidget;
+  class TranslatedTableModel;
   template<typename T> class ValueModel;
   using TextModel = ValueModel<QString>;
   class Window;
