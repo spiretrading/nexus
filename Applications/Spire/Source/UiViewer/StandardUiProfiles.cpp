@@ -9,6 +9,7 @@
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -20,6 +21,8 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -183,8 +186,8 @@ UiProfile Spire::make_decimal_box_profile() {
           return {};
         }
       };
-      auto model =
-        std::make_shared<LocalScalarValueModel<DecimalBox::Decimal>>();
+      auto model = std::make_shared<
+        LocalScalarValueModel<optional<DecimalBox::Decimal>>>();
       auto& minimum = get<QString>("minimum", profile.get_properties());
       minimum.connect_changed_signal([=] (const auto& value) {
         if(auto minimum = parse_decimal(value)) {
@@ -232,8 +235,12 @@ UiProfile Spire::make_decimal_box_profile() {
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        if(auto decimal = parse_decimal(value)) {
-          if(decimal_box->get_model()->get_current().compare(*decimal) != 0) {
+        if(value == QString::fromUtf8("null")) {
+          if(decimal_box->get_model()->get_current()) {
+            decimal_box->get_model()->set_current(none);
+          }
+        } else if(auto decimal = parse_decimal(value)) {
+          if(decimal_box->get_model()->get_current() != *decimal) {
             decimal_box->get_model()->set_current(*decimal);
           }
         }
@@ -241,25 +248,38 @@ UiProfile Spire::make_decimal_box_profile() {
       auto current_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
-        [=, &current] (const DecimalBox::Decimal& value) {
-          current_slot(QString::fromStdString(
-            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
-          current.set(QString::fromStdString(
-            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=, &current] (const optional<DecimalBox::Decimal>& value) {
+          auto text = [&] {
+            if(value) {
+              return QString::fromStdString(
+                value->str(DecimalBox::PRECISION, std::ios_base::dec));
+            }
+            return QString::fromUtf8("null");
+          }();
+          current.set(text);
+          current_slot(text);
         });
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(
-        [=] (const DecimalBox::Decimal& submission) {
-          submit_slot(QString::fromStdString(
-            submission.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=] (const optional<DecimalBox::Decimal>& submission) {
+          if(submission) {
+            submit_slot(QString::fromStdString(
+              submission->str(DecimalBox::PRECISION, std::ios_base::dec)));
+          } else {
+            submit_slot(QString::fromUtf8("null"));
+          }
         });
       auto reject_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Reject"));
       decimal_box->connect_reject_signal(
-        [=] (const DecimalBox::Decimal& value) {
-          reject_slot(QString::fromStdString(
-            value.str(DecimalBox::PRECISION, std::ios_base::dec)));
+        [=] (const optional<DecimalBox::Decimal>& value) {
+          if(value) {
+            reject_slot(QString::fromStdString(
+              value->str(DecimalBox::PRECISION, std::ios_base::dec)));
+          } else {
+            reject_slot(QString::fromUtf8("null"));
+          }
         });
       auto& placeholder = get<QString>("placeholder",
         profile.get_properties());
@@ -288,6 +308,69 @@ UiProfile Spire::make_decimal_box_profile() {
         decimal_box->set_warning_displayed(value);
       });
       return decimal_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_duration_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_qstring_property("current", ""));
+  properties.push_back(make_standard_qstring_property("minimum",
+    "10:10:10.000"));
+  properties.push_back(make_standard_qstring_property("maximum",
+    "20:20:20.000"));
+  properties.push_back(make_standard_bool_property("is_warning_displayed",
+    true));
+  auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
+    [] (auto& profile) {
+      auto parse_duration = [] (auto duration) ->
+          boost::optional<time_duration> {
+        try {
+          return boost::posix_time::duration_from_string(
+            duration.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      auto model = std::make_shared<LocalOptionalDurationModel>();
+      auto duration_box = new DurationBox(model);
+      apply_widget_properties(duration_box, profile.get_properties());
+      auto& minimum = get<QString>("minimum", profile.get_properties());
+      minimum.connect_changed_signal([=] (auto value) {
+        if(auto minimum_value = parse_duration(value)) {
+          model->set_minimum(minimum_value);
+        }
+      });
+      auto& maximum = get<QString>("maximum", profile.get_properties());
+      maximum.connect_changed_signal([=] (auto value) {
+        if(auto maximum_value = parse_duration(value)) {
+          model->set_maximum(maximum_value);
+        }
+      });
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (auto value) {
+        if(auto current_value = parse_duration(value)) {
+          if(duration_box->get_model()->get_current() != *current_value) {
+            duration_box->get_model()->set_current(*current_value);
+          }
+        }
+      });
+      auto& is_warning_displayed = get<bool>("is_warning_displayed",
+        profile.get_properties());
+      is_warning_displayed.connect_changed_signal([=] (auto value) {
+        duration_box->set_warning_displayed(value);
+      });
+      duration_box->get_model()->connect_current_signal(
+        profile.make_event_slot<optional<time_duration>>(
+          QString::fromUtf8("Current")));
+      duration_box->connect_submit_signal(
+        profile.make_event_slot<optional<time_duration>>(
+          QString::fromUtf8("Submit")));
+      duration_box->connect_reject_signal(
+        profile.make_event_slot<optional<time_duration>>(
+          QString::fromUtf8("Reject")));
+      return duration_box;
     });
   return profile;
 }
@@ -341,7 +424,7 @@ UiProfile Spire::make_integer_box_profile() {
     true));
   auto profile = UiProfile(QString::fromUtf8("IntegerBox"), properties,
     [] (auto& profile) {
-      auto model = std::make_shared<LocalIntegerModel>();
+      auto model = std::make_shared<LocalOptionalIntegerModel>();
       auto& minimum = get<int>("minimum", profile.get_properties());
       minimum.connect_changed_signal([=] (auto value) {
         model->set_minimum(value);
@@ -371,11 +454,11 @@ UiProfile Spire::make_integer_box_profile() {
         }
       });
       integer_box->get_model()->connect_current_signal(
-        profile.make_event_slot<int>(QString::fromUtf8("Current")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       integer_box->connect_submit_signal(
-        profile.make_event_slot<int>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Submit")));
       integer_box->connect_reject_signal(
-        profile.make_event_slot<int>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Reject")));
       auto& placeholder = get<QString>("placeholder",
         profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& placeholder) {

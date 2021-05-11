@@ -188,7 +188,7 @@ void Box::on_style() {
         if(m_body) {
           auto current_alignment = m_container->layout()->alignment();
           auto computed_alignment =
-            alignment.get_expression().as<Qt::Alignment>();
+            alignment.get_expression().as<Qt::AlignmentFlag>();
           if(current_alignment != computed_alignment) {
             m_container->layout()->setAlignment(computed_alignment);
             m_container->layout()->update();

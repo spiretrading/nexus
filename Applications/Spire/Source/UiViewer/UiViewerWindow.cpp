@@ -90,6 +90,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_color_selector_button_profile());
   add(make_currency_combo_box_profile());
   add(make_decimal_box_profile());
+  add(make_duration_box_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
   add(make_integer_box_profile());
@@ -128,7 +129,11 @@ void UiViewerWindow::on_event(const QString& name,
       } else {
         prepend_comma = true;
       }
-      log += displayTextAny(argument);
+      if(argument.type() == typeid(std::nullptr_t)) {
+        log += QString::fromUtf8("null");
+      } else {
+        log += displayTextAny(argument);
+      }
     }
     log += ")";
   }
