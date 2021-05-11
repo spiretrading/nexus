@@ -59,7 +59,7 @@ namespace {
 CheckBox::CheckBox(QWidget* parent)
   : CheckBox(std::make_shared<LocalBooleanModel>(false), parent) {}
 
-CheckBox::CheckBox(std::shared_ptr<BoolModel> model, QWidget* parent)
+CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
       m_is_read_only(false) {
@@ -97,7 +97,7 @@ void CheckBox::changeEvent(QEvent* event) {
   }
 }
 
-const std::shared_ptr<BoolModel>& CheckBox::get_model() const {
+const std::shared_ptr<BooleanModel>& CheckBox::get_model() const {
   return m_model;
 }
 

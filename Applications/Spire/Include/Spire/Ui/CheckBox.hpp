@@ -28,17 +28,17 @@ namespace Styles {
       */
       explicit CheckBox(QWidget* parent = nullptr);
   
-      //! Constructs a CheckBox using a LocalCheckModel and an initial checked
-      //! state.
-      /*!
+      //! Constructs a CheckBox using a LocalBooleanModel and an initial value
+      //! of false.
+      /*/
         \param model The check state's model.
         \param parent The parent widget.
       */
-      explicit CheckBox(std::shared_ptr<BoolModel> model,
+      explicit CheckBox(std::shared_ptr<BooleanModel> model,
         QWidget* parent = nullptr);
 
       //! Returns the model.
-      const std::shared_ptr<BoolModel>& get_model() const;
+      const std::shared_ptr<BooleanModel>& get_model() const;
 
       //! Sets the text of the label.
       /*!
@@ -64,7 +64,7 @@ namespace Styles {
 
     private:
       mutable CheckedSignal m_checked_signal;
-      std::shared_ptr<BoolModel> m_model;
+      std::shared_ptr<BooleanModel> m_model;
       bool m_is_read_only;
       Icon* m_check;
       TextBox* m_label;
