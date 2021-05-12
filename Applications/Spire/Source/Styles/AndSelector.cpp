@@ -28,14 +28,24 @@ AndSelector Spire::Styles::operator &&(Selector left, Selector right) {
   return AndSelector(std::move(left), std::move(right));
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const AndSelector& selector, Stylist& source) {
-  auto left_selection = select(selector.get_left(), source);
-  auto right_selection = std::vector<Stylist*>();
-  for(auto base : left_selection) {
-    auto base_selection = select(selector.get_right(), *base);
-    right_selection.insert(right_selection.end(), base_selection.begin(),
-      base_selection.end());
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const AndSelector& selector, std::unordered_set<Stylist*> sources) {
+  auto left = select(selector.get_left(), sources);
+  if(left.empty()) {
+    return {};
   }
-  return right_selection;
+  auto right = select(selector.get_right(), sources);
+  if(right.empty()) {
+    return {};
+  }
+  if(left.size() == 1 && right.size() == 1 &&
+      *left.begin() == *right.begin()) {
+    return {*left.begin()};
+  }
+  for(auto match : left) {
+    if(right.find(match) == right.end()) {
+      left.erase(match);
+    }
+  }
+  return left;
 }

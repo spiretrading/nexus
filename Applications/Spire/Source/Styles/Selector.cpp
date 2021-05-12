@@ -1,5 +1,4 @@
 #include "Spire/Styles/Selector.hpp"
-#include <unordered_set>
 #include "Spire/Styles/StyleSheet.hpp"
 
 using namespace Spire;
@@ -17,9 +16,14 @@ bool Selector::operator !=(const Selector& selector) const {
   return !(*this == selector);
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const Selector& selector, Stylist& source) {
-  return selector.m_select(selector, source);
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const Selector& selector, std::unordered_set<Stylist*> source) {
+  return selector.m_select(selector, std::move(source));
+}
+
+std::unordered_set<Stylist*>
+    Spire::Styles::select(const Selector& selector, Stylist& source) {
+  return select(selector, std::unordered_set{&source});
 }
 
 std::vector<QWidget*> Spire::Styles::build_reach(

@@ -1,5 +1,4 @@
 #include "Spire/Styles/AncestorSelector.hpp"
-#include <unordered_set>
 #include <QWidget>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
@@ -31,19 +30,18 @@ AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
   return AncestorSelector(std::move(base), std::move(ancestor));
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const AncestorSelector& selector, Stylist& source) {
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const AncestorSelector& selector, std::unordered_set<Stylist*> sources) {
   auto selection = std::unordered_set<Stylist*>();
-  auto bases = select(selector.get_base(), source);
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  for(auto base : bases) {
-    auto ancestor = base->get_widget().parentWidget();
+  for(auto source : select(selector.get_base(), std::move(sources))) {
+    auto ancestor = source->get_widget().parentWidget();
     while(ancestor) {
-      auto ancestor_selection = select(selector.get_ancestor(),
-        find_stylist(*ancestor));
+      auto ancestor_selection =
+        select(selector.get_ancestor(), find_stylist(*ancestor));
       if(!ancestor_selection.empty()) {
         if(is_flipped) {
-          selection.insert(base);
+          selection.insert(source);
           break;
         } else {
           selection.insert(
@@ -53,5 +51,5 @@ std::vector<Stylist*> Spire::Styles::select(
       ancestor = ancestor->parentWidget();
     }
   }
-  return std::vector(selection.begin(), selection.end());
+  return selection;
 }

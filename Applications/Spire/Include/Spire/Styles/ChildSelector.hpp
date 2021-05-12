@@ -38,7 +38,8 @@ namespace Spire::Styles {
    */
   ChildSelector operator >(Selector base, Selector child);
 
-  std::vector<Stylist*> select(const ChildSelector& selector, Stylist& source);
+  std::unordered_set<Stylist*> select(
+    const ChildSelector& selector, std::unordered_set<Stylist*> sources);
 
   std::vector<QWidget*> build_reach(
     const ChildSelector& selector, QWidget& source);

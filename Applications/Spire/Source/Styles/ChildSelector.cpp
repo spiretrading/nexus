@@ -1,5 +1,4 @@
 #include "Spire/Styles/ChildSelector.hpp"
-#include <unordered_set>
 #include <QWidget>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
@@ -31,21 +30,20 @@ ChildSelector Spire::Styles::operator >(Selector base, Selector child) {
   return ChildSelector(std::move(base), std::move(child));
 }
 
-std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
-    Stylist& source) {
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const ChildSelector& selector, std::unordered_set<Stylist*> sources) {
   auto selection = std::unordered_set<Stylist*>();
-  auto bases = select(selector.get_base(), source);
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  for(auto base : bases) {
-    auto is_base_selected = false;
-    for(auto child : base->get_widget().children()) {
+  for(auto source : select(selector.get_base(), std::move(sources))) {
+    auto is_source_selected = false;
+    for(auto child : source->get_widget().children()) {
       if(child->isWidgetType()) {
         auto child_selection = select(selector.get_child(),
           find_stylist(*static_cast<QWidget*>(child)));
         if(!child_selection.empty()) {
           if(is_flipped) {
-            selection.insert(base);
-            is_base_selected = true;
+            selection.insert(source);
+            is_source_selected = true;
             break;
           } else {
             selection.insert(child_selection.begin(), child_selection.end());
@@ -53,13 +51,13 @@ std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
         }
       }
     }
-    if(!is_flipped || !is_base_selected) {
-      for(auto& pseudo_element : get_pseudo_elements(base->get_widget())) {
-        if(auto stylist = find_stylist(base->get_widget(), pseudo_element)) {
+    if(!is_flipped || !is_source_selected) {
+      for(auto& pseudo_element : get_pseudo_elements(source->get_widget())) {
+        if(auto stylist = find_stylist(source->get_widget(), pseudo_element)) {
           auto child_selection = select(selector.get_child(), *stylist);
           if(!child_selection.empty()) {
             if(is_flipped) {
-              selection.insert(base);
+              selection.insert(source);
               break;
             } else {
               selection.insert(child_selection.begin(), child_selection.end());
@@ -69,7 +67,7 @@ std::vector<Stylist*> Spire::Styles::select(const ChildSelector& selector,
       }
     }
   }
-  return std::vector(selection.begin(), selection.end());
+  return selection;
 }
 
 std::vector<QWidget*> Spire::Styles::build_reach(
