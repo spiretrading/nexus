@@ -16,7 +16,7 @@ namespace Spire::Styles {
   template<typename T>
   struct is_selector_t<T, std::enable_if_t<std::is_same_v<decltype(
     select(std::declval<T>(), std::declval<std::unordered_set<Stylist*>>())),
-    std::vector<Stylist*>>>> : std::true_type {};
+    std::unordered_set<Stylist*>>>> : std::true_type {};
 
   template<typename T>
   constexpr auto is_selector_v = is_selector_t<T>::value;

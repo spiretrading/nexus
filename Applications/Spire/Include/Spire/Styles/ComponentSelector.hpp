@@ -31,12 +31,13 @@ namespace Spire::Styles {
       bool operator !=(const ComponentSelector& selector) const;
 
     private:
-      friend std::vector<Stylist*> select(const ComponentSelector&, Stylist&);
+      friend std::unordered_set<Stylist*>
+        select(const ComponentSelector&, std::unordered_set<Stylist*>);
       std::any m_id;
       std::function<
         bool (const ComponentSelector&, const ComponentSelector&)> m_is_equal;
-      std::function<
-        std::vector<Stylist*> (const ComponentSelector&, Stylist&)> m_select;
+      std::function<std::unordered_set<Stylist*> (
+        const ComponentSelector&, std::unordered_set<Stylist*>)> m_select;
   };
 
   /** Returns the hash value of a ComponentSelector. */
@@ -91,11 +92,12 @@ namespace Spire::Styles {
   struct ComponentRegistry {
     using Id = I;
     using SelectCallable =
-      std::function<std::vector<Stylist*> (QWidget&, const Id&)>;
+      std::function<std::unordered_set<Stylist*> (QWidget&, const Id&)>;
 
     static bool register_id(std::type_index widget, std::type_index id,
       SelectCallable callable);
-    static std::vector<Stylist*> select(const Id& id, Stylist& source);
+    static std::unordered_set<Stylist*>
+      select(const Id& id, std::unordered_set<Stylist*>);
 
     static inline
       std::unordered_map<std::type_index, SelectCallable> m_registry;
@@ -106,7 +108,8 @@ namespace Spire::Styles {
     using Widget = W;
     using Id = I;
 
-    std::vector<Stylist*> operator ()(Widget& widget, const Id& id) const;
+    std::unordered_set<Stylist*>
+      operator ()(Widget& widget, const Id& id) const;
     static bool register_id();
 
     static inline const auto initializer = register_id();
@@ -116,8 +119,8 @@ namespace Spire::Styles {
   struct ComponentFinder {};
 
 namespace Details {
-  bool register_id(std::type_index type,
-    std::function<std::vector<Stylist*> (const ComponentSelector&, Stylist&)>);
+  bool register_id(std::type_index type, std::function<std::unordered_set<
+    Stylist*> (const ComponentSelector&, Stylist&)> callable);
 }
 
   template<typename I>
@@ -125,27 +128,33 @@ namespace Details {
       std::type_index widget, std::type_index id, SelectCallable callable) {
     m_registry.insert(std::pair(widget, std::move(callable)));
     return Details::register_id(id,
-      [] (const ComponentSelector& selector, Stylist& source) {
-        return ComponentRegistry::select(selector.as<Id>(), source);
+      [] (const ComponentSelector& selector,
+          std::unordered_set<Stylist*> sources) {
+        return ComponentRegistry::select(selector.as<Id>(), std::move(sources));
       });
   }
 
   template<typename I>
-  std::vector<Stylist*>
-      ComponentRegistry<I>::select(const Id& id, Stylist& source) {
-    auto i = m_registry.find(typeid(source.get_widget()));
-    if(i == m_registry.end()) {
-      return {};
+  std::unordered_set<Stylist*> ComponentRegistry<I>::select(
+      const Id& id, std::unordered_set<Stylist*> sources) {
+    auto selection = std::unordered_set<Stylist*>();
+    for(auto source : sources) {
+      auto i = m_registry.find(typeid(source->get_widget()));
+      if(i != m_registry.end()) {
+        auto source_selection = i->second(source.get_widget(), id);
+        selection.insert(source_selection.begin(), source_selection.end());
+      }
     }
-    return i->second(source.get_widget(), id);
+    return selection;
   }
 
-  std::vector<Stylist*>
-    select(const ComponentSelector& selector, Stylist& source);
+  std::unordered_set<Stylist*> select(
+    const ComponentSelector& selector, std::unordered_set<Stylist*> sources);
 
   template<typename T, typename G>
-  std::vector<Stylist*> select(const ComponentId<T, G>& id, Stylist& source) {
-    return ComponentRegistry<ComponentId<T, G>>::select(id, source);
+  std::unordered_set<Stylist*> select(
+      const ComponentId<T, G>& id, std::unordered_set<Stylist*> sources) {
+    return ComponentRegistry<ComponentId<T, G>>::select(id, std::move(sources));
   }
 
   template<typename W, typename I>
@@ -164,8 +173,9 @@ namespace Details {
           return left.get_type() == right.get_type() &&
             left.as<ComponentId<T, G>>() == right.as<ComponentId<T, G>>();
         }),
-      m_select([] (const ComponentSelector& selector, Stylist& stylist) {
-        return select(selector.as<ComponentId<T, G>>(), stylist);
+      m_select([] (const ComponentSelector& selector,
+          std::unordered_set<Stylist*> sources) {
+        return select(selector.as<ComponentId<T, G>>(), std::move(sources));
       }) {}
 
   template<typename U>

@@ -24,9 +24,9 @@ FlipSelector Spire::Styles::operator +(Selector selector) {
   return FlipSelector(std::move(selector));
 }
 
-std::vector<Stylist*>
-    Spire::Styles::select(const FlipSelector& selector, Stylist& source) {
-  return select(selector.get_selector(), source);
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const FlipSelector& selector, std::unordered_set<Stylist*> sources) {
+  return select(selector.get_selector(), std::move(sources));
 }
 
 std::vector<QWidget*>

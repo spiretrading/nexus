@@ -32,8 +32,8 @@ AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
 
 std::unordered_set<Stylist*> Spire::Styles::select(
     const AncestorSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto selection = std::unordered_set<Stylist*>();
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
+  auto selection = std::unordered_set<Stylist*>();
   for(auto source : select(selector.get_base(), std::move(sources))) {
     auto ancestor = source->get_widget().parentWidget();
     while(ancestor) {

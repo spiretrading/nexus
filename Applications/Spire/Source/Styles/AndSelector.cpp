@@ -40,11 +40,14 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   }
   if(left.size() == 1 && right.size() == 1 &&
       *left.begin() == *right.begin()) {
-    return {*left.begin()};
+    return left;
   }
-  for(auto match : left) {
+  for(auto i = left.begin(); i != left.end();) {
+    auto match = *i;
     if(right.find(match) == right.end()) {
-      left.erase(match);
+      i = left.erase(i);
+    } else {
+      ++i;
     }
   }
   return left;
