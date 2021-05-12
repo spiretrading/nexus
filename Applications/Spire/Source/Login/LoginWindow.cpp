@@ -32,9 +32,9 @@ namespace {
     style.get(Body()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(Fill(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
-    style.get(+Body() < !Active()).
+    style.get(!Active() && Body()).
       set(Fill(QColor::fromRgb(0xBA, 0xB3, 0xD9)));
-    style.get(+Body() < Hover()).
+    style.get(Hover() && Body()).
       set(BackgroundColor(QColor::fromRgb(0x32, 0x14, 0x71))).
       set(Fill(QColor::fromRgb(0xE6, 0x3F, 0x45)));
     return style;
@@ -63,12 +63,12 @@ namespace {
       set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
       set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
       set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
-    style.get(+Body() < Hover()).
+    style.get(Hover() && Body()).
       set(BackgroundColor(QColor(0x8D, 0x78, 0xEC))).
       set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(+Body() < Focus()).
+    style.get(Focus() && Body()).
       set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(+Body() < Disabled()).
+    style.get(Disabled() && Body()).
       set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
       set(TextColor(QColor(0x8D, 0x78, 0xEC))).
       set(border_color(QColor(0x68, 0x4B, 0xC7)));
