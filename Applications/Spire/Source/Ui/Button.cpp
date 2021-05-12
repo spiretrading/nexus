@@ -124,7 +124,7 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   return button;
 }
 
-std::vector<Stylist*> BasePathFinder<Button, Body>::operator ()(
+std::vector<Stylist*> BaseComponentFinder<Button, Body>::operator ()(
     Button& button, const Body& body) const {
   auto stylists = std::vector<Stylist*>();
   stylists.push_back(&find_stylist(button.get_body()));

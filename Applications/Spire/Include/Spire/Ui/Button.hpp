@@ -57,7 +57,7 @@ namespace Spire {
 
 namespace Spire::Styles {
   template<>
-  struct PathFinder<Button, Body> : BasePathFinder<Button, Body> {};
+  struct ComponentFinder<Button, Body> : BaseComponentFinder<Button, Body> {};
 }
 
 #endif
