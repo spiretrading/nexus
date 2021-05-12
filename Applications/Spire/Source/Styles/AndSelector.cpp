@@ -37,27 +37,5 @@ std::vector<Stylist*> Spire::Styles::select(
     right_selection.insert(right_selection.end(), base_selection.begin(),
       base_selection.end());
   }
-  if(left_selection.empty() || right_selection.empty()) {
-    return {};
-  }
-  if(left_selection.size() == 1 && right_selection.size() == 1) {
-    if(left_selection.front() == right_selection.front()) {
-      return left_selection;
-    }
-    return {};
-  }
-  auto [small, big] = [&] () {
-    if(left_selection.size() < right_selection.size()) {
-      return std::tie(left_selection, right_selection);
-    }
-    return std::tie(right_selection, left_selection);
-  }();
-  auto small_set = std::unordered_set(small.begin(), small.end());
-  auto selection = std::vector<Stylist*>();
-  for(auto& candidate : big) {
-    if(small_set.find(candidate) != small_set.end()) {
-      selection.push_back(candidate);
-    }
-  }
-  return selection;
+  return right_selection;
 }

@@ -102,11 +102,9 @@ namespace Spire::Styles {
   PseudoElement::PseudoElement(PseudoElementSelector<T, G> element)
     : m_pseudo_element(std::move(element)),
       m_is_equal([] (const PseudoElement& left, const PseudoElement& right) {
-        if(left.get_type() != right.get_type()) {
-          return false;
-        }
-        return left.as<PseudoElementSelector<T, G>>() ==
-          right.as<PseudoElementSelector<T, G>>();
+        return left.get_type() == right.get_type() &&
+          left.as<PseudoElementSelector<T, G>>() ==
+            right.as<PseudoElementSelector<T, G>>();
       }),
       m_select([] (const PseudoElement& element, Stylist& stylist) {
         return select(element.as<PseudoElementSelector<T, G>>(), stylist);
@@ -155,9 +153,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::PseudoElement> {
-    auto operator ()(const Spire::Styles::PseudoElement& element) const {
-      return Spire::Styles::hash_value(element);
-    }
+    std::size_t operator ()(const Spire::Styles::PseudoElement& element) const;
   };
 }
 

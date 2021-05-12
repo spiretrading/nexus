@@ -16,6 +16,8 @@ namespace Spire::Styles {
   class NotSelector;
   class OrSelector;
   class ParentSelector;
+  template<typename T, typename G> class Path;
+  class PathSelector;
   class Property;
   class PseudoElement;
   template<typename T, typename G> class PseudoElementSelector;
