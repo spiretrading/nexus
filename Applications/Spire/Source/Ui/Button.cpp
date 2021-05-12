@@ -18,7 +18,6 @@ Button::Button(QWidget* body, QWidget* parent)
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_body);
   setFocusPolicy(Qt::StrongFocus);
-  find_stylist(*m_body).match(Body());
 }
 
 const QWidget& Button::get_body() const {
@@ -91,12 +90,12 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   auto button = new Button(new Icon(icon, parent), parent);
   auto style = StyleSheet();
-  style.get(Any() > Button::Body()).
+  style.get(Body()).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Hover() > Button::Body()).set(
+  style.get(+Body() < Hover()).set(
     BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
-  style.get(Focus() > Button::Body()).set(
+  style.get(+Body() < Focus()).set(
     border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   set_style(*button, std::move(style));
   return button;
@@ -108,24 +107,24 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   text_box->setDisabled(true);
   auto button = new Button(text_box, parent);
   auto style = StyleSheet();
-  style.get(Any() > Button::Body()).
+  style.get(Body()).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(TextColor(QColor::fromRgb(0, 0, 0))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Hover() > Button::Body()).
+  style.get(+Body() < Hover()).
     set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
     set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Focus() > Button::Body()).set(
+  style.get(+Body() < Focus()).set(
     border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  style.get(Disabled() > Button::Body()).
+  style.get(+Body() < Disabled()).
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
   set_style(*button, std::move(style));
   return button;
 }
 
-std::vector<Stylist*> PathFinder<Button, Body>::operator ()(
+std::vector<Stylist*> BasePathFinder<Button, Body>::operator ()(
     Button& button, const Body& body) const {
   auto stylists = std::vector<Stylist*>();
   stylists.push_back(&find_stylist(button.get_body()));

@@ -5,6 +5,9 @@
 #include <typeindex>
 #include <unordered_map>
 #include "Spire/Styles/Styles.hpp"
+#include "Spire/Styles/Stylist.hpp"
+
+class QWidget;
 
 namespace Spire::Styles {
 
@@ -36,6 +39,9 @@ namespace Spire::Styles {
       std::function<std::vector<Stylist*> (const PathSelector&, Stylist&)>
         m_select;
   };
+
+  /** Returns the hash value of a PathSelector. */
+  std::size_t hash_value(const PathSelector& element);
 
   /**
    * Specifies a path to a sub-component.
@@ -79,49 +85,86 @@ namespace Spire::Styles {
       bool operator !=(const Path& selector) const;
   };
 
+  /** A commonly used path to identify the main body of a component. */
+  using Body = Path<void, struct BodyTag>;
+
   template<typename P>
-  struct BasePathFinder {
-    static find_registry
+  struct PathFinderRegistry {
+    using Path = P;
+    using SelectCallable =
+      std::function<std::vector<Stylist*> (QWidget&, const Path&)>;
+
+    static bool register_path(std::type_index widget, std::type_index path,
+      SelectCallable callable);
+    static std::vector<Stylist*> select(const Path& path, Stylist& source);
+
+    static inline
+      std::unordered_map<std::type_index, SelectCallable> m_registry;
   };
 
   template<typename W, typename P>
-  struct PathFinderRegistry : BasePathFinder<P> {
+  struct BasePathFinder : PathFinderRegistry<P> {
     using Widget = W;
     using Path = P;
 
-    private:
-      static bool register_path();
-      static const auto initializer = register_path();
+    std::vector<Stylist*> operator ()(Widget& widget, const Path& path) const;
+    static bool register_path();
+
+    static inline const auto initializer = register_path();
   };
 
   template<typename W, typename P>
   struct PathFinder {};
 
-  /** A commonly used path to identify the main body of a component. */
-  using Body = Path<void, struct BodyTag>;
+namespace Details {
+  bool register_path(std::type_index type,
+    std::function<std::vector<Stylist*> (const PathSelector&, Stylist&)>);
+}
 
-  /** Returns the hash value of a PathSelector. */
-  std::size_t hash_value(const PathSelector& element);
+  template<typename P>
+  bool PathFinderRegistry<P>::register_path(
+      std::type_index widget, std::type_index path, SelectCallable callable) {
+    m_registry.insert(std::pair(widget, std::move(callable)));
+    return Details::register_path(path,
+      [] (const PathSelector& selector, Stylist& source) {
+        return PathFinderRegistry::select(selector.as<Path>(), source);
+      });
+  }
+
+  template<typename P>
+  std::vector<Stylist*>
+      PathFinderRegistry<P>::select(const Path& path, Stylist& source) {
+    auto i = m_registry.find(typeid(source.get_widget()));
+    if(i == m_registry.end()) {
+      return {};
+    }
+    return i->second(source.get_widget(), path);
+  }
 
   std::vector<Stylist*> select(const PathSelector& selector, Stylist& source);
 
   template<typename T, typename G>
-  std::vector<Stylist*> select(const Path<T, G>& selector, Stylist& source) {
-    BasePathFinder<Path<T, G>>::find_registry(typeid(*source.m_widget));
-    return {};
+  std::vector<Stylist*> select(const Path<T, G>& path, Stylist& source) {
+    return PathFinderRegistry<Path<T, G>>::select(path, source);
+  }
+
+  template<typename W, typename P>
+  bool BasePathFinder<W, P>::register_path() {
+    return PathFinderRegistry::register_path(typeid(Widget), typeid(Path),
+      [] (QWidget& widget, const Path& path) {
+        return BasePathFinder()(static_cast<Widget&>(widget), path);
+      });
   }
 
   template<typename T, typename G>
   PathSelector::PathSelector(Path<T, G> path)
     : m_path(std::move(path)),
       m_is_equal([] (const PathSelector& left, const PathSelector& right) {
-        if(left.get_type() != right.get_type()) {
-          return false;
-        }
-        return left.as<Path<T, G>>() == right.as<Path<T, G>>();
+        return left.get_type() == right.get_type() &&
+          left.as<Path<T, G>>() == right.as<Path<T, G>>();
       }),
       m_select([] (const PathSelector& element, Stylist& stylist) {
-        return select(element.as<PathSelector<T, G>>(), stylist);
+        return select(element.as<Path<T, G>>(), stylist);
       }) {}
 
   template<typename U>
@@ -162,9 +205,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::PathSelector> {
-    auto operator ()(const Spire::Styles::PathSelector& path) const {
-      return Spire::Styles::hash_value(path);
-    }
+    std::size_t operator ()(const Spire::Styles::PathSelector& path) const;
   };
 }
 

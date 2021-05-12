@@ -29,12 +29,12 @@ namespace {
 
   auto CLOSE_BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() > Button::Body()).
+    style.get(Body()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(Fill(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
-    style.get(!Active() > Button::Body()).
+    style.get(+Body() < !Active()).
       set(Fill(QColor::fromRgb(0xBA, 0xB3, 0xD9)));
-    style.get(Hover() > Button::Body()).
+    style.get(+Body() < Hover()).
       set(BackgroundColor(QColor::fromRgb(0x32, 0x14, 0x71))).
       set(Fill(QColor::fromRgb(0xE6, 0x3F, 0x45)));
     return style;
@@ -57,18 +57,18 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Bold);
     font.setPixelSize(scale_width(14));
-    style.get(Any() > Button::Body()).
+    style.get(Body()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(text_style(font, QColor(0, 0, 0))).
       set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
       set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
       set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
-    style.get(Hover() > Button::Body()).
+    style.get(+Body() < Hover()).
       set(BackgroundColor(QColor(0x8D, 0x78, 0xEC))).
       set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(Focus() > Button::Body()).
+    style.get(+Body() < Focus()).
       set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(Disabled() > Button::Body()).
+    style.get(+Body() < Disabled()).
       set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
       set(TextColor(QColor(0x8D, 0x78, 0xEC))).
       set(border_color(QColor(0x68, 0x4B, 0xC7)));
