@@ -1,6 +1,6 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
-#include "Spire/Styles/PathSelector.hpp"
+#include "Spire/Styles/ComponentSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
