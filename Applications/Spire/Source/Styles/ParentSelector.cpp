@@ -1,7 +1,7 @@
 #include "Spire/Styles/ParentSelector.hpp"
 #include <unordered_set>
 #include <QWidget>
-#include "Spire/Styles/DisambiguateSelector.hpp"
+#include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -31,14 +31,13 @@ std::vector<Stylist*> Spire::Styles::select(
     const ParentSelector& selector, Stylist& source) {
   auto selection = std::unordered_set<Stylist*>();
   auto bases = select(selector.get_base(), source);
-  auto is_disambiguated = selector.get_base().get_type() ==
-    typeid(DisambiguateSelector);
+  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
   for(auto base : bases) {
     if(auto parent = base->get_widget().parentWidget()) {
       auto parent_selection = select(selector.get_parent(),
         find_stylist(*parent));
       if(!parent_selection.empty()) {
-        if(is_disambiguated) {
+        if(is_flipped) {
           selection.insert(base);
         } else {
           selection.insert(parent_selection.begin(), parent_selection.end());

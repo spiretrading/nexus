@@ -12,8 +12,8 @@ namespace Spire::Styles {
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
   class DescendantSelector;
-  class DisambiguateSelector;
   template<typename T> class Expression;
+  class FlipSelector;
   class IsASelector;
   class NotSelector;
   class OrSelector;
