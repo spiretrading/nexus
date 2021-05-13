@@ -27,7 +27,7 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
-    *order.begin() = order.front().cycle();
+    order.front() = order.front().cycle();
     sorted_model.set_column_order(order);
     REQUIRE(sorted_model.get<int>(0, 0) == 9);
     REQUIRE(sorted_model.get<int>(1, 0) == 4);
@@ -37,13 +37,13 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
-    *order.begin() = order.front().cycle();
+    order.front() = order.front().cycle();
     sorted_model.set_column_order(order);
     REQUIRE(sorted_model.get<int>(0, 0) == 4);
     REQUIRE(sorted_model.get<int>(1, 0) == 2);
     REQUIRE(sorted_model.get<int>(2, 0) == 9);
     REQUIRE(sorted_model.get<int>(3, 0) == 1);
-    *order.begin() = order.front().cycle();
+    order.front() = order.front().cycle();
     sorted_model.set_column_order(order);
     REQUIRE(sorted_model.get<int>(0, 0) == 1);
     REQUIRE(sorted_model.get<int>(1, 0) == 2);
