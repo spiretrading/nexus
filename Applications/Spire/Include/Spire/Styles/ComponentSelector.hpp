@@ -96,8 +96,7 @@ namespace Spire::Styles {
 
     static bool register_id(std::type_index widget, std::type_index id,
       SelectCallable callable);
-    static std::unordered_set<Stylist*>
-      select(const Id& id, std::unordered_set<Stylist*>);
+    static std::unordered_set<Stylist*> select(const Id& id, Stylist&);
 
     static inline
       std::unordered_map<std::type_index, SelectCallable> m_registry;
@@ -128,33 +127,40 @@ namespace Details {
       std::type_index widget, std::type_index id, SelectCallable callable) {
     m_registry.insert(std::pair(widget, std::move(callable)));
     return Details::register_id(id,
-      [] (const ComponentSelector& selector,
-          std::unordered_set<Stylist*> sources) {
-        return ComponentRegistry::select(selector.as<Id>(), std::move(sources));
+      [] (const ComponentSelector& selector, Stylist& source) {
+        return ComponentRegistry::select(selector.as<Id>(), source);
       });
   }
 
   template<typename I>
-  std::unordered_set<Stylist*> ComponentRegistry<I>::select(
-      const Id& id, std::unordered_set<Stylist*> sources) {
-    auto selection = std::unordered_set<Stylist*>();
-    for(auto source : sources) {
-      auto i = m_registry.find(typeid(source->get_widget()));
-      if(i != m_registry.end()) {
-        auto source_selection = i->second(source.get_widget(), id);
-        selection.insert(source_selection.begin(), source_selection.end());
-      }
+  std::unordered_set<Stylist*>
+      ComponentRegistry<I>::select(const Id& id, Stylist& source) {
+    auto i = m_registry.find(typeid(source.get_widget()));
+    if(i != m_registry.end()) {
+      return i->second(source.get_widget(), id);
     }
-    return selection;
+    return {};
   }
 
   std::unordered_set<Stylist*> select(
     const ComponentSelector& selector, std::unordered_set<Stylist*> sources);
 
   template<typename T, typename G>
+  std::unordered_set<Stylist*>
+      select(const ComponentId<T, G>& id, Stylist& source) {
+    return ComponentRegistry<ComponentId<T, G>>::select(id, source);
+  }
+
+  template<typename T, typename G>
   std::unordered_set<Stylist*> select(
       const ComponentId<T, G>& id, std::unordered_set<Stylist*> sources) {
-    return ComponentRegistry<ComponentId<T, G>>::select(id, std::move(sources));
+    auto selection = std::unordered_set<Stylist*>();
+    for(auto source : sources) {
+      auto source_selection =
+        ComponentRegistry<ComponentId<T, G>>::select(id, *source);
+      selection.insert(source_selection.begin(), source_selection.end());
+    }
+    return selection;
   }
 
   template<typename W, typename I>

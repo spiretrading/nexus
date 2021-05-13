@@ -49,12 +49,16 @@ namespace Spire::Styles {
   };
 
   template<typename T, typename G>
-  std::vector<Stylist*> select(
-      const StateSelector<T, G>& selector, Stylist& source) {
-    if(source.is_match(selector)) {
-      return {&source};
+  std::unordered_set<Stylist*> select(const StateSelector<T, G>& selector,
+      std::unordered_set<Stylist*> sources) {
+    for(auto i = sources.begin(); i != sources.end();) {
+      auto& source = **i;
+      if(!source.is_match(selector)) {
+        i = sources.erase(i);
+      }
+      ++i;
     }
-    return {};
+    return sources;
   }
 
   template<typename T, typename G>
