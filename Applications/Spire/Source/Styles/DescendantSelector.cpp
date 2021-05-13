@@ -1,6 +1,5 @@
 #include "Spire/Styles/DescendantSelector.hpp"
 #include <deque>
-#include <unordered_set>
 #include <QWidget>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
