@@ -221,6 +221,7 @@ namespace Spire {
         value != m_current && !is_selected) {
       return;
     } else if(m_current == value && !is_selected) {
+      set_associated_model_value(value, true);
       set_current(m_default_value);
       return;
     }

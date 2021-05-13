@@ -175,6 +175,20 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(signal_count == 3);
   }
 
+  TEST_CASE("default_value") {
+    auto model = AssociativeValueModel<std::string>("default");
+    auto default_model = model.make_association("default");
+    auto bool_model = std::make_shared<LocalBooleanModel>(false);
+    model.associate(bool_model, "model1");
+    bool_model->set_current(true);
+    REQUIRE(model.get_current() == "model1");
+    bool_model->set_current(false);
+    REQUIRE(model.get_current() == "default");
+    default_model->set_current(false);
+    REQUIRE(model.get_current() == "default");
+    REQUIRE(default_model->get_current());
+  }
+
   TEST_CASE("default_instance_values") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = std::make_shared<LocalBooleanModel>(false);
