@@ -63,6 +63,7 @@ namespace Spire {
   class ScrollableLayer;
   class SecurityStack;
   class SecurityWidget;
+  class SortedTableModel;
   class TabWidget;
   class TableModel;
   class TableModelTransactionLog;
