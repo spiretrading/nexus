@@ -6,6 +6,27 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  SortedTableModel::Comparator DEFAULT_COMPARATOR() {
+    return [] (const std::any& lhs, const std::any& rhs) {
+      if(lhs.type() == rhs.type()) {
+        if(lhs.type() == typeid(int)) {
+          return std::any_cast<int>(lhs) < std::any_cast<int>(rhs);
+        } else if(lhs.type() == typeid(QString)) {
+          return std::any_cast<QString>(lhs) < std::any_cast<QString>(rhs);
+        } else if(lhs.type() == typeid(DecimalBox::Decimal)) {
+          return std::any_cast<DecimalBox::Decimal>(lhs) <
+            std::any_cast<DecimalBox::Decimal>(rhs);
+        } else if(lhs.type() == typeid(time_duration)) {
+          return std::any_cast<time_duration>(lhs) <
+            std::any_cast<time_duration>(rhs);
+        }
+      }
+      return false;
+    };
+  }
+}
+
 SortedTableModel::ColumnOrder SortedTableModel::ColumnOrder::cycle() const {
   if(m_order == Ordering::NONE) {
     return ColumnOrder{m_index, Ordering::ASCENDING};
@@ -20,7 +41,7 @@ SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source)
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
   std::vector<ColumnOrder> order)
-    : SortedTableModel(source, order, get_default_comparator()) {}
+    : SortedTableModel(source, order, DEFAULT_COMPARATOR()) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
   Comparator comparator)
@@ -76,25 +97,6 @@ QValidator::State SortedTableModel::set(int row, int column,
 connection SortedTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
-}
-
-SortedTableModel::Comparator SortedTableModel::get_default_comparator() {
-  return [&] (const std::any& lhs, const std::any& rhs) {
-    if(lhs.type() == rhs.type()) {
-      if(lhs.type() == typeid(int)) {
-        return std::any_cast<int>(lhs) < std::any_cast<int>(rhs);
-      } else if(lhs.type() == typeid(QString)) {
-        return std::any_cast<QString>(lhs) < std::any_cast<QString>(rhs);
-      } else if(lhs.type() == typeid(DecimalBox::Decimal)) {
-        return std::any_cast<DecimalBox::Decimal>(lhs) <
-          std::any_cast<DecimalBox::Decimal>(rhs);
-      } else if(lhs.type() == typeid(time_duration)) {
-        return std::any_cast<time_duration>(lhs) <
-          std::any_cast<time_duration>(rhs);
-      }
-    }
-    return false;
-  };
 }
 
 void SortedTableModel::sort() {

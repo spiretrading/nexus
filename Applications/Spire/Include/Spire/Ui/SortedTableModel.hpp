@@ -123,7 +123,6 @@ namespace Spire {
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
-      Comparator get_default_comparator();
       void sort();
       void translate(int direction, int row);
       void on_operation(const Operation& operation);
