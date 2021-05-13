@@ -23,7 +23,7 @@ namespace Spire {
        * @return Returns true when the first argument is less than the second,
        *         otherwise returns false.
        */
-      using Comparator = std::function<bool(const std::any&, const std::any)>;
+      using Comparator = std::function<bool(const std::any&, const std::any&)>;
 
       /** Indicates the sorting order. */
       enum class Ordering {
