@@ -1,11 +1,12 @@
 #ifndef SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #define SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #include <functional>
+#include <queue>
 #include <boost/functional/hash.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace std {
   template<typename T>
@@ -31,21 +32,32 @@ namespace Spire {
 
       using Type = typename ValueModel<T>::Type;
 
-      /** Constructs an AssociativeValueModel. */
+      /**
+       * Constructs an AssociativeValueModel and associates a BooleanModel with
+       * a default constructed value as the default value.
+       */
       AssociativeValueModel();
 
       /**
-      * Constructs an AssociativeValueModel with a default value. The default
-      * value is the value that will become current if all associated models
-      * have a value of false.
-      * @param default_value The default value.
-      */
-      AssociativeValueModel(Type default_value);
+       * Constructs an AssociativeValueModel with a default value. The default
+       * value is associated with a BooleanModel that is set to true if all
+       * associated models become false.
+       * @param default_value The default value.
+       */
+      explicit AssociativeValueModel(Type default_value);
 
       /**
-       * Associates a BooleanModel iff it's not already associated.
-       * If there are no existing models the BooleanModel is set to true,
-       * otherwise, it's set to false.
+       * Constructs an AssociativeValueModel with a default value associated
+       * with a given model.
+       * @param model The model to associate with the default value.
+       * @param default_value The default value.
+       */
+      AssociativeValueModel(std::shared_ptr<BooleanModel> model,
+        Type default_value);
+
+      /**
+       * Associates a BooleanModel with the given value. If the given
+       * BooleanModel has a value of true it's set to false.
        * @param model The model to associate.
        * @param value The associated value.
        */
@@ -96,9 +108,11 @@ namespace Spire {
     private:
       mutable CurrentSignal m_current_signal;
       Type m_current;
-      boost::optional<Type> m_default_value;
+      Type m_default_value;
       std::unordered_map<Type, std::shared_ptr<BooleanModel>> m_models;
-      std::vector<boost::signals2::scoped_connection> m_connections;
+      std::unordered_map<Type, boost::signals2::scoped_connection>
+        m_connections;
+      std::queue<Type> m_current_queue;
       bool m_is_blocked;
 
       void set_associated_model_value(const Type& value, bool model_value);
@@ -107,28 +121,28 @@ namespace Spire {
 
   template<typename T>
   AssociativeValueModel<T>::AssociativeValueModel()
-    : m_is_blocked(false) {}
+    : AssociativeValueModel(Type{}) {}
 
   template<typename T>
   AssociativeValueModel<T>::AssociativeValueModel(Type default_value)
-    : m_is_blocked(false),
-      m_default_value(std::move(default_value)) {}
+    : AssociativeValueModel(std::make_shared<LocalBooleanModel>(true),
+        default_value) {}
+
+  template<typename T>
+  AssociativeValueModel<T>::AssociativeValueModel(
+      std::shared_ptr<BooleanModel> model, Type default_value)
+      : m_default_value(std::move(default_value)),
+        m_is_blocked(false) {
+    associate(model, m_default_value);
+  }
 
   template<typename T>
   void AssociativeValueModel<T>::associate(
       const std::shared_ptr<BooleanModel>& model, const Type& value) {
-    auto inserted_model = m_models.insert({value, model});
-    if(!inserted_model.second) {
-      return;
-    }
-    if(model->get_current()) {
-      model->set_current(false);
-    }
-    m_connections.push_back(model->connect_current_signal(
+    m_models.insert_or_assign(value, model);
+    model->set_current(value == m_current);
+    m_connections.insert_or_assign(value, model->connect_current_signal(
       [=] (auto is_selected) { on_current(value, is_selected); }));
-    if(get_state() == QValidator::Invalid) {
-      set_current(value);
-    }
   }
 
   template<typename T>
@@ -142,19 +156,16 @@ namespace Spire {
   template<typename T>
   std::shared_ptr<BooleanModel> AssociativeValueModel<T>::find(
       const Type& value) const {
-    auto iterator = m_models.find(value);
-    if(iterator == m_models.end()) {
+    auto i = m_models.find(value);
+    if(i == m_models.end()) {
       return nullptr;
     }
-    return iterator->second;
+    return i->second;
   }
 
   template<typename T>
   QValidator::State AssociativeValueModel<T>::get_state() const {
-    if(m_models.find(m_current) != m_models.end()) {
-      return QValidator::Acceptable;
-    }
-    return QValidator::Invalid;
+    return QValidator::Acceptable;
   }
 
   template<typename T>
@@ -168,11 +179,24 @@ namespace Spire {
     if(m_models.find(value) == m_models.end()) {
       return QValidator::Invalid;
     }
+    if(m_is_blocked) {
+      m_current_queue.push(value);
+      return QValidator::Intermediate;
+    }
+    m_is_blocked = true;
     auto previous = m_current;
     m_current = value;
-    set_associated_model_value(previous, false);
-    set_associated_model_value(m_current, true);
+    if(previous != m_current) {
+      set_associated_model_value(previous, false);
+      set_associated_model_value(m_current, true);
+    }
     m_current_signal(m_current);
+    m_is_blocked = false;
+    if(!m_current_queue.empty()) {
+      auto current_value = m_current_queue.front();
+      m_current_queue.pop();
+      set_current(current_value);
+    }
     return QValidator::Acceptable;
   }
 
@@ -185,8 +209,8 @@ namespace Spire {
   template<typename T>
   void AssociativeValueModel<T>::set_associated_model_value(const Type& value,
       bool model_value) {
-    if(auto iterator = m_models.find(value); iterator != m_models.end()) {
-      iterator->second->set_current(model_value);
+    if(auto i = m_models.find(value); i != m_models.end()) {
+      i->second->set_current(model_value);
     }
   }
 
@@ -196,26 +220,11 @@ namespace Spire {
     if(value == m_current && is_selected ||
         value != m_current && !is_selected) {
       return;
-    }
-    if(m_is_blocked) {
-      if(is_selected) {
-        set_associated_model_value(value, false);
-      }
+    } else if(m_current == value && !is_selected) {
+      set_current(m_default_value);
       return;
     }
-    if(m_current == value && !is_selected) {
-      if(m_default_value) {
-        m_is_blocked = true;
-        set_current(*m_default_value);
-        m_is_blocked = false;
-      } else {
-        set_associated_model_value(m_current, true);
-      }
-      return;
-    }
-    m_is_blocked = true;
     set_current(value);
-    m_is_blocked = false;
   }
 
   template<typename T>
