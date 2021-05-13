@@ -86,11 +86,17 @@ int SortedTableModel::get_column_size() const {
 }
 
 const std::any& SortedTableModel::at(int row, int column) const {
+  if(row < 0 || row >= static_cast<int>(m_mapping.size())) {
+    throw std::out_of_range("The row is out of range.");
+  }
   return m_source->at(m_mapping[row], column);
 }
 
 QValidator::State SortedTableModel::set(int row, int column,
     const std::any& value) {
+  if(row < 0 || row >= static_cast<int>(m_mapping.size())) {
+    throw std::out_of_range("The row is out of range.");
+  }
   return m_source->set(m_mapping[row], column, value);
 }
 
