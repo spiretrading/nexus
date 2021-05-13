@@ -36,13 +36,11 @@ DescendantSelector Spire::Styles::operator >>(
 
 std::unordered_set<Stylist*> Spire::Styles::select(
     const DescendantSelector& selector, std::unordered_set<Stylist*> sources) {
-#if 0
   auto selection = std::unordered_set<Stylist*>();
-  auto bases = select(selector.get_base(), source);
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  for(auto base : bases) {
+  for(auto source : select(selector.get_base(), std::move(sources))) {
     auto descendants = std::deque<QWidget*>();
-    for(auto child : base->get_widget().children()) {
+    for(auto child : source->get_widget().children()) {
       if(child->isWidgetType()) {
         descendants.push_back(static_cast<QWidget*>(child));
       }
@@ -54,7 +52,7 @@ std::unordered_set<Stylist*> Spire::Styles::select(
         find_stylist(*static_cast<QWidget*>(descendant)));
       if(!descendant_selection.empty()) {
         if(is_flipped) {
-          selection.insert(base);
+          selection.insert(source);
           break;
         } else {
           selection.insert(
@@ -68,9 +66,7 @@ std::unordered_set<Stylist*> Spire::Styles::select(
       }
     }
   }
-  return std::vector(selection.begin(), selection.end());
-#endif
-  return {};
+  return selection;
 }
 
 std::vector<QWidget*> Spire::Styles::build_reach(
