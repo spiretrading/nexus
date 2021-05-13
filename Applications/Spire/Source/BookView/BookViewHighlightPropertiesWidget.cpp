@@ -10,14 +10,12 @@
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/BookView/MarketListItem.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/AssociativeValueModel.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using OrderHighlight = BookViewProperties::OrderHighlight;
 
 BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     const BookViewProperties& properties, QWidget* parent)
@@ -99,7 +97,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
       on_highlight_all_levels_checkbox_checked(is_checked);
     });
   market_highlight_layout->addWidget(m_highlight_all_levels_checkbox, 16);
-  //auto market_checkbox_button_group = new QButtonGroup(this);
+  auto market_checkbox_button_group = new QButtonGroup(this);
   //market_checkbox_button_group->addButton(m_highlight_none_checkbox);
   //market_checkbox_button_group->addButton(m_highlight_top_level_checkbox);
   //market_checkbox_button_group->addButton(m_highlight_all_levels_checkbox);
@@ -134,27 +132,22 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  auto orders_checkbox_model =
-    std::make_shared<AssociativeValueModel<OrderHighlight>>(
-      OrderHighlight::HIGHLIGHT_ORDERS);
-  m_hide_orders_checkbox = new CheckBox(
-    orders_checkbox_model->make_association(OrderHighlight::HIDE_ORDERS),
-    this);
+  m_hide_orders_checkbox = new CheckBox(this);
   m_hide_orders_checkbox->set_label(tr("Hide Orders"));
   orders_layout->addWidget(m_hide_orders_checkbox, 16);
   orders_layout->addStretch(10);
-  m_display_orders_checkbox = new CheckBox(
-    orders_checkbox_model->make_association(OrderHighlight::DISPLAY_ORDERS),
-    this);
+  m_display_orders_checkbox = new CheckBox(this);
   m_display_orders_checkbox->set_label(tr("Display Orders"));
   orders_layout->addWidget(m_display_orders_checkbox, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_checkbox = new CheckBox(
-    orders_checkbox_model->make_association(OrderHighlight::HIGHLIGHT_ORDERS),
-    this);
+  m_highlight_orders_checkbox = new CheckBox(this);
   m_highlight_orders_checkbox->set_label(tr("Highlight Orders"));
   m_highlight_orders_checkbox->get_model()->set_current(true);
   orders_layout->addWidget(m_highlight_orders_checkbox, 16);
+  auto orders_checkbox_button_group = new QButtonGroup(this);
+  //orders_checkbox_button_group->addButton(m_hide_orders_checkbox);
+  //orders_checkbox_button_group->addButton(m_display_orders_checkbox);
+  //orders_checkbox_button_group->addButton(m_highlight_orders_checkbox);
   orders_layout->addStretch(18);
   auto order_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   order_highlight_color_label->setStyleSheet(generic_label_text_style);
