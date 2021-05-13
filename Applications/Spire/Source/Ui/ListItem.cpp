@@ -20,9 +20,9 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   auto style = get_style(*m_button);
   style.get(Body()).set(
     BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Hover() && Body()).set(
+  style.get(Hover() / Body()).set(
     BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
-  style.get(Focus() && Body()).set(
+  style.get(Focus() / Body()).set(
     BackgroundColor(QColor::fromRgb(0x68, 0x4B, 0xC7)));
   set_style(*m_button, std::move(style));
 }

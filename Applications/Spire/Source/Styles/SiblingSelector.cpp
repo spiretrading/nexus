@@ -32,26 +32,25 @@ SiblingSelector Spire::Styles::operator %(Selector base, Selector sibling) {
   return SiblingSelector(std::move(base), std::move(sibling));
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const SiblingSelector& selector, Stylist& source) {
-  if(!source.get_widget().parentWidget()) {
-    return {};
-  }
-  auto bases = select(selector.get_base(), source);
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const SiblingSelector& selector, std::unordered_set<Stylist*> sources) {
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
   auto selection = std::unordered_set<Stylist*>();
-  for(auto base : bases) {
-    auto siblings = source.get_widget().parent()->children();
+  for(auto source : select(selector.get_base(), std::move(sources))) {
+    if(!source->get_widget().parentWidget()) {
+      continue;
+    }
+    auto siblings = source->get_widget().parent()->children();
     auto i = 0;
     while(i != siblings.size()) {
       auto child = siblings[i];
-      if(child != &base->get_widget()) {
+      if(child != &source->get_widget()) {
         if(auto sibling = qobject_cast<QWidget*>(child)) {
           auto sibling_selection = select(selector.get_sibling(),
             find_stylist(*sibling));
           if(!sibling_selection.empty()) {
             if(is_flipped) {
-              selection.insert(base);
+              selection.insert(source);
               break;
             } else {
               selection.insert(
@@ -65,5 +64,5 @@ std::vector<Stylist*> Spire::Styles::select(
       ++i;
     }
   }
-  return std::vector(selection.begin(), selection.end());
+  return selection;
 }

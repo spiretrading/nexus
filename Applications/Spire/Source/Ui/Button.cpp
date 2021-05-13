@@ -93,9 +93,9 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   style.get(Body()).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Hover() && Body()).set(
+  style.get(Hover() / Body()).set(
     BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
-  style.get(Focus() && Body()).set(
+  style.get(Focus() / Body()).set(
     border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   set_style(*button, std::move(style));
   return button;
@@ -112,12 +112,12 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(TextColor(QColor::fromRgb(0, 0, 0))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Hover() && Body()).
+  style.get(Hover() / Body()).
     set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
     set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Focus() && Body()).set(
+  style.get(Focus() / Body()).set(
     border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  style.get(Disabled() && Body()).
+  style.get(Disabled() / Body()).
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
   set_style(*button, std::move(style));

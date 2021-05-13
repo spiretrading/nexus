@@ -15,6 +15,7 @@
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
 #include "Spire/Styles/OrSelector.hpp"
+#include "Spire/Styles/PathSelector.hpp"
 #include "Spire/Styles/ParentSelector.hpp"
 #include "Spire/Styles/PropertyMatchSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"

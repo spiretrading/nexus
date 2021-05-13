@@ -55,8 +55,9 @@ namespace Spire::Styles {
       auto& source = **i;
       if(!source.is_match(selector)) {
         i = sources.erase(i);
+      } else {
+        ++i;
       }
-      ++i;
     }
     return sources;
   }

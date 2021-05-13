@@ -46,10 +46,10 @@ namespace {
     style.get(Body()).
       set(BackgroundColor(QColor("#FFFFFF"))).
       set(Fill(QColor("#333333")));
-    style.get(Hover() && Body()).
+    style.get(Hover() / Body()).
       set(BackgroundColor(QColor("#EBEBEB"))).
       set(Fill(QColor("#4B23A0")));
-    style.get(Disabled() && Body()).
+    style.get(Disabled() / Body()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
     style.get(+Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
