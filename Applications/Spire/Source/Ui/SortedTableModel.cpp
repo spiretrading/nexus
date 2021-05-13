@@ -41,14 +41,14 @@ SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source)
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
   std::vector<ColumnOrder> order)
-    : SortedTableModel(source, order, DEFAULT_COMPARATOR()) {}
+  : SortedTableModel(source, order, DEFAULT_COMPARATOR()) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
   Comparator comparator)
-    : SortedTableModel(source, m_order, comparator) {}
+  : SortedTableModel(source, m_order, comparator) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
-  std::vector<ColumnOrder> order, Comparator comparator)
+    std::vector<ColumnOrder> order, Comparator comparator)
     : m_source(std::move(source)),
       m_order(std::move(order)),
       m_comparator(std::move(comparator)),
