@@ -140,7 +140,7 @@ void SortedTableModel::on_operation(const Operation& operation) {
               make_counting_iterator(get_row_size()), index,
               [&] (auto lhs, auto rhs) {
                 return row_comparator(lhs, rhs);
-              });
+              }) - 1;
           } else {
             return index;
           }
@@ -161,12 +161,15 @@ void SortedTableModel::on_operation(const Operation& operation) {
               make_counting_iterator(get_row_size()), index,
               [&] (auto lhs, auto rhs) {
                 return row_comparator(lhs, rhs);
-              });
+              }) - 1;
           } else {
             return index;
           }
         }();
-        m_translation->move(operation.m_row, index);
+        if(operation.m_row != index) {
+          m_translation->move(operation.m_row, index);
+          m_transaction.push(MoveOperation{operation.m_row, index});
+        }
         m_transaction.push(UpdateOperation{index, operation.m_column});
       },
       [&] (const RemoveOperation& operation) {

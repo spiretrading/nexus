@@ -54,20 +54,6 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(sorted_model.get<int>(3, 0) == 9);
   }
 
-  TEST_CASE("sort_with_wrong_sorting_column") {
-    auto source = std::make_shared<ArrayTableModel>();
-    source->push({4});
-    source->push({2});
-    source->push({9});
-    source->push({1});
-    auto sorted_model = SortedTableModel(source,
-      {{2, SortedTableModel::Ordering::ASCENDING}}, test_comparator);
-    REQUIRE(sorted_model.get<int>(0, 0) == 4);
-    REQUIRE(sorted_model.get<int>(1, 0) == 2);
-    REQUIRE(sorted_model.get<int>(2, 0) == 9);
-    REQUIRE(sorted_model.get<int>(3, 0) == 1);
-  }
-
   TEST_CASE("sort_constructor_without_order_comparator") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({4});
@@ -762,7 +748,7 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(sorted_model.get<float>(3, 2) == 10.0f);
     REQUIRE(sorted_model.get<float>(4, 2) == 1.3f);
     REQUIRE(sorted_model.get<float>(5, 2) == 7.8f);
-    updated_row = 1;
+    updated_row = 0;
     updated_column = 1;
     moved_source = 1;
     moved_destination = 0;
@@ -788,7 +774,7 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(sorted_model.get<float>(3, 2) == 10.0f);
     REQUIRE(sorted_model.get<float>(4, 2) == 1.3f);
     REQUIRE(sorted_model.get<float>(5, 2) == 7.8f);
-    updated_row = 4;
+    updated_row = 0;
     updated_column = 0;
     moved_source = 4;
     moved_destination = 0;
