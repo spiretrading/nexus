@@ -110,14 +110,20 @@ void SortedTableModel::sort() {
   std::iota(ordering.begin(), ordering.end(), 0);
   std::sort(ordering.begin(), ordering.end(),
     [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
-  m_transaction.transact([&] {
-    for(auto i = 0; i != get_row_size(); ++i) {
-      m_translation->move(ordering[i], i);
-      for(auto j = i + 1; j < get_row_size(); ++j) {
-        if(ordering[j] < ordering[i]) {
-          ++ordering[j];
-        }
+  for(auto i = 0; i != get_row_size(); ++i) {
+    m_translation->move(ordering[i], i);
+    for(auto j = i + 1; j < get_row_size(); ++j) {
+      if(ordering[j] < ordering[i]) {
+        ++ordering[j];
       }
+    }
+  }
+  m_transaction.transact([&] {
+    for(auto i = get_row_size() - 1; i >= 0; --i) {
+      m_transaction.push(RemoveOperation{i});
+    }
+    for(auto i = 0; i != get_row_size(); ++i) {
+      m_transaction.push(AddOperation{i});
     }
   });
   m_source_connection = m_translation->connect_operation_signal(

@@ -558,12 +558,17 @@ TEST_SUITE("SortedTableModel") {
     auto sorted_model = SortedTableModel(source, order, test_comparator);
     auto signal_count = 0;
     auto added_row = 0;
+    auto is_resorted = false;
     auto connection = scoped_connection(sorted_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        ++signal_count;
+        if(!is_resorted) {
+          ++signal_count;
+        }
         visit(operation,
           [&] (const TableModel::AddOperation& add_operation) {
-            REQUIRE(add_operation.m_index == added_row);
+            if(!is_resorted) {
+              REQUIRE(add_operation.m_index == added_row);
+            }
           });
       }));
     added_row = 3;
@@ -594,7 +599,9 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(sorted_model.get_row_size() == 5);
     source->remove(2);
     order.clear();
+    is_resorted = true;
     sorted_model.set_column_order(order);
+    is_resorted = false;
     added_row = 3;
     source->insert({0, std::string("Liam"), 1.4f}, 3);
     REQUIRE(signal_count == 4);
