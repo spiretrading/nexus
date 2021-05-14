@@ -1,64 +1,52 @@
 #include "Spire/Ui/SortedTableModel.hpp"
 #include <algorithm>
+#include <boost/iterator/counting_iterator.hpp>
 #include "Spire/Ui/DecimalBox.hpp"
 
+using namespace boost::iterators;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  SortedTableModel::Comparator DEFAULT_COMPARATOR() {
-    return [] (const std::any& lhs, const std::any& rhs) {
-      if(lhs.type() == rhs.type()) {
-        if(lhs.type() == typeid(int)) {
-          return std::any_cast<int>(lhs) < std::any_cast<int>(rhs);
-        } else if(lhs.type() == typeid(QString)) {
-          return std::any_cast<QString>(lhs) < std::any_cast<QString>(rhs);
-        } else if(lhs.type() == typeid(DecimalBox::Decimal)) {
-          return std::any_cast<DecimalBox::Decimal>(lhs) <
-            std::any_cast<DecimalBox::Decimal>(rhs);
-        } else if(lhs.type() == typeid(time_duration)) {
-          return std::any_cast<time_duration>(lhs) <
-            std::any_cast<time_duration>(rhs);
-        }
-      }
+  template<typename T>
+  bool compare(const std::any& lhs, const std::any& rhs) {
+    return std::any_cast<const T&>(lhs) < std::any_cast<const T&>(rhs);
+  }
+
+  bool default_comparator(const std::any& lhs, const std::any& rhs) {
+    if(lhs.type() != rhs.type()) {
       return false;
-    };
+    } else if(lhs.type() == typeid(int)) {
+      return compare<int>(lhs, rhs);
+    } else if(lhs.type() == typeid(QString)) {
+      return compare<QString>(lhs, rhs);
+    } else if(lhs.type() == typeid(DecimalBox::Decimal)) {
+      return compare<DecimalBox::Decimal>(lhs, rhs);
+    } else if(lhs.type() == typeid(time_duration)) {
+      return compare<time_duration>(lhs, rhs);
+    }
+    return false;
   }
 }
 
-SortedTableModel::ColumnOrder SortedTableModel::ColumnOrder::cycle() const {
-  if(m_order == Ordering::NONE) {
-    return ColumnOrder{m_index, Ordering::ASCENDING};
-  } else if(m_order == Ordering::ASCENDING) {
-    return ColumnOrder{m_index, Ordering::DESCENDING};
-  } 
-  return ColumnOrder{m_index, Ordering::NONE};
-}
-
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source)
-  : SortedTableModel(source, m_order) {}
+  : SortedTableModel(std::move(source), std::vector<ColumnOrder>()) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
   std::vector<ColumnOrder> order)
-  : SortedTableModel(source, order, DEFAULT_COMPARATOR()) {}
+  : SortedTableModel(std::move(source), std::move(order), default_comparator) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
   Comparator comparator)
-  : SortedTableModel(source, m_order, comparator) {}
+  : SortedTableModel(std::move(source), {}, std::move(comparator)) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
     std::vector<ColumnOrder> order, Comparator comparator)
     : m_source(std::move(source)),
       m_order(std::move(order)),
-      m_comparator(std::move(comparator)),
-      m_mapping(m_source->get_row_size()),
-      m_reverse_mapping(m_source->get_row_size()) {
-  std::iota(m_mapping.begin(), m_mapping.end(), 0);
-  m_reverse_mapping = m_mapping;
+      m_comparator(std::move(comparator)) {
   sort();
-  m_source_connection = m_source->connect_operation_signal(
-    [=] (const auto& operation) { on_operation(operation); });
 }
 
 const SortedTableModel::Comparator& SortedTableModel::get_comparator() const {
@@ -72,32 +60,24 @@ const std::vector<SortedTableModel::ColumnOrder>&
 
 void SortedTableModel::set_column_order(const std::vector<ColumnOrder>& order) {
   m_order = order;
-  std::iota(m_mapping.begin(), m_mapping.end(), 0);
-  m_reverse_mapping = m_mapping;
   sort();
 }
 
 int SortedTableModel::get_row_size() const {
-  return m_source->get_row_size();
+  return m_translation->get_row_size();
 }
 
 int SortedTableModel::get_column_size() const {
-  return m_source->get_column_size();
+  return m_translation->get_column_size();
 }
 
 const std::any& SortedTableModel::at(int row, int column) const {
-  if(row < 0 || row >= static_cast<int>(m_mapping.size())) {
-    throw std::out_of_range("The row is out of range.");
-  }
-  return m_source->at(m_mapping[row], column);
+  return m_translation->at(row, column);
 }
 
 QValidator::State SortedTableModel::set(int row, int column,
     const std::any& value) {
-  if(row < 0 || row >= static_cast<int>(m_mapping.size())) {
-    throw std::out_of_range("The row is out of range.");
-  }
-  return m_source->set(m_mapping[row], column, value);
+  return m_translation->set(row, column, value);
 }
 
 connection SortedTableModel::connect_operation_signal(
@@ -105,167 +85,88 @@ connection SortedTableModel::connect_operation_signal(
   return m_transaction.connect_operation_signal(slot);
 }
 
+bool SortedTableModel::row_comparator(int lhs, int rhs) const {
+  for(auto& order : m_order) {
+    if(order.m_order == Ordering::NONE) {
+      continue;
+    }
+    auto is_lesser = m_comparator(m_translation->at(lhs, order.m_index),
+      m_translation->at(rhs, order.m_index));
+    if(is_lesser) {
+      return order.m_order == Ordering::ASCENDING;
+    }
+    auto is_greater = m_comparator(m_translation->at(rhs, order.m_index),
+      m_translation->at(lhs, order.m_index));
+    if(is_greater) {
+      return order.m_order == Ordering::DESCENDING;
+    }
+  }
+  return lhs < rhs;
+}
+
 void SortedTableModel::sort() {
-  if(!m_order.empty() && m_order.front().m_order != Ordering::NONE) {
-    std::stable_sort(m_mapping.begin(), m_mapping.end(),
-      [&] (int lhs, int rhs) {
-        for(auto i = m_order.begin(); i != m_order.end(); ++i) {
-          if(i->m_index < 0 || i->m_index > get_column_size()) {
-            break;
-          }
-          if(i->m_order == Ordering::ASCENDING) {
-            if(m_comparator(m_source->at(lhs, i->m_index),
-              m_source->at(rhs, i->m_index))) {
-              return true;
-            } else if(m_comparator(m_source->at(rhs, i->m_index),
-              m_source->at(lhs, i->m_index))) {
-              return false;
-            }
-          } else if(i->m_order == Ordering::DESCENDING) {
-            if(m_comparator(m_source->at(rhs, i->m_index),
-              m_source->at(lhs, i->m_index))) {
-              return true;
-            } else if(m_comparator(m_source->at(lhs, i->m_index),
-              m_source->at(rhs, i->m_index))) {
-              return false;
-            }
-          } else {
-            return false;
-          }
+  m_translation.emplace(m_source);
+  auto ordering = std::vector<int>(get_row_size());
+  std::iota(ordering.begin(), ordering.end(), 0);
+  std::sort(ordering.begin(), ordering.end(),
+    [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
+  m_transaction.transact([&] {
+    for(auto i = 0; i != get_row_size(); ++i) {
+      m_translation->move(ordering[i], i);
+      for(auto j = i + 1; j < get_row_size(); ++j) {
+        if(ordering[j] < ordering[i]) {
+          ++ordering[j];
         }
-        return false;
-      });
-    for(auto i = m_mapping.begin(); i != m_mapping.end(); ++i) {
-      m_reverse_mapping[*i] = static_cast<int>(i - m_mapping.begin());
+      }
     }
-  }
-}
-
-void SortedTableModel::translate(int direction, int row) {
-  auto row_index = m_reverse_mapping[row];
-  for(auto i = 0; i != static_cast<int>(m_mapping.size()); ++i) {
-    if(m_mapping[i] >= row) {
-      m_mapping[i] += direction;
-    }
-    if(m_reverse_mapping[i] >= row_index) {
-      m_reverse_mapping[i] += direction;
-    }
-  }
-}
-
-std::tuple<int, int> SortedTableModel::find_range(
-    const std::vector<int>::iterator& begin_iterator,
-    const std::vector<int>::iterator& end_iterator, int row) {
-  auto begin = begin_iterator;
-  auto end = end_iterator;
-  for(auto i = m_order.begin(); i != m_order.end(); ++i) {
-    auto new_begin = std::lower_bound(begin, end,
-      m_source->at(row, i->m_index),
-      [&] (int row, const std::any& value) {
-        if(i->m_order == Ordering::ASCENDING) {
-          return m_comparator(m_source->at(row, i->m_index), value);
-        } else {
-          return m_comparator(value, m_source->at(row, i->m_index));
-        }
-      });
-    auto new_end = std::upper_bound(new_begin, end,
-      m_source->at(row, i->m_index),
-      [&] (const std::any& value, int row) {
-        if(i->m_order == Ordering::ASCENDING) {
-          return m_comparator(value, m_source->at(row, i->m_index));
-        } else {
-          return m_comparator(m_source->at(row, i->m_index), value);
-        }
-      });
-    begin = new_begin;
-    end = new_end;
-  }
-  return {static_cast<int>(begin - m_mapping.begin()),
-    static_cast<int>(end - m_mapping.begin())};
+  });
+  m_source_connection = m_translation->connect_operation_signal(
+    [=] (const auto& operation) { on_operation(operation); });
 }
 
 void SortedTableModel::on_operation(const Operation& operation) {
   m_transaction.transact([&] {
     visit(operation,
       [&] (const AddOperation& operation) {
-        auto added_index = [&] {
-          if(operation.m_index >= static_cast<int>(m_mapping.size())) {
-            m_mapping.push_back(operation.m_index);
-            m_reverse_mapping.push_back(operation.m_index);
-            return operation.m_index;
+        auto index = [&] {
+          auto index = operation.m_index;
+          if(index != 0 && row_comparator(index, index - 1)) {
+            return *std::lower_bound(make_counting_iterator(0),
+              make_counting_iterator(index - 1), index,
+              [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
+          } else if(index != get_row_size() - 1 &&
+              row_comparator(index + 1, index)) {
+            return *std::lower_bound(make_counting_iterator(index + 1),
+              make_counting_iterator(get_row_size() - 1), index,
+              [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
           } else {
-            auto row_index = m_reverse_mapping[operation.m_index];
-            translate(1, operation.m_index);
-            m_mapping.insert(m_mapping.begin() + row_index,
-              operation.m_index);
-            m_reverse_mapping.insert(
-              m_reverse_mapping.begin() + operation.m_index, row_index);
-            return row_index;
+            return index;
           }
         }();
-        if(m_order.empty() || m_order.front().m_order == Ordering::NONE) {
-          m_transaction.push(AddOperation{added_index});
-        } else {
-          sort();
-          m_transaction.push(AddOperation{m_reverse_mapping[operation.m_index]});
-        }
-      },
-      [&] (const RemoveOperation& operation) {
-        auto row_index = m_reverse_mapping[operation.m_index];
-        translate(-1, operation.m_index);
-        m_mapping.erase(m_mapping.begin() + row_index);
-        m_reverse_mapping.erase(m_reverse_mapping.begin() + operation.m_index);
-        m_transaction.push(RemoveOperation{row_index});
+        m_translation->move(operation.m_index, index);
+        m_transaction.push(AddOperation{index});
       },
       [&] (const UpdateOperation& operation) {
-        auto row_index = m_reverse_mapping[operation.m_row];
-        m_transaction.push(UpdateOperation{row_index, operation.m_column});
-        auto is_sorted_column = [&] {
-          for(auto i = m_order.begin(); i != m_order.end(); ++i) {
-            if(i->m_order == Ordering::NONE) {
-              break;
-            } else if(i->m_index == operation.m_column) {
-              return true;
-            }
+        auto index = [&] {
+          auto index = operation.m_row;
+          if(index != 0 && row_comparator(index, index - 1)) {
+            return *std::lower_bound(make_counting_iterator(0),
+              make_counting_iterator(index - 1), index,
+              [&] (int lhs, int rhs) { return row_comparator(lhs, rhs); });
+          } else if(index != get_row_size() - 1 &&
+              row_comparator(index + 1, index)) {
+            return *std::lower_bound(make_counting_iterator(index + 1),
+              make_counting_iterator(get_row_size() - 1), index,
+              [&] (int lhs, int rhs) { return row_comparator(lhs, rhs); });
+          } else {
+            return index;
           }
-          return false;
         }();
-        if(!is_sorted_column) {
-          return;
-        }
-        auto destination = [&] {
-          auto [upper_part_begin, upper_part_end] =
-            find_range(m_mapping.begin(), m_mapping.begin() + row_index,
-              operation.m_row);
-          auto [lower_part_begin, lower_part_end] =
-            find_range(m_mapping.begin() + row_index + 1, m_mapping.end(),
-              operation.m_row);
-          if(upper_part_end != row_index) {
-            return upper_part_end;
-          } else if(lower_part_begin != row_index + 1){
-            return lower_part_begin;
-          }
-          return row_index;
-        }();
-        if(row_index == destination) {
-          return;
-        }
-        if(row_index < destination) {
-          for(auto i = row_index; i < destination - 1; ++i) {
-            m_mapping[i] = m_mapping[i + 1];
-            m_reverse_mapping[m_mapping[i + 1]] = i;
-          }
-          m_mapping[destination - 1] = operation.m_row;
-          m_reverse_mapping[operation.m_row] = destination - 1;
-        } else {
-          for(auto i = row_index; i > destination; --i) {
-            m_mapping[i] = m_mapping[i - 1];
-            m_reverse_mapping[m_mapping[i - 1]] = i;
-          }
-          m_mapping[destination] = operation.m_row;
-          m_reverse_mapping[operation.m_row] = destination;
-        }
-          m_transaction.push(MoveOperation{row_index, destination});
+        m_translation->move(operation.m_row, index);
+        m_transaction.push(UpdateOperation{index, operation.m_column});
+      },
+      [&] (const RemoveOperation& operation) {
+        m_transaction.push(Operation(operation));
       });
     });
 }
@@ -273,11 +174,26 @@ void SortedTableModel::on_operation(const Operation& operation) {
 void Spire::adjust(SortedTableModel::ColumnOrder order,
     std::vector<SortedTableModel::ColumnOrder>& column_order) {
   auto i = std::find_if(column_order.begin(), column_order.end(),
-    [&] (const SortedTableModel::ColumnOrder& value) {
+    [&] (const auto& value) {
       return value.m_index == order.m_index;
     });
-  if(i != column_order.end()) {
+  if(i == column_order.begin()) {
+    *i = order;
+    return;
+  } else if(i != column_order.end()) {
     column_order.erase(i);
   }
   column_order.insert(column_order.begin(), order);
+}
+
+SortedTableModel::ColumnOrder
+    Spire::cycle(SortedTableModel::ColumnOrder order) {
+  if(order.m_order == SortedTableModel::Ordering::NONE) {
+    order.m_order = SortedTableModel::Ordering::ASCENDING;
+  } else if(order.m_order == SortedTableModel::Ordering::ASCENDING) {
+    order.m_order = SortedTableModel::Ordering::DESCENDING;
+  } else {
+    order.m_order = SortedTableModel::Ordering::NONE;
+  }
+  return order;
 }

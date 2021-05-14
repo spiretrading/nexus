@@ -17,38 +17,34 @@ namespace Spire {
     public:
 
       /**
-       * Binary function that accepts two elements, and returns a value
-       * convertible to bool. The value returned indicates whether the element
-       * passed as first argument is considered to be less than the second.
-       * @return Returns true when the first argument is less than the second,
-       *         otherwise returns false.
+       * Binary function that accepts two elements and returns whether the first
+       * argument is less than the second.
+       * @return Returns <code>true</code> iff the first argument is less than
+       *         the second.
        */
-      using Comparator = std::function<bool(const std::any&, const std::any&)>;
+      using Comparator = std::function<bool (const std::any&, const std::any&)>;
 
-      /** Indicates the sorting order. */
+      /** Specifies a sort order. */
       enum class Ordering {
 
-        /** The unsorted order. */
+        /** The column is unsorted. */
         NONE,
 
-        /** The ascending order. */
+        /** The column is sorted from least to greatest. */
         ASCENDING,
 
-        /** The descending order. */
+        /** The column is sorted from greatest to least. */
         DESCENDING
       };
 
-      /** Indicates a column will be sorted in a specific order. */
+      /** Specifies the ordering applied to a specific column. */
       struct ColumnOrder {
 
-        /** Indicates a column will be sorted. */
+        /** The index of the column. */
         int m_index;
 
-        /** Indicates a sort order. */
+        /** The column's sort order. */
         Ordering m_order;
-
-        /** The sort order cycles through unsorted, ascending and descending. */
-        ColumnOrder cycle() const;
       };
 
       /** 
@@ -57,20 +53,20 @@ namespace Spire {
        */
       explicit SortedTableModel(std::shared_ptr<TableModel> source);
 
-      /** 
+      /**
        * Constructs a SortedTableModel from a TableModel and a ColumnOrder. It
        * supports sorting by multiple columns. A default comparator will be used
        * to sort elements based on the columns and the sort orders in the order.
        * @param source The model.
        * @param order The multiple-column sorting order which comtains multiple
-       *               columns and sort orders. The first element in the order
-       *               is considered as the primary sorting key and the rest is
-       *               the secondary sorting key.
+       *              columns and sort orders. The first element in the order
+       *              is considered as the primary sorting key and the rest is
+       *              the secondary sorting key.
        */
       SortedTableModel(std::shared_ptr<TableModel> source,
         std::vector<ColumnOrder> order);
 
-      /** 
+      /**
        * Constructs a SortedTableModel from a TableModel and a comparator.
        * @param source The model.
        * @param compartor A comparison function.
@@ -78,7 +74,7 @@ namespace Spire {
       SortedTableModel(std::shared_ptr<TableModel> source,
         Comparator comparator);
 
-      /** 
+      /**
        * Constructs a SortedTableModel from a TableModel, a ColumnOrder and
        * a comparator. It supports sorting by multiple columns.
        * @param source The model.
@@ -91,15 +87,15 @@ namespace Spire {
       SortedTableModel(std::shared_ptr<TableModel> source,
         std::vector<ColumnOrder> order, Comparator comparator);
 
-      /** Returns the comparsion function in the model. */
+      /** Returns the comparator used to rank rows. */
       const Comparator& get_comparator() const;
 
-      /** Returns the multiple-column sorting order in the model. */
+      /** Returns the multiple-column sort order in the model. */
       const std::vector<ColumnOrder>& get_column_order() const;
 
       /**
-       * Sets the multiple-column sorting order.
-       * @param order The multiple-column sorting order.
+       * Sets the column sort order.
+       * @param order The column sort order.
        */
       void set_column_order(const std::vector<ColumnOrder>& order);
 
@@ -109,24 +105,22 @@ namespace Spire {
 
       const std::any& at(int row, int column) const override;
 
-      QValidator::State set(int row, int column, const std::any& value) override;
+      QValidator::State set(
+        int row, int column, const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
+      boost::optional<TranslatedTableModel> m_translation;
       std::vector<ColumnOrder> m_order;
       Comparator m_comparator;
-      std::vector<int> m_mapping;
-      std::vector<int> m_reverse_mapping;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
+      bool row_comparator(int lhs, int rhs) const;
       void sort();
-      void translate(int direction, int row);
-      std::tuple<int, int> find_range(const std::vector<int>::iterator& begin,
-        const std::vector<int>::iterator& end, int row);
       void on_operation(const Operation& operation);
   };
 
@@ -138,6 +132,12 @@ namespace Spire {
    */
   void adjust(SortedTableModel::ColumnOrder order,
     std::vector<SortedTableModel::ColumnOrder>& column_order);
+
+  /**
+   * The cycles a ColumnOrder's sort order from none, to ascending, to
+   * descending.
+   */
+  SortedTableModel::ColumnOrder cycle(SortedTableModel::ColumnOrder order);
 }
 
 #endif
