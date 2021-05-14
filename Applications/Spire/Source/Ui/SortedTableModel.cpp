@@ -33,12 +33,12 @@ namespace {
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source)
   : SortedTableModel(std::move(source), std::vector<ColumnOrder>()) {}
 
-SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
-  std::vector<ColumnOrder> order)
+SortedTableModel::SortedTableModel(
+  std::shared_ptr<TableModel> source, std::vector<ColumnOrder> order)
   : SortedTableModel(std::move(source), std::move(order), default_comparator) {}
 
-SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
-  Comparator comparator)
+SortedTableModel::SortedTableModel(
+  std::shared_ptr<TableModel> source, Comparator comparator)
   : SortedTableModel(std::move(source), {}, std::move(comparator)) {}
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
@@ -75,8 +75,8 @@ const std::any& SortedTableModel::at(int row, int column) const {
   return m_translation->at(row, column);
 }
 
-QValidator::State SortedTableModel::set(int row, int column,
-    const std::any& value) {
+QValidator::State
+    SortedTableModel::set(int row, int column, const std::any& value) {
   return m_translation->set(row, column, value);
 }
 
@@ -124,48 +124,29 @@ void SortedTableModel::sort() {
     [=] (const auto& operation) { on_operation(operation); });
 }
 
+int SortedTableModel::find_sorted_index(int row) const {
+  if(row != 0 && row_comparator(row, row - 1)) {
+    return *std::lower_bound(
+      make_counting_iterator(0), make_counting_iterator(row), row,
+      [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
+  } else if(row != get_row_size() - 1 && row_comparator(row + 1, row)) {
+    return *std::lower_bound(make_counting_iterator(row + 1),
+      make_counting_iterator(get_row_size()), row,
+      [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); }) - 1;
+  }
+  return row;
+}
+
 void SortedTableModel::on_operation(const Operation& operation) {
   m_transaction.transact([&] {
     visit(operation,
       [&] (const AddOperation& operation) {
-        auto index = [&] {
-          auto index = operation.m_index;
-          if(index != 0 && row_comparator(index, index - 1)) {
-            return *std::lower_bound(make_counting_iterator(0),
-              make_counting_iterator(index), index,
-              [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
-          } else if(index != get_row_size() - 1 &&
-              row_comparator(index + 1, index)) {
-            return *std::lower_bound(make_counting_iterator(index + 1),
-              make_counting_iterator(get_row_size()), index,
-              [&] (auto lhs, auto rhs) {
-                return row_comparator(lhs, rhs);
-              }) - 1;
-          } else {
-            return index;
-          }
-        }();
+        auto index = find_sorted_index(operation.m_index);
         m_translation->move(operation.m_index, index);
         m_transaction.push(AddOperation{index});
       },
       [&] (const UpdateOperation& operation) {
-        auto index = [&] {
-          auto index = operation.m_row;
-          if(index != 0 && row_comparator(index, index - 1)) {
-            return *std::lower_bound(make_counting_iterator(0),
-              make_counting_iterator(index), index,
-              [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
-          } else if(index != get_row_size() - 1 &&
-              row_comparator(index + 1, index)) {
-            return *std::lower_bound(make_counting_iterator(index + 1),
-              make_counting_iterator(get_row_size()), index,
-              [&] (auto lhs, auto rhs) {
-                return row_comparator(lhs, rhs);
-              }) - 1;
-          } else {
-            return index;
-          }
-        }();
+        auto index = find_sorted_index(operation.m_row);
         if(operation.m_row != index) {
           m_translation->move(operation.m_row, index);
           m_transaction.push(MoveOperation{operation.m_row, index});
@@ -173,7 +154,7 @@ void SortedTableModel::on_operation(const Operation& operation) {
         m_transaction.push(UpdateOperation{index, operation.m_column});
       },
       [&] (const RemoveOperation& operation) {
-        m_transaction.push(Operation(operation));
+        m_transaction.push(operation);
       });
     });
 }

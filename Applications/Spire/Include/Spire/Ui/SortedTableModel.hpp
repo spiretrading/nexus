@@ -121,6 +121,7 @@ namespace Spire {
 
       bool row_comparator(int lhs, int rhs) const;
       void sort();
+      int find_sorted_index(int row) const;
       void on_operation(const Operation& operation);
   };
 
