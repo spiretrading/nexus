@@ -37,6 +37,7 @@ namespace Spire {
     private:
       mutable typename CurrentSignal m_current_signal;
       Type m_current;
+      mutable int connection_count;
   };
 
   template<typename T>
@@ -45,7 +46,8 @@ namespace Spire {
 
   template<typename T>
   LocalValueModel<T>::LocalValueModel(Type current)
-    : m_current(std::move(current)) {}
+    : m_current(std::move(current)),
+      connection_count(0) {}
 
   template<typename T>
   const typename LocalValueModel<T>::Type&
@@ -55,7 +57,12 @@ namespace Spire {
 
   template<typename T>
   QValidator::State LocalValueModel<T>::set_current(const Type& value) {
+    //qDebug() << "lvm set_current";
+    //if constexpr(std::is_same_v<Type, bool>) {
+    //  qDebug() << value;
+    //}
     m_current = value;
+    //qDebug() << "conn count: " << connection_count;
     m_current_signal(value);
     return QValidator::State::Acceptable;
   }
@@ -63,7 +70,8 @@ namespace Spire {
   template<typename T>
   boost::signals2::connection LocalValueModel<T>::connect_current_signal(
       const typename CurrentSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+    ++connection_count;
+    return m_current_signal.connect(slot);//, boost::signals2::connect_position::at_front);
   }
 }
 

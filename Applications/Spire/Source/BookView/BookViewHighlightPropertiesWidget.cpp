@@ -1,16 +1,12 @@
 #include "Spire/BookView/BookViewHighlightPropertiesWidget.hpp"
-#include <QButtonGroup>
-#include <QColorDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/BookView/MarketListItem.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/AssociativeValueModel.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
@@ -134,24 +130,24 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  auto orders_checkbox_model =
+  m_orders_checkbox_model =
     std::make_shared<AssociativeValueModel<OrderHighlight>>(
       OrderHighlight::HIGHLIGHT_ORDERS);
   m_hide_orders_checkbox = new CheckBox(
-    orders_checkbox_model->make_association(OrderHighlight::HIDE_ORDERS),
+    m_orders_checkbox_model->make_association(OrderHighlight::HIDE_ORDERS),
     this);
   m_hide_orders_checkbox->set_label(tr("Hide Orders"));
   orders_layout->addWidget(m_hide_orders_checkbox, 16);
   orders_layout->addStretch(10);
   m_display_orders_checkbox = new CheckBox(
-    orders_checkbox_model->make_association(OrderHighlight::DISPLAY_ORDERS),
+    m_orders_checkbox_model->make_association(OrderHighlight::DISPLAY_ORDERS),
     this);
   m_display_orders_checkbox->set_label(tr("Display Orders"));
   orders_layout->addWidget(m_display_orders_checkbox, 16);
   orders_layout->addStretch(10);
   m_highlight_orders_checkbox = new CheckBox(
-    orders_checkbox_model->make_association(OrderHighlight::HIGHLIGHT_ORDERS),
-    this);
+    m_orders_checkbox_model->make_association(
+      OrderHighlight::HIGHLIGHT_ORDERS), this);
   m_highlight_orders_checkbox->set_label(tr("Highlight Orders"));
   m_highlight_orders_checkbox->get_model()->set_current(true);
   orders_layout->addWidget(m_highlight_orders_checkbox, 16);

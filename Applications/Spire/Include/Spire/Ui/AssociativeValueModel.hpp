@@ -176,6 +176,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State AssociativeValueModel<T>::set_current(const Type& value) {
+    //qDebug() << "set_current";
     if(m_models.find(value) == m_models.end()) {
       return QValidator::Invalid;
     }
@@ -217,6 +218,7 @@ namespace Spire {
   template<typename T>
   void AssociativeValueModel<T>::on_current(const Type& value,
       bool is_selected) {
+    //qDebug() << "on_current: " << is_selected;
     if(value == m_current && is_selected ||
         value != m_current && !is_selected) {
       return;

@@ -3,6 +3,8 @@
 #include <QListWidget>
 #include <QWidget>
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Ui/AssociativeValueModel.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -36,6 +38,8 @@ namespace Spire {
       CheckBox* m_highlight_top_level_checkbox;
       CheckBox* m_highlight_all_levels_checkbox;
       ColorSelectorButton* m_market_highlight_color_button;
+      std::shared_ptr<AssociativeValueModel<
+        BookViewProperties::OrderHighlight>> m_orders_checkbox_model;
       CheckBox* m_hide_orders_checkbox;
       CheckBox* m_display_orders_checkbox;
       CheckBox* m_highlight_orders_checkbox;
