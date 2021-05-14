@@ -1,8 +1,7 @@
 #include "Spire/Styles/DescendantSelector.hpp"
 #include <deque>
-#include <unordered_set>
 #include <QWidget>
-#include "Spire/Styles/DisambiguateSelector.hpp"
+#include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -34,15 +33,13 @@ DescendantSelector Spire::Styles::operator >>(
   return DescendantSelector(std::move(base), std::move(descendant));
 }
 
-std::vector<Stylist*> Spire::Styles::select(const DescendantSelector& selector,
-    Stylist& source) {
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const DescendantSelector& selector, std::unordered_set<Stylist*> sources) {
   auto selection = std::unordered_set<Stylist*>();
-  auto bases = select(selector.get_base(), source);
-  auto is_disambiguated = selector.get_base().get_type() ==
-    typeid(DisambiguateSelector);
-  for(auto base : bases) {
+  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
+  for(auto source : select(selector.get_base(), std::move(sources))) {
     auto descendants = std::deque<QWidget*>();
-    for(auto child : base->get_widget().children()) {
+    for(auto child : source->get_widget().children()) {
       if(child->isWidgetType()) {
         descendants.push_back(static_cast<QWidget*>(child));
       }
@@ -53,8 +50,8 @@ std::vector<Stylist*> Spire::Styles::select(const DescendantSelector& selector,
       auto descendant_selection = select(selector.get_descendant(),
         find_stylist(*static_cast<QWidget*>(descendant)));
       if(!descendant_selection.empty()) {
-        if(is_disambiguated) {
-          selection.insert(base);
+        if(is_flipped) {
+          selection.insert(source);
           break;
         } else {
           selection.insert(
@@ -68,7 +65,7 @@ std::vector<Stylist*> Spire::Styles::select(const DescendantSelector& selector,
       }
     }
   }
-  return std::vector(selection.begin(), selection.end());
+  return selection;
 }
 
 std::vector<QWidget*> Spire::Styles::build_reach(

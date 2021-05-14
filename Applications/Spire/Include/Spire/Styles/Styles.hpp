@@ -8,10 +8,12 @@ namespace Spire::Styles {
   template<typename T, typename G> class BasicProperty;
   class Block;
   class ChildSelector;
+  template<typename T, typename G> class ComponentId;
+  class ComponentSelector;
   template<typename... T> class CompositeProperty;
   class DescendantSelector;
-  class DisambiguateSelector;
   template<typename T> class Expression;
+  class FlipSelector;
   class IsASelector;
   class NotSelector;
   class OrSelector;

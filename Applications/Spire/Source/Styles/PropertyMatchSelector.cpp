@@ -25,13 +25,24 @@ PropertyMatchSelector Spire::Styles::matches(Property property) {
   return PropertyMatchSelector(std::move(property));
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const PropertyMatchSelector& selector, Stylist& source) {
-  auto block = source.compute_style();
-  for(auto& property : block.get_properties()) {
-    if(property == selector.get_property()) {
-      return {&source};
+std::unordered_set<Stylist*>
+    Spire::Styles::select(const PropertyMatchSelector& selector,
+      std::unordered_set<Stylist*> sources) {
+  for(auto i = sources.begin(); i != sources.end();) {
+    auto& source = **i;
+    auto block = source.compute_style();
+    auto is_missing_property = true;
+    for(auto& property : block.get_properties()) {
+      if(property == selector.get_property()) {
+        is_missing_property = false;
+        break;
+      }
+    }
+    if(is_missing_property) {
+      i = sources.erase(i);
+    } else {
+      ++i;
     }
   }
-  return {};
+  return sources;
 }

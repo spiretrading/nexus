@@ -15,11 +15,16 @@ bool PseudoElement::operator !=(const PseudoElement& element) const {
   return !(*this == element);
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const PseudoElement& selector, Stylist& source) {
-  return selector.m_select(selector, source);
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const PseudoElement& selector, std::unordered_set<Stylist*> sources) {
+  return selector.m_select(selector, std::move(sources));
 }
 
 std::size_t Spire::Styles::hash_value(const PseudoElement& element) {
   return std::hash<std::type_index>()(element.get_type());
+}
+
+std::size_t
+    std::hash<PseudoElement>::operator ()(const PseudoElement& element) const {
+  return hash_value(element);
 }

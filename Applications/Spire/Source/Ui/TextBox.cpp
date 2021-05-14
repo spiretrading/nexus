@@ -37,7 +37,7 @@ namespace {
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
-    style.get(Disabled() > Placeholder()).
+    style.get(Disabled() / Placeholder()).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
@@ -63,7 +63,8 @@ struct TextBox::TextValidator : QValidator {
       }
       return QValidator::State::Acceptable;
     }
-    auto state = m_model->set_current(input);
+    auto current = std::move(input);
+    auto state = m_model->set_current(current);
     input = m_model->get_current();
     if(state == QValidator::State::Invalid) {
       return state;

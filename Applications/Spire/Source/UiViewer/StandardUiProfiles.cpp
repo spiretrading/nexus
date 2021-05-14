@@ -317,9 +317,9 @@ UiProfile Spire::make_duration_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("current", ""));
   properties.push_back(make_standard_qstring_property("minimum",
-    "00:00:00.000"));
+    "10:10:10.000"));
   properties.push_back(make_standard_qstring_property("maximum",
-    "24:00:00.000"));
+    "20:20:20.000"));
   properties.push_back(make_standard_bool_property("is_warning_displayed",
     true));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
@@ -333,7 +333,7 @@ UiProfile Spire::make_duration_box_profile() {
           return {};
         }
       };
-      auto model = std::make_shared<LocalDurationModel>();
+      auto model = std::make_shared<LocalOptionalDurationModel>();
       auto duration_box = new DurationBox(model);
       apply_widget_properties(duration_box, profile.get_properties());
       auto& minimum = get<QString>("minimum", profile.get_properties());
@@ -354,9 +354,6 @@ UiProfile Spire::make_duration_box_profile() {
           if(duration_box->get_model()->get_current() != *current_value) {
             duration_box->get_model()->set_current(*current_value);
           }
-        } else {
-            duration_box->get_model()->set_current(
-              boost::posix_time::not_a_date_time);
         }
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
@@ -365,11 +362,14 @@ UiProfile Spire::make_duration_box_profile() {
         duration_box->set_warning_displayed(value);
       });
       duration_box->get_model()->connect_current_signal(
-        profile.make_event_slot<time_duration>(QString::fromUtf8("Current")));
+        profile.make_event_slot<optional<time_duration>>(
+          QString::fromUtf8("Current")));
       duration_box->connect_submit_signal(
-        profile.make_event_slot<time_duration>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<optional<time_duration>>(
+          QString::fromUtf8("Submit")));
       duration_box->connect_reject_signal(
-        profile.make_event_slot<time_duration>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<optional<time_duration>>(
+          QString::fromUtf8("Reject")));
       return duration_box;
     });
   return profile;

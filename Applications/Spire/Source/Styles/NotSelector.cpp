@@ -22,11 +22,10 @@ NotSelector Spire::Styles::operator !(Selector selector) {
   return NotSelector(std::move(selector));
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const NotSelector& selector, Stylist& source) {
-  auto selection = select(selector.get_selector(), source);
-  if(selection.empty()) {
-    return std::vector{&source};
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const NotSelector& selector, std::unordered_set<Stylist*> sources) {
+  for(auto selected : select(selector.get_selector(), sources)) {
+    sources.erase(selected);
   }
-  return {};
+  return sources;
 }

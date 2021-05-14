@@ -11,7 +11,7 @@ bool Any::operator !=(const Any& selector) const {
   return !(*this == selector);
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const Any& selector, Stylist& source) {
-  return std::vector{&source};
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const Any& selector, std::unordered_set<Stylist*> sources) {
+  return sources;
 }

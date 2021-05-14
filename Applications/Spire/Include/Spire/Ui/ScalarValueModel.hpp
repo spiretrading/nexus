@@ -71,8 +71,12 @@ namespace Details {
   template<typename T>
   typename ScalarValueModel<T>::Scalar
       ScalarValueModel<T>::get_increment() const {
-    return
-      std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
+      return
+        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+    } else {
+      return Scalar();
+    }
   }
 }
 
