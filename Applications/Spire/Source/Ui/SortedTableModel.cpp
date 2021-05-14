@@ -132,13 +132,15 @@ void SortedTableModel::on_operation(const Operation& operation) {
           auto index = operation.m_index;
           if(index != 0 && row_comparator(index, index - 1)) {
             return *std::lower_bound(make_counting_iterator(0),
-              make_counting_iterator(index - 1), index,
+              make_counting_iterator(index), index,
               [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
           } else if(index != get_row_size() - 1 &&
               row_comparator(index + 1, index)) {
             return *std::lower_bound(make_counting_iterator(index + 1),
-              make_counting_iterator(get_row_size() - 1), index,
-              [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
+              make_counting_iterator(get_row_size()), index,
+              [&] (auto lhs, auto rhs) {
+                return row_comparator(lhs, rhs);
+              });
           } else {
             return index;
           }
@@ -151,13 +153,15 @@ void SortedTableModel::on_operation(const Operation& operation) {
           auto index = operation.m_row;
           if(index != 0 && row_comparator(index, index - 1)) {
             return *std::lower_bound(make_counting_iterator(0),
-              make_counting_iterator(index - 1), index,
-              [&] (int lhs, int rhs) { return row_comparator(lhs, rhs); });
+              make_counting_iterator(index), index,
+              [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
           } else if(index != get_row_size() - 1 &&
               row_comparator(index + 1, index)) {
             return *std::lower_bound(make_counting_iterator(index + 1),
-              make_counting_iterator(get_row_size() - 1), index,
-              [&] (int lhs, int rhs) { return row_comparator(lhs, rhs); });
+              make_counting_iterator(get_row_size()), index,
+              [&] (auto lhs, auto rhs) {
+                return row_comparator(lhs, rhs);
+              });
           } else {
             return index;
           }

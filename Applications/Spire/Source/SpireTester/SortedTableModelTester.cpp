@@ -490,7 +490,7 @@ TEST_SUITE("SortedTableModel") {
         ++signal_count;
         auto add_operation = get<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
-//        REQUIRE(add_operation->m_index == added_row);
+        REQUIRE(add_operation->m_index == added_row);
       }));
     REQUIRE(sorted_model.get<int>(0, 0) == 2);
     REQUIRE(sorted_model.get<int>(1, 0) == 2);
