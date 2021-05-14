@@ -48,6 +48,12 @@ namespace Styles {
       /** Returns the model used for the current value. */
       const std::shared_ptr<OptionalDurationModel>& get_model() const;
 
+      //! Returns <code>true</code> iff this box is read-only.
+      bool is_read_only() const;
+
+      //! Sets whether the box is read-only.
+      void set_read_only(bool read_only);
+
       /**
        * Returns whether a warning is displayed when a submission is rejected.
        */
@@ -80,6 +86,7 @@ namespace Styles {
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
+      bool m_is_read_only;
       bool m_is_warning_displayed;
 
       void on_submit();
