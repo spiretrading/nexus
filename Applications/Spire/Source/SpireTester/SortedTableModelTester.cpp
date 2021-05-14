@@ -512,11 +512,5 @@ TEST_SUITE("SortedTableModel") {
       std::vector<std::string>{"Jack", "Tom", "John", "Bob", "Bob", "Liam"});
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{1.3f, 11.1f, 3.7f, 4.1f, 9.2f, 7.8f});
-    REQUIRE(sorted_model.get<float>(0, 2) == 1.3f);
-    REQUIRE(sorted_model.get<float>(1, 2) == 11.1f);
-    REQUIRE(sorted_model.get<float>(2, 2) == 3.7f);
-    REQUIRE(sorted_model.get<float>(3, 2) == 4.1f);
-    REQUIRE(sorted_model.get<float>(4, 2) == 9.2f);
-    REQUIRE(sorted_model.get<float>(5, 2) == 7.8f);
   }
 }
