@@ -422,8 +422,8 @@ bool DurationBox::is_read_only() const {
   return m_is_read_only;
 }
 
-void DurationBox::set_read_only(bool read_only) {
-  m_is_read_only = read_only;
+void DurationBox::set_read_only(bool is_read_only) {
+  m_is_read_only = is_read_only;
   m_hour_field->set_read_only(m_is_read_only);
   m_minute_field->set_read_only(m_is_read_only);
   m_second_field->set_read_only(m_is_read_only);

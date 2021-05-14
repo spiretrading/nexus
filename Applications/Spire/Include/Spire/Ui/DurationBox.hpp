@@ -52,7 +52,7 @@ namespace Styles {
       bool is_read_only() const;
 
       //! Sets whether the box is read-only.
-      void set_read_only(bool read_only);
+      void set_read_only(bool is_read_only);
 
       /**
        * Returns whether a warning is displayed when a submission is rejected.
