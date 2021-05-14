@@ -125,6 +125,8 @@ namespace Spire {
 
       void sort();
       void translate(int direction, int row);
+      std::tuple<int, int> find_range(const std::vector<int>::iterator& begin,
+        const std::vector<int>::iterator& end, int row);
       void on_operation(const Operation& operation);
   };
 

@@ -951,7 +951,7 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(sorted_model.get<float>(5, 2) == 7.8f);
   }
 
-  TEST_CASE("transaction") {
+  TEST_CASE("multiple_operations") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({4, std::string("John"), 3.7f});
     source->push({2, std::string("Bob"), 9.2f});
@@ -977,17 +977,11 @@ TEST_SUITE("SortedTableModel") {
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
       }));
-    source->transact([&] {
-      source->push({2, std::string("Ava"), 4.1f});
-      source->transact([&] {
-        source->set(3, 0, 1);
-        source->transact([&] {
-          source->insert({6, std::string("Tom"), 11.1f}, 2);
-        });
-        source->set(5, 1, std::string("Bob"));
-      });
-    });
-    REQUIRE(signal_count == 1);
+    source->push({2, std::string("Ava"), 4.1f});
+    source->set(3, 0, 1);
+    source->insert({6, std::string("Tom"), 11.1f}, 2);
+    source->set(5, 1, std::string("Bob"));
+    REQUIRE(signal_count == 4);
     REQUIRE(sorted_model.get<int>(0, 0) == 9);
     REQUIRE(sorted_model.get<int>(1, 0) == 6);
     REQUIRE(sorted_model.get<int>(2, 0) == 4);

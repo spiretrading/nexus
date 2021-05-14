@@ -153,6 +153,37 @@ void SortedTableModel::translate(int direction, int row) {
   }
 }
 
+std::tuple<int, int> SortedTableModel::find_range(
+    const std::vector<int>::iterator& begin_iterator,
+    const std::vector<int>::iterator& end_iterator, int row) {
+  auto begin = begin_iterator;
+  auto end = end_iterator;
+  for(auto i = m_order.begin(); i != m_order.end(); ++i) {
+    auto new_begin = std::lower_bound(begin, end,
+      m_source->at(row, i->m_index),
+      [&] (int row, const std::any& value) {
+        if(i->m_order == Ordering::ASCENDING) {
+          return m_comparator(m_source->at(row, i->m_index), value);
+        } else {
+          return m_comparator(value, m_source->at(row, i->m_index));
+        }
+      });
+    auto new_end = std::upper_bound(new_begin, end,
+      m_source->at(row, i->m_index),
+      [&] (const std::any& value, int row) {
+        if(i->m_order == Ordering::ASCENDING) {
+          return m_comparator(value, m_source->at(row, i->m_index));
+        } else {
+          return m_comparator(m_source->at(row, i->m_index), value);
+        }
+      });
+    begin = new_begin;
+    end = new_end;
+  }
+  return {static_cast<int>(begin - m_mapping.begin()),
+    static_cast<int>(end - m_mapping.begin())};
+}
+
 void SortedTableModel::on_operation(const Operation& operation) {
   m_transaction.transact([&] {
     visit(operation,
@@ -202,11 +233,39 @@ void SortedTableModel::on_operation(const Operation& operation) {
         if(!is_sorted_column) {
           return;
         }
-        sort();
-        if(row_index != m_reverse_mapping[operation.m_row]) {
-          m_transaction.push(MoveOperation{row_index,
-            m_reverse_mapping[operation.m_row]});
+        auto destination = [&] {
+          auto [upper_part_begin, upper_part_end] =
+            find_range(m_mapping.begin(), m_mapping.begin() + row_index,
+              operation.m_row);
+          auto [lower_part_begin, lower_part_end] =
+            find_range(m_mapping.begin() + row_index + 1, m_mapping.end(),
+              operation.m_row);
+          if(upper_part_end != row_index) {
+            return upper_part_end;
+          } else if(lower_part_begin != row_index + 1){
+            return lower_part_begin;
+          }
+          return row_index;
+        }();
+        if(row_index == destination) {
+          return;
         }
+        if(row_index < destination) {
+          for(auto i = row_index; i < destination - 1; ++i) {
+            m_mapping[i] = m_mapping[i + 1];
+            m_reverse_mapping[m_mapping[i + 1]] = i;
+          }
+          m_mapping[destination - 1] = operation.m_row;
+          m_reverse_mapping[operation.m_row] = destination - 1;
+        } else {
+          for(auto i = row_index; i > destination; --i) {
+            m_mapping[i] = m_mapping[i - 1];
+            m_reverse_mapping[m_mapping[i - 1]] = i;
+          }
+          m_mapping[destination] = operation.m_row;
+          m_reverse_mapping[operation.m_row] = destination;
+        }
+          m_transaction.push(MoveOperation{row_index, destination});
       });
     });
 }
