@@ -91,7 +91,8 @@ namespace Styles {
    * @param time The time displayed in the time box.
    * @param parent The parent widget.
    */
-  DurationBox* make_time_box(boost::posix_time::time_duration time,
+  DurationBox* make_time_box(
+    const boost::optional<boost::posix_time::time_duration>& time,
     QWidget* parent = nullptr);
 
   /**
@@ -100,8 +101,8 @@ namespace Styles {
    */
   DurationBox* make_time_box(QWidget* parent = nullptr);
 
-  //! Returns a model which represents a time of day
-  std::shared_ptr<LocalDurationModel> make_time_of_day_model();
+  /** Returns a model which represents a time of day. */
+  std::shared_ptr<LocalOptionalDurationModel> make_time_of_day_model();
 }
 
 #endif

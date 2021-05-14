@@ -667,11 +667,11 @@ UiProfile Spire::make_time_box_profile() {
           return boost::posix_time::duration_from_string(
             time.toStdString().c_str());
         } catch(const std::exception&) {
-          return boost::posix_time::not_a_date_time;
+          return {};
         }
       };
       auto& current = get<QString>("current", profile.get_properties());
-      auto time_box = make_time_box(parse_time(current.get()));
+      auto time_box = make_time_box();
       apply_widget_properties(time_box, profile.get_properties());
       current.connect_changed_signal([=] (auto value) {
         auto current_value = parse_time(value);
@@ -685,11 +685,14 @@ UiProfile Spire::make_time_box_profile() {
         time_box->set_warning_displayed(value);
       });
       time_box->get_model()->connect_current_signal(
-        profile.make_event_slot<time_duration>(QString::fromUtf8("Current")));
+        profile.make_event_slot<optional<time_duration>>(
+        QString::fromUtf8("Current")));
       time_box->connect_submit_signal(
-        profile.make_event_slot<time_duration>(QString::fromUtf8("Submit")));
+        profile.make_event_slot<optional<time_duration>>(
+        QString::fromUtf8("Submit")));
       time_box->connect_reject_signal(
-        profile.make_event_slot<time_duration>(QString::fromUtf8("Reject")));
+        profile.make_event_slot<optional<time_duration>>(
+        QString::fromUtf8("Reject")));
       return time_box;
     });
   return profile;

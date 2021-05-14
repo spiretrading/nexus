@@ -64,6 +64,7 @@ namespace {
     optional<int> m_current;
     QValidator::State m_state;
     scoped_connection m_source_connection;
+    optional<int> m_maximum = none;
 
     HourModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
@@ -78,7 +79,7 @@ namespace {
     }
 
     optional<int> get_maximum() const {
-      return none;
+      return m_maximum;
     }
 
     int get_increment() const {
@@ -301,6 +302,7 @@ namespace {
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
       QWidget& event_filter) {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
+    field->setObjectName("HourField");
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
     field->set_warning_displayed(false);
@@ -512,21 +514,25 @@ void DurationBox::on_reject() {
   }
 }
 
-DurationBox* Spire::make_time_box(time_duration time, QWidget* parent) {
+DurationBox* Spire::make_time_box(const optional<time_duration>& time,
+    QWidget* parent) {
   auto model = make_time_of_day_model();
   auto time_box = new DurationBox(model, parent);
   model->set_current(time);
+  auto hour_field = time_box->findChild<IntegerBox*>("HourField");
+  auto hour_model = std::dynamic_pointer_cast<HourModel>(
+    hour_field->get_model());
+  hour_model->m_maximum = 23;
   return time_box;
 }
 
 DurationBox* Spire::make_time_box(QWidget* parent) {
-  return make_time_box(not_a_date_time, parent);
+  return make_time_box(none, parent);
 }
 
-std::shared_ptr<LocalDurationModel> Spire::make_time_of_day_model() {
-  auto model = std::make_shared<LocalDurationModel>();
-  model->get_hour_model()->set_maximum(23);
+std::shared_ptr<LocalOptionalDurationModel> Spire::make_time_of_day_model() {
+  auto model = std::make_shared<LocalOptionalDurationModel>();
   model->set_minimum(hours(0));
-  model->set_maximum(hours(24));
+  model->set_maximum(hours(23) + minutes(59) + millisec(59999));
   return model;
 }
