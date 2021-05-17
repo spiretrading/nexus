@@ -668,7 +668,7 @@ UiProfile Spire::make_time_box_profile() {
     true));
   auto profile = UiProfile(QString::fromUtf8("TimeBox"), properties,
     [] (auto& profile) {
-      auto parse_time = [] (auto time) -> time_duration {
+      auto parse_time = [] (auto time) -> boost::optional<time_duration> {
         try {
           return boost::posix_time::duration_from_string(
             time.toStdString().c_str());
@@ -680,9 +680,10 @@ UiProfile Spire::make_time_box_profile() {
       auto time_box = make_time_box();
       apply_widget_properties(time_box, profile.get_properties());
       current.connect_changed_signal([=] (auto value) {
-        auto current_value = parse_time(value);
-        if(time_box->get_model()->get_current() != current_value) {
-          time_box->get_model()->set_current(current_value);
+        if(auto current_value = parse_time(value)) {
+          if(time_box->get_model()->get_current() != *current_value) {
+            time_box->get_model()->set_current(*current_value);
+          }
         }
       });
       auto& read_only = get<bool>("read_only", profile.get_properties());
