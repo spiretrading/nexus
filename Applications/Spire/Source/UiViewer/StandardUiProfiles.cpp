@@ -663,6 +663,7 @@ UiProfile Spire::make_time_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("current", ""));
+  properties.push_back(make_standard_bool_property("read_only"));
   properties.push_back(make_standard_bool_property("is_warning_displayed",
     true));
   auto profile = UiProfile(QString::fromUtf8("TimeBox"), properties,
@@ -683,6 +684,10 @@ UiProfile Spire::make_time_box_profile() {
         if(time_box->get_model()->get_current() != current_value) {
           time_box->get_model()->set_current(current_value);
         }
+      });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        time_box->set_read_only(is_read_only);
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
         profile.get_properties());
