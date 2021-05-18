@@ -124,7 +124,11 @@ namespace Styles {
     private:
       QWidget* m_container;
       QWidget* m_body;
+      QRect m_body_geometry;
+      std::unordered_map<QString, QString> m_styles;
+      bool m_is_buffering_style;
 
+      void commit_style();
       void on_style();
   };
 
