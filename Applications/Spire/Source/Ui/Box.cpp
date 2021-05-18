@@ -116,20 +116,23 @@ void Box::resizeEvent(QResizeEvent* event) {
 }
 
 void Box::on_style() {
-  auto computed_style = compute_style(*this);
+  auto& stylist = find_stylist(*this);
+  auto computed_style = stylist.compute_style();
   auto style = QString("#Box {");
   style += "border-style: solid;";
   auto body_geometry = QRect(0, 0, width(), height());
   for(auto& property : computed_style.get_properties()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        style += "background-color: " +
-          color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+        stylist.evaluate(color, [&] (QColor color) {
+          style += "background-color: " + color.name(QColor::HexArgb) + ";";
+        });
       },
       [&] (const BorderTopSize& size) {
-        auto computed_size = size.get_expression().as<int>();
-        style += "border-top-width: " + QString::number(computed_size) + "px;";
-        body_geometry.setTop(body_geometry.top() + computed_size);
+        stylist.evaluate(size, [&] (int size) {
+          style += "border-top-width: " + QString::number(size) + "px;";
+          body_geometry.setTop(body_geometry.top() + size);
+        });
       },
       [&] (const BorderRightSize& size) {
         auto computed_size = size.get_expression().as<int>();

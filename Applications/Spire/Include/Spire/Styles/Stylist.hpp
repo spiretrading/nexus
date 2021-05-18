@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <QWidget>
+#include <type_traits>
 #include <unordered_set>
 #include <vector>
 #include <boost/optional/optional.hpp>
@@ -109,11 +110,31 @@ namespace Spire::Styles {
        */
       void unmatch(const Selector& selector);
 
+      /**
+       * Applies a function to the evaluation of a property's expression.
+       * The function receiving the evaluation may be called multiple times,
+       * especially if the property evaluates to an animation.
+       * @param property The property whose expression is to be evaluated.
+       * @param receiver The function receiving the evaluation.
+       */
+      template<typename Property, typename F>
+      void evaluate(const Property& property, F&& receiver);
+
       /** Connects a slot to the StyleSignal. */
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 
     private:
+      template<typename T>
+      struct TypeExtractor {};
+      template<typename T>
+      struct TypeExtractor<Beam::TypeSequence<T>> {
+        using type = std::decay_t<T>;
+      };
+      template<typename T, typename U>
+      struct TypeExtractor<Beam::TypeSequence<T, U>> {
+        using type = std::decay_t<U>;
+      };
       struct StyleEventFilter;
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
@@ -221,6 +242,13 @@ namespace Spire::Styles {
   boost::signals2::connection connect_style_signal(
     const QWidget& widget, const PseudoElement& pseudo_element,
     const Stylist::StyleSignal::slot_type& slot);
+
+  template<typename Property, typename F>
+  void Stylist::evaluate(const Property& property, F&& receiver) {
+    using Parameter = std::decay_t<typename TypeExtractor<
+      Beam::GetFunctionParameters<std::decay_t<F>>>::type>;
+    std::forward<F>(receiver)(property.get_expression().as<Parameter>());
+  }
 }
 
 #endif
