@@ -297,8 +297,6 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
       m_submission(m_model->get_current()),
       m_modifiers(std::move(modifiers)) {
-  setAttribute(Qt::WA_NativeWindow);
-  setAttribute(Qt::WA_DontCreateNativeAncestors);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
