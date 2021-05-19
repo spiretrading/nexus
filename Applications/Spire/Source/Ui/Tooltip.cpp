@@ -1,4 +1,7 @@
 #include "Spire/Ui/Tooltip.hpp"
+#include <QGraphicsDropShadowEffect>
+#include <QGraphicsPathItem>
+#include <QGraphicsScene>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -110,8 +113,7 @@ void Tooltip::hideEvent(QHideEvent* event) {
 
 void Tooltip::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(rect().marginsRemoved(get_margins()), TOOLTIP_COLOR);
-  painter.fillPath(get_arrow_path(), TOOLTIP_COLOR);
+  painter.drawPixmap(0, 0, render_background());
 }
 
 QPainterPath Tooltip::get_arrow_path() const {
@@ -211,6 +213,24 @@ QPoint Tooltip::get_position() const {
       (2 * ARROW_X_POSITION()));
   }
   return {x, y};
+}
+
+QPixmap Tooltip::render_background() {
+  auto scene = QGraphicsScene();
+  scene.setSceneRect(rect());
+  auto shadow = QGraphicsDropShadowEffect();
+  shadow.setColor(DROP_SHADOW_COLOR);
+  shadow.setOffset(0, 0);
+  shadow.setBlurRadius(scale_width(5));
+  auto path = get_arrow_path();
+  path.addRect(rect().marginsRemoved(get_margins()));
+  auto arrow = scene.addPath(path, Qt::NoPen, TOOLTIP_COLOR);
+  arrow->setGraphicsEffect(&shadow);
+  auto pixmap = QPixmap(size());
+  pixmap.fill(Qt::transparent);
+  auto painter = QPainter(&pixmap);
+  scene.render(&painter);
+  return pixmap;
 }
 
 void Tooltip::on_show_timeout() {

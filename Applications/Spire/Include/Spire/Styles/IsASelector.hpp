@@ -3,6 +3,7 @@
 #include <functional>
 #include <typeindex>
 #include <type_traits>
+#include <unordered_set>
 #include <QWidget>
 #include "Spire/Styles/Styles.hpp"
 
@@ -42,7 +43,8 @@ namespace Spire::Styles {
     return IsASelector(std::in_place_type<T>);
   }
 
-  std::vector<Stylist*> select(const IsASelector& selector, Stylist& source);
+  std::unordered_set<Stylist*>
+    select(const IsASelector& selector, std::unordered_set<Stylist*> sources);
 
   template<typename T>
   IsASelector::IsASelector(std::in_place_type_t<T>)

@@ -3,7 +3,7 @@
 #include <any>
 #include <typeindex>
 #include <type_traits>
-#include <vector>
+#include <unordered_set>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/Styles.hpp"
 
@@ -14,9 +14,9 @@ namespace Spire::Styles {
   struct is_selector_t : std::false_type {};
 
   template<typename T>
-  struct is_selector_t<T, std::enable_if_t<std::is_same_v<
-    decltype(select(std::declval<T>(), std::declval<Stylist>())),
-    std::vector<Stylist*>>>> : std::true_type {};
+  struct is_selector_t<T, std::enable_if_t<std::is_same_v<decltype(
+    select(std::declval<T>(), std::declval<std::unordered_set<Stylist*>>())),
+    std::unordered_set<Stylist*>>>> : std::true_type {};
 
   template<typename T>
   constexpr auto is_selector_v = is_selector_t<T>::value;
@@ -68,22 +68,33 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
-      friend std::vector<Stylist*> select(const Selector&, Stylist&);
+      friend std::unordered_set<Stylist*>
+        select(const Selector&, std::unordered_set<Stylist*>);
       friend std::vector<QWidget*> build_reach(const Selector&, QWidget&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_is_equal;
-      std::function<std::vector<Stylist*> (const Selector&, Stylist&)> m_select;
+      std::function<std::unordered_set<Stylist*> (
+        const Selector&, std::unordered_set<Stylist*>)> m_select;
       std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_reach;
   };
 
   /**
-   * Returns all selected Stylists relative to a source.
-   * @param selector The Selector to use.
-   * @param source The Stylist used as the reference point for selection.
-   *        This is usually the Stylist that the <i>selector</i> belongs to.
-   * @return The list of all Stylists that were selected.
-   */
-  std::vector<Stylist*> select(const Selector& selector, Stylist& source);
+   * Returns all Stylists that match a Selector.
+   * @param selector The Selector to match.
+   * @param sources The set if Stylists to match.
+   * @return The set of of all Stylists that match the <i>selector<i>.
+'  */
+  std::unordered_set<Stylist*>
+    select(const Selector& selector, std::unordered_set<Stylist*> sources);
+
+  /**
+   * Returns all Stylists that match a Selector.
+   * @param selector The Selector to match.
+   * @param source The Stylist to match.
+   * @return The set of of all Stylists that match the <i>selector<i>.
+'  */
+  std::unordered_set<Stylist*>
+    select(const Selector& selector, Stylist& source);
 
   /**
    * Returns the list of all widgets that could be selected by one of the rules
@@ -117,8 +128,8 @@ namespace Spire::Styles {
         }
         return self.as<T>() == selector.as<T>();
       }),
-      m_select([] (const Selector& self, Stylist& source) {
-        return select(self.as<T>(), source);
+      m_select([] (const Selector& self, std::unordered_set<Stylist*> source) {
+        return select(self.as<T>(), std::move(source));
       }),
       m_reach([] (const Selector& self, QWidget& widget) {
         return build_reach(self.as<T>(), widget);

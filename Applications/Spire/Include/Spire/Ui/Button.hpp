@@ -1,6 +1,6 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
-#include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Styles/ComponentSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -11,9 +11,6 @@ namespace Spire {
 
       /** Signals that the button is clicked. */
       using ClickedSignal = Signal<void ()>;
-
-      /** Selects the body for styling. */
-      using Body = Styles::StateSelector<void, struct ButtonBodyTag>;
 
       /**
        * Constructs a Button.
@@ -56,6 +53,11 @@ namespace Spire {
    * @param parent The parent widget.
    */
   Button* make_label_button(const QString& label, QWidget* parent = nullptr);
+}
+
+namespace Spire::Styles {
+  template<>
+  struct ComponentFinder<Button, Body> : BaseComponentFinder<Button, Body> {};
 }
 
 #endif

@@ -48,6 +48,12 @@ namespace Styles {
       /** Returns the model used for the current value. */
       const std::shared_ptr<OptionalDurationModel>& get_model() const;
 
+      //! Returns <code>true</code> iff this box is read-only.
+      bool is_read_only() const;
+
+      //! Sets whether the box is read-only.
+      void set_read_only(bool is_read_only);
+
       /**
        * Returns whether a warning is displayed when a submission is rejected.
        */
@@ -80,11 +86,37 @@ namespace Styles {
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
+      bool m_is_read_only;
       bool m_is_warning_displayed;
 
       void on_submit();
       void on_reject();
   };
+
+  /**
+   * Returns a newly constructed time box.
+   * @param time The time displayed in the time box.
+   * @param parent The parent widget.
+   */
+  DurationBox* make_time_box(
+    const boost::optional<boost::posix_time::time_duration>& time,
+    QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed time box without a default time.
+   * @param parent The parent widget.
+   */
+  DurationBox* make_time_box(QWidget* parent = nullptr);
+
+  /** Returns a model which represents a time of day. */
+  std::shared_ptr<OptionalDurationModel> make_time_of_day_model();
+
+  /**
+   * Returns a model which represents a time of day.
+   * @param time The current time of day.
+   */
+  std::shared_ptr<OptionalDurationModel> make_time_of_day_model(
+    const boost::optional<boost::posix_time::time_duration>& time);
 }
 
 #endif

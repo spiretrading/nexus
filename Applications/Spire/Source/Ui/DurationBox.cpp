@@ -78,6 +78,9 @@ namespace {
     }
 
     optional<int> get_maximum() const {
+      if(auto maximum = m_source->get_maximum()) {
+        return static_cast<int>(maximum->hours());
+      }
       return none;
     }
 
@@ -236,9 +239,15 @@ namespace {
     style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(Hover()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    style.get(ReadOnly()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(ReadOnly() && Disabled()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     return style;
   }
 
@@ -351,6 +360,7 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
     : QWidget(parent),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
+      m_is_read_only(false),
       m_is_warning_displayed(true) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -411,6 +421,22 @@ const std::shared_ptr<OptionalDurationModel>& DurationBox::get_model() const {
   return m_model;
 }
 
+bool DurationBox::is_read_only() const {
+  return m_is_read_only;
+}
+
+void DurationBox::set_read_only(bool is_read_only) {
+  m_is_read_only = is_read_only;
+  m_hour_field->set_read_only(m_is_read_only);
+  m_minute_field->set_read_only(m_is_read_only);
+  m_second_field->set_read_only(m_is_read_only);
+  if(m_is_read_only) {
+    match(*this, ReadOnly());
+  } else {
+    unmatch(*this, ReadOnly());
+  }
+}
+
 bool DurationBox::is_warning_displayed() const {
   return m_is_warning_displayed;
 }
@@ -435,10 +461,12 @@ QSize DurationBox::sizeHint() const {
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    find_stylist(*this).match(Focus());
+    if(!m_is_read_only) {
+      find_stylist(*this).match(Focus());
+    }
   } else if(event->type() == QEvent::FocusOut) {
-    if(!m_hour_field->hasFocus() && !m_minute_field->hasFocus() &&
-        !m_second_field->hasFocus()) {
+    if(!m_is_read_only && !m_hour_field->hasFocus() &&
+        !m_minute_field->hasFocus() && !m_second_field->hasFocus()) {
       find_stylist(*this).unmatch(Focus());
       on_submit();
     }
@@ -510,4 +538,24 @@ void DurationBox::on_reject() {
   if(m_is_warning_displayed) {
     display_warning_indicator(*this);
   }
+}
+
+DurationBox* Spire::make_time_box(const optional<time_duration>& time,
+    QWidget* parent) {
+  return new DurationBox(make_time_of_day_model(time), parent);
+}
+
+DurationBox* Spire::make_time_box(QWidget* parent) {
+  return make_time_box(none, parent);
+}
+
+std::shared_ptr<OptionalDurationModel> Spire::make_time_of_day_model() {
+  return make_time_of_day_model(none);
+}
+
+std::shared_ptr<OptionalDurationModel> Spire::make_time_of_day_model(
+    const optional<time_duration>& time) {
+  auto model = std::make_shared<LocalOptionalDurationModel>(time);
+  model->set_maximum(hours(23) + minutes(59) + seconds(59) + millisec(999));
+  return model;
 }

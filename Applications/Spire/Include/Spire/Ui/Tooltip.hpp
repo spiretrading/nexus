@@ -44,6 +44,7 @@ namespace Spire {
       QMargins get_margins() const;
       Orientation get_orientation() const;
       QPoint get_position() const;
+      QPixmap render_background();
       void on_show_timeout();
   };
 

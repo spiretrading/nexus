@@ -18,11 +18,11 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
   auto style = get_style(*m_button);
-  style.get(Any() > Button::Body()).set(
+  style.get(Body()).set(
     BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Hover() > Button::Body()).set(
+  style.get(Hover() / Body()).set(
     BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
-  style.get(Focus() > Button::Body()).set(
+  style.get(Focus() / Body()).set(
     BackgroundColor(QColor::fromRgb(0x68, 0x4B, 0xC7)));
   set_style(*m_button, std::move(style));
 }

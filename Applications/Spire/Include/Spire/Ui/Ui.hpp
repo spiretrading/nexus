@@ -64,10 +64,12 @@ namespace Spire {
   class ScrollableLayer;
   class SecurityStack;
   class SecurityWidget;
+  class SortedTableModel;
   class TabWidget;
   class TableModel;
   class TableModelTransactionLog;
   class TextBox;
+  class TimeBox;
   class TitleBar;
   class Tooltip;
   class TransitionWidget;
