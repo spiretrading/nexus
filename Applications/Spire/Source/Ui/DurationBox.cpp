@@ -310,7 +310,6 @@ namespace {
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
       QWidget& event_filter) {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
-    field->setObjectName("HourField");
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
     field->set_warning_displayed(false);
