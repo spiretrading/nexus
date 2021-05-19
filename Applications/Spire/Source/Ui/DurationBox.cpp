@@ -78,6 +78,9 @@ namespace {
     }
 
     optional<int> get_maximum() const {
+      if(auto maximum = m_source->get_maximum()) {
+        return static_cast<int>(maximum->hours());
+      }
       return none;
     }
 
@@ -535,4 +538,24 @@ void DurationBox::on_reject() {
   if(m_is_warning_displayed) {
     display_warning_indicator(*this);
   }
+}
+
+DurationBox* Spire::make_time_box(const optional<time_duration>& time,
+    QWidget* parent) {
+  return new DurationBox(make_time_of_day_model(time), parent);
+}
+
+DurationBox* Spire::make_time_box(QWidget* parent) {
+  return make_time_box(none, parent);
+}
+
+std::shared_ptr<OptionalDurationModel> Spire::make_time_of_day_model() {
+  return make_time_of_day_model(none);
+}
+
+std::shared_ptr<OptionalDurationModel> Spire::make_time_of_day_model(
+    const optional<time_duration>& time) {
+  auto model = std::make_shared<LocalOptionalDurationModel>(time);
+  model->set_maximum(hours(23) + minutes(59) + seconds(59) + millisec(999));
+  return model;
 }
