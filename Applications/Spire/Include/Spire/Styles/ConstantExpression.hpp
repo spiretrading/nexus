@@ -28,6 +28,10 @@ namespace Spire::Styles {
       /** Returns the constant. */
       Type&& get_constant() &&;
 
+      bool operator ==(const ConstantExpression& expression) const;
+
+      bool operator !=(const ConstantExpression& expression) const;
+
     private:
       Type m_constant;
   };
@@ -54,6 +58,18 @@ namespace Spire::Styles {
   typename ConstantExpression<T>::Type&&
       ConstantExpression<T>::get_constant() && {
     return std::move(m_constant);
+  }
+
+  template<typename T>
+  bool ConstantExpression<T>::operator ==(
+      const ConstantExpression& expression) const {
+    return m_constant == expression.get_constant();
+  }
+
+  template<typename T>
+  bool ConstantExpression<T>::operator !=(
+      const ConstantExpression& expression) const {
+    return !(*this == expression);
   }
 }
 

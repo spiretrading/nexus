@@ -1,6 +1,6 @@
 #ifndef SPIRE_STYLES_MINIMUM_EXPRESSION_HPP
 #define SPIRE_STYLES_MINIMUM_EXPRESSION_HPP
-#include "Spire/Styles/Evaluator.hpp"
+#include <algorithm>
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -17,22 +17,23 @@ namespace Spire::Styles {
    */
   template<typename T>
   auto min(Expression<T> left, Expression<T> right) {
-    return MinimumExpression(std::move(left), std::move(right));
+    return MinimumExpression<T>(std::move(left), std::move(right));
   }
 
   template<typename T>
   auto make_evaluator(MinimumExpression<T> expression, const Stylist& stylist) {
     using Type = T;
-    struct Evaluator {
+    struct MinimumEvaluator {
       Evaluator<Type> m_left;
       Evaluator<Type> m_right;
       Evaluation<Type> operator ()(boost::posix_time::time_duration frame) {
         auto a = m_left(frame);
         auto b = m_right(frame);
-        return {std::min(a.m_value, b.m_value), std::min(a, b)};
+        return Evaluation(std::min(a.m_value, b.m_value),
+          std::min(a.m_next_frame, b.m_next_frame));
       }
     };
-    return Evaluator{
+    return MinimumEvaluator{
       make_evaluator(std::get<0>(expression.get_arguments()), stylist),
       make_evaluator(std::get<1>(expression.get_arguments()), stylist)};
   }

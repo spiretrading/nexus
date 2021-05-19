@@ -82,9 +82,11 @@ namespace {
   }
 
   auto STATUS_LABEL_STYLE(StyleSheet style) {
+/* TODO
     style.get(Disabled()).
       set(TextColor(QColor(0xFA, 0xEB, 0x96))).
-      set(TextAlign({Qt::AlignCenter}));
+      set(TextAlign(Qt::AlignCenter));
+*/
     return style;
   }
 }

@@ -11,6 +11,7 @@ namespace Spire::Styles {
   template<typename T, typename G> class ComponentId;
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
+  template<typename T> class ConstantExpression;
   class DescendantSelector;
   template<typename T> struct Evaluation;
   template<typename T> class Expression;

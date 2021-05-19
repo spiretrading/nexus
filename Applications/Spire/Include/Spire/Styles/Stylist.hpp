@@ -247,7 +247,8 @@ namespace Spire::Styles {
   void Stylist::evaluate(const Property& property, F&& receiver) {
     using Parameter = std::decay_t<typename TypeExtractor<
       Beam::GetFunctionParameters<std::decay_t<F>>>::type>;
-    std::forward<F>(receiver)(property.get_expression().as<Parameter>());
+    auto evaluator = make_evaluator(property.get_expression(), *this);
+    std::forward<F>(receiver)(evaluator(boost::posix_time::seconds(0)).m_value);
   }
 }
 

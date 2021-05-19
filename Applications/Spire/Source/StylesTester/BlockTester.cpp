@@ -13,13 +13,15 @@ TEST_SUITE("Block") {
     auto visits = 0;
     for(auto& property : block.get_properties()) {
       property.visit([&] (const BackgroundColor& color) {
-        REQUIRE(color.get_expression().as<QColor>() ==
-          QColor::fromRgb(255, 0, 0));
+        auto expression =
+          color.get_expression().as<ConstantExpression<QColor>>();
+        REQUIRE(expression.get_constant() == QColor::fromRgb(255, 0, 0));
         ++visits;
       },
       [&] (const BorderTopColor& color) {
-        REQUIRE(color.get_expression().as<QColor>() ==
-          QColor::fromRgb(0, 255, 0));
+        auto expression =
+          color.get_expression().as<ConstantExpression<QColor>>();
+        REQUIRE(expression.get_constant() == QColor::fromRgb(0, 255, 0));
         ++visits;
       });
     }
@@ -27,12 +29,13 @@ TEST_SUITE("Block") {
     block.set(BackgroundColor(QColor::fromRgb(0, 0, 255)));
     auto background = find<BackgroundColor>(block);
     REQUIRE(background.is_initialized());
-    REQUIRE(background->get_expression().as<QColor>() ==
-      QColor::fromRgb(0, 0, 255));
+    auto expression =
+      background->get_expression().as<ConstantExpression<QColor>>();
+    REQUIRE(expression.get_constant() == QColor::fromRgb(0, 0, 255));
     block.remove<BackgroundColor>();
     REQUIRE(block.get_properties().size() == 1);
     REQUIRE_NOTHROW(block.get_properties().front().visit(
-      [&] (const BorderTopColor& color) {}));
+      [] (const BorderTopColor& color) {}));
   }
 
   TEST_CASE("modify_composite_properties") {
@@ -40,7 +43,8 @@ TEST_SUITE("Block") {
     block.set(border(1, QColor::fromRgb(0, 0, 255)));
     auto border_color = find<BorderColor>(block);
     REQUIRE(border_color.is_initialized());
-    REQUIRE(border_color->get<BorderTopColor>().get_expression().as<QColor>() ==
+    auto expression = border_color->get<BorderTopColor>().get_expression();
+    REQUIRE(expression.as<ConstantExpression<QColor>>().get_constant() ==
       QColor::fromRgb(0, 0, 255));
   }
 }
