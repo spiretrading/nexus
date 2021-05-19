@@ -12,13 +12,16 @@ namespace Spire::Styles {
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
   class DescendantSelector;
+  template<typename T> struct Evaluation;
   template<typename T> class Expression;
   class FlipSelector;
   class IsASelector;
   class NotSelector;
   class OrSelector;
   class ParentSelector;
+  class PathSelector;
   class Property;
+  class PropertyMatchSelector;
   class PseudoElement;
   template<typename T, typename G> class PseudoElementSelector;
   class Rule;
