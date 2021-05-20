@@ -94,6 +94,7 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 }
 
 Stylist::~Stylist() {
+  m_widget = nullptr;
   for(auto& block : m_source_to_block) {
     block.second->m_source->m_dependents.erase(this);
   }
@@ -426,7 +427,12 @@ connection Spire::Styles::connect_style_signal(const QWidget& widget,
     const PseudoElement& pseudo_element,
     const Stylist::StyleSignal::slot_type& slot) {
   if(auto stylist = find_stylist(widget, pseudo_element)) {
-    return stylist->connect_style_signal(slot);
+    auto& primary_stylist = find_stylist(widget);
+    return stylist->connect_style_signal([=, &primary_stylist] {
+      if(primary_stylist.m_widget) {
+        slot();
+      }
+    });
   }
   return {};
 }

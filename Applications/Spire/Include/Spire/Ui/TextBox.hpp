@@ -1,5 +1,6 @@
 #ifndef SPIRE_TEXT_BOX_HPP
 #define SPIRE_TEXT_BOX_HPP
+#include <boost/optional/optional.hpp>
 #include <QLabel>
 #include <QLineEdit>
 #include "Spire/Styles/StyleSheetMap.hpp"

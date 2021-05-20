@@ -138,6 +138,9 @@ namespace Spire::Styles {
       friend Stylist& find_stylist(QWidget& widget);
       friend void add_pseudo_element(QWidget& source,
         const PseudoElement& pseudo_element);
+      friend boost::signals2::connection connect_style_signal(
+        const QWidget& widget, const PseudoElement& pseudo_element,
+        const Stylist::StyleSignal::slot_type& slot);
       mutable StyleSignal m_style_signal;
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
