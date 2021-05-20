@@ -363,7 +363,7 @@ namespace {
     }
     style.get(Any() > Colon()).
       set(PaddingBottom(scale_height(static_cast<int>((number_height -
-        colon_height) / 2))));
+        colon_height) / 2.0f + 0.5f))));
     return style;
   }
 }
