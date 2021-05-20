@@ -126,7 +126,7 @@ namespace Spire {
   template<typename T>
   AssociativeValueModel<T>::AssociativeValueModel(Type default_value)
     : AssociativeValueModel(std::make_shared<LocalBooleanModel>(true),
-        default_value) {}
+        std::move(default_value)) {}
 
   template<typename T>
   AssociativeValueModel<T>::AssociativeValueModel(
@@ -165,7 +165,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State AssociativeValueModel<T>::get_state() const {
-    return QValidator::Acceptable;
+    return m_models.at(m_current)->get_state();
   }
 
   template<typename T>
@@ -186,16 +186,16 @@ namespace Spire {
     m_is_blocked = true;
     auto previous = m_current;
     m_current = value;
-    if(previous != m_current) {
-      set_associated_model_value(previous, false);
-      set_associated_model_value(m_current, true);
-    }
     m_current_signal(m_current);
     m_is_blocked = false;
     if(!m_current_queue.empty()) {
       auto current_value = m_current_queue.front();
       m_current_queue.pop();
       set_current(current_value);
+    }
+    if(previous != m_current) {
+      set_associated_model_value(previous, false);
+      set_associated_model_value(m_current, true);
     }
     return QValidator::Acceptable;
   }
@@ -232,8 +232,7 @@ namespace Spire {
   std::shared_ptr<AssociativeValueModel<boost::optional<T>>>
       make_nullable_associative_model() {
     auto model =
-      std::make_shared<AssociativeValueModel<boost::optional<T>>>(
-        boost::optional<T>(boost::none));
+      std::make_shared<AssociativeValueModel<boost::optional<T>>>(boost::none);
     model->associate(std::make_shared<LocalBooleanModel>(true), boost::none);
     return model;
   }
