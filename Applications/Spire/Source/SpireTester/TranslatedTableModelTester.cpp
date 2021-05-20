@@ -11,7 +11,7 @@ namespace {
   template<typename... F>
   decltype(auto) test_operation(
       const TableModel::Operation& operation, F&&... f) {
-    return visit(
+    return visit<TableModel>(
       operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
   }
 }
@@ -303,7 +303,7 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(operations.size() == 1);
     auto operation = operations.front();
     operations.pop_front();
-    visit(operation,
+    visit<TableModel>(operation,
       [&] (const TableModel::UpdateOperation& operation) {
         REQUIRE(operation.m_row == 0);
         REQUIRE(operation.m_column == 0);
@@ -421,7 +421,7 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        visit(operation,
+        visit<TableModel>(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             ++add_count;
           },
@@ -475,7 +475,7 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        visit(operation,
+        visit<TableModel>(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             ++add_count;
           },

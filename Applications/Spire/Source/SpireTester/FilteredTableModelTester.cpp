@@ -279,7 +279,7 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        visit(operation,
+        visit<TableModel>(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             ++add_count;
             REQUIRE(add_operation.m_index == 0);
@@ -363,7 +363,7 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        visit(operation,
+        visit<TableModel>(operation,
           [&] (const TableModel::AddOperation& add_operation) {
             ++add_count;
           },

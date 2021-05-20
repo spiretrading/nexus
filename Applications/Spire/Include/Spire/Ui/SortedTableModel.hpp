@@ -2,8 +2,8 @@
 #define SPIRE_SORTED_TABLE_MODEL_HPP
 #include <functional>
 #include <vector>
+#include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
-#include "Spire/Ui/TableModelTransactionLog.hpp"
 #include "Spire/Ui/TranslatedTableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -116,7 +116,7 @@ namespace Spire {
       boost::optional<TranslatedTableModel> m_translation;
       std::vector<ColumnOrder> m_order;
       Comparator m_comparator;
-      TableModelTransactionLog m_transaction;
+      ModelTransactionLog<TableModel> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       bool row_comparator(int lhs, int rhs) const;

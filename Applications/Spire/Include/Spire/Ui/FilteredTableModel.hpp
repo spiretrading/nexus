@@ -3,8 +3,8 @@
 #include <functional>
 #include <tuple>
 #include <vector>
+#include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
-#include "Spire/Ui/TableModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -41,7 +41,7 @@ namespace Spire {
       std::shared_ptr<TableModel> m_source;
       std::function<bool(const TableModel&, int)> m_filter;
       std::vector<int> m_filtered_data;
-      TableModelTransactionLog m_transaction;
+      ModelTransactionLog<TableModel> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);

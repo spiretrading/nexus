@@ -1,7 +1,7 @@
 #ifndef SPIRE_ARRAY_TABLE_MODEL_HPP
 #define SPIRE_ARRAY_TABLE_MODEL_HPP
+#include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
-#include "Spire/Ui/TableModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -75,7 +75,7 @@ namespace Spire {
 
     private:
       std::vector<std::vector<std::any>> m_data;
-      TableModelTransactionLog m_transaction;
+      ModelTransactionLog<TableModel> m_transaction;
   };
 
   template<typename F>

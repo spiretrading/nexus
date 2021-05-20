@@ -57,7 +57,7 @@ std::tuple<bool, std::vector<int>::iterator> FilteredTableModel::find(
 
 void FilteredTableModel::on_operation(const Operation& operation) {
   m_transaction.transact([&] {
-    visit(operation,
+    visit<TableModel>(operation,
       [&] (const AddOperation& operation) {
         if(operation.m_index >= m_source->get_row_size() - 1) {
           if(!m_filter(*m_source, operation.m_index)) {

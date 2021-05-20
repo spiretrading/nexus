@@ -80,7 +80,7 @@ void TranslatedTableModel::translate(int direction, int row) {
 
 void TranslatedTableModel::on_operation(const Operation& operation) {
   transact([&] {
-    visit(operation,
+    visit<TableModel>(operation,
       [&] (const AddOperation& operation) {
         if(operation.m_index >= static_cast<int>(m_translation.size())) {
           m_reverse_translation.push_back(operation.m_index);

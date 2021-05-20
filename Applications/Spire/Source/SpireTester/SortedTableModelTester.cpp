@@ -413,7 +413,7 @@ TEST_SUITE("SortedTableModel") {
     auto operations = std::deque<TableModel::Operation>();
     sorted_model.connect_operation_signal(
       [&] (const auto& operation) {
-        visit(operation, [&] (const auto& operation) {
+        visit<TableModel>(operation, [&] (const auto& operation) {
           operations.push_back(operation);
         });
       });
