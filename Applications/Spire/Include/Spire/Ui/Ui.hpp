@@ -68,6 +68,7 @@ namespace Spire {
   class TableModel;
   class TableModelTransactionLog;
   class TextBox;
+  class TimeBox;
   class TitleBar;
   class Tooltip;
   class TransitionWidget;
