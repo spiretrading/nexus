@@ -131,7 +131,8 @@ namespace Spire {
   template<typename T>
   AssociativeValueModel<T>::AssociativeValueModel(
       std::shared_ptr<BooleanModel> model, Type default_value)
-      : m_default_value(std::move(default_value)),
+      : m_current(std::move(default_value)),
+        m_default_value(m_current),
         m_is_blocked(false) {
     associate(model, m_default_value);
   }
@@ -193,7 +194,7 @@ namespace Spire {
       m_current_queue.pop();
       set_current(current_value);
     }
-    if(previous != m_current) {
+    if(m_models.at(previous) != m_models.at(m_current)) {
       set_associated_model_value(previous, false);
       set_associated_model_value(m_current, true);
     }
