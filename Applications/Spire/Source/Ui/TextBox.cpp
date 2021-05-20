@@ -74,7 +74,15 @@ struct TextBox::TextValidator : QValidator {
 };
 
 TextStyle Spire::Styles::text_style(QFont font, QColor color) {
-  return TextStyle(Font(std::move(font)), TextColor(std::move(color)));
+  return TextStyle(Font(std::move(font)), TextColor(color));
+}
+
+void TextBox::StyleProperties::clear() {
+  m_styles.clear();
+  m_alignment = none;
+  m_font = none;
+  m_size = none;
+  m_echo_mode = none;
 }
 
 TextBox::TextBox(QWidget* parent)
@@ -85,11 +93,11 @@ TextBox::TextBox(QString current, QWidget* parent)
 
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
+      m_line_edit_styles{[=] { commit_style(); }},
+      m_placeholder_styles{[=] { commit_placeholder_style(); }},
       m_is_warning_displayed(true),
       m_model(std::move(model)),
-      m_submission(m_model->get_current()),
-      m_styles([=] { commit_style(); }),
-      m_placeholder_styles([=] { commit_placeholder_style(); }) {
+      m_submission(m_model->get_current()) {
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
@@ -163,13 +171,13 @@ void TextBox::set_warning_displayed(bool is_displayed) {
   m_is_warning_displayed = is_displayed;
 }
 
-connection TextBox::connect_submit_signal(
-    const SubmitSignal::slot_type& slot) const {
+connection
+    TextBox::connect_submit_signal(const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
 }
 
-connection TextBox::connect_reject_signal(
-    const RejectSignal::slot_type& slot) const {
+connection
+    TextBox::connect_reject_signal(const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
 }
 
@@ -196,8 +204,7 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(key_event.key() == Qt::Key_Up ||
-        key_event.key() == Qt::Key_Down) {
+    if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
       key_event.ignore();
       return true;
     }
@@ -241,8 +248,8 @@ bool TextBox::is_placeholder_shown() const {
     !m_placeholder_text.isEmpty();
 }
 
-QString TextBox::get_elided_text(const QFontMetrics& font_metrics,
-    const QString& text) const {
+QString TextBox::get_elided_text(
+    const QFontMetrics& font_metrics, const QString& text) const {
   auto option = QStyleOptionFrame();
   option.initFrom(m_line_edit);
   option.rect = m_line_edit->contentsRect();
@@ -330,7 +337,20 @@ void TextBox::commit_style() {
       background: transparent;
       border-width: 0px;
       padding: 0px;)");
-  m_styles.write(stylesheet);
+  m_line_edit_styles.m_styles.write(stylesheet);
+  auto alignment = m_line_edit_styles.m_alignment.value_or(
+    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
+  if(alignment != m_line_edit->alignment()) {
+    m_line_edit->setAlignment(alignment);
+  }
+  auto font = m_line_edit_styles.m_font.value_or(QFont());
+  if(m_line_edit_styles.m_size) {
+    font.setPixelSize(*m_line_edit_styles.m_size);
+  }
+  m_line_edit->setFont(font);
+  if(m_line_edit_styles.m_echo_mode) {
+    m_line_edit->setEchoMode(*m_line_edit_styles.m_echo_mode);
+  }
   if(stylesheet != m_line_edit->styleSheet()) {
     m_line_edit->setStyleSheet(stylesheet);
     m_line_edit->style()->unpolish(this);
@@ -345,7 +365,17 @@ void TextBox::commit_placeholder_style() {
       background: transparent;
       border-width: 0px;
       padding: 0px;)");
-  m_styles.write(stylesheet);
+  m_placeholder_styles.m_styles.write(stylesheet);
+  auto alignment = m_placeholder_styles.m_alignment.value_or(
+    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
+  if(alignment != m_placeholder->alignment()) {
+    m_placeholder->setAlignment(alignment);
+  }
+  auto font = m_placeholder_styles.m_font.value_or(QFont());
+  if(m_placeholder_styles.m_size) {
+    font.setPixelSize(*m_placeholder_styles.m_size);
+  }
+  m_placeholder->setFont(font);
   if(stylesheet != m_placeholder->styleSheet()) {
     m_placeholder->setStyleSheet(stylesheet);
     m_placeholder->style()->unpolish(this);
@@ -381,62 +411,61 @@ void TextBox::on_text_edited(const QString& text) {
 void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
   auto computed_style = stylist.compute_style();
-  m_styles.clear();
-  m_styles.buffer([&] {
+  m_line_edit_styles.clear();
+  m_line_edit_styles.m_styles.buffer([&] {
     for(auto& property : computed_style.get_properties()) {
       property.visit(
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
-            m_styles.set("color", color);
+            m_line_edit_styles.m_styles.set("color", color);
           });
         },
         [&] (const TextAlign& alignment) {
           stylist.evaluate(alignment, [=] (auto alignment) {
-            if(alignment != m_line_edit->alignment()) {
-              m_line_edit->setAlignment(alignment);
-            }
+            m_line_edit_styles.m_alignment = alignment;
           });
         },
         [&] (const Font& font) {
           stylist.evaluate(font, [=] (const auto& font) {
-            if(m_line_edit_font != font) {
-              m_line_edit_font = font;
-              m_line_edit->setFont(font);
-            }
+            m_line_edit_styles.m_font = font;
+          });
+        },
+        [&] (const FontSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_line_edit_styles.m_size = size;
           });
         },
         [&] (const EchoMode& mode) {
           stylist.evaluate(mode, [=] (auto mode) {
-            if(m_line_edit->echoMode() != mode) {
-              m_line_edit->setEchoMode(mode);
-            }
+            m_line_edit_styles.m_echo_mode = mode;
           });
         });
     }
   });
   auto& placeholder_stylist = *find_stylist(*this, Placeholder());
   merge(computed_style, placeholder_stylist.compute_style());
-  m_placeholder_styles.buffer([&] {
+  m_placeholder_styles.clear();
+  m_placeholder_styles.m_styles.buffer([&] {
     for(auto& property : computed_style.get_properties()) {
       property.visit(
         [&] (const TextColor& color) {
           placeholder_stylist.evaluate(color, [=] (auto color) {
-            m_placeholder_styles.set("color", color);
+            m_placeholder_styles.m_styles.set("color", color);
           });
         },
         [&] (const TextAlign& alignment) {
           placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
-            if(alignment != m_placeholder->alignment()) {
-              m_placeholder->setAlignment(alignment);
-            }
+            m_placeholder_styles.m_alignment = alignment;
           });
         },
         [&] (const Font& font) {
           placeholder_stylist.evaluate(font, [=] (auto font) {
-            if(m_placeholder_font != font) {
-              m_placeholder_font = font;
-              m_placeholder->setFont(font);
-            }
+            m_placeholder_styles.m_font = font;
+          });
+        },
+        [&] (const FontSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_size = size;
           });
         });
     }

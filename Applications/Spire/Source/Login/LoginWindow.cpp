@@ -42,7 +42,7 @@ namespace {
 
   auto INPUT_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(border(scale_width(0), QColor::fromRgb(0, 0, 0, 0))).
+      set(border_size(0)).
       set(FontSize(scale_height(14)));
     return style;
   }
@@ -71,17 +71,15 @@ namespace {
   }
 
   auto PASSWORD_INPUT_STYLE(StyleSheet style) {
-    style = INPUT_STYLE(style);
+    style = INPUT_STYLE(std::move(style));
     style.get(Any()).set(EchoMode(QLineEdit::EchoMode::Password));
     return style;
   }
 
   auto STATUS_LABEL_STYLE(StyleSheet style) {
-/* TODO
     style.get(Disabled()).
       set(TextColor(QColor(0xFA, 0xEB, 0x96))).
-      set(TextAlign(Qt::AlignCenter));
-*/
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     return style;
   }
 }
@@ -101,14 +99,12 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_close_button = make_icon_button(imageFromSvg(":/Icons/close.svg",
-    BUTTON_SIZE()), this);
+  m_close_button =
+    make_icon_button(imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()), this);
   set_style(*m_close_button, CLOSE_BUTTON_STYLE());
   m_close_button->setFixedSize(BUTTON_SIZE());
   m_close_button->setFocusPolicy(Qt::NoFocus);
-  m_close_button->connect_clicked_signal([=] {
-    window()->close();
-  });
+  m_close_button->connect_clicked_signal([=] { window()->close(); });
   layout->addWidget(m_close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
   m_logo_widget = new QLabel(parent);
@@ -132,8 +128,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
       m_sign_in_button->setDisabled(current.isEmpty());
     });
   m_username_text_box->set_placeholder(tr("Username"));
-  set_style(*m_username_text_box,
-    INPUT_STYLE(get_style(*m_username_text_box)));
+  set_style(*m_username_text_box, INPUT_STYLE(get_style(*m_username_text_box)));
   layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(15));
   auto password_layout = new QHBoxLayout();
@@ -150,16 +145,16 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   password_layout->addWidget(m_password_text_box);
   m_chroma_hash_widget = new ChromaHashWidget(this);
   m_chroma_hash_widget->setFixedSize(scale(34, 30));
-  m_chroma_hash_widget->setContentsMargins({scale_width(2), scale_height(2),
-    scale_width(2), scale_height(2)});
+  m_chroma_hash_widget->setContentsMargins(
+    {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
   password_layout->addWidget(m_chroma_hash_widget);
   layout->addLayout(password_layout);
   layout->addSpacing(scale_height(30));
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
   button_layout->setSpacing(0);
-  auto build_label = new TextBox(QString(tr("Build ")) +
-    QString::fromStdString(version), this);
+  auto build_label =
+    new TextBox(QString(tr("Build ")) + QString::fromStdString(version), this);
   build_label->set_read_only(true);
   build_label->setDisabled(true);
   set_style(*build_label, BUILD_LABEL_STYLE(get_style(*build_label)));
@@ -180,8 +175,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
 
 LoginWindow::~LoginWindow() = default;
 
-void LoginWindow::set_state(State s) {
-  switch(s) {
+void LoginWindow::set_state(State state) {
+  switch(state) {
     case State::NONE: {
       reset_all();
       break;
@@ -197,7 +192,7 @@ void LoginWindow::set_state(State s) {
     }
     case State::CANCELLING: {
       reset_all();
-      s = State::NONE;
+      state = State::NONE;
       break;
     }
     case State::INCORRECT_CREDENTIALS: {
@@ -212,7 +207,7 @@ void LoginWindow::set_state(State s) {
       break;
     }
   }
-  m_state = s;
+  m_state = state;
 }
 
 connection LoginWindow::connect_login_signal(

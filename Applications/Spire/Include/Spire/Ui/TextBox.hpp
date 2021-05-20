@@ -119,6 +119,15 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      struct StyleProperties {
+        Styles::StyleSheetMap m_styles;
+        boost::optional<Qt::Alignment> m_alignment;
+        boost::optional<QFont> m_font;
+        boost::optional<int> m_size;
+        boost::optional<QLineEdit::EchoMode> m_echo_mode;
+
+        void clear();
+      };
       struct TextValidator;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
@@ -126,20 +135,18 @@ namespace Styles {
       Box* m_box;
       LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
-      QFont m_line_edit_font;
+      StyleProperties m_line_edit_styles;
       QLabel* m_placeholder;
-      QFont m_placeholder_font;
+      StyleProperties m_placeholder_styles;
       bool m_is_warning_displayed;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
       TextValidator* m_text_validator;
-      Styles::StyleSheetMap m_styles;
-      Styles::StyleSheetMap m_placeholder_styles;
 
       bool is_placeholder_shown() const;
-      QString get_elided_text(const QFontMetrics& font_metrics,
-        const QString& text) const;
+      QString get_elided_text(
+        const QFontMetrics& font_metrics, const QString& text) const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
