@@ -303,6 +303,9 @@ void Stylist::apply_style() {
         m_visibility = visibility;
       }
     });
+  } else if(m_visibility != VisibilityOption::VISIBLE) {
+    m_widget->show();
+    m_visibility = VisibilityOption::VISIBLE;
   }
 }
 

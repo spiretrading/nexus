@@ -128,7 +128,7 @@ void Box::resizeEvent(QResizeEvent* event) {
 
 void Box::commit_style() {
   auto stylesheet = QString(
-    R"(#Box {"
+    R"(#Box {
         border-style: solid;)");
   m_styles.write(stylesheet);
   if(stylesheet != styleSheet()) {
