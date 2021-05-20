@@ -31,6 +31,7 @@ namespace Spire::Styles {
   class SiblingSelector;
   template<typename T, typename G> class StateSelector;
   class StyleSheet;
+  class StyleSheetMap;
   class Stylist;
 }
 

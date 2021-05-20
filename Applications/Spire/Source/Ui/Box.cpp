@@ -57,7 +57,7 @@ Padding Spire::Styles::padding(int size) {
 Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_is_buffering_style(false) {
+      m_styles([=] { commit_style(); }) {
   setObjectName("Box");
   if(m_body) {
     m_container = new QWidget(this);
@@ -74,193 +74,167 @@ Box::Box(QWidget* body, QWidget* parent)
 
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
-    auto& stylist = find_stylist(*this);
-    auto computed_style = stylist.compute_style();
     m_body_geometry = QRect(0, 0, width(), height());
-    for(auto& property : computed_style.get_properties()) {
-      property.visit(
-        [&] (const BorderTopSize& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["border-top-width"] = QString::number(size) + "px";
-            m_body_geometry.setTop(m_body_geometry.top() + size);
+    m_styles.buffer([&] {
+      auto& stylist = find_stylist(*this);
+      auto properties = stylist.compute_style().get_properties();
+      for(auto& property : properties) {
+        property.visit(
+          [&] (const BorderTopSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setTop(m_body_geometry.top() + size);
+            });
+          },
+          [&] (const BorderRightSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setRight(m_body_geometry.right() - size);
+            });
+          },
+          [&] (const BorderBottomSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+            });
+          },
+          [&] (const BorderLeftSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setLeft(m_body_geometry.left() + size);
+            });
+          },
+          [&] (const PaddingTop& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setTop(m_body_geometry.top() + size);
+            });
+          },
+          [&] (const PaddingRight& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setRight(m_body_geometry.right() - size);
+            });
+          },
+          [&] (const PaddingBottom& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+            });
+          },
+          [&] (const PaddingLeft& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_body_geometry.setLeft(m_body_geometry.left() + size);
+            });
           });
-        },
-        [&] (const BorderRightSize& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["border-right-width"] = QString::number(size) + "px";
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          });
-        },
-        [&] (const BorderBottomSize& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["border-bottom-width"] = QString::number(size) + "px";
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          });
-        },
-        [&] (const BorderLeftSize& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["border-left-width"] = QString::number(size) + "px";
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          });
-        },
-        [&] (const PaddingTop& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["padding-top"] = QString::number(size) + "px";
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          });
-        },
-        [&] (const PaddingRight& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["padding-right"] = QString::number(size) + "px";
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          });
-        },
-        [&] (const PaddingBottom& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["padding-bottom"] = QString::number(size) + "px";
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          });
-        },
-        [&] (const PaddingLeft& size) {
-          stylist.evaluate(size, [=] (int size) {
-            m_styles["padding-left"] = QString::number(size) + "px";
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          });
-        });
-    }
-    m_container->setGeometry(m_body_geometry);
+      }
+    });
   }
   QWidget::resizeEvent(event);
 }
 
 void Box::commit_style() {
-  if(m_is_buffering_style) {
-    return;
-  }
-  auto stylesheet = QString("#Box {");
-  stylesheet += "border-style: solid;";
-  for(auto& style : m_styles) {
-    stylesheet += style.first + ": " + style.second + ";";
-  }
-  stylesheet += "}";
-  if(stylesheet != this->styleSheet()) {
+  auto stylesheet = QString(
+    R"(#Box {"
+        border-style: solid;)");
+  m_styles.write(stylesheet);
+  if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
     style()->unpolish(this);
     style()->polish(this);
-    if(m_body) {
-      m_container->setGeometry(m_body_geometry);
-    }
+  }
+  if(m_body) {
+    m_container->setGeometry(m_body_geometry);
   }
 }
 
 void Box::on_style() {
-  auto& stylist = find_stylist(*this);
-  auto computed_style = stylist.compute_style();
   m_body_geometry = QRect(0, 0, width(), height());
   m_styles.clear();
-  m_is_buffering_style = true;
-  for(auto& property : computed_style.get_properties()) {
-    property.visit(
-      [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=] (QColor color) {
-          m_styles["background-color"] = color.name(QColor::HexArgb);
-          commit_style();
-        });
-      },
-      [&] (const BorderTopSize& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["border-top-width"] = QString::number(size) + "px";
-          m_body_geometry.setTop(m_body_geometry.top() + size);
-          commit_style();
-        });
-      },
-      [&] (const BorderRightSize& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["border-right-width"] = QString::number(size) + "px";
-          m_body_geometry.setRight(m_body_geometry.right() - size);
-          commit_style();
-        });
-      },
-      [&] (const BorderBottomSize& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["border-bottom-width"] = QString::number(size) + "px";
-          m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          commit_style();
-        });
-      },
-      [&] (const BorderLeftSize& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["border-left-width"] = QString::number(size) + "px";
-          m_body_geometry.setLeft(m_body_geometry.left() + size);
-          commit_style();
-        });
-      },
-      [&] (const BorderTopColor& color) {
-        stylist.evaluate(color, [=] (QColor color) {
-          m_styles["border-top-color"] = color.name(QColor::HexArgb);
-          commit_style();
-        });
-      },
-      [&] (const BorderRightColor& color) {
-        stylist.evaluate(color, [=] (QColor color) {
-          m_styles["border-right-color"] = color.name(QColor::HexArgb);
-          commit_style();
-        });
-      },
-      [&] (const BorderBottomColor& color) {
-        stylist.evaluate(color, [=] (QColor color) {
-          m_styles["border-bottom-color"] = color.name(QColor::HexArgb);
-          commit_style();
-        });
-      },
-      [&] (const BorderLeftColor& color) {
-        stylist.evaluate(color, [=] (QColor color) {
-          m_styles["border-left-color"] = color.name(QColor::HexArgb);
-          commit_style();
-        });
-      },
-      [&] (const PaddingTop& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["padding-top"] = QString::number(size) + "px";
-          m_body_geometry.setTop(m_body_geometry.top() + size);
-          commit_style();
-        });
-      },
-      [&] (const PaddingRight& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["padding-right"] = QString::number(size) + "px";
-          m_body_geometry.setRight(m_body_geometry.right() - size);
-          commit_style();
-        });
-      },
-      [&] (const PaddingBottom& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["padding-bottom"] = QString::number(size) + "px";
-          m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          commit_style();
-        });
-      },
-      [&] (const PaddingLeft& size) {
-        stylist.evaluate(size, [=] (int size) {
-          m_styles["padding-left"] = QString::number(size) + "px";
-          m_body_geometry.setLeft(m_body_geometry.left() + size);
-          commit_style();
-        });
-      },
-      [&] (BodyAlign alignment) {
-        stylist.evaluate(alignment, [=] (Qt::Alignment alignment) {
-          if(m_body) {
-            auto current_alignment = m_container->layout()->alignment();
-            if(current_alignment != alignment) {
-              m_container->layout()->setAlignment(alignment);
-              m_container->layout()->update();
+  m_styles.buffer([&] {
+    auto& stylist = find_stylist(*this);
+    auto properties = stylist.compute_style().get_properties();
+    for(auto& property : properties) {
+      property.visit(
+        [&] (const BackgroundColor& color) {
+          stylist.evaluate(color, [=] (auto color) {
+            m_styles.set("background-color", color);
+          });
+        },
+        [&] (const BorderTopSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("border-top-width", size);
+            m_body_geometry.setTop(m_body_geometry.top() + size);
+          });
+        },
+        [&] (const BorderRightSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("border-right-width", size);
+            m_body_geometry.setRight(m_body_geometry.right() - size);
+          });
+        },
+        [&] (const BorderBottomSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("border-bottom-width", size);
+            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+          });
+        },
+        [&] (const BorderLeftSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("border-left-width", size);
+            m_body_geometry.setLeft(m_body_geometry.left() + size);
+          });
+        },
+        [&] (const BorderTopColor& color) {
+          stylist.evaluate(color, [=] (auto color) {
+            m_styles.set("border-top-color", color);
+          });
+        },
+        [&] (const BorderRightColor& color) {
+          stylist.evaluate(color, [=] (auto color) {
+            m_styles.set("border-right-color", color);
+          });
+        },
+        [&] (const BorderBottomColor& color) {
+          stylist.evaluate(color, [=] (auto color) {
+            m_styles.set("border-bottom-color", color);
+          });
+        },
+        [&] (const BorderLeftColor& color) {
+          stylist.evaluate(color, [=] (auto color) {
+            m_styles.set("border-left-color", color);
+          });
+        },
+        [&] (const PaddingTop& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("padding-top", size);
+            m_body_geometry.setTop(m_body_geometry.top() + size);
+          });
+        },
+        [&] (const PaddingRight& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("padding-right", size);
+            m_body_geometry.setRight(m_body_geometry.right() - size);
+          });
+        },
+        [&] (const PaddingBottom& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("padding-bottom", size);
+            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+          });
+        },
+        [&] (const PaddingLeft& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_styles.set("padding-left", size);
+            m_body_geometry.setLeft(m_body_geometry.left() + size);
+          });
+        },
+        [&] (BodyAlign alignment) {
+          stylist.evaluate(alignment, [=] (auto alignment) {
+            if(m_body) {
+              auto current_alignment = m_container->layout()->alignment();
+              if(current_alignment != alignment) {
+                m_container->layout()->setAlignment(alignment);
+                m_container->layout()->update();
+              }
             }
-          }
+          });
         });
-      });
-  }
-  m_is_buffering_style = false;
-  commit_style();
+    }
+  });
 }
 
 void Spire::display_warning_indicator(QWidget& widget) {

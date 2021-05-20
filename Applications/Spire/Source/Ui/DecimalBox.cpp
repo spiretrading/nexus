@@ -485,13 +485,16 @@ void DecimalBox::on_reject(const QString& value) {
 }
 
 void DecimalBox::on_style() {
-  auto style = compute_style(*this);
-  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
-    m_adaptor_model->set_leading_zeros(
-      leading_zeros->get_expression().as<int>());
+  auto& stylist = find_stylist(*this);
+  auto computed_style = stylist.compute_style();
+  if(auto leading_zeros = Styles::find<LeadingZeros>(computed_style)) {
+    stylist.evaluate(*leading_zeros, [=] (auto leading_zeros) {
+      m_adaptor_model->set_leading_zeros(leading_zeros);
+    });
   }
-  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
-    m_adaptor_model->set_trailing_zeros(
-      trailing_zeros->get_expression().as<int>());
+  if(auto trailing_zeros = Styles::find<TrailingZeros>(computed_style)) {
+    stylist.evaluate(*trailing_zeros, [=] (auto trailing_zeros) {
+      m_adaptor_model->set_trailing_zeros(trailing_zeros);
+    });
   }
 }

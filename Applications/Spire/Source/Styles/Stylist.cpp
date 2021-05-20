@@ -284,27 +284,25 @@ void Stylist::apply_style() {
     return;
   }
   auto style = compute_style();
-  auto visibility_option = [&] {
-    if(auto visibility = Spire::Styles::find<Visibility>(style)) {
-      return visibility->get_expression().as<VisibilityOption>();
-    }
-    return VisibilityOption::VISIBLE;
-  }();
-  if(visibility_option != m_visibility) {
-    if(visibility_option == VisibilityOption::VISIBLE) {
-      m_widget->show();
-    } else if(visibility_option == VisibilityOption::NONE) {
-      auto size = m_widget->sizePolicy();
-      size.setRetainSizeWhenHidden(false);
-      m_widget->setSizePolicy(size);
-      m_widget->hide();
-    } else if(visibility_option == VisibilityOption::INVISIBLE) {
-      auto size = m_widget->sizePolicy();
-      size.setRetainSizeWhenHidden(true);
-      m_widget->setSizePolicy(size);
-      m_widget->hide();
-    }
-    m_visibility = visibility_option;
+  if(auto visibility = Spire::Styles::find<Visibility>(style)) {
+    evaluate(*visibility, [=] (auto visibility) {
+      if(visibility != m_visibility) {
+        if(visibility == VisibilityOption::VISIBLE) {
+          m_widget->show();
+        } else if(visibility == VisibilityOption::NONE) {
+          auto size = m_widget->sizePolicy();
+          size.setRetainSizeWhenHidden(false);
+          m_widget->setSizePolicy(size);
+          m_widget->hide();
+        } else if(visibility == VisibilityOption::INVISIBLE) {
+          auto size = m_widget->sizePolicy();
+          size.setRetainSizeWhenHidden(true);
+          m_widget->setSizePolicy(size);
+          m_widget->hide();
+        }
+        m_visibility = visibility;
+      }
+    });
   }
 }
 

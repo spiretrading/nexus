@@ -3,6 +3,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -18,10 +19,12 @@ namespace {
 
 Icon::Icon(QImage icon, QWidget* parent)
     : QWidget(parent),
-      m_icon(std::move(icon)) {
+      m_icon(std::move(icon)),
+      m_background_color(QColor::fromRgb(0xF5, 0xF5, 0xF5)),
+      m_fill(QColor::fromRgb(0x75, 0x5E, 0xEC)) {
   setAttribute(Qt::WA_Hover);
   set_style(*this, DEFAULT_STYLE());
-  connect_style_signal(*this, [=] { update(); });
+  connect_style_signal(*this, [=] { on_style(); });
 }
 
 QSize Icon::sizeHint() const {
@@ -31,27 +34,44 @@ QSize Icon::sizeHint() const {
 
 void Icon::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  auto computed_style = compute_style(*this);
-  auto background_color = [&] {
-    if(auto background_color = Styles::find<BackgroundColor>(computed_style)) {
-      return background_color->get_expression().as<QColor>();
-    }
-    return QColor::fromRgb(0xF5, 0xF5, 0xF5);
-  }();
-  painter.fillRect(rect(), background_color);
+  painter.fillRect(rect(), m_background_color);
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
   image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-  auto fill = [&] {
-    if(auto fill = Styles::find<Fill>(computed_style)) {
-      return fill->get_expression().as<QColor>();
-    }
-    return QColor::fromRgb(0x75, 0x5E, 0xEC);
-  }();
-  image_painter.fillRect(icon.rect(), fill);
+  image_painter.fillRect(icon.rect(), m_fill);
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
-  if(auto border_color = Styles::find<BorderTopColor>(computed_style)) {
-    draw_border(rect(), border_color->get_expression().as<QColor>(), &painter);
+  if(m_border_color) {
+    draw_border(rect(), *m_border_color, &painter);
   }
+}
+
+void Icon::on_style() {
+  auto& stylist = find_stylist(*this);
+  auto computed_style = stylist.compute_style();
+  m_background_color = QColor::fromRgb(0xF5, 0xF5, 0xF5);
+  m_fill = QColor::fromRgb(0x75, 0x5E, 0xEC);
+  m_border_color = none;
+  for(auto& property : computed_style.get_properties()) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_background_color = color;
+          update();
+        });
+      },
+      [&] (const Fill& fill) {
+        stylist.evaluate(fill, [=] (auto color) {
+          m_fill = color;
+          update();
+        });
+      },
+      [&] (const BorderTopColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_border_color = color;
+          update();
+        });
+      });
+  }
+  update();
 }

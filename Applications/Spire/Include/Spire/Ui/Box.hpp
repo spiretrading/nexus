@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
+#include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -125,8 +126,7 @@ namespace Styles {
       QWidget* m_container;
       QWidget* m_body;
       QRect m_body_geometry;
-      std::unordered_map<QString, QString> m_styles;
-      bool m_is_buffering_style;
+      Styles::StyleSheetMap m_styles;
 
       void commit_style();
       void on_style();

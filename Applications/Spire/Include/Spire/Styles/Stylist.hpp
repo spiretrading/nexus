@@ -125,16 +125,6 @@ namespace Spire::Styles {
         const StyleSignal::slot_type& slot) const;
 
     private:
-      template<typename T>
-      struct TypeExtractor {};
-      template<typename T>
-      struct TypeExtractor<Beam::TypeSequence<T>> {
-        using type = std::decay_t<T>;
-      };
-      template<typename T, typename U>
-      struct TypeExtractor<Beam::TypeSequence<T, U>> {
-        using type = std::decay_t<U>;
-      };
       struct StyleEventFilter;
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
@@ -245,8 +235,6 @@ namespace Spire::Styles {
 
   template<typename Property, typename F>
   void Stylist::evaluate(const Property& property, F&& receiver) {
-    using Parameter = std::decay_t<typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type>;
     auto evaluator = make_evaluator(property.get_expression(), *this);
     std::forward<F>(receiver)(evaluator(boost::posix_time::seconds(0)).m_value);
   }

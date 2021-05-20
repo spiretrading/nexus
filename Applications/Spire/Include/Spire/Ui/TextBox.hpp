@@ -2,6 +2,7 @@
 #define SPIRE_TEXT_BOX_HPP
 #include <QLabel>
 #include <QLineEdit>
+#include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -11,6 +12,9 @@ namespace Styles {
 
   /** Sets the element's font. */
   using Font = BasicProperty<QFont, struct FontTag>;
+
+  /** Sets the element's font size. */
+  using FontSize = BasicProperty<int, struct FontSizeTag>;
 
   /** Sets the color of the text. */
   using TextColor = BasicProperty<QColor, struct TextColorTag>;
@@ -37,7 +41,7 @@ namespace Styles {
   /** The type of model used by the TextBox. */
   using TextModel = ValueModel<QString>;
 
-  //! Displays a one-line text box.
+  /** Displays a one-line text box. */
   class TextBox : public QWidget {
     public:
 
@@ -53,53 +57,55 @@ namespace Styles {
        */
       using RejectSignal = Signal<void (const QString& value)>;
 
-      //! Constructs a TextBox using a LocalTextModel.
-      /*!
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a TextBox using a LocalTextModel.
+       * @param parent The parent widget.
+       */
       explicit TextBox(QWidget* parent = nullptr);
 
-      //! Constructs a TextBox using a LocalTextModel and initial current value.
-      /*!
-        \param current The initial current value.
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a TextBox using a LocalTextModel and initial current value.
+       * @param current The initial current value.
+       * @param parent The parent widget.
+       */
       explicit TextBox(QString current, QWidget* parent = nullptr);
 
-      //! Constructs a TextBox.
-      /*!
-        \param model The current value's model.
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a TextBox.
+       * @param model The current value's model.
+       * @param parent The parent widget.
+       */
       explicit TextBox(std::shared_ptr<TextModel> model,
         QWidget* parent = nullptr);
 
-      //! Returns the model.
+      /** Returns the model. */
       const std::shared_ptr<TextModel>& get_model() const;
 
-      //! Returns the last submitted value.
+      /** Returns the last submitted value. */
       const QString& get_submission() const;
 
-      //! Sets the placeholder value.
+      /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
 
-      //! Returns <code>true</code> iff this box is read-only.
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
-      //! Sets whether the box is read-only.
+      /** Sets whether the box is read-only. */
       void set_read_only(bool read_only);
 
-      //! Returns whether a warning is displayed when a submission is rejected.
+      /**
+       * Returns whether a warning is displayed when a submission is rejected.
+       */
       bool is_warning_displayed() const;
 
-      //! Sets whether a warning is displayed when a submission is rejected.
+      /** Sets whether a warning is displayed when a submission is rejected. */
       void set_warning_displayed(bool is_displayed);
 
-      //! Connects a slot to the SubmitSignal.
+      /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-      //! Connects a slot to the RejectedSignal.
+      /** Connects a slot to the RejectedSignal. */
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
@@ -128,6 +134,8 @@ namespace Styles {
       QString m_submission;
       QString m_placeholder_text;
       TextValidator* m_text_validator;
+      Styles::StyleSheetMap m_styles;
+      Styles::StyleSheetMap m_placeholder_styles;
 
       bool is_placeholder_shown() const;
       QString get_elided_text(const QFontMetrics& font_metrics,
@@ -135,6 +143,8 @@ namespace Styles {
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
+      void commit_style();
+      void commit_placeholder_style();
       void on_current(const QString& current);
       void on_editing_finished();
       void on_text_edited(const QString& text);

@@ -41,14 +41,9 @@ namespace {
   }
 
   auto INPUT_STYLE(StyleSheet style) {
-    style.get(Any()).set(border(scale_width(0), QColor::fromRgb(0, 0, 0, 0)));
-    auto font_style = find<TextStyle>(style.find(Any())->get_block());
-    if(font_style) {
-      auto font = font_style->get<Font>().get_expression().as<QFont>();
-      font.setPixelSize(scale_height(14));
-      style.get(Any()).set(text_style(font,
-        font_style->get<TextColor>().get_expression().as<QColor>()));
-    }
+    style.get(Any()).
+      set(border(scale_width(0), QColor::fromRgb(0, 0, 0, 0))).
+      set(FontSize(scale_height(14)));
     return style;
   }
 
