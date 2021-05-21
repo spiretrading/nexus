@@ -2,7 +2,6 @@
 #define SPIRE_STYLES_EXPRESSION_HPP
 #include <any>
 #include <functional>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 #include "Spire/Styles/ConstantExpression.hpp"
@@ -20,6 +19,19 @@ namespace Spire::Styles {
 
   template<typename T>
   constexpr auto is_expression_v = is_expression_t<T>::value;
+
+  template<typename T>
+  struct expression_type {
+    using type = T;
+  };
+
+  template<typename T>
+  struct expression_type<Expression<T>> {
+    using type = typename Expression<T>::Type;
+  };
+
+  template<typename T>
+  using expression_type_t = typename expression_type<std::decay_t<T>>::type;
 
   /**
    * Represents an expression performed on a style.
@@ -73,39 +85,6 @@ namespace Spire::Styles {
     return expression.make_evaluator(stylist);
   }
 
-  /**
-   * Provides a helper template class for a generic expression definition.
-   * @param <I> A unique struct ID/tag used to differentiate definitions.
-   * @param <T> The type the expression evaluates to.
-   * @param <A> The type of the expression's arguments.
-   */
-  template<typename I, typename T, typename... A>
-  class ExpressionDefinition {
-    public:
-
-      /** The type the expression evaluates to. */
-      using Type = T;
-
-      /** The tuple of arguments. */
-      using Arguments = std::tuple<Expression<A>...>;
-
-      /**
-       * Constructs an ExpressionDefinition.
-       * @param arguments The arguments used to evaluate the expression.
-       */
-      explicit ExpressionDefinition(Expression<A>... arguments);
-
-      /** Returns the tuple of arguments. */
-      const Arguments& get_arguments() const;
-
-      bool operator ==(const ExpressionDefinition& expression) const;
-
-      bool operator !=(const ExpressionDefinition& expression) const;
-
-    private:
-      Arguments m_arguments;
-  };
-
   template<typename T>
   Expression<T>::Expression(Type value)
     : Expression(ConstantExpression(std::move(value))) {}
@@ -143,29 +122,6 @@ namespace Spire::Styles {
   Evaluator<typename Expression<T>::Type>
       Expression<T>::make_evaluator(const Stylist& stylist) const {
     return m_make_evaluator(*this, stylist);
-  }
-
-  template<typename I, typename T, typename... A>
-  ExpressionDefinition<I, T, A...>::ExpressionDefinition(
-    Expression<A>... arguments)
-    : m_arguments(std::move(arguments)...) {}
-
-  template<typename I, typename T, typename... A>
-  const typename ExpressionDefinition<I, T, A...>::Arguments&
-      ExpressionDefinition<I, T, A...>::get_arguments() const {
-    return m_arguments;
-  }
-
-  template<typename I, typename T, typename... A>
-  bool ExpressionDefinition<I, T, A...>::operator ==(
-      const ExpressionDefinition& expression) const {
-    return m_arguments == expression.m_arguments;
-  }
-
-  template<typename I, typename T, typename... A>
-  bool ExpressionDefinition<I, T, A...>::operator !=(
-      const ExpressionDefinition& expression) const {
-    return !(*this == expression);
   }
 }
 

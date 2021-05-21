@@ -12,6 +12,17 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  QTimer& get_animation_timer() {
+    static auto timer = [] {
+      const auto INTERVAL = 1000 / 30;
+      auto timer = std::make_unique<QTimer>();
+      timer->setInterval(INTERVAL);
+      timer->start();
+      return timer;
+    }();
+    return *timer;
+  }
+
   std::unordered_map<std::pair<QWidget*, PseudoElement>, Stylist*,
     boost::hash<std::pair<QWidget*, PseudoElement>>> pseudo_stylists;
 

@@ -16,6 +16,8 @@ namespace Spire::Styles {
   template<typename T> struct Evaluation;
   template<typename T> class Expression;
   class FlipSelector;
+  template<typename I, typename T, typename... A>
+    class FunctionDefinitionExpression;
   class IsASelector;
   class NotSelector;
   class OrSelector;
