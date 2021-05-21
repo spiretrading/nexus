@@ -18,6 +18,9 @@ namespace Details {
   class ModelTransactionLog {
     public:
 
+      /** The type of the model. */
+      using Type = typename T;
+
       /** Constructs an empty log. */
       ModelTransactionLog();
 
@@ -25,7 +28,7 @@ namespace Details {
        * Pushes an operation to a model transaction.
        * @param operation The operation to push.
        */
-      void push(typename T::Operation&& operation);
+      void push(typename Type::Operation&& operation);
 
       /**
        * Takes a callable function and invokes it. All operations performed on
@@ -43,11 +46,11 @@ namespace Details {
        * Connects a slot to a signal indicating the completion of a transaction.
        */
       boost::signals2::connection connect_operation_signal(
-        const typename T::OperationSignal::slot_type& slot) const;
+        const typename Type::OperationSignal::slot_type& slot) const;
 
     private:
-      mutable typename T::OperationSignal m_operation_signal;
-      typename T::Transaction m_transaction;
+      mutable typename Type::OperationSignal m_operation_signal;
+      typename Type::Transaction m_transaction;
       int m_level;
 
       ModelTransactionLog(const ModelTransactionLog&) = delete;

@@ -39,7 +39,7 @@ TEST_SUITE("ArrayListModel") {
     connection = model.connect_operation_signal(
       [&] (const ListModel::Operation& operation) {
         ++signal_count;
-        visit<ListModel>(operation,
+        visit(operation,
           [&] (const ListModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == model.get_size() - 1);
           },
@@ -82,7 +82,7 @@ TEST_SUITE("ArrayListModel") {
     connection = model.connect_operation_signal(
       [&] (const ListModel::Operation& operation) {
         ++signal_count;
-        visit<ListModel>(operation,
+        visit(operation,
           [&] (const ListModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == model.get_size() - 1);
           },
@@ -177,7 +177,7 @@ TEST_SUITE("ArrayListModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
         ++signal_count;
-        visit<ListModel>(operation,
+        visit(operation,
           [&] (const ListModel::AddOperation& add_operation) {
             REQUIRE(add_operation.m_index == model.get_size() - 1);
           },
