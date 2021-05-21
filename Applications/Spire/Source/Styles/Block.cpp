@@ -31,6 +31,14 @@ void Block::remove(const Property& property) {
   }
 }
 
+bool Block::operator ==(const Block& block) const {
+  return m_properties == block.m_properties;
+}
+
+bool Block::operator !=(const Block& block) const {
+  return !(*this == block);
+}
+
 void Spire::Styles::merge(Block& block, Block other) {
   for(auto& property : std::move(other).get_properties()) {
     block.set(std::move(property));
