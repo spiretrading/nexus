@@ -68,6 +68,6 @@ QValidator::State ArrayListModel::set(int index, const std::any& value) {
 }
 
 connection ArrayListModel::connect_operation_signal(
-    const typename OperationSignal::slot_type& slot) const {
+    const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
 }

@@ -19,7 +19,7 @@ namespace Details {
     public:
 
       /** The type of the model. */
-      using Type = typename T;
+      using Type = T;
 
       /** Constructs an empty log. */
       ModelTransactionLog();

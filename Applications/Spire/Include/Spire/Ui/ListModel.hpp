@@ -162,7 +162,7 @@ namespace Details {
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const = 0;
+        const OperationSignal::slot_type& slot) const = 0;
 
     protected:
 
