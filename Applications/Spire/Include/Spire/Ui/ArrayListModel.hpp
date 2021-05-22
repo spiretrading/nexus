@@ -1,7 +1,7 @@
 #ifndef SPIRE_ARRAY_LIST_MODEL_HPP
 #define SPIRE_ARRAY_LIST_MODEL_HPP
 #include "Spire/Ui/ListModel.hpp"
-#include "Spire/Ui/ModelTransactionLog.hpp"
+#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -68,7 +68,7 @@ namespace Spire {
 
     private:
       std::vector<std::any> m_data;
-      ModelTransactionLog<ListModel> m_transaction;
+      ListModelTransactionLog m_transaction;
   };
 
   template<typename F>
