@@ -343,6 +343,7 @@ connection Stylist::connect_enable_signal(
 void Stylist::connect_animation() {
   m_animation_connection.emplace(QObject::connect(
     &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); }));
+  m_last_frame = std::chrono::steady_clock::now();
 }
 
 void Stylist::clear_animations() {
@@ -360,8 +361,11 @@ void Stylist::on_enable() {
 
 void Stylist::on_animation() {
   for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
+    auto delta = time_duration(
+      microseconds(std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - m_last_frame).count()));
     auto& evaluator = *i->second;
-    evaluator.m_next_frame -= FRAME_DURATION;
+    evaluator.m_next_frame -= delta;
     if(evaluator.m_next_frame <= seconds(0)) {
       evaluator.animate();
       if(evaluator.m_next_frame == pos_infin) {
@@ -371,13 +375,14 @@ void Stylist::on_animation() {
           get_animation_timer().disconnect(*m_animation_connection);
         }
       } else {
-        evaluator.m_elapsed += std::max(FRAME_DURATION, evaluator.m_next_frame);
+        evaluator.m_elapsed += std::max(delta, evaluator.m_next_frame);
         ++i;
       }
     } else {
       ++i;
     }
   }
+  m_last_frame = std::chrono::steady_clock::now();
 }
 
 const Stylist& Spire::Styles::find_stylist(const QWidget& widget) {

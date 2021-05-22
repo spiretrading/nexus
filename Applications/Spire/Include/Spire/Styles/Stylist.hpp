@@ -1,11 +1,12 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
-#include <QWidget>
+#include <chrono>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
+#include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
@@ -175,6 +176,7 @@ namespace Spire::Styles {
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       int m_animation_count;
+      std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
       boost::optional<QMetaObject::Connection> m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
