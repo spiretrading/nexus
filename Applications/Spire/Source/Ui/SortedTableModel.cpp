@@ -145,7 +145,7 @@ int SortedTableModel::find_sorted_index(int row) const {
 
 void SortedTableModel::on_operation(const Operation& operation) {
   m_transaction.transact([&] {
-    visit<TableModel>(operation,
+    visit(operation,
       [&] (const AddOperation& operation) {
         auto index = find_sorted_index(operation.m_index);
         m_translation->move(operation.m_index, index);

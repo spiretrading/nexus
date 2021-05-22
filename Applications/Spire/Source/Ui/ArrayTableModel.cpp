@@ -82,6 +82,6 @@ QValidator::State ArrayTableModel::set(int row, int column,
 }
 
 connection ArrayTableModel::connect_operation_signal(
-    const typename OperationSignal::slot_type& slot) const {
+    const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
 }

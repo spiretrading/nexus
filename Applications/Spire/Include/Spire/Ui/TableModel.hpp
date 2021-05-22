@@ -116,6 +116,11 @@ namespace Spire {
   const T& TableModel::get(int row, int column) const {
     return std::any_cast<const T&>(at(row, column));
   }
+
+  template<typename... F>
+  void visit(const TableModel::Operation& operation, F&&... f) {
+    return Details::visit<TableModel>(operation, std::forward<F>(f)...);
+  }
 }
 
 #endif

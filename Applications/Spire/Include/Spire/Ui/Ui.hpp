@@ -70,7 +70,6 @@ namespace Spire {
   class SortedTableModel;
   class TabWidget;
   class TableModel;
-  class TableModelTransactionLog;
   class TextBox;
   class TimeBox;
   class TitleBar;

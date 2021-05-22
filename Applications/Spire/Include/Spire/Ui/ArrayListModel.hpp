@@ -64,7 +64,7 @@ namespace Spire {
       QValidator::State set(int index, const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
+        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::vector<std::any> m_data;

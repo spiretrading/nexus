@@ -1,7 +1,7 @@
 #ifndef SPIRE_ARRAY_TABLE_MODEL_HPP
 #define SPIRE_ARRAY_TABLE_MODEL_HPP
-#include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
+#include "Spire/Ui/TableModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -71,11 +71,11 @@ namespace Spire {
         const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
+        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::vector<std::vector<std::any>> m_data;
-      ModelTransactionLog<TableModel> m_transaction;
+      TableModelTransactionLog m_transaction;
   };
 
   template<typename F>

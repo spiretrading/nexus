@@ -1,8 +1,8 @@
 #ifndef SPIRE_TRANSLATED_TABLE_MODEL_HPP
 #define SPIRE_TRANSLATED_TABLE_MODEL_HPP
 #include <boost/signals2/connection.hpp>
-#include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
+#include "Spire/Ui/TableModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -48,13 +48,13 @@ namespace Spire {
         int row, int column, const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
+        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       std::vector<int> m_translation;
       std::vector<int> m_reverse_translation;
-      ModelTransactionLog<TableModel> m_transaction;
+      TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       void translate(int direction, int row);

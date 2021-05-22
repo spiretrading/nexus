@@ -23,6 +23,57 @@ namespace Details {
   struct ModelTransaction {
     std::vector<O> m_operations;
   };
+
+  /**
+   * Applies a callable to an Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
+   */
+  template<typename M, typename F>
+  void visit(const typename M::Operation& operation, F&& f) {
+    static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
+      std::is_invocable_v<F, const typename M::RemoveOperation&> ||
+      std::is_invocable_v<F, const typename M::MoveOperation&> ||
+      std::is_invocable_v<F, const typename M::UpdateOperation&>);
+    if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
+      for(auto& transaction_operation : transaction->m_operations) {
+        visit<M>(transaction_operation, std::forward<F>(f));
+      }
+    } else {
+      boost::apply_visitor([&] (const auto& operation) {
+        using Parameter = std::decay_t<decltype(operation)>;
+        if constexpr(std::is_invocable_v<F, Parameter>) {
+          std::forward<F>(f)(operation);
+        }
+      }, operation);
+    }
+  }
+
+  template<typename M, typename F, typename... G>
+  typename std::enable_if_t<(sizeof...(G) != 0)>
+  visit(const typename M::Operation& operation, F&& f, G&&... g) {
+    static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
+      std::is_invocable_v<F, const typename M::RemoveOperation&> ||
+      std::is_invocable_v<F, const typename M::MoveOperation&> ||
+      std::is_invocable_v<F, const typename M::UpdateOperation&>);
+    if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
+      for(auto& transaction_operation : transaction->m_operations) {
+        visit<M>(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
+      }
+    } else {
+      auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+        using Parameter = std::decay_t<decltype(operation)>;
+        if constexpr(std::is_invocable_v<F, Parameter>) {
+          std::forward<F>(f)(operation);
+          return true;
+        }
+        return false;
+      }, operation);
+      if(!is_visited) {
+        visit<M>(operation, std::forward<G>(g)...);
+      }
+    }
+  }
 }
 
   /** Base class for a model over a list of values. */
@@ -111,7 +162,7 @@ namespace Details {
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const = 0;
+        const OperationSignal::slot_type& slot) const = 0;
 
     protected:
 
@@ -128,55 +179,9 @@ namespace Details {
     return std::any_cast<const T&>(at(index));
   }
 
-  /**
-   * Applies a callable to an Operation.
-   * @param operation The operation to visit.
-   * @param f The callable to apply to the <i>operation</i>.
-   */
-  template<typename M, typename F>
-  void visit(const typename M::Operation& operation, F&& f) {
-    static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
-      std::is_invocable_v<F, const typename M::RemoveOperation&> ||
-      std::is_invocable_v<F, const typename M::MoveOperation&> ||
-      std::is_invocable_v<F, const typename M::UpdateOperation&>);
-    if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
-      for(auto& transaction_operation : transaction->m_operations) {
-        visit<M>(transaction_operation, std::forward<F>(f));
-      }
-    } else {
-      boost::apply_visitor([&] (const auto& operation) {
-        using Parameter = std::decay_t<decltype(operation)>;
-        if constexpr(std::is_invocable_v<F, Parameter>) {
-          std::forward<F>(f)(operation);
-        }
-      }, operation);
-    }
-  }
-
-  template<typename M, typename F, typename... G>
-  typename std::enable_if<(sizeof...(G) != 0)>::type
-  visit(const typename M::Operation& operation, F&& f, G&&... g) {
-    static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
-      std::is_invocable_v<F, const typename M::RemoveOperation&> ||
-      std::is_invocable_v<F, const typename M::MoveOperation&> ||
-      std::is_invocable_v<F, const typename M::UpdateOperation&>);
-    if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
-      for(auto& transaction_operation : transaction->m_operations) {
-        visit<M>(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
-      }
-    } else {
-      auto is_visited = boost::apply_visitor([&] (const auto& operation) {
-        using Parameter = std::decay_t<decltype(operation)>;
-        if constexpr(std::is_invocable_v<F, Parameter>) {
-          std::forward<F>(f)(operation);
-          return true;
-        }
-        return false;
-      }, operation);
-      if(!is_visited) {
-        visit<M>(operation, std::forward<G>(g)...);
-      }
-    }
+  template<typename... F>
+  void visit(const ListModel::Operation& operation, F&&... f) {
+    return Details::visit<ListModel>(operation, std::forward<F>(f)...);
   }
 }
 

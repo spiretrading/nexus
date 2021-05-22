@@ -11,7 +11,7 @@ TEST_SUITE("TableModel") {
     auto remove_count = 0;
     auto update_count = 0;
     auto visitor = [&] (const TableModel::Operation& operation) {
-      visit<TableModel>(operation,
+      visit(operation,
         [&] (const TableModel::AddOperation& add_operation) {
           ++add_count;
           REQUIRE(add_operation.m_index == 0);
@@ -60,11 +60,10 @@ TEST_SUITE("TableModel") {
   TEST_CASE("visit_partial_operations") {
     auto move_count = 0;
     auto visitor = [&] (const TableModel::Operation& operation) {
-      visit<TableModel>(operation,
-        [&] (const TableModel::MoveOperation& move_operation) {
-          ++move_count;
-          REQUIRE(move_operation.m_source == 0);
-          REQUIRE(move_operation.m_destination == 1);
+      visit(operation, [&] (const TableModel::MoveOperation& move_operation) {
+        ++move_count;
+        REQUIRE(move_operation.m_source == 0);
+        REQUIRE(move_operation.m_destination == 1);
       });
     };
     auto add_operation = TableModel::AddOperation{0};
@@ -85,7 +84,7 @@ TEST_SUITE("TableModel") {
     auto add_count = 0;
     auto default_count = 0;
     auto visitor = [&] (const TableModel::Operation& operation) {
-      visit<TableModel>(operation,
+      visit(operation,
         [&] (const TableModel::AddOperation& add_operation) {
           ++add_count;
           REQUIRE(add_operation.m_index == 0);
@@ -123,7 +122,7 @@ TEST_SUITE("TableModel") {
     transaction.m_operations.push_back(TableModel::MoveOperation{0, 1});
     transaction.m_operations.push_back(TableModel::RemoveOperation{1});
     transaction.m_operations.push_back(TableModel::UpdateOperation{0, 0});
-    visit<TableModel>(transaction,
+    visit(transaction,
       [&] (const TableModel::AddOperation& add_operation) {
         ++add_count;
         REQUIRE(index == 0);
@@ -164,7 +163,7 @@ TEST_SUITE("TableModel") {
     transaction.m_operations.push_back(TableModel::RemoveOperation{1});
     transaction.m_operations.push_back(TableModel::UpdateOperation{0, 0});
     transaction.m_operations.push_back(TableModel::RemoveOperation{2});
-    visit<TableModel>(transaction,
+    visit(transaction,
       [&] (const TableModel::RemoveOperation& remove_operation) {
         ++remove_count;
         REQUIRE(remove_operation.m_index == remove_count);
@@ -180,7 +179,7 @@ TEST_SUITE("TableModel") {
     transaction.m_operations.push_back(TableModel::MoveOperation{0, 1});
     transaction.m_operations.push_back(TableModel::RemoveOperation{1});
     transaction.m_operations.push_back(TableModel::UpdateOperation{0, 0});
-    visit<TableModel>(transaction,
+    visit(transaction,
       [&] (const TableModel::RemoveOperation& remove_operation) {
         ++remove_count;
         REQUIRE(remove_operation.m_index == 1);
@@ -196,7 +195,7 @@ TEST_SUITE("TableModel") {
     auto add_count = 0;
     auto transaction = TableModel::Transaction();
     transaction.m_operations.push_back(TableModel::AddOperation{0});
-    visit<TableModel>(transaction,
+    visit(transaction,
       [&] (const TableModel::AddOperation& add_operation) {
         ++add_count;
         REQUIRE(add_operation.m_index == 0);
