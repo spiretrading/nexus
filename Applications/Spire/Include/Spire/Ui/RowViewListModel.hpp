@@ -1,8 +1,8 @@
 #ifndef SPIRE_ROW_VIEW_LIST_MODEL_HPP
 #define SPIRE_ROW_VIEW_LIST_MODEL_HPP
 #include <boost/signals2/connection.hpp>
-#include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/ListModel.hpp"
+#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -29,12 +29,12 @@ namespace Spire {
       QValidator::State set(int index, const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
+        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       int m_row;
-      ModelTransactionLog<ListModel> m_transaction;
+      ListModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       void on_operation(const TableModel::Operation& operation);
