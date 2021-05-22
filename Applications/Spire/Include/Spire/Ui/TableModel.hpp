@@ -117,6 +117,11 @@ namespace Spire {
     return std::any_cast<const T&>(at(row, column));
   }
 
+  /**
+   * Applies a callable to an Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
+   */
   template<typename... F>
   void visit(const TableModel::Operation& operation, F&&... f) {
     return Details::visit<TableModel>(operation, std::forward<F>(f)...);

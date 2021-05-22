@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <boost/hana/functional/overload.hpp>
 #include <boost/mpl/advance.hpp>
 #include <boost/mpl/begin_end.hpp>
 #include <boost/mpl/deref.hpp>
@@ -24,11 +23,6 @@ namespace Details {
     std::vector<O> m_operations;
   };
 
-  /**
-   * Applies a callable to an Operation.
-   * @param operation The operation to visit.
-   * @param f The callable to apply to the <i>operation</i>.
-   */
   template<typename M, typename F>
   void visit(const typename M::Operation& operation, F&& f) {
     static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
@@ -58,7 +52,8 @@ namespace Details {
       std::is_invocable_v<F, const typename M::UpdateOperation&>);
     if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
       for(auto& transaction_operation : transaction->m_operations) {
-        visit<M>(transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
+        visit<M>(
+          transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
       }
     } else {
       auto is_visited = boost::apply_visitor([&] (const auto& operation) {
@@ -179,6 +174,11 @@ namespace Details {
     return std::any_cast<const T&>(at(index));
   }
 
+  /**
+   * Applies a callable to an Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
+   */
   template<typename... F>
   void visit(const ListModel::Operation& operation, F&&... f) {
     return Details::visit<ListModel>(operation, std::forward<F>(f)...);
