@@ -7,16 +7,18 @@
 #include "Spire/Styles/PseudoElement.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto FRAME_DURATION = time_duration(seconds(1)) / 30;
+
   QTimer& get_animation_timer() {
     static auto timer = [] {
-      const auto INTERVAL = 1000 / 30;
       auto timer = std::make_unique<QTimer>();
-      timer->setInterval(INTERVAL);
+      timer->setInterval(static_cast<int>(FRAME_DURATION.total_milliseconds()));
       timer->start();
       return timer;
     }();
@@ -106,6 +108,7 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 
 Stylist::~Stylist() {
   m_widget = nullptr;
+  clear_animations();
   for(auto& block : m_source_to_block) {
     block.second->m_source->m_dependents.erase(this);
   }
@@ -228,7 +231,8 @@ connection Stylist::connect_style_signal(
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
-      m_visibility(VisibilityOption::VISIBLE) {
+      m_visibility(VisibilityOption::VISIBLE),
+      m_animation_count(0) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -293,6 +297,7 @@ void Stylist::apply_rules() {
 }
 
 void Stylist::apply_style() {
+  clear_animations();
   m_style_signal();
   if(m_pseudo_element) {
     return;
@@ -335,8 +340,44 @@ connection Stylist::connect_enable_signal(
   return m_enable_signal.connect(slot);
 }
 
+void Stylist::connect_animation() {
+  m_animation_connection.emplace(QObject::connect(
+    &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); }));
+}
+
+void Stylist::clear_animations() {
+  if(m_animation_count == 0) {
+    return;
+  }
+  m_evaluators.clear();
+  m_animation_count = 0;
+  get_animation_timer().disconnect(*m_animation_connection);
+}
+
 void Stylist::on_enable() {
   apply_rules();
+}
+
+void Stylist::on_animation() {
+  for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
+    auto& evaluator = *i->second;
+    evaluator.m_next_frame -= FRAME_DURATION;
+    if(evaluator.m_next_frame <= seconds(0)) {
+      evaluator.animate();
+      if(evaluator.m_next_frame == pos_infin) {
+        i = m_evaluators.erase(i);
+        --m_animation_count;
+        if(m_animation_count == 0) {
+          get_animation_timer().disconnect(*m_animation_connection);
+        }
+      } else {
+        evaluator.m_elapsed += evaluator.m_next_frame;
+        ++i;
+      }
+    } else {
+      ++i;
+    }
+  }
 }
 
 const Stylist& Spire::Styles::find_stylist(const QWidget& widget) {

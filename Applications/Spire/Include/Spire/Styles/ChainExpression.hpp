@@ -64,8 +64,8 @@ namespace Spire::Styles {
   auto make_evaluator(ChainExpression<T> expression, const Stylist& stylist) {
     using Type = T;
     struct ChainEvaluator {
-      std::unique_ptr<Evaluator<Type>> m_first;
-      std::unique_ptr<Evaluator<Type>> m_second;
+      std::shared_ptr<Evaluator<Type>> m_first;
+      std::shared_ptr<Evaluator<Type>> m_second;
       boost::posix_time::time_duration m_offset;
       Evaluation<Type> operator ()(boost::posix_time::time_duration frame) {
         if(m_first) {
@@ -84,9 +84,9 @@ namespace Spire::Styles {
         return evaluation;
       }
     };
-    return ChainEvaluator{std::make_unique<Evaluator<Type>>(
+    return ChainEvaluator{std::make_shared<Evaluator<Type>>(
       make_evaluator(expression.get_first(), stylist)),
-      std::make_unique<Evaluator<Type>>(
+      std::make_shared<Evaluator<Type>>(
         make_evaluator(expression.get_second(), stylist))};
   }
 

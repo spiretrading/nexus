@@ -134,6 +134,22 @@ namespace Spire::Styles {
         int m_priority;
         Block m_block;
       };
+      struct BaseEvaluatorEntry {
+        boost::posix_time::time_duration m_elapsed;
+        boost::posix_time::time_duration m_next_frame;
+
+        virtual ~BaseEvaluatorEntry() = default;
+        virtual void animate() = 0;
+      };
+      template<typename T>
+      struct EvaluatorEntry : BaseEvaluatorEntry {
+        using Type = T;
+        Evaluator<Type> m_evaluator;
+        std::vector<std::function<void (const Type&)>> m_receivers;
+
+        EvaluatorEntry(Evaluator<Type> evaluator);
+        void animate() override;
+      };
       using EnableSignal = Signal<void ()>;
       friend Stylist& find_stylist(QWidget& widget);
       friend void add_pseudo_element(QWidget& source,
@@ -156,6 +172,10 @@ namespace Spire::Styles {
       std::unordered_map<const Stylist*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
+      std::unordered_map<
+        std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
+      int m_animation_count;
+      boost::optional<QMetaObject::Connection> m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
@@ -167,7 +187,10 @@ namespace Spire::Styles {
       void apply_proxy_styles();
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
+      void connect_animation();
+      void clear_animations();
       void on_enable();
+      void on_animation();
   };
 
   /** Returns the Stylist associated with a widget. */
@@ -236,10 +259,47 @@ namespace Spire::Styles {
     const QWidget& widget, const PseudoElement& pseudo_element,
     const Stylist::StyleSignal::slot_type& slot);
 
+  template<typename T>
+  Stylist::EvaluatorEntry<T>::EvaluatorEntry(Evaluator<Type> evaluator)
+    : m_evaluator(std::move(evaluator)) {}
+
+  template<typename T>
+  void Stylist::EvaluatorEntry<T>::animate() {
+    auto evaluation = m_evaluator(m_elapsed);
+    for(auto i = m_receivers.begin(); i != m_receivers.end() - 1; ++i) {
+      (*i)(evaluation.m_value);
+    }
+    m_receivers.back()(std::move(evaluation.m_value));
+    m_next_frame = evaluation.m_next_frame;
+  }
+
   template<typename Property, typename F>
   void Stylist::evaluate(const Property& property, F&& receiver) {
-    auto evaluator = make_evaluator(property.get_expression(), *this);
-    std::forward<F>(receiver)(evaluator(boost::posix_time::seconds(0)).m_value);
+    auto i = m_evaluators.find(typeid(Property));
+    if(i == m_evaluators.end()) {
+      auto evaluator = make_evaluator(property.get_expression(), *this);
+      auto evaluation = evaluator(boost::posix_time::seconds(0));
+      if(evaluation.m_next_frame != boost::posix_time::pos_infin) {
+        auto entry = std::make_unique<EvaluatorEntry<typename Property::Type>>(
+          std::move(evaluator));
+        entry->m_receivers.push_back(std::forward<F>(receiver));
+        auto& receiver = entry->m_receivers.back();
+        m_evaluators.emplace(typeid(Property), std::move(entry));
+        ++m_animation_count;
+        if(m_animation_count == 1) {
+          connect_animation();
+        }
+        receiver(std::move(evaluation.m_value));
+      } else {
+        std::forward<F>(receiver)(std::move(evaluation.m_value));
+      }
+      return;
+    }
+    auto& evaluator = static_cast<EvaluatorEntry<typename Property::Type>&>(
+      *i->second);
+    evaluator.m_receivers.push_back(std::forward<F>(receiver));
+    evaluator.m_receivers.back()(
+      evaluator.m_evaluator(evaluator.m_elapsed).m_value);
   }
 }
 
