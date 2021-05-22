@@ -53,6 +53,7 @@ namespace Spire {
   class RangeInputSlider;
   class RangeInputWidget;
   class RealSpinBox;
+  class RowViewListModel;
   template<typename T> class ScalarValueModel;
   using OptionalDurationModel =
     ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
