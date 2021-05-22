@@ -1,3 +1,4 @@
+#include <deque>
 #include <doctest/doctest.h>
 #include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/RowViewListModel.hpp"
@@ -5,6 +6,15 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  template<typename... F>
+  decltype(auto) test_operation(
+      const ListModel::Operation& operation, F&&... f) {
+    return visit(
+      operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
+  }
+}
 
 TEST_SUITE("RowViewListModel") {
   TEST_CASE("construct") {
@@ -30,27 +40,25 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(model.get<int>(0) == 4);
     REQUIRE(model.get<int>(1) == 5);
     REQUIRE(model.get<int>(2) == 6);
-    auto signal_count = 0;
-    auto updated_index = 0;
+    auto operations = std::deque<ListModel::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
-        ++signal_count;
-        auto update_operation = get<ListModel::UpdateOperation>(&operation);
-        REQUIRE(update_operation != nullptr);
-        REQUIRE(update_operation->m_index == updated_index);
+        operations.push_back(operation);
       }));
-    updated_index = 4;
-    REQUIRE(model.set(updated_index, 0) == QValidator::State::Invalid);
-    REQUIRE(signal_count == 0);
-    updated_index = -1;
-    REQUIRE(model.set(updated_index, 0) == QValidator::State::Invalid);
-    REQUIRE(signal_count == 0);
-    updated_index = 2;
-    REQUIRE(model.set(updated_index, 0) == QValidator::State::Acceptable);
-    REQUIRE(signal_count == 1);
+    REQUIRE(model.set(4, 0) == QValidator::State::Invalid);
+    REQUIRE(operations.empty());
+    REQUIRE(model.set(-1, 0) == QValidator::State::Invalid);
+    REQUIRE(operations.empty());
+    REQUIRE(model.set(2, 0) == QValidator::State::Acceptable);
     REQUIRE(model.get<int>(0) == 4);
     REQUIRE(model.get<int>(1) == 5);
     REQUIRE(model.get<int>(2) == 0);
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    test_operation(operation, [&] (const ListModel::UpdateOperation& operation) {
+      REQUIRE(operation.m_index == 2);
+    });
   }
 
   TEST_CASE("source_add") {
@@ -59,37 +67,37 @@ TEST_SUITE("RowViewListModel") {
     source->push({2});
     auto invalid_model = RowViewListModel(source, 3);
     REQUIRE(invalid_model.get_size() == 0);
-    auto signal_count1 = 0;
+    auto operations1 = std::deque<ListModel::Operation>();
     auto connection1 = scoped_connection(invalid_model.connect_operation_signal(
       [&] (const auto& operation) {
-        ++signal_count1;
+        operations1.push_back(operation);
       }));
     auto model = RowViewListModel(source, 1);
     REQUIRE(model.get<int>(0) == 2);
-    auto signal_count2 = 0;
+    auto operations2 = std::deque<ListModel::Operation>();
     auto connection2 = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
-        ++signal_count2;
+        operations2.push_back(operation);
       }));
     source->push({3});
-    REQUIRE(signal_count1 == 0);
+    REQUIRE(operations1.empty());
+    REQUIRE(operations2.empty());
     REQUIRE(invalid_model.get_size() == 0);
-    REQUIRE(signal_count2 == 0);
     REQUIRE(model.get<int>(0) == 2);
     source->insert({4}, 1);
-    REQUIRE(signal_count1 == 0);
+    REQUIRE(operations1.empty());
+    REQUIRE(operations2.empty());
     REQUIRE(invalid_model.get_size() == 0);
-    REQUIRE(signal_count2 == 0);
     REQUIRE(model.get<int>(0) == 2);
     source->insert({5}, 0);
-    REQUIRE(signal_count1 == 0);
+    REQUIRE(operations1.empty());
+    REQUIRE(operations2.empty());
     REQUIRE(invalid_model.get_size() == 0);
-    REQUIRE(signal_count2 == 0);
     REQUIRE(model.get<int>(0) == 2);
     source->push({6});
-    REQUIRE(signal_count1 == 0);
+    REQUIRE(operations1.empty());
+    REQUIRE(operations2.empty());
     REQUIRE(invalid_model.get_size() == 0);
-    REQUIRE(signal_count2 == 0);
     REQUIRE(model.get<int>(0) == 2);
   }
 
@@ -118,6 +126,7 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(model.get_size() == 0);
     REQUIRE_THROWS(model.get<int>(0));
     source->insert({6}, 2);
+    REQUIRE(signal_count == 0);
     REQUIRE(model.get_size() == 0);
     REQUIRE_THROWS(model.get<int>(0));
   }
@@ -162,24 +171,29 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(model.get<int>(0) == 4);
     REQUIRE(model.get<int>(1) == 5);
     REQUIRE(model.get<int>(2) == 6);
-    auto signal_count = 0;
-    auto updated_index = 0;
+    auto operations = std::deque<ListModel::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
-        ++signal_count;
-        auto update_operation = get<ListModel::UpdateOperation>(&operation);
-        REQUIRE(update_operation != nullptr);
-        REQUIRE(update_operation->m_index == updated_index);
+        operations.push_back(operation);
       }));
     source->set(0, 0, 0);
-    REQUIRE(signal_count == 0);
-    updated_index = 0;
-    source->set(1, updated_index, 0);
-    REQUIRE(signal_count == 1);
-    REQUIRE(model.get<int>(updated_index) == 0);
-    updated_index = 2;
-    source->set(1, updated_index, 10);
-    REQUIRE(model.get<int>(updated_index) == 10);
+    REQUIRE(operations.empty());
+    source->set(1, 0, 0);
+    REQUIRE(model.get<int>(0) == 0);
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    test_operation(operation, [&] (const ListModel::UpdateOperation& operation) {
+      REQUIRE(operation.m_index == 0);
+    });
+    source->set(1, 2, 10);
+    REQUIRE(model.get<int>(2) == 10);
+    REQUIRE(operations.size() == 1);
+    operation = operations.front();
+    operations.pop_front();
+    test_operation(operation, [&] (const ListModel::UpdateOperation& operation) {
+      REQUIRE(operation.m_index == 2);
+    });
   }
 
   TEST_CASE("source_transaction") {
@@ -187,27 +201,10 @@ TEST_SUITE("RowViewListModel") {
     source->push({1, 2, 3});
     source->push({4, 5, 6});
     auto model = RowViewListModel(source, 1);
-    auto signal_count = 0;
-    auto add_count = 0;
-    auto move_count = 0;
-    auto remove_count = 0;
-    auto update_count = 0;
+    auto operations = std::deque<ListModel::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
-        ++signal_count;
-        visit<ListModel>(operation,
-          [&] (const ListModel::AddOperation& operation) {
-            ++add_count;
-          },
-          [&] (const ListModel::MoveOperation& operation) {
-            ++move_count;
-          },
-          [&] (const ListModel::RemoveOperation& operation) {
-            ++remove_count;
-          },
-          [&] (const ListModel::UpdateOperation& operation) {
-            ++update_count;
-          });
+        operations.push_back(operation);
       }));
     source->transact([&] {
       source->push({7, 8, 9});
@@ -222,7 +219,26 @@ TEST_SUITE("RowViewListModel") {
       });
       source->move(2, 0);
     });
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 1);
+    auto operation = operations.front();
+    operations.pop_front();
+    auto add_count = 0;
+    auto move_count = 0;
+    auto remove_count = 0;
+    auto update_count = 0;
+    test_operation(operation,
+      [&] (const ListModel::AddOperation& operation) {
+        ++add_count;
+      },
+      [&] (const ListModel::MoveOperation& operation) {
+        ++move_count;
+      },
+      [&] (const ListModel::RemoveOperation& operation) {
+        ++remove_count;
+      },
+      [&] (const ListModel::UpdateOperation& operation) {
+        ++update_count;
+      });
     REQUIRE(add_count == 0);
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 0);
