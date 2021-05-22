@@ -19,6 +19,7 @@ namespace Spire::Styles {
   template<typename I, typename T, typename... A>
     class FunctionDefinitionExpression;
   class IsASelector;
+  template<typename T> class LinearExpression;
   class NotSelector;
   class OrSelector;
   class ParentSelector;

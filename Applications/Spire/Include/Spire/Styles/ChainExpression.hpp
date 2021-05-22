@@ -1,7 +1,8 @@
 #ifndef SPIRE_STYLES_CHAIN_EXPRESSION_HPP
 #define SPIRE_STYLES_CHAIN_EXPRESSION_HPP
-#include <algorithm>
-#include "Spire/Styles/FunctionDefinitionExpression.hpp"
+#include <memory>
+#include <utility>
+#include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {

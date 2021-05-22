@@ -1,0 +1,145 @@
+#ifndef SPIRE_STYLES_LINEAR_EXPRESSION_HPP
+#define SPIRE_STYLES_LINEAR_EXPRESSION_HPP
+#include <memory>
+#include <utility>
+#include "Spire/Styles/Expression.hpp"
+#include "Spire/Styles/Styles.hpp"
+
+namespace Spire::Styles {
+
+  /**
+   * Calculates a linear transition between two sub-expressions.
+   * @param <T> The type to evaluate to.
+   */
+  template<typename T>
+  class LinearExpression {
+    public:
+
+      /** The type to evaluate to. */
+      using Type = T;
+
+      /**
+       * Constructs a LinearExpression.
+       * @param initial The initial value.
+       * @param end The end value.
+       * @param duration The duration of the transition.
+       */
+      LinearExpression(Expression<Type> initial, Expression<Type> end,
+        boost::posix_time::time_duration duration);
+
+      /** Returns the initial value Expression. */
+      const Expression<Type>& get_initial() const;
+
+      /** Returns the end value Expression. */
+      const Expression<Type>& get_end() const;
+
+      /** Returns the duration of the transition. */
+      boost::posix_time::time_duration get_duration() const;
+
+      bool operator ==(const LinearExpression& expression) const;
+
+      bool operator !=(const LinearExpression& expression) const;
+
+    private:
+      Expression<Type> m_initial;
+      Expression<Type> m_end;
+      boost::posix_time::time_duration m_duration;
+  };
+
+  template<typename T>
+  LinearExpression(T&&, T&&, boost::posix_time::time_duration) ->
+    LinearExpression<expression_type_t<T>>;
+
+  /**
+   * Calculates a linear transition between two sub-expressions.
+   * @param initial The initial value.
+   * @param end The end value.
+   * @param duration The duration of the transition.
+   */
+  template<typename T, typename U>
+  auto linear(T initial, U end, boost::posix_time::time_duration duration) {
+    return LinearExpression(
+      std::forward<T>(initial), std::forward<U>(end), duration);
+  }
+
+  template<typename T>
+  auto make_evaluator(LinearExpression<T> expression, const Stylist& stylist) {
+    using Type = T;
+    struct LinearEvaluator {
+      std::shared_ptr<Evaluator<Type>> m_initial;
+      std::shared_ptr<Evaluator<Type>> m_end;
+      boost::posix_time::time_duration m_duration;
+      Evaluation<Type> operator ()(boost::posix_time::time_duration frame) {
+        auto initial = (*m_initial)(frame).m_value;
+        auto end = (*m_end)(frame).m_value;
+        auto percentage = std::min(1.0,
+          frame.ticks() / static_cast<double>(m_duration.ticks()));
+        auto transition =
+          [&] (const auto& initial, const auto& end) {
+            return initial +
+              static_cast<decltype(end)>((end - initial) * percentage);
+          };
+        auto value = [&] {
+          if constexpr(std::is_same_v<Type, QColor>) {
+            return QColor(transition(initial.red(), end.red()),
+              transition(initial.green(), end.green()),
+              transition(initial.blue(), end.blue()));
+          } else {
+            return transition(initial, end);
+          }
+        }();
+        auto next_frame = [&] () -> boost::posix_time::time_duration {
+          if(frame >= m_duration) {
+            return boost::posix_time::pos_infin;
+          }
+          return boost::posix_time::seconds(0);
+        }();
+        return Evaluation(std::move(value), next_frame);
+      }
+    };
+    return LinearEvaluator{std::make_shared<Evaluator<Type>>(
+      make_evaluator(expression.get_initial(), stylist)),
+      std::make_shared<Evaluator<Type>>(
+        make_evaluator(expression.get_end(), stylist)),
+      expression.get_duration()};
+  }
+
+  template<typename T>
+  LinearExpression<T>::LinearExpression(Expression<Type> initial,
+    Expression<Type> end, boost::posix_time::time_duration duration)
+    : m_initial(std::move(initial)),
+      m_end(std::move(end)),
+      m_duration(duration) {}
+
+  template<typename T>
+  const Expression<typename LinearExpression<T>::Type>&
+      LinearExpression<T>::get_initial() const {
+    return m_initial;
+  }
+
+  template<typename T>
+  const Expression<typename LinearExpression<T>::Type>&
+      LinearExpression<T>::get_end() const {
+    return m_end;
+  }
+
+  template<typename T>
+  boost::posix_time::time_duration LinearExpression<T>::get_duration() const {
+    return m_duration;
+  }
+
+  template<typename T>
+  bool LinearExpression<T>::operator ==(
+      const LinearExpression& expression) const {
+    return m_initial == expression.m_initial && m_end == expression.m_end &&
+      m_duration == expression.m_duration;
+  }
+
+  template<typename T>
+  bool LinearExpression<T>::operator !=(
+      const LinearExpression& expression) const {
+    return !(*this == expression);
+  }
+}
+
+#endif

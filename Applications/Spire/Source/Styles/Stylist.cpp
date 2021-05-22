@@ -371,7 +371,7 @@ void Stylist::on_animation() {
           get_animation_timer().disconnect(*m_animation_connection);
         }
       } else {
-        evaluator.m_elapsed += evaluator.m_next_frame;
+        evaluator.m_elapsed += std::max(FRAME_DURATION, evaluator.m_next_frame);
         ++i;
       }
     } else {
