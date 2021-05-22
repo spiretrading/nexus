@@ -1,6 +1,5 @@
 #ifndef SPIRE_ROW_VIEW_LIST_MODEL_HPP
 #define SPIRE_ROW_VIEW_LIST_MODEL_HPP
-#include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include "Spire/Ui/ModelTransactionLog.hpp"
 #include "Spire/Ui/ListModel.hpp"
@@ -34,7 +33,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<TableModel> m_source;
-      boost::optional<int> m_row;
+      int m_row;
       ModelTransactionLog<ListModel> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
