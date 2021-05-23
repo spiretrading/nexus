@@ -341,14 +341,6 @@ void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
 }
 
-bool DecimalBox::is_warning_displayed() const {
-  return m_text_box->is_warning_displayed();
-}
-
-void DecimalBox::set_warning_displayed(bool is_displayed) {
-  m_text_box->set_warning_displayed(is_displayed);
-}
-
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);

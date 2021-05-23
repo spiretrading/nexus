@@ -57,7 +57,7 @@ namespace Spire::Styles {
    * @param duration The duration of the transition.
    */
   template<typename T, typename U>
-  auto linear(T initial, U end, boost::posix_time::time_duration duration) {
+  auto linear(T&& initial, U&& end, boost::posix_time::time_duration duration) {
     return LinearExpression(
       std::forward<T>(initial), std::forward<U>(end), duration);
   }
@@ -66,19 +66,19 @@ namespace Spire::Styles {
   auto make_evaluator(LinearExpression<T> expression, const Stylist& stylist) {
     using Type = T;
     struct LinearEvaluator {
-      std::shared_ptr<Evaluator<Type>> m_initial;
-      std::shared_ptr<Evaluator<Type>> m_end;
+      Evaluator<Type> m_initial;
+      Evaluator<Type> m_end;
       boost::posix_time::time_duration m_duration;
+
       Evaluation<Type> operator ()(boost::posix_time::time_duration frame) {
-        auto initial = (*m_initial)(frame).m_value;
-        auto end = (*m_end)(frame).m_value;
-        auto percentage = std::min(1.0,
-          frame.ticks() / static_cast<double>(m_duration.ticks()));
-        auto transition =
-          [&] (const auto& initial, const auto& end) {
-            return initial +
-              static_cast<decltype(end)>((end - initial) * percentage);
-          };
+        auto initial = m_initial(frame).m_value;
+        auto end = m_end(frame).m_value;
+        auto percentage = std::min(
+          1.0, frame.ticks() / static_cast<double>(m_duration.ticks()));
+        auto transition = [&] (const auto& initial, const auto& end) {
+          return initial +
+            static_cast<decltype(end)>((end - initial) * percentage);
+        };
         auto value = [&] {
           if constexpr(std::is_same_v<Type, QColor>) {
             return QColor(transition(initial.red(), end.red()),
@@ -97,11 +97,8 @@ namespace Spire::Styles {
         return Evaluation(std::move(value), next_frame);
       }
     };
-    return LinearEvaluator{std::make_shared<Evaluator<Type>>(
-      make_evaluator(expression.get_initial(), stylist)),
-      std::make_shared<Evaluator<Type>>(
-        make_evaluator(expression.get_end(), stylist)),
-      expression.get_duration()};
+    return LinearEvaluator{make_evaluator(expression.get_initial(), stylist),
+      make_evaluator(expression.get_end(), stylist), expression.get_duration()};
   }
 
   template<typename T>

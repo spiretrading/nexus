@@ -55,14 +55,6 @@ namespace Spire {
        */
       void set_read_only(bool is_read_only);
 
-      /**
-       * Returns whether a warning is displayed when a submission is rejected.
-       */
-      bool is_warning_displayed() const;
-
-      /** Sets whether a warning is displayed when a submission is rejected. */
-      void set_warning_displayed(bool is_displayed);
-
       /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;

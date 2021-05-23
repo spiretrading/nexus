@@ -30,7 +30,6 @@ using namespace Spire::Styles;
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
       auto box = new Box(nullptr);
@@ -47,13 +46,6 @@ UiProfile Spire::make_box_profile() {
         set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
       set_style(*box, std::move(style));
       apply_widget_properties(box, profile.get_properties());
-      auto& warning = get<bool>("display_warning", profile.get_properties());
-      warning.connect_changed_signal([&warning, box] (auto is_playing_warning) {
-        if(is_playing_warning) {
-          display_warning_indicator(*box);
-          warning.set(false);
-        }
-      });
       return box;
     });
   return profile;
@@ -174,8 +166,6 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_qstring_property("placeholder"));
   properties.push_back(make_standard_bool_property("read_only", false));
   properties.push_back(make_standard_bool_property("buttons_visible", true));
-  properties.push_back(make_standard_bool_property("is_warning_displayed",
-    true));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto parse_decimal = [] (auto decimal) ->
@@ -302,11 +292,6 @@ UiProfile Spire::make_decimal_box_profile() {
         }
         set_style(*decimal_box, std::move(style));
       });
-      auto& is_warning_displayed = get<bool>("is_warning_displayed",
-        profile.get_properties());
-      is_warning_displayed.connect_changed_signal([=] (auto value) {
-        decimal_box->set_warning_displayed(value);
-      });
       return decimal_box;
     });
   return profile;
@@ -321,8 +306,6 @@ UiProfile Spire::make_duration_box_profile() {
   properties.push_back(make_standard_qstring_property("maximum",
     "20:20:20.000"));
   properties.push_back(make_standard_bool_property("read_only"));
-  properties.push_back(make_standard_bool_property("is_warning_displayed",
-    true));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
     [] (auto& profile) {
       auto parse_duration = [] (auto duration) ->
@@ -360,11 +343,6 @@ UiProfile Spire::make_duration_box_profile() {
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         duration_box->set_read_only(is_read_only);
-      });
-      auto& is_warning_displayed = get<bool>("is_warning_displayed",
-        profile.get_properties());
-      is_warning_displayed.connect_changed_signal([=] (auto value) {
-        duration_box->set_warning_displayed(value);
       });
       duration_box->get_model()->connect_current_signal(
         profile.make_event_slot<optional<time_duration>>(
@@ -425,8 +403,6 @@ UiProfile Spire::make_integer_box_profile() {
   properties.push_back(make_standard_qstring_property("placeholder"));
   properties.push_back(make_standard_bool_property("read_only", false));
   properties.push_back(make_standard_bool_property("buttons_visible", true));
-  properties.push_back(make_standard_bool_property("is_warning_displayed",
-    true));
   auto profile = UiProfile(QString::fromUtf8("IntegerBox"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalIntegerModel>();
@@ -484,11 +460,6 @@ UiProfile Spire::make_integer_box_profile() {
             Visibility(VisibilityOption::NONE));
         }
         set_style(*integer_box, std::move(style));
-      });
-      auto& is_warning_displayed = get<bool>("is_warning_displayed",
-        profile.get_properties());
-      is_warning_displayed.connect_changed_signal([=] (auto value) {
-        integer_box->set_warning_displayed(value);
       });
       return integer_box;
     });
@@ -618,7 +589,6 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_bool_property("read_only"));
   properties.push_back(make_standard_qstring_property("current"));
   properties.push_back(make_standard_qstring_property("placeholder"));
-  properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
       auto text_box = new TextBox();
@@ -637,14 +607,6 @@ UiProfile Spire::make_text_box_profile() {
       placeholder.connect_changed_signal([text_box] (const auto& text) {
         text_box->set_placeholder(text);
       });
-      auto& warning = get<bool>("display_warning", profile.get_properties());
-      warning.connect_changed_signal(
-        [&warning, text_box] (auto is_playing_warning) {
-          if(is_playing_warning) {
-            display_warning_indicator(*text_box);
-            warning.set(false);
-          }
-        });
       text_box->get_model()->connect_current_signal([&] (const auto& value) {
         current.set(value);
       });

@@ -309,7 +309,7 @@ namespace {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
-    field->set_warning_displayed(false);
+//    field->set_warning_displayed(false);
     set_style(*field, HOUR_FIELD_STYLE(get_style(*field)));
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -320,7 +320,7 @@ namespace {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
     field->setMinimumWidth(scale_width(28));
     field->set_placeholder("mm");
-    field->set_warning_displayed(false);
+//    field->set_warning_displayed(false);
     set_style(*field, MINUTE_FIELD_STYLE(get_style(*field)));
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -333,7 +333,7 @@ namespace {
       new DecimalBox(std::move(model), create_modifiers<DecimalBox::Decimal>());
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
-    field->set_warning_displayed(false);
+//    field->set_warning_displayed(false);
     set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -357,8 +357,7 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
     : QWidget(parent),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
-      m_is_read_only(false),
-      m_is_warning_displayed(true) {
+      m_is_read_only(false) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto hour_model = std::make_shared<HourModel>(m_model);
@@ -432,14 +431,6 @@ void DurationBox::set_read_only(bool is_read_only) {
   } else {
     unmatch(*this, ReadOnly());
   }
-}
-
-bool DurationBox::is_warning_displayed() const {
-  return m_is_warning_displayed;
-}
-
-void DurationBox::set_warning_displayed(bool is_displayed) {
-  m_is_warning_displayed = is_displayed;
 }
 
 connection DurationBox::connect_reject_signal(
@@ -532,7 +523,5 @@ void DurationBox::on_reject() {
   auto submission = m_submission;
   m_reject_signal(current);
   m_model->set_current(submission);
-  if(m_is_warning_displayed) {
-    display_warning_indicator(*this);
-  }
+  match(*this, Rejected());
 }

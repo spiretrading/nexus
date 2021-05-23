@@ -29,6 +29,9 @@ namespace Styles {
   /** Selects a read-only widget. */
   using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
 
+  /** Selects a a widget whose input value is rejected. */
+  using Rejected = StateSelector<void, struct RejectedTag>;
+
   /** Selects the placeholder. */
   using Placeholder = PseudoElementSelector<void, struct PlaceholderTag>;
 
@@ -94,14 +97,6 @@ namespace Styles {
       /** Sets whether the box is read-only. */
       void set_read_only(bool read_only);
 
-      /**
-       * Returns whether a warning is displayed when a submission is rejected.
-       */
-      bool is_warning_displayed() const;
-
-      /** Sets whether a warning is displayed when a submission is rejected. */
-      void set_warning_displayed(bool is_displayed);
-
       /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -139,7 +134,6 @@ namespace Styles {
       StyleProperties m_line_edit_styles;
       QLabel* m_placeholder;
       StyleProperties m_placeholder_styles;
-      bool m_is_warning_displayed;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;

@@ -42,8 +42,8 @@ namespace Spire::Styles {
       Expression<Type> m_second;
   };
 
-  template<typename T>
-  ChainExpression(T&&, T&&) -> ChainExpression<expression_type_t<T>>;
+  template<typename T, typename U>
+  ChainExpression(T&&, U&&) -> ChainExpression<expression_type_t<T>>;
 
   /**
    * Chains a series of expressions together to form a single animation.
@@ -65,30 +65,25 @@ namespace Spire::Styles {
   auto make_evaluator(ChainExpression<T> expression, const Stylist& stylist) {
     using Type = T;
     struct ChainEvaluator {
-      std::shared_ptr<Evaluator<Type>> m_first;
-      std::shared_ptr<Evaluator<Type>> m_second;
+      Evaluator<Type> m_first;
+      Evaluator<Type> m_second;
       boost::posix_time::time_duration m_offset;
+
       Evaluation<Type> operator ()(boost::posix_time::time_duration frame) {
-        if(m_first) {
-          auto evaluation = (*m_first)(frame);
-          if(evaluation.m_next_frame == boost::posix_time::pos_infin) {
-            m_first = nullptr;
-            m_offset = frame;
-            evaluation.m_next_frame = boost::posix_time::seconds(0);
-          }
-          return evaluation;
+        if(m_offset != boost::posix_time::time_duration() &&
+            frame >= m_offset) {
+          return m_second(frame - m_offset);
         }
-        auto evaluation = (*m_second)(frame - m_offset);
+        auto evaluation = m_first(frame);
         if(evaluation.m_next_frame == boost::posix_time::pos_infin) {
-          m_second = nullptr;
+          m_offset = frame;
+          evaluation.m_next_frame = boost::posix_time::seconds(0);
         }
         return evaluation;
       }
     };
-    return ChainEvaluator{std::make_shared<Evaluator<Type>>(
-      make_evaluator(expression.get_first(), stylist)),
-      std::make_shared<Evaluator<Type>>(
-        make_evaluator(expression.get_second(), stylist))};
+    return ChainEvaluator{make_evaluator(expression.get_first(), stylist),
+      make_evaluator(expression.get_second(), stylist)};
   }
 
   template<typename T>

@@ -20,7 +20,7 @@ namespace Spire::Styles {
   template<typename T>
   constexpr auto is_expression_v = is_expression_t<T>::value;
 
-  template<typename T>
+  template<typename T, typename = void>
   struct expression_type {
     using type = T;
   };
@@ -28,6 +28,12 @@ namespace Spire::Styles {
   template<typename T>
   struct expression_type<Expression<T>> {
     using type = typename Expression<T>::Type;
+  };
+
+  template<typename T>
+  struct
+      expression_type<T, std::enable_if_t<is_expression_v<std::decay_t<T>>>> {
+    using type = typename T::Type;
   };
 
   template<typename T>

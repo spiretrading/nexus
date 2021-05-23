@@ -2,11 +2,15 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -36,6 +40,11 @@ namespace {
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(Rejected()).
+      set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+        linear(QColor(0xFFF1F1), QColor(0xFFFFFF), milliseconds(300))))).
+      set(border_color(chain(timeout(QColor(0xB71C1C), milliseconds(550)),
+        QColor::fromRgb(0x4B, 0x23, 0xA0))));
     style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
     style.get(Disabled() / Placeholder()).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
@@ -95,7 +104,6 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
       m_line_edit_styles{[=] { commit_style(); }},
       m_placeholder_styles{[=] { commit_placeholder_style(); }},
-      m_is_warning_displayed(true),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
   m_layers = new LayeredWidget(this);
@@ -161,14 +169,6 @@ void TextBox::set_read_only(bool read_only) {
   }
   update_display_text();
   update_placeholder_text();
-}
-
-bool TextBox::is_warning_displayed() const {
-  return m_is_warning_displayed;
-}
-
-void TextBox::set_warning_displayed(bool is_displayed) {
-  m_is_warning_displayed = is_displayed;
 }
 
 connection
@@ -385,6 +385,7 @@ void TextBox::commit_placeholder_style() {
 }
 
 void TextBox::on_current(const QString& current) {
+  unmatch(*this, Rejected());
   update_display_text();
   update_placeholder_text();
 }
@@ -397,9 +398,7 @@ void TextBox::on_editing_finished() {
     } else {
       m_reject_signal(m_model->get_current());
       m_model->set_current(m_submission);
-      if(is_warning_displayed()) {
-        display_warning_indicator(*this);
-      }
+      match(*this, Rejected());
     }
   }
 }

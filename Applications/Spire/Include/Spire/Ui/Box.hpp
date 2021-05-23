@@ -131,12 +131,6 @@ namespace Styles {
       void commit_style();
       void on_style();
   };
-
-  /**
-   * Displays a red warning indicator on a widget.
-   * @param widget The widget to display the warning indicator over.
-   */
-  void display_warning_indicator(QWidget& widget);
 }
 
 #endif
