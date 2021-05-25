@@ -185,7 +185,7 @@ namespace Spire {
       return QValidator::Intermediate;
     }
     m_is_blocked = true;
-    auto previous = m_current;
+    auto previous_model = m_models.at(m_current);
     m_current = value;
     m_current_signal(m_current);
     m_is_blocked = false;
@@ -194,9 +194,10 @@ namespace Spire {
       m_current_queue.pop();
       set_current(current_value);
     }
-    if(m_models.at(previous) != m_models.at(m_current)) {
-      set_associated_model_value(previous, false);
-      set_associated_model_value(m_current, true);
+    auto current_model = m_models.at(m_current);
+    if(previous_model != current_model) {
+      previous_model->set_current(false);
+      current_model->set_current(true);
     }
     return QValidator::Acceptable;
   }
