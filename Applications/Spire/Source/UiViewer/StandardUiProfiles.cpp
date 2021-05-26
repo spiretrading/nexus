@@ -40,26 +40,30 @@ UiProfile Spire::make_box_profile() {
       auto& border_size = get<int>("border-size", profile.get_properties());
       auto& border_radius = get<int>("border-radius",
         profile.get_properties());
-      auto update_style = [&, box = box] {
-        auto style = StyleSheet();
-        style.get(Any()).
-          set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-          set(border(scale_width(border_size.get()),
-            QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-          set(Styles::border_radius(scale_width(border_radius.get()))).
-          set(horizontal_padding(scale_width(8)));
-        style.get(Hover() || Focus()).
-          set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-        style.get(Disabled()).
-          set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-          set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-        set_style(*box, std::move(style));
-      };
-      border_size.connect_changed_signal([=] (auto size) {
-        update_style();
+      auto style = StyleSheet();
+      style.get(Any()).
+        set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+        set(border(scale_width(border_size.get()),
+          QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(Styles::border_radius(scale_width(border_radius.get()))).
+        set(horizontal_padding(scale_width(8)));
+      style.get(Hover() || Focus()).
+        set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
+        set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set_style(*box, std::move(style));
+      border_size.connect_changed_signal([&, box = box] (auto size) {
+        auto style = get_style(*box);
+        style.get(Any()).set(Styles::border_size(scale_width(
+          border_size.get())));
+        set_style(*box, style);
       });
-      border_radius.connect_changed_signal([=] (auto radius) {
-        update_style();
+      border_radius.connect_changed_signal([&, box = box] (auto radius) {
+        auto style = get_style(*box);
+        style.get(Any()).set(Styles::border_radius(scale_width(
+          border_radius.get())));
+        set_style(*box, style);
       });
       apply_widget_properties(box, profile.get_properties());
       auto& warning = get<bool>("display_warning", profile.get_properties());
