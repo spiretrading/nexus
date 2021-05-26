@@ -645,8 +645,6 @@ UiProfile Spire::make_time_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_qstring_property("current", ""));
   properties.push_back(make_standard_bool_property("read_only"));
-  properties.push_back(make_standard_bool_property("is_warning_displayed",
-    true));
   auto profile = UiProfile(QString::fromUtf8("TimeBox"), properties,
     [] (auto& profile) {
       auto parse_time = [] (auto time) -> boost::optional<time_duration> {
@@ -670,11 +668,6 @@ UiProfile Spire::make_time_box_profile() {
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         time_box->set_read_only(is_read_only);
-      });
-      auto& is_warning_displayed = get<bool>("is_warning_displayed",
-        profile.get_properties());
-      is_warning_displayed.connect_changed_signal([=] (auto value) {
-        time_box->set_warning_displayed(value);
       });
       time_box->get_model()->connect_current_signal(
         profile.make_event_slot<optional<time_duration>>(
