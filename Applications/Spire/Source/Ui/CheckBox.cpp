@@ -70,7 +70,6 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   auto button = new Button(body, this);
   setFocusProxy(button);
   button->connect_clicked_signal([=] {
-    //qDebug() << "cb clicked: " << !m_model->get_current();
     m_model->set_current(!m_model->get_current());
   });
   layout->addWidget(button);
@@ -86,7 +85,6 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   m_label->setDisabled(true);
   body_layout->addWidget(m_label);
   m_model->connect_current_signal([=] (auto is_checked) {
-    //qDebug() << "cb model: " << is_checked;
     if(is_checked == m_model->get_current()) {
       on_checked(is_checked);
     }
