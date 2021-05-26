@@ -2,6 +2,7 @@
 #include <deque>
 #include <QApplication>
 #include <QEvent>
+#include <QTimer>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
 
@@ -13,6 +14,17 @@ using namespace Spire::Styles;
 namespace {
   std::unordered_map<std::pair<QWidget*, PseudoElement>, Stylist*,
     boost::hash<std::pair<QWidget*, PseudoElement>>> pseudo_stylists;
+
+  bool contains(QWidget& container, QWidget& widget) {
+    if(&container == &widget) {
+      return true;
+    }
+    auto container_rect =
+      QRect(container.mapToGlobal(QPoint(0, 0)), container.frameSize());
+    auto widget_rect =
+      QRect(widget.mapToGlobal(QPoint(0, 0)), widget.frameSize());
+    return container_rect.contains(widget_rect, true);
+  }
 }
 
 struct Stylist::StyleEventFilter : QObject {
@@ -21,8 +33,8 @@ struct Stylist::StyleEventFilter : QObject {
   StyleEventFilter(Stylist& stylist)
       : QObject(stylist.m_widget),
         m_stylist(&stylist) {
-    connect(qApp, &QApplication::focusChanged, this,
-      &StyleEventFilter::on_focus_changed);
+    connect(qApp,
+      &QApplication::focusChanged, this, &StyleEventFilter::on_focus_changed);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
@@ -33,10 +45,7 @@ struct Stylist::StyleEventFilter : QObject {
     } else if(event->type() == QEvent::Enter) {
       m_stylist->match(Hover());
     } else if(event->type() == QEvent::Leave) {
-      auto widget = static_cast<QWidget*>(watched);
-      if(!widget->rect().contains(widget->mapFromGlobal(QCursor::pos()))) {
-        m_stylist->unmatch(Hover());
-      }
+      poll_mouse();
     } else if(event->type() == QEvent::EnabledChange) {
       if(!m_stylist->m_widget->isEnabled()) {
         m_stylist->match(Disabled());
@@ -62,6 +71,20 @@ struct Stylist::StyleEventFilter : QObject {
         break;
       }
       proxy = proxy->focusProxy();
+    }
+  }
+
+  void poll_mouse() {
+    if(!m_stylist->get_widget().rect().contains(
+        m_stylist->get_widget().mapFromGlobal(QCursor::pos()))) {
+      m_stylist->unmatch(Hover());
+    } else {
+      auto hovered_widget = qApp->widgetAt(QCursor::pos());
+      if(hovered_widget && contains(m_stylist->get_widget(), *hovered_widget)) {
+        QTimer::singleShot(50, this, [=] { poll_mouse(); });
+      } else {
+        m_stylist->unmatch(Hover());
+      }
     }
   }
 };

@@ -20,13 +20,16 @@ bool IsASelector::operator !=(const IsASelector& selector) const {
   return !(*this == selector);
 }
 
-std::vector<Stylist*> Spire::Styles::select(const IsASelector& selector,
-    Stylist& source) {
-  if(source.get_pseudo_element()) {
-    return {};
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const IsASelector& selector, std::unordered_set<Stylist*> sources) {
+  for(auto i = sources.begin(); i != sources.end();) {
+    auto& source = **i;
+    if(source.get_pseudo_element() ||
+        !selector.is_instance(source.get_widget())) {
+      i = sources.erase(i);
+    } else {
+      ++i;
+    }
   }
-  if(selector.is_instance(source.get_widget())) {
-    return std::vector{&source};
-  }
-  return {};
+  return sources;
 }

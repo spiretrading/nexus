@@ -28,36 +28,27 @@ AndSelector Spire::Styles::operator &&(Selector left, Selector right) {
   return AndSelector(std::move(left), std::move(right));
 }
 
-std::vector<Stylist*> Spire::Styles::select(
-    const AndSelector& selector, Stylist& source) {
-  auto left_selection = select(selector.get_left(), source);
-  auto right_selection = std::vector<Stylist*>();
-  for(auto base : left_selection) {
-    auto base_selection = select(selector.get_right(), *base);
-    right_selection.insert(right_selection.end(), base_selection.begin(),
-      base_selection.end());
-  }
-  if(left_selection.empty() || right_selection.empty()) {
+std::unordered_set<Stylist*> Spire::Styles::select(
+    const AndSelector& selector, std::unordered_set<Stylist*> sources) {
+  auto left = select(selector.get_left(), sources);
+  if(left.empty()) {
     return {};
   }
-  if(left_selection.size() == 1 && right_selection.size() == 1) {
-    if(left_selection.front() == right_selection.front()) {
-      return left_selection;
-    }
+  auto right = select(selector.get_right(), sources);
+  if(right.empty()) {
     return {};
   }
-  auto [small, big] = [&] () {
-    if(left_selection.size() < right_selection.size()) {
-      return std::tie(left_selection, right_selection);
-    }
-    return std::tie(right_selection, left_selection);
-  }();
-  auto small_set = std::unordered_set(small.begin(), small.end());
-  auto selection = std::vector<Stylist*>();
-  for(auto& candidate : big) {
-    if(small_set.find(candidate) != small_set.end()) {
-      selection.push_back(candidate);
+  if(left.size() == 1 && right.size() == 1 &&
+      *left.begin() == *right.begin()) {
+    return left;
+  }
+  for(auto i = left.begin(); i != left.end();) {
+    auto match = *i;
+    if(right.find(match) == right.end()) {
+      i = left.erase(i);
+    } else {
+      ++i;
     }
   }
-  return selection;
+  return left;
 }

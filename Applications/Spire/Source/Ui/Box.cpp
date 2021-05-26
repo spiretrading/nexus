@@ -37,6 +37,10 @@ BorderColor Spire::Styles::border_color(Expression<QColor> color) {
   return BorderColor(color, color, color, color);
 }
 
+BorderRadius Spire::Styles::border_radius(Expression<int> radius) {
+  return BorderRadius(radius, radius, radius, radius);
+}
+
 Border Spire::Styles::border(Expression<int> size, Expression<QColor> color) {
   return Border(border_size(size), border_color(color));
 }
@@ -163,6 +167,26 @@ void Box::on_style() {
       [&] (const BorderLeftColor& color) {
         style += "border-left-color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
+      },
+      [&] (const BorderTopLeftRadius& radius) {
+        auto computed_size = radius.get_expression().as<int>();
+        style += "border-top-left-radius: " +
+          QString::number(computed_size) + "px;";
+      },
+      [&] (const BorderTopRightRadius& radius) {
+        auto computed_size = radius.get_expression().as<int>();
+        style += "border-top-right-radius: " +
+          QString::number(computed_size) + "px;";
+      },
+      [&] (const BorderBottomRightRadius& radius) {
+        auto computed_size = radius.get_expression().as<int>();
+        style += "border-bottom-right-radius: " +
+          QString::number(computed_size) + "px;";
+      },
+      [&] (const BorderBottomLeftRadius& radius) {
+        auto computed_size = radius.get_expression().as<int>();
+        style += "border-bottom-left-radius: " +
+          QString::number(computed_size) + "px;";
       },
       [&] (const PaddingTop& size) {
         auto computed_size = size.get_expression().as<int>();

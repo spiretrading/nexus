@@ -30,15 +30,22 @@ using namespace Spire::Styles;
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_int_property("border-size", 1));
+  properties.push_back(make_standard_int_property("border-radius", 0));
   properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
       auto box = new Box(nullptr);
       box->resize(scale(100, 100));
+      auto& border_size = get<int>("border-size", profile.get_properties());
+      auto& border_radius = get<int>("border-radius",
+        profile.get_properties());
       auto style = StyleSheet();
       style.get(Any()).
         set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-        set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(border(scale_width(border_size.get()),
+          QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(Styles::border_radius(scale_width(border_radius.get()))).
         set(horizontal_padding(scale_width(8)));
       style.get(Hover() || Focus()).
         set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
@@ -46,6 +53,18 @@ UiProfile Spire::make_box_profile() {
         set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
         set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
       set_style(*box, std::move(style));
+      border_size.connect_changed_signal([&, box = box] (auto size) {
+        auto style = get_style(*box);
+        style.get(Any()).set(Styles::border_size(scale_width(
+          border_size.get())));
+        set_style(*box, style);
+      });
+      border_radius.connect_changed_signal([&, box = box] (auto radius) {
+        auto style = get_style(*box);
+        style.get(Any()).set(Styles::border_radius(scale_width(
+          border_radius.get())));
+        set_style(*box, style);
+      });
       apply_widget_properties(box, profile.get_properties());
       auto& warning = get<bool>("display_warning", profile.get_properties());
       warning.connect_changed_signal([&warning, box] (auto is_playing_warning) {
@@ -319,6 +338,7 @@ UiProfile Spire::make_duration_box_profile() {
     "10:10:10.000"));
   properties.push_back(make_standard_qstring_property("maximum",
     "20:20:20.000"));
+  properties.push_back(make_standard_bool_property("read_only"));
   properties.push_back(make_standard_bool_property("is_warning_displayed",
     true));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
@@ -354,6 +374,10 @@ UiProfile Spire::make_duration_box_profile() {
             duration_box->get_model()->set_current(*current_value);
           }
         }
+      });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        duration_box->set_read_only(is_read_only);
       });
       auto& is_warning_displayed = get<bool>("is_warning_displayed",
         profile.get_properties());
@@ -649,6 +673,56 @@ UiProfile Spire::make_text_box_profile() {
       text_box->connect_reject_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Reject")));
       return text_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_time_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_qstring_property("current", ""));
+  properties.push_back(make_standard_bool_property("read_only"));
+  properties.push_back(make_standard_bool_property("is_warning_displayed",
+    true));
+  auto profile = UiProfile(QString::fromUtf8("TimeBox"), properties,
+    [] (auto& profile) {
+      auto parse_time = [] (auto time) -> boost::optional<time_duration> {
+        try {
+          return boost::posix_time::duration_from_string(
+            time.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      auto& current = get<QString>("current", profile.get_properties());
+      auto time_box = make_time_box();
+      apply_widget_properties(time_box, profile.get_properties());
+      current.connect_changed_signal([=] (auto value) {
+        if(auto current_value = parse_time(value)) {
+          if(time_box->get_model()->get_current() != *current_value) {
+            time_box->get_model()->set_current(*current_value);
+          }
+        }
+      });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        time_box->set_read_only(is_read_only);
+      });
+      auto& is_warning_displayed = get<bool>("is_warning_displayed",
+        profile.get_properties());
+      is_warning_displayed.connect_changed_signal([=] (auto value) {
+        time_box->set_warning_displayed(value);
+      });
+      time_box->get_model()->connect_current_signal(
+        profile.make_event_slot<optional<time_duration>>(
+        QString::fromUtf8("Current")));
+      time_box->connect_submit_signal(
+        profile.make_event_slot<optional<time_duration>>(
+        QString::fromUtf8("Submit")));
+      time_box->connect_reject_signal(
+        profile.make_event_slot<optional<time_duration>>(
+        QString::fromUtf8("Reject")));
+      return time_box;
     });
   return profile;
 }

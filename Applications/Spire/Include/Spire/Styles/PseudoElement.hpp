@@ -3,6 +3,7 @@
 #include <any>
 #include <functional>
 #include <typeindex>
+#include <unordered_set>
 #include <utility>
 #include "Spire/Styles/Styles.hpp"
 
@@ -28,12 +29,13 @@ namespace Spire::Styles {
       bool operator !=(const PseudoElement& selector) const;
 
     private:
-      friend std::vector<Stylist*> select(const PseudoElement&, Stylist&);
+      friend std::unordered_set<Stylist*>
+        select(const PseudoElement&, std::unordered_set<Stylist*>);
       std::any m_pseudo_element;
-      std::function<bool (const PseudoElement&, const PseudoElement&)>
-        m_is_equal;
-      std::function<std::vector<Stylist*> (const PseudoElement&, Stylist&)>
-        m_select;
+      std::function<
+        bool (const PseudoElement&, const PseudoElement&)> m_is_equal;
+      std::function<std::unordered_set<Stylist*> (
+        const PseudoElement&, std::unordered_set<Stylist*>)> m_select;
   };
 
   /**
@@ -81,35 +83,34 @@ namespace Spire::Styles {
   /** Returns the hash value of a PseudoElement. */
   std::size_t hash_value(const PseudoElement& element);
 
-  std::vector<Stylist*> select(const PseudoElement& selector, Stylist& source);
+  std::unordered_set<Stylist*>
+    select(const PseudoElement& selector, std::unordered_set<Stylist*> sources);
 
   template<typename T, typename G>
-  std::vector<Stylist*> select(const PseudoElementSelector<T, G>& selector,
-      Stylist& source) {
-    if(!source.get_pseudo_element()) {
-      if(auto pseudo_stylist = find_stylist(source.get_widget(), selector)) {
-        return {pseudo_stylist};
+  std::unordered_set<Stylist*>
+      select(const PseudoElementSelector<T, G>& selector,
+        std::unordered_set<Stylist*> sources) {
+    auto selection = std::unordered_set<Stylist*>();
+    for(auto source : sources) {
+      if(auto pseudo_stylist = find_stylist(source->get_widget(), selector)) {
+        selection.insert(pseudo_stylist);
       }
-      return {};
     }
-    if(source.get_pseudo_element() == PseudoElement(selector)) {
-      return {&source};
-    }
-    return {};
+    return selection;
   }
 
   template<typename T, typename G>
   PseudoElement::PseudoElement(PseudoElementSelector<T, G> element)
     : m_pseudo_element(std::move(element)),
       m_is_equal([] (const PseudoElement& left, const PseudoElement& right) {
-        if(left.get_type() != right.get_type()) {
-          return false;
-        }
-        return left.as<PseudoElementSelector<T, G>>() ==
-          right.as<PseudoElementSelector<T, G>>();
+        return left.get_type() == right.get_type() &&
+          left.as<PseudoElementSelector<T, G>>() ==
+            right.as<PseudoElementSelector<T, G>>();
       }),
-      m_select([] (const PseudoElement& element, Stylist& stylist) {
-        return select(element.as<PseudoElementSelector<T, G>>(), stylist);
+      m_select([] (
+          const PseudoElement& element, std::unordered_set<Stylist*> sources) {
+        return
+          select(element.as<PseudoElementSelector<T, G>>(), std::move(sources));
       }) {}
 
   template<typename U>
@@ -155,9 +156,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::PseudoElement> {
-    auto operator ()(const Spire::Styles::PseudoElement& element) const {
-      return Spire::Styles::hash_value(element);
-    }
+    std::size_t operator ()(const Spire::Styles::PseudoElement& element) const;
   };
 }
 
