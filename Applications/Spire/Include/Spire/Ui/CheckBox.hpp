@@ -23,14 +23,14 @@ namespace Styles {
       using CheckedSignal = Signal<void (bool is_checked)>;
 
       /**
-       * Constructs a CheckBox using a LocalCheckModel.
+       * Constructs a CheckBox using a LocalBooleanModel with an initial value
+       * of false.
        * @param parent The parent widget.
        */
       explicit CheckBox(QWidget* parent = nullptr);
   
       /**
-       * Constructs a CheckBox using a LocalBooleanModel and an initial value
-       * of false.
+       * Constructs a CheckBox.
        * @param model The check state's model.
        * @param parent The parent widget.
        */
