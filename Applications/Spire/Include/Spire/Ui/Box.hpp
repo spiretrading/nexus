@@ -21,6 +21,9 @@ namespace Styles {
   /** Sets the size of the left border. */
   using BorderLeftSize = BasicProperty<int, struct BorderLeftSizeTag>;
 
+  /** Sets the border radius. */
+  using BorderRadius = BasicProperty<int, struct BorderRadiusTag>;
+
   /** Composes all border size properties. */
   using BorderSize = CompositeProperty<BorderTopSize, BorderRightSize,
     BorderBottomSize, BorderLeftSize>;

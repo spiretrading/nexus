@@ -164,6 +164,10 @@ void Box::on_style() {
         style += "border-left-color: " +
           color.get_expression().as<QColor>().name(QColor::HexArgb) + ";";
       },
+      [&] (const BorderRadius& size) {
+        auto computed_size = size.get_expression().as<int>();
+        style += "border-radius: " + QString::number(computed_size) + "px;";
+      },
       [&] (const PaddingTop& size) {
         auto computed_size = size.get_expression().as<int>();
         style += "padding-top: " + QString::number(computed_size) + "px;";
