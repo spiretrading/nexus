@@ -76,7 +76,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   m_market_highlight_checkbox_model =
     std::make_shared<AssociativeValueModel<QString>>("none");
   m_highlight_none_checkbox = new CheckBox(
-    m_market_highlight_checkbox_model->make_association("none"), this);
+    m_market_highlight_checkbox_model->get_association("none"), this);
   m_highlight_none_checkbox->set_label(tr("Highlight None"));
   m_highlight_none_checkbox->connect_checked_signal([=] (auto is_checked) {
     on_highlight_none_checkbox_checked(is_checked);
@@ -84,7 +84,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->addWidget(m_highlight_none_checkbox, 16);
   market_highlight_layout->addStretch(10);
   m_highlight_top_level_checkbox = new CheckBox(
-    m_market_highlight_checkbox_model->make_association("top_level"), this);
+    m_market_highlight_checkbox_model->get_association("top_level"), this);
   m_highlight_top_level_checkbox->set_label(tr("Highlight Top Level"));
   m_highlight_top_level_checkbox->connect_checked_signal(
     [=] (auto is_checked) {
@@ -93,7 +93,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->addWidget(m_highlight_top_level_checkbox, 16);
   market_highlight_layout->addStretch(10);
   m_highlight_all_levels_checkbox = new CheckBox(
-    m_market_highlight_checkbox_model->make_association("all"), this);
+    m_market_highlight_checkbox_model->get_association("all"), this);
   m_highlight_all_levels_checkbox->set_label(tr("Highlight All Levels"));
   m_highlight_all_levels_checkbox->connect_checked_signal(
     [=] (auto is_checked) {
@@ -135,19 +135,19 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     std::make_shared<AssociativeValueModel<OrderHighlight>>(
       OrderHighlight::HIGHLIGHT_ORDERS);
   m_hide_orders_checkbox = new CheckBox(
-    m_orders_checkbox_model->make_association(OrderHighlight::HIDE_ORDERS),
+    m_orders_checkbox_model->get_association(OrderHighlight::HIDE_ORDERS),
     this);
   m_hide_orders_checkbox->set_label(tr("Hide Orders"));
   orders_layout->addWidget(m_hide_orders_checkbox, 16);
   orders_layout->addStretch(10);
   m_display_orders_checkbox = new CheckBox(
-    m_orders_checkbox_model->make_association(OrderHighlight::DISPLAY_ORDERS),
+    m_orders_checkbox_model->get_association(OrderHighlight::DISPLAY_ORDERS),
     this);
   m_display_orders_checkbox->set_label(tr("Display Orders"));
   orders_layout->addWidget(m_display_orders_checkbox, 16);
   orders_layout->addStretch(10);
   m_highlight_orders_checkbox = new CheckBox(
-    m_orders_checkbox_model->make_association(
+    m_orders_checkbox_model->get_association(
       OrderHighlight::HIGHLIGHT_ORDERS), this);
   m_highlight_orders_checkbox->set_label(tr("Highlight Orders"));
   m_highlight_orders_checkbox->get_model()->set_current(true);
