@@ -80,6 +80,9 @@ namespace {
     }
 
     optional<int> get_maximum() const {
+      if(auto maximum = m_source->get_maximum()) {
+        return static_cast<int>(maximum->hours());
+      }
       return none;
     }
 
@@ -351,6 +354,22 @@ namespace {
     find_stylist(*colon).match(Colon());
     return colon;
   }
+
+  auto align_colon(StyleSheet style, StyleSheet colon_style) {
+    auto number_height = 0;
+    auto colon_height = 0;
+    auto font_style = find<TextStyle>(colon_style.find(Any())->get_block());
+    if(font_style) {
+      auto font_metrics = QFontMetrics(
+        font_style->get<Font>().get_expression().as<QFont>());
+      number_height = font_metrics.boundingRect('0').height();
+      colon_height = font_metrics.boundingRect(':').height();
+    }
+    style.get(Any() > Colon()).
+      set(PaddingBottom(scale_height(static_cast<int>((number_height -
+        colon_height) / 2.0f + 0.5f))));
+    return style;
+  }
 }
 
 DurationBox::DurationBox(QWidget* parent)
@@ -387,7 +406,8 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
-  set_style(*container, COLON_FIELD_STYLE(get_style(*container)));
+  set_style(*container, align_colon(COLON_FIELD_STYLE(get_style(*container)),
+    get_style(*hour_minute_colon)));
   auto box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -541,4 +561,24 @@ void DurationBox::on_reject() {
     m_is_rejected = true;
     match(*this, Rejected());
   }
+}
+
+DurationBox* Spire::make_time_box(const optional<time_duration>& time,
+    QWidget* parent) {
+  return new DurationBox(make_time_of_day_model(time), parent);
+}
+
+DurationBox* Spire::make_time_box(QWidget* parent) {
+  return make_time_box(none, parent);
+}
+
+std::shared_ptr<OptionalDurationModel> Spire::make_time_of_day_model() {
+  return make_time_of_day_model(none);
+}
+
+std::shared_ptr<OptionalDurationModel> Spire::make_time_of_day_model(
+    const optional<time_duration>& time) {
+  auto model = std::make_shared<LocalOptionalDurationModel>(time);
+  model->set_maximum(hours(23) + minutes(59) + seconds(59) + millisec(999));
+  return model;
 }

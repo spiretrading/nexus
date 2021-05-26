@@ -11,6 +11,8 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class ArrayListModel;
+  class ArrayTableModel;
   class Box;
   class Button;
   class CalendarDayWidget;
@@ -34,6 +36,7 @@ namespace Spire {
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
+  class ListModel;
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
   using LocalDurationModel =
@@ -50,6 +53,7 @@ namespace Spire {
   class RangeInputSlider;
   class RangeInputWidget;
   class RealSpinBox;
+  class RowViewListModel;
   template<typename T> class ScalarValueModel;
   using OptionalDurationModel =
     ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
@@ -66,8 +70,8 @@ namespace Spire {
   class SortedTableModel;
   class TabWidget;
   class TableModel;
-  class TableModelTransactionLog;
   class TextBox;
+  class TimeBox;
   class TitleBar;
   class Tooltip;
   class TransitionWidget;

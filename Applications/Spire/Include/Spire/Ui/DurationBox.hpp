@@ -83,6 +83,31 @@ namespace Styles {
       void on_submit();
       void on_reject();
   };
+
+  /**
+   * Returns a newly constructed time box.
+   * @param time The time displayed in the time box.
+   * @param parent The parent widget.
+   */
+  DurationBox* make_time_box(
+    const boost::optional<boost::posix_time::time_duration>& time,
+    QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed time box without a default time.
+   * @param parent The parent widget.
+   */
+  DurationBox* make_time_box(QWidget* parent = nullptr);
+
+  /** Returns a model which represents a time of day. */
+  std::shared_ptr<OptionalDurationModel> make_time_of_day_model();
+
+  /**
+   * Returns a model which represents a time of day.
+   * @param time The current time of day.
+   */
+  std::shared_ptr<OptionalDurationModel> make_time_of_day_model(
+    const boost::optional<boost::posix_time::time_duration>& time);
 }
 
 #endif

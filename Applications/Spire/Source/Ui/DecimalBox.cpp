@@ -296,10 +296,7 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
       m_submission(m_model->get_current()),
-      m_modifiers(std::move(modifiers)),
-      m_mouse_wheel_orientation(Qt::Vertical) {
-  setAttribute(Qt::WA_NativeWindow);
-  setAttribute(Qt::WA_DontCreateNativeAncestors);
+      m_modifiers(std::move(modifiers)) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
@@ -369,9 +366,7 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 void DecimalBox::wheelEvent(QWheelEvent* event) {
   if(hasFocus() && !is_read_only()) {
     auto angle_delta = [&] {
-      if(m_mouse_wheel_orientation == Qt::Horizontal) {
-        return 0;
-      } else if(event->modifiers().testFlag(Qt::AltModifier)) {
+      if(event->modifiers().testFlag(Qt::AltModifier)) {
         return event->angleDelta().x();
       } else {
         return event->angleDelta().y();
@@ -384,17 +379,6 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
     }
   }
   QWidget::wheelEvent(event);
-}
-
-bool DecimalBox::nativeEvent(const QByteArray& eventType, void* message,
-    long* result) {
-  auto msg = reinterpret_cast<MSG*>(message);
-  if(msg->message == WM_MOUSEHWHEEL) {
-    m_mouse_wheel_orientation = Qt::Horizontal;
-  } else if(msg->message == WM_MOUSEWHEEL) {
-    m_mouse_wheel_orientation = Qt::Vertical;
-  }
-  return QWidget::nativeEvent(eventType, message, result);
 }
 
 void DecimalBox::decrement() {
