@@ -1,12 +1,11 @@
 #ifndef SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #define SPIRE_ASSOCIATIVE_VALUE_MODEL_HPP
 #include <functional>
-#include <queue>
 #include <boost/functional/hash.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/ValueModel.hpp"
 
 namespace std {
   template<typename T>
@@ -33,50 +32,37 @@ namespace Spire {
       using Type = typename ValueModel<T>::Type;
 
       /**
-       * Constructs an AssociativeValueModel and associates a BooleanModel with
-       * a default constructed value as the default value.
+       * Constructs an AssociativeValueModel using a default constructed value
+       * as the model's default value.
        */
       AssociativeValueModel();
 
       /**
-       * Constructs an AssociativeValueModel with a default value. The default
-       * value is associated with a BooleanModel that is set to true if all
-       * associated models become false.
-       * @param default_value The default value.
+       * Constructs an AssociativeValueModel with a default value used when
+       * the BooleanModel whose current value is <code>true</code> is set to
+       * <code>false</code>.
+       * @param default The default value.
        */
-      explicit AssociativeValueModel(Type default_value);
+      explicit AssociativeValueModel(Type default);
 
       /**
-       * Constructs an AssociativeValueModel with a default value associated
-       * with a given model.
-       * @param model The model to associate with the default value.
-       * @param default_value The default value.
-       */
-      AssociativeValueModel(std::shared_ptr<BooleanModel> model,
-        Type default_value);
-
-      /**
-       * Associates a BooleanModel with the given value. If the given
-       * BooleanModel has a value of true it's set to false.
-       * @param model The model to associate.
-       * @param value The associated value.
-       */
-      void associate(const std::shared_ptr<BooleanModel>& model,
-        const Type& value);
-
-      /**
-       * Constructs a LocalBooleanModel and associates it with the given
-       * value.
-       * @param value The associated value.
+       * Returns a BooleanModel whose current value is <code>true</code>
+       * whenever <code>this</code> model's current value is a specified value,
+       * and vice-versa.
+       * @param value The value used to engage the returned BooleanModel,
+       *        when <code>this</code> has a current value of <i>value</i> then
+       *        the returned model will have a current value of
+       *        <code>true</code> and vice-versa.
        * @return The associated model.
        */
-      std::shared_ptr<BooleanModel> make_association(const Type& value);
+      std::shared_ptr<BooleanModel> get_association(const Type& value);
 
       /**
-       * Finds the model associated with a value.
+       * Finds the model associated with a value if one exists, otherwise
+       * returns <code>nullptr</code>.
        * @param value The model's associated value.
-       * @return The associated model, or nullptr if no associated model was
-       *         found.
+       * @return The associated model or <code>nullptr</code> if no associated
+       *         model was found.
        */
       std::shared_ptr<BooleanModel> find(const Type& value) const;
 
@@ -106,17 +92,27 @@ namespace Spire {
         const typename CurrentSignal::slot_type& slot) const override;
 
     private:
-      mutable CurrentSignal m_current_signal;
-      Type m_current;
-      Type m_default_value;
-      std::unordered_map<Type, std::shared_ptr<BooleanModel>> m_models;
-      std::unordered_map<Type, boost::signals2::scoped_connection>
-        m_connections;
-      std::queue<Type> m_current_queue;
-      bool m_is_blocked;
+      struct InnerModel : ValueModel<bool> {
+        using Type = ValueModel<bool>::Type;
 
-      void set_associated_model_value(const Type& value, bool model_value);
-      void on_current(const Type& value, bool is_selected);
+        void update(bool value);
+        void signal() const;
+        QValidator::State get_state() const override;
+        const Type& get_current() const override;
+        QValidator::State set_current(const Type& value) override;
+        boost::signals2::connection connect_current_signal(
+          const typename CurrentSignal::slot_type& slot) const override;
+
+        mutable CurrentSignal m_current_signal;
+        bool m_current;
+        std::function<void (bool)> m_slot;
+      };
+      mutable CurrentSignal m_current_signal;
+      std::unordered_map<Type, std::shared_ptr<InnerModel>> m_models;
+      const Type* m_default;
+      const Type* m_current;
+
+      void on_current(const Type& value, bool current);
   };
 
   template<typename T>
@@ -124,38 +120,33 @@ namespace Spire {
     : AssociativeValueModel(Type{}) {}
 
   template<typename T>
-  AssociativeValueModel<T>::AssociativeValueModel(Type default_value)
-    : AssociativeValueModel(std::make_shared<LocalBooleanModel>(true),
-        default_value) {}
-
-  template<typename T>
-  AssociativeValueModel<T>::AssociativeValueModel(
-      std::shared_ptr<BooleanModel> model, Type default_value)
-      : m_default_value(std::move(default_value)),
-        m_is_blocked(false) {
-    associate(model, m_default_value);
+  AssociativeValueModel<T>::AssociativeValueModel(Type default) {
+    auto model = std::make_shared<InnerModel>();
+    m_default = &m_models.emplace(std::move(default), model).first->first;
+    m_current = m_default;
+    model->m_current = true;
+    model->m_slot = [=, value = m_current] (auto current) {
+      on_current(*value, current);
+    };
   }
 
   template<typename T>
-  void AssociativeValueModel<T>::associate(
-      const std::shared_ptr<BooleanModel>& model, const Type& value) {
-    m_models.insert_or_assign(value, model);
-    model->set_current(value == m_current);
-    m_connections.insert_or_assign(value, model->connect_current_signal(
-      [=] (auto is_selected) { on_current(value, is_selected); }));
-  }
-
-  template<typename T>
-  std::shared_ptr<BooleanModel> AssociativeValueModel<T>::make_association(
-      const Type& value) {
-    auto model = std::make_shared<LocalBooleanModel>(false);
-    associate(model, value);
+  std::shared_ptr<BooleanModel>
+      AssociativeValueModel<T>::get_association(const Type& value) {
+    auto model = find(value);
+    if(!model) {
+      auto model = std::make_shared<InnerModel>();
+      auto entry = &m_models.emplace(value, model).first->first;
+      model->m_current = false;
+      model->m_slot = [=] (auto current) { on_current(*entry, current); };
+      return model;
+    }
     return model;
   }
 
   template<typename T>
-  std::shared_ptr<BooleanModel> AssociativeValueModel<T>::find(
-      const Type& value) const {
+  std::shared_ptr<BooleanModel>
+      AssociativeValueModel<T>::find(const Type& value) const {
     auto i = m_models.find(value);
     if(i == m_models.end()) {
       return nullptr;
@@ -165,39 +156,33 @@ namespace Spire {
 
   template<typename T>
   QValidator::State AssociativeValueModel<T>::get_state() const {
-    return QValidator::Acceptable;
+    return QValidator::State::Acceptable;
   }
 
   template<typename T>
   const typename AssociativeValueModel<T>::Type&
       AssociativeValueModel<T>::get_current() const {
-    return m_current;
+    return *m_current;
   }
 
   template<typename T>
   QValidator::State AssociativeValueModel<T>::set_current(const Type& value) {
-    //qDebug() << "set_current";
-    if(m_models.find(value) == m_models.end()) {
+    auto i = m_models.find(value);
+    if(i == m_models.end()) {
       return QValidator::Invalid;
     }
-    if(m_is_blocked) {
-      m_current_queue.push(value);
-      return QValidator::Intermediate;
+    auto next_current = i->second;
+    auto previous_current = m_models.at(*m_current);
+    if(next_current == previous_current) {
+      return QValidator::Acceptable;
     }
-    m_is_blocked = true;
-    auto previous = m_current;
-    m_current = value;
-    if(previous != m_current) {
-      set_associated_model_value(previous, false);
-      set_associated_model_value(m_current, true);
-    }
-    m_current_signal(m_current);
-    m_is_blocked = false;
-    if(!m_current_queue.empty()) {
-      auto current_value = m_current_queue.front();
-      m_current_queue.pop();
-      set_current(current_value);
-    }
+    previous_current->update(false);
+    next_current->update(true);
+    m_current = &i->first;
+    previous_current->signal();
+    next_current->signal();
+    auto current = m_current;
+    m_current_signal(*current);
     return QValidator::Acceptable;
   }
 
@@ -208,36 +193,50 @@ namespace Spire {
   }
 
   template<typename T>
-  void AssociativeValueModel<T>::set_associated_model_value(const Type& value,
-      bool model_value) {
-    if(auto i = m_models.find(value); i != m_models.end()) {
-      i->second->set_current(model_value);
+  void AssociativeValueModel<T>::on_current(const Type& value, bool current) {
+    if(current) {
+      set_current(value);
+    } else {
+      set_current(*m_default);
     }
   }
 
   template<typename T>
-  void AssociativeValueModel<T>::on_current(const Type& value,
-      bool is_selected) {
-    //qDebug() << "on_current: " << is_selected;
-    if(value == m_current && is_selected ||
-        value != m_current && !is_selected) {
-      return;
-    } else if(m_current == value && !is_selected) {
-      set_associated_model_value(value, true);
-      set_current(m_default_value);
-      return;
-    }
-    set_current(value);
+  void AssociativeValueModel<T>::InnerModel::update(bool value) {
+    m_current = value;
   }
 
   template<typename T>
-  std::shared_ptr<AssociativeValueModel<boost::optional<T>>>
-      make_nullable_associative_model() {
-    auto model =
-      std::make_shared<AssociativeValueModel<boost::optional<T>>>(
-        boost::optional<T>(boost::none));
-    model->associate(std::make_shared<LocalBooleanModel>(true), boost::none);
-    return model;
+  void AssociativeValueModel<T>::InnerModel::signal() const {
+    auto current = m_current;
+    m_current_signal(current);
+  }
+
+  template<typename T>
+  QValidator::State AssociativeValueModel<T>::InnerModel::get_state() const {
+    return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  const typename AssociativeValueModel<T>::InnerModel::Type&
+      AssociativeValueModel<T>::InnerModel::get_current() const {
+    return m_current;
+  }
+
+  template<typename T>
+  QValidator::State AssociativeValueModel<T>::InnerModel::set_current(
+      const Type& value) {
+    if(value != m_current) {
+      m_slot(value);
+    }
+    return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  boost::signals2::connection
+      AssociativeValueModel<T>::InnerModel::connect_current_signal(
+        const typename CurrentSignal::slot_type& slot) const {
+    return m_current_signal.connect(slot);
   }
 }
 
