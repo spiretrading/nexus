@@ -39,6 +39,7 @@ namespace Spire {
   class ListModel;
   template<typename T> class LocalScalarValueModel;
   template<typename T> class LocalValueModel;
+  using LocalBooleanModel = LocalValueModel<bool>;
   using LocalDurationModel =
     LocalScalarValueModel<boost::posix_time::time_duration>;
   using LocalIntegerModel = LocalScalarValueModel<int>;
@@ -77,6 +78,7 @@ namespace Spire {
   class TransitionWidget;
   class TranslatedTableModel;
   template<typename T> class ValueModel;
+  using BooleanModel = ValueModel<bool>;
   using TextModel = ValueModel<QString>;
   class Window;
 
