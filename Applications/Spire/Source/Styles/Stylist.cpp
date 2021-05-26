@@ -108,7 +108,8 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 
 Stylist::~Stylist() {
   m_widget = nullptr;
-  clear_animations();
+  m_evaluators.clear();
+  get_animation_timer().disconnect(m_animation_connection);
   for(auto& block : m_source_to_block) {
     block.second->m_source->m_dependents.erase(this);
   }
@@ -231,8 +232,7 @@ connection Stylist::connect_style_signal(
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
-      m_visibility(VisibilityOption::VISIBLE),
-      m_animation_count(0) {
+      m_visibility(VisibilityOption::VISIBLE) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -297,12 +297,28 @@ void Stylist::apply_rules() {
 }
 
 void Stylist::apply_style() {
-  clear_animations();
+  auto style = compute_style();
+  if(!m_evaluators.empty()) {
+    for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
+      auto j = std::find_if(
+        style.get_properties().begin(), style.get_properties().end(),
+        [&] (const auto& property) {
+          return property.get_type() == i->first;
+        });
+      if(j == style.get_properties().end() || *j != i->second->m_property) {
+        i = m_evaluators.erase(i);
+      } else {
+        ++i;
+      }
+    }
+    if(m_evaluators.empty()) {
+      get_animation_timer().disconnect(m_animation_connection);
+    }
+  }
   m_style_signal();
   if(m_pseudo_element) {
     return;
   }
-  auto style = compute_style();
   if(auto visibility = Spire::Styles::find<Visibility>(style)) {
     evaluate(*visibility, [=] (auto visibility) {
       if(visibility != m_visibility) {
@@ -341,18 +357,9 @@ connection Stylist::connect_enable_signal(
 }
 
 void Stylist::connect_animation() {
-  m_animation_connection.emplace(QObject::connect(
-    &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); }));
+  m_animation_connection = QObject::connect(
+    &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); });
   m_last_frame = std::chrono::steady_clock::now();
-}
-
-void Stylist::clear_animations() {
-  if(m_animation_count == 0) {
-    return;
-  }
-  m_evaluators.clear();
-  m_animation_count = 0;
-  get_animation_timer().disconnect(*m_animation_connection);
 }
 
 void Stylist::on_enable() {
@@ -360,26 +367,15 @@ void Stylist::on_enable() {
 }
 
 void Stylist::on_animation() {
-  for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
+  for(auto& evaluator_pair : m_evaluators) {
     auto delta = time_duration(
       microseconds(std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now() - m_last_frame).count()));
-    auto& evaluator = *i->second;
+    auto& evaluator = *evaluator_pair.second;
     evaluator.m_next_frame -= delta;
     if(evaluator.m_next_frame <= seconds(0)) {
       evaluator.animate();
-      if(evaluator.m_next_frame == pos_infin) {
-        i = m_evaluators.erase(i);
-        --m_animation_count;
-        if(m_animation_count == 0) {
-          get_animation_timer().disconnect(*m_animation_connection);
-        }
-      } else {
-        evaluator.m_elapsed += std::max(delta, evaluator.m_next_frame);
-        ++i;
-      }
-    } else {
-      ++i;
+      evaluator.m_elapsed += std::max(delta, evaluator.m_next_frame);
     }
   }
   m_last_frame = std::chrono::steady_clock::now();
@@ -437,6 +433,9 @@ Block Spire::Styles::compute_style(
   }
   return {};
 }
+
+Stylist::BaseEvaluatorEntry::BaseEvaluatorEntry(Property property)
+  : m_property(std::move(property)) {}
 
 std::vector<PseudoElement> Spire::Styles::get_pseudo_elements(
     const QWidget& source) {

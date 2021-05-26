@@ -136,9 +136,11 @@ namespace Spire::Styles {
         Block m_block;
       };
       struct BaseEvaluatorEntry {
+        Property m_property;
         boost::posix_time::time_duration m_elapsed;
         boost::posix_time::time_duration m_next_frame;
 
+        BaseEvaluatorEntry(Property property);
         virtual ~BaseEvaluatorEntry() = default;
         virtual void animate() = 0;
       };
@@ -148,7 +150,7 @@ namespace Spire::Styles {
         Evaluator<Type> m_evaluator;
         std::vector<std::function<void (const Type&)>> m_receivers;
 
-        EvaluatorEntry(Evaluator<Type> evaluator);
+        EvaluatorEntry(Property property, Evaluator<Type> evaluator);
         void animate() override;
       };
       using EnableSignal = Signal<void ()>;
@@ -175,9 +177,8 @@ namespace Spire::Styles {
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
-      int m_animation_count;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
-      boost::optional<QMetaObject::Connection> m_animation_connection;
+      QMetaObject::Connection m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
@@ -190,7 +191,6 @@ namespace Spire::Styles {
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
       void connect_animation();
-      void clear_animations();
       void on_enable();
       void on_animation();
   };
@@ -262,8 +262,10 @@ namespace Spire::Styles {
     const Stylist::StyleSignal::slot_type& slot);
 
   template<typename T>
-  Stylist::EvaluatorEntry<T>::EvaluatorEntry(Evaluator<Type> evaluator)
-    : m_evaluator(std::move(evaluator)) {}
+  Stylist::EvaluatorEntry<T>::EvaluatorEntry(
+    Property property, Evaluator<Type> evaluator)
+    : BaseEvaluatorEntry(std::move(property)),
+      m_evaluator(std::move(evaluator)) {}
 
   template<typename T>
   void Stylist::EvaluatorEntry<T>::animate() {
@@ -283,12 +285,11 @@ namespace Spire::Styles {
       auto evaluation = evaluator(boost::posix_time::seconds(0));
       if(evaluation.m_next_frame != boost::posix_time::pos_infin) {
         auto entry = std::make_unique<EvaluatorEntry<typename Property::Type>>(
-          std::move(evaluator));
+          property, std::move(evaluator));
         entry->m_receivers.push_back(std::forward<F>(receiver));
         auto& receiver = entry->m_receivers.back();
         m_evaluators.emplace(typeid(Property), std::move(entry));
-        ++m_animation_count;
-        if(m_animation_count == 1) {
+        if(m_evaluators.size() == 1) {
           connect_animation();
         }
         receiver(std::move(evaluation.m_value));

@@ -3,6 +3,9 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -42,8 +45,7 @@ namespace {
   }
 
   template<typename Model, typename F>
-  void on_current(Model& model, const boost::optional<time_duration>& current,
-      F&& f) {
+  void on_current(Model& model, const optional<time_duration>& current, F&& f) {
     if(current) {
       auto field = std::forward<F>(f)(*current);
       if(!field && !model.m_current) {
@@ -245,6 +247,11 @@ namespace {
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(Rejected()).
+      set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+        linear(QColor(0xFFF1F1), QColor(0xFFFFFF), milliseconds(300))))).
+      set(border_color(chain(timeout(QColor(0xB71C1C), milliseconds(550)),
+        QColor::fromRgb(0x4B, 0x23, 0xA0))));
     return style;
   }
 
@@ -309,7 +316,6 @@ namespace {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
-//    field->set_warning_displayed(false);
     set_style(*field, HOUR_FIELD_STYLE(get_style(*field)));
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -320,7 +326,6 @@ namespace {
     auto field = new IntegerBox(std::move(model), create_modifiers<int>());
     field->setMinimumWidth(scale_width(28));
     field->set_placeholder("mm");
-//    field->set_warning_displayed(false);
     set_style(*field, MINUTE_FIELD_STYLE(get_style(*field)));
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -333,7 +338,6 @@ namespace {
       new DecimalBox(std::move(model), create_modifiers<DecimalBox::Decimal>());
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
-//    field->set_warning_displayed(false);
     set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -357,7 +361,8 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
     : QWidget(parent),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
-      m_is_read_only(false) {
+      m_is_read_only(false),
+      m_is_rejected(false) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto hour_model = std::make_shared<HourModel>(m_model);
@@ -411,6 +416,8 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
     [=] (const auto& value) { on_reject(); });
   m_second_field->connect_reject_signal(
     [=] (const auto& value) { on_reject(); });
+  m_model->connect_current_signal(
+    [=] (const auto& value) { on_current(value); });
 }
 
 const std::shared_ptr<OptionalDurationModel>& DurationBox::get_model() const {
@@ -497,6 +504,13 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void DurationBox::on_current(const optional<time_duration>& current) {
+  if(m_is_rejected) {
+    m_is_rejected = false;
+    unmatch(*this, Rejected());
+  }
+}
+
 void DurationBox::on_submit() {
   if(m_model->get_state() != QValidator::State::Acceptable) {
     on_reject();
@@ -523,5 +537,8 @@ void DurationBox::on_reject() {
   auto submission = m_submission;
   m_reject_signal(current);
   m_model->set_current(submission);
-  match(*this, Rejected());
+  if(!m_is_rejected) {
+    m_is_rejected = true;
+    match(*this, Rejected());
+  }
 }

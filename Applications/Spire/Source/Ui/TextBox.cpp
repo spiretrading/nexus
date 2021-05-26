@@ -105,7 +105,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_line_edit_styles{[=] { commit_style(); }},
       m_placeholder_styles{[=] { commit_placeholder_style(); }},
       m_model(std::move(model)),
-      m_submission(m_model->get_current()) {
+      m_submission(m_model->get_current()),
+      m_is_rejected(false) {
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
@@ -385,7 +386,10 @@ void TextBox::commit_placeholder_style() {
 }
 
 void TextBox::on_current(const QString& current) {
-  unmatch(*this, Rejected());
+  if(m_is_rejected) {
+    m_is_rejected = false;
+    unmatch(*this, Rejected());
+  }
   update_display_text();
   update_placeholder_text();
 }
@@ -398,7 +402,10 @@ void TextBox::on_editing_finished() {
     } else {
       m_reject_signal(m_model->get_current());
       m_model->set_current(m_submission);
-      match(*this, Rejected());
+      if(!m_is_rejected) {
+        m_is_rejected = true;
+        match(*this, Rejected());
+      }
     }
   }
 }

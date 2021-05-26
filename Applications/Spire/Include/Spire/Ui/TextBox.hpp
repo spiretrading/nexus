@@ -138,6 +138,7 @@ namespace Styles {
       QString m_submission;
       QString m_placeholder_text;
       TextValidator* m_text_validator;
+      bool m_is_rejected;
 
       bool is_placeholder_shown() const;
       QString get_elided_text(

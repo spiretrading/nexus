@@ -76,7 +76,10 @@ namespace Styles {
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
       bool m_is_read_only;
+      bool m_is_rejected;
 
+      void on_current(
+        const boost::optional<boost::posix_time::time_duration>& current);
       void on_submit();
       void on_reject();
   };
