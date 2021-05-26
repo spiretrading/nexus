@@ -652,11 +652,6 @@ UiProfile Spire::make_time_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         time_box->set_read_only(is_read_only);
       });
-      auto& is_warning_displayed = get<bool>("is_warning_displayed",
-        profile.get_properties());
-      is_warning_displayed.connect_changed_signal([=] (auto value) {
-        time_box->set_warning_displayed(value);
-      });
       time_box->get_model()->connect_current_signal(
         profile.make_event_slot<optional<time_duration>>(
         QString::fromUtf8("Current")));

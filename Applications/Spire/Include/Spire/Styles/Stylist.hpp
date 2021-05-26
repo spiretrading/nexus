@@ -56,6 +56,9 @@ namespace Spire::Styles {
   /** Sets the display mode. */
   using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
 
+  template<typename T>
+  class UnsetExpression;
+
   /** Keeps track of a widget's styling. */
   class Stylist {
     public:
@@ -160,6 +163,9 @@ namespace Spire::Styles {
       friend boost::signals2::connection connect_style_signal(
         const QWidget& widget, const PseudoElement& pseudo_element,
         const Stylist::StyleSignal::slot_type& slot);
+      template<typename T>
+      friend Evaluator<T>
+        make_evaluator(UnsetExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
@@ -188,6 +194,8 @@ namespace Spire::Styles {
       void apply_rules();
       void apply_style();
       void apply_proxy_styles();
+      template<typename T>
+      Evaluator<T> unset() const;
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
       void connect_animation();
@@ -303,6 +311,17 @@ namespace Spire::Styles {
     evaluator.m_receivers.push_back(std::forward<F>(receiver));
     evaluator.m_receivers.back()(
       evaluator.m_evaluator(evaluator.m_elapsed).m_value);
+  }
+
+  template<typename T>
+  Evaluator<T> Stylist::unset() const {
+    auto property = Property();
+    for(auto& block : m_blocks) {
+      if(block->m_source != this) {
+      }
+    }
+    return Evaluator<T>(T());
+//    return make_evaluator(property.get_expression(), *this);
   }
 }
 
