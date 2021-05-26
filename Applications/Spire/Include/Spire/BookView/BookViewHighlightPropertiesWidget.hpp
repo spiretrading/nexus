@@ -38,6 +38,8 @@ namespace Spire {
       CheckBox* m_highlight_top_level_checkbox;
       CheckBox* m_highlight_all_levels_checkbox;
       ColorSelectorButton* m_market_highlight_color_button;
+      std::shared_ptr<AssociativeValueModel<QString>>
+        m_market_highlight_checkbox_model;
       std::shared_ptr<AssociativeValueModel<
         BookViewProperties::OrderHighlight>> m_orders_checkbox_model;
       CheckBox* m_hide_orders_checkbox;

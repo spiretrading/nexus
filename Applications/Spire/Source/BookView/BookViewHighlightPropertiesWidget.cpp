@@ -73,14 +73,18 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->setContentsMargins({});
   market_highlight_layout->setSpacing(0);
   market_highlight_layout->addStretch(26);
-  m_highlight_none_checkbox = new CheckBox(this);
+  m_market_highlight_checkbox_model =
+    std::make_shared<AssociativeValueModel<QString>>("none");
+  m_highlight_none_checkbox = new CheckBox(
+    m_market_highlight_checkbox_model->make_association("none"), this);
   m_highlight_none_checkbox->set_label(tr("Highlight None"));
   m_highlight_none_checkbox->connect_checked_signal([=] (auto is_checked) {
     on_highlight_none_checkbox_checked(is_checked);
   });
   market_highlight_layout->addWidget(m_highlight_none_checkbox, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_top_level_checkbox = new CheckBox(this);
+  m_highlight_top_level_checkbox = new CheckBox(
+    m_market_highlight_checkbox_model->make_association("top_level"), this);
   m_highlight_top_level_checkbox->set_label(tr("Highlight Top Level"));
   m_highlight_top_level_checkbox->connect_checked_signal(
     [=] (auto is_checked) {
@@ -88,17 +92,14 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     });
   market_highlight_layout->addWidget(m_highlight_top_level_checkbox, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_all_levels_checkbox = new CheckBox(this);
+  m_highlight_all_levels_checkbox = new CheckBox(
+    m_market_highlight_checkbox_model->make_association("all"), this);
   m_highlight_all_levels_checkbox->set_label(tr("Highlight All Levels"));
   m_highlight_all_levels_checkbox->connect_checked_signal(
     [=] (auto is_checked) {
       on_highlight_all_levels_checkbox_checked(is_checked);
     });
   market_highlight_layout->addWidget(m_highlight_all_levels_checkbox, 16);
-  //auto market_checkbox_button_group = new QButtonGroup(this);
-  //market_checkbox_button_group->addButton(m_highlight_none_checkbox);
-  //market_checkbox_button_group->addButton(m_highlight_top_level_checkbox);
-  //market_checkbox_button_group->addButton(m_highlight_all_levels_checkbox);
   market_highlight_layout->addStretch(18);
   auto market_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   auto generic_label_text_style = QString(R"(
