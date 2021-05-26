@@ -30,15 +30,22 @@ using namespace Spire::Styles;
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_int_property("border-size", 1));
+  properties.push_back(make_standard_int_property("border-radius", 0));
   properties.push_back(make_standard_bool_property("display_warning"));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
       auto box = new Box(nullptr);
       box->resize(scale(100, 100));
+      auto& border_size = get<int>("border-size", profile.get_properties());
+      auto& border_radius = get<int>("border-radius",
+        profile.get_properties());
       auto style = StyleSheet();
       style.get(Any()).
         set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-        set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(border(scale_width(border_size.get()),
+          QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+        set(Styles::border_radius(scale_width(border_radius.get()))).
         set(horizontal_padding(scale_width(8)));
       style.get(Hover() || Focus()).
         set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
@@ -46,6 +53,18 @@ UiProfile Spire::make_box_profile() {
         set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
         set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
       set_style(*box, std::move(style));
+      border_size.connect_changed_signal([&, box = box] (auto size) {
+        auto style = get_style(*box);
+        style.get(Any()).set(Styles::border_size(scale_width(
+          border_size.get())));
+        set_style(*box, style);
+      });
+      border_radius.connect_changed_signal([&, box = box] (auto radius) {
+        auto style = get_style(*box);
+        style.get(Any()).set(Styles::border_radius(scale_width(
+          border_radius.get())));
+        set_style(*box, style);
+      });
       apply_widget_properties(box, profile.get_properties());
       auto& warning = get<bool>("display_warning", profile.get_properties());
       warning.connect_changed_signal([&warning, box] (auto is_playing_warning) {

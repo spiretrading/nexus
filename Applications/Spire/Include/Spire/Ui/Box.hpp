@@ -21,6 +21,26 @@ namespace Styles {
   /** Sets the size of the left border. */
   using BorderLeftSize = BasicProperty<int, struct BorderLeftSizeTag>;
 
+  /** Sets the radius of the border's top left corner. */
+  using BorderTopLeftRadius = BasicProperty<int,
+    struct BorderTopLeftRadiusTag>;
+
+  /** Sets the radius of the border's top right corner. */
+  using BorderTopRightRadius = BasicProperty<int,
+    struct BorderTopRightRadiusTag>;
+
+  /** Sets the radius of the border's bottom right corner. */
+  using BorderBottomRightRadius = BasicProperty<int,
+    struct BorderBottomRightRadiusTag>;
+
+  /** Sets the radius of the border's bottom left corner. */
+  using BorderBottomLeftRadius = BasicProperty<int,
+    struct BorderBottomLeftRadiusTag>;
+
+  /** Composes all border radius properties. */
+  using BorderRadius = CompositeProperty<BorderTopLeftRadius,
+    BorderTopRightRadius, BorderBottomRightRadius, BorderBottomLeftRadius>;
+
   /** Composes all border size properties. */
   using BorderSize = CompositeProperty<BorderTopSize, BorderRightSize,
     BorderBottomSize, BorderLeftSize>;
@@ -80,6 +100,12 @@ namespace Styles {
    * @param color The color to apply to all borders.
    */
   BorderColor border_color(Expression<QColor> color);
+
+  /**
+   * Applies a radius to all four corners of a border.
+   * @param radius The radius to apply to all borders.
+   */
+  BorderRadius border_radius(Expression<int> radius);
 
   /**
    * Applies a single color and size to all four corners of a border.
