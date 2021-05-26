@@ -45,7 +45,7 @@ UiProfile Spire::make_box_profile() {
         style.get(Any()).
           set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
           set(border(border_size.get(), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-          set(BorderRadius(scale_width(border_radius.get()))).
+          set(Styles::border_radius(scale_width(border_radius.get()))).
           set(horizontal_padding(scale_width(8)));
         style.get(Hover() || Focus()).
           set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
