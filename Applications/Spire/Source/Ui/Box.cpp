@@ -14,6 +14,10 @@ BorderColor Spire::Styles::border_color(Expression<QColor> color) {
   return BorderColor(color, color, color, color);
 }
 
+BorderRadius Spire::Styles::border_radius(Expression<int> radius) {
+  return BorderRadius(radius, radius, radius, radius);
+}
+
 Border Spire::Styles::border(Expression<int> size, Expression<QColor> color) {
   return Border(border_size(size), border_color(color));
 }
@@ -173,6 +177,26 @@ void Box::on_style() {
         [&] (const BorderLeftColor& color) {
           stylist.evaluate(color, [=] (auto color) {
             m_styles.set("border-left-color", color);
+          });
+        },
+        [&] (const BorderTopLeftRadius& radius) {
+          stylist.evaluate(radius, [=] (auto radius) {
+            m_styles.set("border-top-left-radius", radius);
+          });
+        },
+        [&] (const BorderTopRightRadius& radius) {
+          stylist.evaluate(radius, [=] (auto radius) {
+            m_styles.set("border-top-right-radius", radius);
+          });
+        },
+        [&] (const BorderBottomRightRadius& radius) {
+          stylist.evaluate(radius, [=] (auto radius) {
+            m_styles.set("border-bottom-right-radius", radius);
+          });
+        },
+        [&] (const BorderBottomLeftRadius& radius) {
+          stylist.evaluate(radius, [=] (auto radius) {
+            m_styles.set("border-bottom-left-radius", radius);
           });
         },
         [&] (const PaddingTop& size) {
