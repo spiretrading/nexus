@@ -57,7 +57,7 @@ namespace Spire::Styles {
   using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
 
   template<typename T>
-  class UnsetExpression;
+  class RevertExpression;
 
   /** Keeps track of a widget's styling. */
   class Stylist {
@@ -165,7 +165,7 @@ namespace Spire::Styles {
         const Stylist::StyleSignal::slot_type& slot);
       template<typename T>
       friend Evaluator<T>
-        make_evaluator(UnsetExpression<T> expression, const Stylist& stylist);
+        make_evaluator(RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
@@ -197,7 +197,7 @@ namespace Spire::Styles {
       void apply_proxy_styles();
       boost::optional<Property> find_reverted_property() const;
       template<typename T>
-      Evaluator<T> unset() const;
+      Evaluator<T> revert() const;
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
       void connect_animation();
@@ -317,7 +317,7 @@ namespace Spire::Styles {
   }
 
   template<typename T>
-  Evaluator<T> Stylist::unset() const {
+  Evaluator<T> Stylist::revert() const {
     auto reverted_property = find_reverted_property();
     if(!reverted_property) {
       return Evaluator<T>();

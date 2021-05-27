@@ -5,7 +5,7 @@
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Styles/UnsetExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
@@ -43,9 +43,9 @@ namespace {
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Rejected()).
       set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
-        linear(QColor(0xFFF1F1), unset, milliseconds(300))))).
+        linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
       set(border_color(
-        chain(timeout(QColor(0xB71C1C), milliseconds(550)), unset)));
+        chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
     style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
     style.get(Disabled() / Placeholder()).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
