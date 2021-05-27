@@ -150,17 +150,16 @@ bool OrderImbalanceIndicatorContextMenu::eventFilter(QObject* watched,
 
 void OrderImbalanceIndicatorContextMenu::add_checkbox(const QString& text,
     ToggledSignal& signal) {
-  auto checkbox = new CheckBox(this);
-  checkbox->set_label(text);
-  checkbox->setFixedSize(CHECK_BOX_SIZE());
-  checkbox->get_model()->set_current(true);
-  checkbox->setLayoutDirection(Qt::RightToLeft);
+  auto check_box = new CheckBox(this);
+  check_box->set_label(text);
+  check_box->setFixedSize(CHECK_BOX_SIZE());
+  check_box->get_model()->set_current(true);
+  check_box->setLayoutDirection(Qt::RightToLeft);
   auto action = new QWidgetAction(this);
-  action->setDefaultWidget(checkbox);
+  action->setDefaultWidget(check_box);
   m_table_columns_menu->addAction(action);
-  checkbox->connect_checked_signal([signal = &signal] (auto is_checked) {
-    (*signal)(is_checked);
-  });
+  check_box->get_model()->connect_current_signal(
+    [signal = &signal] (auto is_checked) { (*signal)(is_checked); });
 }
 
 void OrderImbalanceIndicatorContextMenu::add_menu_item(const QString& text,

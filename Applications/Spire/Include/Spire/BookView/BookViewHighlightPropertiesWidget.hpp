@@ -33,26 +33,32 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
+      enum class MarketHighlightType {
+        ALL_LEVELS,
+        NONE,
+        TOP_LEVEL,
+      };
+
       QListWidget* m_markets_list_widget;
-      std::shared_ptr<AssociativeValueModel<QString>>
-        m_market_highlight_checkbox_model;
-      CheckBox* m_highlight_none_checkbox;
-      CheckBox* m_highlight_top_level_checkbox;
-      CheckBox* m_highlight_all_levels_checkbox;
+      AssociativeValueModel<MarketHighlightType>
+        m_market_highlight_check_box_model;
+      CheckBox* m_highlight_none_check_box;
+      CheckBox* m_highlight_top_level_check_box;
+      CheckBox* m_highlight_all_levels_check_box;
       ColorSelectorButton* m_market_highlight_color_button;
-      std::shared_ptr<AssociativeValueModel<
-        BookViewProperties::OrderHighlight>> m_orders_checkbox_model;
-      CheckBox* m_hide_orders_checkbox;
-      CheckBox* m_display_orders_checkbox;
-      CheckBox* m_highlight_orders_checkbox;
+      AssociativeValueModel<BookViewProperties::OrderHighlight>
+        m_orders_check_box_model;
+      CheckBox* m_hide_orders_check_box;
+      CheckBox* m_display_orders_check_box;
+      CheckBox* m_highlight_orders_check_box;
       ColorSelectorButton* m_order_highlight_color_button;
 
       void update_market_widgets();
       void update_market_list_stylesheet(int selected_item_index);
       void on_market_highlight_color_selected(const QColor& color);
-      void on_highlight_none_checkbox_checked(bool is_checked);
-      void on_highlight_top_level_checkbox_checked(bool is_checked);
-      void on_highlight_all_levels_checkbox_checked(bool is_checked);
+      void on_highlight_none_check_box_checked(bool is_checked);
+      void on_highlight_top_level_check_box_checked(bool is_checked);
+      void on_highlight_all_levels_check_box_checked(bool is_checked);
   };
 }
 

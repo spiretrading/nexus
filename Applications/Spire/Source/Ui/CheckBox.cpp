@@ -21,7 +21,7 @@ namespace {
 
   auto DEFAULT_STYLE(Qt::LayoutDirection direction) {
     auto style = StyleSheet();
-    auto alignment = [=] {
+    auto alignment = [&] {
       if(direction == Qt::LeftToRight) {
         return Qt::AlignRight;
       }
@@ -113,11 +113,11 @@ void CheckBox::set_read_only(bool is_read_only) {
     if(m_is_read_only) {
       setAttribute(Qt::WA_TransparentForMouseEvents);
       setFocusPolicy(Qt::NoFocus);
-      find_stylist(*this).match(ReadOnly());
+      match(*this, ReadOnly());
     } else {
       setAttribute(Qt::WA_TransparentForMouseEvents, false);
       setFocusPolicy(Qt::StrongFocus);
-      find_stylist(*this).unmatch(ReadOnly());
+      unmatch(*this, ReadOnly());
     }
   }
 }
@@ -126,17 +126,10 @@ QSize CheckBox::sizeHint() const {
   return scale(80, 16);
 }
 
-connection CheckBox::connect_checked_signal(
-    const CheckedSignal::slot_type& slot) const {
-  return m_checked_signal.connect(slot, connect_position::at_front);
-}
-
 void CheckBox::on_checked(bool is_checked) {
-  auto& stylist = find_stylist(*this);
   if(is_checked) {
-    stylist.match(Checked());
+    match(*this, Checked());
   } else {
-    stylist.unmatch(Checked());
+    unmatch(*this, Checked());
   }
-  m_checked_signal(is_checked);
 }

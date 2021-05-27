@@ -17,12 +17,6 @@ namespace Styles {
     public:
 
       /**
-      * Signals that the checked state has changed.
-      * @param is_checked True iff the CheckBox is checked.
-      */
-      using CheckedSignal = Signal<void (bool is_checked)>;
-
-      /**
        * Constructs a CheckBox using a LocalBooleanModel with an initial value
        * of false.
        * @param parent The parent widget.
@@ -55,15 +49,10 @@ namespace Styles {
 
       QSize sizeHint() const override;
 
-      /** Connects a slot to the checked signal. */
-      boost::signals2::connection connect_checked_signal(
-        const CheckedSignal::slot_type& slot) const;
-
     protected:
       void changeEvent(QEvent* event) override;
 
     private:
-      mutable CheckedSignal m_checked_signal;
       std::shared_ptr<BooleanModel> m_model;
       bool m_is_read_only;
       Icon* m_check;

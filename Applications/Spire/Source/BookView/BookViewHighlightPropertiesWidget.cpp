@@ -17,7 +17,9 @@ using OrderHighlight = BookViewProperties::OrderHighlight;
 
 BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     const BookViewProperties& properties, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_market_highlight_check_box_model(MarketHighlightType::NONE),
+      m_orders_check_box_model(OrderHighlight::HIGHLIGHT_ORDERS) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, scale_height(8), 0, scale_height(20));
   layout->setSpacing(0);
@@ -73,33 +75,36 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->setContentsMargins({});
   market_highlight_layout->setSpacing(0);
   market_highlight_layout->addStretch(26);
-  m_market_highlight_checkbox_model =
-    std::make_shared<AssociativeValueModel<QString>>("none");
-  m_highlight_none_checkbox = new CheckBox(
-    m_market_highlight_checkbox_model->get_association("none"), this);
-  m_highlight_none_checkbox->set_label(tr("Highlight None"));
-  m_highlight_none_checkbox->connect_checked_signal([=] (auto is_checked) {
-    on_highlight_none_checkbox_checked(is_checked);
-  });
-  market_highlight_layout->addWidget(m_highlight_none_checkbox, 16);
-  market_highlight_layout->addStretch(10);
-  m_highlight_top_level_checkbox = new CheckBox(
-    m_market_highlight_checkbox_model->get_association("top_level"), this);
-  m_highlight_top_level_checkbox->set_label(tr("Highlight Top Level"));
-  m_highlight_top_level_checkbox->connect_checked_signal(
+  m_highlight_none_check_box = new CheckBox(
+    m_market_highlight_check_box_model.get_association(MarketHighlightType::NONE), this);
+  m_highlight_none_check_box->set_label(tr("Highlight None"));
+  m_highlight_none_check_box->get_model()->connect_current_signal(
     [=] (auto is_checked) {
-      on_highlight_top_level_checkbox_checked(is_checked);
+      on_highlight_none_check_box_checked(is_checked);
     });
-  market_highlight_layout->addWidget(m_highlight_top_level_checkbox, 16);
+  market_highlight_layout->addWidget(m_highlight_none_check_box, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_all_levels_checkbox = new CheckBox(
-    m_market_highlight_checkbox_model->get_association("all"), this);
-  m_highlight_all_levels_checkbox->set_label(tr("Highlight All Levels"));
-  m_highlight_all_levels_checkbox->connect_checked_signal(
+  m_highlight_top_level_check_box = new CheckBox(
+    m_market_highlight_check_box_model.get_association(
+      MarketHighlightType::TOP_LEVEL),
+    this);
+  m_highlight_top_level_check_box->set_label(tr("Highlight Top Level"));
+  m_highlight_top_level_check_box->get_model()->connect_current_signal(
     [=] (auto is_checked) {
-      on_highlight_all_levels_checkbox_checked(is_checked);
+      on_highlight_top_level_check_box_checked(is_checked);
     });
-  market_highlight_layout->addWidget(m_highlight_all_levels_checkbox, 16);
+  market_highlight_layout->addWidget(m_highlight_top_level_check_box, 16);
+  market_highlight_layout->addStretch(10);
+  m_highlight_all_levels_check_box = new CheckBox(
+    m_market_highlight_check_box_model.get_association(
+      MarketHighlightType::ALL_LEVELS),
+    this);
+  m_highlight_all_levels_check_box->set_label(tr("Highlight All Levels"));
+  m_highlight_all_levels_check_box->get_model()->connect_current_signal(
+    [=] (auto is_checked) {
+      on_highlight_all_levels_check_box_checked(is_checked);
+    });
+  market_highlight_layout->addWidget(m_highlight_all_levels_check_box, 16);
   market_highlight_layout->addStretch(18);
   auto market_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   auto generic_label_text_style = QString(R"(
@@ -131,27 +136,24 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  m_orders_checkbox_model =
-    std::make_shared<AssociativeValueModel<OrderHighlight>>(
-      OrderHighlight::HIGHLIGHT_ORDERS);
-  m_hide_orders_checkbox = new CheckBox(
-    m_orders_checkbox_model->get_association(OrderHighlight::HIDE_ORDERS),
+  m_hide_orders_check_box = new CheckBox(
+    m_orders_check_box_model.get_association(OrderHighlight::HIDE_ORDERS),
     this);
-  m_hide_orders_checkbox->set_label(tr("Hide Orders"));
-  orders_layout->addWidget(m_hide_orders_checkbox, 16);
+  m_hide_orders_check_box->set_label(tr("Hide Orders"));
+  orders_layout->addWidget(m_hide_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_display_orders_checkbox = new CheckBox(
-    m_orders_checkbox_model->get_association(OrderHighlight::DISPLAY_ORDERS),
+  m_display_orders_check_box = new CheckBox(
+    m_orders_check_box_model.get_association(OrderHighlight::DISPLAY_ORDERS),
     this);
-  m_display_orders_checkbox->set_label(tr("Display Orders"));
-  orders_layout->addWidget(m_display_orders_checkbox, 16);
+  m_display_orders_check_box->set_label(tr("Display Orders"));
+  orders_layout->addWidget(m_display_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_checkbox = new CheckBox(
-    m_orders_checkbox_model->get_association(
+  m_highlight_orders_check_box = new CheckBox(
+    m_orders_check_box_model.get_association(
       OrderHighlight::HIGHLIGHT_ORDERS), this);
-  m_highlight_orders_checkbox->set_label(tr("Highlight Orders"));
-  m_highlight_orders_checkbox->get_model()->set_current(true);
-  orders_layout->addWidget(m_highlight_orders_checkbox, 16);
+  m_highlight_orders_check_box->set_label(tr("Highlight Orders"));
+  m_highlight_orders_check_box->get_model()->set_current(true);
+  orders_layout->addWidget(m_highlight_orders_check_box, 16);
   orders_layout->addStretch(18);
   auto order_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   order_highlight_color_label->setStyleSheet(generic_label_text_style);
@@ -176,10 +178,10 @@ void BookViewHighlightPropertiesWidget::apply(
         *highlight);
     }
   }
-  if(m_highlight_orders_checkbox->get_model()->get_current()) {
+  if(m_highlight_orders_check_box->get_model()->get_current()) {
     properties.set_order_highlight(
       BookViewProperties::OrderHighlight::HIGHLIGHT_ORDERS);
-  } else if(m_display_orders_checkbox->get_model()->get_current()) {
+  } else if(m_display_orders_check_box->get_model()->get_current()) {
     properties.set_order_highlight(
       BookViewProperties::OrderHighlight::DISPLAY_ORDERS);
   } else {
@@ -202,13 +204,13 @@ void BookViewHighlightPropertiesWidget::update_market_widgets() {
   if(selected_item.is_initialized()) {
     m_market_highlight_color_button->set_color(selected_item->m_color);
     if(selected_item->m_highlight_all_levels) {
-      m_highlight_all_levels_checkbox->get_model()->set_current(true);
+      m_highlight_all_levels_check_box->get_model()->set_current(true);
     } else {
-      m_highlight_top_level_checkbox->get_model()->set_current(true);
+      m_highlight_top_level_check_box->get_model()->set_current(true);
     }
   } else {
     m_market_highlight_color_button->set_color(Qt::white);
-    m_highlight_none_checkbox->get_model()->set_current(true);
+    m_highlight_none_check_box->get_model()->set_current(true);
   }
   update_market_list_stylesheet(m_markets_list_widget->currentRow());
 }
@@ -251,7 +253,7 @@ void BookViewHighlightPropertiesWidget::on_market_highlight_color_selected(
 }
 
 void BookViewHighlightPropertiesWidget::
-    on_highlight_none_checkbox_checked(bool is_checked) {
+    on_highlight_none_check_box_checked(bool is_checked) {
   if(is_checked) {
     auto current_item = static_cast<MarketListItem*>(
       m_markets_list_widget->currentItem());
@@ -263,7 +265,7 @@ void BookViewHighlightPropertiesWidget::
 }
 
 void BookViewHighlightPropertiesWidget::
-    on_highlight_top_level_checkbox_checked(bool is_checked) {
+    on_highlight_top_level_check_box_checked(bool is_checked) {
   if(is_checked) {
     static_cast<MarketListItem*>(m_markets_list_widget->currentItem())->
       set_highlight_top_level();
@@ -271,7 +273,7 @@ void BookViewHighlightPropertiesWidget::
 }
 
 void BookViewHighlightPropertiesWidget::
-    on_highlight_all_levels_checkbox_checked(bool is_checked) {
+    on_highlight_all_levels_check_box_checked(bool is_checked) {
   if(is_checked) {
     static_cast<MarketListItem*>(m_markets_list_widget->currentItem())->
       set_highlight_all_levels();
