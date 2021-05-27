@@ -46,8 +46,8 @@ namespace Spire::Styles {
       boost::posix_time::time_duration m_duration;
   };
 
-  template<typename T>
-  LinearExpression(T&&, T&&, boost::posix_time::time_duration) ->
+  template<typename T, typename U>
+  LinearExpression(T&&, U&&, boost::posix_time::time_duration) ->
     LinearExpression<expression_type_t<T>>;
 
   /**

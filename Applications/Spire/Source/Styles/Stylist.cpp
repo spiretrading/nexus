@@ -232,7 +232,8 @@ connection Stylist::connect_style_signal(
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
-      m_visibility(VisibilityOption::VISIBLE) {
+      m_visibility(VisibilityOption::VISIBLE),
+      m_evaluated_property(typeid(void)) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -300,12 +301,8 @@ void Stylist::apply_style() {
   auto style = compute_style();
   if(!m_evaluators.empty()) {
     for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
-      auto j = std::find_if(
-        style.get_properties().begin(), style.get_properties().end(),
-        [&] (const auto& property) {
-          return property.get_type() == i->first;
-        });
-      if(j == style.get_properties().end() || *j != i->second->m_property) {
+      auto property = find(style, i->first);
+      if(!property || *property != i->second->m_property) {
         i = m_evaluators.erase(i);
       } else {
         ++i;
@@ -349,6 +346,31 @@ void Stylist::apply_proxy_styles() {
   for(auto proxy : m_proxies) {
     proxy->apply_proxy_styles();
   }
+}
+
+optional<Property> Stylist::find_reverted_property() const {
+  auto property = boost::optional<Property>();
+  auto reverted_property = boost::optional<Property>();
+  auto principals = std::deque<const Stylist*>();
+  principals.push_back(this);
+  while(!principals.empty()) {
+    auto principal = principals.front();
+    principals.pop_front();
+    principals.insert(principals.end(), principal->m_principals.begin(),
+      principal->m_principals.end());
+    for(auto& rule : principal->m_style.get_rules()) {
+      auto selection = select(rule.get_selector(), *const_cast<Stylist*>(this));
+      for(auto& selected : selection) {
+        if(selected == this) {
+          if(property) {
+            reverted_property.emplace(std::move(*property));
+          }
+          property = find(rule.get_block(), m_evaluated_property);
+        }
+      }
+    }
+  }
+  return reverted_property;
 }
 
 connection Stylist::connect_enable_signal(

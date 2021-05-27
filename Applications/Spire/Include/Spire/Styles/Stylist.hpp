@@ -183,6 +183,7 @@ namespace Spire::Styles {
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
+      std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
       QMetaObject::Connection m_animation_connection;
 
@@ -194,6 +195,7 @@ namespace Spire::Styles {
       void apply_rules();
       void apply_style();
       void apply_proxy_styles();
+      boost::optional<Property> find_reverted_property() const;
       template<typename T>
       Evaluator<T> unset() const;
       boost::signals2::connection connect_enable_signal(
@@ -287,7 +289,8 @@ namespace Spire::Styles {
 
   template<typename Property, typename F>
   void Stylist::evaluate(const Property& property, F&& receiver) {
-    auto i = m_evaluators.find(typeid(Property));
+    m_evaluated_property = typeid(Property);
+    auto i = m_evaluators.find(m_evaluated_property);
     if(i == m_evaluators.end()) {
       auto evaluator = make_evaluator(property.get_expression(), *this);
       auto evaluation = evaluator(boost::posix_time::seconds(0));
@@ -296,7 +299,7 @@ namespace Spire::Styles {
           property, std::move(evaluator));
         entry->m_receivers.push_back(std::forward<F>(receiver));
         auto& receiver = entry->m_receivers.back();
-        m_evaluators.emplace(typeid(Property), std::move(entry));
+        m_evaluators.emplace(m_evaluated_property, std::move(entry));
         if(m_evaluators.size() == 1) {
           connect_animation();
         }
@@ -315,13 +318,11 @@ namespace Spire::Styles {
 
   template<typename T>
   Evaluator<T> Stylist::unset() const {
-    auto property = Property();
-    for(auto& block : m_blocks) {
-      if(block->m_source != this) {
-      }
+    auto reverted_property = find_reverted_property();
+    if(!reverted_property) {
+      return Evaluator<T>();
     }
-    return Evaluator<T>(T());
-//    return make_evaluator(property.get_expression(), *this);
+    return make_evaluator(reverted_property->expression_as<T>(), *this);
   }
 }
 

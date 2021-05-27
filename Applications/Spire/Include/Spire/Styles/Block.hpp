@@ -84,6 +84,13 @@ namespace Spire::Styles {
    * Finds a property of a given type within a Block.
    * @param block The block to search.
    */
+  boost::optional<Property>
+    find(const Block& block, const std::type_index& type);
+
+  /**
+   * Finds a property of a given type within a Block.
+   * @param block The block to search.
+   */
   template<typename T>
   boost::optional<CompositeProperty<T>> find(const Block& block,
       std::in_place_type_t<CompositeProperty<T>>) {

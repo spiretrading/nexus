@@ -1,10 +1,10 @@
 #ifndef SPIRE_STYLES_PROPERTY_HPP
 #define SPIRE_STYLES_PROPERTY_HPP
-#include <any>
 #include <typeindex>
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/BasicProperty.hpp"
+#include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
@@ -23,6 +23,10 @@ namespace Spire::Styles {
       /** Casts the underlying property to a specified type. */
       template<typename U>
       const U& as() const;
+
+      /** Casts the underlying property's expression to a specified type. */
+      template<typename U>
+      const Expression<U>& expression_as() const;
 
       /**
        * Applies a callable to the underlying property stored.
@@ -49,24 +53,43 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
-      std::any m_property;
-      std::function<bool (const Property&, const Property&)> m_is_equal;
+      struct BaseEntry {
+        virtual ~BaseEntry() = default;
+        virtual std::type_index get_type() const = 0;
+        virtual const void* expression_as(std::type_index type) const = 0;
+        virtual bool operator ==(const BaseEntry& entry) const = 0;
+        bool operator !=(const BaseEntry& entry) const;
+      };
+      template<typename T>
+      struct Entry : BaseEntry {
+        using Type = T;
+        Type m_property;
+
+        Entry(Type property);
+        std::type_index get_type() const override;
+        const void* expression_as(std::type_index type) const override;
+        bool operator ==(const BaseEntry& entry) const override;
+      };
+      std::shared_ptr<BaseEntry> m_entry;
   };
 
   template<typename T, typename G>
   Property::Property(BasicProperty<T, G> property)
-    : m_property(std::move(property)),
-      m_is_equal([] (const Property& left, const Property& right) {
-        if(left.get_type() != right.get_type()) {
-          return false;
-        }
-        return left.as<BasicProperty<T, G>>() ==
-          right.as<BasicProperty<T, G>>();
-      }) {}
+    : m_entry(
+        std::make_shared<Entry<BasicProperty<T, G>>>(std::move(property))) {}
 
   template<typename U>
   const U& Property::as() const {
-    return std::any_cast<const U&>(m_property);
+    if(m_entry->get_type() != typeid(U)) {
+      throw std::bad_any_cast();
+    }
+    return static_cast<const Entry<U>&>(*m_entry).m_property;
+  }
+
+  template<typename U>
+  const Expression<U>& Property::expression_as() const {
+    return
+      *static_cast<const Expression<U>*>(m_entry->expression_as(typeid(U)));
   }
 
   template<typename F>
@@ -75,8 +98,9 @@ namespace Spire::Styles {
       Beam::GetFunctionParameters<std::decay_t<F>>>::type;
     if constexpr(std::is_invocable_v<std::decay_t<F>>) {
       return std::forward<F>(f)();
-    } else if(m_property.type() == typeid(Parameter)) {
-      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_property));
+    } else if(m_entry->get_type() == typeid(Parameter)) {
+      return std::forward<F>(f)(
+        static_cast<const Entry<Parameter>&>(*m_entry).m_property);
     }
     if constexpr(!std::is_invocable_r_v<void, F, const Parameter&>) {
       throw std::bad_any_cast();
@@ -87,10 +111,34 @@ namespace Spire::Styles {
   decltype(auto) Property::visit(F&& f, G&&... g) const {
     using Parameter = typename TypeExtractor<
       Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if(m_property.type() == typeid(Parameter)) {
-      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_property));
+    if(m_entry->get_type() == typeid(Parameter)) {
+      return std::forward<F>(f)(
+        static_cast<const Entry<Parameter>&>(*m_entry).m_property);
     }
     return visit(std::forward<G>(g)...);
+  }
+
+  template<typename T>
+  Property::Entry<T>::Entry(Type property)
+    : m_property(std::move(property)) {}
+
+  template<typename T>
+  std::type_index Property::Entry<T>::get_type() const {
+    return typeid(Type);
+  }
+
+  template<typename T>
+  const void* Property::Entry<T>::expression_as(std::type_index type) const {
+    if(type != typeid(typename Type::Type)) {
+      throw std::bad_any_cast();
+    }
+    return &m_property.get_expression();
+  }
+
+  template<typename T>
+  bool Property::Entry<T>::operator ==(const BaseEntry& entry) const {
+    return entry.get_type() == typeid(Type) &&
+      m_property == static_cast<const Entry<Type>&>(entry).m_property;
   }
 }
 
