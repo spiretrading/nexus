@@ -195,9 +195,10 @@ namespace Spire::Styles {
       void apply_rules();
       void apply_style();
       void apply_proxy_styles();
-      boost::optional<Property> find_reverted_property() const;
+      boost::optional<Property>
+        find_reverted_property(std::type_index type) const;
       template<typename T>
-      Evaluator<T> revert() const;
+      Evaluator<T> revert(std::type_index type) const;
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
       void connect_animation();
@@ -317,8 +318,8 @@ namespace Spire::Styles {
   }
 
   template<typename T>
-  Evaluator<T> Stylist::revert() const {
-    auto reverted_property = find_reverted_property();
+  Evaluator<T> Stylist::revert(std::type_index type) const {
+    auto reverted_property = find_reverted_property(type);
     if(!reverted_property) {
       return Evaluator<T>();
     }

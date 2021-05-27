@@ -348,7 +348,7 @@ void Stylist::apply_proxy_styles() {
   }
 }
 
-optional<Property> Stylist::find_reverted_property() const {
+optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = boost::optional<Property>();
   auto reverted_property = boost::optional<Property>();
   auto principals = std::deque<const Stylist*>();
@@ -365,7 +365,7 @@ optional<Property> Stylist::find_reverted_property() const {
           if(property) {
             reverted_property.emplace(std::move(*property));
           }
-          property = find(rule.get_block(), m_evaluated_property);
+          property = find(rule.get_block(), type);
         }
       }
     }

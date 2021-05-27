@@ -5,6 +5,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -252,9 +253,9 @@ namespace {
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Rejected()).
       set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
-        linear(QColor(0xFFF1F1), QColor(0xFFFFFF), milliseconds(300))))).
-      set(border_color(chain(timeout(QColor(0xB71C1C), milliseconds(550)),
-        QColor::fromRgb(0x4B, 0x23, 0xA0))));
+        linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
+      set(border_color(
+        chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
     return style;
   }
 

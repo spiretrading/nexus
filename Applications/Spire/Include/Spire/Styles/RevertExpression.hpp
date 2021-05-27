@@ -43,7 +43,16 @@ namespace Spire::Styles {
   template<typename T>
   Evaluator<T>
       make_evaluator(RevertExpression<T> expression, const Stylist& stylist) {
-    return stylist.revert<T>();
+    using Type = T;
+    struct RevertEvaluator {
+      const Stylist* m_stylist;
+      std::type_index m_type;
+
+      Evaluation<Type> operator ()(boost::posix_time::time_duration frame) {
+        return m_stylist->revert<Type>(m_type)(frame);
+      }
+    };
+    return RevertEvaluator{&stylist, stylist.m_evaluated_property};
   }
 
   template<typename T>
