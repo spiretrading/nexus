@@ -321,7 +321,13 @@ namespace Spire::Styles {
   Evaluator<T> Stylist::revert(std::type_index type) const {
     auto reverted_property = find_reverted_property(type);
     if(!reverted_property) {
-      return Evaluator<T>();
+      return [] (auto frame) {
+        if constexpr(std::is_same_v<T, QColor>) {
+          return Evaluation(QColor(0, 0, 0, 0));
+        } else {
+          return Evaluation(T());
+        }
+      };
     }
     return make_evaluator(reverted_property->expression_as<T>(), *this);
   }
