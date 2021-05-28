@@ -205,11 +205,17 @@ void OverlayPanel::position() {
       return x;
     };
     if((parent_bottom_left.y() + height()) > screen_geometry.bottom()) {
+      layout()->setContentsMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
+        DROP_SHADOW_WIDTH(), 0);
+      update();
       move({get_x(parent_bottom_left.x()), parent_bottom_left.y() -
-        parent_geometry.height() - height() - scale_height(1)});
+        parent_geometry.height() - height() + scale_height(1)});
     } else {
-      move({get_x(parent_bottom_left.x()),
-        parent_bottom_left.y() + scale_height(1)});
+      layout()->setContentsMargins(DROP_SHADOW_WIDTH(), 0,
+        DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT());
+      update();
+      move({get_x(parent_bottom_left.x()), parent_bottom_left.y() +
+        scale_height(1)});
     }
   }
 }
