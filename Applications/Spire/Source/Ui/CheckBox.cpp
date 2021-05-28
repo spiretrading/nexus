@@ -85,9 +85,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   m_label->setDisabled(true);
   body_layout->addWidget(m_label);
   m_model->connect_current_signal([=] (auto is_checked) {
-    if(is_checked == m_model->get_current()) {
-      on_checked(is_checked);
-    }
+    on_checked(is_checked);
   });
   on_checked(m_model->get_current());
   set_style(*this, DEFAULT_STYLE(layoutDirection()));

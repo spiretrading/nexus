@@ -1,5 +1,5 @@
-#ifndef SPIRE_CHECKBOX_HPP
-#define SPIRE_CHECKBOX_HPP
+#ifndef SPIRE_CHECK_BOX_HPP
+#define SPIRE_CHECK_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -28,8 +28,8 @@ namespace Styles {
        * @param model The check state's model.
        * @param parent The parent widget.
        */
-      explicit CheckBox(std::shared_ptr<BooleanModel> model,
-        QWidget* parent = nullptr);
+      explicit CheckBox(
+        std::shared_ptr<BooleanModel> model, QWidget* parent = nullptr);
 
       /** Returns the model. */
       const std::shared_ptr<BooleanModel>& get_model() const;
