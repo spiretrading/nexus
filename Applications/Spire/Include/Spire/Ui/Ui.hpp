@@ -58,6 +58,7 @@ namespace Spire {
   using OptionalDurationModel =
     ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
   using OptionalIntegerModel = ScalarValueModel<boost::optional<int>>;
+  class OverlayPanel;
   using DurationModel = ScalarValueModel<boost::posix_time::time_duration>;
   using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
