@@ -239,8 +239,7 @@ namespace {
       set(BodyAlign(Qt::AlignCenter)).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(horizontal_padding(scale_width(4)));
-    style.get(Focus()).set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
-    style.get(Hover()).
+    style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
@@ -355,22 +354,6 @@ namespace {
     find_stylist(*colon).match(Colon());
     return colon;
   }
-
-  auto align_colon(StyleSheet style, StyleSheet colon_style) {
-    auto number_height = 0;
-    auto colon_height = 0;
-    auto font_style = find<TextStyle>(colon_style.find(Any())->get_block());
-    if(font_style) {
-      auto font_metrics = QFontMetrics(
-        font_style->get<Font>().get_expression().as<QFont>());
-      number_height = font_metrics.boundingRect('0').height();
-      colon_height = font_metrics.boundingRect(':').height();
-    }
-    style.get(Any() > Colon()).
-      set(PaddingBottom(scale_height(static_cast<int>((number_height -
-        colon_height) / 2.0f + 0.5f))));
-    return style;
-  }
 }
 
 DurationBox::DurationBox(QWidget* parent)
@@ -407,8 +390,6 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
-  set_style(*container, align_colon(COLON_FIELD_STYLE(get_style(*container)),
-    get_style(*hour_minute_colon)));
   auto box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});

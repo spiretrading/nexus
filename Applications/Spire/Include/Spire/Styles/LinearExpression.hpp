@@ -83,7 +83,8 @@ namespace Spire::Styles {
           if constexpr(std::is_same_v<Type, QColor>) {
             return QColor(transition(initial.red(), end.red()),
               transition(initial.green(), end.green()),
-              transition(initial.blue(), end.blue()));
+              transition(initial.blue(), end.blue()),
+              transition(initial.alpha(), end.alpha()));
           } else {
             return transition(initial, end);
           }

@@ -59,6 +59,9 @@ namespace Spire::Styles {
       template<typename E, typename = std::enable_if_t<is_expression_v<E>>>
       Expression(E expression);
 
+      /** Returns the type of the underlying expression. */
+      const std::type_info& get_type() const;
+
       /** Casts the underlying expression to a specified type. */
       template<typename U>
       const U& as() const;
@@ -107,6 +110,11 @@ namespace Spire::Styles {
         [] (const Expression& expression, const Stylist& stylist) {
           return Spire::Styles::make_evaluator(expression.as<E>(), stylist);
         }) {}
+
+  template<typename T>
+  const std::type_info& Expression<T>::get_type() const {
+    return m_expression.type();
+  }
 
   template<typename T>
   template<typename U>

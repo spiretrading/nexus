@@ -352,20 +352,46 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = boost::optional<Property>();
   auto reverted_property = boost::optional<Property>();
   auto principals = std::deque<const Stylist*>();
-  principals.push_back(this);
-  while(!principals.empty()) {
-    auto principal = principals.front();
-    principals.pop_front();
-    principals.insert(principals.end(), principal->m_principals.begin(),
-      principal->m_principals.end());
-    for(auto& rule : principal->m_style.get_rules()) {
-      auto selection = select(rule.get_selector(), *const_cast<Stylist*>(this));
-      for(auto& selected : selection) {
-        if(selected == this) {
-          if(property) {
-            reverted_property.emplace(std::move(*property));
+  for(auto& source : m_blocks) {
+    principals.push_back(source->m_source);
+    while(!principals.empty()) {
+      auto principal = principals.front();
+      principals.pop_front();
+      principals.insert(principals.end(), principal->m_principals.begin(),
+        principal->m_principals.end());
+      for(auto& rule : principal->m_style.get_rules()) {
+        auto selection = select(rule.get_selector(), *source->m_source);
+        for(auto& selected : selection) {
+          if(selected == this) {
+            if(auto update = find(rule.get_block(), type)) {
+              if(property) {
+                reverted_property.emplace(std::move(*property));
+              }
+              property = std::move(update);
+            }
           }
-          property = find(rule.get_block(), type);
+        }
+      }
+    }
+  }
+  for(auto source : m_principals) {
+    principals.push_back(source);
+    while(!principals.empty()) {
+      auto principal = principals.front();
+      principals.pop_front();
+      principals.insert(principals.end(), principal->m_principals.begin(),
+        principal->m_principals.end());
+      for(auto& rule : principal->m_style.get_rules()) {
+        auto selection = select(rule.get_selector(), *source);
+        for(auto& selected : selection) {
+          if(selected == source) {
+            if(auto update = find(rule.get_block(), type)) {
+              if(property) {
+                reverted_property.emplace(std::move(*property));
+              }
+              property = std::move(update);
+            }
+          }
         }
       }
     }
