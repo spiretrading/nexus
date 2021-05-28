@@ -260,10 +260,8 @@ void Stylist::apply(Stylist& source, Block block) {
     m_blocks.push_back(entry);
     i = m_source_to_block.insert(i, std::pair(&source, std::move(entry)));
   }
-  if(block != i->second->m_block) {
-    i->second->m_block = std::move(block);
-    apply_proxy_styles();
-  }
+  i->second->m_block = std::move(block);
+  apply_proxy_styles();
 }
 
 void Stylist::apply_rules() {
