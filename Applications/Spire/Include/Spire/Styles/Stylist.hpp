@@ -1,10 +1,12 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
-#include <QWidget>
+#include <chrono>
+#include <type_traits>
 #include <unordered_set>
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
+#include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/AncestorSelector.hpp"
 #include "Spire/Styles/AndSelector.hpp"
@@ -53,6 +55,9 @@ namespace Spire::Styles {
 
   /** Sets the display mode. */
   using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
+
+  template<typename T>
+  class RevertExpression;
 
   /** Keeps track of a widget's styling. */
   class Stylist {
@@ -109,6 +114,16 @@ namespace Spire::Styles {
        */
       void unmatch(const Selector& selector);
 
+      /**
+       * Applies a function to the evaluation of a property's expression.
+       * The function receiving the evaluation may be called multiple times,
+       * especially if the property evaluates to an animation.
+       * @param property The property whose expression is to be evaluated.
+       * @param receiver The function receiving the evaluation.
+       */
+      template<typename Property, typename F>
+      void evaluate(const Property& property, F&& receiver);
+
       /** Connects a slot to the StyleSignal. */
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
@@ -123,10 +138,34 @@ namespace Spire::Styles {
         int m_priority;
         Block m_block;
       };
+      struct BaseEvaluatorEntry {
+        Property m_property;
+        boost::posix_time::time_duration m_elapsed;
+        boost::posix_time::time_duration m_next_frame;
+
+        BaseEvaluatorEntry(Property property);
+        virtual ~BaseEvaluatorEntry() = default;
+        virtual void animate() = 0;
+      };
+      template<typename T>
+      struct EvaluatorEntry : BaseEvaluatorEntry {
+        using Type = T;
+        Evaluator<Type> m_evaluator;
+        std::vector<std::function<void (const Type&)>> m_receivers;
+
+        EvaluatorEntry(Property property, Evaluator<Type> evaluator);
+        void animate() override;
+      };
       using EnableSignal = Signal<void ()>;
       friend Stylist& find_stylist(QWidget& widget);
       friend void add_pseudo_element(QWidget& source,
         const PseudoElement& pseudo_element);
+      friend boost::signals2::connection connect_style_signal(
+        const QWidget& widget, const PseudoElement& pseudo_element,
+        const Stylist::StyleSignal::slot_type& slot);
+      template<typename T>
+      friend Evaluator<T>
+        make_evaluator(RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
       mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
@@ -142,6 +181,11 @@ namespace Spire::Styles {
       std::unordered_map<const Stylist*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
+      std::unordered_map<
+        std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
+      std::type_index m_evaluated_property;
+      std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
+      QMetaObject::Connection m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
@@ -151,9 +195,15 @@ namespace Spire::Styles {
       void apply_rules();
       void apply_style();
       void apply_proxy_styles();
+      boost::optional<Property>
+        find_reverted_property(std::type_index type) const;
+      template<typename T>
+      Evaluator<T> revert(std::type_index type) const;
       boost::signals2::connection connect_enable_signal(
         const EnableSignal::slot_type& slot) const;
+      void connect_animation();
       void on_enable();
+      void on_animation();
   };
 
   /** Returns the Stylist associated with a widget. */
@@ -221,6 +271,66 @@ namespace Spire::Styles {
   boost::signals2::connection connect_style_signal(
     const QWidget& widget, const PseudoElement& pseudo_element,
     const Stylist::StyleSignal::slot_type& slot);
+
+  template<typename T>
+  Stylist::EvaluatorEntry<T>::EvaluatorEntry(
+    Property property, Evaluator<Type> evaluator)
+    : BaseEvaluatorEntry(std::move(property)),
+      m_evaluator(std::move(evaluator)) {}
+
+  template<typename T>
+  void Stylist::EvaluatorEntry<T>::animate() {
+    auto evaluation = m_evaluator(m_elapsed);
+    for(auto i = m_receivers.begin(); i != m_receivers.end() - 1; ++i) {
+      (*i)(evaluation.m_value);
+    }
+    m_receivers.back()(std::move(evaluation.m_value));
+    m_next_frame = evaluation.m_next_frame;
+  }
+
+  template<typename Property, typename F>
+  void Stylist::evaluate(const Property& property, F&& receiver) {
+    m_evaluated_property = typeid(Property);
+    auto i = m_evaluators.find(m_evaluated_property);
+    if(i == m_evaluators.end()) {
+      auto evaluator = make_evaluator(property.get_expression(), *this);
+      auto evaluation = evaluator(boost::posix_time::seconds(0));
+      if(evaluation.m_next_frame != boost::posix_time::pos_infin) {
+        auto entry = std::make_unique<EvaluatorEntry<typename Property::Type>>(
+          property, std::move(evaluator));
+        entry->m_receivers.push_back(std::forward<F>(receiver));
+        auto& receiver = entry->m_receivers.back();
+        m_evaluators.emplace(m_evaluated_property, std::move(entry));
+        if(m_evaluators.size() == 1) {
+          connect_animation();
+        }
+        receiver(std::move(evaluation.m_value));
+      } else {
+        std::forward<F>(receiver)(std::move(evaluation.m_value));
+      }
+      return;
+    }
+    auto& evaluator = static_cast<EvaluatorEntry<typename Property::Type>&>(
+      *i->second);
+    evaluator.m_receivers.push_back(std::forward<F>(receiver));
+    evaluator.m_receivers.back()(
+      evaluator.m_evaluator(evaluator.m_elapsed).m_value);
+  }
+
+  template<typename T>
+  Evaluator<T> Stylist::revert(std::type_index type) const {
+    auto reverted_property = find_reverted_property(type);
+    if(!reverted_property) {
+      return [] (auto frame) {
+        if constexpr(std::is_same_v<T, QColor>) {
+          return Evaluation(QColor(0, 0, 0, 0));
+        } else {
+          return Evaluation(T());
+        }
+      };
+    }
+    return make_evaluator(reverted_property->expression_as<T>(), *this);
+  }
 }
 
 #endif

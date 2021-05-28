@@ -54,17 +54,6 @@ namespace Styles {
       //! Sets whether the box is read-only.
       void set_read_only(bool is_read_only);
 
-      /**
-       * Returns whether a warning is displayed when a submission is rejected.
-       */
-      bool is_warning_displayed() const;
-
-      /**
-       * Sets whether a warning is displayed when a submission is rejected.
-       * @param is_displayed True iff the warning style should be displayed.
-       */
-      void set_warning_displayed(bool is_displayed);
-
       /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -87,8 +76,10 @@ namespace Styles {
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
       bool m_is_read_only;
-      bool m_is_warning_displayed;
+      bool m_is_rejected;
 
+      void on_current(
+        const boost::optional<boost::posix_time::time_duration>& current);
       void on_submit();
       void on_reject();
   };

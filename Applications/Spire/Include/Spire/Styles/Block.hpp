@@ -46,6 +46,11 @@ namespace Spire::Styles {
       template<typename... T>
       void remove(const CompositeProperty<T...>& property);
 
+      /** Tests if two Block's contain the same Properties in the same order. */
+      bool operator ==(const Block& block) const;
+
+      bool operator !=(const Block& block) const;
+
     private:
       std::vector<Property> m_properties;
   };
@@ -74,6 +79,13 @@ namespace Spire::Styles {
       return boost::none;
     }
   }
+
+  /**
+   * Finds a property of a given type within a Block.
+   * @param block The block to search.
+   */
+  boost::optional<Property>
+    find(const Block& block, const std::type_index& type);
 
   /**
    * Finds a property of a given type within a Block.

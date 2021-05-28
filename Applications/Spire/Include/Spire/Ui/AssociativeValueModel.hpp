@@ -21,7 +21,7 @@ namespace std {
 
 namespace Spire {
 
-  /** 
+  /**
    * Associates BooleanModels with corresponding values, and ensures that
    * only a single model has a value of true at one time.
    */

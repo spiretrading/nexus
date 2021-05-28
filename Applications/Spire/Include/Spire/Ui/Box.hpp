@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
+#include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -150,15 +151,12 @@ namespace Styles {
     private:
       QWidget* m_container;
       QWidget* m_body;
+      QRect m_body_geometry;
+      Styles::StyleSheetMap m_styles;
 
+      void commit_style();
       void on_style();
   };
-
-  /**
-   * Displays a red warning indicator on a widget.
-   * @param widget The widget to display the warning indicator over.
-   */
-  void display_warning_indicator(QWidget& widget);
 }
 
 #endif

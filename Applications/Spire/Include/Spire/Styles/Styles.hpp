@@ -11,14 +11,21 @@ namespace Spire::Styles {
   template<typename T, typename G> class ComponentId;
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
+  template<typename T> class ConstantExpression;
   class DescendantSelector;
+  template<typename T> struct Evaluation;
   template<typename T> class Expression;
   class FlipSelector;
+  template<typename I, typename T, typename... A>
+    class FunctionDefinitionExpression;
   class IsASelector;
+  template<typename T> class LinearExpression;
   class NotSelector;
   class OrSelector;
   class ParentSelector;
+  class PathSelector;
   class Property;
+  class PropertyMatchSelector;
   class PseudoElement;
   template<typename T, typename G> class PseudoElementSelector;
   class Rule;
@@ -27,6 +34,7 @@ namespace Spire::Styles {
   class SiblingSelector;
   template<typename T, typename G> class StateSelector;
   class StyleSheet;
+  class StyleSheetMap;
   class Stylist;
 }
 

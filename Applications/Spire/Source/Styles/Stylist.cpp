@@ -7,11 +7,24 @@
 #include "Spire/Styles/PseudoElement.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto FRAME_DURATION = time_duration(seconds(1)) / 30;
+
+  QTimer& get_animation_timer() {
+    static auto timer = [] {
+      auto timer = std::make_unique<QTimer>();
+      timer->setInterval(static_cast<int>(FRAME_DURATION.total_milliseconds()));
+      timer->start();
+      return timer;
+    }();
+    return *timer;
+  }
+
   std::unordered_map<std::pair<QWidget*, PseudoElement>, Stylist*,
     boost::hash<std::pair<QWidget*, PseudoElement>>> pseudo_stylists;
 
@@ -94,6 +107,9 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 }
 
 Stylist::~Stylist() {
+  m_widget = nullptr;
+  m_evaluators.clear();
+  get_animation_timer().disconnect(m_animation_connection);
   for(auto& block : m_source_to_block) {
     block.second->m_source->m_dependents.erase(this);
   }
@@ -216,7 +232,8 @@ connection Stylist::connect_style_signal(
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
-      m_visibility(VisibilityOption::VISIBLE) {
+      m_visibility(VisibilityOption::VISIBLE),
+      m_evaluated_property(typeid(void)) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -279,32 +296,46 @@ void Stylist::apply_rules() {
 }
 
 void Stylist::apply_style() {
+  auto style = compute_style();
+  if(!m_evaluators.empty()) {
+    for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
+      auto property = find(style, i->first);
+      if(!property || *property != i->second->m_property) {
+        i = m_evaluators.erase(i);
+      } else {
+        ++i;
+      }
+    }
+    if(m_evaluators.empty()) {
+      get_animation_timer().disconnect(m_animation_connection);
+    }
+  }
   m_style_signal();
   if(m_pseudo_element) {
     return;
   }
-  auto style = compute_style();
-  auto visibility_option = [&] {
-    if(auto visibility = Spire::Styles::find<Visibility>(style)) {
-      return visibility->get_expression().as<VisibilityOption>();
-    }
-    return VisibilityOption::VISIBLE;
-  }();
-  if(visibility_option != m_visibility) {
-    if(visibility_option == VisibilityOption::VISIBLE) {
-      m_widget->show();
-    } else if(visibility_option == VisibilityOption::NONE) {
-      auto size = m_widget->sizePolicy();
-      size.setRetainSizeWhenHidden(false);
-      m_widget->setSizePolicy(size);
-      m_widget->hide();
-    } else if(visibility_option == VisibilityOption::INVISIBLE) {
-      auto size = m_widget->sizePolicy();
-      size.setRetainSizeWhenHidden(true);
-      m_widget->setSizePolicy(size);
-      m_widget->hide();
-    }
-    m_visibility = visibility_option;
+  if(auto visibility = Spire::Styles::find<Visibility>(style)) {
+    evaluate(*visibility, [=] (auto visibility) {
+      if(visibility != m_visibility) {
+        if(visibility == VisibilityOption::VISIBLE) {
+          m_widget->show();
+        } else if(visibility == VisibilityOption::NONE) {
+          auto size = m_widget->sizePolicy();
+          size.setRetainSizeWhenHidden(false);
+          m_widget->setSizePolicy(size);
+          m_widget->hide();
+        } else if(visibility == VisibilityOption::INVISIBLE) {
+          auto size = m_widget->sizePolicy();
+          size.setRetainSizeWhenHidden(true);
+          m_widget->setSizePolicy(size);
+          m_widget->hide();
+        }
+        m_visibility = visibility;
+      }
+    });
+  } else if(m_visibility != VisibilityOption::VISIBLE) {
+    m_widget->show();
+    m_visibility = VisibilityOption::VISIBLE;
   }
 }
 
@@ -315,13 +346,85 @@ void Stylist::apply_proxy_styles() {
   }
 }
 
+optional<Property> Stylist::find_reverted_property(std::type_index type) const {
+  auto property = boost::optional<Property>();
+  auto reverted_property = boost::optional<Property>();
+  auto principals = std::deque<const Stylist*>();
+  for(auto& source : m_blocks) {
+    principals.push_back(source->m_source);
+    while(!principals.empty()) {
+      auto principal = principals.front();
+      principals.pop_front();
+      principals.insert(principals.end(), principal->m_principals.begin(),
+        principal->m_principals.end());
+      for(auto& rule : principal->m_style.get_rules()) {
+        auto selection = select(rule.get_selector(), *source->m_source);
+        for(auto& selected : selection) {
+          if(selected == this) {
+            if(auto update = find(rule.get_block(), type)) {
+              if(property) {
+                reverted_property.emplace(std::move(*property));
+              }
+              property = std::move(update);
+            }
+          }
+        }
+      }
+    }
+  }
+  for(auto source : m_principals) {
+    principals.push_back(source);
+    while(!principals.empty()) {
+      auto principal = principals.front();
+      principals.pop_front();
+      principals.insert(principals.end(), principal->m_principals.begin(),
+        principal->m_principals.end());
+      for(auto& rule : principal->m_style.get_rules()) {
+        auto selection = select(rule.get_selector(), *source);
+        for(auto& selected : selection) {
+          if(selected == source) {
+            if(auto update = find(rule.get_block(), type)) {
+              if(property) {
+                reverted_property.emplace(std::move(*property));
+              }
+              property = std::move(update);
+            }
+          }
+        }
+      }
+    }
+  }
+  return reverted_property;
+}
+
 connection Stylist::connect_enable_signal(
     const EnableSignal::slot_type& slot) const {
   return m_enable_signal.connect(slot);
 }
 
+void Stylist::connect_animation() {
+  m_animation_connection = QObject::connect(
+    &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); });
+  m_last_frame = std::chrono::steady_clock::now();
+}
+
 void Stylist::on_enable() {
   apply_rules();
+}
+
+void Stylist::on_animation() {
+  for(auto& evaluator_pair : m_evaluators) {
+    auto delta = time_duration(
+      microseconds(std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - m_last_frame).count()));
+    auto& evaluator = *evaluator_pair.second;
+    evaluator.m_next_frame -= delta;
+    if(evaluator.m_next_frame <= seconds(0)) {
+      evaluator.animate();
+      evaluator.m_elapsed += std::max(delta, evaluator.m_next_frame);
+    }
+  }
+  m_last_frame = std::chrono::steady_clock::now();
 }
 
 const Stylist& Spire::Styles::find_stylist(const QWidget& widget) {
@@ -377,6 +480,9 @@ Block Spire::Styles::compute_style(
   return {};
 }
 
+Stylist::BaseEvaluatorEntry::BaseEvaluatorEntry(Property property)
+  : m_property(std::move(property)) {}
+
 std::vector<PseudoElement> Spire::Styles::get_pseudo_elements(
     const QWidget& source) {
   auto pseudo_elements = std::vector<PseudoElement>();
@@ -425,7 +531,12 @@ connection Spire::Styles::connect_style_signal(const QWidget& widget,
     const PseudoElement& pseudo_element,
     const Stylist::StyleSignal::slot_type& slot) {
   if(auto stylist = find_stylist(widget, pseudo_element)) {
-    return stylist->connect_style_signal(slot);
+    auto& primary_stylist = find_stylist(widget);
+    return stylist->connect_style_signal([=, &primary_stylist] {
+      if(primary_stylist.m_widget) {
+        slot();
+      }
+    });
   }
   return {};
 }

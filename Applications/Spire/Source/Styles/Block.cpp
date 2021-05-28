@@ -1,5 +1,6 @@
 #include "Spire/Styles/Block.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -29,6 +30,24 @@ void Block::remove(const Property& property) {
   if(i != m_properties.end()) {
     m_properties.erase(i);
   }
+}
+
+bool Block::operator ==(const Block& block) const {
+  return m_properties == block.m_properties;
+}
+
+bool Block::operator !=(const Block& block) const {
+  return !(*this == block);
+}
+
+optional<Property>
+    Spire::Styles::find(const Block& block, const std::type_index& type) {
+  for(auto& property : block.get_properties()) {
+    if(property.get_type() == type) {
+      return property;
+    }
+  }
+  return none;
 }
 
 void Spire::Styles::merge(Block& block, Block other) {

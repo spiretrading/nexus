@@ -338,14 +338,6 @@ void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
 }
 
-bool DecimalBox::is_warning_displayed() const {
-  return m_text_box->is_warning_displayed();
-}
-
-void DecimalBox::set_warning_displayed(bool is_displayed) {
-  m_text_box->set_warning_displayed(is_displayed);
-}
-
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -469,13 +461,16 @@ void DecimalBox::on_reject(const QString& value) {
 }
 
 void DecimalBox::on_style() {
-  auto style = compute_style(*this);
-  if(auto leading_zeros = Styles::find<LeadingZeros>(style)) {
-    m_adaptor_model->set_leading_zeros(
-      leading_zeros->get_expression().as<int>());
+  auto& stylist = find_stylist(*this);
+  auto computed_style = stylist.compute_style();
+  if(auto leading_zeros = Styles::find<LeadingZeros>(computed_style)) {
+    stylist.evaluate(*leading_zeros, [=] (auto leading_zeros) {
+      m_adaptor_model->set_leading_zeros(leading_zeros);
+    });
   }
-  if(auto trailing_zeros = Styles::find<TrailingZeros>(style)) {
-    m_adaptor_model->set_trailing_zeros(
-      trailing_zeros->get_expression().as<int>());
+  if(auto trailing_zeros = Styles::find<TrailingZeros>(computed_style)) {
+    stylist.evaluate(*trailing_zeros, [=] (auto trailing_zeros) {
+      m_adaptor_model->set_trailing_zeros(trailing_zeros);
+    });
   }
 }
