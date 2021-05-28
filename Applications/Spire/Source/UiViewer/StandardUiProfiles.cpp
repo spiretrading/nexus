@@ -12,6 +12,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -510,6 +511,36 @@ UiProfile Spire::make_integer_box_profile() {
         integer_box->set_warning_displayed(value);
       });
       return integer_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_key_tag_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_qstring_property("key"));
+  auto profile = UiProfile(QString::fromUtf8("KeyTag"), properties,
+    [] (auto& profile) {
+      auto key_tag = new KeyTag();
+      apply_widget_properties(key_tag, profile.get_properties());
+      auto& key = get<QString>("key", profile.get_properties());
+      key.connect_changed_signal([=] (auto key_text) {
+        auto key = [&] {
+          if(key_text.toLower() == "alt") {
+            return Qt::Key_Alt;
+          } else if(key_text.toLower() == "ctrl") {
+            return Qt::Key_Control;
+          } else if(key_text.toLower() == "shift") {
+            return Qt::Key_Shift;
+          } else if(auto sequence = QKeySequence::fromString(key_text);
+              !sequence.isEmpty()) {
+            return Qt::Key(sequence[0]);
+          }
+          return Qt::Key_unknown;
+        }();
+        key_tag->get_model()->set_current(key);
+      });
+      return key_tag;
     });
   return profile;
 }

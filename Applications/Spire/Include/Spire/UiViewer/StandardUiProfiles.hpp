@@ -32,6 +32,9 @@ namespace Spire {
   //! Returns a UiProfile for the IntegerBox.
   UiProfile make_integer_box_profile();
 
+  //! Returns a UiProfile for the KeyTag.
+  UiProfile make_key_tag_profile();
+
   //! Returns a UiProfile for the ListItem.
   UiProfile make_list_item_profile();
 

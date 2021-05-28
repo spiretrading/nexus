@@ -43,6 +43,7 @@ namespace Spire {
   using LocalDurationModel =
     LocalScalarValueModel<boost::posix_time::time_duration>;
   using LocalIntegerModel = LocalScalarValueModel<int>;
+  using LocalKeyModel = LocalValueModel<Qt::Key>;
   using LocalOptionalDurationModel =
     LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
   using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
@@ -79,6 +80,7 @@ namespace Spire {
   class TranslatedTableModel;
   template<typename T> class ValueModel;
   using BooleanModel = ValueModel<bool>;
+  using KeyModel = ValueModel<Qt::Key>;
   using TextModel = ValueModel<QString>;
   class Window;
 
