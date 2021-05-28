@@ -27,10 +27,20 @@ namespace {
         return QObject::tr("ALT");
       case Qt::Key_Control:
         return QObject::tr("CTRL");
+      case Qt::Key_PageDown:
+        return QObject::tr("PGDN");
+      case Qt::Key_Up:
+        return QObject::tr("ARROWUP");
+      case Qt::Key_Down:
+        return QObject::tr("ARROWDN");
+      case Qt::Key_Left:
+        return QObject::tr("ARROWLFT");
+      case Qt::Key_Right:
+        return QObject::tr("ARROWRHT");
       case Qt::Key_unknown:
         return QObject::tr("NaK");
       default:
-        return QKeySequence(key).toString();
+        return QKeySequence(key).toString().toUpper();
     }
   }
 
