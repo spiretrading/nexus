@@ -19,6 +19,8 @@ namespace Spire {
       std::shared_ptr<KeyModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
       TextBox* m_text_box;
+
+      void update_tag_style(Qt::Key key);
   };
 }
 
