@@ -64,7 +64,6 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_body(body),
       m_top_level_window(nullptr),
       m_is_closed_on_blur(true),
-      m_is_touched(false),
       m_is_closed(false),
       m_positioning(Positioning::PARENT) {
   setAttribute(Qt::WA_TranslucentBackground);
@@ -124,14 +123,13 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       m_mouse_press_position = mouse_event->pos();
     } else if(event->type() == QEvent::MouseMove) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
-      if(mouse_event->buttons() & Qt::LeftButton) {
+      if(mouse_event->buttons() & Qt::LeftButton &&
+          m_positioning != Positioning::PARENT) {
         move(mapToGlobal(mouse_event->pos() - m_mouse_press_position));
-        m_is_touched = true;
       }
     }
   } else if(watched == m_top_level_window) {
-    if(event->type() == QEvent::Move && m_positioning == Positioning::PARENT &&
-        !m_is_touched) {
+    if(event->type() == QEvent::Move) {
       position();
     }
   }
@@ -152,7 +150,6 @@ void OverlayPanel::closeEvent(QCloseEvent* event) {
     event->ignore();
   } else {
     event->accept();
-    m_is_touched = false;
     m_is_closed = true;
   }
 }

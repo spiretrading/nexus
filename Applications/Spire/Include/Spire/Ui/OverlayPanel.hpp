@@ -71,7 +71,6 @@ namespace Spire {
       QWidget* m_body;
       QWidget* m_top_level_window;
       bool m_is_closed_on_blur;
-      bool m_is_touched;
       bool m_is_closed;
       Positioning m_positioning;
       QPoint m_mouse_press_position;
