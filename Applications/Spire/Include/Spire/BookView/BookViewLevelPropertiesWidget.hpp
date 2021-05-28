@@ -9,23 +9,25 @@
 
 namespace Spire {
 
-  //! Displays/modifies the properties used to display a book view's price
-  //! levels.
+  /**
+   * Displays/modifies the properties used to display a book view's price
+   * levels.
+   */
   class BookViewLevelPropertiesWidget : public QWidget {
     public:
 
-      //! Constructs a BookViewLevelPropertiesWidget.
-      /*!
-        \param properties The properties to display.
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a BookViewLevelPropertiesWidget.
+       * @param properties The properties to display.
+       * @param parent The parent widget.
+       */
       explicit BookViewLevelPropertiesWidget(
         const BookViewProperties& properties, QWidget* parent = nullptr);
 
-      //! Applies the properties represented by this widget to an instance.
-      /*!
-        \param properties The instance to apply the properties to.
-      */
+      /**
+       * Applies the properties represented by this widget to an instance.
+       * @param properties The instance to apply the properties to.
+       */
       void apply(BookViewProperties& properties) const;
 
     protected:
@@ -37,7 +39,7 @@ namespace Spire {
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_gradient_start_button;
       ColorSelectorButton* m_gradient_end_button;
-      Checkbox* m_show_grid_lines_checkbox;
+      CheckBox* m_show_grid_lines_check_box;
 
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();

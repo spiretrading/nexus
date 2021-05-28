@@ -12,39 +12,39 @@
 
 namespace Spire {
 
-  //! Displays the properties for a time and sales window.
+  /** Displays the properties for a time and sales window. */
   class TimeAndSalesPropertiesDialog : public Dialog {
     public:
 
-      //! Signals that properties should be applied to the parent window.
+      /** Signals that properties should be applied to the parent window. */
       using ApplySignal = Signal<void ()>;
 
-      //! Signals that properties should be applied to all windows.
+      /** Signals that properties should be applied to all windows. */
       using ApplyAllSignal = Signal<void ()>;
 
-      //! Signals that properties should be saved as the default.
+      /** Signals that properties should be saved as the default. */
       using SaveDefaultSignal = Signal<void ()>;
 
-      //! Constructs a time and sales properties dialog.
-      /*!
-        \param properties The properties to modify.
-        \param parent The parent widget.
-      */
+      /**
+       * Constructs a time and sales properties dialog.
+       * @param properties The properties to modify.
+       * @param parent The parent widget.
+       */
       explicit TimeAndSalesPropertiesDialog(
         const TimeAndSalesProperties& properties, QWidget* parent = nullptr);
 
-      //! Returns the properties represented by this dialog.
+      /** Returns the properties represented by this dialog. */
       TimeAndSalesProperties get_properties() const;
 
-      //! Connects a slot to the apply signal.
+      /** Connects a slot to the apply signal. */
       boost::signals2::connection connect_apply_signal(
         const ApplySignal::slot_type& slot) const;
 
-      //! Connects a slot to the apply all signal.
+      /** Connects a slot to the apply all signal. */
       boost::signals2::connection connect_apply_all_signal(
         const ApplyAllSignal::slot_type& slot) const;
 
-      //! Connects a slot to the save default signal.
+      /** Connects a slot to the save default signal. */
       boost::signals2::connection connect_save_default_signal(
         const SaveDefaultSignal::slot_type& slot) const;
 
@@ -61,7 +61,7 @@ namespace Spire {
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_text_color_button;
       FontSelectorWidget* m_edit_font_widget;
-      Checkbox* m_show_grid_checkbox;
+      CheckBox* m_show_grid_checkbox;
 
       void set_band_color(const QColor& color);
       void set_color_settings_stylesheet(int band_index);

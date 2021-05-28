@@ -70,7 +70,7 @@ UiProfile Spire::make_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_checkbox_profile() {
+UiProfile Spire::make_check_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_bool_property("checked"));
@@ -78,41 +78,40 @@ UiProfile Spire::make_checkbox_profile() {
     QString::fromUtf8("Click me!")));
   properties.push_back(make_standard_bool_property("read-only"));
   properties.push_back(make_standard_bool_property("left-to-right", true));
-  auto profile = UiProfile(QString::fromUtf8("Checkbox"), properties,
+  auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
     [] (auto& profile) {
+      auto check_box = new CheckBox();
       auto& label = get<QString>("label", profile.get_properties());
-      auto checkbox = new Checkbox(label.get());
-      apply_widget_properties(checkbox, profile.get_properties());
+      check_box->set_label(label.get());
+      apply_widget_properties(check_box, profile.get_properties());
       label.connect_changed_signal([=] (const auto& value) {
-        checkbox->setText(value);
+        check_box->set_label(value);
       });
       auto& checked = get<bool>("checked", profile.get_properties());
       checked.connect_changed_signal([=] (auto value) {
-        if(value) {
-          checkbox->setCheckState(Qt::Checked);
-        } else {
-          checkbox->setCheckState(Qt::Unchecked);
+        if(check_box->get_model()->get_current() != value) {
+          check_box->get_model()->set_current(value);
         }
       });
-      QObject::connect(checkbox, &Checkbox::stateChanged, [&] (auto value) {
-        checked.set(value == Qt::Checked);
+      check_box->get_model()->connect_current_signal([&] (auto is_checked) {
+        checked.set(is_checked);
       });
-      QObject::connect(checkbox, &Checkbox::stateChanged,
-        profile.make_event_slot<int>(QString::fromUtf8("stateChanged")));
+      check_box->get_model()->connect_current_signal(
+        profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
       auto& read_only = get<bool>("read-only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
-        checkbox->set_read_only(is_read_only);
+        check_box->set_read_only(is_read_only);
       });
       auto& layout_direction = get<bool>("left-to-right",
         profile.get_properties());
       layout_direction.connect_changed_signal([=] (auto value) {
         if(value) {
-          checkbox->setLayoutDirection(Qt::LeftToRight);
+          check_box->setLayoutDirection(Qt::LeftToRight);
         } else {
-          checkbox->setLayoutDirection(Qt::RightToLeft);
+          check_box->setLayoutDirection(Qt::RightToLeft);
         }
       });
-      return checkbox;
+      return check_box;
     });
   return profile;
 }

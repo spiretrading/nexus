@@ -18,7 +18,7 @@ namespace Spire {
   class CalendarDayWidget;
   class CalendarModel;
   class CalendarWidget;
-  class Checkbox;
+  class CheckBox;
   class ColonWidget;
   class DateInputWidget;
   class DecimalBox;
@@ -31,6 +31,7 @@ namespace Spire {
   class DurationBox;
   class FilteredTableModel;
   class FlatButton;
+  class Icon;
   class IconButton;
   class IntegerBox;
   class IntegerSpinBox;
