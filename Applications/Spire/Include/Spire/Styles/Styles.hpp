@@ -13,6 +13,7 @@ namespace Spire::Styles {
   template<typename... T> class CompositeProperty;
   template<typename T> class ConstantExpression;
   class DescendantSelector;
+  class EvaluatedBlock;
   class EvaluatedProperty;
   template<typename T> struct Evaluation;
   template<typename T> class Expression;

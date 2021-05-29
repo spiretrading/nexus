@@ -11,7 +11,7 @@ TEST_SUITE("Block") {
     block.set(BackgroundColor(QColor::fromRgb(255, 0, 0)));
     block.set(BorderTopColor(QColor::fromRgb(0, 255, 0)));
     auto visits = 0;
-    for(auto& property : block.get_properties()) {
+    for(auto& property : block) {
       property.visit([&] (const BackgroundColor& color) {
         auto expression =
           color.get_expression().as<ConstantExpression<QColor>>();
@@ -33,9 +33,6 @@ TEST_SUITE("Block") {
       background->get_expression().as<ConstantExpression<QColor>>();
     REQUIRE(expression.get_constant() == QColor::fromRgb(0, 0, 255));
     block.remove<BackgroundColor>();
-    REQUIRE(block.get_properties().size() == 1);
-    REQUIRE_NOTHROW(block.get_properties().front().visit(
-      [] (const BorderTopColor& color) {}));
   }
 
   TEST_CASE("modify_composite_properties") {

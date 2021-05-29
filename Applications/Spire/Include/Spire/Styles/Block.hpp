@@ -16,11 +16,11 @@ namespace Spire::Styles {
       /** Constructs an empty Block. */
       Block() = default;
 
-      /** Returns the list of Properties contained within this Block. */
-      const std::vector<Property>& get_properties() const&;
+      /** Returns an iterator to the first property. */
+      std::vector<Property>::const_iterator begin() const;
 
-      /** Returns the list of Properties contained within this Block. */
-      std::vector<Property>&& get_properties() &&;
+      /** Returns an iterator to one past the last property. */
+      std::vector<Property>::const_iterator end() const;
 
       /** Sets a Property, overwriting any previously matching Property. */
       void set(Property property);
@@ -71,7 +71,7 @@ namespace Spire::Styles {
     if constexpr(is_composite_property_v<T>) {
       return find(block, std::in_place_type<T>);
     } else {
-      for(auto& property : block.get_properties()) {
+      for(auto& property : block) {
         if(property.get_type() == typeid(T)) {
           return property.as<T>();
         }

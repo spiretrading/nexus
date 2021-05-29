@@ -32,7 +32,7 @@ std::unordered_set<Stylist*>
     auto& source = **i;
     auto block = source.compute_style();
     auto is_missing_property = true;
-    for(auto& property : block.get_properties()) {
+    for(auto& property : block) {
       if(property == selector.get_property()) {
         is_missing_property = false;
         break;

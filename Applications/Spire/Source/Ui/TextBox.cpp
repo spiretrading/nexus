@@ -420,7 +420,7 @@ void TextBox::on_style() {
   auto computed_style = stylist.compute_style();
   m_line_edit_styles.clear();
   m_line_edit_styles.m_styles.buffer([&] {
-    for(auto& property : computed_style.get_properties()) {
+    for(auto& property : computed_style) {
       property.visit(
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
@@ -453,7 +453,7 @@ void TextBox::on_style() {
   merge(computed_style, placeholder_stylist.compute_style());
   m_placeholder_styles.clear();
   m_placeholder_styles.m_styles.buffer([&] {
-    for(auto& property : computed_style.get_properties()) {
+    for(auto& property : computed_style) {
       property.visit(
         [&] (const TextColor& color) {
           placeholder_stylist.evaluate(color, [=] (auto color) {

@@ -58,7 +58,7 @@ void Box::resizeEvent(QResizeEvent* event) {
     m_body_geometry = QRect(0, 0, width(), height());
     m_styles.buffer([&] {
       auto& stylist = find_stylist(*this);
-      auto properties = stylist.compute_style().get_properties();
+      auto properties = stylist.compute_style();
       for(auto& property : properties) {
         property.visit(
           [&] (const BorderTopSize& size) {
@@ -127,7 +127,7 @@ void Box::on_style() {
   m_styles.clear();
   m_styles.buffer([&] {
     auto& stylist = find_stylist(*this);
-    auto properties = stylist.compute_style().get_properties();
+    auto properties = stylist.compute_style();
     for(auto& property : properties) {
       property.visit(
         [&] (const BackgroundColor& color) {

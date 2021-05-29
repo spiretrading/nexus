@@ -52,7 +52,7 @@ void Icon::on_style() {
   m_background_color = QColor::fromRgb(0xF5, 0xF5, 0xF5);
   m_fill = QColor::fromRgb(0x75, 0x5E, 0xEC);
   m_border_color = none;
-  for(auto& property : computed_style.get_properties()) {
+  for(auto& property : computed_style) {
     property.visit(
       [&] (const BackgroundColor& color) {
         stylist.evaluate(color, [=] (auto color) {
