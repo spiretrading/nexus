@@ -3,6 +3,8 @@
 #include <any>
 #include <memory>
 #include <typeindex>
+#include <type_traits>
+#include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/ConstantExpression.hpp"
 #include "Spire/Styles/Property.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -43,11 +45,31 @@ namespace Spire::Styles {
       template<typename U>
       const U& as() const;
 
+      /**
+       * Applies a callable to the underlying property stored.
+       * @param f The callable to apply.
+       */
+      template<typename F>
+      decltype(auto) visit(F&& f) const;
+
+      template<typename F, typename... G>
+      decltype(auto) visit(F&& f, G&&... g) const;
+
       bool operator ==(const EvaluatedProperty& property) const;
 
       bool operator !=(const EvaluatedProperty& property) const;
 
     private:
+      template<typename T>
+      struct TypeExtractor {};
+      template<typename T, typename U>
+      struct TypeExtractor<Beam::TypeSequence<std::in_place_type_t<T>, U>> {
+        using type = T;
+      };
+      template<typename T, typename U, typename V>
+      struct TypeExtractor<Beam::TypeSequence<T, std::in_place_type_t<U>, V>> {
+        using type = U;
+      };
       struct BaseEntry {
         virtual ~BaseEntry() = default;
         virtual std::type_index get_property_type() const = 0;
@@ -84,6 +106,33 @@ namespace Spire::Styles {
   template<typename U>
   const U& EvaluatedProperty::as() const {
     return *static_cast<const U*>(m_entry->as(typeid(U)));
+  }
+
+  template<typename F>
+  decltype(auto) EvaluatedProperty::visit(F&& f) const {
+    using Parameter = typename TypeExtractor<
+      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+    if constexpr(std::is_invocable_v<std::decay_t<F>>) {
+      return std::forward<F>(f)();
+    } else if(m_entry->get_property_type() == typeid(Parameter)) {
+      return std::forward<F>(f)(
+        std::in_place_type<Parameter>, as<typename Parameter::Type>());
+    }
+    if constexpr(!std::is_invocable_r_v<void, F, const Parameter&,
+        const typename Parameter::Type&>) {
+      throw std::bad_any_cast();
+    }
+  }
+
+  template<typename F, typename... G>
+  decltype(auto) EvaluatedProperty::visit(F&& f, G&&... g) const {
+    using Parameter = typename TypeExtractor<
+      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+    if(m_entry->get_property_type() == typeid(Parameter)) {
+      return std::forward<F>(f)(
+        std::in_place_type<Parameter>, as<typename Parameter::Type>());
+    }
+    return visit(std::forward<G>(g)...);
   }
 
   template<typename P>

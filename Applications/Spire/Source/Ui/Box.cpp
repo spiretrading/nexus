@@ -57,49 +57,32 @@ void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
     m_styles.buffer([&] {
-      auto& stylist = find_stylist(*this);
-      auto properties = stylist.compute_style();
-      for(auto& property : properties) {
+      auto block = get_evaluated_block(*this);
+      for(auto& property : block) {
         property.visit(
-          [&] (const BorderTopSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setTop(m_body_geometry.top() + size);
-            });
+          [&] (std::in_place_type_t<BorderTopSize>, int size) {
+            m_body_geometry.setTop(m_body_geometry.top() + size);
           },
-          [&] (const BorderRightSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setRight(m_body_geometry.right() - size);
-            });
+          [&] (std::in_place_type_t<BorderRightSize>, int size) {
+            m_body_geometry.setRight(m_body_geometry.right() - size);
           },
-          [&] (const BorderBottomSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-            });
+          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
           },
-          [&] (const BorderLeftSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setLeft(m_body_geometry.left() + size);
-            });
+          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+            m_body_geometry.setLeft(m_body_geometry.left() + size);
           },
-          [&] (const PaddingTop& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setTop(m_body_geometry.top() + size);
-            });
+          [&] (std::in_place_type_t<PaddingTop>, int size) {
+            m_body_geometry.setTop(m_body_geometry.top() + size);
           },
-          [&] (const PaddingRight& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setRight(m_body_geometry.right() - size);
-            });
+          [&] (std::in_place_type_t<PaddingRight>, int size) {
+            m_body_geometry.setRight(m_body_geometry.right() - size);
           },
-          [&] (const PaddingBottom& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-            });
+          [&] (std::in_place_type_t<PaddingBottom>, int size) {
+            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
           },
-          [&] (const PaddingLeft& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_body_geometry.setLeft(m_body_geometry.left() + size);
-            });
+          [&] (std::in_place_type_t<PaddingLeft>, int size) {
+            m_body_geometry.setLeft(m_body_geometry.left() + size);
           });
       }
     });
@@ -127,8 +110,8 @@ void Box::on_style() {
   m_styles.clear();
   m_styles.buffer([&] {
     auto& stylist = find_stylist(*this);
-    auto properties = stylist.compute_style();
-    for(auto& property : properties) {
+    auto block = stylist.get_computed_block();
+    for(auto& property : block) {
       property.visit(
         [&] (const BackgroundColor& color) {
           stylist.evaluate(color, [=] (auto color) {

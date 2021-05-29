@@ -161,15 +161,22 @@ bool Stylist::is_match(const Selector& selector) const {
   return false;
 }
 
-Block Stylist::compute_style() const {
-  auto block = Block();
+const Block& Stylist::get_computed_block() const {
+  if(m_computed_block) {
+    return *m_computed_block;
+  }
+  m_computed_block.emplace();
   for(auto& entry : m_blocks) {
-    merge(block, entry->m_block);
+    merge(*m_computed_block, entry->m_block);
   }
   for(auto principal : m_principals) {
-    merge(block, principal->compute_style());
+    merge(*m_computed_block, principal->get_computed_block());
   }
-  return block;
+  return *m_computed_block;
+}
+
+const EvaluatedBlock& Stylist::get_evaluated_block() const {
+  return *m_evaluated_block;
 }
 
 void Stylist::add_proxy(QWidget& widget) {
@@ -296,7 +303,12 @@ void Stylist::apply_rules() {
 }
 
 void Stylist::apply_style() {
-  auto style = compute_style();
+  m_computed_block = none;
+
+  // TODO: Need to evaluate all properties before signaling m_style_signal().
+  // Otherwise Box won't see the evaluated border sizes/paddings.
+  m_evaluated_block.emplace();
+  auto& style = get_computed_block();
   if(!m_evaluators.empty()) {
     for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
       auto property = find(style, i->first);
@@ -468,16 +480,32 @@ void Spire::Styles::set_style(QWidget& widget, const StyleSheet& style) {
   find_stylist(widget).set_style(style);
 }
 
-Block Spire::Styles::compute_style(QWidget& widget) {
-  return find_stylist(widget).compute_style();
+const Block& Spire::Styles::get_computed_block(QWidget& widget) {
+  return find_stylist(widget).get_computed_block();
 }
 
-Block Spire::Styles::compute_style(
+const Block& Spire::Styles::get_computed_block(
     QWidget& widget, const PseudoElement& pseudo_element) {
   if(auto stylist = find_stylist(widget, pseudo_element)) {
-    return stylist->compute_style();
+    return stylist->get_computed_block();
+  } else {
+    static const auto block = Block();
+    return block;
   }
-  return {};
+}
+
+const EvaluatedBlock& Spire::Styles::get_evaluated_block(QWidget& widget) {
+  return find_stylist(widget).get_evaluated_block();
+}
+
+const EvaluatedBlock& Spire::Styles::get_evaluated_block(
+    QWidget& widget, const PseudoElement& pseudo_element) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    return stylist->get_evaluated_block();
+  } else {
+    static const auto block = EvaluatedBlock();
+    return block;
+  }
 }
 
 Stylist::BaseEvaluatorEntry::BaseEvaluatorEntry(Property property)

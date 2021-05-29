@@ -48,11 +48,11 @@ void Icon::paintEvent(QPaintEvent* event) {
 
 void Icon::on_style() {
   auto& stylist = find_stylist(*this);
-  auto computed_style = stylist.compute_style();
+  auto& block = stylist.get_computed_block();
   m_background_color = QColor::fromRgb(0xF5, 0xF5, 0xF5);
   m_fill = QColor::fromRgb(0x75, 0x5E, 0xEC);
   m_border_color = none;
-  for(auto& property : computed_style) {
+  for(auto& property : block) {
     property.visit(
       [&] (const BackgroundColor& color) {
         stylist.evaluate(color, [=] (auto color) {
