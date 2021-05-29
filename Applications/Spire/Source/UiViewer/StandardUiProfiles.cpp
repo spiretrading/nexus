@@ -488,7 +488,7 @@ UiProfile Spire::make_integer_box_profile() {
 UiProfile Spire::make_key_tag_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_qstring_property("key"));
+  properties.push_back(make_standard_qstring_property("key", "f1"));
   auto profile = UiProfile(QString::fromUtf8("KeyTag"), properties,
     [] (auto& profile) {
       auto key_tag = new KeyTag();

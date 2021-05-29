@@ -184,6 +184,11 @@ connection
 }
 
 QSize TextBox::sizeHint() const {
+  if(m_line_edit->isReadOnly()) {
+    auto text_size = m_line_edit->fontMetrics().boundingRect(
+      m_model->get_current()).size();
+    return text_size.grownBy(m_padding);
+  }
   return scale(160, 30);
 }
 
@@ -445,6 +450,26 @@ void TextBox::on_style() {
         [&] (const EchoMode& mode) {
           stylist.evaluate(mode, [=] (auto mode) {
             m_line_edit_styles.m_echo_mode = mode;
+          });
+        },
+        [&] (const PaddingTop& padding) {
+          stylist.evaluate(padding, [=] (auto padding) {
+            m_padding.setTop(padding);
+          });
+        },
+        [&] (const PaddingRight& padding) {
+          stylist.evaluate(padding, [=] (auto padding) {
+            m_padding.setRight(padding);
+          });
+        },
+        [&] (const PaddingBottom& padding) {
+          stylist.evaluate(padding, [=] (auto padding) {
+            m_padding.setBottom(padding);
+          });
+        },
+        [&] (const PaddingLeft& padding) {
+          stylist.evaluate(padding, [=] (auto padding) {
+            m_padding.setLeft(padding);
           });
         });
     }
