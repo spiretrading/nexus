@@ -15,11 +15,11 @@ namespace Spire::Styles {
       /** Constructs an empty EvaluatedBlock. */
       EvaluatedBlock() = default;
 
-      /** Returns the list of EvaluatedProperties. */
-      const std::vector<EvaluatedProperty>& get_properties() const&;
+      /** Returns an iterator to the first EvaluatedProperty. */
+      std::vector<EvaluatedProperty>::const_iterator begin() const;
 
-      /** Returns the list of EvaluatedProperties. */
-      std::vector<EvaluatedProperty>&& get_properties() &&;
+      /** Returns an iterator to one past the last EvaluatedProperty. */
+      std::vector<EvaluatedProperty>::const_iterator end() const;
 
       /**
        * Returns a Block containing all Properties that correspond to all the
