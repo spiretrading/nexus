@@ -185,9 +185,11 @@ connection
 
 QSize TextBox::sizeHint() const {
   if(m_line_edit->isReadOnly()) {
-    auto text_size = m_line_edit->fontMetrics().boundingRect(
-      m_model->get_current()).size();
-    return text_size.grownBy(m_padding);
+    auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
+        m_model->get_current()),
+      m_line_edit->fontMetrics().boundingRect(
+        m_model->get_current()).height());
+    return size_hint.grownBy(m_padding);
   }
   return scale(160, 30);
 }
@@ -424,6 +426,7 @@ void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
   auto computed_style = stylist.compute_style();
   m_line_edit_styles.clear();
+  m_padding = {};
   m_line_edit_styles.m_styles.buffer([&] {
     for(auto& property : computed_style.get_properties()) {
       property.visit(
@@ -447,29 +450,29 @@ void TextBox::on_style() {
             m_line_edit_styles.m_size = size;
           });
         },
+        [&] (const PaddingTop& padding_top) {
+          stylist.evaluate(padding_top, [=] (auto padding_top) {
+            m_padding.setTop(padding_top);
+          });
+        },
+        [&] (const PaddingRight& padding_right) {
+          stylist.evaluate(padding_right, [=] (auto padding_right) {
+            m_padding.setRight(padding_right);
+          });
+        },
+        [&] (const PaddingBottom& padding_bottom) {
+          stylist.evaluate(padding_bottom, [=] (auto padding_bottom) {
+            m_padding.setBottom(padding_bottom);
+          });
+        },
+        [&] (const PaddingLeft& padding_left) {
+          stylist.evaluate(padding_left, [=] (auto padding_left) {
+            m_padding.setLeft(padding_left);
+          });
+        },
         [&] (const EchoMode& mode) {
           stylist.evaluate(mode, [=] (auto mode) {
             m_line_edit_styles.m_echo_mode = mode;
-          });
-        },
-        [&] (const PaddingTop& padding) {
-          stylist.evaluate(padding, [=] (auto padding) {
-            m_padding.setTop(padding);
-          });
-        },
-        [&] (const PaddingRight& padding) {
-          stylist.evaluate(padding, [=] (auto padding) {
-            m_padding.setRight(padding);
-          });
-        },
-        [&] (const PaddingBottom& padding) {
-          stylist.evaluate(padding, [=] (auto padding) {
-            m_padding.setBottom(padding);
-          });
-        },
-        [&] (const PaddingLeft& padding) {
-          stylist.evaluate(padding, [=] (auto padding) {
-            m_padding.setLeft(padding);
           });
         });
     }

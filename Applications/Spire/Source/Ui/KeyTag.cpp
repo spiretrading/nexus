@@ -86,6 +86,7 @@ void KeyTag::on_current_key(Qt::Key key) {
   auto style = get_style(*m_text_box);
   style.get(ReadOnly() && Disabled()).
     set(BackgroundColor(tag_background_color(key))).
+    set(border_size(0)).
     set(border_radius(scale_width(3))).
     set(PaddingLeft(scale_width(4))).
     set(PaddingRight(scale_width(4))).
