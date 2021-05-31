@@ -1,6 +1,7 @@
 #ifndef SPIRE_STANDARD_UI_PROFILES_HPP
 #define SPIRE_STANDARD_UI_PROFILES_HPP
 #include <Qt>
+#include <QWidget>
 #include "Spire/UiViewer/UiViewer.hpp"
 
 namespace Spire {
@@ -36,7 +37,7 @@ namespace Spire {
   UiProfile make_list_item_profile();
 
   //! Returns a UiProfile for the OverlayPanel.
-  UiProfile make_overlay_panel_profile();
+  UiProfile make_overlay_panel_profile(QWidget* parent);
 
   //! Returns a UiProfile for the ScrollBar.
   UiProfile make_scroll_bar_profile();

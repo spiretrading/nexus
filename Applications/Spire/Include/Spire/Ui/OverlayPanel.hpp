@@ -71,7 +71,6 @@ namespace Spire {
     private:
       mutable ClosedSignal m_closed_signal;
       QWidget* m_body;
-      QWidget* m_top_level_window;
       bool m_is_closed_on_blur;
       bool m_is_closed;
       Positioning m_positioning;

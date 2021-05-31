@@ -44,24 +44,12 @@ namespace {
       set(border(scale_width(1), QColor::fromRgb(0xA0, 0xA0, 0xA0)));
     return style;
   }
-
-  QWidget* find_top_level_window() {
-    auto list = QApplication::topLevelWidgets();
-    for(auto i = 0; i < list.size(); ++i) {
-      auto widget = list.at(i);
-      if(widget->isVisible() && !widget->parentWidget() && widget->isWindow()) {
-        return widget;
-      }
-    }
-    return nullptr;
-  }
 }
 
 OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint |
         Qt::NoDropShadowWindowHint),
       m_body(body),
-      m_top_level_window(nullptr),
       m_is_closed_on_blur(true),
       m_is_closed(false),
       m_positioning(Positioning::PARENT) {
@@ -79,9 +67,7 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
   shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
   box->setGraphicsEffect(shadow);
   m_body->installEventFilter(this);
-  if(m_top_level_window = find_top_level_window()) {
-    m_top_level_window->installEventFilter(this);
-  }
+  parent->window()->installEventFilter(this);
 }
 
 const QWidget& OverlayPanel::get_body() const {
@@ -127,7 +113,7 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
         move(pos() + (mouse_event->pos() - m_mouse_pressed_position));
       }
     }
-  } else if(watched == m_top_level_window) {
+  } else if(watched == parentWidget()->window()) {
     if(event->type() == QEvent::Move) {
       position();
     }
@@ -194,26 +180,23 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry =
       get_current_screen(parent_bottom_left)->availableGeometry();
-    auto get_x = [&] {
-      auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
-      if(x < 0) {
-        return 0;
-      } else if(x + width() > screen_geometry.right()) {
-        return screen_geometry.right() - width();
-      }
-      return x;
-    };
+    auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
+    if(x < 0) {
+      x = 0;
+    } else if(x + width() > screen_geometry.right()) {
+      x = screen_geometry.right() - width();
+    }
     if((parent_bottom_left.y() + height()) > screen_geometry.bottom()) {
       layout()->setContentsMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
         DROP_SHADOW_WIDTH(), 0);
       update();
-      move({get_x(), parent_bottom_left.y() - parent_geometry.height() -
-        height() + scale_height(1)});
+      move({x, parent_bottom_left.y() - parent_geometry.height() - height() +
+        scale_height(1)});
     } else {
       layout()->setContentsMargins(DROP_SHADOW_WIDTH(), 0,
         DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT());
       update();
-      move({get_x(), parent_bottom_left.y() + scale_height(1)});
+      move({x, parent_bottom_left.y() + scale_height(1)});
     }
   }
 }

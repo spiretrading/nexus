@@ -519,12 +519,12 @@ UiProfile Spire::make_list_item_profile() {
   return profile;
 }
 
-UiProfile Spire::make_overlay_panel_profile() {
+UiProfile Spire::make_overlay_panel_profile(QWidget* parent) {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_bool_property("close_on_blur", true));
   properties.push_back(make_standard_bool_property("positioning_parent", true));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
-    [] (auto& profile) {
+    [=] (auto& profile) {
       auto body = new QWidget();
       body->resize(scale(300, 300));
       body->setMinimumSize(scale(180, 100));
@@ -555,7 +555,7 @@ UiProfile Spire::make_overlay_panel_profile() {
       content_layout->addWidget(new QLabel("End Date:"), 1, 0);
       content_layout->addWidget(new TextBox, 1, 1);
       container_layout->addLayout(content_layout);
-      auto button = make_label_button("Click me");
+      auto button = make_label_button("Click me", parent);
       auto panel = new OverlayPanel(body, button);
       auto& close_on_blur = get<bool>("close_on_blur", profile.get_properties());
       close_on_blur.connect_changed_signal([=] (auto is_closed_on_blur) {
