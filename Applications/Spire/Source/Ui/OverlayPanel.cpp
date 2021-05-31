@@ -49,8 +49,7 @@ namespace {
     auto list = QApplication::topLevelWidgets();
     for(auto i = 0; i < list.size(); ++i) {
       auto widget = list.at(i);
-      if(widget->isVisible() && !widget->parentWidget() &&
-          widget->windowFlags() & Qt::Window) {
+      if(widget->isVisible() && !widget->parentWidget() && widget->isWindow()) {
         return widget;
       }
     }
@@ -120,12 +119,12 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       resize(m_body->size().grownBy(DROP_SHADOW_MARGINS()));
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
-      m_mouse_press_position = mouse_event->pos();
+      m_mouse_pressed_position = mouse_event->pos();
     } else if(event->type() == QEvent::MouseMove) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       if(mouse_event->buttons() & Qt::LeftButton &&
           m_positioning != Positioning::PARENT) {
-        move(pos() + (mouse_event->pos() - m_mouse_press_position));
+        move(pos() + (mouse_event->pos() - m_mouse_pressed_position));
       }
     }
   } else if(watched == m_top_level_window) {

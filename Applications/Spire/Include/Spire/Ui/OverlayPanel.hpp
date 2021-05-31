@@ -73,7 +73,7 @@ namespace Spire {
       bool m_is_closed_on_blur;
       bool m_is_closed;
       Positioning m_positioning;
-      QPoint m_mouse_press_position;
+      QPoint m_mouse_pressed_position;
 
       QScreen* get_current_screen(const QPoint& point) const;
       void fade(bool reverse);
