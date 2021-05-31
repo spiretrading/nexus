@@ -195,8 +195,8 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry =
       get_current_screen(parent_bottom_left)->availableGeometry();
-    auto get_x = [&] (int parent_x) {
-      auto x = parent_x - DROP_SHADOW_WIDTH();
+    auto get_x = [&] {
+      auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
       if(x < 0) {
         return 0;
       } else if(x + width() > screen_geometry.right()) {
@@ -208,14 +208,13 @@ void OverlayPanel::position() {
       layout()->setContentsMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
         DROP_SHADOW_WIDTH(), 0);
       update();
-      move({get_x(parent_bottom_left.x()), parent_bottom_left.y() -
-        parent_geometry.height() - height() + scale_height(1)});
+      move({get_x(), parent_bottom_left.y() - parent_geometry.height() -
+        height() + scale_height(1)});
     } else {
       layout()->setContentsMargins(DROP_SHADOW_WIDTH(), 0,
         DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT());
       update();
-      move({get_x(parent_bottom_left.x()), parent_bottom_left.y() +
-        scale_height(1)});
+      move({get_x(), parent_bottom_left.y() + scale_height(1)});
     }
   }
 }
