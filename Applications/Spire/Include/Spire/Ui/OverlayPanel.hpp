@@ -42,7 +42,8 @@ namespace Spire {
        */
       bool is_closed_on_blur() const;
 
-      /** Sets whether the panel closes on blur event.
+      /**
+       * Sets whether the panel closes on blur event.
        * @param is_closed_on_blur Sets the panel to be colsed on blur event iff
        *                          is_closed_on_blur is true.
        */
@@ -51,7 +52,8 @@ namespace Spire {
       /** Returns the positioning of the panel relative to the parent. */
       Positioning get_positioning() const;
 
-      /** Sets the positioning of the panel relative to the parent.
+      /**
+       * Sets the positioning of the panel relative to the parent.
        * @param positioning The positioning of the panel relative to the parent.
        */
       void set_positioning(Positioning positioning);
