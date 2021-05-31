@@ -125,7 +125,7 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       if(mouse_event->buttons() & Qt::LeftButton &&
           m_positioning != Positioning::PARENT) {
-        move(mapToGlobal(mouse_event->pos() - m_mouse_press_position));
+        move(pos() + (mouse_event->pos() - m_mouse_press_position));
       }
     }
   } else if(watched == m_top_level_window) {
