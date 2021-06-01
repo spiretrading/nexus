@@ -13,6 +13,13 @@ namespace {
   const auto ESCAPE_BACKGROUND_COLOR = QColor("#C6E6FF");
   const auto MODIFIER_BACKGROUND_COLOR = QColor("#FFEDCD");
 
+  auto BACKGROUND_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor(0, 0, 0, 0)));
+    return style;
+  }
+
   auto get_key_text(Qt::Key key) {
     switch(key) {
       case Qt::Key_Shift:
@@ -60,6 +67,7 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
       m_model(std::move(model)) {
   setAttribute(Qt::WA_TranslucentBackground);
   setFocusPolicy(Qt::NoFocus);
+  set_style(*this, BACKGROUND_STYLE());
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(this);
