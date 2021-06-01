@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_PROPERTY_HPP
 #define SPIRE_STYLES_PROPERTY_HPP
+#include <any>
 #include <typeindex>
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
@@ -61,7 +62,7 @@ namespace Spire::Styles {
         bool operator !=(const BaseEntry& entry) const;
       };
       template<typename T>
-      struct Entry : BaseEntry {
+      struct Entry final : BaseEntry {
         using Type = T;
         Type m_property;
 

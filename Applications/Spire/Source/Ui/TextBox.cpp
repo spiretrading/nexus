@@ -417,10 +417,10 @@ void TextBox::on_text_edited(const QString& text) {
 
 void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
-  auto computed_style = stylist.compute_style();
+  auto block = stylist.get_computed_block();
   m_line_edit_styles.clear();
   m_line_edit_styles.m_styles.buffer([&] {
-    for(auto& property : computed_style.get_properties()) {
+    for(auto& property : block) {
       property.visit(
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
@@ -450,10 +450,10 @@ void TextBox::on_style() {
     }
   });
   auto& placeholder_stylist = *find_stylist(*this, Placeholder());
-  merge(computed_style, placeholder_stylist.compute_style());
+  merge(block, placeholder_stylist.get_computed_block());
   m_placeholder_styles.clear();
   m_placeholder_styles.m_styles.buffer([&] {
-    for(auto& property : computed_style.get_properties()) {
+    for(auto& property : block) {
       property.visit(
         [&] (const TextColor& color) {
           placeholder_stylist.evaluate(color, [=] (auto color) {

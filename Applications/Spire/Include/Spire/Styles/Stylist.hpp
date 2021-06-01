@@ -13,6 +13,7 @@
 #include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/ChildSelector.hpp"
 #include "Spire/Styles/DescendantSelector.hpp"
+#include "Spire/Styles/EvaluatedBlock.hpp"
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/NotSelector.hpp"
@@ -86,8 +87,13 @@ namespace Spire::Styles {
       /** Returns <code>true</code> iff a Selector matches. */
       bool is_match(const Selector& selector) const;
 
-      /** Returns a Block containing this widget's computed style. */
-      Block compute_style() const;
+      /** Returns the Block containing all current Properties. */
+      const Block& get_computed_block() const;
+
+      /**
+       * Returns the EvaluatedBlock containing all current EvaluatedProperties.
+       */
+      const EvaluatedBlock& get_evaluated_block() const;
 
       /**
        * Specifies that all styles applied to this widget are also applied to
@@ -172,6 +178,8 @@ namespace Spire::Styles {
       boost::optional<PseudoElement> m_pseudo_element;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
       StyleSheet m_style;
+      boost::optional<EvaluatedBlock> m_evaluated_block;
+      mutable boost::optional<Block> m_computed_block;
       VisibilityOption m_visibility;
       std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
@@ -229,12 +237,22 @@ namespace Spire::Styles {
   void set_style(QWidget& widget, const StyleSheet& style);
 
   /** Returns a Block containing a widget's computed style. */
-  Block compute_style(QWidget& widget);
+  const Block& get_computed_block(QWidget& widget);
 
   /**
    * Returns a Block containing the computed style of a widget's pseudoelement.
    */
-  Block compute_style(QWidget& widget, const PseudoElement& pseudo_element);
+  const Block& get_computed_block(
+    QWidget& widget, const PseudoElement& pseudo_element);
+
+  /** Returns an EvaluatedBlock containing a widget's evaluated style. */
+  const EvaluatedBlock& get_evaluated_block(QWidget& widget);
+
+  /**
+   * Returns a Block containing the evaluated style of a widget's pseudoelement.
+   */
+  const EvaluatedBlock& get_evaluated_block(
+    QWidget& widget, const PseudoElement& pseudo_element);
 
   /** Returns all of a QWidget's PseudoElements. */
   std::vector<PseudoElement> get_pseudo_elements(const QWidget& source);
@@ -304,17 +322,23 @@ namespace Spire::Styles {
         if(m_evaluators.size() == 1) {
           connect_animation();
         }
+        m_evaluated_block->set(
+          EvaluatedProperty(std::in_place_type<Property>, evaluation.m_value));
         receiver(std::move(evaluation.m_value));
       } else {
+        m_evaluated_block->set(
+          EvaluatedProperty(std::in_place_type<Property>, evaluation.m_value));
         std::forward<F>(receiver)(std::move(evaluation.m_value));
       }
-      return;
+    } else {
+      auto& evaluator = static_cast<EvaluatorEntry<typename Property::Type>&>(
+        *i->second);
+      evaluator.m_receivers.push_back(std::forward<F>(receiver));
+      auto evaluation = evaluator.m_evaluator(evaluator.m_elapsed).m_value;
+      m_evaluated_block->set(
+        EvaluatedProperty(std::in_place_type<Property>, evaluation));
+      evaluator.m_receivers.back()(std::move(evaluation));
     }
-    auto& evaluator = static_cast<EvaluatorEntry<typename Property::Type>&>(
-      *i->second);
-    evaluator.m_receivers.push_back(std::forward<F>(receiver));
-    evaluator.m_receivers.back()(
-      evaluator.m_evaluator(evaluator.m_elapsed).m_value);
   }
 
   template<typename T>
