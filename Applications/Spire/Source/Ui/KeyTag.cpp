@@ -20,6 +20,21 @@ namespace {
     return style;
   }
 
+  auto TAG_STYLE() {
+    auto style = StyleSheet();
+    style.get(ReadOnly() && Disabled()).
+      set(border_size(0)).
+      set(border_radius(scale_width(3))).
+      //set(BackgroundColor(tag_background_color(key))).
+      set(PaddingLeft(scale_width(4))).
+      set(PaddingRight(scale_width(4))).
+      set(PaddingBottom(scale_height(2))).
+      set(PaddingTop(scale_height(2))).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+      set(TextColor(QColor::fromRgb(0, 0, 0)));
+    return style;
+  }
+
   auto get_key_text(Qt::Key key) {
     switch(key) {
       case Qt::Key_Shift:
@@ -73,6 +88,7 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   m_text_box = new TextBox(this);
   m_text_box->set_read_only(true);
   m_text_box->setDisabled(true);
+  set_style(*m_text_box, TAG_STYLE());
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
   m_current_connection = m_model->connect_current_signal([=] (auto key) {
@@ -93,15 +109,15 @@ void KeyTag::on_current_key(Qt::Key key) {
   m_text_box->get_model()->set_current(get_key_text(key));
   auto style = get_style(*m_text_box);
   style.get(ReadOnly() && Disabled()).
-    set(BackgroundColor(tag_background_color(key))).
-    set(border_size(0)).
-    set(border_radius(scale_width(3))).
-    set(PaddingLeft(scale_width(4))).
-    set(PaddingRight(scale_width(4))).
-    set(PaddingBottom(scale_height(2))).
-    set(PaddingTop(scale_height(2))).
-    set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set(TextColor(QColor::fromRgb(0, 0, 0)));
+    //set(border_size(0)).
+    //set(border_radius(scale_width(3))).
+    set(BackgroundColor(tag_background_color(key)));
+    //set(PaddingLeft(scale_width(4))).
+    //set(PaddingRight(scale_width(4))).
+    //set(PaddingBottom(scale_height(2))).
+    //set(PaddingTop(scale_height(2))).
+    //set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+    //set(TextColor(QColor::fromRgb(0, 0, 0)));
   set_style(*m_text_box, style);
   adjustSize();
 }
