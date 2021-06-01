@@ -493,7 +493,11 @@ UiProfile Spire::make_key_tag_profile() {
   properties.push_back(make_standard_qstring_property("key", "f1"));
   auto profile = UiProfile(QString::fromUtf8("KeyTag"), properties,
     [] (auto& profile) {
+      auto container = new QWidget();
+      auto container_layout = new QHBoxLayout(container);
       auto key_tag = new KeyTag();
+      container_layout->addWidget(key_tag);
+      key_tag->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
       apply_widget_properties(key_tag, profile.get_properties());
       auto& key = get<QString>("key", profile.get_properties());
       key.connect_changed_signal([=] (auto key_text) {

@@ -17,12 +17,6 @@ namespace Spire {
 
       QSize sizeHint() const override;
 
-    protected:
-      void showEvent(QShowEvent* event) override {
-        adjustSize();
-        QWidget::showEvent(event);
-      }
-
     private:
       std::shared_ptr<KeyModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
