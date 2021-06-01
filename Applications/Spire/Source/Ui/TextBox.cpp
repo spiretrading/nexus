@@ -171,6 +171,7 @@ void TextBox::set_read_only(bool read_only) {
   }
   update_display_text();
   update_placeholder_text();
+  adjustSize();
 }
 
 connection
@@ -184,6 +185,13 @@ connection
 }
 
 QSize TextBox::sizeHint() const {
+  if(is_read_only()) {
+    auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
+        m_model->get_current()),
+      m_line_edit->fontMetrics().boundingRect(
+        m_model->get_current()).height());
+    return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
+  }
   return scale(160, 30);
 }
 
@@ -242,6 +250,7 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
   update_placeholder_text();
+  m_line_edit->setFixedSize(size());
   QWidget::resizeEvent(event);
 }
 
@@ -393,6 +402,9 @@ void TextBox::on_current(const QString& current) {
   }
   update_display_text();
   update_placeholder_text();
+  if(is_read_only()) {
+    adjustSize();
+  }
 }
 
 void TextBox::on_editing_finished() {
@@ -419,6 +431,8 @@ void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
   auto block = stylist.get_computed_block();
   m_line_edit_styles.clear();
+  m_border_sizes = {};
+  m_padding = {};
   m_line_edit_styles.m_styles.buffer([&] {
     for(auto& property : block) {
       property.visit(
@@ -440,6 +454,46 @@ void TextBox::on_style() {
         [&] (const FontSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_line_edit_styles.m_size = size;
+          });
+        },
+        [&] (const BorderTopSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_border_sizes.setTop(size);
+          });
+        },
+        [&] (const BorderRightSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_border_sizes.setRight(size);
+          });
+        },
+        [&] (const BorderBottomSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_border_sizes.setBottom(size);
+          });
+        },
+        [&] (const BorderLeftSize& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_border_sizes.setLeft(size);
+          });
+        },
+        [&] (const PaddingTop& padding_top) {
+          stylist.evaluate(padding_top, [=] (auto padding_top) {
+            m_padding.setTop(padding_top);
+          });
+        },
+        [&] (const PaddingRight& padding_right) {
+          stylist.evaluate(padding_right, [=] (auto padding_right) {
+            m_padding.setRight(padding_right);
+          });
+        },
+        [&] (const PaddingBottom& padding_bottom) {
+          stylist.evaluate(padding_bottom, [=] (auto padding_bottom) {
+            m_padding.setBottom(padding_bottom);
+          });
+        },
+        [&] (const PaddingLeft& padding_left) {
+          stylist.evaluate(padding_left, [=] (auto padding_left) {
+            m_padding.setLeft(padding_left);
           });
         },
         [&] (const EchoMode& mode) {

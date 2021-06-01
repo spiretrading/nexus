@@ -130,6 +130,8 @@ namespace Styles {
       std::shared_ptr<TextModel> m_model;
       Box* m_box;
       LayeredWidget* m_layers;
+      QMargins m_border_sizes;
+      QMargins m_padding;
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
       QLabel* m_placeholder;
