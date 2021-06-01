@@ -250,6 +250,7 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
   update_placeholder_text();
+  m_line_edit->setFixedSize(size());
   QWidget::resizeEvent(event);
 }
 
