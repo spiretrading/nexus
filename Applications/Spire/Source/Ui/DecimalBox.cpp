@@ -462,13 +462,13 @@ void DecimalBox::on_reject(const QString& value) {
 
 void DecimalBox::on_style() {
   auto& stylist = find_stylist(*this);
-  auto computed_style = stylist.compute_style();
-  if(auto leading_zeros = Styles::find<LeadingZeros>(computed_style)) {
+  auto block = stylist.get_computed_block();
+  if(auto leading_zeros = Styles::find<LeadingZeros>(block)) {
     stylist.evaluate(*leading_zeros, [=] (auto leading_zeros) {
       m_adaptor_model->set_leading_zeros(leading_zeros);
     });
   }
-  if(auto trailing_zeros = Styles::find<TrailingZeros>(computed_style)) {
+  if(auto trailing_zeros = Styles::find<TrailingZeros>(block)) {
     stylist.evaluate(*trailing_zeros, [=] (auto trailing_zeros) {
       m_adaptor_model->set_trailing_zeros(trailing_zeros);
     });

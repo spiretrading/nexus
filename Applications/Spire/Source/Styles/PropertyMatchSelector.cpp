@@ -30,9 +30,9 @@ std::unordered_set<Stylist*>
       std::unordered_set<Stylist*> sources) {
   for(auto i = sources.begin(); i != sources.end();) {
     auto& source = **i;
-    auto block = source.compute_style();
+    auto& block = source.get_computed_block();
     auto is_missing_property = true;
-    for(auto& property : block.get_properties()) {
+    for(auto& property : block) {
       if(property == selector.get_property()) {
         is_missing_property = false;
         break;

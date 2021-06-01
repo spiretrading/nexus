@@ -4,12 +4,12 @@ using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
-const std::vector<Property>& Block::get_properties() const& {
-  return m_properties;
+std::vector<Property>::const_iterator Block::begin() const {
+  return m_properties.cbegin();
 }
 
-std::vector<Property>&& Block::get_properties() && {
-  return std::move(m_properties);
+std::vector<Property>::const_iterator Block::end() const {
+  return m_properties.cend();
 }
 
 void Block::set(Property property) {
@@ -42,7 +42,7 @@ bool Block::operator !=(const Block& block) const {
 
 optional<Property>
     Spire::Styles::find(const Block& block, const std::type_index& type) {
-  for(auto& property : block.get_properties()) {
+  for(auto& property : block) {
     if(property.get_type() == type) {
       return property;
     }
@@ -51,7 +51,7 @@ optional<Property>
 }
 
 void Spire::Styles::merge(Block& block, Block other) {
-  for(auto& property : std::move(other).get_properties()) {
+  for(auto& property : other) {
     block.set(std::move(property));
   }
 }
