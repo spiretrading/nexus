@@ -118,10 +118,6 @@ namespace Spire::Styles {
       return std::forward<F>(f)(
         std::in_place_type<Parameter>, as<typename Parameter::Type>());
     }
-    if constexpr(!std::is_invocable_r_v<void, F, const Parameter&,
-        const typename Parameter::Type&>) {
-      throw std::bad_any_cast();
-    }
   }
 
   template<typename F, typename... G>

@@ -299,8 +299,6 @@ namespace Spire::Styles {
   template<typename T>
   void Stylist::EvaluatorEntry<T>::animate() {
     auto evaluation = m_evaluator(m_elapsed);
-
-    // TODO
     for(auto i = m_receivers.begin(); i != m_receivers.end() - 1; ++i) {
       (*i)(evaluation.m_value);
     }
@@ -328,17 +326,19 @@ namespace Spire::Styles {
           EvaluatedProperty(std::in_place_type<Property>, evaluation.m_value));
         receiver(std::move(evaluation.m_value));
       } else {
+        m_evaluated_block->set(
+          EvaluatedProperty(std::in_place_type<Property>, evaluation.m_value));
         std::forward<F>(receiver)(std::move(evaluation.m_value));
       }
-      return;
+    } else {
+      auto& evaluator = static_cast<EvaluatorEntry<typename Property::Type>&>(
+        *i->second);
+      evaluator.m_receivers.push_back(std::forward<F>(receiver));
+      auto evaluation = evaluator.m_evaluator(evaluator.m_elapsed).m_value;
+      m_evaluated_block->set(
+        EvaluatedProperty(std::in_place_type<Property>, evaluation));
+      evaluator.m_receivers.back()(std::move(evaluation));
     }
-    auto& evaluator = static_cast<EvaluatorEntry<typename Property::Type>&>(
-      *i->second);
-    evaluator.m_receivers.push_back(std::forward<F>(receiver));
-    auto evaluation = evaluator.m_evaluator(evaluator.m_elapsed).m_value;
-    m_evaluated_block->set(
-      EvaluatedProperty(std::in_place_type<Property>, evaluation));
-    evaluator.m_receivers.back()(std::move(evaluation));
   }
 
   template<typename T>

@@ -240,6 +240,7 @@ Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
       m_visibility(VisibilityOption::VISIBLE),
+      m_evaluated_block(in_place_init),
       m_evaluated_property(typeid(void)) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
@@ -304,14 +305,11 @@ void Stylist::apply_rules() {
 
 void Stylist::apply_style() {
   m_computed_block = none;
-
-  // TODO: Need to evaluate all properties before signaling m_style_signal().
-  // Otherwise Box won't see the evaluated border sizes/paddings.
   m_evaluated_block.emplace();
-  auto& style = get_computed_block();
+  auto& block = get_computed_block();
   if(!m_evaluators.empty()) {
     for(auto i = m_evaluators.begin(); i != m_evaluators.end();) {
-      auto property = find(style, i->first);
+      auto property = find(block, i->first);
       if(!property || *property != i->second->m_property) {
         i = m_evaluators.erase(i);
       } else {
@@ -326,7 +324,7 @@ void Stylist::apply_style() {
   if(m_pseudo_element) {
     return;
   }
-  if(auto visibility = Spire::Styles::find<Visibility>(style)) {
+  if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
       if(visibility != m_visibility) {
         if(visibility == VisibilityOption::VISIBLE) {
