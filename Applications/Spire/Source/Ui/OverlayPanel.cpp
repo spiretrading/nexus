@@ -94,11 +94,6 @@ void OverlayPanel::set_positioning(Positioning positioning) {
   m_positioning = positioning;
 }
 
-connection OverlayPanel::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
     if(event->type() == QEvent::Resize) {
@@ -166,9 +161,7 @@ void OverlayPanel::fade(bool reverse) {
   } else {
     animation->setStartValue(1);
     animation->setEndValue(0);
-    connect(animation, &QPropertyAnimation::finished, [=] {
-      close();
-    });
+    connect(animation, &QPropertyAnimation::finished, [=] { close(); });
   }
   animation->start(QAbstractAnimation::DeleteWhenStopped);
 }

@@ -21,9 +21,6 @@ namespace Spire {
         PARENT
       };
 
-      /** Signals that the panel is closed. */
-      using ClosedSignal = Signal<void ()>;
-
       /**
        * Constructs an OverlayPanel.
        * @param body The widget displayed in the OverlayPanel.
@@ -58,10 +55,6 @@ namespace Spire {
        */
       void set_positioning(Positioning positioning);
 
-      /** Connects a slot to the close signal. */
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -69,7 +62,6 @@ namespace Spire {
       bool event(QEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       QWidget* m_body;
       bool m_is_closed_on_blur;
       bool m_is_closed;

@@ -533,7 +533,12 @@ UiProfile Spire::make_overlay_panel_profile() {
       auto button = make_label_button("Click me");
       auto close_on_blur_connection = std::make_shared<scoped_connection>();
       auto positioning_connection = std::make_shared<scoped_connection>();
+      auto panel = static_cast<OverlayPanel*>(nullptr);
       button->connect_clicked_signal([=, &profile] () mutable {
+        if(panel) {
+          panel->close();
+          panel = nullptr;
+        }
         auto body = new QWidget();
         body->resize(scale(300, 300));
         body->setMinimumSize(scale(180, 100));
@@ -541,7 +546,7 @@ UiProfile Spire::make_overlay_panel_profile() {
         container_layout->setSpacing(0);
         container_layout->setContentsMargins(
           scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-        auto title_layout = new QHBoxLayout(body);
+        auto title_layout = new QHBoxLayout();
         title_layout->setSpacing(scale_width(3));
         auto title_name = new QLabel("Filter Date");
         title_layout->addWidget(title_name);
@@ -555,7 +560,7 @@ UiProfile Spire::make_overlay_panel_profile() {
         title_layout->addWidget(close_button);
         container_layout->addLayout(title_layout);
         container_layout->addSpacing(scale_height(3));
-        auto content_layout = new QGridLayout(body);
+        auto content_layout = new QGridLayout();
         content_layout->setSpacing(scale_width(5));
         content_layout->setContentsMargins(
           {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
@@ -564,7 +569,7 @@ UiProfile Spire::make_overlay_panel_profile() {
         content_layout->addWidget(new QLabel("End Date:"), 1, 0);
         content_layout->addWidget(new TextBox, 1, 1);
         container_layout->addLayout(content_layout);
-        auto panel = new OverlayPanel(body, button);
+        panel = new OverlayPanel(body, button);
         auto& close_on_blur =
           get<bool>("close_on_blur", profile.get_properties());
         close_on_blur_connection = std::make_shared<scoped_connection>(
