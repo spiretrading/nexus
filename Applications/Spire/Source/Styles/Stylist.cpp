@@ -56,7 +56,9 @@ struct Stylist::StyleEventFilter : QObject {
     } else if(event->type() == QEvent::FocusOut) {
       m_stylist->unmatch(Focus());
     } else if(event->type() == QEvent::Enter) {
-      m_stylist->match(Hover());
+      if(m_stylist->m_widget->isEnabled()) {
+        m_stylist->match(Hover());
+      }
     } else if(event->type() == QEvent::Leave) {
       poll_mouse();
     } else if(event->type() == QEvent::EnabledChange) {
