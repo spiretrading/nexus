@@ -96,9 +96,7 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
-    if(event->type() == QEvent::Resize) {
-      resize(m_body->size().grownBy(DROP_SHADOW_MARGINS()));
-    } else if(event->type() == QEvent::MouseButtonPress) {
+    if(event->type() == QEvent::MouseButtonPress) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       m_mouse_pressed_position = mouse_event->pos();
     } else if(event->type() == QEvent::MouseMove) {
@@ -173,23 +171,30 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry =
       get_current_screen(parent_bottom_left)->availableGeometry();
+    auto size = m_body->size() + QSize(2 * DROP_SHADOW_WIDTH(),
+      DROP_SHADOW_HEIGHT());
     auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
     if(x < 0) {
       x = 0;
-    } else if(x + width() > screen_geometry.right()) {
-      x = screen_geometry.right() - width();
+    } else if(x + size.width() > screen_geometry.right()) {
+      x = screen_geometry.right() - size.width();
     }
-    if((parent_bottom_left.y() + height()) > screen_geometry.bottom()) {
-      layout()->setContentsMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
+    auto rect = QRect();
+    if((parent_bottom_left.y() + size.height()) > screen_geometry.bottom()) {
+      auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
         DROP_SHADOW_WIDTH(), 0);
-      update();
-      move({x, parent_bottom_left.y() - parent_geometry.height() - height() +
-        scale_height(1)});
+      layout()->setContentsMargins(margins);
+      rect = {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
+        size.height() + scale_height(1)), size};
     } else {
-      layout()->setContentsMargins(DROP_SHADOW_WIDTH(), 0,
-        DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT());
-      update();
-      move({x, parent_bottom_left.y() + scale_height(1)});
+      auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
+        DROP_SHADOW_HEIGHT());
+      layout()->setContentsMargins(margins);
+      rect = {QPoint(x, parent_bottom_left.y() + scale_height(1)), size};
     }
+    update();
+    setGeometry(rect);
+  } else {
+    resize(m_body->size().grownBy(DROP_SHADOW_MARGINS()));
   }
 }
