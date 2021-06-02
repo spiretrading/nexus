@@ -171,7 +171,6 @@ void TextBox::set_read_only(bool read_only) {
   }
   update_display_text();
   update_placeholder_text();
-  adjustSize();
 }
 
 connection
@@ -187,8 +186,7 @@ connection
 QSize TextBox::sizeHint() const {
   auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
       m_model->get_current()),
-    m_line_edit->fontMetrics().boundingRect(
-      m_model->get_current()).height());
+    m_line_edit->font().pixelSize());
   return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
 }
 
@@ -398,7 +396,7 @@ void TextBox::on_current(const QString& current) {
   }
   update_display_text();
   update_placeholder_text();
-  adjustSize();
+  updateGeometry();
 }
 
 void TextBox::on_editing_finished() {
