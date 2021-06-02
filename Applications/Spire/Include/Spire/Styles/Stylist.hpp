@@ -82,7 +82,7 @@ namespace Spire::Styles {
       const StyleSheet& get_style() const;
 
       /** Sets the style and update's the QWidget. */
-      void set_style(const StyleSheet& style);
+      void set_style(StyleSheet style);
 
       /** Returns <code>true</code> iff a Selector matches. */
       bool is_match(const Selector& selector) const;
@@ -139,10 +139,13 @@ namespace Spire::Styles {
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
       };
+      struct AppliedProperty {
+        Property m_property;
+        std::shared_ptr<const Rule> m_rule;
+      };
       struct BlockEntry {
         Stylist* m_source;
-        int m_priority;
-        Block m_block;
+        std::vector<AppliedProperty> m_properties;
       };
       struct BaseEvaluatorEntry {
         Property m_property;
@@ -177,7 +180,7 @@ namespace Spire::Styles {
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
-      StyleSheet m_style;
+      std::shared_ptr<StyleSheet> m_style;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
       VisibilityOption m_visibility;
@@ -186,7 +189,7 @@ namespace Spire::Styles {
       std::unordered_set<Selector, SelectorHash> m_matching_selectors;
       std::unordered_set<Stylist*> m_dependents;
       std::vector<boost::signals2::scoped_connection> m_enable_connections;
-      std::unordered_map<const Stylist*, std::shared_ptr<BlockEntry>>
+      std::unordered_map<Stylist*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
       std::unordered_map<
@@ -198,8 +201,12 @@ namespace Spire::Styles {
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
       Stylist& operator =(const Stylist&) = delete;
+      static void merge(
+        Block& block, const std::vector<AppliedProperty>& properties);
+      static void merge(std::vector<AppliedProperty>& properties,
+        std::shared_ptr<const Rule> rule);
       void remove_dependent(Stylist& dependent);
-      void apply(Stylist& source, Block block);
+      void apply(Stylist& source, std::vector<AppliedProperty> properties);
       void apply_rules();
       void apply_style();
       void apply_proxy_styles();
@@ -234,7 +241,7 @@ namespace Spire::Styles {
   const StyleSheet& get_style(const QWidget& widget);
 
   /** Sets the styling of a QWidget. */
-  void set_style(QWidget& widget, const StyleSheet& style);
+  void set_style(QWidget& widget, StyleSheet style);
 
   /** Returns a Block containing a widget's computed style. */
   const Block& get_computed_block(QWidget& widget);
