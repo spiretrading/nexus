@@ -185,14 +185,11 @@ connection
 }
 
 QSize TextBox::sizeHint() const {
-  if(is_read_only()) {
-    auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
-        m_model->get_current()),
-      m_line_edit->fontMetrics().boundingRect(
-        m_model->get_current()).height());
-    return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
-  }
-  return scale(160, 30);
+  auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
+      m_model->get_current()),
+    m_line_edit->fontMetrics().boundingRect(
+      m_model->get_current()).height());
+  return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
 }
 
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
@@ -250,7 +247,6 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
   update_placeholder_text();
-  m_line_edit->setFixedSize(size());
   QWidget::resizeEvent(event);
 }
 
@@ -402,9 +398,7 @@ void TextBox::on_current(const QString& current) {
   }
   update_display_text();
   update_placeholder_text();
-  if(is_read_only()) {
-    adjustSize();
-  }
+  adjustSize();
 }
 
 void TextBox::on_editing_finished() {
