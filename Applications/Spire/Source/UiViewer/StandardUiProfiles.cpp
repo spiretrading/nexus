@@ -10,6 +10,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -374,6 +375,42 @@ UiProfile Spire::make_duration_box_profile() {
         profile.make_event_slot<optional<time_duration>>(
           QString::fromUtf8("Reject")));
       return duration_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_qstring_property("title",
+    "Filter Quantity"));
+  auto profile = UiProfile(QString::fromUtf8("FilterPanel"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      button->connect_clicked_signal([=, &profile] () mutable {
+        auto component = new QWidget();
+        component->setObjectName("component");
+        component->setStyleSheet("#component {background-color: #F5F5F5;}");
+        component->setFixedSize(scale(180, 80));
+        auto component_layout = new QGridLayout(component);
+        component_layout->setSpacing(0);
+        component_layout->setContentsMargins({});
+        auto min_box = new TextBox(QString::fromUtf8("Min"));
+        min_box->set_read_only(true);
+        min_box->setFixedSize(scale(40, 30));
+        component_layout->addWidget(min_box, 0, 0);
+        component_layout->addWidget(new TextBox(), 0, 1);
+        auto max_box = new TextBox(QString::fromUtf8("Max"));
+        max_box->set_read_only(true);
+        max_box->setFixedSize(scale(40, 30));
+        component_layout->addWidget(max_box, 1, 0);
+        component_layout->addWidget(new TextBox(), 1, 1);
+        auto& title = get<QString>("title", profile.get_properties());
+        auto panel = new FilterPanel(title.get(), component, button);
+        panel->connect_reset_signal(profile.make_event_slot(
+          QString::fromUtf8("ResetSignal")));
+        panel->show();
+      });
+      return button;
     });
   return profile;
 }

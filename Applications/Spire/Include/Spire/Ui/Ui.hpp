@@ -30,6 +30,7 @@ namespace Spire {
   class DropShadow;
   class DurationBox;
   class FilteredTableModel;
+  class FilterPanel;
   class FlatButton;
   class Icon;
   class IconButton;
