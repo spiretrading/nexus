@@ -253,7 +253,7 @@ namespace Spire::Styles {
     QWidget& widget, const PseudoElement& pseudo_element);
 
   /** Returns an EvaluatedBlock containing a widget's evaluated style. */
-  const EvaluatedBlock& get_evaluated_block(QWidget& widget);
+  const EvaluatedBlock& get_evaluated_block(const QWidget& widget);
 
   /**
    * Returns a Block containing the evaluated style of a widget's pseudoelement.
