@@ -338,6 +338,10 @@ void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
 }
 
+QSize DecimalBox::sizeHint() const {
+  return scale(120, 26);
+}
+
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);

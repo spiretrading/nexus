@@ -111,7 +111,6 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
@@ -185,14 +184,9 @@ connection
 }
 
 QSize TextBox::sizeHint() const {
-  if(is_read_only()) {
-    auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
-        m_model->get_current()),
-      m_line_edit->fontMetrics().boundingRect(
-        m_model->get_current()).height());
-    return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
-  }
-  return scale(160, 30);
+  auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
+      m_model->get_current()) + 5, m_line_edit->fontMetrics().height());
+  return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
 }
 
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
@@ -402,9 +396,7 @@ void TextBox::on_current(const QString& current) {
   }
   update_display_text();
   update_placeholder_text();
-  if(is_read_only()) {
-    adjustSize();
-  }
+  updateGeometry();
 }
 
 void TextBox::on_editing_finished() {
@@ -431,6 +423,7 @@ void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
   auto block = stylist.get_computed_block();
   m_line_edit_styles.clear();
+  m_border_sizes = {};
   m_padding = {};
   m_line_edit_styles.m_styles.buffer([&] {
     for(auto& property : block) {
