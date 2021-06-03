@@ -205,17 +205,6 @@ connection TimeAndSalesPropertiesDialog::connect_save_default_signal(
   return m_save_default_signal.connect(slot);
 }
 
-void TimeAndSalesPropertiesDialog::mousePressEvent(QMouseEvent* event) {
-  setFocus();
-}
-
-void TimeAndSalesPropertiesDialog::showEvent(QShowEvent* event) {
-  m_band_list->setFocus();
-  auto parent_geometry = static_cast<QWidget*>(parent())->geometry();
-  move(parent_geometry.center().x() - (width() / 2),
-    parent_geometry.center().y() - (height() / 2));
-}
-
 void TimeAndSalesPropertiesDialog::set_band_color(const QColor& color) {
   auto index = m_band_list->currentIndex().row();
   auto band = static_cast<PriceRange>(index);

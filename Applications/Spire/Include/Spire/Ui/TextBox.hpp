@@ -130,8 +130,6 @@ namespace Styles {
       std::shared_ptr<TextModel> m_model;
       Box* m_box;
       LayeredWidget* m_layers;
-      QMargins m_border_sizes;
-      QMargins m_padding;
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
       QMargins m_border_sizes;
@@ -143,6 +141,7 @@ namespace Styles {
       QString m_placeholder_text;
       TextValidator* m_text_validator;
       bool m_is_rejected;
+      mutable boost::optional<QSize> m_size_hint;
 
       bool is_placeholder_shown() const;
       QString get_elided_text(

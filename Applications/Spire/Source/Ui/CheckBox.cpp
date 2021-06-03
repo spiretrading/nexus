@@ -45,7 +45,8 @@ namespace {
     style.get(Any() >> is_a<TextBox>()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(TextColor(QColor(0, 0, 0))).
-      set(TextAlign(alignment | Qt::AlignVCenter));
+      set(TextAlign(alignment | Qt::AlignVCenter)).
+      set(padding(0));
     style.get(Disabled() >> is_a<TextBox>()).
       set(BackgroundColor(QColor(0, 0, 0, 0)));
     style.get(ReadOnly() >> is_a<TextBox>()).

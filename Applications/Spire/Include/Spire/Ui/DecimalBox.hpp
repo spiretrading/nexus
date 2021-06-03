@@ -94,8 +94,6 @@ namespace Styles {
        */
       void set_read_only(bool is_read_only);
 
-      QSize sizeHint() const;
-
       /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;

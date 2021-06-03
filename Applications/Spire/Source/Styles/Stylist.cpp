@@ -526,7 +526,7 @@ const Block& Spire::Styles::get_computed_block(
   }
 }
 
-const EvaluatedBlock& Spire::Styles::get_evaluated_block(QWidget& widget) {
+const EvaluatedBlock& Spire::Styles::get_evaluated_block(const QWidget& widget) {
   return find_stylist(widget).get_evaluated_block();
 }
 
