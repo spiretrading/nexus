@@ -111,7 +111,6 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
@@ -185,7 +184,7 @@ connection
 
 QSize TextBox::sizeHint() const {
   auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
-      m_model->get_current()) + 3, m_line_edit->font().pixelSize());
+      m_model->get_current()) + 5, m_line_edit->font().pixelSize());
   return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
 }
 
