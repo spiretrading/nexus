@@ -699,7 +699,7 @@ UiProfile Spire::make_text_box_profile() {
         text_box->set_placeholder(text);
       });
       text_box->get_model()->connect_current_signal(
-        [&, text_box = text_box] (const auto& value) {
+        [&, text_box] (const auto& value) {
           current.set(value);
           text_box->adjustSize();
         });
