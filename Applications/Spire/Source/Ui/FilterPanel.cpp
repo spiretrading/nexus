@@ -18,9 +18,12 @@ namespace {
 
   auto HEADER_STYLE() {
     auto style = StyleSheet();
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Medium);
+    font.setPixelSize(scale_width(12));
     style.get(Any()).
       set(border_size(0)).
-      set(TextColor(QColor::fromRgb(0x80, 0x80, 0x80)));
+      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80)));
     return style;
   }
 }
