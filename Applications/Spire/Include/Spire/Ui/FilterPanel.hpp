@@ -16,7 +16,7 @@ namespace Spire {
       using ResetSignal = Signal<void ()>;
 
       /**
-       * Constructs an FilterPanel.
+       * Constructs a FilterPanel.
        * @param title The title of the FilterPanel.
        * @param component The filter component displayed in the FilterPanel.
        * @param parent The parent widget that shows the panel.
@@ -30,7 +30,7 @@ namespace Spire {
       /** Returns the component displayed in the panel. */
       QWidget& get_component();
 
-      /** Connects a slot to the click signal. */
+      /** Connects a slot to the reset signal. */
       boost::signals2::connection connect_reset_signal(
         const ResetSignal::slot_type& slot) const;
 
