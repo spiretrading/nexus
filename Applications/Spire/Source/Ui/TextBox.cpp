@@ -185,8 +185,7 @@ connection
 
 QSize TextBox::sizeHint() const {
   auto size_hint = QSize(m_line_edit->fontMetrics().horizontalAdvance(
-      m_model->get_current()),
-    m_line_edit->font().pixelSize());
+      m_model->get_current()) + 3, m_line_edit->font().pixelSize());
   return size_hint.grownBy(m_padding).grownBy(m_border_sizes);
 }
 
