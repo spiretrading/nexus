@@ -27,7 +27,8 @@ namespace {
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
-      set(horizontal_padding(scale_width(8)));
+      set(horizontal_padding(scale_width(8))).
+      set(vertical_padding(scale_height(7)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
@@ -111,7 +112,6 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
@@ -184,7 +184,43 @@ connection
 }
 
 QSize TextBox::sizeHint() const {
-  return scale(160, 30);
+  if(m_size_hint) {
+    return *m_size_hint;
+  }
+  const auto LINE_EDIT_HORIZONTAL_MARGIN = 4;
+  const auto CURSOR_WIDTH = 1;
+  const auto BASE_WIDTH = LINE_EDIT_HORIZONTAL_MARGIN + CURSOR_WIDTH;
+  m_size_hint.emplace(
+    QSize(m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
+      BASE_WIDTH, m_line_edit->fontMetrics().height()));
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        m_size_hint->rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        m_size_hint->rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingTop>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingRight>, int size) {
+        m_size_hint->rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingBottom>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingLeft>, int size) {
+        m_size_hint->rwidth() += size;
+      });
+  }
+  return *m_size_hint;
 }
 
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
@@ -298,6 +334,8 @@ void TextBox::update_display_text() {
   } else if(m_line_edit->text() != m_model->get_current()) {
     m_line_edit->setText(m_model->get_current());
   }
+  m_size_hint = none;
+  updateGeometry();
 }
 
 void TextBox::update_placeholder_text() {

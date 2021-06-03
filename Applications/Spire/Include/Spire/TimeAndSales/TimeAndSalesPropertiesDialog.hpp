@@ -48,10 +48,6 @@ namespace Spire {
       boost::signals2::connection connect_save_default_signal(
         const SaveDefaultSignal::slot_type& slot) const;
 
-    protected:
-      void mousePressEvent(QMouseEvent* event) override;
-      void showEvent(QShowEvent* event) override;
-
     private:
       mutable ApplySignal m_apply_signal;
       mutable ApplyAllSignal m_apply_all_signal;
