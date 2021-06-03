@@ -132,6 +132,8 @@ namespace Styles {
       LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
+      QMargins m_border_sizes;
+      QMargins m_padding;
       QLabel* m_placeholder;
       StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_current_connection;

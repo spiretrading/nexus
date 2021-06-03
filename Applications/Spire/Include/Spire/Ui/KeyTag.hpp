@@ -15,6 +15,8 @@ namespace Spire {
   
       const std::shared_ptr<KeyModel>& get_model() const;
 
+      QSize sizeHint() const override;
+
     private:
       std::shared_ptr<KeyModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
