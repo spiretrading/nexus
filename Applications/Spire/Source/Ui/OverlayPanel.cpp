@@ -18,7 +18,7 @@ namespace {
   const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 64);
   const auto DROP_SHADOW_OFFSET = QPoint(0, 3);
   const auto DROP_SHADOW_RADIUS = 5;
-  const auto DROP_SHADOW_SIZE = 3;
+  const auto DROP_SHADOW_SIZE = 5;
   const auto FADE_SPEED_MS = 100;
 
   auto DROP_SHADOW_HEIGHT() {
