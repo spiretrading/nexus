@@ -79,7 +79,6 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   m_text_box = new TextBox(this);
   m_text_box->setDisabled(true);
   set_style(*m_text_box, TAG_STYLE(get_style(*m_text_box)));
-  m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
   m_current_connection = m_model->connect_current_signal([=] (auto key) {
     on_current_key(key);
@@ -101,5 +100,4 @@ void KeyTag::on_current_key(Qt::Key key) {
   style.get(Disabled()).
     set(BackgroundColor(tag_background_color(key)));
   set_style(*m_text_box, style);
-  m_text_box->repaint();
 }

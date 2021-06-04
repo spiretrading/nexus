@@ -4,15 +4,23 @@
 
 namespace Spire {
 
+  /** Displays text for the associated key. */
   class KeyTag : public QWidget {
     public:
 
-      /** Constructs a KeyTag with the Qt::Unknown key. */
+      /** Constructs a KeyTag with the Qt::Unknown key.
+       * parent The parent widget.
+       */
       explicit KeyTag(QWidget* parent = nullptr);
   
+      /** Constructs a KeyTag with a key provided by a model
+       * model The current key's model.
+       * parent The parent widget.
+       */
       explicit KeyTag(std::shared_ptr<KeyModel> model,
         QWidget* parent = nullptr);
   
+      /** Returns the model. */
       const std::shared_ptr<KeyModel>& get_model() const;
 
       QSize sizeHint() const override;
