@@ -171,7 +171,6 @@ void TextBox::set_read_only(bool read_only) {
   }
   update_display_text();
   update_placeholder_text();
-  adjustSize();
 }
 
 connection
@@ -279,7 +278,6 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
   update_placeholder_text();
-  m_line_edit->setFixedSize(size());
   QWidget::resizeEvent(event);
 }
 
