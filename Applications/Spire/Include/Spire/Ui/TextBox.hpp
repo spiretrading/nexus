@@ -142,8 +142,6 @@ namespace Styles {
       mutable boost::optional<QSize> m_size_hint;
 
       bool is_placeholder_shown() const;
-      QString get_elided_text(
-        const QFontMetrics& font_metrics, const QString& text) const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();

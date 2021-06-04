@@ -17,6 +17,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto LINE_EDIT_HORIZONTAL_MARGIN = 2;
+  const auto CURSOR_WIDTH = 1;
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -112,6 +115,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_layers = new LayeredWidget(this);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
+  m_line_edit->setTextMargins(-2, 0, 0, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
@@ -187,12 +191,15 @@ QSize TextBox::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
   }
-  const auto LINE_EDIT_HORIZONTAL_MARGIN = 4;
-  const auto CURSOR_WIDTH = 1;
-  const auto BASE_WIDTH = LINE_EDIT_HORIZONTAL_MARGIN + CURSOR_WIDTH;
+  auto base_width = [&] {
+    if(is_read_only()) {
+      return LINE_EDIT_HORIZONTAL_MARGIN;
+    }
+    return LINE_EDIT_HORIZONTAL_MARGIN + CURSOR_WIDTH;
+  }();
   m_size_hint.emplace(
     QSize(m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
-      BASE_WIDTH, m_line_edit->fontMetrics().height()));
+      base_width, m_line_edit->fontMetrics().height()));
   for(auto& property : get_evaluated_block(*m_box)) {
     property.visit(
       [&] (std::in_place_type_t<BorderTopSize>, int size) {
@@ -246,6 +253,9 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       key_event.ignore();
       return true;
     }
+  } else if(event->type() == QEvent::Resize) {
+    update_display_text();
+    update_placeholder_text();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -286,23 +296,6 @@ bool TextBox::is_placeholder_shown() const {
     !m_placeholder_text.isEmpty();
 }
 
-QString TextBox::get_elided_text(
-    const QFontMetrics& font_metrics, const QString& text) const {
-  auto option = QStyleOptionFrame();
-  option.initFrom(m_line_edit);
-  option.rect = m_line_edit->contentsRect();
-  option.lineWidth = 0;
-  option.midLineWidth = 0;
-  option.state |= QStyle::State_Sunken;
-  if(is_read_only()) {
-    option.state |= QStyle::State_ReadOnly;
-  }
-  option.features = QStyleOptionFrame::None;
-  auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
-    &option, m_line_edit);
-  return font_metrics.elidedText(text, Qt::ElideRight, rect.width());
-}
-
 void TextBox::elide_text() {
   auto font_metrics = m_line_edit->fontMetrics();
   auto option = QStyleOptionFrame();
@@ -318,10 +311,8 @@ void TextBox::elide_text() {
   auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
     &option, m_line_edit);
   auto elided_text = font_metrics.elidedText(m_model->get_current(),
-    Qt::ElideRight, rect.width());
-  if(elided_text != m_model->get_current()) {
-    m_text_validator->m_is_text_elided = true;
-  }
+    Qt::ElideRight, rect.width() + LINE_EDIT_HORIZONTAL_MARGIN);
+  m_text_validator->m_is_text_elided = elided_text != m_model->get_current();
   if(elided_text != m_line_edit->text()) {
     m_line_edit->setText(elided_text);
     m_line_edit->setCursorPosition(0);
