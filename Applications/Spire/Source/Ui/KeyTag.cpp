@@ -78,7 +78,6 @@ KeyTag::KeyTag(QWidget* parent)
 KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)) {
-  setAttribute(Qt::WA_TranslucentBackground);
   setFocusPolicy(Qt::NoFocus);
   set_style(*this, TAG_STYLE());
   auto layout = new QHBoxLayout(this);
