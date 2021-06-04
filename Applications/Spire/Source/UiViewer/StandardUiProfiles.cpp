@@ -515,6 +515,7 @@ UiProfile Spire::make_key_tag_profile() {
           return Qt::Key_unknown;
         }();
         key_tag->get_model()->set_current(key);
+        key_tag->adjustSize();
       });
       return key_tag;
     });

@@ -13,21 +13,14 @@ namespace {
   const auto ESCAPE_BACKGROUND_COLOR = QColor("#C6E6FF");
   const auto MODIFIER_BACKGROUND_COLOR = QColor("#FFEDCD");
 
-  auto TAG_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(border_size(0)).
+  auto TAG_STYLE(StyleSheet style) {
+    style.get(Disabled()).
       set(border_radius(scale_width(3))).
+      set(border_size(0)).
       set(PaddingLeft(scale_width(4))).
       set(PaddingRight(scale_width(4))).
       set(PaddingBottom(scale_height(2))).
-      set(PaddingTop(scale_height(2)));
-    return style;
-  }
-
-  auto KEY_STYLE() {
-    auto style = StyleSheet();
-    style.get(ReadOnly() && Disabled()).
+      set(PaddingTop(scale_height(2))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(TextColor(QColor::fromRgb(0, 0, 0)));
     return style;
@@ -78,14 +71,14 @@ KeyTag::KeyTag(QWidget* parent)
 KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)) {
+  setObjectName("key_tag");
+  setStyleSheet("#key_tag { background-color: transparent; }");
   setFocusPolicy(Qt::NoFocus);
-  set_style(*this, TAG_STYLE());
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(this);
-  m_text_box->set_read_only(true);
   m_text_box->setDisabled(true);
-  set_style(*m_text_box, KEY_STYLE());
+  set_style(*m_text_box, TAG_STYLE(get_style(*m_text_box)));
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_text_box);
   m_current_connection = m_model->connect_current_signal([=] (auto key) {
@@ -104,9 +97,9 @@ QSize KeyTag::sizeHint() const {
 
 void KeyTag::on_current_key(Qt::Key key) {
   m_text_box->get_model()->set_current(get_key_text(key));
-  auto style = get_style(*this);
-  style.get(Any()).
+  auto style = get_style(*m_text_box);
+  style.get(Disabled()).
     set(BackgroundColor(tag_background_color(key)));
-  set_style(*this, style);
+  set_style(*m_text_box, style);
   m_text_box->repaint();
 }
