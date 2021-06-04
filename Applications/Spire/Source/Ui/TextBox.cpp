@@ -17,6 +17,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto LINE_EDIT_HORIZONTAL_MARGIN = 2;
+  const auto CURSOR_WIDTH = 1;
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -27,7 +30,8 @@ namespace {
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
-      set(horizontal_padding(scale_width(8)));
+      set(horizontal_padding(scale_width(8))).
+      set(vertical_padding(scale_height(7)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
@@ -184,7 +188,46 @@ connection
 }
 
 QSize TextBox::sizeHint() const {
-  return scale(160, 30);
+  if(m_size_hint) {
+    return *m_size_hint;
+  }
+  auto base_width = [&] {
+    if(is_read_only()) {
+      return LINE_EDIT_HORIZONTAL_MARGIN;
+    }
+    return LINE_EDIT_HORIZONTAL_MARGIN + CURSOR_WIDTH;
+  }();
+  m_size_hint.emplace(
+    QSize(m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
+      base_width, m_line_edit->fontMetrics().height()));
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        m_size_hint->rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        m_size_hint->rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingTop>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingRight>, int size) {
+        m_size_hint->rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingBottom>, int size) {
+        m_size_hint->rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingLeft>, int size) {
+        m_size_hint->rwidth() += size;
+      });
+  }
+  return *m_size_hint;
 }
 
 bool TextBox::eventFilter(QObject* watched, QEvent* event) {
@@ -210,6 +253,9 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       key_event.ignore();
       return true;
     }
+  } else if(event->type() == QEvent::Resize) {
+    update_display_text();
+    update_placeholder_text();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -250,23 +296,6 @@ bool TextBox::is_placeholder_shown() const {
     !m_placeholder_text.isEmpty();
 }
 
-QString TextBox::get_elided_text(
-    const QFontMetrics& font_metrics, const QString& text) const {
-  auto option = QStyleOptionFrame();
-  option.initFrom(m_line_edit);
-  option.rect = m_line_edit->contentsRect();
-  option.lineWidth = 0;
-  option.midLineWidth = 0;
-  option.state |= QStyle::State_Sunken;
-  if(is_read_only()) {
-    option.state |= QStyle::State_ReadOnly;
-  }
-  option.features = QStyleOptionFrame::None;
-  auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
-    &option, m_line_edit);
-  return font_metrics.elidedText(text, Qt::ElideRight, rect.width());
-}
-
 void TextBox::elide_text() {
   auto font_metrics = m_line_edit->fontMetrics();
   auto option = QStyleOptionFrame();
@@ -282,10 +311,8 @@ void TextBox::elide_text() {
   auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
     &option, m_line_edit);
   auto elided_text = font_metrics.elidedText(m_model->get_current(),
-    Qt::ElideRight, rect.width());
-  if(elided_text != m_model->get_current()) {
-    m_text_validator->m_is_text_elided = true;
-  }
+    Qt::ElideRight, rect.width() + LINE_EDIT_HORIZONTAL_MARGIN);
+  m_text_validator->m_is_text_elided = elided_text != m_model->get_current();
   if(elided_text != m_line_edit->text()) {
     m_line_edit->setText(elided_text);
     m_line_edit->setCursorPosition(0);
@@ -298,6 +325,8 @@ void TextBox::update_display_text() {
   } else if(m_line_edit->text() != m_model->get_current()) {
     m_line_edit->setText(m_model->get_current());
   }
+  m_size_hint = none;
+  updateGeometry();
 }
 
 void TextBox::update_placeholder_text() {
