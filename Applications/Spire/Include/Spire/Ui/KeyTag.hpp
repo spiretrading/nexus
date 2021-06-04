@@ -21,15 +21,16 @@ namespace Styles {
     public:
 
       /**
-       * Constructs a KeyTag with the Qt::Unknown key.
-       * parent The parent widget.
+       * Constructs a KeyTag using a local model initialized to a
+       * Qt::Unknown key.
+       * @param parent The parent widget.
        */
       explicit KeyTag(QWidget* parent = nullptr);
   
       /**
-       * Constructs a KeyTag with a key provided by a model
-       * model The current key's model.
-       * parent The parent widget.
+       * Constructs a KeyTag.
+       * @param model The current key's model.
+       * @param parent The parent widget.
        */
       explicit KeyTag(std::shared_ptr<KeyModel> model,
         QWidget* parent = nullptr);
