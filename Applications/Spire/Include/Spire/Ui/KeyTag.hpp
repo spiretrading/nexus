@@ -1,8 +1,20 @@
 #ifndef SPIRE_KEY_TAG_HPP
 #define SPIRE_KEY_TAG_HPP
+#include <memory>
+#include <QWidget>
+#include <boost/signals2/connection.hpp>
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Styles the KeyTag when it's displaying a modifier key. */
+  using ModifierKeyState = StateSelector<void, struct ModifierKeyStateTag>;
+
+  /** Styles the KeyTag when it's displaying the ESC key. */
+  using EscapeKeyState = StateSelector<void, struct EscapeKeyStateTag>;
+}
 
   /** Displays text for the associated key. */
   class KeyTag : public QWidget {
@@ -25,12 +37,16 @@ namespace Spire {
       /** Returns the model. */
       const std::shared_ptr<KeyModel>& get_model() const;
 
-      QSize sizeHint() const override;
-
     private:
+      enum class State {
+        DEFAULT,
+        MODIFIER,
+        ESCAPE
+      };
       std::shared_ptr<KeyModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
       TextBox* m_text_box;
+      State m_state;
 
       void on_current_key(Qt::Key key);
   };
