@@ -3,7 +3,6 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional/optional.hpp>
 #include <QHash>
-#include <QRegularExpression>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ScalarValueModel.hpp"
@@ -20,6 +19,18 @@ namespace Styles {
    * number.
    */
   using TrailingZeros = BasicProperty<int, struct TrailingZerosTag>;
+
+  /** The current value is positive. */
+  using IsPositive = StateSelector<void, struct IsPositiveTag>;
+
+  /** The current value is negative. */
+  using IsNegative = StateSelector<void, struct IsNegativeTag>;
+
+  /** The current value has increased. */
+  using Uptick = StateSelector<void, struct UptickTag>;
+
+  /** The current value has decreased. */
+  using Downtick = StateSelector<void, struct DowntickTag>;
 }
 
   /** Represents a widget for inputting decimal values. */
@@ -108,6 +119,16 @@ namespace Styles {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
+      enum class TickIndicator {
+        NONE,
+        UP,
+        DOWN
+      };
+      enum class SignIndicator {
+        NONE,
+        POSITIVE,
+        NEGATIVE
+      };
       struct DecimalToTextModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
@@ -119,6 +140,9 @@ namespace Styles {
       QRegExp m_validator;
       Button* m_up_button;
       Button* m_down_button;
+      boost::optional<Decimal> m_last_current;
+      TickIndicator m_tick;
+      SignIndicator m_sign;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;

@@ -296,7 +296,8 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
       m_submission(m_model->get_current()),
-      m_modifiers(std::move(modifiers)) {
+      m_modifiers(std::move(modifiers)),
+      m_tick(TickIndicator::NONE) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
@@ -309,6 +310,17 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
+  if(auto current = m_model->get_current()) {
+    if(*current > 0) {
+      m_sign = SignIndicator::POSITIVE;
+      match(*this, IsPositive());
+    } else if(*current < 0) {
+      m_sign = SignIndicator::NEGATIVE;
+      match(*this, IsNegative());
+    } else {
+      m_sign = SignIndicator::NONE;
+    }
+  }
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
@@ -439,6 +451,43 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::on_current(const optional<Decimal>& current) {
+  if(m_last_current && current) {
+    if(m_tick == TickIndicator::DOWN) {
+      unmatch(*this, Downtick());
+    } else if(m_tick == TickIndicator::UP) {
+      unmatch(*this, Uptick());
+    }
+    if(*m_last_current > *current) {
+      m_tick = TickIndicator::UP;
+      match(*this, Uptick());
+    } else if(*m_last_current < *current) {
+      m_tick = TickIndicator::DOWN;
+      match(*this, Downtick());
+    }
+  }
+  if(current) {
+    m_last_current = current;
+    if(*current > 0 && m_sign != SignIndicator::POSITIVE) {
+      if(m_sign == SignIndicator::NEGATIVE) {
+        unmatch(*this, IsNegative());
+      }
+      match(*this, IsPositive());
+      m_sign = SignIndicator::POSITIVE;
+    } else if(*current == 0 && m_sign != SignIndicator::NONE) {
+      if(m_sign == SignIndicator::NEGATIVE) {
+        unmatch(*this, IsNegative());
+      } else if(m_sign == SignIndicator::POSITIVE) {
+        unmatch(*this, IsPositive());
+      }
+      m_sign = SignIndicator::NONE;
+    } else if(*current < 0 && m_sign != SignIndicator::NEGATIVE) {
+      if(m_sign == SignIndicator::POSITIVE) {
+        unmatch(*this, IsPositive());
+      }
+      match(*this, IsNegative());
+      m_sign = SignIndicator::NEGATIVE;
+    }
+  }
   m_up_button->setEnabled(
     !is_read_only() && (!m_model->get_maximum() || !m_model->get_current() ||
       m_model->get_current() < m_model->get_maximum()));

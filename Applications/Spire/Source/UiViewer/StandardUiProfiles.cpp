@@ -3,6 +3,10 @@
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
@@ -187,6 +191,10 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_qstring_property("placeholder"));
   properties.push_back(make_standard_bool_property("read_only", false));
   properties.push_back(make_standard_bool_property("buttons_visible", true));
+  properties.push_back(
+    make_standard_bool_property("apply_sign_styling", false));
+  properties.push_back(
+    make_standard_bool_property("apply_tick_styling", false));
   auto profile = UiProfile(QString::fromUtf8("DecimalBox"), properties,
     [] (auto& profile) {
       auto parse_decimal = [] (auto decimal) ->
@@ -310,6 +318,40 @@ UiProfile Spire::make_decimal_box_profile() {
         } else {
           style.get(Any() > is_a<Button>()).set(
             Visibility(VisibilityOption::NONE));
+        }
+        set_style(*decimal_box, std::move(style));
+      });
+      auto& apply_sign_styling = get<bool>("apply_sign_styling",
+        profile.get_properties());
+      apply_sign_styling.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*decimal_box);
+        if(value) {
+          style.get(ReadOnly() && IsPositive()).
+            set(TextColor(QColor(0x36BB55)));
+          style.get(ReadOnly() && IsNegative()).
+            set(TextColor(QColor(0xE63F44)));
+        } else {
+//          style.erase(ReadOnly() && IsPositive());
+//          style.erase(ReadOnly() && IsNegative());
+        }
+        set_style(*decimal_box, std::move(style));
+      });
+      auto& apply_tick_styling = get<bool>("apply_tick_styling",
+        profile.get_properties());
+      apply_tick_styling.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*decimal_box);
+        if(value) {
+          style.get(ReadOnly() && IsPositive()).
+            set(BackgroundColor(
+              chain(timeout(QColor(0xEBFFF0), milliseconds(250)),
+                linear(QColor(0xEBFFF0), revert, milliseconds(300)))));
+          style.get(ReadOnly() && IsNegative()).
+            set(BackgroundColor(
+              chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+                linear(QColor(0xFFF1F1), revert, milliseconds(300)))));
+        } else {
+//          style.erase(ReadOnly() && IsPositive());
+//          style.erase(ReadOnly() && IsNegative());
         }
         set_style(*decimal_box, std::move(style));
       });
