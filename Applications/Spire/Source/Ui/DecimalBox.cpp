@@ -457,10 +457,10 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     } else if(m_tick == TickIndicator::UP) {
       unmatch(*this, Uptick());
     }
-    if(*m_last_current > *current) {
+    if(*current > *m_last_current) {
       m_tick = TickIndicator::UP;
       match(*this, Uptick());
-    } else if(*m_last_current < *current) {
+    } else if(*current < *m_last_current) {
       m_tick = TickIndicator::DOWN;
       match(*this, Downtick());
     }

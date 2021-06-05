@@ -341,11 +341,11 @@ UiProfile Spire::make_decimal_box_profile() {
       apply_tick_styling.connect_changed_signal([=] (auto value) {
         auto style = get_style(*decimal_box);
         if(value) {
-          style.get(ReadOnly() && IsPositive()).
+          style.get(ReadOnly() && Uptick()).
             set(BackgroundColor(
               chain(timeout(QColor(0xEBFFF0), milliseconds(250)),
                 linear(QColor(0xEBFFF0), revert, milliseconds(300)))));
-          style.get(ReadOnly() && IsNegative()).
+          style.get(ReadOnly() && Downtick()).
             set(BackgroundColor(
               chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
                 linear(QColor(0xFFF1F1), revert, milliseconds(300)))));
