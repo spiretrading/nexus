@@ -403,14 +403,12 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
         principal->m_principals.end());
       for(auto& rule : principal->m_style->get_rules()) {
         auto selection = select(rule.get_selector(), *source->m_source);
-        for(auto& selected : selection) {
-          if(selected == this) {
-            if(auto update = find(rule.get_block(), type)) {
-              if(property) {
-                reverted_property.emplace(std::move(*property));
-              }
-              property = std::move(update);
+        if(selection.find(const_cast<Stylist*>(this)) != selection.end()) {
+          if(auto update = find(rule.get_block(), type)) {
+            if(property) {
+              reverted_property.emplace(std::move(*property));
             }
+            property = std::move(update);
           }
         }
       }
@@ -425,14 +423,12 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
         principal->m_principals.end());
       for(auto& rule : principal->m_style->get_rules()) {
         auto selection = select(rule.get_selector(), *source);
-        for(auto& selected : selection) {
-          if(selected == source) {
-            if(auto update = find(rule.get_block(), type)) {
-              if(property) {
-                reverted_property.emplace(std::move(*property));
-              }
-              property = std::move(update);
+        if(selection.find(source) != selection.end()) {
+          if(auto update = find(rule.get_block(), type)) {
+            if(property) {
+              reverted_property.emplace(std::move(*property));
             }
+            property = std::move(update);
           }
         }
       }
