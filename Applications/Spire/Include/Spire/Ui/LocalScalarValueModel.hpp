@@ -67,8 +67,8 @@ namespace Spire {
   LocalScalarValueModel<T>::LocalScalarValueModel()
       : m_state(m_model.get_state()) {
     if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      m_increment =
-        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+      m_increment = Scalar(std::numeric_limits<Scalar>::max() /
+        std::numeric_limits<Scalar>::max());
     }
   }
 
@@ -77,8 +77,8 @@ namespace Spire {
       : m_model(std::move(current)),
         m_state(m_model.get_state()) {
     if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      m_increment =
-        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+      m_increment = Scalar(std::numeric_limits<Scalar>::max() /
+        std::numeric_limits<Scalar>::max());
     }
   }
 

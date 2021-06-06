@@ -72,8 +72,8 @@ namespace Details {
   typename ScalarValueModel<T>::Scalar
       ScalarValueModel<T>::get_increment() const {
     if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      return
-        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+      return Scalar(std::numeric_limits<Scalar>::max() /
+        std::numeric_limits<Scalar>::max());
     } else {
       return Scalar();
     }

@@ -49,6 +49,7 @@ namespace Spire {
     LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
   using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
   using LocalTextModel = LocalValueModel<QString>;
+  class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class OverlayPanel;
