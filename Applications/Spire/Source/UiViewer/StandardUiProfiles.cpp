@@ -152,13 +152,13 @@ UiProfile Spire::make_box_profile() {
         set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
         set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
       set_style(*box, std::move(style));
-      border_size.connect_changed_signal([&, box = box] (auto size) {
+      border_size.connect_changed_signal([&, box] (auto size) {
         auto style = get_style(*box);
         style.get(Any()).set(Styles::border_size(scale_width(
           border_size.get())));
         set_style(*box, style);
       });
-      border_radius.connect_changed_signal([&, box = box] (auto radius) {
+      border_radius.connect_changed_signal([&, box] (auto radius) {
         auto style = get_style(*box);
         style.get(Any()).set(Styles::border_radius(scale_width(
           border_radius.get())));
@@ -423,9 +423,6 @@ UiProfile Spire::make_decimal_box_profile() {
             set(TextColor(QColor(0x36BB55)));
           style.get(ReadOnly() && IsNegative()).
             set(TextColor(QColor(0xE63F44)));
-        } else {
-//          style.erase(ReadOnly() && IsPositive());
-//          style.erase(ReadOnly() && IsNegative());
         }
         set_style(*decimal_box, std::move(style));
       });
@@ -442,9 +439,6 @@ UiProfile Spire::make_decimal_box_profile() {
             set(BackgroundColor(
               chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
                 linear(QColor(0xFFF1F1), revert, milliseconds(300)))));
-        } else {
-//          style.erase(ReadOnly() && IsPositive());
-//          style.erase(ReadOnly() && IsNegative());
         }
         set_style(*decimal_box, std::move(style));
       });
