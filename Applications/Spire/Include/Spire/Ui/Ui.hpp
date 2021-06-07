@@ -22,6 +22,7 @@ namespace Spire {
   class ColonWidget;
   class DateInputWidget;
   class DecimalBox;
+  template<typename T> class DecimalBoxAdaptor;
   class DecimalSpinBox;
   class Dialog;
   class DropDownMenu;
@@ -33,7 +34,6 @@ namespace Spire {
   class FlatButton;
   class Icon;
   class IconButton;
-  class IntegerBox;
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;

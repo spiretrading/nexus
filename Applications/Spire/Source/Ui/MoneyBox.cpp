@@ -81,9 +81,5 @@ void MoneyBox::on_submit(const optional<Decimal>& submission) {
 }
 
 void MoneyBox::on_reject(const optional<Decimal>& value) {
-  if(value) {
-    m_reject_signal(Money::FromValue(value->str()));
-  } else {
-    m_reject_signal(none);
-  }
+  m_reject_signal(from_decimal<Money>(value));
 }
