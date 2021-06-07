@@ -72,6 +72,23 @@ namespace Spire {
       boost::signals2::connection connect_reject_signal(
         const typename RejectSignal::slot_type& slot) const;
 
+    protected:
+
+      /**
+       * Constructs a DecimalBoxAdaptor with a custom adaptor model.
+       * @param model The model used for the current value.
+       * @param adaptor_model The model adapting from the scalar to the Decimal.
+       * @param modifiers The keyboard modifier increments.
+       * @param parent The parent widget.
+       */
+      DecimalBoxAdaptor(
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
+        QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent = nullptr);
+
+      /** Returns the DecimalBox used to display the scalar. */
+      DecimalBox& get_decimal_box();
+
     private:
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
@@ -95,29 +112,10 @@ namespace Spire {
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
-      std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
-      QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
-      : QWidget(parent),
-        m_model(std::move(model)),
-        m_adaptor_model(std::make_shared<ToDecimalModel<Type>>(m_model)),
-        m_submission(m_model->get_current()) {
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins({});
-    auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
-    for(auto modifier = modifiers.begin();
-        modifier != modifiers.end(); ++modifier) {
-      adapted_modifiers.insert(modifier.key(), to_decimal(modifier.value()));
-    }
-    m_decimal_box =
-      new DecimalBox(m_adaptor_model, std::move(adapted_modifiers), this);
-    Styles::proxy_style(*this, *m_decimal_box);
-    setFocusProxy(m_decimal_box);
-    layout->addWidget(m_decimal_box);
-    m_submit_connection = m_decimal_box->connect_submit_signal(
-      [=] (const auto& submission) { on_submit(submission); });
-    m_reject_connection = m_decimal_box->connect_reject_signal(
-      [=] (const auto& value) { on_reject(value); });
-  }
+    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+    QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
+    : DecimalBoxAdaptor(model, std::make_shared<ToDecimalModel<Type>>(model),
+        std::move(modifiers), parent) {}
 
   template<typename T>
   const std::shared_ptr<ScalarValueModel<
@@ -151,6 +149,38 @@ namespace Spire {
   boost::signals2::connection DecimalBoxAdaptor<T>::connect_reject_signal(
       const typename RejectSignal::slot_type& slot) const {
     return m_reject_signal.connect(slot);
+  }
+
+  template<typename T>
+  DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
+      std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+      std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
+      QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
+      : QWidget(parent),
+        m_model(std::move(model)),
+        m_adaptor_model(std::move(adaptor_model)),
+        m_submission(m_model->get_current()) {
+    auto layout = new QHBoxLayout(this);
+    layout->setContentsMargins({});
+    auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
+    for(auto modifier = modifiers.begin();
+        modifier != modifiers.end(); ++modifier) {
+      adapted_modifiers.insert(modifier.key(), to_decimal(modifier.value()));
+    }
+    m_decimal_box =
+      new DecimalBox(m_adaptor_model, std::move(adapted_modifiers), this);
+    Styles::proxy_style(*this, *m_decimal_box);
+    setFocusProxy(m_decimal_box);
+    layout->addWidget(m_decimal_box);
+    m_submit_connection = m_decimal_box->connect_submit_signal(
+      [=] (const auto& submission) { on_submit(submission); });
+    m_reject_connection = m_decimal_box->connect_reject_signal(
+      [=] (const auto& value) { on_reject(value); });
+  }
+
+  template<typename T>
+  DecimalBox& DecimalBoxAdaptor<T>::get_decimal_box() {
+    return *m_decimal_box;
   }
 
   template<typename T>
