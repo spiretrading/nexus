@@ -657,8 +657,10 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("title",
     QString::fromUtf8("Filter by Size")));
-  properties.push_back(make_standard_property("min", QString::fromUtf8("")));
-  properties.push_back(make_standard_property("max", QString::fromUtf8("")));
+  properties.push_back(make_standard_property("default_min",
+    QString::fromUtf8("")));
+  properties.push_back(make_standard_property("default_max",
+    QString::fromUtf8("")));
   properties.push_back(make_standard_property("leading_zeros", 0));
   properties.push_back(make_standard_property("trailing_zeros", 0));
   auto profile = UiProfile(QString::fromUtf8("NumericFilterPanel"), properties,
@@ -679,15 +681,15 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
         return QString::fromUtf8("null");
       };
       auto& title = get<QString>("title", profile.get_properties());
-      auto& min = get<QString>("min", profile.get_properties());
-      auto& max = get<QString>("max", profile.get_properties());
+      auto& default_min = get<QString>("default_min", profile.get_properties());
+      auto& default_max = get<QString>("default_max", profile.get_properties());
       auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
       auto& trailing_zeros = get<int>("trailing_zeros",
         profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
       button->connect_clicked_signal([&, button] {
         auto default_value = NumericFilterPanel::NumericRange{
-          parse_decimal(min.get()), parse_decimal(max.get())};
+          parse_decimal(default_min.get()), parse_decimal(default_max.get())};
         auto model = std::make_shared<LocalValueModel<
           NumericFilterPanel::NumericRange>>();
         auto panel = new NumericFilterPanel(model, title.get(), default_value,
