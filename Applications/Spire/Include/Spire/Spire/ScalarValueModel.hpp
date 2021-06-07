@@ -1,8 +1,7 @@
 #ifndef SPIRE_SCALAR_VALUE_MODEL_HPP
 #define SPIRE_SCALAR_VALUE_MODEL_HPP
 #include <boost/optional/optional.hpp>
-#include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/ValueModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 namespace Details {

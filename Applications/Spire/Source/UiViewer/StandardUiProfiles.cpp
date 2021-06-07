@@ -3,6 +3,7 @@
 #include <QLabel>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
@@ -18,7 +19,6 @@
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -290,16 +290,14 @@ UiProfile Spire::make_decimal_box_profile() {
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
       width.set(scale_width(100));
-      auto parse_decimal = [] (auto decimal) ->
-          std::optional<DecimalBox::Decimal> {
+      auto parse_decimal = [] (auto decimal) -> std::optional<Decimal> {
         try {
-          return DecimalBox::Decimal(decimal.toStdString().c_str());
+          return Decimal(decimal.toStdString().c_str());
         } catch(const std::exception&) {
           return {};
         }
       };
-      auto model = std::make_shared<
-        LocalScalarValueModel<optional<DecimalBox::Decimal>>>();
+      auto model = std::make_shared<LocalScalarValueModel<optional<Decimal>>>();
       auto& minimum = get<QString>("minimum", profile.get_properties());
       minimum.connect_changed_signal([=] (const auto& value) {
         if(auto minimum = parse_decimal(value)) {
@@ -315,7 +313,7 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& decimal_places = get<int>("decimal_places",
         profile.get_properties());
       decimal_places.connect_changed_signal([=] (auto value) {
-        model->set_increment(pow(DecimalBox::Decimal(10), -value));
+        model->set_increment(pow(Decimal(10), -value));
       });
       auto& default_increment = get<QString>("default_increment",
         profile.get_properties());
@@ -325,7 +323,7 @@ UiProfile Spire::make_decimal_box_profile() {
         profile.get_properties());
       auto& shift_increment = get<QString>("shift_increment",
         profile.get_properties());
-      auto modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
+      auto modifiers = QHash<Qt::KeyboardModifier, Decimal>(
         {{Qt::NoModifier, *parse_decimal(default_increment.get())},
          {Qt::AltModifier, *parse_decimal(alt_increment.get())},
          {Qt::ControlModifier, *parse_decimal(ctrl_increment.get())},
@@ -360,11 +358,12 @@ UiProfile Spire::make_decimal_box_profile() {
       auto current_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Current"));
       decimal_box->get_model()->connect_current_signal(
-        [=, &current] (const optional<DecimalBox::Decimal>& value) {
+        [=, &current] (const optional<Decimal>& value) {
           auto text = [&] {
             if(value) {
-              return QString::fromStdString(
-                value->str(DecimalBox::PRECISION, std::ios_base::dec));
+              return QString::fromStdString(value->str(
+                Decimal::backend_type::cpp_dec_float_digits10,
+                std::ios_base::dec));
             }
             return QString::fromUtf8("null");
           }();
@@ -374,10 +373,11 @@ UiProfile Spire::make_decimal_box_profile() {
       auto submit_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Submit"));
       decimal_box->connect_submit_signal(
-        [=] (const optional<DecimalBox::Decimal>& submission) {
+        [=] (const optional<Decimal>& submission) {
           if(submission) {
-            submit_slot(QString::fromStdString(
-              submission->str(DecimalBox::PRECISION, std::ios_base::dec)));
+            submit_slot(QString::fromStdString(submission->str(
+              Decimal::backend_type::cpp_dec_float_digits10,
+              std::ios_base::dec)));
           } else {
             submit_slot(QString::fromUtf8("null"));
           }
@@ -385,10 +385,11 @@ UiProfile Spire::make_decimal_box_profile() {
       auto reject_slot = profile.make_event_slot<QString>(
         QString::fromUtf8("Reject"));
       decimal_box->connect_reject_signal(
-        [=] (const optional<DecimalBox::Decimal>& value) {
+        [=] (const optional<Decimal>& value) {
           if(value) {
-            reject_slot(QString::fromStdString(
-              value->str(DecimalBox::PRECISION, std::ios_base::dec)));
+            reject_slot(QString::fromStdString(value->str(
+              Decimal::backend_type::cpp_dec_float_digits10,
+              std::ios_base::dec)));
           } else {
             reject_slot(QString::fromUtf8("null"));
           }

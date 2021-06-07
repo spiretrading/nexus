@@ -3,9 +3,9 @@
 #include <utility>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/optional/optional.hpp>
-#include "Spire/Ui/LocalValueModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/ScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/ValueModel.hpp"
 
 namespace Spire {
 

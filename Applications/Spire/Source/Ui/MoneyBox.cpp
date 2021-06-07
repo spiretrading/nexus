@@ -1,7 +1,8 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include <boost/lexical_cast.hpp>
 #include <QHBoxLayout>
-#include "Spire/Ui/LocalScalarValueModel.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -10,11 +11,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  DecimalBox::Decimal to_decimal(Money money) {
-    return DecimalBox::Decimal(lexical_cast<std::string>(money));
+  Decimal to_decimal(Money money) {
+    return Decimal(lexical_cast<std::string>(money));
   }
 
-  optional<DecimalBox::Decimal> to_decimal(optional<Money> money) {
+  optional<Decimal> to_decimal(optional<Money> money) {
     if(money) {
       return to_decimal(*money);
     }
@@ -22,10 +23,10 @@ namespace {
   }
 }
 
-struct MoneyBox::MoneyToDecimalModel : DecimalBox::DecimalModel {
+struct MoneyBox::MoneyToDecimalModel : OptionalDecimalModel {
   mutable CurrentSignal m_current_signal;
   std::shared_ptr<OptionalMoneyModel> m_model;
-  optional<DecimalBox::Decimal> m_current;
+  optional<Decimal> m_current;
   scoped_connection m_current_connection;
 
   MoneyToDecimalModel(std::shared_ptr<OptionalMoneyModel> model)
@@ -36,28 +37,27 @@ struct MoneyBox::MoneyToDecimalModel : DecimalBox::DecimalModel {
           on_current(current);
         })) {}
 
-  optional<DecimalBox::Decimal> get_minimum() const {
+  optional<Decimal> get_minimum() const {
     return to_decimal(m_model->get_minimum());
   }
 
-  optional<DecimalBox::Decimal> get_maximum() const {
+  optional<Decimal> get_maximum() const {
     return to_decimal(m_model->get_maximum());
   }
 
-  DecimalBox::Decimal get_increment() const {
-    return DecimalBox::Decimal("0.000001");
+  Decimal get_increment() const {
+    return Decimal("0.000001");
   }
 
   QValidator::State get_state() const override {
     return m_model->get_state();
   }
 
-  const optional<DecimalBox::Decimal>& get_current() const {
+  const optional<Decimal>& get_current() const {
     return m_current;
   }
 
-  QValidator::State set_current(
-      const optional<DecimalBox::Decimal>& value) override {
+  QValidator::State set_current(const optional<Decimal>& value) override {
     auto state = [&] {
       if(value) {
         return m_model->set_current(Money::FromValue(value->str()));
@@ -97,7 +97,7 @@ MoneyBox::MoneyBox(std::shared_ptr<OptionalMoneyModel> model,
       m_submission(m_model->get_current()) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  auto adapted_modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>();
+  auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
   for(auto modifier = modifiers.begin();
       modifier != modifiers.end(); ++modifier) {
     adapted_modifiers.insert(modifier.key(), to_decimal(modifier.value()));
@@ -141,12 +141,12 @@ connection MoneyBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-void MoneyBox::on_submit(const optional<DecimalBox::Decimal>& submission) {
+void MoneyBox::on_submit(const optional<Decimal>& submission) {
   m_submission = m_model->get_current();
   m_submit_signal(m_submission);
 }
 
-void MoneyBox::on_reject(const optional<DecimalBox::Decimal>& value) {
+void MoneyBox::on_reject(const optional<Decimal>& value) {
   if(value) {
     m_reject_signal(Money::FromValue(value->str()));
   } else {

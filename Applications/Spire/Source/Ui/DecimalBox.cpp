@@ -6,10 +6,10 @@
 #include <QKeyEvent>
 #include <qt_windows.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -18,13 +18,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  optional<DecimalBox::Decimal> to_decimal(const QString& text) {
+  optional<Decimal> to_decimal(const QString& text) {
     auto trimmed_text = text.trimmed().toStdString();
     if(trimmed_text.empty()) {
       return none;
     }
     try {
-      return DecimalBox::Decimal(trimmed_text.c_str());
+      return Decimal(trimmed_text.c_str());
     } catch (const std::runtime_error&) {
       return none;
     }
@@ -62,7 +62,7 @@ namespace {
 
 struct DecimalBox::DecimalToTextModel : TextModel {
   mutable CurrentSignal m_current_signal;
-  std::shared_ptr<DecimalBox::DecimalModel> m_model;
+  std::shared_ptr<OptionalDecimalModel> m_model;
   int m_decimal_places;
   int m_leading_zeros;
   int m_trailing_zeros;
@@ -71,7 +71,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   bool m_is_rejected;
   scoped_connection m_current_connection;
 
-  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
+  DecimalToTextModel(std::shared_ptr<OptionalDecimalModel> model)
       : m_model(std::move(model)),
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
         m_leading_zeros(0),
@@ -117,7 +117,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
   }
 
-  const optional<DecimalBox::Decimal>& submit() {
+  const optional<Decimal>& submit() {
     auto displayed_value = to_string(m_model->get_current());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
@@ -235,7 +235,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return false;
   }
 
-  QString to_string(const optional<DecimalBox::Decimal>& value) const {
+  QString to_string(const optional<Decimal>& value) const {
     static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9]*))(\\.([0-9]*))?");
     static const auto LEADING_DIGITS_CAPTURE_GROUP = 2;
     static const auto TRAILING_CAPTURE_GROUP = 3;
@@ -243,8 +243,8 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     if(!value) {
       return {};
     }
-    auto s = QString::fromStdString(
-      value->str(DecimalBox::PRECISION, std::ios_base::dec));
+    auto s = QString::fromStdString(value->str(
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
     if(DECIMAL_PATTERN.indexIn(s, 0) != -1) {
       auto captures = DECIMAL_PATTERN.capturedTexts();
       if(m_trailing_zeros != 0) {
@@ -260,7 +260,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return s;
   }
 
-  void on_current(const optional<DecimalBox::Decimal>& current) {
+  void on_current(const optional<Decimal>& current) {
     m_current = to_string(current);
     m_current_signal(m_current);
   }
@@ -287,10 +287,10 @@ QValidator::State DecimalBox::validate(const Decimal& value,
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
-  : DecimalBox(std::make_shared<LocalScalarValueModel<optional<Decimal>>>(),
+  : DecimalBox(std::make_shared<LocalOptionalDecimalModel>(),
       std::move(modifiers), parent) {}
 
-DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
+DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
@@ -334,7 +334,7 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   update_button_positions();
 }
 
-const std::shared_ptr<DecimalBox::DecimalModel>& DecimalBox::get_model() const {
+const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_model() const {
   return m_model;
 }
 
@@ -401,7 +401,7 @@ void DecimalBox::increment() {
   step_by(get_increment());
 }
 
-DecimalBox::Decimal DecimalBox::get_increment() const {
+Decimal DecimalBox::get_increment() const {
   auto modifier_flags = static_cast<int>(qApp->keyboardModifiers());
   auto modifiers =
     std::bitset<std::numeric_limits<int>::digits>(modifier_flags);

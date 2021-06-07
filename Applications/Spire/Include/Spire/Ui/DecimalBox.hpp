@@ -3,9 +3,8 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional/optional.hpp>
 #include <QHash>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/ScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -36,16 +35,6 @@ namespace Styles {
   /** Represents a widget for inputting decimal values. */
   class DecimalBox : public QWidget {
     public:
-
-      /** The maximum precision of the Decimal type. */
-      static constexpr auto PRECISION = 15;
-
-      /** Represents the floating point type used by the DecimalBox. */
-      using Decimal = boost::multiprecision::number<
-        boost::multiprecision::cpp_dec_float<PRECISION>>;
-
-      /** Type of model used by the DecimalBox. */
-      using DecimalModel = ScalarValueModel<boost::optional<Decimal>>;
 
       /**
        * Signals that submission value has changed.
@@ -86,12 +75,12 @@ namespace Styles {
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
-      DecimalBox(std::shared_ptr<DecimalModel> model,
+      DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<DecimalModel>& get_model() const;
+      const std::shared_ptr<OptionalDecimalModel>& get_model() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -132,7 +121,7 @@ namespace Styles {
       struct DecimalToTextModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<DecimalModel> m_model;
+      std::shared_ptr<OptionalDecimalModel> m_model;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
       boost::optional<Decimal> m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;

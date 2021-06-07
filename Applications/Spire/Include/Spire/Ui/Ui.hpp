@@ -38,17 +38,6 @@ namespace Spire {
   class KeySequenceInputField;
   class LayeredWidget;
   class ListModel;
-  template<typename T> class LocalScalarValueModel;
-  template<typename T> class LocalValueModel;
-  using LocalBooleanModel = LocalValueModel<bool>;
-  using LocalDurationModel =
-    LocalScalarValueModel<boost::posix_time::time_duration>;
-  using LocalIntegerModel = LocalScalarValueModel<int>;
-  using LocalKeyModel = LocalValueModel<Qt::Key>;
-  using LocalOptionalDurationModel =
-    LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
-  using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
-  using LocalTextModel = LocalValueModel<QString>;
   class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
@@ -59,12 +48,6 @@ namespace Spire {
   class RangeInputWidget;
   class RealSpinBox;
   class RowViewListModel;
-  template<typename T> class ScalarValueModel;
-  using OptionalDurationModel =
-    ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
-  using OptionalIntegerModel = ScalarValueModel<boost::optional<int>>;
-  using DurationModel = ScalarValueModel<boost::posix_time::time_duration>;
-  using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;
@@ -81,10 +64,6 @@ namespace Spire {
   class Tooltip;
   class TransitionWidget;
   class TranslatedTableModel;
-  template<typename T> class ValueModel;
-  using BooleanModel = ValueModel<bool>;
-  using KeyModel = ValueModel<Qt::Key>;
-  using TextModel = ValueModel<QString>;
   class Window;
 
   //! Draws a border inside the given region.

@@ -1,7 +1,7 @@
 #include "Spire/Ui/KeyTag.hpp"
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/LocalValueModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;

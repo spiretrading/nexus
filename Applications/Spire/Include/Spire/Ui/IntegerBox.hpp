@@ -1,11 +1,21 @@
 #ifndef SPIRE_INTEGER_BOX_HPP
 #define SPIRE_INTEGER_BOX_HPP
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/DecimalBox.hpp"
-#include "Spire/Ui/ScalarValueModel.hpp"
+#include "Spire/Spire/Decimal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+
+  /** A ScalarValueModel over ints. */
+  using IntegerModel = ScalarValueModel<int>;
+
+  /** A ScalarValueModel over optional ints. */
+  using OptionalIntegerModel = ScalarValueModel<boost::optional<int>>;
+
+  /** A LocalScalarValueModel over ints. */
+  using LocalIntegerModel = LocalScalarValueModel<int>;
+
+  /** A LocalScalarValueModel over optional ints. */
+  using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
 
   /** Represents a widget for inputting integer values. */
   class IntegerBox : public QWidget {
@@ -51,7 +61,7 @@ namespace Spire {
 
       /**
        * Sets the read-only state.
-       * @param is_read_only True iff the DecimalBox should be read-only.
+       * @param is_read_only True iff the IntegerBox should be read-only.
        */
       void set_read_only(bool is_read_only);
 
@@ -75,8 +85,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;
 
-      void on_submit(const boost::optional<DecimalBox::Decimal>& submission);
-      void on_reject(const boost::optional<DecimalBox::Decimal>& value);
+      void on_submit(const boost::optional<Decimal>& submission);
+      void on_reject(const boost::optional<Decimal>& value);
   };
 }
 
