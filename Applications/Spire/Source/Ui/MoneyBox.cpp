@@ -10,77 +10,11 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  Decimal to_decimal(Money money) {
-    return Decimal(lexical_cast<std::string>(money));
-  }
+struct MoneyBox::MoneyToDecimalModel : ToDecimalModel<Money> {
+  using ToDecimalModel<Money>::ToDecimalModel;
 
-  optional<Decimal> to_decimal(optional<Money> money) {
-    if(money) {
-      return to_decimal(*money);
-    }
-    return none;
-  }
-}
-
-struct MoneyBox::MoneyToDecimalModel : OptionalDecimalModel {
-  mutable CurrentSignal m_current_signal;
-  std::shared_ptr<OptionalMoneyModel> m_model;
-  optional<Decimal> m_current;
-  scoped_connection m_current_connection;
-
-  MoneyToDecimalModel(std::shared_ptr<OptionalMoneyModel> model)
-    : m_model(std::move(model)),
-      m_current(to_decimal(m_model->get_current())),
-      m_current_connection(m_model->connect_current_signal(
-        [=] (const auto& current) {
-          on_current(current);
-        })) {}
-
-  optional<Decimal> get_minimum() const {
-    return to_decimal(m_model->get_minimum());
-  }
-
-  optional<Decimal> get_maximum() const {
-    return to_decimal(m_model->get_maximum());
-  }
-
-  Decimal get_increment() const {
+  Decimal get_increment() const override {
     return Decimal("0.000001");
-  }
-
-  QValidator::State get_state() const override {
-    return m_model->get_state();
-  }
-
-  const optional<Decimal>& get_current() const {
-    return m_current;
-  }
-
-  QValidator::State set_current(const optional<Decimal>& value) override {
-    auto state = [&] {
-      if(value) {
-        return m_model->set_current(Money::FromValue(value->str()));
-      }
-      return m_model->set_current(none);
-    }();
-    if(state == QValidator::State::Invalid) {
-      return QValidator::State::Invalid;
-    }
-    m_current = value;
-    m_current_signal(value);
-    return state;
-  }
-
-  connection connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const override {
-    return m_current_signal.connect(slot);
-  }
-
-  void on_current(const optional<Money>& current) {
-    auto decimal = to_decimal(current);
-    m_current = decimal;
-    m_current_signal(decimal);
   }
 };
 

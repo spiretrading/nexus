@@ -18,7 +18,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  optional<Decimal> to_decimal(const QString& text) {
+  optional<Decimal> text_to_decimal(const QString& text) {
     auto trimmed_text = text.trimmed().toStdString();
     if(trimmed_text.empty()) {
       return none;
@@ -159,7 +159,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       m_current_signal(m_current);
       m_is_rejected = false;
       return QValidator::State::Intermediate;
-    } else if(auto decimal = to_decimal(value)) {
+    } else if(auto decimal = text_to_decimal(value)) {
       auto state =
         validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
       if(state == QValidator::State::Invalid) {
@@ -505,7 +505,7 @@ void DecimalBox::on_submit(const QString& submission) {
 }
 
 void DecimalBox::on_reject(const QString& value) {
-  m_reject_signal(to_decimal(value).value_or(Decimal(0)));
+  m_reject_signal(text_to_decimal(value).value_or(Decimal(0)));
   m_adaptor_model->reject();
 }
 

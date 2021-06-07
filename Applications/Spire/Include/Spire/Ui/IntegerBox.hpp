@@ -74,11 +74,10 @@ namespace Spire {
         const RejectSignal::slot_type& slot) const;
 
     private:
-      struct IntegerToDecimalModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalIntegerModel> m_model;
-      std::shared_ptr<IntegerToDecimalModel> m_adaptor_model;
+      std::shared_ptr<ToDecimalModel<int>> m_adaptor_model;
       boost::optional<int> m_submission;
       DecimalBox* m_decimal_box;
       boost::signals2::scoped_connection m_current_connection;
