@@ -236,7 +236,7 @@ namespace {
     auto style = StyleSheet();
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-      set(BodyAlign(Qt::AlignCenter)).
+      set(BodyAlign(Qt::Alignment(Qt::AlignCenter))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(horizontal_padding(scale_width(4)));
     style.get(Hover() || Focus()).

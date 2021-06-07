@@ -12,6 +12,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
@@ -483,6 +484,31 @@ UiProfile Spire::make_integer_box_profile() {
         set_style(*integer_box, std::move(style));
       });
       return integer_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_key_input_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  //properties.push_back(make_standard_qstring_property("current"));
+  auto profile = UiProfile(QString::fromUtf8("KeyInputBox"), properties,
+    [] (auto& profile) {
+      auto key_input = new KeyInputBox();
+      apply_widget_properties(key_input, profile.get_properties());
+      //auto& current = get<QString>("current", profile.get_properties());
+      //current.connect_changed_signal([&, key_input] (auto current) {
+      //  if(current != key_input->get_model()->get_current().toString()) {
+      //    key_input->get_model()->set_current(current);
+      //    key_input->adjustSize();
+      //  }
+      //});
+      key_input->get_model()->connect_current_signal([=] (auto sequence) {
+        key_input->adjustSize();
+      });
+      key_input->connect_submit_signal(
+        profile.make_event_slot<QKeySequence>(QString::fromUtf8("Submit")));
+      return key_input;
     });
   return profile;
 }

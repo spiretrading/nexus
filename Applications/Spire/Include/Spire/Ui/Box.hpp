@@ -88,7 +88,7 @@ namespace Styles {
     PaddingLeft>;
 
   /** Sets the alignment of the body. */
-  using BodyAlign = BasicProperty<Qt::AlignmentFlag, struct BodyAlignTag>;
+  using BodyAlign = BasicProperty<Qt::Alignment, struct BodyAlignTag>;
 
   /**
    * Applies a single size to all four corners of a border.
