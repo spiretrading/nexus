@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Ui/AssociativeValueModel.hpp"
+#include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"

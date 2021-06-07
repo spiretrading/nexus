@@ -3,8 +3,9 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/LocalScalarValueModel.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -19,12 +20,12 @@ namespace {
     return style;
   }
 
-  auto make_value_field(const optional<DecimalBox::Decimal>& value) {
-    auto modifiers = QHash<Qt::KeyboardModifier, DecimalBox::Decimal>(
+  auto make_value_field(const optional<Decimal>& value) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Decimal>(
       {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
        {Qt::ShiftModifier, 20}});
     auto model = std::make_shared<
-      LocalScalarValueModel<optional<DecimalBox::Decimal>>>(value);
+      LocalScalarValueModel<optional<Decimal>>>(value);
     model->set_minimum(none);
     model->set_maximum(none);
     auto field = new DecimalBox(model, modifiers);
@@ -138,8 +139,8 @@ void NumericFilterPanel::on_style(DecimalBox* field) {
     stylist.evaluate(*trailing_zeros_property, [=] (auto trailing_zeros) {
       auto exp = -trailing_zeros;
       std::dynamic_pointer_cast<
-        LocalScalarValueModel<optional<DecimalBox::Decimal>>>(
-          field->get_model())->set_increment(pow(DecimalBox::Decimal(10), exp));
+        LocalScalarValueModel<optional<Decimal>>>(
+          field->get_model())->set_increment(pow(Decimal(10), exp));
     });
   }
 }

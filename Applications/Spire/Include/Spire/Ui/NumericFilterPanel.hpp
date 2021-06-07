@@ -2,9 +2,9 @@
 #define SPIRE_NUMERIC_FILTER_PANEL_HPP
 #include <QWidget>
 #include <boost/optional/optional.hpp>
-#include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Spire/Decimal.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
-#include "Spire/Ui/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -19,10 +19,10 @@ namespace Spire {
       struct NumericRange {
 
         /** The minimum value or none if there is no minimum. */
-        boost::optional<DecimalBox::Decimal> m_min;
+        boost::optional<Decimal> m_min;
 
         /** The maximum value or none if there is no maximum. */
-        boost::optional<DecimalBox::Decimal> m_max;
+        boost::optional<Decimal> m_max;
       };
 
       /** Type of model used by the NumericFilterPanel. */

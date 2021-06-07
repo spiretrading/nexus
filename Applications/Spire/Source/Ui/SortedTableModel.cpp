@@ -21,8 +21,8 @@ namespace {
       return compare<int>(lhs, rhs);
     } else if(lhs.type() == typeid(QString)) {
       return compare<QString>(lhs, rhs);
-    } else if(lhs.type() == typeid(DecimalBox::Decimal)) {
-      return compare<DecimalBox::Decimal>(lhs, rhs);
+    } else if(lhs.type() == typeid(Decimal)) {
+      return compare<Decimal>(lhs, rhs);
     } else if(lhs.type() == typeid(time_duration)) {
       return compare<time_duration>(lhs, rhs);
     }

@@ -6,10 +6,10 @@
 #include <QKeyEvent>
 #include <qt_windows.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -18,13 +18,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  optional<DecimalBox::Decimal> to_decimal(const QString& text) {
+  optional<Decimal> text_to_decimal(const QString& text) {
     auto trimmed_text = text.trimmed().toStdString();
     if(trimmed_text.empty()) {
       return none;
     }
     try {
-      return DecimalBox::Decimal(trimmed_text.c_str());
+      return Decimal(trimmed_text.c_str());
     } catch (const std::runtime_error&) {
       return none;
     }
@@ -62,7 +62,7 @@ namespace {
 
 struct DecimalBox::DecimalToTextModel : TextModel {
   mutable CurrentSignal m_current_signal;
-  std::shared_ptr<DecimalBox::DecimalModel> m_model;
+  std::shared_ptr<OptionalDecimalModel> m_model;
   int m_decimal_places;
   int m_leading_zeros;
   int m_trailing_zeros;
@@ -71,7 +71,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   bool m_is_rejected;
   scoped_connection m_current_connection;
 
-  DecimalToTextModel(std::shared_ptr<DecimalBox::DecimalModel> model)
+  DecimalToTextModel(std::shared_ptr<OptionalDecimalModel> model)
       : m_model(std::move(model)),
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
         m_leading_zeros(0),
@@ -117,7 +117,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
   }
 
-  const optional<DecimalBox::Decimal>& submit() {
+  const optional<Decimal>& submit() {
     auto displayed_value = to_string(m_model->get_current());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
@@ -159,7 +159,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       m_current_signal(m_current);
       m_is_rejected = false;
       return QValidator::State::Intermediate;
-    } else if(auto decimal = to_decimal(value)) {
+    } else if(auto decimal = text_to_decimal(value)) {
       auto state =
         validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
       if(state == QValidator::State::Invalid) {
@@ -235,7 +235,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return false;
   }
 
-  QString to_string(const optional<DecimalBox::Decimal>& value) const {
+  QString to_string(const optional<Decimal>& value) const {
     static auto DECIMAL_PATTERN = QRegExp("^([-|\\+]?([0-9]*))(\\.([0-9]*))?");
     static const auto LEADING_DIGITS_CAPTURE_GROUP = 2;
     static const auto TRAILING_CAPTURE_GROUP = 3;
@@ -243,8 +243,8 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     if(!value) {
       return {};
     }
-    auto s = QString::fromStdString(
-      value->str(DecimalBox::PRECISION, std::ios_base::dec));
+    auto s = QString::fromStdString(value->str(
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
     if(DECIMAL_PATTERN.indexIn(s, 0) != -1) {
       auto captures = DECIMAL_PATTERN.capturedTexts();
       if(m_trailing_zeros != 0) {
@@ -260,7 +260,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return s;
   }
 
-  void on_current(const optional<DecimalBox::Decimal>& current) {
+  void on_current(const optional<Decimal>& current) {
     m_current = to_string(current);
     m_current_signal(m_current);
   }
@@ -287,16 +287,17 @@ QValidator::State DecimalBox::validate(const Decimal& value,
 
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
-  : DecimalBox(std::make_shared<LocalScalarValueModel<optional<Decimal>>>(),
+  : DecimalBox(std::make_shared<LocalOptionalDecimalModel>(),
       std::move(modifiers), parent) {}
 
-DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
+DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
       m_submission(m_model->get_current()),
-      m_modifiers(std::move(modifiers)) {
+      m_modifiers(std::move(modifiers)),
+      m_tick(TickIndicator::NONE) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
@@ -309,6 +310,17 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
+  if(auto current = m_model->get_current()) {
+    if(*current > 0) {
+      m_sign = SignIndicator::POSITIVE;
+      match(*this, IsPositive());
+    } else if(*current < 0) {
+      m_sign = SignIndicator::NEGATIVE;
+      match(*this, IsNegative());
+    } else {
+      m_sign = SignIndicator::NONE;
+    }
+  }
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
@@ -322,7 +334,7 @@ DecimalBox::DecimalBox(std::shared_ptr<DecimalModel> model,
   update_button_positions();
 }
 
-const std::shared_ptr<DecimalBox::DecimalModel>& DecimalBox::get_model() const {
+const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_model() const {
   return m_model;
 }
 
@@ -389,7 +401,7 @@ void DecimalBox::increment() {
   step_by(get_increment());
 }
 
-DecimalBox::Decimal DecimalBox::get_increment() const {
+Decimal DecimalBox::get_increment() const {
   auto modifier_flags = static_cast<int>(qApp->keyboardModifiers());
   auto modifiers =
     std::bitset<std::numeric_limits<int>::digits>(modifier_flags);
@@ -439,6 +451,43 @@ void DecimalBox::update_button_positions() {
 }
 
 void DecimalBox::on_current(const optional<Decimal>& current) {
+  if(m_last_current && current) {
+    if(m_tick == TickIndicator::DOWN) {
+      unmatch(*this, Downtick());
+    } else if(m_tick == TickIndicator::UP) {
+      unmatch(*this, Uptick());
+    }
+    if(*current > *m_last_current) {
+      m_tick = TickIndicator::UP;
+      match(*this, Uptick());
+    } else if(*current < *m_last_current) {
+      m_tick = TickIndicator::DOWN;
+      match(*this, Downtick());
+    }
+  }
+  if(current) {
+    m_last_current = current;
+    if(*current > 0 && m_sign != SignIndicator::POSITIVE) {
+      if(m_sign == SignIndicator::NEGATIVE) {
+        unmatch(*this, IsNegative());
+      }
+      match(*this, IsPositive());
+      m_sign = SignIndicator::POSITIVE;
+    } else if(*current == 0 && m_sign != SignIndicator::NONE) {
+      if(m_sign == SignIndicator::NEGATIVE) {
+        unmatch(*this, IsNegative());
+      } else if(m_sign == SignIndicator::POSITIVE) {
+        unmatch(*this, IsPositive());
+      }
+      m_sign = SignIndicator::NONE;
+    } else if(*current < 0 && m_sign != SignIndicator::NEGATIVE) {
+      if(m_sign == SignIndicator::POSITIVE) {
+        unmatch(*this, IsPositive());
+      }
+      match(*this, IsNegative());
+      m_sign = SignIndicator::NEGATIVE;
+    }
+  }
   m_up_button->setEnabled(
     !is_read_only() && (!m_model->get_maximum() || !m_model->get_current() ||
       m_model->get_current() < m_model->get_maximum()));
@@ -456,7 +505,7 @@ void DecimalBox::on_submit(const QString& submission) {
 }
 
 void DecimalBox::on_reject(const QString& value) {
-  m_reject_signal(to_decimal(value).value_or(Decimal(0)));
+  m_reject_signal(text_to_decimal(value).value_or(Decimal(0)));
   m_adaptor_model->reject();
 }
 

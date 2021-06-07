@@ -11,7 +11,6 @@ using namespace Spire::Styles;
 
 namespace {
   const auto BUTTON_SIZE = QSize(102, 26);
-  const auto HEADER_HEIGHT = 16;
   const auto MARGIN_SIZE = 8;
   const auto SPACE_BETWEEN_COMPONENT_BUTTON = 50;
   const auto SPACE_BETWEEN_HEADER_COMPONENT = 18;
@@ -53,8 +52,8 @@ FilterPanel::FilterPanel(const QString& title, QWidget* component,
     scale_width(BUTTON_SIZE.width()));
   setMinimumSize(max_width + scale_width(MARGIN_SIZE * 2),
     scale_height(MARGIN_SIZE * 2 + SPACE_BETWEEN_COMPONENT_BUTTON +
-    SPACE_BETWEEN_HEADER_COMPONENT + BUTTON_SIZE.height() + HEADER_HEIGHT) +
-    component->height());
+    SPACE_BETWEEN_HEADER_COMPONENT + BUTTON_SIZE.height()) +
+    header->sizeHint().height() + component->height());
   m_panel = new OverlayPanel(this, parent);
   m_panel->set_closed_on_blur(true);
 }

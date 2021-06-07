@@ -1,7 +1,7 @@
 #include <queue>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
-#include "Spire/Ui/AssociativeValueModel.hpp"
+#include "Spire/Spire/AssociativeValueModel.hpp"
 
 using namespace boost;
 using namespace Spire;
