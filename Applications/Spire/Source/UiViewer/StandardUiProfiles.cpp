@@ -385,8 +385,9 @@ UiProfile Spire::make_filter_panel_profile() {
     "Filter Quantity"));
   auto profile = UiProfile(QString::fromUtf8("FilterPanel"), properties,
     [] (auto& profile) {
+      auto& title = get<QString>("title", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
-      button->connect_clicked_signal([=, &profile] () mutable {
+      button->connect_clicked_signal([&, button] {
         auto component = new QWidget();
         component->setObjectName("component");
         component->setStyleSheet("#component {background-color: #F5F5F5;}");
@@ -404,7 +405,6 @@ UiProfile Spire::make_filter_panel_profile() {
         max_box->setFixedSize(scale(40, 30));
         component_layout->addWidget(max_box, 1, 0);
         component_layout->addWidget(new TextBox(), 1, 1);
-        auto& title = get<QString>("title", profile.get_properties());
         auto panel = new FilterPanel(title.get(), component, button);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
