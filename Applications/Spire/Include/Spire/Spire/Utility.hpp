@@ -1,9 +1,16 @@
 #ifndef SPIRE_UTILITY_HPP
 #define SPIRE_UTILITY_HPP
 #include <cmath>
+#include <QLayout>
 #include <QObject>
 
 namespace Spire {
+
+  /**
+   * Removes and deletes all items from a layout.
+   * @param layout The layout to remove items from.
+   */
+  void clear_layout(QLayout* layout);
 
   //! Deletes an object when control returns to the thread's event loop.
   /*
