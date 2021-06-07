@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
@@ -10,7 +11,6 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/LocalScalarValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -63,7 +63,7 @@ namespace {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
-    std::weak_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> m_seconds;
+    std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
     optional<int> m_current;
     QValidator::State m_state;
     scoped_connection m_source_connection;
@@ -120,7 +120,7 @@ namespace {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
-    std::weak_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> m_seconds;
+    std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
     optional<int> m_current;
     QValidator::State m_state;
     scoped_connection m_source_connection;
@@ -170,16 +170,16 @@ namespace {
     }
   };
 
-  struct SecondModel : ScalarValueModel<optional<DecimalBox::Decimal>> {
+  struct SecondModel : ScalarValueModel<optional<Decimal>> {
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
-    optional<DecimalBox::Decimal> m_current;
+    optional<Decimal> m_current;
     QValidator::State m_state;
     scoped_connection m_source_connection;
 
-    static auto to_seconds(const DecimalBox::Decimal& decimal) {
+    static auto to_seconds(const Decimal& decimal) {
       return milliseconds(static_cast<time_duration::sec_type>(
         (1000 * decimal).convert_to<double>()));
     }
@@ -192,23 +192,23 @@ namespace {
       on_current(m_source->get_current());
     }
 
-    optional<DecimalBox::Decimal> get_minimum() const {
+    optional<Decimal> get_minimum() const {
       return 0;
     }
 
-    optional<DecimalBox::Decimal> get_maximum() const {
-      return DecimalBox::Decimal("59.999");
+    optional<Decimal> get_maximum() const {
+      return Decimal("59.999");
     }
 
-    DecimalBox::Decimal get_increment() const {
-      return DecimalBox::Decimal("0.001");
+    Decimal get_increment() const {
+      return Decimal("0.001");
     }
 
     QValidator::State get_state() const {
       return m_state;
     }
 
-    const optional<DecimalBox::Decimal>& get_current() const {
+    const optional<Decimal>& get_current() const {
       return m_current;
     }
 
@@ -225,8 +225,8 @@ namespace {
     }
 
     void on_current(const optional<time_duration>& current) {
-      ::on_current(*this, current, [] (auto current) -> DecimalBox::Decimal {
-        return DecimalBox::Decimal((current - hours(current.hours()) -
+      ::on_current(*this, current, [] (auto current) -> Decimal {
+        return Decimal((current - hours(current.hours()) -
           minutes(current.minutes())).total_milliseconds()) / 1000;
       });
     }
@@ -335,10 +335,9 @@ namespace {
   }
 
   auto make_second_field(
-      std::shared_ptr<ScalarValueModel<optional<DecimalBox::Decimal>>> model,
+      std::shared_ptr<ScalarValueModel<optional<Decimal>>> model,
         QWidget& event_filter) {
-    auto field =
-      new DecimalBox(std::move(model), create_modifiers<DecimalBox::Decimal>());
+    auto field = new DecimalBox(std::move(model), create_modifiers<Decimal>());
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
     set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
@@ -526,7 +525,7 @@ void DurationBox::on_submit() {
         m_minute_field->get_model()->set_current(0);
       }
       if(!m_second_field->get_model()->get_current()) {
-        m_second_field->get_model()->set_current(DecimalBox::Decimal(0));
+        m_second_field->get_model()->set_current(Decimal(0));
       }
     }
     auto submission = m_submission;

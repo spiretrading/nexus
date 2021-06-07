@@ -38,8 +38,7 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   if(right.empty()) {
     return {};
   }
-  if(left.size() == 1 && right.size() == 1 &&
-      *left.begin() == *right.begin()) {
+  if(left.size() == 1 && right.size() == 1 && *left.begin() == *right.begin()) {
     return left;
   }
   for(auto i = left.begin(); i != left.end();) {

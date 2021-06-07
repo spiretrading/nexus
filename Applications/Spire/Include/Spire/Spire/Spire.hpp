@@ -11,20 +11,25 @@ namespace Spire {
   class Definitions;
   class KeySequenceValidationModel;
   class LocalRangeInputModel;
+  template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
+  template<typename T> class LocalValueModel;
   template<typename T> class QtFuture;
   template<typename T> class QtPromise;
   class RangeInputModel;
   class RealSpinBoxModel;
   class Scalar;
+  template<typename T> class ScalarValueModel;
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
   class TaskKeySequenceValidationModel;
   class TechnicalsModel;
   class TestKeySequenceValidationModel;
+  template<typename T> class ToDecimalModel;
+  template<typename T> class ValueModel;
 
-  //! Defines the common type of boost signal used throughout Spire.
+  /** Defines the common type of boost signal used throughout Spire. */
   template<typename F>
   using Signal = typename boost::signals2::signal_type<F,
     boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>>::type;

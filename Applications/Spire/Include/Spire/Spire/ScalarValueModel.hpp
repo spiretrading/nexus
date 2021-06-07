@@ -1,8 +1,7 @@
 #ifndef SPIRE_SCALAR_VALUE_MODEL_HPP
 #define SPIRE_SCALAR_VALUE_MODEL_HPP
 #include <boost/optional/optional.hpp>
-#include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/ValueModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 namespace Details {
@@ -72,8 +71,8 @@ namespace Details {
   typename ScalarValueModel<T>::Scalar
       ScalarValueModel<T>::get_increment() const {
     if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      return
-        std::numeric_limits<Scalar>::max() / std::numeric_limits<Scalar>::max();
+      return Scalar(std::numeric_limits<Scalar>::max() /
+        std::numeric_limits<Scalar>::max());
     } else {
       return Scalar();
     }
