@@ -15,6 +15,7 @@
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/LocalScalarValueModel.hpp"
+#include "Spire/Ui/NumericFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -542,6 +543,65 @@ UiProfile Spire::make_list_item_profile() {
       list_item->connect_submit_signal(profile.make_event_slot(
         QString::fromUtf8("Submit")));
       return list_item;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_numeric_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_qstring_property("title",
+    "Filter by Size"));
+  properties.push_back(make_standard_qstring_property("min", ""));
+  properties.push_back(make_standard_qstring_property("max", ""));
+  properties.push_back(make_standard_int_property("leading_zeros", 0));
+  properties.push_back(make_standard_int_property("trailing_zeros", 0));
+  auto profile = UiProfile(QString::fromUtf8("NumericFilterPanel"), properties,
+    [] (auto& profile) {
+      auto parse_decimal = [] (auto decimal) ->
+          boost::optional<DecimalBox::Decimal> {
+        try {
+          return DecimalBox::Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      auto to_string = [] (const optional<DecimalBox::Decimal>& value) {
+        if(value) {
+          return QString::fromStdString(
+            value->str(DecimalBox::PRECISION, std::ios_base::dec));
+        }
+        return QString::fromUtf8("null");
+      };
+      auto& title = get<QString>("title", profile.get_properties());
+      auto& min = get<QString>("min", profile.get_properties());
+      auto& max = get<QString>("max", profile.get_properties());
+      auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
+      auto& trailing_zeros = get<int>("trailing_zeros",
+        profile.get_properties());
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      button->connect_clicked_signal([&, button] {
+        auto default_value = NumericFilterPanel::NumericRange{
+          parse_decimal(min.get()), parse_decimal(max.get())};
+        auto model = std::make_shared<LocalValueModel<
+          NumericFilterPanel::NumericRange>>();
+        auto panel = new NumericFilterPanel(model, title.get(), default_value,
+          button);
+        auto filter_slot = profile.make_event_slot<QString>(
+          QString::fromUtf8("FilterSignal"));
+        panel->connect_filter_signal([=] {
+          auto current = model->get_current();
+          filter_slot(to_string(current.m_min) + QString::fromUtf8(", ") +
+            to_string(current.m_max));
+        });
+        auto style = get_style(*panel);
+        style.get(Any() >> is_a<DecimalBox>()).set(
+          LeadingZeros(leading_zeros.get()));
+        style.get(Any() >> is_a<DecimalBox>()).set(
+          TrailingZeros(trailing_zeros.get()));
+        set_style(*panel, std::move(style));
+        panel->show();
+      });
+      return button;
     });
   return profile;
 }

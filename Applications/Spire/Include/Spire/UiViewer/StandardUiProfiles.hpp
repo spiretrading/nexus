@@ -38,6 +38,9 @@ namespace Spire {
   //! Returns a UiProfile for the ListItem.
   UiProfile make_list_item_profile();
 
+  //! Returns a UiProfile for the NumericFilterPanel.
+  UiProfile make_numeric_filter_panel_profile();
+
   //! Returns a UiProfile for the OverlayPanel.
   UiProfile make_overlay_panel_profile();
 

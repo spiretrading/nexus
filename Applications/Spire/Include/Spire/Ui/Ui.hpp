@@ -51,6 +51,7 @@ namespace Spire {
   using LocalTextModel = LocalValueModel<QString>;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
+  class NumericFilterPanel;
   class OverlayPanel;
   class PropertiesWindowButtonsWidget;
   class QuantitySpinBox;
