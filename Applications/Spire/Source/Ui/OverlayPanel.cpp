@@ -179,13 +179,12 @@ void OverlayPanel::position() {
           DROP_SHADOW_WIDTH(), 0);
         layout()->setContentsMargins(margins);
         return {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
-          panel_size.height() + scale_height(1)), panel_size};
+          panel_size.height() + 1), panel_size};
       } else {
         auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
           DROP_SHADOW_HEIGHT());
         layout()->setContentsMargins(margins);
-        return {QPoint(x, parent_bottom_left.y() + scale_height(1)),
-          panel_size};
+        return {QPoint(x, parent_bottom_left.y() + 1), panel_size};
       }
     }();
     setGeometry(rect);
