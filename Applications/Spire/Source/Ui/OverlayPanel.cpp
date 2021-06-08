@@ -1,9 +1,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QApplication>
 #include <QCloseEvent>
 #include <QEvent>
 #include <QGraphicsDropShadowEffect>
-#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QPropertyAnimation>
 #include <QScreen>
@@ -141,14 +139,6 @@ bool OverlayPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-
-QScreen* OverlayPanel::get_current_screen(const QPoint& point) const {
-  if(auto screen = QGuiApplication::screenAt(point)) {
-    return screen;
-  }
-  return parentWidget()->screen();
-}
-
 void OverlayPanel::fade(bool reverse) {
   auto animation = new QPropertyAnimation(this, "windowOpacity");
   animation->setDuration(FADE_SPEED_MS);
@@ -169,8 +159,7 @@ void OverlayPanel::position() {
     auto parent_geometry = parentWidget()->rect();
     auto parent_bottom_left = parentWidget()->mapToGlobal(
       parent_geometry.bottomLeft());
-    auto screen_geometry =
-      get_current_screen(parent_bottom_left)->availableGeometry();
+    auto screen_geometry = parentWidget()->screen()->availableGeometry();
     auto panel_size = [=] {
       if(layout()->contentsMargins() == DROP_SHADOW_MARGINS()) {
         return size() - QSize(0, DROP_SHADOW_HEIGHT());
@@ -178,10 +167,10 @@ void OverlayPanel::position() {
       return size();
     }();
     auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
-    if(x < 0) {
-      x = 0;
+    if(x < screen_geometry.left()) {
+      x = screen_geometry.left() - DROP_SHADOW_WIDTH();
     } else if(x + panel_size.width() > screen_geometry.right()) {
-      x = screen_geometry.right() - panel_size.width();
+      x = screen_geometry.right() - panel_size.width() + DROP_SHADOW_WIDTH();
     }
     auto rect = [=] () -> QRect {
       if((parent_bottom_left.y() + panel_size.height()) >
