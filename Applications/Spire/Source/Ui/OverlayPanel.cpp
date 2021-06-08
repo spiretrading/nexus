@@ -166,12 +166,16 @@ void OverlayPanel::position() {
       }
       return size();
     }();
-    auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
-    if(x < screen_geometry.left()) {
-      x = screen_geometry.left() - DROP_SHADOW_WIDTH();
-    } else if(x + panel_size.width() > screen_geometry.right()) {
-      x = screen_geometry.right() - panel_size.width() + DROP_SHADOW_WIDTH();
-    }
+    auto x = [&] {
+      auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
+      if(x < screen_geometry.left()) {
+        return screen_geometry.left() - DROP_SHADOW_WIDTH();
+      } else if(x + panel_size.width() > screen_geometry.right()) {
+        return screen_geometry.right() - panel_size.width() +
+          DROP_SHADOW_WIDTH();
+      }
+      return x;
+    }();
     auto rect = [&] () -> QRect {
       if((parent_bottom_left.y() + panel_size.height()) >
           screen_geometry.bottom()) {
