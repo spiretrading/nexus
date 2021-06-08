@@ -171,30 +171,35 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry =
       get_current_screen(parent_bottom_left)->availableGeometry();
-    auto size = m_body->size() + QSize(2 * DROP_SHADOW_WIDTH(),
-      DROP_SHADOW_HEIGHT());
+    auto panel_size = [=] {
+      if(layout()->contentsMargins() == DROP_SHADOW_MARGINS()) {
+        return size() - QSize(0, DROP_SHADOW_HEIGHT());
+      }
+      return size();
+    }();
     auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
     if(x < 0) {
       x = 0;
-    } else if(x + size.width() > screen_geometry.right()) {
-      x = screen_geometry.right() - size.width();
+    } else if(x + panel_size.width() > screen_geometry.right()) {
+      x = screen_geometry.right() - panel_size.width();
     }
-    auto rect = QRect();
-    if((parent_bottom_left.y() + size.height()) > screen_geometry.bottom()) {
-      auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
-        DROP_SHADOW_WIDTH(), 0);
-      layout()->setContentsMargins(margins);
-      rect = {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
-        size.height() + scale_height(1)), size};
-    } else {
-      auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
-        DROP_SHADOW_HEIGHT());
-      layout()->setContentsMargins(margins);
-      rect = {QPoint(x, parent_bottom_left.y() + scale_height(1)), size};
-    }
-    update();
+    auto rect = [=] () -> QRect {
+      if((parent_bottom_left.y() + panel_size.height()) >
+          screen_geometry.bottom()) {
+        auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
+          DROP_SHADOW_WIDTH(), 0);
+        layout()->setContentsMargins(margins);
+        return {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
+          panel_size.height() + scale_height(1)), panel_size};
+      } else {
+        auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
+          DROP_SHADOW_HEIGHT());
+        layout()->setContentsMargins(margins);
+        return {QPoint(x, parent_bottom_left.y() + scale_height(1)),
+          panel_size};
+      }
+    }();
     setGeometry(rect);
-  } else {
-    resize(m_body->size().grownBy(DROP_SHADOW_MARGINS()));
+    update();
   }
 }

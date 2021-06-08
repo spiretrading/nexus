@@ -3,6 +3,7 @@
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -53,12 +54,51 @@ Box::Box(QWidget* body, QWidget* parent)
   connect_style_signal(*this, [=] { on_style(); });
 }
 
+QSize Box::sizeHint() const {
+  if(m_size_hint) {
+    return *m_size_hint;
+  } else if(m_container) {
+    m_size_hint.emplace(m_container->sizeHint());
+    if(m_size_hint->isValid()) {
+      for(auto& property : get_evaluated_block(*this)) {
+        property.visit(
+          [&] (std::in_place_type_t<BorderTopSize>, int size) {
+            m_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<BorderRightSize>, int size) {
+            m_size_hint->rwidth() += size;
+          },
+          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+            m_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+            m_size_hint->rwidth() += size;
+          },
+          [&] (std::in_place_type_t<PaddingTop>, int size) {
+            m_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<PaddingRight>, int size) {
+            m_size_hint->rwidth() += size;
+          },
+          [&] (std::in_place_type_t<PaddingBottom>, int size) {
+            m_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<PaddingLeft>, int size) {
+            m_size_hint->rwidth() += size;
+          });
+      }
+    }
+  } else {
+    m_size_hint.emplace(QWidget::sizeHint());
+  }
+  return *m_size_hint;
+}
+
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
     m_styles.buffer([&] {
-      auto block = get_evaluated_block(*this);
-      for(auto& property : block) {
+      for(auto& property : get_evaluated_block(*this)) {
         property.visit(
           [&] (std::in_place_type_t<BorderTopSize>, int size) {
             m_body_geometry.setTop(m_body_geometry.top() + size);
@@ -99,6 +139,10 @@ void Box::commit_style() {
     setStyleSheet(stylesheet);
     style()->unpolish(this);
     style()->polish(this);
+    if(m_body) {
+      m_size_hint = none;
+      updateGeometry();
+    }
   }
   if(m_body) {
     m_container->setGeometry(m_body_geometry);
@@ -110,8 +154,7 @@ void Box::on_style() {
   m_styles.clear();
   m_styles.buffer([&] {
     auto& stylist = find_stylist(*this);
-    auto block = stylist.get_computed_block();
-    for(auto& property : block) {
+    for(auto& property : stylist.get_computed_block()) {
       property.visit(
         [&] (const BackgroundColor& color) {
           stylist.evaluate(color, [=] (auto color) {
@@ -213,6 +256,8 @@ void Box::on_style() {
               if(current_alignment != alignment) {
                 m_container->layout()->setAlignment(alignment);
                 m_container->layout()->update();
+                m_size_hint = none;
+                updateGeometry();
               }
             }
           });
