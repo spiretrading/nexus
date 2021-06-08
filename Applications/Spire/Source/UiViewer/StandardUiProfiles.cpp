@@ -522,7 +522,6 @@ UiProfile Spire::make_filter_panel_profile() {
         auto component = new QWidget();
         component->setObjectName("component");
         component->setStyleSheet("#component {background-color: #F5F5F5;}");
-        component->setFixedSize(scale(180, 80));
         auto component_layout = new QGridLayout(component);
         component_layout->setSpacing(0);
         component_layout->setContentsMargins({});
@@ -530,12 +529,16 @@ UiProfile Spire::make_filter_panel_profile() {
         min_box->set_read_only(true);
         min_box->setFixedSize(scale(40, 30));
         component_layout->addWidget(min_box, 0, 0);
-        component_layout->addWidget(new TextBox(), 0, 1);
+        auto min_text = new TextBox();
+        min_text->setFixedSize(scale(120, 26));
+        component_layout->addWidget(min_text, 0, 1);
         auto max_box = new TextBox(QString::fromUtf8("Max"));
         max_box->set_read_only(true);
         max_box->setFixedSize(scale(40, 30));
         component_layout->addWidget(max_box, 1, 0);
-        component_layout->addWidget(new TextBox(), 1, 1);
+        auto max_text = new TextBox();
+        max_text->setFixedSize(scale(120, 26));
+        component_layout->addWidget(max_text, 1, 1);
         auto panel = new FilterPanel(title.get(), component, button);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
