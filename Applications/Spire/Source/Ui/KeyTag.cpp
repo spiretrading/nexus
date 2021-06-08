@@ -13,12 +13,11 @@ namespace {
   const auto MODIFIER_BACKGROUND_COLOR = QColor("#FFEDCD");
 
   auto TAG_STYLE(StyleSheet style) {
-    style.get(Disabled()).
+    style.get(ReadOnly()).
       set(border_radius(scale_width(3))).
       set(border_size(0)).
       set(horizontal_padding(scale_width(4))).
       set(vertical_padding(scale_height(2))).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(TextColor(QColor::fromRgb(0, 0, 0)));
     return style;
   }
@@ -60,7 +59,7 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(this);
-  m_text_box->setDisabled(true);
+  m_text_box->set_read_only(true);
   proxy_style(*this, *m_text_box);
   set_style(*m_text_box, TAG_STYLE(get_style(*m_text_box)));
   auto style = get_style(*this);
