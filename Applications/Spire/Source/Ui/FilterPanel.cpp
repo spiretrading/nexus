@@ -42,7 +42,7 @@ FilterPanel::FilterPanel(const QString& title, QWidget* component,
   layout->addWidget(m_component);
   layout->addSpacing(scale_height(50));
   auto reset_button = make_label_button(tr("Reset to Default"));
-  reset_button->setFixedSize(scale(102, 26));
+  reset_button->setFixedHeight(scale_height(26));
   layout->addWidget(reset_button, 0, Qt::AlignRight);
   reset_button->connect_clicked_signal([=] { m_reset_signal(); });
   m_panel = new OverlayPanel(this, parent);
