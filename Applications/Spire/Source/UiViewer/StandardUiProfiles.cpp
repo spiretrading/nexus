@@ -672,8 +672,6 @@ UiProfile Spire::make_overlay_panel_profile() {
           panel = nullptr;
         }
         auto body = new QWidget();
-        body->resize(scale(300, 300));
-        body->setMinimumSize(scale(180, 100));
         auto container_layout = new QVBoxLayout(body);
         container_layout->setSpacing(0);
         container_layout->setContentsMargins(
@@ -697,9 +695,13 @@ UiProfile Spire::make_overlay_panel_profile() {
         content_layout->setContentsMargins(
           {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
         content_layout->addWidget(new QLabel("Start Date:"), 0, 0);
-        content_layout->addWidget(new TextBox, 0, 1);
+        auto text_box1 = new TextBox();
+        text_box1->setFixedSize(scale(120, 26));
+        content_layout->addWidget(text_box1, 0, 1);
         content_layout->addWidget(new QLabel("End Date:"), 1, 0);
-        content_layout->addWidget(new TextBox, 1, 1);
+        auto text_box2 = new TextBox();
+        text_box2->setFixedSize(scale(120, 26));
+        content_layout->addWidget(text_box2, 1, 1);
         container_layout->addLayout(content_layout);
         panel = new OverlayPanel(body, button);
         auto& close_on_blur =
