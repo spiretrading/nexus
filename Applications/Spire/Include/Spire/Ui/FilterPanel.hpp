@@ -20,7 +20,7 @@ namespace Spire {
        * @param component The filter component displayed in the FilterPanel.
        * @param parent The parent widget that shows the panel.
        */
-      FilterPanel(const QString& title, QWidget* component,
+      FilterPanel(QString title, QWidget* component,
         QWidget* parent);
 
       /** Returns the component displayed in the panel. */

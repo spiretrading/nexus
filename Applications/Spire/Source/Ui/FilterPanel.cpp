@@ -24,8 +24,7 @@ namespace {
   }
 }
 
-FilterPanel::FilterPanel(const QString& title, QWidget* component,
-    QWidget* parent)
+FilterPanel::FilterPanel(QString title, QWidget* component, QWidget* parent)
     : QWidget(parent),
       m_component(component) {
   auto layout = new QVBoxLayout(this);
@@ -33,7 +32,7 @@ FilterPanel::FilterPanel(const QString& title, QWidget* component,
   layout->setContentsMargins(scale_width(MARGIN_SIZE),
     scale_height(MARGIN_SIZE), scale_width(MARGIN_SIZE),
     scale_height(MARGIN_SIZE));
-  auto header = new TextBox(title);
+  auto header = new TextBox(std::move(title));
   header->setEnabled(false);
   header->set_read_only(true);
   set_style(*header, HEADER_STYLE());
