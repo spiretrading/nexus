@@ -73,7 +73,6 @@ NumericFilterPanel::NumericFilterPanel(
   auto max_field = make_value_field(m_default_value.m_max);
   max_layout->addWidget(max_field);
   layout->addLayout(max_layout);
-  setMinimumSize(scale(172, 62));
   m_filter_panel = new FilterPanel(title, this, parent);
   m_filter_panel->connect_reset_signal([=] {
     m_model->set_current(m_default_value);

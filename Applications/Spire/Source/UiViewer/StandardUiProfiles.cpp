@@ -668,7 +668,7 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
   properties.push_back(make_standard_property("trailing_zeros", 0));
   auto profile = UiProfile(QString::fromUtf8("NumericFilterPanel"), properties,
     [] (auto& profile) {
-      auto parse_decimal = [] (auto decimal) -> boost::optional<Decimal> {
+      auto to_decimal = [] (auto decimal) -> boost::optional<Decimal> {
         try {
           return Decimal(decimal.toStdString().c_str());
         } catch(const std::exception&) {
@@ -692,7 +692,7 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
       auto button = make_label_button(QString::fromUtf8("Click me"));
       button->connect_clicked_signal([&, button] {
         auto default_value = NumericFilterPanel::NumericRange{
-          parse_decimal(default_min.get()), parse_decimal(default_max.get())};
+          to_decimal(default_min.get()), to_decimal(default_max.get())};
         auto model = std::make_shared<LocalValueModel<
           NumericFilterPanel::NumericRange>>();
         auto panel = new NumericFilterPanel(model, title.get(), default_value,
