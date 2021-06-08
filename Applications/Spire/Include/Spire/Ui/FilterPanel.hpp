@@ -6,8 +6,7 @@
 namespace Spire {
 
   /** 
-   * Represents a fliter panel which contains a title, a sub-component and
-   * a "Reset to Default" button. 
+   * Represents a panel to display inputs for filtering values.
    */
   class FilterPanel : public QWidget {
     public:
