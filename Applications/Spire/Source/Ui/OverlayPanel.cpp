@@ -160,7 +160,7 @@ void OverlayPanel::position() {
     auto parent_bottom_left = parentWidget()->mapToGlobal(
       parent_geometry.bottomLeft());
     auto screen_geometry = parentWidget()->screen()->availableGeometry();
-    auto panel_size = [=] {
+    auto panel_size = [&] {
       if(layout()->contentsMargins() == DROP_SHADOW_MARGINS()) {
         return size() - QSize(0, DROP_SHADOW_HEIGHT());
       }
@@ -172,7 +172,7 @@ void OverlayPanel::position() {
     } else if(x + panel_size.width() > screen_geometry.right()) {
       x = screen_geometry.right() - panel_size.width() + DROP_SHADOW_WIDTH();
     }
-    auto rect = [=] () -> QRect {
+    auto rect = [&] () -> QRect {
       if((parent_bottom_left.y() + panel_size.height()) >
           screen_geometry.bottom()) {
         auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
