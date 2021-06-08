@@ -33,8 +33,8 @@ FilterPanel::FilterPanel(QString title, QWidget* component, QWidget* parent)
     scale_height(MARGIN_SIZE), scale_width(MARGIN_SIZE),
     scale_height(MARGIN_SIZE));
   auto header = new TextBox(std::move(title));
-  header->setEnabled(false);
   header->set_read_only(true);
+  header->setFocusPolicy(Qt::NoFocus);
   set_style(*header, HEADER_STYLE());
   layout->addWidget(header);
   layout->addSpacing(scale_height(18));
