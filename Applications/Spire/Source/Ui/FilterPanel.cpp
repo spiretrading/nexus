@@ -3,6 +3,7 @@
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -24,21 +25,21 @@ namespace {
   }
 }
 
-FilterPanel::FilterPanel(QString title, QWidget* component, QWidget* parent)
+FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_component(component) {
+      m_body(body) {
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
-  layout->setContentsMargins(scale_width(MARGIN_SIZE),
-    scale_height(MARGIN_SIZE), scale_width(MARGIN_SIZE),
-    scale_height(MARGIN_SIZE));
+  layout->setContentsMargins(
+    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
+    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
   auto header = new TextBox(std::move(title));
   header->set_read_only(true);
   header->setFocusPolicy(Qt::NoFocus);
   set_style(*header, HEADER_STYLE());
   layout->addWidget(header);
   layout->addSpacing(scale_height(18));
-  layout->addWidget(m_component);
+  layout->addWidget(m_body);
   layout->addSpacing(scale_height(50));
   auto reset_button = make_label_button(tr("Reset to Default"));
   reset_button->setFixedHeight(scale_height(26));
@@ -48,12 +49,12 @@ FilterPanel::FilterPanel(QString title, QWidget* component, QWidget* parent)
   m_panel->set_closed_on_blur(true);
 }
 
-const QWidget& FilterPanel::get_component() const {
-  return *m_component;
+const QWidget& FilterPanel::get_body() const {
+  return m_panel->get_body();
 }
 
-QWidget& FilterPanel::get_component() {
-  return *m_component;
+QWidget& FilterPanel::get_body() {
+  return m_panel->get_body();
 }
 
 connection FilterPanel::connect_reset_signal(
