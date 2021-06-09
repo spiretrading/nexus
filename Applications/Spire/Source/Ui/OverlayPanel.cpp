@@ -1,9 +1,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QApplication>
 #include <QCloseEvent>
 #include <QEvent>
 #include <QGraphicsDropShadowEffect>
-#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QPropertyAnimation>
 #include <QScreen>
@@ -18,7 +16,7 @@ namespace {
   const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 64);
   const auto DROP_SHADOW_OFFSET = QPoint(0, 3);
   const auto DROP_SHADOW_RADIUS = 5;
-  const auto DROP_SHADOW_SIZE = 3;
+  const auto DROP_SHADOW_SIZE = 5;
   const auto FADE_SPEED_MS = 100;
 
   auto DROP_SHADOW_HEIGHT() {
@@ -96,9 +94,7 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
-    if(event->type() == QEvent::Resize) {
-      resize(m_body->size().grownBy(DROP_SHADOW_MARGINS()));
-    } else if(event->type() == QEvent::MouseButtonPress) {
+    if(event->type() == QEvent::MouseButtonPress) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       m_mouse_pressed_position = mouse_event->pos();
     } else if(event->type() == QEvent::MouseMove) {
@@ -143,14 +139,6 @@ bool OverlayPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-
-QScreen* OverlayPanel::get_current_screen(const QPoint& point) const {
-  if(auto screen = QGuiApplication::screenAt(point)) {
-    return screen;
-  }
-  return parentWidget()->screen();
-}
-
 void OverlayPanel::fade(bool reverse) {
   auto animation = new QPropertyAnimation(this, "windowOpacity");
   animation->setDuration(FADE_SPEED_MS);
@@ -171,25 +159,39 @@ void OverlayPanel::position() {
     auto parent_geometry = parentWidget()->rect();
     auto parent_bottom_left = parentWidget()->mapToGlobal(
       parent_geometry.bottomLeft());
-    auto screen_geometry =
-      get_current_screen(parent_bottom_left)->availableGeometry();
-    auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
-    if(x < 0) {
-      x = 0;
-    } else if(x + width() > screen_geometry.right()) {
-      x = screen_geometry.right() - width();
-    }
-    if((parent_bottom_left.y() + height()) > screen_geometry.bottom()) {
-      layout()->setContentsMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
-        DROP_SHADOW_WIDTH(), 0);
-      update();
-      move({x, parent_bottom_left.y() - parent_geometry.height() - height() +
-        scale_height(1)});
-    } else {
-      layout()->setContentsMargins(DROP_SHADOW_WIDTH(), 0,
-        DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT());
-      update();
-      move({x, parent_bottom_left.y() + scale_height(1)});
-    }
+    auto screen_geometry = parentWidget()->screen()->availableGeometry();
+    auto panel_size = [&] {
+      if(layout()->contentsMargins() == DROP_SHADOW_MARGINS()) {
+        return size() - QSize(0, DROP_SHADOW_HEIGHT());
+      }
+      return size();
+    }();
+    auto x = [&] {
+      auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
+      if(x < screen_geometry.left()) {
+        return screen_geometry.left() - DROP_SHADOW_WIDTH();
+      } else if(x + panel_size.width() > screen_geometry.right()) {
+        return screen_geometry.right() - panel_size.width() +
+          DROP_SHADOW_WIDTH();
+      }
+      return x;
+    }();
+    auto rect = [&] () -> QRect {
+      if((parent_bottom_left.y() + panel_size.height()) >
+          screen_geometry.bottom()) {
+        auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
+          DROP_SHADOW_WIDTH(), 0);
+        layout()->setContentsMargins(margins);
+        return {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
+          panel_size.height() + 1), panel_size};
+      } else {
+        auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
+          DROP_SHADOW_HEIGHT());
+        layout()->setContentsMargins(margins);
+        return {QPoint(x, parent_bottom_left.y() + 1), panel_size};
+      }
+    }();
+    setGeometry(rect);
+    update();
   }
 }

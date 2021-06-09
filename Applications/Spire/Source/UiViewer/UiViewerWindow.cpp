@@ -91,6 +91,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_currency_combo_box_profile());
   add(make_decimal_box_profile());
   add(make_duration_box_profile());
+  add(make_filter_panel_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
   add(make_integer_box_profile());

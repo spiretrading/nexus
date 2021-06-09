@@ -15,6 +15,7 @@
 #include "Spire/Ui/CurrencyComboBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
@@ -509,6 +510,45 @@ UiProfile Spire::make_duration_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back( make_standard_property<QString>("title",
+    QString::fromUtf8("Filter Quantity")));
+  auto profile = UiProfile(QString::fromUtf8("FilterPanel"), properties,
+    [] (auto& profile) {
+      auto& title = get<QString>("title", profile.get_properties());
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      button->connect_clicked_signal([&, button] {
+        auto component = new QWidget();
+        component->setObjectName("component");
+        component->setStyleSheet("#component {background-color: #F5F5F5;}");
+        auto component_layout = new QGridLayout(component);
+        component_layout->setSpacing(0);
+        component_layout->setContentsMargins({});
+        auto min_box = new TextBox(QString::fromUtf8("Min"));
+        min_box->set_read_only(true);
+        min_box->setFixedSize(scale(40, 30));
+        component_layout->addWidget(min_box, 0, 0);
+        auto min_text = new TextBox();
+        min_text->setFixedSize(scale(120, 26));
+        component_layout->addWidget(min_text, 0, 1);
+        auto max_box = new TextBox(QString::fromUtf8("Max"));
+        max_box->set_read_only(true);
+        max_box->setFixedSize(scale(40, 30));
+        component_layout->addWidget(max_box, 1, 0);
+        auto max_text = new TextBox();
+        max_text->setFixedSize(scale(120, 26));
+        component_layout->addWidget(max_text, 1, 1);
+        auto panel = new FilterPanel(title.get(), component, button);
+        panel->connect_reset_signal(profile.make_event_slot(
+          QString::fromUtf8("ResetSignal")));
+        panel->show();
+      });
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_flat_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -635,8 +675,6 @@ UiProfile Spire::make_overlay_panel_profile() {
           panel = nullptr;
         }
         auto body = new QWidget();
-        body->resize(scale(300, 300));
-        body->setMinimumSize(scale(180, 100));
         auto container_layout = new QVBoxLayout(body);
         container_layout->setSpacing(0);
         container_layout->setContentsMargins(
@@ -660,9 +698,13 @@ UiProfile Spire::make_overlay_panel_profile() {
         content_layout->setContentsMargins(
           {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
         content_layout->addWidget(new QLabel("Start Date:"), 0, 0);
-        content_layout->addWidget(new TextBox, 0, 1);
+        auto text_box1 = new TextBox();
+        text_box1->setFixedSize(scale(120, 26));
+        content_layout->addWidget(text_box1, 0, 1);
         content_layout->addWidget(new QLabel("End Date:"), 1, 0);
-        content_layout->addWidget(new TextBox, 1, 1);
+        auto text_box2 = new TextBox();
+        text_box2->setFixedSize(scale(120, 26));
+        content_layout->addWidget(text_box2, 1, 1);
         container_layout->addLayout(content_layout);
         panel = new OverlayPanel(body, button);
         auto& close_on_blur =
