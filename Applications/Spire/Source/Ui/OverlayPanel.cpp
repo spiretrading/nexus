@@ -140,10 +140,8 @@ bool OverlayPanel::event(QEvent* event) {
 }
 
 void OverlayPanel::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape) {
-    if(!m_is_closed) {
-      fade(true);
-    }
+  if(event->key() == Qt::Key_Escape && !m_is_closed) {
+    fade(true);
   } else {
     QWidget::keyPressEvent(event);
   }
