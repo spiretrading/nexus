@@ -160,32 +160,35 @@ void OverlayPanel::position() {
     auto parent_bottom_left = parentWidget()->mapToGlobal(
       parent_geometry.bottomLeft());
     auto screen_geometry = parentWidget()->screen()->availableGeometry();
-    auto panel_size = [=] {
+    auto panel_size = [&] {
       if(layout()->contentsMargins() == DROP_SHADOW_MARGINS()) {
         return size() - QSize(0, DROP_SHADOW_HEIGHT());
       }
       return size();
     }();
-    auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
-    if(x < screen_geometry.left()) {
-      x = screen_geometry.left() - DROP_SHADOW_WIDTH();
-    } else if(x + panel_size.width() > screen_geometry.right()) {
-      x = screen_geometry.right() - panel_size.width() + DROP_SHADOW_WIDTH();
-    }
-    auto rect = [=] () -> QRect {
+    auto x = [&] {
+      auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
+      if(x < screen_geometry.left()) {
+        return screen_geometry.left() - DROP_SHADOW_WIDTH();
+      } else if(x + panel_size.width() > screen_geometry.right()) {
+        return screen_geometry.right() - panel_size.width() +
+          DROP_SHADOW_WIDTH();
+      }
+      return x;
+    }();
+    auto rect = [&] () -> QRect {
       if((parent_bottom_left.y() + panel_size.height()) >
           screen_geometry.bottom()) {
         auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
           DROP_SHADOW_WIDTH(), 0);
         layout()->setContentsMargins(margins);
         return {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
-          panel_size.height() + scale_height(1)), panel_size};
+          panel_size.height() + 1), panel_size};
       } else {
         auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
           DROP_SHADOW_HEIGHT());
         layout()->setContentsMargins(margins);
-        return {QPoint(x, parent_bottom_left.y() + scale_height(1)),
-          panel_size};
+        return {QPoint(x, parent_bottom_left.y() + 1), panel_size};
       }
     }();
     setGeometry(rect);

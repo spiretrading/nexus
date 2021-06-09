@@ -150,6 +150,7 @@ namespace Styles {
       bool m_is_rejected;
       mutable boost::optional<QSize> m_size_hint;
 
+      QSize compute_decoration_size() const;
       bool is_placeholder_shown() const;
       void elide_text();
       void update_display_text();
