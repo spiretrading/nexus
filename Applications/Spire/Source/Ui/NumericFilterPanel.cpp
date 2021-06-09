@@ -60,7 +60,7 @@ NumericFilterPanel::NumericFilterPanel(
       m_model(std::move(model)),
       m_default_value(default_value) {
   if(m_default_value.m_min && m_default_value.m_max &&
-      m_default_value.m_min > m_default_value.m_max) {
+      *m_default_value.m_min > *m_default_value.m_max) {
     std::swap(m_default_value.m_min, m_default_value.m_max);
   }
   auto layout = new QVBoxLayout(this);
@@ -81,7 +81,6 @@ NumericFilterPanel::NumericFilterPanel(
     auto current = m_model->get_current();
     if(current.m_max && value > *current.m_max) {
       current.m_max = value;
-      max_input->get_model()->set_current(value);
     }
     current.m_min = value;
     m_model->set_current(current);
@@ -90,7 +89,6 @@ NumericFilterPanel::NumericFilterPanel(
     auto current = m_model->get_current();
     if(current.m_min && value < *current.m_min) {
       current.m_min = value;
-      min_input->get_model()->set_current(value);
     }
     current.m_max = value;
     m_model->set_current(current);
@@ -106,7 +104,7 @@ NumericFilterPanel::NumericFilterPanel(
 }
 
 const std::shared_ptr<NumericFilterPanel::NumericFilterModel>&
-NumericFilterPanel::get_model() const {
+  NumericFilterPanel::get_model() const {
   return m_model;
 }
 

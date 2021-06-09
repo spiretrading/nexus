@@ -39,7 +39,7 @@ namespace Spire {
        * @param parent The parent widget that shows the panel.
        */
       NumericFilterPanel(QString title, const NumericRange& default_value,
-        QWidget* parent);
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a NumericFilterPanel.
@@ -50,7 +50,8 @@ namespace Spire {
        * @param parent The parent widget that shows the panel.
        */
       NumericFilterPanel(std::shared_ptr<NumericFilterModel> model,
-        QString title, const NumericRange& default_value, QWidget* parent);
+        QString title, const NumericRange& default_value,
+        QWidget* parent = nullptr);
 
       /** Returns the model of the minimum and maximum value. */
       const std::shared_ptr<NumericFilterModel>& get_model() const;
