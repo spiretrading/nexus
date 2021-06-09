@@ -14,6 +14,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto PADDING_BETWEEN_LABEL_INPUT = 18;
+
   auto LABEL_STYLE(StyleSheet style) {
     style.get(Disabled()).
       set(TextColor(QColor::fromRgb(0, 0, 0)));
@@ -58,6 +60,7 @@ NumericFilterPanel::NumericFilterPanel(
   min_label->set_read_only(true);
   set_style(*min_label, LABEL_STYLE(get_style(*min_label)));
   min_layout->addWidget(min_label);
+  min_layout->addSpacing(scale_width(PADDING_BETWEEN_LABEL_INPUT));
   min_layout->addStretch();
   auto min_field = make_value_field(m_default_value.m_min);
   min_layout->addWidget(min_field);
@@ -69,6 +72,7 @@ NumericFilterPanel::NumericFilterPanel(
   max_label->set_read_only(true);
   set_style(*max_label, LABEL_STYLE(get_style(*max_label)));
   max_layout->addWidget(max_label);
+  max_layout->addSpacing(scale_width(PADDING_BETWEEN_LABEL_INPUT));
   max_layout->addStretch();
   auto max_field = make_value_field(m_default_value.m_max);
   max_layout->addWidget(max_field);
