@@ -2,15 +2,15 @@
 #define SPIRE_NUMERIC_FILTER_PANEL_HPP
 #include <QWidget>
 #include <boost/optional/optional.hpp>
+#include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   /**
-   * Represents a numeric fliter panel.
+   * Represents a panel for filtering numeric values.
    */
   class NumericFilterPanel : public QWidget {
     public:
@@ -38,8 +38,8 @@ namespace Spire {
        *                      minimum and maximum value.
        * @param parent The parent widget that shows the panel.
        */
-      NumericFilterPanel(const QString& title,
-        const NumericRange& default_value, QWidget* parent);
+      NumericFilterPanel(QString title, const NumericRange& default_value,
+        QWidget* parent);
 
       /**
        * Constructs a NumericFilterPanel.
@@ -50,8 +50,7 @@ namespace Spire {
        * @param parent The parent widget that shows the panel.
        */
       NumericFilterPanel(std::shared_ptr<NumericFilterModel> model,
-        const QString& title, const NumericRange& default_value,
-        QWidget* parent);
+        QString title, const NumericRange& default_value, QWidget* parent);
 
       /** Returns the model of the minimum and maximum value. */
       const std::shared_ptr<NumericFilterModel>& get_model() const;

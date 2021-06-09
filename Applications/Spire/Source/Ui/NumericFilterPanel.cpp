@@ -6,6 +6,7 @@
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -14,15 +15,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto PADDING_BETWEEN_LABEL_INPUT = 18;
-
   auto LABEL_STYLE(StyleSheet style) {
     style.get(Disabled()).
       set(TextColor(QColor::fromRgb(0, 0, 0)));
     return style;
   }
 
-  auto make_value_field(const optional<Decimal>& value) {
+  auto make_input_field(const optional<Decimal>& value) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>(
       {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
        {Qt::ShiftModifier, 20}});
@@ -34,15 +33,28 @@ namespace {
     field->setFixedSize(scale(120, 26));
     return field;
   }
+
+  auto make_row_layout(QString label_name, DecimalBox* input_field) {
+    auto layout = new QHBoxLayout();
+    auto label = new TextBox(std::move(label_name));
+    label->setEnabled(false);
+    label->set_read_only(true);
+    set_style(*label, LABEL_STYLE(get_style(*label)));
+    layout->addWidget(label);
+    layout->addSpacing(scale_width(18));
+    layout->addStretch();
+    layout->addWidget(input_field);
+    return layout;
+  }
 }
 
-NumericFilterPanel::NumericFilterPanel(const QString& title,
+NumericFilterPanel::NumericFilterPanel(QString title,
   const NumericRange& default_value, QWidget* parent)
   : NumericFilterPanel(std::make_shared<LocalValueModel<NumericRange>>(), title,
     default_value, parent) {}
 
 NumericFilterPanel::NumericFilterPanel(
-    std::shared_ptr<NumericFilterModel> model, const QString& title,
+    std::shared_ptr<NumericFilterModel> model, QString title,
     const NumericRange& default_value, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
@@ -54,57 +66,41 @@ NumericFilterPanel::NumericFilterPanel(
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
-  auto min_layout = new QHBoxLayout();
-  auto min_label = new TextBox(tr("Min"));
-  min_label->setEnabled(false);
-  min_label->set_read_only(true);
-  set_style(*min_label, LABEL_STYLE(get_style(*min_label)));
-  min_layout->addWidget(min_label);
-  min_layout->addSpacing(scale_width(PADDING_BETWEEN_LABEL_INPUT));
-  min_layout->addStretch();
-  auto min_field = make_value_field(m_default_value.m_min);
-  min_layout->addWidget(min_field);
+  auto min_input = make_input_field(m_default_value.m_min);
+  auto min_layout = make_row_layout(tr("Min"), min_input);
   layout->addLayout(min_layout);
   layout->addSpacing(scale_height(10));
-  auto max_layout = new QHBoxLayout();
-  auto max_label = new TextBox(tr("Max"));
-  max_label->setEnabled(false);
-  max_label->set_read_only(true);
-  set_style(*max_label, LABEL_STYLE(get_style(*max_label)));
-  max_layout->addWidget(max_label);
-  max_layout->addSpacing(scale_width(PADDING_BETWEEN_LABEL_INPUT));
-  max_layout->addStretch();
-  auto max_field = make_value_field(m_default_value.m_max);
-  max_layout->addWidget(max_field);
+  auto max_input = make_input_field(m_default_value.m_min);
+  auto max_layout = make_row_layout(tr("Max"), max_input);
   layout->addLayout(max_layout);
-  m_filter_panel = new FilterPanel(title, this, parent);
+  m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal([=] {
     m_model->set_current(m_default_value);
   });
-  min_field->connect_submit_signal([=] (const auto& value) {
+  min_input->connect_submit_signal([=] (const auto& value) {
     auto current = m_model->get_current();
     if(current.m_max && value > *current.m_max) {
       current.m_max = value;
-      max_field->get_model()->set_current(value);
+      max_input->get_model()->set_current(value);
     }
     current.m_min = value;
     m_model->set_current(current);
   });
-  max_field->connect_submit_signal([=] (const auto& value) {
+  max_input->connect_submit_signal([=] (const auto& value) {
     auto current = m_model->get_current();
     if(current.m_min && value < *current.m_min) {
       current.m_min = value;
-      min_field->get_model()->set_current(value);
+      min_input->get_model()->set_current(value);
     }
     current.m_max = value;
     m_model->set_current(current);
   });
-  connect_style_signal(*min_field, [=] { on_style(min_field); });
-  connect_style_signal(*max_field, [=] { on_style(max_field); });
+  connect_style_signal(*min_input, [=] { on_style(min_input); });
+  connect_style_signal(*max_input, [=] { on_style(max_input); });
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) {
-      min_field->get_model()->set_current(value.m_min);
-      max_field->get_model()->set_current(value.m_max);
+      min_input->get_model()->set_current(value.m_min);
+      max_input->get_model()->set_current(value.m_max);
       m_filter_signal();
     });
 }
