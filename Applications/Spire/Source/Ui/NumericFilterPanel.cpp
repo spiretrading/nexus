@@ -101,6 +101,7 @@ NumericFilterPanel::NumericFilterPanel(
       max_input->get_model()->set_current(value.m_max);
       m_filter_signal();
     });
+  setFocusProxy(min_input);
 }
 
 const std::shared_ptr<NumericFilterPanel::NumericFilterModel>&
