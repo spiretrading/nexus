@@ -727,7 +727,7 @@ UiProfile Spire::make_overlay_panel_profile() {
     make_standard_enum_property("positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
     [=] (auto& profile) {
-      auto button = make_label_button("Click me");
+      auto button = make_label_button(QString::fromUtf8("Click me"));
       auto close_on_blur_connection = std::make_shared<scoped_connection>();
       auto positioning_connection = std::make_shared<scoped_connection>();
       auto panel = static_cast<OverlayPanel*>(nullptr);
@@ -743,7 +743,7 @@ UiProfile Spire::make_overlay_panel_profile() {
           scale_width(1), scale_height(1), scale_width(1), scale_height(1));
         auto title_layout = new QHBoxLayout();
         title_layout->setSpacing(scale_width(3));
-        auto title_name = new QLabel("Filter Date");
+        auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
         title_layout->addWidget(title_name);
         auto close_button =
           make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
@@ -759,14 +759,18 @@ UiProfile Spire::make_overlay_panel_profile() {
         content_layout->setSpacing(scale_width(5));
         content_layout->setContentsMargins(
           {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
-        content_layout->addWidget(new QLabel("Start Date:"), 0, 0);
+        content_layout->addWidget(new QLabel(QString::fromUtf8("Start Date:")),
+          0, 0);
         auto text_box1 = new TextBox();
         text_box1->setFixedSize(scale(120, 26));
         content_layout->addWidget(text_box1, 0, 1);
-        content_layout->addWidget(new QLabel("End Date:"), 1, 0);
+        content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")), 1,
+          0);
         auto text_box2 = new TextBox();
         text_box2->setFixedSize(scale(120, 26));
         content_layout->addWidget(text_box2, 1, 1);
+        content_layout->addWidget(make_label_button(QString::fromUtf8("Reset")),
+          2, 1);
         container_layout->addLayout(content_layout);
         panel = new OverlayPanel(body, button);
         auto& close_on_blur =
