@@ -37,6 +37,7 @@ void Button::focusOutEvent(QFocusEvent* event) {
   if(event->reason() != Qt::PopupFocusReason && m_is_down) {
     m_is_down = false;
   }
+  unmatch(*this, Press());
   QWidget::focusOutEvent(event);
 }
 
@@ -51,6 +52,7 @@ void Button::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Space:
       if(!event->isAutoRepeat()) {
         m_is_down = true;
+        match(*this, Press());
       }
       break;
     default:
@@ -63,6 +65,7 @@ void Button::keyReleaseEvent(QKeyEvent* event) {
     case Qt::Key_Space:
       if(!event->isAutoRepeat() && m_is_down) {
         m_is_down = false;
+        unmatch(*this, Press());
         m_clicked_signal();
       }
       break;
@@ -74,15 +77,18 @@ void Button::keyReleaseEvent(QKeyEvent* event) {
 void Button::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && rect().contains(event->pos())) {
     m_is_down = true;
+    match(*this, Press());
   }
   QWidget::mousePressEvent(event);
 }
 
 void Button::mouseReleaseEvent(QMouseEvent* event) {
-  if(m_is_down && event->button() == Qt::LeftButton &&
-      rect().contains(event->pos())) {
-    m_is_down = false;
-    m_clicked_signal();
+  if(event->button() == Qt::LeftButton) {
+    unmatch(*this, Press());
+    if(m_is_down && rect().contains(event->pos())) {
+      m_is_down = false;
+      m_clicked_signal();
+    }
   }
   QWidget::mouseReleaseEvent(event);
 }

@@ -4,6 +4,11 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects a pressed Button. */
+  using Press = StateSelector<void, struct PressTag>;
+}
 
   /** Represents a button built upon a box. */
   class Button : public QWidget {

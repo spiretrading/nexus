@@ -92,10 +92,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_decimal_box_profile());
   add(make_duration_box_profile());
   add(make_filter_panel_profile());
-  add(make_flat_button_profile());
   add(make_icon_button_profile());
   add(make_integer_box_profile());
   add(make_key_tag_profile());
+  add(make_label_button_profile());
   add(make_list_item_profile());
   add(make_money_box_profile());
   add(make_overlay_panel_profile());
