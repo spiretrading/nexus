@@ -16,13 +16,19 @@ namespace Spire {
 
       const std::shared_ptr<KeySequenceModel>& get_model() const;
 
+      QSize sizeHint() const override;
+
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
+      //void keyPressEvent(QKeyEvent* event) override;
+      //void mousePressEvent(QMouseEvent* event) override;
+      //void resizeEvent(QResizeEvent* event) override {
+      //  m_key_container->resize(size());
+      //  QWidget::resizeEvent(event);
+      //}
 
     private:
       enum class Status {
@@ -34,6 +40,8 @@ namespace Spire {
       std::shared_ptr<KeySequenceModel> m_model;
       QKeySequence m_submission;
       TextBox* m_text_box;
+      QHBoxLayout* m_key_layout;
+      QWidget* m_key_container;
 
       void set_status(Status status);
       void on_current_sequence(const QKeySequence& sequence);
