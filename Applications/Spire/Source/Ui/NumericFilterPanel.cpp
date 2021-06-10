@@ -21,8 +21,6 @@ namespace {
        {Qt::ShiftModifier, 20}});
     auto model = std::make_shared<
       LocalScalarValueModel<optional<Decimal>>>(value);
-    model->set_minimum(none);
-    model->set_maximum(none);
     auto field = new DecimalBox(model, modifiers);
     field->setFixedSize(scale(120, 26));
     return field;
