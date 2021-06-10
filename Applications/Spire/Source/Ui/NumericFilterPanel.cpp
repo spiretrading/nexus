@@ -80,8 +80,6 @@ NumericFilterPanel::NumericFilterPanel(
     }
     m_model->set_current(current);
   });
-  connect_style_signal(*min_input, [=] { on_style(min_input); });
-  connect_style_signal(*max_input, [=] { on_style(max_input); });
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) {
       if(value.m_min && value.m_max && *value.m_min > *value.m_max) {
@@ -119,17 +117,4 @@ bool NumericFilterPanel::event(QEvent* event) {
     m_filter_panel->show();
   }
   return QWidget::event(event);
-}
-
-void NumericFilterPanel::on_style(DecimalBox* field) {
-  auto& stylist = find_stylist(*field);
-  auto block = stylist.get_computed_block();
-  if(auto trailing_zeros_property = Styles::find<TrailingZeros>(block)) {
-    stylist.evaluate(*trailing_zeros_property, [=] (auto trailing_zeros) {
-      auto exp = -trailing_zeros;
-      std::dynamic_pointer_cast<
-        LocalScalarValueModel<optional<Decimal>>>(
-          field->get_model())->set_increment(pow(Decimal(10), exp));
-    });
-  }
 }

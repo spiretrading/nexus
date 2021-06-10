@@ -664,8 +664,6 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
     QString::fromUtf8("")));
   properties.push_back(make_standard_property("default_max",
     QString::fromUtf8("")));
-  properties.push_back(make_standard_property("leading_zeros", 0));
-  properties.push_back(make_standard_property("trailing_zeros", 0));
   auto profile = UiProfile(QString::fromUtf8("NumericFilterPanel"), properties,
     [] (auto& profile) {
       auto to_decimal = [] (auto decimal) -> boost::optional<Decimal> {
@@ -686,9 +684,6 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
       auto& title = get<QString>("title", profile.get_properties());
       auto& default_min = get<QString>("default_min", profile.get_properties());
       auto& default_max = get<QString>("default_max", profile.get_properties());
-      auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
-      auto& trailing_zeros = get<int>("trailing_zeros",
-        profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
       button->connect_clicked_signal([&, button] {
         auto default_value = NumericFilterPanel::NumericRange{
@@ -704,12 +699,6 @@ UiProfile Spire::make_numeric_filter_panel_profile() {
           filter_slot(to_string(current.m_min) + QString::fromUtf8(", ") +
             to_string(current.m_max));
           });
-        auto style = get_style(*panel);
-        style.get(Any() >> is_a<DecimalBox>()).set(
-          LeadingZeros(leading_zeros.get()));
-        style.get(Any() >> is_a<DecimalBox>()).set(
-          TrailingZeros(trailing_zeros.get()));
-        set_style(*panel, std::move(style));
         panel->show();
         });
       return button;

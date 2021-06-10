@@ -75,8 +75,6 @@ namespace Spire {
       NumericRange m_default_value;
       FilterPanel* m_filter_panel;
       boost::signals2::scoped_connection m_current_connection;
-
-      void on_style(DecimalBox* field);
   };
 }
 
