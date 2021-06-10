@@ -6,6 +6,7 @@
 #include "Spire/Styles/StyleSheet.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/KeyTag.hpp"
+#include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -16,6 +17,16 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto KEY_SPACER_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor(0, 0, 0, 0))).
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(+Hover() || +Focus()).
+      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    return style;
+  }
+
   auto make_key_sequence(const std::vector<Qt::Key>& keys) {
     switch(keys.size()) {
       case 1:
@@ -35,31 +46,49 @@ namespace {
 KeyInputBox::KeyInputBox(QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<LocalKeySequenceModel>()) {
-  setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
+  auto layers = new LayeredWidget(this);
+  layout->addWidget(layers);
   m_text_box = new TextBox(this);
-  m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
-  layout->addWidget(m_text_box);
-  m_key_container = new QWidget(this);
-  m_key_container->setObjectName("key_container");
-  m_key_container->setStyleSheet("#key_container { background-color: transparent; }");
-  m_key_container->setAttribute(Qt::WA_TransparentForMouseEvents);
+  layers->add(m_text_box);
+  //layers->setFocusProxy(m_text_box);
+  setFocusProxy(m_text_box);
+  //m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
+  //layout->addWidget(m_text_box);
+  auto key_container = new QWidget(this);
+  key_container->setObjectName("key_container");
+  key_container->setStyleSheet("#key_container { background-color: transparent; }");
+  key_container->setFocusPolicy(Qt::NoFocus);
+  //key_container->setAttribute(Qt::WA_TransparentForMouseEvents);
   //m_key_container->setSizePolicy(QSizePolicy::, QSizePolicy::Maximum);
-  m_key_layout = new QHBoxLayout(m_key_container);
-  m_key_layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(2),
+  m_key_layout = new QHBoxLayout(key_container);
+  m_key_layout->setContentsMargins(scale_width(8), scale_height(6), 0,
     scale_height(6));
   m_key_layout->setSpacing(scale_width(4));
   m_key_layout->setAlignment(Qt::AlignLeft);
-  m_key_layout->setSizeConstraint(QLayout::SetFixedSize);
+  //m_key_layout->setSizeConstraint(QLayout::SetFixedSize);
+  auto key_spacer = new Box(key_container, this);
+  key_spacer->setFocusPolicy(Qt::NoFocus);
+  layers->setFocusPolicy(Qt::NoFocus);
+  set_style(*key_spacer, KEY_SPACER_STYLE());
+  layers->add(key_spacer);
+  key_spacer->setFocusProxy(m_text_box);
   m_model->connect_current_signal([=] (const auto& sequence) {
     on_current_sequence(sequence);
   });
   on_current_sequence(m_model->get_current());
+  qApp->installEventFilter(this);
 }
 
 bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
+  //if(event->type() == QEvent::FocusIn) {
+  //  if(typeid(watched) != typeid(m_text_box)) {
+  //    auto b = 0;
+  //  }
+  //  qDebug() << watched;
+  //}
   if(event->type() == QEvent::FocusIn) {
     if(m_model->get_current().isEmpty()) {
       set_status(Status::PROMPT);
@@ -159,26 +188,28 @@ void KeyInputBox::set_status(Status status) {
     for(auto i = 0; i < sequence.count(); ++i) {
       auto tag = new KeyTag(Qt::Key(sequence[i]), this);
       tag->setAttribute(Qt::WA_TransparentForMouseEvents);
-      tag->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      tag->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
       m_key_layout->addWidget(tag);
-      tag->adjustSize();
-      c_size.rwidth() += tag->width();
+      //tag->adjustSize();
+      //c_size.rwidth() += tag->width();
     }
-    c_size.rwidth() += 2 * scale_width(8);
-    m_text_box->set_placeholder("");
+    //c_size.rwidth() += 2 * scale_width(8);
+    //m_text_box->set_placeholder("");
     //qDebug() << "****************************";
     //qDebug() << m_key_container->geometry();
     //m_key_container->updateGeometry();
     //m_key_container->adjustSize();
     //m_key_layout->invalidate();
     //m_key_layout->update();
-    m_key_container->show();
+    //m_key_container->show();
     //qDebug() << m_key_container->geometry();
     if(!sequence.isEmpty()) {
       auto style = get_style(*m_text_box);
-      auto left_padding = m_key_container->rect().right();
+      //auto left_padding = m_key_container->rect().right();
+      auto left_padding = m_key_layout->itemAt(
+        m_key_layout->count() - 1)->widget()->rect().right();
       //qDebug() << left_padding;
-      style.get(Any()).set(PaddingLeft(c_size.width() - scale_width(2)));
+      style.get(Any()).set(PaddingLeft(left_padding));
       set_style(*m_text_box, style);
     }
   }

@@ -41,7 +41,7 @@ namespace Spire {
       QKeySequence m_submission;
       TextBox* m_text_box;
       QHBoxLayout* m_key_layout;
-      QWidget* m_key_container;
+      //QWidget* m_key_container;
 
       void set_status(Status status);
       void on_current_sequence(const QKeySequence& sequence);
