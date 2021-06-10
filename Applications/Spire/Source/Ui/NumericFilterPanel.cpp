@@ -15,12 +15,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto LABEL_STYLE(StyleSheet style) {
-    style.get(Disabled()).
-      set(TextColor(QColor::fromRgb(0, 0, 0)));
-    return style;
-  }
-
   auto make_input_field(const optional<Decimal>& value) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>(
       {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
@@ -37,9 +31,8 @@ namespace {
   auto make_row_layout(QString label_name, DecimalBox* input_field) {
     auto layout = new QHBoxLayout();
     auto label = new TextBox(std::move(label_name));
-    label->setEnabled(false);
     label->set_read_only(true);
-    set_style(*label, LABEL_STYLE(get_style(*label)));
+    label->setFocusPolicy(Qt::NoFocus);
     layout->addWidget(label);
     layout->addSpacing(scale_width(18));
     layout->addStretch();
