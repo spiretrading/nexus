@@ -52,10 +52,6 @@ NumericFilterPanel::NumericFilterPanel(
     : QWidget(parent),
       m_model(std::move(model)),
       m_default_value(default_value) {
-  if(m_default_value.m_min && m_default_value.m_max &&
-      *m_default_value.m_min > *m_default_value.m_max) {
-    std::swap(m_default_value.m_min, m_default_value.m_max);
-  }
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
@@ -72,24 +68,28 @@ NumericFilterPanel::NumericFilterPanel(
   });
   min_input->connect_submit_signal([=] (const auto& value) {
     auto current = m_model->get_current();
+    current.m_min = value;
     if(current.m_max && value > *current.m_max) {
       current.m_max = value;
     }
-    current.m_min = value;
     m_model->set_current(current);
   });
   max_input->connect_submit_signal([=] (const auto& value) {
     auto current = m_model->get_current();
+    current.m_max = value;
     if(current.m_min && value < *current.m_min) {
       current.m_min = value;
     }
-    current.m_max = value;
     m_model->set_current(current);
   });
   connect_style_signal(*min_input, [=] { on_style(min_input); });
   connect_style_signal(*max_input, [=] { on_style(max_input); });
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) {
+      if(value.m_min && value.m_max && *value.m_min > *value.m_max) {
+        m_model->set_current({*value.m_max, *value.m_min});
+        return;
+      }
       min_input->get_model()->set_current(value.m_min);
       max_input->get_model()->set_current(value.m_max);
       m_filter_signal();
