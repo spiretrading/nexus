@@ -26,8 +26,6 @@ namespace Styles {
        * @param parent The parent widget.
        */
       explicit KeyTag(QWidget* parent = nullptr);
-  
-      explicit KeyTag(Qt::Key current, QWidget* parent = nullptr);
 
       /**
        * Constructs a KeyTag.

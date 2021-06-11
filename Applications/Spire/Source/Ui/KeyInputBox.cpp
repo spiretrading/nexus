@@ -190,7 +190,8 @@ void KeyInputBox::set_status(Status status) {
   if(!sequence.isEmpty()) {
     auto sequence_size = QSize(KEY_PADDING(), 0);
     for(auto i = 0; i < sequence.count(); ++i) {
-      auto tag = new KeyTag(Qt::Key(sequence[i]), this);
+      auto tag = new KeyTag(
+        std::make_shared<LocalKeyModel>(Qt::Key(sequence[i])), this);
       tag->setAttribute(Qt::WA_TransparentForMouseEvents);
       m_key_layout->addWidget(tag);
       sequence_size.rwidth() += tag->sizeHint().width();
