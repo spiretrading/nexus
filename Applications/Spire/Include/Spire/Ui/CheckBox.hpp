@@ -2,8 +2,8 @@
 #define SPIRE_CHECK_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/ValueModel.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -11,6 +11,18 @@ namespace Styles {
   /** Selects a checked CheckBox. */
   using Checked = StateSelector<void, struct CheckedTag>;
 }
+
+  /** A ValueModel over a bool. */
+  using BooleanModel = ValueModel<bool>;
+
+  /** A ValueModel over an optional bool. */
+  using OptionalBooleanModel = ValueModel<boost::optional<bool>>;
+
+  /** A LocalValueModel over a bool. */
+  using LocalBooleanModel = LocalValueModel<bool>;
+
+  /** A LocalValueModel over an optional bool. */
+  using LocalOptionalBooleanModel = LocalValueModel<boost::optional<bool>>;
 
   /** Represents a Spire-styled CheckBox. */
   class CheckBox : public QWidget {

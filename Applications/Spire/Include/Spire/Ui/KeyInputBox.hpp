@@ -1,9 +1,16 @@
 #ifndef SPIRE_KEY_INPUT_BOX_HPP
 #define SPIRE_KEY_INPUT_BOX_HPP
 #include <QHBoxLayout>
+#include <QKeySequence>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+
+  /** A ValueModel over a QKeySequence. */
+  using KeySequenceModel = ValueModel<QKeySequence>;
+
+  /** A LocalValueModel over a Qt::Key. */
+  using LocalKeySequenceModel = LocalValueModel<QKeySequence>;
 
   /** Represents an input for entering key sequences. */
   class KeyInputBox : public QWidget {

@@ -3,10 +3,8 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional/optional.hpp>
 #include <QHash>
-#include <QRegularExpression>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/ScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -20,21 +18,23 @@ namespace Styles {
    * number.
    */
   using TrailingZeros = BasicProperty<int, struct TrailingZerosTag>;
+
+  /** The current value is positive. */
+  using IsPositive = StateSelector<void, struct IsPositiveTag>;
+
+  /** The current value is negative. */
+  using IsNegative = StateSelector<void, struct IsNegativeTag>;
+
+  /** The current value has increased. */
+  using Uptick = StateSelector<void, struct UptickTag>;
+
+  /** The current value has decreased. */
+  using Downtick = StateSelector<void, struct DowntickTag>;
 }
 
   /** Represents a widget for inputting decimal values. */
   class DecimalBox : public QWidget {
     public:
-
-      /** The maximum precision of the Decimal type. */
-      static constexpr auto PRECISION = 15;
-
-      /** Represents the floating point type used by the DecimalBox. */
-      using Decimal = boost::multiprecision::number<
-        boost::multiprecision::cpp_dec_float<PRECISION>>;
-
-      /** Type of model used by the DecimalBox. */
-      using DecimalModel = ScalarValueModel<boost::optional<Decimal>>;
 
       /**
        * Signals that submission value has changed.
@@ -75,12 +75,12 @@ namespace Styles {
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
-      DecimalBox(std::shared_ptr<DecimalModel> model,
+      DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<DecimalModel>& get_model() const;
+      const std::shared_ptr<OptionalDecimalModel>& get_model() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -108,10 +108,20 @@ namespace Styles {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
+      enum class TickIndicator {
+        NONE,
+        UP,
+        DOWN
+      };
+      enum class SignIndicator {
+        NONE,
+        POSITIVE,
+        NEGATIVE
+      };
       struct DecimalToTextModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<DecimalModel> m_model;
+      std::shared_ptr<OptionalDecimalModel> m_model;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
       boost::optional<Decimal> m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
@@ -119,6 +129,9 @@ namespace Styles {
       QRegExp m_validator;
       Button* m_up_button;
       Button* m_down_button;
+      boost::optional<Decimal> m_last_current;
+      TickIndicator m_tick;
+      SignIndicator m_sign;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;

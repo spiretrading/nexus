@@ -16,6 +16,18 @@ namespace Styles {
   using EscapeKeyState = StateSelector<void, struct EscapeKeyStateTag>;
 }
 
+  /** A ValueModel over a Qt::Key. */
+  using KeyModel = ValueModel<Qt::Key>;
+
+  /** A ValueModel over an optional Qt::Key. */
+  using OptionalKeyModel = ValueModel<boost::optional<Qt::Key>>;
+
+  /** A LocalValueModel over a Qt::Key. */
+  using LocalKeyModel = LocalValueModel<Qt::Key>;
+
+  /** A LocalValueModel over an optional Qt::Key. */
+  using LocalOptionalKeyModel = LocalValueModel<boost::optional<Qt::Key>>;
+
   /** Displays text for the associated key. */
   class KeyTag : public QWidget {
     public:
@@ -34,7 +46,7 @@ namespace Styles {
        */
       explicit KeyTag(std::shared_ptr<KeyModel> model,
         QWidget* parent = nullptr);
-  
+
       /** Returns the model. */
       const std::shared_ptr<KeyModel>& get_model() const;
 

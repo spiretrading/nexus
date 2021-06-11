@@ -3,9 +3,9 @@
 #include <boost/optional/optional.hpp>
 #include <QLabel>
 #include <QLineEdit>
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -42,8 +42,17 @@ namespace Styles {
   TextStyle text_style(QFont font, QColor color);
 }
 
-  /** The type of model used by the TextBox. */
+  /** A ValueModel over a QString. */
   using TextModel = ValueModel<QString>;
+
+  /** A ValueModel over an optional QString. */
+  using OptionalTextModel = ValueModel<boost::optional<QString>>;
+
+  /** A LocalValueModel over a QString. */
+  using LocalTextModel = LocalValueModel<QString>;
+
+  /** A LocalValueModel over an optional QString. */
+  using LocalOptionalTextModel = LocalValueModel<boost::optional<QString>>;
 
   /** Displays a one-line text box. */
   class TextBox : public QWidget {
@@ -141,6 +150,7 @@ namespace Styles {
       bool m_is_rejected;
       mutable boost::optional<QSize> m_size_hint;
 
+      QSize compute_decoration_size() const;
       bool is_placeholder_shown() const;
       void elide_text();
       void update_display_text();

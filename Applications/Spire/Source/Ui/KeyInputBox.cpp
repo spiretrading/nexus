@@ -2,12 +2,12 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
-#include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;

@@ -205,6 +205,10 @@ namespace Spire::Styles {
         Block& block, const std::vector<AppliedProperty>& properties);
       static void merge(std::vector<AppliedProperty>& properties,
         std::shared_ptr<const Rule> rule);
+      template<typename F>
+      void for_each_principal(F&& f);
+      template<typename F>
+      void for_each_principal(F&& f) const;
       void remove_dependent(Stylist& dependent);
       void apply(Stylist& source, std::vector<AppliedProperty> properties);
       void apply_rules();

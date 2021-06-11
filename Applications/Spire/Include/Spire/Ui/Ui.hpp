@@ -22,6 +22,7 @@ namespace Spire {
   class ColonWidget;
   class DateInputWidget;
   class DecimalBox;
+  template<typename T> class DecimalBoxAdaptor;
   class DecimalSpinBox;
   class Dialog;
   class DropDownMenu;
@@ -30,10 +31,10 @@ namespace Spire {
   class DropShadow;
   class DurationBox;
   class FilteredTableModel;
+  class FilterPanel;
   class FlatButton;
   class Icon;
   class IconButton;
-  class IntegerBox;
   class IntegerSpinBox;
   class KeySequenceInputField;
   class LayeredWidget;
@@ -50,6 +51,7 @@ namespace Spire {
     LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
   using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
   using LocalTextModel = LocalValueModel<QString>;
+  class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class OverlayPanel;
@@ -59,12 +61,6 @@ namespace Spire {
   class RangeInputWidget;
   class RealSpinBox;
   class RowViewListModel;
-  template<typename T> class ScalarValueModel;
-  using OptionalDurationModel =
-    ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
-  using OptionalIntegerModel = ScalarValueModel<boost::optional<int>>;
-  using DurationModel = ScalarValueModel<boost::posix_time::time_duration>;
-  using IntegerModel = ScalarValueModel<int>;
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;
@@ -81,11 +77,6 @@ namespace Spire {
   class Tooltip;
   class TransitionWidget;
   class TranslatedTableModel;
-  template<typename T> class ValueModel;
-  using BooleanModel = ValueModel<bool>;
-  using KeyModel = ValueModel<Qt::Key>;
-  using KeySequenceModel = ValueModel<QKeySequence>;
-  using TextModel = ValueModel<QString>;
   class Window;
 
   //! Draws a border inside the given region.

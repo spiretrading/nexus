@@ -60,6 +60,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       QWidget* m_body;
@@ -68,7 +69,6 @@ namespace Spire {
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
 
-      QScreen* get_current_screen(const QPoint& point) const;
       void fade(bool reverse);
       void position();
   };

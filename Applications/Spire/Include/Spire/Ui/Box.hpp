@@ -145,6 +145,8 @@ namespace Styles {
        */
       explicit Box(QWidget* body, QWidget* parent = nullptr);
 
+      QSize sizeHint() const override;
+
     protected:
       void resizeEvent(QResizeEvent* event) override;
 
@@ -153,6 +155,7 @@ namespace Styles {
       QWidget* m_body;
       QRect m_body_geometry;
       Styles::StyleSheetMap m_styles;
+      mutable boost::optional<QSize> m_size_hint;
 
       void commit_style();
       void on_style();

@@ -91,12 +91,14 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_currency_combo_box_profile());
   add(make_decimal_box_profile());
   add(make_duration_box_profile());
+  add(make_filter_panel_profile());
   add(make_flat_button_profile());
   add(make_icon_button_profile());
   add(make_integer_box_profile());
   add(make_key_input_box_profile());
   add(make_key_tag_profile());
   add(make_list_item_profile());
+  add(make_money_box_profile());
   add(make_overlay_panel_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());

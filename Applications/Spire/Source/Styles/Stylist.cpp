@@ -260,6 +260,32 @@ void Stylist::merge(std::vector<AppliedProperty>& properties,
   }
 }
 
+template<typename F>
+void Stylist::for_each_principal(F&& f) {
+  auto principals = std::deque<Stylist*>();
+  principals.push_back(this);
+  while(!principals.empty()) {
+    auto principal = principals.front();
+    principals.pop_front();
+    principals.insert(principals.end(), principal->m_principals.begin(),
+      principal->m_principals.end());
+    std::forward<F>(f)(principal);
+  }
+}
+
+template<typename F>
+void Stylist::for_each_principal(F&& f) const {
+  auto principals = std::deque<const Stylist*>();
+  principals.push_back(this);
+  while(!principals.empty()) {
+    auto principal = principals.front();
+    principals.pop_front();
+    principals.insert(principals.end(), principal->m_principals.begin(),
+      principal->m_principals.end());
+    std::forward<F>(f)(principal);
+  }
+}
+
 void Stylist::remove_dependent(Stylist& dependent) {
   dependent.apply(*this, {});
   dependent.m_source_to_block.erase(this);
@@ -307,13 +333,7 @@ void Stylist::apply(Stylist& source, std::vector<AppliedProperty> properties) {
 void Stylist::apply_rules() {
   auto applied_properties =
     std::unordered_map<Stylist*, std::vector<AppliedProperty>>();
-  auto principals = std::deque<Stylist*>();
-  principals.push_back(this);
-  while(!principals.empty()) {
-    auto principal = principals.front();
-    principals.pop_front();
-    principals.insert(principals.end(), principal->m_principals.begin(),
-      principal->m_principals.end());
+  for_each_principal([&] (Stylist* principal) {
     for(auto& base_rule : principal->m_style->get_rules()) {
       auto selection = select(base_rule.get_selector(), *this);
       auto rule = std::shared_ptr<const Rule>(principal->m_style, &base_rule);
@@ -321,7 +341,7 @@ void Stylist::apply_rules() {
         merge(applied_properties[selected], rule);
       }
     }
-  }
+  });
   auto previous_dependents = std::move(m_dependents);
   for(auto& properties : applied_properties) {
     m_dependents.insert(properties.first);
@@ -393,50 +413,45 @@ void Stylist::apply_proxy_styles() {
 optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = boost::optional<Property>();
   auto reverted_property = boost::optional<Property>();
-  auto principals = std::deque<const Stylist*>();
+  auto targets = std::unordered_set<const Stylist*>();
+  for_each_principal([&] (const Stylist* principal) {
+    targets.insert(principal);
+  });
+  auto contains_one_of = [] (const std::unordered_set<Stylist*>& container,
+      const std::unordered_set<const Stylist*>& targets) {
+    if(container.size() <= targets.size()) {
+      for(auto target : container) {
+        if(targets.find(target) != targets.end()) {
+          return true;
+        }
+      }
+    } else {
+      for(auto target : targets) {
+        if(container.find(const_cast<Stylist*>(target)) != container.end()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  auto swap_properties = [&] (const Rule& rule) {
+    if(auto update = find(rule.get_block(), type)) {
+      if(property) {
+        reverted_property.emplace(std::move(*property));
+      }
+      property = std::move(update);
+    }
+  };
   for(auto& source : m_blocks) {
-    principals.push_back(source->m_source);
-    while(!principals.empty()) {
-      auto principal = principals.front();
-      principals.pop_front();
-      principals.insert(principals.end(), principal->m_principals.begin(),
-        principal->m_principals.end());
+    source->m_source->for_each_principal([&] (Stylist* principal) {
+      auto sources = std::unordered_set{source->m_source, principal};
       for(auto& rule : principal->m_style->get_rules()) {
-        auto selection = select(rule.get_selector(), *source->m_source);
-        for(auto& selected : selection) {
-          if(selected == this) {
-            if(auto update = find(rule.get_block(), type)) {
-              if(property) {
-                reverted_property.emplace(std::move(*property));
-              }
-              property = std::move(update);
-            }
-          }
+        auto selection = select(rule.get_selector(), sources);
+        if(contains_one_of(selection, targets)) {
+          swap_properties(rule);
         }
       }
-    }
-  }
-  for(auto source : m_principals) {
-    principals.push_back(source);
-    while(!principals.empty()) {
-      auto principal = principals.front();
-      principals.pop_front();
-      principals.insert(principals.end(), principal->m_principals.begin(),
-        principal->m_principals.end());
-      for(auto& rule : principal->m_style->get_rules()) {
-        auto selection = select(rule.get_selector(), *source);
-        for(auto& selected : selection) {
-          if(selected == source) {
-            if(auto update = find(rule.get_block(), type)) {
-              if(property) {
-                reverted_property.emplace(std::move(*property));
-              }
-              property = std::move(update);
-            }
-          }
-        }
-      }
-    }
+    });
   }
   return reverted_property;
 }

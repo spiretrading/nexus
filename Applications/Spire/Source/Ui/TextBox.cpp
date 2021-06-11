@@ -2,13 +2,13 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
-#include "Spire/Ui/LocalValueModel.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -17,9 +17,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto LINE_EDIT_HORIZONTAL_MARGIN = 2;
-  const auto CURSOR_WIDTH = 1;
-
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -168,6 +165,7 @@ bool TextBox::is_read_only() const {
 
 void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
+  m_line_edit->setCursorPosition(0);
   if(read_only) {
     match(*this, ReadOnly());
   } else {
@@ -191,42 +189,16 @@ QSize TextBox::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
   }
-  auto base_width = [&] {
+  auto cursor_width = [&] {
     if(is_read_only()) {
-      return LINE_EDIT_HORIZONTAL_MARGIN;
+      return 0;
     }
-    return LINE_EDIT_HORIZONTAL_MARGIN + CURSOR_WIDTH;
+    return 1;
   }();
   m_size_hint.emplace(
-    QSize(m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
-      base_width, m_line_edit->fontMetrics().height()));
-  for(auto& property : get_evaluated_block(*m_box)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        m_size_hint->rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        m_size_hint->rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        m_size_hint->rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        m_size_hint->rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingTop>, int size) {
-        m_size_hint->rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingRight>, int size) {
-        m_size_hint->rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        m_size_hint->rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        m_size_hint->rwidth() += size;
-      });
-  }
+    m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
+      cursor_width, m_line_edit->fontMetrics().height());
+  *m_size_hint += compute_decoration_size();
   return *m_size_hint;
 }
 
@@ -291,6 +263,38 @@ void TextBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+QSize TextBox::compute_decoration_size() const {
+  auto decoration_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        decoration_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        decoration_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        decoration_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        decoration_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingTop>, int size) {
+        decoration_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingRight>, int size) {
+        decoration_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingBottom>, int size) {
+        decoration_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingLeft>, int size) {
+        decoration_size.rwidth() += size;
+      });
+  }
+  return decoration_size;
+}
+
 bool TextBox::is_placeholder_shown() const {
   return !is_read_only() && m_model->get_current().isEmpty() &&
     !m_placeholder_text.isEmpty();
@@ -298,20 +302,9 @@ bool TextBox::is_placeholder_shown() const {
 
 void TextBox::elide_text() {
   auto font_metrics = m_line_edit->fontMetrics();
-  auto option = QStyleOptionFrame();
-  option.initFrom(m_line_edit);
-  option.rect = m_line_edit->contentsRect();
-  option.lineWidth = 0;
-  option.midLineWidth = 0;
-  option.state |= QStyle::State_Sunken;
-  if(is_read_only()) {
-    option.state |= QStyle::State_ReadOnly;
-  }
-  option.features = QStyleOptionFrame::None;
-  auto rect = m_line_edit->style()->subElementRect(QStyle::SE_LineEditContents,
-    &option, m_line_edit);
-  auto elided_text = font_metrics.elidedText(m_model->get_current(),
-    Qt::ElideRight, rect.width() + LINE_EDIT_HORIZONTAL_MARGIN);
+  auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
+  auto elided_text = font_metrics.elidedText(
+    m_model->get_current(), Qt::ElideRight, rect.width());
   m_text_validator->m_is_text_elided = elided_text != m_model->get_current();
   if(elided_text != m_line_edit->text()) {
     m_line_edit->setText(elided_text);
@@ -332,30 +325,10 @@ void TextBox::update_display_text() {
 void TextBox::update_placeholder_text() {
   if(is_placeholder_shown()) {
     auto font_metrics = m_placeholder->fontMetrics();
-    auto rect = m_placeholder->contentsRect();
-    auto m = font_metrics.horizontalAdvance(QLatin1Char('x')) / 2 -
-      m_placeholder->margin();
-    auto text_direction = [&] {
-      if(m_placeholder_text.isRightToLeft()) {
-        return Qt::RightToLeft;
-      } else {
-        return Qt::LeftToRight;
-      }
-    }();
-    auto align = QStyle::visualAlignment(text_direction,
-      QFlag(m_placeholder->alignment()));
-    if(align & Qt::AlignLeft) {
-      rect.setLeft(rect.left() + m);
-    } else if(align & Qt::AlignRight) {
-      rect.setRight(rect.right() - m);
-    } else if(align & Qt::AlignTop) {
-      rect.setTop(rect.top() + m);
-    } else if(align & Qt::AlignBottom) {
-      rect.setBottom(rect.bottom() - m);
-    }
-    auto placeholder_text = font_metrics.elidedText(m_placeholder_text,
-      Qt::ElideRight, rect.width());
-    m_placeholder->setText(placeholder_text);
+    auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
+    auto elided_text =
+      font_metrics.elidedText(m_placeholder_text, Qt::ElideRight, rect.width());
+    m_placeholder->setText(elided_text);
     m_placeholder->show();
   } else {
     m_placeholder->hide();

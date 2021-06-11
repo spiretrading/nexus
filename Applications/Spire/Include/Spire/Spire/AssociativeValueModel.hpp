@@ -4,8 +4,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/ValueModel.hpp"
 
 namespace std {
   template<typename T>
@@ -55,7 +55,7 @@ namespace Spire {
        *        <code>true</code> and vice-versa.
        * @return The associated model.
        */
-      std::shared_ptr<BooleanModel> get_association(const Type& value);
+      std::shared_ptr<ValueModel<bool>> get_association(const Type& value);
 
       /**
        * Finds the model associated with a value if one exists, otherwise
@@ -64,7 +64,7 @@ namespace Spire {
        * @return The associated model or <code>nullptr</code> if no associated
        *         model was found.
        */
-      std::shared_ptr<BooleanModel> find(const Type& value) const;
+      std::shared_ptr<ValueModel<bool>> find(const Type& value) const;
 
       /**
        * Returns Acceptable if the model's current value is valid, Invalid
@@ -131,7 +131,7 @@ namespace Spire {
   }
 
   template<typename T>
-  std::shared_ptr<BooleanModel>
+  std::shared_ptr<ValueModel<bool>>
       AssociativeValueModel<T>::get_association(const Type& value) {
     auto model = find(value);
     if(!model) {
@@ -145,7 +145,7 @@ namespace Spire {
   }
 
   template<typename T>
-  std::shared_ptr<BooleanModel>
+  std::shared_ptr<ValueModel<bool>>
       AssociativeValueModel<T>::find(const Type& value) const {
     auto i = m_models.find(value);
     if(i == m_models.end()) {

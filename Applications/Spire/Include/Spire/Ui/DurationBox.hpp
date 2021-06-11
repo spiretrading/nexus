@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -12,6 +13,23 @@ namespace Styles {
   /** Selects the colon field. */
   using Colon = StateSelector<void, struct DurationBoxColonTag>;
 }
+
+  /** A ScalarValueModel over a boost::posix_time::time_duration. */
+  using DurationModel = ScalarValueModel<boost::posix_time::time_duration>;
+
+  /** A ScalarValueModel over an optional boost::posix_time::time_duration. */
+  using OptionalDurationModel =
+    ScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
+
+  /** A LocalScalarValueModel over a boost::posix_time::time_duration. */
+  using LocalDurationModel =
+    LocalScalarValueModel<boost::posix_time::time_duration>;
+
+  /**
+   * A LocalScalarValueModel over an optional boost::posix_time::time_duration.
+   */
+  using LocalOptionalDurationModel =
+    LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
 
   /** Displays a widget for inputting a time duration. */
   class DurationBox : public QWidget {
