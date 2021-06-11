@@ -101,44 +101,44 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
       set_status(Status::NONE);
       break;
     case QEvent::KeyPress:
-      {
-        auto e = static_cast<QKeyEvent*>(event);
-        if(e->isAutoRepeat()) {
-          return true;
-        }
-        switch(e->key()) {
-          case Qt::Key_Enter:
-          case Qt::Key_Return:
-            set_status(Status::PROMPT);
-            break;
-          case Qt::Key_Delete:
-            m_model->set_current(QKeySequence());
-            m_submission = {};
-            m_submit_signal(m_submission);
-            break;
-          case Qt::Key_Alt:
-          case Qt::Key_Control:
-          case Qt::Key_Shift:
-            break;
-          default:
-            auto sequence = [&] {
-              auto keys = std::vector<Qt::Key>();
-              if(e->modifiers().testFlag(Qt::AltModifier)) {
-                keys.push_back(Qt::Key_Alt);
-              }
-              if(e->modifiers().testFlag(Qt::ControlModifier)) {
-                keys.push_back(Qt::Key_Control);
-              }
-              if(e->modifiers().testFlag(Qt::ShiftModifier)) {
-                keys.push_back(Qt::Key_Shift);
-              }
-              keys.push_back(Qt::Key(e->key()));
-              return make_key_sequence(keys);
-            }();
-            if(m_model->set_current(sequence) == QValidator::Acceptable) {
-              m_submission = sequence;
-              m_submit_signal(m_submission);
+    {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->isAutoRepeat()) {
+        return true;
+      }
+      switch(e->key()) {
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+          set_status(Status::PROMPT);
+          break;
+        case Qt::Key_Delete:
+          m_model->set_current(QKeySequence());
+          m_submission = {};
+          m_submit_signal(m_submission);
+          break;
+        case Qt::Key_Alt:
+        case Qt::Key_Control:
+        case Qt::Key_Shift:
+          break;
+        default:
+          auto sequence = [&] {
+            auto keys = std::vector<Qt::Key>();
+            if(e->modifiers().testFlag(Qt::AltModifier)) {
+              keys.push_back(Qt::Key_Alt);
             }
+            if(e->modifiers().testFlag(Qt::ControlModifier)) {
+              keys.push_back(Qt::Key_Control);
+            }
+            if(e->modifiers().testFlag(Qt::ShiftModifier)) {
+              keys.push_back(Qt::Key_Shift);
+            }
+            keys.push_back(Qt::Key(e->key()));
+            return make_key_sequence(keys);
+          }();
+          if(m_model->set_current(sequence) == QValidator::Acceptable) {
+            m_submission = sequence;
+            m_submit_signal(m_submission);
+          }
       }
     }
     return true;
@@ -149,8 +149,8 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
 void KeyInputBox::resizeEvent(QResizeEvent* event) {
   if(auto border_size =
       Styles::find<BorderLeftSize>(get_computed_block(*m_text_box))) {
-    m_key_spacer->setMask({0, 0,
-      width() - border_size->get_expression().as<ConstantExpression<int>>().get_constant(), height()});
+    m_key_spacer->setMask({0, 0, width() - border_size->get_expression().
+      as<ConstantExpression<int>>().get_constant(), height()});
   } else {
     m_key_spacer->clearMask();
   }

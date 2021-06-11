@@ -9,7 +9,7 @@ namespace Spire {
   /** A ValueModel over a QKeySequence. */
   using KeySequenceModel = ValueModel<QKeySequence>;
 
-  /** A LocalValueModel over a Qt::Key. */
+  /** A LocalValueModel over a QKeySequence. */
   using LocalKeySequenceModel = LocalValueModel<QKeySequence>;
 
   /** Represents an input for entering key sequences. */
