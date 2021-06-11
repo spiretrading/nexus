@@ -5,20 +5,33 @@
 
 namespace Spire {
 
+  /** Represents an input for entering key sequences. */
   class KeyInputBox : public QWidget {
     public:
 
+      /**
+       * Signals that the current key sequence is being submitted.
+       * @param submission The submitted key sequence.
+       */
       using SubmitSignal = Signal<void (const QKeySequence& submission)>;
 
+      /**
+       * Constructs a KeyInputBox.
+       * @param model The current key sequence's model.
+       * @param parent The parent widget.
+       */
       KeyInputBox(std::shared_ptr<KeySequenceModel> model,
         QWidget* parent = nullptr);
 
+      /** Returns the last submitted key sequence. */
       const QKeySequence& get_submission() const;
 
+      /** Returns the model. */
       const std::shared_ptr<KeySequenceModel>& get_model() const;
 
       QSize sizeHint() const override;
 
+      /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
