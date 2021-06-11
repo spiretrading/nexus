@@ -35,6 +35,7 @@ namespace Spire {
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<KeySequenceModel> m_model;
       QKeySequence m_submission;
+      LayeredWidget* m_layers;
       TextBox* m_text_box;
       QHBoxLayout* m_key_layout;
       QWidget* m_key_spacer;

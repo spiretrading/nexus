@@ -62,12 +62,10 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
       m_model(std::move(model)) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  auto layers = new LayeredWidget(this);
-  layout->addWidget(layers);
+  m_layers = new LayeredWidget(this);
+  layout->addWidget(m_layers);
   m_text_box = new TextBox(this);
-  m_text_box->setObjectName("TextBox");
-  layers->add(m_text_box);
-  m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_layers->add(m_text_box);
   m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   setFocusProxy(m_text_box);
   m_text_box->installEventFilter(this);
@@ -79,7 +77,7 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
   auto key_box = new Box(m_key_spacer, this);
   set_style(*key_box, KEY_BOX_STYLE());
   key_box->setAttribute(Qt::WA_TransparentForMouseEvents);
-  layers->add(key_box);
+  m_layers->add(key_box);
   m_model->connect_current_signal([=] (const auto& sequence) {
     on_current_sequence(sequence);
   });
@@ -170,7 +168,7 @@ const std::shared_ptr<KeySequenceModel>& KeyInputBox::get_model() const {
 }
 
 QSize KeyInputBox::sizeHint() const {
-  return scale(220, 30);
+  return m_layers->sizeHint();
 }
 
 connection KeyInputBox::connect_submit_signal(
@@ -199,7 +197,8 @@ void KeyInputBox::set_status(Status status) {
       if(i < sequence.count() - 1) {
         sequence_size.rwidth() += KEY_SPACING();
       }
-      sequence_size.rheight() = std::max(tag->sizeHint().height(), sequence_size.height());
+      sequence_size.rheight() = std::max(tag->sizeHint().height(),
+        sequence_size.height());
     }
     auto style = get_style(*m_text_box);
     style.get(Any()).set(PaddingLeft(sequence_size.width() + CARET_PADDING()));

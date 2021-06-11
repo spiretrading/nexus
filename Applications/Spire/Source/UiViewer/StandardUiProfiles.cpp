@@ -24,6 +24,8 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+#include <QApplication>
+
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -491,19 +493,31 @@ UiProfile Spire::make_integer_box_profile() {
 UiProfile Spire::make_key_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  //properties.push_back(make_standard_qstring_property("current"));
+  properties.push_back(make_standard_qstring_property("current"));
   auto profile = UiProfile(QString::fromUtf8("KeyInputBox"), properties,
     [] (auto& profile) {
       auto key_input = new KeyInputBox(
         std::make_shared<LocalKeySequenceModel>());
       apply_widget_properties(key_input, profile.get_properties());
-      //auto& current = get<QString>("current", profile.get_properties());
-      //current.connect_changed_signal([&, key_input] (auto current) {
-      //  if(current != key_input->get_model()->get_current().toString()) {
-      //    key_input->get_model()->set_current(current);
-      //    key_input->adjustSize();
-      //  }
-      //});
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([&, key_input] (auto current) {
+        auto key_strings = current.split(',', Qt::SkipEmptyParts);
+        auto keys = std::array<int, 4>({0, 0, 0, 0});
+        for(auto i = 0; i < std::min(key_strings.size(), 4); ++i) {
+          auto key = key_strings[i].toLower();
+          if(key == "alt") {
+            keys[i] = Qt::Key_Alt;
+          } else if(key == "ctrl" || key == "control") {
+            keys[i] = Qt::Key_Control;
+          } else if(key == "shift") {
+            keys[i] = Qt::Key_Shift;
+          } else {
+            keys[i] = QKeySequence(key)[0];
+          }
+        }
+        key_input->get_model()->set_current(
+          QKeySequence(keys[0], keys[1], keys[2], keys[3]));
+      });
       key_input->get_model()->connect_current_signal([=] (auto sequence) {
         key_input->adjustSize();
       });

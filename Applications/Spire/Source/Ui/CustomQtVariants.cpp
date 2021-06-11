@@ -105,6 +105,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<TimeInForce>(value));
   } else if(value.type() == typeid(QColor)) {
     return QVariant::fromValue(std::any_cast<QColor>(value));
+  } else if(value.type() == typeid(QKeySequence)) {
+    return QVariant::fromValue(std::any_cast<QKeySequence>(value));
   } else if(value.type() == typeid(QString)) {
     return QVariant::fromValue(std::any_cast<QString>(value));
   }
