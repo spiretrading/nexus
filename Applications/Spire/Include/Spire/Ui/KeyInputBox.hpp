@@ -10,7 +10,8 @@ namespace Spire {
 
       using SubmitSignal = Signal<void (const QKeySequence& submission)>;
 
-      KeyInputBox(QWidget* parent = nullptr);
+      KeyInputBox(std::shared_ptr<KeySequenceModel> model,
+        QWidget* parent = nullptr);
 
       const QKeySequence& get_submission() const;
 
@@ -23,12 +24,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      //void keyPressEvent(QKeyEvent* event) override;
-      //void mousePressEvent(QMouseEvent* event) override;
-      //void resizeEvent(QResizeEvent* event) override {
-      //  m_key_container->resize(size());
-      //  QWidget::resizeEvent(event);
-      //}
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       enum class Status {
@@ -41,7 +37,7 @@ namespace Spire {
       QKeySequence m_submission;
       TextBox* m_text_box;
       QHBoxLayout* m_key_layout;
-      //QWidget* m_key_container;
+      QWidget* m_key_spacer;
 
       void set_status(Status status);
       void on_current_sequence(const QKeySequence& sequence);
