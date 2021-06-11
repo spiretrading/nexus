@@ -42,6 +42,7 @@ namespace Spire {
   class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
+  template<typename T> class NumericFilterPanel;
   class OverlayPanel;
   class PropertiesWindowButtonsWidget;
   class QuantitySpinBox;

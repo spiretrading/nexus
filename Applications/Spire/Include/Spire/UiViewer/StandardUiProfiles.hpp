@@ -20,6 +20,9 @@ namespace Spire {
   /** Returns a UiProfile for the DecimalBox. */
   UiProfile make_decimal_box_profile();
 
+  /** Returns a UiProfile for the DecimalFilterPanel. */
+  UiProfile make_decimal_filter_panel_profile();
+
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
 
@@ -35,6 +38,9 @@ namespace Spire {
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
 
+  /** Returns a UiProfile for the IntegerFilterPanel. */
+  UiProfile make_integer_filter_panel_profile();
+
   /** Returns a UiProfile for the KeyTag. */
   UiProfile make_key_tag_profile();
 
@@ -43,6 +49,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
+
+  /** Returns a UiProfile for the MoneyFilterPanel. */
+  UiProfile make_money_filter_panel_profile();
 
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
