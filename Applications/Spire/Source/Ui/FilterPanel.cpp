@@ -65,6 +65,7 @@ connection FilterPanel::connect_reset_signal(
 bool FilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
+    m_body->setFocus();
   }
   return QWidget::event(event);
 }
