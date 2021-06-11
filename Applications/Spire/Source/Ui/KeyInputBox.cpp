@@ -85,7 +85,7 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
 bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
   switch(event->type()) {
     case QEvent::MouseButtonPress:
-      {
+      if(isEnabled()) {
         auto e = static_cast<QMouseEvent*>(event);
         if(e->button() == Qt::LeftButton) {
           set_status(Status::PROMPT);
