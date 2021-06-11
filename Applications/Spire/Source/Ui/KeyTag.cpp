@@ -50,8 +50,7 @@ namespace {
 }
 
 KeyTag::KeyTag(QWidget* parent)
-  : KeyTag(std::make_shared<LocalKeyModel>(Qt::Key_unknown),
-    parent) {}
+  : KeyTag(std::make_shared<LocalKeyModel>(Qt::Key_unknown), parent) {}
 
 KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
     : QWidget(parent),

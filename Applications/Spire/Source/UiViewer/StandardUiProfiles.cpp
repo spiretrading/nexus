@@ -24,8 +24,6 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
-#include <QApplication>
-
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;

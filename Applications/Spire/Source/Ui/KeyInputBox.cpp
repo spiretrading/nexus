@@ -10,8 +10,6 @@
 #include "Spire/Ui/LocalValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
-#include <QApplication>
-
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -66,9 +64,9 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
   layout->addWidget(m_layers);
   m_text_box = new TextBox(this);
   m_layers->add(m_text_box);
-  m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   setFocusProxy(m_text_box);
   m_text_box->installEventFilter(this);
+  m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   m_key_spacer = new QWidget(this);
   m_key_spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_key_layout = new QHBoxLayout(m_key_spacer);
