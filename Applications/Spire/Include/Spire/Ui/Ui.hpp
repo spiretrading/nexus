@@ -39,18 +39,6 @@ namespace Spire {
   class KeySequenceInputField;
   class LayeredWidget;
   class ListModel;
-  template<typename T> class LocalScalarValueModel;
-  template<typename T> class LocalValueModel;
-  using LocalBooleanModel = LocalValueModel<bool>;
-  using LocalDurationModel =
-    LocalScalarValueModel<boost::posix_time::time_duration>;
-  using LocalIntegerModel = LocalScalarValueModel<int>;
-  using LocalKeyModel = LocalValueModel<Qt::Key>;
-  using LocalKeySequenceModel = LocalValueModel<QKeySequence>;
-  using LocalOptionalDurationModel =
-    LocalScalarValueModel<boost::optional<boost::posix_time::time_duration>>;
-  using LocalOptionalIntegerModel = LocalScalarValueModel<boost::optional<int>>;
-  using LocalTextModel = LocalValueModel<QString>;
   class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
