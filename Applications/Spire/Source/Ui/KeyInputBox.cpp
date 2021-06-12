@@ -65,7 +65,6 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
   m_text_box = new TextBox(this);
   m_layers->add(m_text_box);
   setFocusProxy(m_text_box);
-  m_text_box->installEventFilter(this);
   m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   m_key_spacer = new QWidget(this);
   m_key_spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -84,14 +83,6 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
 
 bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
   switch(event->type()) {
-    case QEvent::MouseButtonPress:
-      if(isEnabled()) {
-        auto e = static_cast<QMouseEvent*>(event);
-        if(e->button() == Qt::LeftButton) {
-          set_status(Status::PROMPT);
-        }
-      }
-      break;
     case QEvent::FocusIn:
       if(m_model->get_current().isEmpty()) {
         set_status(Status::PROMPT);
