@@ -25,6 +25,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/TestKeySequenceModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -598,7 +599,7 @@ UiProfile Spire::make_key_input_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("KeyInputBox"), properties,
     [] (auto& profile) {
       auto key_input = new KeyInputBox(
-        std::make_shared<LocalKeySequenceModel>());
+        std::make_shared<TestKeySequenceModel>());
       apply_widget_properties(key_input, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([&, key_input] (auto current) {

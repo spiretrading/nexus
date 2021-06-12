@@ -138,6 +138,8 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
           if(m_model->set_current(sequence) == QValidator::Acceptable) {
             m_submission = sequence;
             m_submit_signal(m_submission);
+          } else {
+            m_model->set_current(m_submission);
           }
       }
     }
