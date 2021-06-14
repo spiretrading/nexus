@@ -135,10 +135,6 @@ namespace Spire {
         m_max_model(std::move(max_model)),
         m_default_min_value(std::move(default_min_value)),
         m_default_max_value(std::move(default_max_value)) {
-    if(m_default_min_value && m_default_max_value &&
-        *m_default_min_value > *m_default_max_value) {
-      std::swap(m_default_min_value, m_default_max_value);
-    }
     auto layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
