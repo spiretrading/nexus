@@ -41,7 +41,8 @@ namespace Spire {
         LocalScalarValueModel<boost::optional<Type>>;
 
       /**
-       * Signals that the minimum value and the maximum value for the filter.
+       * Signals that the minimum value and the maximum value for the filter was
+       * submitted.
        * @param min_value The minimum value.
        * @param max_value The maximum value.
        */
