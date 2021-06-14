@@ -137,12 +137,12 @@ namespace {
     auto& default_increment =
       get<Type>("default_increment", profile.get_properties());
     auto button = make_label_button(QString::fromUtf8("Click me"));
-    button->connect_clicked_signal([&, button] {
-      auto min_model =
-        std::make_shared<LocalScalarValueModel<optional<Type>>>();
+    auto min_model =
+      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_min.get());
+    auto max_model =
+      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_max.get());
+    button->connect_clicked_signal([&, button, min_model, max_model] {
       min_model->set_increment(default_increment.get());
-      auto max_model =
-        std::make_shared<LocalScalarValueModel<optional<Type>>>();
       max_model->set_increment(default_increment.get());
       auto panel = new NumericFilterPanel<B>(min_model, max_model,
         default_min.get(), default_max.get(), title.get(), button);
@@ -501,13 +501,13 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
   properties.push_back(make_standard_property("title",
     QString::fromUtf8("Filter by Decimal Number")));
   properties.push_back(make_standard_property("default_minimum",
-    QString::fromUtf8("")));
+    QString::fromUtf8("1.3")));
   properties.push_back(make_standard_property("default_maximum",
-    QString::fromUtf8("")));
+    QString::fromUtf8("10.67")));
   properties.push_back(make_standard_property("decimal_places", 2));
   properties.push_back(make_standard_property("leading_zeros", 0));
   properties.push_back(make_standard_property("trailing_zeros", 2));
-  auto profile = UiProfile(QString::fromUtf8("NumericFilterPanel"), properties,
+  auto profile = UiProfile(QString::fromUtf8("DecimalFilterPanel"), properties,
     [] (auto& profile) {
       auto to_decimal = [] (auto decimal) -> boost::optional<Decimal> {
         try {
@@ -535,12 +535,14 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
       auto& trailing_zeros = get<int>("trailing_zeros",
         profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
-      button->connect_clicked_signal([&, button] {
-        auto min_model =
-          std::make_shared<LocalScalarValueModel<optional<Decimal>>>();
+      auto min_model =
+        std::make_shared<LocalScalarValueModel<optional<Decimal>>>(
+          to_decimal(default_min.get()));
+      auto max_model =
+        std::make_shared<LocalScalarValueModel<optional<Decimal>>>(
+          to_decimal(default_max.get()));
+      button->connect_clicked_signal([&, button, min_model, max_model] {
         min_model->set_increment(pow(Decimal(10), -decimal_places.get()));
-        auto max_model =
-          std::make_shared<LocalScalarValueModel<optional<Decimal>>>();
         max_model->set_increment(pow(Decimal(10), -decimal_places.get()));
         auto panel = new DecimalFilterPanel(min_model, max_model,
           to_decimal(default_min.get()), to_decimal(default_max.get()),

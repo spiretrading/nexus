@@ -108,11 +108,15 @@ namespace Spire {
       boost::optional<Type> m_min_value;
       boost::optional<Type> m_max_value;
       FilterPanel* m_filter_panel;
+      NumericBox* m_min_input;
+      NumericBox* m_max_input;
 
       static NumericBox* make_input_field(
         std::shared_ptr<OptionalNumericModel> model);
       static QHBoxLayout* make_row_layout(QString label_name,
         NumericBox* input_field);
+      void on_min_input_submit(const boost::optional<Type>& value);
+      void on_max_input_submit(const boost::optional<Type>& value);
       void reset();
   };
 
@@ -136,44 +140,29 @@ namespace Spire {
         m_min_model(std::move(min_model)),
         m_max_model(std::move(max_model)),
         m_default_min_value(std::move(default_min_value)),
-        m_default_max_value(std::move(default_max_value)) {
+        m_default_max_value(std::move(default_max_value)),
+        m_min_value(m_min_model->get_current()),
+        m_max_value(m_max_model->get_current()) {
     auto layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
-    auto min_input =
-      NumericFilterPanel<NumericBox>::make_input_field(m_min_model);
-    auto min_layout =
-      NumericFilterPanel<NumericBox>::make_row_layout(tr("Min"), min_input);
+    m_min_input = make_input_field(m_min_model);
+    auto min_layout = make_row_layout(tr("Min"), m_min_input);
     layout->addLayout(min_layout);
     layout->addSpacing(scale_height(10));
-    auto max_input =
-      NumericFilterPanel<NumericBox>::make_input_field(m_max_model);
-    auto max_layout =
-      NumericFilterPanel<NumericBox>::make_row_layout(tr("Max"), max_input);
+    m_max_input = make_input_field(m_max_model);
+    auto max_layout = make_row_layout(tr("Max"), m_max_input);
     layout->addLayout(max_layout);
     m_filter_panel = new FilterPanel(std::move(title), this, parent);
     m_filter_panel->connect_reset_signal([=] {
       reset();
     });
-    min_input->connect_submit_signal([=] (const auto& value) {
-      if(m_max_value && value && *value > *m_max_value) {
-        m_max_model->set_current(value);
-      }
-      if(m_min_value != value) {
-        m_filter_signal(value, m_max_value);
-      }
-      m_min_value = value;
+    m_min_input->connect_submit_signal([=] (const auto& value) {
+      on_min_input_submit(value);
     });
-    max_input->connect_submit_signal([=] (const auto& value) {
-      if(m_min_value && value && *value < *m_min_value) {
-        m_min_model->set_current(value);
-      }
-      if(m_max_value != value) {
-        m_filter_signal(m_min_value, value);
-      }
-      m_max_value = value;
+    m_max_input->connect_submit_signal([=] (const auto& value) {
+      on_max_input_submit(value);
     });
-    setFocusProxy(min_input);
   }
 
   template<typename T>
@@ -217,8 +206,8 @@ namespace Spire {
   template<typename T>
   bool NumericFilterPanel<T>::event(QEvent* event) {
     if(event->type() == QEvent::ShowToParent) {
-      reset();
       m_filter_panel->show();
+      m_min_input->setFocus(Qt::TabFocusReason);
     }
     return QWidget::event(event);
   }
@@ -229,7 +218,7 @@ namespace Spire {
         std::shared_ptr<OptionalNumericModel> model) {
     auto field = [&] {
       if constexpr(std::is_same_v<NumericBox, DurationBox>) {
-        return new NumericBox(model);
+        return new NumericBox(std::move(model));
       }
       auto modifiers = QHash<Qt::KeyboardModifier, Type>(
         {{Qt::NoModifier, model->get_increment()},
@@ -257,15 +246,41 @@ namespace Spire {
   }
 
   template<typename T>
+  void NumericFilterPanel<T>::on_min_input_submit(
+      const boost::optional<Type>& value) {
+    if(m_max_value && value && *value > *m_max_value) {
+      m_max_value = value;
+      m_max_model->set_current(m_max_value);
+    }
+    if(m_min_value != value) {
+      m_filter_signal(value, m_max_value);
+    }
+    m_min_value = value;
+  }
+
+  template<typename T>
+  void NumericFilterPanel<T>::on_max_input_submit(
+      const boost::optional<Type>& value) {
+    if(m_min_value && value && *value < *m_min_value) {
+      m_min_value = value;
+      m_min_model->set_current(m_min_value);
+    }
+    if(m_max_value != value) {
+      m_filter_signal(m_min_value, value);
+    }
+    m_max_value = value;
+  }
+
+  template<typename T>
   void NumericFilterPanel<T>::reset() {
     m_min_model->set_current(m_default_min_value);
     m_max_model->set_current(m_default_max_value);
     if(m_min_value != m_default_min_value ||
         m_max_value != m_default_max_value) {
       m_filter_signal(m_default_min_value, m_default_max_value);
+      m_min_value = m_default_min_value;
+      m_max_value = m_default_max_value;
     }
-    m_min_value = m_default_min_value;
-    m_max_value = m_default_max_value;
   }
 
   using DecimalFilterPanel = NumericFilterPanel<DecimalBox>;
