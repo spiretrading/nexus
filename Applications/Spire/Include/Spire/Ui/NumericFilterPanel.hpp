@@ -109,8 +109,10 @@ namespace Spire {
       boost::optional<Type> m_max_value;
       FilterPanel* m_filter_panel;
 
-      NumericBox* make_input_field(std::shared_ptr<OptionalNumericModel> model);
-      QHBoxLayout* make_row_layout(QString label_name, NumericBox* input_field);
+      static NumericBox* make_input_field(
+        std::shared_ptr<OptionalNumericModel> model);
+      static QHBoxLayout* make_row_layout(QString label_name,
+        NumericBox* input_field);
       void reset();
   };
 
@@ -138,12 +140,16 @@ namespace Spire {
     auto layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
-    auto min_input = make_input_field(m_min_model);
-    auto min_layout = make_row_layout(tr("Min"), min_input);
+    auto min_input =
+      NumericFilterPanel<NumericBox>::make_input_field(m_min_model);
+    auto min_layout =
+      NumericFilterPanel<NumericBox>::make_row_layout(tr("Min"), min_input);
     layout->addLayout(min_layout);
     layout->addSpacing(scale_height(10));
-    auto max_input = make_input_field(m_max_model);
-    auto max_layout = make_row_layout(tr("Max"), max_input);
+    auto max_input =
+      NumericFilterPanel<NumericBox>::make_input_field(m_max_model);
+    auto max_layout =
+      NumericFilterPanel<NumericBox>::make_row_layout(tr("Max"), max_input);
     layout->addLayout(max_layout);
     m_filter_panel = new FilterPanel(std::move(title), this, parent);
     m_filter_panel->connect_reset_signal([=] {
@@ -221,7 +227,7 @@ namespace Spire {
   typename NumericFilterPanel<T>::NumericBox*
       NumericFilterPanel<T>::make_input_field(
         std::shared_ptr<OptionalNumericModel> model) {
-    auto field = [=] {
+    auto field = [&] {
       if constexpr(std::is_same_v<NumericBox, DurationBox>) {
         return new NumericBox(model);
       }
@@ -230,7 +236,7 @@ namespace Spire {
         {Qt::AltModifier, 5 * model->get_increment()},
         {Qt::ControlModifier, 10 * model->get_increment()},
         {Qt::ShiftModifier, 20 * model->get_increment()}});
-      return new NumericBox(model, std::move(modifiers));
+      return new NumericBox(std::move(model), std::move(modifiers));
     }();
     field->setFixedSize(scale(120, 26));
     return field;
