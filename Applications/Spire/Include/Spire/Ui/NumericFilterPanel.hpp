@@ -105,8 +105,10 @@ namespace Spire {
       std::shared_ptr<OptionalNumericModel> m_max_model;
       boost::optional<Type> m_default_min_value;
       boost::optional<Type> m_default_max_value;
-      boost::optional<Type> m_min_value;
-      boost::optional<Type> m_max_value;
+      LocalValueModel<boost::optional<Type>> m_min_value;
+      LocalValueModel<boost::optional<Type>> m_max_value;
+      boost::signals2::scoped_connection m_min_value_connection;
+      boost::signals2::scoped_connection m_max_value_connection;
       FilterPanel* m_filter_panel;
       NumericBox* m_min_input;
       NumericBox* m_max_input;
@@ -115,9 +117,12 @@ namespace Spire {
         std::shared_ptr<OptionalNumericModel> model);
       static QHBoxLayout* make_row_layout(QString label_name,
         NumericBox* input_field);
-      void on_min_input_submit(const boost::optional<Type>& value);
-      void on_max_input_submit(const boost::optional<Type>& value);
+      static void update_current(LocalValueModel<boost::optional<Type>>& value,
+        const boost::optional<Type>& current);
+      void on_min_current(const boost::optional<Type>& current);
+      void on_max_current(const boost::optional<Type>& current);
       void reset();
+      void update_input_field_and_signal();
   };
 
   template<typename T>
@@ -143,6 +148,10 @@ namespace Spire {
         m_default_max_value(std::move(default_max_value)),
         m_min_value(m_min_model->get_current()),
         m_max_value(m_max_model->get_current()) {
+    m_min_value_connection = m_min_value.connect_current_signal(
+      [=] (const auto& current) { on_min_current(current); });
+    m_max_value_connection = m_max_value.connect_current_signal(
+      [=] (const auto& current) { on_max_current(current); });
     auto layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
@@ -158,10 +167,10 @@ namespace Spire {
       reset();
     });
     m_min_input->connect_submit_signal([=] (const auto& value) {
-      on_min_input_submit(value);
+      update_current(m_min_value, value);
     });
     m_max_input->connect_submit_signal([=] (const auto& value) {
-      on_max_input_submit(value);
+      update_current(m_max_value, value);
     });
   }
 
@@ -246,41 +255,47 @@ namespace Spire {
   }
 
   template<typename T>
-  void NumericFilterPanel<T>::on_min_input_submit(
-      const boost::optional<Type>& value) {
-    if(m_max_value && value && *value > *m_max_value) {
-      m_max_value = value;
-      m_max_model->set_current(m_max_value);
+  void NumericFilterPanel<T>::update_current(
+      LocalValueModel<boost::optional<Type>>& value,
+      const boost::optional<Type>& current) {
+    if(value.get_current() != current) {
+      value.set_current(current);
     }
-    if(m_min_value != value) {
-      m_filter_signal(value, m_max_value);
-    }
-    m_min_value = value;
   }
 
   template<typename T>
-  void NumericFilterPanel<T>::on_max_input_submit(
-      const boost::optional<Type>& value) {
-    if(m_min_value && value && *value < *m_min_value) {
-      m_min_value = value;
-      m_min_model->set_current(m_min_value);
+  void NumericFilterPanel<T>::on_min_current(
+      const boost::optional<Type>& current) {
+    if(current && m_max_value.get_current() &&
+        *current > *m_max_value.get_current()) {
+      auto blocker = shared_connection_block(m_max_value_connection);
+      update_current(m_max_value, current);
     }
-    if(m_max_value != value) {
-      m_filter_signal(m_min_value, value);
+    update_input_field_and_signal();
+  }
+
+  template<typename T>
+  void NumericFilterPanel<T>::on_max_current(
+      const boost::optional<Type>& current) {
+    if(current && m_min_value.get_current() &&
+        *current < *m_min_value.get_current()) {
+      auto blocker = shared_connection_block(m_min_value_connection);
+      update_current(m_min_value, current);
     }
-    m_max_value = value;
+    update_input_field_and_signal();
   }
 
   template<typename T>
   void NumericFilterPanel<T>::reset() {
-    m_min_model->set_current(m_default_min_value);
-    m_max_model->set_current(m_default_max_value);
-    if(m_min_value != m_default_min_value ||
-        m_max_value != m_default_max_value) {
-      m_filter_signal(m_default_min_value, m_default_max_value);
-      m_min_value = m_default_min_value;
-      m_max_value = m_default_max_value;
-    }
+    update_current(m_min_value, m_default_min_value);
+    update_current(m_max_value, m_default_max_value);
+  }
+
+  template<typename T>
+  void NumericFilterPanel<T>::update_input_field_and_signal() {
+    m_min_model->set_current(m_min_value.get_current());
+    m_max_model->set_current(m_max_value.get_current());
+    m_filter_signal(m_min_value.get_current(), m_max_value.get_current());
   }
 
   using DecimalFilterPanel = NumericFilterPanel<DecimalBox>;
