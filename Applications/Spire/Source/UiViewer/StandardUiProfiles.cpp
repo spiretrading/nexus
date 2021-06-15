@@ -541,6 +541,7 @@ UiProfile Spire::make_filter_panel_profile() {
         max_text->setFixedSize(scale(120, 26));
         component_layout->addWidget(max_text, 1, 1);
         auto panel = new FilterPanel(title.get(), component, button);
+        panel->window()->setAttribute(Qt::WA_DeleteOnClose);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
         panel->show();
