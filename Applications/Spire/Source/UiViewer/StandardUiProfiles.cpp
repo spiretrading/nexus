@@ -1,6 +1,7 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <QImageReader>
 #include <QLabel>
+#include <QPointer>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -540,6 +541,7 @@ UiProfile Spire::make_filter_panel_profile() {
         max_text->setFixedSize(scale(120, 26));
         component_layout->addWidget(max_text, 1, 1);
         auto panel = new FilterPanel(title.get(), component, button);
+        panel->window()->setAttribute(Qt::WA_DeleteOnClose);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
         panel->show();
@@ -665,66 +667,61 @@ UiProfile Spire::make_overlay_panel_profile() {
     make_standard_enum_property("positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
     [=] (auto& profile) {
+      auto& close_on_blur =
+        get<bool>("close_on_blur", profile.get_properties());
+      auto& positioning = get<OverlayPanel::Positioning>(
+        "positioning", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto close_on_blur_connection = std::make_shared<scoped_connection>();
       auto positioning_connection = std::make_shared<scoped_connection>();
-      auto panel = static_cast<OverlayPanel*>(nullptr);
-      button->connect_clicked_signal([=, &profile] () mutable {
-        if(panel) {
-          panel->close();
-          panel = nullptr;
-        }
-        auto body = new QWidget();
-        auto container_layout = new QVBoxLayout(body);
-        container_layout->setSpacing(0);
-        container_layout->setContentsMargins(
-          scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-        auto title_layout = new QHBoxLayout();
-        title_layout->setSpacing(scale_width(3));
-        auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
-        title_layout->addWidget(title_name);
-        auto close_button =
-          make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
-        close_button->setFixedSize(scale(26, 26));
-        close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-        close_button->connect_clicked_signal([=] {
-          close_button->window()->close();
+      auto panel = QPointer<OverlayPanel>();
+      button->connect_clicked_signal(
+        [=, &profile, &close_on_blur, &positioning] () mutable {
+          if(panel && !close_on_blur.get()) {
+            return;
+          }
+          auto body = new QWidget();
+          auto container_layout = new QVBoxLayout(body);
+          container_layout->setSpacing(0);
+          container_layout->setContentsMargins(
+            scale_width(1), scale_height(1), scale_width(1), scale_height(1));
+          auto title_layout = new QHBoxLayout();
+          title_layout->setSpacing(scale_width(3));
+          auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
+          title_layout->addWidget(title_name);
+          auto close_button =
+            make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
+          close_button->setFixedSize(scale(26, 26));
+          close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+          close_button->connect_clicked_signal([=] {
+            close_button->window()->close();
+          });
+          title_layout->addWidget(close_button);
+          container_layout->addLayout(title_layout);
+          container_layout->addSpacing(scale_height(3));
+          auto content_layout = new QGridLayout();
+          content_layout->setSpacing(scale_width(5));
+          content_layout->setContentsMargins(
+            {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
+          content_layout->addWidget(new QLabel(QString::fromUtf8("Start Date:")),
+            0, 0);
+          auto text_box1 = new TextBox();
+          text_box1->setFixedSize(scale(120, 26));
+          content_layout->addWidget(text_box1, 0, 1);
+          content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")),
+            1, 0);
+          auto text_box2 = new TextBox();
+          text_box2->setFixedSize(scale(120, 26));
+          content_layout->addWidget(text_box2, 1, 1);
+          content_layout->addWidget(make_label_button(
+            QString::fromUtf8("Reset")), 2, 1);
+          container_layout->addLayout(content_layout);
+          panel = new OverlayPanel(body, button);
+          panel->setAttribute(Qt::WA_DeleteOnClose);
+          panel->set_closed_on_blur(close_on_blur.get());
+          panel->set_positioning(positioning.get());
+          panel->show();
         });
-        title_layout->addWidget(close_button);
-        container_layout->addLayout(title_layout);
-        container_layout->addSpacing(scale_height(3));
-        auto content_layout = new QGridLayout();
-        content_layout->setSpacing(scale_width(5));
-        content_layout->setContentsMargins(
-          {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
-        content_layout->addWidget(new QLabel(QString::fromUtf8("Start Date:")),
-          0, 0);
-        auto text_box1 = new TextBox();
-        text_box1->setFixedSize(scale(120, 26));
-        content_layout->addWidget(text_box1, 0, 1);
-        content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")), 1,
-          0);
-        auto text_box2 = new TextBox();
-        text_box2->setFixedSize(scale(120, 26));
-        content_layout->addWidget(text_box2, 1, 1);
-        content_layout->addWidget(make_label_button(QString::fromUtf8("Reset")),
-          2, 1);
-        container_layout->addLayout(content_layout);
-        panel = new OverlayPanel(body, button);
-        auto& close_on_blur =
-          get<bool>("close_on_blur", profile.get_properties());
-        close_on_blur_connection = std::make_shared<scoped_connection>(
-          close_on_blur.connect_changed_signal([=] (auto is_closed_on_blur) {
-            panel->set_closed_on_blur(is_closed_on_blur);
-          }));
-        auto& positioning = get<OverlayPanel::Positioning>(
-          "positioning", profile.get_properties());
-        positioning_connection = std::make_shared<scoped_connection>(
-          positioning.connect_changed_signal([=] (auto positioning) {
-            panel->set_positioning(positioning);
-          }));
-        panel->show();
-      });
       return button;
     });
   return profile;
