@@ -94,7 +94,7 @@ export class AccountController extends React.Component<Properties, State> {
           <Router.Route path='/account/:id(\d+)?/risk'
             render={this.renderRiskPage}/>
           <Router.Route path='/account/:id(\d+)?'
-            render={({match}) => {
+            render={({match}: any) => {
               const url = (() => {
                 if(match.params.id) {
                   return `/account/${match.params.id}/profile`;
