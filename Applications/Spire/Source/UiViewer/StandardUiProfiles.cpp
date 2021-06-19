@@ -22,8 +22,8 @@
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
-#include "Spire/Ui/NumericFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -130,7 +130,7 @@ namespace {
   }
 
   template<typename B>
-  auto setup_numeric_panel_profile(UiProfile& profile) {
+  auto setup_scalar_filter_panel_profile(UiProfile& profile) {
     using Type = std::decay_t<decltype(*std::declval<B>().get_model())>::Scalar;
     auto& title = get<QString>("title", profile.get_properties());
     auto& default_min = get<Type>("default_minimum", profile.get_properties());
@@ -145,11 +145,11 @@ namespace {
     button->connect_clicked_signal([&, button, min_model, max_model] {
       min_model->set_increment(default_increment.get());
       max_model->set_increment(default_increment.get());
-      auto panel = new NumericFilterPanel<B>(min_model, max_model,
+      auto panel = new ScalarFilterPanel<B>(min_model, max_model,
         default_min.get(), default_max.get(), title.get(), button);
-      auto filter_slot = profile.make_event_slot<QString>(
-        QString::fromUtf8("FilterSignal"));
-      panel->connect_filter_signal([=] (const auto& min, const auto& max) {
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal([=] (const auto& min, const auto& max) {
         auto to_string = [&] (const optional<Type>& value) -> QString {
           if(value) {
             return displayTextAny(*value);
@@ -164,7 +164,7 @@ namespace {
   }
 
   template<typename T>
-  void populate_numeric_panel_properties(
+  void populate_scalar_filter_panel_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties,
       T default_increment, const QString& default_title) {
     using Type = T;
@@ -549,8 +549,8 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
           to_decimal(default_min.get()), to_decimal(default_max.get()),
           title.get(), button);
         auto filter_slot = profile.make_event_slot<QString>(
-          QString::fromUtf8("FilterSignal"));
-        panel->connect_filter_signal([=] (const auto& min, const auto& max) {
+          QString::fromUtf8("SubmitSignal"));
+        panel->connect_submit_signal([=] (const auto& min, const auto& max) {
           filter_slot(to_string(min) + QString::fromUtf8(", ") +
             to_string(max));
         });
@@ -711,10 +711,10 @@ UiProfile Spire::make_integer_box_profile() {
 
 UiProfile Spire::make_integer_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_numeric_panel_properties<int>(properties, 1,
+  populate_scalar_filter_panel_properties<int>(properties, 1,
     QString::fromUtf8("Filter by Integer"));
   auto profile = UiProfile(QString::fromUtf8("IntegerFilterPanel"), properties,
-    setup_numeric_panel_profile<IntegerBox>);
+    setup_scalar_filter_panel_profile<IntegerBox>);
   return profile;
 }
 
@@ -785,10 +785,10 @@ UiProfile Spire::make_money_box_profile() {
 
 UiProfile Spire::make_money_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_numeric_panel_properties<Money>(properties, Money::CENT,
+  populate_scalar_filter_panel_properties<Money>(properties, Money::CENT,
     QString::fromUtf8("Filter by Money"));
   auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"), properties,
-    setup_numeric_panel_profile<MoneyBox>);
+    setup_scalar_filter_panel_profile<MoneyBox>);
   return profile;
 }
 

@@ -42,7 +42,6 @@ namespace Spire {
   class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
-  template<typename T> class NumericFilterPanel;
   class OverlayPanel;
   class PropertiesWindowButtonsWidget;
   class QuantitySpinBox;
@@ -50,6 +49,7 @@ namespace Spire {
   class RangeInputWidget;
   class RealSpinBox;
   class RowViewListModel;
+  template<typename T> class ScalarFilterPanel;
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;
