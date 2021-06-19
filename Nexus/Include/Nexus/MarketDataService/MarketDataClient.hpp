@@ -6,6 +6,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
@@ -182,6 +183,7 @@ namespace Nexus::MarketDataService {
   template<typename B>
   template<typename BF>
   MarketDataClient<B>::MarketDataClient(BF&& clientBuilder)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder),
               std::bind(&MarketDataClient::OnReconnect, this,
               std::placeholders::_1)),
@@ -190,6 +192,7 @@ namespace Nexus::MarketDataService {
             m_bookQuotePublisher(Beam::Ref(m_clientHandler)),
             m_marketQuotePublisher(Beam::Ref(m_clientHandler)),
             m_timeAndSalePublisher(Beam::Ref(m_clientHandler)) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(m_clientHandler.GetSlots()));

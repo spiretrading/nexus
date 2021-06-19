@@ -8,6 +8,7 @@
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
@@ -67,6 +68,7 @@ namespace {
 
 SpireServiceClients::SpireServiceClients(
   std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient)
+BEAM_SUPPRESS_THIS_INITIALIZER()
   : m_applicationServiceLocatorClient(std::move(serviceLocatorClient)),
     m_serviceLocatorClient(m_applicationServiceLocatorClient->Get()),
     m_definitionsClient([&] {
@@ -98,6 +100,7 @@ SpireServiceClients::SpireServiceClients(
       m_applicationServiceLocatorClient->Get()),
     m_timeClient(MakeLiveNtpTimeClientFromServiceLocator(
       m_serviceLocatorClient)) {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 SpireServiceClients::~SpireServiceClients() {
   Close();

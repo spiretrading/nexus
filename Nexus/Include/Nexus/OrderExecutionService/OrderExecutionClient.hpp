@@ -12,6 +12,7 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
@@ -151,6 +152,7 @@ namespace Nexus::OrderExecutionService {
   template<typename B>
   template<typename BF>
   OrderExecutionClient<B>::OrderExecutionClient(BF&& clientBuilder)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
               &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
             m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
@@ -167,6 +169,7 @@ namespace Nexus::OrderExecutionService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&OrderExecutionClient::OnOrderUpdate, this,
         std::placeholders::_1, std::placeholders::_2));
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to connect to the order execution server."));

@@ -8,6 +8,7 @@
 #include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/Queues/TablePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/RiskController.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
@@ -141,6 +142,7 @@ namespace Nexus::RiskService {
     std::unique_ptr<TransitionTimer> ()> transitionTimerFactory,
     TF&& timeClient, DF&& dataStore, std::vector<ExchangeRate> exchangeRates,
     MarketDatabase markets, DestinationDatabase destinations)
+BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_administrationClient(std::forward<AF>(administrationClient)),
       m_marketDataClient(std::forward<MF>(marketDataClient)),
       m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
@@ -154,6 +156,7 @@ namespace Nexus::RiskService {
         m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(std::bind(
         &ConsolidatedRiskController::OnAccount, this,
         std::placeholders::_1))) {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>

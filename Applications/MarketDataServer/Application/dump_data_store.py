@@ -2,6 +2,7 @@ import argparse
 import copy
 import datetime
 import functools
+import multiprocessing
 import sqlite3
 import sys
 
@@ -106,6 +107,8 @@ def main():
     '-e', '--end', type=parse_date, help='End time range.', required=True)
   parser.add_argument('-o', '--output', type=str, help='SQLite output file.')
   parser.add_argument('-i', '--input', type=str, help='SQLite input file.')
+  parser.add_argument('-j', '--cores', type=int, help='Number of cores to use',
+    required=False, default=(multiprocessing.cpu_count() - 1))
   args = parser.parse_args()
   try:
     stream = open(args.config, 'r').read()
@@ -148,14 +151,22 @@ def main():
     source = sqlite_data_store
     destination = mysql_data_store
   routines = beam.routines.RoutineHandlerGroup()
+  count = 0
   for security in securities:
     routines.spawn(functools.partial(backup_spawn, security, args.start,
       args.end, source, destination))
+    count += 1
+    if count % args.cores == 0:
+      routines.wait()
   routines.wait()
   routines = beam.routines.RoutineHandlerGroup()
+  count = 0
   for market in markets:
     routines.spawn(functools.partial(backup, market, args.start, args.end,
       source.load_order_imbalances, destination))
+    count += 1
+    if count % args.cores == 0:
+      routines.wait()
   routines.wait()
   backup_security_info(source, destination)
 

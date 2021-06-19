@@ -156,7 +156,7 @@ namespace Details {
       const YAML::Node& node) {
     return Beam::TryOrNest([&] {
       auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(Beam::Extract<int>(node, "id"));
+      entry.m_id = CurrencyId(Beam::Extract<std::uint16_t>(node, "id"));
       entry.m_code = Beam::Extract<std::string>(node, "code");
       entry.m_sign = Beam::Extract<std::string>(node, "sign");
       return entry;
