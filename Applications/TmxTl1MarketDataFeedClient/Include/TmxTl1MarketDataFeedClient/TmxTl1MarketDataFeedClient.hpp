@@ -5,6 +5,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -70,11 +71,13 @@ namespace Nexus::MarketDataService {
   TmxTl1MarketDataFeedClient<M, S>::TmxTl1MarketDataFeedClient(
       TmxTl1Configuration config, MF&& marketDataFeedClient,
       SF&& serviceAccessClient)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_config(std::move(config)),
             m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
             m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
             m_readLoopRoutine(Beam::Routines::Spawn(
               std::bind(&TmxTl1MarketDataFeedClient::ReadLoop, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to initialize the TMX TL1 market data feed client."));
