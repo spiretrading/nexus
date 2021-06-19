@@ -38,9 +38,6 @@ namespace Spire {
       /** The type of model representing the min and max range values. */
       using Model = ScalarValueModel<boost::optional<Type>>;
 
-      /** The type of local model representing the min and max range values. */
-      using LocalModel = LocalScalarValueModel<boost::optional<Type>>;
-
       /**
        * Signals that the minimum and maximum value for the filter was
        * submitted.
@@ -51,7 +48,7 @@ namespace Spire {
         const boost::optional<Type>& min, const boost::optional<Type>& max)>;
 
       /**
-       * Constructs a ScalarFilterPanel using a LocalModel for the minimum and
+       * Constructs a ScalarFilterPanel using a local Model for the minimum and
        * maximum values.
        * @param default_min The default minimum value.
        * @param default_max The default maximum value.
@@ -119,9 +116,11 @@ namespace Spire {
   template<typename T>
   ScalarFilterPanel<T>::ScalarFilterPanel(boost::optional<Type> default_min,
     boost::optional<Type> default_max, QString title, QWidget* parent)
-    : ScalarFilterPanel(std::make_shared<LocalModel>(),
-        std::make_shared<LocalModel>(), std::move(default_min),
-        std::move(default_max), std::move(title), parent) {}
+    : ScalarFilterPanel(
+        std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
+        std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
+        std::move(default_min), std::move(default_max), std::move(title),
+        parent) {}
 
   template<typename T>
   ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<Model> min_model,
