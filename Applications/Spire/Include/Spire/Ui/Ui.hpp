@@ -39,6 +39,7 @@ namespace Spire {
   class KeySequenceInputField;
   class LayeredWidget;
   class ListModel;
+  class ListView;
   class MoneyBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;

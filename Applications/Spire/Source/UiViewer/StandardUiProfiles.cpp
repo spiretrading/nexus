@@ -2,6 +2,7 @@
 #include <QImageReader>
 #include <QLabel>
 #include <QPointer>
+#include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -9,6 +10,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
@@ -21,6 +23,7 @@
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -644,6 +647,86 @@ UiProfile Spire::make_list_item_profile() {
       item->connect_submit_signal(
         profile.make_event_slot(QString::fromUtf8("Submit")));
       return item;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_list_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto direction_property = define_enum<Qt::Orientation>(
+    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
+  properties.push_back(
+    make_standard_enum_property("direction", direction_property));
+  auto overflow_property = define_enum<ListView::Overflow>(
+    {{"NONE", ListView::Overflow::NONE}, {"WRAP", ListView::Overflow::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
+  auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
+    [=] (auto& profile) {
+      auto list_model = std::make_shared<ArrayListModel>();
+      list_model->push(QString::fromUtf8("AB.NSYE"));
+      list_model->push(QString::fromUtf8("ABU.V.CDNX"));
+      list_model->push(QString::fromUtf8("CAN"));
+      list_model->push(QString::fromUtf8("MSFT.NSDQ"));
+      list_model->push(QString::fromUtf8("XIU.TSX"));
+      list_model->push(QString::fromUtf8("XYZ.TSX"));
+      auto current_model = std::make_shared<ListView::LocalCurrentModel>();
+      auto list_view = new ListView(current_model, list_model,
+        [] (auto model, auto index) {
+          auto text_box = new TextBox(model->get<QString>(index));
+          text_box->set_read_only(true);
+          text_box->setDisabled(true);
+          auto style = get_style(*text_box);
+          style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
+          set_style(*text_box, std::move(style));
+          auto item_widget = new ListItem(text_box);
+          item_widget->setFixedHeight(
+            scale_height(QRandomGenerator::global()->bounded(30, 70)));
+          item_widget->setMinimumWidth(item_widget->sizeHint().width());
+          item_widget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+          return item_widget;
+        });
+      apply_widget_properties(list_view, profile.get_properties());
+      auto& direction = get<Qt::Orientation>("direction",
+        profile.get_properties());
+      auto& overflow = get<ListView::Overflow>("overflow",
+        profile.get_properties());
+      direction.connect_changed_signal([=, &overflow] (auto value) {
+        if(overflow.get() == ListView::Overflow::WRAP) {
+          if(value == Qt::Vertical) {
+            list_view->setMaximumWidth(QWIDGETSIZE_MAX);
+            list_view->setMinimumWidth(0);
+            list_view->setFixedHeight(scale_height(170));
+          } else {
+            list_view->setMaximumHeight(QWIDGETSIZE_MAX);
+            list_view->setMinimumHeight(0);
+            list_view->setFixedWidth(scale_width(170));
+          }
+        } else {
+          list_view->setMaximumSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX);
+          list_view->setMinimumSize(0, 0);
+        }
+        list_view->set_direction(value);
+      });
+      overflow.connect_changed_signal([=, &direction] (auto value) {
+        if(value == ListView::Overflow::WRAP) {
+          if(direction.get() == Qt::Vertical) {
+            list_view->setMaximumWidth(QWIDGETSIZE_MAX);
+            list_view->setMinimumWidth(0);
+            list_view->setFixedHeight(scale_height(170));
+          } else {
+            list_view->setMaximumHeight(QWIDGETSIZE_MAX);
+            list_view->setMinimumHeight(0);
+            list_view->setFixedWidth(scale_width(170));
+          }
+        } else {
+          list_view->setMaximumSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX);
+          list_view->setMinimumSize(0, 0);
+        }
+        list_view->set_overflow(value);
+      });
+      return list_view;
     });
   return profile;
 }
