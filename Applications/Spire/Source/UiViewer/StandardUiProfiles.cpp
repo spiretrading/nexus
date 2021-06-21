@@ -726,6 +726,9 @@ UiProfile Spire::make_list_view_profile() {
         }
         list_view->set_overflow(value);
       });
+      current_model->connect_current_signal(
+        profile.make_event_slot<optional<QString>>(
+        QString::fromUtf8("Current")));
       return list_view;
     });
   return profile;

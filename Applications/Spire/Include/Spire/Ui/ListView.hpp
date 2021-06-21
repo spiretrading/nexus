@@ -2,6 +2,7 @@
 #define SPIRE_LIST_VIEW_HPP
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListModel.hpp"
 
@@ -83,7 +84,7 @@ namespace Styles {
        */
       ListView(std::shared_ptr<CurrentModel> current_model,
         std::shared_ptr<ListModel> list_model,
-        std::function<QWidget* (std::shared_ptr<ListModel>, int index)> factory,
+        std::function<ListItem* (std::shared_ptr<ListModel>, int index)> factory,
         QWidget* parent = nullptr);
   
       /** Returns the current model. */
@@ -119,6 +120,7 @@ namespace Styles {
         const SubmitSignal::slot_type& slot) const;
 
     protected:
+      void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -126,14 +128,18 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<ListModel> m_list_model;
-      std::function<QWidget* (std::shared_ptr<ListModel>, int index)> m_factory;
+      std::function<ListItem* (std::shared_ptr<ListModel>, int index)> m_factory;
       Qt::Orientation m_direction;
       EdgeNavigation m_navigation;
       Overflow m_overflow;
-      std::vector<QWidget*> m_items;
+      std::vector<ListItem*> m_items;
       int m_gap;
       int m_overflow_gap;
+      int m_current_index;
 
+      void move_next();
+      void move_previous();
+      void update_current();
       void update_layout();
   };
 }

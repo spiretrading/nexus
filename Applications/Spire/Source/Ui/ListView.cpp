@@ -1,7 +1,9 @@
 #include "Spire/Ui/ListView.hpp"
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -14,7 +16,7 @@ namespace {
 
 ListView::ListView(std::shared_ptr<CurrentModel> current_model,
     std::shared_ptr<ListModel> list_model,
-    std::function<QWidget* (std::shared_ptr<ListModel>, int index)> factory,
+    std::function<ListItem* (std::shared_ptr<ListModel>, int index)> factory,
     QWidget* parent)
     : QWidget(parent),
       m_current_model(std::move(current_model)),
@@ -24,10 +26,15 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_gap(5),
-      m_overflow_gap(m_gap) {
+      m_overflow_gap(m_gap),
+      m_current_index(-1) {
   m_items.resize(m_list_model->get_size());
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     m_items[i] = m_factory(m_list_model, i);
+    m_items[i]->connect_current_signal([=] {
+      m_current_index = static_cast<int>(i);
+      m_current_model->set_current(m_list_model->get<QString>(m_current_index));
+    });
   }
   update_layout();
 }
@@ -77,8 +84,70 @@ connection ListView::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+void ListView::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+  case Qt::Key_Home:
+    m_current_index = 0;
+    update_current();
+    break;
+  case Qt::Key_End:
+    m_current_index = static_cast<int>(m_items.size()) - 1;
+    update_current();
+    break;
+  case Qt::Key_Down:
+    if(m_direction == Qt::Vertical) {
+      move_next();
+      update_current();
+    }
+    break;
+  case Qt::Key_Up:
+    if(m_direction == Qt::Vertical) {
+      move_previous();
+      update_current();
+    }
+    break;
+  case Qt::Key_Left:
+    if(m_direction == Qt::Horizontal) {
+      move_previous();
+      update_current();
+    }
+    break;
+  case Qt::Key_Right:
+    if(m_direction == Qt::Horizontal) {
+      move_next();
+      update_current();
+    }
+    break;
+  }
+}
+
 void ListView::resizeEvent(QResizeEvent* event) {
   update_layout();
+}
+
+void ListView::move_next() {
+  if(m_navigation == EdgeNavigation::CONTAIN) {
+    m_current_index =
+      std::min(m_current_index + 1, static_cast<int>(m_items.size()) - 1);
+  } else {
+    m_current_index = (m_current_index + 1) % static_cast<int>(m_items.size());
+  }
+}
+
+void ListView::move_previous() {
+  if(m_navigation == EdgeNavigation::CONTAIN) {
+    m_current_index = std::max(m_current_index - 1, 0);
+  } else {
+    m_current_index = (m_current_index - 1) % static_cast<int>(m_items.size());
+    if(m_current_index < 0) {
+      m_current_index = static_cast<int>(m_items.size()) - 1;
+    }
+  }
+}
+
+void ListView::update_current() {
+  m_items[m_current_index]->setFocus();
+  //m_current_model->set_current(m_list_model->get<QString>(m_current_index));
 }
 
 void ListView::update_layout() {
