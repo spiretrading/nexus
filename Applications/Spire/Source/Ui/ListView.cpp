@@ -75,7 +75,7 @@ void ListView::set_direction(Qt::Orientation direction) {
 }
 
 ListView::EdgeNavigation ListView::get_edge_navigation() const {
-  return EdgeNavigation();
+  return m_navigation;
 }
 
 void ListView::set_edge_navigation(EdgeNavigation navigation) {

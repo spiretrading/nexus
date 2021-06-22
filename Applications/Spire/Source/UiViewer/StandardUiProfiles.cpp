@@ -662,6 +662,11 @@ UiProfile Spire::make_list_view_profile() {
     {{"NONE", ListView::Overflow::NONE}, {"WRAP", ListView::Overflow::WRAP}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
+  auto navigation_property = define_enum<ListView::EdgeNavigation>(
+    {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
+     {"WRAP", ListView::EdgeNavigation::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("edge_navigation", navigation_property));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto list_model = std::make_shared<ArrayListModel>();
@@ -725,6 +730,12 @@ UiProfile Spire::make_list_view_profile() {
           list_view->setMinimumSize(0, 0);
         }
         list_view->set_overflow(value);
+      });
+      auto& navigation = get<ListView::EdgeNavigation>("edge_navigation",
+        profile.get_properties());
+      navigation.set(list_view->get_edge_navigation());
+      navigation.connect_changed_signal([=] (auto value) {
+        list_view->set_edge_navigation(value);
       });
       current_model->connect_current_signal(
         profile.make_event_slot<optional<QString>>(
