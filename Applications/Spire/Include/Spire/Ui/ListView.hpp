@@ -136,11 +136,13 @@ namespace Styles {
       int m_gap;
       int m_overflow_gap;
       int m_current_index;
+      int m_column_or_row_index;
 
       void move_next();
       void move_previous();
       void update_current();
       void update_layout();
+      void select_nearest_item(bool is_next);
   };
 }
 

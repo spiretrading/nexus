@@ -25,7 +25,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_direction(Qt::Vertical),
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
-      m_gap(5),
+      m_gap(0),
       m_overflow_gap(m_gap),
       m_current_index(-1) {
   m_items.resize(m_list_model->get_size());
@@ -36,6 +36,23 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_current_model->set_current(m_list_model->get<QString>(m_current_index));
     });
   }
+  m_current_model->connect_current_signal([=] (const auto& value) {
+    if(!value) {
+      return;
+    }
+    if(m_overflow == Overflow::WRAP) {
+      auto list_view_layout = layout();
+      for(auto i = 0; i < list_view_layout->count(); ++i) {
+        if(auto child_layout = list_view_layout->itemAt(i)->layout()) {
+          if(child_layout->indexOf(m_items[m_current_index]) >= 0) {
+            m_column_or_row_index = i;
+            return;
+          }
+        }
+      }
+      m_column_or_row_index = -1;
+    }
+  });
   update_layout();
 }
 
@@ -87,10 +104,12 @@ connection ListView::connect_submit_signal(
 void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
   case Qt::Key_Home:
+  case Qt::Key_PageUp:
     m_current_index = 0;
     update_current();
     break;
   case Qt::Key_End:
+  case Qt::Key_PageDown:
     m_current_index = static_cast<int>(m_items.size()) - 1;
     update_current();
     break;
@@ -98,24 +117,68 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     if(m_direction == Qt::Vertical) {
       move_next();
       update_current();
+    } else if(m_overflow == Overflow::WRAP) {
+      if(m_current_index < 0) {
+        return;
+      }
+      if(m_items[m_current_index]->y() +
+          layout()->itemAt(m_column_or_row_index)->geometry().height() <
+          rect().bottom()) {
+        select_nearest_item(true);
+      } else {
+        move_next();
+        update_current();
+      }
     }
     break;
   case Qt::Key_Up:
     if(m_direction == Qt::Vertical) {
       move_previous();
       update_current();
+    } else if(m_overflow == Overflow::WRAP) {
+      if(m_current_index < 0) {
+        return;
+      }
+      if(m_items[m_current_index]->y() != rect().y()) {
+        select_nearest_item(false);
+      } else {
+        move_previous();
+        update_current();
+      }
     }
     break;
   case Qt::Key_Left:
     if(m_direction == Qt::Horizontal) {
       move_previous();
       update_current();
+    } else if(m_overflow == Overflow::WRAP) {
+      if(m_current_index < 0) {
+        return;
+      }
+      if(m_items[m_current_index]->x() != rect().x()) {
+        select_nearest_item(false);
+      } else {
+        move_previous();
+        update_current();
+      }
     }
     break;
   case Qt::Key_Right:
     if(m_direction == Qt::Horizontal) {
       move_next();
       update_current();
+    } else if(m_overflow == Overflow::WRAP) {
+      if(m_current_index < 0) {
+        return;
+      }
+      if(m_items[m_current_index]->x() +
+          layout()->itemAt(m_column_or_row_index)->geometry().width() <
+          rect().right()) {
+        select_nearest_item(true);
+      } else {
+        move_next();
+        update_current();
+      }
     }
     break;
   }
@@ -147,7 +210,6 @@ void ListView::move_previous() {
 
 void ListView::update_current() {
   m_items[m_current_index]->setFocus();
-  //m_current_model->set_current(m_list_model->get<QString>(m_current_index));
 }
 
 void ListView::update_layout() {
@@ -237,4 +299,52 @@ void ListView::update_layout() {
     }
   }
   adjustSize();
+}
+
+void ListView::select_nearest_item(bool is_next) {
+  auto column_layout = [=] {
+    if(is_next) {
+      return layout()->itemAt(m_column_or_row_index + 2)->layout();
+    } else {
+      return layout()->itemAt(m_column_or_row_index - 2)->layout();
+    }
+  }();
+  auto item_pos = [=] {
+    if(m_direction == Qt::Vertical) {
+      return m_items[m_current_index]->y();
+    } else {
+      return m_items[m_current_index]->x();
+    }
+  }();
+  auto min_offset = [=] {
+  if(m_direction == Qt::Vertical) {
+    return std::abs(column_layout->itemAt(0)->geometry().y() - item_pos);
+  } else {
+    return std::abs(column_layout->itemAt(0)->geometry().x() - item_pos);
+  }
+  }();
+  auto index = 0;
+  for(auto i = 2; i < column_layout->count(); i += 2) {
+    if(!column_layout->itemAt(i)->widget()) {
+      continue;
+    }
+    auto offset = [=] {
+      if(m_direction == Qt::Vertical) {
+        return std::abs(column_layout->itemAt(i)->geometry().y() - item_pos);
+      } else {
+        return std::abs(column_layout->itemAt(i)->geometry().x() - item_pos);
+      }
+    }();
+    if(offset < min_offset) {
+      index = i;
+      min_offset = offset;
+    }
+  }
+  for(auto i = m_items.begin(); i != m_items.end(); ++i) {
+    if(column_layout->itemAt(index)->widget() == *i) {
+      m_current_index = static_cast<int>(std::distance(m_items.begin(), i));
+      update_current();
+      break;
+    }
+  }
 }
