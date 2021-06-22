@@ -1,5 +1,7 @@
 #ifndef SPIRE_LIST_VIEW_HPP
 #define SPIRE_LIST_VIEW_HPP
+#include <QTimer>
+#include <QString>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
@@ -137,12 +139,15 @@ namespace Styles {
       int m_overflow_gap;
       int m_current_index;
       int m_column_or_row_index;
+      QString m_query;
+      QTimer m_query_timer;
 
-      void move_next();
-      void move_previous();
-      void update_current();
+      int move_next();
+      int move_previous();
+      void update_current(int index);
       void update_layout();
       void select_nearest_item(bool is_next);
+      void query();
   };
 }
 

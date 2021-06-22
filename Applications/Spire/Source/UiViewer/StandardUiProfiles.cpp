@@ -674,6 +674,9 @@ UiProfile Spire::make_list_view_profile() {
       list_model->push(QString::fromUtf8("ABU.V.CDNX"));
       list_model->push(QString::fromUtf8("CAN"));
       list_model->push(QString::fromUtf8("MSFT.NSDQ"));
+      list_model->push(QString::fromUtf8("ABY.AX.ASX"));
+      list_model->push(QString::fromUtf8("ABX.NSDQ"));
+      list_model->push(QString::fromUtf8("ABX.TO.TSX"));
       list_model->push(QString::fromUtf8("XIU.TSX"));
       list_model->push(QString::fromUtf8("XYZ.TSX"));
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();

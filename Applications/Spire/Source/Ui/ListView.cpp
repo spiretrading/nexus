@@ -12,6 +12,7 @@ using namespace Styles;
 namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
+  const auto QUERY_TIMEOUT_MS = 500;
 }
 
 ListView::ListView(std::shared_ptr<CurrentModel> current_model,
@@ -53,6 +54,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_column_or_row_index = -1;
     }
   });
+  connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
   update_layout();
 }
 
@@ -105,18 +107,15 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
   case Qt::Key_Home:
   case Qt::Key_PageUp:
-    m_current_index = 0;
-    update_current();
+    update_current(0);
     break;
   case Qt::Key_End:
   case Qt::Key_PageDown:
-    m_current_index = static_cast<int>(m_items.size()) - 1;
-    update_current();
+    update_current(m_list_model->get_size() - 1);
     break;
   case Qt::Key_Down:
     if(m_direction == Qt::Vertical) {
-      move_next();
-      update_current();
+      update_current(move_next());
     } else if(m_overflow == Overflow::WRAP) {
       if(m_current_index < 0) {
         return;
@@ -126,15 +125,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
           rect().bottom()) {
         select_nearest_item(true);
       } else {
-        move_next();
-        update_current();
+        update_current(move_next());
       }
     }
     break;
   case Qt::Key_Up:
     if(m_direction == Qt::Vertical) {
-      move_previous();
-      update_current();
+      update_current(move_previous());
     } else if(m_overflow == Overflow::WRAP) {
       if(m_current_index < 0) {
         return;
@@ -142,15 +139,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_items[m_current_index]->y() != rect().y()) {
         select_nearest_item(false);
       } else {
-        move_previous();
-        update_current();
+        update_current(move_previous());
       }
     }
     break;
   case Qt::Key_Left:
     if(m_direction == Qt::Horizontal) {
-      move_previous();
-      update_current();
+      update_current(move_previous());
     } else if(m_overflow == Overflow::WRAP) {
       if(m_current_index < 0) {
         return;
@@ -158,15 +153,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_items[m_current_index]->x() != rect().x()) {
         select_nearest_item(false);
       } else {
-        move_previous();
-        update_current();
+        update_current(move_previous());
       }
     }
     break;
   case Qt::Key_Right:
     if(m_direction == Qt::Horizontal) {
-      move_next();
-      update_current();
+      update_current(move_next());
     } else if(m_overflow == Overflow::WRAP) {
       if(m_current_index < 0) {
         return;
@@ -176,9 +169,16 @@ void ListView::keyPressEvent(QKeyEvent* event) {
           rect().right()) {
         select_nearest_item(true);
       } else {
-        move_next();
-        update_current();
+        update_current(move_next());
       }
+    }
+    break;
+  default:
+    auto key = event->text();
+    if(!key.isEmpty() && key[0].isLetterOrNumber()) {
+      m_query += key.toUpper();
+      m_query_timer.start(QUERY_TIMEOUT_MS);
+      query();
     }
     break;
   }
@@ -188,28 +188,28 @@ void ListView::resizeEvent(QResizeEvent* event) {
   update_layout();
 }
 
-void ListView::move_next() {
+int ListView::move_next() {
   if(m_navigation == EdgeNavigation::CONTAIN) {
-    m_current_index =
-      std::min(m_current_index + 1, static_cast<int>(m_items.size()) - 1);
+    return std::min(m_current_index + 1, m_list_model->get_size() - 1);
   } else {
-    m_current_index = (m_current_index + 1) % static_cast<int>(m_items.size());
+    return (m_current_index + 1) % m_list_model->get_size();
   }
 }
 
-void ListView::move_previous() {
+int ListView::move_previous() {
   if(m_navigation == EdgeNavigation::CONTAIN) {
-    m_current_index = std::max(m_current_index - 1, 0);
+    return std::max(m_current_index - 1, 0);
   } else {
-    m_current_index = (m_current_index - 1) % static_cast<int>(m_items.size());
-    if(m_current_index < 0) {
-      m_current_index = static_cast<int>(m_items.size()) - 1;
+    auto index = (m_current_index - 1) % m_list_model->get_size();
+    if(index < 0) {
+      index = m_list_model->get_size() - 1;
     }
+    return index;
   }
 }
 
-void ListView::update_current() {
-  m_items[m_current_index]->setFocus();
+void ListView::update_current(int index) {
+  m_items[index]->setFocus();
 }
 
 void ListView::update_layout() {
@@ -342,9 +342,23 @@ void ListView::select_nearest_item(bool is_next) {
   }
   for(auto i = m_items.begin(); i != m_items.end(); ++i) {
     if(column_layout->itemAt(index)->widget() == *i) {
-      m_current_index = static_cast<int>(std::distance(m_items.begin(), i));
-      update_current();
+      update_current(static_cast<int>(std::distance(m_items.begin(), i)));
       break;
     }
+  }
+}
+
+void ListView::query() {
+  if(m_query.isEmpty()) {
+    return;
+  }
+  auto index = (m_current_index + 1) % m_list_model->get_size();
+  while(index != m_current_index) {
+    if(auto value = m_list_model->get<QString>(index).toUpper();
+        value.startsWith(m_query)) {
+      update_current(index);
+      break;
+    }
+    index = (index + 1) % m_list_model->get_size();
   }
 }
