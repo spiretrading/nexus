@@ -654,6 +654,11 @@ UiProfile Spire::make_list_item_profile() {
 UiProfile Spire::make_list_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  auto navigation_property = define_enum<ListView::EdgeNavigation>(
+    {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
+     {"WRAP", ListView::EdgeNavigation::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("edge_navigation", navigation_property));
   auto direction_property = define_enum<Qt::Orientation>(
     {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
@@ -662,11 +667,6 @@ UiProfile Spire::make_list_view_profile() {
     {{"NONE", ListView::Overflow::NONE}, {"WRAP", ListView::Overflow::WRAP}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto navigation_property = define_enum<ListView::EdgeNavigation>(
-    {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
-     {"WRAP", ListView::EdgeNavigation::WRAP}});
-  properties.push_back(
-    make_standard_enum_property("edge_navigation", navigation_property));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto list_model = std::make_shared<ArrayListModel>();
@@ -743,6 +743,9 @@ UiProfile Spire::make_list_view_profile() {
       current_model->connect_current_signal(
         profile.make_event_slot<optional<QString>>(
         QString::fromUtf8("Current")));
+      list_view->connect_submit_signal(
+        profile.make_event_slot<optional<QString>>(
+        QString::fromUtf8("Submit")));
       return list_view;
     });
   return profile;

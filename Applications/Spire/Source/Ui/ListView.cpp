@@ -33,8 +33,12 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     m_items[i] = m_factory(m_list_model, i);
     m_items[i]->connect_current_signal([=] {
-      m_current_index = static_cast<int>(i);
+      m_current_index = i;
       m_current_model->set_current(m_list_model->get<QString>(m_current_index));
+    });
+    m_items[i]->connect_submit_signal([=] {
+      m_current_index = i;
+      m_submit_signal(m_list_model->get<QString>(i));
     });
   }
   m_current_model->connect_current_signal([=] (const auto& value) {
