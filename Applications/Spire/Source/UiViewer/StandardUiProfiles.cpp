@@ -654,6 +654,8 @@ UiProfile Spire::make_list_item_profile() {
 UiProfile Spire::make_list_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("gap", 5));
+  properties.push_back(make_standard_property("overflow_gap", 5));
   auto navigation_property = define_enum<ListView::EdgeNavigation>(
     {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
      {"WRAP", ListView::EdgeNavigation::WRAP}});
@@ -702,6 +704,24 @@ UiProfile Spire::make_list_view_profile() {
           return item_widget;
         });
       apply_widget_properties(list_view, profile.get_properties());
+      auto& gap = get<int>("gap", profile.get_properties());
+      gap.connect_changed_signal([=] (auto value) {
+        if(value < 0) {
+          return;
+        }
+        auto style = get_style(*list_view);
+        style.get(Any()).set(ListItemGap(scale_width(value)));
+        set_style(*list_view, style);
+      });
+      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
+      overflow_gap.connect_changed_signal([=] (auto value) {
+        if(value < 0) {
+          return;
+        }
+        auto style = get_style(*list_view);
+        style.get(Any()).set(ListOverflowGap(scale_width(value)));
+        set_style(*list_view, style);
+      });
       auto& direction = get<Qt::Orientation>("direction",
         profile.get_properties());
       auto& overflow = get<ListView::Overflow>("overflow",

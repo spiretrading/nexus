@@ -15,6 +15,14 @@ namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
   const auto QUERY_TIMEOUT_MS = 500;
+
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(ListItemGap(DEFAULT_GAP)).
+      set(ListOverflowGap(DEFAULT_OVERFLOW_GAP));
+    return style;
+  }
 }
 
 ListView::ListView(std::shared_ptr<CurrentModel> current_model,
@@ -30,11 +38,11 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
-      m_gap(0),
-      m_overflow_gap(m_gap),
       m_current_index(-1),
       m_start_index(m_current_index),
       m_column_or_row_index(0) {
+  set_style(*this, DEFAULT_STYLE());
+  connect_style_signal(*this, [=] { update_layout(); });
   m_current_connection = m_current_model->connect_current_signal(
     [=] (const auto& current) {
       on_current(current);
@@ -336,6 +344,20 @@ void ListView::update_layout() {
   if(m_items.empty()) {
     return;
   }
+  auto gap = 0;
+  auto overflow_gap = 0;
+  auto& stylist = find_stylist(*this);
+  auto block = stylist.get_computed_block();
+  if(auto gap_property = Styles::find<ListItemGap>(block)) {
+    stylist.evaluate(*gap_property, [&] (auto value) {
+      gap = value;
+    });
+  }
+  if(auto overflow_gap_property = Styles::find<ListOverflowGap>(block)) {
+    stylist.evaluate(*overflow_gap_property, [&] (auto value) {
+      overflow_gap = value;
+    });
+  }
   if(m_direction == Qt::Vertical) {
     auto layout = new QHBoxLayout(this);
     layout->setSpacing(0);
@@ -346,7 +368,7 @@ void ListView::update_layout() {
       column_layout->setContentsMargins({});
       column_layout->addWidget(m_items[0].m_component);
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
-        column_layout->addSpacing(m_gap);
+        column_layout->addSpacing(gap);
         column_layout->addWidget(m_items[i].m_component);
       }
       layout->addLayout(column_layout);
@@ -360,14 +382,14 @@ void ListView::update_layout() {
       column_height += first_item->height();
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         auto item = m_items[i].m_component;
-        column_height += item->height() + m_gap;
+        column_height += item->height() + gap;
         if(column_height <= height()) {
-          column_layout->addSpacing(m_gap);
+          column_layout->addSpacing(gap);
           column_layout->addWidget(item, 0, Qt::AlignTop);
         } else {
           column_layout->addStretch();
           layout->addLayout(column_layout);
-          layout->addSpacing(m_overflow_gap);
+          layout->addSpacing(overflow_gap);
           column_layout = new QVBoxLayout();
           column_layout->setSpacing(0);
           column_layout->setContentsMargins({});
@@ -388,7 +410,7 @@ void ListView::update_layout() {
       row_layout->setContentsMargins({});
       row_layout->addWidget(m_items[0].m_component, 0, Qt::AlignTop);
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
-        row_layout->addSpacing(m_gap);
+        row_layout->addSpacing(gap);
         row_layout->addWidget(m_items[i].m_component, 0, Qt::AlignTop);
       }
       layout->addLayout(row_layout);
@@ -402,14 +424,14 @@ void ListView::update_layout() {
       row_width += first_item->width();
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         auto item = m_items[i].m_component;
-        row_width += item->width() + m_gap;
+        row_width += item->width() + gap;
         if(row_width <= width()) {
-          row_layout->addSpacing(m_gap);
+          row_layout->addSpacing(gap);
           row_layout->addWidget(item, 0, Qt::AlignLeft | Qt::AlignTop);
         } else {
           row_layout->addStretch();
           layout->addLayout(row_layout);
-          layout->addSpacing(m_overflow_gap);
+          layout->addSpacing(overflow_gap);
           row_layout = new QHBoxLayout();
           row_layout->setSpacing(0);
           row_layout->setContentsMargins({});
