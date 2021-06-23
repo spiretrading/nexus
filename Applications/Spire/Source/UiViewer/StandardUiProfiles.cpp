@@ -700,7 +700,6 @@ UiProfile Spire::make_list_view_profile() {
           item_widget->setFixedHeight(
             scale_height(QRandomGenerator::global()->bounded(30, 70)));
           item_widget->setMinimumWidth(item_widget->sizeHint().width());
-          item_widget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
           return item_widget;
         });
       apply_widget_properties(list_view, profile.get_properties());
@@ -727,36 +726,26 @@ UiProfile Spire::make_list_view_profile() {
       auto& overflow = get<ListView::Overflow>("overflow",
         profile.get_properties());
       direction.connect_changed_signal([=, &overflow] (auto value) {
+        list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        list_view->setMinimumSize(0, 0);
         if(overflow.get() == ListView::Overflow::WRAP) {
           if(value == Qt::Vertical) {
-            list_view->setMaximumWidth(QWIDGETSIZE_MAX);
-            list_view->setMinimumWidth(0);
             list_view->setFixedHeight(scale_height(170));
           } else {
-            list_view->setMaximumHeight(QWIDGETSIZE_MAX);
-            list_view->setMinimumHeight(0);
             list_view->setFixedWidth(scale_width(170));
           }
-        } else {
-          list_view->setMaximumSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX);
-          list_view->setMinimumSize(0, 0);
         }
         list_view->set_direction(value);
       });
       overflow.connect_changed_signal([=, &direction] (auto value) {
+        list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        list_view->setMinimumSize(0, 0);
         if(value == ListView::Overflow::WRAP) {
           if(direction.get() == Qt::Vertical) {
-            list_view->setMaximumWidth(QWIDGETSIZE_MAX);
-            list_view->setMinimumWidth(0);
             list_view->setFixedHeight(scale_height(170));
           } else {
-            list_view->setMaximumHeight(QWIDGETSIZE_MAX);
-            list_view->setMinimumHeight(0);
             list_view->setFixedWidth(scale_width(170));
           }
-        } else {
-          list_view->setMaximumSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX);
-          list_view->setMinimumSize(0, 0);
         }
         list_view->set_overflow(value);
       });
