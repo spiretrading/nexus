@@ -171,11 +171,13 @@ namespace Styles {
       int m_column_or_row_index;
       QString m_query;
       QTimer m_query_timer;
+      int m_key;
 
       boost::signals2::scoped_connection connect_item_current(ListItem* item,
         const QString& value);
       boost::signals2::scoped_connection connect_item_submit(ListItem* item,
         const QString& value);
+      int get_index_by_value(const QString& value);
       int move_next();
       int move_previous();
       void on_current(const boost::optional<QString>& current);
