@@ -667,6 +667,12 @@ UiProfile Spire::make_list_view_profile() {
     {{"NONE", ListView::Overflow::NONE}, {"WRAP", ListView::Overflow::WRAP}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
+  auto selection_mode_property = define_enum<ListView::SelectionMode>(
+    {{"NONE", ListView::SelectionMode::NONE},
+     {"SINGLE", ListView::SelectionMode::SINGLE},
+     {"MULTIPLE", ListView::SelectionMode::MULTIPLE}});
+  properties.push_back(
+    make_standard_enum_property("selection_mode", selection_mode_property));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto list_model = std::make_shared<ArrayListModel>();
@@ -740,12 +746,21 @@ UiProfile Spire::make_list_view_profile() {
       navigation.connect_changed_signal([=] (auto value) {
         list_view->set_edge_navigation(value);
       });
+      auto& selection_mode = get<ListView::SelectionMode>("selection_mode",
+        profile.get_properties());
+      selection_mode.set(list_view->get_selection_mode());
+      selection_mode.connect_changed_signal([=] (auto value) {
+        list_view->set_selection_mode(value);
+      });
       current_model->connect_current_signal(
         profile.make_event_slot<optional<QString>>(
         QString::fromUtf8("Current")));
       list_view->connect_submit_signal(
         profile.make_event_slot<optional<QString>>(
         QString::fromUtf8("Submit")));
+      list_view->connect_delete_signal(
+        profile.make_event_slot<optional<QString>>(
+        QString::fromUtf8("Delete")));
       return list_view;
     });
   return profile;

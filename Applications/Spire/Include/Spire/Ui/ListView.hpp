@@ -6,7 +6,7 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListModel.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -51,6 +51,19 @@ namespace Styles {
         WRAP
       };
 
+      /** Specifies the selection behavior for the ListView. */
+      enum class SelectionMode {
+
+        /** Items can not be selected. */
+        NONE,
+
+        /** The user can select a single item. */
+        SINGLE,
+
+        /** The user can select multiple items. */
+        MULTIPLE
+      };
+
       /**
        * A ValueModel over an optional QString to represent the current of the
        * list view.
@@ -85,33 +98,40 @@ namespace Styles {
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<CurrentModel> current_model,
-        std::shared_ptr<ListModel> list_model,
-        std::function<ListItem* (std::shared_ptr<ListModel>, int index)> factory,
+        std::shared_ptr<ArrayListModel> list_model,
+        std::function<ListItem* (
+          std::shared_ptr<ArrayListModel>, int index)> factory,
         QWidget* parent = nullptr);
   
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
 
       /** Returns the list model. */
-      const std::shared_ptr<ListModel>& get_list_model() const;
+      const std::shared_ptr<ArrayListModel>& get_list_model() const;
 
-      /** Returns the direction of the list. */
+      /** Returns the direction of the ListView. */
       Qt::Orientation get_direction() const;
 
-      /** Sets the direction of the list. */
+      /** Sets the direction of the ListView. */
       void set_direction(Qt::Orientation direction);
       
-      /** Returns the navigation behavior of the list. */
+      /** Returns the navigation behavior of the ListView. */
       EdgeNavigation get_edge_navigation() const;
 
-      /** Sets the navigation behavior of the list. */
+      /** Sets the navigation behavior of the ListView. */
       void set_edge_navigation(EdgeNavigation navigation);
 
-      /** Returns the overflow mode of the list. */
+      /** Returns the overflow mode of the ListView. */
       Overflow get_overflow() const;
 
-      /** Sets the overflow mode of the list. */
+      /** Sets the overflow mode of the ListView. */
       void set_overflow(Overflow overflow);
+
+      /** Returns the selection mode of the ListView. */
+      SelectionMode get_selection_mode() const;
+
+      /** Sets the selection mode of the ListView. */
+      void set_selection_mode(SelectionMode selection_mode);
 
       /** Connects a slot to the delete signal. */
       boost::signals2::connection connect_delete_signal(
@@ -126,24 +146,43 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      struct Item {
+        ListItem* m_component;
+        QString m_value;
+        boost::signals2::scoped_connection m_current_connection;
+        boost::signals2::scoped_connection m_submit_connection;
+      };
       mutable DeleteSignal m_delete_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<CurrentModel> m_current_model;
-      std::shared_ptr<ListModel> m_list_model;
-      std::function<ListItem* (std::shared_ptr<ListModel>, int index)> m_factory;
+      std::shared_ptr<ArrayListModel> m_list_model;
+      std::function<ListItem* (
+        std::shared_ptr<ArrayListModel>, int index)> m_factory;
       Qt::Orientation m_direction;
       EdgeNavigation m_navigation;
       Overflow m_overflow;
-      std::vector<ListItem*> m_items;
+      SelectionMode m_selection_mode;
+      std::vector<Item> m_items;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_list_model_connection;
+      std::unordered_set<QString> m_selected;
       int m_gap;
       int m_overflow_gap;
       int m_current_index;
+      int m_start_index;
       int m_column_or_row_index;
       QString m_query;
       QTimer m_query_timer;
 
+      boost::signals2::scoped_connection connect_item_current(ListItem* item,
+        const QString& value);
+      boost::signals2::scoped_connection connect_item_submit(ListItem* item,
+        const QString& value);
       int move_next();
       int move_previous();
+      void on_current(const boost::optional<QString>& current);
+      void on_delete_item(int index);
+      void update_column_row_index();
       void update_current(int index);
       void update_layout();
       void select_nearest_item(bool is_next);

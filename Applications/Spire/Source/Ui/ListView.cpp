@@ -1,4 +1,6 @@
 #include "Spire/Ui/ListView.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QVBoxLayout>
@@ -16,8 +18,9 @@ namespace {
 }
 
 ListView::ListView(std::shared_ptr<CurrentModel> current_model,
-    std::shared_ptr<ListModel> list_model,
-    std::function<ListItem* (std::shared_ptr<ListModel>, int index)> factory,
+    std::shared_ptr<ArrayListModel> list_model,
+    std::function<ListItem* (
+      std::shared_ptr<ArrayListModel>, int index)> factory,
     QWidget* parent)
     : QWidget(parent),
       m_current_model(std::move(current_model)),
@@ -26,40 +29,31 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_direction(Qt::Vertical),
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
+      m_selection_mode(SelectionMode::SINGLE),
       m_gap(0),
       m_overflow_gap(m_gap),
-      m_current_index(-1) {
+      m_current_index(-1),
+      m_start_index(m_current_index),
+      m_column_or_row_index(0) {
+  m_current_connection = m_current_model->connect_current_signal(
+    [=] (const auto& current) {
+      on_current(current);
+    });
   m_items.resize(m_list_model->get_size());
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    m_items[i] = m_factory(m_list_model, i);
-    m_items[i]->connect_current_signal([=] {
-      m_current_index = i;
-      m_current_model->set_current(m_list_model->get<QString>(m_current_index));
-    });
-    m_items[i]->connect_submit_signal([=] {
-      m_current_index = i;
-      m_submit_signal(m_list_model->get<QString>(i));
-    });
+    auto value = m_list_model->get<QString>(i);
+    auto list_item = m_factory(m_list_model, i);
+    m_items[i] = {list_item, value, connect_item_current(list_item, value),
+      connect_item_submit(list_item, value)};
   }
-  m_current_model->connect_current_signal([=] (const auto& value) {
-    if(!value) {
-      return;
-    }
-    if(m_overflow == Overflow::WRAP) {
-      auto list_view_layout = layout();
-      for(auto i = 0; i < list_view_layout->count(); ++i) {
-        if(auto child_layout = list_view_layout->itemAt(i)->layout()) {
-          if(child_layout->indexOf(m_items[m_current_index]) >= 0) {
-            m_column_or_row_index = i;
-            return;
-          }
-        }
-      }
-      m_column_or_row_index = -1;
-    }
+  m_list_model_connection = m_list_model->connect_operation_signal(
+    [=] (const ListModel::Operation& operation) {
+      visit(operation,
+        [&] (const ListModel::RemoveOperation& operation) {
+          on_delete_item(operation.m_index);
+        });
   });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
-  update_layout();
 }
 
 const std::shared_ptr<ListView::CurrentModel>&
@@ -67,7 +61,7 @@ const std::shared_ptr<ListView::CurrentModel>&
   return m_current_model;
 }
 
-const std::shared_ptr<ListModel>& ListView::get_list_model() const {
+const std::shared_ptr<ArrayListModel>& ListView::get_list_model() const {
   return m_list_model;
 }
 
@@ -97,6 +91,14 @@ void ListView::set_overflow(Overflow overflow) {
   update_layout();
 }
 
+ListView::SelectionMode ListView::get_selection_mode() const {
+  return m_selection_mode;
+}
+
+void ListView::set_selection_mode(SelectionMode selection_mode) {
+  m_selection_mode = selection_mode;
+}
+
 connection ListView::connect_delete_signal(
     const DeleteSignal::slot_type& slot) const {
   return m_delete_signal.connect(slot);
@@ -108,6 +110,10 @@ connection ListView::connect_submit_signal(
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
+  if(m_selection_mode == SelectionMode::NONE) {
+    QWidget::keyPressEvent(event);
+    return;
+  }
   switch(event->key()) {
   case Qt::Key_Home:
   case Qt::Key_PageUp:
@@ -124,7 +130,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_current_index < 0) {
         return;
       }
-      if(m_items[m_current_index]->y() +
+      if(m_items[m_current_index].m_component->y() +
           layout()->itemAt(m_column_or_row_index)->geometry().height() <
           rect().bottom()) {
         select_nearest_item(true);
@@ -140,7 +146,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_current_index < 0) {
         return;
       }
-      if(m_items[m_current_index]->y() != rect().y()) {
+      if(m_items[m_current_index].m_component->y() != rect().y()) {
         select_nearest_item(false);
       } else {
         update_current(move_previous());
@@ -154,7 +160,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_current_index < 0) {
         return;
       }
-      if(m_items[m_current_index]->x() != rect().x()) {
+      if(m_items[m_current_index].m_component->x() != rect().x()) {
         select_nearest_item(false);
       } else {
         update_current(move_previous());
@@ -168,7 +174,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_current_index < 0) {
         return;
       }
-      if(m_items[m_current_index]->x() +
+      if(m_items[m_current_index].m_component->x() +
           layout()->itemAt(m_column_or_row_index)->geometry().width() <
           rect().right()) {
         select_nearest_item(true);
@@ -177,12 +183,31 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       }
     }
     break;
+  case Qt::Key_Delete:
+    {
+      auto blocker = shared_connection_block(m_current_connection);
+      for(auto& value : m_selected) {
+        for(auto i = 0; i < m_list_model->get_size(); ++i) {
+          if(m_list_model->get<QString>(i) == value) {
+            m_delete_signal(value);
+            m_list_model->remove(i);
+            break;
+          }
+        }
+      }
+      m_selected.clear();
+    }
+    update_layout();
+    update_column_row_index();
+    break;
   default:
     auto key = event->text();
     if(!key.isEmpty() && key[0].isLetterOrNumber()) {
       m_query += key.toUpper();
       m_query_timer.start(QUERY_TIMEOUT_MS);
       query();
+    } else {
+      QWidget::keyPressEvent(event);
     }
     break;
   }
@@ -190,6 +215,43 @@ void ListView::keyPressEvent(QKeyEvent* event) {
 
 void ListView::resizeEvent(QResizeEvent* event) {
   update_layout();
+}
+
+scoped_connection ListView::connect_item_current(ListItem* item,
+    const QString& value) {
+  return item->connect_current_signal([=] {
+    if(m_selection_mode == SelectionMode::NONE) {
+      return;
+    }
+    m_current_index = [=] {
+      for(auto i = 0; i < m_list_model->get_size(); ++i) {
+        if(m_list_model->get<QString>(i) == value) {
+          return i;
+        }
+      }
+      return -1;
+    }();
+    if(m_current_index == -1) {
+      m_current_model->set_current(boost::none);
+    } else {
+      m_current_model->set_current(value);
+    }
+    });
+}
+
+scoped_connection ListView::connect_item_submit(ListItem* item,
+    const QString& value) {
+  return item->connect_submit_signal([=] {
+    m_current_index = [=] {
+      for(auto i = 0; i < m_list_model->get_size(); ++i) {
+        if(m_list_model->get<QString>(i) == value) {
+          return i;
+        }
+      }
+      return -1;
+    }();
+    m_submit_signal(value);
+    });
 }
 
 int ListView::move_next() {
@@ -212,8 +274,61 @@ int ListView::move_previous() {
   }
 }
 
+void ListView::on_current(const boost::optional<QString>& current) {
+  if(!current) {
+    return;
+  }
+  if(m_selection_mode == SelectionMode::SINGLE) {
+    m_selected.clear();
+    m_selected.insert(current.get());
+  } else if(m_selection_mode == SelectionMode::MULTIPLE) {
+    auto modifiers = QGuiApplication::keyboardModifiers();
+    if(modifiers & Qt::ControlModifier) {
+      m_start_index = m_current_index;
+      m_selected.insert(current.get());
+    } else if(modifiers & Qt::ShiftModifier) {
+      auto min_index = std::min(m_start_index, m_current_index);
+      auto max_index = std::max(m_start_index, m_current_index);
+      for(auto i = min_index; i <= max_index; ++i) {
+        m_selected.insert(m_list_model->get<QString>(i));
+      }
+    } else {
+      m_selected.clear();
+      m_start_index = m_current_index;
+      m_selected.insert(current.get());
+    }
+  }
+  update_column_row_index();
+}
+
+void ListView::on_delete_item(int index) {
+  delete m_items[index].m_component;
+  m_items.erase(std::next(m_items.begin(), index));
+  if(m_current_index >= m_list_model->get_size()) {
+    m_current_index = m_list_model->get_size() - 1;
+  }
+  update_current(m_current_index);
+}
+
+void ListView::update_column_row_index() {
+  if(m_overflow == Overflow::WRAP) {
+    m_column_or_row_index = -1;
+    auto list_view_layout = layout();
+    for(auto i = 0; i < list_view_layout->count(); ++i) {
+      if(auto child_layout = list_view_layout->itemAt(i)->layout()) {
+        if(child_layout->indexOf(m_items[m_current_index].m_component) >= 0) {
+          m_column_or_row_index = i;
+          break;
+        }
+      }
+    }
+  }
+}
+
 void ListView::update_current(int index) {
-  m_items[index]->setFocus();
+  if(m_selection_mode != SelectionMode::NONE && index != -1) {
+    m_items[index].m_component->setFocus();
+  }
 }
 
 void ListView::update_layout() {
@@ -229,10 +344,10 @@ void ListView::update_layout() {
       auto column_layout = new QVBoxLayout();
       column_layout->setSpacing(0);
       column_layout->setContentsMargins({});
-      column_layout->addWidget(m_items.front());
-      for(auto i = m_items.begin() + 1; i != m_items.end(); ++i) {
+      column_layout->addWidget(m_items[0].m_component);
+      for(auto i = 1; i < m_list_model->get_size(); ++i) {
         column_layout->addSpacing(m_gap);
-        column_layout->addWidget(*i);
+        column_layout->addWidget(m_items[i].m_component);
       }
       layout->addLayout(column_layout);
     } else {
@@ -240,13 +355,15 @@ void ListView::update_layout() {
       auto column_layout = new QVBoxLayout();
       column_layout->setSpacing(0);
       column_layout->setContentsMargins({});
-      column_layout->addWidget(m_items.front(), 0, Qt::AlignTop);
-      column_height += m_items.front()->height();
-      for(auto i = m_items.begin() + 1; i != m_items.end(); ++i) {
-        column_height += (*i)->height() + m_gap;
+      auto first_item = m_items[0].m_component;
+      column_layout->addWidget(first_item, 0, Qt::AlignTop);
+      column_height += first_item->height();
+      for(auto i = 1; i < m_list_model->get_size(); ++i) {
+        auto item = m_items[i].m_component;
+        column_height += item->height() + m_gap;
         if(column_height <= height()) {
           column_layout->addSpacing(m_gap);
-          column_layout->addWidget(*i, 0, Qt::AlignTop);
+          column_layout->addWidget(item, 0, Qt::AlignTop);
         } else {
           column_layout->addStretch();
           layout->addLayout(column_layout);
@@ -254,8 +371,8 @@ void ListView::update_layout() {
           column_layout = new QVBoxLayout();
           column_layout->setSpacing(0);
           column_layout->setContentsMargins({});
-          column_layout->addWidget(*i, 0, Qt::AlignTop);
-          column_height = (*i)->height();
+          column_layout->addWidget(item, 0, Qt::AlignTop);
+          column_height = item->height();
         }
       }
       column_layout->addStretch();
@@ -269,10 +386,10 @@ void ListView::update_layout() {
       auto row_layout = new QHBoxLayout();
       row_layout->setSpacing(0);
       row_layout->setContentsMargins({});
-      row_layout->addWidget(m_items.front(), 0, Qt::AlignTop);
-      for(auto i = m_items.begin() + 1; i != m_items.end(); ++i) {
+      row_layout->addWidget(m_items[0].m_component, 0, Qt::AlignTop);
+      for(auto i = 1; i < m_list_model->get_size(); ++i) {
         row_layout->addSpacing(m_gap);
-        row_layout->addWidget(*i, 0, Qt::AlignTop);
+        row_layout->addWidget(m_items[i].m_component, 0, Qt::AlignTop);
       }
       layout->addLayout(row_layout);
     } else {
@@ -280,13 +397,15 @@ void ListView::update_layout() {
       auto row_layout = new QHBoxLayout();
       row_layout->setSpacing(0);
       row_layout->setContentsMargins({});
-      row_layout->addWidget(m_items.front(), 0, Qt::AlignLeft | Qt::AlignTop);
-      row_width += m_items.front()->width();
-      for(auto i = m_items.begin() + 1; i != m_items.end(); ++i) {
-        row_width += (*i)->width() + m_gap;
+      auto first_item = m_items[0].m_component;
+      row_layout->addWidget(first_item, 0, Qt::AlignLeft | Qt::AlignTop);
+      row_width += first_item->width();
+      for(auto i = 1; i < m_list_model->get_size(); ++i) {
+        auto item = m_items[i].m_component;
+        row_width += item->width() + m_gap;
         if(row_width <= width()) {
           row_layout->addSpacing(m_gap);
-          row_layout->addWidget(*i, 0, Qt::AlignLeft | Qt::AlignTop);
+          row_layout->addWidget(item, 0, Qt::AlignLeft | Qt::AlignTop);
         } else {
           row_layout->addStretch();
           layout->addLayout(row_layout);
@@ -294,8 +413,8 @@ void ListView::update_layout() {
           row_layout = new QHBoxLayout();
           row_layout->setSpacing(0);
           row_layout->setContentsMargins({});
-          row_layout->addWidget(*i, 0, Qt::AlignLeft | Qt::AlignTop);
-          row_width = (*i)->width();
+          row_layout->addWidget(item, 0, Qt::AlignLeft | Qt::AlignTop);
+          row_width = item->width();
         }
       }
       row_layout->addStretch();
@@ -315,9 +434,9 @@ void ListView::select_nearest_item(bool is_next) {
   }();
   auto item_pos = [=] {
     if(m_direction == Qt::Vertical) {
-      return m_items[m_current_index]->y();
+      return m_items[m_current_index].m_component->y();
     } else {
-      return m_items[m_current_index]->x();
+      return m_items[m_current_index].m_component->x();
     }
   }();
   auto min_offset = [=] {
@@ -344,9 +463,9 @@ void ListView::select_nearest_item(bool is_next) {
       min_offset = offset;
     }
   }
-  for(auto i = m_items.begin(); i != m_items.end(); ++i) {
-    if(column_layout->itemAt(index)->widget() == *i) {
-      update_current(static_cast<int>(std::distance(m_items.begin(), i)));
+  for(auto i = 0; i < m_list_model->get_size(); ++i) {
+    if(column_layout->itemAt(index)->widget() == m_items[i].m_component) {
+      update_current(i);
       break;
     }
   }
