@@ -700,7 +700,7 @@ UiProfile Spire::make_list_view_profile() {
           set_style(*text_box, std::move(style));
           auto item_widget = new ListItem(text_box);
           if(random_height.get()) {
-            item_widget->setFixedHeight(
+            item_widget->setMinimumHeight(
               scale_height(QRandomGenerator::global()->bounded(30, 70)));
           } else {
             item_widget->setMinimumHeight(item_widget->sizeHint().height());

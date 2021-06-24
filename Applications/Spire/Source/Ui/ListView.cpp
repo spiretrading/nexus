@@ -118,7 +118,7 @@ connection ListView::connect_submit_signal(
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
-  if(m_selection_mode == SelectionMode::NONE) {
+  if(m_selection_mode == SelectionMode::NONE || m_list_model->get_size() == 0) {
     QWidget::keyPressEvent(event);
     return;
   }
@@ -140,7 +140,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       }
       if(m_items[m_current_index].m_component->y() +
           layout()->itemAt(m_column_or_row_index)->geometry().height() <
-          rect().bottom()) {
+          layout()->itemAt(layout()->count() - 2)->geometry().bottom()) {
         select_nearest_item(true);
       } else {
         update_current(move_next());
@@ -184,7 +184,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       }
       if(m_items[m_current_index].m_component->x() +
           layout()->itemAt(m_column_or_row_index)->geometry().width() <
-          rect().right()) {
+          layout()->itemAt(layout()->count() - 2)->geometry().right()) {
         select_nearest_item(true);
       } else {
         update_current(move_next());
@@ -334,14 +334,14 @@ void ListView::update_layout() {
       column_layout->setSpacing(0);
       column_layout->setContentsMargins({});
       auto first_item = m_items[0].m_component;
-      column_layout->addWidget(first_item, 0, Qt::AlignTop);
+      column_layout->addWidget(first_item);
       column_height += first_item->height();
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         auto item = m_items[i].m_component;
         column_height += item->height() + gap;
         if(column_height <= height()) {
           column_layout->addSpacing(gap);
-          column_layout->addWidget(item, 0, Qt::AlignTop);
+          column_layout->addWidget(item);
         } else {
           column_layout->addStretch();
           layout->addLayout(column_layout);
@@ -349,12 +349,13 @@ void ListView::update_layout() {
           column_layout = new QVBoxLayout();
           column_layout->setSpacing(0);
           column_layout->setContentsMargins({});
-          column_layout->addWidget(item, 0, Qt::AlignTop);
+          column_layout->addWidget(item);
           column_height = item->height();
         }
       }
       column_layout->addStretch();
       layout->addLayout(column_layout);
+      layout->addStretch();
     }
   } else {
     auto layout = new QVBoxLayout(this);
@@ -364,10 +365,10 @@ void ListView::update_layout() {
       auto row_layout = new QHBoxLayout();
       row_layout->setSpacing(0);
       row_layout->setContentsMargins({});
-      row_layout->addWidget(m_items[0].m_component, 0, Qt::AlignTop);
+      row_layout->addWidget(m_items[0].m_component);
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         row_layout->addSpacing(gap);
-        row_layout->addWidget(m_items[i].m_component, 0, Qt::AlignTop);
+        row_layout->addWidget(m_items[i].m_component);
       }
       layout->addLayout(row_layout);
     } else {
@@ -376,14 +377,14 @@ void ListView::update_layout() {
       row_layout->setSpacing(0);
       row_layout->setContentsMargins({});
       auto first_item = m_items[0].m_component;
-      row_layout->addWidget(first_item, 0, Qt::AlignLeft | Qt::AlignTop);
+      row_layout->addWidget(first_item);
       row_width += first_item->width();
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         auto item = m_items[i].m_component;
         row_width += item->width() + gap;
         if(row_width <= width()) {
           row_layout->addSpacing(gap);
-          row_layout->addWidget(item, 0, Qt::AlignLeft | Qt::AlignTop);
+          row_layout->addWidget(item);
         } else {
           row_layout->addStretch();
           layout->addLayout(row_layout);
@@ -391,12 +392,13 @@ void ListView::update_layout() {
           row_layout = new QHBoxLayout();
           row_layout->setSpacing(0);
           row_layout->setContentsMargins({});
-          row_layout->addWidget(item, 0, Qt::AlignLeft | Qt::AlignTop);
+          row_layout->addWidget(item);
           row_width = item->width();
         }
       }
       row_layout->addStretch();
       layout->addLayout(row_layout);
+      layout->addStretch();
     }
   }
   adjustSize();
