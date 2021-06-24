@@ -654,7 +654,7 @@ UiProfile Spire::make_list_item_profile() {
 UiProfile Spire::make_list_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property("random_height", true));
+  properties.push_back(make_standard_property("random_height_seed", 0));
   properties.push_back(make_standard_property("gap", 5));
   properties.push_back(make_standard_property("overflow_gap", 5));
   auto navigation_property = define_enum<ListView::EdgeNavigation>(
@@ -678,7 +678,9 @@ UiProfile Spire::make_list_view_profile() {
     make_standard_enum_property("selection_mode", selection_mode_property));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
-      auto& random_height = get<bool>("random_height", profile.get_properties());
+      auto& random_height_seed =
+        get<int>("random_height_seed", profile.get_properties());
+      auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
       list_model->push(QString::fromUtf8("AB.NSYE"));
       list_model->push(QString::fromUtf8("ABU.V.CDNX"));
@@ -691,7 +693,7 @@ UiProfile Spire::make_list_view_profile() {
       list_model->push(QString::fromUtf8("XYZ.TSX"));
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
-        [&random_height] (auto model, auto index) {
+        [&random_height_seed, &random_generator] (auto model, auto index) {
           auto text_box = new TextBox(model->get<QString>(index));
           text_box->set_read_only(true);
           text_box->setDisabled(true);
@@ -699,9 +701,9 @@ UiProfile Spire::make_list_view_profile() {
           style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
           set_style(*text_box, std::move(style));
           auto item_widget = new ListItem(text_box);
-          if(random_height.get()) {
+          if(random_height_seed.get() != 0) {
             item_widget->setMinimumHeight(
-              scale_height(QRandomGenerator::global()->bounded(30, 70)));
+              scale_height(random_generator.bounded(30, 70)));
           } else {
             item_widget->setMinimumHeight(item_widget->sizeHint().height());
           }

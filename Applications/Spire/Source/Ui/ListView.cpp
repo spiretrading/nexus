@@ -39,8 +39,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_current_index(-1),
-      m_column_or_row_index(0),
-      m_key(Qt::Key_unknown) {
+      m_column_or_row_index(0) {
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { update_layout(); });
   m_current_connection = m_current_model->connect_current_signal(
