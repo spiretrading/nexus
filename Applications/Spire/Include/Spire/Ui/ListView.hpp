@@ -165,9 +165,7 @@ namespace Styles {
       std::vector<Item> m_items;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_list_model_connection;
-      std::unordered_set<QString> m_selected;
       int m_current_index;
-      int m_start_index;
       int m_column_or_row_index;
       QString m_query;
       QTimer m_query_timer;

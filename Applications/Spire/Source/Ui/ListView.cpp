@@ -39,7 +39,6 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_current_index(-1),
-      m_start_index(m_current_index),
       m_column_or_row_index(0),
       m_key(Qt::Key_unknown) {
   set_style(*this, DEFAULT_STYLE());
@@ -192,38 +191,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       }
     }
     break;
-  case Qt::Key_Delete:
-    {
-      auto blocker = shared_connection_block(m_current_connection);
-      for(auto& value : m_selected) {
-        for(auto i = 0; i < m_list_model->get_size(); ++i) {
-          if(m_list_model->get<QString>(i) == value) {
-            m_delete_signal(value);
-            m_list_model->remove(i);
-            break;
-          }
-        }
-      }
-      m_selected.clear();
-    }
-    update_layout();
-    update_column_row_index();
-    break;
   default:
-    if(m_selection_mode == SelectionMode::MULTIPLE &&
-        (m_key = event->key()) == Qt::Key_A) {
-      auto modifiers = event->modifiers();
-      if((modifiers & Qt::ControlModifier) && (modifiers & Qt::ShiftModifier)) {
-        m_items[m_current_index].m_component->clearFocus();
-        m_current_index = -1;
-        m_current_model->set_current(boost::none);
-        return;
-      } else if(modifiers & Qt::ControlModifier) {
-        m_start_index = 0;
-        update_current(m_list_model->get_size() - 1);
-        return;
-      }
-    }
     auto key = event->text();
     if(!key.isEmpty() && key[0].isLetterOrNumber()) {
       m_query += key.toUpper();
@@ -292,38 +260,6 @@ int ListView::move_previous() {
 }
 
 void ListView::on_current(const boost::optional<QString>& current) {
-  if(!current) {
-    m_selected.clear();
-    m_start_index = m_current_index;
-    return;
-  }
-  if(m_selection_mode == SelectionMode::SINGLE) {
-    m_selected.clear();
-    m_selected.insert(current.get());
-  } else if(m_selection_mode == SelectionMode::MULTIPLE) {
-    auto modifiers = QGuiApplication::keyboardModifiers();
-    if((modifiers & Qt::ControlModifier) && (modifiers & Qt::ShiftModifier) &&
-        m_key == Qt::Key_A) {
-      m_selected.clear();
-      m_start_index = m_current_index;
-    } else if((modifiers & Qt::ShiftModifier) ||
-        (modifiers & Qt::ControlModifier && m_key == Qt::Key_A)) {
-      auto min_index = std::min(m_start_index, m_current_index);
-      auto max_index = std::max(m_start_index, m_current_index);
-      for(auto i = min_index; i <= max_index; ++i) {
-        m_selected.insert(m_list_model->get<QString>(i));
-      }
-    } else if(modifiers & Qt::ControlModifier) {
-      m_start_index = m_current_index;
-      m_selected.insert(current.get());
-    } else {
-      m_selected.clear();
-      m_start_index = m_current_index;
-      if(current) {
-        m_selected.insert(current.get());
-      }
-    }
-  }
   update_column_row_index();
 }
 
@@ -337,15 +273,16 @@ void ListView::on_delete_item(int index) {
 }
 
 void ListView::update_column_row_index() {
-  if(m_overflow == Overflow::WRAP) {
-    m_column_or_row_index = -1;
-    if(auto list_view_layout = layout()) {
-      for(auto i = 0; i < list_view_layout->count(); ++i) {
-        if(auto child_layout = list_view_layout->itemAt(i)->layout()) {
-          if(child_layout->indexOf(m_items[m_current_index].m_component) >= 0) {
-            m_column_or_row_index = i;
-            break;
-          }
+  if(m_overflow != Overflow::WRAP) {
+    return;
+  }
+  m_column_or_row_index = -1;
+  if(auto list_view_layout = layout()) {
+    for(auto i = 0; i < list_view_layout->count(); i += 2) {
+      if(auto child_layout = list_view_layout->itemAt(i)->layout()) {
+        if(child_layout->indexOf(m_items[m_current_index].m_component) >= 0) {
+          m_column_or_row_index = i;
+          break;
         }
       }
     }
