@@ -654,6 +654,7 @@ UiProfile Spire::make_list_item_profile() {
 UiProfile Spire::make_list_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("random_height", true));
   properties.push_back(make_standard_property("gap", 5));
   properties.push_back(make_standard_property("overflow_gap", 5));
   auto navigation_property = define_enum<ListView::EdgeNavigation>(
@@ -677,6 +678,7 @@ UiProfile Spire::make_list_view_profile() {
     make_standard_enum_property("selection_mode", selection_mode_property));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
+      auto& random_height = get<bool>("random_height", profile.get_properties());
       auto list_model = std::make_shared<ArrayListModel>();
       list_model->push(QString::fromUtf8("AB.NSYE"));
       list_model->push(QString::fromUtf8("ABU.V.CDNX"));
@@ -689,7 +691,7 @@ UiProfile Spire::make_list_view_profile() {
       list_model->push(QString::fromUtf8("XYZ.TSX"));
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
-        [] (auto model, auto index) {
+        [&random_height] (auto model, auto index) {
           auto text_box = new TextBox(model->get<QString>(index));
           text_box->set_read_only(true);
           text_box->setDisabled(true);
@@ -697,8 +699,12 @@ UiProfile Spire::make_list_view_profile() {
           style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
           set_style(*text_box, std::move(style));
           auto item_widget = new ListItem(text_box);
-          item_widget->setFixedHeight(
-            scale_height(QRandomGenerator::global()->bounded(30, 70)));
+          if(random_height.get()) {
+            item_widget->setFixedHeight(
+              scale_height(QRandomGenerator::global()->bounded(30, 70)));
+          } else {
+            item_widget->setMinimumHeight(item_widget->sizeHint().height());
+          }
           item_widget->setMinimumWidth(item_widget->sizeHint().width());
           return item_widget;
         });
