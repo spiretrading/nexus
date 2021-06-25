@@ -19,8 +19,8 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(ListItemGap(DEFAULT_GAP)).
-      set(ListOverflowGap(DEFAULT_OVERFLOW_GAP));
+      set(ListItemGap(scale_height(DEFAULT_GAP))).
+      set(ListOverflowGap(scale_width(DEFAULT_OVERFLOW_GAP)));
     return style;
   }
 }
@@ -238,7 +238,8 @@ scoped_connection ListView::connect_item_current(ListItem* item,
 scoped_connection ListView::connect_item_submit(ListItem* item,
     const QString& value) {
   return item->connect_submit_signal([=] {
-    update_current_index(value);
+    m_current_index = get_index_by_value(value);
+    update_x_y();
     m_submit_signal(value);
   });
 }
