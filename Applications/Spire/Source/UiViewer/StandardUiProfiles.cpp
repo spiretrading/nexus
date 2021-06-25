@@ -682,15 +682,24 @@ UiProfile Spire::make_list_view_profile() {
         get<int>("random_height_seed", profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
-      list_model->push(QString::fromUtf8("AB.NSYE"));
-      list_model->push(QString::fromUtf8("ABU.V.CDNX"));
-      list_model->push(QString::fromUtf8("CAN"));
-      list_model->push(QString::fromUtf8("MSFT.NSDQ"));
-      list_model->push(QString::fromUtf8("ABY.AX.ASX"));
-      list_model->push(QString::fromUtf8("ABX.NSDQ"));
-      list_model->push(QString::fromUtf8("ABX.TO.TSX"));
-      list_model->push(QString::fromUtf8("XIU.TSX"));
-      list_model->push(QString::fromUtf8("XYZ.TSX"));
+      //list_model->push(QString::fromUtf8("AB.NSYE"));
+      //list_model->push(QString::fromUtf8("ABU.V.CDNX"));
+      //list_model->push(QString::fromUtf8("CAN"));
+      //list_model->push(QString::fromUtf8("MSFT.NSDQ"));
+      //list_model->push(QString::fromUtf8("ABY.AX.ASX"));
+      //list_model->push(QString::fromUtf8("ABX.NSDQ"));
+      //list_model->push(QString::fromUtf8("ABX.TO.TSX"));
+      //list_model->push(QString::fromUtf8("XIU.TSX"));
+      //list_model->push(QString::fromUtf8("XYZ.TSX"));
+      list_model->push(QString::fromUtf8("0"));
+      list_model->push(QString::fromUtf8("1"));
+      list_model->push(QString::fromUtf8("2"));
+      list_model->push(QString::fromUtf8("3"));
+      list_model->push(QString::fromUtf8("4"));
+      list_model->push(QString::fromUtf8("5"));
+      list_model->push(QString::fromUtf8("6"));
+      list_model->push(QString::fromUtf8("7"));
+      list_model->push(QString::fromUtf8("8"));
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
         [&random_height_seed, &random_generator] (auto model, auto index) {

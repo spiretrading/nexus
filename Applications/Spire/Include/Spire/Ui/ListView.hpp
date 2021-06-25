@@ -163,10 +163,12 @@ namespace Styles {
       Overflow m_overflow;
       SelectionMode m_selection_mode;
       std::vector<Item> m_items;
-      boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
+      int m_previous_current_index;
       int m_column_or_row_index;
+      int m_x;
+      int m_y;
       QString m_query;
       QTimer m_query_timer;
 
@@ -177,12 +179,13 @@ namespace Styles {
       int get_index_by_value(const QString& value);
       int move_next();
       int move_previous();
-      void on_current(const boost::optional<QString>& current);
       void on_delete_item(int index);
       void update_column_row_index();
-      void update_current(int index);
+      void update_current_item(int index);
+      void update_current_index(const QString& value);
       void update_layout();
-      void select_nearest_item(bool is_next);
+      void update_x_y();
+      void select_nearest_item();
       void query();
   };
 }
