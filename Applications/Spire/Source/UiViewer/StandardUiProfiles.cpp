@@ -655,7 +655,7 @@ UiProfile Spire::make_list_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("random_height_seed", 0));
-  properties.push_back(make_standard_property("gap", 5));
+  properties.push_back(make_standard_property("gap", 2));
   properties.push_back(make_standard_property("overflow_gap", 5));
   auto navigation_property = define_enum<ListView::EdgeNavigation>(
     {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
@@ -682,27 +682,19 @@ UiProfile Spire::make_list_view_profile() {
         get<int>("random_height_seed", profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
-      //list_model->push(QString::fromUtf8("AB.NSYE"));
-      //list_model->push(QString::fromUtf8("ABU.V.CDNX"));
-      //list_model->push(QString::fromUtf8("CAN"));
-      //list_model->push(QString::fromUtf8("MSFT.NSDQ"));
-      //list_model->push(QString::fromUtf8("ABY.AX.ASX"));
-      //list_model->push(QString::fromUtf8("ABX.NSDQ"));
-      //list_model->push(QString::fromUtf8("ABX.TO.TSX"));
-      //list_model->push(QString::fromUtf8("XIU.TSX"));
-      //list_model->push(QString::fromUtf8("XYZ.TSX"));
-      list_model->push(QString::fromUtf8("0"));
-      list_model->push(QString::fromUtf8("1"));
-      list_model->push(QString::fromUtf8("2"));
-      list_model->push(QString::fromUtf8("3"));
-      list_model->push(QString::fromUtf8("4"));
-      list_model->push(QString::fromUtf8("5"));
-      list_model->push(QString::fromUtf8("6"));
-      list_model->push(QString::fromUtf8("7"));
-      list_model->push(QString::fromUtf8("8"));
+      for(auto i = 0; i < 66; ++i) {
+        list_model->push(QString::fromUtf8("Item%1").arg(i));
+      }
+      auto& gap = get<int>("gap", profile.get_properties());
+      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
+      auto& direction = get<Qt::Orientation>("direction",
+        profile.get_properties());
+      auto& overflow = get<ListView::Overflow>("overflow",
+        profile.get_properties());
+      auto& height = get<int>("height", properties);
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
-        [&random_height_seed, &random_generator] (auto model, auto index) {
+        [&] (auto model, auto index) {
           auto text_box = new TextBox(model->get<QString>(index));
           text_box->set_read_only(true);
           text_box->setDisabled(true);
@@ -710,17 +702,32 @@ UiProfile Spire::make_list_view_profile() {
           style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
           set_style(*text_box, std::move(style));
           auto item_widget = new ListItem(text_box);
-          if(random_height_seed.get() != 0) {
-            item_widget->setMinimumHeight(
-              scale_height(random_generator.bounded(30, 70)));
+          if(random_height_seed.get() == 0) {
+            if(direction.get() == Qt::Vertical) {
+              if(index == 15) {
+                item_widget->setFixedHeight(
+                  scale_height(26 * 3 + 2 * gap.get()));
+              } else if(index == 27) {
+                item_widget->setFixedHeight(scale_height(26 * 2 + gap.get()));
+              } else if(index == 36) {
+                item_widget->setFixedHeight(
+                  scale_height(26 * 3 + 2 * gap.get()));
+              } else if(index == 37) {
+                item_widget->setFixedHeight(scale_height(26 * 2 + gap.get()));
+              } else {
+                item_widget->setFixedHeight(scale_height(26));
+              }
+            } else {
+              item_widget->setMinimumHeight(item_widget->sizeHint().height());
+            }
           } else {
-            item_widget->setMinimumHeight(item_widget->sizeHint().height());
+              item_widget->setMinimumHeight(
+                scale_height(random_generator.bounded(30, 70)));
           }
           item_widget->setMinimumWidth(item_widget->sizeHint().width());
           return item_widget;
         });
       apply_widget_properties(list_view, profile.get_properties());
-      auto& gap = get<int>("gap", profile.get_properties());
       gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
@@ -729,7 +736,6 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(ListItemGap(scale_width(value)));
         set_style(*list_view, style);
       });
-      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
       overflow_gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
@@ -738,28 +744,26 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(ListOverflowGap(scale_width(value)));
         set_style(*list_view, style);
       });
-      auto& direction = get<Qt::Orientation>("direction",
-        profile.get_properties());
-      auto& overflow = get<ListView::Overflow>("overflow",
-        profile.get_properties());
-      direction.connect_changed_signal([=, &overflow] (auto value) {
+      direction.connect_changed_signal([=, &overflow, &height] (auto value) {
         list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
         list_view->setMinimumSize(0, 0);
         if(overflow.get() == ListView::Overflow::WRAP) {
           if(value == Qt::Vertical) {
             list_view->setFixedHeight(scale_height(170));
+            height.set(360);
           } else {
             list_view->setFixedWidth(scale_width(170));
           }
         }
         list_view->set_direction(value);
       });
-      overflow.connect_changed_signal([=, &direction] (auto value) {
+      overflow.connect_changed_signal([=, &direction, &height] (auto value) {
         list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
         list_view->setMinimumSize(0, 0);
         if(value == ListView::Overflow::WRAP) {
           if(direction.get() == Qt::Vertical) {
             list_view->setFixedHeight(scale_height(170));
+            height.set(360);
           } else {
             list_view->setFixedWidth(scale_width(170));
           }
