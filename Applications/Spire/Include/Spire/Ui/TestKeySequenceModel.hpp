@@ -8,6 +8,8 @@ namespace Spire {
   class TestKeySequenceModel : public KeySequenceModel {
     public:
 
+      QValidator::State get_state() const override;
+
       const QKeySequence& get_current() const override;
 
       QValidator::State set_current(const QKeySequence& sequence) override;

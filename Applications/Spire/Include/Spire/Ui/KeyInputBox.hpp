@@ -54,6 +54,7 @@ namespace Spire {
 
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<KeySequenceModel> m_model;
+      boost::signals2::scoped_connection m_current_connection;
       QKeySequence m_submission;
       LayeredWidget* m_layers;
       TextBox* m_text_box;
@@ -61,6 +62,7 @@ namespace Spire {
       QWidget* m_key_spacer;
 
       void set_status(Status status);
+      void submit_current();
       void on_current_sequence(const QKeySequence& sequence);
   };
 }

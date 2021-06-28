@@ -1,4 +1,5 @@
 #include "Spire/Ui/KeyInputBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -29,7 +30,7 @@ namespace {
   }
 
   auto KEY_PADDING() {
-    static auto padding = scale_width(8);
+    static auto padding = scale_width(10);
     return padding;
   }
 
@@ -38,7 +39,18 @@ namespace {
     return spacing;
   }
 
-  auto make_key_sequence(const std::vector<Qt::Key>& keys) {
+  auto make_key_sequence(QKeyEvent* event) {
+    auto keys = std::vector<Qt::Key>();
+    if(event->modifiers().testFlag(Qt::AltModifier)) {
+      keys.push_back(Qt::Key_Alt);
+    }
+    if(event->modifiers().testFlag(Qt::ControlModifier)) {
+      keys.push_back(Qt::Key_Control);
+    }
+    if(event->modifiers().testFlag(Qt::ShiftModifier)) {
+      keys.push_back(Qt::Key_Shift);
+    }
+    keys.push_back(Qt::Key(event->key()));
     switch(keys.size()) {
       case 1:
         return QKeySequence(keys[0]);
@@ -68,17 +80,17 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
   m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   m_key_spacer = new QWidget(this);
   m_key_spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
+  m_key_spacer->setFixedSize(0, 0);
   m_key_layout = new QHBoxLayout(m_key_spacer);
-  m_key_layout->setContentsMargins(scale_width(8), 0, 0, 0);
+  m_key_layout->setContentsMargins(KEY_PADDING(), 0, 0, 0);
   m_key_layout->setSpacing(scale_width(4));
   auto key_box = new Box(m_key_spacer, this);
   set_style(*key_box, KEY_BOX_STYLE());
   key_box->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_layers->add(key_box);
-  m_model->connect_current_signal([=] (const auto& sequence) {
-    on_current_sequence(sequence);
-  });
-  on_current_sequence(m_model->get_current());
+  m_current_connection = m_model->connect_current_signal(
+    [=] (const auto& sequence) { on_current_sequence(sequence); });
+  set_status(Status::NONE);
 }
 
 bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
@@ -89,6 +101,7 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
       }
       break;
     case QEvent::FocusOut:
+      submit_current();
       set_status(Status::NONE);
       break;
     case QEvent::KeyPress:
@@ -98,40 +111,27 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
       switch(e->key()) {
+        case Qt::Key_Delete:
+        case Qt::Key_Backspace:
+          m_submission = {};
+          m_model->set_current(QKeySequence());
+          break;
+        case Qt::Key_Escape:
+          if(m_model->set_current(make_key_sequence(e)) ==
+              QValidator::Invalid) {
+            m_model->set_current(m_submission);
+          }
+          break;
         case Qt::Key_Enter:
         case Qt::Key_Return:
-          set_status(Status::PROMPT);
-          break;
-        case Qt::Key_Delete:
-          m_model->set_current(QKeySequence());
-          m_submission = {};
-          m_submit_signal(m_submission);
+          submit_current();
           break;
         case Qt::Key_Alt:
         case Qt::Key_Control:
         case Qt::Key_Shift:
           break;
         default:
-          auto sequence = [&] {
-            auto keys = std::vector<Qt::Key>();
-            if(e->modifiers().testFlag(Qt::AltModifier)) {
-              keys.push_back(Qt::Key_Alt);
-            }
-            if(e->modifiers().testFlag(Qt::ControlModifier)) {
-              keys.push_back(Qt::Key_Control);
-            }
-            if(e->modifiers().testFlag(Qt::ShiftModifier)) {
-              keys.push_back(Qt::Key_Shift);
-            }
-            keys.push_back(Qt::Key(e->key()));
-            return make_key_sequence(keys);
-          }();
-          if(m_model->set_current(sequence) == QValidator::Acceptable) {
-            m_submission = sequence;
-            m_submit_signal(m_submission);
-          } else {
-            m_model->set_current(m_submission);
-          }
+          m_model->set_current(make_key_sequence(e));
       }
     }
     return true;
@@ -140,12 +140,24 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void KeyInputBox::resizeEvent(QResizeEvent* event) {
-  if(auto border_size =
-      Styles::find<BorderLeftSize>(get_computed_block(*m_text_box))) {
-    m_key_spacer->setMask({0, 0, width() - border_size->get_expression().
-      as<ConstantExpression<int>>().get_constant(), height()});
-  } else {
+  auto mask = [&] {
+    auto mask = QRect(0, 0, 0, height());
+    if(auto border_size =
+        Styles::find<BorderRightSize>(get_computed_block(*m_text_box))) {
+      mask.setWidth(width() - border_size->get_expression().
+        as<ConstantExpression<int>>().get_constant());
+    }
+    if(auto right_padding =
+        Styles::find<PaddingRight>(get_computed_block(*m_text_box))) {
+      mask.setWidth(mask.width() - right_padding->get_expression().
+        as<ConstantExpression<int>>().get_constant());
+    }
+    return mask;
+  }();
+  if(mask.width() == 0) {
     m_key_spacer->clearMask();
+  } else {
+    m_key_spacer->setMask(mask);
   }
   QWidget::resizeEvent(event);
 }
@@ -159,7 +171,8 @@ const std::shared_ptr<KeySequenceModel>& KeyInputBox::get_model() const {
 }
 
 QSize KeyInputBox::sizeHint() const {
-  return m_layers->sizeHint();
+  return {m_layers->sizeHint().width() + m_key_spacer->width() - KEY_PADDING(),
+    m_layers->sizeHint().height()};
 }
 
 connection KeyInputBox::connect_submit_signal(
@@ -171,9 +184,7 @@ void KeyInputBox::set_status(Status status) {
   clear_layout(m_key_layout);
   if(status == Status::PROMPT) {
     m_text_box->set_placeholder(tr("Enter Keys"));
-    auto style = get_style(*m_text_box);
-    style.get(Any()).set(PaddingLeft(scale_width(8)));
-    set_style(*m_text_box, style);
+    m_key_spacer->setFixedSize(0, 0);
     return;
   }
   m_text_box->set_placeholder("");
@@ -192,16 +203,25 @@ void KeyInputBox::set_status(Status status) {
       sequence_size.rheight() = std::max(tag->sizeHint().height(),
         sequence_size.height());
     }
-    auto style = get_style(*m_text_box);
-    style.get(Any()).set(PaddingLeft(sequence_size.width() + CARET_PADDING()));
-    set_style(*m_text_box, style);
     m_key_spacer->setFixedSize(sequence_size);
   }
 }
 
+void KeyInputBox::submit_current() {
+  m_submission = m_model->get_current();
+  m_submit_signal(m_submission);
+}
+
 void KeyInputBox::on_current_sequence(const QKeySequence& sequence) {
-  if(sequence.isEmpty() && hasFocus()) {
+  if(sequence.isEmpty()) {
+    auto blocker = shared_connection_block(m_current_connection);
+    m_model->set_current(m_submission);
+    m_submit_signal(m_submission);
     set_status(Status::PROMPT);
+  } else if(m_model->get_state() == QValidator::Invalid) {
+    unmatch(*m_text_box, Rejected());
+    match(*m_text_box, Rejected());
+    m_model->set_current(m_submission);
   } else {
     set_status(Status::NONE);
   }
