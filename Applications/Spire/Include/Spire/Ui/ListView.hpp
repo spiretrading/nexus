@@ -91,8 +91,8 @@ namespace Styles {
   
       /**
        * Constructs a ListView.
-       * @param current_model The current value's model .
-       * @param list_model The list model which holds the a list of items. 
+       * @param current_model The current value's model.
+       * @param list_model The list model which holds a list of items.
        * @param factory A function that takes a ListMoel and a index
        *                used to construct a widget displayed in the ListView.
        * @param parent The parent widget.

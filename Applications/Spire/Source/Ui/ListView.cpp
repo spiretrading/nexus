@@ -45,6 +45,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_y(0) {
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { update_layout(); });
+  setFocusPolicy(Qt::StrongFocus);
   m_items.resize(m_list_model->get_size());
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->get<QString>(i);
@@ -344,13 +345,12 @@ void ListView::update_layout() {
       }
       layout->addLayout(column_layout);
     } else {
-      auto column_height = 0;
       auto column_layout = new QVBoxLayout();
       column_layout->setSpacing(0);
       column_layout->setContentsMargins({});
       auto first_item = m_items[0].m_component;
       column_layout->addWidget(first_item);
-      column_height += first_item->height();
+      auto column_height = first_item->height();
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         auto item = m_items[i].m_component;
         column_height += item->height() + gap;
@@ -387,13 +387,12 @@ void ListView::update_layout() {
       }
       layout->addLayout(row_layout);
     } else {
-      auto row_width = 0;
       auto row_layout = new QHBoxLayout();
       row_layout->setSpacing(0);
       row_layout->setContentsMargins({});
       auto first_item = m_items[0].m_component;
       row_layout->addWidget(first_item);
-      row_width += first_item->width();
+      auto row_width = first_item->width();
       for(auto i = 1; i < m_list_model->get_size(); ++i) {
         auto item = m_items[i].m_component;
         row_width += item->width() + gap;
