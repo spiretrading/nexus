@@ -64,7 +64,7 @@ export class GroupController extends React.Component<Properties, State> {
           <Router.Route path='/group/:id(\d+)?/profit_loss'
             render={this.renderProfitLossPage}/>
           <Router.Route path='/group/:id(\d+)?'
-            render={({match}) => {
+            render={({match}: any) => {
               const url = `/group/${match.params.id}/group_info`;
               return <Router.Redirect to={url}/>;
             }}/>

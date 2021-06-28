@@ -49,6 +49,7 @@ namespace Spire {
   class RangeInputWidget;
   class RealSpinBox;
   class RowViewListModel;
+  template<typename T> class ScalarFilterPanel;
   class ScalarWidget;
   class ScrollArea;
   class ScrollBar;

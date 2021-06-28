@@ -20,7 +20,7 @@ FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property insta
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="e120b39fae985951b1a806349da57709329af87c"
+SET BEAM_COMMIT="3eb991fe9e76ef2772fcb5708b6a7be46c3c82a5"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
@@ -90,7 +90,7 @@ IF NOT EXIST lua-5.4.2 (
 IF NOT EXIST quickfix-v.1.15.1 (
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
   IF !ERRORLEVEL! LEQ 0 (
-    unzip quickfix-v.1.15.1.zip
+    tar -xf quickfix-v.1.15.1.zip
     mv quickfix-49b3508e48f0bbafbab13b68be72250bdd971ac2 quickfix-v.1.15.1
     PUSHD quickfix-v.1.15.1
     PUSHD src\C++
