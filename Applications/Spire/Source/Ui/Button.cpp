@@ -101,6 +101,14 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   return button;
 }
 
+Button* Spire::make_delete_icon_button(QWidget* parent) {
+  auto button = new Button(new Icon(icon, parent), parent);
+  auto style = StyleSheet();
+
+  set_style(*button, std::move(style));
+  return button;
+}
+
 Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   auto text_box = new TextBox(label);
   text_box->set_read_only(true);
