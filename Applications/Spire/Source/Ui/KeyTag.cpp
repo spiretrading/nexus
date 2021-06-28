@@ -13,7 +13,7 @@ namespace {
   const auto MODIFIER_BACKGROUND_COLOR = QColor("#FFEDCD");
 
   auto TAG_STYLE(StyleSheet style) {
-    style.get(ReadOnly()).
+    style.get(ReadOnly() && Disabled()).
       set(border_radius(scale_width(3))).
       set(border_size(0)).
       set(horizontal_padding(scale_width(4))).
@@ -60,6 +60,7 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   layout->setContentsMargins({});
   m_text_box = new TextBox(this);
   m_text_box->set_read_only(true);
+  m_text_box->setDisabled(true);
   proxy_style(*this, *m_text_box);
   set_style(*m_text_box, TAG_STYLE(get_style(*m_text_box)));
   auto style = get_style(*this);
