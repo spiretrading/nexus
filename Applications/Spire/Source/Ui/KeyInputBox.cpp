@@ -130,6 +130,9 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
         case Qt::Key_Control:
         case Qt::Key_Shift:
           break;
+        case Qt::Key_Tab:
+        case Qt::Key_Backtab:
+          return false;
         default:
           m_model->set_current(make_key_sequence(e));
       }
