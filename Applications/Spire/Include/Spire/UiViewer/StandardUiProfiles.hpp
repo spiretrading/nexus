@@ -23,6 +23,9 @@ namespace Spire {
   /** Returns a UiProfile for the DecimalFilterPanel. */
   UiProfile make_decimal_filter_panel_profile();
 
+  /** Returns a UiProfile for the DeleteIconButton. */
+  UiProfile make_delete_icon_button_profile();
+
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
 

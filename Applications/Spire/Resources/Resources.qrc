@@ -98,5 +98,6 @@
         <file>Icons/delete-row.svg</file>
         <file>Icons/arrow-down.svg</file>
         <file>Icons/arrow-up.svg</file>
+        <file>Icons/delete.svg</file>
     </qresource>
 </RCC>

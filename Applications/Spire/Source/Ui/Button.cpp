@@ -102,9 +102,15 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
 }
 
 Button* Spire::make_delete_icon_button(QWidget* parent) {
-  auto button = new Button(new Icon(icon, parent), parent);
-  auto style = StyleSheet();
-
+  auto button = make_icon_button(imageFromSvg(":/Icons/delete.svg",
+    scale(16, 16)), parent);
+  auto style = get_style(*button);
+  style.get(Body()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+    set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  style.get(Focus() / Body() || Hover() / Body()).
+    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
+    set(Fill(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   set_style(*button, std::move(style));
   return button;
 }

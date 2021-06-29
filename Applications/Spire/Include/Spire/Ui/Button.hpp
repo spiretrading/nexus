@@ -47,7 +47,11 @@ namespace Spire {
    */
   Button* make_icon_button(QImage icon, QWidget* parent = nullptr);
 
-  Button* make_delete_icon_button(QImage icon, QWidget* parent = nullptr);
+  /**
+   * Returns a newly constructed DeleteIconButton.
+   * @param parent The parent widget.
+   */
+  Button* make_delete_icon_button(QWidget* parent = nullptr);
 
   /**
    * Returns a newly constructed Button displaying a text label.
