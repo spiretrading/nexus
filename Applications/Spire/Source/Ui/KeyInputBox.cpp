@@ -78,12 +78,12 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
   m_text_box = new TextBox(this);
   m_layers->add(m_text_box);
   setFocusProxy(m_text_box);
+  connect_style_signal(*m_text_box, [=] { on_text_box_style(); });
   m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
   m_key_spacer = new QWidget(this);
   m_key_spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_key_spacer->setFixedSize(0, 0);
   m_key_layout = new QHBoxLayout(m_key_spacer);
-  m_key_layout->setContentsMargins(KEY_PADDING(), 0, 0, 0);
   m_key_layout->setSpacing(scale_width(4));
   auto key_box = new Box(m_key_spacer, this);
   set_style(*key_box, KEY_BOX_STYLE());
@@ -144,25 +144,8 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void KeyInputBox::resizeEvent(QResizeEvent* event) {
-  auto mask = [&] {
-    auto mask = QRect(0, 0, 0, height());
-    if(auto border_size =
-        Styles::find<BorderRightSize>(get_computed_block(*m_text_box))) {
-      mask.setWidth(width() - border_size->get_expression().
-        as<ConstantExpression<int>>().get_constant());
-    }
-    if(auto right_padding =
-        Styles::find<PaddingRight>(get_computed_block(*m_text_box))) {
-      mask.setWidth(mask.width() - right_padding->get_expression().
-        as<ConstantExpression<int>>().get_constant());
-    }
-    return mask;
-  }();
-  if(mask.width() == 0) {
-    m_key_spacer->clearMask();
-  } else {
-    m_key_spacer->setMask(mask);
-  }
+  auto mask = QRect(0, 0, width() - m_text_box_margins.right(), height());
+  m_key_spacer->setMask(mask);
   QWidget::resizeEvent(event);
 }
 
@@ -175,8 +158,8 @@ const std::shared_ptr<KeySequenceModel>& KeyInputBox::get_model() const {
 }
 
 QSize KeyInputBox::sizeHint() const {
-  return {m_layers->sizeHint().width() + m_key_spacer->width() - KEY_PADDING(),
-    m_layers->sizeHint().height()};
+  return {m_layers->sizeHint().width() + m_key_spacer->width() -
+    m_key_layout->contentsMargins().left(), m_layers->sizeHint().height()};
 }
 
 connection KeyInputBox::connect_submit_signal(
@@ -194,7 +177,7 @@ void KeyInputBox::set_status(Status status) {
   m_text_box->set_placeholder("");
   auto sequence = m_model->get_current();
   if(!sequence.isEmpty()) {
-    auto sequence_size = QSize(KEY_PADDING(), 0);
+    auto sequence_size = QSize(m_key_layout->contentsMargins().left(), 0);
     for(auto i = 0; i < sequence.count(); ++i) {
       auto tag = new KeyTag(
         std::make_shared<LocalKeyModel>(Qt::Key(sequence[i])), this);
@@ -231,4 +214,34 @@ void KeyInputBox::on_current_sequence(const QKeySequence& sequence) {
     m_previous_current = sequence;
     set_status(Status::NONE);
   }
+}
+
+void KeyInputBox::on_text_box_style() {
+  m_text_box_margins = {CARET_PADDING(), 0, 0, 0};
+  auto& stylist = find_stylist(*m_text_box);
+  auto block = stylist.get_computed_block();
+  for(auto& property : block) {
+    property.visit(
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_text_box_margins.setLeft(m_text_box_margins.left() + size);
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_text_box_margins.setRight(m_text_box_margins.right() + size);
+        });
+      },
+      [&] (const PaddingLeft& padding) {
+        stylist.evaluate(padding, [=] (auto padding) {
+          m_text_box_margins.setLeft(m_text_box_margins.left() + padding);
+        });
+      },
+      [&] (const PaddingRight& padding) {
+        stylist.evaluate(padding, [=] (auto padding) {
+          m_text_box_margins.setRight(m_text_box_margins.right() + padding);
+        });
+      });
+  }
+  m_key_layout->setContentsMargins(m_text_box_margins.left(), 0, 0, 0);
 }
