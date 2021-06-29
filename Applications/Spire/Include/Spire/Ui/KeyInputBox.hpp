@@ -61,7 +61,7 @@ namespace Spire {
       TextBox* m_text_box;
       QHBoxLayout* m_key_layout;
       QWidget* m_key_spacer;
-      QMargins m_text_box_margins;
+      int m_text_box_right_margin;
 
       void set_status(Status status);
       void submit_current();

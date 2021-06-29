@@ -29,11 +29,6 @@ namespace {
     return style;
   }
 
-  auto KEY_PADDING() {
-    static auto padding = scale_width(10);
-    return padding;
-  }
-
   auto KEY_SPACING() {
     static auto spacing = scale_width(4);
     return spacing;
@@ -70,7 +65,8 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
     QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
-      m_previous_current(m_model->get_current()) {
+      m_previous_current(m_model->get_current()),
+      m_text_box_right_margin(0) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_layers = new LayeredWidget(this);
@@ -144,8 +140,8 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void KeyInputBox::resizeEvent(QResizeEvent* event) {
-  auto mask = QRect(0, 0, width() - m_text_box_margins.right(), height());
-  m_key_spacer->setMask(mask);
+  m_key_spacer->setMask(QRegion(0, 0, width() - m_text_box_right_margin,
+    height()));
   QWidget::resizeEvent(event);
 }
 
@@ -217,31 +213,32 @@ void KeyInputBox::on_current_sequence(const QKeySequence& sequence) {
 }
 
 void KeyInputBox::on_text_box_style() {
-  m_text_box_margins = {CARET_PADDING(), 0, 0, 0};
+  m_text_box_right_margin = 0;
+  auto text_box_left_margin = CARET_PADDING();
   auto& stylist = find_stylist(*m_text_box);
   auto block = stylist.get_computed_block();
   for(auto& property : block) {
     property.visit(
       [&] (const BorderLeftSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_text_box_margins.setLeft(m_text_box_margins.left() + size);
+        stylist.evaluate(size, [&] (auto size) {
+          text_box_left_margin += size;
         });
       },
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_text_box_margins.setRight(m_text_box_margins.right() + size);
+          m_text_box_right_margin += size;
         });
       },
       [&] (const PaddingLeft& padding) {
-        stylist.evaluate(padding, [=] (auto padding) {
-          m_text_box_margins.setLeft(m_text_box_margins.left() + padding);
+        stylist.evaluate(padding, [&] (auto padding) {
+          text_box_left_margin += padding;
         });
       },
       [&] (const PaddingRight& padding) {
         stylist.evaluate(padding, [=] (auto padding) {
-          m_text_box_margins.setRight(m_text_box_margins.right() + padding);
+          m_text_box_right_margin += padding;
         });
       });
   }
-  m_key_layout->setContentsMargins(m_text_box_margins.left(), 0, 0, 0);
+  m_key_layout->setContentsMargins(text_box_left_margin, 0, 0, 0);
 }
