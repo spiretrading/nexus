@@ -107,7 +107,8 @@ namespace Spire {
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
     QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
-    : DecimalBoxAdaptor(std::make_shared<LocalOptionalScalarValueModel<Type>>(),
+    : DecimalBoxAdaptor(
+        std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
         std::move(modifiers), parent) {}
 
   template<typename T>

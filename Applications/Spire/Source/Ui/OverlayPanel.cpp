@@ -139,6 +139,14 @@ bool OverlayPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+void OverlayPanel::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape && !m_is_closed) {
+    fade(true);
+    return;
+  }
+  QWidget::keyPressEvent(event);
+}
+
 void OverlayPanel::fade(bool reverse) {
   auto animation = new QPropertyAnimation(this, "windowOpacity");
   animation->setDuration(FADE_SPEED_MS);

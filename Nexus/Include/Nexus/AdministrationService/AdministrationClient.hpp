@@ -10,6 +10,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Streamable.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
@@ -375,6 +376,7 @@ namespace Nexus::AdministrationService {
   template<typename B>
   template<typename BF>
   AdministrationClient<B>::AdministrationClient(BF&& clientBuilder)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder),
               std::bind(&AdministrationClient::OnReconnect, this,
               std::placeholders::_1)) {
@@ -388,6 +390,7 @@ namespace Nexus::AdministrationService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&AdministrationClient::OnRiskStateMessage, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to connect to the administration server."));
