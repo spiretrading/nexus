@@ -39,13 +39,12 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_current_index(-1),
-      m_previous_current_index(m_current_index),
       m_column_or_row_index(0),
       m_x(0),
-      m_y(0) {
+      m_y(0),
+      m_is_setting_item_focus(false) {
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { update_layout(); });
-  setFocusPolicy(Qt::StrongFocus);
   m_items.resize(m_list_model->get_size());
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->get<QString>(i);
@@ -227,13 +226,17 @@ scoped_connection ListView::connect_item_current(ListItem* item,
     if(m_selection_mode == SelectionMode::NONE) {
       return;
     }
-    update_current_index(value);
+    m_current_index = get_index_by_value(value);
+    if(!m_is_setting_item_focus) {
+      update_x_y();
+    }
+    m_is_setting_item_focus = false;
     if(m_current_index == -1) {
       m_current_model->set_current(boost::none);
     } else {
       m_current_model->set_current(value);
     }
-    });
+  });
 }
 
 scoped_connection ListView::connect_item_submit(ListItem* item,
@@ -299,16 +302,9 @@ void ListView::update_column_row_index() {
 
 void ListView::update_current_item(int index) {
   if(m_selection_mode != SelectionMode::NONE && index != -1) {
+    m_is_setting_item_focus = true;
     m_items[index].m_component->setFocus();
   }
-}
-
-void ListView::update_current_index(const QString& value) {
-  m_current_index = get_index_by_value(value);
-  if(m_previous_current_index == -1) {
-    update_x_y();
-  }
-  m_previous_current_index = m_current_index;
 }
 
 void ListView::update_layout() {

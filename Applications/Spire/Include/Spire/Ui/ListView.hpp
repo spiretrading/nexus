@@ -165,10 +165,10 @@ namespace Styles {
       std::vector<Item> m_items;
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
-      int m_previous_current_index;
       int m_column_or_row_index;
       int m_x;
       int m_y;
+      bool m_is_setting_item_focus;
       QString m_query;
       QTimer m_query_timer;
 
@@ -182,7 +182,6 @@ namespace Styles {
       void on_delete_item(int index);
       void update_column_row_index();
       void update_current_item(int index);
-      void update_current_index(const QString& value);
       void update_layout();
       void update_x_y();
       void select_nearest_item();
