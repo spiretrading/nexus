@@ -108,8 +108,9 @@ Button* Spire::make_delete_icon_button(QWidget* parent) {
   style.get(Body()).
     set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
     set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  style.get(Focus() / Body() || Hover() / Body()).
-    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
+  style.get((Focus() || Hover()) / Body()).
+    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB)));
+  style.get(Hover() / Body()).
     set(Fill(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   set_style(*button, std::move(style));
   return button;
