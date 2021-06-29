@@ -683,7 +683,19 @@ UiProfile Spire::make_list_view_profile() {
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
       for(auto i = 0; i < 66; ++i) {
-        list_model->push(QString::fromUtf8("Item%1").arg(i));
+        if(i == 10) {
+          list_model->push(QString::fromUtf8("llama"));
+        } else if(i == 11) {
+          list_model->push(QString::fromUtf8("llamb"));
+        } else if(i == 12) {
+          list_model->push(QString::fromUtf8("lllama"));
+        } else if(i == 20) {
+          list_model->push(QString::fromUtf8("llbma"));
+        } else if(i == 30) {
+          list_model->push(QString::fromUtf8("llxy"));
+        } else {
+          list_model->push(QString::fromUtf8("Item%1").arg(i));
+        }
       }
       auto& gap = get<int>("gap", profile.get_properties());
       auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());

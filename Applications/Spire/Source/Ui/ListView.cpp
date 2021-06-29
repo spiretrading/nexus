@@ -123,18 +123,15 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
   case Qt::Key_Home:
   case Qt::Key_PageUp:
-    update_current_item(0);
-    update_x_y();
+    update_current_item(0, true);
     break;
   case Qt::Key_End:
   case Qt::Key_PageDown:
-    update_current_item(m_list_model->get_size() - 1);
-    update_x_y();
+    update_current_item(m_list_model->get_size() - 1, true);
     break;
   case Qt::Key_Down:
     if(m_direction == Qt::Vertical) {
-      update_current_item(move_next());
-      update_x_y();
+      update_current_item(move_next(), true);
     } else if(m_overflow == Overflow::WRAP) {
       auto row_height =
         layout()->itemAt(m_column_or_row_index)->geometry().height();
@@ -145,15 +142,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         m_column_or_row_index += 2;
         select_nearest_item();
       } else {
-        update_current_item(move_next());
-        update_x_y();
+        update_current_item(move_next(), true);
       }
     }
     break;
   case Qt::Key_Up:
     if(m_direction == Qt::Vertical) {
-      update_current_item(move_previous());
-      update_x_y();
+      update_current_item(move_previous(), true);
     } else if(m_overflow == Overflow::WRAP) {
       if(m_current_index < 0) {
         return;
@@ -164,15 +159,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         m_column_or_row_index -= 2;
         select_nearest_item();
       } else {
-        update_current_item(move_previous());
-        update_x_y();
+        update_current_item(move_previous(), true);
       }
     }
     break;
   case Qt::Key_Left:
     if(m_direction == Qt::Horizontal) {
-      update_current_item(move_previous());
-      update_x_y();
+      update_current_item(move_previous(), true);
     } else if(m_overflow == Overflow::WRAP) {
       if(m_x != rect().x()) {
         m_x -= layout()->itemAt(m_column_or_row_index - 2)->geometry().width() +
@@ -180,15 +173,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         m_column_or_row_index -= 2;
         select_nearest_item();
       } else {
-        update_current_item(move_previous());
-        update_x_y();
+        update_current_item(move_previous(), true);
       }
     }
     break;
   case Qt::Key_Right:
     if(m_direction == Qt::Horizontal) {
-      update_current_item(move_next());
-      update_x_y();
+      update_current_item(move_next(), true);
     } else if(m_overflow == Overflow::WRAP) {
       auto column_width =
         layout()->itemAt(m_column_or_row_index)->geometry().width();
@@ -199,8 +190,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         m_column_or_row_index += 2;
         select_nearest_item();
       } else {
-        update_current_item(move_next());
-        update_x_y();
+        update_current_item(move_next(), true);
       }
     }
     break;
@@ -226,8 +216,8 @@ scoped_connection ListView::connect_item_current(ListItem* item,
     if(m_selection_mode == SelectionMode::NONE) {
       return;
     }
-    m_current_index = get_index_by_value(value);
     if(!m_is_setting_item_focus) {
+      m_current_index = get_index_by_value(value);
       update_x_y();
     }
     m_is_setting_item_focus = false;
@@ -283,7 +273,7 @@ void ListView::on_delete_item(int index) {
   if(m_current_index >= m_list_model->get_size()) {
     m_current_index = m_list_model->get_size() - 1;
   }
-  update_current_item(m_current_index);
+  update_current_item(m_current_index, true);
 }
 
 void ListView::update_column_row_index() {
@@ -300,10 +290,14 @@ void ListView::update_column_row_index() {
   }
 }
 
-void ListView::update_current_item(int index) {
+void ListView::update_current_item(int index, bool is_update_x_y) {
   if(m_selection_mode != SelectionMode::NONE && index != -1) {
     m_is_setting_item_focus = true;
+    m_current_index = index;
     m_items[index].m_component->setFocus();
+    if(is_update_x_y) {
+      update_x_y();
+    }
   }
 }
 
@@ -459,7 +453,7 @@ void ListView::select_nearest_item() {
   }
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     if(column_layout->itemAt(index)->widget() == m_items[i].m_component) {
-      update_current_item(i);
+      update_current_item(i, false);
       break;
     }
   }
@@ -469,13 +463,21 @@ void ListView::query() {
   if(m_query.isEmpty()) {
     return;
   }
-  auto index = (m_current_index + 1) % m_list_model->get_size();
-  while(index != m_current_index) {
+  auto item_count = m_list_model->get_size();
+  auto index = m_current_index;
+  auto query = m_query;
+  if(m_query.count(m_query.front()) == m_query.size()) {
+    index = (m_current_index + 1) % item_count;
+    query = m_query[0];
+  }
+  auto count = 0;
+  while(count < item_count) {
     if(auto value = m_list_model->get<QString>(index).toUpper();
-        value.startsWith(m_query)) {
-      update_current_item(index);
+        value.startsWith(query)) {
+      update_current_item(index, true);
       break;
     }
-    index = (index + 1) % m_list_model->get_size();
+    index = (index + 1) % item_count;
+    ++count;
   }
 }

@@ -181,7 +181,7 @@ namespace Styles {
       int move_previous();
       void on_delete_item(int index);
       void update_column_row_index();
-      void update_current_item(int index);
+      void update_current_item(int index, bool is_update_x_y);
       void update_layout();
       void update_x_y();
       void select_nearest_item();
