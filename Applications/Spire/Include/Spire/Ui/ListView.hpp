@@ -166,8 +166,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
       int m_column_or_row_index;
-      int m_x;
-      int m_y;
+      QRect m_tracking_geometry;
       bool m_is_setting_item_focus;
       QString m_query;
       QTimer m_query_timer;
@@ -177,14 +176,14 @@ namespace Styles {
       boost::signals2::scoped_connection connect_item_submit(ListItem* item,
         const QString& value);
       int get_index_by_value(const QString& value);
+      void cross_move(bool is_next);
       int move_next();
       int move_previous();
       void on_delete_item(int index);
       void update_column_row_index();
       void update_current_item(int index, bool is_update_x_y);
       void update_layout();
-      void update_x_y();
-      void select_nearest_item();
+      void update_tracking_geometry();
       void query();
   };
 }
