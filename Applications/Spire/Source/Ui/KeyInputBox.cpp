@@ -69,7 +69,8 @@ namespace {
 KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
     QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_previous_current(m_model->get_current()) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_layers = new LayeredWidget(this);
@@ -217,6 +218,7 @@ void KeyInputBox::submit_current() {
 
 void KeyInputBox::on_current_sequence(const QKeySequence& sequence) {
   if(sequence.isEmpty()) {
+    m_previous_current = m_submission;
     auto blocker = shared_connection_block(m_current_connection);
     m_model->set_current(m_submission);
     m_submit_signal(m_submission);
@@ -224,8 +226,9 @@ void KeyInputBox::on_current_sequence(const QKeySequence& sequence) {
   } else if(m_model->get_state() == QValidator::Invalid) {
     unmatch(*m_text_box, Rejected());
     match(*m_text_box, Rejected());
-    m_model->set_current(m_submission);
+    m_model->set_current(m_previous_current);
   } else {
+    m_previous_current = sequence;
     set_status(Status::NONE);
   }
 }

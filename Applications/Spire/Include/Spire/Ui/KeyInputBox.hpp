@@ -56,6 +56,7 @@ namespace Spire {
       std::shared_ptr<KeySequenceModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
       QKeySequence m_submission;
+      QKeySequence m_previous_current;
       LayeredWidget* m_layers;
       TextBox* m_text_box;
       QHBoxLayout* m_key_layout;
