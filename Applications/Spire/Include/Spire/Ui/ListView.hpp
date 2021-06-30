@@ -166,7 +166,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
       int m_column_or_row_index;
-      QRect m_tracking_geometry;
+      QPoint m_tracking_position;
       bool m_is_setting_item_focus;
       QString m_query;
       QTimer m_query_timer;
@@ -183,7 +183,7 @@ namespace Styles {
       void update_column_row_index();
       void update_current_item(int index, bool is_update_x_y);
       void update_layout();
-      void update_tracking_geometry();
+      void update_tracking_position();
       void query();
   };
 }

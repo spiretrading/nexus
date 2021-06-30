@@ -131,9 +131,9 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
       auto row_height =
         layout()->itemAt(m_column_or_row_index)->geometry().height();
-      if(m_tracking_geometry.y() + row_height <
+      if(m_tracking_position.y() + row_height <
           layout()->itemAt(layout()->count() - 2)->geometry().bottom()) {
-        m_tracking_geometry.setY(m_tracking_geometry.y() + row_height +
+        m_tracking_position.setY(m_tracking_position.y() + row_height +
           layout()->itemAt(m_column_or_row_index + 1)->geometry().height());
         cross_move(true);
         break;
@@ -143,8 +143,8 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     break;
   case Qt::Key_Up:
     if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-      if(m_tracking_geometry.y() != rect().y()) {
-        m_tracking_geometry.setY(m_tracking_geometry.y() -
+      if(m_tracking_position.y() != rect().y()) {
+        m_tracking_position.setY(m_tracking_position.y() -
           layout()->itemAt(m_column_or_row_index - 2)->geometry().height() -
           layout()->itemAt(m_column_or_row_index - 1)->geometry().height());
         cross_move(false);
@@ -155,8 +155,8 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     break;
   case Qt::Key_Left:
     if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-      if(m_tracking_geometry.x() != rect().x()) {
-        m_tracking_geometry.setX(m_tracking_geometry.x() -
+      if(m_tracking_position.x() != rect().x()) {
+        m_tracking_position.setX(m_tracking_position.x() -
           layout()->itemAt(m_column_or_row_index - 2)->geometry().width() -
           layout()->itemAt(m_column_or_row_index - 1)->geometry().width());
         cross_move(false);
@@ -169,9 +169,9 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
       auto column_width =
         layout()->itemAt(m_column_or_row_index)->geometry().width();
-      if(m_tracking_geometry.x() + column_width <
+      if(m_tracking_position.x() + column_width <
           layout()->itemAt(layout()->count() - 2)->geometry().right()) {
-        m_tracking_geometry.setX(m_tracking_geometry.x() + column_width +
+        m_tracking_position.setX(m_tracking_position.x() + column_width +
           layout()->itemAt(m_column_or_row_index + 1)->geometry().width());
         cross_move(true);
         break;
@@ -203,7 +203,7 @@ scoped_connection ListView::connect_item_current(ListItem* item,
     }
     if(!m_is_setting_item_focus) {
       m_current_index = get_index_by_value(value);
-      update_tracking_geometry();
+      update_tracking_position();
     }
     m_is_setting_item_focus = false;
     if(m_current_index == -1) {
@@ -218,7 +218,7 @@ scoped_connection ListView::connect_item_submit(ListItem* item,
     const QString& value) {
   return item->connect_submit_signal([=] {
     m_current_index = get_index_by_value(value);
-    update_tracking_geometry();
+    update_tracking_position();
     m_submit_signal(value);
   });
 }
@@ -241,15 +241,15 @@ void ListView::cross_move(bool is_next) {
     }
   }();
   auto target = layout()->itemAt(m_column_or_row_index)->layout();
-  auto [v0, dim, min_value] = [=] () -> std::tuple<int, int, int> {
+  auto [v0, min_value] = [=] () -> std::tuple<int, int> {
     if(m_direction == Qt::Vertical) {
-      return {m_tracking_geometry.y(), m_tracking_geometry.height(),
+      return {m_tracking_position.y(),
         std::abs(target->itemAt(0)->geometry().bottom() -
-          m_tracking_geometry.x())};
+          m_tracking_position.y())};
     } else {
-      return {m_tracking_geometry.x(), m_tracking_geometry.width(),
+      return {m_tracking_position.x(),
         std::abs(target->itemAt(0)->geometry().right() -
-          m_tracking_geometry.y())};
+          m_tracking_position.y())};
     }
   }();
   auto index = 0;
@@ -267,7 +267,7 @@ void ListView::cross_move(bool is_next) {
       break;
     } else {
       if(v1 > v0) {
-        if(std::abs(v0 + dim - v1) < min_value) {
+        if(std::abs(v0 - v1) < min_value) {
           index = i;
         } else {
           index = i - 2;
@@ -336,7 +336,7 @@ void ListView::update_current_item(int index, bool is_update_x_y) {
     m_current_index = index;
     m_items[index].m_component->setFocus();
     if(is_update_x_y) {
-      update_tracking_geometry();
+      update_tracking_position();
     }
   }
 }
@@ -428,14 +428,14 @@ void ListView::update_layout() {
     layout->addStretch();
   }
   adjustSize();
-  update_tracking_geometry();
+  update_tracking_position();
 }
 
-void ListView::update_tracking_geometry() {
+void ListView::update_tracking_position() {
   if(m_current_index == -1) {
     return;
   }
-  m_tracking_geometry = m_items[m_current_index].m_component->geometry();
+  m_tracking_position = m_items[m_current_index].m_component->pos();
   update_column_row_index();
 }
 
