@@ -8,28 +8,37 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Hover()).set(
+      BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
+    style.get(Focus()).set(
+      border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    style.get(Selected()).set(
+      BackgroundColor(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
+    return style;
+  }
+}
+
 ListItem::ListItem(QWidget* component, QWidget* parent)
     : QWidget(parent),
       m_is_selected(false) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_button = new Button(component, this);
+  auto box = new Box(component);
+  box->setDisabled(true);
+  m_button = new Button(box, this);
   setFocusProxy(m_button);
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
-  auto style = get_style(*m_button);
-  style.get(Body()).
-    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-    set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
-    set(horizontal_padding(scale_width(8)));
-  style.get(Hover() / Body()).set(
-    BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
-  style.get(Focus() / Body()).set(
-    border(scale_width(1), QColor::fromRgb(0x4B, 0x23, 0xA0)));
-  style.get(Selected() / Body()).set(
-    BackgroundColor(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
-  set_style(*m_button, std::move(style));
+  proxy_style(*this, *box);
+  set_style(*this, DEFAULT_STYLE());
 }
 
 bool ListItem::is_selected() const {
@@ -39,9 +48,9 @@ bool ListItem::is_selected() const {
 void ListItem::set_selected(bool is_selected) {
   m_is_selected = is_selected;
   if(m_is_selected) {
-    match(*m_button, Selected());
+    match(*this, Selected());
   } else {
-    unmatch(*m_button, Selected());
+    unmatch(*this, Selected());
   }
 }
 
