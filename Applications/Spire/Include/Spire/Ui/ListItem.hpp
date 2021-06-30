@@ -4,6 +4,11 @@
 #include "Spire/Ui/Button.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects the selected widget. */
+  using Selected = StateSelector<void, struct SelectedSelectorTag>;
+}
 
   /** Represents an item in a list. */
   class ListItem : public QWidget {
@@ -22,6 +27,15 @@ namespace Spire {
        */
       explicit ListItem(QWidget* component, QWidget* parent = nullptr);
   
+      /** Returns <code>true</code> iff this ListItem is selected. */
+      bool is_selected() const;
+
+      /**
+       * Sets the selected state.
+       * @param is_selected True iff the ListItem should be selected.
+       */
+      void set_selected(bool is_selected);
+
       /** Connects a slot to the current signal. */
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const;
@@ -36,6 +50,7 @@ namespace Spire {
     private:
       mutable SubmitSignal m_current_signal;
       Button* m_button;
+      bool m_is_selected;
   };
 }
 
