@@ -346,8 +346,8 @@ void ListView::update_layout() {
   if(m_items.empty()) {
     return;
   }
-  auto gap = 0;
-  auto overflow_gap = 0;
+  auto gap = DEFAULT_GAP;
+  auto overflow_gap = DEFAULT_OVERFLOW_GAP;
   auto& stylist = find_stylist(*this);
   auto block = stylist.get_computed_block();
   if(auto gap_property = Styles::find<ListItemGap>(block)) {
@@ -360,90 +360,72 @@ void ListView::update_layout() {
       overflow_gap = value;
     });
   }
-  if(m_direction == Qt::Vertical) {
-    auto layout = new QHBoxLayout(this);
+  auto layout = [=] () -> QBoxLayout* {
+    if(m_direction == Qt::Vertical) {
+      return new QHBoxLayout(this);
+    } else {
+      return new QVBoxLayout(this);
+    }
+  }();
+  auto get_child_layout = [=] () -> QBoxLayout* {
+    auto layout = [=] () -> QBoxLayout* {
+      if(m_direction == Qt::Vertical) {
+        return new QVBoxLayout();
+      } else {
+        return new QHBoxLayout();
+      }
+    }();
     layout->setSpacing(0);
     layout->setContentsMargins({});
-    if(m_overflow == Overflow::NONE) {
-      auto column_layout = new QVBoxLayout();
-      column_layout->setSpacing(0);
-      column_layout->setContentsMargins({});
-      column_layout->addWidget(m_items[0].m_component);
-      for(auto i = 1; i < m_list_model->get_size(); ++i) {
-        column_layout->addSpacing(gap);
-        column_layout->addWidget(m_items[i].m_component);
-      }
-      layout->addLayout(column_layout);
+    return layout;
+  };
+  auto get_item_dimension = [=] (QWidget* widget) {
+    if(m_direction == Qt::Vertical) {
+      return widget->height();
     } else {
-      auto column_layout = new QVBoxLayout();
-      column_layout->setSpacing(0);
-      column_layout->setContentsMargins({});
-      auto first_item = m_items[0].m_component;
-      column_layout->addWidget(first_item);
-      auto column_height = first_item->height();
-      for(auto i = 1; i < m_list_model->get_size(); ++i) {
-        auto item = m_items[i].m_component;
-        column_height += item->height() + gap;
-        if(column_height <= height()) {
-          column_layout->addSpacing(gap);
-          column_layout->addWidget(item);
-        } else {
-          column_layout->addStretch();
-          layout->addLayout(column_layout);
-          layout->addSpacing(overflow_gap);
-          column_layout = new QVBoxLayout();
-          column_layout->setSpacing(0);
-          column_layout->setContentsMargins({});
-          column_layout->addWidget(item);
-          column_height = item->height();
-        }
-      }
-      column_layout->addStretch();
-      layout->addLayout(column_layout);
-      layout->addStretch();
+      return widget->width();
     }
+  };
+  auto get_dimension = [=] {
+    if(m_direction == Qt::Vertical) {
+      return height();
+    } else {
+      return width();
+    }
+  };
+  layout->setSpacing(0);
+  layout->setContentsMargins({});
+  if(m_overflow == Overflow::NONE) {
+    auto child_layout = get_child_layout();
+    child_layout->addWidget(m_items[0].m_component);
+    for(auto i = 1; i < m_list_model->get_size(); ++i) {
+      child_layout->addSpacing(gap);
+      child_layout->addWidget(m_items[i].m_component);
+    }
+    layout->addLayout(child_layout);
   } else {
-    auto layout = new QVBoxLayout(this);
-    layout->setSpacing(0);
-    layout->setContentsMargins({});
-    if(m_overflow == Overflow::NONE) {
-      auto row_layout = new QHBoxLayout();
-      row_layout->setSpacing(0);
-      row_layout->setContentsMargins({});
-      row_layout->addWidget(m_items[0].m_component);
-      for(auto i = 1; i < m_list_model->get_size(); ++i) {
-        row_layout->addSpacing(gap);
-        row_layout->addWidget(m_items[i].m_component);
+    auto child_layout = get_child_layout();
+    auto first_item = m_items[0].m_component;
+    child_layout->addWidget(first_item);
+    auto child_dimension = get_item_dimension(first_item);
+    for(auto i = 1; i < m_list_model->get_size(); ++i) {
+      auto item = m_items[i].m_component;
+      child_dimension += get_item_dimension(item) + gap;
+      if(child_dimension <= get_dimension()) {
+        child_layout->addSpacing(gap);
+        child_layout->addWidget(item);
+      } else {
+        child_layout->addStretch();
+        layout->addLayout(child_layout);
+        layout->addSpacing(overflow_gap);
+        child_layout = get_child_layout();
+        child_layout->addWidget(item);
+        child_dimension = get_item_dimension(item);
       }
-      layout->addLayout(row_layout);
-    } else {
-      auto row_layout = new QHBoxLayout();
-      row_layout->setSpacing(0);
-      row_layout->setContentsMargins({});
-      auto first_item = m_items[0].m_component;
-      row_layout->addWidget(first_item);
-      auto row_width = first_item->width();
-      for(auto i = 1; i < m_list_model->get_size(); ++i) {
-        auto item = m_items[i].m_component;
-        row_width += item->width() + gap;
-        if(row_width <= width()) {
-          row_layout->addSpacing(gap);
-          row_layout->addWidget(item);
-        } else {
-          row_layout->addStretch();
-          layout->addLayout(row_layout);
-          layout->addSpacing(overflow_gap);
-          row_layout = new QHBoxLayout();
-          row_layout->setSpacing(0);
-          row_layout->setContentsMargins({});
-          row_layout->addWidget(item);
-          row_width = item->width();
-        }
-      }
-      row_layout->addStretch();
-      layout->addLayout(row_layout);
-      layout->addStretch();
     }
+    child_layout->addStretch();
+    layout->addLayout(child_layout);
+    layout->addStretch();
   }
   adjustSize();
   update_tracking_geometry();
