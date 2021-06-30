@@ -1,6 +1,7 @@
 #ifndef SPIRE_LIST_ITEM_HPP
 #define SPIRE_LIST_ITEM_HPP
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 
 namespace Spire {
@@ -49,6 +50,7 @@ namespace Styles {
 
     private:
       mutable SubmitSignal m_current_signal;
+      Box* m_box;
       Button* m_button;
       bool m_is_selected;
   };

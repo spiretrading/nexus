@@ -2,7 +2,6 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Box.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -31,14 +30,13 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  auto box = new Box(component);
-  box->setDisabled(true);
-  m_button = new Button(box, this);
+  m_box = new Box(component);
+  m_box->setDisabled(true);
+  m_button = new Button(m_box, this);
   setFocusProxy(m_button);
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
-  proxy_style(*this, *box);
-  set_style(*this, DEFAULT_STYLE());
+  set_style(*m_box, DEFAULT_STYLE());
 }
 
 bool ListItem::is_selected() const {
@@ -48,15 +46,22 @@ bool ListItem::is_selected() const {
 void ListItem::set_selected(bool is_selected) {
   m_is_selected = is_selected;
   if(m_is_selected) {
-    match(*this, Selected());
+    match(*m_box, Selected());
   } else {
-    unmatch(*this, Selected());
+    unmatch(*m_box, Selected());
   }
 }
 
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
+    match(*m_box, Focus());
     m_current_signal();
+  } else if(event->type() == QEvent::FocusOut) {
+    unmatch(*m_box, Focus());
+  } else if(event->type() == QEvent::Enter) {
+    match(*m_box, Hover());
+  } else if(event->type() == QEvent::Leave) {
+    unmatch(*m_box, Hover());
   }
   return QWidget::eventFilter(watched, event);
 }
