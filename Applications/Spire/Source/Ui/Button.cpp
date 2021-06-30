@@ -38,6 +38,7 @@ void Button::focusOutEvent(QFocusEvent* event) {
     m_is_down = false;
   }
   unmatch(*this, Press());
+  unmatch(*this, Hover());
   QWidget::focusOutEvent(event);
 }
 
@@ -74,6 +75,15 @@ void Button::keyReleaseEvent(QKeyEvent* event) {
   }
 }
 
+void Button::mouseMoveEvent(QMouseEvent* event) {
+  if(!rect().contains(event->pos())) {
+    unmatch(*this, Hover());
+  } else if(m_is_down) {
+    match(*this, Hover());
+  }
+  QWidget::mouseMoveEvent(event);
+}
+
 void Button::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && rect().contains(event->pos())) {
     m_is_down = true;
@@ -85,12 +95,22 @@ void Button::mousePressEvent(QMouseEvent* event) {
 void Button::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     unmatch(*this, Press());
-    if(m_is_down && rect().contains(event->pos())) {
-      m_is_down = false;
-      m_clicked_signal();
+    if(rect().contains(event->pos())) {
+      match(*this, Hover());
+      if(m_is_down) {
+        m_is_down = false;
+        m_clicked_signal();
+      }
     }
   }
   QWidget::mouseReleaseEvent(event);
+}
+
+void Button::showEvent(QShowEvent* event) {
+  if(!underMouse()) {
+    unmatch(*this, Hover());
+  }
+  QWidget::showEvent(event);
 }
 
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
@@ -121,6 +141,8 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(horizontal_padding(scale_width(8)));
   style.get(Hover() / Body()).
     set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0))).
+    set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
+  style.get(Press() / Body()).
     set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
   style.get(Focus() / Body()).set(
     border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));

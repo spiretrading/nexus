@@ -33,11 +33,13 @@ namespace Styles {
         const ClickedSignal::slot_type& slot) const;
 
     protected:
-      void focusOutEvent(QFocusEvent* event);
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable ClickedSignal m_clicked_signal;

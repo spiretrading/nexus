@@ -738,7 +738,8 @@ UiProfile Spire::make_label_button_profile() {
   properties.push_back(
     make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
   properties.push_back(make_standard_property<QColor>("pressed-color",
-    QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    //QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    QColor::fromRgb(0xFF, 0x0, 0x0)));
   auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
