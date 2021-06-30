@@ -26,6 +26,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -129,6 +130,52 @@ namespace {
   void populate_decimal_box_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties, 1);
+  }
+
+  template<typename B>
+  auto setup_scalar_filter_panel_profile(UiProfile& profile) {
+    using Type = std::decay_t<decltype(*std::declval<B>().get_model())>::Scalar;
+    auto& title = get<QString>("title", profile.get_properties());
+    auto& default_min = get<Type>("default_minimum", profile.get_properties());
+    auto& default_max = get<Type>("default_maximum", profile.get_properties());
+    auto& default_increment =
+      get<Type>("default_increment", profile.get_properties());
+    auto button = make_label_button(QString::fromUtf8("Click me"));
+    auto min_model =
+      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_min.get());
+    auto max_model =
+      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_max.get());
+    button->connect_clicked_signal([&, button, min_model, max_model] {
+      min_model->set_increment(default_increment.get());
+      max_model->set_increment(default_increment.get());
+      auto panel = new ScalarFilterPanel<B>(min_model, max_model,
+        default_min.get(), default_max.get(), title.get(), button);
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal([=] (const auto& min, const auto& max) {
+        auto to_string = [&] (const optional<Type>& value) -> QString {
+          if(value) {
+            return displayTextAny(*value);
+          }
+          return QString::fromUtf8("null");
+        };
+        filter_slot(QString("%1, %2").arg(to_string(min)).arg(to_string(max)));
+      });
+      panel->show();
+    });
+    return button;
+  }
+
+  template<typename T>
+  void populate_scalar_filter_panel_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      T default_increment, const QString& default_title) {
+    using Type = T;
+    properties.push_back(make_standard_property("title", default_title));
+    properties.push_back(make_standard_property("default_minimum", Type(1)));
+    properties.push_back(make_standard_property("default_maximum", Type(10)));
+    properties.push_back(make_standard_property(
+      "default_increment", default_increment));
   }
 }
 
@@ -453,6 +500,76 @@ UiProfile Spire::make_decimal_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_decimal_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property("title",
+    QString::fromUtf8("Filter by Decimal Number")));
+  properties.push_back(make_standard_property("default_minimum",
+    QString::fromUtf8("1.3")));
+  properties.push_back(make_standard_property("default_maximum",
+    QString::fromUtf8("10.67")));
+  properties.push_back(make_standard_property("decimal_places", 2));
+  properties.push_back(make_standard_property("leading_zeros", 0));
+  properties.push_back(make_standard_property("trailing_zeros", 2));
+  auto profile = UiProfile(QString::fromUtf8("DecimalFilterPanel"), properties,
+    [] (auto& profile) {
+      auto to_decimal = [] (auto decimal) -> boost::optional<Decimal> {
+        try {
+          return Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      auto to_string = [] (const optional<Decimal>& value) {
+        if(value) {
+          return QString::fromStdString(value->str(
+            Decimal::backend_type::cpp_dec_float_digits10,
+            std::ios_base::dec));
+        }
+        return QString::fromUtf8("null");
+      };
+      auto& title = get<QString>("title", profile.get_properties());
+      auto& default_min =
+        get<QString>("default_minimum", profile.get_properties());
+      auto& default_max =
+        get<QString>("default_maximum", profile.get_properties());
+      auto& decimal_places = get<int>("decimal_places",
+        profile.get_properties());
+      auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
+      auto& trailing_zeros = get<int>("trailing_zeros",
+        profile.get_properties());
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto min_model =
+        std::make_shared<LocalScalarValueModel<optional<Decimal>>>(
+          to_decimal(default_min.get()));
+      auto max_model =
+        std::make_shared<LocalScalarValueModel<optional<Decimal>>>(
+          to_decimal(default_max.get()));
+      button->connect_clicked_signal([&, button, min_model, max_model] {
+        min_model->set_increment(pow(Decimal(10), -decimal_places.get()));
+        max_model->set_increment(pow(Decimal(10), -decimal_places.get()));
+        auto panel = new DecimalFilterPanel(min_model, max_model,
+          to_decimal(default_min.get()), to_decimal(default_max.get()),
+          title.get(), button);
+        auto filter_slot = profile.make_event_slot<QString>(
+          QString::fromUtf8("SubmitSignal"));
+        panel->connect_submit_signal([=] (const auto& min, const auto& max) {
+          filter_slot(to_string(min) + QString::fromUtf8(", ") +
+            to_string(max));
+        });
+        auto style = get_style(*panel);
+        style.get(Any() >> is_a<DecimalBox>()).set(
+          LeadingZeros(leading_zeros.get()));
+        style.get(Any() >> is_a<DecimalBox>()).set(
+          TrailingZeros(trailing_zeros.get()));
+        set_style(*panel, std::move(style));
+        panel->show();
+      });
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -592,6 +709,15 @@ UiProfile Spire::make_integer_box_profile() {
   populate_decimal_box_properties<int>(properties);
   auto profile = UiProfile(QString::fromUtf8("IntegerBox"), properties,
     setup_decimal_box_profile<IntegerBox>);
+  return profile;
+}
+
+UiProfile Spire::make_integer_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_scalar_filter_panel_properties<int>(properties, 1,
+    QString::fromUtf8("Filter by Integer"));
+  auto profile = UiProfile(QString::fromUtf8("IntegerFilterPanel"), properties,
+    setup_scalar_filter_panel_profile<IntegerBox>);
   return profile;
 }
 
@@ -814,6 +940,15 @@ UiProfile Spire::make_money_box_profile() {
   populate_decimal_box_properties<Money>(properties, Money::CENT);
   auto profile = UiProfile(QString::fromUtf8("MoneyBox"), properties,
     setup_decimal_box_profile<MoneyBox>);
+  return profile;
+}
+
+UiProfile Spire::make_money_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_scalar_filter_panel_properties<Money>(properties, Money::CENT,
+    QString::fromUtf8("Filter by Money"));
+  auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"), properties,
+    setup_scalar_filter_panel_profile<MoneyBox>);
   return profile;
 }
 
