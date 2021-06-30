@@ -66,6 +66,7 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
     : QWidget(parent),
       m_model(std::move(model)),
       m_previous_current(m_model->get_current()),
+      m_is_rejected(false),
       m_text_box_right_margin(0) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -76,12 +77,12 @@ KeyInputBox::KeyInputBox(std::shared_ptr<KeySequenceModel> model,
   setFocusProxy(m_text_box);
   connect_style_signal(*m_text_box, [=] { on_text_box_style(); });
   m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
-  m_key_spacer = new QWidget(this);
-  m_key_spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_key_spacer->setFixedSize(0, 0);
-  m_key_layout = new QHBoxLayout(m_key_spacer);
+  m_key_sequence = new QWidget(this);
+  m_key_sequence->setAttribute(Qt::WA_TransparentForMouseEvents);
+  m_key_sequence->setFixedSize(0, 0);
+  m_key_layout = new QHBoxLayout(m_key_sequence);
   m_key_layout->setSpacing(scale_width(4));
-  auto key_box = new Box(m_key_spacer, this);
+  auto key_box = new Box(m_key_sequence, this);
   set_style(*key_box, KEY_BOX_STYLE());
   key_box->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_layers->add(key_box);
@@ -140,7 +141,7 @@ bool KeyInputBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void KeyInputBox::resizeEvent(QResizeEvent* event) {
-  m_key_spacer->setMask(QRegion(0, 0, width() - m_text_box_right_margin,
+  m_key_sequence->setMask(QRegion(0, 0, width() - m_text_box_right_margin,
     height()));
   QWidget::resizeEvent(event);
 }
@@ -154,7 +155,7 @@ const std::shared_ptr<KeySequenceModel>& KeyInputBox::get_model() const {
 }
 
 QSize KeyInputBox::sizeHint() const {
-  return {m_layers->sizeHint().width() + m_key_spacer->width() -
+  return {m_layers->sizeHint().width() + m_key_sequence->width() -
     m_key_layout->contentsMargins().left(), m_layers->sizeHint().height()};
 }
 
@@ -167,7 +168,7 @@ void KeyInputBox::set_status(Status status) {
   clear_layout(m_key_layout);
   if(status == Status::PROMPT) {
     m_text_box->set_placeholder(tr("Enter Keys"));
-    m_key_spacer->setFixedSize(0, 0);
+    m_key_sequence->setFixedSize(0, 0);
     return;
   }
   m_text_box->set_placeholder("");
@@ -186,7 +187,7 @@ void KeyInputBox::set_status(Status status) {
       sequence_size.rheight() = std::max(tag->sizeHint().height(),
         sequence_size.height());
     }
-    m_key_spacer->setFixedSize(sequence_size);
+    m_key_sequence->setFixedSize(sequence_size);
   }
 }
 
@@ -196,16 +197,22 @@ void KeyInputBox::submit_current() {
 }
 
 void KeyInputBox::on_current_sequence(const QKeySequence& sequence) {
+  if(m_is_rejected) {
+    m_is_rejected = false;
+    unmatch(*m_text_box, Rejected());
+  }
+  auto blocker = shared_connection_block(m_current_connection);
   if(sequence.isEmpty()) {
     m_previous_current = m_submission;
-    auto blocker = shared_connection_block(m_current_connection);
     m_model->set_current(m_submission);
     m_submit_signal(m_submission);
     set_status(Status::PROMPT);
   } else if(m_model->get_state() == QValidator::Invalid) {
-    unmatch(*m_text_box, Rejected());
-    match(*m_text_box, Rejected());
     m_model->set_current(m_previous_current);
+    if(!m_is_rejected) {
+      m_is_rejected = true;
+      match(*m_text_box, Rejected());
+    }
   } else {
     m_previous_current = sequence;
     set_status(Status::NONE);

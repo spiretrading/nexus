@@ -57,10 +57,11 @@ namespace Spire {
       boost::signals2::scoped_connection m_current_connection;
       QKeySequence m_submission;
       QKeySequence m_previous_current;
+      bool m_is_rejected;
       LayeredWidget* m_layers;
       TextBox* m_text_box;
       QHBoxLayout* m_key_layout;
-      QWidget* m_key_spacer;
+      QWidget* m_key_sequence;
       int m_text_box_right_margin;
 
       void set_status(Status status);
