@@ -249,17 +249,17 @@ void ListView::cross_move(bool is_next) {
     } else {
       return {m_tracking_position.x(),
         std::abs(target->itemAt(0)->geometry().right() -
-          m_tracking_position.y())};
+          m_tracking_position.x())};
     }
   }();
   auto index = 0;
   for(auto i = 0; i < target->count(); i += 2) {
-    auto range = target->itemAt(i)->geometry();
-    auto [v1, v2] = [=, &range] () -> std::tuple<int, int> {
+    auto [v1, v2] = [=] () -> std::tuple<int, int> {
+      auto item_geometry = target->itemAt(i)->geometry();
       if(m_direction == Qt::Vertical) {
-        return {range.top(), range.bottom()};
+        return {item_geometry.top(), item_geometry.bottom()};
       } else {
-        return {range.left(), range.right()};
+        return {item_geometry.left(), item_geometry.right()};
       }
     }();
     if(v0 >= v1 && v0 <= v2) {
@@ -269,18 +269,20 @@ void ListView::cross_move(bool is_next) {
       if(v1 > v0) {
         if(std::abs(v0 - v1) < min_value) {
           index = i;
+        } else if(i == 0) {
+          index = i;
         } else {
           index = i - 2;
         }
         break;
       } else {
-        index = i;
         min_value = std::abs(v0 - v2);
       }
     }
   }
+  auto item = target->itemAt(index)->widget();
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    if(target->itemAt(index)->widget() == m_items[i].m_component) {
+    if(item == m_items[i].m_component) {
       update_current_item(i, false);
       break;
     }
@@ -360,13 +362,6 @@ void ListView::update_layout() {
       overflow_gap = value;
     });
   }
-  auto layout = [=] () -> QBoxLayout* {
-    if(m_direction == Qt::Vertical) {
-      return new QHBoxLayout(this);
-    } else {
-      return new QVBoxLayout(this);
-    }
-  }();
   auto get_child_layout = [=] () -> QBoxLayout* {
     auto layout = [=] () -> QBoxLayout* {
       if(m_direction == Qt::Vertical) {
@@ -393,6 +388,13 @@ void ListView::update_layout() {
       return width();
     }
   };
+  auto layout = [=] () -> QBoxLayout* {
+    if(m_direction == Qt::Vertical) {
+      return new QHBoxLayout(this);
+    } else {
+      return new QVBoxLayout(this);
+    }
+  }();
   layout->setSpacing(0);
   layout->setContentsMargins({});
   if(m_overflow == Overflow::NONE) {
@@ -444,12 +446,13 @@ void ListView::query() {
     return;
   }
   auto item_count = m_list_model->get_size();
-  auto index = m_current_index;
-  auto query = m_query;
-  if(m_query.count(m_query.front()) == m_query.size()) {
-    index = (m_current_index + 1) % item_count;
-    query = m_query[0];
-  }
+  auto [query, index] = [=] () -> std::tuple<QString, int> {
+    if(m_query.count(m_query.front()) == m_query.size()) {
+      return {static_cast<QString>(m_query[0]),
+        (m_current_index + 1) % item_count};
+    }
+    return {m_query, m_current_index};
+  }();
   auto count = 0;
   while(count < item_count) {
     if(auto value = m_list_model->get<QString>(index).toUpper();
