@@ -36,6 +36,7 @@ namespace Spire {
   class Icon;
   class IconButton;
   class IntegerSpinBox;
+  class KeyInputBox;
   class KeySequenceInputField;
   class LayeredWidget;
   class ListModel;
