@@ -52,6 +52,7 @@ namespace Spire {
     protected:
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       enum class Status : std::uint8_t {
@@ -61,10 +62,12 @@ namespace Spire {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<KeySequenceValueModel> m_current;
+      QKeySequence m_submission;
       Status m_status;
       QWidget* m_body;
       boost::signals2::scoped_connection m_current_connection;
 
+      void layout_key_sequence();
       void transition_status();
       void set_status(Status status);
       void on_current(const QKeySequence& current);

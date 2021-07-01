@@ -1,5 +1,6 @@
 #include "Spire/Ui/KeyInputBox.hpp"
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -30,6 +31,13 @@ namespace {
       }
     }
     return keys;
+  }
+
+  void clear(QLayout& layout) {
+    while(auto item = layout.takeAt(0)) {
+      item->widget()->deleteLater();
+      delete item;
+    }
   }
 }
 
@@ -72,6 +80,29 @@ void KeyInputBox::focusOutEvent(QFocusEvent* event) {
   set_status(Status::NONE);
 }
 
+void KeyInputBox::keyPressEvent(QKeyEvent* event) {
+  auto key = event->key();
+  if(key == Qt::Key_Shift || key == Qt::Key_Meta || key == Qt::Key_Control ||
+      key == Qt::Key_Alt) {
+    return;
+  } else if(event->modifiers() == 0 &&
+      (key == Qt::Key_Delete || key == Qt::Key_Backspace)) {
+    m_submission = m_current->get_current();
+    m_current->set_current(QKeySequence());
+  } else {
+    m_current->set_current(event->modifiers() + key);
+  }
+}
+
+void KeyInputBox::layout_key_sequence() {
+  auto& layout = *m_body->layout();
+  clear(layout);
+  layout.setSpacing(scale_width(4));
+  for(auto key : split(m_current->get_current())) {
+    layout.addWidget(new KeyTag(make_constant_value_model(key)));
+  }
+}
+
 void KeyInputBox::transition_status() {
   if(m_current->get_current().count() == 0) {
     set_status(Status::PROMPT);
@@ -85,17 +116,9 @@ void KeyInputBox::set_status(Status status) {
     return;
   }
   m_status = status;
-  auto& layout = *m_body->layout();
-  while(auto item = layout.takeAt(0)) {
-    item->widget()->deleteLater();
-    delete item;
-  }
-  if(m_status == Status::NONE) {
-    layout.setSpacing(scale_width(4));
-    for(auto key : split(m_current->get_current())) {
-      layout.addWidget(new KeyTag(make_constant_value_model(key)));
-    }
-  } else if(m_status == Status::PROMPT) {
+  if(m_status == Status::PROMPT) {
+    auto& layout = *m_body->layout();
+    clear(layout);
     layout.setSpacing(0);
     auto prompt = new TextBox(tr("Enter Keys"));
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -107,4 +130,7 @@ void KeyInputBox::set_status(Status status) {
 
 void KeyInputBox::on_current(const QKeySequence& current) {
   transition_status();
+  if(m_status == Status::NONE) {
+    layout_key_sequence();
+  }
 }
