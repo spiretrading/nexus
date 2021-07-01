@@ -752,6 +752,7 @@ UiProfile Spire::make_key_tag_profile() {
 UiProfile Spire::make_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
@@ -769,6 +770,10 @@ UiProfile Spire::make_list_item_profile() {
         profile.make_event_slot(QString::fromUtf8("Current")));
       item->connect_submit_signal(
         profile.make_event_slot(QString::fromUtf8("Submit")));
+      auto& selected = get<bool>("selected", profile.get_properties());
+      selected.connect_changed_signal([=] (auto value) {
+        item->set_selected(value);
+      });
       return item;
     });
   return profile;
