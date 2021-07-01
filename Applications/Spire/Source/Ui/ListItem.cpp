@@ -31,9 +31,13 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_box = new Box(component);
-  m_box->setDisabled(true);
   m_button = new Button(m_box, this);
-  setFocusProxy(m_button);
+  if(component->isEnabled()) {
+    setFocusProxy(component);
+  } else {
+    m_box->setFocusProxy(nullptr);
+    setFocusProxy(m_button);
+  }
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
   set_style(*m_box, DEFAULT_STYLE());
