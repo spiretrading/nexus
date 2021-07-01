@@ -19,6 +19,7 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -715,6 +716,19 @@ UiProfile Spire::make_integer_filter_panel_profile() {
     QString::fromUtf8("Filter by Integer"));
   auto profile = UiProfile(QString::fromUtf8("IntegerFilterPanel"), properties,
     setup_scalar_filter_panel_profile<IntegerBox>);
+  return profile;
+}
+
+UiProfile Spire::make_key_input_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
+    auto& width = get<int>("width", profile.get_properties());
+    width.set(scale_width(100));
+    auto box = new KeyInputBox();
+    apply_widget_properties(box, profile.get_properties());
+    return box;
+  });
   return profile;
 }
 

@@ -48,6 +48,25 @@ namespace Spire {
        */
       boost::signals2::connection
         connect_submit_signal(const SubmitSignal::slot_type& slot) const;
+
+    protected:
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
+
+    private:
+      enum class Status : std::uint8_t {
+        UNINITIALIZED,
+        NONE,
+        PROMPT
+      };
+      mutable SubmitSignal m_submit_signal;
+      std::shared_ptr<KeySequenceValueModel> m_current;
+      Status m_status;
+      boost::signals2::scoped_connection m_current_connection;
+
+      void transition_status();
+      void set_status(Status status);
+      void on_current(const QKeySequence& current);
   };
 }
 
