@@ -26,9 +26,6 @@ namespace Styles {
   /** Sets the text alignment. */
   using TextAlign = BasicProperty<Qt::Alignment, struct TextAlignTag>;
 
-  /** Selects a read-only widget. */
-  using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
-
   /** Selects a a widget whose input value is rejected. */
   using Rejected = StateSelector<void, struct RejectedTag>;
 
