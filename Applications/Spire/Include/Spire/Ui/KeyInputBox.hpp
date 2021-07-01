@@ -62,6 +62,7 @@ namespace Spire {
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<KeySequenceValueModel> m_current;
       Status m_status;
+      QWidget* m_body;
       boost::signals2::scoped_connection m_current_connection;
 
       void transition_status();
