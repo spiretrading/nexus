@@ -22,6 +22,7 @@ namespace Spire {
       QSize sizeHint() const override;
 
     protected:
+      bool event(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:

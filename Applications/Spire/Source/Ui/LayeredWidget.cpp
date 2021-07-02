@@ -1,4 +1,5 @@
 #include "Spire/Ui/LayeredWidget.hpp"
+#include <QEvent>
 
 using namespace Spire;
 
@@ -23,6 +24,13 @@ QSize LayeredWidget::sizeHint() const {
     size.setHeight(std::max(size.height(), layer->sizeHint().height()));
   }
   return size;
+}
+
+bool LayeredWidget::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    updateGeometry();
+  }
+  return QWidget::event(event);
 }
 
 void LayeredWidget::resizeEvent(QResizeEvent* event) {
