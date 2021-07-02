@@ -107,6 +107,7 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   auto tooltip = new Tooltip(new QLabel(tooltip_text, box), box);
   auto style = StyleSheet();
   style.get(Body()).
+    set(BodyAlign(Qt::AlignCenter)).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
   style.get(Hover() / Body()).
