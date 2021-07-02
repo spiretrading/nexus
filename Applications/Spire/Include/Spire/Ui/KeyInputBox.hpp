@@ -69,6 +69,7 @@ namespace Spire {
 
       void layout_key_sequence();
       void transition_status();
+      void transition_submission();
       void set_status(Status status);
       void on_current(const QKeySequence& current);
   };

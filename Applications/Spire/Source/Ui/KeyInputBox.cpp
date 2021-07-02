@@ -10,6 +10,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   std::vector<Qt::Key> split(const QKeySequence& sequence) {
@@ -78,6 +79,7 @@ void KeyInputBox::focusInEvent(QFocusEvent* event) {
 
 void KeyInputBox::focusOutEvent(QFocusEvent* event) {
   set_status(Status::NONE);
+  transition_submission();
 }
 
 void KeyInputBox::keyPressEvent(QKeyEvent* event) {
@@ -85,10 +87,18 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
   if(key == Qt::Key_Shift || key == Qt::Key_Meta || key == Qt::Key_Control ||
       key == Qt::Key_Alt) {
     return;
-  } else if(event->modifiers() == 0 &&
-      (key == Qt::Key_Delete || key == Qt::Key_Backspace)) {
-    m_submission = m_current->get_current();
-    m_current->set_current(QKeySequence());
+  } else if(event->modifiers() == 0) {
+    if(key == Qt::Key_Delete || key == Qt::Key_Backspace) {
+      m_submission = m_current->get_current();
+      m_current->set_current(QKeySequence());
+    } else if(key == Qt::Key_Escape &&
+        m_current->set_current(key) == QValidator::Invalid) {
+      m_current->set_current(m_submission);
+    } else if(key == Qt::Key_Enter || key == Qt::Key_Tab) {
+      transition_submission();
+    } else {
+      m_current->set_current(key);
+    }
   } else {
     m_current->set_current(event->modifiers() + key);
   }
@@ -111,6 +121,11 @@ void KeyInputBox::transition_status() {
   }
 }
 
+void KeyInputBox::transition_submission() {
+  m_submission = m_current->get_current();
+  m_submit_signal(m_submission);
+}
+
 void KeyInputBox::set_status(Status status) {
   if(m_status == status) {
     return;
@@ -124,6 +139,9 @@ void KeyInputBox::set_status(Status status) {
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     prompt->set_read_only(true);
     prompt->setDisabled(true);
+    auto style = get_style(*prompt);
+    style.get(Any()).set(vertical_padding(0));
+    set_style(*prompt, std::move(style));
     layout.addWidget(prompt);
   }
 }
@@ -132,5 +150,8 @@ void KeyInputBox::on_current(const QKeySequence& current) {
   transition_status();
   if(m_status == Status::NONE) {
     layout_key_sequence();
+  }
+  if(current.count() == 0) {
+    transition_submission();
   }
 }

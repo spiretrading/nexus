@@ -725,8 +725,14 @@ UiProfile Spire::make_key_input_box_profile() {
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
     auto& width = get<int>("width", profile.get_properties());
     width.set(scale_width(100));
+    auto& height = get<int>("height", profile.get_properties());
+    height.set(scale_height(34));
     auto box = new KeyInputBox();
     apply_widget_properties(box, profile.get_properties());
+    box->get_current()->connect_current_signal(
+      profile.make_event_slot<QKeySequence>(QString::fromUtf8("Current")));
+    box->connect_submit_signal(
+      profile.make_event_slot<QKeySequence>(QString::fromUtf8("Submit")));
     return box;
   });
   return profile;
@@ -1050,13 +1056,13 @@ UiProfile Spire::make_time_box_profile() {
       });
       time_box->get_model()->connect_current_signal(
         profile.make_event_slot<optional<time_duration>>(
-        QString::fromUtf8("Current")));
+          QString::fromUtf8("Current")));
       time_box->connect_submit_signal(
         profile.make_event_slot<optional<time_duration>>(
-        QString::fromUtf8("Submit")));
+          QString::fromUtf8("Submit")));
       time_box->connect_reject_signal(
         profile.make_event_slot<optional<time_duration>>(
-        QString::fromUtf8("Reject")));
+          QString::fromUtf8("Reject")));
       return time_box;
     });
   return profile;
