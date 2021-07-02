@@ -118,7 +118,6 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   style.get(Body()).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
-    set(TextColor(QColor::fromRgb(0, 0, 0))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
     set(horizontal_padding(scale_width(8)));
   style.get((Hover() || Press()) / Body()).
@@ -127,7 +126,6 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   style.get(Focus() / Body()).set(
     border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
   style.get(Disabled() / Body()).
-    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
   set_style(*button, std::move(style));
   return button;

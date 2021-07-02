@@ -97,7 +97,6 @@ QSize Box::sizeHint() const {
 
 void Box::focusOutEvent(QFocusEvent* event) {
   m_is_mouse_down = false;
-  unmatch(*this, Hover());
   QWidget::focusOutEvent(event);
 }
 
