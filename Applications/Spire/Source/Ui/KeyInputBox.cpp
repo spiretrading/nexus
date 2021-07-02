@@ -82,14 +82,14 @@ KeyInputBox::KeyInputBox(
       m_current(std::move(current)),
       m_status(Status::UNINITIALIZED) {
   setFocusPolicy(Qt::StrongFocus);
-  m_layers = new LayeredWidget();
-  m_layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  auto layers = new LayeredWidget();
+  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   m_body = new QWidget();
-  m_layers->add(m_body);
-  m_layers->add(new Caret(this));
+  layers->add(m_body);
+  layers->add(new Caret(this));
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  layout->addWidget(make_input_box(m_layers, this));
+  layout->addWidget(make_input_box(layers, this));
   setLayout(layout);
   auto body_layout = new QHBoxLayout();
   body_layout->setContentsMargins({});
@@ -150,7 +150,6 @@ void KeyInputBox::layout_key_sequence() {
     for(auto key : split(m_current->get_current())) {
       layout.addWidget(new KeyTag(make_constant_value_model(key)));
     }
-    m_layers->updateGeometry();
   }
 }
 
@@ -186,7 +185,6 @@ void KeyInputBox::set_status(Status status) {
     style.get(Any()).set(vertical_padding(0));
     set_style(*prompt, std::move(style));
     layout.addWidget(prompt);
-    m_layers->updateGeometry();
   }
 }
 
