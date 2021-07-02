@@ -1,6 +1,7 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <QImageReader>
 #include <QLabel>
+#include <QPointer>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -22,6 +23,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -125,6 +127,52 @@ namespace {
   void populate_decimal_box_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties, 1);
+  }
+
+  template<typename B>
+  auto setup_scalar_filter_panel_profile(UiProfile& profile) {
+    using Type = std::decay_t<decltype(*std::declval<B>().get_model())>::Scalar;
+    auto& title = get<QString>("title", profile.get_properties());
+    auto& default_min = get<Type>("default_minimum", profile.get_properties());
+    auto& default_max = get<Type>("default_maximum", profile.get_properties());
+    auto& default_increment =
+      get<Type>("default_increment", profile.get_properties());
+    auto button = make_label_button(QString::fromUtf8("Click me"));
+    auto min_model =
+      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_min.get());
+    auto max_model =
+      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_max.get());
+    button->connect_clicked_signal([&, button, min_model, max_model] {
+      min_model->set_increment(default_increment.get());
+      max_model->set_increment(default_increment.get());
+      auto panel = new ScalarFilterPanel<B>(min_model, max_model,
+        default_min.get(), default_max.get(), title.get(), button);
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal([=] (const auto& min, const auto& max) {
+        auto to_string = [&] (const optional<Type>& value) -> QString {
+          if(value) {
+            return displayTextAny(*value);
+          }
+          return QString::fromUtf8("null");
+        };
+        filter_slot(QString("%1, %2").arg(to_string(min)).arg(to_string(max)));
+      });
+      panel->show();
+    });
+    return button;
+  }
+
+  template<typename T>
+  void populate_scalar_filter_panel_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      T default_increment, const QString& default_title) {
+    using Type = T;
+    properties.push_back(make_standard_property("title", default_title));
+    properties.push_back(make_standard_property("default_minimum", Type(1)));
+    properties.push_back(make_standard_property("default_maximum", Type(10)));
+    properties.push_back(make_standard_property(
+      "default_increment", default_increment));
   }
 }
 
@@ -449,6 +497,76 @@ UiProfile Spire::make_decimal_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_decimal_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property("title",
+    QString::fromUtf8("Filter by Decimal Number")));
+  properties.push_back(make_standard_property("default_minimum",
+    QString::fromUtf8("1.3")));
+  properties.push_back(make_standard_property("default_maximum",
+    QString::fromUtf8("10.67")));
+  properties.push_back(make_standard_property("decimal_places", 2));
+  properties.push_back(make_standard_property("leading_zeros", 0));
+  properties.push_back(make_standard_property("trailing_zeros", 2));
+  auto profile = UiProfile(QString::fromUtf8("DecimalFilterPanel"), properties,
+    [] (auto& profile) {
+      auto to_decimal = [] (auto decimal) -> boost::optional<Decimal> {
+        try {
+          return Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      auto to_string = [] (const optional<Decimal>& value) {
+        if(value) {
+          return QString::fromStdString(value->str(
+            Decimal::backend_type::cpp_dec_float_digits10,
+            std::ios_base::dec));
+        }
+        return QString::fromUtf8("null");
+      };
+      auto& title = get<QString>("title", profile.get_properties());
+      auto& default_min =
+        get<QString>("default_minimum", profile.get_properties());
+      auto& default_max =
+        get<QString>("default_maximum", profile.get_properties());
+      auto& decimal_places = get<int>("decimal_places",
+        profile.get_properties());
+      auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
+      auto& trailing_zeros = get<int>("trailing_zeros",
+        profile.get_properties());
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto min_model =
+        std::make_shared<LocalScalarValueModel<optional<Decimal>>>(
+          to_decimal(default_min.get()));
+      auto max_model =
+        std::make_shared<LocalScalarValueModel<optional<Decimal>>>(
+          to_decimal(default_max.get()));
+      button->connect_clicked_signal([&, button, min_model, max_model] {
+        min_model->set_increment(pow(Decimal(10), -decimal_places.get()));
+        max_model->set_increment(pow(Decimal(10), -decimal_places.get()));
+        auto panel = new DecimalFilterPanel(min_model, max_model,
+          to_decimal(default_min.get()), to_decimal(default_max.get()),
+          title.get(), button);
+        auto filter_slot = profile.make_event_slot<QString>(
+          QString::fromUtf8("SubmitSignal"));
+        panel->connect_submit_signal([=] (const auto& min, const auto& max) {
+          filter_slot(to_string(min) + QString::fromUtf8(", ") +
+            to_string(max));
+        });
+        auto style = get_style(*panel);
+        style.get(Any() >> is_a<DecimalBox>()).set(
+          LeadingZeros(leading_zeros.get()));
+        style.get(Any() >> is_a<DecimalBox>()).set(
+          TrailingZeros(trailing_zeros.get()));
+        set_style(*panel, std::move(style));
+        panel->show();
+      });
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -540,27 +658,11 @@ UiProfile Spire::make_filter_panel_profile() {
         max_text->setFixedSize(scale(120, 26));
         component_layout->addWidget(max_text, 1, 1);
         auto panel = new FilterPanel(title.get(), component, button);
+        panel->window()->setAttribute(Qt::WA_DeleteOnClose);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
         panel->show();
       });
-      return button;
-    });
-  return profile;
-}
-
-UiProfile Spire::make_flat_button_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(
-    make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
-  auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
-    [] (auto& profile) {
-      auto& label = get<QString>("label", profile.get_properties());
-      auto button = make_label_button(label.get());
-      apply_widget_properties(button, profile.get_properties());
-      button->connect_clicked_signal(
-        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
       return button;
     });
   return profile;
@@ -590,6 +692,15 @@ UiProfile Spire::make_integer_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_integer_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_scalar_filter_panel_properties<int>(properties, 1,
+    QString::fromUtf8("Filter by Integer"));
+  auto profile = UiProfile(QString::fromUtf8("IntegerFilterPanel"), properties,
+    setup_scalar_filter_panel_profile<IntegerBox>);
+  return profile;
+}
+
 UiProfile Spire::make_key_tag_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -614,9 +725,35 @@ UiProfile Spire::make_key_tag_profile() {
           return Qt::Key_unknown;
         }();
         key_tag->get_model()->set_current(key);
-        key_tag->adjustSize();
       });
       return key_tag;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_label_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
+  properties.push_back(make_standard_property<QColor>("pressed-color",
+    QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
+    [] (auto& profile) {
+      auto& label = get<QString>("label", profile.get_properties());
+      auto button = make_label_button(label.get());
+      apply_widget_properties(button, profile.get_properties());
+      auto& pressed_color = get<QColor>("pressed-color",
+        profile.get_properties());
+      pressed_color.connect_changed_signal([=] (const auto& color) {
+        auto style = get_style(*button);
+        style.get(Press() / Body()).
+          set(BackgroundColor(color));
+        set_style(*button, std::move(style));
+      });
+      button->connect_clicked_signal(
+        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
     });
   return profile;
 }
@@ -637,6 +774,7 @@ UiProfile Spire::make_label_profile() {
 UiProfile Spire::make_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
@@ -654,6 +792,10 @@ UiProfile Spire::make_list_item_profile() {
         profile.make_event_slot(QString::fromUtf8("Current")));
       item->connect_submit_signal(
         profile.make_event_slot(QString::fromUtf8("Submit")));
+      auto& selected = get<bool>("selected", profile.get_properties());
+      selected.connect_changed_signal([=] (auto value) {
+        item->set_selected(value);
+      });
       return item;
     });
   return profile;
@@ -668,6 +810,15 @@ UiProfile Spire::make_money_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_money_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_scalar_filter_panel_properties<Money>(properties, Money::CENT,
+    QString::fromUtf8("Filter by Money"));
+  auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"), properties,
+    setup_scalar_filter_panel_profile<MoneyBox>);
+  return profile;
+}
+
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("close_on_blur", true));
@@ -678,66 +829,61 @@ UiProfile Spire::make_overlay_panel_profile() {
     make_standard_enum_property("positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
     [=] (auto& profile) {
+      auto& close_on_blur =
+        get<bool>("close_on_blur", profile.get_properties());
+      auto& positioning = get<OverlayPanel::Positioning>(
+        "positioning", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto close_on_blur_connection = std::make_shared<scoped_connection>();
       auto positioning_connection = std::make_shared<scoped_connection>();
-      auto panel = static_cast<OverlayPanel*>(nullptr);
-      button->connect_clicked_signal([=, &profile] () mutable {
-        if(panel) {
-          panel->close();
-          panel = nullptr;
-        }
-        auto body = new QWidget();
-        auto container_layout = new QVBoxLayout(body);
-        container_layout->setSpacing(0);
-        container_layout->setContentsMargins(
-          scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-        auto title_layout = new QHBoxLayout();
-        title_layout->setSpacing(scale_width(3));
-        auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
-        title_layout->addWidget(title_name);
-        auto close_button =
-          make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
-        close_button->setFixedSize(scale(26, 26));
-        close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-        close_button->connect_clicked_signal([=] {
-          close_button->window()->close();
+      auto panel = QPointer<OverlayPanel>();
+      button->connect_clicked_signal(
+        [=, &profile, &close_on_blur, &positioning] () mutable {
+          if(panel && !close_on_blur.get()) {
+            return;
+          }
+          auto body = new QWidget();
+          auto container_layout = new QVBoxLayout(body);
+          container_layout->setSpacing(0);
+          container_layout->setContentsMargins(
+            scale_width(1), scale_height(1), scale_width(1), scale_height(1));
+          auto title_layout = new QHBoxLayout();
+          title_layout->setSpacing(scale_width(3));
+          auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
+          title_layout->addWidget(title_name);
+          auto close_button =
+            make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
+          close_button->setFixedSize(scale(26, 26));
+          close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+          close_button->connect_clicked_signal([=] {
+            close_button->window()->close();
+          });
+          title_layout->addWidget(close_button);
+          container_layout->addLayout(title_layout);
+          container_layout->addSpacing(scale_height(3));
+          auto content_layout = new QGridLayout();
+          content_layout->setSpacing(scale_width(5));
+          content_layout->setContentsMargins(
+            {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
+          content_layout->addWidget(new QLabel(QString::fromUtf8("Start Date:")),
+            0, 0);
+          auto text_box1 = new TextBox();
+          text_box1->setFixedSize(scale(120, 26));
+          content_layout->addWidget(text_box1, 0, 1);
+          content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")),
+            1, 0);
+          auto text_box2 = new TextBox();
+          text_box2->setFixedSize(scale(120, 26));
+          content_layout->addWidget(text_box2, 1, 1);
+          content_layout->addWidget(make_label_button(
+            QString::fromUtf8("Reset")), 2, 1);
+          container_layout->addLayout(content_layout);
+          panel = new OverlayPanel(body, button);
+          panel->setAttribute(Qt::WA_DeleteOnClose);
+          panel->set_closed_on_blur(close_on_blur.get());
+          panel->set_positioning(positioning.get());
+          panel->show();
         });
-        title_layout->addWidget(close_button);
-        container_layout->addLayout(title_layout);
-        container_layout->addSpacing(scale_height(3));
-        auto content_layout = new QGridLayout();
-        content_layout->setSpacing(scale_width(5));
-        content_layout->setContentsMargins(
-          {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
-        content_layout->addWidget(new QLabel(QString::fromUtf8("Start Date:")),
-          0, 0);
-        auto text_box1 = new TextBox();
-        text_box1->setFixedSize(scale(120, 26));
-        content_layout->addWidget(text_box1, 0, 1);
-        content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")), 1,
-          0);
-        auto text_box2 = new TextBox();
-        text_box2->setFixedSize(scale(120, 26));
-        content_layout->addWidget(text_box2, 1, 1);
-        content_layout->addWidget(make_label_button(QString::fromUtf8("Reset")),
-          2, 1);
-        container_layout->addLayout(content_layout);
-        panel = new OverlayPanel(body, button);
-        auto& close_on_blur =
-          get<bool>("close_on_blur", profile.get_properties());
-        close_on_blur_connection = std::make_shared<scoped_connection>(
-          close_on_blur.connect_changed_signal([=] (auto is_closed_on_blur) {
-            panel->set_closed_on_blur(is_closed_on_blur);
-          }));
-        auto& positioning = get<OverlayPanel::Positioning>(
-          "positioning", profile.get_properties());
-        positioning_connection = std::make_shared<scoped_connection>(
-          positioning.connect_changed_signal([=] (auto positioning) {
-            panel->set_positioning(positioning);
-          }));
-        panel->show();
-      });
       return button;
     });
   return profile;
@@ -852,13 +998,11 @@ UiProfile Spire::make_text_box_profile() {
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([text_box] (auto is_read_only) {
         text_box->set_read_only(is_read_only);
-        text_box->adjustSize();
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         if(text_box->get_model()->get_current() != current) {
           text_box->get_model()->set_current(current);
-          text_box->adjustSize();
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -868,7 +1012,6 @@ UiProfile Spire::make_text_box_profile() {
       text_box->get_model()->connect_current_signal(
         [&, text_box] (const auto& value) {
           current.set(value);
-          text_box->adjustSize();
         });
       text_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));

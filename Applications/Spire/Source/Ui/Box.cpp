@@ -94,6 +94,15 @@ QSize Box::sizeHint() const {
   return *m_size_hint;
 }
 
+void Box::mouseMoveEvent(QMouseEvent* event) {
+  if(!rect().contains(event->pos())) {
+    unmatch(*this, Hover());
+  } else {
+    match(*this, Hover());
+  }
+  QWidget::mouseMoveEvent(event);
+}
+
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
@@ -264,4 +273,24 @@ void Box::on_style() {
         });
     }
   });
+}
+
+Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
+  auto box = new Box(body, parent);
+  auto style = StyleSheet();
+  style.get(Any()).
+    set(BackgroundColor(QColor(0xFFFFFF))).
+    set(border(scale_width(1), QColor(0xC8C8C8))).
+    set(horizontal_padding(scale_width(8))).
+    set(vertical_padding(scale_height(7)));
+  style.get(Hover() || Focus()).set(border_color(QColor(0x4B23A0)));
+  style.get(Disabled()).
+    set(BackgroundColor(QColor(0xF5F5F5))).
+    set(border_color(QColor(0xC8C8C8)));
+  style.get(ReadOnly()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+    set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+    set(horizontal_padding(0));
+  set_style(*box, std::move(style));
+  return box;
 }

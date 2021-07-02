@@ -109,7 +109,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_rejected(false) {
-  m_layers = new LayeredWidget(this);
+  auto layers = new LayeredWidget(this);
+  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, 0, 0);
@@ -117,7 +118,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
-  m_layers->add(m_line_edit);
+  layers->add(m_line_edit);
   m_placeholder = new QLabel();
   m_placeholder->setCursor(m_line_edit->cursor());
   m_placeholder->setTextFormat(Qt::PlainText);
@@ -125,8 +126,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_placeholder->setIndent(0);
   m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_layers->add(m_placeholder);
-  m_box = new Box(m_layers);
+  layers->add(m_placeholder);
+  m_box = new Box(layers);
   m_box->setFocusProxy(m_line_edit);
   setCursor(m_line_edit->cursor());
   setFocusPolicy(m_line_edit->focusPolicy());
