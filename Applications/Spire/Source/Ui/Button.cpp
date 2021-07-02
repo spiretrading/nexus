@@ -5,6 +5,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Tooltip.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -88,15 +89,29 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
-  auto button = new Button(new Icon(icon, parent), parent);
+  return make_icon_button(icon, "", parent);
+}
+
+Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
+    QWidget* parent) {
+  auto box = new Box(new Icon(icon, parent));
+  auto button = new Button(box, parent);
+  auto tooltip = new Tooltip(new QLabel(tooltip_text, box), box);
   auto style = StyleSheet();
   style.get(Body()).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Hover() / Body()).set(
-    BackgroundColor(QColor::fromRgb(0xE3, 0xE3, 0xE3)));
-  style.get(Focus() / Body()).set(
-    border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  style.get(Hover() / Body()).
+    set(BackgroundColor(QColor::fromRgb(0xE0, 0xE0, 0xE0)));
+  style.get(Focus() / Body()).
+    set(border_color(QColor(0x4B, 0x23, 0xA0)));
+  style.get(Body() >> is_a<Icon>()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+    set(Fill(QColor::fromRgb(0x53, 0x53, 0x53)));
+  style.get(Hover() / Body() >> is_a<Icon>())
+    .set(Fill(QColor(0x4B, 0x23, 0xA0)));
+  style.get(Disabled() / Body() >> is_a<Icon>()).
+    set(Fill(QColor(0xD0, 0xD0, 0xD0)));
   set_style(*button, std::move(style));
   return button;
 }

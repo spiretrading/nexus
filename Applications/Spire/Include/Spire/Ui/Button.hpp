@@ -41,11 +41,20 @@ namespace Spire {
   };
 
   /**
-   * Returns a newly constructed Button displaying an Icon.
+   * Returns a newly constructed Button displaying an Icon and no tooltip.
    * @param icon The icon used within the button.
    * @param parent The parent widget.
    */
   Button* make_icon_button(QImage icon, QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed Button displaying an Icon and a tooltip.
+   * @param icon The icon used within the button.
+   * @param tooltip_text The text of the Tooltip to display.
+   * @param parent The parent widget.
+   */
+  Button* make_icon_button(QImage icon, QString tooltip_text,
+    QWidget* parent = nullptr);
 
   /**
    * Returns a newly constructed Button displaying a text label.
