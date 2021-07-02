@@ -158,6 +158,13 @@ namespace Styles {
       void on_text_edited(const QString& text);
       void on_style();
   };
+
+  /**
+   * Returns a TextBox as a label.
+   * @param label The text displayed on the label.
+   * @param parent The parent widget.
+   */
+  TextBox* make_label(QString label, QWidget* parent = nullptr);
 }
 
 #endif

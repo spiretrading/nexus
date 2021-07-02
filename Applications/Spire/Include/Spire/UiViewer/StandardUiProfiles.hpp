@@ -44,6 +44,9 @@ namespace Spire {
   /** Returns a UiProfile for the LabelButton. */
   UiProfile make_label_button_profile();
 
+  /** Returns a UiProfile for the Label. */
+  UiProfile make_label_profile();
+
   /** Returns a UiProfile for the ListItem. */
   UiProfile make_list_item_profile();
 

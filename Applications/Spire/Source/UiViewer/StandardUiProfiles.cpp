@@ -758,6 +758,19 @@ UiProfile Spire::make_label_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(
+    make_standard_property("label", QString::fromUtf8("Label")));
+  auto profile = UiProfile(QString::fromUtf8("Label"), properties,
+    [] (auto& profile) {
+      auto& label = get<QString>("label", profile.get_properties());
+      auto label_box = make_label(label.get());
+      return label_box;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
