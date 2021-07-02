@@ -229,7 +229,7 @@ UiProfile Spire::make_check_box_profile() {
   properties.push_back(make_standard_property("left-to-right", true));
   auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
     [] (auto& profile) {
-      auto check_box = new CheckBox();
+      auto check_box = make_radio_button();//new CheckBox();
       auto& label = get<QString>("label", profile.get_properties());
       check_box->set_label(label.get());
       apply_widget_properties(check_box, profile.get_properties());

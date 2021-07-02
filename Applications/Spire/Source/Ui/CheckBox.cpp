@@ -19,6 +19,11 @@ namespace {
     return icon;
   }
 
+  const auto& RADIO_CHECK_ICON() {
+    static auto icon = imageFromSvg(":/Icons/radio-check.svg", scale(16, 16));
+    return icon;
+  }
+
   auto DEFAULT_STYLE(Qt::LayoutDirection direction) {
     auto style = StyleSheet();
     auto alignment = [&] {
@@ -28,20 +33,32 @@ namespace {
       return Qt::AlignLeft;
     }();
     style.get(Any() >> is_a<Icon>()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8C8C8)));
-    style.get((Focus() || (Hover() && !Disabled())) >> is_a<Icon>())
-      .set(border_color(QColor(0x4B, 0x23, 0xA0)));
-    style.get(Disabled() >> is_a<Icon>()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
-    style.get(ReadOnly() >> is_a<Icon>()).
-      set(BackgroundColor(QColor(0, 0, 0, 0))).
-      set(border_color(QColor(0, 0, 0, 0)));
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
     style.get(!Checked() >> is_a<Icon>()).
       set(Fill(QColor(0, 0, 0, 0)));
     style.get((Disabled() && Checked()) >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+   
+//-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+//-      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33))).
+//-      set(border(scale_width(1), QColor::fromRgb(0xC8C8C8)));
+//-    style.get((Focus() || (Hover() && !Disabled())) >> is_a<Icon>())
+//-      .set(border_color(QColor(0x4B, 0x23, 0xA0)));
+//-    style.get(Disabled() >> is_a<Icon>()).
+//-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+//-    style.get(ReadOnly() >> is_a<Icon>()).
+//-      set(BackgroundColor(QColor(0, 0, 0, 0))).
+//-      set(border_color(QColor(0, 0, 0, 0)));
+
+    style.get(Any() >> is_a<Box>()).
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(border_radius(8));
+    style.get((Focus() || Hover()) >> is_a<Box>()).
+      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xAB)));
+    style.get((Disabled() || ReadOnly()) >> is_a<Box>()).
+      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+
     style.get(Any() >> is_a<TextBox>()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(TextColor(QColor(0, 0, 0))).
@@ -78,9 +95,10 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   body_layout->setContentsMargins({});
   body_layout->setSpacing(0);
   auto check = new Icon(CHECK_ICON(), parent);
-  check->setFixedSize(scale(16, 16));
   check->setFocusPolicy(Qt::NoFocus);
-  body_layout->addWidget(check);
+  auto check_box = new Box(check, this);
+  check_box->setFixedSize(scale(16, 16));
+  body_layout->addWidget(check_box);
   m_label = new TextBox(this);
   m_label->set_read_only(true);
   m_label->setDisabled(true);
@@ -131,4 +149,13 @@ void CheckBox::on_checked(bool is_checked) {
   } else {
     unmatch(*this, Checked());
   }
+}
+
+CheckBox* Spire::make_radio_button(QWidget* parent) {
+  auto button = new CheckBox(parent);
+  auto style = get_style(*button);
+  style.get(Any() >> is_a<Icon>()).
+    set(IconImage(RADIO_CHECK_ICON()));
+  set_style(*button, std::move(style));
+  return button;
 }

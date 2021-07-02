@@ -72,6 +72,8 @@ namespace Styles {
 
       void on_checked(bool is_checked);
   };
+
+  CheckBox* make_radio_button(QWidget* parent = nullptr);
 }
 
 #endif
