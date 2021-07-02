@@ -106,13 +106,6 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
   QWidget::mouseReleaseEvent(event);
 }
 
-void Button::showEvent(QShowEvent* event) {
-  if(!underMouse()) {
-    unmatch(*this, Hover());
-  }
-  QWidget::showEvent(event);
-}
-
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   auto button = new Button(new Icon(icon, parent), parent);
   auto style = StyleSheet();

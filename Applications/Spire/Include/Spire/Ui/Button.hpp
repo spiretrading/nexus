@@ -39,7 +39,6 @@ namespace Styles {
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
-      void showEvent(QShowEvent* event) override;
 
     private:
       mutable ClickedSignal m_clicked_signal;
