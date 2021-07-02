@@ -745,7 +745,6 @@ UiProfile Spire::make_key_tag_profile() {
           return Qt::Key_unknown;
         }();
         key_tag->get_model()->set_current(key);
-        key_tag->adjustSize();
       });
       return key_tag;
     });
@@ -755,6 +754,7 @@ UiProfile Spire::make_key_tag_profile() {
 UiProfile Spire::make_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
@@ -772,6 +772,10 @@ UiProfile Spire::make_list_item_profile() {
         profile.make_event_slot(QString::fromUtf8("Current")));
       item->connect_submit_signal(
         profile.make_event_slot(QString::fromUtf8("Submit")));
+      auto& selected = get<bool>("selected", profile.get_properties());
+      selected.connect_changed_signal([=] (auto value) {
+        item->set_selected(value);
+      });
       return item;
     });
   return profile;
@@ -1131,13 +1135,11 @@ UiProfile Spire::make_text_box_profile() {
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([text_box] (auto is_read_only) {
         text_box->set_read_only(is_read_only);
-        text_box->adjustSize();
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         if(text_box->get_model()->get_current() != current) {
           text_box->get_model()->set_current(current);
-          text_box->adjustSize();
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -1147,7 +1149,6 @@ UiProfile Spire::make_text_box_profile() {
       text_box->get_model()->connect_current_signal(
         [&, text_box] (const auto& value) {
           current.set(value);
-          text_box->adjustSize();
         });
       text_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));

@@ -8,6 +8,7 @@
 
 namespace Spire {
   class CancelKeySequenceValidationModel;
+  template<typename T> class ConstantValueModel;
   class Definitions;
   class KeySequenceValidationModel;
   class LocalRangeInputModel;

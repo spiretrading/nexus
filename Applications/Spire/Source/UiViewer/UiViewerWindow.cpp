@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/UiViewerWindow.hpp"
+#include <QEvent>
 #include <QGridLayout>
 #include <QLabel>
 #include <QScrollArea>
@@ -59,6 +60,22 @@ namespace {
     layout->addLayout(button_layout);
     return container;
   }
+
+  struct SizeAdjustedContainer : QWidget {
+    SizeAdjustedContainer(QWidget* body) {
+      auto layout = new QVBoxLayout();
+      layout->setContentsMargins({});
+      layout->addWidget(body);
+      setLayout(layout);
+    }
+
+    bool event(QEvent* event) override {
+      if(event->type() == QEvent::LayoutRequest) {
+        adjustSize();
+      }
+      return QWidget::event(event);
+    }
+  };
 }
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
@@ -159,7 +176,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   auto stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  m_center_stage->setWidget(profile.get_widget());
+  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   m_center_stage->setAlignment(Qt::AlignCenter);
   stage->addWidget(m_center_stage);
   m_event_log = new QTextEdit();
