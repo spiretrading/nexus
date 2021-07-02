@@ -65,6 +65,7 @@ namespace Spire {
       QKeySequence m_submission;
       Status m_status;
       QWidget* m_body;
+      LayeredWidget* m_layers;
       boost::signals2::scoped_connection m_current_connection;
 
       void layout_key_sequence();
