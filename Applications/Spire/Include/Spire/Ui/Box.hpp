@@ -152,8 +152,6 @@ namespace Styles {
 
     protected:
       void mouseMoveEvent(QMouseEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -162,7 +160,6 @@ namespace Styles {
       QRect m_body_geometry;
       Styles::StyleSheetMap m_styles;
       mutable boost::optional<QSize> m_size_hint;
-      bool m_is_mouse_down;
 
       void commit_style();
       void on_style();

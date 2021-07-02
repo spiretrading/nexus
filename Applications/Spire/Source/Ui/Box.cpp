@@ -39,8 +39,7 @@ Padding Spire::Styles::padding(int size) {
 Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_styles([=] { commit_style(); }),
-      m_is_mouse_down(false) {
+      m_styles([=] { commit_style(); }) {
   setObjectName("Box");
   if(m_body) {
     m_container = new QWidget(this);
@@ -98,24 +97,10 @@ QSize Box::sizeHint() const {
 void Box::mouseMoveEvent(QMouseEvent* event) {
   if(!rect().contains(event->pos())) {
     unmatch(*this, Hover());
-  } else if(m_is_mouse_down) {
+  } else {
     match(*this, Hover());
   }
   QWidget::mouseMoveEvent(event);
-}
-
-void Box::mousePressEvent(QMouseEvent* event) {
-  if(event->button() == Qt::LeftButton) {
-    m_is_mouse_down = true;
-  }
-  QWidget::mousePressEvent(event);
-}
-
-void Box::mouseReleaseEvent(QMouseEvent* event) {
-  if(event->button() == Qt::LeftButton) {
-    m_is_mouse_down = false;
-  }
-  QWidget::mouseReleaseEvent(event);
 }
 
 void Box::resizeEvent(QResizeEvent* event) {
