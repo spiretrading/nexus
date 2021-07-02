@@ -29,9 +29,6 @@ namespace Spire {
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
 
-  /** Returns a UiProfile for the FlatButton. */
-  UiProfile make_flat_button_profile();
-
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
 
@@ -43,6 +40,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the KeyTag. */
   UiProfile make_key_tag_profile();
+
+  /** Returns a UiProfile for the LabelButton. */
+  UiProfile make_label_button_profile();
 
   /** Returns a UiProfile for the ListItem. */
   UiProfile make_list_item_profile();
