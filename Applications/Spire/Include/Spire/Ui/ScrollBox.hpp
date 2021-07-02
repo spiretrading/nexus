@@ -71,7 +71,6 @@ namespace Spire {
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
       ScrollableLayer* m_scrollable_layer;
-      LayeredWidget* m_layers;
 
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
