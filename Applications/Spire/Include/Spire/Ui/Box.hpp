@@ -151,6 +151,7 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
+      void mouseMoveEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
