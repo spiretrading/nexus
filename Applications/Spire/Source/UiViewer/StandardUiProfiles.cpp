@@ -968,6 +968,8 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
+      auto& width = get<int>("width", profile.get_properties());
+      width.set(scale_width(100));
       auto text_box = new TextBox();
       apply_widget_properties(text_box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
