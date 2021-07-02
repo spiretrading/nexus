@@ -3,11 +3,6 @@
 
 using namespace Spire;
 
-LayeredWidget::LayeredWidget(QWidget* parent)
-    : QWidget(parent) {
-  setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
-}
-
 void LayeredWidget::add(QWidget* widget) {
   widget->setParent(this);
   if(!m_layers.empty()) {
