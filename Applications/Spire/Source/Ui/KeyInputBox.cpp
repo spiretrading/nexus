@@ -1,10 +1,13 @@
 #include "Spire/Ui/KeyInputBox.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QPainter>
+#include <QTimer>
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/KeyTag.hpp"
+#include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -40,6 +43,37 @@ namespace {
       delete item;
     }
   }
+
+  class Caret : public QWidget {
+    public:
+      Caret(QWidget* focus_widget)
+          : m_focus_widget(focus_widget),
+            m_is_visible(false) {
+        auto blink_timer = new QTimer(this);
+        connect(blink_timer, &QTimer::timeout, this, [=] { on_blink(); });
+        const auto BLINK_RATE = 500;
+        blink_timer->setInterval(BLINK_RATE);
+        blink_timer->start();
+        setFixedWidth(scale_width(1));
+      }
+
+    protected:
+      void paintEvent(QPaintEvent* event) override {
+        if(m_is_visible && m_focus_widget->hasFocus()) {
+          auto painter = QPainter(this);
+          painter.fillRect(QRect(0, 0, width(), height()), QColor(0x0u));
+        }
+      }
+
+    private:
+      QWidget* m_focus_widget;
+      bool m_is_visible;
+
+      void on_blink() {
+        m_is_visible = !m_is_visible;
+        update();
+      }
+  };
 }
 
 KeyInputBox::KeyInputBox(
@@ -48,10 +82,13 @@ KeyInputBox::KeyInputBox(
       m_current(std::move(current)),
       m_status(Status::UNINITIALIZED) {
   setFocusPolicy(Qt::StrongFocus);
+  auto layers = new LayeredWidget();
   m_body = new QWidget();
+  layers->add(m_body);
+  layers->add(new Caret(this));
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  layout->addWidget(make_input_box(m_body, this));
+  layout->addWidget(make_input_box(layers, this));
   setLayout(layout);
   auto body_layout = new QHBoxLayout();
   body_layout->setContentsMargins({});
@@ -105,11 +142,13 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void KeyInputBox::layout_key_sequence() {
-  auto& layout = *m_body->layout();
-  clear(layout);
-  layout.setSpacing(scale_width(4));
-  for(auto key : split(m_current->get_current())) {
-    layout.addWidget(new KeyTag(make_constant_value_model(key)));
+  if(m_status == Status::NONE) {
+    auto& layout = *m_body->layout();
+    clear(layout);
+    layout.setSpacing(scale_width(4));
+    for(auto key : split(m_current->get_current())) {
+      layout.addWidget(new KeyTag(make_constant_value_model(key)));
+    }
   }
 }
 
@@ -131,7 +170,9 @@ void KeyInputBox::set_status(Status status) {
     return;
   }
   m_status = status;
-  if(m_status == Status::PROMPT) {
+  if(m_status == Status::NONE) {
+    layout_key_sequence();
+  } else if(m_status == Status::PROMPT) {
     auto& layout = *m_body->layout();
     clear(layout);
     layout.setSpacing(0);
@@ -148,9 +189,7 @@ void KeyInputBox::set_status(Status status) {
 
 void KeyInputBox::on_current(const QKeySequence& current) {
   transition_status();
-  if(m_status == Status::NONE) {
-    layout_key_sequence();
-  }
+  layout_key_sequence();
   if(current.count() == 0) {
     transition_submission();
   }
