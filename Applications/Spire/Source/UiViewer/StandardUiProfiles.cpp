@@ -749,7 +749,7 @@ UiProfile Spire::make_label_button_profile() {
         auto style = get_style(*button);
         style.get(Press() / Body()).
           set(BackgroundColor(color));
-        set_style(*button, style);
+        set_style(*button, std::move(style));
       });
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
