@@ -742,7 +742,6 @@ UiProfile Spire::make_key_tag_profile() {
           return Qt::Key_unknown;
         }();
         key_tag->get_model()->set_current(key);
-        key_tag->adjustSize();
       });
       return key_tag;
     });
@@ -969,20 +968,16 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
-      auto& width = get<int>("width", profile.get_properties());
-      width.set(scale_width(100));
       auto text_box = new TextBox();
       apply_widget_properties(text_box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([text_box] (auto is_read_only) {
         text_box->set_read_only(is_read_only);
-        text_box->adjustSize();
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         if(text_box->get_model()->get_current() != current) {
           text_box->get_model()->set_current(current);
-          text_box->adjustSize();
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -992,7 +987,6 @@ UiProfile Spire::make_text_box_profile() {
       text_box->get_model()->connect_current_signal(
         [&, text_box] (const auto& value) {
           current.set(value);
-          text_box->adjustSize();
         });
       text_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
