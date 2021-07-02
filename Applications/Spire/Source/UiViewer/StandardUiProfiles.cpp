@@ -668,23 +668,6 @@ UiProfile Spire::make_filter_panel_profile() {
   return profile;
 }
 
-UiProfile Spire::make_flat_button_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(
-    make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
-  auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
-    [] (auto& profile) {
-      auto& label = get<QString>("label", profile.get_properties());
-      auto button = make_label_button(label.get());
-      apply_widget_properties(button, profile.get_properties());
-      button->connect_clicked_signal(
-        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
-      return button;
-    });
-  return profile;
-}
-
 UiProfile Spire::make_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -744,6 +727,33 @@ UiProfile Spire::make_key_tag_profile() {
         key_tag->get_model()->set_current(key);
       });
       return key_tag;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_label_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
+  properties.push_back(make_standard_property<QColor>("pressed-color",
+    QColor::fromRgb(0x4B, 0x23, 0xA0)));
+  auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
+    [] (auto& profile) {
+      auto& label = get<QString>("label", profile.get_properties());
+      auto button = make_label_button(label.get());
+      apply_widget_properties(button, profile.get_properties());
+      auto& pressed_color = get<QColor>("pressed-color",
+        profile.get_properties());
+      pressed_color.connect_changed_signal([=] (const auto& color) {
+        auto style = get_style(*button);
+        style.get(Press() / Body()).
+          set(BackgroundColor(color));
+        set_style(*button, std::move(style));
+      });
+      button->connect_clicked_signal(
+        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
     });
   return profile;
 }
