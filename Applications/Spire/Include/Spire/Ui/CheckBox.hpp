@@ -73,6 +73,10 @@ namespace Styles {
       void on_checked(bool is_checked);
   };
 
+  /**
+   * Returns a newly constructed RadioButton.
+   * @param parent The parent widget.
+   */
   CheckBox* make_radio_button(QWidget* parent = nullptr);
 }
 
