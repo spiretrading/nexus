@@ -59,6 +59,9 @@ namespace Spire {
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
+  /** Returns a UiProfile for the RadioButton. */
+  UiProfile make_radio_button_profile();
+
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();
 

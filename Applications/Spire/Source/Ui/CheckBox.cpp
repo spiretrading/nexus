@@ -40,21 +40,18 @@ namespace {
     style.get((Disabled() && Checked()) >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(Any() >> is_a<Box>()).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(border_radius(8));
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get((Focus() || Hover()) >> is_a<Box>()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xAB)));
     style.get((Disabled() || ReadOnly()) >> is_a<Box>()).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(ReadOnly()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
     style.get(Any() >> is_a<TextBox>()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(TextColor(QColor(0, 0, 0))).
       set(TextAlign(alignment | Qt::AlignVCenter)).
       set(padding(0));
-    //style.get(Disabled() >> is_a<TextBox>()).
-    //  set(BackgroundColor(QColor(0, 0, 0, 0)));
-    //style.get(ReadOnly() >> is_a<TextBox>()).
-    //  set(BackgroundColor(QColor(0, 0, 0, 0)));
     style.get((ReadOnly() && !Checked()) >> is_a<TextBox>()).
       set(TextColor(QColor(0, 0, 0, 0)));
     return style;
@@ -141,6 +138,8 @@ CheckBox* Spire::make_radio_button(QWidget* parent) {
   auto style = get_style(*button);
   style.get(Any() >> is_a<Icon>()).
     set(IconImage(RADIO_CHECK_ICON()));
+  style.get(Any() >> is_a<Box>()).
+    set(border_radius(scale_width(8)));
   set_style(*button, std::move(style));
   return button;
 }

@@ -102,6 +102,49 @@ namespace {
     return box;
   }
 
+  auto setup_checkable_profile(UiProfile& profile, CheckBox* check_box) {
+    auto& label = get<QString>("label", profile.get_properties());
+    check_box->set_label(label.get());
+    apply_widget_properties(check_box, profile.get_properties());
+    label.connect_changed_signal([=] (const auto& value) {
+      check_box->set_label(value);
+    });
+    auto& checked = get<bool>("checked", profile.get_properties());
+    checked.connect_changed_signal([=] (auto value) {
+      if(check_box->get_model()->get_current() != value) {
+        check_box->get_model()->set_current(value);
+      }
+    });
+    check_box->get_model()->connect_current_signal([&] (auto is_checked) {
+      checked.set(is_checked);
+    });
+    check_box->get_model()->connect_current_signal(
+      profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
+    auto& read_only = get<bool>("read-only", profile.get_properties());
+    read_only.connect_changed_signal([=] (auto is_read_only) {
+      check_box->set_read_only(is_read_only);
+    });
+    auto& layout_direction = get<bool>("left-to-right",
+      profile.get_properties());
+    layout_direction.connect_changed_signal([=] (auto value) {
+      if(value) {
+        check_box->setLayoutDirection(Qt::LeftToRight);
+      } else {
+        check_box->setLayoutDirection(Qt::RightToLeft);
+      }
+    });
+    return check_box;
+  }
+
+  void populate_check_box_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties) {
+    properties.push_back(make_standard_property<bool>("checked"));
+    properties.push_back(
+      make_standard_property("label", QString::fromUtf8("Click me!")));
+    properties.push_back(make_standard_property<bool>("read-only"));
+    properties.push_back(make_standard_property("left-to-right", true));
+  }
+
   template<typename T>
   void populate_decimal_box_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties,
@@ -222,47 +265,11 @@ UiProfile Spire::make_box_profile() {
 UiProfile Spire::make_check_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<bool>("checked"));
-  properties.push_back(
-    make_standard_property("label", QString::fromUtf8("Click me!")));
-  properties.push_back(make_standard_property<bool>("read-only"));
-  properties.push_back(make_standard_property("left-to-right", true));
-  auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
-    [] (auto& profile) {
-      auto check_box = make_radio_button();//new CheckBox();
-      auto& label = get<QString>("label", profile.get_properties());
-      check_box->set_label(label.get());
-      apply_widget_properties(check_box, profile.get_properties());
-      label.connect_changed_signal([=] (const auto& value) {
-        check_box->set_label(value);
-      });
-      auto& checked = get<bool>("checked", profile.get_properties());
-      checked.connect_changed_signal([=] (auto value) {
-        if(check_box->get_model()->get_current() != value) {
-          check_box->get_model()->set_current(value);
-        }
-      });
-      check_box->get_model()->connect_current_signal([&] (auto is_checked) {
-        checked.set(is_checked);
-      });
-      check_box->get_model()->connect_current_signal(
-        profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
-      auto& read_only = get<bool>("read-only", profile.get_properties());
-      read_only.connect_changed_signal([=] (auto is_read_only) {
-        check_box->set_read_only(is_read_only);
-      });
-      auto& layout_direction = get<bool>("left-to-right",
-        profile.get_properties());
-      layout_direction.connect_changed_signal([=] (auto value) {
-        if(value) {
-          check_box->setLayoutDirection(Qt::LeftToRight);
-        } else {
-          check_box->setLayoutDirection(Qt::RightToLeft);
-        }
-      });
-      return check_box;
+  populate_check_box_properties(properties);
+  return UiProfile(QString::fromUtf8("CheckBox"), properties,
+    [=] (auto& profile) {
+      return setup_checkable_profile(profile, new CheckBox());
     });
-  return profile;
 }
 
 UiProfile Spire::make_color_selector_button_profile() {
@@ -887,6 +894,16 @@ UiProfile Spire::make_overlay_panel_profile() {
       return button;
     });
   return profile;
+}
+
+UiProfile Spire::make_radio_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_check_box_properties(properties);
+  return UiProfile(QString::fromUtf8("RadioButton"), properties,
+    [=] (auto& profile) {
+      return setup_checkable_profile(profile, make_radio_button());
+    });
 }
 
 UiProfile Spire::make_scroll_bar_profile() {
