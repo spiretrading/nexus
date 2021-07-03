@@ -39,18 +39,6 @@ namespace {
       set(Fill(QColor(0, 0, 0, 0)));
     style.get((Disabled() && Checked()) >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-   
-//-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-//-      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33))).
-//-      set(border(scale_width(1), QColor::fromRgb(0xC8C8C8)));
-//-    style.get((Focus() || (Hover() && !Disabled())) >> is_a<Icon>())
-//-      .set(border_color(QColor(0x4B, 0x23, 0xA0)));
-//-    style.get(Disabled() >> is_a<Icon>()).
-//-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
-//-    style.get(ReadOnly() >> is_a<Icon>()).
-//-      set(BackgroundColor(QColor(0, 0, 0, 0))).
-//-      set(border_color(QColor(0, 0, 0, 0)));
-
     style.get(Any() >> is_a<Box>()).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(border_radius(8));
@@ -58,16 +46,15 @@ namespace {
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xAB)));
     style.get((Disabled() || ReadOnly()) >> is_a<Box>()).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
-
     style.get(Any() >> is_a<TextBox>()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(TextColor(QColor(0, 0, 0))).
       set(TextAlign(alignment | Qt::AlignVCenter)).
       set(padding(0));
-    style.get(Disabled() >> is_a<TextBox>()).
-      set(BackgroundColor(QColor(0, 0, 0, 0)));
-    style.get(ReadOnly() >> is_a<TextBox>()).
-      set(BackgroundColor(QColor(0, 0, 0, 0)));
+    //style.get(Disabled() >> is_a<TextBox>()).
+    //  set(BackgroundColor(QColor(0, 0, 0, 0)));
+    //style.get(ReadOnly() >> is_a<TextBox>()).
+    //  set(BackgroundColor(QColor(0, 0, 0, 0)));
     style.get((ReadOnly() && !Checked()) >> is_a<TextBox>()).
       set(TextColor(QColor(0, 0, 0, 0)));
     return style;
@@ -99,9 +86,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   auto check_box = new Box(check, this);
   check_box->setFixedSize(scale(16, 16));
   body_layout->addWidget(check_box);
-  m_label = new TextBox(this);
-  m_label->set_read_only(true);
-  m_label->setDisabled(true);
+  m_label = make_label("", this);
   body_layout->addWidget(m_label);
   m_model->connect_current_signal([=] (auto is_checked) {
     on_checked(is_checked);
