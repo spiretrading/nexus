@@ -21,6 +21,7 @@ namespace Spire {
   class FilteredTableModel;
   class FilterPanel;
   class Icon;
+  class InfoTip;
   class LayeredWidget;
   class ListModel;
   class MoneyBox;
