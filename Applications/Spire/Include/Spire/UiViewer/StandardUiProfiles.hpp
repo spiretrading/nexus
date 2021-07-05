@@ -32,6 +32,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
 
+  /** Returns a UiProfile for the IntoTip. */
+  UiProfile make_info_tip_profile();
+
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
 

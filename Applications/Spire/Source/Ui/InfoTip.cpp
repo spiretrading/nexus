@@ -1,32 +1,32 @@
-#include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/InfoTip.hpp"
 #include <QGraphicsDropShadowEffect>
 #include <QGraphicsPathItem>
 #include <QGraphicsScene>
 #include <QGuiApplication>
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   const auto DEFAULT_SHOW_DELAY_MS = 500;
-  const auto DROP_SHADOW_SIZE = 4;
+  const auto DROP_SHADOW_SIZE = 5;
   const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 63);
-  const auto TOOLTIP_COLOR = QColor("#333333");
-
-  auto ARROW_X_POSITION() {
-    static auto x = scale_width(6);
-    return x;
-  }
 
   auto ARROW_SIZE() {
     static auto size = scale(14, 7);
     return size;
+  }
+
+  auto ARROW_X_POSITION() {
+    static auto x = scale_width(6);
+    return x;
   }
 
   auto DROP_SHADOW_HEIGHT() {
@@ -44,46 +44,37 @@ namespace {
     return offset;
   }
 
-  const auto& QLABEL_TOOLTIP_STYLE() {
-    static auto style = QString(R"(
-      QLabel {
-        background-color: transparent;
-        color: #FFFFFF;
-        font-family: Roboto;
-        font-size: %1px;
-        font-weight: 600;
-        padding: %2px %3px;
-      }
-    )").arg(scale_height(10)).arg(scale_height(8)).arg(scale_width(8));
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(border_color(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
     return style;
   }
 }
 
-Tooltip::Tooltip(QWidget* body, QWidget* parent)
+InfoTip::InfoTip(QWidget* body, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
         Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
-      m_body(body) {
+      m_body(body),
+      m_is_interactive(false) {
   setAttribute(Qt::WA_ShowWithoutActivating);
-  setAttribute(Qt::WA_TransparentForMouseEvents);
   setAttribute(Qt::WA_TranslucentBackground);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(get_margins());
-  layout->addWidget(body);
+  layout->addWidget(m_body);
   m_show_timer.setInterval(DEFAULT_SHOW_DELAY_MS);
   m_show_timer.setSingleShot(true);
-  connect(&m_show_timer, &QTimer::timeout, this, &Tooltip::on_show_timeout);
-  m_body->installEventFilter(this);
+  connect(&m_show_timer, &QTimer::timeout, this, &InfoTip::on_show_timeout);
   parent->installEventFilter(this);
+  connect_style_signal(*this, [=] { on_style(); });
+  set_style(*this, DEFAULT_STYLE());
 }
 
-bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_body) {
-    if(event->type() == QEvent::Resize) {
-      resize(m_body->size().grownBy(get_margins()));
-    }
-  } else if(watched == parentWidget()) {
+bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == parentWidget()) {
     switch(event->type()) {
-      case QEvent::HoverEnter:
+      case QEvent::Enter:
         if(parentWidget()->isEnabled()) {
           m_show_timer.start();
         }
@@ -94,7 +85,11 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
           hide();
         }
         break;
-      case QEvent::HoverLeave:
+      case QEvent::Leave:
+        if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
+          hide();
+        }
+        break;
       case QEvent::WindowDeactivate:
         hide();
         break;
@@ -105,17 +100,28 @@ bool Tooltip::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void Tooltip::hideEvent(QHideEvent* event) {
+void InfoTip::hideEvent(QHideEvent* event) {
   m_show_timer.stop();
   QWidget::hideEvent(event);
 }
 
-void Tooltip::paintEvent(QPaintEvent* event) {
+void InfoTip::leaveEvent(QEvent* event) {
+  if(!parentWidget()->underMouse() && !m_body->underMouse()) {
+    hide();
+  }
+  QWidget::leaveEvent(event);
+}
+
+void InfoTip::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.drawPixmap(0, 0, render_background());
 }
 
-QPainterPath Tooltip::get_arrow_path() const {
+void InfoTip::set_interactive(bool is_interactive) {
+  m_is_interactive = is_interactive;
+}
+
+QPainterPath InfoTip::get_arrow_path() const {
   auto path = QPainterPath();
   auto polygon = [&] () -> QPolygonF {
     auto margins = get_margins();
@@ -140,7 +146,7 @@ QPainterPath Tooltip::get_arrow_path() const {
   return path;
 }
 
-Tooltip::BodyOrientation Tooltip::get_body_orientation() const {
+InfoTip::BodyOrientation InfoTip::get_body_orientation() const {
   auto parent_position = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
   auto screen_geometry =
@@ -152,14 +158,14 @@ Tooltip::BodyOrientation Tooltip::get_body_orientation() const {
   return BodyOrientation::RIGHT;
 }
 
-QScreen* Tooltip::get_current_screen(const QPoint& point) const {
+QScreen* InfoTip::get_current_screen(const QPoint& point) const {
   if(auto screen = QGuiApplication::screenAt(point)) {
     return screen;
   }
   return parentWidget()->screen();
 }
 
-QMargins Tooltip::get_margins() const {
+QMargins InfoTip::get_margins() const {
   auto orientation = get_orientation();
   if(orientation == Orientation::TOP_LEFT ||
       orientation == Orientation::TOP_RIGHT) {
@@ -170,7 +176,7 @@ QMargins Tooltip::get_margins() const {
     DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT()};
 }
 
-Tooltip::Orientation Tooltip::get_orientation() const {
+InfoTip::Orientation InfoTip::get_orientation() const {
   auto parent_position = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
   auto screen_geometry =
@@ -187,7 +193,7 @@ Tooltip::Orientation Tooltip::get_orientation() const {
   return Orientation::BOTTOM_LEFT;
 }
 
-QPoint Tooltip::get_position() const {
+QPoint InfoTip::get_position() const {
   auto parent_pos = parentWidget()->mapToGlobal(
     parentWidget()->rect().bottomLeft());
   auto orientation = get_orientation();
@@ -214,16 +220,21 @@ QPoint Tooltip::get_position() const {
   return {x, y};
 }
 
-QPixmap Tooltip::render_background() {
+QRect InfoTip::hover_rect() const {
+  return QRect(get_position(), QSize(width(), height()));
+}
+
+QPixmap InfoTip::render_background() {
   auto scene = QGraphicsScene();
   scene.setSceneRect(rect());
   auto shadow = QGraphicsDropShadowEffect();
   shadow.setColor(DROP_SHADOW_COLOR);
-  shadow.setOffset(0, 0);
+  shadow.setOffset(0, scale_height(3));
   shadow.setBlurRadius(scale_width(5));
   auto path = get_arrow_path();
   path.addRect(rect().marginsRemoved(get_margins()));
-  auto arrow = scene.addPath(path, Qt::NoPen, TOOLTIP_COLOR);
+  auto arrow = scene.addPath(path.simplified(), QPen(m_border_color,
+    scale_width(1)), m_background_color);
   arrow->setGraphicsEffect(&shadow);
   auto pixmap = QPixmap(size());
   pixmap.fill(Qt::transparent);
@@ -232,7 +243,7 @@ QPixmap Tooltip::render_background() {
   return pixmap;
 }
 
-void Tooltip::on_show_timeout() {
+void InfoTip::on_show_timeout() {
   if(parentWidget()->underMouse()) {
     layout()->setContentsMargins(get_margins());
     adjustSize();
@@ -241,9 +252,21 @@ void Tooltip::on_show_timeout() {
   }
 }
 
-Tooltip* Spire::make_text_tooltip(const QString& label, QWidget* parent) {
-  auto body = new QLabel(label, parent);
-  body->setStyleSheet(QLABEL_TOOLTIP_STYLE());
-  auto tooltip = new Tooltip(body, parent);
-  return tooltip;
+void InfoTip::on_style() {
+  auto& stylist = find_stylist(*this);
+  auto& block = stylist.get_computed_block();
+  for(auto& property : block) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_background_color = color;
+        });
+      },
+      [&] (const BorderTopColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_border_color = color;
+        });
+      });
+  }
+  update();
 }
