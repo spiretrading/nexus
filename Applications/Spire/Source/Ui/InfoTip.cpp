@@ -250,7 +250,7 @@ QPixmap InfoTip::render_background() {
 }
 
 void InfoTip::on_show_timeout() {
-  if(parentWidget()->underMouse()) {
+  if(isEnabled() && parentWidget()->underMouse()) {
     layout()->setContentsMargins(get_margins());
     adjustSize();
     move(get_position());

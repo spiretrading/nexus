@@ -5,6 +5,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Tooltip.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
