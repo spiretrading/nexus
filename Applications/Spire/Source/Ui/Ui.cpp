@@ -20,7 +20,7 @@ void Spire::draw_border(const QRect& region, const QColor& color,
 
 QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
     int fade_speed_ms) {
-  auto animation = new QPropertyAnimation(target, "windowOpacity");
+  auto animation = new QPropertyAnimation(target, "windowOpacity", target);
   animation->setDuration(fade_speed_ms);
   animation->setEasingCurve(QEasingCurve::Linear);
   if(!reverse) {

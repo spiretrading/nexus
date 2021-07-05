@@ -53,7 +53,8 @@ namespace Spire {
   /**
    * Fades a window in by animating its window opacity. The returned animation
    * is deleted on completion.
-   * @param target The window to fade in or out.
+   * @param target The window to fade in or out. Use as the parent for the
+   *               returned QPropertyAnimation.
    * @param reverse True iff the animation should be reversed (fade out).
    * @param fade_speed_ms The fade speed, in milliseconds.
    * @returns The animation assigned to the target.

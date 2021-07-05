@@ -14,7 +14,6 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
@@ -36,6 +35,8 @@ namespace Spire {
       QColor m_background_color;
       QColor m_border_color;
 
+      void fade_in();
+      void fade_out();
       QPainterPath get_arrow_path() const;
       BodyOrientation get_body_orientation() const;
       QScreen* get_current_screen(const QPoint& point) const;

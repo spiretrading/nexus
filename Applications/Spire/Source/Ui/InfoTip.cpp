@@ -18,6 +18,7 @@ namespace {
   const auto DEFAULT_SHOW_DELAY_MS = 500;
   const auto DROP_SHADOW_SIZE = 5;
   const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 63);
+  const auto FADE_IN_MS = 100;
 
   auto ARROW_SIZE() {
     static auto size = scale(14, 7);
@@ -82,16 +83,16 @@ bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
       case QEvent::MouseMove:
         if(!parentWidget()->rect().contains(
             static_cast<QMouseEvent*>(event)->pos())) {
-          hide();
+          fade_out();
         }
         break;
       case QEvent::Leave:
         if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
-          hide();
+          fade_out();
         }
         break;
       case QEvent::WindowDeactivate:
-        hide();
+        fade_out();
         break;
       case QEvent::ToolTip:
         return true;
@@ -100,14 +101,9 @@ bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void InfoTip::hideEvent(QHideEvent* event) {
-  m_show_timer.stop();
-  QWidget::hideEvent(event);
-}
-
 void InfoTip::leaveEvent(QEvent* event) {
   if(!parentWidget()->underMouse() && !m_body->underMouse()) {
-    hide();
+    fade_out();
   }
   QWidget::leaveEvent(event);
 }
@@ -119,6 +115,20 @@ void InfoTip::paintEvent(QPaintEvent* event) {
 
 void InfoTip::set_interactive(bool is_interactive) {
   m_is_interactive = is_interactive;
+}
+
+void InfoTip::fade_in() {
+  fade_window(this, false, FADE_IN_MS);
+}
+
+void InfoTip::fade_out() {
+  auto animation = fade_window(this, true, FADE_IN_MS);
+  connect(animation, &QPropertyAnimation::finished, [&] {
+    if(!parentWidget()->underMouse()) {
+      m_show_timer.stop();
+      hide();
+    }
+  });
 }
 
 QPainterPath InfoTip::get_arrow_path() const {
@@ -248,6 +258,7 @@ void InfoTip::on_show_timeout() {
     layout()->setContentsMargins(get_margins());
     adjustSize();
     move(get_position());
+    fade_in();
     show();
   }
 }
