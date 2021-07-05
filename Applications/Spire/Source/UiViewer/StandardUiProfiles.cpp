@@ -12,8 +12,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
-#include "Spire/Ui/ColorSelectorButton.hpp"
-#include "Spire/Ui/CurrencyComboBox.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
@@ -261,51 +260,6 @@ UiProfile Spire::make_check_box_profile() {
         }
       });
       return check_box;
-    });
-  return profile;
-}
-
-UiProfile Spire::make_color_selector_button_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QColor>("color"));
-  auto profile = UiProfile(QString::fromUtf8("ColorSelectorButton"), properties,
-    [] (auto& profile) {
-      auto& color = get<QColor>("color", profile.get_properties());
-      auto button = new ColorSelectorButton(color.get());
-      apply_widget_properties(button, profile.get_properties());
-      color.connect_changed_signal([=] (const auto& value) {
-        button->set_color(value);
-      });
-      button->connect_color_signal([&] (auto value) {
-        color.set(value);
-      });
-      button->connect_color_signal(
-        profile.make_event_slot<QColor>(QString::fromUtf8("ColorSignal")));
-      return button;
-    });
-  return profile;
-}
-
-UiProfile Spire::make_currency_combo_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<CurrencyId>("currency"));
-  auto profile = UiProfile(QString::fromUtf8("CurrencyComboBox"), properties,
-    [] (auto& profile) {
-      auto combo_box = new CurrencyComboBox(GetDefaultCurrencyDatabase());
-      apply_widget_properties(combo_box, profile.get_properties());
-      auto& currency = get<CurrencyId>("currency", profile.get_properties());
-      currency.set(combo_box->get_currency());
-      currency.connect_changed_signal([=] (auto value) {
-        combo_box->set_currency(value);
-      });
-      combo_box->connect_selected_signal([&] (auto value) {
-        currency.set(value);
-      });
-      combo_box->connect_selected_signal(profile.make_event_slot<CurrencyId>(
-        QString::fromUtf8("SelectedSignal")));
-      return combo_box;
     });
   return profile;
 }
