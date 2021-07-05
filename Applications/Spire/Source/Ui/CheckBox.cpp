@@ -26,8 +26,6 @@ namespace {
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any()).
-      set(BackgroundColor(QColor(255, 0, 0)));
     style.get(Any() >> is_a<Icon>()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
