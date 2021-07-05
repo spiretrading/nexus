@@ -2,6 +2,7 @@
 #define SPIRE_UI_HPP
 #include <QHeaderView>
 #include <QImage>
+#include <QPropertyAnimation>
 #include <QRect>
 #include <QSize>
 #include <QString>
@@ -48,6 +49,17 @@ namespace Spire {
   */
   void draw_border(const QRect& region, const QColor& color,
     QPainter* painter);
+
+  /**
+   * Fades a window in by animating its window opacity. The returned animation
+   * is deleted on completion.
+   * @param target The window to fade in or out.
+   * @param reverse True iff the animation should be reversed (fade out).
+   * @param fade_speed_ms The fade speed, in milliseconds.
+   * @returns The animation assigned to the target.
+   */
+  QPropertyAnimation* fade_window(QObject* target, bool reverse,
+    int fade_speed_ms);
 
   //! Builds a QImage from an SVG resource where the size of the SVG is equal
   //! to the image as a whole.

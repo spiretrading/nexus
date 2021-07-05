@@ -18,6 +18,22 @@ void Spire::draw_border(const QRect& region, const QColor& color,
   painter->restore();
 }
 
+QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
+    int fade_speed_ms) {
+  auto animation = new QPropertyAnimation(target, "windowOpacity");
+  animation->setDuration(fade_speed_ms);
+  animation->setEasingCurve(QEasingCurve::Linear);
+  if(!reverse) {
+    animation->setStartValue(0);
+    animation->setEndValue(1);
+  } else {
+    animation->setStartValue(1);
+    animation->setEndValue(0);
+  }
+  animation->start(QAbstractAnimation::DeleteWhenStopped);
+  return animation;
+}
+
 QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
   return imageFromSvg(path, size, QRect(0, 0, size.width(), size.height()));
 }
