@@ -75,9 +75,7 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
 bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
   switch(event->type()) {
     case QEvent::Enter:
-      if(parentWidget()->isEnabled()) {
-        m_show_timer.start();
-      }
+      m_show_timer.start();
       break;
     case QEvent::MouseMove:
       if(!parentWidget()->rect().contains(
