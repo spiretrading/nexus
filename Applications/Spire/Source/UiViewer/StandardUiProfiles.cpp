@@ -859,13 +859,8 @@ UiProfile Spire::make_list_view_profile() {
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
         [&] (auto model, auto index) {
-          auto text_box = new TextBox(model->get<QString>(index));
-          text_box->set_read_only(true);
-          text_box->setDisabled(true);
-          auto style = get_style(*text_box);
-          style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
-          set_style(*text_box, std::move(style));
-          auto item_widget = new ListItem(text_box);
+          auto label = make_label(model->get<QString>(index));
+          auto item_widget = new ListItem(label);
           if(random_height_seed.get() == 0) {
             if(direction.get() == Qt::Vertical) {
               if(index == 15) {
