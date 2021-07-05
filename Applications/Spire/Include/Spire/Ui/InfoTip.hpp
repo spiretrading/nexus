@@ -25,9 +25,6 @@ namespace Spire {
        */
       void set_interactive(bool is_interactive);
 
-
-      void set_disabled_hovereable(bool is_disable_hoverable);
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void leaveEvent(QEvent* event) override;
