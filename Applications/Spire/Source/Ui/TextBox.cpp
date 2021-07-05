@@ -481,3 +481,14 @@ void TextBox::on_style() {
     }
   });
 }
+
+TextBox* Spire::make_label(QString label, QWidget* parent) {
+  auto text_box = new TextBox(std::move(label), parent);
+  text_box->setDisabled(true);
+  text_box->set_read_only(true);
+  auto style = get_style(*text_box);
+  style.get(ReadOnly() && Disabled()).
+    set(TextColor(QColor::fromRgb(0, 0, 0)));
+  set_style(*text_box, std::move(style));
+  return text_box;
+}
