@@ -5,11 +5,24 @@
 
 namespace Spire {
 
+  /**
+   * Represents a pop-up window for providing addtional context for a
+   * component.
+   */
   class InfoTip : public QWidget {
     public:
 
+      /**
+       * Constructs an InfoTip.
+       * @param body The component to display in the InfoTip.
+       * @param parent The parent widget.
+       */
       explicit InfoTip(QWidget* body, QWidget* parent = nullptr);
 
+      /**
+       * Sets if the InfoTop will remain visible when hovered.
+       * @param is_interactive True iff the InfoTip is interactive.
+       */
       void set_interactive(bool is_interactive);
 
     protected:
