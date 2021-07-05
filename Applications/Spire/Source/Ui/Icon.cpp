@@ -60,6 +60,12 @@ void Icon::on_style() {
           update();
         });
       },
+      [&] (const IconImage& image) {
+        stylist.evaluate(image, [=] (auto image) {
+          m_icon = std::move(image);
+          update();
+        });
+      },
       [&] (const Fill& fill) {
         stylist.evaluate(fill, [=] (auto color) {
           m_fill = color;

@@ -6,6 +6,9 @@
 namespace Spire {
 namespace Styles {
 
+  /** Sets the icon image of an icon. */
+  using IconImage = BasicProperty<QImage, struct IconImageTag>;
+
   /** Sets the fill color of an icon. */
   using Fill = BasicProperty<QColor, struct FillTag>;
 }
