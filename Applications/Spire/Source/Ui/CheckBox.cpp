@@ -38,6 +38,8 @@ namespace {
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get((Focus() || Hover()) >> is_a<Box>()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xAB)));
+    style.get(Disabled() >> is_a<Box>()).
+      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
     style.get((Disabled() || ReadOnly()) >> is_a<Box>()).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Any() >> is_a<TextBox>()).
