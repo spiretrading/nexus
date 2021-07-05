@@ -73,38 +73,34 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
 }
 
 bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == parentWidget()) {
-    switch(event->type()) {
-      case QEvent::Enter:
-        if(parentWidget()->isEnabled()) {
-          m_show_timer.start();
-        }
-        break;
-      case QEvent::MouseMove:
-        if(!parentWidget()->rect().contains(
-            static_cast<QMouseEvent*>(event)->pos())) {
-          fade_out();
-        }
-        break;
-      case QEvent::Leave:
-        if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
-          fade_out();
-        }
-        break;
-      case QEvent::WindowDeactivate:
+  switch(event->type()) {
+    case QEvent::Enter:
+      if(parentWidget()->isEnabled()) {
+        m_show_timer.start();
+      }
+      break;
+    case QEvent::MouseMove:
+      if(!parentWidget()->rect().contains(
+          static_cast<QMouseEvent*>(event)->pos())) {
         fade_out();
-        break;
-      case QEvent::ToolTip:
-        return true;
-    }
+      }
+      break;
+    case QEvent::Leave:
+      if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
+        fade_out();
+      }
+      break;
+    case QEvent::WindowDeactivate:
+      fade_out();
+      break;
+    case QEvent::ToolTip:
+      return true;
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void InfoTip::leaveEvent(QEvent* event) {
-  if(!parentWidget()->underMouse() && !m_body->underMouse()) {
-    fade_out();
-  }
+  fade_out();
   QWidget::leaveEvent(event);
 }
 
