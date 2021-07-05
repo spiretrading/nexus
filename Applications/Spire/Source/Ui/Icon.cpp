@@ -62,7 +62,7 @@ void Icon::on_style() {
       },
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
-          m_icon = image;
+          m_icon = std::move(image);
           update();
         });
       },
