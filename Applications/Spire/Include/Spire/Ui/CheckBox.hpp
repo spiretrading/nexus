@@ -71,6 +71,7 @@ namespace Styles {
       TextBox* m_label;
 
       void on_checked(bool is_checked);
+      void on_layout_direction(Qt::LayoutDirection direction);
   };
 
   /**

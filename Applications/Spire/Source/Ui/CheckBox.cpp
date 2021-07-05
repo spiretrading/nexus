@@ -24,14 +24,10 @@ namespace {
     return icon;
   }
 
-  auto DEFAULT_STYLE(Qt::LayoutDirection direction) {
+  auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    auto alignment = [&] {
-      if(direction == Qt::LeftToRight) {
-        return Qt::AlignRight;
-      }
-      return Qt::AlignLeft;
-    }();
+    style.get(Any()).
+      set(BackgroundColor(QColor(255, 0, 0)));
     style.get(Any() >> is_a<Icon>()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
@@ -50,7 +46,6 @@ namespace {
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
     style.get(Any() >> is_a<TextBox>()).
-      set(TextAlign(alignment | Qt::AlignVCenter)).
       set(padding(0));
     style.get((ReadOnly() && !Checked()) >> is_a<TextBox>()).
       set(TextColor(QColor(0, 0, 0, 0)));
@@ -89,12 +84,13 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
     on_checked(is_checked);
   });
   on_checked(m_model->get_current());
-  set_style(*this, DEFAULT_STYLE(layoutDirection()));
+  set_style(*this, DEFAULT_STYLE());
+  on_layout_direction(layoutDirection());
 }
 
 void CheckBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::LayoutDirectionChange) {
-    set_style(*this, DEFAULT_STYLE(layoutDirection()));
+    on_layout_direction(layoutDirection());
   }
 }
 
@@ -131,6 +127,19 @@ void CheckBox::on_checked(bool is_checked) {
   } else {
     unmatch(*this, Checked());
   }
+}
+
+void CheckBox::on_layout_direction(Qt::LayoutDirection direction) {
+  auto style = get_style(*this);
+  auto alignment = [&] {
+    if(direction == Qt::LeftToRight) {
+      return Qt::AlignRight;
+    }
+    return Qt::AlignLeft;
+  }();
+  style.get(Any() >> is_a<TextBox>()).
+    set(TextAlign(alignment | Qt::AlignVCenter));
+  set_style(*this, style);
 }
 
 CheckBox* Spire::make_radio_button(QWidget* parent) {
