@@ -1,12 +1,13 @@
 #ifndef SPIRE_LIST_VIEW_HPP
 #define SPIRE_LIST_VIEW_HPP
-#include <QTimer>
+#include <QLayout>
 #include <QString>
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
-#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Ui/ListItem.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -170,12 +171,16 @@ namespace Styles {
       bool m_is_setting_item_focus;
       QString m_query;
       QTimer m_query_timer;
+      QWidget* m_body;
+      Box* m_box;
 
       boost::signals2::scoped_connection connect_item_current(ListItem* item,
         const QString& value);
       boost::signals2::scoped_connection connect_item_submit(ListItem* item,
         const QString& value);
       int get_index_by_value(const QString& value);
+      QLayout* get_layout();
+      QLayoutItem* get_column_or_row(int index);
       void cross_move(bool is_next);
       int move_next();
       int move_previous();

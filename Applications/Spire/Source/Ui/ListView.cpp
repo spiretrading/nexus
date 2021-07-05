@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -41,6 +42,11 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_current_index(-1),
       m_column_or_row_index(0),
       m_is_setting_item_focus(false) {
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  m_body = new QWidget(this);
+  m_box = new Box(m_body);
+  layout->addWidget(m_box);
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { update_layout(); });
   m_items.resize(m_list_model->get_size());
@@ -130,11 +136,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   case Qt::Key_Down:
     if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
       auto row_height =
-        layout()->itemAt(m_column_or_row_index)->geometry().height();
+        get_column_or_row(m_column_or_row_index)->geometry().height();
       if(m_tracking_position.y() + row_height <
-          layout()->itemAt(layout()->count() - 2)->geometry().bottom()) {
+          get_column_or_row(get_layout()->count() - 2)->geometry().bottom()) {
         m_tracking_position.setY(m_tracking_position.y() + row_height +
-          layout()->itemAt(m_column_or_row_index + 1)->geometry().height());
+          get_column_or_row(m_column_or_row_index + 1)->geometry().height());
         cross_move(true);
         break;
       }
@@ -145,8 +151,8 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
       if(m_tracking_position.y() != rect().y()) {
         m_tracking_position.setY(m_tracking_position.y() -
-          layout()->itemAt(m_column_or_row_index - 2)->geometry().height() -
-          layout()->itemAt(m_column_or_row_index - 1)->geometry().height());
+          get_column_or_row(m_column_or_row_index - 2)->geometry().height() -
+          get_column_or_row(m_column_or_row_index - 1)->geometry().height());
         cross_move(false);
         break;
       }
@@ -157,8 +163,8 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
       if(m_tracking_position.x() != rect().x()) {
         m_tracking_position.setX(m_tracking_position.x() -
-          layout()->itemAt(m_column_or_row_index - 2)->geometry().width() -
-          layout()->itemAt(m_column_or_row_index - 1)->geometry().width());
+          get_column_or_row(m_column_or_row_index - 2)->geometry().width() -
+          get_column_or_row(m_column_or_row_index - 1)->geometry().width());
         cross_move(false);
         break;
       }
@@ -168,11 +174,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   case Qt::Key_Right:
     if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
       auto column_width =
-        layout()->itemAt(m_column_or_row_index)->geometry().width();
+        get_column_or_row(m_column_or_row_index)->geometry().width();
       if(m_tracking_position.x() + column_width <
-          layout()->itemAt(layout()->count() - 2)->geometry().right()) {
+          get_column_or_row(get_layout()->count() - 2)->geometry().right()) {
         m_tracking_position.setX(m_tracking_position.x() + column_width +
-          layout()->itemAt(m_column_or_row_index + 1)->geometry().width());
+          get_column_or_row(m_column_or_row_index + 1)->geometry().width());
         cross_move(true);
         break;
       }
@@ -232,6 +238,14 @@ int ListView::get_index_by_value(const QString& value) {
   return -1;
 }
 
+QLayout* Spire::ListView::get_layout() {
+  return m_body->layout();
+}
+
+QLayoutItem* ListView::get_column_or_row(int index) {
+  return get_layout()->itemAt(index);
+}
+
 void ListView::cross_move(bool is_next) {
   m_column_or_row_index = [=] {
     if(is_next) {
@@ -240,7 +254,7 @@ void ListView::cross_move(bool is_next) {
       return m_column_or_row_index - 2;
     }
   }();
-  auto target = layout()->itemAt(m_column_or_row_index)->layout();
+  auto target = get_column_or_row(m_column_or_row_index)->layout();
   auto [v0, min_value] = [=] () -> std::tuple<int, int> {
     if(m_direction == Qt::Vertical) {
       return {m_tracking_position.y(),
@@ -320,9 +334,9 @@ void ListView::on_delete_item(int index) {
 
 void ListView::update_column_row_index() {
   m_column_or_row_index = -1;
-  if(auto list_view_layout = layout()) {
-    for(auto i = 0; i < list_view_layout->count(); i += 2) {
-      if(auto child_layout = list_view_layout->itemAt(i)->layout()) {
+  if(auto layout = get_layout()) {
+    for(auto i = 0; i < layout->count(); i += 2) {
+      if(auto child_layout = layout->itemAt(i)->layout()) {
         if(child_layout->indexOf(m_items[m_current_index].m_component) >= 0) {
           m_column_or_row_index = i;
           break;
@@ -344,9 +358,16 @@ void ListView::update_current_item(int index, bool is_update_x_y) {
 }
 
 void ListView::update_layout() {
-  delete layout();
+  delete m_body->layout();
   if(m_items.empty()) {
     return;
+  }
+  if(m_direction == Qt::Vertical) {
+    if(m_overflow == Overflow::WRAP) {
+      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    } else {
+      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    }
   }
   auto gap = DEFAULT_GAP;
   auto overflow_gap = DEFAULT_OVERFLOW_GAP;
@@ -381,18 +402,18 @@ void ListView::update_layout() {
       return widget->width();
     }
   };
-  auto get_dimension = [=] {
+  auto dimension = [=] {
     if(m_direction == Qt::Vertical) {
       return height();
     } else {
       return width();
     }
-  };
+  }();
   auto layout = [=] () -> QBoxLayout* {
     if(m_direction == Qt::Vertical) {
-      return new QHBoxLayout(this);
+      return new QHBoxLayout(m_body);
     } else {
-      return new QVBoxLayout(this);
+      return new QVBoxLayout(m_body);
     }
   }();
   layout->setSpacing(0);
@@ -413,7 +434,7 @@ void ListView::update_layout() {
     for(auto i = 1; i < m_list_model->get_size(); ++i) {
       auto item = m_items[i].m_component;
       child_dimension += get_item_dimension(item) + gap;
-      if(child_dimension <= get_dimension()) {
+      if(child_dimension <= dimension) {
         child_layout->addSpacing(gap);
         child_layout->addWidget(item);
       } else {
@@ -429,7 +450,8 @@ void ListView::update_layout() {
     layout->addLayout(child_layout);
     layout->addStretch();
   }
-  adjustSize();
+  resize(layout->sizeHint());
+  m_box->updateGeometry();
   update_tracking_position();
 }
 

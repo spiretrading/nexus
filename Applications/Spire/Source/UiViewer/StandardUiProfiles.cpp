@@ -807,7 +807,7 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(
     make_standard_enum_property("direction", direction_property));
   auto overflow_property = define_enum<ListView::Overflow>(
-    {{"NONE", ListView::Overflow::NONE}, {"WRAP", ListView::Overflow::WRAP}});
+    {{"WRAP", ListView::Overflow::WRAP}, {"NONE", ListView::Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
   auto selection_mode_property = define_enum<ListView::SelectionMode>(
@@ -843,7 +843,6 @@ UiProfile Spire::make_list_view_profile() {
         profile.get_properties());
       auto& overflow = get<ListView::Overflow>("overflow",
         profile.get_properties());
-      auto& height = get<int>("height", properties);
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
         [&] (auto model, auto index) {
@@ -869,14 +868,14 @@ UiProfile Spire::make_list_view_profile() {
               } else {
                 item_widget->setFixedHeight(scale_height(26));
               }
+              item_widget->setMinimumWidth(item_widget->sizeHint().width());
             } else {
-              item_widget->setMinimumHeight(item_widget->sizeHint().height());
+              item_widget->setFixedSize(item_widget->sizeHint());
             }
           } else {
-              item_widget->setMinimumHeight(
-                scale_height(random_generator.bounded(30, 70)));
+            item_widget->setFixedHeight(
+              scale_height(random_generator.bounded(30, 70)));
           }
-          item_widget->setMinimumWidth(item_widget->sizeHint().width());
           return item_widget;
         });
       apply_widget_properties(list_view, profile.get_properties());
@@ -886,7 +885,8 @@ UiProfile Spire::make_list_view_profile() {
         }
         auto style = get_style(*list_view);
         style.get(Any()).set(ListItemGap(scale_width(value)));
-        set_style(*list_view, style);
+        set_style(*list_view, std::move(style));
+        list_view->update();
       });
       overflow_gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
@@ -894,32 +894,28 @@ UiProfile Spire::make_list_view_profile() {
         }
         auto style = get_style(*list_view);
         style.get(Any()).set(ListOverflowGap(scale_width(value)));
-        set_style(*list_view, style);
+        set_style(*list_view, std::move(style));
+        list_view->update();
       });
-      direction.connect_changed_signal([=, &overflow, &height] (auto value) {
-        list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-        list_view->setMinimumSize(0, 0);
-        if(overflow.get() == ListView::Overflow::WRAP) {
-          if(value == Qt::Vertical) {
-            list_view->setFixedHeight(scale_height(170));
-            height.set(360);
+      auto set_size =
+        [=] (Qt::Orientation direction, ListView::Overflow overflow) {
+          if(overflow == ListView::Overflow::WRAP) {
+            if(direction == Qt::Vertical) {
+              list_view->setFixedHeight(scale_height(360));
+            } else {
+              list_view->setFixedWidth(scale_width(360));
+            }
           } else {
-            list_view->setFixedWidth(scale_width(170));
+            list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+            list_view->setMinimumSize(0, 0);
           }
-        }
+        };
+      direction.connect_changed_signal([=, &overflow] (auto value) {
+        set_size(value, overflow.get());
         list_view->set_direction(value);
       });
-      overflow.connect_changed_signal([=, &direction, &height] (auto value) {
-        list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-        list_view->setMinimumSize(0, 0);
-        if(value == ListView::Overflow::WRAP) {
-          if(direction.get() == Qt::Vertical) {
-            list_view->setFixedHeight(scale_height(170));
-            height.set(360);
-          } else {
-            list_view->setFixedWidth(scale_width(170));
-          }
-        }
+      overflow.connect_changed_signal([=, &direction] (auto value) {
+        set_size(direction.get(), value);
         list_view->set_overflow(value);
       });
       auto& navigation = get<ListView::EdgeNavigation>("edge_navigation",
