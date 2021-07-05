@@ -7,12 +7,15 @@
 #endif
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
-#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   auto BUTTON_SIZE() {
@@ -22,27 +25,26 @@ namespace {
 
   const auto& BUTTON_STYLE() {
     static auto style = [] {
-      auto style = IconButton::Style();
-      style.m_default_color = "#333333";
-      style.m_hover_color = "#333333";
-      style.m_blur_color = "#D0D0D0";
+      auto style = StyleSheet();
+      style.get(Any()).set(Fill(QColor(0x333333)));
+      style.get(!Focus()).set(Fill(QColor(0xD0D0D0)));
       return style;
     }();
     return style;
   }
 
   auto create_button(const QString& icon, QWidget* parent) {
-    auto button = new IconButton(imageFromSvg(icon, BUTTON_SIZE()),
-      BUTTON_STYLE(), parent);
+    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
     button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
+    set_style(*button, BUTTON_STYLE());
     return button;
   }
 }
 
-TitleBar::TitleBar(const QImage& icon, QWidget* parent)
+TitleBar::TitleBar(QImage icon, QWidget* parent)
     : QWidget(parent),
-      m_icon(icon),
+      m_icon(std::move(icon)),
       m_icon_button(nullptr) {
   setObjectName("title_bar");
   setFixedHeight(scale_height(26));
@@ -55,33 +57,30 @@ TitleBar::TitleBar(const QImage& icon, QWidget* parent)
   m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
   set_title_text_stylesheet(QColor("#000000"));
   m_layout->addWidget(m_title_label);
-  m_layout->addSpacerItem(new QSpacerItem(scale_width(8), 10, QSizePolicy::Fixed,
-    QSizePolicy::Expanding));
+  m_layout->addSpacerItem(new QSpacerItem(
+    scale_width(8), 10, QSizePolicy::Fixed, QSizePolicy::Expanding));
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
-  connect(m_minimize_button, &IconButton::clicked, [=] {
+  m_minimize_button->connect_clicked_signal([=] {
     on_minimize_button_press();
   });
   m_layout->addWidget(m_minimize_button);
   m_maximize_button = create_button(":/Icons/maximize.svg", this);
-  connect(m_maximize_button, &IconButton::clicked, [=] {
+  m_maximize_button->connect_clicked_signal([=] {
     on_maximize_button_press();
   });
   m_layout->addWidget(m_maximize_button);
   m_restore_button = create_button(":/Icons/restore.svg", this);
-  connect(m_restore_button, &IconButton::clicked, [=] {
-    on_restore_button_press();
-  });
+  m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
   m_restore_button->hide();
   m_layout->addWidget(m_restore_button);
   auto close_button_style = BUTTON_STYLE();
-  close_button_style.m_hover_color = "#E63F44";
-  m_close_button = new IconButton(imageFromSvg(":/Icons/close.svg",
-    BUTTON_SIZE()), close_button_style, parent);
+  close_button_style.get(Hover()).set(Fill(QColor(0xE63F44)));
+  m_close_button = make_icon_button(
+    imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()), parent);
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->setFixedSize(BUTTON_SIZE());
-  connect(m_close_button, &IconButton::clicked, [=] {
-    on_close_button_press();
-  });
+  m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
+  set_style(*m_close_button, std::move(close_button_style));
   m_layout->addWidget(m_close_button);
   connect_window_signals();
 }
@@ -93,12 +92,14 @@ void TitleBar::set_icon(const QImage& icon) {
 
 void TitleBar::set_icon(const QImage& icon, const QColor& hover_color) {
   auto icon_button_style = BUTTON_STYLE();
-  icon_button_style.m_hover_color = hover_color;
-  icon_button_style.m_hover_background_color = Qt::transparent;
+  icon_button_style.get(Hover()).
+    set(Fill(hover_color)).
+    set(BackgroundColor(QColor(0, 0, 0, 0)));
   delete m_icon_button;
-  m_icon_button = new IconButton(icon, icon_button_style, this);
+  m_icon_button = make_icon_button(icon, this);
   m_icon_button->setFixedSize(scale(26, 26));
   m_icon_button->setFocusPolicy(Qt::NoFocus);
+  set_style(*m_icon_button, std::move(icon_button_style));
   m_layout->insertWidget(0, m_icon_button);
 }
 
@@ -115,10 +116,10 @@ void TitleBar::changeEvent(QEvent* event) {
 bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
-      set_title_text_stylesheet(QColor("#A0A0A0"));
+      set_title_text_stylesheet(QColor(0xA0A0A0));
       set_icon(m_icon, "#D0D0D0");
     } else if(event->type() == QEvent::WindowActivate) {
-      set_title_text_stylesheet(QColor("#000000"));
+      set_title_text_stylesheet(QColor(0x0u));
       set_icon(m_icon, "#333333");
     } else if(event->type() == QEvent::WindowStateChange) {
       if(window()->isMaximized()) {

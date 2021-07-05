@@ -15,7 +15,6 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
-#include "Spire/Charting/TrendLine.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -72,7 +71,9 @@ Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Spire::MarketToken);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
-Q_DECLARE_METATYPE(Spire::TrendLineStyle);
+
+/** Add back this style when charting is implemented. */
+//Q_DECLARE_METATYPE(Spire::TrendLineStyle);
 Q_DECLARE_METATYPE(std::any);
 
 namespace Spire {
