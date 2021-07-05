@@ -9,7 +9,6 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include "Spire/Login/LoginController.hpp"
-#include "Spire/Toolbar/ToolbarController.hpp"
 
 using namespace Beam;
 using namespace Beam::Network;
@@ -93,9 +92,5 @@ std::vector<LoginController::ServerEntry>
 }
 
 void SpireController::on_login(const Definitions& definitions) {
-  m_toolbar_controller = std::make_unique<ToolbarController>(definitions,
-    m_login_controller->get_service_clients());
-  m_login_controller.reset();
-  m_toolbar_controller->open();
   m_state = State::TOOLBAR;
 }
