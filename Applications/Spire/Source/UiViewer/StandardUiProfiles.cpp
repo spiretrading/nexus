@@ -783,6 +783,7 @@ UiProfile Spire::make_list_view_profile() {
      {"MULTIPLE", ListView::SelectionMode::MULTIPLE}});
   properties.push_back(
     make_standard_enum_property("selection_mode", selection_mode_property));
+  properties.push_back(make_standard_property("selection_follows_focus", true));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
@@ -891,6 +892,11 @@ UiProfile Spire::make_list_view_profile() {
       selection_mode.set(list_view->get_selection_mode());
       selection_mode.connect_changed_signal([=] (auto value) {
         list_view->set_selection_mode(value);
+      });
+      auto& selection_follows_focus = get<bool>("selection_follows_focus",
+        profile.get_properties());
+      selection_follows_focus.connect_changed_signal([=] (auto value) {
+        list_view->set_selection_follows_focus(value);
       });
       current_model->connect_current_signal(
         profile.make_event_slot<optional<QString>>(

@@ -134,6 +134,18 @@ namespace Styles {
       /** Sets the selection mode of the ListView. */
       void set_selection_mode(SelectionMode selection_mode);
 
+      /**
+       * Returns whether items are selected when focused for
+       * selection_mode = SINGLE.
+       */
+      bool get_selection_follows_focus() const;
+
+      /**
+       * Sets whether items are selected when focused for
+       * selection_mode = SINGLE.
+       */
+      void set_selection_follows_focus(bool is_selection_follows_focus);
+
       /** Connects a slot to the delete signal. */
       boost::signals2::connection connect_delete_signal(
         const DeleteSignal::slot_type& slot) const;
@@ -163,6 +175,8 @@ namespace Styles {
       EdgeNavigation m_navigation;
       Overflow m_overflow;
       SelectionMode m_selection_mode;
+      bool m_is_selection_follows_focus;
+      QString m_selected;
       std::vector<Item> m_items;
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
@@ -189,6 +203,7 @@ namespace Styles {
       void update_current_item(int index, bool is_update_x_y);
       void update_layout();
       void update_tracking_position();
+      void update_selection(const QString& current);
       void query();
   };
 }

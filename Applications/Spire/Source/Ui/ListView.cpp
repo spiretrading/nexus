@@ -39,6 +39,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
+      m_is_selection_follows_focus(true),
       m_current_index(-1),
       m_column_or_row_index(0),
       m_is_setting_item_focus(false) {
@@ -62,6 +63,15 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
         [&] (const ListModel::RemoveOperation& operation) {
           on_delete_item(operation.m_index);
         });
+  });
+  m_current_model->connect_current_signal([=] (const auto& current) {
+    if(m_is_selection_follows_focus) {
+      if(current) {
+        update_selection(*current);
+      } else {
+        update_selection("");
+      }
+    }
   });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
 }
@@ -107,6 +117,14 @@ ListView::SelectionMode ListView::get_selection_mode() const {
 
 void ListView::set_selection_mode(SelectionMode selection_mode) {
   m_selection_mode = selection_mode;
+}
+
+bool ListView::get_selection_follows_focus() const {
+  return m_is_selection_follows_focus;
+}
+
+void ListView::set_selection_follows_focus(bool is_selection_follows_focus) {
+  m_is_selection_follows_focus = is_selection_follows_focus;
 }
 
 connection ListView::connect_delete_signal(
@@ -225,6 +243,9 @@ scoped_connection ListView::connect_item_submit(ListItem* item,
   return item->connect_submit_signal([=] {
     m_current_index = get_index_by_value(value);
     update_tracking_position();
+    if(!m_is_selection_follows_focus) {
+      update_selection(value);
+    }
     m_submit_signal(value);
   });
 }
@@ -461,6 +482,16 @@ void ListView::update_tracking_position() {
   }
   m_tracking_position = m_items[m_current_index].m_component->pos();
   update_column_row_index();
+}
+
+void ListView::update_selection(const QString& current) {
+  if(auto index = get_index_by_value(m_selected); index != -1) {
+    m_items[index].m_component->set_selected(false);
+  }
+  m_selected = current;
+  if(m_current_index != -1) {
+    m_items[m_current_index].m_component->set_selected(true);
+  }
 }
 
 void ListView::query() {
