@@ -47,6 +47,7 @@ namespace Spire {
       QTimer m_show_timer;
       QColor m_background_color;
       QColor m_border_color;
+      int m_border_size;
 
       void fade_in();
       void fade_out();

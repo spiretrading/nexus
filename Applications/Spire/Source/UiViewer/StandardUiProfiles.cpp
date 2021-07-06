@@ -633,10 +633,14 @@ UiProfile Spire::make_filter_panel_profile() {
 UiProfile Spire::make_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip",
+    "Tooltip"));
   auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
     [] (auto& profile) {
+      auto& tooltip = get<QString>("tooltip", profile.get_properties());
       auto button =
-        make_icon_button(imageFromSvg(":/Icons/demo.svg", scale(26, 26)));
+        make_icon_button(imageFromSvg(":/Icons/demo.svg", scale(26, 26)),
+          tooltip.get());
       apply_widget_properties(button, profile.get_properties());
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));

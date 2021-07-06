@@ -50,7 +50,7 @@ namespace {
     auto style = StyleSheet();
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(border_color(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+      set(border(scale_width(1), QColor::fromRgb(0xA0, 0xA0, 0xA0)));
     return style;
   }
 }
@@ -232,7 +232,7 @@ QPixmap InfoTip::render_background() const {
   auto path = get_arrow_path();
   path.addRect(rect().marginsRemoved(get_margins()));
   auto arrow = scene.addPath(path.simplified(), QPen(m_border_color,
-    scale_width(1)), m_background_color);
+    m_border_size), m_background_color);
   arrow->setGraphicsEffect(&shadow);
   auto pixmap = QPixmap(size());
   pixmap.fill(Qt::transparent);
@@ -272,7 +272,15 @@ void InfoTip::on_style() {
         stylist.evaluate(color, [=] (auto color) {
           m_border_color = color;
         });
+      },
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_border_size = size;
+        });
       });
+  }
+  if(m_border_size == 0) {
+    m_border_color = m_background_color;
   }
   update();
 }
