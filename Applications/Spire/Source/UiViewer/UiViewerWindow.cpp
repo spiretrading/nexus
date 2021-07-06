@@ -6,11 +6,10 @@
 #include <QSplitter>
 #include <QTextEdit>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ScrollBarStyle.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 #include "Spire/UiViewer/UiPropertyTableView.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Spire;
 
@@ -44,7 +43,6 @@ namespace {
       })").arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(3)));
-    widget_list->verticalScrollBar()->setStyle(new ScrollBarStyle(widget_list));
     return widget_list;
   }
 
@@ -104,8 +102,6 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
   add(make_box_profile());
   add(make_check_box_profile());
-  add(make_color_selector_button_profile());
-  add(make_currency_combo_box_profile());
   add(make_decimal_box_profile());
   add(make_decimal_filter_panel_profile());
   add(make_duration_box_profile());
@@ -115,10 +111,12 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_integer_filter_panel_profile());
   add(make_key_tag_profile());
   add(make_label_button_profile());
+  add(make_label_profile());
   add(make_list_item_profile());
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());
   add(make_overlay_panel_profile());
+  add(make_radio_button_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_text_box_profile());

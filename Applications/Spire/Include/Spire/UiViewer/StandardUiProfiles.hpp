@@ -11,12 +11,6 @@ namespace Spire {
   /** Returns a UiProfile for the CheckBox. */
   UiProfile make_check_box_profile();
 
-  /** Returns a UiProfile for the ColorSelectorButton. */
-  UiProfile make_color_selector_button_profile();
-
-  /** Returns a UiProfile for the CurrencyComboBox. */
-  UiProfile make_currency_combo_box_profile();
-
   /** Returns a UiProfile for the DecimalBox. */
   UiProfile make_decimal_box_profile();
 
@@ -44,6 +38,9 @@ namespace Spire {
   /** Returns a UiProfile for the LabelButton. */
   UiProfile make_label_button_profile();
 
+  /** Returns a UiProfile for the Label. */
+  UiProfile make_label_profile();
+
   /** Returns a UiProfile for the ListItem. */
   UiProfile make_list_item_profile();
 
@@ -55,6 +52,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
+
+  /** Returns a UiProfile for the RadioButton. */
+  UiProfile make_radio_button_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();

@@ -1,10 +1,7 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/optional/optional.hpp>
 #include <QHeaderView>
 #include <QImage>
-#include <QLineEdit>
 #include <QRect>
 #include <QSize>
 #include <QString>
@@ -15,50 +12,25 @@ namespace Spire {
   class ArrayTableModel;
   class Box;
   class Button;
-  class CalendarDayWidget;
-  class CalendarModel;
-  class CalendarWidget;
   class CheckBox;
-  class ColonWidget;
-  class DateInputWidget;
   class DecimalBox;
-  template<typename T> class DecimalBoxAdaptor;
-  class DecimalSpinBox;
   class Dialog;
-  class DropDownMenu;
-  class DropDownMenuItem;
-  class DropDownMenuList;
   class DropShadow;
   class DurationBox;
   class FilteredTableModel;
   class FilterPanel;
-  class FlatButton;
   class Icon;
-  class IconButton;
-  class IntegerSpinBox;
-  class KeySequenceInputField;
   class LayeredWidget;
   class ListModel;
   class MoneyBox;
-  class MoneyInputWidget;
-  class MonthAndYearSpinBox;
   class OverlayPanel;
-  class PropertiesWindowButtonsWidget;
-  class QuantitySpinBox;
-  class RangeInputSlider;
-  class RangeInputWidget;
-  class RealSpinBox;
   class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
-  class ScalarWidget;
-  class ScrollArea;
   class ScrollBar;
   class ScrollBox;
   class ScrollableLayer;
   class SecurityStack;
-  class SecurityWidget;
   class SortedTableModel;
-  class TabWidget;
   class TableModel;
   class TextBox;
   class TimeBox;

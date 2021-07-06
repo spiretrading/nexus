@@ -126,10 +126,8 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
 }
 
 Button* Spire::make_label_button(const QString& label, QWidget* parent) {
-  auto text_box = new TextBox(label);
-  text_box->set_read_only(true);
-  text_box->setDisabled(true);
-  auto button = new Button(text_box, parent);
+  auto label_box = make_label(label);
+  auto button = new Button(label_box, parent);
   auto style = StyleSheet();
   style.get(Body()).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
