@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <QHeaderView>
 #include <QImage>
 #include <QPropertyAnimation>
@@ -61,7 +62,7 @@ namespace Spire {
    * @returns The animation assigned to the target.
    */
   QPropertyAnimation* fade_window(QObject* target, bool reverse,
-    int fade_speed_ms);
+    boost::posix_time::time_duration fade_speed);
 
   //! Builds a QImage from an SVG resource where the size of the SVG is equal
   //! to the image as a whole.

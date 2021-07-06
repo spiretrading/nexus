@@ -5,6 +5,7 @@
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
+using namespace boost::posix_time;
 using namespace Spire;
 
 void Spire::draw_border(const QRect& region, const QColor& color,
@@ -19,9 +20,9 @@ void Spire::draw_border(const QRect& region, const QColor& color,
 }
 
 QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
-    int fade_speed_ms) {
+    time_duration fade_speed) {
   auto animation = new QPropertyAnimation(target, "windowOpacity", target);
-  animation->setDuration(fade_speed_ms);
+  animation->setDuration(fade_speed.total_milliseconds());
   animation->setEasingCurve(QEasingCurve::Linear);
   if(!reverse) {
     animation->setStartValue(0);
