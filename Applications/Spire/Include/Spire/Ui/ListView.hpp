@@ -59,10 +59,7 @@ namespace Styles {
         NONE,
 
         /** The user can select a single item. */
-        SINGLE,
-
-        /** The user can select multiple items. */
-        MULTIPLE
+        SINGLE
       };
 
       /**
@@ -160,8 +157,7 @@ namespace Styles {
 
     private:
       struct Item {
-        ListItem* m_component;
-        QString m_value;
+        ListItem* m_item;
         boost::signals2::scoped_connection m_current_connection;
         boost::signals2::scoped_connection m_submit_connection;
       };
@@ -178,6 +174,7 @@ namespace Styles {
       bool m_is_selection_follows_focus;
       QString m_selected;
       std::vector<Item> m_items;
+      boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
       int m_column_or_row_index;
@@ -198,6 +195,7 @@ namespace Styles {
       void cross_move(bool is_next);
       int move_next();
       int move_previous();
+      void on_current(const boost::optional<QString>& current);
       void on_delete_item(int index);
       void update_column_row_index();
       void update_current_item(int index, bool is_update_x_y);

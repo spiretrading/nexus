@@ -8,6 +8,7 @@
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Styles;
@@ -54,7 +55,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->get<QString>(i);
     auto list_item = m_factory(m_list_model, i);
-    m_items[i] = {list_item, value, connect_item_current(list_item, value),
+    m_items[i] = {list_item, connect_item_current(list_item, value),
       connect_item_submit(list_item, value)};
   }
   m_list_model_connection = m_list_model->connect_operation_signal(
@@ -64,15 +65,10 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
           on_delete_item(operation.m_index);
         });
   });
-  m_current_model->connect_current_signal([=] (const auto& current) {
-    if(m_is_selection_follows_focus) {
-      if(current) {
-        update_selection(*current);
-      } else {
-        update_selection("");
-      }
-    }
-  });
+  m_current_connection = m_current_model->connect_current_signal(
+    [=] (const auto& current) {
+      on_current(current);
+    });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
 }
 
@@ -117,6 +113,9 @@ ListView::SelectionMode ListView::get_selection_mode() const {
 
 void ListView::set_selection_mode(SelectionMode selection_mode) {
   m_selection_mode = selection_mode;
+  if(m_selection_mode == SelectionMode::NONE && !m_selected.isEmpty()) {
+    deselect_current_item();
+  }
 }
 
 bool ListView::get_selection_follows_focus() const {
@@ -138,7 +137,7 @@ connection ListView::connect_submit_signal(
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
-  if(m_selection_mode == SelectionMode::NONE || m_list_model->get_size() == 0) {
+  if(m_list_model->get_size() == 0) {
     QWidget::keyPressEvent(event);
     return;
   }
@@ -222,19 +221,16 @@ void ListView::resizeEvent(QResizeEvent* event) {
 scoped_connection ListView::connect_item_current(ListItem* item,
     const QString& value) {
   return item->connect_current_signal([=] {
-    if(m_selection_mode == SelectionMode::NONE) {
-      return;
-    }
     if(!m_is_setting_item_focus) {
       m_current_index = get_index_by_value(value);
+      if(m_current_index == -1) {
+        m_current_model->set_current(boost::none);
+      } else {
+        m_current_model->set_current(value);
+      }
       update_tracking_position();
     }
     m_is_setting_item_focus = false;
-    if(m_current_index == -1) {
-      m_current_model->set_current(boost::none);
-    } else {
-      m_current_model->set_current(value);
-    }
   });
 }
 
@@ -265,6 +261,12 @@ QLayout* Spire::ListView::get_layout() {
 
 QLayoutItem* ListView::get_column_or_row(int index) {
   return get_layout()->itemAt(index);
+}
+
+void ListView::deselect_current_item() {
+  if(auto index = get_index_by_value(m_selected); index != -1) {
+    m_items[index].m_item->set_selected(false);
+  }
 }
 
 void ListView::cross_move(bool is_next) {
@@ -317,7 +319,7 @@ void ListView::cross_move(bool is_next) {
   }
   auto item = target->itemAt(index)->widget();
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    if(item == m_items[i].m_component) {
+    if(item == m_items[i].m_item) {
       update_current_item(i, false);
       break;
     }
@@ -344,8 +346,19 @@ int ListView::move_previous() {
   }
 }
 
+void ListView::on_current(const optional<QString>& current) {
+  m_items[m_current_index].m_item->setFocus();
+  if(m_is_selection_follows_focus) {
+    if(current) {
+      update_selection(*current);
+    } else {
+      update_selection("");
+    }
+  }
+}
+
 void ListView::on_delete_item(int index) {
-  delete m_items[index].m_component;
+  delete m_items[index].m_item;
   m_items.erase(std::next(m_items.begin(), index));
   if(m_current_index >= m_list_model->get_size()) {
     m_current_index = m_list_model->get_size() - 1;
@@ -358,7 +371,7 @@ void ListView::update_column_row_index() {
   if(auto layout = get_layout()) {
     for(auto i = 0; i < layout->count(); i += 2) {
       if(auto child_layout = layout->itemAt(i)->layout()) {
-        if(child_layout->indexOf(m_items[m_current_index].m_component) >= 0) {
+        if(child_layout->indexOf(m_items[m_current_index].m_item) >= 0) {
           m_column_or_row_index = i;
           break;
         }
@@ -368,10 +381,10 @@ void ListView::update_column_row_index() {
 }
 
 void ListView::update_current_item(int index, bool is_update_x_y) {
-  if(m_selection_mode != SelectionMode::NONE && index != -1) {
+  if(index != -1) {
     m_is_setting_item_focus = true;
     m_current_index = index;
-    m_items[index].m_component->setFocus();
+    m_current_model->set_current(m_list_model->get<QString>(index));
     if(is_update_x_y) {
       update_tracking_position();
     }
@@ -441,19 +454,19 @@ void ListView::update_layout() {
   layout->setContentsMargins({});
   if(m_overflow == Overflow::NONE) {
     auto child_layout = get_child_layout();
-    child_layout->addWidget(m_items[0].m_component);
+    child_layout->addWidget(m_items[0].m_item);
     for(auto i = 1; i < m_list_model->get_size(); ++i) {
       child_layout->addSpacing(gap);
-      child_layout->addWidget(m_items[i].m_component);
+      child_layout->addWidget(m_items[i].m_item);
     }
     layout->addLayout(child_layout);
   } else {
     auto child_layout = get_child_layout();
-    auto first_item = m_items[0].m_component;
+    auto first_item = m_items[0].m_item;
     child_layout->addWidget(first_item);
     auto child_dimension = get_item_dimension(first_item);
     for(auto i = 1; i < m_list_model->get_size(); ++i) {
-      auto item = m_items[i].m_component;
+      auto item = m_items[i].m_item;
       child_dimension += get_item_dimension(item) + gap;
       if(child_dimension <= dimension) {
         child_layout->addSpacing(gap);
@@ -480,17 +493,18 @@ void ListView::update_tracking_position() {
   if(m_current_index == -1) {
     return;
   }
-  m_tracking_position = m_items[m_current_index].m_component->pos();
+  m_tracking_position = m_items[m_current_index].m_item->pos();
   update_column_row_index();
 }
 
 void ListView::update_selection(const QString& current) {
-  if(auto index = get_index_by_value(m_selected); index != -1) {
-    m_items[index].m_component->set_selected(false);
+  if(m_selection_mode == SelectionMode::NONE) {
+    return;
   }
+  deselect_current_item();
   m_selected = current;
   if(m_current_index != -1) {
-    m_items[m_current_index].m_component->set_selected(true);
+    m_items[m_current_index].m_item->set_selected(true);
   }
 }
 

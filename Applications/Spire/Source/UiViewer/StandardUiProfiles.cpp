@@ -779,8 +779,7 @@ UiProfile Spire::make_list_view_profile() {
     make_standard_enum_property("overflow", overflow_property));
   auto selection_mode_property = define_enum<ListView::SelectionMode>(
     {{"NONE", ListView::SelectionMode::NONE},
-     {"SINGLE", ListView::SelectionMode::SINGLE},
-     {"MULTIPLE", ListView::SelectionMode::MULTIPLE}});
+     {"SINGLE", ListView::SelectionMode::SINGLE}});
   properties.push_back(
     make_standard_enum_property("selection_mode", selection_mode_property));
   properties.push_back(make_standard_property("selection_follows_focus", true));
