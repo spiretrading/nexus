@@ -58,6 +58,7 @@ namespace Spire {
       QPoint get_position() const;
       QRect hover_rect() const;
       QPixmap render_background();
+      void on_fade_out_finished();
       void on_show_timeout();
       void on_style();
   };

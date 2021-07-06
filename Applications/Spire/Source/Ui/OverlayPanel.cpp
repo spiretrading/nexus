@@ -9,6 +9,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Ui.hpp"
 
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -149,7 +150,7 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
 }
 
 void OverlayPanel::fade(bool reverse) {
-  auto animation = fade_window(this, reverse, FADE_SPEED_MS);
+  auto animation = fade_window(this, reverse, milliseconds(FADE_SPEED_MS));
   if(reverse) {
     connect(animation, &QPropertyAnimation::finished, [=] { close(); });
   }

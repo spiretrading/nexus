@@ -11,6 +11,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 
+using namespace boost::posix_time;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -88,9 +89,6 @@ bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
         fade_out();
       }
       break;
-    case QEvent::WindowDeactivate:
-      fade_out();
-      break;
     case QEvent::ToolTip:
       return true;
   }
@@ -112,17 +110,13 @@ void InfoTip::set_interactive(bool is_interactive) {
 }
 
 void InfoTip::fade_in() {
-  fade_window(this, false, FADE_IN_MS);
+  fade_window(this, false, milliseconds(FADE_IN_MS));
 }
 
 void InfoTip::fade_out() {
-  auto animation = fade_window(this, true, FADE_IN_MS);
-  connect(animation, &QPropertyAnimation::finished, [&] {
-    if(!parentWidget()->underMouse()) {
-      m_show_timer.stop();
-      hide();
-    }
-  });
+  auto animation = fade_window(this, true, milliseconds(FADE_IN_MS));
+  connect(animation, &QPropertyAnimation::finished, this,
+    &InfoTip::on_fade_out_finished);
 }
 
 QPainterPath InfoTip::get_arrow_path() const {
@@ -130,7 +124,7 @@ QPainterPath InfoTip::get_arrow_path() const {
   auto polygon = [&] () -> QPolygonF {
     auto margins = get_margins();
     auto left_x = ARROW_X_POSITION() + DROP_SHADOW_WIDTH();
-    auto tip_x = left_x + (ARROW_SIZE().width() / 2);
+    auto tip_x = left_x + ARROW_SIZE().width() / 2;
     auto right_x = left_x + ARROW_SIZE().width();
     auto orientation = get_orientation();
     if(orientation == Orientation::TOP_LEFT ||
@@ -143,8 +137,8 @@ QPainterPath InfoTip::get_arrow_path() const {
       {right_x, margins.top()}});
   }();
   if(get_body_orientation() == BodyOrientation::LEFT) {
-    polygon.translate(width() - (2 * (ARROW_X_POSITION() +
-      DROP_SHADOW_WIDTH())) - ARROW_SIZE().width(), 0);
+    polygon.translate(width() - 2 * (ARROW_X_POSITION() +
+      DROP_SHADOW_WIDTH()) - ARROW_SIZE().width(), 0);
   }
   path.addPolygon(polygon);
   return path;
@@ -185,7 +179,7 @@ InfoTip::Orientation InfoTip::get_orientation() const {
     parentWidget()->rect().bottomLeft());
   auto screen_geometry =
     get_current_screen(parent_position)->availableGeometry();
-  if((parent_position.y() + height()) >
+  if(parent_position.y() + height() >
       screen_geometry.y() + screen_geometry.height()) {
     if(parent_position.x() < screen_geometry.x()) {
       return Orientation::TOP_RIGHT;
@@ -245,6 +239,13 @@ QPixmap InfoTip::render_background() {
   auto painter = QPainter(&pixmap);
   scene.render(&painter);
   return pixmap;
+}
+
+void InfoTip::on_fade_out_finished() {
+  if(!parentWidget()->underMouse()) {
+    m_show_timer.stop();
+    hide();
+  }
 }
 
 void InfoTip::on_show_timeout() {
