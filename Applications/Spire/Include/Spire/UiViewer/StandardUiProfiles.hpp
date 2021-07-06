@@ -26,6 +26,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
 
+  /** Returns a UiProfile for the IntoTip. */
+  UiProfile make_info_tip_profile();
+
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
 
@@ -55,6 +58,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
+
+  /** Returns a UiProfile for the RadioButton. */
+  UiProfile make_radio_button_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();

@@ -19,6 +19,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -102,6 +103,49 @@ namespace {
       set_style(*box, std::move(style));
     });
     return box;
+  }
+
+  auto setup_checkable_profile(UiProfile& profile, CheckBox* check_box) {
+    auto& label = get<QString>("label", profile.get_properties());
+    check_box->set_label(label.get());
+    apply_widget_properties(check_box, profile.get_properties());
+    label.connect_changed_signal([=] (const auto& value) {
+      check_box->set_label(value);
+    });
+    auto& checked = get<bool>("checked", profile.get_properties());
+    checked.connect_changed_signal([=] (auto value) {
+      if(check_box->get_model()->get_current() != value) {
+        check_box->get_model()->set_current(value);
+      }
+    });
+    check_box->get_model()->connect_current_signal([&] (auto is_checked) {
+      checked.set(is_checked);
+    });
+    check_box->get_model()->connect_current_signal(
+      profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
+    auto& read_only = get<bool>("read-only", profile.get_properties());
+    read_only.connect_changed_signal([=] (auto is_read_only) {
+      check_box->set_read_only(is_read_only);
+    });
+    auto& layout_direction = get<bool>("left-to-right",
+      profile.get_properties());
+    layout_direction.connect_changed_signal([=] (auto value) {
+      if(value) {
+        check_box->setLayoutDirection(Qt::LeftToRight);
+      } else {
+        check_box->setLayoutDirection(Qt::RightToLeft);
+      }
+    });
+    return check_box;
+  }
+
+  void populate_check_box_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties) {
+    properties.push_back(make_standard_property<bool>("checked"));
+    properties.push_back(
+      make_standard_property("label", QString::fromUtf8("Click me!")));
+    properties.push_back(make_standard_property<bool>("read-only"));
+    properties.push_back(make_standard_property("left-to-right", true));
   }
 
   template<typename T>
@@ -224,47 +268,11 @@ UiProfile Spire::make_box_profile() {
 UiProfile Spire::make_check_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<bool>("checked"));
-  properties.push_back(
-    make_standard_property("label", QString::fromUtf8("Click me!")));
-  properties.push_back(make_standard_property<bool>("read-only"));
-  properties.push_back(make_standard_property("left-to-right", true));
-  auto profile = UiProfile(QString::fromUtf8("CheckBox"), properties,
-    [] (auto& profile) {
-      auto check_box = new CheckBox();
-      auto& label = get<QString>("label", profile.get_properties());
-      check_box->set_label(label.get());
-      apply_widget_properties(check_box, profile.get_properties());
-      label.connect_changed_signal([=] (const auto& value) {
-        check_box->set_label(value);
-      });
-      auto& checked = get<bool>("checked", profile.get_properties());
-      checked.connect_changed_signal([=] (auto value) {
-        if(check_box->get_model()->get_current() != value) {
-          check_box->get_model()->set_current(value);
-        }
-      });
-      check_box->get_model()->connect_current_signal([&] (auto is_checked) {
-        checked.set(is_checked);
-      });
-      check_box->get_model()->connect_current_signal(
-        profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
-      auto& read_only = get<bool>("read-only", profile.get_properties());
-      read_only.connect_changed_signal([=] (auto is_read_only) {
-        check_box->set_read_only(is_read_only);
-      });
-      auto& layout_direction = get<bool>("left-to-right",
-        profile.get_properties());
-      layout_direction.connect_changed_signal([=] (auto value) {
-        if(value) {
-          check_box->setLayoutDirection(Qt::LeftToRight);
-        } else {
-          check_box->setLayoutDirection(Qt::RightToLeft);
-        }
-      });
-      return check_box;
+  populate_check_box_properties(properties);
+  return UiProfile(QString::fromUtf8("CheckBox"), properties,
+    [=] (auto& profile) {
+      return setup_checkable_profile(profile, new CheckBox());
     });
-  return profile;
 }
 
 UiProfile Spire::make_decimal_box_profile() {
@@ -628,13 +636,52 @@ UiProfile Spire::make_filter_panel_profile() {
 UiProfile Spire::make_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip",
+    "Tooltip"));
   auto profile = UiProfile(QString::fromUtf8("IconButton"), properties,
     [] (auto& profile) {
+      auto& tooltip = get<QString>("tooltip", profile.get_properties());
       auto button =
-        make_icon_button(imageFromSvg(":/Icons/demo.svg", scale(26, 26)));
+        make_icon_button(imageFromSvg(":/Icons/demo.svg", scale(26, 26)),
+          tooltip.get());
       apply_widget_properties(button, profile.get_properties());
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_info_tip_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("interactive"));
+  properties.push_back(make_standard_property<int>("body-width",
+    scale_width(100)));
+  properties.push_back(make_standard_property<int>("body-height",
+    scale_height(30)));
+  auto profile = UiProfile(QString::fromUtf8("InfoTip"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button("Hover me!");
+      auto body_label = make_label("Body Label");
+      auto label_style = get_style(*body_label);
+      label_style.get(Any()).
+        set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+      set_style(*body_label, label_style);
+      auto info_tip = new InfoTip(body_label, button);
+      apply_widget_properties(button, profile.get_properties());
+      auto& interactive = get<bool>("interactive", profile.get_properties());
+      interactive.connect_changed_signal([=] (bool is_interactive) {
+        info_tip->set_interactive(is_interactive);
+      });
+      auto& body_width = get<int>("body-width", profile.get_properties());
+      body_width.connect_changed_signal([=] (auto width) {
+        body_label->setFixedWidth(width);
+      });
+      auto& body_height = get<int>("body-height", profile.get_properties());
+      body_height.connect_changed_signal([=] (auto height) {
+        body_label->setFixedHeight(height);
+      });
       return button;
     });
   return profile;
@@ -1017,6 +1064,16 @@ UiProfile Spire::make_overlay_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_radio_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_check_box_properties(properties);
+  return UiProfile(QString::fromUtf8("RadioButton"), properties,
+    [=] (auto& profile) {
+      return setup_checkable_profile(profile, make_radio_button());
+    });
+}
+
 UiProfile Spire::make_scroll_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1197,34 +1254,17 @@ UiProfile Spire::make_time_box_profile() {
 
 UiProfile Spire::make_tooltip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
   properties.push_back(
     make_standard_property("tooltip-text", QString::fromUtf8("Tooltip Text")));
   auto profile = UiProfile(QString::fromUtf8("Tooltip"), properties,
     [] (auto& profile) {
-      auto label = new QLabel("Hover me!");
-      label->setAttribute(Qt::WA_Hover);
-      label->setFocusPolicy(Qt::StrongFocus);
-      label->resize(scale(100, 28));
-      label->setStyleSheet(QString(R"(
-        QLabel {
-          background-color: #684BC7;
-          color: white;
-          qproperty-alignment: AlignCenter;
-        }
-
-        QLabel:focus {
-          border: %1px solid #000000;
-        }
-
-        QLabel:disabled {
-          background-color: #F5F5F5;
-          color: #C8C8C8;
-        })").arg(scale_width(2)));
-      apply_widget_properties(label, profile.get_properties());
+      auto label = make_label("Hover me!");
       auto& tooltip_text = get<QString>("tooltip-text",
         profile.get_properties());
-      auto tooltip = make_text_tooltip(tooltip_text.get(), label);
+      auto tooltip = new Tooltip(tooltip_text.get(), label);
+      tooltip_text.connect_changed_signal([=] (const auto& text) {
+        tooltip->set_label(text);
+      });
       return label;
     });
   return profile;

@@ -7,7 +7,9 @@
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Ui.hpp"
 
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -148,18 +150,10 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
 }
 
 void OverlayPanel::fade(bool reverse) {
-  auto animation = new QPropertyAnimation(this, "windowOpacity");
-  animation->setDuration(FADE_SPEED_MS);
-  animation->setEasingCurve(QEasingCurve::Linear);
-  if(!reverse) {
-    animation->setStartValue(0);
-    animation->setEndValue(1);
-  } else {
-    animation->setStartValue(1);
-    animation->setEndValue(0);
+  auto animation = fade_window(this, reverse, milliseconds(FADE_SPEED_MS));
+  if(reverse) {
     connect(animation, &QPropertyAnimation::finished, [=] { close(); });
   }
-  animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
 void OverlayPanel::position() {
