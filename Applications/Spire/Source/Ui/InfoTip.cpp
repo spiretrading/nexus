@@ -200,8 +200,8 @@ QPoint InfoTip::get_position() const {
         orientation == Orientation::TOP_LEFT) {
       return parent_pos.x() - DROP_SHADOW_WIDTH();
     }
-    return parent_pos.x() + (parentWidget()->width() -
-      (2 * ARROW_X_POSITION()) - ARROW_SIZE().width() - DROP_SHADOW_WIDTH());
+    return parent_pos.x() + parentWidget()->width() -
+      2 * ARROW_X_POSITION() - ARROW_SIZE().width() - DROP_SHADOW_WIDTH();
   }();
   auto y = [&] {
     if(orientation == Orientation::TOP_LEFT ||
@@ -212,8 +212,8 @@ QPoint InfoTip::get_position() const {
     return parent_pos.y() + scale_height(1);
   }();
   if(get_body_orientation() == BodyOrientation::LEFT) {
-    x -= width() - ((2 * DROP_SHADOW_WIDTH()) + ARROW_SIZE().width() +
-      (2 * ARROW_X_POSITION()));
+    x -= width() - (2 * DROP_SHADOW_WIDTH() + ARROW_SIZE().width() +
+      2 * ARROW_X_POSITION());
   }
   return {x, y};
 }
@@ -222,7 +222,7 @@ QRect InfoTip::hover_rect() const {
   return QRect(get_position(), QSize(width(), height()));
 }
 
-QPixmap InfoTip::render_background() {
+QPixmap InfoTip::render_background() const {
   auto scene = QGraphicsScene();
   scene.setSceneRect(rect());
   auto shadow = QGraphicsDropShadowEffect();
