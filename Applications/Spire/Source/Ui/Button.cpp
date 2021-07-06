@@ -110,7 +110,7 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   style.get(Body()).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
-  style.get(Hover() / Body()).
+  style.get((Hover() || Press()) / Body()).
     set(BackgroundColor(QColor::fromRgb(0xE0, 0xE0, 0xE0)));
   style.get(Focus() / Body()).
     set(border_color(QColor(0x4B, 0x23, 0xA0)));
