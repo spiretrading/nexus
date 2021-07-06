@@ -197,11 +197,13 @@ namespace Styles {
       int move_next();
       int move_previous();
       void on_current(const boost::optional<QString>& current);
+      void on_add_item(int index);
       void on_delete_item(int index);
       void update_column_row_index();
-      void update_current_item(int index, bool is_update_x_y);
       void update_layout();
       void update_tracking_position();
+      void update_current(int index, bool is_update_x_y);
+      void update_current_after_items_changed();
       void update_selection(const QString& current);
       void query();
   };

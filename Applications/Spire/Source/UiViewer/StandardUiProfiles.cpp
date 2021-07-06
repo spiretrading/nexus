@@ -783,13 +783,18 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(
     make_standard_enum_property("selection_mode", selection_mode_property));
   properties.push_back(make_standard_property("selection_follows_focus", true));
+  auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
+  properties.push_back(
+    make_standard_enum_property("change_item", change_item_property));
+  properties.push_back(make_standard_property("change_item_index", 0));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
         get<int>("random_height_seed", profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
-      for(auto i = 0; i < 66; ++i) {
+      auto list_size = 66;
+      for(auto i = 0; i < list_size; ++i) {
         if(i == 10) {
           list_model->push(QString::fromUtf8("llama"));
         } else if(i == 11) {
@@ -804,6 +809,19 @@ UiProfile Spire::make_list_view_profile() {
           list_model->push(QString::fromUtf8("Item%1").arg(i));
         }
       }
+      auto& change_item = get<int>("change_item", profile.get_properties());
+      auto& change_item_index = get<int>("change_item_index",
+        profile.get_properties());
+      change_item_index.connect_changed_signal([=, &change_item] (auto value) {
+        if(value < 0 || value >= list_size) {
+          return;
+        }
+        if(change_item.get() == 0) {
+          list_model->remove(value);
+        } else {
+          list_model->insert(QString::fromUtf8("newItem%1").arg(value), value);
+        }
+      });
       auto& gap = get<int>("gap", profile.get_properties());
       auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
       auto& direction = get<Qt::Orientation>("direction",
