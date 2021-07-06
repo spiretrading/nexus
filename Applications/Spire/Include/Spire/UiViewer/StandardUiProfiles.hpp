@@ -11,12 +11,6 @@ namespace Spire {
   /** Returns a UiProfile for the CheckBox. */
   UiProfile make_check_box_profile();
 
-  /** Returns a UiProfile for the ColorSelectorButton. */
-  UiProfile make_color_selector_button_profile();
-
-  /** Returns a UiProfile for the CurrencyComboBox. */
-  UiProfile make_currency_combo_box_profile();
-
   /** Returns a UiProfile for the DecimalBox. */
   UiProfile make_decimal_box_profile();
 
@@ -32,11 +26,11 @@ namespace Spire {
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
 
-  /** Returns a UiProfile for the FlatButton. */
-  UiProfile make_flat_button_profile();
-
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
+
+  /** Returns a UiProfile for the IntoTip. */
+  UiProfile make_info_tip_profile();
 
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
@@ -46,6 +40,12 @@ namespace Spire {
 
   /** Returns a UiProfile for the KeyTag. */
   UiProfile make_key_tag_profile();
+
+  /** Returns a UiProfile for the LabelButton. */
+  UiProfile make_label_button_profile();
+
+  /** Returns a UiProfile for the Label. */
+  UiProfile make_label_profile();
 
   /** Returns a UiProfile for the ListItem. */
   UiProfile make_list_item_profile();
@@ -58,6 +58,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
+
+  /** Returns a UiProfile for the RadioButton. */
+  UiProfile make_radio_button_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();

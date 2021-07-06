@@ -26,9 +26,6 @@ namespace Styles {
   /** Sets the text alignment. */
   using TextAlign = BasicProperty<Qt::Alignment, struct TextAlignTag>;
 
-  /** Selects a read-only widget. */
-  using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
-
   /** Selects a a widget whose input value is rejected. */
   using Rejected = StateSelector<void, struct RejectedTag>;
 
@@ -138,7 +135,6 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_model;
       Box* m_box;
-      LayeredWidget* m_layers;
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
       QLabel* m_placeholder;
@@ -162,6 +158,13 @@ namespace Styles {
       void on_text_edited(const QString& text);
       void on_style();
   };
+
+  /**
+   * Returns a TextBox as a label.
+   * @param label The text displayed on the label.
+   * @param parent The parent widget.
+   */
+  TextBox* make_label(QString label, QWidget* parent = nullptr);
 }
 
 #endif

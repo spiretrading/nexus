@@ -62,18 +62,6 @@ QSize Box::sizeHint() const {
     if(m_size_hint->isValid()) {
       for(auto& property : get_evaluated_block(*this)) {
         property.visit(
-          [&] (std::in_place_type_t<BorderTopSize>, int size) {
-            m_size_hint->rheight() += size;
-          },
-          [&] (std::in_place_type_t<BorderRightSize>, int size) {
-            m_size_hint->rwidth() += size;
-          },
-          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-            m_size_hint->rheight() += size;
-          },
-          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-            m_size_hint->rwidth() += size;
-          },
           [&] (std::in_place_type_t<PaddingTop>, int size) {
             m_size_hint->rheight() += size;
           },
@@ -94,24 +82,21 @@ QSize Box::sizeHint() const {
   return *m_size_hint;
 }
 
+void Box::mouseMoveEvent(QMouseEvent* event) {
+  if(!rect().contains(event->pos())) {
+    unmatch(*this, Hover());
+  } else {
+    match(*this, Hover());
+  }
+  QWidget::mouseMoveEvent(event);
+}
+
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
     m_styles.buffer([&] {
       for(auto& property : get_evaluated_block(*this)) {
         property.visit(
-          [&] (std::in_place_type_t<BorderTopSize>, int size) {
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          },
-          [&] (std::in_place_type_t<BorderRightSize>, int size) {
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          },
-          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          },
-          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          },
           [&] (std::in_place_type_t<PaddingTop>, int size) {
             m_body_geometry.setTop(m_body_geometry.top() + size);
           },
@@ -164,25 +149,21 @@ void Box::on_style() {
         [&] (const BorderTopSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-top-width", size);
-            m_body_geometry.setTop(m_body_geometry.top() + size);
           });
         },
         [&] (const BorderRightSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-right-width", size);
-            m_body_geometry.setRight(m_body_geometry.right() - size);
           });
         },
         [&] (const BorderBottomSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-bottom-width", size);
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
           });
         },
         [&] (const BorderLeftSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-left-width", size);
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
           });
         },
         [&] (const BorderTopColor& color) {
@@ -264,4 +245,24 @@ void Box::on_style() {
         });
     }
   });
+}
+
+Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
+  auto box = new Box(body, parent);
+  auto style = StyleSheet();
+  style.get(Any()).
+    set(BackgroundColor(QColor(0xFFFFFF))).
+    set(border(scale_width(1), QColor(0xC8C8C8))).
+    set(horizontal_padding(scale_width(8))).
+    set(vertical_padding(scale_height(7)));
+  style.get(Hover() || Focus()).set(border_color(QColor(0x4B23A0)));
+  style.get(Disabled()).
+    set(BackgroundColor(QColor(0xF5F5F5))).
+    set(border_color(QColor(0xC8C8C8)));
+  style.get(ReadOnly()).
+    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+    set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+    set(horizontal_padding(0));
+  set_style(*box, std::move(style));
+  return box;
 }

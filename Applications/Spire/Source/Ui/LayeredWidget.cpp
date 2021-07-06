@@ -1,11 +1,7 @@
 #include "Spire/Ui/LayeredWidget.hpp"
+#include <QEvent>
 
 using namespace Spire;
-
-LayeredWidget::LayeredWidget(QWidget* parent)
-    : QWidget(parent) {
-  setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
-}
 
 void LayeredWidget::add(QWidget* widget) {
   widget->setParent(this);
@@ -23,6 +19,13 @@ QSize LayeredWidget::sizeHint() const {
     size.setHeight(std::max(size.height(), layer->sizeHint().height()));
   }
   return size;
+}
+
+bool LayeredWidget::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    updateGeometry();
+  }
+  return QWidget::event(event);
 }
 
 void LayeredWidget::resizeEvent(QResizeEvent* event) {

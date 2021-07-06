@@ -90,6 +90,9 @@ namespace Styles {
   /** Sets the alignment of the body. */
   using BodyAlign = BasicProperty<Qt::AlignmentFlag, struct BodyAlignTag>;
 
+  /** Selects a read-only widget. */
+  using ReadOnly = StateSelector<void, struct ReadOnlyTag>;
+
   /**
    * Applies a single size to all four corners of a border.
    * @param size The size to apply to all borders.
@@ -148,6 +151,7 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
+      void mouseMoveEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -160,6 +164,13 @@ namespace Styles {
       void commit_style();
       void on_style();
   };
+
+  /**
+   * Returns a Box styled as an input component.
+   * @param body The component to display within the Box.
+   * @param parent The parent widget.
+   */
+  Box* make_input_box(QWidget* body, QWidget* parent = nullptr);
 }
 
 #endif

@@ -4,6 +4,11 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects a pressed Button. */
+  using Press = StateSelector<void, struct PressTag>;
+}
 
   /** Represents a button built upon a box. */
   class Button : public QWidget {
@@ -28,7 +33,7 @@ namespace Spire {
         const ClickedSignal::slot_type& slot) const;
 
     protected:
-      void focusOutEvent(QFocusEvent* event);
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -41,7 +46,7 @@ namespace Spire {
   };
 
   /**
-   * Returns a newly constructed Button displaying an Icon.
+   * Returns a newly constructed Button displaying an Icon and no tooltip.
    * @param icon The icon used within the button.
    * @param parent The parent widget.
    */
@@ -52,6 +57,15 @@ namespace Spire {
    * @param parent The parent widget.
    */
   Button* make_delete_icon_button(QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed Button displaying an Icon and a tooltip.
+   * @param icon The icon used within the button.
+   * @param tooltip_text The text of the Tooltip to display.
+   * @param parent The parent widget.
+   */
+  Button* make_icon_button(QImage icon, QString tooltip_text,
+    QWidget* parent = nullptr);
 
   /**
    * Returns a newly constructed Button displaying a text label.

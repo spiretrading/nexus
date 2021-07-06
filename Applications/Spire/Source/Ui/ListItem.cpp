@@ -2,34 +2,70 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Box.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Hover()).set(
+      BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
+    style.get(Focus()).set(
+      border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    style.get(Selected()).set(
+      BackgroundColor(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
+    return style;
+  }
+}
+
 ListItem::ListItem(QWidget* component, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_selected(false) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_button = new Button(component, this);
-  setFocusProxy(m_button);
+  m_box = new Box(component);
+  m_button = new Button(m_box, this);
+  if(component->isEnabled()) {
+    setFocusProxy(component);
+  } else {
+    m_box->setFocusProxy(nullptr);
+    setFocusProxy(m_button);
+  }
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
-  auto style = get_style(*m_button);
-  style.get(Body()).set(
-    BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
-  style.get(Hover() / Body()).set(
-    BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
-  style.get(Focus() / Body()).set(
-    BackgroundColor(QColor::fromRgb(0x68, 0x4B, 0xC7)));
-  set_style(*m_button, std::move(style));
+  set_style(*m_box, DEFAULT_STYLE());
+}
+
+bool ListItem::is_selected() const {
+  return m_is_selected;
+}
+
+void ListItem::set_selected(bool is_selected) {
+  m_is_selected = is_selected;
+  if(m_is_selected) {
+    match(*m_box, Selected());
+  } else {
+    unmatch(*m_box, Selected());
+  }
 }
 
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
+    match(*m_box, Focus());
     m_current_signal();
+  } else if(event->type() == QEvent::FocusOut) {
+    unmatch(*m_box, Focus());
+  } else if(event->type() == QEvent::Enter) {
+    match(*m_box, Hover());
+  } else if(event->type() == QEvent::Leave) {
+    unmatch(*m_box, Hover());
   }
   return QWidget::eventFilter(watched, event);
 }
