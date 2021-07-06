@@ -192,6 +192,7 @@ namespace Styles {
       int get_index_by_value(const QString& value);
       QLayout* get_layout();
       QLayoutItem* get_column_or_row(int index);
+      void deselect_current_item();
       void cross_move(bool is_next);
       int move_next();
       int move_previous();

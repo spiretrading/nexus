@@ -205,7 +205,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   default:
     auto key = event->text();
     if(!key.isEmpty() && key[0].isLetterOrNumber()) {
-      m_query += key.toUpper();
+      m_query += key.toLower();
       m_query_timer.start(QUERY_TIMEOUT_MS);
       query();
     }
@@ -522,7 +522,7 @@ void ListView::query() {
   }();
   auto count = 0;
   while(count < item_count) {
-    if(auto value = m_list_model->get<QString>(index).toUpper();
+    if(auto value = m_list_model->get<QString>(index).toLower();
         value.startsWith(query)) {
       update_current_item(index, true);
       break;
