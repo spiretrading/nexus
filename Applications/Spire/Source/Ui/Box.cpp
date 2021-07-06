@@ -209,21 +209,25 @@ void Box::on_style() {
         [&] (const PaddingTop& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-top", size);
+            m_body_geometry.setTop(m_body_geometry.top() + size);
           });
         },
         [&] (const PaddingRight& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-right", size);
+            m_body_geometry.setRight(m_body_geometry.right() - size);
           });
         },
         [&] (const PaddingBottom& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-bottom", size);
+            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
           });
         },
         [&] (const PaddingLeft& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-left", size);
+            m_body_geometry.setLeft(m_body_geometry.left() + size);
           });
         },
         [&] (BodyAlign alignment) {
