@@ -1076,34 +1076,17 @@ UiProfile Spire::make_time_box_profile() {
 
 UiProfile Spire::make_tooltip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
   properties.push_back(
     make_standard_property("tooltip-text", QString::fromUtf8("Tooltip Text")));
   auto profile = UiProfile(QString::fromUtf8("Tooltip"), properties,
     [] (auto& profile) {
-      auto label = new QLabel("Hover me!");
-      label->setAttribute(Qt::WA_Hover);
-      label->setFocusPolicy(Qt::StrongFocus);
-      label->resize(scale(100, 28));
-      label->setStyleSheet(QString(R"(
-        QLabel {
-          background-color: #684BC7;
-          color: white;
-          qproperty-alignment: AlignCenter;
-        }
-
-        QLabel:focus {
-          border: %1px solid #000000;
-        }
-
-        QLabel:disabled {
-          background-color: #F5F5F5;
-          color: #C8C8C8;
-        })").arg(scale_width(2)));
-      apply_widget_properties(label, profile.get_properties());
+      auto label = make_label("Hover me!");
       auto& tooltip_text = get<QString>("tooltip-text",
         profile.get_properties());
-      auto tooltip = make_text_tooltip(tooltip_text.get(), label);
+      auto tooltip = new Tooltip(tooltip_text.get(), label);
+      tooltip_text.connect_changed_signal([=] (const auto& text) {
+        tooltip->set_label(text);
+      });
       return label;
     });
   return profile;
