@@ -102,11 +102,12 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
 
 Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
     QWidget* parent) {
-  auto button = new Button(new Box(new Icon(icon, parent)), parent);
+  auto button_icon = new Icon(icon, parent);
+  button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto button = new Button(new Box(button_icon), parent);
   auto tooltip = new Tooltip(tooltip_text, button);
   auto style = StyleSheet();
   style.get(Body()).
-    set(BodyAlign(Qt::AlignCenter)).
     set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
     set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
   style.get(Hover() / Body()).

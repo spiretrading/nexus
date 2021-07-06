@@ -62,18 +62,6 @@ QSize Box::sizeHint() const {
     if(m_size_hint->isValid()) {
       for(auto& property : get_evaluated_block(*this)) {
         property.visit(
-          [&] (std::in_place_type_t<BorderTopSize>, int size) {
-            m_size_hint->rheight() += size;
-          },
-          [&] (std::in_place_type_t<BorderRightSize>, int size) {
-            m_size_hint->rwidth() += size;
-          },
-          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-            m_size_hint->rheight() += size;
-          },
-          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-            m_size_hint->rwidth() += size;
-          },
           [&] (std::in_place_type_t<PaddingTop>, int size) {
             m_size_hint->rheight() += size;
           },
@@ -109,18 +97,6 @@ void Box::resizeEvent(QResizeEvent* event) {
     m_styles.buffer([&] {
       for(auto& property : get_evaluated_block(*this)) {
         property.visit(
-          [&] (std::in_place_type_t<BorderTopSize>, int size) {
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          },
-          [&] (std::in_place_type_t<BorderRightSize>, int size) {
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          },
-          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          },
-          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          },
           [&] (std::in_place_type_t<PaddingTop>, int size) {
             m_body_geometry.setTop(m_body_geometry.top() + size);
           },
@@ -173,25 +149,21 @@ void Box::on_style() {
         [&] (const BorderTopSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-top-width", size);
-            m_body_geometry.setTop(m_body_geometry.top() + size);
           });
         },
         [&] (const BorderRightSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-right-width", size);
-            m_body_geometry.setRight(m_body_geometry.right() - size);
           });
         },
         [&] (const BorderBottomSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-bottom-width", size);
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
           });
         },
         [&] (const BorderLeftSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("border-left-width", size);
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
           });
         },
         [&] (const BorderTopColor& color) {
@@ -237,25 +209,21 @@ void Box::on_style() {
         [&] (const PaddingTop& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-top", size);
-            m_body_geometry.setTop(m_body_geometry.top() + size);
           });
         },
         [&] (const PaddingRight& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-right", size);
-            m_body_geometry.setRight(m_body_geometry.right() - size);
           });
         },
         [&] (const PaddingBottom& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-bottom", size);
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
           });
         },
         [&] (const PaddingLeft& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_styles.set("padding-left", size);
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
           });
         },
         [&] (BodyAlign alignment) {

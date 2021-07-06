@@ -10,7 +10,7 @@ namespace {
     auto style = StyleSheet();
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0))).
-      set(border_size(0));
+      set(border_color(QColor::fromRgb(0, 0, 0)));
     auto font = QFont("Roboto");
     font.setWeight(60);
     font.setPixelSize(scale_width(10));
