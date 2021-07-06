@@ -131,7 +131,7 @@ Button* Spire::make_delete_icon_button(QWidget* parent) {
   auto style = get_style(*button);
   style.get(Body()).
     set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    set(Fill(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
   style.get((Hover() || Press()) / Body()).
     set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
     set(Fill(QColor::fromRgb(0x4B, 0x23, 0xA0)));
