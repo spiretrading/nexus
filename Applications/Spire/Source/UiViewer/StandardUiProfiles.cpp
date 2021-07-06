@@ -17,6 +17,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -644,6 +645,41 @@ UiProfile Spire::make_icon_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_info_tip_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("interactive"));
+  properties.push_back(make_standard_property<int>("body-width",
+    scale_width(100)));
+  properties.push_back(make_standard_property<int>("body-height",
+    scale_height(30)));
+  auto profile = UiProfile(QString::fromUtf8("InfoTip"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button("Hover me!");
+      auto body_label = make_label("Body Label");
+      auto label_style = get_style(*body_label);
+      label_style.get(Any()).
+        set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+      set_style(*body_label, label_style);
+      auto info_tip = new InfoTip(body_label, button);
+      apply_widget_properties(button, profile.get_properties());
+      auto& interactive = get<bool>("interactive", profile.get_properties());
+      interactive.connect_changed_signal([=] (bool is_interactive) {
+        info_tip->set_interactive(is_interactive);
+      });
+      auto& body_width = get<int>("body-width", profile.get_properties());
+      body_width.connect_changed_signal([=] (auto width) {
+        body_label->setFixedWidth(width);
+      });
+      auto& body_height = get<int>("body-height", profile.get_properties());
+      body_height.connect_changed_signal([=] (auto height) {
+        body_label->setFixedHeight(height);
+      });
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_integer_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1040,34 +1076,17 @@ UiProfile Spire::make_time_box_profile() {
 
 UiProfile Spire::make_tooltip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
   properties.push_back(
     make_standard_property("tooltip-text", QString::fromUtf8("Tooltip Text")));
   auto profile = UiProfile(QString::fromUtf8("Tooltip"), properties,
     [] (auto& profile) {
-      auto label = new QLabel("Hover me!");
-      label->setAttribute(Qt::WA_Hover);
-      label->setFocusPolicy(Qt::StrongFocus);
-      label->resize(scale(100, 28));
-      label->setStyleSheet(QString(R"(
-        QLabel {
-          background-color: #684BC7;
-          color: white;
-          qproperty-alignment: AlignCenter;
-        }
-
-        QLabel:focus {
-          border: %1px solid #000000;
-        }
-
-        QLabel:disabled {
-          background-color: #F5F5F5;
-          color: #C8C8C8;
-        })").arg(scale_width(2)));
-      apply_widget_properties(label, profile.get_properties());
+      auto label = make_label("Hover me!");
       auto& tooltip_text = get<QString>("tooltip-text",
         profile.get_properties());
-      auto tooltip = make_text_tooltip(tooltip_text.get(), label);
+      auto tooltip = new Tooltip(tooltip_text.get(), label);
+      tooltip_text.connect_changed_signal([=] (const auto& text) {
+        tooltip->set_label(text);
+      });
       return label;
     });
   return profile;

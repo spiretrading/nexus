@@ -1,59 +1,31 @@
 #ifndef SPIRE_TOOLTIP_HPP
 #define SPIRE_TOOLTIP_HPP
-#include <QTimer>
-#include <QWidget>
+#include "Spire/Ui/InfoTip.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  //! Represents a Spire-styled tooltip.
-  class Tooltip : public QWidget {
+  /** Represents a Spire-styled tooltip. */
+  class Tooltip : public QObject {
     public:
   
-      //! Constructs a Tooltip.
-      /*!
-        \param body The widget displayed in the Tooltip.
-        \param parent The parent widget that when hovered will show the
-                      Tooltip.
-      */
-      Tooltip(QWidget* body, QWidget* parent);
+      /**
+       * Constructs a Tooltip.
+       * @param text The Tooltip's label text.
+       * @param parent The parent widget that when hovered will show the
+       *                Tooltip.
+       */
+      Tooltip(QString text, QWidget* parent);
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
-      void paintEvent(QPaintEvent* event) override;
+      /**
+       * @param text The text label to display.
+       */
+      void set_label(const QString& text);
 
     private:
-      enum class Orientation {
-        BOTTOM_LEFT,
-        BOTTOM_RIGHT,
-        TOP_LEFT,
-        TOP_RIGHT
-      };
-      enum class BodyOrientation {
-        LEFT,
-        RIGHT
-      };
-
-      QWidget* m_body;
-      QPoint m_position_offset;
-      QTimer m_show_timer;
-
-      QPainterPath get_arrow_path() const;
-      BodyOrientation get_body_orientation() const;
-      QScreen* get_current_screen(const QPoint& point) const;
-      QMargins get_margins() const;
-      Orientation get_orientation() const;
-      QPoint get_position() const;
-      QPixmap render_background();
-      void on_show_timeout();
+      TextBox* m_label;
+      InfoTip* m_tooltip;
   };
-
-  //! Constructs a Tooltip with a text label.
-  /*!
-    \param label The text label.
-    \param parent The Tooltip's parent widget.
-  */
-  Tooltip* make_text_tooltip(const QString& label, QWidget* parent);
 }
 
 #endif
