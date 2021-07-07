@@ -532,6 +532,20 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_delete_icon_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("DeleteIconButton"), properties,
+    [] (auto& profile) {
+      auto button = make_delete_icon_button();
+      apply_widget_properties(button, profile.get_properties());
+      button->connect_clicked_signal(
+        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

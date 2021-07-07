@@ -7,7 +7,6 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DropShadow.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
