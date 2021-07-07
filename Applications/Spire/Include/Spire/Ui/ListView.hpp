@@ -109,19 +109,29 @@ namespace Styles {
       /** Returns the navigation behavior of the ListView. */
       EdgeNavigation get_edge_navigation() const;
 
-      /** Sets the navigation behavior of the ListView. */
+      /**
+       * Sets the navigation behavior of the ListView.
+       * @param navigation The keyboard navigation behavior when the first or
+       *                    last list item is selected.
+       */
       void set_edge_navigation(EdgeNavigation navigation);
 
       /** Returns the overflow mode of the ListView. */
       Overflow get_overflow() const;
 
-      /** Sets the overflow mode of the ListView. */
+      /**
+       * Sets the overflow mode of the ListView.
+       * @param overflow The overflow model.
+       */
       void set_overflow(Overflow overflow);
 
       /** Returns the selection mode of the ListView. */
       SelectionMode get_selection_mode() const;
 
-      /** Sets the selection mode of the ListView. */
+      /**
+       * Sets the selection mode of the ListView.
+       * @param selection_mode The selection mode for the ListView.
+       */
       void set_selection_mode(SelectionMode selection_mode);
 
       /**
@@ -133,8 +143,13 @@ namespace Styles {
       /**
        * Sets whether items are selected when focused for
        * selection_mode = SINGLE.
+       * @param is_selection_follows_focus True iff items are selected
+       *                                   when focused
        */
       void set_selection_follows_focus(bool is_selection_follows_focus);
+
+      /** Returns the value of the selected list item. */
+      const QString& get_selected() const;
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(

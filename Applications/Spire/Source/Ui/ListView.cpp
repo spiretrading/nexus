@@ -130,6 +130,10 @@ void ListView::set_selection_follows_focus(bool is_selection_follows_focus) {
   m_is_selection_follows_focus = is_selection_follows_focus;
 }
 
+const QString& ListView::get_selected() const {
+  return m_selected;
+}
+
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
