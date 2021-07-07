@@ -351,7 +351,9 @@ int ListView::move_previous() {
 
 void ListView::on_current(const optional<QString>& current) {
   m_is_setting_item_focus = true;
-  m_items[m_current_index].m_item->setFocus();
+  if(!m_items[m_current_index].m_item->hasFocus()) {
+    m_items[m_current_index].m_item->setFocus();
+  }
   if(m_is_selection_follows_focus) {
     if(current) {
       update_selection(*current);
@@ -390,16 +392,11 @@ void ListView::update_column_row_index() {
 }
 
 void ListView::update_layout() {
-  delete m_body->layout();
+  if(m_body->layout()) {
+    delete m_body->layout();
+  }
   if(m_items.empty()) {
     return;
-  }
-  if(m_direction == Qt::Vertical) {
-    if(m_overflow == Overflow::WRAP) {
-      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    } else {
-      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    }
   }
   auto gap = DEFAULT_GAP;
   auto overflow_gap = DEFAULT_OVERFLOW_GAP;
