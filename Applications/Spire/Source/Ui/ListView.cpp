@@ -307,9 +307,7 @@ void ListView::cross_move(bool is_next) {
       break;
     } else {
       if(v1 > v0) {
-        if(std::abs(v0 - v1) < min_value) {
-          index = i;
-        } else if(i == 0) {
+        if(std::abs(v0 - v1) < min_value || i == 0) {
           index = i;
         } else {
           index = i - 2;
@@ -317,6 +315,7 @@ void ListView::cross_move(bool is_next) {
         break;
       } else {
         min_value = std::abs(v0 - v2);
+        index = i;
       }
     }
   }
@@ -479,8 +478,7 @@ void ListView::update_layout() {
     layout->addLayout(child_layout);
     layout->addStretch();
   }
-  resize(layout->sizeHint());
-  m_box->updateGeometry();
+  m_body->adjustSize();
   update_tracking_position();
 }
 
@@ -506,8 +504,8 @@ void ListView::update_current_after_items_changed() {
   if(m_current_index >= m_list_model->get_size()) {
     m_current_index = m_list_model->get_size() - 1;
   }
-  update_current(m_current_index, true);
   update_layout();
+  update_current(m_current_index, true);
 }
 
 void ListView::update_selection(const QString& current) {
