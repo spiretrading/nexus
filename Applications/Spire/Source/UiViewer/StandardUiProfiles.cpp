@@ -893,7 +893,6 @@ UiProfile Spire::make_list_view_profile() {
       auto list_view = new ListView(current_model, list_model,
         [&] (auto model, auto index) {
           auto label = make_label(model->get<QString>(index));
-          //label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
           if(random_height_seed.get() == 0) {
             if(direction.get() == Qt::Vertical) {
               if(index == 15) {
@@ -907,10 +906,6 @@ UiProfile Spire::make_list_view_profile() {
               } else {
                 label->setFixedHeight(scale_height(26));
               }
-              //label->setMinimumWidth(label->sizeHint().width());
-              //label->setFixedWidth(label->sizeHint().width());
-            } else {
-              //label->setFixedSize(label->sizeHint());
             }
           } else {
             label->setFixedHeight(
@@ -939,15 +934,14 @@ UiProfile Spire::make_list_view_profile() {
       });
       auto set_size =
         [=] (Qt::Orientation direction, ListView::Overflow overflow) {
+          list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+          list_view->setMinimumSize(0, 0);
           if(overflow == ListView::Overflow::WRAP) {
             if(direction == Qt::Vertical) {
               list_view->setFixedHeight(scale_height(360));
             } else {
               list_view->setFixedWidth(scale_width(360));
             }
-          } else {
-            list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-            list_view->setMinimumSize(0, 0);
           }
         };
       direction.connect_changed_signal([=, &overflow] (auto value) {

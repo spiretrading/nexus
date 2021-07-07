@@ -47,8 +47,8 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_body = new QWidget(this);
-  m_box = new Box(m_body);
-  layout->addWidget(m_box);
+  auto box = new Box(m_body);
+  layout->addWidget(box);
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { update_layout(); });
   m_items.resize(m_list_model->get_size());
@@ -226,7 +226,9 @@ void ListView::keyPressEvent(QKeyEvent* event) {
 }
 
 void ListView::resizeEvent(QResizeEvent* event) {
-  update_layout();
+  if(event->size() != event->oldSize()) {
+    update_layout();
+  }
 }
 
 scoped_connection ListView::connect_item_current(ListItem* item,
@@ -487,6 +489,7 @@ void ListView::update_layout() {
     layout->addStretch();
   }
   m_body->adjustSize();
+  resize(m_body->sizeHint());
   update_tracking_position();
 }
 

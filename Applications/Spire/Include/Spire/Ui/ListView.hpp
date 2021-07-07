@@ -192,7 +192,6 @@ namespace Styles {
       QString m_query;
       QTimer m_query_timer;
       QWidget* m_body;
-      Box* m_box;
 
       boost::signals2::scoped_connection connect_item_current(ListItem* item,
         const QString& value);
