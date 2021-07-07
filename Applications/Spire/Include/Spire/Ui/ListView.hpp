@@ -151,6 +151,12 @@ namespace Styles {
       /** Returns the value of the selected list item. */
       const QString& get_selected() const;
 
+      /**
+       * Returns the ListItem connected the specified text value.
+       * @param value The text value associated with an item.
+       */
+      const ListItem* get_item(const QString& value) const;
+
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -192,9 +198,9 @@ namespace Styles {
         const QString& value);
       boost::signals2::scoped_connection connect_item_submit(ListItem* item,
         const QString& value);
-      int get_index_by_value(const QString& value);
-      QLayout* get_layout();
-      QLayoutItem* get_column_or_row(int index);
+      int get_index_by_value(const QString& value) const;
+      QLayout* get_layout() const;
+      QLayoutItem* get_column_or_row(int index) const;
       void deselect_current_item();
       void cross_move(bool is_next);
       int move_next();

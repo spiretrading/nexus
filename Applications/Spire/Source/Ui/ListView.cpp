@@ -134,6 +134,14 @@ const QString& ListView::get_selected() const {
   return m_selected;
 }
 
+const ListItem* ListView::get_item(const QString& value) const {
+  auto index = get_index_by_value(value);
+  if(index < 0 || index >= m_list_model->get_size()) {
+    return nullptr;
+  }
+  return m_items[index].m_item;
+}
+
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -249,7 +257,7 @@ scoped_connection ListView::connect_item_submit(ListItem* item,
   });
 }
 
-int ListView::get_index_by_value(const QString& value) {
+int ListView::get_index_by_value(const QString& value) const {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     if(m_list_model->get<QString>(i) == value) {
       return i;
@@ -258,11 +266,11 @@ int ListView::get_index_by_value(const QString& value) {
   return -1;
 }
 
-QLayout* Spire::ListView::get_layout() {
+QLayout* Spire::ListView::get_layout() const {
   return m_body->layout();
 }
 
-QLayoutItem* ListView::get_column_or_row(int index) {
+QLayoutItem* ListView::get_column_or_row(int index) const {
   return get_layout()->itemAt(index);
 }
 
