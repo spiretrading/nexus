@@ -155,11 +155,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
   case Qt::Key_Home:
   case Qt::Key_PageUp:
-    update_current(0, true);
+    update_current(0);
     break;
   case Qt::Key_End:
   case Qt::Key_PageDown:
-    update_current(m_list_model->get_size() - 1, true);
+    update_current(m_list_model->get_size() - 1);
     break;
   case Qt::Key_Down:
     if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
@@ -173,7 +173,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         break;
       }
     }
-    update_current(move_next(), true);
+    update_current(move_next());
     break;
   case Qt::Key_Up:
     if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
@@ -185,7 +185,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         break;
       }
     }
-    update_current(move_previous(), true);
+    update_current(move_previous());
     break;
   case Qt::Key_Left:
     if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
@@ -197,7 +197,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         break;
       }
     }
-    update_current(move_previous(), true);
+    update_current(move_previous());
     break;
   case Qt::Key_Right:
     if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
@@ -211,7 +211,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         break;
       }
     }
-    update_current(move_next(), true);
+    update_current(move_next());
     break;
   default:
     auto key = event->text();
@@ -332,7 +332,7 @@ void ListView::cross_move(bool is_next) {
   auto item = target->itemAt(index)->widget();
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     if(item == m_items[i].m_item) {
-      update_current(i, false);
+      update_current(i, false, false);
       break;
     }
   }
@@ -501,7 +501,11 @@ void ListView::update_tracking_position() {
   update_column_row_index();
 }
 
-void ListView::update_current(int index, bool is_update_x_y) {
+void ListView::update_current(int index, bool is_forced_update,
+    bool is_update_x_y) {
+  if(!is_forced_update && m_current_index == index) {
+    return;
+  }
   m_current_index = index;
   if(m_current_index != -1) {
     m_current_model->set_current(m_list_model->get<QString>(m_current_index));
@@ -511,12 +515,16 @@ void ListView::update_current(int index, bool is_update_x_y) {
   }
 }
 
+void ListView::update_current(int index) {
+  update_current(index, false, true);
+}
+
 void ListView::update_current_after_items_changed() {
   if(m_current_index >= m_list_model->get_size()) {
     m_current_index = m_list_model->get_size() - 1;
   }
   update_layout();
-  update_current(m_current_index, true);
+  update_current(m_current_index, true, true);
 }
 
 void ListView::update_selection(const QString& current) {
@@ -546,7 +554,7 @@ void ListView::query() {
   while(count < item_count) {
     if(auto value = m_list_model->get<QString>(index).toLower();
         value.startsWith(query)) {
-      update_current(index, true);
+      update_current(index);
       break;
     }
     index = (index + 1) % item_count;
