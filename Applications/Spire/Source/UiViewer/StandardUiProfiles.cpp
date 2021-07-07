@@ -838,10 +838,19 @@ UiProfile Spire::make_list_view_profile() {
     [=] (auto& profile) {
       auto& random_height_seed =
         get<int>("random_height_seed", profile.get_properties());
+      auto& gap = get<int>("gap", profile.get_properties());
+      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
+      auto& direction = get<Qt::Orientation>("direction",
+        profile.get_properties());
+      auto& overflow = get<ListView::Overflow>("overflow",
+        profile.get_properties());
+      auto& change_item = get<int>("change_item", profile.get_properties());
+      auto& change_item_index = get<int>("change_item_index",
+        profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
-      auto list_size = 66;
-      for(auto i = 0; i < list_size; ++i) {
+      auto list_count = 66;
+      for(auto i = 0; i < list_count; ++i) {
         if(i == 10) {
           list_model->push(QString::fromUtf8("llama"));
         } else if(i == 11) {
@@ -856,11 +865,8 @@ UiProfile Spire::make_list_view_profile() {
           list_model->push(QString::fromUtf8("Item%1").arg(i));
         }
       }
-      auto& change_item = get<int>("change_item", profile.get_properties());
-      auto& change_item_index = get<int>("change_item_index",
-        profile.get_properties());
       change_item_index.connect_changed_signal([=, &change_item] (auto value) {
-        if(value < 0 || value >= list_size) {
+        if(value < 0 || value >= list_count) {
           return;
         }
         if(change_item.get() == 0) {
@@ -869,40 +875,34 @@ UiProfile Spire::make_list_view_profile() {
           list_model->insert(QString::fromUtf8("newItem%1").arg(value), value);
         }
       });
-      auto& gap = get<int>("gap", profile.get_properties());
-      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
-      auto& direction = get<Qt::Orientation>("direction",
-        profile.get_properties());
-      auto& overflow = get<ListView::Overflow>("overflow",
-        profile.get_properties());
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
         [&] (auto model, auto index) {
-          auto item_widget = make_label(model->get<QString>(index));
+          auto label = make_label(model->get<QString>(index));
+          //label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
           if(random_height_seed.get() == 0) {
             if(direction.get() == Qt::Vertical) {
               if(index == 15) {
-                item_widget->setFixedHeight(
-                  scale_height(26 * 3 + 2 * gap.get()));
+                label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
               } else if(index == 27) {
-                item_widget->setFixedHeight(scale_height(26 * 2 + gap.get()));
+                label->setFixedHeight(scale_height(26 * 2 + gap.get()));
               } else if(index == 36) {
-                item_widget->setFixedHeight(
-                  scale_height(26 * 3 + 2 * gap.get()));
+                label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
               } else if(index == 37) {
-                item_widget->setFixedHeight(scale_height(26 * 2 + gap.get()));
+                label->setFixedHeight(scale_height(26 * 2 + gap.get()));
               } else {
-                item_widget->setFixedHeight(scale_height(26));
+                label->setFixedHeight(scale_height(26));
               }
-              item_widget->setMinimumWidth(item_widget->sizeHint().width());
+              //label->setMinimumWidth(label->sizeHint().width());
+              //label->setFixedWidth(label->sizeHint().width());
             } else {
-              item_widget->setFixedSize(item_widget->sizeHint());
+              //label->setFixedSize(label->sizeHint());
             }
           } else {
-            item_widget->setFixedHeight(
+            label->setFixedHeight(
               scale_height(random_generator.bounded(30, 70)));
           }
-          return item_widget;
+          return label;
         });
       apply_widget_properties(list_view, profile.get_properties());
       gap.connect_changed_signal([=] (auto value) {

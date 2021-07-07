@@ -429,9 +429,9 @@ void ListView::update_layout() {
   };
   auto get_item_dimension = [=] (QWidget* widget) {
     if(m_direction == Qt::Vertical) {
-      return widget->height();
+      return widget->sizeHint().height();
     } else {
-      return widget->width();
+      return widget->sizeHint().width();
     }
   };
   auto dimension = [=] {
