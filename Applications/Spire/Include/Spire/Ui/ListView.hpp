@@ -69,18 +69,11 @@ namespace Styles {
       using CurrentModel = ValueModel<boost::optional<QString>>;
 
       /**
-       * A LcoalValueModel over an optional QString to represent the local
+       * A LocalValueModel over an optional QString to represent the local
        * current of the list view.
        */
       using LocalCurrentModel = LocalValueModel<boost::optional<QString>>;
 
-      /**
-       * Signals the user has clicked to delete a list item.
-       * @param value The value associated with the item being requested for
-       *              deletion. 
-       */
-      using DeleteSignal = Signal<void (const QString& value)>;
-  
       /**
        * Signals that the item was submitted.
        * @param submission The submitted value.
@@ -97,7 +90,7 @@ namespace Styles {
        */
       ListView(std::shared_ptr<CurrentModel> current_model,
         std::shared_ptr<ArrayListModel> list_model,
-        std::function<ListItem* (
+        std::function<QWidget* (
           std::shared_ptr<ArrayListModel>, int index)> factory,
         QWidget* parent = nullptr);
   
@@ -143,10 +136,6 @@ namespace Styles {
        */
       void set_selection_follows_focus(bool is_selection_follows_focus);
 
-      /** Connects a slot to the delete signal. */
-      boost::signals2::connection connect_delete_signal(
-        const DeleteSignal::slot_type& slot) const;
-  
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -161,11 +150,10 @@ namespace Styles {
         boost::signals2::scoped_connection m_current_connection;
         boost::signals2::scoped_connection m_submit_connection;
       };
-      mutable DeleteSignal m_delete_signal;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<ArrayListModel> m_list_model;
-      std::function<ListItem* (
+      std::function<QWidget* (
         std::shared_ptr<ArrayListModel>, int index)> m_factory;
       Qt::Orientation m_direction;
       EdgeNavigation m_navigation;

@@ -878,8 +878,7 @@ UiProfile Spire::make_list_view_profile() {
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
         [&] (auto model, auto index) {
-          auto label = make_label(model->get<QString>(index));
-          auto item_widget = new ListItem(label);
+          auto item_widget = make_label(model->get<QString>(index));
           if(random_height_seed.get() == 0) {
             if(direction.get() == Qt::Vertical) {
               if(index == 15) {
@@ -968,9 +967,6 @@ UiProfile Spire::make_list_view_profile() {
       list_view->connect_submit_signal(
         profile.make_event_slot<optional<QString>>(
         QString::fromUtf8("Submit")));
-      list_view->connect_delete_signal(
-        profile.make_event_slot<optional<QString>>(
-        QString::fromUtf8("Delete")));
       return list_view;
     });
   return profile;

@@ -29,7 +29,7 @@ namespace {
 
 ListView::ListView(std::shared_ptr<CurrentModel> current_model,
     std::shared_ptr<ArrayListModel> list_model,
-    std::function<ListItem* (
+    std::function<QWidget* (
       std::shared_ptr<ArrayListModel>, int index)> factory,
     QWidget* parent)
     : QWidget(parent),
@@ -54,7 +54,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   m_items.resize(m_list_model->get_size());
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->get<QString>(i);
-    auto list_item = m_factory(m_list_model, i);
+    auto list_item = new ListItem(m_factory(m_list_model, i), this);
     m_items[i] = {list_item, connect_item_current(list_item, value),
       connect_item_submit(list_item, value)};
   }
@@ -73,6 +73,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       on_current(current);
     });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
+  update_layout();
 }
 
 const std::shared_ptr<ListView::CurrentModel>&
@@ -127,11 +128,6 @@ bool ListView::get_selection_follows_focus() const {
 
 void ListView::set_selection_follows_focus(bool is_selection_follows_focus) {
   m_is_selection_follows_focus = is_selection_follows_focus;
-}
-
-connection ListView::connect_delete_signal(
-    const DeleteSignal::slot_type& slot) const {
-  return m_delete_signal.connect(slot);
 }
 
 connection ListView::connect_submit_signal(
@@ -363,7 +359,7 @@ void ListView::on_current(const optional<QString>& current) {
 
 void ListView::on_add_item(int index) {
   auto value = m_list_model->get<QString>(index);
-  auto list_item = m_factory(m_list_model, index);
+  auto list_item = new ListItem(m_factory(m_list_model, index), this);
   m_items.insert(m_items.begin() + index, {list_item,
     connect_item_current(list_item, value),
     connect_item_submit(list_item, value)});
@@ -380,11 +376,10 @@ void ListView::update_column_row_index() {
   m_column_or_row_index = -1;
   if(auto layout = get_layout()) {
     for(auto i = 0; i < layout->count(); i += 2) {
-      if(auto child_layout = layout->itemAt(i)->layout()) {
-        if(child_layout->indexOf(m_items[m_current_index].m_item) >= 0) {
-          m_column_or_row_index = i;
-          break;
-        }
+      if(auto child_layout = layout->itemAt(i)->layout();
+          child_layout->indexOf(m_items[m_current_index].m_item) >= 0) {
+        m_column_or_row_index = i;
+        break;
       }
     }
   }
