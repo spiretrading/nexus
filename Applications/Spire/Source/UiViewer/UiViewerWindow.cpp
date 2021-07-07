@@ -120,6 +120,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_radio_button_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
+  add(make_text_area_box_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_tooltip_profile());

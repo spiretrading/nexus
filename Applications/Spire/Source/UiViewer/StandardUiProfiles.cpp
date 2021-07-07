@@ -26,6 +26,7 @@
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -990,6 +991,64 @@ UiProfile Spire::make_scroll_box_profile() {
         scroll_box->set_vertical(value);
       });
       return scroll_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_text_area_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<bool>("read_only"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property<int>("max-lines"));
+  properties.push_back(make_standard_property<int>("max-length"));
+  properties.push_back(make_standard_property<int>("line-height", 125));
+  auto horizontal_alignment_property = define_enum<Qt::Alignment>(
+    {{"LEFT", Qt::AlignLeft},
+     {"RIGHT", Qt::AlignRight},
+     {"CENTER", Qt::AlignHCenter},
+     {"JUSTIFY", Qt::AlignJustify}});
+  properties.push_back(make_standard_enum_property(
+    "horizontal-align", horizontal_alignment_property));
+  auto vertical_alignment_property = define_enum<Qt::Alignment>(
+    {{"TOP", Qt::AlignTop},
+     {"BOTTOM", Qt::AlignBottom},
+     {"CENTER", Qt::AlignVCenter},
+     {"BASELINE", Qt::AlignBaseline}});
+  properties.push_back(make_standard_enum_property(
+    "vertical-align", vertical_alignment_property));
+  auto overflow_property = define_enum<TextAreaBox::Overflow>(
+    {{"NONE", TextAreaBox::Overflow::NONE},
+     {"WRAP", TextAreaBox::Overflow::WRAP}});
+  properties.push_back(make_standard_enum_property("wrap", overflow_property));
+  auto profile = UiProfile(QString::fromUtf8("TextAreaBox"), properties,
+    [] (auto& profile) {
+      auto& width = get<int>("width", profile.get_properties());
+      width.set(scale_width(200));
+      auto& height = get<int>("height", profile.get_properties());
+      height.set(scale_height(200));
+      auto text_area_box = new TextAreaBox();
+      apply_widget_properties(text_area_box, profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        text_area_box->set_read_only(is_read_only);
+      });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& text) {
+        text_area_box->set_placeholder(text);
+      });
+      auto& line_height = get<int>("line-height", profile.get_properties());
+      line_height.connect_changed_signal(
+        [=] (auto line_height) {
+          auto style = get_style(*text_area_box);
+          style.get(Any()).set(LineHeight(
+            static_cast<double>(line_height) / 100));
+          set_style(*text_area_box, style);
+        });
+      text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
+        QString::fromUtf8("Submit")));
+      return text_area_box;
     });
   return profile;
 }
