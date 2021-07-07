@@ -94,6 +94,14 @@ QSize Box::sizeHint() const {
   return *m_size_hint;
 }
 
+bool Box::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+    updateGeometry();
+  }
+  return QWidget::event(event);
+}
+
 void Box::mouseMoveEvent(QMouseEvent* event) {
   if(!rect().contains(event->pos())) {
     unmatch(*this, Hover());
