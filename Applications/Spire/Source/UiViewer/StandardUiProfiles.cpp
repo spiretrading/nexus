@@ -863,8 +863,7 @@ UiProfile Spire::make_list_view_profile() {
         profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
-      auto list_count = 66;
-      for(auto i = 0; i < list_count; ++i) {
+      for(auto i = 0; i < 66; ++i) {
         if(i == 10) {
           list_model->push(QString::fromUtf8("llama"));
         } else if(i == 11) {
@@ -880,7 +879,7 @@ UiProfile Spire::make_list_view_profile() {
         }
       }
       change_item_index.connect_changed_signal([=, &change_item] (auto value) {
-        if(value < 0 || value >= list_count) {
+        if(value < 0 || value >= list_model->get_size()) {
           return;
         }
         if(change_item.get() == 0) {
