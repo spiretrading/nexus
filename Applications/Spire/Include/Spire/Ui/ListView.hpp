@@ -201,7 +201,7 @@ namespace Styles {
       int get_index_by_value(const QString& value) const;
       QLayout* get_layout() const;
       QLayoutItem* get_column_or_row(int index) const;
-      void deselect_item();
+      void select_item(bool is_selected);
       void cross_move(bool is_next);
       int move_next();
       int move_previous();
@@ -211,10 +211,10 @@ namespace Styles {
       void update_column_row_index();
       void update_layout();
       void update_tracking_position();
-      void update_current(int index, bool is_forced_update, bool is_update_x_y);
+      void update_current(int index, bool is_update_x_y);
       void update_current(int index);
       void update_after_items_changed();
-      void update_selection(const QString& selected, int selected_index);
+      void update_selection(const QString& selected);
       void query();
   };
 }
