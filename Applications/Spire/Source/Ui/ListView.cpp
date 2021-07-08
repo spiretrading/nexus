@@ -42,7 +42,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_selection_mode(SelectionMode::SINGLE),
       m_is_selection_follows_focus(true),
       m_current_index(-1),
-      m_column_or_row_index(0),
+      m_column_or_row_index(-1),
       m_is_setting_item_focus(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -145,6 +145,13 @@ const ListItem* ListView::get_item(const QString& value) const {
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+bool ListView::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    adjustSize();
+  }
+  return QWidget::event(event);
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
@@ -489,7 +496,6 @@ void ListView::update_layout() {
     layout->addStretch();
   }
   m_body->adjustSize();
-  resize(m_body->sizeHint());
   update_tracking_position();
 }
 

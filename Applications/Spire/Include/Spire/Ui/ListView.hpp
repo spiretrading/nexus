@@ -162,6 +162,7 @@ namespace Styles {
         const SubmitSignal::slot_type& slot) const;
 
     protected:
+      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
