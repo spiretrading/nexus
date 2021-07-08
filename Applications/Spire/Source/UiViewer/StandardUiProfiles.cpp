@@ -1018,10 +1018,10 @@ UiProfile Spire::make_text_area_box_profile() {
      {"BASELINE", Qt::AlignBaseline}});
   properties.push_back(make_standard_enum_property(
     "vertical-align", vertical_alignment_property));
-  auto overflow_property = define_enum<TextAreaBox::Overflow>(
-    {{"NONE", TextAreaBox::Overflow::NONE},
-     {"WRAP", TextAreaBox::Overflow::WRAP}});
-  properties.push_back(make_standard_enum_property("wrap", overflow_property));
+  //auto overflow_property = define_enum<TextAreaBox::Overflow>(
+  //  {{"NONE", TextAreaBox::Overflow::NONE},
+  //   {"WRAP", TextAreaBox::Overflow::WRAP}});
+  //properties.push_back(make_standard_enum_property("wrap", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("TextAreaBox"), properties,
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
@@ -1045,6 +1045,26 @@ UiProfile Spire::make_text_area_box_profile() {
           style.get(Any()).set(LineHeight(
             static_cast<double>(line_height) / 100));
           set_style(*text_area_box, style);
+        });
+      auto& horizontal_alignment = get<Qt::Alignment>("horizontal-align",
+        profile.get_properties());
+      auto& vertical_alignment = get<Qt::Alignment>("vertical-align",
+        profile.get_properties());
+      horizontal_alignment.connect_changed_signal(
+        [&, text_area_box] (auto alignment) {
+          auto style = get_style(*text_area_box);
+          style.get(Any()).
+            set(TextAlign(
+              Qt::Alignment(alignment) | vertical_alignment.get()));
+          set_style(*text_area_box, std::move(style));
+        });
+      vertical_alignment.connect_changed_signal(
+        [&, text_area_box] (auto alignment) {
+          auto style = get_style(*text_area_box);
+          style.get(Any()).
+            set(TextAlign(
+              Qt::Alignment(alignment) | horizontal_alignment.get()));
+          set_style(*text_area_box, std::move(style));
         });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
