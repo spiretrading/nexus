@@ -118,7 +118,7 @@ ListView::SelectionMode ListView::get_selection_mode() const {
 void ListView::set_selection_mode(SelectionMode selection_mode) {
   m_selection_mode = selection_mode;
   if(m_selection_mode == SelectionMode::NONE && !m_selected.isEmpty()) {
-    deselect_current_item();
+    deselect_item();
   }
 }
 
@@ -253,7 +253,7 @@ scoped_connection ListView::connect_item_submit(ListItem* item,
     m_current_index = get_index_by_value(value);
     update_tracking_position();
     if(!m_is_selection_follows_focus) {
-      update_selection(value);
+      update_selection(value, m_current_index);
     }
     m_submit_signal(value);
   });
@@ -276,7 +276,7 @@ QLayoutItem* ListView::get_column_or_row(int index) const {
   return get_layout()->itemAt(index);
 }
 
-void ListView::deselect_current_item() {
+void ListView::deselect_item() {
   if(auto index = get_index_by_value(m_selected); index != -1) {
     m_items[index].m_item->set_selected(false);
   }
@@ -359,15 +359,15 @@ int ListView::move_previous() {
 }
 
 void ListView::on_current(const optional<QString>& current) {
-  m_is_setting_item_focus = true;
-  if(!m_items[m_current_index].m_item->hasFocus()) {
+  if(m_current_index != -1 && !m_items[m_current_index].m_item->hasFocus()) {
+    m_is_setting_item_focus = true;
     m_items[m_current_index].m_item->setFocus();
   }
   if(m_is_selection_follows_focus) {
     if(current) {
-      update_selection(*current);
+      update_selection(*current, m_current_index);
     } else {
-      update_selection("");
+      update_selection("", -1);
     }
   }
 }
@@ -378,13 +378,13 @@ void ListView::on_add_item(int index) {
   m_items.insert(m_items.begin() + index, {list_item,
     connect_item_current(list_item, value),
     connect_item_submit(list_item, value)});
-  update_current_after_items_changed();
+  update_after_items_changed();
 }
 
 void ListView::on_delete_item(int index) {
   delete m_items[index].m_item;
   m_items.erase(std::next(m_items.begin(), index));
-  update_current_after_items_changed();
+  update_after_items_changed();
 }
 
 void ListView::update_column_row_index() {
@@ -519,7 +519,7 @@ void ListView::update_current(int index) {
   update_current(index, false, true);
 }
 
-void ListView::update_current_after_items_changed() {
+void ListView::update_after_items_changed() {
   if(m_current_index >= m_list_model->get_size()) {
     m_current_index = m_list_model->get_size() - 1;
   }
@@ -527,14 +527,14 @@ void ListView::update_current_after_items_changed() {
   update_current(m_current_index, true, true);
 }
 
-void ListView::update_selection(const QString& current) {
+void ListView::update_selection(const QString& selected, int selected_index) {
   if(m_selection_mode == SelectionMode::NONE) {
     return;
   }
-  deselect_current_item();
-  m_selected = current;
-  if(m_current_index != -1) {
-    m_items[m_current_index].m_item->set_selected(true);
+  deselect_item();
+  m_selected = selected;
+  if(selected_index != -1) {
+    m_items[selected_index].m_item->set_selected(true);
   }
 }
 
