@@ -879,13 +879,14 @@ UiProfile Spire::make_list_view_profile() {
         }
       }
       change_item_index.connect_changed_signal([=, &change_item] (auto value) {
+        static auto index = 0;
         if(value < 0 || value >= list_model->get_size()) {
           return;
         }
         if(change_item.get() == 0) {
           list_model->remove(value);
         } else {
-          list_model->insert(QString::fromUtf8("newItem%1").arg(value), value);
+          list_model->insert(QString::fromUtf8("newItem%1").arg(index++), value);
         }
       });
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
