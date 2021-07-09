@@ -134,14 +134,6 @@ const QString& ListView::get_selected() const {
   return m_selected;
 }
 
-const ListItem* ListView::get_item(const QString& value) const {
-  auto index = get_index_by_value(value);
-  if(index < 0 || index >= m_list_model->get_size()) {
-    return nullptr;
-  }
-  return m_items[index].m_item;
-}
-
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);

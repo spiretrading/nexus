@@ -151,12 +151,6 @@ namespace Styles {
       /** Returns the value of the selected list item. */
       const QString& get_selected() const;
 
-      /**
-       * Returns the ListItem connected the specified text value.
-       * @param value The text value associated with an item.
-       */
-      const ListItem* get_item(const QString& value) const;
-
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
