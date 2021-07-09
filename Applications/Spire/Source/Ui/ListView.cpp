@@ -130,13 +130,6 @@ connection ListView::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-bool ListView::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    adjustSize();
-  }
-  return QWidget::event(event);
-}
-
 void ListView::keyPressEvent(QKeyEvent* event) {
   if(m_list_model->get_size() == 0) {
     QWidget::keyPressEvent(event);
