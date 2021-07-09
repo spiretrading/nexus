@@ -204,7 +204,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       update_current(move_next());
       break;
     default:
-      auto key = event->text();
+      auto key = std::move(event->text());
       if(!key.isEmpty() && (key[0].isLetterOrNumber() || key[0] == '_')) {
         m_query += key.toLower();
         m_query_timer.start(QUERY_TIMEOUT_MS);
