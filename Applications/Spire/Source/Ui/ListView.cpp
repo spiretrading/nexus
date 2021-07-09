@@ -69,9 +69,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
         });
   });
   m_current_connection = m_current_model->connect_current_signal(
-    [=] (const auto& current) {
-      on_current(current);
-    });
+    [=] (const auto& current) { on_current(current); });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
   update_layout();
 }
@@ -152,74 +150,74 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     return;
   }
   switch(event->key()) {
-  case Qt::Key_Home:
-  case Qt::Key_PageUp:
-    update_current(0);
-    break;
-  case Qt::Key_End:
-  case Qt::Key_PageDown:
-    update_current(m_list_model->get_size() - 1);
-    break;
-  case Qt::Key_Down:
-    if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-      auto row_height =
-        get_column_or_row(m_column_or_row_index)->geometry().height();
-      if(m_tracking_position.y() + row_height <
-          get_column_or_row(get_layout()->count() - 2)->geometry().bottom()) {
-        m_tracking_position.setY(m_tracking_position.y() + row_height +
-          get_column_or_row(m_column_or_row_index + 1)->geometry().height());
-        cross_move(true);
-        break;
+    case Qt::Key_Home:
+    case Qt::Key_PageUp:
+      update_current(0);
+      break;
+    case Qt::Key_End:
+    case Qt::Key_PageDown:
+      update_current(m_list_model->get_size() - 1);
+      break;
+    case Qt::Key_Down:
+      if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
+        auto row_height =
+          get_column_or_row(m_column_or_row_index)->geometry().height();
+        if(m_tracking_position.y() + row_height <
+            get_column_or_row(get_layout()->count() - 2)->geometry().bottom()) {
+          m_tracking_position.setY(m_tracking_position.y() + row_height +
+            get_column_or_row(m_column_or_row_index + 1)->geometry().height());
+          cross_move(true);
+          break;
+        }
       }
-    }
-    update_current(move_next());
-    break;
-  case Qt::Key_Up:
-    if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-      if(m_tracking_position.y() != rect().y()) {
-        m_tracking_position.setY(m_tracking_position.y() -
-          get_column_or_row(m_column_or_row_index - 2)->geometry().height() -
-          get_column_or_row(m_column_or_row_index - 1)->geometry().height());
-        cross_move(false);
-        break;
+      update_current(move_next());
+      break;
+    case Qt::Key_Up:
+      if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
+        if(m_tracking_position.y() != rect().y()) {
+          m_tracking_position.setY(m_tracking_position.y() -
+            get_column_or_row(m_column_or_row_index - 2)->geometry().height() -
+            get_column_or_row(m_column_or_row_index - 1)->geometry().height());
+          cross_move(false);
+          break;
+        }
       }
-    }
-    update_current(move_previous());
-    break;
-  case Qt::Key_Left:
-    if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-      if(m_tracking_position.x() != rect().x()) {
-        m_tracking_position.setX(m_tracking_position.x() -
-          get_column_or_row(m_column_or_row_index - 2)->geometry().width() -
-          get_column_or_row(m_column_or_row_index - 1)->geometry().width());
-        cross_move(false);
-        break;
+      update_current(move_previous());
+      break;
+    case Qt::Key_Left:
+      if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
+        if(m_tracking_position.x() != rect().x()) {
+          m_tracking_position.setX(m_tracking_position.x() -
+            get_column_or_row(m_column_or_row_index - 2)->geometry().width() -
+            get_column_or_row(m_column_or_row_index - 1)->geometry().width());
+          cross_move(false);
+          break;
+        }
       }
-    }
-    update_current(move_previous());
-    break;
-  case Qt::Key_Right:
-    if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-      auto column_width =
-        get_column_or_row(m_column_or_row_index)->geometry().width();
-      if(m_tracking_position.x() + column_width <
-          get_column_or_row(get_layout()->count() - 2)->geometry().right()) {
-        m_tracking_position.setX(m_tracking_position.x() + column_width +
-          get_column_or_row(m_column_or_row_index + 1)->geometry().width());
-        cross_move(true);
-        break;
+      update_current(move_previous());
+      break;
+    case Qt::Key_Right:
+      if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
+        auto column_width =
+          get_column_or_row(m_column_or_row_index)->geometry().width();
+        if(m_tracking_position.x() + column_width <
+            get_column_or_row(get_layout()->count() - 2)->geometry().right()) {
+          m_tracking_position.setX(m_tracking_position.x() + column_width +
+            get_column_or_row(m_column_or_row_index + 1)->geometry().width());
+          cross_move(true);
+          break;
+        }
       }
-    }
-    update_current(move_next());
-    break;
-  default:
-    auto key = event->text();
-    if(!key.isEmpty() && key[0].isLetterOrNumber()) {
-      m_query += key.toLower();
-      m_query_timer.start(QUERY_TIMEOUT_MS);
-      query();
-    }
-    break;
+      update_current(move_next());
+      break;
+    default:
+      auto key = event->text();
+      if(!key.isEmpty() && key[0].isLetterOrNumber()) {
+        m_query += key.toLower();
+        m_query_timer.start(QUERY_TIMEOUT_MS);
+        query();
+      }
+      break;
   }
   QWidget::keyPressEvent(event);
 }
