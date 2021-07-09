@@ -193,8 +193,8 @@ namespace Styles {
       boost::signals2::scoped_connection connect_item_submit(ListItem* item,
         const QString& value);
       int get_index_by_value(const QString& value) const;
-      QLayout* get_layout() const;
-      QLayoutItem* get_column_or_row(int index) const;
+      QLayout* get_layout();
+      QLayoutItem* get_column_or_row(int index);
       void select_item(bool is_selected);
       void cross_move(bool is_next);
       int move_next();

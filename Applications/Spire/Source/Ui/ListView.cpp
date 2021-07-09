@@ -265,11 +265,11 @@ int ListView::get_index_by_value(const QString& value) const {
   return -1;
 }
 
-QLayout* Spire::ListView::get_layout() const {
+QLayout* Spire::ListView::get_layout() {
   return m_body->layout();
 }
 
-QLayoutItem* ListView::get_column_or_row(int index) const {
+QLayoutItem* ListView::get_column_or_row(int index) {
   return get_layout()->itemAt(index);
 }
 
