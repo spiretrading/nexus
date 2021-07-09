@@ -59,15 +59,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       connect_item_submit(list_item, value)});
   }
   m_list_model_connection = m_list_model->connect_operation_signal(
-    [=] (const ListModel::Operation& operation) {
-      visit(operation,
-        [&] (const ListModel::AddOperation& operation) {
-          on_add_item(operation.m_index);
-        },
-        [&] (const ListModel::RemoveOperation& operation) {
-          on_delete_item(operation.m_index);
-        });
-  });
+    [=] (const ListModel::Operation& operation) { on_operation(operation); });
   m_current_connection = m_current_model->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
@@ -369,6 +361,16 @@ void ListView::on_current(const optional<QString>& current) {
       update_selection("");
     }
   }
+}
+
+void ListView::on_operation(const ListModel::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel::AddOperation& operation) {
+      on_add_item(operation.m_index);
+    },
+    [&] (const ListModel::RemoveOperation& operation) {
+      on_delete_item(operation.m_index);
+    });
 }
 
 void ListView::on_add_item(int index) {
