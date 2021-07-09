@@ -138,7 +138,7 @@ namespace Styles {
        * Returns whether items are selected when focused for
        * selection_mode = SINGLE.
        */
-      bool get_selection_follows_focus() const;
+      bool does_selection_follow_focus() const;
 
       /**
        * Sets whether items are selected when focused for

@@ -120,7 +120,7 @@ void ListView::set_selection_mode(SelectionMode selection_mode) {
   }
 }
 
-bool ListView::get_selection_follows_focus() const {
+bool ListView::does_selection_follow_focus() const {
   return m_is_selection_follows_focus;
 }
 
