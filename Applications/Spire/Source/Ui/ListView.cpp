@@ -212,7 +212,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       break;
     default:
       auto key = event->text();
-      if(!key.isEmpty() && key[0].isLetterOrNumber()) {
+      if(!key.isEmpty() && (key[0].isLetterOrNumber() || key[0] == '_')) {
         m_query += key.toLower();
         m_query_timer.start(QUERY_TIMEOUT_MS);
         query();
