@@ -1038,6 +1038,10 @@ UiProfile Spire::make_text_area_box_profile() {
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_area_box->set_placeholder(text);
       });
+      auto& max_lines = get<int>("max-lines", profile.get_properties());
+      max_lines.connect_changed_signal([=] (auto max_lines) {
+        text_area_box->set_max_lines(max_lines);
+      });
       auto& line_height = get<int>("line-height", profile.get_properties());
       line_height.connect_changed_signal(
         [=] (auto line_height) {

@@ -43,6 +43,8 @@ namespace Styles {
 
       void set_read_only(bool read_only);
 
+      void set_max_lines(int max_lines);
+
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
@@ -79,6 +81,8 @@ namespace Styles {
       TextValidator* m_text_validator;
       bool m_is_rejected;
       mutable boost::optional<QSize> m_size_hint;
+      int m_line_height;
+      int m_max_lines;
 
       QSize compute_decoration_size() const;
       bool is_placeholder_shown() const;
@@ -87,6 +91,8 @@ namespace Styles {
       void update_placeholder_text();
       void commit_style();
       void commit_placeholder_style();
+      int line_count() const;
+      void trim_extra_lines();
       void on_current(const QString& current);
       void on_editing_finished();
       void on_text_edited();

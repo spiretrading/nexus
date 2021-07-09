@@ -1,4 +1,5 @@
 #include "Spire/Ui/TextAreaBox.hpp"
+#include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QTextBlock>
@@ -26,7 +27,7 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(LineHeight(1.25)).
       set(text_style(font, QColor::fromRgb(0, 0, 0))).
@@ -119,7 +120,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //m_text_edit->setFrame(false);
   m_text_edit->setAcceptRichText(false);
   m_text_edit->document()->setDocumentMargin(0);
-  m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  //m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_text_edit->setFrameShape(QFrame::NoFrame);
   // TODO
   //m_text_edit->setTextMargins(-2, 0, 0, 0);
@@ -155,6 +156,26 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //connect(m_line_edit, &QLineEdit::editingFinished, this,
   //  &TextAreaBox::on_editing_finished);
   //connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
+  connect(m_text_edit->document()->documentLayout(),
+    &QAbstractTextDocumentLayout::documentSizeChanged,
+      [&] (const auto& size) {
+        if(size.height() != line_count() * m_line_height) {
+          for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
+            auto block = m_text_edit->document()->findBlockByNumber(i);
+            if(block.isValid()) {
+              auto cursor = m_text_edit->textCursor();
+              cursor.setPosition(block.position());
+              m_text_edit->setTextCursor(cursor);
+              auto block_format = cursor.blockFormat();
+              block_format.setLineHeight(m_line_height,
+                QTextBlockFormat::FixedHeight);
+              cursor.setBlockFormat(block_format);
+              m_text_edit->setTextCursor(cursor);
+            }
+          }
+        }
+        //qDebug() << size;
+      });
   connect(m_text_edit, &QTextEdit::textChanged, this, &TextAreaBox::on_text_edited);
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) { on_current(value); });
@@ -190,6 +211,11 @@ void TextAreaBox::set_read_only(bool read_only) {
   update_placeholder_text();
 }
 
+void TextAreaBox::set_max_lines(int max_lines) {
+  m_max_lines = max_lines;
+  trim_extra_lines();
+}
+
 connection
     TextAreaBox::connect_submit_signal(const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -218,15 +244,16 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
     if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
         focus_event->reason() != Qt::PopupFocusReason) {
       m_text_validator->m_is_text_elided = false;
-      if(m_text_edit->toPlainText() != m_model->get_current()) {
-        m_text_edit->setText(m_model->get_current());
-      }
+      //if(m_text_edit->toPlainText() != m_model->get_current()) {
+      //  m_text_edit->setText(m_model->get_current());
+      //}
     }
   } else if(event->type() == QEvent::FocusOut) {
     auto focusEvent = static_cast<QFocusEvent*>(event);
     if(focusEvent->lostFocus() &&
         focusEvent->reason() != Qt::ActiveWindowFocusReason &&
         focusEvent->reason() != Qt::PopupFocusReason) {
+      on_editing_finished();
       update_display_text();
     }
   }/* else if(event->type() == QEvent::KeyPress) {
@@ -329,7 +356,7 @@ void TextAreaBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
-    m_text_edit->setText(m_model->get_current());
+    //m_text_edit->setText(m_model->get_current());
   }
   m_size_hint = none;
   updateGeometry();
@@ -389,9 +416,10 @@ void TextAreaBox::commit_style() {
         cursor.setPosition(block.position());
         m_text_edit->setTextCursor(cursor);
         auto block_format = cursor.blockFormat();
-        auto line_height = static_cast<double>(font.pixelSize()) *
+        m_line_height = static_cast<double>(font.pixelSize()) *
           *m_text_edit_styles.m_line_height;
-        block_format.setLineHeight(line_height, QTextBlockFormat::FixedHeight);
+        block_format.setLineHeight(m_line_height,
+          QTextBlockFormat::FixedHeight);
         cursor.setBlockFormat(block_format);
         m_text_edit->setTextCursor(cursor);
       }
@@ -433,6 +461,40 @@ void TextAreaBox::commit_placeholder_style() {
   update_placeholder_text();
 }
 
+int TextAreaBox::line_count() const {
+  qDebug() << m_text_edit->document()->lineCount();
+  //qDebug() << m_text_edit->toPlainText();
+  if(m_text_edit->toPlainText().length() == 0) {
+    //qDebug() << "lc returned 0";
+    return 0;
+  }
+  m_text_edit->document()->documentLayout()->documentSize();
+  //qDebug() << "lc returned " <<
+  //  m_text_edit->document()->documentLayout()->documentSize().height() /
+  //  m_line_height;
+  //qDebug() << "doc height: " <<
+  //  m_text_edit->document()->documentLayout()->documentSize().height();
+  //qDebug() << "line height: " << m_line_height;
+  return m_text_edit->document()->documentLayout()->documentSize().height() /
+    m_line_height;
+}
+
+void TextAreaBox::trim_extra_lines() {
+  //qDebug() << "tel lc: " << line_count();
+  while(line_count() > m_max_lines) {
+    //qDebug() << "while lc: " << line_count();
+    auto cursor = m_text_edit->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    cursor.select(QTextCursor::LineUnderCursor);
+    cursor.removeSelectedText();
+    cursor.deletePreviousChar(); // Added to trim the newline char when removing last line
+    m_text_edit->setTextCursor(cursor);
+    if(m_text_edit->toPlainText().length() == 0) {
+      break;
+    }
+  }
+}
+
 void TextAreaBox::on_current(const QString& current) {
   if(m_is_rejected) {
     m_is_rejected = false;
@@ -459,8 +521,21 @@ void TextAreaBox::on_editing_finished() {
 }
 
 void TextAreaBox::on_text_edited() {
+  //qDebug() << m_text_edit->toPlainText();
+  //qDebug() << "lc: " << line_count();
+  //if(m_text_edit->toPlainText() == m_model->get_current()) {
+  //  return;
+  //}
+  //if(m_max_lines == 0 || line_count() > m_max_lines) {
+  //  qDebug() << "revert";
+  //  //m_text_edit->setText(m_model->get_current());
+  //  trim_extra_lines();
+  //  return;
+  //}
+  //qDebug() << "set";
+  trim_extra_lines();
   update_placeholder_text();
-  // TODO: validate
+  // TODO: validate to ensure proper editing
   m_model->set_current(m_text_edit->toPlainText());
 }
 
