@@ -970,10 +970,10 @@ UiProfile Spire::make_list_view_profile() {
         list_view->set_selection_follows_focus(value);
       });
       current_model->connect_current_signal(
-        profile.make_event_slot<optional<QString>>(
+        profile.make_event_slot<optional<std::any>>(
         QString::fromUtf8("Current")));
       list_view->connect_submit_signal(
-        profile.make_event_slot<optional<QString>>(
+        profile.make_event_slot<optional<std::any>>(
         QString::fromUtf8("Submit")));
       return list_view;
     });

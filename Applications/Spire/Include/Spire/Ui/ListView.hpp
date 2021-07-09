@@ -63,22 +63,22 @@ namespace Styles {
       };
 
       /**
-       * A ValueModel over an optional QString to represent the current of the
+       * A ValueModel over an optional std::any to represent the current of the
        * list view.
        */
-      using CurrentModel = ValueModel<boost::optional<QString>>;
+      using CurrentModel = ValueModel<boost::optional<std::any>>;
 
       /**
-       * A LocalValueModel over an optional QString to represent the local
+       * A LocalValueModel over an optional std::any to represent the local
        * current of the list view.
        */
-      using LocalCurrentModel = LocalValueModel<boost::optional<QString>>;
+      using LocalCurrentModel = LocalValueModel<boost::optional<std::any>>;
 
       /**
        * Signals that the item was submitted.
        * @param submission The submitted value.
        */
-      using SubmitSignal = Signal<void (const QString& submission)>;
+      using SubmitSignal = Signal<void (const std::any& submission)>;
   
       /**
        * Constructs a ListView.
@@ -149,7 +149,7 @@ namespace Styles {
       void set_selection_follows_focus(bool is_selection_follows_focus);
 
       /** Returns the value of the selected list item. */
-      const QString& get_selected() const;
+      const std::any& get_selected() const;
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
@@ -176,7 +176,7 @@ namespace Styles {
       Overflow m_overflow;
       SelectionMode m_selection_mode;
       bool m_is_selection_follows_focus;
-      QString m_selected;
+      std::any m_selected;
       std::vector<Item> m_items;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_list_model_connection;
@@ -189,17 +189,17 @@ namespace Styles {
       QWidget* m_body;
 
       boost::signals2::scoped_connection connect_item_current(ListItem* item,
-        const QString& value);
+        const std::any& value);
       boost::signals2::scoped_connection connect_item_submit(ListItem* item,
-        const QString& value);
-      int get_index_by_value(const QString& value) const;
+        const std::any& value);
+      int get_index_by_value(const std::any& value) const;
       QLayout* get_layout();
       QLayoutItem* get_column_or_row(int index);
       void select_item(bool is_selected);
       void cross_move(bool is_next);
       int move_next();
       int move_previous();
-      void on_current(const boost::optional<QString>& current);
+      void on_current(const boost::optional<std::any>& current);
       void on_operation(const ListModel::Operation& operation);
       void on_add_item(int index);
       void on_delete_item(int index);
@@ -209,7 +209,7 @@ namespace Styles {
       void update_current(int index, bool is_update_x_y);
       void update_current(int index);
       void update_after_items_changed();
-      void update_selection(const QString& selected);
+      void update_selection(const std::any& selected);
       void query();
   };
 }
