@@ -290,7 +290,7 @@ void ListView::cross_move(bool is_next) {
     }
   }();
   auto target = get_column_or_row(m_column_or_row_index)->layout();
-  auto [v0, min_value] = [=] () -> std::tuple<int, int> {
+  auto [v0, min_value] = [&] () -> std::tuple<int, int> {
     if(m_direction == Qt::Vertical) {
       return {m_tracking_position.y(),
         std::abs(target->itemAt(0)->geometry().bottom() -
@@ -303,7 +303,7 @@ void ListView::cross_move(bool is_next) {
   }();
   auto index = 0;
   for(auto i = 0; i < target->count(); i += 2) {
-    auto [v1, v2] = [=] () -> std::tuple<int, int> {
+    auto [v1, v2] = [&] () -> std::tuple<int, int> {
       auto item_geometry = target->itemAt(i)->geometry();
       if(m_direction == Qt::Vertical) {
         return {item_geometry.top(), item_geometry.bottom()};
