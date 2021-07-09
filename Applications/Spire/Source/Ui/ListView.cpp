@@ -391,7 +391,7 @@ void ListView::on_add_item(int index) {
 }
 
 void ListView::on_delete_item(int index) {
-  delete m_items[index].m_item;
+  m_items[index].m_item->deleteLater();
   m_items.erase(std::next(m_items.begin(), index));
   update_after_items_changed();
 }
