@@ -51,12 +51,12 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   layout->addWidget(box);
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { update_layout(); });
-  m_items.resize(m_list_model->get_size());
+  m_items.reserve(m_list_model->get_size());
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->get<QString>(i);
     auto list_item = new ListItem(m_factory(m_list_model, i), this);
-    m_items[i] = {list_item, connect_item_current(list_item, value),
-      connect_item_submit(list_item, value)};
+    m_items.push_back({list_item, connect_item_current(list_item, value),
+      connect_item_submit(list_item, value)});
   }
   m_list_model_connection = m_list_model->connect_operation_signal(
     [=] (const ListModel::Operation& operation) {
