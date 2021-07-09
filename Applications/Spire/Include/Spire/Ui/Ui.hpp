@@ -25,6 +25,7 @@ namespace Spire {
   class InfoTip;
   class LayeredWidget;
   class ListModel;
+  class ListView;
   class MoneyBox;
   class OverlayPanel;
   class RowViewListModel;
