@@ -967,7 +967,7 @@ UiProfile Spire::make_list_view_profile() {
       auto& selection_follows_focus = get<bool>("selection_follows_focus",
         profile.get_properties());
       selection_follows_focus.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_follows_focus(value);
+        list_view->set_selection_follow_focus(value);
       });
       current_model->connect_current_signal(
         profile.make_event_slot<optional<std::any>>(

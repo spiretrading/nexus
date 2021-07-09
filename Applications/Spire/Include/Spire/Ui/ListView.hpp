@@ -143,10 +143,10 @@ namespace Styles {
       /**
        * Sets whether items are selected when focused for
        * selection_mode = SINGLE.
-       * @param is_selection_follows_focus True iff items are selected
+       * @param does_selection_follow_focus True iff items are selected
        *                                   when focused
        */
-      void set_selection_follows_focus(bool is_selection_follows_focus);
+      void set_selection_follow_focus(bool does_selection_follow_focus);
 
       /** Returns the value of the selected list item. */
       const std::any& get_selected() const;
@@ -174,7 +174,7 @@ namespace Styles {
       EdgeNavigation m_navigation;
       Overflow m_overflow;
       SelectionMode m_selection_mode;
-      bool m_is_selection_follows_focus;
+      bool m_does_selection_follow_focus;
       std::any m_selected;
       std::vector<Item> m_items;
       boost::signals2::scoped_connection m_current_connection;

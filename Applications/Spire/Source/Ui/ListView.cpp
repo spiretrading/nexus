@@ -41,7 +41,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
-      m_is_selection_follows_focus(true),
+      m_does_selection_follow_focus(true),
       m_current_index(-1),
       m_column_or_row_index(-1),
       m_is_setting_item_focus(false) {
@@ -114,11 +114,11 @@ void ListView::set_selection_mode(SelectionMode selection_mode) {
 }
 
 bool ListView::does_selection_follow_focus() const {
-  return m_is_selection_follows_focus;
+  return m_does_selection_follow_focus;
 }
 
-void ListView::set_selection_follows_focus(bool is_selection_follows_focus) {
-  m_is_selection_follows_focus = is_selection_follows_focus;
+void ListView::set_selection_follow_focus(bool does_selection_follow_focus) {
+  m_does_selection_follow_focus = does_selection_follow_focus;
 }
 
 const std::any& ListView::get_selected() const {
@@ -235,7 +235,7 @@ scoped_connection ListView::connect_item_submit(ListItem* item,
   return item->connect_submit_signal([=] {
     m_current_index = get_index_by_value(value);
     update_tracking_position();
-    if(!m_is_selection_follows_focus) {
+    if(!m_does_selection_follow_focus) {
       update_selection(value);
     }
     m_submit_signal(value);
@@ -350,7 +350,7 @@ void ListView::on_current(const optional<std::any>& current) {
     m_is_setting_item_focus = true;
     m_items[m_current_index].m_item->setFocus();
   }
-  if(m_is_selection_follows_focus) {
+  if(m_does_selection_follow_focus) {
     if(current) {
       update_selection(*current);
     } else {
