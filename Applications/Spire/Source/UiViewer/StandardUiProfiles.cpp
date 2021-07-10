@@ -1001,8 +1001,6 @@ UiProfile Spire::make_text_area_box_profile() {
   properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<bool>("read_only"));
   properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property<int>("max-lines"));
-  properties.push_back(make_standard_property<int>("max-length"));
   properties.push_back(make_standard_property<int>("line-height", 125));
   auto horizontal_alignment_property = define_enum<Qt::Alignment>(
     {{"LEFT", Qt::AlignLeft},
@@ -1037,10 +1035,6 @@ UiProfile Spire::make_text_area_box_profile() {
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_area_box->set_placeholder(text);
-      });
-      auto& max_lines = get<int>("max-lines", profile.get_properties());
-      max_lines.connect_changed_signal([=] (auto max_lines) {
-        text_area_box->set_max_lines(max_lines);
       });
       auto& line_height = get<int>("line-height", profile.get_properties());
       line_height.connect_changed_signal(

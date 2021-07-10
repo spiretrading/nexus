@@ -18,12 +18,6 @@ namespace Styles {
   class TextAreaBox : public QWidget {
     public:
 
-      enum class Overflow {
-        NONE,
-
-        WRAP
-      };
-
       using SubmitSignal = Signal<void (const QString& submission)>;
 
       explicit TextAreaBox(QWidget* parent = nullptr);
@@ -43,8 +37,6 @@ namespace Styles {
 
       void set_read_only(bool read_only);
 
-      void set_max_lines(int max_lines);
-
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
@@ -54,7 +46,6 @@ namespace Styles {
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -86,16 +77,16 @@ namespace Styles {
 
       QSize compute_decoration_size() const;
       bool is_placeholder_shown() const;
-      void elide_text();
+      void elide_current();
       void update_display_text();
       void update_placeholder_text();
       void commit_style();
       void commit_placeholder_style();
       int line_count() const;
-      void trim_extra_lines();
+      int visible_line_count() const;
       void on_current(const QString& current);
       void on_editing_finished();
-      void on_text_edited();
+      void on_text_changed();
       void on_style();
   };
 }
