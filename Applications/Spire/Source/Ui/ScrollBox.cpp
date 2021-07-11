@@ -1,16 +1,19 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
   auto layers = new LayeredWidget(this);
+  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto viewport = new QWidget();
   m_body->installEventFilter(this);
   m_body->setParent(viewport);
@@ -23,9 +26,11 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
+  auto box = new Box(layers);
+  proxy_style(*this, *box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(layers);
+  layout->addWidget(box);
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
 }

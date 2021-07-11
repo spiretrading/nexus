@@ -1146,6 +1146,7 @@ UiProfile Spire::make_scroll_box_profile() {
     "horizontal_display_policy", display_policy_property));
   properties.push_back(make_standard_enum_property(
     "vertical_display_policy", display_policy_property));
+  properties.push_back(make_standard_property("border_size", 1));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
     [] (auto& profile) {
       auto label = new QLabel();
@@ -1154,7 +1155,7 @@ UiProfile Spire::make_scroll_box_profile() {
       image = image.scaled(QSize(2000, 2000));
       label->setPixmap(std::move(image));
       auto scroll_box = new ScrollBox(label);
-      scroll_box->resize(scale(320, 240));
+      scroll_box->setFixedSize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
       auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
         "horizontal_display_policy", profile.get_properties());
@@ -1166,6 +1167,13 @@ UiProfile Spire::make_scroll_box_profile() {
         "vertical_display_policy", profile.get_properties());
       vertical_display_policy.connect_changed_signal([scroll_box] (auto value) {
         scroll_box->set_vertical(value);
+      });
+      auto& border_size = get<int>("border_size", profile.get_properties());
+      border_size.connect_changed_signal([scroll_box] (auto value) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(border(scale_width(value), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+        set_style(*scroll_box, std::move(style));
       });
       return scroll_box;
     });
