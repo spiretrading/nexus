@@ -29,6 +29,8 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   corner_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   layout->addWidget(corner_box, 1, 1);
   update_mask();
+  m_vertical_scroll_bar->installEventFilter(this);
+  m_horizontal_scroll_bar->installEventFilter(this);
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
