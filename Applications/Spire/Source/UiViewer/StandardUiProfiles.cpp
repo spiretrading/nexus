@@ -2,6 +2,7 @@
 #include <QImageReader>
 #include <QLabel>
 #include <QPointer>
+#include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -9,6 +10,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
@@ -21,6 +23,7 @@
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
@@ -530,6 +533,20 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_delete_icon_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("DeleteIconButton"), properties,
+    [] (auto& profile) {
+      auto button = make_delete_icon_button();
+      apply_widget_properties(button, profile.get_properties());
+      button->connect_clicked_signal(
+        profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -799,6 +816,167 @@ UiProfile Spire::make_list_item_profile() {
         item->set_selected(value);
       });
       return item;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_list_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("random_height_seed", 0));
+  properties.push_back(make_standard_property("gap", 2));
+  properties.push_back(make_standard_property("overflow_gap", 5));
+  auto navigation_property = define_enum<ListView::EdgeNavigation>(
+    {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
+     {"WRAP", ListView::EdgeNavigation::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("edge_navigation", navigation_property));
+  auto direction_property = define_enum<Qt::Orientation>(
+    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
+  properties.push_back(
+    make_standard_enum_property("direction", direction_property));
+  auto overflow_property = define_enum<ListView::Overflow>(
+    {{"WRAP", ListView::Overflow::WRAP}, {"NONE", ListView::Overflow::NONE}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
+  auto selection_mode_property = define_enum<ListView::SelectionMode>(
+    {{"NONE", ListView::SelectionMode::NONE},
+     {"SINGLE", ListView::SelectionMode::SINGLE}});
+  properties.push_back(
+    make_standard_enum_property("selection_mode", selection_mode_property));
+  properties.push_back(make_standard_property("selection_follows_focus", true));
+  auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
+  properties.push_back(
+    make_standard_enum_property("change_item", change_item_property));
+  properties.push_back(make_standard_property("change_item_index", 0));
+  auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
+    [=] (auto& profile) {
+      auto& random_height_seed =
+        get<int>("random_height_seed", profile.get_properties());
+      auto& gap = get<int>("gap", profile.get_properties());
+      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
+      auto& direction = get<Qt::Orientation>("direction",
+        profile.get_properties());
+      auto& overflow = get<ListView::Overflow>("overflow",
+        profile.get_properties());
+      auto& change_item = get<int>("change_item", profile.get_properties());
+      auto& change_item_index = get<int>("change_item_index",
+        profile.get_properties());
+      auto random_generator = QRandomGenerator(random_height_seed.get());
+      auto list_model = std::make_shared<ArrayListModel>();
+      for(auto i = 0; i < 66; ++i) {
+        if(i == 10) {
+          list_model->push(QString::fromUtf8("llama"));
+        } else if(i == 11) {
+          list_model->push(QString::fromUtf8("llamb"));
+        } else if(i == 12) {
+          list_model->push(QString::fromUtf8("lllama"));
+        } else if(i == 20) {
+          list_model->push(QString::fromUtf8("llbma"));
+        } else if(i == 30) {
+          list_model->push(QString::fromUtf8("llxy"));
+        } else {
+          list_model->push(QString::fromUtf8("Item%1").arg(i));
+        }
+      }
+      change_item_index.connect_changed_signal([=, &change_item] (auto value) {
+        static auto index = 0;
+        if(value < 0 || value >= list_model->get_size()) {
+          return;
+        }
+        if(change_item.get() == 0) {
+          list_model->remove(value);
+        } else {
+          list_model->insert(QString::fromUtf8("newItem%1").arg(index++), value);
+        }
+      });
+      auto current_model = std::make_shared<ListView::LocalCurrentModel>();
+      auto list_view = new ListView(current_model, list_model,
+        [&] (auto model, auto index) {
+          auto label = make_label(model->get<QString>(index));
+          if(random_height_seed.get() == 0) {
+            if(direction.get() == Qt::Vertical) {
+              if(index == 15) {
+                label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
+              } else if(index == 27) {
+                label->setFixedHeight(scale_height(26 * 2 + gap.get()));
+              } else if(index == 36) {
+                label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
+              } else if(index == 37) {
+                label->setFixedHeight(scale_height(26 * 2 + gap.get()));
+              } else {
+                label->setFixedHeight(scale_height(26));
+              }
+            }
+          } else {
+            label->setFixedHeight(
+              scale_height(random_generator.bounded(30, 70)));
+          }
+          return label;
+        });
+      apply_widget_properties(list_view, profile.get_properties());
+      gap.connect_changed_signal([=] (auto value) {
+        if(value < 0) {
+          return;
+        }
+        auto style = get_style(*list_view);
+        style.get(Any()).set(ListItemGap(scale_width(value)));
+        set_style(*list_view, std::move(style));
+        list_view->update();
+      });
+      overflow_gap.connect_changed_signal([=] (auto value) {
+        if(value < 0) {
+          return;
+        }
+        auto style = get_style(*list_view);
+        style.get(Any()).set(ListOverflowGap(scale_width(value)));
+        set_style(*list_view, std::move(style));
+        list_view->update();
+      });
+      auto set_size =
+        [=] (Qt::Orientation direction, ListView::Overflow overflow) {
+          list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+          list_view->setMinimumSize(0, 0);
+          if(overflow == ListView::Overflow::WRAP) {
+            if(direction == Qt::Vertical) {
+              list_view->setFixedHeight(scale_height(360));
+            } else {
+              list_view->setFixedWidth(scale_width(360));
+            }
+          }
+        };
+      direction.connect_changed_signal([=, &overflow] (auto value) {
+        set_size(value, overflow.get());
+        list_view->set_direction(value);
+      });
+      overflow.connect_changed_signal([=, &direction] (auto value) {
+        set_size(direction.get(), value);
+        list_view->set_overflow(value);
+      });
+      auto& navigation = get<ListView::EdgeNavigation>("edge_navigation",
+        profile.get_properties());
+      navigation.set(list_view->get_edge_navigation());
+      navigation.connect_changed_signal([=] (auto value) {
+        list_view->set_edge_navigation(value);
+      });
+      auto& selection_mode = get<ListView::SelectionMode>("selection_mode",
+        profile.get_properties());
+      selection_mode.set(list_view->get_selection_mode());
+      selection_mode.connect_changed_signal([=] (auto value) {
+        list_view->set_selection_mode(value);
+      });
+      auto& selection_follows_focus = get<bool>("selection_follows_focus",
+        profile.get_properties());
+      selection_follows_focus.connect_changed_signal([=] (auto value) {
+        list_view->set_selection_follow_focus(value);
+      });
+      current_model->connect_current_signal(
+        profile.make_event_slot<optional<std::any>>(
+        QString::fromUtf8("Current")));
+      list_view->connect_submit_signal(
+        profile.make_event_slot<optional<std::any>>(
+        QString::fromUtf8("Submit")));
+      return list_view;
     });
   return profile;
 }

@@ -17,6 +17,9 @@ namespace Spire {
   /** Returns a UiProfile for the DecimalFilterPanel. */
   UiProfile make_decimal_filter_panel_profile();
 
+  /** Returns a UiProfile for the DeleteIconButton. */
+  UiProfile make_delete_icon_button_profile();
+
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
 
@@ -46,6 +49,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the ListItem. */
   UiProfile make_list_item_profile();
+
+  /** Returns a UiProfile for the ListView. */
+  UiProfile make_list_view_profile();
 
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();

@@ -9,15 +9,17 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 ScrollableLayer::ScrollableLayer(QWidget* parent)
-  : QWidget(parent),
-    m_vertical_scroll_bar(new ScrollBar(Qt::Orientation::Vertical, this)),
-    m_horizontal_scroll_bar(new ScrollBar(Qt::Orientation::Horizontal, this)) {
+    : QWidget(parent),
+      m_vertical_scroll_bar(new ScrollBar(Qt::Orientation::Vertical, this)),
+      m_horizontal_scroll_bar(
+        new ScrollBar(Qt::Orientation::Horizontal, this)) {
   auto layout = new QGridLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->setColumnStretch(0, 1);
-  layout->addItem(new QSpacerItem(
-    1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 0);
+  m_transparent_spacer =
+    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding);
+  layout->addItem(m_transparent_spacer, 0, 0);
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
   auto corner_box = new Box(nullptr);
@@ -26,6 +28,9 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   set_style(*corner_box, std::move(style));
   corner_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   layout->addWidget(corner_box, 1, 1);
+  update_mask();
+  m_vertical_scroll_bar->installEventFilter(this);
+  m_horizontal_scroll_bar->installEventFilter(this);
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
@@ -74,4 +79,21 @@ void ScrollableLayer::wheelEvent(QWheelEvent* event) {
   } else if(event->angleDelta().x() > 0) {
     scroll_line_up(*m_horizontal_scroll_bar);
   }
+}
+
+bool ScrollableLayer::eventFilter(QObject* watched, QEvent* event) {
+  if((watched == m_vertical_scroll_bar || watched == m_horizontal_scroll_bar) &&
+      (event->type() == QEvent::Resize || event->type() == QEvent::Show ||
+      event->type() == QEvent::Hide)) {
+    update_mask();
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void ScrollableLayer::resizeEvent(QResizeEvent* event) {
+  update_mask();
+}
+
+void ScrollableLayer::update_mask() {
+  setMask(QPolygon(geometry()).subtracted(m_transparent_spacer->geometry()));
 }

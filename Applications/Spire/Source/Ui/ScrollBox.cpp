@@ -94,6 +94,10 @@ void ScrollBox::resizeEvent(QResizeEvent* event) {
   update_ranges();
 }
 
+void ScrollBox::wheelEvent(QWheelEvent* event) {
+  m_scrollable_layer->wheelEvent(event);
+}
+
 void ScrollBox::on_vertical_scroll(int position) {
   m_body->move(m_body->pos().x(), -position);
 }
