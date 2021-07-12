@@ -3,7 +3,6 @@
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -29,11 +28,11 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
-  auto box = new Box(layers);
-  proxy_style(*this, *box);
+  m_box = new Box(layers);
+  proxy_style(*this, *m_box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(box);
+  layout->addWidget(m_box);
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
 }
@@ -135,7 +134,24 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
+  auto border_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        border_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        border_size.rwidth() += size;
+      });
+  }
+  auto viewport_size = m_body->size() + QSize(bar_width, bar_height) +
+    border_size;
   setMaximumSize(viewport_size);
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
@@ -151,13 +167,18 @@ void ScrollBox::update_ranges() {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
     }
   }
-  auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
-  auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
+  auto new_size = size() - border_size;
+  auto vertical_range = std::max(m_body->height() - new_size.height() +
+    bar_height, 0);
+  auto horizontal_range = std::max(m_body->width() - new_size.width() +
+    bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
-  m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());
+  m_scrollable_layer->get_vertical_scroll_bar().set_page_size(
+    new_size.height());
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(
     0, horizontal_range);
-  m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(width());
+  m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
+    new_size.width());
 }
 
 ScrollBox* Spire::make_scrollable_list_box(ListView* list_view,

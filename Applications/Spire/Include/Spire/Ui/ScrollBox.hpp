@@ -1,6 +1,7 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -75,6 +76,7 @@ namespace Spire {
 
     private:
       QWidget* m_body;
+      Box* m_box;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
       ScrollableLayer* m_scrollable_layer;
