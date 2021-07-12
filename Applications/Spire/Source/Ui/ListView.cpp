@@ -147,11 +147,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Home:
     case Qt::Key_PageUp:
       update_current(0);
-      break;
+      return;
     case Qt::Key_End:
     case Qt::Key_PageDown:
       update_current(m_list_model->get_size() - 1);
-      break;
+      return;
     case Qt::Key_Down:
       if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
         auto row_height =
@@ -161,11 +161,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
           m_tracking_position.setY(m_tracking_position.y() + row_height +
             get_column_or_row(m_column_or_row_index + 1)->geometry().height());
           cross_move(true);
-          break;
+          return;
         }
       }
       update_current(move_next());
-      break;
+      return;
     case Qt::Key_Up:
       if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
         if(m_tracking_position.y() != rect().y()) {
@@ -173,11 +173,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
             get_column_or_row(m_column_or_row_index - 2)->geometry().height() -
             get_column_or_row(m_column_or_row_index - 1)->geometry().height());
           cross_move(false);
-          break;
+          return;
         }
       }
       update_current(move_previous());
-      break;
+      return;
     case Qt::Key_Left:
       if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
         if(m_tracking_position.x() != rect().x()) {
@@ -185,11 +185,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
             get_column_or_row(m_column_or_row_index - 2)->geometry().width() -
             get_column_or_row(m_column_or_row_index - 1)->geometry().width());
           cross_move(false);
-          break;
+          return;
         }
       }
       update_current(move_previous());
-      break;
+      return;
     case Qt::Key_Right:
       if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
         auto column_width =
@@ -199,11 +199,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
           m_tracking_position.setX(m_tracking_position.x() + column_width +
             get_column_or_row(m_column_or_row_index + 1)->geometry().width());
           cross_move(true);
-          break;
+          return;
         }
       }
       update_current(move_next());
-      break;
+      return;
     default:
       auto key = std::move(event->text());
       if(!key.isEmpty() && (key[0].isLetterOrNumber() || key[0] == '_')) {
