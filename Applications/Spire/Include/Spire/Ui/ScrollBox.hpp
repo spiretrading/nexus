@@ -1,6 +1,7 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -61,6 +62,12 @@ namespace Spire {
       /** Sets the horizontal and vertical display policies. */
       void set(DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy);
 
+      /** Returns the vertical ScrollBar. */
+      ScrollBar& get_vertical_scroll_bar();
+
+      /** Returns the horizontal ScrollBar. */
+      ScrollBar& get_horizontal_scroll_bar();
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -69,6 +76,7 @@ namespace Spire {
 
     private:
       QWidget* m_body;
+      Box* m_box;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
       ScrollableLayer* m_scrollable_layer;
@@ -77,6 +85,15 @@ namespace Spire {
       void on_horizontal_scroll(int position);
       void update_ranges();
   };
+
+  /**
+   * Returns a newly constructed ScrollableListBox which is a ScrollBox
+   * containing a ListView.
+   * @param list_view The ListView contained within a ScrollBox.
+   * @param parent The parent widget.
+   */
+  ScrollBox* make_scrollable_list_box(ListView* list_view,
+    QWidget* parent = nullptr);
 }
 
 #endif

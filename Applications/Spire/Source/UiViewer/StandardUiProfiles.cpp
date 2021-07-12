@@ -1147,6 +1147,7 @@ UiProfile Spire::make_scroll_box_profile() {
     "horizontal_display_policy", display_policy_property));
   properties.push_back(make_standard_enum_property(
     "vertical_display_policy", display_policy_property));
+  properties.push_back(make_standard_property("border_size", 1));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
     [] (auto& profile) {
       auto label = new QLabel();
@@ -1155,7 +1156,7 @@ UiProfile Spire::make_scroll_box_profile() {
       image = image.scaled(QSize(2000, 2000));
       label->setPixmap(std::move(image));
       auto scroll_box = new ScrollBox(label);
-      scroll_box->resize(scale(320, 240));
+      scroll_box->setFixedSize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
       auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
         "horizontal_display_policy", profile.get_properties());
@@ -1168,7 +1169,37 @@ UiProfile Spire::make_scroll_box_profile() {
       vertical_display_policy.connect_changed_signal([scroll_box] (auto value) {
         scroll_box->set_vertical(value);
       });
+      auto& border_size = get<int>("border_size", profile.get_properties());
+      border_size.connect_changed_signal([scroll_box] (auto value) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(border(scale_width(value), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+        set_style(*scroll_box, std::move(style));
+      });
       return scroll_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_scrollable_list_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
+    [] (auto& profile) {
+      auto list_model = std::make_shared<ArrayListModel>();
+        for(auto i = 0; i < 15; ++i) {
+          list_model->push(QString::fromUtf8("Item%1").arg(i));
+        }
+      auto current_model = std::make_shared<ListView::LocalCurrentModel>();
+      auto list_view = new ListView(current_model, list_model,
+        [&] (auto model, auto index) {
+          auto label = make_label(model->get<QString>(index));
+          return label;
+        });
+      auto scrollable_list_box = make_scrollable_list_box(list_view);
+      apply_widget_properties(scrollable_list_box, profile.get_properties());
+      scrollable_list_box->setFixedSize(scale(150, 240));
+      return scrollable_list_box;
     });
   return profile;
 }

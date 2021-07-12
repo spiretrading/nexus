@@ -1,16 +1,21 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
   auto layers = new LayeredWidget(this);
+  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto viewport = new QWidget();
   m_body->installEventFilter(this);
   m_body->setParent(viewport);
@@ -23,9 +28,11 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
+  m_box = new Box(layers);
+  proxy_style(*this, *m_box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(layers);
+  layout->addWidget(m_box);
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
 }
@@ -74,6 +81,14 @@ void ScrollBox::set(DisplayPolicy horizontal_policy,
   set_vertical(vertical_policy);
 }
 
+ScrollBar& ScrollBox::get_vertical_scroll_bar() {
+  return m_scrollable_layer->get_vertical_scroll_bar();
+}
+
+ScrollBar& ScrollBox::get_horizontal_scroll_bar() {
+  return m_scrollable_layer->get_horizontal_scroll_bar();
+}
+
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched != m_body) {
     if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
@@ -119,14 +134,24 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  //qDebug() << "bar_width: " << bar_width;
-  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
-  qDebug() << "vp_size: " << viewport_size;
-  static auto vp = viewport_size;
-  if(vp.height() < viewport_size.height()) {
-    auto a = 0;
+  auto border_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        border_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        border_size.rwidth() += size;
+      });
   }
-  vp = viewport_size;
+  auto viewport_size = m_body->size() + QSize(bar_width, bar_height) +
+    border_size;
   setMaximumSize(viewport_size);
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
@@ -142,12 +167,57 @@ void ScrollBox::update_ranges() {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
     }
   }
-  auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
-  //qDebug() << "vert_range: " << vertical_range;
-  auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
+  auto new_size = size() - border_size;
+  auto vertical_range = std::max(m_body->height() - new_size.height() +
+    bar_height, 0);
+  auto horizontal_range = std::max(m_body->width() - new_size.width() +
+    bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
-  m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());
+  m_scrollable_layer->get_vertical_scroll_bar().set_page_size(
+    new_size.height());
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(
     0, horizontal_range);
-  m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(width());
+  m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
+    new_size.width());
+}
+
+ScrollBox* Spire::make_scrollable_list_box(ListView* list_view,
+    QWidget* parent) {
+  list_view->set_edge_navigation(ListView::EdgeNavigation::CONTAIN);
+  auto scroll_box = new ScrollBox(list_view, parent);
+  scroll_box->set(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  auto style = get_style(*scroll_box);
+  style.get(Any()).
+    set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+    set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  set_style(*scroll_box, std::move(style));
+  list_view->get_current_model()->connect_current_signal(
+    [=] (const auto& current) {
+      if(!current) {
+        return;
+      }
+      auto item = list_view->get_item(*current);
+      auto item_pos = item->pos();
+      auto item_height = item->height();
+      auto item_width = item->width();
+      auto viewport_x = scroll_box->get_horizontal_scroll_bar().get_position();
+      auto viewport_y = scroll_box->get_vertical_scroll_bar().get_position();
+      auto viewport_width =
+        scroll_box->get_horizontal_scroll_bar().get_page_size();
+      auto viewport_height =
+        scroll_box->get_vertical_scroll_bar().get_page_size();
+      if(item_height > viewport_height || viewport_y > item_pos.y()) {
+        scroll_box->get_vertical_scroll_bar().set_position(item_pos.y());
+      } else if(viewport_y + viewport_height < item_pos.y() + item_height) {
+        scroll_box->get_vertical_scroll_bar().set_position(
+           item_pos.y() + item_height - viewport_height);
+      }
+      if(item_width > viewport_width || viewport_x > item_pos.x()) {
+        scroll_box->get_horizontal_scroll_bar().set_position(item_pos.x());
+      } else if(viewport_x + viewport_width < item_pos.x() + item_width) {
+        scroll_box->get_horizontal_scroll_bar().set_position(
+           item_pos.x() + item_width - viewport_width);
+      }
+    });
+  return scroll_box;
 }
