@@ -1028,6 +1028,10 @@ UiProfile Spire::make_text_area_box_profile() {
       height.set(scale_height(200));
       auto text_area_box = new TextAreaBox();
       apply_widget_properties(text_area_box, profile.get_properties());
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& value) {
+        text_area_box->get_model()->set_current(value);
+      });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_area_box->set_read_only(is_read_only);

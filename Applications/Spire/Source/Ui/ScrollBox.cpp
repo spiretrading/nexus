@@ -115,7 +115,14 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
+  //qDebug() << "bar_width: " << bar_width;
   auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
+  qDebug() << "vp_size: " << viewport_size;
+  static auto vp = viewport_size;
+  if(vp.height() < viewport_size.height()) {
+    auto a = 0;
+  }
+  vp = viewport_size;
   setMaximumSize(viewport_size);
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
@@ -132,6 +139,7 @@ void ScrollBox::update_ranges() {
     }
   }
   auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
+  //qDebug() << "vert_range: " << vertical_range;
   auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
   m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());

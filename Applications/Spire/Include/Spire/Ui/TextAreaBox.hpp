@@ -61,7 +61,7 @@ namespace Styles {
       struct TextValidator;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TextModel> m_model;
-      Box* m_box;
+      Box* m_container_box;
       QTextEdit* m_text_edit;
       StyleProperties m_text_edit_styles;
       QLabel* m_placeholder;
@@ -74,6 +74,11 @@ namespace Styles {
       mutable boost::optional<QSize> m_size_hint;
       int m_line_height;
       int m_max_lines;
+
+      //Box* m_layer_container;
+      LayeredWidget* m_layers;
+      int m_document_height;
+      Box* m_text_edit_box;
 
       QSize compute_decoration_size() const;
       bool is_placeholder_shown() const;
