@@ -61,6 +61,12 @@ namespace Spire {
       /** Sets the horizontal and vertical display policies. */
       void set(DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy);
 
+      /** Returns the vertical ScrollBar. */
+      ScrollBar& get_vertical_scroll_bar();
+
+      /** Returns the horizontal ScrollBar. */
+      ScrollBar& get_horizontal_scroll_bar();
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;

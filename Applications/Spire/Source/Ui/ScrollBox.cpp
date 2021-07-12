@@ -79,6 +79,14 @@ void ScrollBox::set(DisplayPolicy horizontal_policy,
   set_vertical(vertical_policy);
 }
 
+ScrollBar& ScrollBox::get_vertical_scroll_bar() {
+  return m_scrollable_layer->get_vertical_scroll_bar();
+}
+
+ScrollBar& ScrollBox::get_horizontal_scroll_bar() {
+  return m_scrollable_layer->get_horizontal_scroll_bar();
+}
+
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched != m_body) {
     if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
