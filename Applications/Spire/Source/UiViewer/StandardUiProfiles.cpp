@@ -29,6 +29,7 @@
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -1168,6 +1169,24 @@ UiProfile Spire::make_scroll_box_profile() {
         scroll_box->set_vertical(value);
       });
       return scroll_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_search_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("SearchBox"), properties,
+    [] (auto& profile) {
+      auto& width = get<int>("width", profile.get_properties());
+      width.set(scale_width(180));
+      auto& height = get<int>("height", profile.get_properties());
+      height.set(scale_height(26));
+      auto search_box = new SearchBox();
+      apply_widget_properties(search_box, profile.get_properties());
+      search_box->get_model()->connect_current_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Current")));
+      return search_box;
     });
   return profile;
 }
