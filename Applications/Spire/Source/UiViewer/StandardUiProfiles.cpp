@@ -1266,7 +1266,7 @@ UiProfile Spire::make_text_area_box_profile() {
           auto style = get_style(*text_area_box);
           style.get(Any()).
             set(TextAlign(
-              Qt::Alignment(alignment)));// | vertical_alignment.get()));
+              Qt::Alignment(alignment) | Qt::AlignTop));//vertical_alignment.get()));
           set_style(*text_area_box, std::move(style));
         });
       //vertical_alignment.connect_changed_signal(

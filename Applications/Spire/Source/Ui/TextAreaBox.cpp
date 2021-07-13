@@ -35,6 +35,7 @@ namespace {
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(LineHeight(1.25)).
+      set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
     style.get(Any() >> is_a<Box>()).
       set(border_size(0));
@@ -119,6 +120,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_submission(m_model->get_current()),
       m_is_rejected(false),
       m_document_height(0) {
+  //setObjectName("tab");
+  //setStyleSheet("#tab { background-color: red; }");
   //m_layers = new LayeredWidget(this);
   //layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_edit = new QTextEdit(m_model->get_current());
@@ -127,22 +130,22 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_edit->document()->setDocumentMargin(8);
   m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_text_edit->setFrameShape(QFrame::NoFrame);
-  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   setFocusProxy(m_text_edit);
   m_text_edit->installEventFilter(this);
-  m_text_edit->verticalScrollBar()->setDisabled(true);
-  m_text_edit->verticalScrollBar()->setValue(0);
+  //m_text_edit->verticalScrollBar()->setDisabled(true);
+  //m_text_edit->verticalScrollBar()->setValue(0);
   //m_layers->add(m_text_edit);
-  //m_placeholder = new QLabel();
-  //m_placeholder->setCursor(m_text_edit->cursor());
-  //m_placeholder->setTextFormat(Qt::PlainText);
-  //m_placeholder->setWordWrap(true);
-  //m_placeholder->setMargin(0);
-  //m_placeholder->setIndent(0);
-  //m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
-  //m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  ////m_placeholder->setFocusPolicy(Qt::NoFocus);
+  m_placeholder = new QLabel();
+  m_placeholder->setCursor(m_text_edit->cursor());
+  m_placeholder->setTextFormat(Qt::PlainText);
+  m_placeholder->setWordWrap(true);
+  m_placeholder->setMargin(0);
+  m_placeholder->setIndent(0);
+  m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
+  m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_placeholder->setFocusPolicy(Qt::NoFocus);
   //m_layers->add(m_placeholder);
   //auto box = new Box(layers, this);
   //box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -248,22 +251,20 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  //if(m_size_hint) {
-  //  return *m_size_hint;
-  //}
-  //auto cursor_width = [&] {
-  //  if(is_read_only()) {
-  //    return 0;
-  //  }
-  //  return 1;
-  //}();
-  //m_size_hint.emplace(
-  //  m_text_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
-  //    cursor_width, m_text_edit->fontMetrics().height());
-  //*m_size_hint += compute_decoration_size();
-  //return *m_size_hint;
-  //return m_scroll_box->sizeHint();
-  return {};
+  if(m_size_hint) {
+    return *m_size_hint;
+  }
+  auto cursor_width = [&] {
+    if(is_read_only()) {
+      return 0;
+    }
+    return 1;
+  }();
+  m_size_hint.emplace(
+    m_text_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
+      cursor_width, m_text_edit->fontMetrics().height());
+  *m_size_hint += compute_decoration_size();
+  return *m_size_hint;
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
@@ -314,6 +315,7 @@ void TextAreaBox::mousePressEvent(QMouseEvent* event) {
 
 void TextAreaBox::resizeEvent(QResizeEvent* event) {
   //qDebug() << m_layers->size();
+  update_text_box_size();
   update_display_text();
   update_placeholder_text();
   QWidget::resizeEvent(event);
@@ -383,7 +385,7 @@ void TextAreaBox::update_display_text() {
   //if(!isEnabled() || is_read_only() || !hasFocus()) {
   //  elide_text();
   //} else if(m_text_edit->toPlainText() != m_model->get_current()) {
-  //  //m_text_edit->setText(m_model->get_current());
+  //  m_text_edit->setText(m_model->get_current());
   //}
   //}
   m_size_hint = none;
@@ -391,16 +393,16 @@ void TextAreaBox::update_display_text() {
 }
 
 void TextAreaBox::update_placeholder_text() {
-  ////qDebug() << window()->focusWidget();
-  //if(is_placeholder_shown()) {
-  //  // TODO: elide
-  //  m_placeholder->setText(m_placeholder_text);
-  //  //qDebug() << "show";
-  //  m_placeholder->show();
-  //} else {
-  //  //qDebug() << "hide";
-  //  m_placeholder->hide();
-  //}
+  //qDebug() << window()->focusWidget();
+  if(is_placeholder_shown()) {
+    // TODO: elide
+    m_placeholder->setText(m_placeholder_text);
+    //qDebug() << "show";
+    m_placeholder->show();
+  } else {
+    //qDebug() << "hide";
+    m_placeholder->hide();
+  }
 }
 
 void TextAreaBox::commit_style() {
@@ -463,28 +465,28 @@ void TextAreaBox::commit_style() {
 }
 
 void TextAreaBox::commit_placeholder_style() {
-  //auto stylesheet = QString(
-  //  R"(QLabel {
-  //    background: transparent;
-  //    border-width: 0px;
-  //    padding: 0px;)");
-  //m_placeholder_styles.m_styles.write(stylesheet);
-  //auto alignment = m_placeholder_styles.m_alignment.value_or(
-  //  Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  //if(alignment != m_placeholder->alignment()) {
-  //  m_placeholder->setAlignment(alignment);
-  //}
-  //auto font = m_placeholder_styles.m_font.value_or(QFont());
-  //if(m_placeholder_styles.m_size) {
-  //  font.setPixelSize(*m_placeholder_styles.m_size);
-  //}
-  //m_placeholder->setFont(font);
-  //if(stylesheet != m_placeholder->styleSheet()) {
-  //  m_placeholder->setStyleSheet(stylesheet);
-  //  m_placeholder->style()->unpolish(this);
-  //  m_placeholder->style()->polish(this);
-  //}
-  //update_placeholder_text();
+  auto stylesheet = QString(
+    R"(QLabel {
+      background: transparent;
+      border-width: 0px;
+      padding: 0px;)");
+  m_placeholder_styles.m_styles.write(stylesheet);
+  auto alignment = m_placeholder_styles.m_alignment.value_or(
+    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
+  if(alignment != m_placeholder->alignment()) {
+    m_placeholder->setAlignment(alignment);
+  }
+  auto font = m_placeholder_styles.m_font.value_or(QFont());
+  if(m_placeholder_styles.m_size) {
+    font.setPixelSize(*m_placeholder_styles.m_size);
+  }
+  m_placeholder->setFont(font);
+  if(stylesheet != m_placeholder->styleSheet()) {
+    m_placeholder->setStyleSheet(stylesheet);
+    m_placeholder->style()->unpolish(this);
+    m_placeholder->style()->polish(this);
+  }
+  update_placeholder_text();
 }
 
 int TextAreaBox::line_count() const {
@@ -507,6 +509,21 @@ int TextAreaBox::line_count() const {
   return ret.size();
 }
 
+void TextAreaBox::update_text_box_size() {
+  auto h_adjust = [&] {
+    if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+      return m_scroll_box->get_vertical_scroll_bar().width();
+    }
+    return 0;
+  }();
+  //qDebug() << "size set";
+  m_text_edit_box->setFixedSize(
+    width() - h_adjust - compute_decoration_size().width(),
+    std::max(
+      m_text_edit->document()->documentLayout()->documentSize().toSize().height(),
+      m_line_height));// - compute_decoration_size().height());
+}
+
 int TextAreaBox::visible_line_count() const {
   return (m_text_edit->viewport()->height() -
     compute_decoration_size().height()) / m_line_height;
@@ -526,10 +543,10 @@ void TextAreaBox::on_cursor_position() {
   //static auto last = m_text_edit->cursorRect();
   auto t = m_text_edit->visibleRegion().boundingRect().top();
   auto b = m_text_edit->visibleRegion().boundingRect().bottom();
-  qDebug() << "************************************";
-  qDebug() << "vr top: " << t;
-  qDebug() << "vr bottom: " << b;
-  qDebug() << "cur: " << m_text_edit->cursorRect();
+  //qDebug() << "************************************";
+  //qDebug() << "vr top: " << t;
+  //qDebug() << "vr bottom: " << b;
+  //qDebug() << "cur: " << m_text_edit->cursorRect();
   if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
     if(m_text_edit->cursorRect().top() <= t) {
     //if(m_text_edit->cursorRect().y() < m_text_edit->viewport()->y()) {
@@ -568,17 +585,7 @@ void TextAreaBox::on_text_changed() {
   // TODO: put in method and call from resizeEvent, etc.
   //qDebug() << line_count();
   //qDebug() << "doc height: " << m_text_edit->document()->size().toSize().height();
-  auto h_adjust = [&] {
-    if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
-      return m_scroll_box->get_vertical_scroll_bar().width();
-    }
-    return 0;
-  }();
-  m_text_edit_box->setFixedSize(
-    width() - h_adjust - compute_decoration_size().width(),
-    std::max(
-      m_text_edit->document()->documentLayout()->documentSize().toSize().height(),
-      m_line_height));// - compute_decoration_size().height());
+  update_text_box_size();
   //m_layer_container->setFixedSize(m_text_edit->size());
   //qDebug() << "text change size: " << m_text_edit->size();
   //qDebug() << "text change pos: " << m_text_edit->pos();
@@ -611,7 +618,7 @@ void TextAreaBox::on_style() {
         },
         [&] (const TextAlign& alignment) {
           stylist.evaluate(alignment, [=] (auto alignment) {
-            m_text_edit_styles.m_alignment = Qt::AlignLeft | Qt::AlignBottom;
+            m_text_edit_styles.m_alignment = alignment;
           });
         },
         [&] (const Font& font) {
@@ -631,32 +638,32 @@ void TextAreaBox::on_style() {
         });
     }
   });
-  //auto& placeholder_stylist = *find_stylist(*this, Placeholder());
-  //merge(block, placeholder_stylist.get_computed_block());
-  //m_placeholder_styles.clear();
-  //m_placeholder_styles.m_styles.buffer([&] {
-  //  for(auto& property : block) {
-  //    property.visit(
-  //      [&] (const TextColor& color) {
-  //        placeholder_stylist.evaluate(color, [=] (auto color) {
-  //          m_placeholder_styles.m_styles.set("color", color);
-  //        });
-  //      },
-  //      [&] (const TextAlign& alignment) {
-  //        placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
-  //          m_placeholder_styles.m_alignment = alignment;
-  //        });
-  //      },
-  //      [&] (const Font& font) {
-  //        placeholder_stylist.evaluate(font, [=] (auto font) {
-  //          m_placeholder_styles.m_font = font;
-  //        });
-  //      },
-  //      [&] (const FontSize& size) {
-  //        placeholder_stylist.evaluate(size, [=] (auto size) {
-  //          m_placeholder_styles.m_size = size;
-  //        });
-  //      });
-  //  }
-  //});
+  auto& placeholder_stylist = *find_stylist(*this, Placeholder());
+  merge(block, placeholder_stylist.get_computed_block());
+  m_placeholder_styles.clear();
+  m_placeholder_styles.m_styles.buffer([&] {
+    for(auto& property : block) {
+      property.visit(
+        [&] (const TextColor& color) {
+          placeholder_stylist.evaluate(color, [=] (auto color) {
+            m_placeholder_styles.m_styles.set("color", color);
+          });
+        },
+        [&] (const TextAlign& alignment) {
+          placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
+            m_placeholder_styles.m_alignment = alignment;
+          });
+        },
+        [&] (const Font& font) {
+          placeholder_stylist.evaluate(font, [=] (auto font) {
+            m_placeholder_styles.m_font = font;
+          });
+        },
+        [&] (const FontSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_size = size;
+          });
+        });
+    }
+  });
 }

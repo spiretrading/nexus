@@ -89,6 +89,7 @@ namespace Styles {
       void commit_style();
       void commit_placeholder_style();
       int line_count() const;
+      void update_text_box_size();
       int visible_line_count() const;
       void on_current(const QString& current);
       void on_cursor_position();

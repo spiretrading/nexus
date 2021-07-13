@@ -107,6 +107,13 @@ void ScrollBox::keyPressEvent(QKeyEvent* event) {
 
 void ScrollBox::resizeEvent(QResizeEvent* event) {
   update_ranges();
+  static auto num = 0;
+  //qDebug() << "sb max: " << maximumSize();
+  if(size() == QSize(200, 33)) {
+    auto a = 0;
+    ++num;
+  }
+  //qDebug() << "sb size: " << size();
 }
 
 void ScrollBox::wheelEvent(QWheelEvent* event) {
@@ -152,7 +159,7 @@ void ScrollBox::update_ranges() {
   }
   auto viewport_size = m_body->size() + QSize(bar_width, bar_height) +
     border_size;
-  setMaximumSize(viewport_size);
+  //setMaximumSize(viewport_size);
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
       m_scrollable_layer->get_vertical_scroll_bar().hide();
