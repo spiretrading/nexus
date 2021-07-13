@@ -206,17 +206,31 @@ ScrollBox* Spire::make_scrollable_list_box(ListView* list_view,
         scroll_box->get_horizontal_scroll_bar().get_page_size();
       auto viewport_height =
         scroll_box->get_vertical_scroll_bar().get_page_size();
+      auto bar_width = [&] {
+        if(scroll_box->get_vertical_scroll_bar().isVisible()) {
+          return scroll_box->get_vertical_scroll_bar().width();
+        }
+        return 0;
+      }();
+      auto bar_height = [&] {
+        if(scroll_box->get_horizontal_scroll_bar().isVisible()) {
+          return scroll_box->get_horizontal_scroll_bar().height();
+        }
+        return 0;
+      }();
       if(item_height > viewport_height || viewport_y > item_pos.y()) {
         scroll_box->get_vertical_scroll_bar().set_position(item_pos.y());
-      } else if(viewport_y + viewport_height < item_pos.y() + item_height) {
+      } else if(viewport_y + viewport_height - bar_height <
+          item_pos.y() + item_height) {
         scroll_box->get_vertical_scroll_bar().set_position(
-           item_pos.y() + item_height - viewport_height);
+           item_pos.y() + item_height - viewport_height + bar_height);
       }
       if(item_width > viewport_width || viewport_x > item_pos.x()) {
         scroll_box->get_horizontal_scroll_bar().set_position(item_pos.x());
-      } else if(viewport_x + viewport_width < item_pos.x() + item_width) {
+      } else if(viewport_x + viewport_width - bar_width <
+          item_pos.x() + item_width) {
         scroll_box->get_horizontal_scroll_bar().set_position(
-           item_pos.x() + item_width - viewport_width);
+           item_pos.x() + item_width - viewport_width + bar_width);
       }
     });
   return scroll_box;
