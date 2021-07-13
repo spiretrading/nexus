@@ -78,6 +78,7 @@ namespace Styles {
       //Box* m_layer_container;
       LayeredWidget* m_layers;
       int m_document_height;
+      ScrollBox* m_scroll_box;
       Box* m_text_edit_box;
 
       QSize compute_decoration_size() const;
@@ -90,6 +91,7 @@ namespace Styles {
       int line_count() const;
       int visible_line_count() const;
       void on_current(const QString& current);
+      void on_cursor_position();
       void on_editing_finished();
       void on_text_changed();
       void on_style();

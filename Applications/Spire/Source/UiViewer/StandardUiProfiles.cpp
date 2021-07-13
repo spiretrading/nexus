@@ -1218,13 +1218,13 @@ UiProfile Spire::make_text_area_box_profile() {
      {"JUSTIFY", Qt::AlignJustify}});
   properties.push_back(make_standard_enum_property(
     "horizontal-align", horizontal_alignment_property));
-  auto vertical_alignment_property = define_enum<Qt::Alignment>(
-    {{"TOP", Qt::AlignTop},
-     {"BOTTOM", Qt::AlignBottom},
-     {"CENTER", Qt::AlignVCenter},
-     {"BASELINE", Qt::AlignBaseline}});
-  properties.push_back(make_standard_enum_property(
-    "vertical-align", vertical_alignment_property));
+  //auto vertical_alignment_property = define_enum<Qt::Alignment>(
+  //  {{"TOP", Qt::AlignTop},
+  //   {"BOTTOM", Qt::AlignBottom},
+  //   {"CENTER", Qt::AlignVCenter},
+  //   {"BASELINE", Qt::AlignBaseline}});
+  //properties.push_back(make_standard_enum_property(
+  //  "vertical-align", vertical_alignment_property));
   //auto overflow_property = define_enum<TextAreaBox::Overflow>(
   //  {{"NONE", TextAreaBox::Overflow::NONE},
   //   {"WRAP", TextAreaBox::Overflow::WRAP}});
@@ -1259,24 +1259,24 @@ UiProfile Spire::make_text_area_box_profile() {
         });
       auto& horizontal_alignment = get<Qt::Alignment>("horizontal-align",
         profile.get_properties());
-      auto& vertical_alignment = get<Qt::Alignment>("vertical-align",
-        profile.get_properties());
+      //auto& vertical_alignment = get<Qt::Alignment>("vertical-align",
+      //  profile.get_properties());
       horizontal_alignment.connect_changed_signal(
         [&, text_area_box] (auto alignment) {
           auto style = get_style(*text_area_box);
           style.get(Any()).
             set(TextAlign(
-              Qt::Alignment(alignment) | vertical_alignment.get()));
+              Qt::Alignment(alignment)));// | vertical_alignment.get()));
           set_style(*text_area_box, std::move(style));
         });
-      vertical_alignment.connect_changed_signal(
-        [&, text_area_box] (auto alignment) {
-          auto style = get_style(*text_area_box);
-          style.get(Any()).
-            set(TextAlign(
-              Qt::Alignment(alignment) | horizontal_alignment.get()));
-          set_style(*text_area_box, std::move(style));
-        });
+      //vertical_alignment.connect_changed_signal(
+      //  [&, text_area_box] (auto alignment) {
+      //    auto style = get_style(*text_area_box);
+      //    style.get(Any()).
+      //      set(TextAlign(
+      //        Qt::Alignment(alignment) | horizontal_alignment.get()));
+      //    set_style(*text_area_box, std::move(style));
+      //  });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
       return text_area_box;

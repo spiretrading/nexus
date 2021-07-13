@@ -2,6 +2,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -35,9 +37,9 @@ namespace {
       set(LineHeight(1.25)).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
     style.get(Any() >> is_a<Box>()).
-      set(border_size(0)).
-      set(horizontal_padding(scale_width(8))).
-      set(vertical_padding(scale_height(7)));
+      set(border_size(0));
+      //set(horizontal_padding(scale_width(8))).
+      //set(vertical_padding(scale_height(7)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
@@ -121,13 +123,16 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_edit = new QTextEdit(m_model->get_current());
   m_text_edit->setAcceptRichText(false);
-  m_text_edit->document()->setDocumentMargin(0);
+  // TODO: reset to 0
+  m_text_edit->document()->setDocumentMargin(8);
   m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  //m_text_edit->setFrameShape(QFrame::NoFrame);
+  m_text_edit->setFrameShape(QFrame::NoFrame);
   m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   setFocusProxy(m_text_edit);
   m_text_edit->installEventFilter(this);
+  m_text_edit->verticalScrollBar()->setDisabled(true);
+  m_text_edit->verticalScrollBar()->setValue(0);
   //m_layers->add(m_text_edit);
   //m_placeholder = new QLabel();
   //m_placeholder->setCursor(m_text_edit->cursor());
@@ -146,16 +151,17 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //m_layer_container = new Box(m_layers);
   m_text_edit_box = new Box(m_text_edit, this);
   m_text_edit_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto scroll_box = new ScrollBox(m_text_edit_box, this);
-  scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
+  m_scroll_box = new ScrollBox(m_text_edit_box, this);
+  m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
-  scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  scroll_box->setFocusPolicy(Qt::NoFocus);
+  m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_scroll_box->setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_container_box = new Box(scroll_box, this);
-  m_container_box->setFocusPolicy(Qt::NoFocus);
-  layout->addWidget(m_container_box);
+  layout->addWidget(m_scroll_box);
+  //m_container_box = new Box(scroll_box, this);
+  //m_container_box->setFocusPolicy(Qt::NoFocus);
+  //layout->addWidget(m_container_box);
   //auto scroll_area = new ScrollBox();
   //scroll_area->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   //m_box = new Box();
@@ -166,11 +172,13 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //layout->setContentsMargins(0, 0, 0, 0);
   //layout->addWidget(m_box);
   //setFocusProxy(m_box);
-  proxy_style(*this, *m_container_box);
+  proxy_style(*this, *m_scroll_box);
   add_pseudo_element(*this, Placeholder());
   connect_style_signal(*this, [=] { on_style(); });
   connect_style_signal(*this, Placeholder(), [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
+  connect(m_text_edit, &QTextEdit::cursorPositionChanged, this,
+    &TextAreaBox::on_cursor_position);
   //connect(m_text_edit->document()->documentLayout(),
   //  &QAbstractTextDocumentLayout::documentSizeChanged,
   //    // TODO: don't capture by reference, created method
@@ -254,7 +262,8 @@ QSize TextAreaBox::sizeHint() const {
   //    cursor_width, m_text_edit->fontMetrics().height());
   //*m_size_hint += compute_decoration_size();
   //return *m_size_hint;
-  return m_container_box->sizeHint();
+  //return m_scroll_box->sizeHint();
+  return {};
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
@@ -312,7 +321,7 @@ void TextAreaBox::resizeEvent(QResizeEvent* event) {
 
 QSize TextAreaBox::compute_decoration_size() const {
   auto decoration_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*m_container_box)) {
+  for(auto& property : get_evaluated_block(*m_scroll_box)) {
     property.visit(
       [&] (std::in_place_type_t<BorderTopSize>, int size) {
         decoration_size.rheight() += size;
@@ -424,7 +433,7 @@ void TextAreaBox::commit_style() {
   }
   m_text_edit->setFont(font);
   if(m_text_edit_styles.m_line_height) {
-    qDebug() << *m_text_edit_styles.m_line_height;
+    //qDebug() << *m_text_edit_styles.m_line_height;
     auto cursor_pos = m_text_edit->textCursor().position();
     for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
       auto block = m_text_edit->document()->findBlockByNumber(i);
@@ -512,6 +521,32 @@ void TextAreaBox::on_current(const QString& current) {
   update_placeholder_text();
 }
 
+void TextAreaBox::on_cursor_position() {
+  // TOOD: clean up, use set vertical padding
+  //static auto last = m_text_edit->cursorRect();
+  auto t = m_text_edit->visibleRegion().boundingRect().top();
+  auto b = m_text_edit->visibleRegion().boundingRect().bottom();
+  qDebug() << "************************************";
+  qDebug() << "vr top: " << t;
+  qDebug() << "vr bottom: " << b;
+  qDebug() << "cur: " << m_text_edit->cursorRect();
+  if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+    if(m_text_edit->cursorRect().top() <= t) {
+    //if(m_text_edit->cursorRect().y() < m_text_edit->viewport()->y()) {
+      m_scroll_box->get_vertical_scroll_bar().set_position(
+        m_text_edit->cursorRect().top() - scale_height(8));
+    } else if(m_text_edit->cursorRect().bottom() >= b) {
+    //} else if(m_text_edit->cursorRect().y() > m_text_edit->viewport()->y()) {
+      m_scroll_box->get_vertical_scroll_bar().set_position(
+        m_text_edit->cursorRect().bottom() -
+        m_text_edit->visibleRegion().boundingRect().height() +
+        scale_height(8));
+    }
+  }
+  //last = m_text_edit->cursorRect();
+  //update();
+}
+
 void TextAreaBox::on_editing_finished() {
   if(!is_read_only()) {
     if(m_model->get_state() == QValidator::Acceptable) {
@@ -531,12 +566,34 @@ void TextAreaBox::on_text_changed() {
   //update_placeholder_text();
   m_model->set_current(m_text_edit->toPlainText());
   // TODO: put in method and call from resizeEvent, etc.
-  qDebug() << line_count();
+  //qDebug() << line_count();
+  //qDebug() << "doc height: " << m_text_edit->document()->size().toSize().height();
+  auto h_adjust = [&] {
+    if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+      return m_scroll_box->get_vertical_scroll_bar().width();
+    }
+    return 0;
+  }();
   m_text_edit_box->setFixedSize(
-    width() - 15 - compute_decoration_size().width(),
-    static_cast<int>(std::max(line_count() * 14.0 * 1.25, 14.0 * 1.25)));// - compute_decoration_size().height());
+    width() - h_adjust - compute_decoration_size().width(),
+    std::max(
+      m_text_edit->document()->documentLayout()->documentSize().toSize().height(),
+      m_line_height));// - compute_decoration_size().height());
   //m_layer_container->setFixedSize(m_text_edit->size());
-  qDebug() << "text change size: " << m_text_edit->size();
+  //qDebug() << "text change size: " << m_text_edit->size();
+  //qDebug() << "text change pos: " << m_text_edit->pos();
+  //qDebug() << m_text_edit->textCursor().blockFormat().headingLevel();
+  //qDebug() << m_text_edit->textCursor().blockFormat().lineHeight();
+  //qDebug() << m_text_edit->textCursor().verticalMovementX();
+  //qDebug() << "vbar: " << m_text_edit->verticalScrollBar()->value();
+  //on_cursor_position();
+  //m_text_edit->verticalScrollBar()->setValue(0);
+  //m_text_edit->ensureCursorVisible();
+  //auto a = m_text_edit->textCursor();
+  //a.setVerticalMovementX(0);
+  //m_text_edit->setTextCursor(a);
+  //qDebug() << m_text_edit->textCursor().blockFormat().topMargin();
+  //qDebug() << m_text_edit->textCursor().blockFormat().bottomMargin();
   //updateGeometry();
 }
 
@@ -554,7 +611,7 @@ void TextAreaBox::on_style() {
         },
         [&] (const TextAlign& alignment) {
           stylist.evaluate(alignment, [=] (auto alignment) {
-            m_text_edit_styles.m_alignment = alignment;
+            m_text_edit_styles.m_alignment = Qt::AlignLeft | Qt::AlignBottom;
           });
         },
         [&] (const Font& font) {
