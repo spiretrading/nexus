@@ -12,17 +12,23 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    style.get(Any() / (Hover() || Focus())).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(horizontal_padding(scale_width(5)));
+    style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    style.get(Any() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
-    style.get(Disabled() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+
+
+    style.get((Any() >> is_a<Icon>()) &&
+        !(Any() >> is_a<Button>() >> is_a<Icon>())).
+      set(BackgroundColor(QColor::fromRgb(255, 0, 0, 255)));
+      //set(Fill(QColor::fromRgb(0x00, 0xFF, 0xFF)));
+    //style.get(Disabled() > is_a<Button>()).
+    //  set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));

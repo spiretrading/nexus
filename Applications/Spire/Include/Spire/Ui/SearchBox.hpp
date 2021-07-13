@@ -19,9 +19,6 @@ namespace Spire {
       /** Returns the model associated with the TextBox. */
       const std::shared_ptr<TextModel>& get_model() const;
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-
     private:
       TextBox* m_text_box;
       Button* m_delete_button;
