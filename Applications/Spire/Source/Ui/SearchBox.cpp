@@ -14,6 +14,7 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(vertical_padding(scale_height(4))).
       set(horizontal_padding(scale_width(5)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));

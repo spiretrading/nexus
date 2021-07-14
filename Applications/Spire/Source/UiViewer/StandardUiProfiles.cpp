@@ -1180,8 +1180,6 @@ UiProfile Spire::make_search_box_profile() {
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
       width.set(scale_width(180));
-      auto& height = get<int>("height", profile.get_properties());
-      height.set(scale_height(26));
       auto search_box = new SearchBox();
       apply_widget_properties(search_box, profile.get_properties());
       search_box->get_model()->connect_current_signal(
