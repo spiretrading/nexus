@@ -1186,6 +1186,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
     [] (auto& profile) {
       auto container = new QWidget();
+      apply_widget_properties(container, profile.get_properties());
       auto layout = new QHBoxLayout(container);
       layout->setContentsMargins({});
       auto list_model = std::make_shared<ArrayListModel>();
@@ -1199,7 +1200,8 @@ UiProfile Spire::make_scrollable_list_box_profile() {
           return label;
         });
       auto scrollable_list_box = make_scrollable_list_box(list_view);
-      apply_widget_properties(scrollable_list_box, profile.get_properties());
+      scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
+        QSizePolicy::Expanding);
       layout->addWidget(scrollable_list_box);
       container->setMaximumHeight(scale_height(240));
       return container;

@@ -139,23 +139,22 @@ void ScrollBox::update_ranges() {
     return 0;
   };
   auto border_size = get_border_size();
-  auto viewport_size = m_body->size() + border_size +
-    QSize(get_bar_width(), get_bar_height());
-  setMaximumSize(viewport_size);
+  auto viewport_size = m_body->size() + border_size;
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.height() <= height()) {
+    if(viewport_size.height() <= height() - get_bar_height()) {
       m_scrollable_layer->get_vertical_scroll_bar().hide();
     } else {
       m_scrollable_layer->get_vertical_scroll_bar().show();
     }
   }
   if(m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.width() <= width()) {
+    if(viewport_size.width() <= width() - get_bar_width()) {
       m_scrollable_layer->get_horizontal_scroll_bar().hide();
     } else {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
     }
   }
+  setMaximumSize(viewport_size + QSize(get_bar_width(), get_bar_height()));
   auto new_size = size() - border_size;
   auto vertical_range = std::max(m_body->height() - new_size.height() +
     get_bar_height(), 0);
