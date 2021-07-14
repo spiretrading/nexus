@@ -130,7 +130,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_edit->document()->setDocumentMargin(8);
   m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_text_edit->setFrameShape(QFrame::NoFrame);
-  //m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   setFocusProxy(m_text_edit);
   m_text_edit->installEventFilter(this);
@@ -153,7 +153,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //box->setFocusProxy(m_text_edit);
   //m_layer_container = new Box(m_layers);
   m_text_edit_box = new Box(m_text_edit, this);
-  m_text_edit_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //m_text_edit_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_scroll_box = new ScrollBox(m_text_edit_box, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
@@ -436,6 +436,10 @@ void TextAreaBox::commit_style() {
   m_text_edit->setFont(font);
   if(m_text_edit_styles.m_line_height) {
     //qDebug() << *m_text_edit_styles.m_line_height;
+    m_line_height = static_cast<double>(font.pixelSize()) *
+      *m_text_edit_styles.m_line_height;
+    //qDebug() << m_line_height;
+    m_scroll_box->get_vertical_scroll_bar().set_line_size(m_line_height);
     auto cursor_pos = m_text_edit->textCursor().position();
     for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
       auto block = m_text_edit->document()->findBlockByNumber(i);
@@ -444,8 +448,6 @@ void TextAreaBox::commit_style() {
         cursor.setPosition(block.position());
         m_text_edit->setTextCursor(cursor);
         auto block_format = cursor.blockFormat();
-        m_line_height = static_cast<double>(font.pixelSize()) *
-          *m_text_edit_styles.m_line_height;
         block_format.setLineHeight(m_line_height,
           QTextBlockFormat::FixedHeight);
         cursor.setBlockFormat(block_format);
@@ -496,7 +498,7 @@ int TextAreaBox::line_count() const {
   while(tb.isValid())
   {
     QString blockText = tb.text();
-    Q_ASSERT(tb.layout());
+    //Q_ASSERT(tb.layout());
     if(!tb.layout())
       continue;
     for(int i = 0; i != tb.layout()->lineCount(); ++i)
@@ -510,18 +512,25 @@ int TextAreaBox::line_count() const {
 }
 
 void TextAreaBox::update_text_box_size() {
+  // TODO: optimize to so this isn't called too many times.
   auto h_adjust = [&] {
-    if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
-      return m_scroll_box->get_vertical_scroll_bar().width();
+    if(line_count() > visible_line_count()) {
+      // TODO: unshown scroll bar gives 100 as width, either fix or get this
+      //      value from somewhere else.
+      return scale_width(15);
     }
     return 0;
   }();
   //qDebug() << "size set";
+  //qDebug() << "dec size: " << compute_decoration_size().width();
   m_text_edit_box->setFixedSize(
     width() - h_adjust - compute_decoration_size().width(),
     std::max(
       m_text_edit->document()->documentLayout()->documentSize().toSize().height(),
       m_line_height));// - compute_decoration_size().height());
+  //m_text_edit_box->
+  //m_scroll_box->get_vertical_scroll_bar().set_page_size(10);
+  //m_text_edit->document()->documentLayout()->update();
 }
 
 int TextAreaBox::visible_line_count() const {
