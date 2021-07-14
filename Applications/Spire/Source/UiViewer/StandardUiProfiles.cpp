@@ -1231,10 +1231,10 @@ UiProfile Spire::make_text_area_box_profile() {
   //properties.push_back(make_standard_enum_property("wrap", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("TextAreaBox"), properties,
     [] (auto& profile) {
-      auto& width = get<int>("width", profile.get_properties());
-      width.set(scale_width(200));
-      auto& height = get<int>("height", profile.get_properties());
-      height.set(scale_height(200));
+      //auto& width = get<int>("width", profile.get_properties());
+      //width.set(scale_width(200));
+      //auto& height = get<int>("height", profile.get_properties());
+      //height.set(scale_height(200));
       auto text_area_box = new TextAreaBox();
       apply_widget_properties(text_area_box, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());

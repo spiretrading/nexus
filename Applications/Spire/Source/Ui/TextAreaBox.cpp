@@ -1,5 +1,4 @@
 #include "Spire/Ui/TextAreaBox.hpp"
-#include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QScrollBar>
@@ -39,8 +38,8 @@ namespace {
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
       // TODO: the ScrollBox seems to maintain its own padding,
       //        so remove it with this
-      //.set(horizontal_padding(0)).
-      //.set(vertical_padding(0));
+      //set(horizontal_padding(0)).
+      //set(vertical_padding(0));
     style.get(Any() >> is_a<Box>()).
       set(border_size(0));
       //set(horizontal_padding(scale_width(8))).
@@ -72,36 +71,6 @@ namespace {
   }
 }
 
-struct TextAreaBox::TextValidator : QValidator {
-  std::shared_ptr<TextModel> m_model;
-  bool m_is_text_elided;
-
-  TextValidator(std::shared_ptr<TextModel> model, QObject* parent = nullptr)
-    : QValidator(parent),
-      m_model(std::move(model)),
-      m_is_text_elided(false) {}
-
-  QValidator::State validate(QString& input, int& pos) const override {
-    if(m_is_text_elided) {
-      return QValidator::State::Acceptable;
-    }
-    if(input == m_model->get_current()) {
-      auto state = m_model->get_state();
-      if(state == QValidator::State::Invalid) {
-        return state;
-      }
-      return QValidator::State::Acceptable;
-    }
-    auto current = std::move(input);
-    auto state = m_model->set_current(current);
-    input = m_model->get_current();
-    if(state == QValidator::State::Invalid) {
-      return state;
-    }
-    return QValidator::State::Acceptable;
-  }
-};
-
 void TextAreaBox::StyleProperties::clear() {
   m_styles.clear();
   m_alignment = none;
@@ -128,14 +97,15 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //setStyleSheet("#tab { background-color: red; }");
   //m_layers = new LayeredWidget(this);
   //layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_text_edit = new QTextEdit(m_model->get_current());
+  // TODO: set current
+  m_text_edit = new TextEdit(this);
   m_text_edit->setAcceptRichText(false);
   // TODO: reset to 0
-  m_text_edit->document()->setDocumentMargin(8);
+  m_text_edit->document()->setDocumentMargin(0);
   m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_text_edit->setFrameShape(QFrame::NoFrame);
-  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_text_validator = new TextValidator(m_model, this);
+  //m_text_edit->setLineWrapMode(QTextEdit::NoWrap);
+  //m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_text_edit);
   m_text_edit->installEventFilter(this);
   //m_text_edit->verticalScrollBar()->setDisabled(true);
@@ -157,6 +127,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //box->setFocusProxy(m_text_edit);
   //m_layer_container = new Box(m_layers);
   m_text_edit_box = new Box(m_text_edit, this);
+  m_text_edit_box->setObjectName("text_edit_box");
   //m_text_edit_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_scroll_box = new ScrollBox(m_text_edit_box, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
@@ -255,20 +226,20 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  if(m_size_hint) {
-    return *m_size_hint;
-  }
-  auto cursor_width = [&] {
-    if(is_read_only()) {
-      return 0;
-    }
-    return 1;
-  }();
-  m_size_hint.emplace(
-    m_text_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
-      cursor_width, m_text_edit->fontMetrics().height());
-  *m_size_hint += compute_decoration_size();
-  return *m_size_hint;
+  //if(m_size_hint) {
+  //  return *m_size_hint;
+  //}
+  //auto cursor_width = [&] {
+  //  if(is_read_only()) {
+  //    return 0;
+  //  }
+  //  return 1;
+  //}();
+  //m_size_hint.emplace(
+  //  m_text_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
+  //    cursor_width, m_text_edit->fontMetrics().height());
+  //*m_size_hint += compute_decoration_size();
+  return m_text_edit->sizeHint() + compute_decoration_size();
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
@@ -280,7 +251,7 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
     auto focus_event = static_cast<QFocusEvent*>(event);
     if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
         focus_event->reason() != Qt::PopupFocusReason) {
-      m_text_validator->m_is_text_elided = false;
+      //m_text_validator->m_is_text_elided = false;
       //if(m_text_edit->toPlainText() != m_model->get_current()) {
       //  m_text_edit->setText(m_model->get_current());
       //}
@@ -319,6 +290,8 @@ void TextAreaBox::mousePressEvent(QMouseEvent* event) {
 
 void TextAreaBox::resizeEvent(QResizeEvent* event) {
   //qDebug() << m_layers->size();
+  //qDebug() << "min: " << minimumSize();
+  //qDebug() << "max: " << maximumSize();
   update_text_box_size();
   update_display_text();
   update_placeholder_text();
@@ -467,6 +440,7 @@ void TextAreaBox::commit_style() {
     m_text_edit->style()->unpolish(this);
     m_text_edit->style()->polish(this);
   }
+  m_text_edit->set_decoration_size(compute_decoration_size());
   update_display_text();
 }
 
@@ -527,11 +501,13 @@ void TextAreaBox::update_text_box_size() {
   }();
   //qDebug() << "size set";
   //qDebug() << "dec size: " << compute_decoration_size().width();
-  m_text_edit_box->setFixedSize(
-    width() - h_adjust - compute_decoration_size().width(),
-    std::max(
-      m_text_edit->document()->documentLayout()->documentSize().toSize().height(),
-      m_line_height));// - compute_decoration_size().height());
+  m_text_edit->set_scroll_bar_visible(line_count() > visible_line_count());
+  m_text_edit_box->setFixedSize(m_text_edit->size());
+  //m_text_edit_box->setFixedSize(
+  //  width() - h_adjust - compute_decoration_size().width(),
+  //  std::max(
+  //    m_text_edit->document()->documentLayout()->documentSize().toSize().height(),
+  //    m_line_height));// - compute_decoration_size().height());
   //m_text_edit_box->
   //m_scroll_box->get_vertical_scroll_bar().set_page_size(10);
   //m_text_edit->document()->documentLayout()->update();

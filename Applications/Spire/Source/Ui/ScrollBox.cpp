@@ -107,13 +107,6 @@ void ScrollBox::keyPressEvent(QKeyEvent* event) {
 
 void ScrollBox::resizeEvent(QResizeEvent* event) {
   update_ranges();
-  static auto num = 0;
-  //qDebug() << "sb max: " << maximumSize();
-  if(size() == QSize(200, 33)) {
-    auto a = 0;
-    ++num;
-  }
-  //qDebug() << "sb size: " << size();
 }
 
 void ScrollBox::wheelEvent(QWheelEvent* event) {
