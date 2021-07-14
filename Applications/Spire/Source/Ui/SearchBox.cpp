@@ -22,8 +22,7 @@ namespace {
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
 
 
-    style.get((Any() >> is_a<Icon>()) &&
-        !(+Any() << is_a<Button>())).
+    style.get(Any() >> (is_a<Icon>() && !(+Any() << is_a<Button>()))).
       set(BackgroundColor(QColor::fromRgb(255, 0, 0, 255)));
       //set(Fill(QColor::fromRgb(0x00, 0xFF, 0xFF)));
     //style.get(Disabled() > is_a<Button>()).
