@@ -37,6 +37,10 @@ namespace {
       set(LineHeight(1.25)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
+      // TODO: the ScrollBox seems to maintain its own padding,
+      //        so remove it with this
+      //.set(horizontal_padding(0)).
+      //.set(vertical_padding(0));
     style.get(Any() >> is_a<Box>()).
       set(border_size(0));
       //set(horizontal_padding(scale_width(8))).
