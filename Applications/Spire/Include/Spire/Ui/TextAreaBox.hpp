@@ -88,7 +88,7 @@ namespace Styles {
           }
 
           QSize sizeHint() const override {
-            return size() + get_size_adjustment();
+            return {document()->size().toSize().width(), 300};
           }
 
         protected:
@@ -122,14 +122,14 @@ namespace Styles {
             //updateGeometry();
             //qDebug() << "min: " << minimumWidth();
             //qDebug() << "max: " << maximumWidth();
-            if(minimumWidth() == maximumWidth() ||
-                sizePolicy().horizontalPolicy() == QSizePolicy::Fixed) {
-              qDebug() << "wrap";
-              setWordWrapMode(QTextOption::WordWrap);
-            } else {
-              qDebug() << "no wrap";
-              setWordWrapMode(QTextOption::NoWrap);
-            }
+            //if(minimumWidth() == maximumWidth() ||
+            //    sizePolicy().horizontalPolicy() == QSizePolicy::Fixed) {
+            //  qDebug() << "wrap";
+            //  setWordWrapMode(QTextOption::WordWrap);
+            //} else {
+            //  qDebug() << "no wrap";
+            //  setWordWrapMode(QTextOption::NoWrap);
+            //}
             //if(document()->size().toSize() != size()) {
             //  document()->setPageSize(size());
             //}
@@ -149,7 +149,7 @@ namespace Styles {
 
           void on_document_size(const QSizeF& size) {
             //setGeometry(0, 0, size.toSize().width(), size.toSize().height());
-            setFixedSize(size.toSize());// + QSize(2, 2));
+            //setFixedSize(size.toSize());// + QSize(2, 2));
           }
       };
 

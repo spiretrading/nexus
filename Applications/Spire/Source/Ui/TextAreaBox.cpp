@@ -239,7 +239,8 @@ QSize TextAreaBox::sizeHint() const {
   //  m_text_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
   //    cursor_width, m_text_edit->fontMetrics().height());
   //*m_size_hint += compute_decoration_size();
-  return m_text_edit->sizeHint() + compute_decoration_size();
+  //return m_text_edit->sizeHint() + compute_decoration_size();
+  return m_text_edit->sizeHint();
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
