@@ -68,6 +68,8 @@ namespace Spire {
       /** Returns the horizontal ScrollBar. */
       ScrollBar& get_horizontal_scroll_bar();
 
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -84,6 +86,7 @@ namespace Spire {
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
       void update_ranges();
+      QSize get_border_size() const;
   };
 
   /**

@@ -89,6 +89,10 @@ ScrollBar& ScrollBox::get_horizontal_scroll_bar() {
   return m_scrollable_layer->get_horizontal_scroll_bar();
 }
 
+QSize ScrollBox::sizeHint() const {
+  return m_body->size() + get_border_size();
+}
+
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched != m_body) {
     if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
@@ -134,22 +138,7 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  auto border_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*m_box)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        border_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        border_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        border_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        border_size.rwidth() += size;
-      });
-  }
+  auto border_size = get_border_size();
   auto viewport_size = m_body->size() + QSize(bar_width, bar_height) +
     border_size;
   setMaximumSize(viewport_size);
@@ -181,11 +170,55 @@ void ScrollBox::update_ranges() {
     new_size.width());
 }
 
+QSize ScrollBox::get_border_size() const {
+  auto border_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        border_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        border_size.rwidth() += size;
+      });
+  }
+  return border_size;
+}
+
 ScrollBox* Spire::make_scrollable_list_box(ListView* list_view,
     QWidget* parent) {
   list_view->set_edge_navigation(ListView::EdgeNavigation::CONTAIN);
-  auto scroll_box = new ScrollBox(list_view, parent);
+  auto component = new QWidget();
+  component->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto is_horizontal_layout = [=] {
+    return list_view->get_direction() == Qt::Vertical &&
+      list_view->get_overflow() == ListView::Overflow::NONE ||
+      list_view->get_direction() == Qt::Horizontal &&
+      list_view->get_overflow() == ListView::Overflow::WRAP;
+  }();
+  auto layout = [=] () -> QBoxLayout* {
+    if(is_horizontal_layout) {
+      return new QHBoxLayout(component);
+    } else {
+      return new QVBoxLayout(component);
+    }
+  }();
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  layout->addWidget(list_view);
+  auto scroll_box = new ScrollBox(component, parent);
   scroll_box->set(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  if(is_horizontal_layout) {
+    layout->addSpacing(scroll_box->get_vertical_scroll_bar().sizeHint().width());
+  } else {
+    layout->addSpacing(
+      scroll_box->get_horizontal_scroll_bar().sizeHint().height());
+  }
   auto style = get_style(*scroll_box);
   style.get(Any()).
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
