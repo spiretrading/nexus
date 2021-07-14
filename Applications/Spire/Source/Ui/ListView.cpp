@@ -56,6 +56,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->at(i);
     auto list_item = new ListItem(m_factory(m_list_model, i), this);
+    list_item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_items.push_back({list_item, connect_item_current(list_item, value),
       connect_item_submit(list_item, value)});
   }
