@@ -68,13 +68,12 @@ namespace Spire {
       /** Returns the horizontal ScrollBar. */
       ScrollBar& get_horizontal_scroll_bar();
 
-      QSize sizeHint() const override;
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
+      QSize get_border_size() const;
 
     private:
       QWidget* m_body;
@@ -86,17 +85,7 @@ namespace Spire {
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
       void update_ranges();
-      QSize get_border_size() const;
   };
-
-  /**
-   * Returns a newly constructed ScrollableListBox which is a ScrollBox
-   * containing a ListView.
-   * @param list_view The ListView contained within a ScrollBox.
-   * @param parent The parent widget.
-   */
-  ScrollBox* make_scrollable_list_box(ListView* list_view,
-    QWidget* parent = nullptr);
 }
 
 #endif
