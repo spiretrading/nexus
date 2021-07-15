@@ -30,7 +30,6 @@ namespace Spire {
       QWidget* m_body;
       QSize m_body_size;
 
-      bool is_horizontal_layout_of_body();
       QWidget* make_body();
       void on_current(const boost::optional<std::any>& current);
   };

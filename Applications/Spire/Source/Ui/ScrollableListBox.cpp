@@ -12,9 +12,20 @@ using namespace Spire::Styles;
 ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
     : ScrollBox(make_body(), parent)
     , m_list_view(list_view) {
-  set(ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_list_view->set_edge_navigation(ListView::EdgeNavigation::CONTAIN);
-  auto is_horizontal_layout = is_horizontal_layout_of_body();
+  auto is_horizontal_layout = [=] {
+    return (m_list_view->get_direction() == Qt::Vertical &&
+      m_list_view->get_overflow() == ListView::Overflow::NONE) ||
+      (m_list_view->get_direction() == Qt::Horizontal &&
+        m_list_view->get_overflow() == ListView::Overflow::WRAP);
+  }();
+  if(is_horizontal_layout) {
+    set_horizontal(ScrollBox::DisplayPolicy::NEVER);
+    set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  } else {
+    set_horizontal(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+    set_vertical(ScrollBox::DisplayPolicy::NEVER);
+  }
   auto layout = [=] () -> QBoxLayout* {
     if(is_horizontal_layout) {
       return new QHBoxLayout(m_body);
@@ -39,13 +50,6 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
     [=] (const auto& current) { on_current(current); });
   m_body->installEventFilter(this);
   m_list_view->installEventFilter(this);
-}
-
-bool ScrollableListBox::is_horizontal_layout_of_body() {
-  return (m_list_view->get_direction() == Qt::Vertical &&
-    m_list_view->get_overflow() == ListView::Overflow::NONE) ||
-    (m_list_view->get_direction() == Qt::Horizontal &&
-    m_list_view->get_overflow() == ListView::Overflow::WRAP);
 }
 
 QWidget* ScrollableListBox::make_body() {
@@ -129,7 +133,7 @@ void ScrollableListBox::resizeEvent(QResizeEvent* event) {
         m_body->resize({event->size().width() - get_border_size().width(),
           m_body->height()});
       } else {
-        m_list_view->setFixedHeight(
+        m_list_view->resize(m_list_view->width(),
           event->size().height() - bar_height - get_border_size().height());
         m_body->resize({m_list_view->get_layout_size().width(),
           event->size().height() - get_border_size().height()});
@@ -139,8 +143,8 @@ void ScrollableListBox::resizeEvent(QResizeEvent* event) {
         m_body->resize({m_body->width(),
           event->size().height() - get_border_size().height()});
       } else {
-        m_list_view->setFixedWidth(
-          event->size().width() - bar_width - get_border_size().width());
+        m_list_view->resize({event->size().width() - bar_width -
+          get_border_size().width(), m_list_view->height()});
         m_body->resize({event->size().width() - get_border_size().width(),
           m_list_view->get_layout_size().height()});
       }
