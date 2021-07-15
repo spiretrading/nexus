@@ -36,6 +36,8 @@ namespace {
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(vertical_padding(0)).
       set(horizontal_padding(scale_width(5)));
+    style.get(Disabled() >> is_a<TextBox>()).
+      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
 }
