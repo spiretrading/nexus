@@ -27,6 +27,7 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -1183,8 +1184,20 @@ UiProfile Spire::make_scroll_box_profile() {
 UiProfile Spire::make_scrollable_list_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  auto direction_property = define_enum<Qt::Orientation>(
+    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
+  properties.push_back(
+    make_standard_enum_property("direction", direction_property));
+  auto overflow_property = define_enum<ListView::Overflow>(
+    {{"NONE", ListView::Overflow::NONE}, {"WRAP", ListView::Overflow::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
     [] (auto& profile) {
+      auto& direction = get<Qt::Orientation>("direction",
+        profile.get_properties());
+      auto& overflow = get<ListView::Overflow>("overflow",
+        profile.get_properties());
       auto container = new QWidget();
       apply_widget_properties(container, profile.get_properties());
       auto layout = new QHBoxLayout(container);
@@ -1199,11 +1212,17 @@ UiProfile Spire::make_scrollable_list_box_profile() {
           auto label = make_label(model->get<QString>(index));
           return label;
         });
-      auto scrollable_list_box = make_scrollable_list_box(list_view);
+      list_view->set_direction(direction.get());
+      list_view->set_overflow(overflow.get());
+      auto scrollable_list_box = new ScrollableListBox(list_view);
       scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
         QSizePolicy::Expanding);
       layout->addWidget(scrollable_list_box);
-      container->setMaximumHeight(scale_height(240));
+      if(direction.get() == Qt::Vertical) {
+        container->setMaximumHeight(scale_height(240));
+      } else {
+        container->setMaximumWidth(scale_width(140));
+      }
       return container;
     });
   return profile;
