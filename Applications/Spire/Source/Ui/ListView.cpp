@@ -165,7 +165,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         auto row_height =
           get_column_or_row(m_column_or_row_index)->geometry().height();
         if(m_tracking_position.y() + row_height <
-            get_column_or_row(get_layout()->count() - 1)->geometry().bottom()) {
+            get_column_or_row(get_layout()->count() - 2)->geometry().bottom()) {
           m_tracking_position.setY(m_tracking_position.y() + row_height +
             get_column_or_row(m_column_or_row_index + 1)->geometry().height());
           cross_move(true);
@@ -203,7 +203,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         auto column_width =
           get_column_or_row(m_column_or_row_index)->geometry().width();
         if(m_tracking_position.x() + column_width <
-            get_column_or_row(get_layout()->count() - 1)->geometry().right()) {
+            get_column_or_row(get_layout()->count() - 2)->geometry().right()) {
           m_tracking_position.setX(m_tracking_position.x() + column_width +
             get_column_or_row(m_column_or_row_index + 1)->geometry().width());
           cross_move(true);
@@ -489,6 +489,7 @@ void ListView::update_layout() {
         child_layout->addSpacing(gap);
         child_layout->addWidget(item);
       } else {
+        child_layout->addStretch();
         layout->addLayout(child_layout);
         layout->addSpacing(overflow_gap);
         child_layout = get_child_layout();
