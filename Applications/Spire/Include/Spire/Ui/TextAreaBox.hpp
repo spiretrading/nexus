@@ -1,14 +1,17 @@
 #ifndef SPIRE_TEXT_AREA_BOX_HPP
 #define SPIRE_TEXT_AREA_BOX_HPP
 #include <boost/optional/optional.hpp>
-#include <QAbstractTextDocumentLayout>
 #include <QApplication>
 #include <QLabel>
 #include <QTextEdit>
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TextBox.hpp"
+
+#include <QAbstractTextDocumentLayout>
+#include <QTextBlock>
 
 namespace Spire {
 namespace Styles {
@@ -59,17 +62,24 @@ namespace Styles {
       class TextEdit : public QTextEdit {
         public:
 
-          explicit TextEdit(QWidget *parent = nullptr)
+          explicit TextEdit(QWidget* t_a_b, QWidget *parent = nullptr)
               : QTextEdit(parent),
+                m_t_a_b(t_a_b),
+                m_longest_line_length(0),
                 m_is_scroll_bar_visible(false) {
             //setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
-            setWordWrapMode(QTextOption::NoWrap);
+            //setWordWrapMode(QTextOption::NoWrap);
             setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
             setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            connect(this, &QTextEdit::textChanged, this,
+              &TextEdit::on_text_changed);
             connect(document()->documentLayout(),
               &QAbstractTextDocumentLayout::documentSizeChanged, this,
               &TextEdit::on_document_size);
+            connect(document(), &QTextDocument::contentsChange, this,
+              &TextEdit::on_contents_changed);
             //parent->installEventFilter(this);
+            m_t_a_b->installEventFilter(this);
           }
 
           void set_decoration_size(const QSize& size) {
@@ -80,7 +90,7 @@ namespace Styles {
           void set_scroll_bar_visible(bool is_visible) {
             m_is_scroll_bar_visible = is_visible;
             if(m_is_scroll_bar_visible) {
-              setViewportMargins(0, 0, 0, 0);
+              //setViewportMargins(0, 0, 0, 0);
             } else {
               //setViewportMargins({});
             }
@@ -88,57 +98,31 @@ namespace Styles {
           }
 
           QSize sizeHint() const override {
-            return {document()->size().toSize().width(), 300};
+            // TODO: add decorations, get line height
+            return {std::max(scale_width(10), m_longest_line_length + 2),
+              line_count() * 15 + 2};
           }
 
         protected:
-          //void changeEvent(QEvent* event) override {
-          //  if(event->type() == QEvent::ParentChange) {
-          //    parent()->installEventFilter(this);
-          //  }
-          //  QTextEdit::changeEvent(event);
-          //}
-          //bool eventFilter(QObject* watched, QEvent* event) override {
-          //  if(event->type() == QEvent::Resize) {
-          //    setFixedSize(parentWidget()->size());
-          //    if(parentWidget()->minimumWidth() == parentWidget()->maximumWidth() ||
-          //        parentWidget()->sizePolicy().horizontalPolicy() == QSizePolicy::Fixed) {
-          //      qDebug() << "wrap";
-          //      setWordWrapMode(QTextOption::WordWrap);
-          //    } else {
-          //      qDebug() << "no wrap";
-          //      setWordWrapMode(QTextOption::NoWrap);
-          //    }
-          //  }
-          //  return QTextEdit::eventFilter(watched, event);
-          //}
-
-          void resizeEvent (QResizeEvent *event) override {
-            /*
-              * If the widget has been resized then the size hint will
-              * also have changed.  Call updateGeometry to make sure
-              * any layouts are notified of the change.
-              */
-            //updateGeometry();
-            //qDebug() << "min: " << minimumWidth();
-            //qDebug() << "max: " << maximumWidth();
-            //if(minimumWidth() == maximumWidth() ||
-            //    sizePolicy().horizontalPolicy() == QSizePolicy::Fixed) {
-            //  qDebug() << "wrap";
-            //  setWordWrapMode(QTextOption::WordWrap);
-            //} else {
-            //  qDebug() << "no wrap";
-            //  setWordWrapMode(QTextOption::NoWrap);
-            //}
-            //if(document()->size().toSize() != size()) {
-            //  document()->setPageSize(size());
-            //}
-            QTextEdit::resizeEvent(event);
+          bool eventFilter(QObject* watched, QEvent* event) override {
+            if(event->type() == QEvent::Resize) {
+              update_page_size();
+            }
+            return QTextEdit::eventFilter(watched, event);
           }
 
         private:
+
+          QWidget* m_t_a_b;
+          int m_longest_line_length;
+          int m_longest_line_block;
           bool m_is_scroll_bar_visible;
           QSize m_decoration_size;
+
+          int get_text_length(const QString& text) {
+            // TODO: assumes cursor is always visible (+ 1).
+            return fontMetrics().horizontalAdvance(text) + 1;
+          }
 
           QSize get_size_adjustment() const {
             if(!m_is_scroll_bar_visible) {
@@ -147,9 +131,109 @@ namespace Styles {
             return m_decoration_size + QSize(15, 0) + QSize(2, 2);
           }
 
+          int line_count() const {
+            //auto count = 0;
+            //QStringList ret;
+            //QTextBlock tb = document()->begin();
+            //while(tb.isValid())
+            //{
+            //  QString blockText = tb.text();
+            //  //Q_ASSERT(tb.layout());
+            //  if(!tb.layout())
+            //    continue;
+            //  for(int i = 0; i != tb.layout()->lineCount(); ++i)
+            //  {
+            //    QTextLine line = tb.layout()->lineAt(i);
+            //    ret.append(blockText.mid(line.textStart(), line.textLength()));
+            //  }
+            //  tb = tb.next();
+            //}
+            //return ret.size();
+            auto num = 0;
+            for(auto i = 0; i < document()->blockCount(); ++i) {
+              auto block = document()->findBlockByNumber(i);
+              if(block.isValid()) {
+                num += block.layout()->lineCount();
+              }
+            }
+            //qDebug() << "lc: " << num;
+            return std::max(1, num);
+          }
+
+          int visible_line_count() const {
+            // TODO: get line height
+            return (m_t_a_b->height()// -
+              /*compute_decoration_size().height()*/) / 15;
+          }
+
+          bool is_scroll_bar_visible() {
+            qDebug() << "lc: " << line_count();
+            qDebug() << "vlc: " << visible_line_count();
+            return line_count() > visible_line_count();
+          }
+
+          void update_page_size() {
+            auto scroll_bar_width = [&] {
+              if(is_scroll_bar_visible()) {
+                qDebug() << "sb is vis";
+                return scale_width(15);
+              }
+              return 0;
+            }();
+            if(m_t_a_b->width() < m_longest_line_length) {
+              //qDebug() << "page size = tab width";
+              document()->setPageSize({
+                static_cast<double>(m_t_a_b->width() - scroll_bar_width),
+                document()->pageSize().height()});
+            } else {
+              //qDebug() << "page size = longest line";
+              document()->setPageSize({
+                static_cast<double>(m_longest_line_length - scroll_bar_width),
+                document()->pageSize().height()});
+            }
+          }
+
+          void on_contents_changed(int position, int charsRemoved,
+              int charsAdded) {
+            auto block = document()->findBlock(position);
+            if(block.isValid()) {
+              auto line_length = get_text_length(block.text());
+              if(line_length > m_longest_line_length) {
+                m_longest_line_length = line_length;
+                m_longest_line_block = block.blockNumber();
+                setFixedSize(m_longest_line_length, height());
+              } else if(block.blockNumber() == m_longest_line_block) {
+                m_longest_line_length = 0;
+                m_longest_line_block = 0;
+                for(auto i = 0; i < document()->blockCount(); ++i) {
+                  auto block = document()->findBlockByNumber(i);
+                  if(block.isValid()) {
+                    if(get_text_length(block.text()) > m_longest_line_length) {
+                      m_longest_line_length = get_text_length(block.text());
+                      m_longest_line_block = block.blockNumber();
+                    }
+                  }
+                }
+              }
+            }
+            update_page_size();
+          }
+
           void on_document_size(const QSizeF& size) {
+            qDebug() << "document size: " << document()->size();
             //setGeometry(0, 0, size.toSize().width(), size.toSize().height());
-            //setFixedSize(size.toSize());// + QSize(2, 2));
+            setFixedSize(size.toSize());// + QSize(2, 2));
+          }
+
+          void on_text_changed() {
+            //if(parentWidget()->height() < height()) {
+            //  if(!m_is_scroll_bar_visible) {
+            //    m_is_scroll_bar_visible = true;
+            //    auto page_size = document()->pageSize();
+            //    document()->setPageSize({page_size.width() + 15.0,
+            //      page_size.height()});
+            //  }
+            //}
           }
       };
 

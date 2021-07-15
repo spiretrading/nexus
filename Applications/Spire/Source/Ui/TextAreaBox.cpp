@@ -98,7 +98,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //m_layers = new LayeredWidget(this);
   //layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   // TODO: set current
-  m_text_edit = new TextEdit(this);
+  m_text_edit = new TextEdit(this, this);
   m_text_edit->setAcceptRichText(false);
   // TODO: reset to 0
   m_text_edit->document()->setDocumentMargin(0);

@@ -14,13 +14,17 @@ using namespace Spire::Styles;
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
+  setObjectName("scroll_box");
   auto layers = new LayeredWidget(this);
+  layers->setObjectName("layered_widget");
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto viewport = new QWidget();
+  viewport->setObjectName("scroll_box_viewport");
   m_body->installEventFilter(this);
   m_body->setParent(viewport);
   layers->add(viewport);
   m_scrollable_layer = new ScrollableLayer();
+  m_scrollable_layer->setObjectName("scrollable_layer");
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
     [=] (auto position) { on_vertical_scroll(position); });
   m_scrollable_layer->get_horizontal_scroll_bar().connect_position_signal(
