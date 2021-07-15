@@ -20,11 +20,9 @@ namespace Spire {
       const std::shared_ptr<TextModel>& get_model() const;
 
     private:
+      boost::signals2::scoped_connection m_current_connection;
       TextBox* m_text_box;
       Button* m_delete_button;
-
-      void on_current(const QString& value);
-      void on_delete_button();
   };
 }
 

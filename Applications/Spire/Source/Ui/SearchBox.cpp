@@ -65,20 +65,15 @@ SearchBox::SearchBox(QWidget* parent)
   layout->addWidget(box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
-  m_text_box->get_model()->connect_current_signal([=] (const auto& current) {
-    on_current(current);
+  m_current_connection = m_text_box->get_model()->connect_current_signal(
+    [=] (const auto& current) {
+      m_delete_button->setVisible(!current.isEmpty());
+    });
+  m_delete_button->connect_clicked_signal([=] {
+    m_text_box->get_model()->set_current({});
   });
-  m_delete_button->connect_clicked_signal([=] { on_delete_button(); });
 }
 
 const std::shared_ptr<TextModel>& SearchBox::get_model() const {
   return m_text_box->get_model();
-}
-
-void SearchBox::on_current(const QString& current) {
-  m_delete_button->setVisible(!current.isEmpty());
-}
-
-void SearchBox::on_delete_button() {
-  m_text_box->get_model()->set_current({});
 }
