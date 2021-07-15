@@ -19,6 +19,12 @@ namespace Spire {
       /** Returns the model associated with the TextBox. */
       const std::shared_ptr<TextModel>& get_model() const;
 
+      /**
+       * Sets the placeholder text.
+       * @param text The placeholder text.
+       */
+      void set_placeholder(const QString& text);
+
     private:
       boost::signals2::scoped_connection m_current_connection;
       TextBox* m_text_box;

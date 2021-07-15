@@ -1176,12 +1176,17 @@ UiProfile Spire::make_scroll_box_profile() {
 UiProfile Spire::make_search_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("placeholder"));
   auto profile = UiProfile(QString::fromUtf8("SearchBox"), properties,
     [] (auto& profile) {
       auto& width = get<int>("width", profile.get_properties());
       width.set(scale_width(180));
       auto search_box = new SearchBox();
       apply_widget_properties(search_box, profile.get_properties());
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& text) {
+        search_box->set_placeholder(text);
+      });
       search_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       return search_box;

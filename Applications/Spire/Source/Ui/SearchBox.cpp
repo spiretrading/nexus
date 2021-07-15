@@ -1,6 +1,5 @@
 #include "Spire/Ui/SearchBox.hpp"
 #include <QHBoxLayout>
-#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -78,4 +77,8 @@ SearchBox::SearchBox(QWidget* parent)
 
 const std::shared_ptr<TextModel>& SearchBox::get_model() const {
   return m_text_box->get_model();
+}
+
+void SearchBox::set_placeholder(const QString& text) {
+  m_text_box->set_placeholder(text);
 }
