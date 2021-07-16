@@ -46,7 +46,7 @@ namespace {
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Any() >> is_a<TextBox>()).
       set(padding(0));
-    style.get(Disabled() >> is_a<TextBox>()).
+    style.get((Disabled() && !ReadOnly()) >> is_a<TextBox>()).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get((ReadOnly() && !Checked()) >> is_a<TextBox>()).
       set(Visibility(VisibilityOption::NONE));
