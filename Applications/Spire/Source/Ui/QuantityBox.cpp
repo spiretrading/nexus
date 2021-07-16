@@ -24,6 +24,6 @@ QuantityBox::QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
     : DecimalBoxAdaptor(model, std::make_shared<QuantityToDecimalModel>(model),
         std::move(modifiers), parent) {
   auto style = get_style(get_decimal_box());
-  style.get(Any()).set(TrailingZeros(2));
+  style.get(Any()).set(TrailingZeros(0));
   set_style(get_decimal_box(), std::move(style));
 }
