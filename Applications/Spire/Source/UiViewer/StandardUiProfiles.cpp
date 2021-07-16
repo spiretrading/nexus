@@ -43,7 +43,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -56,7 +55,7 @@ namespace {
     Type m_ctrl_increment;
     Type m_shift_increment;
 
-    DecimalBoxProfileProperties(Type default_increment)
+    explicit DecimalBoxProfileProperties(Type default_increment)
       : m_current(Type(1)),
         m_minimum(Type(-100)),
         m_maximum(Type(100)),

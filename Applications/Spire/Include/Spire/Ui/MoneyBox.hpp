@@ -24,7 +24,7 @@ namespace Spire {
     public:
 
       /**
-       * Constructs a MoneyBox with a LocalValueModel.
+       * Constructs a MoneyBox with a LocalOptionalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */

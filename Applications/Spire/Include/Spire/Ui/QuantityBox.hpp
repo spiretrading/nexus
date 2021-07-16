@@ -20,11 +20,12 @@ namespace Spire {
   using LocalOptionalQuantityModel =
     LocalScalarValueModel<boost::optional<Nexus::Quantity>>;
 
+  /** Represents a widget for inputting Quantity values. */
   class QuantityBox : public DecimalBoxAdaptor<Nexus::Quantity> {
     public:
 
       /**
-       * Constructs a QuantityBox with a LocalValueModel.
+       * Constructs a QuantityBox with a LocalOptionalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
