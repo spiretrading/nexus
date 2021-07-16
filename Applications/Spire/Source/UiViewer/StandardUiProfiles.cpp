@@ -1014,7 +1014,8 @@ UiProfile Spire::make_list_view_profile() {
 UiProfile Spire::make_money_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  populate_decimal_box_properties<Money>(properties, Money::ONE);
+  populate_decimal_box_properties<Money>(properties,
+    DecimalBoxProfileProperties(Money::ONE));
   auto profile = UiProfile(QString::fromUtf8("MoneyBox"), properties,
     setup_decimal_box_profile<MoneyBox>);
   return profile;
