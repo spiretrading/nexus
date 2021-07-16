@@ -203,7 +203,8 @@ namespace {
   template<typename T>
   void populate_decimal_box_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties) {
-    populate_decimal_box_properties<T>(properties, {1});
+    populate_decimal_box_properties<T>(properties,
+      DecimalBoxProfileProperties(1));
   }
 
   template<typename B>
@@ -1014,7 +1015,7 @@ UiProfile Spire::make_list_view_profile() {
 UiProfile Spire::make_money_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  populate_decimal_box_properties<Money>(properties, Money::CENT);
+  populate_decimal_box_properties<Money>(properties, Money::ONE);
   auto profile = UiProfile(QString::fromUtf8("MoneyBox"), properties,
     setup_decimal_box_profile<MoneyBox>);
   return profile;
@@ -1102,7 +1103,7 @@ UiProfile Spire::make_overlay_panel_profile() {
 UiProfile Spire::make_quantity_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto box_properties = DecimalBoxProfileProperties(Quantity(0.01));
+  auto box_properties = DecimalBoxProfileProperties(Quantity(1));
   box_properties.m_minimum = Quantity(0);
   populate_decimal_box_properties<Quantity>(properties, box_properties);
   auto profile = UiProfile(QString::fromUtf8("QuantityBox"), properties,
