@@ -73,7 +73,6 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
-      QSize get_border_size() const;
       virtual void update_ranges();
 
     private:
@@ -85,6 +84,7 @@ namespace Spire {
 
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
+      QSize get_border_size();
   };
 }
 

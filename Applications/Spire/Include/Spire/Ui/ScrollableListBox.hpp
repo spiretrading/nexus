@@ -39,6 +39,7 @@ namespace Spire {
       bool is_horizontal_layout();
       int get_bar_width();
       int get_bar_height();
+      QSize get_border_size() const;
   };
 }
 

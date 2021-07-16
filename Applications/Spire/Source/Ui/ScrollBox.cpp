@@ -110,34 +110,6 @@ void ScrollBox::wheelEvent(QWheelEvent* event) {
   m_scrollable_layer->wheelEvent(event);
 }
 
-QSize ScrollBox::get_border_size() const {
-  auto border_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*m_box)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        border_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        border_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        border_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        border_size.rwidth() += size;
-      });
-  }
-  return border_size;
-}
-
-void ScrollBox::on_vertical_scroll(int position) {
-  m_body->move(m_body->pos().x(), -position);
-}
-
-void ScrollBox::on_horizontal_scroll(int position) {
-  m_body->move(-position, m_body->pos().y());
-}
-
 void ScrollBox::update_ranges() {
   auto get_bar_width = [&] {
     if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
@@ -180,4 +152,32 @@ void ScrollBox::update_ranges() {
     0, horizontal_range);
   m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
     new_size.width());
+}
+
+void ScrollBox::on_vertical_scroll(int position) {
+  m_body->move(m_body->pos().x(), -position);
+}
+
+void ScrollBox::on_horizontal_scroll(int position) {
+  m_body->move(-position, m_body->pos().y());
+}
+
+QSize ScrollBox::get_border_size() {
+  auto border_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*m_box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        border_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        border_size.rwidth() += size;
+      });
+  }
+  return border_size;
 }

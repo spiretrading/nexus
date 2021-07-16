@@ -211,3 +211,24 @@ int ScrollableListBox::get_bar_height() {
   }
   return 0;
 }
+
+QSize ScrollableListBox::get_border_size() const {
+  auto box = findChild<Box*>("Box");
+  auto border_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        border_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        border_size.rwidth() += size;
+      });
+  }
+  return border_size;
+}
