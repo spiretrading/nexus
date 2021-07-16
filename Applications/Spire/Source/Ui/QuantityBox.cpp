@@ -9,7 +9,7 @@ namespace {
     using ToDecimalModel<Quantity>::ToDecimalModel;
 
     Decimal get_increment() const override {
-      return Decimal("0.000001");
+      return Decimal("1");
     }
   };
 }
