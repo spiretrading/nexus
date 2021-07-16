@@ -130,14 +130,15 @@ void CheckBox::on_checked(bool is_checked) {
 
 void CheckBox::on_layout_direction(Qt::LayoutDirection direction) {
   auto style = get_style(*this);
-  auto alignment = [&] {
+  auto [padding_left, padding_right] = [&] {
     if(direction == Qt::LeftToRight) {
-      return Qt::AlignRight;
+      return std::make_pair(scale_width(8), 0);
     }
-    return Qt::AlignLeft;
+    return std::make_pair(0, scale_width(8));
   }();
   style.get(Any() >> is_a<TextBox>()).
-    set(TextAlign(alignment | Qt::AlignVCenter));
+    set(PaddingLeft(padding_left)).
+    set(PaddingRight(padding_right));
   set_style(*this, style);
 }
 
