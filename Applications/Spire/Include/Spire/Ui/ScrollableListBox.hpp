@@ -24,14 +24,18 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void update_ranges() override;
 
     private:
       ListView* m_list_view;
       QWidget* m_body;
       QSize m_body_size;
 
-      QWidget* make_body();
       void on_current(const boost::optional<std::any>& current);
+      QWidget* make_body();
+      bool is_horizontal_layout();
+      int get_bar_width();
+      int get_bar_height();
   };
 }
 

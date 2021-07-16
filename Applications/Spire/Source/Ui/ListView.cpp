@@ -268,7 +268,7 @@ int ListView::get_index_by_value(const std::any& value) const {
   return -1;
 }
 
-QLayout* Spire::ListView::get_layout() {
+QLayout* ListView::get_layout() {
   return m_body->layout();
 }
 
@@ -499,6 +499,7 @@ void ListView::update_layout() {
     }
     child_layout->addStretch();
     layout->addLayout(child_layout);
+    layout->addStretch();
   }
   m_body->adjustSize();
   update_tracking_position();
