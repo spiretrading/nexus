@@ -31,25 +31,22 @@ namespace {
       set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
     style.get(!Checked() >> is_a<Icon>()).
       set(Fill(QColor(0, 0, 0, 0)));
-    style.get((Disabled() && Checked() && !ReadOnly()) >> is_a<Icon>()).
+    style.get((Disabled() && Checked()) >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(Any() >> is_a<Box>()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get((Focus() || Hover()) >> is_a<Box>()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xAB)));
+      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(Disabled() >> is_a<Box>()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
       set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    style.get((ReadOnly()) >> is_a<Box>()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(ReadOnly() >> is_a<Box>()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0)));
     style.get(Any() >> is_a<TextBox>()).
       set(padding(0));
-    style.get((Disabled() && !ReadOnly()) >> is_a<TextBox>()).
+    style.get((Disabled()) >> is_a<TextBox>()).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    style.get((ReadOnly() && !Checked()) >> is_a<TextBox>()).
-      set(Visibility(VisibilityOption::NONE));
     return style;
   }
 }
