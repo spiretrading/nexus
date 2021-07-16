@@ -57,6 +57,21 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
   return ScrollBox::eventFilter(watched, event);
 }
 
+void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Home:
+    case Qt::Key_End:
+    case Qt::Key_PageUp:
+    case Qt::Key_PageDown:
+    case Qt::Key_Down:
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+    case Qt::Key_Up:
+      return;
+  }
+  ScrollBox::keyPressEvent(event);
+}
+
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {
   if(m_body_size.isValid()) {
     auto border_size = get_border_size();
