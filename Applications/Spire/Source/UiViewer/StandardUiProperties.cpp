@@ -156,7 +156,7 @@ std::shared_ptr<TypedUiProperty<Money>> Spire::make_standard_property<Money>(
   return std::make_shared<StandardUiProperty<Money>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<Money>& property) {
       auto setter = new QDoubleSpinBox(parent);
-      setter->setMinimum(std::numeric_limits<double>::min());
+      setter->setMinimum(std::numeric_limits<double>::lowest());
       setter->setMaximum(std::numeric_limits<double>::max());
       property.connect_changed_signal([=] (auto value) {
         setter->setValue(static_cast<double>(value));
@@ -177,7 +177,7 @@ std::shared_ptr<TypedUiProperty<Quantity>>
   return std::make_shared<StandardUiProperty<Quantity>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<Quantity>& property) {
       auto setter = new QDoubleSpinBox(parent);
-      setter->setMinimum(std::numeric_limits<double>::min());
+      setter->setMinimum(std::numeric_limits<double>::lowest());
       setter->setMaximum(std::numeric_limits<double>::max());
       property.connect_changed_signal([=] (auto value) {
         setter->setValue(static_cast<double>(value));
