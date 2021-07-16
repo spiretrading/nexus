@@ -58,45 +58,47 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {
-  auto set_maximum_height= [=] (int height) {
-    if(height - event->size().height() - get_bar_height()
-        - get_border_size().height() < 0) {
-      setMaximumHeight(height + get_border_size().height());
-    } else {
-      setMaximumHeight(QWIDGETSIZE_MAX);
-    }
-  };
-  auto set_maximum_width = [=] (int width) {
-    if(width - event->size().width() - get_bar_width()
-        - get_border_size().width() < 0) {
-      setMaximumWidth(width + get_border_size().width());
-    } else {
-      setMaximumWidth(QWIDGETSIZE_MAX);
-    }
-  };
   if(m_body_size.isValid()) {
+    auto border_size = get_border_size();
+    auto bar_width = get_bar_width();
+    auto bar_height = get_bar_height();
+    auto set_maximum_height = [=] (int height) {
+      if(height - event->size().height() - bar_height -
+        border_size.height() < 0) {
+        setMaximumHeight(height + get_border_size().height());
+      } else {
+        setMaximumHeight(QWIDGETSIZE_MAX);
+      }
+    };
+    auto set_maximum_width = [=] (int width) {
+      if(width - event->size().width() - bar_width - border_size.width() < 0) {
+        setMaximumWidth(width + get_border_size().width());
+      } else {
+        setMaximumWidth(QWIDGETSIZE_MAX);
+      }
+    };
     if(m_list_view->get_direction() == Qt::Vertical) {
       if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
         set_maximum_height(m_list_view->height());
-        m_body->resize({event->size().width() - get_border_size().width(),
+        m_body->resize({event->size().width() - border_size.width(),
           m_body->height()});
       } else {
-        m_list_view->setFixedHeight(event->size().height() - get_bar_height() -
-          get_border_size().height());
+        m_list_view->setFixedHeight(event->size().height() - bar_height -
+          border_size.height());
         set_maximum_width(m_list_view->get_layout_size().width());
         m_body->resize({m_list_view->get_layout_size().width(),
-          event->size().height() - get_border_size().height()});
+          event->size().height() - border_size.height()});
       }
     } else {
       if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
         set_maximum_width(m_list_view->width());
         m_body->resize({m_body->width(),
-          event->size().height() - get_border_size().height()});
+          event->size().height() - border_size.height()});
       } else {
-        m_list_view->setFixedWidth(event->size().width() - get_bar_width() -
-          get_border_size().width());
+        m_list_view->setFixedWidth(event->size().width() - bar_width -
+          border_size.width());
         set_maximum_height(m_list_view->get_layout_size().height());
-        m_body->resize({event->size().width() - get_border_size().width(),
+        m_body->resize({event->size().width() - border_size.width(),
           m_list_view->get_layout_size().height()});
       }
     }

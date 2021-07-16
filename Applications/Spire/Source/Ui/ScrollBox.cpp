@@ -170,6 +170,7 @@ void ScrollBox::update_ranges() {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
     }
   }
+  setMaximumSize(viewport_size + QSize(get_bar_width(), get_bar_height()));
   auto new_size = size() - border_size;
   auto vertical_range = std::max(m_body->height() - new_size.height() +
     get_bar_height(), 0);
