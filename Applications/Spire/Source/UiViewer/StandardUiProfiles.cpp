@@ -26,6 +26,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -42,6 +43,28 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  template<typename T>
+  struct DecimalBoxProfileProperties {
+    using Type = T;
+
+    Type m_current;
+    Type m_minimum;
+    Type m_maximum;
+    Type m_default_increment;
+    Type m_alt_increment;
+    Type m_ctrl_increment;
+    Type m_shift_increment;
+
+    explicit DecimalBoxProfileProperties(Type default_increment)
+      : m_current(Type(1)),
+        m_minimum(Type(-100)),
+        m_maximum(Type(100)),
+        m_default_increment(std::move(default_increment)),
+        m_alt_increment(5 * m_default_increment),
+        m_ctrl_increment(10 * m_default_increment),
+        m_shift_increment(20 * m_default_increment) {}
+  };
+
   template<typename B>
   auto setup_decimal_box_profile(UiProfile& profile) {
     using Type = std::decay_t<decltype(*std::declval<B>().get_model())>::Scalar;
@@ -151,19 +174,26 @@ namespace {
   template<typename T>
   void populate_decimal_box_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties,
-      T default_increment) {
+      const DecimalBoxProfileProperties<T>& box_properties) {
     using Type = T;
-    properties.push_back(make_standard_property("current", Type(1)));
-    properties.push_back(make_standard_property("minimum", Type(-100)));
-    properties.push_back(make_standard_property("maximum", Type(100)));
+    properties.push_back(make_standard_property("current",
+      box_properties.m_current));
+    properties.push_back(make_standard_property("minimum",
+      box_properties.m_minimum));
+    properties.push_back(make_standard_property("maximum",
+      box_properties.m_maximum));
     properties.push_back(
-      make_standard_property("default_increment", default_increment));
+      make_standard_property("default_increment",
+        box_properties.m_default_increment));
     properties.push_back(
-      make_standard_property("alt_increment", 5 * default_increment));
+      make_standard_property("alt_increment",
+        box_properties.m_alt_increment));
     properties.push_back(
-      make_standard_property("ctrl_increment", 10 * default_increment));
+      make_standard_property("ctrl_increment",
+        box_properties.m_ctrl_increment));
     properties.push_back(
-      make_standard_property("shift_increment", 20 * default_increment));
+      make_standard_property("shift_increment",
+        box_properties.m_shift_increment));
     properties.push_back(make_standard_property<QString>("placeholder"));
     properties.push_back(make_standard_property("read_only", false));
     properties.push_back(make_standard_property("buttons_visible", true));
@@ -172,7 +202,8 @@ namespace {
   template<typename T>
   void populate_decimal_box_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties) {
-    populate_decimal_box_properties<T>(properties, 1);
+    populate_decimal_box_properties<T>(properties,
+      DecimalBoxProfileProperties(1));
   }
 
   template<typename B>
@@ -286,7 +317,7 @@ UiProfile Spire::make_decimal_box_profile() {
     make_standard_property("maximum", QString::fromUtf8("100")));
   properties.push_back(make_standard_property("decimal_places", 2));
   properties.push_back(make_standard_property("leading_zeros", 0));
-  properties.push_back(make_standard_property("trailing_zeros", 2));
+  properties.push_back(make_standard_property("trailing_zeros", 0));
   properties.push_back(
     make_standard_property("default_increment", QString::fromUtf8("1")));
   properties.push_back(
@@ -983,7 +1014,8 @@ UiProfile Spire::make_list_view_profile() {
 UiProfile Spire::make_money_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  populate_decimal_box_properties<Money>(properties, Money::CENT);
+  populate_decimal_box_properties<Money>(properties,
+    DecimalBoxProfileProperties(Money::ONE));
   auto profile = UiProfile(QString::fromUtf8("MoneyBox"), properties,
     setup_decimal_box_profile<MoneyBox>);
   return profile;
@@ -1065,6 +1097,17 @@ UiProfile Spire::make_overlay_panel_profile() {
         });
       return button;
     });
+  return profile;
+}
+
+UiProfile Spire::make_quantity_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto box_properties = DecimalBoxProfileProperties(Quantity(1));
+  box_properties.m_minimum = Quantity(0);
+  populate_decimal_box_properties<Quantity>(properties, box_properties);
+  auto profile = UiProfile(QString::fromUtf8("QuantityBox"), properties,
+    setup_decimal_box_profile<QuantityBox>);
   return profile;
 }
 
