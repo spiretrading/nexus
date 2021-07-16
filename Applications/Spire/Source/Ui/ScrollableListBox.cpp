@@ -32,6 +32,7 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
     set_horizontal(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     set_vertical(ScrollBox::DisplayPolicy::NEVER);
   }
+  m_scroll_bar_padding = layout->itemAt(1);
   auto style = get_style(*this);
   style.get(Any()).
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
@@ -57,24 +58,44 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {
+  auto set_maximum_height= [=] (int height) {
+    if(height - event->size().height() - get_bar_height()
+        - get_border_size().height() < 0) {
+      setMaximumHeight(height + get_border_size().height());
+    } else {
+      setMaximumHeight(QWIDGETSIZE_MAX);
+    }
+  };
+  auto set_maximum_width = [=] (int width) {
+    if(width - event->size().width() - get_bar_width()
+        - get_border_size().width() < 0) {
+      setMaximumWidth(width + get_border_size().width());
+    } else {
+      setMaximumWidth(QWIDGETSIZE_MAX);
+    }
+  };
   if(m_body_size.isValid()) {
     if(m_list_view->get_direction() == Qt::Vertical) {
       if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
+        set_maximum_height(m_list_view->height());
         m_body->resize({event->size().width() - get_border_size().width(),
           m_body->height()});
       } else {
         m_list_view->setFixedHeight(event->size().height() - get_bar_height() -
           get_border_size().height());
+        set_maximum_width(m_list_view->get_layout_size().width());
         m_body->resize({m_list_view->get_layout_size().width(),
           event->size().height() - get_border_size().height()});
       }
     } else {
       if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
+        set_maximum_width(m_list_view->width());
         m_body->resize({m_body->width(),
           event->size().height() - get_border_size().height()});
       } else {
         m_list_view->setFixedWidth(event->size().width() - get_bar_width() -
           get_border_size().width());
+        set_maximum_height(m_list_view->get_layout_size().height());
         m_body->resize({event->size().width() - get_border_size().width(),
           m_list_view->get_layout_size().height()});
       }
@@ -105,6 +126,13 @@ void ScrollableListBox::update_ranges() {
     QSize{get_bar_width(), get_bar_height()};
   auto vertical_range = std::max(m_list_view->height() - new_size.height(), 0);
   auto horizontal_range = std::max(m_list_view->width() - new_size.width(), 0);
+  if(vertical_range == 0 && horizontal_range == 0) {
+    m_body->layout()->removeItem(m_scroll_bar_padding);
+  } else {
+    if(m_body->layout()->count() == 1) {
+      m_body->layout()->addItem(m_scroll_bar_padding);
+    }
+  }
   get_vertical_scroll_bar().set_range(0, vertical_range);
   get_vertical_scroll_bar().set_page_size(new_size.height());
   get_horizontal_scroll_bar().set_range(0, horizontal_range);
@@ -115,8 +143,6 @@ void ScrollableListBox::on_current(const boost::optional<std::any>& current) {
   if(!current) {
     return;
   }
-  auto bar_height = get_bar_height();
-  auto bar_width = get_bar_width();
   auto item = m_list_view->get_item(*current);
   auto item_pos = item->pos();
   auto item_height = item->height();
@@ -129,17 +155,15 @@ void ScrollableListBox::on_current(const boost::optional<std::any>& current) {
     get_vertical_scroll_bar().get_page_size();
   if(item_height > viewport_height || viewport_y > item_pos.y()) {
     get_vertical_scroll_bar().set_position(item_pos.y());
-  } else if(viewport_y + viewport_height - bar_height <
-      item_pos.y() + item_height) {
+  } else if(viewport_y + viewport_height < item_pos.y() + item_height) {
     get_vertical_scroll_bar().set_position(
-      item_pos.y() + item_height - viewport_height + bar_height);
+      item_pos.y() + item_height - viewport_height);
   }
   if(item_width > viewport_width || viewport_x > item_pos.x()) {
     get_horizontal_scroll_bar().set_position(item_pos.x());
-  } else if(viewport_x + viewport_width - bar_width <
-      item_pos.x() + item_width) {
+  } else if(viewport_x + viewport_width < item_pos.x() + item_width) {
     get_horizontal_scroll_bar().set_position(
-      item_pos.x() + item_width - viewport_width + bar_width);
+      item_pos.x() + item_width - viewport_width);
   }
 }
 

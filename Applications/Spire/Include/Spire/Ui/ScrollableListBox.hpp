@@ -1,5 +1,6 @@
 #ifndef SPIRE_SCROLLABLE_LIST_BOX_HPP
 #define SPIRE_SCROLLABLE_LIST_BOX_HPP
+#include <QLayoutItem>
 #include <QWidget>
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -30,6 +31,7 @@ namespace Spire {
       ListView* m_list_view;
       QWidget* m_body;
       QSize m_body_size;
+      QLayoutItem* m_scroll_bar_padding;
 
       void on_current(const boost::optional<std::any>& current);
       QWidget* make_body();
