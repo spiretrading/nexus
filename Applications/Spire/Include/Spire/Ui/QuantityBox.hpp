@@ -29,8 +29,8 @@ namespace Spire {
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
-      explicit QuantityBox(QHash<Qt::KeyboardModifier,
-        Nexus::Quantity> modifiers, QWidget* parent = nullptr);
+      explicit QuantityBox(QHash<Qt::KeyboardModifier, Nexus::Quantity>
+        modifiers, QWidget* parent = nullptr);
 
       /**
        * Constructs a QuantityBox.
