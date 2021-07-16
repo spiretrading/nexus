@@ -172,6 +172,27 @@ std::shared_ptr<TypedUiProperty<Money>> Spire::make_standard_property<Money>(
 }
 
 template<>
+std::shared_ptr<TypedUiProperty<Quantity>>
+    Spire::make_standard_property<Quantity>(QString name, Quantity value) {
+  return std::make_shared<StandardUiProperty<Quantity>>(std::move(name), value,
+    [] (QWidget* parent, StandardUiProperty<Quantity>& property) {
+      auto setter = new QDoubleSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<double>::min());
+      setter->setMaximum(std::numeric_limits<double>::max());
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<double>(value));
+      });
+      QObject::connect(setter, &QDoubleSpinBox::textChanged,
+        [&] (const auto& value) {
+          if(auto quantity = Quantity::FromValue(value.toStdString())) {
+            property.set(*quantity);
+          }
+        });
+      return setter;
+    });
+}
+
+template<>
 std::shared_ptr<TypedUiProperty<QColor>>
     Spire::make_standard_property<QColor>(QString name) {
   return make_standard_property(std::move(name), QColorConstants::White);

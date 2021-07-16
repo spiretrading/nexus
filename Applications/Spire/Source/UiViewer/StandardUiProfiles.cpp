@@ -26,6 +26,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -1065,6 +1066,15 @@ UiProfile Spire::make_overlay_panel_profile() {
         });
       return button;
     });
+  return profile;
+}
+
+UiProfile Spire::make_quantity_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_decimal_box_properties<Quantity>(properties, Quantity(0.01));
+  auto profile = UiProfile(QString::fromUtf8("QuantityBox"), properties,
+    setup_decimal_box_profile<QuantityBox>);
   return profile;
 }
 
