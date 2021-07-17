@@ -16,6 +16,8 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+
+#include <QPlainTextEdit>
 #include <QApplication>
 
 using namespace boost;
@@ -99,8 +101,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_document_height(0) {
   //setObjectName("tab");
   //setStyleSheet("#tab { background-color: red; }");
-  auto layers = new LayeredWidget(this);
-  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //m_layers = new LayeredWidget(this);
+  //m_layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   // TODO: set current
   m_text_edit = new QTextEdit(this);
   m_text_edit->setAcceptRichText(false);
@@ -121,7 +123,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //m_text_edit->verticalScrollBar()->setDisabled(true);
   //m_text_edit->verticalScrollBar()->setValue(0);
   //m_text_edit_box = new Box(m_text_edit, this);
-  layers->add(m_text_edit);
+  //m_layers->add(m_text_edit);
   m_placeholder = new QLabel();
   m_placeholder->setCursor(m_text_edit->cursor());
   m_placeholder->setTextFormat(Qt::PlainText);
@@ -132,7 +134,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_placeholder->setFocusPolicy(Qt::NoFocus);
   //m_placeholder->setFixedSize(100, 100);
-  layers->add(m_placeholder);
+  //m_layers->add(m_placeholder);
   //auto box = new Box(layers, this);
   //box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   //box->setFocusPolicy(Qt::NoFocus);
@@ -140,7 +142,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //m_layer_container = new Box(m_layers);
   //m_text_edit_box->setObjectName("text_edit_box");
   //m_text_edit_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_scroll_box = new ScrollBox(layers, this);
+  m_scroll_box = new ScrollBox(m_text_edit, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -194,8 +196,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //      //}
   //      //qDebug() << size;
   //    });
-  connect(m_text_edit, &QTextEdit::textChanged, this,
-    &TextAreaBox::on_text_changed);
+  //connect(m_text_edit, &QTextEdit::textChanged, this,
+  //  &TextAreaBox::on_text_changed);
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) { on_current(value); });
 
@@ -254,7 +256,7 @@ QSize TextAreaBox::sizeHint() const {
             // TODO: add decorations, get line height
   auto a = line_count() *
     static_cast<int>(static_cast<double>(fontMetrics().height()) * 1.25) + 2;
-  qDebug() << "sz height: " << a;
+  //qDebug() << "sz height: " << a;
   return {std::max(scale_width(10), m_longest_line_length + 2), a};
 }
 
@@ -524,12 +526,17 @@ int TextAreaBox::line_count() const {
       num += block.layout()->lineCount();
     }
   }
-  qDebug() << "lc: " << num;
+  //qDebug() << "lc: " << num;
   return std::max(1, num);
 }
 
 // TODO: reorder definitions alphabetically
 void TextAreaBox::update_page_size() {
+  static auto m_is_resizing = false;
+  if(m_is_resizing) {
+    return;
+  }
+  m_is_resizing = true;
   //auto scroll_bar_width = [&] {
   //  if(is_scroll_bar_visible()) {
   //    qDebug() << "sb is vis";
@@ -537,18 +544,23 @@ void TextAreaBox::update_page_size() {
   //  }
   //  return 0;
   //}();
-  //if(width() < m_longest_line_length) {
-  //  //qDebug() << "page size = tab width";
-  //  m_text_edit->document()->setPageSize({
-  //    static_cast<double>(m_text_edit->width()/* - 16 - 2*/),
-  //    m_text_edit->document()->pageSize().height()/* - 14 - 2*/});
-  //} else {
-  //  //qDebug() << "page size = longest line";
-  //  m_text_edit->document()->setPageSize({
-  //    static_cast<double>(m_longest_line_length),
-  //    m_text_edit->document()->pageSize().height()});
-  //}
+  if(width() < m_longest_line_length) {
+    //qDebug() << "page size = tab width";
+    //m_text_edit->document()->setPageSize({
+    //  static_cast<double>(m_text_edit->width()/* - 16 - 2*/),
+    //  m_text_edit->document()->pageSize().height()/* - 14 - 2*/});
+    m_text_edit->document()->setTextWidth(width() - 2);
+  } else {
+    //qDebug() << "page size = longest line";
+    //m_text_edit->document()->setPageSize({
+    //  static_cast<double>(m_longest_line_length),
+    //  m_text_edit->document()->pageSize().height()});
+    m_text_edit->document()->setTextWidth(m_longest_line_length);
+  }
+  m_text_edit->document()->adjustSize();
+  //updateGeometry();
   //qDebug() << "page size: " << m_text_edit->document()->pageSize();
+  m_is_resizing = false;
 }
 
 void TextAreaBox::update_text_box_size() {
@@ -590,7 +602,7 @@ void TextAreaBox::on_contents_changed(int position, int removed, int added) {
     if(line_length > m_longest_line_length) {
       m_longest_line_length = line_length;
       m_longest_line_block = block.blockNumber();
-      //setFixedSize(m_longest_line_length, height());
+      //m_text_edit->setFixedSize(m_longest_line_length, height());
     } else if(block.blockNumber() == m_longest_line_block) {
       m_longest_line_length = 0;
       m_longest_line_block = 0;
@@ -644,9 +656,12 @@ void TextAreaBox::on_cursor_position() {
 }
 
 void TextAreaBox::on_document_size(const QSizeF& size) {
-  //qDebug() << "document size: " << m_text_edit->document()->size();
+  qDebug() << "document size: " << m_text_edit->document()->size();
+  qDebug() << "longest line: " << m_longest_line_length;
   //setGeometry(0, 0, size.toSize().width(), size.toSize().height());
-  //m_text_edit->setFixedSize(size.toSize());// + QSize(2, 2));
+  m_text_edit->setFixedSize(size.toSize());// + QSize(2, 2));
+  //m_layers->updateGeometry();
+  //qDebug() << "layers size: " << m_layers->size();
 }
 
 void TextAreaBox::on_editing_finished() {
@@ -670,7 +685,7 @@ void TextAreaBox::on_text_changed() {
   // TODO: put in method and call from resizeEvent, etc.
   //qDebug() << line_count();
   //qDebug() << "doc height: " << m_text_edit->document()->size().toSize().height();
-  update_text_box_size();
+  //update_text_box_size();
   //m_layer_container->setFixedSize(m_text_edit->size());
   //qDebug() << "text change size: " << m_text_edit->size();
   //qDebug() << "text change pos: " << m_text_edit->pos();
