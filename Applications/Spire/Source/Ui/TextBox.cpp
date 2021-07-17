@@ -165,6 +165,9 @@ bool TextBox::is_read_only() const {
 }
 
 void TextBox::set_read_only(bool read_only) {
+  if(m_line_edit->isReadOnly() == read_only) {
+    return;
+  }
   m_line_edit->setReadOnly(read_only);
   m_line_edit->setCursorPosition(0);
   if(read_only) {
