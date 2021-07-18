@@ -23,7 +23,6 @@ namespace Spire {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void update_ranges() override;
@@ -31,8 +30,8 @@ namespace Spire {
     private:
       ListView* m_list_view;
       QWidget* m_body;
-      QSize m_body_size;
       QLayoutItem* m_scroll_bar_padding;
+      int m_padding_size;
 
       void on_current(const boost::optional<std::any>& current);
       QWidget* make_body();

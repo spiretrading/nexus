@@ -1264,7 +1264,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       if(direction.get() == Qt::Vertical) {
         container->setMaximumHeight(scale_height(240));
       } else {
-        container->setMaximumWidth(scale_width(140));
+        container->setMaximumWidth(scale_width(240));
       }
       return container;
     });

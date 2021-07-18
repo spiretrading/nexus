@@ -137,13 +137,13 @@ ListItem* ListView::get_item(const std::any& value) const {
   return m_items[index].m_item;
 }
 
-QSize ListView::get_layout_size() const {
-  return m_body->size();
-}
-
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+QSize ListView::sizeHint() const {
+  return m_body->sizeHint();
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {

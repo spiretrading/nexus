@@ -1,4 +1,5 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
+#include <QCoreApplication>
 #include <QResizeEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -12,6 +13,7 @@ using namespace Spire::Styles;
 ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
     : ScrollBox(make_body(), parent)
     , m_list_view(list_view) {
+  m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_list_view->set_edge_navigation(ListView::EdgeNavigation::CONTAIN);
   auto layout = [=] () -> QBoxLayout* {
     if(is_horizontal_layout()) {
@@ -20,19 +22,24 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
       return new QVBoxLayout(m_body);
     }
   }();
+  layout->setSizeConstraint(QLayout::SetFixedSize);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(list_view);
   if(is_horizontal_layout()) {
-    layout->addSpacing(get_vertical_scroll_bar().sizeHint().width());
+    m_padding_size = get_vertical_scroll_bar().sizeHint().width();
+  } else {
+    m_padding_size = get_horizontal_scroll_bar().sizeHint().height();
+  }
+  layout->addSpacing(m_padding_size);
+  m_scroll_bar_padding = layout->itemAt(1);
+  if(is_horizontal_layout()) {
     set_horizontal(ScrollBox::DisplayPolicy::NEVER);
     set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
   } else {
-    layout->addSpacing(get_horizontal_scroll_bar().sizeHint().height());
     set_horizontal(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     set_vertical(ScrollBox::DisplayPolicy::NEVER);
   }
-  m_scroll_bar_padding = layout->itemAt(1);
   auto style = get_style(*this);
   style.get(Any()).
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
@@ -40,21 +47,10 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
   set_style(*this, std::move(style));
   m_list_view->get_current_model()->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
-  m_body->installEventFilter(this);
-  m_list_view->installEventFilter(this);
 }
 
 QSize ScrollableListBox::sizeHint() const {
-  return m_body_size + get_border_size();
-}
-
-bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_body && event->type() == QEvent::Resize) {
-    if(!m_body_size.isValid()) {
-      m_body_size = m_body->size();
-    }
-  }
-  return ScrollBox::eventFilter(watched, event);
+  return m_body->sizeHint() + get_border_size();
 }
 
 void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
@@ -73,57 +69,97 @@ void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {
-  if(m_body_size.isValid()) {
-    auto border_size = get_border_size();
-    auto bar_width = get_bar_width();
-    auto bar_height = get_bar_height();
-    auto set_maximum_height = [=] (int height) {
-      if(height - event->size().height() - bar_height -
-        border_size.height() < 0) {
-        setMaximumHeight(height + get_border_size().height());
-      } else {
-        setMaximumHeight(QWIDGETSIZE_MAX);
-      }
-    };
-    auto set_maximum_width = [=] (int width) {
-      if(width - event->size().width() - bar_width - border_size.width() < 0) {
-        setMaximumWidth(width + get_border_size().width());
-      } else {
-        setMaximumWidth(QWIDGETSIZE_MAX);
-      }
-    };
-    if(m_list_view->get_direction() == Qt::Vertical) {
-      if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
-        set_maximum_height(m_list_view->height());
-        m_body->resize({event->size().width() - border_size.width(),
-          m_body->height()});
-      } else {
-        m_list_view->setFixedHeight(event->size().height() - bar_height -
-          border_size.height());
-        set_maximum_width(m_list_view->get_layout_size().width());
-        m_body->resize({m_list_view->get_layout_size().width(),
-          event->size().height() - border_size.height()});
-      }
+  auto border_size = get_border_size();
+  auto update_list_view_width = [=] (int width) {
+    if(!event->oldSize().isValid()) {
+      QCoreApplication::postEvent(m_list_view, new QResizeEvent(
+        QSize(width, m_list_view->height()), m_list_view->size()));
+    }
+  };
+  auto update_list_view_height = [=] (int height) {
+    if(!event->oldSize().isValid()) {
+      QCoreApplication::postEvent(m_list_view, new QResizeEvent(
+        QSize(m_list_view->width(), height), m_list_view->size()));
+    }
+  };
+  auto set_maximum_height = [=] {
+    auto height = m_list_view->sizeHint().height();
+    if(height <= event->size().height() - border_size.height()) {
+      setMaximumHeight(height + border_size.height());
     } else {
-      if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
-        set_maximum_width(m_list_view->width());
-        m_body->resize({m_body->width(),
-          event->size().height() - border_size.height()});
-      } else {
-        m_list_view->setFixedWidth(event->size().width() - bar_width -
-          border_size.width());
-        set_maximum_height(m_list_view->get_layout_size().height());
-        m_body->resize({event->size().width() - border_size.width(),
-          m_list_view->get_layout_size().height()});
+      setMaximumHeight(QWIDGETSIZE_MAX);
+    }
+  };
+  auto set_maximum_width = [=] {
+    auto width = m_list_view->sizeHint().width();
+    if(width <= event->size().width() - border_size.width()) {
+      setMaximumWidth(width + border_size.width());
+    } else {
+      setMaximumWidth(QWIDGETSIZE_MAX);
+    }
+  };
+  auto get_horizontal_padding = [=] {
+    if(m_list_view->sizeHint().height() <= event->size().height() -
+        border_size.height()) {
+      return 0;
+    } else {
+      return m_padding_size;
+    }
+  };
+  auto get_vertical_padding = [=] {
+    if(m_list_view->sizeHint().width() <= event->size().width() -
+        border_size.width()) {
+      return 0;
+    } else {
+      return m_padding_size;
+    }
+  };
+  if(m_list_view->get_direction() == Qt::Vertical) {
+    if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
+      auto width = event->size().width() - get_horizontal_padding() -
+        border_size.width();
+      m_list_view->setFixedWidth(width);
+      update_list_view_width(width);
+      set_maximum_height();
+    } else {
+      auto height = event->size().height() - border_size.height();
+      m_list_view->setFixedHeight(height);
+      update_list_view_height(height);
+      auto padding = get_vertical_padding();
+      if(padding > 0) {
+        height -= padding;
+        m_list_view->setFixedHeight(height);
+        update_list_view_height(height);
       }
+      set_maximum_width();
+    }
+  } else {
+    if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
+      auto height = event->size().height() - get_vertical_padding() -
+        border_size.height();
+      m_list_view->setFixedHeight(height);
+      update_list_view_height(height);
+      set_maximum_width();
+    } else {
+      auto width = event->size().width() - border_size.width();
+      m_list_view->setFixedWidth(width);
+      update_list_view_width(width);
+      auto padding = get_horizontal_padding();
+      if(padding > 0) {
+        width -= padding;
+        m_list_view->setFixedWidth(width);
+        update_list_view_width(width);
+      }
+      set_maximum_height();
     }
   }
+  m_body->adjustSize();
   ScrollBox::resizeEvent(event);
 }
 
 void ScrollableListBox::update_ranges() {
   auto border_size = get_border_size();
-  auto viewport_size = m_list_view->size();
+  auto viewport_size = m_list_view->sizeHint();
   if(is_horizontal_layout()) {
     if(viewport_size.height() <= height() - get_bar_height() -
         border_size.height()) {
@@ -139,10 +175,10 @@ void ScrollableListBox::update_ranges() {
       get_horizontal_scroll_bar().show();
     }
   }
- auto new_size = size() - border_size -
+  auto new_size = size() - border_size -
     QSize{get_bar_width(), get_bar_height()};
-  auto vertical_range = std::max(m_list_view->height() - new_size.height(), 0);
-  auto horizontal_range = std::max(m_list_view->width() - new_size.width(), 0);
+  auto vertical_range = std::max(viewport_size.height() - new_size.height(), 0);
+  auto horizontal_range = std::max(viewport_size.width() - new_size.width(), 0);
   if(vertical_range == 0 && horizontal_range == 0) {
     m_body->layout()->removeItem(m_scroll_bar_padding);
   } else {
@@ -186,7 +222,6 @@ void ScrollableListBox::on_current(const boost::optional<std::any>& current) {
 
 QWidget* ScrollableListBox::make_body() {
   auto body = new QWidget();
-  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_body = body;
   return body;
 }

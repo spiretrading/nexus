@@ -157,14 +157,11 @@ namespace Styles {
       */
       ListItem* get_item(const std::any& value) const;
 
-      /**
-      * Returns the size of the layout when the layout is updated.
-      */
-      QSize get_layout_size() const;
-
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
+
+      QSize sizeHint() const override;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
