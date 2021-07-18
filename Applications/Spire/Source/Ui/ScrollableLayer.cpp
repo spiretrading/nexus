@@ -95,5 +95,12 @@ void ScrollableLayer::resizeEvent(QResizeEvent* event) {
 }
 
 void ScrollableLayer::update_mask() {
-  setMask(QPolygon(geometry()).subtracted(m_transparent_spacer->geometry()));
+  auto region =
+    QPolygon(geometry()).subtracted(m_transparent_spacer->geometry());
+  if(region.isEmpty()) {
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+  } else {
+    setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    setMask(region);
+  }
 }
