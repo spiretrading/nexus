@@ -196,6 +196,7 @@ namespace Spire::Styles {
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
+      bool m_is_handling_enabled_signal;
       QMetaObject::Connection m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);

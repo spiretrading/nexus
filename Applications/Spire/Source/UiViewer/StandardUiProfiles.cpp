@@ -1251,7 +1251,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       }
       auto current_model = std::make_shared<ListView::LocalCurrentModel>();
       auto list_view = new ListView(current_model, list_model,
-        [&] (auto model, auto index) {
+        [] (auto model, auto index) {
           auto label = make_label(model->get<QString>(index));
           return label;
         });
