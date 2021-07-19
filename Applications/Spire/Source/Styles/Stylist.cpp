@@ -228,7 +228,8 @@ Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
       m_style(std::make_shared<StyleSheet>()),
       m_visibility(VisibilityOption::VISIBLE),
       m_evaluated_block(in_place_init),
-      m_evaluated_property(typeid(void)) {
+      m_evaluated_property(typeid(void)),
+      m_is_handling_enabled_signal(false) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -333,7 +334,7 @@ void Stylist::apply(Stylist& source, std::vector<AppliedProperty> properties) {
 void Stylist::apply_rules() {
   auto applied_properties =
     std::unordered_map<Stylist*, std::vector<AppliedProperty>>();
-  for_each_principal([&] (Stylist* principal) {
+  for_each_principal([&] (auto principal) {
     for(auto& base_rule : principal->m_style->get_rules()) {
       auto selection = select(base_rule.get_selector(), *this);
       auto rule = std::shared_ptr<const Rule>(principal->m_style, &base_rule);
@@ -414,7 +415,7 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = boost::optional<Property>();
   auto reverted_property = boost::optional<Property>();
   auto targets = std::unordered_set<const Stylist*>();
-  for_each_principal([&] (const Stylist* principal) {
+  for_each_principal([&] (auto principal) {
     targets.insert(principal);
   });
   auto contains_one_of = [] (const std::unordered_set<Stylist*>& container,
@@ -443,7 +444,7 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
     }
   };
   for(auto& source : m_blocks) {
-    source->m_source->for_each_principal([&] (Stylist* principal) {
+    source->m_source->for_each_principal([&] (auto principal) {
       auto sources = std::unordered_set{source->m_source, principal};
       for(auto& rule : principal->m_style->get_rules()) {
         auto selection = select(rule.get_selector(), sources);
@@ -468,7 +469,13 @@ void Stylist::connect_animation() {
 }
 
 void Stylist::on_enable() {
+  if(m_is_handling_enabled_signal) {
+    return;
+  }
+  m_is_handling_enabled_signal = true;
   apply_rules();
+  m_enable_signal();
+  m_is_handling_enabled_signal = false;
 }
 
 void Stylist::on_animation() {
