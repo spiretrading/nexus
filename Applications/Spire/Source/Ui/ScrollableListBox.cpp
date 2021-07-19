@@ -18,9 +18,8 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
   auto layout = [=] () -> QBoxLayout* {
     if(is_horizontal_layout()) {
       return new QHBoxLayout(m_body);
-    } else {
-      return new QVBoxLayout(m_body);
     }
+    return new QVBoxLayout(m_body);
   }();
   layout->setSizeConstraint(QLayout::SetFixedSize);
   layout->setContentsMargins({});
@@ -106,17 +105,15 @@ void ScrollableListBox::resizeEvent(QResizeEvent* event) {
     if(m_list_view->sizeHint().height() <= event->size().height() -
         border_size.height()) {
       return 0;
-    } else {
-      return m_padding_size;
     }
+    return m_padding_size;
   };
   auto get_vertical_padding = [=] {
     if(m_list_view->sizeHint().width() <= event->size().width() -
         border_size.width()) {
       return 0;
-    } else {
-      return m_padding_size;
     }
+    return m_padding_size;
   };
   if(m_list_view->get_direction() == Qt::Vertical) {
     if(m_list_view->get_overflow() == ListView::Overflow::NONE) {
@@ -184,11 +181,11 @@ void ScrollableListBox::update_ranges() {
   auto vertical_range = std::max(viewport_size.height() - new_size.height(), 0);
   auto horizontal_range = std::max(viewport_size.width() - new_size.width(), 0);
   if(vertical_range == 0 && horizontal_range == 0) {
-    m_body->layout()->removeItem(m_scroll_bar_padding);
-  } else {
-    if(m_body->layout()->count() == 1) {
-      m_body->layout()->addItem(m_scroll_bar_padding);
+    if(m_body->layout()->count() == 2) {
+      m_body->layout()->removeItem(m_scroll_bar_padding);
     }
+  } else if(m_body->layout()->count() == 1) {
+    m_body->layout()->addItem(m_scroll_bar_padding);
   }
   get_vertical_scroll_bar().set_range(0, vertical_range);
   get_vertical_scroll_bar().set_page_size(new_size.height());
