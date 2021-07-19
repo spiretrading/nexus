@@ -85,6 +85,8 @@ namespace Styles {
       Box* m_text_edit_box;
       int m_longest_line_length;
       int m_longest_line_block;
+      int m_largest_width;
+      int m_added_width;
 
       // TODO: alphabetical
       QSize compute_decoration_size() const;

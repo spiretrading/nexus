@@ -196,7 +196,6 @@ QSize TextBox::sizeHint() const {
     }
     return 1;
   }();
-  qDebug() << "FM height: " << m_line_edit->fontMetrics().height();
   m_size_hint.emplace(
     m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
       cursor_width, m_line_edit->fontMetrics().height());

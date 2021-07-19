@@ -124,15 +124,15 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   //m_text_edit->verticalScrollBar()->setValue(0);
   //m_text_edit_box = new Box(m_text_edit, this);
   //m_layers->add(m_text_edit);
-  m_placeholder = new QLabel();
-  m_placeholder->setCursor(m_text_edit->cursor());
-  m_placeholder->setTextFormat(Qt::PlainText);
-  m_placeholder->setWordWrap(true);
-  m_placeholder->setMargin(0);
-  m_placeholder->setIndent(0);
-  m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
-  m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_placeholder->setFocusPolicy(Qt::NoFocus);
+  //m_placeholder = new QLabel();
+  //m_placeholder->setCursor(m_text_edit->cursor());
+  //m_placeholder->setTextFormat(Qt::PlainText);
+  //m_placeholder->setWordWrap(true);
+  //m_placeholder->setMargin(0);
+  //m_placeholder->setIndent(0);
+  //m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
+  //m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //m_placeholder->setFocusPolicy(Qt::NoFocus);
   //m_placeholder->setFixedSize(100, 100);
   //m_layers->add(m_placeholder);
   //auto box = new Box(layers, this);
@@ -254,10 +254,10 @@ QSize TextAreaBox::sizeHint() const {
   //*m_size_hint += compute_decoration_size();
   //return m_text_edit->sizeHint() + compute_decoration_size();
             // TODO: add decorations, get line height
-  auto a = line_count() *
-    static_cast<int>(static_cast<double>(fontMetrics().height()) * 1.25) + 2;
+  auto a = line_count() * m_line_height + 2;
   //qDebug() << "sz height: " << a;
-  return {std::max(scale_width(10), m_longest_line_length + 2), a};
+  return {std::max(scale_width(10),
+    m_longest_line_length + 2 + m_text_edit->cursorWidth()), a};
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
@@ -285,7 +285,7 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_text_edit) {
     if(event->type() == QEvent::Resize) {
-      update_page_size();
+      //update_page_size();
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -313,6 +313,24 @@ void TextAreaBox::resizeEvent(QResizeEvent* event) {
   //qDebug() << "min: " << minimumSize();
   //qDebug() << "max: " << maximumSize();
   //m_placeholder->setFixedSize(size());
+  //qDebug() << "resizeEvent: " << size();
+  //if(width() > m_largest_width) {
+  //  m_largest_width = size().width();
+  //}
+  //if(width() < event->oldSize().width()) {
+  //  qDebug() << "UNDERSIZED *****************************************";
+  //  if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+  //    qDebug() << "sb";
+  //    m_text_edit->document()->setTextWidth(width() - 2 - 15 + m_text_edit->cursorWidth() + 10);
+  //  } else {
+  //    qDebug() << "no sb";
+  //    m_text_edit->document()->setTextWidth(width() - 2);
+  //  }
+  //  //m_text_edit->adjustSize();
+  //}
+  //qDebug() << "resizeEvent";
+  //m_added_width = 0;
+  update_page_size();
   update_text_box_size();
   update_display_text();
   update_placeholder_text();
@@ -364,7 +382,7 @@ bool TextAreaBox::is_scroll_bar_visible() const {
 
 int TextAreaBox::get_text_length(const QString& text) {
   // TODO: assumes cursor is always visible (+ 1).
-  return fontMetrics().horizontalAdvance(text) + 1;
+  return m_text_edit->fontMetrics().horizontalAdvance(text) + 1;
 }
 
 void TextAreaBox::elide_current() {
@@ -405,19 +423,20 @@ void TextAreaBox::update_placeholder_text() {
   //qDebug() << window()->focusWidget();
   if(is_placeholder_shown()) {
     // TODO: elide
-    m_placeholder->setText(m_placeholder_text);
+    //m_placeholder->setText(m_placeholder_text);
     //qDebug() << "show";
-    m_placeholder->show();
+    //m_placeholder->show();
+    m_text_edit->setPlaceholderText(m_placeholder_text);
   } else {
     //qDebug() << "hide";
-    m_placeholder->hide();
+    //m_placeholder->hide();
   }
 }
 
 void TextAreaBox::commit_style() {
   auto stylesheet = QString(
     R"(QTextEdit {
-      background: aqua;
+      background: transparent;
       border-width: 0px;
       padding: 0px;)");
   m_text_edit_styles.m_styles.write(stylesheet);
@@ -443,7 +462,8 @@ void TextAreaBox::commit_style() {
     font.setPixelSize(*m_text_edit_styles.m_size);
   }
   m_text_edit->setFont(font);
-  if(m_text_edit_styles.m_line_height) {
+  if(m_text_edit_styles.m_line_height && ((static_cast<double>(font.pixelSize()) *
+      *m_text_edit_styles.m_line_height) != m_line_height)) {
     //qDebug() << *m_text_edit_styles.m_line_height;
     m_line_height = static_cast<double>(font.pixelSize()) *
       *m_text_edit_styles.m_line_height;
@@ -477,28 +497,28 @@ void TextAreaBox::commit_style() {
 }
 
 void TextAreaBox::commit_placeholder_style() {
-  auto stylesheet = QString(
-    R"(QLabel {
-      background: red;
-      border-width: 0px;
-      padding: 0px;)");
-  m_placeholder_styles.m_styles.write(stylesheet);
-  auto alignment = m_placeholder_styles.m_alignment.value_or(
-    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  if(alignment != m_placeholder->alignment()) {
-    m_placeholder->setAlignment(alignment);
-  }
-  auto font = m_placeholder_styles.m_font.value_or(QFont());
-  if(m_placeholder_styles.m_size) {
-    font.setPixelSize(*m_placeholder_styles.m_size);
-  }
-  m_placeholder->setFont(font);
-  if(stylesheet != m_placeholder->styleSheet()) {
-    m_placeholder->setStyleSheet(stylesheet);
-    m_placeholder->style()->unpolish(this);
-    m_placeholder->style()->polish(this);
-  }
-  update_placeholder_text();
+  //auto stylesheet = QString(
+  //  R"(QLabel {
+  //    background: red;
+  //    border-width: 0px;
+  //    padding: 0px;)");
+  //m_placeholder_styles.m_styles.write(stylesheet);
+  //auto alignment = m_placeholder_styles.m_alignment.value_or(
+  //  Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
+  //if(alignment != m_placeholder->alignment()) {
+  //  m_placeholder->setAlignment(alignment);
+  //}
+  //auto font = m_placeholder_styles.m_font.value_or(QFont());
+  //if(m_placeholder_styles.m_size) {
+  //  font.setPixelSize(*m_placeholder_styles.m_size);
+  //}
+  //m_placeholder->setFont(font);
+  //if(stylesheet != m_placeholder->styleSheet()) {
+  //  m_placeholder->setStyleSheet(stylesheet);
+  //  m_placeholder->style()->unpolish(this);
+  //  m_placeholder->style()->polish(this);
+  //}
+  //update_placeholder_text();
 }
 
 int TextAreaBox::line_count() const {
@@ -532,33 +552,51 @@ int TextAreaBox::line_count() const {
 
 // TODO: reorder definitions alphabetically
 void TextAreaBox::update_page_size() {
+  //qDebug() << "update page size";
   static auto m_is_resizing = false;
-  if(m_is_resizing) {
-    return;
-  }
+  //if(width() < m_largest_width) {
+  //  return;
+  //}
   m_is_resizing = true;
-  //auto scroll_bar_width = [&] {
-  //  if(is_scroll_bar_visible()) {
-  //    qDebug() << "sb is vis";
-  //    return scale_width(15);
+  //if(width() < m_longest_line_length) {
+  //  //qDebug() << "text width = width - 2";
+  //  //qDebug() << "page size = tab width";
+  //  //m_text_edit->document()->setPageSize({
+  //  //  static_cast<double>(m_text_edit->width()/* - 16 - 2*/),
+  //  //  m_text_edit->document()->pageSize().height()/* - 14 - 2*/});
+  //  //m_text_edit->document()->setTextWidth(m_longest_line_length);
+  //  if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+  //    m_text_edit->document()->setTextWidth(width() - 2 - 15 + m_text_edit->cursorWidth() + 10);
+  //  } else {
+  //    m_text_edit->document()->setTextWidth(width() - 2 + m_text_edit->cursorWidth() + 10);
   //  }
-  //  return 0;
-  //}();
-  if(width() < m_longest_line_length) {
-    //qDebug() << "page size = tab width";
-    //m_text_edit->document()->setPageSize({
-    //  static_cast<double>(m_text_edit->width()/* - 16 - 2*/),
-    //  m_text_edit->document()->pageSize().height()/* - 14 - 2*/});
-    m_text_edit->document()->setTextWidth(width() - 2);
-  } else {
-    //qDebug() << "page size = longest line";
-    //m_text_edit->document()->setPageSize({
-    //  static_cast<double>(m_longest_line_length),
-    //  m_text_edit->document()->pageSize().height()});
-    m_text_edit->document()->setTextWidth(m_longest_line_length);
-  }
-  m_text_edit->document()->adjustSize();
-  //updateGeometry();
+  //} else {
+  //  //qDebug() << "text width = longest line length";
+  //  //qDebug() << "length: " << m_longest_line_length;
+  //  //qDebug() << "page size = longest line";
+  //  //m_text_edit->document()->setPageSize({
+  //  //  static_cast<double>(m_longest_line_length),
+  //  //  m_text_edit->document()->pageSize().height()});
+  //  m_text_edit->document()->setTextWidth(m_longest_line_length +
+  //    m_text_edit->cursorWidth());
+  //}
+  //qDebug() << "width: " << width();
+  //qDebug() << "longest width: " << m_longest_line_length;
+  //qDebug() << "added_width: " << m_added_width;
+  auto scroll_bar_width = [&] {
+    if(is_scroll_bar_visible()) {
+      //qDebug() << "sb is vis";
+      return scale_width(15);
+    }
+    return 0;
+  }();
+  m_text_edit->document()->setTextWidth(std::min(width() - 2, m_longest_line_length) +
+    m_text_edit->cursorWidth() - scroll_bar_width);
+  //m_added_width = 0;
+  //m_text_edit->document()->adjustSize();
+  //m_text_edit->updateGeometry();
+  //m_text_edit->document()->adjustSize();
+  updateGeometry();
   //qDebug() << "page size: " << m_text_edit->document()->pageSize();
   m_is_resizing = false;
 }
@@ -596,13 +634,17 @@ int TextAreaBox::visible_line_count() const {
 }
 
 void TextAreaBox::on_contents_changed(int position, int removed, int added) {
+  //qDebug() << "on_contents_changed";
   auto block = m_text_edit->document()->findBlock(position);
   if(block.isValid()) {
+    //qDebug() << "block text: " << block.text();
     auto line_length = get_text_length(block.text());
+    //qDebug() << "candidate line_length: " << line_length;
     if(line_length > m_longest_line_length) {
       m_longest_line_length = line_length;
       m_longest_line_block = block.blockNumber();
       //m_text_edit->setFixedSize(m_longest_line_length, height());
+      //qDebug() << "new length: " << m_longest_line_length;
     } else if(block.blockNumber() == m_longest_line_block) {
       m_longest_line_length = 0;
       m_longest_line_block = 0;
@@ -612,10 +654,13 @@ void TextAreaBox::on_contents_changed(int position, int removed, int added) {
           if(get_text_length(block.text()) > m_longest_line_length) {
             m_longest_line_length = get_text_length(block.text());
             m_longest_line_block = block.blockNumber();
+            //qDebug() << "new length: " << m_longest_line_length;
           }
         }
       }
     }
+    m_added_width = get_text_length(block.text().mid(position, added - removed));
+    //qDebug() << "NEW added width: " << m_added_width;
   }
   update_page_size();
 }
@@ -631,35 +676,40 @@ void TextAreaBox::on_current(const QString& current) {
 
 void TextAreaBox::on_cursor_position() {
   // TOOD: clean up, use set vertical padding
-  //static auto last = m_text_edit->cursorRect();
-  //auto t = m_text_edit->visibleRegion().boundingRect().top();
-  //auto b = m_text_edit->visibleRegion().boundingRect().bottom();
+  static auto last = m_text_edit->cursorRect();
+  auto t = m_text_edit->visibleRegion().boundingRect().top();
+  auto b = m_text_edit->visibleRegion().boundingRect().bottom();
   //qDebug() << "************************************";
   //qDebug() << "vr top: " << t;
   //qDebug() << "vr bottom: " << b;
   //qDebug() << "cur: " << m_text_edit->cursorRect();
-  //if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
-  //  if(m_text_edit->cursorRect().top() <= t) {
-  //  if(m_text_edit->cursorRect().y() < m_text_edit->viewport()->y()) {
-  //    m_scroll_box->get_vertical_scroll_bar().set_position(
-  //      m_text_edit->cursorRect().top() - scale_height(8));
-  //  } else if(m_text_edit->cursorRect().bottom() >= b) {
-  //  } else if(m_text_edit->cursorRect().y() > m_text_edit->viewport()->y()) {
-  //    m_scroll_box->get_vertical_scroll_bar().set_position(
-  //      m_text_edit->cursorRect().bottom() -
-  //      m_text_edit->visibleRegion().boundingRect().height() +
-  //      scale_height(8));
-  //  }
-  //}
-  //last = m_text_edit->cursorRect();
+  //qDebug() << "te br: " << m_text_edit->visibleRegion().boundingRect();
+  if(m_scroll_box->get_vertical_scroll_bar().isVisible() &&
+      !m_text_edit->visibleRegion().boundingRect().contains(m_text_edit->cursorRect())) {
+    if(m_text_edit->cursorRect().top() <= t) {
+    //if(m_text_edit->cursorRect().y() < m_text_edit->viewport()->y()) {
+      m_scroll_box->get_vertical_scroll_bar().set_position(
+        m_text_edit->cursorRect().top() - scale_height(8));
+    } else if(m_text_edit->cursorRect().bottom() >= b) {
+    //} else if(m_text_edit->cursorRect().y() > m_text_edit->viewport()->y()) {
+      m_scroll_box->get_vertical_scroll_bar().set_position(
+        m_text_edit->cursorRect().bottom() -
+        m_text_edit->visibleRegion().boundingRect().height() +
+        scale_height(8));
+    }
+  }
+  last = m_text_edit->cursorRect();
   //update();
 }
 
 void TextAreaBox::on_document_size(const QSizeF& size) {
-  qDebug() << "document size: " << m_text_edit->document()->size();
-  qDebug() << "longest line: " << m_longest_line_length;
+  if(size.toSize() == QSize(89, 60)) {
+    auto a = 0;
+  }
+  //qDebug() << "on_document_size: " << m_text_edit->document()->size();
   //setGeometry(0, 0, size.toSize().width(), size.toSize().height());
   m_text_edit->setFixedSize(size.toSize());// + QSize(2, 2));
+  updateGeometry();
   //m_layers->updateGeometry();
   //qDebug() << "layers size: " << m_layers->size();
 }
@@ -681,7 +731,8 @@ void TextAreaBox::on_editing_finished() {
 
 void TextAreaBox::on_text_changed() {
   //update_placeholder_text();
-  m_model->set_current(m_text_edit->toPlainText());
+  // TODO: restore
+  //m_model->set_current(m_text_edit->toPlainText());
   // TODO: put in method and call from resizeEvent, etc.
   //qDebug() << line_count();
   //qDebug() << "doc height: " << m_text_edit->document()->size().toSize().height();
