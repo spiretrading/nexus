@@ -28,7 +28,7 @@ namespace {
       set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(horizontal_padding(scale_width(8))).
-      set(vertical_padding(scale_height(7)));
+      set(vertical_padding(scale_height(5)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).

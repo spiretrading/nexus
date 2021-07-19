@@ -1,6 +1,7 @@
 #include "Spire/Spire/Decimal.hpp"
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -24,4 +25,14 @@ Decimal Spire::to_decimal(const Money& value) {
 template<>
 Money Spire::from_decimal(const Decimal& value) {
   return *Money::FromValue(value.str());
+}
+
+template<>
+Decimal Spire::to_decimal(const Quantity& value) {
+  return Decimal(lexical_cast<std::string>(value));
+}
+
+template<>
+Quantity Spire::from_decimal(const Decimal& value) {
+  return *Quantity::FromValue(value.str());
 }

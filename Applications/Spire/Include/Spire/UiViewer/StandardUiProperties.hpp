@@ -5,6 +5,7 @@
 #include <QComboBox>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/UiViewer/TypedUiProperty.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
@@ -184,6 +185,16 @@ namespace Spire {
   template<>
   std::shared_ptr<TypedUiProperty<Nexus::Money>>
     make_standard_property<Nexus::Money>(QString name, Nexus::Money value);
+
+  /**
+   * Returns a standard TypedUiProperty<Nexus::Quantity>.
+   * @param name The name of the property.
+   * @param value The property's initial value.
+   */
+  template<>
+  std::shared_ptr<TypedUiProperty<Nexus::Quantity>>
+    make_standard_property<Nexus::Quantity>(QString name,
+      Nexus::Quantity value);
 
   /**
    * Returns a standard TypedUiProperty<QColor> with an initial value of white.

@@ -41,6 +41,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   update_ranges();
 }
 
+QWidget& ScrollBox::get_body() {
+  return *m_body;
+}
+
 ScrollBox::DisplayPolicy ScrollBox::get_horizontal_display_policy() const {
   return m_horizontal_display_policy;
 }
@@ -224,4 +228,11 @@ ScrollBox* Spire::make_scrollable_list_box(ListView* list_view,
       }
     });
   return scroll_box;
+}
+
+std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
+    ScrollBox& box, const Body& body) const {
+  auto stylists = std::unordered_set<Stylist*>();
+  stylists.insert(&find_stylist(box.get_body()));
+  return stylists;
 }
