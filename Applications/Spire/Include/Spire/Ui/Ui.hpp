@@ -34,6 +34,7 @@ namespace Spire {
   class ScrollBox;
   class ScrollableLayer;
   class ScrollableListBox;
+  class SearchBox;
   class SecurityStack;
   class SortedTableModel;
   class TableModel;

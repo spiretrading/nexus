@@ -31,6 +31,7 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -1199,7 +1200,7 @@ UiProfile Spire::make_scroll_box_profile() {
       image = image.scaled(QSize(2000, 2000));
       label->setPixmap(std::move(image));
       auto scroll_box = new ScrollBox(label);
-      scroll_box->setFixedSize(scale(320, 240));
+      scroll_box->resize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
       auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
         "horizontal_display_policy", profile.get_properties());
@@ -1267,6 +1268,29 @@ UiProfile Spire::make_scrollable_list_box_profile() {
         container->setMaximumWidth(scale_width(240));
       }
       return container;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_search_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  auto profile = UiProfile(QString::fromUtf8("SearchBox"), properties,
+    [] (auto& profile) {
+      auto& width = get<int>("width", profile.get_properties());
+      width.set(scale_width(180));
+      auto search_box = new SearchBox();
+      apply_widget_properties(search_box, profile.get_properties());
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& text) {
+        search_box->set_placeholder(text);
+      });
+      search_box->get_model()->connect_current_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Current")));
+      search_box->connect_submit_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
+      return search_box;
     });
   return profile;
 }
