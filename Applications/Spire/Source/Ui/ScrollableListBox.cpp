@@ -50,7 +50,13 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
 }
 
 QSize ScrollableListBox::sizeHint() const {
-  return m_body->sizeHint() + get_border_size();
+  if(is_horizontal_layout()) {
+    return m_list_view->sizeHint() + QSize(m_padding_size, 0) +
+      get_border_size();
+  } else {
+    return m_list_view->sizeHint() + QSize(0, m_padding_size) +
+      get_border_size();
+  }
 }
 
 void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
@@ -226,7 +232,7 @@ QWidget* ScrollableListBox::make_body() {
   return body;
 }
 
-bool ScrollableListBox::is_horizontal_layout() {
+bool ScrollableListBox::is_horizontal_layout() const {
   return (m_list_view->get_direction() == Qt::Vertical &&
     m_list_view->get_overflow() == ListView::Overflow::NONE) ||
     (m_list_view->get_direction() == Qt::Horizontal &&
