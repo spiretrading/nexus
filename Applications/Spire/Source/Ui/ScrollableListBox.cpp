@@ -198,6 +198,9 @@ void ScrollableListBox::on_current(const boost::optional<std::any>& current) {
     return;
   }
   auto item = m_list_view->get_item(*current);
+  if(!item) {
+    return;
+  }
   auto item_pos = item->pos();
   auto item_height = item->height();
   auto item_width = item->width();
