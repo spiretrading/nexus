@@ -24,7 +24,7 @@ namespace Spire {
 
       /**
        * Constructs a SearchBox.
-       * @param model THe current value's model.
+       * @param model The current value's model.
        * @param parent The parent widget.
        */
       explicit SearchBox(std::shared_ptr<TextModel> model,
