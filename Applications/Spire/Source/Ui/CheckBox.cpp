@@ -129,11 +129,11 @@ void CheckBox::on_checked(bool is_checked) {
 
 void CheckBox::on_layout_direction(Qt::LayoutDirection direction) {
   auto style = get_style(*this);
-  auto [padding_left, padding_right] = [&] () -> std::tuple<int, int> {
+  auto [padding_left, padding_right] = [&] {
     if(direction == Qt::LeftToRight) {
-      return {scale_width(8), 0};
+      return std::make_tuple(scale_width(8), 0);
     }
-    return {0, scale_width(8)};
+    return std::make_tuple(0, scale_width(8));
   }();
   style.get(Any() >> is_a<TextBox>()).
     set(PaddingLeft(padding_left)).
