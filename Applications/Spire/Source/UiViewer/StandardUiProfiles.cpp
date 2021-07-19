@@ -1232,6 +1232,8 @@ UiProfile Spire::make_search_box_profile() {
       });
       search_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
+      search_box->connect_submit_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
       return search_box;
     });
   return profile;

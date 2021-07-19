@@ -3,7 +3,9 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -42,6 +44,9 @@ namespace {
 }
 
 SearchBox::SearchBox(QWidget* parent)
+  : SearchBox(std::make_shared<LocalTextModel>(), parent) {}
+
+SearchBox::SearchBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent) {
   auto container = new QWidget(this);
   auto container_layout = new QHBoxLayout(container);
@@ -51,7 +56,7 @@ SearchBox::SearchBox(QWidget* parent)
     imageFromSvg(":/Icons/magnifying-glass.svg", scale(16, 16)), this);
   search_icon->setFixedSize(scale(16, 16));
   container_layout->addWidget(search_icon);
-  m_text_box = new TextBox(this);
+  m_text_box = new TextBox(std::move(model), this);
   container->setFocusProxy(m_text_box);
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   container_layout->addWidget(m_text_box);
@@ -67,12 +72,8 @@ SearchBox::SearchBox(QWidget* parent)
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_text_box->get_model()->connect_current_signal(
-    [=] (const auto& current) {
-      m_delete_button->setVisible(!current.isEmpty());
-    });
-  m_delete_button->connect_clicked_signal([=] {
-    m_text_box->get_model()->set_current({});
-  });
+    [=] (const auto& current) { on_current(current); });
+  m_delete_button->connect_clicked_signal([=] { on_delete_button(); });
 }
 
 const std::shared_ptr<TextModel>& SearchBox::get_model() const {
@@ -81,4 +82,17 @@ const std::shared_ptr<TextModel>& SearchBox::get_model() const {
 
 void SearchBox::set_placeholder(const QString& text) {
   m_text_box->set_placeholder(text);
+}
+
+connection SearchBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_text_box->connect_submit_signal(slot);
+}
+
+void SearchBox::on_current(const QString& current) {
+  m_delete_button->setVisible(!current.isEmpty());
+}
+
+void SearchBox::on_delete_button() {
+  m_text_box->get_model()->set_current({});
 }
