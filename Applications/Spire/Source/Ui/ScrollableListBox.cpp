@@ -50,13 +50,11 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
 }
 
 QSize ScrollableListBox::sizeHint() const {
+  auto border_size = get_border_size(*this);
   if(is_horizontal_layout()) {
-    return m_list_view->sizeHint() + QSize(m_padding_size, 0) +
-      get_border_size();
-  } else {
-    return m_list_view->sizeHint() + QSize(0, m_padding_size) +
-      get_border_size();
+    return m_list_view->sizeHint() + QSize(m_padding_size, 0) + border_size;
   }
+  return m_list_view->sizeHint() + QSize(0, m_padding_size) + border_size;
 }
 
 void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
@@ -75,7 +73,7 @@ void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {
-  auto border_size = get_border_size();
+  auto border_size = get_border_size(*this);
   auto update_list_view_width = [=] (int width) {
     if(!event->oldSize().isValid()) {
       QCoreApplication::postEvent(m_list_view, new QResizeEvent(
@@ -164,7 +162,7 @@ void ScrollableListBox::resizeEvent(QResizeEvent* event) {
 }
 
 void ScrollableListBox::update_ranges() {
-  auto border_size = get_border_size();
+  auto border_size = get_border_size(*this);
   auto viewport_size = m_list_view->sizeHint();
   if(is_horizontal_layout()) {
     if(viewport_size.height() <= height() - get_bar_height() -
@@ -251,25 +249,4 @@ int ScrollableListBox::get_bar_height() {
     return get_horizontal_scroll_bar().height();
   }
   return 0;
-}
-
-QSize ScrollableListBox::get_border_size() const {
-  auto box = findChild<Box*>("Box");
-  auto border_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*box)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        border_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        border_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        border_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        border_size.rwidth() += size;
-      });
-  }
-  return border_size;
 }

@@ -84,7 +84,6 @@ namespace Spire {
 
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
-      QSize get_border_size();
   };
 }
 

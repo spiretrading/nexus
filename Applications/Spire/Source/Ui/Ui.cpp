@@ -2,9 +2,12 @@
 #include <QIcon>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace boost::posix_time;
 using namespace Spire;
+using namespace Spire::Styles;
 
 void Spire::draw_border(const QRect& region, const QColor& color,
     QPainter* painter) {
@@ -31,6 +34,30 @@ QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
   }
   animation->start(QAbstractAnimation::DeleteWhenStopped);
   return animation;
+}
+
+QSize Spire::get_border_size(const QWidget& widget) {
+  auto border_size = QSize(0, 0);
+  auto box = widget.findChild<Box*>("Box");
+  if(!box) {
+    return border_size;
+  }
+  for(auto& property : get_evaluated_block(*box)) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        border_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+        border_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        border_size.rwidth() += size;
+      });
+  }
+  return border_size;
 }
 
 QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
