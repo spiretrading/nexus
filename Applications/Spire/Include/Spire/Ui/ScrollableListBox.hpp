@@ -37,8 +37,6 @@ namespace Spire {
       void on_current(const boost::optional<std::any>& current);
       QWidget* make_body();
       bool is_horizontal_layout() const;
-      int get_bar_width();
-      int get_bar_height();
   };
 }
 

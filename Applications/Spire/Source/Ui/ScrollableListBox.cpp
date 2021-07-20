@@ -162,6 +162,18 @@ void ScrollableListBox::resizeEvent(QResizeEvent* event) {
 void ScrollableListBox::update_ranges() {
   auto border_size = get_border_size();
   auto viewport_size = m_list_view->sizeHint();
+  auto get_bar_width = [=] {
+    if(get_vertical_scroll_bar().isVisible()) {
+      return get_vertical_scroll_bar().width();
+    }
+    return 0;
+  };
+  auto get_bar_height = [=] {
+    if(get_horizontal_scroll_bar().isVisible()) {
+      return get_horizontal_scroll_bar().height();
+    }
+    return 0;
+  };
   if(is_horizontal_layout()) {
     if(viewport_size.height() <= height() - get_bar_height() -
         border_size.height()) {
@@ -238,16 +250,3 @@ bool ScrollableListBox::is_horizontal_layout() const {
       m_list_view->get_overflow() == ListView::Overflow::WRAP);
 }
 
-int ScrollableListBox::get_bar_width() {
-  if(get_vertical_scroll_bar().isVisible()) {
-    return get_vertical_scroll_bar().width();
-  }
-  return 0;
-}
-
-int ScrollableListBox::get_bar_height() {
-  if(get_horizontal_scroll_bar().isVisible()) {
-    return get_horizontal_scroll_bar().height();
-  }
-  return 0;
-}
