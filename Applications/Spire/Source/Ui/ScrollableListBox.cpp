@@ -44,7 +44,8 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
     set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
     set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8)));
   set_style(*this, std::move(style));
-  m_list_view->get_current_model()->connect_current_signal(
+  m_list_view_current_connection =
+    m_list_view->get_current_model()->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
 }
 

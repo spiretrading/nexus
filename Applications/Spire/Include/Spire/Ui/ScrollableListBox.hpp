@@ -32,6 +32,7 @@ namespace Spire {
       QWidget* m_body;
       QLayoutItem* m_scroll_bar_padding;
       int m_padding_size;
+      boost::signals2::scoped_connection m_list_view_current_connection;
 
       void on_current(const boost::optional<std::any>& current);
       QWidget* make_body();
