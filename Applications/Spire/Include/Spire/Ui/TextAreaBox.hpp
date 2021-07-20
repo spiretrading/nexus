@@ -48,8 +48,6 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
@@ -100,7 +98,6 @@ namespace Styles {
       void commit_placeholder_style();
       int line_count() const;
       void update_page_size();
-      void update_text_box_size();
       int visible_line_count() const;
       void on_contents_changed(int position, int removed, int added);
       void on_current(const QString& current);

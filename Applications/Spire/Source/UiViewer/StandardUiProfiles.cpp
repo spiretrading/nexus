@@ -1267,14 +1267,12 @@ UiProfile Spire::make_text_area_box_profile() {
       apply_widget_properties(text_area_box, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        qDebug() << "profile property changed: " << value;
         if(value != text_area_box->get_model()->get_current()) {
           text_area_box->get_model()->set_current(value);
         }
       });
       text_area_box->get_model()->connect_current_signal(
         [&] (const auto& value) {
-          qDebug() << "TAB current: " << value;
           current.set(value);
         });
       auto& read_only = get<bool>("read_only", profile.get_properties());
