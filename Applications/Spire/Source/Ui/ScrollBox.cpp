@@ -6,6 +6,7 @@
 #include "Spire/Ui/ScrollableLayer.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
@@ -28,6 +29,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   layout->addWidget(layers);
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
+}
+
+QWidget& ScrollBox::get_body() {
+  return *m_body;
 }
 
 ScrollBox::DisplayPolicy ScrollBox::get_horizontal_display_policy() const {
@@ -142,4 +147,11 @@ void ScrollBox::update_ranges() {
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(
     0, horizontal_range);
   m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(width());
+}
+
+std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
+    ScrollBox& box, const Body& body) const {
+  auto stylists = std::unordered_set<Stylist*>();
+  stylists.insert(&find_stylist(box.get_body()));
+  return stylists;
 }

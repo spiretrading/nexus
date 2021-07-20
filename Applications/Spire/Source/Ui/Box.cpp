@@ -54,6 +54,10 @@ Box::Box(QWidget* body, QWidget* parent)
   connect_style_signal(*this, [=] { on_style(); });
 }
 
+QWidget* Box::get_body() {
+  return m_body;
+}
+
 QSize Box::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
@@ -301,4 +305,13 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
     set(horizontal_padding(0));
   set_style(*box, std::move(style));
   return box;
+}
+
+std::unordered_set<Stylist*> BaseComponentFinder<Box, Body>::operator ()(
+    Box& box, const Body& body) const {
+  auto stylists = std::unordered_set<Stylist*>();
+  if(auto body = box.get_body()) {
+    stylists.insert(&find_stylist(*body));
+  }
+  return stylists;
 }
