@@ -50,11 +50,7 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
 }
 
 QSize ScrollableListBox::sizeHint() const {
-  auto border_size = get_border_size();
-  if(is_horizontal_layout()) {
-    return m_list_view->sizeHint() + QSize(m_padding_size, 0) + border_size;
-  }
-  return m_list_view->sizeHint() + QSize(0, m_padding_size) + border_size;
+  return m_body->sizeHint() + get_border_size();
 }
 
 void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
