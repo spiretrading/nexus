@@ -111,6 +111,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_text_edit->setFrameShape(QFrame::NoFrame);
+  connect(m_text_edit, &QTextEdit::textChanged, this,
+    &TextAreaBox::on_text_changed);
   connect(m_text_edit->document()->documentLayout(),
     &QAbstractTextDocumentLayout::documentSizeChanged, this,
     &TextAreaBox::on_document_size);
@@ -222,6 +224,7 @@ bool TextAreaBox::is_read_only() const {
 }
 
 void TextAreaBox::set_read_only(bool read_only) {
+  // TODO: change text width
   m_text_edit->setReadOnly(read_only);
   if(read_only) {
     match(*this, ReadOnly());
@@ -415,8 +418,8 @@ void TextAreaBox::update_display_text() {
   //  m_text_edit->setText(m_model->get_current());
   //}
   //}
-  m_size_hint = none;
-  updateGeometry();
+  //m_size_hint = none;
+  //updateGeometry();
 }
 
 void TextAreaBox::update_placeholder_text() {
@@ -666,12 +669,12 @@ void TextAreaBox::on_contents_changed(int position, int removed, int added) {
 }
 
 void TextAreaBox::on_current(const QString& current) {
-  if(m_is_rejected) {
-    m_is_rejected = false;
-    unmatch(*this, Rejected());
+  qDebug() << "on_current: " << current;
+  if(current != m_text_edit->toPlainText()) {
+    m_text_edit->setPlainText(current);
   }
-  update_display_text();
-  update_placeholder_text();
+  //update_display_text();
+  //update_placeholder_text();
 }
 
 void TextAreaBox::on_cursor_position() {
@@ -730,29 +733,10 @@ void TextAreaBox::on_editing_finished() {
 }
 
 void TextAreaBox::on_text_changed() {
-  //update_placeholder_text();
-  // TODO: restore
-  //m_model->set_current(m_text_edit->toPlainText());
-  // TODO: put in method and call from resizeEvent, etc.
-  //qDebug() << line_count();
-  //qDebug() << "doc height: " << m_text_edit->document()->size().toSize().height();
-  //update_text_box_size();
-  //m_layer_container->setFixedSize(m_text_edit->size());
-  //qDebug() << "text change size: " << m_text_edit->size();
-  //qDebug() << "text change pos: " << m_text_edit->pos();
-  //qDebug() << m_text_edit->textCursor().blockFormat().headingLevel();
-  //qDebug() << m_text_edit->textCursor().blockFormat().lineHeight();
-  //qDebug() << m_text_edit->textCursor().verticalMovementX();
-  //qDebug() << "vbar: " << m_text_edit->verticalScrollBar()->value();
-  //on_cursor_position();
-  //m_text_edit->verticalScrollBar()->setValue(0);
-  //m_text_edit->ensureCursorVisible();
-  //auto a = m_text_edit->textCursor();
-  //a.setVerticalMovementX(0);
-  //m_text_edit->setTextCursor(a);
-  //qDebug() << m_text_edit->textCursor().blockFormat().topMargin();
-  //qDebug() << m_text_edit->textCursor().blockFormat().bottomMargin();
-  //updateGeometry();
+  qDebug() << "text changed";
+  if(m_model->get_current() != m_text_edit->toPlainText()) {
+    m_model->set_current(m_text_edit->toPlainText());
+  }
 }
 
 void TextAreaBox::on_style() {

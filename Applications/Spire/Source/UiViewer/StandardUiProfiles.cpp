@@ -1261,29 +1261,22 @@ UiProfile Spire::make_text_area_box_profile() {
      {"JUSTIFY", Qt::AlignJustify}});
   properties.push_back(make_standard_enum_property(
     "horizontal-align", horizontal_alignment_property));
-  //auto vertical_alignment_property = define_enum<Qt::Alignment>(
-  //  {{"TOP", Qt::AlignTop},
-  //   {"BOTTOM", Qt::AlignBottom},
-  //   {"CENTER", Qt::AlignVCenter},
-  //   {"BASELINE", Qt::AlignBaseline}});
-  //properties.push_back(make_standard_enum_property(
-  //  "vertical-align", vertical_alignment_property));
-  //auto overflow_property = define_enum<TextAreaBox::Overflow>(
-  //  {{"NONE", TextAreaBox::Overflow::NONE},
-  //   {"WRAP", TextAreaBox::Overflow::WRAP}});
-  //properties.push_back(make_standard_enum_property("wrap", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("TextAreaBox"), properties,
     [] (auto& profile) {
-      //auto& width = get<int>("width", profile.get_properties());
-      //width.set(scale_width(200));
-      //auto& height = get<int>("height", profile.get_properties());
-      //height.set(scale_height(200));
       auto text_area_box = new TextAreaBox();
       apply_widget_properties(text_area_box, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        text_area_box->get_model()->set_current(value);
+        qDebug() << "profile property changed: " << value;
+        if(value != text_area_box->get_model()->get_current()) {
+          text_area_box->get_model()->set_current(value);
+        }
       });
+      text_area_box->get_model()->connect_current_signal(
+        [&] (const auto& value) {
+          qDebug() << "TAB current: " << value;
+          current.set(value);
+        });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_area_box->set_read_only(is_read_only);
@@ -1302,24 +1295,14 @@ UiProfile Spire::make_text_area_box_profile() {
         });
       auto& horizontal_alignment = get<Qt::Alignment>("horizontal-align",
         profile.get_properties());
-      //auto& vertical_alignment = get<Qt::Alignment>("vertical-align",
-      //  profile.get_properties());
       horizontal_alignment.connect_changed_signal(
         [&, text_area_box] (auto alignment) {
           auto style = get_style(*text_area_box);
           style.get(Any()).
             set(TextAlign(
-              Qt::Alignment(alignment) | Qt::AlignTop));//vertical_alignment.get()));
+              Qt::Alignment(alignment) | Qt::AlignTop));
           set_style(*text_area_box, std::move(style));
         });
-      //vertical_alignment.connect_changed_signal(
-      //  [&, text_area_box] (auto alignment) {
-      //    auto style = get_style(*text_area_box);
-      //    style.get(Any()).
-      //      set(TextAlign(
-      //        Qt::Alignment(alignment) | horizontal_alignment.get()));
-      //    set_style(*text_area_box, std::move(style));
-      //  });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
       return text_area_box;
