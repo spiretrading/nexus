@@ -74,6 +74,7 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
       virtual void update_ranges();
+      QSize get_border_size() const;
 
     private:
       QWidget* m_body;
