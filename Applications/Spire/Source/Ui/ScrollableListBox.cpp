@@ -24,7 +24,7 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
   layout->setSizeConstraint(QLayout::SetFixedSize);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  layout->addWidget(list_view);
+  layout->addWidget(m_list_view);
   if(is_horizontal_layout()) {
     m_padding_size = get_vertical_scroll_bar().sizeHint().width();
   } else {
