@@ -67,11 +67,11 @@ namespace Spire {
   QPropertyAnimation* fade_window(QObject* target, bool reverse,
     boost::posix_time::time_duration fade_speed);
 
-   /**
-   * Gets the border size of a widget from its styling.
-   * @param widget The widget which has a border.
-   * @returns The border size.
-   */
+  /**
+  * Gets the border size of a widget from its styling.
+  * @param widget The widget which has a border.
+  * @returns The border size.
+  */
   QSize get_border_size(const QWidget& widget);
 
   //! Builds a QImage from an SVG resource where the size of the SVG is equal
