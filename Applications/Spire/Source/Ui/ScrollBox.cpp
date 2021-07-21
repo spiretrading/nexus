@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
