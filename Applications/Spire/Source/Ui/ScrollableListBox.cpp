@@ -11,8 +11,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
-    : ScrollBox(make_body(), parent)
-    , m_list_view(list_view) {
+    : ScrollBox(make_body(), parent),
+      m_list_view(list_view) {
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_list_view->set_edge_navigation(ListView::EdgeNavigation::CONTAIN);
   auto layout = [=] () -> QBoxLayout* {
