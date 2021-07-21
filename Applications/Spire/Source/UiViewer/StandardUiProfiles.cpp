@@ -1287,7 +1287,7 @@ UiProfile Spire::make_text_area_box_profile() {
       line_height.connect_changed_signal(
         [=] (auto line_height) {
           auto style = get_style(*text_area_box);
-          style.get(Any()).set(LineHeight(
+          style.get(Body()).set(LineHeight(
             static_cast<double>(line_height) / 100));
           set_style(*text_area_box, style);
         });
@@ -1296,7 +1296,7 @@ UiProfile Spire::make_text_area_box_profile() {
       horizontal_alignment.connect_changed_signal(
         [&, text_area_box] (auto alignment) {
           auto style = get_style(*text_area_box);
-          style.get(Any()).
+          style.get(Body()).
             set(TextAlign(
               Qt::Alignment(alignment) | Qt::AlignTop));
           set_style(*text_area_box, std::move(style));
