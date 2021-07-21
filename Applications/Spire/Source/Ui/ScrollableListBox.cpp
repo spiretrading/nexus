@@ -50,7 +50,7 @@ ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
 }
 
 QSize ScrollableListBox::sizeHint() const {
-  return m_body->sizeHint() + get_border_size();
+  return m_body->sizeHint() + get_border_size(*this);
 }
 
 void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
@@ -69,7 +69,7 @@ void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {
-  auto border_size = get_border_size();
+  auto border_size = get_border_size(*this);
   auto update_list_view_width = [=] (int width) {
     if(!event->oldSize().isValid()) {
       QCoreApplication::postEvent(m_list_view, new QResizeEvent(
@@ -156,7 +156,7 @@ void ScrollableListBox::resizeEvent(QResizeEvent* event) {
 }
 
 void ScrollableListBox::update_ranges() {
-  auto border_size = get_border_size();
+  auto border_size = get_border_size(*this);
   auto viewport_size = m_list_view->sizeHint();
   auto get_bar_width = [=] {
     if(get_vertical_scroll_bar().isVisible()) {
