@@ -56,7 +56,7 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto value = m_list_model->at(i);
     auto list_item = new ListItem(m_factory(m_list_model, i), this);
-    update_item_size_policy(list_item);
+    update_item_size_policy(*list_item);
     m_items.push_back({list_item, connect_item_current(list_item, value),
       connect_item_submit(list_item, value)});
   }
@@ -84,7 +84,7 @@ Qt::Orientation ListView::get_direction() const {
 void ListView::set_direction(Qt::Orientation direction) {
   m_direction = direction;
   for(const auto& item : m_items) {
-    update_item_size_policy(item.m_item);
+    update_item_size_policy(*item.m_item);
   }
   update_layout();
 }
@@ -552,11 +552,11 @@ void ListView::update_selection(const std::any& selected) {
   select_item(true);
 }
 
-void ListView::update_item_size_policy(ListItem* item) {
+void ListView::update_item_size_policy(ListItem& item) {
   if(m_direction == Qt::Vertical) {
-    item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    item.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   } else {
-    item->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    item.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   }
 }
 

@@ -217,7 +217,7 @@ namespace Styles {
       void update_current(int index);
       void update_after_items_changed();
       void update_selection(const std::any& selected);
-      void update_item_size_policy(ListItem* item);
+      void update_item_size_policy(ListItem& item);
       void query();
   };
 }
