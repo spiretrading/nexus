@@ -1,7 +1,7 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
-#include "Spire/Ui/Box.hpp"
+#include "Spire/Styles/ComponentSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -40,6 +40,9 @@ namespace Spire {
        * @param parent The parent widget.
        */
       explicit ScrollBox(QWidget* body, QWidget* parent = nullptr);
+
+      /** Returns the body. */
+      QWidget& get_body();
 
       /** Returns the horizontal display policy. */
       DisplayPolicy get_horizontal_display_policy() const;
@@ -86,6 +89,12 @@ namespace Spire {
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
   };
+}
+
+namespace Spire::Styles {
+  template<>
+  struct ComponentFinder<ScrollBox, Body> :
+    BaseComponentFinder<ScrollBox, Body> {};
 }
 
 #endif

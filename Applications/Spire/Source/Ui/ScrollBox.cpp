@@ -35,6 +35,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   update_ranges();
 }
 
+QWidget& ScrollBox::get_body() {
+  return *m_body;
+}
+
 ScrollBox::DisplayPolicy ScrollBox::get_horizontal_display_policy() const {
   return m_horizontal_display_policy;
 }
@@ -181,4 +185,11 @@ void ScrollBox::on_vertical_scroll(int position) {
 
 void ScrollBox::on_horizontal_scroll(int position) {
   m_body->move(-position, m_body->pos().y());
+}
+
+std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
+    ScrollBox& box, const Body& body) const {
+  auto stylists = std::unordered_set<Stylist*>();
+  stylists.insert(&find_stylist(box.get_body()));
+  return stylists;
 }
