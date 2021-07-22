@@ -36,8 +36,6 @@ namespace Styles {
 
       const QString& get_submission() const;
 
-      void set_placeholder(const QString& value);
-
       bool is_read_only() const;
 
       void set_read_only(bool read_only);
@@ -48,8 +46,6 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
@@ -65,49 +61,26 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TextModel> m_model;
-      Box* m_container_box;
       QTextEdit* m_text_edit;
+      ScrollBox* m_scroll_box;
       StyleProperties m_text_edit_styles;
-      QLabel* m_placeholder;
-      StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
-      QString m_placeholder_text;
-      bool m_is_rejected;
-      mutable boost::optional<QSize> m_size_hint;
-      int m_line_height;
-      int m_max_lines;
-
-      //Box* m_layer_container;
-      LayeredWidget* m_layers;
-      int m_document_height;
-      ScrollBox* m_scroll_box;
-      Box* m_text_edit_box;
       int m_longest_line_length;
       int m_longest_line_block;
-      int m_largest_width;
-      int m_added_width;
+      int m_line_height;
 
-      // TODO: alphabetical
-      QSize compute_decoration_size() const;
-      bool is_placeholder_shown() const;
-      bool is_scroll_bar_visible() const;
-      void elide_current();
-      int get_text_length(const QString& text);
-      void update_display_text();
-      void update_placeholder_text();
       void commit_style();
-      void commit_placeholder_style();
+      QSize compute_decoration_size() const;
+      int get_text_length(const QString& text);
+      bool is_scroll_bar_visible() const;
       int line_count() const;
-      void update_page_size();
-      void update_text_box_size();
+      void update_text_width();
       int visible_line_count() const;
       void on_contents_changed(int position, int removed, int added);
       void on_current(const QString& current);
       void on_cursor_position();
       void on_document_size(const QSizeF& size);
-      void on_editing_finished();
-      void on_text_changed();
       void on_style();
   };
 }
