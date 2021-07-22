@@ -109,7 +109,7 @@ namespace {
         if(document()->lineCount() == 0) {
           return {};
         }
-
+        return {};
       }
 
       void draw(QPainter *painter,
