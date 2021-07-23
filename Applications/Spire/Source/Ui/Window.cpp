@@ -10,6 +10,7 @@
 #include <qt_windows.h>
 #include <windowsx.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
 using namespace boost;
