@@ -13,9 +13,31 @@ namespace {
 
       TextAreaBox() {
         auto layout = new QHBoxLayout();
+        layout->setContentsMargins({});
         m_text_edit = new QTextEdit(this);
         layout->addWidget(m_text_edit);
         setLayout(layout);
+        connect(m_text_edit,
+          &QTextEdit::textChanged, this, [=] { on_text_changed(); });
+        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+      }
+
+      QSize sizeHint() const override {
+        auto margins = m_text_edit->contentsMargins();
+        return m_text_edit->document()->size().toSize() + QSize(
+          margins.left() + margins.right(), margins.top() + margins.bottom());
+      }
+
+    protected:
+      void resizeEvent(QResizeEvent* event) override {
+        m_text_edit->document()->setTextWidth(-1);
+        updateGeometry();
+        QWidget::resizeEvent(event);
+      }
+
+      void on_text_changed() {
+        m_text_edit->document()->setTextWidth(-1);
+        updateGeometry();
       }
 
     private:
