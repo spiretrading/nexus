@@ -50,6 +50,9 @@ const Order& MatchNowFixApplication::Submit(const OrderInfo& info) {
       if(anonymousTag.is_initialized()) {
         newOrderSingle->setField(ANONYMOUS_TAG, *anonymousTag);
       }
+      if(m_lei) {
+        m_lei->populate(Store(newOrderSingle));
+      }
       auto constraintsTagIterator = std::find_if(
         info.m_fields.m_additionalFields.begin(),
         info.m_fields.m_additionalFields.end(),
@@ -89,7 +92,9 @@ void MatchNowFixApplication::Update(const OrderExecutionSession& session,
 
 void MatchNowFixApplication::onCreate(const FIX::SessionID& sessionID) {}
 
-void MatchNowFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void MatchNowFixApplication::onLogon(const FIX::SessionID& sessionID) {
+  m_lei.emplace(GetSessionSettings().get(GetSessionId()));
+}
 
 void MatchNowFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 

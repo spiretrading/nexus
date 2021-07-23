@@ -2,10 +2,12 @@
 #define OASIS_CNSX_FIX_APPLICATION_HPP
 #include <Beam/Network/Network.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
+#include <boost/optional/optional.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "OasisOrderExecutionServer/IirocLegalEntityIdentifier.hpp"
 
 namespace Nexus::OasisOrderExecutionService {
 
@@ -63,6 +65,7 @@ namespace Nexus::OasisOrderExecutionService {
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
       FixUtilities::FixOrderLog m_orderLog;
       mutable boost::optional<boost::optional<std::string>> m_anonymousTag;
+      boost::optional<IirocLegalEntityIdentifier> m_lei;
 
       std::string GetAccount() const;
       std::string GetSenderSubID() const;

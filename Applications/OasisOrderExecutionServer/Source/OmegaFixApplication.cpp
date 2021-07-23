@@ -84,6 +84,9 @@ const Order& OmegaFixApplication::Submit(const OrderInfo& info) {
         newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
         newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
+      if(m_lei) {
+        m_lei->populate(Store(newOrderSingle));
+      }
       if(submissionInfo->m_fields.m_destination ==
           DefaultDestinations::OMEGA()) {
         FIX::ExDestination exDestination(GetOmegaRoute());
@@ -118,7 +121,9 @@ void OmegaFixApplication::Update(const OrderExecutionSession& session,
 
 void OmegaFixApplication::onCreate(const FIX::SessionID& sessionID) {}
 
-void OmegaFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void OmegaFixApplication::onLogon(const FIX::SessionID& sessionID) {
+  m_lei.emplace(GetSessionSettings().get(GetSessionId()));
+}
 
 void OmegaFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 

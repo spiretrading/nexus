@@ -5,12 +5,14 @@
 #include <Beam/Network/Network.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
+#include <boost/optional/optional.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "OasisOrderExecutionServer/IirocLegalEntityIdentifier.hpp"
 
 namespace Nexus::OasisOrderExecutionService {
 
@@ -75,6 +77,7 @@ namespace Nexus::OasisOrderExecutionService {
         Security, std::shared_ptr<Beam::StateQueue<BboQuote>>>> m_bboQuotes;
       FixUtilities::FixOrderLog m_orderLog;
       mutable boost::optional<boost::optional<std::string>> m_anonymousTag;
+      boost::optional<IirocLegalEntityIdentifier> m_lei;
 
       BboQuote LoadBboQuote(const Security& security);
       std::string GetAccount() const;

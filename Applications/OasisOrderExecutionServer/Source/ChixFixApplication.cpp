@@ -116,6 +116,9 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
         newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
         newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
+      if(m_lei) {
+        m_lei->populate(Store(newOrderSingle));
+      }
       if(!hasDestination) {
         if(info.m_fields.m_type == OrderType::PEGGED) {
           auto route = [&] {
@@ -171,7 +174,9 @@ void ChixFixApplication::Update(const OrderExecutionSession& session,
 
 void ChixFixApplication::onCreate(const FIX::SessionID& sessionID) {}
 
-void ChixFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void ChixFixApplication::onLogon(const FIX::SessionID& sessionID) {
+  m_lei.emplace(GetSessionSettings().get(GetSessionId()));
+}
 
 void ChixFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 

@@ -57,6 +57,9 @@ const Order& TsxSorFixApplication::Submit(const OrderInfo& info) {
       if(anonymousTag.is_initialized()) {
         newOrderSingle->setField(TSX_ANONYMOUS_TAG, *anonymousTag);
       }
+      if(m_lei) {
+        m_lei->populate(Store(newOrderSingle));
+      }
       if(info.m_fields.m_type == OrderType::PEGGED) {
         if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
           newOrderSingle->setField(TSX_PEG_TYPE_TAG, "M");
@@ -116,7 +119,9 @@ void TsxSorFixApplication::Update(const OrderExecutionSession& session,
 
 void TsxSorFixApplication::onCreate(const FIX::SessionID& sessionID) {}
 
-void TsxSorFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void TsxSorFixApplication::onLogon(const FIX::SessionID& sessionID) {
+  m_lei.emplace(GetSessionSettings().get(GetSessionId()));
+}
 
 void TsxSorFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 
@@ -214,7 +219,7 @@ std::string TsxSorFixApplication::GetNoTradeKey() const {
   return {};
 }
 
-const optional<std::string>& TsxSorFixApplication::GetAnonymousTag() const {
+const optional<std::string>& TsxSorFixApplication::GetAnonymousTag() {
   if(m_anonymousTag.is_initialized()) {
     return *m_anonymousTag;
   }

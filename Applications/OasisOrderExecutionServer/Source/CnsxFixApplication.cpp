@@ -65,6 +65,9 @@ const Order& CnsxFixApplication::Submit(const OrderInfo& info) {
       if(!noTradeKey.empty()) {
         newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
+      if(m_lei) {
+        m_lei->populate(Store(newOrderSingle));
+      }
     });
 }
 
@@ -90,7 +93,9 @@ void CnsxFixApplication::Update(const OrderExecutionSession& session,
 
 void CnsxFixApplication::onCreate(const FIX::SessionID& sessionID) {}
 
-void CnsxFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void CnsxFixApplication::onLogon(const FIX::SessionID& sessionID) {
+  m_lei.emplace(GetSessionSettings().get(GetSessionId()));
+}
 
 void CnsxFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 

@@ -95,6 +95,9 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
         newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
         newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
+      if(m_lei) {
+        m_lei->populate(Store(newOrderSingle));
+      }
     });
 }
 
@@ -119,7 +122,9 @@ void AequitasFixApplication::Update(const OrderExecutionSession& session,
 
 void AequitasFixApplication::onCreate(const FIX::SessionID& sessionID) {}
 
-void AequitasFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void AequitasFixApplication::onLogon(const FIX::SessionID& sessionID) {
+  m_lei.emplace(GetSessionSettings().get(GetSessionId()));
+}
 
 void AequitasFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 
