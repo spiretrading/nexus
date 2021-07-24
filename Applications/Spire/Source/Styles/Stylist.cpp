@@ -1,7 +1,7 @@
 #include "Spire/Styles/Stylist.hpp"
 #include <deque>
 #include <QApplication>
-#include <QEvent>
+#include <QFocusEvent>
 #include <QTimer>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
@@ -53,8 +53,14 @@ struct Stylist::StyleEventFilter : QObject {
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::FocusIn) {
       m_stylist->match(Focus());
+      auto& focus_event = static_cast<const QFocusEvent&>(*event);
+      if(focus_event.reason() == Qt::TabFocus ||
+          focus_event.reason() == Qt::BacktabFocusReason) {
+        m_stylist->match(FocusVisible());
+      }
     } else if(event->type() == QEvent::FocusOut) {
       m_stylist->unmatch(Focus());
+      m_stylist->unmatch(FocusVisible());
     } else if(event->type() == QEvent::Enter) {
       if(m_stylist->m_widget->isEnabled()) {
         m_stylist->match(Hover());
