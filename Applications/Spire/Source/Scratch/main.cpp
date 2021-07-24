@@ -1,47 +1,63 @@
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QWidget>
 #include <QTextEdit>
 #include "Spire/Spire/Resources.hpp"
 
 using namespace Spire;
 
 namespace {
-  class TextAreaBox : public QWidget {
+  class ContentSizedTextEdit : public QTextEdit {
     public:
-
-      TextAreaBox() {
-        auto layout = new QHBoxLayout();
-        layout->setContentsMargins({});
-        m_text_edit = new QTextEdit(this);
-        layout->addWidget(m_text_edit);
-        setLayout(layout);
-        connect(m_text_edit,
-          &QTextEdit::textChanged, this, [=] { on_text_changed(); });
+      explicit ContentSizedTextEdit(QWidget* parent = nullptr)
+          : QTextEdit(parent) {
+        setLineWrapMode(QTextEdit::NoWrap);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        document()->setDocumentMargin(0);
+        connect(
+          this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
       }
 
+      explicit ContentSizedTextEdit(
+          const QString& text, QWidget* parent = nullptr)
+          : ContentSizedTextEdit(parent) {
+        setText(text);
+      }
+
+      void set_read_only(bool read_only) {
+        if(read_only != isReadOnly()) {
+          setReadOnly(read_only);
+          updateGeometry();
+        }
+      }
+
       QSize sizeHint() const override {
-        auto margins = m_text_edit->contentsMargins();
-        return m_text_edit->document()->size().toSize() + QSize(
+        auto margins = contentsMargins();
+        auto size = document()->size().toSize() + QSize(
           margins.left() + margins.right(), margins.top() + margins.bottom());
+        if(!isReadOnly()) {
+          size.rwidth() += cursorWidth();
+        }
+        return size;
+      }
+
+      QSize minimumSizeHint() const override {
+        return QSize();
       }
 
     protected:
       void resizeEvent(QResizeEvent* event) override {
-        m_text_edit->document()->setTextWidth(-1);
+        document()->setTextWidth(-1);
         updateGeometry();
-        QWidget::resizeEvent(event);
+        QTextEdit::resizeEvent(event);
       }
 
       void on_text_changed() {
-        m_text_edit->document()->setTextWidth(-1);
+        document()->setTextWidth(-1);
         updateGeometry();
       }
-
-    private:
-      QTextEdit* m_text_edit;
   };
 }
 
@@ -54,7 +70,7 @@ int main(int argc, char** argv) {
   auto vertical_layout = new QVBoxLayout();
   vertical_layout->addSpacerItem(
     new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto box = new TextAreaBox();
+  auto box = new ContentSizedTextEdit();
   vertical_layout->addWidget(box);
   vertical_layout->addSpacerItem(
     new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
