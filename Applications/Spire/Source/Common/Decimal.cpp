@@ -18,6 +18,16 @@ int Spire::from_decimal(const Decimal& value) {
 }
 
 template<>
+Decimal Spire::to_decimal(const std::uint32_t& value) {
+  return Decimal(value);
+}
+
+template<>
+std::uint32_t Spire::from_decimal(const Decimal& value) {
+  return value.convert_to<std::uint32_t>();
+}
+
+template<>
 Decimal Spire::to_decimal(const Money& value) {
   return Decimal(lexical_cast<std::string>(value));
 }

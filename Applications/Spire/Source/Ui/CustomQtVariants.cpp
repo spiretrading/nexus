@@ -70,6 +70,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<bool>(value));
   } else if(value.type() == typeid(int)) {
     return QVariant::fromValue(std::any_cast<int>(value));
+  } else if(value.type() == typeid(std::uint32_t)) {
+    return QVariant::fromValue(std::any_cast<std::uint32_t>(value));
   } else if(value.type() == typeid(Quantity)) {
     return QVariant::fromValue(std::any_cast<Quantity>(value));
   } else if(value.type() == typeid(double)) {

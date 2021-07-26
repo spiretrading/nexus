@@ -58,7 +58,7 @@ namespace {
 
     explicit DecimalBoxProfileProperties(Type default_increment)
       : m_current(Type(1)),
-        m_minimum(Type(-100)),
+        m_minimum(Type(0)),
         m_maximum(Type(100)),
         m_default_increment(std::move(default_increment)),
         m_alt_increment(5 * m_default_increment),
@@ -1104,9 +1104,8 @@ UiProfile Spire::make_overlay_panel_profile() {
 UiProfile Spire::make_quantity_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto box_properties = DecimalBoxProfileProperties(Quantity(1));
-  box_properties.m_minimum = Quantity(0);
-  populate_decimal_box_properties<Quantity>(properties, box_properties);
+  populate_decimal_box_properties<std::uint32_t>(properties,
+    DecimalBoxProfileProperties<std::uint32_t>(1));
   auto profile = UiProfile(QString::fromUtf8("QuantityBox"), properties,
     setup_decimal_box_profile<QuantityBox>);
   return profile;

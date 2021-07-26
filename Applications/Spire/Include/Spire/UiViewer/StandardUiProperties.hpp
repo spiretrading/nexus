@@ -178,6 +178,15 @@ namespace Spire {
     make_standard_property<std::int64_t>(QString name, std::int64_t value);
 
   /**
+   * Returns a standard TypedUiProperty<std::uint32>.
+   * @param name The name of the property.
+   * @param value The property's initial value.
+   */
+  template<>
+  std::shared_ptr<TypedUiProperty<std::uint32_t>>
+    make_standard_property<std::uint32_t>(QString name, std::uint32_t value);
+
+  /**
    * Returns a standard TypedUiProperty<Nexus::Money>.
    * @param name The name of the property.
    * @param value The property's initial value.

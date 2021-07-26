@@ -151,6 +151,27 @@ std::shared_ptr<TypedUiProperty<std::int64_t>>
 }
 
 template<>
+std::shared_ptr<TypedUiProperty<std::uint32_t>>
+    Spire::make_standard_property<std::uint32_t>(
+      QString name, std::uint32_t value) {
+  return std::make_shared<StandardUiProperty<std::uint32_t>>(std::move(name),
+    value,
+    [] (QWidget* parent, StandardUiProperty<std::uint32_t>& property) {
+      auto setter = new QSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<std::uint32_t>::min());
+      setter->setMaximum(std::numeric_limits<int>::max());
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<std::uint32_t>(value));
+      });
+      QObject::connect(setter, qOverload<int>(&QSpinBox::valueChanged),
+        [&] (auto value) {
+          property.set(value);
+        });
+      return setter;
+    });
+}
+
+template<>
 std::shared_ptr<TypedUiProperty<Money>> Spire::make_standard_property<Money>(
     QString name, Money value) {
   return std::make_shared<StandardUiProperty<Money>>(std::move(name), value,

@@ -6,42 +6,22 @@
 
 namespace Spire {
 
-  /** A ScalarValueModel over Quantity values. */
-  using QuantityModel = ScalarValueModel<Nexus::Quantity>;
+  /** A ScalarValueModel over unsigned ints. */
+  using QuantityModel = ScalarValueModel<std::uint32_t>;
 
-  /** A ScalarValueModel over optional Quantity values. */
+  /** A ScalarValueModel over optional unsigned ints. */
   using OptionalQuantityModel =
-    ScalarValueModel<boost::optional<Nexus::Quantity>>;
+    ScalarValueModel<boost::optional<std::uint32_t>>;
 
-  /** A LocalScalarValueModel over Quantity values. */
-  using LocalQuantityModel = LocalScalarValueModel<Nexus::Quantity>;
+  /** A LocalScalarValueModel over unsigned ints. */
+  using LocalQuantityModel = LocalScalarValueModel<std::uint32_t>;
 
-  /** A LocalScalarValueModel over optional Quantity values. */
+  /** A LocalScalarValueModel over optional unsigned ints. */
   using LocalOptionalQuantityModel =
-    LocalScalarValueModel<boost::optional<Nexus::Quantity>>;
+    LocalScalarValueModel<boost::optional<std::uint32_t>>;
 
-  /** Represents a widget for inputting Quantity values. */
-  class QuantityBox : public DecimalBoxAdaptor<Nexus::Quantity> {
-    public:
-
-      /**
-       * Constructs a QuantityBox with a LocalOptionalValueModel.
-       * @param modifiers The keyboard modifier increments.
-       * @param parent The parent widget.
-       */
-      explicit QuantityBox(QHash<Qt::KeyboardModifier, Nexus::Quantity>
-        modifiers, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a QuantityBox.
-       * @param model The model used for the current value.
-       * @param modifiers The keyboard modifier increments.
-       * @param parent The parent widget.
-       */
-      QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
-        QHash<Qt::KeyboardModifier, Nexus::Quantity> modifiers,
-        QWidget* parent = nullptr);
-  };
+  /** Displays a widget for inputting Quantity values. */
+  using QuantityBox = DecimalBoxAdaptor<std::uint32_t>;
 }
 
 #endif
