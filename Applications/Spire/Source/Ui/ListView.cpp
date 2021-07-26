@@ -271,7 +271,7 @@ QLayoutItem* ListView::get_column_or_row(int index) {
 
 void ListView::select_item(const boost::optional<std::any>& selection) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    if(selection && m_list_model->at(i).type() == (*selection).type() &&
+    if(selection && m_list_model->at(i).type() == selection->type() &&
         displayTextAny(m_list_model->at(i)) == displayTextAny(*selection)) {
       m_items[i].m_item->set_selected(true);
     } else {
