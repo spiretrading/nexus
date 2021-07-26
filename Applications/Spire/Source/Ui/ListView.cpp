@@ -124,10 +124,6 @@ ListView::SelectionMode ListView::get_selection_mode() const {
 
 void ListView::set_selection_mode(SelectionMode selection_mode) {
   m_selection_mode = selection_mode;
-  if(m_selection_mode == SelectionMode::NONE &&
-      m_selection_model->get_current()) {
-    select_item(boost::none);
-  }
 }
 
 bool ListView::does_selection_follow_focus() const {
