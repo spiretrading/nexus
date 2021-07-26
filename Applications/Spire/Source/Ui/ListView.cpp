@@ -125,6 +125,14 @@ const std::any& ListView::get_selected() const {
   return m_selected;
 }
 
+ListItem* ListView::get_list_item(const std::any& value) const {
+  auto index = get_index_by_value(value);
+  if(index < 0) {
+    return nullptr;
+  }
+  return m_items[index].m_item;
+}
+
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
