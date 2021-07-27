@@ -14,19 +14,8 @@ namespace {
   const auto ORDER_ORIGINATION_TAG = 1724;
   const auto LEI_TAG = 8027;
 
-  std::string base64Decode(const std::string& source) {
-    auto base64Decoder = Base64Decoder();
-    base64Decoder.Put(
-      reinterpret_cast<const byte*>(source.data()), source.size());
-    base64Decoder.MessageEnd();
-    auto output = std::string();
-    output.resize(static_cast<int>(base64Decoder.MaxRetrievable()));
-    base64Decoder.Get(reinterpret_cast<byte*>(output.data()), output.size());
-    return output;
-  }
-
   std::string base64Encode(const std::string& source) {
-    auto encoder = Base64Encoder();
+    auto encoder = Base64Encoder(nullptr, false);
     encoder.Put(reinterpret_cast<const byte*>(source.data()), source.size());
     encoder.MessageEnd();
     auto output = std::string();
@@ -38,14 +27,12 @@ namespace {
 
 IirocLegalEntityIdentifier::IirocLegalEntityIdentifier(
     const FIX::Dictionary& config) {
-  if(config.has("BrokerNumber") && config.has("OrderOrigination") &&
-      config.has("LEIKey") && config.has("CustomerLEI")) {
+  if(config.has("BrokerNumber") && config.has("DealerID") &&
+      config.has("OrderOrigination") && config.has("LEIKey") &&
+      config.has("CustomerLEI")) {
     m_brokerNumber = config.getString("BrokerNumber");
+    auto dealerId = config.getString("DealerID");
     m_orderOrigination = config.getString("OrderOrigination");
-    auto brokerNumber = *m_brokerNumber;
-    while(brokerNumber.size() < 3) {
-      brokerNumber = '0' + brokerNumber;
-    }
     auto leiKey = config.getString("LEIKey");
     auto customerLei = config.getString("CustomerLEI");
     auto hexIV = std::array<byte, 16>{
@@ -61,7 +48,7 @@ IirocLegalEntityIdentifier::IirocLegalEntityIdentifier(
     encryptor.MessageEnd();
     auto cipher = std::string(static_cast<int>(encryptor.MaxRetrievable()), 0);
     encryptor.Get(reinterpret_cast<byte*>(cipher.data()), cipher.size());
-    auto message = brokerNumber;
+    auto message = dealerId;
     message.append(reinterpret_cast<const char*>(hexIV.data()), 16);
     message.append(cipher);
     m_lei = base64Encode(message);
