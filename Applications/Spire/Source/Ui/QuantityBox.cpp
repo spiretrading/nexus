@@ -28,20 +28,16 @@ struct QuantityBox::UnsignedQuantityModel : OptionalQuantityModel {
           on_current(current);
         })) {}
 
-  virtual optional<Quantity> get_minimum() const {
+  optional<Quantity> get_minimum() const override {
     return 0;
   }
 
-  virtual optional<Quantity> get_maximum() const {
+  optional<Quantity> get_maximum() const override {
     return m_model->get_maximum();
   }
 
-  virtual Quantity get_increment() const {
+  Quantity get_increment() const override {
     return m_model->get_increment();
-  }
-
-  void on_current(const optional<Quantity>& current) {
-    m_current_signal(current);
   }
 
   QValidator::State get_state() const override {
@@ -60,8 +56,12 @@ struct QuantityBox::UnsignedQuantityModel : OptionalQuantityModel {
   }
 
   connection connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const override {
+      const CurrentSignal::slot_type& slot) const override {
     return m_current_signal.connect(slot);
+  }
+
+  void on_current(const optional<Quantity>& current) {
+    m_current_signal(current);
   }
 };
 
