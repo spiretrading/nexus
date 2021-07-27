@@ -158,15 +158,7 @@ void Stylist::set_style(StyleSheet style) {
 }
 
 bool Stylist::is_match(const Selector& selector) const {
-  if(m_matching_selectors.find(selector) != m_matching_selectors.end()) {
-    return true;
-  }
-  for(auto proxy : m_proxies) {
-    if(proxy->is_match(selector)) {
-      return true;
-    }
-  }
-  return false;
+  return m_matching_selectors.find(selector) != m_matching_selectors.end();
 }
 
 const Block& Stylist::get_computed_block() const {
