@@ -129,9 +129,9 @@ const std::any& ListView::get_selected() const {
   return m_selected;
 }
 
-ListItem* ListView::get_item(const std::any& value) const {
+ListItem* ListView::get_list_item(const std::any& value) const {
   auto index = get_index_by_value(value);
-  if(index < 0 || index >= m_list_model->get_size()) {
+  if(index < 0) {
     return nullptr;
   }
   return m_items[index].m_item;

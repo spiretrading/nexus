@@ -216,7 +216,7 @@ void ScrollableListBox::on_current(const boost::optional<std::any>& current) {
   if(!current) {
     return;
   }
-  auto item = m_list_view->get_item(*current);
+  auto item = m_list_view->get_list_item(*current);
   if(!item) {
     return;
   }

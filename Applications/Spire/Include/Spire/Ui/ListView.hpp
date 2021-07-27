@@ -152,10 +152,10 @@ namespace Styles {
       const std::any& get_selected() const;
 
       /**
-      * Returns the ListItem connected the specified value.
-      * @param value The value associated with an item.
-      */
-      ListItem* get_item(const std::any& value) const;
+       * Returns the ListItem connected the specified value.
+       * @param value The value associated with an item.
+       */
+      ListItem* get_list_item(const std::any& value) const;
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
