@@ -14,6 +14,17 @@ namespace {
   const auto ORDER_ORIGINATION_TAG = 1724;
   const auto LEI_TAG = 8027;
 
+  std::string base64Decode(const std::string& source) {
+    auto base64Decoder = Base64Decoder();
+    base64Decoder.Put(
+      reinterpret_cast<const byte*>(source.data()), source.size());
+    base64Decoder.MessageEnd();
+    auto output = std::string();
+    output.resize(static_cast<int>(base64Decoder.MaxRetrievable()));
+    base64Decoder.Get(reinterpret_cast<byte*>(output.data()), output.size());
+    return output;
+  }
+
   std::string base64Encode(const std::string& source) {
     auto encoder = Base64Encoder(nullptr, false);
     encoder.Put(reinterpret_cast<const byte*>(source.data()), source.size());
@@ -33,7 +44,7 @@ IirocLegalEntityIdentifier::IirocLegalEntityIdentifier(
     m_brokerNumber = config.getString("BrokerNumber");
     auto dealerId = config.getString("DealerID");
     m_orderOrigination = config.getString("OrderOrigination");
-    auto leiKey = config.getString("LEIKey");
+    auto leiKey = base64Decode(config.getString("LEIKey"));
     auto customerLei = config.getString("CustomerLEI");
     auto hexIV = std::array<byte, 16>{
       0xF3, 0x05, 0x16, 0xA4, 0x4E, 0x8D, 0x54, 0x72,
