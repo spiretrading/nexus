@@ -22,7 +22,11 @@ optional<Quantity> UnsignedQuantityModel::get_minimum() const {
 }
 
 optional<Quantity> UnsignedQuantityModel::get_maximum() const {
-  return m_model->get_maximum();
+  auto maximum = m_model->get_minimum();
+  if(maximum && *maximum < 0) {
+    return 0;
+  }
+  return maximum;
 }
 
 Quantity UnsignedQuantityModel::get_increment() const {
