@@ -37,8 +37,6 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       std::shared_ptr<ScalarValueModel<boost::optional<Nexus::Quantity>>> m_model;
       boost::signals2::scoped_connection m_current_connection;
-
-      void on_current(const boost::optional<Nexus::Quantity>& current);
   };
 }
 

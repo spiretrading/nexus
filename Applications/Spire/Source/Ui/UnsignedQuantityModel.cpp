@@ -10,7 +10,7 @@ UnsignedQuantityModel::UnsignedQuantityModel(
   : m_model(std::move(model)),
     m_current_connection(m_model->connect_current_signal(
       [=] (const auto& current) {
-        on_current(current);
+        m_current_signal(current);
       })) {}
 
 optional<Quantity> UnsignedQuantityModel::get_minimum() const {
@@ -52,8 +52,4 @@ QValidator::State UnsignedQuantityModel::set_current(
 connection UnsignedQuantityModel::connect_current_signal(
     const CurrentSignal::slot_type& slot) const {
   return m_current_signal.connect(slot);
-}
-
-void UnsignedQuantityModel::on_current(const optional<Quantity>& current) {
-  m_current_signal(current);
 }
