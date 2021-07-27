@@ -3,7 +3,6 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/DecimalBoxAdaptor.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/UnsignedQuantityModel.hpp"
 
 namespace Spire {
 
