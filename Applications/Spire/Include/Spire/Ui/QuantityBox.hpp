@@ -3,6 +3,7 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/DecimalBoxAdaptor.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/UnsignedQuantityModel.hpp"
 
 namespace Spire {
 
@@ -41,9 +42,6 @@ namespace Spire {
       QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
         QHash<Qt::KeyboardModifier, Nexus::Quantity> modifiers,
         QWidget* parent = nullptr);
-
-    private:
-      struct UnsignedQuantityModel;
   };
 }
 
