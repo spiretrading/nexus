@@ -41,6 +41,9 @@ namespace Spire {
       QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
         QHash<Qt::KeyboardModifier, Nexus::Quantity> modifiers,
         QWidget* parent = nullptr);
+
+    private:
+      struct UnsignedQuantityModel;
   };
 }
 
