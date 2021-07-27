@@ -3,6 +3,7 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/modes.h>
+#include <cryptopp/osrng.h>
 
 using namespace Beam;
 using namespace CryptoPP;
@@ -41,17 +42,18 @@ IirocLegalEntityIdentifier::IirocLegalEntityIdentifier(
   if(config.has("BrokerNumber") && config.has("DealerID") &&
       config.has("OrderOrigination") && config.has("LEIKey") &&
       config.has("CustomerLEI")) {
+    static const auto IV_SIZE = 16;
     m_brokerNumber = config.getString("BrokerNumber");
     auto dealerId = config.getString("DealerID");
     m_orderOrigination = config.getString("OrderOrigination");
     auto leiKey = base64Decode(config.getString("LEIKey"));
     auto customerLei = config.getString("CustomerLEI");
-    auto hexIV = std::array<byte, 16>{
-      0xF3, 0x05, 0x16, 0xA4, 0x4E, 0x8D, 0x54, 0x72,
-      0xAE, 0xB1, 0x06, 0xB9, 0xF3, 0x56, 0x03, 0x3F};
+    auto randomPool = AutoSeededRandomPool();
+    auto iv = std::array<byte, IV_SIZE>();
+    randomPool.GenerateBlock(iv.data(), iv.size());
     auto key = SecByteBlock(leiKey.size());
     std::memcpy(key.BytePtr(), leiKey.data(), key.SizeInBytes());
-    auto encryption = CTR_Mode<AES>::Encryption(key, key.size(), hexIV.data());
+    auto encryption = CTR_Mode<AES>::Encryption(key, key.size(), iv.data());
     auto encryptor = StreamTransformationFilter(encryption);
     for(auto c : customerLei) {
       encryptor.Put(static_cast<byte>(c));
@@ -60,7 +62,7 @@ IirocLegalEntityIdentifier::IirocLegalEntityIdentifier(
     auto cipher = std::string(static_cast<int>(encryptor.MaxRetrievable()), 0);
     encryptor.Get(reinterpret_cast<byte*>(cipher.data()), cipher.size());
     auto message = dealerId;
-    message.append(reinterpret_cast<const char*>(hexIV.data()), 16);
+    message.append(reinterpret_cast<const char*>(iv.data()), iv.size());
     message.append(cipher);
     m_lei = base64Encode(message);
   }
