@@ -40,7 +40,7 @@ Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
       m_styles([=] { commit_style(); }) {
-  setObjectName("Box");
+  setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);
@@ -153,8 +153,8 @@ void Box::resizeEvent(QResizeEvent* event) {
 
 void Box::commit_style() {
   auto stylesheet = QString(
-    R"(#Box {
-        border-style: solid;)");
+    R"(#0x%1 {
+        border-style: solid;)").arg(reinterpret_cast<std::intptr_t>(this));
   m_styles.write(stylesheet);
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
