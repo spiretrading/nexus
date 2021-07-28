@@ -75,20 +75,46 @@ namespace Styles {
       using LocalCurrentModel = LocalValueModel<boost::optional<std::any>>;
 
       /**
+       * A ValueModel over an optional std::any to represent the selection of
+       * the list view.
+       */
+      using SelectionModel = ValueModel<boost::optional<std::any>>;
+
+      /**
+       * A LocalValueModel over an optional std::any to represent the local
+       * selection of the list view.
+       */
+      using LocalSelectionModel = LocalValueModel<boost::optional<std::any>>;
+
+      /**
        * Signals that the item was submitted.
        * @param submission The submitted value.
        */
       using SubmitSignal = Signal<void (const std::any& submission)>;
   
       /**
+       * Constructs a ListView using a LocalCurrentModel and LocalSelectionModel.
+       * @param list_model The list model which holds a list of items.
+       * @param factory A function that takes a ListModel and a index
+       *                used to construct a widget displayed in the ListView.
+       * @param parent The parent widget.
+       */
+      ListView(std::shared_ptr<ArrayListModel> list_model,
+        std::function<QWidget* (
+          std::shared_ptr<ArrayListModel>, int index)> factory,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a ListView.
        * @param current_model The current value's model.
+       * @param selection_model The selection value's model.
        * @param list_model The list model which holds a list of items.
        * @param factory A function that takes a ListModel and a index
        *                used to construct a widget displayed in the ListView.
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<CurrentModel> current_model,
+        std::shared_ptr<SelectionModel> selection_model,
         std::shared_ptr<ArrayListModel> list_model,
         std::function<QWidget* (
           std::shared_ptr<ArrayListModel>, int index)> factory,
@@ -96,6 +122,9 @@ namespace Styles {
   
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
+
+      /** Returns the selection model. */
+      const std::shared_ptr<SelectionModel>& get_selection_model() const;
 
       /** Returns the list model. */
       const std::shared_ptr<ArrayListModel>& get_list_model() const;
@@ -148,9 +177,6 @@ namespace Styles {
        */
       void set_selection_follow_focus(bool does_selection_follow_focus);
 
-      /** Returns the value of the selected list item. */
-      const std::any& get_selected() const;
-
       /**
        * Returns the ListItem connected the specified value.
        * @param value The value associated with an item.
@@ -173,6 +199,7 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<CurrentModel> m_current_model;
+      std::shared_ptr<SelectionModel> m_selection_model;
       std::shared_ptr<ArrayListModel> m_list_model;
       std::function<QWidget* (
         std::shared_ptr<ArrayListModel>, int index)> m_factory;
@@ -181,9 +208,9 @@ namespace Styles {
       Overflow m_overflow;
       SelectionMode m_selection_mode;
       bool m_does_selection_follow_focus;
-      std::any m_selected;
       std::vector<Item> m_items;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_selection_connection;
       boost::signals2::scoped_connection m_list_model_connection;
       int m_current_index;
       int m_column_or_row_index;
@@ -200,11 +227,12 @@ namespace Styles {
       int get_index_by_value(const std::any& value) const;
       QLayout* get_layout();
       QLayoutItem* get_column_or_row(int index);
-      void select_item(bool is_selected);
+      void select_item(const boost::optional<std::any>& selection);
       void cross_move(bool is_next);
       int move_next();
       int move_previous();
       void on_current(const boost::optional<std::any>& current);
+      void on_selection(const boost::optional<std::any>& selection);
       void on_operation(const ListModel::Operation& operation);
       void on_add_item(int index);
       void on_delete_item(int index);
@@ -214,7 +242,7 @@ namespace Styles {
       void update_current(int index, bool is_update_x_y);
       void update_current(int index);
       void update_after_items_changed();
-      void update_selection(const std::any& selected);
+      void update_selection(const boost::optional<std::any>& selection);
       void query();
   };
 }
