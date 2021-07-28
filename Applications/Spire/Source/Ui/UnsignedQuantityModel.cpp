@@ -7,11 +7,7 @@ using namespace Spire;
 
 UnsignedQuantityModel::UnsignedQuantityModel(
   std::shared_ptr<ScalarValueModel<optional<Quantity>>> model)
-  : m_model(std::move(model)),
-    m_current_connection(m_model->connect_current_signal(
-      [=] (const auto& current) {
-        m_current_signal(current);
-      })) {}
+  : m_model(std::move(model)) {}
 
 optional<Quantity> UnsignedQuantityModel::get_minimum() const {
   auto minimum = m_model->get_minimum();
@@ -51,5 +47,5 @@ QValidator::State UnsignedQuantityModel::set_current(
 
 connection UnsignedQuantityModel::connect_current_signal(
     const CurrentSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
+  return m_model->connect_current_signal(slot);
 }
