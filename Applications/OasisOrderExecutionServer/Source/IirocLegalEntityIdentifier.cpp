@@ -39,11 +39,12 @@ namespace {
 
 IirocLegalEntityIdentifier::IirocLegalEntityIdentifier(
     const FIX::Dictionary& config) {
-  if(config.has("BrokerNumber") && config.has("DealerID") &&
-      config.has("OrderOrigination") && config.has("LEIKey") &&
-      config.has("CustomerLEI")) {
-    static const auto IV_SIZE = 16;
+  if(config.has("BrokerNumber")) {
     m_brokerNumber = config.getString("BrokerNumber");
+  }
+  if(config.has("DealerID") && config.has("OrderOrigination") &&
+      config.has("LEIKey") && config.has("CustomerLEI")) {
+    static const auto IV_SIZE = 16;
     auto dealerId = config.getString("DealerID");
     m_orderOrigination = config.getString("OrderOrigination");
     auto leiKey = base64Decode(config.getString("LEIKey"));
