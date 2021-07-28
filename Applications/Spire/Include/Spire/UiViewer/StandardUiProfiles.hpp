@@ -65,6 +65,9 @@ namespace Spire {
   /** Returns a UiProfile for the QuantityBox. */
   UiProfile make_quantity_box_profile();
 
+  /** Returns a UiProfile for the QuantityFilterPanel. */
+  UiProfile make_quantity_filter_panel_profile();
+
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
 

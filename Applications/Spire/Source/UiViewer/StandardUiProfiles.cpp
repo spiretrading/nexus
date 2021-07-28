@@ -1123,6 +1123,15 @@ UiProfile Spire::make_quantity_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_quantity_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_scalar_filter_panel_properties<Quantity>(properties, 1,
+    QString::fromUtf8("Filter by Quantity"));
+  auto profile = UiProfile(QString::fromUtf8("QuantityFilterPanel"), properties,
+    setup_scalar_filter_panel_profile<QuantityBox>);
+  return profile;
+}
+
 UiProfile Spire::make_radio_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

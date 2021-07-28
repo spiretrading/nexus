@@ -16,6 +16,7 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -269,6 +270,7 @@ namespace Spire {
   using DurationFilterPanel = ScalarFilterPanel<DurationBox>;
   using IntegerFilterPanel = ScalarFilterPanel<IntegerBox>;
   using MoneyFilterPanel = ScalarFilterPanel<MoneyBox>;
+  using QuantityFilterPanel = ScalarFilterPanel<QuantityBox>;
 }
 
 #endif
