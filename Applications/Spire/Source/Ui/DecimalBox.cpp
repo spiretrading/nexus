@@ -348,6 +348,11 @@ bool DecimalBox::is_read_only() const {
 
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
+  if(is_read_only) {
+    match(*this, ReadOnly());
+  } else {
+    unmatch(*this, ReadOnly());
+  }
 }
 
 connection DecimalBox::connect_submit_signal(

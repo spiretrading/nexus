@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -28,13 +29,21 @@ namespace {
   }
 }
 
+ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
+  std::function<QWidget* (std::shared_ptr<ArrayListModel>, int index)> factory,
+  QWidget* parent)
+  : ListView(std::make_shared<LocalCurrentModel>(),
+      std::make_shared<LocalSelectionModel>(), list_model, factory, parent) {}
+
 ListView::ListView(std::shared_ptr<CurrentModel> current_model,
+    std::shared_ptr<SelectionModel> selection_model,
     std::shared_ptr<ArrayListModel> list_model,
     std::function<QWidget* (
       std::shared_ptr<ArrayListModel>, int index)> factory,
     QWidget* parent)
     : QWidget(parent),
       m_current_model(std::move(current_model)),
+      m_selection_model(std::move(selection_model)),
       m_list_model(std::move(list_model)),
       m_factory(std::move(factory)),
       m_direction(Qt::Vertical),
@@ -63,6 +72,8 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
     [=] (const ListModel::Operation& operation) { on_operation(operation); });
   m_current_connection = m_current_model->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
+  m_selection_connection = m_selection_model->connect_current_signal(
+    [=] (const auto& selection) { on_selection(selection); });
   connect(&m_query_timer, &QTimer::timeout, this, [=] { m_query.clear(); });
   update_layout();
 }
@@ -70,6 +81,11 @@ ListView::ListView(std::shared_ptr<CurrentModel> current_model,
 const std::shared_ptr<ListView::CurrentModel>&
     ListView::get_current_model() const {
   return m_current_model;
+}
+
+const std::shared_ptr<ListView::SelectionModel>&
+    ListView::get_selection_model() const {
+  return m_selection_model;
 }
 
 const std::shared_ptr<ArrayListModel>& ListView::get_list_model() const {
@@ -108,9 +124,6 @@ ListView::SelectionMode ListView::get_selection_mode() const {
 
 void ListView::set_selection_mode(SelectionMode selection_mode) {
   m_selection_mode = selection_mode;
-  if(m_selection_mode == SelectionMode::NONE && m_selected.has_value()) {
-    select_item(false);
-  }
 }
 
 bool ListView::does_selection_follow_focus() const {
@@ -121,8 +134,12 @@ void ListView::set_selection_follow_focus(bool does_selection_follow_focus) {
   m_does_selection_follow_focus = does_selection_follow_focus;
 }
 
-const std::any& ListView::get_selected() const {
-  return m_selected;
+ListItem* ListView::get_list_item(const std::any& value) const {
+  auto index = get_index_by_value(value);
+  if(index < 0) {
+    return nullptr;
+  }
+  return m_items[index].m_item;
 }
 
 connection ListView::connect_submit_signal(
@@ -260,11 +277,13 @@ QLayoutItem* ListView::get_column_or_row(int index) {
   return get_layout()->itemAt(index);
 }
 
-void ListView::select_item(bool is_selected) {
+void ListView::select_item(const boost::optional<std::any>& selection) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    if(m_list_model->at(i).type() == m_selected.type() &&
-        displayTextAny(m_list_model->at(i)) == displayTextAny(m_selected)) {
-      m_items[i].m_item->set_selected(is_selected);
+    if(selection && m_list_model->at(i).type() == selection->type() &&
+        displayTextAny(m_list_model->at(i)) == displayTextAny(*selection)) {
+      m_items[i].m_item->set_selected(true);
+    } else {
+      m_items[i].m_item->set_selected(false);
     }
   }
 }
@@ -351,12 +370,12 @@ void ListView::on_current(const optional<std::any>& current) {
     m_items[m_current_index].m_item->setFocus();
   }
   if(m_does_selection_follow_focus) {
-    if(current) {
-      update_selection(*current);
-    } else {
-      update_selection(std::any());
-    }
+    update_selection(current);
   }
+}
+
+void ListView::on_selection(const optional<std::any>& selection) {
+  update_selection(selection);
 }
 
 void ListView::on_operation(const ListModel::Operation& operation) {
@@ -527,13 +546,13 @@ void ListView::update_after_items_changed() {
   update_current(m_current_index);
 }
 
-void ListView::update_selection(const std::any& selected) {
+void ListView::update_selection(const optional<std::any>& selection) {
   if(m_selection_mode == SelectionMode::NONE) {
     return;
   }
-  select_item(false);
-  m_selected = selected;
-  select_item(true);
+  auto blocker = shared_connection_block(m_selection_connection);
+  m_selection_model->set_current(selection);
+  select_item(selection);
 }
 
 void ListView::query() {
