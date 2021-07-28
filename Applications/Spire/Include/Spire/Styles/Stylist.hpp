@@ -41,6 +41,9 @@ namespace Spire::Styles {
   /** Selects the focused widget. */
   using Focus = StateSelector<void, struct FocusSelectorTag>;
 
+  /** Selects a widget if it was focused using a non-pointing device. */
+  using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
+
   /** Specifies whether an element is visible. */
   enum class VisibilityOption {
 

@@ -177,6 +177,12 @@ namespace Styles {
        */
       void set_selection_follow_focus(bool does_selection_follow_focus);
 
+      /**
+       * Returns the ListItem connected the specified value.
+       * @param value The value associated with an item.
+       */
+      ListItem* get_list_item(const std::any& value) const;
+
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
