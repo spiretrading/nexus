@@ -1,7 +1,7 @@
 #ifndef SPIRE_UNSIGNED_QUANTITY_MODEL_HPP
 #define SPIRE_UNSIGNED_QUANTITY_MODEL_HPP
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/ScalarValueModel.hpp"
 
 namespace Spire {
 

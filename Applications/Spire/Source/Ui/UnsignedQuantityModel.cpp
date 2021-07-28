@@ -11,14 +11,14 @@ UnsignedQuantityModel::UnsignedQuantityModel(
 
 optional<Quantity> UnsignedQuantityModel::get_minimum() const {
   auto minimum = m_model->get_minimum();
-  if(!minimum || (minimum && *minimum < 0)) {
+  if(!minimum || *minimum < 0) {
     return 0;
   }
   return minimum;
 }
 
 optional<Quantity> UnsignedQuantityModel::get_maximum() const {
-  auto maximum = m_model->get_minimum();
+  auto maximum = m_model->get_maximum();
   if(maximum && *maximum < 0) {
     return 0;
   }
