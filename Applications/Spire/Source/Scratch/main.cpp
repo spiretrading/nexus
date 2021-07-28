@@ -4,8 +4,10 @@
 #include <QTextEdit>
 #include "Spire/Spire/Resources.hpp"
 
+#include <QScrollArea>
 #include "Spire/Ui/TextAreaBox.hpp"
 #include <QHBoxLayout>
+#include <QPushButton>
 
 using namespace Spire;
 
@@ -18,6 +20,7 @@ namespace {
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         document()->setDocumentMargin(0);
+        setFrameShape(QFrame::NoFrame);
         connect(
           this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -51,15 +54,42 @@ namespace {
       }
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override {
+        if(event->type() == QEvent::Resize) {
+          setFixedWidth(static_cast<QResizeEvent*>(event)->size().width() - 4);
+        }
+        return QWidget::eventFilter(watched, event);
+      }
+
       void resizeEvent(QResizeEvent* event) override {
-        document()->setTextWidth(-1);
-        updateGeometry();
+        update_text_wrap();
         QTextEdit::resizeEvent(event);
       }
 
       void on_text_changed() {
-        document()->setTextWidth(-1);
+        update_text_wrap();
+      }
+
+      void update_text_wrap() {
+        if(size().width() < get_longest_line()) {
+          setLineWrapMode(QTextEdit::WidgetWidth);
+        } else {
+          document()->setTextWidth(-1);
+          setLineWrapMode(QTextEdit::NoWrap);
+        }
         updateGeometry();
+      }
+
+      int get_longest_line() const {
+        auto longest = 0;
+        for(auto i = 0; i < document()->blockCount(); ++i) {
+          auto block = document()->findBlockByNumber(i);
+          if(block.isValid()) {
+            longest = std::max(longest,
+              fontMetrics().horizontalAdvance(block.text()));
+          }
+        }
+        return longest;
       }
   };
 }
@@ -70,20 +100,39 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto window = new QWidget();
-  auto vertical_layout = new QVBoxLayout();
-  vertical_layout->addSpacerItem(
-    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto box = new ContentSizedTextEdit();
-  vertical_layout->addWidget(box);
-  vertical_layout->addSpacerItem(
-    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto horizontal_layout = new QHBoxLayout();
-  horizontal_layout->addSpacerItem(
-    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  horizontal_layout->addLayout(vertical_layout);
-  horizontal_layout->addSpacerItem(
-    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  window->setLayout(horizontal_layout);
+  //auto vertical_layout = new QVBoxLayout();
+  //vertical_layout->addSpacerItem(
+  //  new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  //auto box = new ContentSizedTextEdit();
+  //vertical_layout->addWidget(box);
+  //vertical_layout->addSpacerItem(
+  //  new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  //auto horizontal_layout = new QHBoxLayout();
+  //horizontal_layout->addSpacerItem(
+  //  new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  //horizontal_layout->addLayout(vertical_layout);
+  //horizontal_layout->addSpacerItem(
+  //  new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  //window->setLayout(horizontal_layout);
+  auto l = new QHBoxLayout(window);
+  auto text_edit = new ContentSizedTextEdit(window);
+  auto inc = new QPushButton("+", window);
+  l->addWidget(inc);
+  QObject::connect(inc, &QPushButton::clicked, [=] {
+    text_edit->setFixedWidth(text_edit->width() + 10);
+  });
+  auto dec = new QPushButton("-", window);
+  l->addWidget(dec);
+  QObject::connect(dec, &QPushButton::clicked, [=] {
+    text_edit->setFixedWidth(text_edit->width() - 10);
+  });
+  //auto scroll_area = new QScrollArea(window);
+  //scroll_area->setWidget(text_edit);
+  //scroll_area->setWidgetResizable(true);
+  //scroll_area->viewport()->installEventFilter(text_edit);
+  //l->addWidget(scroll_area);
+  l->addWidget(text_edit);
+  window->resize(scale(400, 400));
   window->show();
   application->exec();
 }
