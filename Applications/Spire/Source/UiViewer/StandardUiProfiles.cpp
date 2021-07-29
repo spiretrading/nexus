@@ -919,31 +919,33 @@ UiProfile Spire::make_list_view_profile() {
         if(change_item.get() == 0) {
           list_model->remove(value);
         } else {
-          list_model->insert(QString::fromUtf8("newItem%1").arg(index++), value);
+          list_model->insert(
+            QString::fromUtf8("newItem%1").arg(index++), value);
         }
       });
-      auto list_view = new ListView(list_model, [&] (auto model, auto index) {
-        auto label = make_label(model->get<QString>(index));
-        if(random_height_seed.get() == 0) {
-          if(direction.get() == Qt::Vertical) {
-            if(index == 15) {
-              label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
-            } else if(index == 27) {
-              label->setFixedHeight(scale_height(26 * 2 + gap.get()));
-            } else if(index == 36) {
-              label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
-            } else if(index == 37) {
-              label->setFixedHeight(scale_height(26 * 2 + gap.get()));
-            } else {
-              label->setFixedHeight(scale_height(26));
+      auto list_view =
+        new ListView(list_model, [&] (const auto& model, auto index) {
+          auto label = make_label(model.get<QString>(index));
+          if(random_height_seed.get() == 0) {
+            if(direction.get() == Qt::Vertical) {
+              if(index == 15) {
+                label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
+              } else if(index == 27) {
+                label->setFixedHeight(scale_height(26 * 2 + gap.get()));
+              } else if(index == 36) {
+                label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
+              } else if(index == 37) {
+                label->setFixedHeight(scale_height(26 * 2 + gap.get()));
+              } else {
+                label->setFixedHeight(scale_height(26));
+              }
             }
+          } else {
+            label->setFixedHeight(
+              scale_height(random_generator.bounded(30, 70)));
           }
-        } else {
-          label->setFixedHeight(
-            scale_height(random_generator.bounded(30, 70)));
-        }
-        return label;
-      });
+          return label;
+        });
       apply_widget_properties(list_view, profile.get_properties());
       gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
@@ -952,7 +954,6 @@ UiProfile Spire::make_list_view_profile() {
         auto style = get_style(*list_view);
         style.get(Any()).set(ListItemGap(scale_width(value)));
         set_style(*list_view, std::move(style));
-        list_view->update();
       });
       overflow_gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
@@ -961,8 +962,8 @@ UiProfile Spire::make_list_view_profile() {
         auto style = get_style(*list_view);
         style.get(Any()).set(ListOverflowGap(scale_width(value)));
         set_style(*list_view, std::move(style));
-        list_view->update();
       });
+/*
       auto set_size =
         [=] (Qt::Orientation direction, ListView::Overflow overflow) {
           list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
@@ -975,12 +976,13 @@ UiProfile Spire::make_list_view_profile() {
             }
           }
         };
+*/
       direction.connect_changed_signal([=, &overflow] (auto value) {
-        set_size(value, overflow.get());
+//        set_size(value, overflow.get());
         list_view->set_direction(value);
       });
       overflow.connect_changed_signal([=, &direction] (auto value) {
-        set_size(direction.get(), value);
+//        set_size(direction.get(), value);
         list_view->set_overflow(value);
       });
       auto& navigation = get<ListView::EdgeNavigation>("edge_navigation",
@@ -1011,13 +1013,13 @@ UiProfile Spire::make_list_view_profile() {
       });
       list_view->get_current_model()->connect_current_signal(
         profile.make_event_slot<optional<std::any>>(
-        QString::fromUtf8("Current")));
+          QString::fromUtf8("Current")));
       list_view->get_selection_model()->connect_current_signal(
         profile.make_event_slot<optional<std::any>>(
-        QString::fromUtf8("Selection")));
+          QString::fromUtf8("Selection")));
       list_view->connect_submit_signal(
         profile.make_event_slot<optional<std::any>>(
-        QString::fromUtf8("Submit")));
+          QString::fromUtf8("Submit")));
       return list_view;
     });
   return profile;
