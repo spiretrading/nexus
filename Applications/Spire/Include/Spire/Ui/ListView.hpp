@@ -187,6 +187,7 @@ namespace Styles {
         const SubmitSignal::slot_type& slot) const;
 
     private:
+      struct BodyContainer;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ArrayListModel> m_list_model;
       ViewBuilder m_view_builder;
@@ -197,6 +198,10 @@ namespace Styles {
       Overflow m_overflow;
       SelectionMode m_selection_mode;
       bool m_does_selection_follow_focus;
+      std::vector<ListItem*> m_list_items;
+      BodyContainer* m_container;
+
+      void update_layout();
   };
 }
 

@@ -1,16 +1,10 @@
 #include "Spire/Ui/ListView.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
-#include <QGuiApplication>
+#include <QEvent>
 #include <QHBoxLayout>
-#include <QKeyEvent>
-#include <QScrollArea>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListItem.hpp"
 
 using namespace boost;
@@ -33,27 +27,34 @@ namespace {
       set(ListOverflowGap(scale_width(DEFAULT_OVERFLOW_GAP)));
     return style;
   }
+}
 
-  struct BodyContainer : QWidget {
-    QWidget* m_body;
+struct ListView::BodyContainer : QWidget {
+  QWidget* m_body;
 
-    BodyContainer(QWidget* body)
-        : m_body(body) {
-      m_body->setParent(this);
-    }
+  BodyContainer()
+      : m_body(new QWidget(this)) {
+    m_body->setLayout(new QBoxLayout(QBoxLayout::TopToBottom));
+  }
 
-    QSize sizeHint() const override {
+  QBoxLayout& get_layout() {
+    return *static_cast<QBoxLayout*>(m_body->layout());
+  }
+
+  QSize sizeHint() const override {
+    if(m_body) {
       return m_body->sizeHint();
     }
+    return QSize();
+  }
 
-    bool event(QEvent* event) override {
-      if(event->type() == QEvent::LayoutRequest) {
-        updateGeometry();
-      }
-      return QWidget::event(event);
+  bool event(QEvent* event) override {
+    if(event->type() == QEvent::LayoutRequest) {
+      updateGeometry();
     }
-  };
-}
+    return QWidget::event(event);
+  }
+};
 
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model, QWidget* parent)
   : ListView(std::move(list_model), default_view_builder,
@@ -79,22 +80,16 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_does_selection_follow_focus(true) {
-  auto body = new QWidget();
-  auto container = new BodyContainer(body);
+  for(auto i = 0; i < m_list_model->get_size(); ++i) {
+    m_list_items.push_back(new ListItem(m_view_builder(*m_list_model, i)));
+  }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  layout->addWidget(new Box(container));
-  auto body_layout = new QVBoxLayout();
-  for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    auto list_item = new ListItem(m_view_builder(*m_list_model, i));
-    auto item_layout = new QHBoxLayout();
-    item_layout->addWidget(list_item);
-    item_layout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
-    body_layout->addLayout(item_layout);
-  }
-  body->setLayout(body_layout);
+  m_container = new BodyContainer();
+  layout->addWidget(new Box(m_container));
   setLayout(layout);
   set_style(*this, DEFAULT_STYLE());
+  update_layout();
 }
 
 const std::shared_ptr<ArrayListModel>& ListView::get_list_model() const {
@@ -116,7 +111,11 @@ Qt::Orientation ListView::get_direction() const {
 }
 
 void ListView::set_direction(Qt::Orientation direction) {
+  if(direction == m_direction) {
+    return;
+  }
   m_direction = direction;
+  update_layout();
 }
 
 ListView::EdgeNavigation ListView::get_edge_navigation() const {
@@ -154,4 +153,31 @@ void ListView::set_selection_follow_focus(bool does_selection_follow_focus) {
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+void ListView::update_layout() {
+  auto& body_layout = m_container->get_layout();
+  while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
+    delete item;
+  }
+  auto [direction, reverse_direction] = [&] {
+    if(m_direction == Qt::Orientation::Vertical) {
+      return std::tuple(QBoxLayout::TopToBottom, QBoxLayout::LeftToRight);
+    }
+    return std::tuple(QBoxLayout::LeftToRight, QBoxLayout::TopToBottom);
+  }();
+  body_layout.setDirection(direction);
+  for(auto item : m_list_items) {
+    auto item_layout = new QBoxLayout(reverse_direction);
+    if(m_direction == Qt::Orientation::Horizontal) {
+      item_layout->addSpacerItem(
+        new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    }
+    item_layout->addWidget(item);
+    if(m_direction == Qt::Orientation::Vertical) {
+      item_layout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
+    }
+    body_layout.addLayout(item_layout);
+  }
+  m_container->m_body->adjustSize();
 }
