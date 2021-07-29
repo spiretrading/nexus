@@ -32,7 +32,7 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF, 0))).
+      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(LineHeight(1.25)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
@@ -77,24 +77,14 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_submission(m_model->get_current()),
       m_longest_line_length(0),
       m_longest_line_block(0) {
-  m_text_edit = new QTextEdit(this);
-  m_text_edit->setAcceptRichText(false);
-  m_text_edit->document()->setDocumentMargin(0);
-  m_text_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_text_edit->setFrameShape(QFrame::NoFrame);
-  connect(m_text_edit->document()->documentLayout(),
-    &QAbstractTextDocumentLayout::documentSizeChanged, this,
-    &TextAreaBox::on_document_size);
-  connect(m_text_edit->document(), &QTextDocument::contentsChange, this,
-    &TextAreaBox::on_contents_changed);
+  m_text_edit = new ContentSizedTextEdit(this);
   setFocusProxy(m_text_edit);
-  m_text_edit->installEventFilter(this);
+  connect(m_text_edit, &QTextEdit::textChanged, this,
+    &TextAreaBox::on_text_changed);
   m_scroll_box = new ScrollBox(m_text_edit, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
-  m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_scroll_box->setFocusPolicy(Qt::NoFocus);
+  m_scroll_box->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scroll_box);
@@ -103,8 +93,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
   connect(m_text_edit, &QTextEdit::cursorPositionChanged, this,
     &TextAreaBox::on_cursor_position);
-  m_current_connection = m_model->connect_current_signal(
-    [=] (const auto& value) { on_current(value); });
+  //m_current_connection = m_model->connect_current_signal(
+  //  [=] (const auto& value) { on_current(value); });
 }
 
 const std::shared_ptr<TextModel>& TextAreaBox::get_model() const {
@@ -134,9 +124,16 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  return {std::max(scale_width(1),
-    m_longest_line_length + 2 + m_text_edit->cursorWidth()),
-    line_count() * m_line_height + 2};
+  return m_text_edit->sizeHint() + QSize(10, 8);
+}
+
+bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    update_text_edit_width();
+    m_scroll_box->updateGeometry();
+    updateGeometry();
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void TextAreaBox::mousePressEvent(QMouseEvent* event) {
@@ -144,17 +141,12 @@ void TextAreaBox::mousePressEvent(QMouseEvent* event) {
   QWidget::mousePressEvent(event);
 }
 
-void TextAreaBox::resizeEvent(QResizeEvent* event) {
-  update_text_width();
-  QWidget::resizeEvent(event);
-}
-
 void TextAreaBox::commit_style() {
   auto stylesheet = QString(
     R"(QTextEdit {
-      background: transparent;
+      background: red;
       border-width: 0px;
-      padding: 0px;)");
+      padding: 7px 8px 7px 8px;)");
   m_text_edit_styles.m_styles.write(stylesheet);
   auto alignment = m_text_edit_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
@@ -208,108 +200,77 @@ void TextAreaBox::commit_style() {
   }
 }
 
-QSize TextAreaBox::compute_decoration_size() const {
-  auto decoration_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*m_scroll_box)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingTop>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingRight>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        decoration_size.rwidth() += size;
-      });
+//QSize TextAreaBox::compute_decoration_size() const {
+//  auto decoration_size = QSize(0, 0);
+//  for(auto& property : get_evaluated_block(*m_scroll_box)) {
+//    property.visit(
+//      [&] (std::in_place_type_t<BorderTopSize>, int size) {
+//        decoration_size.rheight() += size;
+//      },
+//      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+//        decoration_size.rwidth() += size;
+//      },
+//      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+//        decoration_size.rheight() += size;
+//      },
+//      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+//        decoration_size.rwidth() += size;
+//      },
+//      [&] (std::in_place_type_t<PaddingTop>, int size) {
+//        decoration_size.rheight() += size;
+//      },
+//      [&] (std::in_place_type_t<PaddingRight>, int size) {
+//        decoration_size.rwidth() += size;
+//      },
+//      [&] (std::in_place_type_t<PaddingBottom>, int size) {
+//        decoration_size.rheight() += size;
+//      },
+//      [&] (std::in_place_type_t<PaddingLeft>, int size) {
+//        decoration_size.rwidth() += size;
+//      });
+//  }
+//  return decoration_size;
+//}
+
+void TextAreaBox::update_text_edit_width() {
+  if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+    m_text_edit->setFixedWidth(width() -
+      m_scroll_box->get_vertical_scroll_bar().width());
+  } else {
+    m_text_edit->setFixedWidth(width());
   }
-  return decoration_size;
 }
 
-int TextAreaBox::get_text_length(const QString& text) {
-  return m_text_edit->fontMetrics().horizontalAdvance(text) +
-    m_text_edit->cursorWidth();
-}
-
-bool TextAreaBox::is_scroll_bar_visible() const {
-  return line_count() > visible_line_count();
-}
-
-int TextAreaBox::line_count() const {
-  auto num = 0;
-  for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
-    auto block = m_text_edit->document()->findBlockByNumber(i);
-    if(block.isValid()) {
-      num += block.layout()->lineCount();
-    }
-  }
-  return std::max(1, num);
-}
-
-void TextAreaBox::update_text_width() {
-  auto scroll_bar_width = [&] {
-    if(is_scroll_bar_visible()) {
-      return scale_width(15);
-    }
-    return 0;
-  }();
-  m_text_edit->document()->setTextWidth(std::min(width() - 2,
-    m_longest_line_length) + m_text_edit->cursorWidth() - scroll_bar_width);
-  updateGeometry();
-}
-
-int TextAreaBox::visible_line_count() const {
-  return height() / m_line_height;
-}
-
-void TextAreaBox::on_contents_changed(int position, int removed, int added) {
-  auto block = m_text_edit->document()->findBlock(position);
-  if(block.isValid()) {
-    auto line_length = get_text_length(block.text());
-    if(line_length > m_longest_line_length) {
-      m_longest_line_length = line_length;
-      m_longest_line_block = block.blockNumber();
-    } else if(block.blockNumber() == m_longest_line_block) {
-      m_longest_line_length = 0;
-      m_longest_line_block = 0;
-      for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
-        auto block = m_text_edit->document()->findBlockByNumber(i);
-        if(block.isValid()) {
-          if(get_text_length(block.text()) > m_longest_line_length) {
-            m_longest_line_length = get_text_length(block.text());
-            m_longest_line_block = block.blockNumber();
-          }
-        }
-      }
-    }
-  }
-  update_text_width();
-}
-
-void TextAreaBox::on_current(const QString& current) {
-
-}
+//void TextAreaBox::on_contents_changed(int position, int removed, int added) {
+//  auto block = m_text_edit->document()->findBlock(position);
+//  if(block.isValid()) {
+//    auto line_length = get_text_length(block.text());
+//    if(line_length > m_longest_line_length) {
+//      m_longest_line_length = line_length;
+//      m_longest_line_block = block.blockNumber();
+//    } else if(block.blockNumber() == m_longest_line_block) {
+//      m_longest_line_length = 0;
+//      m_longest_line_block = 0;
+//      for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
+//        auto block = m_text_edit->document()->findBlockByNumber(i);
+//        if(block.isValid()) {
+//          if(get_text_length(block.text()) > m_longest_line_length) {
+//            m_longest_line_length = get_text_length(block.text());
+//            m_longest_line_block = block.blockNumber();
+//          }
+//        }
+//      }
+//    }
+//  }
+//  update_text_width();
+//}
 
 void TextAreaBox::on_cursor_position() {
-  auto top = m_text_edit->visibleRegion().boundingRect().top();
-  auto bottom = m_text_edit->visibleRegion().boundingRect().bottom();
   if(m_scroll_box->get_vertical_scroll_bar().isVisible() &&
       !m_text_edit->visibleRegion().boundingRect().contains(
         m_text_edit->cursorRect())) {
+    auto top = m_text_edit->visibleRegion().boundingRect().top();
+    auto bottom = m_text_edit->visibleRegion().boundingRect().bottom();
     if(m_text_edit->cursorRect().top() <= top) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
         m_text_edit->cursorRect().top() - scale_height(8));
@@ -320,11 +281,6 @@ void TextAreaBox::on_cursor_position() {
         scale_height(8));
     }
   }
-}
-
-void TextAreaBox::on_document_size(const QSizeF& size) {
-  m_text_edit->setFixedSize(size.toSize());
-  updateGeometry();
 }
 
 void TextAreaBox::on_style() {
@@ -361,4 +317,11 @@ void TextAreaBox::on_style() {
         });
     }
   });
+}
+
+void TextAreaBox::on_text_changed() {
+  updateGeometry();
+  m_scroll_box->updateGeometry();
+  m_text_edit->adjustSize();
+  update_text_edit_width();
 }

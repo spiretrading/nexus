@@ -12,6 +12,8 @@
 
 #include <QAbstractTextDocumentLayout>
 #include <QTextBlock>
+#include <QScrollArea>
+#include <QScrollBar>
 
 namespace Spire {
 namespace Styles {
@@ -46,10 +48,93 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
 
     private:
+      class ContentSizedTextEdit : public QTextEdit {
+        public:
+          explicit ContentSizedTextEdit(QWidget* parent = nullptr)
+              : QTextEdit(parent) {
+            setLineWrapMode(QTextEdit::WidgetWidth);
+            setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            document()->setDocumentMargin(0);
+            setFrameShape(QFrame::NoFrame);
+            connect(
+              this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
+            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            setStyleSheet(R"(
+              QTextEdit {
+                padding: 7px 8px 7px 8px;
+              })");
+          }
+
+          explicit ContentSizedTextEdit(
+              const QString& text, QWidget* parent = nullptr)
+              : ContentSizedTextEdit(parent) {
+            setText(text);
+          }
+
+          void set_read_only(bool read_only) {
+            if(read_only != isReadOnly()) {
+              setReadOnly(read_only);
+              updateGeometry();
+            }
+          }
+
+          QSize sizeHint() const override {
+            auto margins = contentsMargins();
+            auto desired_size = QSize(get_longest_line(),
+              document()->size().toSize().height());
+            //qDebug() << "des. size: " << desired_size;
+            //qDebug() << "cur. size: " << size();
+            auto size = desired_size + QSize(//document()->size().toSize() + QSize(
+              margins.left() + margins.right(), margins.top() + margins.bottom());
+            //qDebug() << "doc size: " << size;
+            if(!isReadOnly()) {
+              size.rwidth() += cursorWidth();
+            }
+            //qDebug() << "sh: " << size;
+            //qDebug() << "size: " << this->size();
+            return size;
+          }
+
+          QSize minimumSizeHint() const override {
+            return QSize();
+          }
+
+        private:
+          void on_text_changed() {
+            updateGeometry();
+          }
+
+          int get_longest_line() const {
+            auto longest = 0;
+            for(auto i = 0; i < document()->blockCount(); ++i) {
+              auto block = document()->findBlockByNumber(i);
+              if(block.isValid()) {
+                longest = std::max(longest,
+                  fontMetrics().horizontalAdvance(block.text()));
+              }
+            }
+            return longest;
+          }
+
+          int get_text_height() const {
+            auto text_height = 0;
+            for(auto i = 0; i < document()->blockCount(); ++i) {
+              auto block = document()->findBlockByNumber(i);
+              if(block.isValid()) {
+                auto length = fontMetrics().horizontalAdvance(block.text());
+                auto a = static_cast<int>(std::ceil(
+                  static_cast<double>(length) / static_cast<double>(width())));
+                text_height += a * 13;
+              }
+            }
+            return std::max(13, text_height);
+          }
+      };
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
         boost::optional<Qt::Alignment> m_alignment;
@@ -61,7 +146,7 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TextModel> m_model;
-      QTextEdit* m_text_edit;
+      ContentSizedTextEdit* m_text_edit;
       ScrollBox* m_scroll_box;
       StyleProperties m_text_edit_styles;
       boost::signals2::scoped_connection m_current_connection;
@@ -71,17 +156,12 @@ namespace Styles {
       int m_line_height;
 
       void commit_style();
-      QSize compute_decoration_size() const;
-      int get_text_length(const QString& text);
-      bool is_scroll_bar_visible() const;
-      int line_count() const;
-      void update_text_width();
-      int visible_line_count() const;
-      void on_contents_changed(int position, int removed, int added);
-      void on_current(const QString& current);
+      //QSize compute_decoration_size() const;
+      //void on_current(const QString& current);
+      void update_text_edit_width();
       void on_cursor_position();
-      void on_document_size(const QSizeF& size);
       void on_style();
+      void on_text_changed();
   };
 }
 
