@@ -155,11 +155,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
     case Qt::Key_PageUp:
-      jump_move(0, true, true);
+      jump_move(0, true);
       break;
     case Qt::Key_End:
     case Qt::Key_PageDown:
-      jump_move(m_list_model->get_size() - 1, false, true);
+      jump_move(m_list_model->get_size() - 1, false);
       break;
     case Qt::Key_Down:
       if(m_direction == Qt::Vertical) {
@@ -437,15 +437,15 @@ bool ListView::move(int index, bool is_next, bool track_move) {
   return true;
 }
 
-void ListView::jump_move(int index, bool is_next, bool track_move) {
+void ListView::jump_move(int index, bool is_next) {
   if(!m_items[index].m_item->isEnabled()) {
     if(is_next) {
-      move_next(index, track_move);
+      move_next(index, true);
     } else {
-      move_previous(index, track_move);
+      move_previous(index, true);
     }
   } else {
-    update_current(index, track_move);
+    update_current(index, true);
   }
 }
 
@@ -631,7 +631,7 @@ void ListView::update_after_items_changed() {
   }();
   m_current_index = index;
   if(m_current_index >= 0) {
-    jump_move(m_current_index, is_next, true);
+    jump_move(m_current_index, is_next);
   }
   update_layout();
 }

@@ -234,7 +234,7 @@ namespace Styles {
       bool move_next(int index, bool track_move);
       bool move_previous(int index, bool track_move);
       bool move(int index, bool is_next, bool track_move);
-      void jump_move(int index, bool is_next, bool track_move);
+      void jump_move(int index, bool is_next);
       void on_current(const boost::optional<std::any>& current);
       void on_selection(const boost::optional<std::any>& selection);
       void on_operation(const ListModel::Operation& operation);
