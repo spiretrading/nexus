@@ -329,7 +329,7 @@ void ListView::cross_move(int position, int index, bool is_next,
   if(is_column_or_row_disabled(target, 0, target->count())) {
     cross_move(position, index, is_next, track_move);
   } else {
-    if(target_changed(target, is_next, track_move)) {
+    if(target_changed(target, false, track_move)) {
       update_column_row_index();
       update_position(position);
     }
@@ -375,9 +375,7 @@ bool ListView::target_changed(QLayout* target, bool is_next, bool track_move) {
       }
     }
   }
-  if(is_next && is_column_or_row_disabled(target, index, target->count())) {
-    is_next = false;
-  } else if(!is_next && is_column_or_row_disabled(target, 0, index + 1)) {
+  if(is_column_or_row_disabled(target, 0, index + 1)) {
     is_next = true;
   }
   auto item = target->itemAt(index)->widget();
