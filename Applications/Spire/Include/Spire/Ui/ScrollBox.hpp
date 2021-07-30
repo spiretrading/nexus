@@ -76,7 +76,6 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
-      virtual void update_ranges();
 
     private:
       QWidget* m_body;
@@ -87,6 +86,7 @@ namespace Spire {
 
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
+      void update_ranges();
   };
 }
 

@@ -116,6 +116,14 @@ void ScrollBox::wheelEvent(QWheelEvent* event) {
   m_scrollable_layer->wheelEvent(event);
 }
 
+void ScrollBox::on_vertical_scroll(int position) {
+  m_body->move(m_body->pos().x(), -position);
+}
+
+void ScrollBox::on_horizontal_scroll(int position) {
+  m_body->move(-position, m_body->pos().y());
+}
+
 void ScrollBox::update_ranges() {
   auto get_bar_width = [&] {
     if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
@@ -158,14 +166,6 @@ void ScrollBox::update_ranges() {
     0, horizontal_range);
   m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
     new_size.width());
-}
-
-void ScrollBox::on_vertical_scroll(int position) {
-  m_body->move(m_body->pos().x(), -position);
-}
-
-void ScrollBox::on_horizontal_scroll(int position) {
-  m_body->move(-position, m_body->pos().y());
 }
 
 std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
