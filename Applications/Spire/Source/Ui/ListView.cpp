@@ -155,63 +155,39 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
     case Qt::Key_PageUp:
-      update_current(0);
+      jump_move(0, true, true);
       break;
     case Qt::Key_End:
     case Qt::Key_PageDown:
-      update_current(m_list_model->get_size() - 1);
+      jump_move(m_list_model->get_size() - 1, false, true);
       break;
     case Qt::Key_Down:
-      if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-        auto row_height =
-          get_column_or_row(m_column_or_row_index)->geometry().height();
-        if(m_tracking_position.y() + row_height <
-            get_column_or_row(get_layout()->count() - 2)->geometry().bottom()) {
-          m_tracking_position.setY(m_tracking_position.y() + row_height +
-            get_column_or_row(m_column_or_row_index + 1)->geometry().height());
-          cross_move(true);
-          break;
-        }
+      if(m_direction == Qt::Vertical) {
+        move_next(m_current_index, true);
+      } else if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
+        cross_move(m_tracking_position.y(), m_column_or_row_index, true, false);
       }
-      update_current(move_next());
       break;
     case Qt::Key_Up:
-      if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-        if(m_tracking_position.y() != rect().y()) {
-          m_tracking_position.setY(m_tracking_position.y() -
-            get_column_or_row(m_column_or_row_index - 2)->geometry().height() -
-            get_column_or_row(m_column_or_row_index - 1)->geometry().height());
-          cross_move(false);
-          break;
-        }
+      if(m_direction == Qt::Vertical) {
+        move_previous(m_current_index, true);
+      } else if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
+        cross_move(m_tracking_position.y(), m_column_or_row_index, false, false);
       }
-      update_current(move_previous());
       break;
     case Qt::Key_Left:
-      if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-        if(m_tracking_position.x() != rect().x()) {
-          m_tracking_position.setX(m_tracking_position.x() -
-            get_column_or_row(m_column_or_row_index - 2)->geometry().width() -
-            get_column_or_row(m_column_or_row_index - 1)->geometry().width());
-          cross_move(false);
-          break;
-        }
+      if(m_direction == Qt::Horizontal) {
+        move_previous(m_current_index, true);
+      } else if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
+        cross_move(m_tracking_position.x(), m_column_or_row_index, false, false);
       }
-      update_current(move_previous());
       break;
     case Qt::Key_Right:
-      if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-        auto column_width =
-          get_column_or_row(m_column_or_row_index)->geometry().width();
-        if(m_tracking_position.x() + column_width <
-            get_column_or_row(get_layout()->count() - 2)->geometry().right()) {
-          m_tracking_position.setX(m_tracking_position.x() + column_width +
-            get_column_or_row(m_column_or_row_index + 1)->geometry().width());
-          cross_move(true);
-          break;
-        }
+      if(m_direction == Qt::Horizontal) {
+        move_next(m_current_index, true);
+      } else if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
+        cross_move(m_tracking_position.x(), m_column_or_row_index, true, false);
       }
-      update_current(move_next());
       break;
     default:
       auto key = std::move(event->text());
@@ -277,6 +253,15 @@ QLayoutItem* ListView::get_column_or_row(int index) {
   return get_layout()->itemAt(index);
 }
 
+bool ListView::is_column_or_row_disabled(QLayout* target, int begin, int end) {
+  for(auto i = begin; i < end; i += 2) {
+    if(target->itemAt(i)->widget()->isEnabled()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void ListView::select_item(const boost::optional<std::any>& selection) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     if(selection && m_list_model->at(i).type() == selection->type() &&
@@ -288,34 +273,89 @@ void ListView::select_item(const boost::optional<std::any>& selection) {
   }
 }
 
-void ListView::cross_move(bool is_next) {
-  m_column_or_row_index = [=] {
-    if(is_next) {
-      return m_column_or_row_index + 2;
-    } else {
-      return m_column_or_row_index - 2;
-    }
-  }();
-  auto target = get_column_or_row(m_column_or_row_index)->layout();
-  auto [v0, min_value] = [&] () -> std::tuple<int, int> {
+void ListView::cross_move(int position, int index, bool is_next,
+    bool track_move) {
+  auto update_position = [&] (int position) {
     if(m_direction == Qt::Vertical) {
-      return {m_tracking_position.y(),
-        std::abs(target->itemAt(0)->geometry().bottom() -
-          m_tracking_position.y())};
+      m_tracking_position.setX(position);
     } else {
-      return {m_tracking_position.x(),
+      m_tracking_position.setY(position);
+    }
+  };
+  if(is_next) {
+    auto [span, cross_dim] = [&] {
+      if(m_direction == Qt::Vertical) {
+        return std::make_tuple(
+          get_column_or_row(index)->geometry().width(),
+          get_column_or_row(get_layout()->count() - 2)->geometry().right());
+      }
+      return std::make_tuple(
+        get_column_or_row(index)->geometry().height(),
+        get_column_or_row(get_layout()->count() - 2)->geometry().bottom());
+    }();
+    if(position + span < cross_dim) {
+      auto overflow_gap = [&] {
+        if(m_direction == Qt::Vertical) {
+          return get_column_or_row(index + 1)->geometry().width();
+        }
+        return get_column_or_row(index + 1)->geometry().height();
+      }();
+      position += span + overflow_gap;
+      index += 2;
+    } else {
+      move_next(m_current_index, true);
+      return;
+    }
+  } else {
+    if(position != 0) {
+      auto [pre_span, overflow_gap] = [&] {
+        if(m_direction == Qt::Vertical) {
+          return std::make_tuple(
+            get_column_or_row(index - 2)->geometry().width(),
+            get_column_or_row(index - 1)->geometry().width());
+        }
+        return std::make_tuple(
+          get_column_or_row(index - 2)->geometry().height(),
+          get_column_or_row(index - 1)->geometry().height());
+      }();
+      position -= pre_span + overflow_gap;
+      index -= 2;
+    } else {
+      move_previous(m_current_index, true);
+      return;
+    }
+  }
+  auto target = get_column_or_row(index)->layout();
+  if(is_column_or_row_disabled(target, 0, target->count())) {
+    cross_move(position, index, is_next, track_move);
+  } else {
+    if(target_changed(target, is_next, track_move)) {
+      update_column_row_index();
+      update_position(position);
+    }
+  }
+}
+
+bool ListView::target_changed(QLayout* target, bool is_next, bool track_move) {
+  auto [v0, min_value] = [&] () {
+    if(m_direction == Qt::Vertical) {
+      return std::make_tuple(m_tracking_position.y(),
+        std::abs(target->itemAt(0)->geometry().bottom() -
+          m_tracking_position.y()));
+    } else {
+      return std::make_tuple(m_tracking_position.x(),
         std::abs(target->itemAt(0)->geometry().right() -
-          m_tracking_position.x())};
+          m_tracking_position.x()));
     }
   }();
   auto index = 0;
   for(auto i = 0; i < target->count(); i += 2) {
-    auto [v1, v2] = [&] () -> std::tuple<int, int> {
+    auto [v1, v2] = [&] () {
       auto item_geometry = target->itemAt(i)->geometry();
       if(m_direction == Qt::Vertical) {
-        return {item_geometry.top(), item_geometry.bottom()};
+        return std::make_tuple(item_geometry.top(), item_geometry.bottom());
       } else {
-        return {item_geometry.left(), item_geometry.right()};
+        return std::make_tuple(item_geometry.left(), item_geometry.right());
       }
     }();
     if(v0 >= v1 && v0 <= v2) {
@@ -335,32 +375,80 @@ void ListView::cross_move(bool is_next) {
       }
     }
   }
+  if(is_next && is_column_or_row_disabled(target, index, target->count())) {
+    is_next = false;
+  } else if(!is_next && is_column_or_row_disabled(target, 0, index + 1)) {
+    is_next = true;
+  }
   auto item = target->itemAt(index)->widget();
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     if(item == m_items[i].m_item) {
-      update_current(i, false);
-      break;
+      return move(i, is_next, false);
     }
   }
+  return false;
 }
 
-int ListView::move_next() {
-  if(m_navigation == EdgeNavigation::CONTAIN) {
-    return std::min(m_current_index + 1, m_list_model->get_size() - 1);
-  } else {
-    return (m_current_index + 1) % m_list_model->get_size();
-  }
-}
-
-int ListView::move_previous() {
-  if(m_navigation == EdgeNavigation::CONTAIN) {
-    return std::max(m_current_index - 1, 0);
-  } else {
-    auto index = (m_current_index - 1) % m_list_model->get_size();
-    if(index < 0) {
-      index = m_list_model->get_size() - 1;
+bool ListView::move_next(int index, bool track_move) {
+  auto next_index = [=] {
+    if(m_navigation == EdgeNavigation::CONTAIN) {
+      return std::min(index + 1, m_list_model->get_size() - 1);
+    } else {
+      return (index + 1) % m_list_model->get_size();
     }
-    return index;
+  }();
+  if(index == next_index) {
+    return false;
+  }
+  return move(next_index, true, track_move);
+}
+
+bool ListView::move_previous(int index, bool track_move) {
+  auto previous_index = [=] {
+    if(m_navigation == EdgeNavigation::CONTAIN) {
+      return std::max(index - 1, 0);
+    } else {
+      auto new_index = (index - 1) % m_list_model->get_size();
+      if(new_index < 0) {
+        new_index = m_list_model->get_size() - 1;
+      }
+      return new_index;
+    }
+  }();
+  if(index == previous_index) {
+    return false;
+  }
+  return move(previous_index, false, track_move);
+}
+
+bool ListView::move(int index, bool is_next, bool track_move) {
+  if(!m_items[index].m_item->isEnabled()) {
+    if(m_navigation == EdgeNavigation::WRAP ||
+        !((index == 0 && !is_next) ||
+        (index == m_list_model->get_size() - 1 && is_next))) {
+      if(is_next) {
+        return move_next(index, track_move);
+      } else {
+        return move_previous(index, track_move);
+      }
+    } else {
+      return false;
+    }
+  } else {
+    update_current(index, track_move);
+  }
+  return true;
+}
+
+void ListView::jump_move(int index, bool is_next, bool track_move) {
+  if(!m_items[index].m_item->isEnabled()) {
+    if(is_next) {
+      move_next(index, track_move);
+    } else {
+      move_previous(index, track_move);
+    }
+  } else {
+    update_current(index, track_move);
   }
 }
 
@@ -404,6 +492,9 @@ void ListView::on_delete_item(int index) {
 }
 
 void ListView::update_column_row_index() {
+  if(m_current_index == -1) {
+    return;
+  }
   m_column_or_row_index = -1;
   if(auto layout = get_layout()) {
     for(auto i = 0; i < layout->count(); i += 2) {
@@ -534,16 +625,18 @@ void ListView::update_current(int index, bool is_update_x_y) {
   }
 }
 
-void ListView::update_current(int index) {
-  update_current(index, true);
-}
-
 void ListView::update_after_items_changed() {
-  if(m_current_index >= m_list_model->get_size()) {
-    m_current_index = m_list_model->get_size() - 1;
+  auto [index, is_next] = [=] {
+    if(m_current_index >= m_list_model->get_size() - 1) {
+      return std::make_tuple(m_list_model->get_size() - 1, false);
+    }
+    return std::make_tuple(m_current_index, true);
+  }();
+  m_current_index = index;
+  if(m_current_index >= 0) {
+    jump_move(m_current_index, is_next, true);
   }
   update_layout();
-  update_current(m_current_index);
 }
 
 void ListView::update_selection(const optional<std::any>& selection) {
@@ -570,8 +663,8 @@ void ListView::query() {
   auto count = 0;
   while(count < item_count) {
     if(auto value = displayTextAny(m_list_model->at(index)).toLower();
-        value.startsWith(query)) {
-      update_current(index);
+        value.startsWith(query) && m_items[index].m_item->isEnabled()) {
+      update_current(index, true);
       break;
     }
     index = (index + 1) % item_count;

@@ -879,8 +879,10 @@ UiProfile Spire::make_list_view_profile() {
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
-  properties.push_back(make_standard_property("change_item_index", 0));
+  properties.push_back(make_standard_property("change_item_index", -1));
   properties.push_back(make_standard_property("select_item", 0));
+  properties.push_back(make_standard_property("disable_item", -1));
+  properties.push_back(make_standard_property("enable_item", -1));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
@@ -1008,6 +1010,25 @@ UiProfile Spire::make_list_view_profile() {
         if(index >= 0 && index < list_model->get_size()) {
           list_view->get_selection_model()->set_current(list_model->at(index));
         }
+      });
+      auto& disable_item = get<int>("disable_item", profile.get_properties());
+      disable_item.connect_changed_signal([=] (auto value) {
+        if(value < 0 || value >= list_model->get_size()) {
+          return;
+        }
+        auto item = list_view->get_list_item(list_model->at(value));
+        auto style = get_style(*item);
+        style.get(Disabled() >> is_a<TextBox>()).
+          set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+        set_style(*item, std::move(style));
+        item->setDisabled(true);
+      });
+      auto& enable_item = get<int>("enable_item", profile.get_properties());
+      enable_item.connect_changed_signal([=] (auto value) {
+        if(value < 0 || value >= list_model->get_size()) {
+          return;
+        }
+        list_view->get_list_item(list_model->at(value))->setDisabled(false);
       });
       list_view->get_current_model()->connect_current_signal(
         profile.make_event_slot<optional<std::any>>(

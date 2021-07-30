@@ -227,10 +227,14 @@ namespace Styles {
       int get_index_by_value(const std::any& value) const;
       QLayout* get_layout();
       QLayoutItem* get_column_or_row(int index);
+      bool is_column_or_row_disabled(QLayout* target, int begin, int end);
       void select_item(const boost::optional<std::any>& selection);
-      void cross_move(bool is_next);
-      int move_next();
-      int move_previous();
+      void cross_move(int position, int index, bool is_next, bool track_move);
+      bool target_changed(QLayout* target, bool is_next, bool track_move);
+      bool move_next(int index, bool track_move);
+      bool move_previous(int index, bool track_move);
+      bool move(int index, bool is_next, bool track_move);
+      void jump_move(int index, bool is_next, bool track_move);
       void on_current(const boost::optional<std::any>& current);
       void on_selection(const boost::optional<std::any>& selection);
       void on_operation(const ListModel::Operation& operation);
@@ -240,7 +244,6 @@ namespace Styles {
       void update_layout();
       void update_tracking_position();
       void update_current(int index, bool is_update_x_y);
-      void update_current(int index);
       void update_after_items_changed();
       void update_selection(const boost::optional<std::any>& selection);
       void query();
