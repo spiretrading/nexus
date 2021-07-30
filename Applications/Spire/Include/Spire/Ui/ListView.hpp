@@ -186,6 +186,11 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       struct BodyContainer;
       mutable SubmitSignal m_submit_signal;
@@ -199,9 +204,13 @@ namespace Styles {
       SelectionMode m_selection_mode;
       bool m_does_selection_follow_focus;
       std::vector<ListItem*> m_list_items;
+      Box* m_box;
       BodyContainer* m_container;
+      int m_item_gap;
+      int m_overflow_gap;
 
       void update_layout();
+      void on_style();
   };
 }
 

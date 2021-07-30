@@ -5,7 +5,9 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -17,7 +19,14 @@ namespace {
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
 
   QWidget* default_view_builder(const ArrayListModel& model, int index) {
-    return nullptr;
+    return make_label(displayTextAny(model.at(index)));
+  }
+
+  auto reverse(QBoxLayout::Direction direction) {
+    if(direction == QBoxLayout::TopToBottom) {
+      return QBoxLayout::LeftToRight;
+    }
+    return QBoxLayout::TopToBottom;
   }
 
   auto DEFAULT_STYLE() {
@@ -34,7 +43,9 @@ struct ListView::BodyContainer : QWidget {
 
   BodyContainer()
       : m_body(new QWidget(this)) {
-    m_body->setLayout(new QBoxLayout(QBoxLayout::TopToBottom));
+    auto layout = new QBoxLayout(QBoxLayout::LeftToRight);
+    layout->setContentsMargins({});
+    m_body->setLayout(layout);
   }
 
   QBoxLayout& get_layout() {
@@ -79,17 +90,25 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
-      m_does_selection_follow_focus(true) {
+      m_does_selection_follow_focus(true),
+      m_item_gap(DEFAULT_GAP),
+      m_overflow_gap(DEFAULT_OVERFLOW_GAP) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    m_list_items.push_back(new ListItem(m_view_builder(*m_list_model, i)));
+    auto item = new ListItem(m_view_builder(*m_list_model, i));
+    m_list_items.push_back(item);
   }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   m_container = new BodyContainer();
-  layout->addWidget(new Box(m_container));
+  m_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_box = new Box(m_container);
+  layout->addWidget(m_box);
   setLayout(layout);
   set_style(*this, DEFAULT_STYLE());
+  m_container->installEventFilter(this);
   update_layout();
+  proxy_style(*this, *m_box);
+  connect_style_signal(*this, [=] { on_style(); });
 }
 
 const std::shared_ptr<ArrayListModel>& ListView::get_list_model() const {
@@ -131,7 +150,11 @@ ListView::Overflow ListView::get_overflow() const {
 }
 
 void ListView::set_overflow(Overflow overflow) {
+  if(overflow == m_overflow) {
+    return;
+  }
   m_overflow = overflow;
+  update_layout();
 }
 
 ListView::SelectionMode ListView::get_selection_mode() const {
@@ -155,29 +178,98 @@ connection ListView::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+QSize ListView::sizeHint() const {
+  return m_container->m_body->size() + m_box->size() - m_container->size();
+}
+
+bool ListView::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    update_layout();
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 void ListView::update_layout() {
   auto& body_layout = m_container->get_layout();
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
   }
-  auto [direction, reverse_direction] = [&] {
+  auto direction = [&] {
     if(m_direction == Qt::Orientation::Vertical) {
-      return std::tuple(QBoxLayout::TopToBottom, QBoxLayout::LeftToRight);
+      return QBoxLayout::LeftToRight;
     }
-    return std::tuple(QBoxLayout::LeftToRight, QBoxLayout::TopToBottom);
+    return QBoxLayout::TopToBottom;
   }();
   body_layout.setDirection(direction);
-  for(auto item : m_list_items) {
-    auto item_layout = new QBoxLayout(reverse_direction);
-    if(m_direction == Qt::Orientation::Horizontal) {
-      item_layout->addSpacerItem(
-        new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding));
+  body_layout.setSpacing(m_overflow_gap);
+  auto max_size = [&] {
+    if(m_overflow == Overflow::NONE) {
+      return QWIDGETSIZE_MAX;
+    } else if(m_direction == Qt::Orientation::Vertical) {
+      return m_container->height();
     }
-    item_layout->addWidget(item);
-    if(m_direction == Qt::Orientation::Vertical) {
-      item_layout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
+    return m_container->width();
+  }();
+  auto i = m_list_items.begin();
+  while(i != m_list_items.end()) {
+    auto remaining_size = max_size;
+    auto inner_layout = new QBoxLayout(reverse(direction));
+    inner_layout->setContentsMargins({});
+    inner_layout->setSpacing(m_item_gap);
+    while(i != m_list_items.end()) {
+      auto item_size = [&] {
+        if(m_direction == Qt::Orientation::Vertical) {
+          return (*i)->height();
+        } else {
+          return (*i)->width();
+        }
+      }();
+      remaining_size -= item_size;
+      if(remaining_size < 0 && remaining_size + item_size != max_size) {
+        break;
+      }
+      remaining_size -= inner_layout->spacing();
+      auto item_layout = new QBoxLayout(direction);
+      item_layout->setContentsMargins({});
+      if(m_direction == Qt::Orientation::Horizontal) {
+        item_layout->addSpacerItem(
+          new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+      }
+      item_layout->addWidget(*i);
+      if(m_direction == Qt::Orientation::Vertical) {
+        item_layout->addSpacerItem(
+          new QSpacerItem(0, 0, QSizePolicy::Expanding));
+      }
+      inner_layout->addLayout(item_layout);
+      ++i;
     }
-    body_layout.addLayout(item_layout);
+    inner_layout->addSpacerItem(
+      new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+    body_layout.addLayout(inner_layout);
   }
   m_container->m_body->adjustSize();
+  updateGeometry();
+}
+
+void ListView::on_style() {
+  auto& stylist = find_stylist(*this);
+  auto has_update = std::make_shared<bool>(false);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const ListItemGap& gap) {
+        stylist.evaluate(gap, [=] (auto gap) {
+          m_item_gap = gap;
+          *has_update = true;
+        });
+      },
+      [&] (const ListOverflowGap& gap) {
+        stylist.evaluate(gap, [=] (auto gap) {
+          m_overflow_gap = gap;
+          *has_update = true;
+        });
+      });
+  }
+  if(has_update) {
+    update_layout();
+  }
 }
