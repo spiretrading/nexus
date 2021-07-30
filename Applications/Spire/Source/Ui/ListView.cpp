@@ -165,28 +165,28 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_direction == Qt::Vertical) {
         move_next(m_current_index, true);
       } else if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-        cross_move(m_tracking_position.y(), m_column_or_row_index, true, false);
+        cross_move(m_tracking_position.y(), m_column_or_row_index, true);
       }
       break;
     case Qt::Key_Up:
       if(m_direction == Qt::Vertical) {
         move_previous(m_current_index, true);
       } else if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
-        cross_move(m_tracking_position.y(), m_column_or_row_index, false, false);
+        cross_move(m_tracking_position.y(), m_column_or_row_index, false);
       }
       break;
     case Qt::Key_Left:
       if(m_direction == Qt::Horizontal) {
         move_previous(m_current_index, true);
       } else if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-        cross_move(m_tracking_position.x(), m_column_or_row_index, false, false);
+        cross_move(m_tracking_position.x(), m_column_or_row_index, false);
       }
       break;
     case Qt::Key_Right:
       if(m_direction == Qt::Horizontal) {
         move_next(m_current_index, true);
       } else if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
-        cross_move(m_tracking_position.x(), m_column_or_row_index, true, false);
+        cross_move(m_tracking_position.x(), m_column_or_row_index, true);
       }
       break;
     default:
@@ -273,8 +273,7 @@ void ListView::select_item(const boost::optional<std::any>& selection) {
   }
 }
 
-void ListView::cross_move(int position, int index, bool is_next,
-    bool track_move) {
+void ListView::cross_move(int position, int index, bool is_next) {
   auto update_position = [&] (int position) {
     if(m_direction == Qt::Vertical) {
       m_tracking_position.setX(position);
@@ -327,16 +326,16 @@ void ListView::cross_move(int position, int index, bool is_next,
   }
   auto target = get_column_or_row(index)->layout();
   if(is_column_or_row_disabled(target, 0, target->count())) {
-    cross_move(position, index, is_next, track_move);
+    cross_move(position, index, is_next);
   } else {
-    if(target_changed(target, false, track_move)) {
+    if(target_changed(target, false)) {
       update_column_row_index();
       update_position(position);
     }
   }
 }
 
-bool ListView::target_changed(QLayout* target, bool is_next, bool track_move) {
+bool ListView::target_changed(QLayout* target, bool is_next) {
   auto [v0, min_value] = [&] () {
     if(m_direction == Qt::Vertical) {
       return std::make_tuple(m_tracking_position.y(),

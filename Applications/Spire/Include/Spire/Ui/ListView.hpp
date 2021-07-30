@@ -229,8 +229,8 @@ namespace Styles {
       QLayoutItem* get_column_or_row(int index);
       bool is_column_or_row_disabled(QLayout* target, int begin, int end);
       void select_item(const boost::optional<std::any>& selection);
-      void cross_move(int position, int index, bool is_next, bool track_move);
-      bool target_changed(QLayout* target, bool is_next, bool track_move);
+      void cross_move(int position, int index, bool is_next);
+      bool target_changed(QLayout* target, bool is_next);
       bool move_next(int index, bool track_move);
       bool move_previous(int index, bool track_move);
       bool move(int index, bool is_next, bool track_move);
