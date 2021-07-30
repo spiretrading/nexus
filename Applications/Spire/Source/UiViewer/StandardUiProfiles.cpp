@@ -1293,6 +1293,12 @@ UiProfile Spire::make_text_area_box_profile() {
       current.connect_changed_signal([=] (const auto& value) {
         text_area_box->get_model()->set_current(value);
       });
+      text_area_box->get_model()->connect_current_signal(
+        [&] (const auto& value) {
+          if(current.get() != value) {
+            current.set(value);
+          }
+        });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_area_box->set_read_only(is_read_only);
@@ -1321,6 +1327,8 @@ UiProfile Spire::make_text_area_box_profile() {
         });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
+      text_area_box->get_model()->connect_current_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       return text_area_box;
     });
   return profile;
