@@ -38,6 +38,9 @@ namespace Styles {
 
       const QString& get_submission() const;
 
+      /** Sets the placeholder value. */
+      void set_placeholder(const QString& value);
+
       bool is_read_only() const;
 
       void set_read_only(bool read_only);
@@ -48,6 +51,7 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
+      void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
 
@@ -87,16 +91,12 @@ namespace Styles {
             auto margins = contentsMargins();
             auto desired_size = QSize(get_longest_line(),
               document()->size().toSize().height());
-            //qDebug() << "des. size: " << desired_size;
-            //qDebug() << "cur. size: " << size();
-            auto size = desired_size + QSize(//document()->size().toSize() + QSize(
-              margins.left() + margins.right(), margins.top() + margins.bottom());
-            //qDebug() << "doc size: " << size;
+            auto size = desired_size + QSize(
+              margins.left() + margins.right(), margins.top() +
+              margins.bottom());
             if(!isReadOnly()) {
               size.rwidth() += cursorWidth();
             }
-            //qDebug() << "sh: " << size;
-            //qDebug() << "size: " << this->size();
             return size;
           }
 
@@ -120,20 +120,6 @@ namespace Styles {
             }
             return longest;
           }
-
-          int get_text_height() const {
-            auto text_height = 0;
-            for(auto i = 0; i < document()->blockCount(); ++i) {
-              auto block = document()->findBlockByNumber(i);
-              if(block.isValid()) {
-                auto length = fontMetrics().horizontalAdvance(block.text());
-                auto a = static_cast<int>(std::ceil(
-                  static_cast<double>(length) / static_cast<double>(width())));
-                text_height += a * 13;
-              }
-            }
-            return std::max(13, text_height);
-          }
       };
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
@@ -146,19 +132,26 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TextModel> m_model;
+      LayeredWidget* m_layers;
       ContentSizedTextEdit* m_text_edit;
-      ScrollBox* m_scroll_box;
       StyleProperties m_text_edit_styles;
+      QLabel* m_placeholder;
+      StyleProperties m_placeholder_styles;
+      ScrollBox* m_scroll_box;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
+      QString m_placeholder_text;
       int m_longest_line_length;
       int m_longest_line_block;
       int m_line_height;
 
+      void commit_placeholder_style();
       void commit_style();
-      //QSize compute_decoration_size() const;
-      //void on_current(const QString& current);
+      QSize compute_decoration_size() const;
+      bool is_placeholder_shown() const;
+      void update_placeholder_text();
       void update_text_edit_width();
+      void on_current(const QString& current);
       void on_cursor_position();
       void on_style();
       void on_text_changed();

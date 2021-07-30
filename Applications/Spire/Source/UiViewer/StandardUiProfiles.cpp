@@ -1299,7 +1299,7 @@ UiProfile Spire::make_text_area_box_profile() {
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& text) {
-        //text_area_box->set_placeholder(text);
+        text_area_box->set_placeholder(text);
       });
       auto& line_height = get<int>("line-height", profile.get_properties());
       line_height.connect_changed_signal(
