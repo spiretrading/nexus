@@ -32,14 +32,17 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
-    style.get(Any()).
+    style.get(+Any() >> is_a<Box>()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(LineHeight(1.25)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
-    style.get(Any() >> is_a<Box>()).
-      set(border_size(0));
+    style.get(Any() >> is_a<QTextEdit>()).
+      set(horizontal_padding(8)).
+      set(vertical_padding(7));
+    //style.get(Any() >> is_a<Box>()).
+    //  set(border_size(0));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
@@ -210,8 +213,7 @@ void TextAreaBox::commit_style() {
   auto stylesheet = QString(
     R"(QTextEdit {
       background: transparent;
-      border-width: 0px;
-      padding: 7px 8px 7px 8px;)");
+      border-width: 0px;)");
   m_text_edit_styles.m_styles.write(stylesheet);
   auto alignment = m_text_edit_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
@@ -381,10 +383,33 @@ void TextAreaBox::on_cursor_position() {
 void TextAreaBox::on_style() {
   auto& stylist = find_stylist(*this);
   auto block = stylist.get_computed_block();
+  auto& text_edit_stylist = find_stylist(*m_text_edit);
+  auto text_edit_block = text_edit_stylist.get_computed_block();
+  merge(block, text_edit_block);
   m_text_edit_styles.clear();
   m_text_edit_styles.m_styles.buffer([&] {
     for(auto& property : block) {
       property.visit(
+        [&] (const PaddingTop& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_text_edit_styles.m_styles.set("padding-top", size);
+          });
+        },
+        [&] (const PaddingRight& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_text_edit_styles.m_styles.set("padding-right", size);
+          });
+        },
+        [&] (const PaddingBottom& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_text_edit_styles.m_styles.set("padding-bottom", size);
+          });
+        },
+        [&] (const PaddingLeft& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_text_edit_styles.m_styles.set("padding-left", size);
+          });
+        },
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
             m_text_edit_styles.m_styles.set("color", color);

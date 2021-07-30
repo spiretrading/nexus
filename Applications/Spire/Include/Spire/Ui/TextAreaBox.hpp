@@ -123,6 +123,7 @@ namespace Styles {
       };
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
+        boost::optional<QMargins> m_padding;
         boost::optional<Qt::Alignment> m_alignment;
         boost::optional<QFont> m_font;
         boost::optional<int> m_size;
