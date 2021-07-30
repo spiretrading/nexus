@@ -32,7 +32,7 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
-    style.get(+Any() >> is_a<Box>()).
+    style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(LineHeight(1.25)).
@@ -41,13 +41,12 @@ namespace {
     style.get(Any() >> is_a<QTextEdit>()).
       set(horizontal_padding(8)).
       set(vertical_padding(7));
-    //style.get(Any() >> is_a<Box>()).
-    //  set(border_size(0));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+    style.get(ReadOnly() >> is_a<TextBox>()).
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
@@ -104,6 +103,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_scroll_box = new ScrollBox(m_layers, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  m_scroll_box->get_vertical_scroll_bar().adjustSize();
   m_scroll_box->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -320,13 +320,12 @@ void TextAreaBox::update_placeholder_text() {
 }
 
 void TextAreaBox::update_text_edit_width() {
-  if(m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+  if(m_text_edit->document()->size().toSize().height() + 14 > height() - 2 ||
+      m_scroll_box->get_vertical_scroll_bar().isVisible()) {
     m_text_edit->setFixedWidth(width() -
       m_scroll_box->get_vertical_scroll_bar().width());
-    //m_placeholder->setFixedWidth(m_text_edit->width());
   } else {
     m_text_edit->setFixedWidth(width());
-    //m_placeholder->setFixedWidth(m_text_edit->width());
   }
 }
 
@@ -358,8 +357,6 @@ void TextAreaBox::on_current(const QString& current) {
   if(m_text_edit->toPlainText() != current) {
     m_text_edit->setText(current);
   }
-  //update_display_text();
-  update_placeholder_text();
 }
 
 void TextAreaBox::on_cursor_position() {
@@ -407,6 +404,7 @@ void TextAreaBox::on_style() {
         },
         [&] (const PaddingLeft& size) {
           stylist.evaluate(size, [=] (auto size) {
+            qDebug() << "padding left: " << size;
             m_text_edit_styles.m_styles.set("padding-left", size);
           });
         },
@@ -469,9 +467,9 @@ void TextAreaBox::on_style() {
 
 void TextAreaBox::on_text_changed() {
   m_model->set_current(m_text_edit->toPlainText());
-  updateGeometry();
   m_scroll_box->updateGeometry();
-  m_text_edit->adjustSize();
+  //updateGeometry();
   m_layers->adjustSize();
-  m_placeholder->updateGeometry();
+  update_text_edit_width();
+  update_placeholder_text();
 }
