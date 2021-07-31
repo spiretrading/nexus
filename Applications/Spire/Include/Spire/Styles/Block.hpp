@@ -67,16 +67,18 @@ namespace Spire::Styles {
    * @param block The block to search.
    */
   template<typename T>
-  boost::optional<T> find(const Block& block) {
-    if constexpr(is_composite_property_v<T>) {
+  auto find(const Block& block) {
+    if constexpr(std::is_enum_v<T>) {
+      return find<EnumProperty<T>>(block);
+    } else if constexpr(is_composite_property_v<T>) {
       return find(block, std::in_place_type<T>);
     } else {
       for(auto& property : block) {
         if(property.get_type() == typeid(T)) {
-          return property.as<T>();
+          return boost::optional<T>(property.as<T>());
         }
       }
-      return boost::none;
+      return boost::optional<T>();
     }
   }
 

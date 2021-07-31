@@ -121,8 +121,7 @@ namespace {
       if(value) {
         style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
       } else {
-        style.get(Any() > is_a<Button>()).set(
-          Visibility(VisibilityOption::NONE));
+        style.get(Any() > is_a<Button>()).set(Visibility::NONE);
       }
       set_style(*box, std::move(style));
     });
@@ -456,8 +455,7 @@ UiProfile Spire::make_decimal_box_profile() {
         if(value) {
           style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
         } else {
-          style.get(Any() > is_a<Button>()).set(
-            Visibility(VisibilityOption::NONE));
+          style.get(Any() > is_a<Button>()).set(Visibility::NONE);
         }
         set_style(*decimal_box, std::move(style));
       });
