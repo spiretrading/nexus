@@ -40,13 +40,13 @@ namespace {
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
     style.get(Any() >> is_a<QTextEdit>()).
       set(horizontal_padding(8)).
-      set(vertical_padding(7));
+      set(vertical_padding(5));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
       set(border_color(QColor::fromRgb(0, 0, 0, 0)));
-    style.get(ReadOnly() >> is_a<TextBox>()).
+    style.get(ReadOnly() >> is_a<QTextEdit>()).
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
@@ -84,23 +84,29 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_submission(m_model->get_current()),
       m_longest_line_length(0),
       m_longest_line_block(0) {
-  m_layers = new LayeredWidget(this);
+  //m_layers = new LayeredWidget(this);
+  m_stacked_widget = new QStackedWidget(this);
   m_text_edit = new ContentSizedTextEdit(this);
+  m_stacked_widget->addWidget(m_text_edit);
   setFocusProxy(m_text_edit);
   connect(m_text_edit, &QTextEdit::textChanged, this,
     &TextAreaBox::on_text_changed);
-  m_layers->add(m_text_edit);
-  m_placeholder = new QLabel();
+  //m_layers->add(m_text_edit);
+  m_placeholder = new ElidedLabel("", this);
+  m_stacked_widget->addWidget(m_placeholder);
   m_placeholder->setCursor(m_text_edit->cursor());
-  m_placeholder->setTextFormat(Qt::PlainText);
-  m_placeholder->setWordWrap(true);
-  m_placeholder->setMargin(0);
-  m_placeholder->setIndent(0);
-  m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
-  m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //m_placeholder->setTextFormat(Qt::PlainText);
+  //m_placeholder->setWordWrap(true);
+  //m_placeholder->setMargin(0);
+  //m_placeholder->setIndent(0);
+  //m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
+  //m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_placeholder->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_layers->add(m_placeholder);
-  m_scroll_box = new ScrollBox(m_layers, this);
+  //m_layers->add(m_placeholder);
+  m_read_only_label = new ElidedLabel("", this);
+  m_read_only_label->hide();
+  m_stacked_widget->addWidget(m_read_only_label);
+  m_scroll_box = new ScrollBox(m_stacked_widget, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->get_vertical_scroll_bar().adjustSize();
@@ -130,7 +136,6 @@ const QString& TextAreaBox::get_submission() const {
 void TextAreaBox::set_placeholder(const QString& value) {
   m_placeholder_text = value;
   update_placeholder_text();
-  m_layers->adjustSize();
 }
 
 bool TextAreaBox::is_read_only() const {
@@ -139,11 +144,15 @@ bool TextAreaBox::is_read_only() const {
 
 void TextAreaBox::set_read_only(bool read_only) {
   m_text_edit->setReadOnly(read_only);
+  m_read_only_label->setVisible(read_only);
+  m_text_edit->setVisible(!read_only);
+  m_read_only_label->set_lines(get_current_text_lines());
   if(read_only) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
   }
+  update_display_text();
   update_placeholder_text();
 }
 
@@ -153,7 +162,7 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  return m_text_edit->sizeHint() + QSize(2, 2);// + QSize(10, 8);
+  return m_text_edit->sizeHint() + QSize(2, 2) + QSize(0, 4);
 }
 
 void TextAreaBox::changeEvent(QEvent* event) {
@@ -170,9 +179,10 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize) {
     //qDebug() << "sb resize";
     update_text_edit_width();
+    m_stacked_widget->updateGeometry();
     m_scroll_box->updateGeometry();
     updateGeometry();
-    m_layers->adjustSize();
+    //m_layers->adjustSize();
     //update_display_text();
     update_placeholder_text();
   }
@@ -193,8 +203,8 @@ void TextAreaBox::commit_placeholder_style() {
   m_placeholder_styles.m_styles.write(stylesheet);
   auto alignment = m_placeholder_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  if(alignment != m_placeholder->alignment()) {
-    m_placeholder->setAlignment(alignment);
+  if(alignment != m_placeholder->get_alignment()) {
+    m_placeholder->set_alignment(alignment);
   }
   auto font = m_placeholder_styles.m_font.value_or(QFont());
   if(m_placeholder_styles.m_size) {
@@ -272,6 +282,16 @@ bool TextAreaBox::is_placeholder_shown() const {
     !m_placeholder_text.isEmpty();
 }
 
+std::vector<QString> TextAreaBox::get_current_text_lines() const {
+  auto lines = std::vector<QString>();
+  lines.reserve(m_text_edit->document()->blockCount());
+  for(auto i = m_text_edit->document()->begin();
+      i != m_text_edit->document()->end(); i = i.next()) {
+    lines.push_back(i.text());
+  }
+  return lines;
+}
+
 QSize TextAreaBox::compute_decoration_size() const {
   auto decoration_size = QSize(0, 0);
   for(auto& property : get_evaluated_block(*m_scroll_box)) {
@@ -304,6 +324,18 @@ QSize TextAreaBox::compute_decoration_size() const {
   return decoration_size;
 }
 
+void TextAreaBox::update_display_text() {
+  if(is_read_only()) {
+    //elide_text();
+    qDebug() << "update RO";
+    qDebug() << "lc: " << m_text_edit->document()->lineCount();
+  } else if(m_text_edit->toPlainText() != m_model->get_current()) {
+    m_text_edit->setText(m_model->get_current());
+  }
+  //m_size_hint = none;
+  updateGeometry();
+}
+
 void TextAreaBox::update_placeholder_text() {
   if(is_placeholder_shown()) {
     auto font_metrics = m_placeholder->fontMetrics();
@@ -312,7 +344,13 @@ void TextAreaBox::update_placeholder_text() {
     //  font_metrics.elidedText(m_placeholder_text, Qt::ElideRight, rect.width());
     //m_placeholder->setText(elided_text);
     //qDebug() << m_placeholder_text;
-    m_placeholder->setText(m_placeholder_text);
+    m_placeholder->set_text(m_placeholder_text);
+    m_placeholder->setFixedSize(size() - QSize(2, 2));
+    m_placeholder->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    m_stacked_widget->adjustSize();
+    qDebug() << "placeholder size: " << m_placeholder->size();
+    qDebug() << "stack size: " << m_stacked_widget->size();
+    //m_layers->adjustSize();
     m_placeholder->show();
   } else {
     m_placeholder->hide();
@@ -394,6 +432,11 @@ void TextAreaBox::on_style() {
         },
         [&] (const PaddingRight& size) {
           stylist.evaluate(size, [=] (auto size) {
+            // TODO: fix selector
+            if(is_read_only()) {
+              size = 0;
+              qDebug() << "size zero";
+            }
             m_text_edit_styles.m_styles.set("padding-right", size);
           });
         },
@@ -404,7 +447,10 @@ void TextAreaBox::on_style() {
         },
         [&] (const PaddingLeft& size) {
           stylist.evaluate(size, [=] (auto size) {
-            qDebug() << "padding left: " << size;
+            // TODO: fix selector
+            if(is_read_only()) {
+              size = 0;
+            }
             m_text_edit_styles.m_styles.set("padding-left", size);
           });
         },
@@ -469,7 +515,8 @@ void TextAreaBox::on_text_changed() {
   m_model->set_current(m_text_edit->toPlainText());
   m_scroll_box->updateGeometry();
   //updateGeometry();
-  m_layers->adjustSize();
+  //m_layers->adjustSize();
   update_text_edit_width();
+  m_stacked_widget->adjustSize();
   update_placeholder_text();
 }

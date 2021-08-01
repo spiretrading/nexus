@@ -129,7 +129,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_tooltip_profile());
-  m_widget_list->setCurrentRow(0);
+  m_widget_list->setCurrentRow(25);
 }
 
 void UiViewerWindow::add(UiProfile profile) {

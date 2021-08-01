@@ -14,6 +14,8 @@
 #include <QTextBlock>
 #include <QScrollArea>
 #include <QScrollBar>
+#include <QPainter>
+#include <QStackedWidget>
 
 namespace Spire {
 namespace Styles {
@@ -121,6 +123,83 @@ namespace Styles {
             return longest;
           }
       };
+
+      class ElidedLabel : public QWidget {
+        public:
+
+          explicit ElidedLabel(QString text, QWidget *parent = nullptr)
+            : QWidget(parent),
+              m_alignment(Qt::AlignLeft) {}
+
+          void set_lines(const std::vector<QString>& lines) {
+            m_lines = lines;
+          }
+
+          void set_text(const QString &text) {
+            m_lines = {text};
+            update();
+          }
+
+          Qt::Alignment get_alignment() const {
+            return m_alignment;
+          }
+
+          void set_alignment(Qt::Alignment alignment) {
+            m_alignment = alignment;
+          }
+
+          QSize sizeHint() const override {
+            return {width(), height()};
+          }
+
+        protected:
+          void paintEvent(QPaintEvent *event) override {
+            QPainter painter(this);
+            QFontMetrics fontMetrics = painter.fontMetrics();
+            bool didElide = false;
+            int lineSpacing = fontMetrics.lineSpacing();
+            int y = 0;
+            for(const auto& line : m_lines) {
+              QTextLayout textLayout(line, painter.font());
+              auto opt = textLayout.textOption();
+              opt.setAlignment(m_alignment);
+              textLayout.setTextOption(opt);
+              textLayout.beginLayout();
+              while(true) {
+                QTextLine text_line = textLayout.createLine();
+
+                if (!text_line.isValid())
+                  break;
+
+                text_line.setLineWidth(width());
+                int nextLineY = y + lineSpacing;
+
+                if (height() >= nextLineY + lineSpacing) {
+                  text_line.draw(&painter, QPoint(0, y));
+                  y = nextLineY;
+                } else {
+                  QString lastLine = line.mid(text_line.textStart());
+                  QString elidedLastLine = fontMetrics.elidedText(lastLine,
+                    Qt::ElideRight, width());
+                  painter.drawText(QPoint(0, y + fontMetrics.ascent()),
+                    elidedLastLine);
+                  text_line = textLayout.createLine();
+                  didElide = text_line.isValid();
+                  break;
+                }
+              }
+              textLayout.endLayout();
+              //if (didElide != elided) {
+              //  elided = didElide;
+              //}
+            }
+          }
+
+        private:
+          std::vector<QString> m_lines;
+          Qt::Alignment m_alignment;
+      };
+
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
         boost::optional<QMargins> m_padding;
@@ -133,10 +212,11 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TextModel> m_model;
-      LayeredWidget* m_layers;
+      QStackedWidget* m_stacked_widget;
       ContentSizedTextEdit* m_text_edit;
       StyleProperties m_text_edit_styles;
-      QLabel* m_placeholder;
+      ElidedLabel* m_placeholder;
+      ElidedLabel* m_read_only_label;
       StyleProperties m_placeholder_styles;
       ScrollBox* m_scroll_box;
       boost::signals2::scoped_connection m_current_connection;
@@ -149,7 +229,9 @@ namespace Styles {
       void commit_placeholder_style();
       void commit_style();
       QSize compute_decoration_size() const;
+      std::vector<QString> get_current_text_lines() const;
       bool is_placeholder_shown() const;
+      void update_display_text();
       void update_placeholder_text();
       void update_text_edit_width();
       void on_current(const QString& current);
