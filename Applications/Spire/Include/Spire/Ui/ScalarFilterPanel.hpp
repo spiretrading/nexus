@@ -204,17 +204,20 @@ namespace Spire {
       ScalarFilterPanel<T>::make_scalar_box(const Model& model) {
     auto field = [&] {
       if constexpr(std::is_same_v<ScalarBox, DurationBox>) {
-        return new ScalarBox();
+        auto box = new ScalarBox();
+        box->setFixedSize(scale(132, 26));
+        return box;
       } else {
         auto modifiers = QHash<Qt::KeyboardModifier, Type>(
           {{Qt::NoModifier, model.get_increment()},
           {Qt::AltModifier, 5 * model.get_increment()},
           {Qt::ControlModifier, 10 * model.get_increment()},
           {Qt::ShiftModifier, 20 * model.get_increment()}});
-        return new ScalarBox(std::move(modifiers));
+        auto box =  new ScalarBox(std::move(modifiers));
+        box->setFixedSize(scale(120, 26));
+        return box;
       }
     }();
-    field->setFixedSize(scale(120, 26));
     field->get_model()->set_current(model.get_current());
     return field;
   }
