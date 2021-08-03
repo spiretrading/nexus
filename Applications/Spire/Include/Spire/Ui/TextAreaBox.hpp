@@ -129,14 +129,11 @@ namespace Styles {
 
           explicit ElidedLabel(QString text, QWidget *parent = nullptr)
             : QWidget(parent),
+              m_text(std::move(text)),
               m_alignment(Qt::AlignLeft) {}
 
-          void set_lines(const std::vector<QString>& lines) {
-            m_lines = lines;
-          }
-
           void set_text(const QString &text) {
-            m_lines = {text};
+            m_text = text;
             update();
           }
 
@@ -159,44 +156,42 @@ namespace Styles {
             bool didElide = false;
             int lineSpacing = fontMetrics.lineSpacing();
             int y = 0;
-            for(const auto& line : m_lines) {
-              QTextLayout textLayout(line, painter.font());
-              auto opt = textLayout.textOption();
-              opt.setAlignment(m_alignment);
-              textLayout.setTextOption(opt);
-              textLayout.beginLayout();
-              while(true) {
-                QTextLine text_line = textLayout.createLine();
+            QTextLayout textLayout(m_text, painter.font());
+            auto opt = textLayout.textOption();
+            opt.setAlignment(m_alignment);
+            textLayout.setTextOption(opt);
+            textLayout.beginLayout();
+            while(true) {
+              QTextLine line = textLayout.createLine();
 
-                if (!text_line.isValid())
-                  break;
+              if (!line.isValid())
+                break;
 
-                text_line.setLineWidth(width());
-                int nextLineY = y + lineSpacing;
+              line.setLineWidth(width());
+              int nextLineY = y + lineSpacing;
 
-                if (height() >= nextLineY + lineSpacing) {
-                  text_line.draw(&painter, QPoint(0, y));
-                  y = nextLineY;
-                } else {
-                  QString lastLine = line.mid(text_line.textStart());
-                  QString elidedLastLine = fontMetrics.elidedText(lastLine,
-                    Qt::ElideRight, width());
-                  painter.drawText(QPoint(0, y + fontMetrics.ascent()),
-                    elidedLastLine);
-                  text_line = textLayout.createLine();
-                  didElide = text_line.isValid();
-                  break;
-                }
+              if (height() >= nextLineY + lineSpacing) {
+                line.draw(&painter, QPoint(0, y));
+                y = nextLineY;
+              } else {
+                QString lastLine = m_text.mid(line.textStart());
+                QString elidedLastLine = fontMetrics.elidedText(lastLine,
+                  Qt::ElideRight, width());
+                painter.drawText(QPoint(0, y + fontMetrics.ascent()),
+                  elidedLastLine);
+                line = textLayout.createLine();
+                didElide = line.isValid();
+                break;
               }
-              textLayout.endLayout();
-              //if (didElide != elided) {
-              //  elided = didElide;
-              //}
             }
+            textLayout.endLayout();
+            //if (didElide != elided) {
+            //  elided = didElide;
+            //}
           }
 
         private:
-          std::vector<QString> m_lines;
+          QString m_text;
           Qt::Alignment m_alignment;
       };
 
@@ -225,14 +220,17 @@ namespace Styles {
       int m_longest_line_length;
       int m_longest_line_block;
       int m_line_height;
+      // TODO: remove when selector fixed
+      bool m_is_read_only;
 
       void commit_placeholder_style();
       void commit_style();
       QSize compute_decoration_size() const;
-      std::vector<QString> get_current_text_lines() const;
       bool is_placeholder_shown() const;
       void update_display_text();
+      void update_line_height();
       void update_placeholder_text();
+      void update_text_alignment(Qt::Alignment alignment);
       void update_text_edit_width();
       void on_current(const QString& current);
       void on_cursor_position();

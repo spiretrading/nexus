@@ -1296,6 +1296,7 @@ UiProfile Spire::make_text_area_box_profile() {
       text_area_box->get_model()->connect_current_signal(
         [&] (const auto& value) {
           if(current.get() != value) {
+            qDebug() << "suip current: " << value;
             current.set(value);
           }
         });
