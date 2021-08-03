@@ -250,6 +250,14 @@ namespace {
     properties.push_back(make_standard_property(
       "default_increment", default_increment));
   }
+
+  optional<time_duration> parse_duration(const QString& duration) {
+    try {
+      return duration_from_string(duration.toStdString().c_str());
+    } catch(const std::exception&) {
+      return {};
+    }
+  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -586,15 +594,6 @@ UiProfile Spire::make_duration_box_profile() {
   properties.push_back(make_standard_property<bool>("read_only"));
   auto profile = UiProfile(QString::fromUtf8("DurationBox"), properties,
     [] (auto& profile) {
-      auto parse_duration = [] (auto duration) ->
-          boost::optional<time_duration> {
-        try {
-          return boost::posix_time::duration_from_string(
-            duration.toStdString().c_str());
-        } catch(const std::exception&) {
-          return {};
-        }
-      };
       auto model = std::make_shared<LocalOptionalDurationModel>();
       auto duration_box = new DurationBox(model);
       apply_widget_properties(duration_box, profile.get_properties());
@@ -632,6 +631,48 @@ UiProfile Spire::make_duration_box_profile() {
         profile.make_event_slot<optional<time_duration>>(
           QString::fromUtf8("Reject")));
       return duration_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_duration_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(
+    make_standard_property<QString>("default_minimum", "10:10:10.000"));
+  properties.push_back(
+    make_standard_property<QString>("default_maximum", "20:20:20.000"));
+  auto profile = UiProfile(QString::fromUtf8("DurationFilterPanel"), properties,
+    [] (auto& profile) {
+      auto& default_min=
+        get<QString>("default_minimum", profile.get_properties());
+      auto& default_max=
+        get<QString>("default_maximum", profile.get_properties());
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto min_model =
+        std::make_shared<LocalScalarValueModel<optional<time_duration>>>(
+          parse_duration(default_min.get()));
+      auto max_model =
+        std::make_shared<LocalScalarValueModel<optional<time_duration>>>(
+          parse_duration(default_max.get()));
+      button->connect_clicked_signal([&, button, min_model, max_model] {
+        auto panel = new ScalarFilterPanel<DurationBox>(min_model, max_model,
+          parse_duration(default_min.get()), parse_duration(default_max.get()),
+          QString::fromUtf8("Filter by Duration"), button);
+        auto filter_slot =
+          profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+        panel->connect_submit_signal([=] (const auto& min, const auto& max) {
+          auto to_string =
+            [&] (const optional<time_duration>& value) -> QString {
+              if(value) {
+                return to_simple_string(*value).c_str();
+              }
+              return QString::fromUtf8("null");
+            };
+          filter_slot(QString("%1, %2").arg(to_string(min)).arg(to_string(max)));
+        });
+        panel->show();
+      });
+      return button;
     });
   return profile;
 }

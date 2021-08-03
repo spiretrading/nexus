@@ -194,7 +194,7 @@ namespace Spire {
   bool ScalarFilterPanel<T>::event(QEvent* event) {
     if(event->type() == QEvent::ShowToParent) {
       m_filter_panel->show();
-      m_min_box->setFocus(Qt::TabFocusReason);
+      focusNextChild();
     }
     return QWidget::event(event);
   }
