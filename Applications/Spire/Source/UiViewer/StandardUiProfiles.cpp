@@ -18,7 +18,6 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
-#include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
