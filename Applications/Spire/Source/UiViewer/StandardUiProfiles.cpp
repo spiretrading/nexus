@@ -1273,6 +1273,8 @@ UiProfile Spire::make_tag_profile() {
       });
       tag->connect_delete_signal(
         profile.make_event_slot(QString::fromUtf8("DeleteSignal")));
+      tag->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+      tag->setMinimumSize(0, 0);
       return tag;
     });
   return profile;
