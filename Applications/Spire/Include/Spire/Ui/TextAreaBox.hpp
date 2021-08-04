@@ -61,137 +61,37 @@ namespace Styles {
     private:
       class ContentSizedTextEdit : public QTextEdit {
         public:
-          explicit ContentSizedTextEdit(QWidget* parent = nullptr)
-              : QTextEdit(parent) {
-            setLineWrapMode(QTextEdit::WidgetWidth);
-            setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-            setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-            document()->setDocumentMargin(0);
-            setFrameShape(QFrame::NoFrame);
-            connect(
-              this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
-            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-          }
 
-          explicit ContentSizedTextEdit(
-              const QString& text, QWidget* parent = nullptr)
-              : ContentSizedTextEdit(parent) {
-            setText(text);
-          }
+          explicit ContentSizedTextEdit(const QString& text,
+            QWidget* parent = nullptr);
 
-          void set_read_only(bool read_only) {
-            if(read_only != isReadOnly()) {
-              setReadOnly(read_only);
-              updateGeometry();
-            }
-          }
+          QSize sizeHint() const override;
 
-          QSize sizeHint() const override {
-            auto margins = contentsMargins();
-            auto desired_size = QSize(get_longest_line(),
-              document()->size().toSize().height());
-            auto size = desired_size + QSize(
-              margins.left() + margins.right(), margins.top() +
-              margins.bottom());
-            if(!isReadOnly()) {
-              size.rwidth() += cursorWidth();
-            }
-            return size;
-          }
-
-          QSize minimumSizeHint() const override {
-            return QSize();
-          }
+          QSize minimumSizeHint() const override;
 
         private:
-          void on_text_changed() {
-            updateGeometry();
-          }
+          int m_longest_line_width;
 
-          int get_longest_line() const {
-            auto longest = 0;
-            for(auto i = 0; i < document()->blockCount(); ++i) {
-              auto block = document()->findBlockByNumber(i);
-              if(block.isValid()) {
-                longest = std::max(longest,
-                  fontMetrics().horizontalAdvance(block.text()));
-              }
-            }
-            return longest;
-          }
+          void on_text_changed();
+          int get_longest_line_width() const;
       };
-
-      class ElidedLabel : public QFrame {
+      class ElidedLabel : public QWidget {
         public:
 
-          explicit ElidedLabel(QString text, QWidget *parent = nullptr)
-            : QFrame(parent),
-              m_text(std::move(text)),
-              m_alignment(Qt::AlignLeft) {}
+          explicit ElidedLabel(QWidget *parent = nullptr);
 
-          void set_text(const QString &text) {
-            m_text = text;
-            update();
-          }
+          void set_text(const QString &text);
 
-          void set_padding(const QMargins& padding) {
-            m_padding = padding;
-            update();
-          }
+          void set_padding(const QMargins& padding);
 
-          void set_text_color(const QColor& color) {
-            m_text_color = color;
-            update();
-          }
+          void set_text_color(const QColor& color);
 
-          void set_alignment(Qt::Alignment alignment) {
-            m_alignment = alignment;
-            update();
-          }
+          void set_alignment(Qt::Alignment alignment);
 
-          QSize sizeHint() const override {
-            return {width(), height()};
-          }
+          QSize sizeHint() const override;
 
         protected:
-          void paintEvent(QPaintEvent *event) override {
-            QPainter painter(this);
-            painter.setPen(m_text_color);
-            painter.setFont(font());
-            QFontMetrics fontMetrics = painter.fontMetrics();
-            int lineSpacing = fontMetrics.lineSpacing();
-            int y = m_padding.top();
-            QTextLayout textLayout(m_text, painter.font());
-            auto opt = textLayout.textOption();
-            opt.setAlignment(m_alignment);
-            textLayout.setTextOption(opt);
-            textLayout.beginLayout();
-            while(true) {
-              QTextLine line = textLayout.createLine();
-
-              if (!line.isValid())
-                break;
-
-              line.setLineWidth(width() - m_padding.left() -
-                m_padding.right());
-              int nextLineY = y + lineSpacing;
-
-              if (height() >= nextLineY + lineSpacing) {
-                line.draw(&painter, QPoint(m_padding.left(), y));
-                y = nextLineY;
-              } else {
-                QString lastLine = m_text.mid(line.textStart());
-                QString elidedLastLine = fontMetrics.elidedText(lastLine,
-                  Qt::ElideRight, width() - m_padding.left() -
-                  m_padding.right());
-                painter.drawText(QPoint(m_padding.left(),
-                  y + fontMetrics.ascent()), elidedLastLine);
-                line = textLayout.createLine();
-                break;
-              }
-            }
-            textLayout.endLayout();
-          }
+          void paintEvent(QPaintEvent *event) override;
 
         private:
           QMargins m_padding;
@@ -199,7 +99,6 @@ namespace Styles {
           Qt::Alignment m_alignment;
           QColor m_text_color;
       };
-
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
         QMargins m_padding;
@@ -223,9 +122,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
-      int m_longest_line_length;
-      int m_longest_line_block;
-      int m_line_height;
+      double m_computed_line_height;
       // TODO: remove when selector fixed
       bool m_is_read_only;
 
