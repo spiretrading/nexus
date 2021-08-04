@@ -354,7 +354,6 @@ QSize TextAreaBox::compute_border_size() const {
         border_size.rwidth() += size;
       });
   }
-  qDebug() << "bs: " << border_size;
   return border_size;
 }
 
@@ -375,7 +374,6 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rwidth() += size;
       });
   }
-  qDebug() << "ps: " << padding_size;
   return padding_size;
 }
 
@@ -498,12 +496,13 @@ void TextAreaBox::on_cursor_position() {
     auto bottom = m_text_edit->visibleRegion().boundingRect().bottom();
     if(m_text_edit->cursorRect().top() <= top) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
-        m_text_edit->cursorRect().top() - scale_height(5));
+        m_text_edit->cursorRect().top() -
+        scale_height(compute_padding_size().height()));
     } else if(m_text_edit->cursorRect().bottom() >= bottom) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
         m_text_edit->cursorRect().bottom() -
         m_text_edit->visibleRegion().boundingRect().height() +
-        scale_height(5));
+        scale_height(compute_padding_size().height()));
     }
   }
 }
