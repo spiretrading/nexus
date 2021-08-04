@@ -160,7 +160,6 @@ void ScrollBox::update_ranges() {
   }
   auto viewport_size = m_body->size() + QSize(bar_width, bar_height) +
     border_size;
-  //setMaximumSize(viewport_size);
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
       m_scrollable_layer->get_vertical_scroll_bar().hide();

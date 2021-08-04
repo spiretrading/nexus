@@ -1277,7 +1277,8 @@ UiProfile Spire::make_text_area_box_profile() {
   properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<bool>("read_only"));
   properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property<int>("line-height", 125));
+  // TODO: 124 or 125?
+  properties.push_back(make_standard_property<int>("line-height", 124));
   auto horizontal_alignment_property = define_enum<Qt::Alignment>(
     {{"LEFT", Qt::AlignLeft},
      {"RIGHT", Qt::AlignRight},
@@ -1296,7 +1297,6 @@ UiProfile Spire::make_text_area_box_profile() {
       text_area_box->get_model()->connect_current_signal(
         [&] (const auto& value) {
           if(current.get() != value) {
-            qDebug() << "suip current: " << value;
             current.set(value);
           }
         });
