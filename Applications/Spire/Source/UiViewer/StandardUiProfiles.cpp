@@ -854,25 +854,24 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(make_standard_property("random_height_seed", 0));
   properties.push_back(make_standard_property("gap", 2));
   properties.push_back(make_standard_property("overflow_gap", 5));
-  auto navigation_property = define_enum<ListView::EdgeNavigation>(
-    {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
-     {"WRAP", ListView::EdgeNavigation::WRAP}});
+  auto navigation_property = define_enum<EdgeNavigation>(
+    {{"CONTAIN", EdgeNavigation::CONTAIN},
+     {"WRAP", EdgeNavigation::WRAP}});
   properties.push_back(
     make_standard_enum_property("edge_navigation", navigation_property));
   auto direction_property = define_enum<Qt::Orientation>(
     {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
     make_standard_enum_property("direction", direction_property));
-  auto overflow_property = define_enum<ListView::Overflow>(
-    {{"WRAP", ListView::Overflow::WRAP}, {"NONE", ListView::Overflow::NONE}});
+  auto overflow_property = define_enum<Overflow>(
+    {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto selection_mode_property = define_enum<ListView::SelectionMode>(
-    {{"NONE", ListView::SelectionMode::NONE},
-     {"SINGLE", ListView::SelectionMode::SINGLE}});
+  auto selection_mode_property = define_enum<SelectionMode>(
+    {{"NONE", SelectionMode::NONE},
+     {"SINGLE", SelectionMode::SINGLE}});
   properties.push_back(
     make_standard_enum_property("selection_mode", selection_mode_property));
-  properties.push_back(make_standard_property("selection_follows_focus", true));
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
@@ -882,12 +881,8 @@ UiProfile Spire::make_list_view_profile() {
     [=] (auto& profile) {
       auto& random_height_seed =
         get<int>("random_height_seed", profile.get_properties());
-      auto& gap = get<int>("gap", profile.get_properties());
-      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
       auto& direction =
         get<Qt::Orientation>("direction", profile.get_properties());
-      auto& overflow =
-        get<ListView::Overflow>("overflow", profile.get_properties());
       auto& change_item = get<int>("change_item", profile.get_properties());
       auto& change_item_index =
         get<int>("change_item_index", profile.get_properties());
@@ -935,6 +930,7 @@ UiProfile Spire::make_list_view_profile() {
           return label;
         });
       apply_widget_properties(list_view, profile.get_properties());
+      auto& gap = get<int>("gap", profile.get_properties());
       gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
@@ -943,6 +939,7 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(ListItemGap(scale_width(value)));
         set_style(*list_view, std::move(style));
       });
+      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
       overflow_gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
@@ -951,31 +948,30 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(ListOverflowGap(scale_width(value)));
         set_style(*list_view, std::move(style));
       });
-      direction.connect_changed_signal([=, &overflow] (auto value) {
-        list_view->set_direction(value);
+      direction.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
-      overflow.connect_changed_signal([=, &direction] (auto value) {
-        list_view->set_overflow(value);
+      auto& overflow = get<Overflow>("overflow", profile.get_properties());
+      overflow.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
-      auto& navigation = get<ListView::EdgeNavigation>("edge_navigation",
-        profile.get_properties());
-      navigation.set(list_view->get_edge_navigation());
+      auto& navigation =
+        get<EdgeNavigation>("edge_navigation", profile.get_properties());
       navigation.connect_changed_signal([=] (auto value) {
-        list_view->set_edge_navigation(value);
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
-      auto& selection_mode = get<ListView::SelectionMode>("selection_mode",
-        profile.get_properties());
-      selection_mode.set(list_view->get_selection_mode());
+      auto& selection_mode =
+        get<SelectionMode>("selection_mode", profile.get_properties());
       selection_mode.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_mode(value);
-      });
-      auto& selection_follows_focus = get<bool>("selection_follows_focus",
-        profile.get_properties());
-      selection_follows_focus.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_follow_focus(value);
-      });
-      selection_follows_focus.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_follow_focus(value);
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
       select_item.connect_changed_signal([=] (auto index) {

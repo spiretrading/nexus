@@ -69,15 +69,13 @@ struct ListView::BodyContainer : QWidget {
 };
 
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model, QWidget* parent)
-  : ListView(std::move(list_model), default_view_builder,
-      std::make_shared<LocalCurrentModel>(),
-      std::make_shared<LocalSelectionModel>(), parent) {}
+  : ListView(std::move(list_model), default_view_builder, parent) {}
 
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
   ViewBuilder view_builder, QWidget* parent)
   : ListView(std::move(list_model), std::move(view_builder),
-      std::make_shared<LocalCurrentModel>(),
-      std::make_shared<LocalSelectionModel>(), parent) {}
+      std::make_shared<LocalValueModel<optional<std::any>>>(),
+      std::make_shared<LocalValueModel<optional<std::any>>>(), parent) {}
 
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
     ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
@@ -91,7 +89,6 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
-      m_does_selection_follow_focus(true),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_current_index(-1) {
@@ -136,54 +133,6 @@ const std::shared_ptr<ListView::CurrentModel>&
 const std::shared_ptr<ListView::SelectionModel>&
     ListView::get_selection_model() const {
   return m_selection_model;
-}
-
-Qt::Orientation ListView::get_direction() const {
-  return m_direction;
-}
-
-void ListView::set_direction(Qt::Orientation direction) {
-  if(direction == m_direction) {
-    return;
-  }
-  m_direction = direction;
-  update_layout();
-}
-
-ListView::EdgeNavigation ListView::get_edge_navigation() const {
-  return m_edge_navigation;
-}
-
-void ListView::set_edge_navigation(EdgeNavigation edge_navigation) {
-  m_edge_navigation = edge_navigation;
-}
-
-ListView::Overflow ListView::get_overflow() const {
-  return m_overflow;
-}
-
-void ListView::set_overflow(Overflow overflow) {
-  if(overflow == m_overflow) {
-    return;
-  }
-  m_overflow = overflow;
-  update_layout();
-}
-
-ListView::SelectionMode ListView::get_selection_mode() const {
-  return m_selection_mode;
-}
-
-void ListView::set_selection_mode(SelectionMode selection_mode) {
-  m_selection_mode = selection_mode;
-}
-
-bool ListView::does_selection_follow_focus() const {
-  return m_does_selection_follow_focus;
-}
-
-void ListView::set_selection_follow_focus(bool does_selection_follow_focus) {
-  m_does_selection_follow_focus = does_selection_follow_focus;
 }
 
 connection ListView::connect_submit_signal(
@@ -358,6 +307,30 @@ void ListView::on_style() {
       [&] (const ListOverflowGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {
           m_overflow_gap = gap;
+          *has_update = true;
+        });
+      },
+      [&] (EnumProperty<Qt::Orientation> direction) {
+        stylist.evaluate(direction, [=] (auto direction) {
+          m_direction = direction;
+          *has_update = true;
+        });
+      },
+      [&] (EnumProperty<EdgeNavigation> edge_navigation) {
+        stylist.evaluate(edge_navigation, [=] (auto edge_navigation) {
+          m_edge_navigation = edge_navigation;
+          *has_update = true;
+        });
+      },
+      [&] (EnumProperty<Overflow> overflow) {
+        stylist.evaluate(overflow, [=] (auto overflow) {
+          m_overflow = overflow;
+          *has_update = true;
+        });
+      },
+      [&] (EnumProperty<SelectionMode> selection_mode) {
+        stylist.evaluate(selection_mode, [=] (auto selection_mode) {
+          m_selection_mode = selection_mode;
           *has_update = true;
         });
       });

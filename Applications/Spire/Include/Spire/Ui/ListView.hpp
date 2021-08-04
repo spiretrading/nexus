@@ -16,6 +16,39 @@ namespace Styles {
    * to list direction.
    */
   using ListOverflowGap = BasicProperty<int, struct ListOverflowGapTag>;
+
+  /**
+   * Specifies the keyboard navigation behavior when the first or last list
+   * item is selected and the key for next or previous list item is pressed.
+   */
+  enum class EdgeNavigation {
+
+    /** Selection stops at the current selection. */
+    CONTAIN,
+
+    /** Selection moves from the first item to last item and vice versa. */
+    WRAP
+  };
+
+  /** Specifies how to layout items on overflow. */
+  enum class Overflow {
+
+    /** The list extends indefinitely. */
+    NONE,
+
+    /** List items wrap to fill the perpendicular space. */
+    WRAP
+  };
+
+  /** Specifies the selection behavior for the ListView. */
+  enum class SelectionMode {
+
+    /** Items can not be selected. */
+    NONE,
+
+    /** The user can select a single item. */
+    SINGLE
+  };
 }
 
   /**
@@ -25,58 +58,15 @@ namespace Styles {
   class ListView : public QWidget {
     public:
 
-      /** 
-       * Specifies the keyboard navigation behavior when the first or last list
-       * item is selected and the key for next or previous list item is pressed.
-       */
-      enum class EdgeNavigation {
-
-        /** Selection stops at the current selection. */
-        CONTAIN,
-
-        /** Selection moves from the first item to last item and vice versa. */
-        WRAP
-      };
-
-      /** Specifies how to layout items on overflow. */
-      enum class Overflow {
-
-        /** The list extends indefinitely. */
-        NONE,
-
-        /** List items wrap to fill the perpendicular space. */
-        WRAP
-      };
-
-      /** Specifies the selection behavior for the ListView. */
-      enum class SelectionMode {
-
-        /** Items can not be selected. */
-        NONE,
-
-        /** The user can select a single item. */
-        SINGLE
-      };
-
       /**
-       * The type of model representing the view's current value.
+       * The type of model representing the index of the current value.
        */
       using CurrentModel = ValueModel<boost::optional<std::any>>;
 
       /**
-       * The type of a local model to the view's current value.
-       */
-      using LocalCurrentModel = LocalValueModel<boost::optional<std::any>>;
-
-      /**
-       * The type of model representing the selected values.
+       * The type of model representing the index of the selected value.
        */
       using SelectionModel = ValueModel<boost::optional<std::any>>;
-
-      /**
-       * The type of a local model to selected values.
-       */
-      using LocalSelectionModel = LocalValueModel<boost::optional<std::any>>;
 
       /**
        * The type of function used to build a QWidget representing a value.
@@ -134,54 +124,6 @@ namespace Styles {
       /** Returns the selection model. */
       const std::shared_ptr<SelectionModel>& get_selection_model() const;
 
-      /** Returns the direction of the ListView. */
-      Qt::Orientation get_direction() const;
-
-      /** Sets the direction of the ListView. */
-      void set_direction(Qt::Orientation direction);
-
-      /** Returns the navigation behavior of the ListView. */
-      EdgeNavigation get_edge_navigation() const;
-
-      /**
-       * Sets the navigation behavior of the ListView.
-       * @param edge_navigation The keyboard navigation behavior when the first
-       *        or last list item is selected.
-       */
-      void set_edge_navigation(EdgeNavigation edge_navigation);
-
-      /** Returns the overflow mode of the ListView. */
-      Overflow get_overflow() const;
-
-      /**
-       * Sets the overflow mode of the ListView.
-       * @param overflow The overflow model.
-       */
-      void set_overflow(Overflow overflow);
-
-      /** Returns the selection mode of the ListView. */
-      SelectionMode get_selection_mode() const;
-
-      /**
-       * Sets the selection mode of the ListView.
-       * @param selection_mode The selection mode for the ListView.
-       */
-      void set_selection_mode(SelectionMode selection_mode);
-
-      /**
-       * Returns whether items are selected when focused for
-       * selection_mode = SINGLE.
-       */
-      bool does_selection_follow_focus() const;
-
-      /**
-       * Sets whether items are selected when focused for
-       * selection_mode = SINGLE.
-       * @param does_selection_follow_focus <code>true</code> iff items are
-       *        selected when focused.
-       */
-      void set_selection_follow_focus(bool does_selection_follow_focus);
-
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -203,23 +145,23 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<SelectionModel> m_selection_model;
-      Qt::Orientation m_direction;
-      EdgeNavigation m_edge_navigation;
-      Overflow m_overflow;
-      SelectionMode m_selection_mode;
-      bool m_does_selection_follow_focus;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
       BodyContainer* m_container;
       int m_item_gap;
       int m_overflow_gap;
+      Qt::Orientation m_direction;
+      Styles::EdgeNavigation m_edge_navigation;
+      Styles::Overflow m_overflow;
+      Styles::SelectionMode m_selection_mode;
       int m_current_index;
 
       void navigate_home();
       void navigate_end();
       void navigate_next();
       void navigate_previous();
-      void navigate(int direction, int start, EdgeNavigation edge_navigation);
+      void navigate(
+        int direction, int start, Styles::EdgeNavigation edge_navigation);
       void update_layout();
       void on_current(ItemEntry& item);
       void on_style();
