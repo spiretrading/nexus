@@ -155,6 +155,7 @@ namespace Styles {
       Styles::Overflow m_overflow;
       Styles::SelectionMode m_selection_mode;
       int m_current_index;
+      QPoint m_navigation_point;
 
       void navigate_home();
       void navigate_end();
@@ -162,6 +163,10 @@ namespace Styles {
       void navigate_previous();
       void navigate(
         int direction, int start, Styles::EdgeNavigation edge_navigation);
+      void navigate_up();
+      void navigate_down();
+      void navigate_left();
+      void navigate_right();
       void update_layout();
       void on_current(ItemEntry& item);
       void on_style();
