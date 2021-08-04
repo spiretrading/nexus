@@ -97,6 +97,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     &TextAreaBox::on_text_changed);
   //m_layers->add(m_text_edit);
   m_placeholder = new ElidedLabel("", this);
+  m_placeholder->setFixedSize(0, 0);
   m_stacked_widget->addWidget(m_placeholder);
   m_placeholder->setCursor(m_text_edit->cursor());
   //m_placeholder->setTextFormat(Qt::PlainText);
@@ -362,10 +363,9 @@ void TextAreaBox::update_placeholder_text() {
     auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
     //auto elided_text =
     //  font_metrics.elidedText(m_placeholder_text, Qt::ElideRight, rect.width());
-    //m_placeholder->setText(elided_text);
     m_placeholder->set_text(m_placeholder_text);
-    m_placeholder->setFixedSize(0, 0);//size() - QSize(2, 2));
-    m_placeholder->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    m_placeholder->setFixedSize(size() - QSize(2, 2));
+    m_stacked_widget->adjustSize();
     m_placeholder->show();
   } else {
     m_placeholder->hide();
@@ -548,5 +548,5 @@ void TextAreaBox::on_text_changed() {
   }
   update_text_edit_width();
   updateGeometry();
-  //update_placeholder_text();
+  update_placeholder_text();
 }

@@ -146,7 +146,7 @@ namespace Styles {
           }
 
           QSize sizeHint() const override {
-            return QSize();//return {width(), height()};
+            return {width(), height()};
           }
 
         protected:
