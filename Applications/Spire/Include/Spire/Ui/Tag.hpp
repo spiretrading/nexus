@@ -21,12 +21,12 @@ namespace Spire {
        */
       explicit Tag(QString label, QWidget* parent = nullptr);
 
-      /** Returns <code>true</code> iff the Tag is deletable by the user. */
+      /** Returns <code>true</code> iff the Tag is not deletable. */
       bool is_read_only() const;
 
       /**
        * Sets the read-only state.
-       * @param is_read_only True iff the Tag should be deletable.
+       * @param is_read_only True iff the Tag should not be deletable.
        */
       void set_read_only(bool is_read_only);
 
