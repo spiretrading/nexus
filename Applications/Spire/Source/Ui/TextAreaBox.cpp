@@ -31,9 +31,9 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      // TODO: 1.24 gives correct intrinsic size, spec change for calculated font height
+      // TODO: 1.20 gives correct intrinsic size, spec change for calculated font height
       //        or impl change?
-      set(LineHeight(1.24)).
+      set(LineHeight(1.20)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
     style.get(Any() >> is_a<QTextEdit>()).
@@ -263,7 +263,7 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  return m_text_edit->sizeHint() + QSize(2, 2);
+  return m_text_edit->sizeHint() + compute_border_size();
 }
 
 void TextAreaBox::changeEvent(QEvent* event) {
@@ -337,41 +337,52 @@ bool TextAreaBox::is_placeholder_shown() const {
     !m_placeholder_text.isEmpty();
 }
 
-QSize TextAreaBox::compute_decoration_size() const {
-  auto decoration_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*m_scroll_box)) {
+QSize TextAreaBox::compute_border_size() const {
+  auto border_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*this)) {
     property.visit(
       [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        decoration_size.rheight() += size;
+        border_size.rheight() += size;
       },
       [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        decoration_size.rwidth() += size;
+        border_size.rwidth() += size;
       },
       [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        decoration_size.rheight() += size;
+        border_size.rheight() += size;
       },
       [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingTop>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingRight>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        decoration_size.rwidth() += size;
+        border_size.rwidth() += size;
       });
   }
-  return decoration_size;
+  qDebug() << "bs: " << border_size;
+  return border_size;
+}
+
+QSize TextAreaBox::compute_padding_size() const {
+  auto padding_size = QSize(0, 0);
+  for(auto& property : get_evaluated_block(*this)) {
+    property.visit(
+      [&] (std::in_place_type_t<PaddingTop>, int size) {
+        padding_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingRight>, int size) {
+        padding_size.rwidth() += size;
+      },
+      [&] (std::in_place_type_t<PaddingBottom>, int size) {
+        padding_size.rheight() += size;
+      },
+      [&] (std::in_place_type_t<PaddingLeft>, int size) {
+        padding_size.rwidth() += size;
+      });
+  }
+  qDebug() << "ps: " << padding_size;
+  return padding_size;
 }
 
 void TextAreaBox::update_display_text() {
   if(is_read_only()) {
-    auto line_count = std::floor(static_cast<double>((height() - 10 - 2)) /
+    auto line_count = std::floor(static_cast<double>((height() -
+      compute_padding_size().height() - compute_border_size().height())) /
       m_computed_line_height);
     auto lines = [&] {
       QStringList ret;
@@ -436,7 +447,7 @@ void TextAreaBox::update_line_height() {
 void TextAreaBox::update_placeholder_text() {
   if(is_placeholder_shown()) {
     m_placeholder->set_text(m_placeholder_text);
-    m_placeholder->setFixedSize(size() - QSize(2, 2));
+    m_placeholder->setFixedSize(size() - compute_border_size());
     m_stacked_widget->adjustSize();
     m_placeholder->show();
   } else {
@@ -461,12 +472,15 @@ void TextAreaBox::update_text_alignment(Qt::Alignment alignment) {
 }
 
 void TextAreaBox::update_text_edit_width() {
-  if(m_text_edit->document()->size().toSize().height() + 10 > height() - 2 ||
+  auto border_size = compute_border_size();
+  auto padding_height = compute_padding_size().height();
+  if(m_text_edit->document()->size().toSize().height() + padding_height >
+      height() - border_size.height() ||
       m_scroll_box->get_vertical_scroll_bar().isVisible()) {
     m_text_edit->setFixedWidth(width() -
-      m_scroll_box->get_vertical_scroll_bar().width() - 2);
+      m_scroll_box->get_vertical_scroll_bar().width() - border_size.width());
   } else {
-    m_text_edit->setFixedWidth(width() - 2);
+    m_text_edit->setFixedWidth(width() - border_size.width());
   }
 }
 
@@ -484,12 +498,12 @@ void TextAreaBox::on_cursor_position() {
     auto bottom = m_text_edit->visibleRegion().boundingRect().bottom();
     if(m_text_edit->cursorRect().top() <= top) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
-        m_text_edit->cursorRect().top() - scale_height(8));
+        m_text_edit->cursorRect().top() - scale_height(5));
     } else if(m_text_edit->cursorRect().bottom() >= bottom) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
         m_text_edit->cursorRect().bottom() -
         m_text_edit->visibleRegion().boundingRect().height() +
-        scale_height(8));
+        scale_height(5));
     }
   }
 }
@@ -504,6 +518,19 @@ void TextAreaBox::on_style() {
   m_text_edit_styles.m_styles.buffer([&] {
     for(auto& property : block) {
       property.visit(
+        // TODO: why must these be evaluated to be found later in compute_border_size()?
+        [&] (const BorderTopSize& size) {
+          stylist.evaluate(size, [=] (auto size) {});
+        },
+        [&] (const BorderRightSize& size) {
+          stylist.evaluate(size, [=] (auto size) {});
+        },
+        [&] (const BorderBottomSize& size) {
+          stylist.evaluate(size, [=] (auto size) {});
+        },
+        [&] (const BorderLeftSize& size) {
+          stylist.evaluate(size, [=] (auto size) {});
+        },
         [&] (const PaddingTop& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_text_edit_styles.m_styles.set("padding-top", size);

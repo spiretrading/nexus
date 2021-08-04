@@ -1278,7 +1278,7 @@ UiProfile Spire::make_text_area_box_profile() {
   properties.push_back(make_standard_property<bool>("read_only"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   // TODO: 124 or 125?
-  properties.push_back(make_standard_property<int>("line-height", 124));
+  properties.push_back(make_standard_property<int>("line-height", 120));
   auto horizontal_alignment_property = define_enum<Qt::Alignment>(
     {{"LEFT", Qt::AlignLeft},
      {"RIGHT", Qt::AlignRight},

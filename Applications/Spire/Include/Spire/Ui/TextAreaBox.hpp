@@ -128,7 +128,8 @@ namespace Styles {
 
       void commit_placeholder_style();
       void commit_style();
-      QSize compute_decoration_size() const;
+      QSize compute_border_size() const;
+      QSize compute_padding_size() const;
       bool is_placeholder_shown() const;
       void update_display_text();
       void update_line_height();
