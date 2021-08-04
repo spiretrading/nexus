@@ -30,6 +30,7 @@
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
+#include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -1252,6 +1253,27 @@ UiProfile Spire::make_search_box_profile() {
       search_box->connect_submit_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
       return search_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_tag_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("label", "CAN"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile(QString::fromUtf8("Tag"), properties,
+    [] (auto& profile) {
+      auto& label = get<QString>("label", profile.get_properties());
+      auto tag = new Tag(label.get());
+      apply_widget_properties(tag, profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([tag] (auto is_read_only) {
+        tag->set_read_only(is_read_only);
+      });
+      tag->connect_delete_signal(
+        profile.make_event_slot(QString::fromUtf8("DeleteSignal")));
+      return tag;
     });
   return profile;
 }
