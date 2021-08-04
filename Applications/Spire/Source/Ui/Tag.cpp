@@ -19,6 +19,7 @@ namespace {
       set(border_radius(scale_width(3))).
       set(border_size(0));
     style.get(Any() >> is_a<TextBox>()).
+      set(border_size(0)).
       set(horizontal_padding(scale_width(5))).
       set(vertical_padding(scale_height(2)));
     style.get(ReadOnly() >> is_a<Button>()).
