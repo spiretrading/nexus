@@ -206,6 +206,6 @@ void UiViewerWindow::on_rebuild() {
   profile.remove_widget();
   update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
-  m_center_stage->setWidget(profile.get_widget());
+  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   delete previous_widget;
 }
