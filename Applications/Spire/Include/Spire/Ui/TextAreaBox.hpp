@@ -10,6 +10,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+#include <QFrame>
 #include <QAbstractTextDocumentLayout>
 #include <QTextBlock>
 #include <QScrollArea>
@@ -70,10 +71,6 @@ namespace Styles {
             connect(
               this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-            setStyleSheet(R"(
-              QTextEdit {
-                padding: 7px 8px 7px 8px;
-              })");
           }
 
           explicit ContentSizedTextEdit(
@@ -124,11 +121,11 @@ namespace Styles {
           }
       };
 
-      class ElidedLabel : public QWidget {
+      class ElidedLabel : public QFrame {
         public:
 
           explicit ElidedLabel(QString text, QWidget *parent = nullptr)
-            : QWidget(parent),
+            : QFrame(parent),
               m_text(std::move(text)),
               m_alignment(Qt::AlignLeft) {}
 
@@ -137,12 +134,19 @@ namespace Styles {
             update();
           }
 
-          Qt::Alignment get_alignment() const {
-            return m_alignment;
+          void set_padding(const QMargins& padding) {
+            m_padding = padding;
+            update();
+          }
+
+          void set_text_color(const QColor& color) {
+            m_text_color = color;
+            update();
           }
 
           void set_alignment(Qt::Alignment alignment) {
             m_alignment = alignment;
+            update();
           }
 
           QSize sizeHint() const override {
@@ -152,10 +156,11 @@ namespace Styles {
         protected:
           void paintEvent(QPaintEvent *event) override {
             QPainter painter(this);
+            painter.setPen(m_text_color);
+            painter.setFont(font());
             QFontMetrics fontMetrics = painter.fontMetrics();
-            bool didElide = false;
             int lineSpacing = fontMetrics.lineSpacing();
-            int y = 0;
+            int y = m_padding.top();
             QTextLayout textLayout(m_text, painter.font());
             auto opt = textLayout.textOption();
             opt.setAlignment(m_alignment);
@@ -167,40 +172,41 @@ namespace Styles {
               if (!line.isValid())
                 break;
 
-              line.setLineWidth(width());
+              line.setLineWidth(width() - m_padding.left() -
+                m_padding.right());
               int nextLineY = y + lineSpacing;
 
               if (height() >= nextLineY + lineSpacing) {
-                line.draw(&painter, QPoint(0, y));
+                line.draw(&painter, QPoint(m_padding.left(), y));
                 y = nextLineY;
               } else {
                 QString lastLine = m_text.mid(line.textStart());
                 QString elidedLastLine = fontMetrics.elidedText(lastLine,
-                  Qt::ElideRight, width());
-                painter.drawText(QPoint(0, y + fontMetrics.ascent()),
-                  elidedLastLine);
+                  Qt::ElideRight, width() - m_padding.left() -
+                  m_padding.right());
+                painter.drawText(QPoint(m_padding.left(),
+                  y + fontMetrics.ascent()), elidedLastLine);
                 line = textLayout.createLine();
-                didElide = line.isValid();
                 break;
               }
             }
             textLayout.endLayout();
-            //if (didElide != elided) {
-            //  elided = didElide;
-            //}
           }
 
         private:
+          QMargins m_padding;
           QString m_text;
           Qt::Alignment m_alignment;
+          QColor m_text_color;
       };
 
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
-        boost::optional<QMargins> m_padding;
+        QMargins m_padding;
         boost::optional<Qt::Alignment> m_alignment;
         boost::optional<QFont> m_font;
         boost::optional<int> m_size;
+        boost::optional<QColor> m_color;
         boost::optional<double> m_line_height;
 
         void clear();

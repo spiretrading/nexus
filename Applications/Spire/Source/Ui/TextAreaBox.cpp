@@ -16,10 +16,6 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
-
-#include <QPlainTextEdit>
-#include <QApplication>
-
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -41,6 +37,7 @@ namespace {
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
     style.get(Any() >> is_a<QTextEdit>()).
+      set(TextColor(QColor::fromRgb(0, 0, 0))).
       set(horizontal_padding(8)).
       set(vertical_padding(5));
     style.get(Hover() || Focus()).
@@ -66,9 +63,12 @@ namespace {
 
 void TextAreaBox::StyleProperties::clear() {
   m_styles.clear();
+  m_padding = {};
   m_alignment = none;
   m_font = none;
   m_size = none;
+  m_color = none;
+  m_line_height = none;
 }
 
 TextAreaBox::TextAreaBox(QWidget* parent)
@@ -87,30 +87,17 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_longest_line_length(0),
       m_longest_line_block(0),
       m_is_read_only(false) {
-  //m_layers = new LayeredWidget(this);
   m_text_edit = new ContentSizedTextEdit(this);
   m_stacked_widget = new QStackedWidget(this);
-  //m_stacked_widget->setStyleSheet("QStackedWidget { background-color: red; }");
   m_stacked_widget->addWidget(m_text_edit);
   setFocusProxy(m_text_edit);
   connect(m_text_edit->document(), &QTextDocument::contentsChanged, this,
     &TextAreaBox::on_text_changed);
-  //m_layers->add(m_text_edit);
   m_placeholder = new ElidedLabel("", this);
   m_placeholder->setFixedSize(0, 0);
   m_stacked_widget->addWidget(m_placeholder);
   m_placeholder->setCursor(m_text_edit->cursor());
-  //m_placeholder->setTextFormat(Qt::PlainText);
-  //m_placeholder->setWordWrap(true);
-  //m_placeholder->setMargin(0);
-  //m_placeholder->setIndent(0);
-  //m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
-  //m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_placeholder->setAttribute(Qt::WA_TransparentForMouseEvents);
-  //m_layers->add(m_placeholder);
-  //m_read_only_label = new ElidedLabel("", this);
-  //m_read_only_label->hide();
-  //m_stacked_widget->addWidget(m_read_only_label);
   m_scroll_box = new ScrollBox(m_stacked_widget, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
@@ -197,27 +184,17 @@ void TextAreaBox::mousePressEvent(QMouseEvent* event) {
 }
 
 void TextAreaBox::commit_placeholder_style() {
-  auto stylesheet = QString(
-    R"(QLabel {
-      background: transparent;
-      border-width: 0px;
-      padding: 8px 8px 7px 8px;)");
-  m_placeholder_styles.m_styles.write(stylesheet);
+  m_placeholder->set_padding(m_placeholder_styles.m_padding);
   auto alignment = m_placeholder_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  if(alignment != m_placeholder->get_alignment()) {
-    m_placeholder->set_alignment(alignment);
-  }
+  m_placeholder->set_alignment(alignment);
   auto font = m_placeholder_styles.m_font.value_or(QFont());
   if(m_placeholder_styles.m_size) {
     font.setPixelSize(*m_placeholder_styles.m_size);
   }
   m_placeholder->setFont(font);
-  if(stylesheet != m_placeholder->styleSheet()) {
-    m_placeholder->setStyleSheet(stylesheet);
-    m_placeholder->style()->unpolish(this);
-    m_placeholder->style()->polish(this);
-  }
+  m_placeholder->set_text_color(m_placeholder_styles.m_color.value_or(
+    QColor()));
   update_placeholder_text();
 }
 
@@ -518,9 +495,29 @@ void TextAreaBox::on_style() {
   m_placeholder_styles.m_styles.buffer([&] {
     for(auto& property : block) {
       property.visit(
+        [&] (const PaddingTop& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_padding.setTop(size);
+          });
+        },
+        [&] (const PaddingRight& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_padding.setRight(size);
+          });
+        },
+        [&] (const PaddingBottom& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_padding.setBottom(size);
+          });
+        },
+        [&] (const PaddingLeft& size) {
+          stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_padding.setLeft(size);
+          });
+        },
         [&] (const TextColor& color) {
           placeholder_stylist.evaluate(color, [=] (auto color) {
-            m_placeholder_styles.m_styles.set("color", color);
+            m_placeholder_styles.m_color = color;
           });
         },
         [&] (const TextAlign& alignment) {
