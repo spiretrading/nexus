@@ -1,5 +1,6 @@
 #include "Spire/Ui/ListView.hpp"
 #include <QEvent>
+#include <QKeyEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -87,15 +88,27 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_current_model(std::move(current_model)),
       m_selection_model(std::move(selection_model)),
       m_direction(Qt::Vertical),
-      m_navigation(EdgeNavigation::WRAP),
+      m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_does_selection_follow_focus(true),
       m_item_gap(DEFAULT_GAP),
-      m_overflow_gap(DEFAULT_OVERFLOW_GAP) {
+      m_overflow_gap(DEFAULT_OVERFLOW_GAP),
+      m_current_index(-1) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(*m_list_model, i));
-    m_list_items.push_back(item);
+    m_items.emplace_back(new ItemEntry{item, i});
+    item->connect_current_signal([=, item = m_items.back().get()] {
+      on_current(*item);
+    });
+    if(m_current_model->get_current() &&
+        is_equal(*m_current_model->get_current(), m_list_model->at(i))) {
+      m_current_index = i;
+    }
+    if(m_selection_model->get_current() &&
+        is_equal(*m_selection_model->get_current(), m_list_model->at(i))) {
+      item->set_selected(true);
+    }
   }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
@@ -138,11 +151,11 @@ void ListView::set_direction(Qt::Orientation direction) {
 }
 
 ListView::EdgeNavigation ListView::get_edge_navigation() const {
-  return m_navigation;
+  return m_edge_navigation;
 }
 
-void ListView::set_edge_navigation(EdgeNavigation navigation) {
-  m_navigation = navigation;
+void ListView::set_edge_navigation(EdgeNavigation edge_navigation) {
+  m_edge_navigation = edge_navigation;
 }
 
 ListView::Overflow ListView::get_overflow() const {
@@ -189,39 +202,115 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void ListView::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Home:
+    case Qt::Key_PageUp:
+      navigate_home();
+      break;
+    case Qt::Key_End:
+    case Qt::Key_PageDown:
+      navigate_end();
+      break;
+    case Qt::Key_Up:
+      if(m_direction == Qt::Orientation::Vertical) {
+        navigate_previous();
+      }
+      break;
+    case Qt::Key_Down:
+      if(m_direction == Qt::Orientation::Vertical) {
+        navigate_next();
+      }
+      break;
+    case Qt::Key_Left:
+      if(m_direction == Qt::Orientation::Horizontal) {
+        navigate_previous();
+      }
+      break;
+    case Qt::Key_Right:
+      if(m_direction == Qt::Orientation::Horizontal) {
+        navigate_next();
+      }
+      break;
+  }
+  QWidget::keyPressEvent(event);
+}
+
+void ListView::navigate_home() {
+  navigate(1, -1, EdgeNavigation::CONTAIN);
+}
+
+void ListView::navigate_end() {
+  navigate(-1, static_cast<int>(m_items.size()), EdgeNavigation::CONTAIN);
+}
+
+void ListView::navigate_next() {
+  navigate(1, m_current_index, m_edge_navigation);
+}
+
+void ListView::navigate_previous() {
+  navigate(-1, m_current_index, m_edge_navigation);
+}
+
+void ListView::navigate(
+    int direction, int start, EdgeNavigation edge_navigation) {
+  if(m_items.empty()) {
+    return;
+  }
+  auto i = start;
+  do {
+    i += direction;
+    if(i < 0 || i >= static_cast<int>(m_items.size())) {
+      if(edge_navigation == EdgeNavigation::CONTAIN) {
+        return;
+      }
+      if(direction == -1) {
+        i = static_cast<int>(m_items.size()) - 1;
+      } else {
+        i = 0;
+      }
+    }
+  } while(i != m_current_index && !m_items[i]->m_item->isEnabled());
+  if(i == m_current_index) {
+    return;
+  }
+  m_current_index = i;
+  m_items[m_current_index]->m_item->setFocus();
+}
+
 void ListView::update_layout() {
   auto& body_layout = m_container->get_layout();
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
   }
   auto direction = [&] {
-    if(m_direction == Qt::Orientation::Vertical) {
-      return QBoxLayout::LeftToRight;
+    if(m_direction == Qt::Orientation::Horizontal) {
+      return QBoxLayout::TopToBottom;
     }
-    return QBoxLayout::TopToBottom;
+    return QBoxLayout::LeftToRight;
   }();
   body_layout.setDirection(direction);
   body_layout.setSpacing(m_overflow_gap);
   auto max_size = [&] {
     if(m_overflow == Overflow::NONE) {
       return QWIDGETSIZE_MAX;
-    } else if(m_direction == Qt::Orientation::Vertical) {
-      return m_container->height();
+    } else if(m_direction == Qt::Orientation::Horizontal) {
+      return m_container->width();
     }
-    return m_container->width();
+    return m_container->height();
   }();
-  auto i = m_list_items.begin();
-  while(i != m_list_items.end()) {
+  auto i = m_items.begin();
+  while(i != m_items.end()) {
     auto remaining_size = max_size;
     auto inner_layout = new QBoxLayout(reverse(direction));
     inner_layout->setContentsMargins({});
     inner_layout->setSpacing(m_item_gap);
-    while(i != m_list_items.end()) {
+    while(i != m_items.end()) {
       auto item_size = [&] {
-        if(m_direction == Qt::Orientation::Vertical) {
-          return (*i)->height();
+        if(m_direction == Qt::Orientation::Horizontal) {
+          return (*i)->m_item->width();
         } else {
-          return (*i)->width();
+          return (*i)->m_item->height();
         }
       }();
       remaining_size -= item_size;
@@ -232,14 +321,13 @@ void ListView::update_layout() {
       auto item_layout = new QBoxLayout(direction);
       item_layout->setContentsMargins({});
       if(m_direction == Qt::Orientation::Horizontal) {
-        item_layout->addSpacerItem(
-          new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+        (*i)->m_item->setSizePolicy(
+          QSizePolicy::Preferred, QSizePolicy::Expanding);
+      } else {
+        (*i)->m_item->setSizePolicy(
+          QSizePolicy::Expanding, QSizePolicy::Preferred);
       }
-      item_layout->addWidget(*i);
-      if(m_direction == Qt::Orientation::Vertical) {
-        item_layout->addSpacerItem(
-          new QSpacerItem(0, 0, QSizePolicy::Expanding));
-      }
+      item_layout->addWidget((*i)->m_item);
       inner_layout->addLayout(item_layout);
       ++i;
     }
@@ -249,6 +337,11 @@ void ListView::update_layout() {
   }
   m_container->m_body->adjustSize();
   updateGeometry();
+}
+
+void ListView::on_current(ItemEntry& item) {
+  m_current_index = item.m_index;
+  m_current_model->set_current(m_list_model->at(m_current_index));
 }
 
 void ListView::on_style() {

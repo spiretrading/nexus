@@ -145,10 +145,10 @@ namespace Styles {
 
       /**
        * Sets the navigation behavior of the ListView.
-       * @param navigation The keyboard navigation behavior when the first or
-       *                    last list item is selected.
+       * @param edge_navigation The keyboard navigation behavior when the first
+       *        or last list item is selected.
        */
-      void set_edge_navigation(EdgeNavigation navigation);
+      void set_edge_navigation(EdgeNavigation edge_navigation);
 
       /** Returns the overflow mode of the ListView. */
       Overflow get_overflow() const;
@@ -190,8 +190,13 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      struct ItemEntry {
+        ListItem* m_item;
+        int m_index;
+      };
       struct BodyContainer;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ArrayListModel> m_list_model;
@@ -199,17 +204,24 @@ namespace Styles {
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<SelectionModel> m_selection_model;
       Qt::Orientation m_direction;
-      EdgeNavigation m_navigation;
+      EdgeNavigation m_edge_navigation;
       Overflow m_overflow;
       SelectionMode m_selection_mode;
       bool m_does_selection_follow_focus;
-      std::vector<ListItem*> m_list_items;
+      std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
       BodyContainer* m_container;
       int m_item_gap;
       int m_overflow_gap;
+      int m_current_index;
 
+      void navigate_home();
+      void navigate_end();
+      void navigate_next();
+      void navigate_previous();
+      void navigate(int direction, int start, EdgeNavigation edge_navigation);
       void update_layout();
+      void on_current(ItemEntry& item);
       void on_style();
   };
 }
