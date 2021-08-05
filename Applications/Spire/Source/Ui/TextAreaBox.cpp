@@ -132,6 +132,11 @@ void TextAreaBox::ElidedLabel::set_alignment(Qt::Alignment alignment) {
   update();
 }
 
+void TextAreaBox::ElidedLabel::set_line_height(int line_height) {
+  m_line_height = line_height;
+  update();
+}
+
 QSize TextAreaBox::ElidedLabel::sizeHint() const  {
   return {width(), height()};
 }
@@ -141,8 +146,7 @@ void TextAreaBox::ElidedLabel::paintEvent(QPaintEvent *event) {
   painter.setPen(m_text_color);
   painter.setFont(font());
   auto fontMetrics = painter.fontMetrics();
-  auto lineSpacing = fontMetrics.lineSpacing();
-  auto y = m_padding.top();
+  auto y = m_padding.top() + m_line_height - fontMetrics.height();
   auto textLayout = QTextLayout(m_text, painter.font());
   auto opt = textLayout.textOption();
   opt.setAlignment(m_alignment);
@@ -152,8 +156,8 @@ void TextAreaBox::ElidedLabel::paintEvent(QPaintEvent *event) {
   while(line.isValid()) {
     line.setLineWidth(width() - m_padding.left() -
       m_padding.right());
-    auto next_line_y = y + lineSpacing;
-    if (height() >= next_line_y + lineSpacing) {
+    auto next_line_y = y + m_line_height;
+    if (height() >= next_line_y + m_line_height) {
       line.draw(&painter, QPoint(m_padding.left(), y));
       y = next_line_y;
     } else {
@@ -421,6 +425,7 @@ void TextAreaBox::update_line_height() {
   m_computed_line_height =
     static_cast<int>(static_cast<double>(m_text_edit->font().pixelSize()) *
     *m_text_edit_styles.m_line_height);
+  m_placeholder->set_line_height(m_computed_line_height);
   m_scroll_box->get_vertical_scroll_bar().set_line_size(
     m_computed_line_height);
   auto cursor_pos = m_text_edit->textCursor().position();

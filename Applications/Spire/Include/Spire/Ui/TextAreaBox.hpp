@@ -88,6 +88,8 @@ namespace Styles {
 
           void set_alignment(Qt::Alignment alignment);
 
+          void set_line_height(int line_height);
+
           QSize sizeHint() const override;
 
         protected:
@@ -98,6 +100,7 @@ namespace Styles {
           QString m_text;
           Qt::Alignment m_alignment;
           QColor m_text_color;
+          int m_line_height;
       };
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
