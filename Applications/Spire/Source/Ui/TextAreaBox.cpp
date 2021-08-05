@@ -394,40 +394,42 @@ void TextAreaBox::update_display_text() {
     auto line_count = std::floor(static_cast<double>((height() -
       compute_padding_size().height())) /
       static_cast<double>(m_computed_line_height));
-    auto lines = [&] {
-      auto lines = QStringList();
-      auto block = m_text_edit->document()->begin();
-      while(block.isValid()) {
-        auto block_text = block.text();
-        if(!block.layout())
-          continue;
-        for(int i = 0; i != block.layout()->lineCount(); ++i) {
-          auto line = block.layout()->lineAt(i);
-          lines.append(block_text.mid(line.textStart(), line.textLength()));
+    if(line_count > 0) {
+      auto lines = [&] {
+        auto lines = QStringList();
+        auto block = m_text_edit->document()->begin();
+        while(block.isValid()) {
+          auto block_text = block.text();
+          if(!block.layout())
+            continue;
+          for(int i = 0; i != block.layout()->lineCount(); ++i) {
+            auto line = block.layout()->lineAt(i);
+            lines.append(block_text.mid(line.textStart(), line.textLength()));
+          }
+          if(lines.count() > line_count) {
+            break;
+          }
+          block = block.next();
         }
-        if(lines.count() > line_count) {
-          break;
+        return lines;
+      }();
+      if(lines.count() > line_count) {
+        auto is_elided = lines.count() > line_count;
+        while(lines.count() > line_count) {
+          lines.pop_back();
         }
-        block = block.next();
+        auto& last_line = lines.back();
+        last_line = m_text_edit->fontMetrics().elidedText(last_line,
+          Qt::ElideRight, width() - 18);
+        if(is_elided && !last_line.endsWith("...")) {
+          last_line.append("...");
+        }
+        m_text_edit->blockSignals(true);
+        m_text_edit->setText(lines.join("\n"));
+        update_text_alignment(*m_text_edit_styles.m_alignment);
+        update_line_height();
+        m_text_edit->blockSignals(false);
       }
-      return lines;
-    }();
-    if(lines.count() > line_count) {
-      auto is_elided = lines.count() > line_count;
-      while(lines.count() > line_count) {
-        lines.pop_back();
-      }
-      auto& last_line = lines.back();
-      last_line = m_text_edit->fontMetrics().elidedText(last_line,
-        Qt::ElideRight, width() - 18);
-      if(is_elided && !last_line.endsWith("...")) {
-        last_line.append("...");
-      }
-      m_text_edit->blockSignals(true);
-      m_text_edit->setText(lines.join("\n"));
-      update_text_alignment(*m_text_edit_styles.m_alignment);
-      update_line_height();
-      m_text_edit->blockSignals(false);
     }
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
     m_text_edit->setText(m_model->get_current());
