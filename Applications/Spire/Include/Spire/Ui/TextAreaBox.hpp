@@ -122,7 +122,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
-      double m_computed_line_height;
+      int m_computed_line_height;
       // TODO: remove when selector fixed
       bool m_is_read_only;
 

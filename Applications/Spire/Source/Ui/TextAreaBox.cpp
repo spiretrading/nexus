@@ -380,8 +380,8 @@ QSize TextAreaBox::compute_padding_size() const {
 void TextAreaBox::update_display_text() {
   if(is_read_only()) {
     auto line_count = std::floor(static_cast<double>((height() -
-      compute_padding_size().height() - compute_border_size().height())) /
-      m_computed_line_height);
+      compute_padding_size().height())) /
+      static_cast<double>(m_computed_line_height));
     auto lines = [&] {
       QStringList ret;
       QTextBlock tb = m_text_edit->document()->begin();
@@ -419,10 +419,10 @@ void TextAreaBox::update_display_text() {
 
 void TextAreaBox::update_line_height() {
   m_computed_line_height =
-    static_cast<double>(m_text_edit->font().pixelSize()) *
-    *m_text_edit_styles.m_line_height;
+    static_cast<int>(static_cast<double>(m_text_edit->font().pixelSize()) *
+    *m_text_edit_styles.m_line_height);
   m_scroll_box->get_vertical_scroll_bar().set_line_size(
-    static_cast<int>(m_computed_line_height));
+    m_computed_line_height);
   auto cursor_pos = m_text_edit->textCursor().position();
   for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
     auto block = m_text_edit->document()->findBlockByNumber(i);
