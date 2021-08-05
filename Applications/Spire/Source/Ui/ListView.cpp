@@ -142,14 +142,6 @@ ListItem* ListView::get_list_item(const std::any& value) const {
   return m_items[index].m_item;
 }
 
-const ListItem* ListView::get_item(const std::any& value) const {
-  auto index = get_index_by_value(value);
-  if(index < 0 || index >= m_list_model->get_size()) {
-    return nullptr;
-  }
-  return m_items[index].m_item;
-}
-
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -164,11 +156,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Home:
     case Qt::Key_PageUp:
       update_current(0);
-      return;
+      break;
     case Qt::Key_End:
     case Qt::Key_PageDown:
       update_current(m_list_model->get_size() - 1);
-      return;
+      break;
     case Qt::Key_Down:
       if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
         auto row_height =
@@ -182,7 +174,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         }
       }
       update_current(move_next());
-      return;
+      break;
     case Qt::Key_Up:
       if(m_direction == Qt::Horizontal && m_overflow == Overflow::WRAP) {
         if(m_tracking_position.y() != rect().y()) {
@@ -190,7 +182,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
             get_column_or_row(m_column_or_row_index - 2)->geometry().height() -
             get_column_or_row(m_column_or_row_index - 1)->geometry().height());
           cross_move(false);
-          return;
+          break;
         }
       }
       update_current(move_previous());
@@ -206,7 +198,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         }
       }
       update_current(move_previous());
-      return;
+      break;
     case Qt::Key_Right:
       if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
         auto column_width =
@@ -220,7 +212,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         }
       }
       update_current(move_next());
-      return;
+      break;
     default:
       auto key = std::move(event->text());
       if(!key.isEmpty() && (key[0].isLetterOrNumber() || key[0] == '_')) {

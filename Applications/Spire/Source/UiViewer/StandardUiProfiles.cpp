@@ -1283,29 +1283,6 @@ UiProfile Spire::make_scroll_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_scrollable_list_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
-    [] (auto& profile) {
-      auto list_model = std::make_shared<ArrayListModel>();
-        for(auto i = 0; i < 15; ++i) {
-          list_model->push(QString::fromUtf8("Item%1").arg(i));
-        }
-      auto current_model = std::make_shared<ListView::LocalCurrentModel>();
-      auto list_view = new ListView(current_model, list_model,
-        [&] (auto model, auto index) {
-          auto label = make_label(model->get<QString>(index));
-          return label;
-        });
-      auto scrollable_list_box = make_scrollable_list_box(list_view);
-      apply_widget_properties(scrollable_list_box, profile.get_properties());
-      scrollable_list_box->setFixedSize(scale(150, 240));
-      return scrollable_list_box;
-    });
-  return profile;
-}
-
 UiProfile Spire::make_search_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

@@ -126,12 +126,11 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_search_box_profile());
-  add(make_scrollable_list_box_profile());
   add(make_text_area_box_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_tooltip_profile());
-  m_widget_list->setCurrentRow(25);
+  m_widget_list->setCurrentRow(0);
 }
 
 void UiViewerWindow::add(UiProfile profile) {

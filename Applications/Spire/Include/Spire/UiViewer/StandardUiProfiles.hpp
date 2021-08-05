@@ -80,9 +80,6 @@ namespace Spire {
   /** Returns a UiProfile for the ScrollBox. */
   UiProfile make_scroll_box_profile();
 
-  /** Returns a UiProfile for the ScrollableListBox. */
-  UiProfile make_scrollable_list_box_profile();
-
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
 

@@ -88,15 +88,6 @@ namespace Spire {
       void on_horizontal_scroll(int position);
       void update_ranges();
   };
-
-  /**
-   * Returns a newly constructed ScrollableListBox which is a ScrollBox
-   * containing a ListView.
-   * @param list_view The ListView contained within a ScrollBox.
-   * @param parent The parent widget.
-   */
-  ScrollBox* make_scrollable_list_box(ListView* list_view,
-    QWidget* parent = nullptr);
 }
 
 namespace Spire::Styles {
