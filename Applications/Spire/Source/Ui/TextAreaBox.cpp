@@ -659,7 +659,7 @@ void TextAreaBox::on_style() {
 }
 
 void TextAreaBox::on_text_changed() {
-  if(!is_read_only()) {
+  if(!is_read_only() && m_text_edit->toPlainText() != m_model->get_current()) {
     m_model->set_current(m_text_edit->toPlainText());
   }
   update_text_edit_width();
