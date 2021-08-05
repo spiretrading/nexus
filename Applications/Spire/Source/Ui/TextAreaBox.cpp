@@ -511,6 +511,9 @@ void TextAreaBox::on_current(const QString& current) {
 }
 
 void TextAreaBox::on_cursor_position() {
+  if(!m_text_edit->hasFocus()) {
+    return;
+  }
   if(m_scroll_box->get_vertical_scroll_bar().isVisible() &&
       !m_text_edit->visibleRegion().boundingRect().contains(
         m_text_edit->cursorRect())) {
