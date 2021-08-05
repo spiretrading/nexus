@@ -272,7 +272,6 @@ QSize TextAreaBox::sizeHint() const {
 
 void TextAreaBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    //update_display_text();
     update_placeholder_text();
   }
   QWidget::changeEvent(event);
@@ -282,7 +281,7 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize && watched == m_scroll_box) {
     update_text_edit_width();
     m_stacked_widget->adjustSize();
-    //update_display_text();
+    update_display_text();
     update_placeholder_text();
   }
   return QWidget::eventFilter(watched, event);
@@ -383,6 +382,11 @@ QSize TextAreaBox::compute_padding_size() const {
 
 void TextAreaBox::update_display_text() {
   if(is_read_only()) {
+    if(m_text_edit->toPlainText() != m_model->get_current()) {
+      m_text_edit->blockSignals(true);
+      m_text_edit->setText(m_model->get_current());
+      m_text_edit->blockSignals(false);
+    }
     auto line_count = std::floor(static_cast<double>((height() -
       compute_padding_size().height())) /
       static_cast<double>(m_computed_line_height));
@@ -410,9 +414,11 @@ void TextAreaBox::update_display_text() {
     if(lines.count() > line_count) {
       lines.pop_back();
       // TODO: elide if required
+      m_text_edit->blockSignals(true);
       m_text_edit->setText(lines.join("\n"));
       update_text_alignment(*m_text_edit_styles.m_alignment);
       update_line_height();
+      m_text_edit->blockSignals(false);
     }
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
     m_text_edit->setText(m_model->get_current());
