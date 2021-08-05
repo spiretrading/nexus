@@ -412,8 +412,16 @@ void TextAreaBox::update_display_text() {
       return ret;
     }();
     if(lines.count() > line_count) {
-      lines.pop_back();
-      // TODO: elide if required
+      auto is_elided = lines.count() > line_count;
+      while(lines.count() > line_count) {
+        lines.pop_back();
+      }
+      auto& last_line = lines.back();
+      last_line = m_text_edit->fontMetrics().elidedText(last_line,
+        Qt::ElideRight, width() - 18);
+      if(is_elided && !last_line.endsWith("...")) {
+        last_line.append("...");
+      }
       m_text_edit->blockSignals(true);
       m_text_edit->setText(lines.join("\n"));
       update_text_alignment(*m_text_edit_styles.m_alignment);
