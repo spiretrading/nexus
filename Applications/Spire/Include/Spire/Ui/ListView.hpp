@@ -155,7 +155,7 @@ namespace Styles {
       Styles::Overflow m_overflow;
       Styles::SelectionMode m_selection_mode;
       int m_current_index;
-      QPoint m_navigation_point;
+      QRect m_navigation_box;
 
       void navigate_home();
       void navigate_end();
