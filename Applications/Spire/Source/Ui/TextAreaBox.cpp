@@ -198,6 +198,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_submission(m_model->get_current()),
       m_is_read_only(false) {
   m_text_edit = new ContentSizedTextEdit(m_model->get_current(), this);
+  m_text_edit->installEventFilter(this);
   m_stacked_widget = new QStackedWidget(this);
   m_stacked_widget->addWidget(m_text_edit);
   setFocusProxy(m_text_edit);
@@ -278,11 +279,13 @@ void TextAreaBox::changeEvent(QEvent* event) {
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Resize && watched == m_scroll_box) {
+  if(watched == m_scroll_box && event->type() == QEvent::Resize) {
     update_text_edit_width();
     m_stacked_widget->adjustSize();
     update_display_text();
     update_placeholder_text();
+  } else if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
+    m_submit_signal(m_model->get_current());
   }
   return QWidget::eventFilter(watched, event);
 }
