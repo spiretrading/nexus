@@ -1,6 +1,8 @@
 #include "Spire/Ui/TextAreaBox.hpp"
+#include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QPainter>
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocument>
@@ -394,25 +396,22 @@ void TextAreaBox::update_display_text() {
       compute_padding_size().height())) /
       static_cast<double>(m_computed_line_height));
     auto lines = [&] {
-      QStringList ret;
-      QTextBlock tb = m_text_edit->document()->begin();
-      while(tb.isValid())
-      {
-        QString blockText = tb.text();
-        Q_ASSERT(tb.layout());
-        if(!tb.layout())
+      auto lines = QStringList();
+      auto block = m_text_edit->document()->begin();
+      while(block.isValid()) {
+        auto block_text = block.text();
+        if(!block.layout())
           continue;
-        for(int i = 0; i != tb.layout()->lineCount(); ++i)
-        {
-          QTextLine line = tb.layout()->lineAt(i);
-          ret.append(blockText.mid(line.textStart(), line.textLength()));
+        for(int i = 0; i != block.layout()->lineCount(); ++i) {
+          auto line = block.layout()->lineAt(i);
+          lines.append(block_text.mid(line.textStart(), line.textLength()));
         }
-        if(ret.count() > line_count) {
+        if(lines.count() > line_count) {
           break;
         }
-        tb = tb.next();
+        block = block.next();
       }
-      return ret;
+      return lines;
     }();
     if(lines.count() > line_count) {
       auto is_elided = lines.count() > line_count;
@@ -663,6 +662,7 @@ void TextAreaBox::on_text_changed() {
     m_model->set_current(m_text_edit->toPlainText());
   }
   update_text_edit_width();
+  m_stacked_widget->adjustSize();
   updateGeometry();
   update_placeholder_text();
 }

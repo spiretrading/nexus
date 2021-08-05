@@ -3,20 +3,12 @@
 #include <boost/optional/optional.hpp>
 #include <QApplication>
 #include <QLabel>
+#include <QStackedWidget>
 #include <QTextEdit>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TextBox.hpp"
-
-#include <QFrame>
-#include <QAbstractTextDocumentLayout>
-#include <QTextBlock>
-#include <QScrollArea>
-#include <QScrollBar>
-#include <QPainter>
-#include <QStackedWidget>
 
 namespace Spire {
 namespace Styles {
