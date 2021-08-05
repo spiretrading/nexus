@@ -32,7 +32,7 @@ namespace Styles {
     private:
       QImage m_icon;
       QColor m_background_color;
-      QColor m_fill;
+      boost::optional<QColor> m_fill;
       boost::optional<QColor> m_border_color;
 
       void on_style();
