@@ -118,8 +118,6 @@ namespace Styles {
       QString m_submission;
       QString m_placeholder_text;
       int m_computed_line_height;
-      // TODO: remove when selector fixed
-      bool m_is_read_only;
 
       void commit_placeholder_style();
       void commit_style();

@@ -197,8 +197,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_placeholder_styles{[=] { commit_placeholder_style(); }},
       m_text_edit_styles{[=] { commit_style(); }},
       m_model(std::move(model)),
-      m_submission(m_model->get_current()),
-      m_is_read_only(false) {
+      m_submission(m_model->get_current()) {
   m_text_edit = new ContentSizedTextEdit(m_model->get_current(), this);
   m_text_edit->installEventFilter(this);
   m_stacked_widget = new QStackedWidget(this);
@@ -251,8 +250,7 @@ bool TextAreaBox::is_read_only() const {
 }
 
 void TextAreaBox::set_read_only(bool read_only) {
-  // TODO: if setReadOnly is called here, the read-only style is overwritten.
-  m_is_read_only = read_only;
+  m_text_edit->setReadOnly(read_only);
   if(read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
     match(*this, ReadOnly());
@@ -260,7 +258,6 @@ void TextAreaBox::set_read_only(bool read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     unmatch(*this, ReadOnly());
   }
-  m_text_edit->setReadOnly(read_only);
   update_display_text();
   update_placeholder_text();
   update_text_edit_width();
@@ -561,9 +558,8 @@ void TextAreaBox::on_style() {
         [&] (const PaddingRight& size) {
           stylist.evaluate(size, [=] (auto size) {
             // TODO: fix selector
-            if(m_is_read_only) {
+            if(m_text_edit->isReadOnly()) {
               size = 0;
-              //qDebug() << "size zero";
             }
             m_text_edit_styles.m_styles.set("padding-right", size);
           });
@@ -576,7 +572,7 @@ void TextAreaBox::on_style() {
         [&] (const PaddingLeft& size) {
           stylist.evaluate(size, [=] (auto size) {
             // TODO: fix selector
-            if(m_is_read_only) {
+            if(m_text_edit->isReadOnly()) {
               size = 0;
             }
             m_text_edit_styles.m_styles.set("padding-left", size);
