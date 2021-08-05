@@ -254,8 +254,10 @@ void TextAreaBox::set_read_only(bool read_only) {
   // TODO: if setReadOnly is called here, the read-only style is overwritten.
   m_is_read_only = read_only;
   if(read_only) {
+    m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
     match(*this, ReadOnly());
   } else {
+    m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     unmatch(*this, ReadOnly());
   }
   m_text_edit->setReadOnly(read_only);
