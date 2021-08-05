@@ -264,7 +264,7 @@ namespace {
       set(border_size(0)).
       set(horizontal_padding(scale_width(0))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
     return style;
   }
 
@@ -275,7 +275,7 @@ namespace {
       set(horizontal_padding(scale_width(0))).
       set(LeadingZeros(2)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
     return style;
   }
 
@@ -286,7 +286,7 @@ namespace {
       set(horizontal_padding(scale_width(0))).
       set(LeadingZeros(2)).set(TrailingZeros(3)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > is_a<Button>()).set(Visibility(VisibilityOption::NONE));
+    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
     return style;
   }
 

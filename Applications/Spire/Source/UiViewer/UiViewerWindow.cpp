@@ -106,6 +106,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_decimal_filter_panel_profile());
   add(make_delete_icon_button_profile());
   add(make_duration_box_profile());
+  add(make_duration_filter_panel_profile());
   add(make_filter_panel_profile());
   add(make_icon_button_profile());
   add(make_info_tip_profile());
@@ -120,6 +121,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_money_filter_panel_profile());
   add(make_overlay_panel_profile());
   add(make_quantity_box_profile());
+  add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
