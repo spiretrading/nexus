@@ -74,7 +74,7 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model, QWidget* parent)
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
   ViewBuilder view_builder, QWidget* parent)
   : ListView(std::move(list_model), std::move(view_builder),
-      std::make_shared<LocalValueModel<optional<std::any>>>(),
+      std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<LocalValueModel<optional<std::any>>>(), parent) {}
 
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
@@ -90,18 +90,13 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_item_gap(DEFAULT_GAP),
-      m_overflow_gap(DEFAULT_OVERFLOW_GAP),
-      m_current_index(-1) {
+      m_overflow_gap(DEFAULT_OVERFLOW_GAP) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(*m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i});
     item->connect_current_signal([=, item = m_items.back().get()] {
       on_current(*item);
     });
-    if(m_current_model->get_current() &&
-        is_equal(*m_current_model->get_current(), m_list_model->at(i))) {
-      m_current_index = i;
-    }
     if(m_selection_model->get_current() &&
         is_equal(*m_selection_model->get_current(), m_list_model->at(i))) {
       item->set_selected(true);
@@ -204,11 +199,11 @@ void ListView::navigate_end() {
 }
 
 void ListView::navigate_next() {
-  navigate(1, m_current_index, m_edge_navigation);
+  navigate(1, m_current_model->get_current().value_or(-1), m_edge_navigation);
 }
 
 void ListView::navigate_previous() {
-  navigate(-1, m_current_index, m_edge_navigation);
+  navigate(-1, m_current_model->get_current().value_or(-1), m_edge_navigation);
 }
 
 void ListView::navigate(
@@ -228,8 +223,8 @@ void ListView::navigate(
         i = 0;
       }
     }
-  } while(i != m_current_index && !m_items[i]->m_item->isEnabled());
-  if(i == m_current_index) {
+  } while(i != start && !m_items[i]->m_item->isEnabled());
+  if(i == m_current_model->get_current()) {
     return;
   }
   m_items[i]->m_item->setFocus();
@@ -248,13 +243,13 @@ void ListView::cross(int direction) {
     return;
   }
   if(m_navigation_box.isNull()) {
-    if(m_current_index == -1) {
-      m_navigation_box = m_items.front()->m_item->frameGeometry();
+    if(auto current = m_current_model->get_current()) {
+      m_navigation_box = m_items[*current]->m_item->frameGeometry();
     } else {
-      m_navigation_box = m_items[m_current_index]->m_item->frameGeometry();
+      m_navigation_box = m_items.front()->m_item->frameGeometry();
     }
   }
-  auto i = m_current_index + direction;
+  auto i = m_current_model->get_current().value_or(-1) + direction;
   auto navigation_box = m_navigation_box;
   auto candidate = -1;
   while(i >= 0 && i != static_cast<int>(m_items.size())) {
@@ -281,7 +276,7 @@ void ListView::cross(int direction) {
     }
     i += direction;
   }
-  if(candidate == -1 || candidate == m_current_index) {
+  if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
   m_items[candidate]->m_item->setFocus();
@@ -350,9 +345,8 @@ void ListView::update_layout() {
 }
 
 void ListView::on_current(ItemEntry& item) {
-  m_current_index = item.m_index;
   m_navigation_box = item.m_item->frameGeometry();
-  m_current_model->set_current(m_list_model->at(m_current_index));
+  m_current_model->set_current(item.m_index);
 }
 
 void ListView::on_style() {

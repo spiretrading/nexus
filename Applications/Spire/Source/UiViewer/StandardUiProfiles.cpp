@@ -980,8 +980,7 @@ UiProfile Spire::make_list_view_profile() {
         }
       });
       list_view->get_current_model()->connect_current_signal(
-        profile.make_event_slot<optional<std::any>>(
-          QString::fromUtf8("Current")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       list_view->get_selection_model()->connect_current_signal(
         profile.make_event_slot<optional<std::any>>(
           QString::fromUtf8("Selection")));

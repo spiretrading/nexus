@@ -61,7 +61,7 @@ namespace Styles {
       /**
        * The type of model representing the index of the current value.
        */
-      using CurrentModel = ValueModel<boost::optional<std::any>>;
+      using CurrentModel = ValueModel<boost::optional<int>>;
 
       /**
        * The type of model representing the index of the selected value.
@@ -154,7 +154,6 @@ namespace Styles {
       Styles::EdgeNavigation m_edge_navigation;
       Styles::Overflow m_overflow;
       Styles::SelectionMode m_selection_mode;
-      int m_current_index;
       QRect m_navigation_box;
 
       void navigate_home();
