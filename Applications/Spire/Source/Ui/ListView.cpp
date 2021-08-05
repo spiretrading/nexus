@@ -170,7 +170,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
           m_tracking_position.setY(m_tracking_position.y() + row_height +
             get_column_or_row(m_column_or_row_index + 1)->geometry().height());
           cross_move(true);
-          return;
+          break;
         }
       }
       update_current(move_next());
@@ -186,7 +186,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         }
       }
       update_current(move_previous());
-      return;
+      break;
     case Qt::Key_Left:
       if(m_direction == Qt::Vertical && m_overflow == Overflow::WRAP) {
         if(m_tracking_position.x() != rect().x()) {
@@ -194,7 +194,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
             get_column_or_row(m_column_or_row_index - 2)->geometry().width() -
             get_column_or_row(m_column_or_row_index - 1)->geometry().width());
           cross_move(false);
-          return;
+          break;
         }
       }
       update_current(move_previous());
@@ -208,7 +208,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
           m_tracking_position.setX(m_tracking_position.x() + column_width +
             get_column_or_row(m_column_or_row_index + 1)->geometry().width());
           cross_move(true);
-          return;
+          break;
         }
       }
       update_current(move_next());

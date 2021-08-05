@@ -4,7 +4,6 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
-#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 
