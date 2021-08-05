@@ -165,28 +165,28 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       if(m_direction == Qt::Orientation::Vertical) {
         navigate_previous();
       } else if(m_overflow == Overflow::WRAP) {
-        navigate_up();
+        cross_previous();
       }
       break;
     case Qt::Key_Down:
       if(m_direction == Qt::Orientation::Vertical) {
         navigate_next();
       } else if(m_overflow == Overflow::WRAP) {
-        navigate_down();
+        cross_next();
       }
       break;
     case Qt::Key_Left:
       if(m_direction == Qt::Orientation::Horizontal) {
         navigate_previous();
       } else if(m_overflow == Overflow::WRAP) {
-        navigate_left();
+        cross_previous();
       }
       break;
     case Qt::Key_Right:
       if(m_direction == Qt::Orientation::Horizontal) {
         navigate_next();
       } else if(m_overflow == Overflow::WRAP) {
-        navigate_right();
+        cross_next();
       }
       break;
     default:
@@ -235,71 +235,15 @@ void ListView::navigate(
   m_items[i]->m_item->setFocus();
 }
 
-void ListView::navigate_up() {
-  if(m_items.empty()) {
-    return;
-  }
-  if(m_navigation_point.isNull()) {
-    if(m_current_index == -1) {
-      m_navigation_point = m_items.front()->m_item->pos();
-    } else {
-      m_navigation_point = m_items[m_current_index]->m_item->pos();
-    }
-  }
-  auto i = m_current_index;
-  auto navigation_point = m_navigation_point;
-  while(true) {
-    --i;
-    if(i < 0) {
-      break;
-    } else if(m_items[i]->m_item->isEnabled()) {
-      navigation_point.ry() = m_items[i]->m_item->pos().y();
-      if(navigation_point.y() < m_navigation_point.y() && 
-          m_items[i]->m_item->frameGeometry().contains(navigation_point)) {
-        break;
-      }
-    }
-  }
-  if(i < 0) {
-    return;
-  }
-  m_items[i]->m_item->setFocus();
-  m_navigation_point = navigation_point;
+void ListView::cross_previous() {
+  cross(-1);
 }
 
-void ListView::navigate_down() {
-  if(m_items.empty()) {
-    return;
-  }
-  if(m_navigation_point.isNull()) {
-    if(m_current_index == -1) {
-      m_navigation_point = m_items.front()->m_item->pos();
-    } else {
-      m_navigation_point = m_items[m_current_index]->m_item->pos();
-    }
-  }
-  auto i = m_current_index;
-  auto navigation_point = m_navigation_point;
-  while(true) {
-    ++i;
-    if(i == static_cast<int>(m_items.size())) {
-      break;
-    } else if(m_items[i]->m_item->isEnabled()) {
-      navigation_point.ry() = m_items[i]->m_item->pos().y();
-      if(navigation_point.y() > m_navigation_point.y() && 
-          m_items[i]->m_item->frameGeometry().contains(navigation_point)) {
-        break;
-      }
-    }
-  }
-  if(i == static_cast<int>(m_items.size())) {
-    return;
-  }
-  m_items[i]->m_item->setFocus();
-  m_navigation_point = navigation_point;
+void ListView::cross_next() {
+  cross(1);
 }
 
-void ListView::navigate_left() {
+void ListView::cross(int direction) {
   if(m_items.empty()) {
     return;
   }
@@ -313,50 +257,27 @@ void ListView::navigate_left() {
   auto i = m_current_index;
   auto navigation_point = m_navigation_point;
   while(true) {
-    --i;
-    if(i < 0) {
+    i += direction;
+    if(i < 0 || i == static_cast<int>(m_items.size())) {
       break;
     } else if(m_items[i]->m_item->isEnabled()) {
-      navigation_point.rx() = m_items[i]->m_item->pos().x();
-      if(navigation_point.x() < m_navigation_point.x() && 
+      if(m_direction == Qt::Orientation::Horizontal) {
+        navigation_point.ry() = m_items[i]->m_item->pos().y();
+      } else {
+        navigation_point.rx() = m_items[i]->m_item->pos().x();
+      }
+      if((m_direction == Qt::Orientation::Horizontal &&
+          direction * m_navigation_point.y() <
+          direction * navigation_point.y() ||
+          m_direction == Qt::Orientation::Vertical &&
+          direction * m_navigation_point.x() <
+          direction * navigation_point.x()) &&
           m_items[i]->m_item->frameGeometry().contains(navigation_point)) {
         break;
       }
     }
   }
-  if(i < 0) {
-    return;
-  }
-  m_items[i]->m_item->setFocus();
-  m_navigation_point = navigation_point;
-}
-
-void ListView::navigate_right() {
-  if(m_items.empty()) {
-    return;
-  }
-  if(m_navigation_point.isNull()) {
-    if(m_current_index == -1) {
-      m_navigation_point = m_items.front()->m_item->pos();
-    } else {
-      m_navigation_point = m_items[m_current_index]->m_item->pos();
-    }
-  }
-  auto i = m_current_index;
-  auto navigation_point = m_navigation_point;
-  while(true) {
-    ++i;
-    if(i == static_cast<int>(m_items.size())) {
-      break;
-    } else if(m_items[i]->m_item->isEnabled()) {
-      navigation_point.rx() = m_items[i]->m_item->pos().x();
-      if(navigation_point.x() > m_navigation_point.x() && 
-          m_items[i]->m_item->frameGeometry().contains(navigation_point)) {
-        break;
-      }
-    }
-  }
-  if(i == static_cast<int>(m_items.size())) {
+  if(i == m_current_index || i < 0 || i == static_cast<int>(m_items.size())) {
     return;
   }
   m_items[i]->m_item->setFocus();

@@ -163,10 +163,9 @@ namespace Styles {
       void navigate_previous();
       void navigate(
         int direction, int start, Styles::EdgeNavigation edge_navigation);
-      void navigate_up();
-      void navigate_down();
-      void navigate_left();
-      void navigate_right();
+      void cross_next();
+      void cross_previous();
+      void cross(int direction);
       void update_layout();
       void on_current(ItemEntry& item);
       void on_style();
