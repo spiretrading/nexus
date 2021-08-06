@@ -1,8 +1,6 @@
 #ifndef SPIRE_TEXT_AREA_BOX_HPP
 #define SPIRE_TEXT_AREA_BOX_HPP
 #include <boost/optional/optional.hpp>
-#include <QApplication>
-#include <QLabel>
 #include <QStackedWidget>
 #include <QTextEdit>
 #include "Spire/Spire/Dimensions.hpp"
@@ -17,29 +15,54 @@ namespace Styles {
   using LineHeight = BasicProperty<double, struct LineHeightTag>;
 }
 
+  /** Displays a multi-line text input box. */
   class TextAreaBox : public QWidget {
     public:
 
+      /**
+       * Signals that the current value is being submitted.
+       * @param submission The submitted value.
+       */
       using SubmitSignal = Signal<void (const QString& submission)>;
 
+      /**
+       * Constructs a TextAreaBox using a LocalTextModel.
+       * @param parent The parent widget.
+       */
       explicit TextAreaBox(QWidget* parent = nullptr);
 
+      /**
+       * Constructs a TextAreaBox using a LocalTextModel and initial current
+       * value.
+       * @param current The initial current value.
+       * @param parent The parent widget.
+       */
       explicit TextAreaBox(QString current, QWidget* parent = nullptr);
 
+      /**
+       * Constructs a TextAreaBox.
+       * @param model The current value's model.
+       * @param parent The parent widget.
+       */
       explicit TextAreaBox(std::shared_ptr<TextModel> model,
         QWidget* parent = nullptr);
 
+      /** Returns the model. */
       const std::shared_ptr<TextModel>& get_model() const;
 
+      /** Returns the last submitted value. */
       const QString& get_submission() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
 
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
+      /** Sets whether the box is read-only. */
       void set_read_only(bool read_only);
 
+      /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
@@ -111,7 +134,6 @@ namespace Styles {
       ContentSizedTextEdit* m_text_edit;
       StyleProperties m_text_edit_styles;
       ElidedLabel* m_placeholder;
-      ElidedLabel* m_read_only_label;
       StyleProperties m_placeholder_styles;
       ScrollBox* m_scroll_box;
       boost::signals2::scoped_connection m_current_connection;
