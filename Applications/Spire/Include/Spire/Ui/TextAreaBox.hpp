@@ -150,7 +150,7 @@ namespace Styles {
       void update_document_line_height();
       void update_line_height();
       void update_placeholder_text();
-      void update_text_alignment(Qt::Alignment alignment);
+      void update_text_alignment();
       void update_text_edit_width();
       void on_current(const QString& current);
       void on_cursor_position();

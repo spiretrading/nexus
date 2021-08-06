@@ -319,7 +319,7 @@ void TextAreaBox::commit_style() {
   auto alignment = m_text_edit_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
   if(alignment != m_text_edit->alignment()) {
-    update_text_alignment(alignment);
+    update_text_alignment();
   }
   auto font = m_text_edit_styles.m_font.value_or(QFont());
   if(m_text_edit_styles.m_size) {
@@ -429,13 +429,13 @@ void TextAreaBox::update_display_text() {
         m_text_edit->blockSignals(false);
       }
     }
-    update_text_alignment(*m_text_edit_styles.m_alignment);
+    update_text_alignment();
     update_document_line_height();
     return;
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
     m_text_edit->setText(m_model->get_current());
   }
-  update_text_alignment(*m_text_edit_styles.m_alignment);
+  update_text_alignment();
   update_document_line_height();
 }
 
@@ -459,10 +459,6 @@ void TextAreaBox::update_document_line_height() {
   m_text_edit->setTextCursor(cursor);
 }
 
-void update_document_text_alignment() {
-
-}
-
 void TextAreaBox::update_line_height() {
   m_computed_line_height =
     static_cast<int>(static_cast<double>(m_text_edit->font().pixelSize()) *
@@ -484,7 +480,8 @@ void TextAreaBox::update_placeholder_text() {
   }
 }
 
-void TextAreaBox::update_text_alignment(Qt::Alignment alignment) {
+void TextAreaBox::update_text_alignment() {
+  auto alignment = m_text_edit_styles.m_alignment.value_or(Qt::AlignLeft);
   auto cursor_pos = m_text_edit->textCursor().position();
   for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
     auto block = m_text_edit->document()->findBlockByNumber(i);
