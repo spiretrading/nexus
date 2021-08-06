@@ -83,6 +83,9 @@ namespace Spire {
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
 
+  /** Returns a UiProfile for the SecurityListItem. */
+  UiProfile make_security_list_item_profile();
+
   /** Returns a UiProfile for the Tag. */
   UiProfile make_tag_profile();
 

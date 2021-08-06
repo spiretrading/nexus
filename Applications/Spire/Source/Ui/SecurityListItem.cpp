@@ -1,0 +1,70 @@
+#include "Spire/Ui/SecurityListItem.hpp"
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/TextBox.hpp"
+
+using namespace boost;
+using namespace Nexus;
+using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  auto FLAG_ICON_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(Fill(none));
+    return style;
+  }
+
+  auto NAME_LABEL_STYLE(StyleSheet style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(10));
+    style.get(ReadOnly() && Disabled()).
+      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80))).
+      set(PaddingBottom(0)).
+      set(PaddingTop(scale_height(4)));
+    return style;
+  }
+
+  auto VALUE_LABEL_STYLE(StyleSheet style) {
+    style.get(ReadOnly() && Disabled()).
+      set(PaddingRight(scale_width(8))).
+      set(vertical_padding(0));
+    return style;
+  }
+}
+
+SecurityListItem::SecurityListItem(SecurityInfo security, QWidget* parent)
+    : QWidget(parent),
+      m_security(std::move(security)) {
+  auto value_label = make_label(
+      QString::fromStdString(ToString(m_security.m_security)));
+  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
+  auto name_label = make_label(QString::fromStdString(m_security.m_name));
+  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
+  auto flag_icon = new Icon(QImage(QString(":/Icons/%1.png").
+    arg(std::uint16_t(m_security.m_security.GetCountry()))));
+  set_style(*flag_icon, FLAG_ICON_STYLE());
+  flag_icon->setFocusPolicy(Qt::NoFocus);
+  flag_icon->setFixedSize(scale(16, 10));
+  auto value_container_layout = new QHBoxLayout();
+  value_container_layout->setContentsMargins({});
+  value_container_layout->setSpacing(0);
+  value_container_layout->addWidget(value_label);
+  value_container_layout->addWidget(flag_icon);
+  auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  layout->addLayout(value_container_layout);
+  layout->addWidget(name_label);
+}
+
+const SecurityInfo& SecurityListItem::get_security() const {
+  return m_security;
+}

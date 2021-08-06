@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -30,6 +31,7 @@
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
+#include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
@@ -1294,6 +1296,22 @@ UiProfile Spire::make_search_box_profile() {
       search_box->connect_submit_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
       return search_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_security_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("SecurityListItem"), properties,
+    [] (auto& profile) {
+      auto security = ParseWildCardSecurity("AB.NYSE",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto security_info = SecurityInfo(
+        *security, "Alliancebernstein Holding LP", "", 0);
+      auto item = new SecurityListItem(security_info);
+      apply_widget_properties(item, profile.get_properties());
+      return item;
     });
   return profile;
 }
