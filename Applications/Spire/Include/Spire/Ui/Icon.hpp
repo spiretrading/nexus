@@ -10,7 +10,7 @@ namespace Styles {
   using IconImage = BasicProperty<QImage, struct IconImageTag>;
 
   /** Sets the fill color of an icon. */
-  using Fill = BasicProperty<QColor, struct FillTag>;
+  using Fill = BasicProperty<boost::optional<QColor>, struct FillTag>;
 }
 
   /** Displays an icon. */

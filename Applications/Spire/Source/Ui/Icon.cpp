@@ -7,11 +7,23 @@ using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).set(Fill(QColor(0x755EEC)));
+    style.get(Hover()).set(Fill(QColor(0x4B23AB)));
+    style.get(Disabled()).set(Fill(QColor(0xD0D0D0)));
+    return style;
+  }
+}
+
 Icon::Icon(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_icon(std::move(icon)),
-      m_background_color(QColor::fromRgb(0xF5, 0xF5, 0xF5)) {
+      m_background_color(QColor(0xF5F5F5)),
+      m_fill(QColor(0x755EEC)) {
   setAttribute(Qt::WA_Hover);
+  set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { on_style(); });
 }
 
@@ -39,8 +51,8 @@ void Icon::paintEvent(QPaintEvent* event) {
 void Icon::on_style() {
   auto& stylist = find_stylist(*this);
   auto& block = stylist.get_computed_block();
-  m_background_color = QColor::fromRgb(0xF5, 0xF5, 0xF5);
-  m_fill = none;
+  m_background_color = QColor(0xF5F5F5);
+  m_fill = QColor(0x755EEC);
   m_border_color = none;
   for(auto& property : block) {
     property.visit(
