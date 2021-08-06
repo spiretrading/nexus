@@ -1,13 +1,12 @@
 #include "Spire/Ui/RegionListItem.hpp"
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Button.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -18,9 +17,11 @@ namespace {
     return size;
   }
 
-  auto ICON_STYLE(StyleSheet style) {
-    style.get(Any()).set(Fill(none));
-    style.get(Hover()).set(Fill(none));
+  auto ICON_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(Fill(none));
     return style;
   }
 
@@ -29,19 +30,21 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(10));
     style.get(ReadOnly() && Disabled()).
-      set(text_style(font, QColor::fromRgb(0x8C, 0x8C, 0x8C))).
+      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80))).
+      set(PaddingBottom(0)).
       set(PaddingTop(scale_height(4)));
     return style;
   }
 
   auto VALUE_LABEL_STYLE(StyleSheet style) {
     style.get(ReadOnly() && Disabled()).
-      set(PaddingRight(scale_width(8)));
+      set(PaddingRight(scale_width(8))).
+      set(vertical_padding(0));
     return style;
   }
 }
 
-RegionListItem::RegionListItem(Nexus::Region region, QWidget* parent)
+RegionListItem::RegionListItem(Region region, QWidget* parent)
     : QWidget(parent),
       m_region(std::move(region)),
       m_type(Type::NONE) {
@@ -58,7 +61,7 @@ RegionListItem::RegionListItem(Nexus::Region region, QWidget* parent)
   value_container_layout->addWidget(value_label);
   if(type_icon) {
     type_icon->setFocusPolicy(Qt::NoFocus);
-    set_style(*type_icon, ICON_STYLE(get_style(*type_icon)));
+    set_style(*type_icon, ICON_STYLE());
     value_container_layout->addWidget(type_icon);
   }
   auto layout = new QVBoxLayout(this);
@@ -68,7 +71,7 @@ RegionListItem::RegionListItem(Nexus::Region region, QWidget* parent)
   layout->addWidget(name_label);
 }
 
-const Nexus::Region& RegionListItem::get_region() const {
+const Region& RegionListItem::get_region() const {
   return m_region;
 }
 
@@ -76,7 +79,7 @@ TextBox* RegionListItem::make_value_label() {
   if(!m_region.GetSecurities().empty()) {
     m_type = Type::SECURITY;
     return make_label(
-      QString::fromStdString(m_region.GetSecurities().begin()->GetSymbol()));
+      QString::fromStdString(ToString(*m_region.GetSecurities().begin())));
   } else if(!m_region.GetMarkets().empty()) {
     m_type = Type::MARKET;
     return make_label(
