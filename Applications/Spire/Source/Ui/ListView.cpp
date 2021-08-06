@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QHBoxLayout>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
@@ -75,7 +76,7 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
   ViewBuilder view_builder, QWidget* parent)
   : ListView(std::move(list_model), std::move(view_builder),
       std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<std::any>>>(), parent) {}
+      std::make_shared<LocalValueModel<optional<int>>>(), parent) {}
 
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
     ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
@@ -85,22 +86,26 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_view_builder(std::move(view_builder)),
       m_current_model(std::move(current_model)),
       m_selection_model(std::move(selection_model)),
+      m_selected(m_selection_model->get_current()),
       m_direction(Qt::Vertical),
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
       m_item_gap(DEFAULT_GAP),
-      m_overflow_gap(DEFAULT_OVERFLOW_GAP) {
+      m_overflow_gap(DEFAULT_OVERFLOW_GAP),
+      m_query_timer(new QTimer(this)) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(*m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i});
     item->connect_current_signal([=, item = m_items.back().get()] {
-      on_current(*item);
+      on_item_current(*item);
     });
-    if(m_selection_model->get_current() &&
-        is_equal(*m_selection_model->get_current(), m_list_model->at(i))) {
-      item->set_selected(true);
-    }
+    item->connect_submit_signal([=, item = m_items.back().get()] {
+      on_item_submitted(*item);
+    });
+  }
+  if(m_selected) {
+    m_items[*m_selected]->m_item->set_selected(true);
   }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
@@ -114,6 +119,15 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
   update_layout();
   proxy_style(*this, *m_box);
   connect_style_signal(*this, [=] { on_style(); });
+  const auto QUERY_TIMEOUT_MS = 500;
+  m_query_timer->setSingleShot(true);
+  m_query_timer->setInterval(QUERY_TIMEOUT_MS);
+  connect(
+    m_query_timer, &QTimer::timeout, this, [=] { on_query_timer_expired(); });
+  m_current_connection = m_current_model->connect_current_signal(
+    [=] (const auto& current) { on_current(current); });
+  m_selection_connection = m_selection_model->connect_current_signal(
+    [=] (const auto& selection) { on_selection(selection); });
 }
 
 const std::shared_ptr<ArrayListModel>& ListView::get_list_model() const {
@@ -185,9 +199,39 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       }
       break;
     default:
-      QWidget::keyPressEvent(event);
-      break;
+      {
+        auto text = event->text();
+        if(text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
+          append_query(text);
+        } else {
+          QWidget::keyPressEvent(event);
+        }
+        break;
+      }
   }
+}
+
+void ListView::append_query(const QString& query) {
+  m_query += query;
+  if(!m_items.empty()) {
+    auto start = m_current_model->get_current().get_value_or(-1);
+    auto i = (start + 1) % static_cast<int>(m_items.size());
+    while(i != start) {
+      if(m_items[i]->m_item->isEnabled() && displayTextAny(
+          m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
+        m_items[i]->m_item->setFocus();
+        break;
+      }
+      ++i;
+      if(i == m_items.size()) {
+        if(start == -1) {
+          break;
+        }
+        i = 0;
+      }
+    }
+  }
+  m_query_timer->start();
 }
 
 void ListView::navigate_home() {
@@ -344,9 +388,41 @@ void ListView::update_layout() {
   updateGeometry();
 }
 
-void ListView::on_current(ItemEntry& item) {
+void ListView::on_current(const boost::optional<int>& current) {
+  if(current) {
+    m_items[*current]->m_item->setFocus();
+  }
+}
+
+void ListView::on_selection(const optional<int>& selected) {
+  if(m_selected == selected) {
+    return;
+  }
+  if(m_selected) {
+    m_items[*m_selected]->m_item->set_selected(false);
+  }
+  m_selected = selected;
+  if(m_selected) {
+    m_items[*m_selected]->m_item->set_selected(true);
+  }
+}
+
+void ListView::on_item_current(ItemEntry& item) {
   m_navigation_box = item.m_item->frameGeometry();
-  m_current_model->set_current(item.m_index);
+  if(m_current_model->get_current() != item.m_index) {
+    m_current_model->set_current(item.m_index);
+  }
+}
+
+void ListView::on_item_submitted(ItemEntry& item) {
+  m_navigation_box = item.m_item->frameGeometry();
+  if(m_selection_mode != SelectionMode::NONE) {
+    m_selection_model->set_current(item.m_index);
+  }
+  if(m_current_model->get_current() != item.m_index) {
+    m_current_model->set_current(item.m_index);
+  }
+  m_submit_signal(m_list_model->at(item.m_index));
 }
 
 void ListView::on_style() {
@@ -394,4 +470,8 @@ void ListView::on_style() {
   if(has_update) {
     update_layout();
   }
+}
+
+void ListView::on_query_timer_expired() {
+  m_query.clear();
 }

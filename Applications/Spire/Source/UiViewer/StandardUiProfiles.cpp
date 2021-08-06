@@ -918,7 +918,7 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", 0));
-  properties.push_back(make_standard_property("select_item", 0));
+  properties.push_back(make_standard_property("select_item", -1));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
@@ -1017,15 +1017,16 @@ UiProfile Spire::make_list_view_profile() {
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
       select_item.connect_changed_signal([=] (auto index) {
-        if(index >= 0 && index < list_model->get_size()) {
-          list_view->get_selection_model()->set_current(list_model->at(index));
+        if(index == -1) {
+          list_view->get_selection_model()->set_current(none);
+        } else if(index >= 0 && index < list_model->get_size()) {
+          list_view->get_selection_model()->set_current(index);
         }
       });
       list_view->get_current_model()->connect_current_signal(
         profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       list_view->get_selection_model()->connect_current_signal(
-        profile.make_event_slot<optional<std::any>>(
-          QString::fromUtf8("Selection")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Selection")));
       list_view->connect_submit_signal(
         profile.make_event_slot<optional<std::any>>(
           QString::fromUtf8("Submit")));

@@ -66,7 +66,7 @@ namespace Styles {
       /**
        * The type of model representing the index of the selected value.
        */
-      using SelectionModel = ValueModel<boost::optional<std::any>>;
+      using SelectionModel = ValueModel<boost::optional<int>>;
 
       /**
        * The type of function used to build a QWidget representing a value.
@@ -145,6 +145,7 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<SelectionModel> m_selection_model;
+      boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
       BodyContainer* m_container;
@@ -155,7 +156,12 @@ namespace Styles {
       Styles::Overflow m_overflow;
       Styles::SelectionMode m_selection_mode;
       QRect m_navigation_box;
+      QString m_query;
+      QTimer* m_query_timer;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_selection_connection;
 
+      void append_query(const QString& query);
       void navigate_home();
       void navigate_end();
       void navigate_next();
@@ -166,8 +172,12 @@ namespace Styles {
       void cross_previous();
       void cross(int direction);
       void update_layout();
-      void on_current(ItemEntry& item);
+      void on_current(const boost::optional<int>& current);
+      void on_selection(const boost::optional<int>& selected);
+      void on_item_current(ItemEntry& item);
+      void on_item_submitted(ItemEntry& item);
       void on_style();
+      void on_query_timer_expired();
   };
 }
 
