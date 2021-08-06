@@ -1,23 +1,14 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
-#include <QKeyEvent>
 #include <QPainter>
-#include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Styles/ChainExpression.hpp"
-#include "Spire/Styles/LinearExpression.hpp"
-#include "Spire/Styles/RevertExpression.hpp"
-#include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
