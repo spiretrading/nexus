@@ -370,6 +370,7 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingRight>, int size) {
+        // TODO
         if(m_text_edit->isReadOnly()) {
           size = 0;
         }
@@ -379,6 +380,7 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingLeft>, int size) {
+        // TODO
         if(m_text_edit->isReadOnly()) {
           size = 0;
         }
