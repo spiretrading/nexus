@@ -283,6 +283,7 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_scroll_box && event->type() == QEvent::Resize) {
     update_text_edit_width();
     m_stacked_widget->adjustSize();
+    m_stacked_widget->setMinimumSize(size() - compute_border_size());
     update_display_text();
     update_placeholder_text();
   } else if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
@@ -420,7 +421,8 @@ void TextAreaBox::update_display_text() {
         }
         auto& last_line = lines.back();
         last_line = m_text_edit->fontMetrics().elidedText(last_line,
-          Qt::ElideRight, width() - 18);
+          Qt::ElideRight, width() - compute_border_size().width() -
+          compute_padding_size().width());
         if(is_elided && !last_line.endsWith("...")) {
           last_line.append("...");
         }
@@ -515,6 +517,7 @@ void TextAreaBox::update_text_edit_width() {
 void TextAreaBox::on_current(const QString& current) {
   if(m_text_edit->toPlainText() != current) {
     m_text_edit->setText(current);
+    update_display_text();
   }
 }
 
