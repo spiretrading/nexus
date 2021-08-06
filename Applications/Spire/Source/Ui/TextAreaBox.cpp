@@ -25,8 +25,6 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      // TODO: 1.20 gives correct intrinsic size, spec change for calculated font height
-      //        or impl change?
       set(LineHeight(1.20)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
       set(text_style(font, QColor::fromRgb(0, 0, 0)));
@@ -64,6 +62,7 @@ TextAreaBox::ContentSizedTextEdit::ContentSizedTextEdit(const QString& text,
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   document()->setDocumentMargin(0);
   setFrameShape(QFrame::NoFrame);
+  setAcceptRichText(false);
   connect(
     this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -371,12 +370,18 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingRight>, int size) {
+        if(m_text_edit->isReadOnly()) {
+          size = 0;
+        }
         padding_size.rwidth() += size;
       },
       [&] (std::in_place_type_t<PaddingBottom>, int size) {
         padding_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingLeft>, int size) {
+        if(m_text_edit->isReadOnly()) {
+          size = 0;
+        }
         padding_size.rwidth() += size;
       });
   }
@@ -399,8 +404,9 @@ void TextAreaBox::update_display_text() {
         auto block = m_text_edit->document()->begin();
         while(block.isValid()) {
           auto block_text = block.text();
-          if(!block.layout())
+          if(!block.layout()) {
             continue;
+          }
           for(int i = 0; i != block.layout()->lineCount(); ++i) {
             auto line = block.layout()->lineAt(i);
             lines.append(block_text.mid(line.textStart(), line.textLength()));
@@ -500,9 +506,8 @@ void TextAreaBox::update_text_alignment() {
 void TextAreaBox::update_text_edit_width() {
   auto border_size = compute_border_size();
   auto padding_height = compute_padding_size().height();
-  if(m_text_edit->document()->size().toSize().height() + padding_height >
-      height() - border_size.height() ||
-      m_scroll_box->get_vertical_scroll_bar().isVisible()) {
+  if((m_text_edit->document()->size().toSize().height() + padding_height >
+      height() - border_size.height() && !m_text_edit->isReadOnly())) {
     m_text_edit->setFixedWidth(width() -
       m_scroll_box->get_vertical_scroll_bar().width() - border_size.width());
   } else {
