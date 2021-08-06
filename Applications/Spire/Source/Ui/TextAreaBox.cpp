@@ -17,6 +17,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto ELLIPSES_CHAR = 0x2026;
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -431,9 +433,10 @@ void TextAreaBox::update_display_text() {
         auto& last_line = lines.back();
         last_line = m_text_edit->fontMetrics().elidedText(last_line,
           Qt::ElideRight, width() - compute_border_size().width() -
-          compute_padding_size().width());
-        if(is_elided && !last_line.endsWith("...")) {
-          last_line.append("...");
+          compute_padding_size().width() -
+          m_text_edit->fontMetrics().horizontalAdvance(ELLIPSES_CHAR));
+        if(is_elided && !last_line.endsWith(ELLIPSES_CHAR)) {
+          last_line.append(ELLIPSES_CHAR);
         }
         m_text_edit->blockSignals(true);
         m_text_edit->setText(lines.join(""));
