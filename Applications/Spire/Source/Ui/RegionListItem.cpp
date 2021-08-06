@@ -6,6 +6,7 @@
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Button.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -15,6 +16,12 @@ namespace {
   auto ICON_SIZE() {
     static auto size = scale(10, 10);
     return size;
+  }
+
+  auto ICON_STYLE(StyleSheet style) {
+    style.get(Any()).set(Fill(none));
+    style.get(Hover()).set(Fill(none));
+    return style;
   }
 
   auto NAME_LABEL_STYLE(StyleSheet style) {
@@ -51,6 +58,7 @@ RegionListItem::RegionListItem(Nexus::Region region, QWidget* parent)
   value_container_layout->addWidget(value_label);
   if(type_icon) {
     type_icon->setFocusPolicy(Qt::NoFocus);
+    set_style(*type_icon, ICON_STYLE(get_style(*type_icon)));
     value_container_layout->addWidget(type_icon);
   }
   auto layout = new QVBoxLayout(this);
