@@ -433,7 +433,7 @@ void TextAreaBox::update_display_text() {
           last_line.append("...");
         }
         m_text_edit->blockSignals(true);
-        m_text_edit->setText(lines.join("\n"));
+        m_text_edit->setText(lines.join(""));
         m_text_edit->blockSignals(false);
       }
     }
