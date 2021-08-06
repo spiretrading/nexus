@@ -125,6 +125,7 @@ namespace Styles {
       QSize compute_padding_size() const;
       bool is_placeholder_shown() const;
       void update_display_text();
+      void update_document_line_height();
       void update_line_height();
       void update_placeholder_text();
       void update_text_alignment(Qt::Alignment alignment);

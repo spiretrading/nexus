@@ -427,24 +427,18 @@ void TextAreaBox::update_display_text() {
         m_text_edit->blockSignals(true);
         m_text_edit->setText(lines.join("\n"));
         update_text_alignment(*m_text_edit_styles.m_alignment);
-        update_line_height();
+        update_document_line_height();
         m_text_edit->blockSignals(false);
       }
     }
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
     m_text_edit->setText(m_model->get_current());
     update_text_alignment(*m_text_edit_styles.m_alignment);
-    update_line_height();
+    update_document_line_height();
   }
 }
 
-void TextAreaBox::update_line_height() {
-  m_computed_line_height =
-    static_cast<int>(static_cast<double>(m_text_edit->font().pixelSize()) *
-    *m_text_edit_styles.m_line_height);
-  m_placeholder->set_line_height(m_computed_line_height);
-  m_scroll_box->get_vertical_scroll_bar().set_line_size(
-    m_computed_line_height);
+void TextAreaBox::update_document_line_height() {
   auto cursor_pos = m_text_edit->textCursor().position();
   for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
     auto block = m_text_edit->document()->findBlockByNumber(i);
@@ -462,6 +456,20 @@ void TextAreaBox::update_line_height() {
   auto cursor = m_text_edit->textCursor();
   cursor.setPosition(cursor_pos);
   m_text_edit->setTextCursor(cursor);
+}
+
+void update_document_text_alignment() {
+
+}
+
+void TextAreaBox::update_line_height() {
+  m_computed_line_height =
+    static_cast<int>(static_cast<double>(m_text_edit->font().pixelSize()) *
+    *m_text_edit_styles.m_line_height);
+  m_placeholder->set_line_height(m_computed_line_height);
+  m_scroll_box->get_vertical_scroll_bar().set_line_size(
+    m_computed_line_height);
+  update_display_text();
 }
 
 void TextAreaBox::update_placeholder_text() {
