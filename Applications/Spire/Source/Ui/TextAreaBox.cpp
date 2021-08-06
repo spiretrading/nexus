@@ -428,16 +428,17 @@ void TextAreaBox::update_display_text() {
         }
         m_text_edit->blockSignals(true);
         m_text_edit->setText(lines.join("\n"));
-        update_text_alignment(*m_text_edit_styles.m_alignment);
-        update_document_line_height();
         m_text_edit->blockSignals(false);
       }
     }
-  } else if(m_text_edit->toPlainText() != m_model->get_current()) {
-    m_text_edit->setText(m_model->get_current());
     update_text_alignment(*m_text_edit_styles.m_alignment);
     update_document_line_height();
+    return;
+  } else if(m_text_edit->toPlainText() != m_model->get_current()) {
+    m_text_edit->setText(m_model->get_current());
   }
+  update_text_alignment(*m_text_edit_styles.m_alignment);
+  update_document_line_height();
 }
 
 void TextAreaBox::update_document_line_height() {
