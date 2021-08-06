@@ -52,7 +52,8 @@ namespace {
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(Disabled() >> is_a<QTextEdit>()).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
