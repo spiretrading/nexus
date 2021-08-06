@@ -33,8 +33,8 @@ namespace Spire {
       Nexus::Region m_region;
       Type m_type;
 
-      TextBox* make_value_box();
-      QWidget* make_type_icon();
+      TextBox* make_value_label();
+      Icon* make_type_icon();
   };
 }
 

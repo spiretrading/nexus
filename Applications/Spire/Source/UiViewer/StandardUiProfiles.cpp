@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -1182,7 +1183,6 @@ UiProfile Spire::make_radio_button_profile() {
     });
 }
 
-#include "Nexus/Definitions/SecuritySet.hpp"
 UiProfile Spire::make_region_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
