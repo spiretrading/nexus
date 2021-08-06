@@ -36,6 +36,7 @@ namespace Spire {
   class SecurityStack;
   class SortedTableModel;
   class TableModel;
+  class Tag;
   class TextAreaBox;
   class TextBox;
   class TimeBox;

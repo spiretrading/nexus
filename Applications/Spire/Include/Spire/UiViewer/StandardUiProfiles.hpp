@@ -83,6 +83,9 @@ namespace Spire {
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
 
+  /** Returns a UiProfile for the Tag. */
+  UiProfile make_tag_profile();
+
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
 

@@ -126,6 +126,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_search_box_profile());
+  add(make_tag_profile());
   add(make_text_area_box_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
@@ -207,6 +208,6 @@ void UiViewerWindow::on_rebuild() {
   profile.remove_widget();
   update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
-  m_center_stage->setWidget(profile.get_widget());
+  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   delete previous_widget;
 }
