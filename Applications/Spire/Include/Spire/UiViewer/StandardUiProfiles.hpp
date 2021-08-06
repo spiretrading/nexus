@@ -23,6 +23,9 @@ namespace Spire {
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
 
+  /** Returns a UiProfile for the DurationFilterPanel. */
+  UiProfile make_duration_filter_panel_profile();
+
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
 
@@ -79,6 +82,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
+
+  /** Returns a UiProfile for the Tag. */
+  UiProfile make_tag_profile();
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();
