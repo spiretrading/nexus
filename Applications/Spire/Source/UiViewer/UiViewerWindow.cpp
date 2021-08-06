@@ -123,6 +123,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
+  add(make_region_list_item_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_search_box_profile());

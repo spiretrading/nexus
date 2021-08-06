@@ -74,6 +74,9 @@ namespace Spire {
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
 
+  /** Returns a UiProfile for the RegionListItem. */
+  UiProfile make_region_list_item_profile();
+
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();
 
