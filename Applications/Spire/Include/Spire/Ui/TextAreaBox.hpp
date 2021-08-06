@@ -114,6 +114,7 @@ namespace Styles {
       ElidedLabel* m_read_only_label;
       StyleProperties m_placeholder_styles;
       ScrollBox* m_scroll_box;
+      ScrollableLayer* m_scroll_layer;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;

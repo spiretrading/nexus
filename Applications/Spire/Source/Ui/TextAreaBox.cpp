@@ -14,6 +14,7 @@
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/ScrollableLayer.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -215,6 +216,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->get_vertical_scroll_bar().adjustSize();
   m_scroll_box->installEventFilter(this);
+  m_scroll_layer = m_scroll_box->findChild<ScrollableLayer*>();
+  m_scroll_layer->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scroll_box);
@@ -288,6 +291,10 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
     update_placeholder_text();
   } else if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
     m_submit_signal(m_model->get_current());
+  } else if(watched == m_scroll_layer && event->type() == QEvent::Wheel) {
+    if(m_text_edit->isReadOnly()) {
+      return true;
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
