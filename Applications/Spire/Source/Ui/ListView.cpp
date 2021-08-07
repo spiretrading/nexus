@@ -124,6 +124,8 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
   m_query_timer->setInterval(QUERY_TIMEOUT_MS);
   connect(
     m_query_timer, &QTimer::timeout, this, [=] { on_query_timer_expired(); });
+  m_list_connection = m_list_model->connect_operation_signal(
+    [=] (const auto& operation) { on_list_operation(operation); });
   m_current_connection = m_current_model->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
   m_selection_connection = m_selection_model->connect_current_signal(
@@ -339,6 +341,55 @@ void ListView::cross(int direction) {
   m_navigation_box = navigation_box;
 }
 
+void ListView::add_item(int index) {
+  auto item = new ListItem(m_view_builder(*m_list_model, index));
+  m_items.emplace(m_items.begin() + index, new ItemEntry{item, index});
+  item->connect_current_signal([=, item = m_items[index].get()] {
+    on_item_current(*item);
+  });
+  item->connect_submit_signal([=, item = m_items[index].get()] {
+    on_item_submitted(*item);
+  });
+  for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
+    ++(*i)->m_index;
+  }
+  if(m_current_model->get_current() &&
+      m_current_model->get_current() >= index) {
+    m_current_model->set_current(*m_current_model->get_current() + 1);
+  }
+  if(m_selection_model->get_current() &&
+      m_selection_model->get_current() >= index) {
+    m_selection_model->set_current(*m_selection_model->get_current() + 1);
+    m_selected = m_selection_model->get_current();
+  }
+  update_layout();
+}
+
+void ListView::remove_item(int index) {
+  auto item = m_items[index]->m_item;
+  item->deleteLater();
+  m_items.erase(m_items.begin() + index);
+  for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
+    --(*i)->m_index;
+  }
+  if(m_current_model->get_current()) {
+    if(m_current_model->get_current() == index) {
+      m_current_model->set_current(*m_current_model->get_current());
+    } else if(m_current_model->get_current() > index) {
+      m_current_model->set_current(*m_current_model->get_current() - 1);
+    }
+  }
+  if(m_selection_model->get_current()) {
+    if(m_selection_model->get_current() == index) {
+      m_selection_model->set_current(*m_selection_model->get_current());
+    } else if(m_selection_model->get_current() > index) {
+      m_selection_model->set_current(*m_selection_model->get_current() - 1);
+    }
+    m_selected = m_selection_model->get_current();
+  }
+  update_layout();
+}
+
 void ListView::update_layout() {
   auto& body_layout = m_container->get_layout();
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
@@ -398,6 +449,16 @@ void ListView::update_layout() {
   }
   m_container->m_body->adjustSize();
   updateGeometry();
+}
+
+void ListView::on_list_operation(const ListModel::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel::AddOperation& operation) {
+      add_item(operation.m_index);
+    },
+    [&] (const ListModel::RemoveOperation& operation) {
+      remove_item(operation.m_index);
+    });
 }
 
 void ListView::on_current(const boost::optional<int>& current) {

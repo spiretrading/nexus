@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
+#include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -158,6 +159,7 @@ namespace Styles {
       QRect m_navigation_box;
       QString m_query;
       QTimer* m_query_timer;
+      boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_selection_connection;
 
@@ -171,7 +173,10 @@ namespace Styles {
       void cross_next();
       void cross_previous();
       void cross(int direction);
+      void add_item(int index);
+      void remove_item(int index);
       void update_layout();
+      void on_list_operation(const ListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);
       void on_selection(const boost::optional<int>& selected);
       void on_item_current(ItemEntry& item);
