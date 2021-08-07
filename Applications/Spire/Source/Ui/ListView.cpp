@@ -419,6 +419,9 @@ void ListView::update_layout() {
     inner_layout->setSpacing(m_item_gap);
     while(i != m_items.end()) {
       auto item_size = [&] {
+        if(!(*i)->m_item->isVisible()) {
+          (*i)->m_item->adjustSize();
+        }
         if(m_direction == Qt::Orientation::Horizontal) {
           return (*i)->m_item->width();
         } else {
@@ -430,8 +433,6 @@ void ListView::update_layout() {
         break;
       }
       remaining_size -= inner_layout->spacing();
-      auto item_layout = new QBoxLayout(direction);
-      item_layout->setContentsMargins({});
       if(m_direction == Qt::Orientation::Horizontal) {
         (*i)->m_item->setSizePolicy(
           QSizePolicy::Preferred, QSizePolicy::Expanding);
@@ -439,8 +440,7 @@ void ListView::update_layout() {
         (*i)->m_item->setSizePolicy(
           QSizePolicy::Expanding, QSizePolicy::Preferred);
       }
-      item_layout->addWidget((*i)->m_item);
-      inner_layout->addLayout(item_layout);
+      inner_layout->addWidget((*i)->m_item);
       ++i;
     }
     inner_layout->addSpacerItem(
