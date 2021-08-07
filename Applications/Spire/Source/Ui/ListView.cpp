@@ -219,7 +219,7 @@ void ListView::append_query(const QString& query) {
     while(i != start) {
       if(m_items[i]->m_item->isEnabled() && displayTextAny(
           m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
-        m_items[i]->m_item->setFocus();
+        m_current_model->set_current(i);
         break;
       }
       ++i;
@@ -247,7 +247,11 @@ void ListView::navigate_next() {
 }
 
 void ListView::navigate_previous() {
-  navigate(-1, m_current_model->get_current().value_or(-1), m_edge_navigation);
+  if(m_current_model->get_current()) {
+    navigate(-1, *m_current_model->get_current(), m_edge_navigation);
+  } else {
+    navigate_next();
+  }
 }
 
 void ListView::navigate(
@@ -264,6 +268,9 @@ void ListView::navigate(
       } else if(direction == -1) {
         i = static_cast<int>(m_items.size()) - 1;
       } else {
+        if(start == -1) {
+          return;
+        }
         i = 0;
       }
     }
@@ -271,7 +278,7 @@ void ListView::navigate(
   if(i == m_current_model->get_current()) {
     return;
   }
-  m_items[i]->m_item->setFocus();
+  m_current_model->set_current(i);
 }
 
 void ListView::cross_previous() {
@@ -286,14 +293,19 @@ void ListView::cross(int direction) {
   if(m_items.empty()) {
     return;
   }
+  if(!m_current_model->get_current()) {
+    navigate_next();
+    return;
+  }
   if(m_navigation_box.isNull()) {
-    if(auto current = m_current_model->get_current()) {
-      m_navigation_box = m_items[*current]->m_item->frameGeometry();
+    if(m_current_model->get_current()) {
+      m_navigation_box =
+        m_items[*m_current_model->get_current()]->m_item->frameGeometry();
     } else {
       m_navigation_box = m_items.front()->m_item->frameGeometry();
     }
   }
-  auto i = m_current_model->get_current().value_or(-1) + direction;
+  auto i = *m_current_model->get_current() + direction;
   auto navigation_box = m_navigation_box;
   auto candidate = -1;
   while(i >= 0 && i != static_cast<int>(m_items.size())) {
@@ -323,7 +335,7 @@ void ListView::cross(int direction) {
   if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
-  m_items[candidate]->m_item->setFocus();
+  m_current_model->set_current(candidate);
   m_navigation_box = navigation_box;
 }
 
