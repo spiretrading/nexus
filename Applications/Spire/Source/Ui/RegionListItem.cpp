@@ -17,6 +17,11 @@ namespace {
     return size;
   }
 
+  auto FLAG_SIZE() {
+    static auto size = scale(16, 10);
+    return size;
+  }
+
   auto ICON_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
@@ -111,9 +116,10 @@ Icon* RegionListItem::make_type_icon() {
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::COUNTRY) {
-    auto flag_icon = new Icon(QImage(QString(":/Icons/%1.png").
-      arg(std::uint16_t(*m_region.GetCountries().begin()))));
-    flag_icon->setFixedSize(scale(16, 10));
+    auto flag = QImage(QString(":/Icons/%1.png").
+      arg(std::uint16_t(*m_region.GetCountries().begin())));
+    auto flag_icon = new Icon(flag.scaled(FLAG_SIZE()));
+    flag_icon->setFixedSize(FLAG_SIZE());
     return flag_icon;
   }
   return nullptr;
