@@ -261,7 +261,8 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  return m_text_edit->sizeHint() + compute_border_size();
+  return m_text_edit->sizeHint() + compute_border_size() +
+    compute_padding_size();
 }
 
 void TextAreaBox::changeEvent(QEvent* event) {
