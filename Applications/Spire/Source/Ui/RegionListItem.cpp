@@ -98,7 +98,7 @@ TextBox* RegionListItem::make_value_label() {
   } else if(!m_region.GetCountries().empty()) {
     m_type = Type::COUNTRY;
     return make_label(GetDefaultCountryDatabase().
-      FromCode(*m_region.GetCountries().begin()).m_twoLetterCode.GetData());
+      FromCode(*m_region.GetCountries().begin()).m_threeLetterCode.GetData());
   }
   m_type = Type::NONE;
   return make_label("");
@@ -116,9 +116,11 @@ Icon* RegionListItem::make_type_icon() {
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::COUNTRY) {
-    auto flag = QImage(QString(":/Icons/%1.png").
-      arg(std::uint16_t(*m_region.GetCountries().begin())));
-    auto flag_icon = new Icon(flag.scaled(FLAG_SIZE()));
+    auto country_code = QString(GetDefaultCountryDatabase().
+      FromCode(*m_region.GetCountries().begin()).
+      m_threeLetterCode.GetData()).toLower();
+    auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
+      arg(country_code), FLAG_SIZE()), this);
     flag_icon->setFixedSize(FLAG_SIZE());
     return flag_icon;
   }
