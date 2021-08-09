@@ -23,6 +23,7 @@ namespace Spire {
   class Icon;
   class InfoTip;
   class LayeredWidget;
+  class ListItem;
   class ListModel;
   class ListView;
   class MoneyBox;

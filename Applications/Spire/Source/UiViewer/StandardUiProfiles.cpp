@@ -898,43 +898,38 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(make_standard_property("random_height_seed", 0));
   properties.push_back(make_standard_property("gap", 2));
   properties.push_back(make_standard_property("overflow_gap", 5));
-  auto navigation_property = define_enum<ListView::EdgeNavigation>(
-    {{"CONTAIN", ListView::EdgeNavigation::CONTAIN},
-     {"WRAP", ListView::EdgeNavigation::WRAP}});
+  auto navigation_property = define_enum<EdgeNavigation>(
+    {{"CONTAIN", EdgeNavigation::CONTAIN},
+     {"WRAP", EdgeNavigation::WRAP}});
   properties.push_back(
     make_standard_enum_property("edge_navigation", navigation_property));
   auto direction_property = define_enum<Qt::Orientation>(
     {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
     make_standard_enum_property("direction", direction_property));
-  auto overflow_property = define_enum<ListView::Overflow>(
-    {{"WRAP", ListView::Overflow::WRAP}, {"NONE", ListView::Overflow::NONE}});
+  auto overflow_property = define_enum<Overflow>(
+    {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto selection_mode_property = define_enum<ListView::SelectionMode>(
-    {{"NONE", ListView::SelectionMode::NONE},
-     {"SINGLE", ListView::SelectionMode::SINGLE}});
+  auto selection_mode_property = define_enum<SelectionMode>(
+    {{"NONE", SelectionMode::NONE},
+     {"SINGLE", SelectionMode::SINGLE}});
   properties.push_back(
     make_standard_enum_property("selection_mode", selection_mode_property));
-  properties.push_back(make_standard_property("selection_follows_focus", true));
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", 0));
-  properties.push_back(make_standard_property("select_item", 0));
+  properties.push_back(make_standard_property("select_item", -1));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
         get<int>("random_height_seed", profile.get_properties());
-      auto& gap = get<int>("gap", profile.get_properties());
-      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
-      auto& direction = get<Qt::Orientation>("direction",
-        profile.get_properties());
-      auto& overflow = get<ListView::Overflow>("overflow",
-        profile.get_properties());
+      auto& direction =
+        get<Qt::Orientation>("direction", profile.get_properties());
       auto& change_item = get<int>("change_item", profile.get_properties());
-      auto& change_item_index = get<int>("change_item_index",
-        profile.get_properties());
+      auto& change_item_index =
+        get<int>("change_item_index", profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
       auto list_model = std::make_shared<ArrayListModel>();
       for(auto i = 0; i < 66; ++i) {
@@ -952,40 +947,34 @@ UiProfile Spire::make_list_view_profile() {
           list_model->push(QString::fromUtf8("Item%1").arg(i));
         }
       }
-      change_item_index.connect_changed_signal([=, &change_item] (auto value) {
-        static auto index = 0;
-        if(value < 0 || value >= list_model->get_size()) {
-          return;
-        }
-        if(change_item.get() == 0) {
-          list_model->remove(value);
-        } else {
-          list_model->insert(QString::fromUtf8("newItem%1").arg(index++), value);
-        }
-      });
-      auto list_view = new ListView(list_model, [&] (auto model, auto index) {
-        auto label = make_label(model->get<QString>(index));
-        if(random_height_seed.get() == 0) {
-          if(direction.get() == Qt::Vertical) {
-            if(index == 15) {
-              label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
-            } else if(index == 27) {
-              label->setFixedHeight(scale_height(26 * 2 + gap.get()));
-            } else if(index == 36) {
-              label->setFixedHeight(scale_height(26 * 3 + 2 * gap.get()));
-            } else if(index == 37) {
-              label->setFixedHeight(scale_height(26 * 2 + gap.get()));
+      change_item_index.connect_changed_signal(
+        [=, &change_item, index = 0] (auto value) mutable {
+          if(value < 0 || value >= list_model->get_size()) {
+            return;
+          }
+          if(change_item.get() == 0) {
+            list_model->remove(value);
+          } else {
+            list_model->insert(
+              QString::fromUtf8("newItem%1").arg(index++), value);
+          }
+        });
+      auto list_view =
+        new ListView(list_model, [&] (const auto& model, auto index) {
+          auto label = make_label(model.get<QString>(index));
+          if(random_height_seed.get() == 0) {
+            if(direction.get() == Qt::Vertical) {
+              label->setFixedHeight(
+                scale_height(random_generator.bounded(30, 70)));
             } else {
-              label->setFixedHeight(scale_height(26));
+              label->setFixedWidth(
+                scale_height(random_generator.bounded(30, 70)));
             }
           }
-        } else {
-          label->setFixedHeight(
-            scale_height(random_generator.bounded(30, 70)));
-        }
-        return label;
-      });
+          return label;
+        });
       apply_widget_properties(list_view, profile.get_properties());
+      auto& gap = get<int>("gap", profile.get_properties());
       gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
@@ -993,8 +982,8 @@ UiProfile Spire::make_list_view_profile() {
         auto style = get_style(*list_view);
         style.get(Any()).set(ListItemGap(scale_width(value)));
         set_style(*list_view, std::move(style));
-        list_view->update();
       });
+      auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
       overflow_gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
@@ -1002,63 +991,47 @@ UiProfile Spire::make_list_view_profile() {
         auto style = get_style(*list_view);
         style.get(Any()).set(ListOverflowGap(scale_width(value)));
         set_style(*list_view, std::move(style));
-        list_view->update();
       });
-      auto set_size =
-        [=] (Qt::Orientation direction, ListView::Overflow overflow) {
-          list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-          list_view->setMinimumSize(0, 0);
-          if(overflow == ListView::Overflow::WRAP) {
-            if(direction == Qt::Vertical) {
-              list_view->setFixedHeight(scale_height(360));
-            } else {
-              list_view->setFixedWidth(scale_width(360));
-            }
-          }
-        };
-      direction.connect_changed_signal([=, &overflow] (auto value) {
-        set_size(value, overflow.get());
-        list_view->set_direction(value);
+      direction.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
-      overflow.connect_changed_signal([=, &direction] (auto value) {
-        set_size(direction.get(), value);
-        list_view->set_overflow(value);
+      auto& overflow = get<Overflow>("overflow", profile.get_properties());
+      overflow.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
-      auto& navigation = get<ListView::EdgeNavigation>("edge_navigation",
-        profile.get_properties());
-      navigation.set(list_view->get_edge_navigation());
+      auto& navigation =
+        get<EdgeNavigation>("edge_navigation", profile.get_properties());
       navigation.connect_changed_signal([=] (auto value) {
-        list_view->set_edge_navigation(value);
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
-      auto& selection_mode = get<ListView::SelectionMode>("selection_mode",
-        profile.get_properties());
-      selection_mode.set(list_view->get_selection_mode());
+      auto& selection_mode =
+        get<SelectionMode>("selection_mode", profile.get_properties());
       selection_mode.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_mode(value);
-      });
-      auto& selection_follows_focus = get<bool>("selection_follows_focus",
-        profile.get_properties());
-      selection_follows_focus.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_follow_focus(value);
-      });
-      selection_follows_focus.connect_changed_signal([=] (auto value) {
-        list_view->set_selection_follow_focus(value);
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
       select_item.connect_changed_signal([=] (auto index) {
-        if(index >= 0 && index < list_model->get_size()) {
-          list_view->get_selection_model()->set_current(list_model->at(index));
+        if(index == -1) {
+          list_view->get_selection_model()->set_current(none);
+        } else if(index >= 0 && index < list_model->get_size()) {
+          list_view->get_selection_model()->set_current(index);
         }
       });
       list_view->get_current_model()->connect_current_signal(
-        profile.make_event_slot<optional<std::any>>(
-        QString::fromUtf8("Current")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       list_view->get_selection_model()->connect_current_signal(
-        profile.make_event_slot<optional<std::any>>(
-        QString::fromUtf8("Selection")));
+        profile.make_event_slot<optional<int>>(QString::fromUtf8("Selection")));
       list_view->connect_submit_signal(
         profile.make_event_slot<optional<std::any>>(
-        QString::fromUtf8("Submit")));
+          QString::fromUtf8("Submit")));
       return list_view;
     });
   return profile;
