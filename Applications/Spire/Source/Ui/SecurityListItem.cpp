@@ -11,6 +11,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto FLAG_SIZE() {
+    static auto size = scale(16, 10);
+    return size;
+  }
+
   auto FLAG_ICON_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
@@ -43,21 +48,28 @@ SecurityListItem::SecurityListItem(SecurityInfo security, QWidget* parent)
       m_security(std::move(security)) {
   auto value_label = make_label(
       QString::fromStdString(ToString(m_security.m_security)));
-  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
   auto name_label = make_label(QString::fromStdString(m_security.m_name));
-  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
-  auto flag_icon = new Icon(QImage(QString(":/Icons/%1.png").
-    arg(std::uint16_t(m_security.m_security.GetCountry()))));
+  auto flag = QImage(QString(":/Icons/%1.png").
+    arg(std::uint16_t(m_security.m_security.GetCountry())));
+  auto flag_icon = new Icon(flag.scaled(FLAG_SIZE()));
+  flag_icon->setFixedSize(FLAG_SIZE());
   set_style(*flag_icon, FLAG_ICON_STYLE());
   flag_icon->setFocusPolicy(Qt::NoFocus);
-  flag_icon->setFixedSize(scale(16, 10));
   auto value_container_layout = new QHBoxLayout();
   value_container_layout->setContentsMargins({});
   value_container_layout->setSpacing(0);
   value_container_layout->addWidget(value_label);
-  value_container_layout->addWidget(flag_icon);
+  auto flag_icon_layout = new QVBoxLayout();
+  flag_icon_layout->setContentsMargins({});
+  flag_icon_layout->setSpacing(0);
+  flag_icon_layout->addStretch();
+  flag_icon_layout->addWidget(flag_icon);
+  flag_icon_layout->addStretch();
+  value_container_layout->addLayout(flag_icon_layout);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
