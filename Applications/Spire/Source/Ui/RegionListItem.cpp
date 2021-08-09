@@ -49,10 +49,10 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
       m_region(std::move(region)),
       m_type(Type::NONE) {
   auto value_label = make_value_label();
-  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
   auto name_label = make_label(QString::fromStdString(m_region.GetName()));
-  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
   auto type_icon = make_type_icon();
   auto value_container_layout = new QHBoxLayout();
@@ -62,7 +62,13 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
   if(type_icon) {
     type_icon->setFocusPolicy(Qt::NoFocus);
     set_style(*type_icon, ICON_STYLE());
-    value_container_layout->addWidget(type_icon);
+    auto type_icon_layout = new QVBoxLayout();
+    type_icon_layout->setContentsMargins({});
+    type_icon_layout->setSpacing(0);
+    type_icon_layout->addStretch();
+    type_icon_layout->addWidget(type_icon);
+    type_icon_layout->addStretch();
+    value_container_layout->addLayout(type_icon_layout);
   }
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
