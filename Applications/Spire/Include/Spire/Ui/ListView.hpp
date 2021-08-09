@@ -1,13 +1,10 @@
 #ifndef SPIRE_LIST_VIEW_HPP
 #define SPIRE_LIST_VIEW_HPP
-#include <QLayout>
-#include <QString>
-#include <QTimer>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
-#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -20,105 +17,107 @@ namespace Styles {
    * to list direction.
    */
   using ListOverflowGap = BasicProperty<int, struct ListOverflowGapTag>;
+
+  /**
+   * Specifies the keyboard navigation behavior when the first or last list
+   * item is selected and the key for next or previous list item is pressed.
+   */
+  enum class EdgeNavigation {
+
+    /** Selection stops at the current selection. */
+    CONTAIN,
+
+    /** Selection moves from the first item to last item and vice versa. */
+    WRAP
+  };
+
+  /** Specifies how to layout items on overflow. */
+  enum class Overflow {
+
+    /** The list extends indefinitely. */
+    NONE,
+
+    /** List items wrap to fill the perpendicular space. */
+    WRAP
+  };
+
+  /** Specifies the selection behavior for the ListView. */
+  enum class SelectionMode {
+
+    /** Items can not be selected. */
+    NONE,
+
+    /** The user can select a single item. */
+    SINGLE
+  };
 }
 
   /**
-   * Represents a list view which contains a vertical or horizontal stack of
-   * components.
+   * Displays a list of values represented by ListItems stacked horizontally
+   * or vertically.
    */
   class ListView : public QWidget {
     public:
 
-      /** 
-       * Specifies the keyboard navigation behavior when the first or last list
-       * item is selected and the key for next or previous list item is pressed.
+      /**
+       * The type of model representing the index of the current value.
        */
-      enum class EdgeNavigation {
-
-        /** Selection stops at the current selection. */
-        CONTAIN,
-
-        /** Selection moves from the first item to last item and vice versa. */
-        WRAP
-      };
-
-      /** Specifies how to layout items on overflow. */
-      enum class Overflow {
-
-        /** The list extends indefinitely. */
-        NONE,
-
-        /** List items wrap to fill the perpendicular space. */
-        WRAP
-      };
-
-      /** Specifies the selection behavior for the ListView. */
-      enum class SelectionMode {
-
-        /** Items can not be selected. */
-        NONE,
-
-        /** The user can select a single item. */
-        SINGLE
-      };
+      using CurrentModel = ValueModel<boost::optional<int>>;
 
       /**
-       * A ValueModel over an optional std::any to represent the current of the
-       * list view.
+       * The type of model representing the index of the selected value.
        */
-      using CurrentModel = ValueModel<boost::optional<std::any>>;
+      using SelectionModel = ValueModel<boost::optional<int>>;
 
       /**
-       * A LocalValueModel over an optional std::any to represent the local
-       * current of the list view.
+       * The type of function used to build a QWidget representing a value.
+       * @param model The model containing the list values being displayed.
+       * @param index The index of the specific value to be displayed.
+       * @return The QWidget that shall be used to display the value in the
+       *         <i>model</i> at the given <i>index</i>.
        */
-      using LocalCurrentModel = LocalValueModel<boost::optional<std::any>>;
+      using ViewBuilder =
+        std::function<QWidget* (const ArrayListModel& model, int index)>;
 
       /**
-       * A ValueModel over an optional std::any to represent the selection of
-       * the list view.
-       */
-      using SelectionModel = ValueModel<boost::optional<std::any>>;
-
-      /**
-       * A LocalValueModel over an optional std::any to represent the local
-       * selection of the list view.
-       */
-      using LocalSelectionModel = LocalValueModel<boost::optional<std::any>>;
-
-      /**
-       * Signals that the item was submitted.
+       * Signals that the current item was submitted.
        * @param submission The submitted value.
        */
       using SubmitSignal = Signal<void (const std::any& submission)>;
-  
+
       /**
-       * Constructs a ListView using a LocalCurrentModel and LocalSelectionModel.
-       * @param list_model The list model which holds a list of items.
-       * @param factory A function that takes a ListModel and a index
-       *                used to construct a widget displayed in the ListView.
+       * Constructs a ListView using default local models and a default view
+       * builder.
+       * @param list_model The model of values to display.
+       * @param parent The parent widget.
+       */
+      explicit ListView(std::shared_ptr<ArrayListModel> list_model,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list_model The model of values to display.
+       * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<ArrayListModel> list_model,
-        std::function<QWidget* (
-          std::shared_ptr<ArrayListModel>, int index)> factory,
-        QWidget* parent = nullptr);
+        ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView.
        * @param current_model The current value's model.
        * @param selection_model The selection value's model.
        * @param list_model The list model which holds a list of items.
-       * @param factory A function that takes a ListModel and a index
-       *                used to construct a widget displayed in the ListView.
+       * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<CurrentModel> current_model,
+      ListView(std::shared_ptr<ArrayListModel> list_model,
+        ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
         std::shared_ptr<SelectionModel> selection_model,
-        std::shared_ptr<ArrayListModel> list_model,
-        std::function<QWidget* (
-          std::shared_ptr<ArrayListModel>, int index)> factory,
         QWidget* parent = nullptr);
+
+      /** Returns the list of values displayed. */
+      const std::shared_ptr<ArrayListModel>& get_list_model() const;
   
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
@@ -126,124 +125,64 @@ namespace Styles {
       /** Returns the selection model. */
       const std::shared_ptr<SelectionModel>& get_selection_model() const;
 
-      /** Returns the list model. */
-      const std::shared_ptr<ArrayListModel>& get_list_model() const;
-
-      /** Returns the direction of the ListView. */
-      Qt::Orientation get_direction() const;
-
-      /** Sets the direction of the ListView. */
-      void set_direction(Qt::Orientation direction);
-      
-      /** Returns the navigation behavior of the ListView. */
-      EdgeNavigation get_edge_navigation() const;
-
-      /**
-       * Sets the navigation behavior of the ListView.
-       * @param navigation The keyboard navigation behavior when the first or
-       *                    last list item is selected.
-       */
-      void set_edge_navigation(EdgeNavigation navigation);
-
-      /** Returns the overflow mode of the ListView. */
-      Overflow get_overflow() const;
-
-      /**
-       * Sets the overflow mode of the ListView.
-       * @param overflow The overflow model.
-       */
-      void set_overflow(Overflow overflow);
-
-      /** Returns the selection mode of the ListView. */
-      SelectionMode get_selection_mode() const;
-
-      /**
-       * Sets the selection mode of the ListView.
-       * @param selection_mode The selection mode for the ListView.
-       */
-      void set_selection_mode(SelectionMode selection_mode);
-
-      /**
-       * Returns whether items are selected when focused for
-       * selection_mode = SINGLE.
-       */
-      bool does_selection_follow_focus() const;
-
-      /**
-       * Sets whether items are selected when focused for
-       * selection_mode = SINGLE.
-       * @param does_selection_follow_focus True iff items are selected
-       *                                   when focused
-       */
-      void set_selection_follow_focus(bool does_selection_follow_focus);
-
-      /**
-       * Returns the ListItem connected the specified value.
-       * @param value The value associated with an item.
-       */
-      ListItem* get_list_item(const std::any& value) const;
-
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
 
     private:
-      struct Item {
+      struct ItemEntry {
         ListItem* m_item;
-        boost::signals2::scoped_connection m_current_connection;
-        boost::signals2::scoped_connection m_submit_connection;
+        int m_index;
       };
+      struct BodyContainer;
       mutable SubmitSignal m_submit_signal;
+      std::shared_ptr<ArrayListModel> m_list_model;
+      ViewBuilder m_view_builder;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<SelectionModel> m_selection_model;
-      std::shared_ptr<ArrayListModel> m_list_model;
-      std::function<QWidget* (
-        std::shared_ptr<ArrayListModel>, int index)> m_factory;
+      boost::optional<int> m_selected;
+      std::vector<std::unique_ptr<ItemEntry>> m_items;
+      Box* m_box;
+      BodyContainer* m_container;
+      int m_item_gap;
+      int m_overflow_gap;
       Qt::Orientation m_direction;
-      EdgeNavigation m_navigation;
-      Overflow m_overflow;
-      SelectionMode m_selection_mode;
-      bool m_does_selection_follow_focus;
-      std::vector<Item> m_items;
+      Styles::EdgeNavigation m_edge_navigation;
+      Styles::Overflow m_overflow;
+      Styles::SelectionMode m_selection_mode;
+      QRect m_navigation_box;
+      QString m_query;
+      QTimer* m_query_timer;
+      boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_selection_connection;
-      boost::signals2::scoped_connection m_list_model_connection;
-      int m_current_index;
-      int m_column_or_row_index;
-      QPoint m_tracking_position;
-      bool m_is_setting_item_focus;
-      QString m_query;
-      QTimer m_query_timer;
-      QWidget* m_body;
 
-      boost::signals2::scoped_connection connect_item_current(ListItem* item,
-        const std::any& value);
-      boost::signals2::scoped_connection connect_item_submit(ListItem* item,
-        const std::any& value);
-      int get_index_by_value(const std::any& value) const;
-      QLayout* get_layout();
-      QLayoutItem* get_column_or_row(int index);
-      void select_item(const boost::optional<std::any>& selection);
-      void cross_move(bool is_next);
-      int move_next();
-      int move_previous();
-      void on_current(const boost::optional<std::any>& current);
-      void on_selection(const boost::optional<std::any>& selection);
-      void on_operation(const ListModel::Operation& operation);
-      void on_add_item(int index);
-      void on_delete_item(int index);
-      void update_column_row_index();
+      void append_query(const QString& query);
+      void navigate_home();
+      void navigate_end();
+      void navigate_next();
+      void navigate_previous();
+      void navigate(
+        int direction, int start, Styles::EdgeNavigation edge_navigation);
+      void cross_next();
+      void cross_previous();
+      void cross(int direction);
+      void add_item(int index);
+      void remove_item(int index);
       void update_layout();
-      void update_tracking_position();
-      void update_current(int index, bool is_update_x_y);
-      void update_current(int index);
-      void update_after_items_changed();
-      void update_selection(const boost::optional<std::any>& selection);
-      void query();
+      void on_list_operation(const ListModel::Operation& operation);
+      void on_current(const boost::optional<int>& current);
+      void on_selection(const boost::optional<int>& selected);
+      void on_item_current(ItemEntry& item);
+      void on_item_submitted(ItemEntry& item);
+      void on_style();
+      void on_query_timer_expired();
   };
 }
 

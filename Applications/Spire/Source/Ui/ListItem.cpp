@@ -56,6 +56,16 @@ void ListItem::set_selected(bool is_selected) {
   }
 }
 
+connection ListItem::connect_current_signal(
+    const CurrentSignal::slot_type& slot) const {
+  return m_current_signal.connect(slot);
+}
+
+connection ListItem::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_button->connect_clicked_signal(slot);
+}
+
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
     match(*m_box, Focus());
@@ -68,14 +78,4 @@ bool ListItem::eventFilter(QObject* watched, QEvent* event) {
     unmatch(*m_box, Hover());
   }
   return QWidget::eventFilter(watched, event);
-}
-
-connection ListItem::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
-}
-
-connection ListItem::connect_submit_signal(
-    const SubmitSignal::slot_type& slot) const {
-  return m_button->connect_clicked_signal(slot);
 }
