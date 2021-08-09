@@ -72,6 +72,7 @@ namespace Spire {
       ScrollBar& get_horizontal_scroll_bar();
 
     protected:
+      void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;

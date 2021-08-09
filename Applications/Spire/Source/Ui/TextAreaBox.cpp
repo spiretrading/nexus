@@ -266,9 +266,6 @@ QSize TextAreaBox::sizeHint() const {
 
 void TextAreaBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    m_scroll_box->setAttribute(Qt::WA_Disabled, false);
-    m_scroll_box->get_vertical_scroll_bar().setAttribute(Qt::WA_Disabled,
-      false);
     update_placeholder_text();
   }
   QWidget::changeEvent(event);

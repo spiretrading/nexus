@@ -1,6 +1,7 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include <QInputEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -15,6 +16,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
   setObjectName("scroll_box");
+  installEventFilter(this);
   auto layers = new LayeredWidget(this);
   layers->setObjectName("layered_widget");
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -97,14 +99,32 @@ ScrollBar& ScrollBox::get_horizontal_scroll_bar() {
   return m_scrollable_layer->get_horizontal_scroll_bar();
 }
 
-bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched != m_body) {
-    if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
-      update_ranges();
+void ScrollBox::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::EnabledChange) {
+    if(!isEnabled()) {
+      m_scrollable_layer->setAttribute(Qt::WA_Disabled, false);
+      get_horizontal_scroll_bar().setAttribute(Qt::WA_Disabled, false);
+      get_vertical_scroll_bar().setAttribute(Qt::WA_Disabled, false);
     }
   }
-  if(event->type() == QEvent::Resize) {
-    update_ranges();
+  QWidget::changeEvent(event);
+}
+
+bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == this && !isEnabled()) {
+    if(event->type() == QEvent::Wheel) {
+      auto input_event = static_cast<QInputEvent*>(event);
+      m_scrollable_layer->wheelEvent(static_cast<QWheelEvent*>(input_event));
+    }
+  } else {
+    if(watched != m_body) {
+      if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
+        update_ranges();
+      }
+    }
+    if(event->type() == QEvent::Resize) {
+      update_ranges();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
