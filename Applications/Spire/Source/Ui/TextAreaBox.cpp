@@ -372,20 +372,12 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingRight>, int size) {
-        // TODO
-        if(m_text_edit->isReadOnly()) {
-          size = 0;
-        }
         padding_size.rwidth() += size;
       },
       [&] (std::in_place_type_t<PaddingBottom>, int size) {
         padding_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        // TODO
-        if(m_text_edit->isReadOnly()) {
-          size = 0;
-        }
         padding_size.rwidth() += size;
       });
   }
@@ -483,7 +475,8 @@ void TextAreaBox::update_line_height() {
 void TextAreaBox::update_placeholder_text() {
   if(is_placeholder_shown()) {
     m_placeholder->set_text(m_placeholder_text);
-    m_placeholder->setFixedSize(size() - compute_border_size());
+    m_placeholder->setFixedSize(size() - compute_border_size() -
+      compute_padding_size());
     m_stacked_widget->adjustSize();
     m_placeholder->show();
   } else {
@@ -510,13 +503,16 @@ void TextAreaBox::update_text_alignment() {
 
 void TextAreaBox::update_text_edit_width() {
   auto border_size = compute_border_size();
-  auto padding_height = compute_padding_size().height();
-  if((m_text_edit->document()->size().toSize().height() + padding_height >
-      height() - border_size.height() && !m_text_edit->isReadOnly())) {
+  auto padding_size = compute_padding_size();
+  if(m_text_edit->document()->size().toSize().height() +
+      padding_size.height() > height() - border_size.height() &&
+      !m_text_edit->isReadOnly()) {
     m_text_edit->setFixedWidth(width() -
-      m_scroll_box->get_vertical_scroll_bar().width() - border_size.width());
+      m_scroll_box->get_vertical_scroll_bar().width() - border_size.width() -
+      padding_size.width());
   } else {
-    m_text_edit->setFixedWidth(width() - border_size.width());
+    m_text_edit->setFixedWidth(width() - border_size.width() -
+      padding_size.width());
   }
 }
 
