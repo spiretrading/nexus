@@ -29,8 +29,7 @@ namespace {
       set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(LineHeight(1.20)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
-      set(text_style(font, QColor::fromRgb(0, 0, 0)));
-    style.get(Any() >> is_a<QTextEdit>()).
+      set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(TextColor(QColor::fromRgb(0, 0, 0))).
       set(horizontal_padding(8)).
       set(vertical_padding(5));
@@ -38,13 +37,11 @@ namespace {
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
-    style.get(ReadOnly() >> is_a<QTextEdit>()).
+      set(border_color(QColor::fromRgb(0, 0, 0, 0))).
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    style.get(Disabled() >> is_a<QTextEdit>()).
+      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8))).
       set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     style.get(ReadOnly() && Disabled()).
       set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
@@ -331,8 +328,8 @@ void TextAreaBox::commit_style() {
   }
   m_text_edit->setFont(font);
   if(m_text_edit_styles.m_line_height &&
-      (static_cast<double>(font.pixelSize()) *
-      *m_text_edit_styles.m_line_height) != m_computed_line_height) {
+      (font.pixelSize() * *m_text_edit_styles.m_line_height) !=
+      m_computed_line_height) {
     update_line_height();
   }
   if(stylesheet != m_text_edit->styleSheet()) {
@@ -555,54 +552,9 @@ void TextAreaBox::on_cursor_position() {
 void TextAreaBox::on_style() {
   auto& stylist = find_stylist(*this);
   auto block = stylist.get_computed_block();
-  auto& text_edit_stylist = find_stylist(*m_text_edit);
-  auto text_edit_block = text_edit_stylist.get_computed_block();
-  merge(block, text_edit_block);
-  m_text_edit_styles.clear();
   m_text_edit_styles.m_styles.buffer([&] {
     for(auto& property : block) {
       property.visit(
-        // TODO: why must these be evaluated to be found later in compute_border_size()?
-        [&] (const BorderTopSize& size) {
-          stylist.evaluate(size, [=] (auto size) {});
-        },
-        [&] (const BorderRightSize& size) {
-          stylist.evaluate(size, [=] (auto size) {});
-        },
-        [&] (const BorderBottomSize& size) {
-          stylist.evaluate(size, [=] (auto size) {});
-        },
-        [&] (const BorderLeftSize& size) {
-          stylist.evaluate(size, [=] (auto size) {});
-        },
-        [&] (const PaddingTop& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_text_edit_styles.m_styles.set("padding-top", size);
-          });
-        },
-        [&] (const PaddingRight& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            // TODO: fix selector
-            if(m_text_edit->isReadOnly()) {
-              size = 0;
-            }
-            m_text_edit_styles.m_styles.set("padding-right", size);
-          });
-        },
-        [&] (const PaddingBottom& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_text_edit_styles.m_styles.set("padding-bottom", size);
-          });
-        },
-        [&] (const PaddingLeft& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            // TODO: fix selector
-            if(m_text_edit->isReadOnly()) {
-              size = 0;
-            }
-            m_text_edit_styles.m_styles.set("padding-left", size);
-          });
-        },
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
             m_text_edit_styles.m_styles.set("color", color);
@@ -626,54 +578,6 @@ void TextAreaBox::on_style() {
         [&] (const LineHeight& height) {
           stylist.evaluate(height, [=] (auto height) {
             m_text_edit_styles.m_line_height = height;
-          });
-        });
-    }
-  });
-  auto& placeholder_stylist = *find_stylist(*this, Placeholder());
-  merge(block, placeholder_stylist.get_computed_block());
-  m_placeholder_styles.clear();
-  m_placeholder_styles.m_styles.buffer([&] {
-    for(auto& property : block) {
-      property.visit(
-        [&] (const PaddingTop& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_placeholder_styles.m_padding.setTop(size);
-          });
-        },
-        [&] (const PaddingRight& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_placeholder_styles.m_padding.setRight(size);
-          });
-        },
-        [&] (const PaddingBottom& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_placeholder_styles.m_padding.setBottom(size);
-          });
-        },
-        [&] (const PaddingLeft& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_placeholder_styles.m_padding.setLeft(size);
-          });
-        },
-        [&] (const TextColor& color) {
-          placeholder_stylist.evaluate(color, [=] (auto color) {
-            m_placeholder_styles.m_color = color;
-          });
-        },
-        [&] (const TextAlign& alignment) {
-          placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
-            m_placeholder_styles.m_alignment = alignment;
-          });
-        },
-        [&] (const Font& font) {
-          placeholder_stylist.evaluate(font, [=] (auto font) {
-            m_placeholder_styles.m_font = font;
-          });
-        },
-        [&] (const FontSize& size) {
-          placeholder_stylist.evaluate(size, [=] (auto size) {
-            m_placeholder_styles.m_size = size;
           });
         });
     }
