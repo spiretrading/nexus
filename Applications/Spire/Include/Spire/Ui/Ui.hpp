@@ -28,6 +28,7 @@ namespace Spire {
   class ListView;
   class MoneyBox;
   class OverlayPanel;
+  class RegionListItem;
   class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
@@ -35,6 +36,7 @@ namespace Spire {
   class ScrollableLayer;
   class ScrollableListBox;
   class SearchBox;
+  class SecurityListItem;
   class SecurityStack;
   class SortedTableModel;
   class TableModel;
