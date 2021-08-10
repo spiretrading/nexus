@@ -1290,11 +1290,15 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(make_standard_property("border-color",
     QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  properties.push_back(make_standard_property("rows", 10));
+  properties.push_back(make_standard_property("columns", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
     [] (auto& profile) {
       auto label = new QLabel();
-      label->setPixmap(QPixmap::fromImage(make_grid_image(scale(100, 100), 10,
-        10)));
+      auto& columns = get<int>("columns", profile.get_properties());
+      auto& rows = get<int>("rows", profile.get_properties());
+      label->setPixmap(QPixmap::fromImage(make_grid_image(scale(100, 100),
+        columns.get(), rows.get())));
       auto scroll_box = new ScrollBox(label);
       scroll_box->setFixedSize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
