@@ -12,6 +12,8 @@ using namespace Spire::Styles;
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
+      m_horizontal_display_policy(DisplayPolicy::ALWAYS),
+      m_vertical_display_policy(DisplayPolicy::ALWAYS),
       m_border_styles([=] { commit_border_styles(); }),
       m_padding_styles([=] { commit_padding_styles(); }) {
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
