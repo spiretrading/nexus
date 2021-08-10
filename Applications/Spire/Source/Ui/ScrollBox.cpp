@@ -276,10 +276,10 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  auto viewport_size = m_body->size();
-  setMaximumSize(viewport_size + QSize(bar_width, bar_height));
+  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
+  setMaximumSize(viewport_size);
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.height() <= height() - bar_height) {
+    if(viewport_size.height() <= height()) {
       if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
         m_scrollable_layer->get_vertical_scroll_bar().hide();
         return;
@@ -292,7 +292,7 @@ void ScrollBox::update_ranges() {
     }
   }
   if(m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.width() <= width() - bar_width) {
+    if(viewport_size.width() <= width()) {
       if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
         m_scrollable_layer->get_horizontal_scroll_bar().hide();
         return;

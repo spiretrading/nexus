@@ -29,6 +29,7 @@
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -1244,6 +1245,42 @@ UiProfile Spire::make_scroll_box_profile() {
         scroll_box->set_vertical(value);
       });
       return scroll_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_scrollable_list_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto direction_property = define_enum<Qt::Orientation>(
+    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
+  properties.push_back(
+    make_standard_enum_property("direction", direction_property));
+  auto overflow_property = define_enum<Overflow>(
+    {{"NONE", Overflow::NONE}, {"WRAP", Overflow::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
+  auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
+    [] (auto& profile) {
+      auto& direction =
+        get<Qt::Orientation>("direction", profile.get_properties());
+      auto& overflow = get<Overflow>("overflow", profile.get_properties());
+      auto list_model = std::make_shared<ArrayListModel>();
+      for(auto i = 0; i < 15; ++i) {
+        list_model->push(QString::fromUtf8("Item%1").arg(i));
+      }
+      auto list_view = new ListView(list_model,
+        [] (const auto& model, auto index) {
+          return make_label(model.get<QString>(index));
+        });
+      auto style = get_style(*list_view);
+      style.get(Any()).
+        set(direction.get()).
+        set(overflow.get());
+      set_style(*list_view, std::move(style));
+      auto scrollable_list_box = new ScrollableListBox(list_view);
+      apply_widget_properties(scrollable_list_box, profile.get_properties());
+      return scrollable_list_box;
     });
   return profile;
 }
