@@ -53,32 +53,32 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
     : QWidget(parent),
       m_region(std::move(region)),
       m_type(get_type()) {
-  auto value_label = make_value_label();
-  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
-  auto name_label = make_label(QString::fromStdString(m_region.GetName()));
-  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
-  auto type_icon = make_type_icon();
-  auto value_container_layout = new QHBoxLayout();
-  value_container_layout->setContentsMargins({});
-  value_container_layout->setSpacing(0);
-  value_container_layout->addWidget(value_label);
-  if(type_icon) {
-    type_icon->setFocusPolicy(Qt::NoFocus);
-    set_style(*type_icon, ICON_STYLE());
-    auto type_icon_layout = new QVBoxLayout();
-    type_icon_layout->setContentsMargins({});
-    type_icon_layout->setSpacing(0);
-    type_icon_layout->addStretch();
-    type_icon_layout->addWidget(type_icon);
-    type_icon_layout->addStretch();
-    value_container_layout->addLayout(type_icon_layout);
-  }
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
+  auto value_container_layout = new QHBoxLayout();
+  value_container_layout->setContentsMargins({});
+  value_container_layout->setSpacing(0);
+  auto value_label = make_value_label();
+  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
+  value_container_layout->addWidget(value_label);
+  auto type_icon_layout = new QVBoxLayout();
+  type_icon_layout->setContentsMargins({});
+  type_icon_layout->setSpacing(0);
+  type_icon_layout->addStretch();
+  auto type_icon = make_type_icon();
+  if(type_icon) {
+    type_icon->setFocusPolicy(Qt::NoFocus);
+    set_style(*type_icon, ICON_STYLE());
+    type_icon_layout->addWidget(type_icon);
+  }
+  type_icon_layout->addStretch();
+  value_container_layout->addLayout(type_icon_layout);
   layout->addLayout(value_container_layout);
+  auto name_label = make_label(QString::fromStdString(m_region.GetName()));
+  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
   layout->addWidget(name_label);
 }
 
