@@ -294,8 +294,12 @@ void ScrollBox::update_ranges() {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
     }
   }
-  auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
-  auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
+  auto vertical_range = std::max(m_body->height() - (height() -
+    m_borders.left() - m_borders.right()) + m_padding.top() +
+    m_padding.bottom() + bar_height, 0);
+  auto horizontal_range = std::max(m_body->width() - (width() -
+    m_borders.left() - m_borders.right()) + m_padding.left() +
+    m_padding.right() + bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
   m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(
