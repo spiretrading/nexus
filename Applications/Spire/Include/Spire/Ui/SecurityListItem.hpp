@@ -2,6 +2,7 @@
 #define SPIRE_SECURITY_LIST_ITEM_HPP
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
