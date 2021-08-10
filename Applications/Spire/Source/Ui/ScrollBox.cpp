@@ -22,12 +22,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_viewport->setObjectName(
     QString("0x%1").arg(reinterpret_cast<std::intptr_t>(m_viewport)));
   m_body->installEventFilter(this);
-  auto viewport_layout = new QHBoxLayout();
-  viewport_layout->setContentsMargins({});
-  auto inner_viewport = new QWidget();
-  viewport_layout->addWidget(inner_viewport);
-  m_body->setParent(inner_viewport);
-  m_viewport->setLayout(viewport_layout);
+  m_body->setParent(m_viewport);
   layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
@@ -137,14 +132,15 @@ void ScrollBox::commit_padding_styles() {
   auto stylesheet =
     QString("#0x%1 {").arg(reinterpret_cast<std::intptr_t>(m_viewport));
   m_padding_styles.write(stylesheet);
-  if(m_padding != m_viewport->layout()->contentsMargins()) {
-    m_viewport->layout()->setContentsMargins(m_padding);
-  }
   if(stylesheet != m_viewport->styleSheet()) {
     m_viewport->setStyleSheet(stylesheet);
     m_viewport->style()->unpolish(m_viewport);
     m_viewport->style()->polish(m_viewport);
   }
+  on_horizontal_scroll(
+    m_scrollable_layer->get_horizontal_scroll_bar().get_position());
+  on_vertical_scroll(
+    m_scrollable_layer->get_vertical_scroll_bar().get_position());
   update_ranges();
 }
 
@@ -257,11 +253,11 @@ void ScrollBox::on_style() {
 }
 
 void ScrollBox::on_vertical_scroll(int position) {
-  m_body->move(m_body->pos().x(), -position);
+  m_body->move(m_body->pos().x(), -position + m_padding.top());
 }
 
 void ScrollBox::on_horizontal_scroll(int position) {
-  m_body->move(-position, m_body->pos().y());
+  m_body->move(-position + m_padding.left(), m_body->pos().y());
 }
 
 void ScrollBox::update_ranges() {
