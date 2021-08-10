@@ -86,7 +86,7 @@ const Region& RegionListItem::get_region() const {
   return m_region;
 }
 
-RegionListItem::Type RegionListItem::get_type() {
+RegionListItem::Type RegionListItem::get_type() const {
   if(!m_region.GetSecurities().empty()) {
     return Type::SECURITY;
   } else if(!m_region.GetMarkets().empty()) {

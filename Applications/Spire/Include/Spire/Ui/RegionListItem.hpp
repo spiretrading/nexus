@@ -33,7 +33,7 @@ namespace Spire {
       Nexus::Region m_region;
       Type m_type;
 
-      Type get_type();
+      Type get_type() const;
       TextBox* make_value_label();
       Icon* make_type_icon();
   };
