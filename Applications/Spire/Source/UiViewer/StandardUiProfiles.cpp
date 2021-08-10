@@ -1222,6 +1222,8 @@ UiProfile Spire::make_scroll_box_profile() {
     "horizontal_display_policy", display_policy_property));
   properties.push_back(make_standard_enum_property(
     "vertical_display_policy", display_policy_property));
+  properties.push_back(make_standard_property("horizontal-padding", 10));
+  properties.push_back(make_standard_property("vertical-padding", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
     [] (auto& profile) {
       auto label = new QLabel();
@@ -1242,6 +1244,24 @@ UiProfile Spire::make_scroll_box_profile() {
         "vertical_display_policy", profile.get_properties());
       vertical_display_policy.connect_changed_signal([scroll_box] (auto value) {
         scroll_box->set_vertical(value);
+      });
+      auto& horizontal_padding = get<int>("horizontal-padding",
+        profile.get_properties());
+      horizontal_padding.connect_changed_signal([=] (auto padding) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(PaddingLeft(padding)).
+          set(PaddingRight(padding));
+        set_style(*scroll_box, std::move(style));
+      });
+      auto& vertical_padding = get<int>("vertical-padding",
+        profile.get_properties());
+      vertical_padding.connect_changed_signal([=] (auto padding) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(PaddingTop(padding)).
+          set(PaddingBottom(padding));
+        set_style(*scroll_box, std::move(style));
       });
       return scroll_box;
     });
