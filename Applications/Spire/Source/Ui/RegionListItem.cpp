@@ -96,7 +96,7 @@ RegionListItem::Type RegionListItem::get_type() const {
   return Type::NONE;
 }
 
-TextBox* RegionListItem::make_value_label() {
+TextBox* RegionListItem::make_value_label() const {
   if(m_type == Type::SECURITY) {
     return make_label(
       QString::fromStdString(ToString(*m_region.GetSecurities().begin())));
@@ -110,15 +110,15 @@ TextBox* RegionListItem::make_value_label() {
   return make_label("");
 }
 
-Icon* RegionListItem::make_type_icon() {
+Icon* RegionListItem::make_type_icon() const {
   if(m_type == Type::SECURITY) {
     auto icon = new Icon(
-      imageFromSvg(":/Icons/security-symbol.svg", ICON_SIZE()), this);
+      imageFromSvg(":/Icons/security-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::MARKET) {
     auto icon = new Icon(
-      imageFromSvg(":/Icons/market-symbol.svg", ICON_SIZE()), this);
+      imageFromSvg(":/Icons/market-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::COUNTRY) {
@@ -126,7 +126,7 @@ Icon* RegionListItem::make_type_icon() {
       FromCode(*m_region.GetCountries().begin()).
       m_threeLetterCode.GetData()).toLower();
     auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
-      arg(country_code), FLAG_SIZE()), this);
+      arg(country_code), FLAG_SIZE()));
     flag_icon->setFixedSize(FLAG_SIZE());
     return flag_icon;
   }

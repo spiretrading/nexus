@@ -34,8 +34,8 @@ namespace Spire {
       Type m_type;
 
       Type get_type() const;
-      TextBox* make_value_label();
-      Icon* make_type_icon();
+      TextBox* make_value_label() const;
+      Icon* make_type_icon() const;
   };
 }
 
