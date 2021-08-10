@@ -54,7 +54,7 @@ SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
   value_container_layout->setContentsMargins({});
   value_container_layout->setSpacing(0);
   auto value_label = make_label(
-      QString::fromStdString(ToString(m_security_info.m_security)));
+    QString::fromStdString(ToString(m_security_info.m_security)));
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
   value_container_layout->addWidget(value_label);
@@ -66,7 +66,7 @@ SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
     FromCode(m_security_info.m_security.GetCountry()).
     m_threeLetterCode.GetData()).toLower();
   auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
-      arg(country_code), FLAG_SIZE()), this);
+    arg(country_code), FLAG_SIZE()), this);
   flag_icon->setFixedSize(FLAG_SIZE());
   set_style(*flag_icon, FLAG_ICON_STYLE());
   flag_icon->setFocusPolicy(Qt::NoFocus);
