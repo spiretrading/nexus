@@ -14,14 +14,14 @@ namespace Spire {
        * @param security The security to be displayed in the SecurityListItem.
        * @param parent The parent widget.
        */
-      explicit SecurityListItem(Nexus::SecurityInfo security,
+      explicit SecurityListItem(Nexus::SecurityInfo security_info,
         QWidget* parent = nullptr);
 
       /** Returns the security. */
       const Nexus::SecurityInfo& get_security() const;
 
     private:
-      Nexus::SecurityInfo m_security;
+      Nexus::SecurityInfo m_security_info;
   };
 }
 

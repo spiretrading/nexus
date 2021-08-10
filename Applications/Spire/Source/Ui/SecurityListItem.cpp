@@ -43,19 +43,21 @@ namespace {
   }
 }
 
-SecurityListItem::SecurityListItem(SecurityInfo security, QWidget* parent)
+SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
     : QWidget(parent),
-      m_security(std::move(security)) {
+      m_security_info(std::move(security_info)) {
   auto value_label = make_label(
-      QString::fromStdString(ToString(m_security.m_security)));
+      QString::fromStdString(ToString(m_security_info.m_security)));
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
-  auto name_label = make_label(QString::fromStdString(m_security.m_name));
+  auto name_label = make_label(QString::fromStdString(m_security_info.m_name));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
-  auto flag = QImage(QString(":/Icons/%1.png").
-    arg(std::uint16_t(m_security.m_security.GetCountry())));
-  auto flag_icon = new Icon(flag.scaled(FLAG_SIZE()));
+  auto country_code = QString(GetDefaultCountryDatabase().
+    FromCode(m_security_info.m_security.GetCountry()).
+    m_threeLetterCode.GetData()).toLower();
+  auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
+      arg(country_code), FLAG_SIZE()), this);
   flag_icon->setFixedSize(FLAG_SIZE());
   set_style(*flag_icon, FLAG_ICON_STYLE());
   flag_icon->setFocusPolicy(Qt::NoFocus);
@@ -78,5 +80,5 @@ SecurityListItem::SecurityListItem(SecurityInfo security, QWidget* parent)
 }
 
 const SecurityInfo& SecurityListItem::get_security() const {
-  return m_security;
+  return m_security_info;
 }
