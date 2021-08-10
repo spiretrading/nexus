@@ -1,6 +1,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"

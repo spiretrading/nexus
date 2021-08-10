@@ -11,7 +11,8 @@ namespace Spire {
 
       /**
        * Constructs a SecurityListItem.
-       * @param security The security to be displayed in the SecurityListItem.
+       * @param security_info The security to be displayed in the
+       *                      SecurityListItem.
        * @param parent The parent widget.
        */
       explicit SecurityListItem(Nexus::SecurityInfo security_info,
