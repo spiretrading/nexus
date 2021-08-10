@@ -66,6 +66,13 @@ namespace Spire {
       /** Sets the horizontal and vertical display policies. */
       void set(DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy);
 
+      /**
+       * Scrolls to a widget, ensuring that it's visible. If the widget is
+       * already visible fully then no action is taken.
+       * @param widget The widget to scroll to.
+       */
+      void scroll_to(const QWidget& widget);
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;

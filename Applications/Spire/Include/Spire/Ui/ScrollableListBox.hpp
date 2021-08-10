@@ -23,6 +23,9 @@ namespace Spire {
     private:
       ListView* m_list_view;
       ScrollBox* m_scroll_box;
+      boost::signals2::scoped_connection m_current_connection;
+
+      void on_current(const boost::optional<int>& current);
   };
 }
 
