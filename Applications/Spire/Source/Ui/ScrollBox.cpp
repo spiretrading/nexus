@@ -145,6 +145,7 @@ void ScrollBox::commit_padding_styles() {
     m_viewport->style()->unpolish(m_viewport);
     m_viewport->style()->polish(m_viewport);
   }
+  update_ranges();
 }
 
 void ScrollBox::on_style() {
@@ -276,7 +277,9 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
+  auto viewport_size = m_body->size() + QSize(bar_width, bar_height) -
+    QSize(m_padding.left() + m_padding.right(),
+      m_padding.top() - m_padding.bottom());
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
       m_scrollable_layer->get_vertical_scroll_bar().hide();
@@ -291,10 +294,8 @@ void ScrollBox::update_ranges() {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
     }
   }
-  auto vertical_range = std::max(m_body->height() - height() +
-    m_padding.top() + m_padding.bottom() + bar_height, 0);
-  auto horizontal_range = std::max(m_body->width() - width() +
-    m_padding.left() + m_padding.right() + bar_width, 0);
+  auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
+  auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
   m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(
