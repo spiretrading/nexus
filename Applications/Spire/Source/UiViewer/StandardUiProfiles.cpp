@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -26,10 +27,12 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
+#include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
@@ -1154,6 +1157,45 @@ UiProfile Spire::make_radio_button_profile() {
     });
 }
 
+UiProfile Spire::make_region_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto type_property = define_enum<int>(
+    {{"SECURITY", 0}, {"MARKET", 1}, {"COUNTRY", 2}});
+  properties.push_back(make_standard_enum_property("type", type_property));
+  auto profile = UiProfile(QString::fromUtf8("RegionListItem"), properties,
+    [] (auto& profile) {
+      auto& type = get<int>("type", profile.get_properties());
+      auto region = [&] {
+        if(type.get() == 0) {
+          auto security = ParseWildCardSecurity("MSFT.NSDQ",
+            GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+          auto region = Region(*security);
+          region.SetName("Microsoft Corporation");
+          return region;
+        } else if(type.get() == 1) {
+          auto market =
+            GetDefaultMarketDatabase().FromCode(DefaultMarkets::NSEX());
+          auto region = Region(market);
+          region.SetName(market.m_description);
+          return region;
+        } else {
+          auto country_code = DefaultCountries::US();
+          auto region = Region(country_code);
+          region.SetName(
+            GetDefaultCountryDatabase().FromCode(country_code).m_name);
+          return region;
+        }
+      }();
+      auto item = new RegionListItem(region);
+      apply_widget_properties(item, profile.get_properties());
+      item->setMinimumSize(0, 0);
+      item->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+      return item;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_scroll_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1267,6 +1309,22 @@ UiProfile Spire::make_search_box_profile() {
       search_box->connect_submit_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
       return search_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_security_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("SecurityListItem"), properties,
+    [] (auto& profile) {
+      auto security = ParseWildCardSecurity("AB.NYSE",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto security_info = SecurityInfo(
+        *security, "Alliancebernstein Holding LP", "", 0);
+      auto item = new SecurityListItem(security_info);
+      apply_widget_properties(item, profile.get_properties());
+      return item;
     });
   return profile;
 }
