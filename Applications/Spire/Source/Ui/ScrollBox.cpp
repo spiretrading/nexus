@@ -12,8 +12,8 @@ using namespace Spire::Styles;
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_horizontal_display_policy(DisplayPolicy::ALWAYS),
-      m_vertical_display_policy(DisplayPolicy::ALWAYS),
+      m_horizontal_display_policy(DisplayPolicy::ON_OVERFLOW),
+      m_vertical_display_policy(DisplayPolicy::ON_OVERFLOW),
       m_border_styles([=] { commit_border_styles(); }),
       m_padding_styles([=] { commit_padding_styles(); }) {
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
@@ -276,19 +276,32 @@ void ScrollBox::update_ranges() {
     }
     return 0;
   }();
-  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
+  auto viewport_size = m_body->size();
+  setMaximumSize(viewport_size + QSize(bar_width, bar_height));
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.height() <= height()) {
-      m_scrollable_layer->get_vertical_scroll_bar().hide();
+    if(viewport_size.height() <= height() - bar_height) {
+      if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_vertical_scroll_bar().hide();
+        return;
+      }
     } else {
-      m_scrollable_layer->get_vertical_scroll_bar().show();
+      if(!m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_vertical_scroll_bar().show();
+        return;
+      }
     }
   }
   if(m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.width() <= width()) {
-      m_scrollable_layer->get_horizontal_scroll_bar().hide();
+    if(viewport_size.width() <= width() - bar_width) {
+      if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        return;
+      }
     } else {
-      m_scrollable_layer->get_horizontal_scroll_bar().show();
+      if(!m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_horizontal_scroll_bar().show();
+        return;
+      }
     }
   }
   auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
