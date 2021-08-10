@@ -52,7 +52,7 @@ namespace {
 RegionListItem::RegionListItem(Region region, QWidget* parent)
     : QWidget(parent),
       m_region(std::move(region)),
-      m_type(Type::NONE) {
+      m_type(get_type()) {
   auto value_label = make_value_label();
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
@@ -86,21 +86,28 @@ const Region& RegionListItem::get_region() const {
   return m_region;
 }
 
-TextBox* RegionListItem::make_value_label() {
+RegionListItem::Type RegionListItem::get_type() {
   if(!m_region.GetSecurities().empty()) {
-    m_type = Type::SECURITY;
+    return Type::SECURITY;
+  } else if(!m_region.GetMarkets().empty()) {
+    return Type::MARKET;
+  } else if(!m_region.GetCountries().empty()) {
+    return Type::COUNTRY;
+  }
+  return Type::NONE;
+}
+
+TextBox* RegionListItem::make_value_label() {
+  if(m_type == Type::SECURITY) {
     return make_label(
       QString::fromStdString(ToString(*m_region.GetSecurities().begin())));
-  } else if(!m_region.GetMarkets().empty()) {
-    m_type = Type::MARKET;
+  } else if(m_type == Type::MARKET) {
     return make_label(
       QString::fromStdString(m_region.GetMarkets().begin()->GetData()));
-  } else if(!m_region.GetCountries().empty()) {
-    m_type = Type::COUNTRY;
+  } else if(m_type == Type::COUNTRY) {
     return make_label(GetDefaultCountryDatabase().
       FromCode(*m_region.GetCountries().begin()).m_threeLetterCode.GetData());
   }
-  m_type = Type::NONE;
   return make_label("");
 }
 
