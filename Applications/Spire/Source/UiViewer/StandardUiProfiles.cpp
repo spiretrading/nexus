@@ -1250,8 +1250,7 @@ UiProfile Spire::make_scroll_box_profile() {
       horizontal_padding.connect_changed_signal([=] (auto padding) {
         auto style = get_style(*scroll_box);
         style.get(Any()).
-          set(PaddingLeft(padding)).
-          set(PaddingRight(padding));
+          set(Styles::horizontal_padding(padding));
         set_style(*scroll_box, std::move(style));
       });
       auto& vertical_padding = get<int>("vertical-padding",
@@ -1259,8 +1258,7 @@ UiProfile Spire::make_scroll_box_profile() {
       vertical_padding.connect_changed_signal([=] (auto padding) {
         auto style = get_style(*scroll_box);
         style.get(Any()).
-          set(PaddingTop(padding)).
-          set(PaddingBottom(padding));
+          set(Styles::vertical_padding(padding));
         set_style(*scroll_box, std::move(style));
       });
       return scroll_box;
