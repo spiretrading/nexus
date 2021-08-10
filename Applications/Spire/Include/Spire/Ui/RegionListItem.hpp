@@ -24,7 +24,7 @@ namespace Spire {
       const Nexus::Region& get_region() const;
 
     private:
-      enum class Type {
+      enum class Type : std::uint8_t {
         NONE,
         SECURITY,
         MARKET,
