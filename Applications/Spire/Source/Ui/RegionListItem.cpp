@@ -67,8 +67,7 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
   type_icon_layout->setContentsMargins({});
   type_icon_layout->setSpacing(0);
   type_icon_layout->addStretch();
-  auto type_icon = make_type_icon();
-  if(type_icon) {
+  if(auto type_icon = make_type_icon()) {
     type_icon->setFocusPolicy(Qt::NoFocus);
     set_style(*type_icon, ICON_STYLE());
     type_icon_layout->addWidget(type_icon);
