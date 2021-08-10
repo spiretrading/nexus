@@ -243,6 +243,7 @@ bool TextAreaBox::is_read_only() const {
 
 void TextAreaBox::set_read_only(bool read_only) {
   m_text_edit->setReadOnly(read_only);
+  m_scroll_box->get_vertical_scroll_bar().set_position(0);
   if(read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
     match(*this, ReadOnly());
