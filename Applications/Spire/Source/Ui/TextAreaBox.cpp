@@ -534,13 +534,12 @@ void TextAreaBox::on_cursor_position() {
     auto bottom = m_text_edit->visibleRegion().boundingRect().bottom();
     if(m_text_edit->cursorRect().top() <= top) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
-        m_text_edit->cursorRect().top() -
-        scale_height(compute_padding_size().height()));
+        m_text_edit->cursorRect().top());
     } else if(m_text_edit->cursorRect().bottom() >= bottom) {
       m_scroll_box->get_vertical_scroll_bar().set_position(
         m_text_edit->cursorRect().bottom() -
         m_text_edit->visibleRegion().boundingRect().height() +
-        scale_height(compute_padding_size().height()));
+        compute_padding_size().height());
     }
   }
 }
