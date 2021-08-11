@@ -1,9 +1,6 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
-#include <QInputEvent>
-#include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -28,7 +25,6 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_body->setParent(m_viewport);
   layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
-  m_scrollable_layer->setObjectName("scrollable_layer");
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
     [=] (auto position) { on_vertical_scroll(position); });
   m_scrollable_layer->get_horizontal_scroll_bar().connect_position_signal(

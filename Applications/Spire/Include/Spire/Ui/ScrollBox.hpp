@@ -80,7 +80,6 @@ namespace Spire {
 
     private:
       QWidget* m_body;
-      Box* m_box;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
       QWidget* m_viewport;

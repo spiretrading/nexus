@@ -1291,7 +1291,6 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(make_standard_property("border-color",
     QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-  properties.push_back(make_standard_property("border-size", 1));
   properties.push_back(make_standard_property("rows", 10));
   properties.push_back(make_standard_property("columns", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
@@ -1335,14 +1334,7 @@ UiProfile Spire::make_scroll_box_profile() {
       border_color.connect_changed_signal([=] (const auto& color) {
         auto style = get_style(*scroll_box);
         style.get(Any()).
-          set(Styles::border_color(color));
-        set_style(*scroll_box, std::move(style));
-      });
-      auto& border_size = get<int>("border-size", profile.get_properties());
-      border_size.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*scroll_box);
-        style.get(Any()).
-          set(Styles::border_size(scale_width(value)));
+          set(Styles::border(scale_width(1), color));
         set_style(*scroll_box, std::move(style));
       });
       return scroll_box;
