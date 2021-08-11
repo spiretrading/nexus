@@ -28,12 +28,14 @@ namespace Spire {
   class ListView;
   class MoneyBox;
   class OverlayPanel;
+  class RegionListItem;
   class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
   class ScrollBox;
   class ScrollableLayer;
   class SearchBox;
+  class SecurityListItem;
   class SecurityStack;
   class SortedTableModel;
   class TableModel;

@@ -1,0 +1,85 @@
+#include "Spire/Ui/SecurityListItem.hpp"
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/TextBox.hpp"
+
+using namespace boost;
+using namespace Nexus;
+using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  auto FLAG_SIZE() {
+    static auto size = scale(16, 10);
+    return size;
+  }
+
+  auto FLAG_ICON_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(Fill(none));
+    return style;
+  }
+
+  auto NAME_LABEL_STYLE(StyleSheet style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(10));
+    style.get(ReadOnly() && Disabled()).
+      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80))).
+      set(PaddingBottom(0)).
+      set(PaddingTop(scale_height(4)));
+    return style;
+  }
+
+  auto VALUE_LABEL_STYLE(StyleSheet style) {
+    style.get(ReadOnly() && Disabled()).
+      set(PaddingRight(scale_width(8))).
+      set(vertical_padding(0));
+    return style;
+  }
+}
+
+SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
+    : QWidget(parent),
+      m_security_info(std::move(security_info)) {
+  auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  auto value_container_layout = new QHBoxLayout();
+  value_container_layout->setContentsMargins({});
+  value_container_layout->setSpacing(0);
+  auto value_label = make_label(
+    QString::fromStdString(ToString(m_security_info.m_security)));
+  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
+  value_container_layout->addWidget(value_label);
+  auto flag_icon_layout = new QVBoxLayout();
+  flag_icon_layout->setContentsMargins({});
+  flag_icon_layout->setSpacing(0);
+  flag_icon_layout->addStretch();
+  auto country_code = QString(GetDefaultCountryDatabase().
+    FromCode(m_security_info.m_security.GetCountry()).
+    m_threeLetterCode.GetData()).toLower();
+  auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
+    arg(country_code), FLAG_SIZE()), this);
+  flag_icon->setFixedSize(FLAG_SIZE());
+  set_style(*flag_icon, FLAG_ICON_STYLE());
+  flag_icon->setFocusPolicy(Qt::NoFocus);
+  flag_icon_layout->addWidget(flag_icon);
+  flag_icon_layout->addStretch();
+  value_container_layout->addLayout(flag_icon_layout);
+  layout->addLayout(value_container_layout);
+  auto name_label = make_label(QString::fromStdString(m_security_info.m_name));
+  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
+  layout->addWidget(name_label);
+}
+
+const SecurityInfo& SecurityListItem::get_security() const {
+  return m_security_info;
+}
