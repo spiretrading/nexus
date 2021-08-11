@@ -353,7 +353,6 @@ QSize TextAreaBox::compute_border_size() const {
         border_size.rwidth() += size;
       });
   }
-  border_size = QSize(2, 2);
   return border_size;
 }
 
@@ -374,7 +373,6 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rwidth() += size;
       });
   }
-  padding_size = QSize(16, 10);
   return padding_size;
 }
 
