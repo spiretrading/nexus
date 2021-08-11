@@ -200,6 +200,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->get_vertical_scroll_bar().adjustSize();
+  m_scroll_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   m_scroll_box->installEventFilter(this);
   m_scroll_box->findChild<ScrollableLayer*>()->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
@@ -268,14 +269,7 @@ void TextAreaBox::changeEvent(QEvent* event) {
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_scroll_box && event->type() == QEvent::Resize) {
-    update_text_edit_width();
-    m_stacked_widget->setMinimumSize(size() - get_border_size() -
-      get_padding_size());
-    m_stacked_widget->adjustSize();
-    update_display_text();
-    update_placeholder_text();
-  } else if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
+  if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
     m_submit_signal(m_model->get_current());
   } else if(event->type() == QEvent::Wheel) {
     if(m_text_edit->isReadOnly()) {
@@ -288,6 +282,16 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
 void TextAreaBox::mousePressEvent(QMouseEvent* event) {
   m_text_edit->setFocus();
   QWidget::mousePressEvent(event);
+}
+
+void TextAreaBox::resizeEvent(QResizeEvent* event) {
+  update_text_edit_width();
+  m_stacked_widget->setMinimumSize(size() - get_border_size() -
+    get_padding_size());
+  m_stacked_widget->adjustSize();
+  update_display_text();
+  update_placeholder_text();
+  QWidget::resizeEvent(event);
 }
 
 void TextAreaBox::commit_placeholder_style() {
