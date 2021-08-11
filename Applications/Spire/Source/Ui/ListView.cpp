@@ -40,35 +40,6 @@ namespace {
   }
 }
 
-struct ListView::BodyContainer : QWidget {
-  QWidget* m_body;
-
-  BodyContainer()
-      : m_body(new QWidget(this)) {
-    auto layout = new QBoxLayout(QBoxLayout::LeftToRight);
-    layout->setContentsMargins({});
-    m_body->setLayout(layout);
-  }
-
-  QBoxLayout& get_layout() {
-    return *static_cast<QBoxLayout*>(m_body->layout());
-  }
-
-  QSize sizeHint() const override {
-    if(m_body) {
-      return m_body->sizeHint();
-    }
-    return QSize();
-  }
-
-  bool event(QEvent* event) override {
-    if(event->type() == QEvent::LayoutRequest) {
-      updateGeometry();
-    }
-    return QWidget::event(event);
-  }
-};
-
 ListView::ListView(std::shared_ptr<ArrayListModel> list_model, QWidget* parent)
   : ListView(std::move(list_model), default_view_builder, parent) {}
 
@@ -109,13 +80,15 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
   }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  m_container = new BodyContainer();
-  m_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_box = new Box(m_container);
+  auto body = new QWidget();
+  auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight);
+  body_layout->setContentsMargins({});
+  body->setLayout(body_layout);
+  body->installEventFilter(this);
+  m_box = new Box(body);
   layout->addWidget(m_box);
   setLayout(layout);
   set_style(*this, DEFAULT_STYLE());
-  m_container->installEventFilter(this);
   update_layout();
   proxy_style(*this, *m_box);
   connect_style_signal(*this, [=] { on_style(); });
@@ -156,10 +129,6 @@ ListItem* ListView::get_list_item(int index) {
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
-}
-
-QSize ListView::sizeHint() const {
-  return m_container->m_body->size() + m_box->size() - m_container->size();
 }
 
 bool ListView::eventFilter(QObject* watched, QEvent* event) {
@@ -398,7 +367,16 @@ void ListView::remove_item(int index) {
 }
 
 void ListView::update_layout() {
-  auto& body_layout = m_container->get_layout();
+  auto& body = *m_box->get_body();
+  if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
+      Overflow::NONE || m_direction == Qt::Orientation::Vertical &&
+      m_overflow == Overflow::WRAP) {
+    body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+  } else {
+    body.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  }
+  body.updateGeometry();
+  auto& body_layout = *static_cast<QBoxLayout*>(body.layout());
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
   }
@@ -414,9 +392,9 @@ void ListView::update_layout() {
     if(m_overflow == Overflow::NONE) {
       return QWIDGETSIZE_MAX;
     } else if(m_direction == Qt::Orientation::Horizontal) {
-      return m_container->width();
+      return body.width();
     }
-    return m_container->height();
+    return body.height();
   }();
   auto i = m_items.begin();
   while(i != m_items.end()) {
@@ -426,13 +404,10 @@ void ListView::update_layout() {
     inner_layout->setSpacing(m_item_gap);
     while(i != m_items.end()) {
       auto item_size = [&] {
-        if(!(*i)->m_item->isVisible()) {
-          (*i)->m_item->adjustSize();
-        }
         if(m_direction == Qt::Orientation::Horizontal) {
-          return (*i)->m_item->width();
+          return (*i)->m_item->sizeHint().width();
         } else {
-          return (*i)->m_item->height();
+          return (*i)->m_item->sizeHint().height();
         }
       }();
       remaining_size -= item_size;
@@ -454,7 +429,6 @@ void ListView::update_layout() {
       new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
     body_layout.addLayout(inner_layout);
   }
-  m_container->m_body->adjustSize();
   updateGeometry();
 }
 
