@@ -97,8 +97,6 @@ namespace Styles {
 
           void set_text(const QString &text);
 
-          void set_padding(const QMargins& padding);
-
           void set_text_color(const QColor& color);
 
           void set_alignment(Qt::Alignment alignment);
@@ -119,7 +117,6 @@ namespace Styles {
       };
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
-        QMargins m_padding;
         boost::optional<Qt::Alignment> m_alignment;
         boost::optional<QFont> m_font;
         boost::optional<int> m_size;
@@ -154,6 +151,7 @@ namespace Styles {
       void update_text_edit_width();
       void on_current(const QString& current);
       void on_cursor_position();
+      void on_placeholder_style();
       void on_style();
       void on_text_changed();
   };

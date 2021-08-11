@@ -110,11 +110,6 @@ void TextAreaBox::ElidedLabel::set_text(const QString &text) {
   update();
 }
 
-void TextAreaBox::ElidedLabel::set_padding(const QMargins& padding) {
-  m_padding = padding;
-  update();
-}
-
 void TextAreaBox::ElidedLabel::set_text_color(const QColor& color) {
   m_text_color = color;
   update();
@@ -139,7 +134,7 @@ void TextAreaBox::ElidedLabel::paintEvent(QPaintEvent *event) {
   painter.setPen(m_text_color);
   painter.setFont(font());
   auto fontMetrics = painter.fontMetrics();
-  auto y = m_padding.top() + m_line_height - fontMetrics.height();
+  auto y = m_line_height - fontMetrics.height();
   auto textLayout = QTextLayout(m_text, painter.font());
   auto opt = textLayout.textOption();
   opt.setAlignment(m_alignment);
@@ -147,17 +142,16 @@ void TextAreaBox::ElidedLabel::paintEvent(QPaintEvent *event) {
   textLayout.beginLayout();
   auto line = textLayout.createLine();
   while(line.isValid()) {
-    line.setLineWidth(width() - m_padding.left() -
-      m_padding.right());
+    line.setLineWidth(width());
     auto next_line_y = y + m_line_height;
     if (height() >= next_line_y + m_line_height) {
-      line.draw(&painter, QPoint(m_padding.left(), y));
+      line.draw(&painter, QPoint(0, y));
       y = next_line_y;
     } else {
       auto last_line = m_text.mid(line.textStart());
       auto elided_last_line = fontMetrics.elidedText(last_line,
-        Qt::ElideRight, width() - m_padding.left() - m_padding.right());
-      painter.drawText(QPoint(m_padding.left(), y + fontMetrics.ascent()),
+        Qt::ElideRight, width());
+      painter.drawText(QPoint(0, y + fontMetrics.ascent()),
         elided_last_line);
       line = textLayout.createLine();
       break;
@@ -169,7 +163,6 @@ void TextAreaBox::ElidedLabel::paintEvent(QPaintEvent *event) {
 
 void TextAreaBox::StyleProperties::clear() {
   m_styles.clear();
-  m_padding = {};
   m_alignment = none;
   m_font = none;
   m_size = none;
@@ -297,7 +290,6 @@ void TextAreaBox::mousePressEvent(QMouseEvent* event) {
 }
 
 void TextAreaBox::commit_placeholder_style() {
-  m_placeholder->set_padding(m_placeholder_styles.m_padding);
   auto alignment = m_placeholder_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
   m_placeholder->set_alignment(alignment);
@@ -361,6 +353,7 @@ QSize TextAreaBox::compute_border_size() const {
         border_size.rwidth() += size;
       });
   }
+  border_size = QSize(2, 2);
   return border_size;
 }
 
@@ -381,6 +374,7 @@ QSize TextAreaBox::compute_padding_size() const {
         padding_size.rwidth() += size;
       });
   }
+  padding_size = QSize(16, 10);
   return padding_size;
 }
 
@@ -573,6 +567,39 @@ void TextAreaBox::on_style() {
         [&] (const LineHeight& height) {
           stylist.evaluate(height, [=] (auto height) {
             m_text_edit_styles.m_line_height = height;
+          });
+        });
+    }
+  });
+  auto& placeholder_stylist = *find_stylist(*this, Placeholder());
+  merge(block, placeholder_stylist.get_computed_block());
+  m_placeholder_styles.clear();
+  m_placeholder_styles.m_styles.buffer([&] {
+    for(auto& property : block) {
+      property.visit(
+        [&] (const TextColor& color) {
+          placeholder_stylist.evaluate(color, [=] (auto color) {
+            m_placeholder_styles.m_color = color;
+          });
+        },
+        [&] (const TextAlign& alignment) {
+          placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
+            m_placeholder_styles.m_alignment = alignment;
+          });
+        },
+        [&] (const Font& font) {
+          placeholder_stylist.evaluate(font, [=] (auto font) {
+            m_placeholder_styles.m_font = font;
+          });
+        },
+        [&] (const FontSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_styles.m_size = size;
+          });
+        },
+        [&] (const LineHeight& height) {
+          stylist.evaluate(height, [=] (auto height) {
+            m_placeholder_styles.m_line_height = height;
           });
         });
     }
