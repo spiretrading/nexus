@@ -257,7 +257,7 @@ connection
 }
 
 QSize TextAreaBox::sizeHint() const {
-  return m_text_edit->sizeHint() + get_border_size() + get_padding_size();
+  return m_scroll_box->sizeHint();
 }
 
 void TextAreaBox::changeEvent(QEvent* event) {
