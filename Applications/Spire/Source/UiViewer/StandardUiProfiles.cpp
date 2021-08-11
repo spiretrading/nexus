@@ -1,6 +1,6 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
-#include <QImageReader>
 #include <QLabel>
+#include <QPainter>
 #include <QPointer>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
@@ -260,6 +260,30 @@ namespace {
     } catch(const std::exception&) {
       return {};
     }
+  }
+
+  auto make_grid_image(const QSize& cell_size, int column_count,
+      int row_count) {
+    auto image = QImage(QSize(cell_size.width() * column_count,
+      cell_size.height() * row_count), QImage::Format_RGB32);
+    image.fill(QColor::fromRgb(0x56, 0xC4, 0xC5));
+    auto painter = QPainter(&image);
+    for(auto row = 0; row < row_count; ++row) {
+      for(auto column = row % 2; column < column_count; column += 2) {
+        auto cell_rect = QRect(QPoint(column * cell_size.width(),
+          row * cell_size.width()), cell_size);
+        painter.fillRect(cell_rect, QColor::fromRgb(0xA2, 0x21, 0x8E));
+        painter.fillRect(cell_rect - QMargins(scale_width(1), scale_height(1),
+          scale_width(1), scale_height(1)),
+          QColor::fromRgb(0xFD, 0xC7, 0x77));
+        painter.setPen(QColor::fromRgb(0x02, 0x38, 0x88));
+        cell_rect.translate(translate(5, 5) +
+          QPoint(0, painter.fontMetrics().height()));
+        painter.drawText(cell_rect.topLeft(),
+          QString("(%1, %2)").arg(column).arg(row));
+      }
+    }
+    return image;
   }
 }
 
@@ -1262,13 +1286,19 @@ UiProfile Spire::make_scroll_box_profile() {
     "horizontal_display_policy", display_policy_property));
   properties.push_back(make_standard_enum_property(
     "vertical_display_policy", display_policy_property));
+  properties.push_back(make_standard_property("horizontal-padding", 10));
+  properties.push_back(make_standard_property("vertical-padding", 10));
+  properties.push_back(make_standard_property("border-color",
+    QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  properties.push_back(make_standard_property("rows", 10));
+  properties.push_back(make_standard_property("columns", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
     [] (auto& profile) {
       auto label = new QLabel();
-      auto reader = QImageReader(":/Icons/color-picker-display.png");
-      auto image = QPixmap::fromImage(reader.read());
-      image = image.scaled(QSize(2000, 2000));
-      label->setPixmap(std::move(image));
+      auto& columns = get<int>("columns", profile.get_properties());
+      auto& rows = get<int>("rows", profile.get_properties());
+      label->setPixmap(QPixmap::fromImage(make_grid_image(scale(100, 100),
+        columns.get(), rows.get())));
       auto scroll_box = new ScrollBox(label);
       scroll_box->setFixedSize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
@@ -1281,6 +1311,30 @@ UiProfile Spire::make_scroll_box_profile() {
         "vertical_display_policy", profile.get_properties());
       vertical_display_policy.connect_changed_signal([=] (auto value) {
         scroll_box->set_vertical(value);
+      });
+      auto& horizontal_padding = get<int>("horizontal-padding",
+        profile.get_properties());
+      horizontal_padding.connect_changed_signal([=] (auto padding) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(Styles::horizontal_padding(padding));
+        set_style(*scroll_box, std::move(style));
+      });
+      auto& vertical_padding = get<int>("vertical-padding",
+        profile.get_properties());
+      vertical_padding.connect_changed_signal([=] (auto padding) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(Styles::vertical_padding(padding));
+        set_style(*scroll_box, std::move(style));
+      });
+      auto& border_color = get<QColor>("border-color",
+        profile.get_properties());
+      border_color.connect_changed_signal([=] (const auto& color) {
+        auto style = get_style(*scroll_box);
+        style.get(Any()).
+          set(border(scale_width(1), color));
+        set_style(*scroll_box, std::move(style));
       });
       return scroll_box;
     });
