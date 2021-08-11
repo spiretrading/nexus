@@ -53,113 +53,132 @@ namespace {
   }
 }
 
-TextAreaBox::ContentSizedTextEdit::ContentSizedTextEdit(const QString& text,
-    QWidget* parent)
-    : QTextEdit(parent) {
-  setLineWrapMode(QTextEdit::WidgetWidth);
-  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  document()->setDocumentMargin(0);
-  setFrameShape(QFrame::NoFrame);
-  setAcceptRichText(false);
-  connect(
-    this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
-  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  setText(text);
-}
+class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
+  public:
 
-QSize TextAreaBox::ContentSizedTextEdit::sizeHint() const {
-  auto margins = contentsMargins();
-  auto desired_size = QSize(m_longest_line_width,
-    document()->size().toSize().height());
-  auto size = desired_size + QSize(
-    margins.left() + margins.right(), margins.top() +
-    margins.bottom());
-  if(!isReadOnly()) {
-    size.rwidth() += cursorWidth();
-  }
-  return size;
-}
-
-QSize TextAreaBox::ContentSizedTextEdit::minimumSizeHint() const {
-  return QSize();
-}
-
-void TextAreaBox::ContentSizedTextEdit::on_text_changed() {
-  m_longest_line_width = get_longest_line_width();
-  updateGeometry();
-}
-
-int TextAreaBox::ContentSizedTextEdit::get_longest_line_width() const {
-  auto longest = 0;
-  for(auto i = 0; i < document()->blockCount(); ++i) {
-    auto block = document()->findBlockByNumber(i);
-    if(block.isValid()) {
-      longest = std::max(longest,
-        fontMetrics().horizontalAdvance(block.text()));
+    explicit ContentSizedTextEdit(const QString& text,
+        QWidget* parent = nullptr)
+        : QTextEdit(parent) {
+      setLineWrapMode(QTextEdit::WidgetWidth);
+      setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      document()->setDocumentMargin(0);
+      setFrameShape(QFrame::NoFrame);
+      setAcceptRichText(false);
+      connect(
+        this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
+      setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+      setText(text);
     }
-  }
-  return longest;
-}
 
-TextAreaBox::ElidedLabel::ElidedLabel(QWidget* parent)
-  : QWidget(parent) {}
-
-void TextAreaBox::ElidedLabel::set_text(const QString &text) {
-  m_text = text;
-  update();
-}
-
-void TextAreaBox::ElidedLabel::set_text_color(const QColor& color) {
-  m_text_color = color;
-  update();
-}
-
-void TextAreaBox::ElidedLabel::set_alignment(Qt::Alignment alignment) {
-  m_alignment = alignment;
-  update();
-}
-
-void TextAreaBox::ElidedLabel::set_line_height(int line_height) {
-  m_line_height = line_height;
-  update();
-}
-
-QSize TextAreaBox::ElidedLabel::sizeHint() const  {
-  return {width(), height()};
-}
-
-void TextAreaBox::ElidedLabel::paintEvent(QPaintEvent *event) {
-  auto painter = QPainter(this);
-  painter.setPen(m_text_color);
-  painter.setFont(font());
-  auto fontMetrics = painter.fontMetrics();
-  auto y = m_line_height - fontMetrics.height();
-  auto textLayout = QTextLayout(m_text, painter.font());
-  auto opt = textLayout.textOption();
-  opt.setAlignment(m_alignment);
-  textLayout.setTextOption(opt);
-  textLayout.beginLayout();
-  auto line = textLayout.createLine();
-  while(line.isValid()) {
-    line.setLineWidth(width());
-    auto next_line_y = y + m_line_height;
-    if (height() >= next_line_y + m_line_height) {
-      line.draw(&painter, QPoint(0, y));
-      y = next_line_y;
-    } else {
-      auto last_line = m_text.mid(line.textStart());
-      auto elided_last_line = fontMetrics.elidedText(last_line,
-        Qt::ElideRight, width());
-      painter.drawText(QPoint(0, y + fontMetrics.ascent()),
-        elided_last_line);
-      line = textLayout.createLine();
-      break;
+    QSize sizeHint() const override {
+      auto margins = contentsMargins();
+      auto desired_size = QSize(m_longest_line_width,
+        document()->size().toSize().height());
+      auto size = desired_size + QSize(
+        margins.left() + margins.right(), margins.top() +
+        margins.bottom());
+      if(!isReadOnly()) {
+        size.rwidth() += cursorWidth();
+      }
+      return size;
     }
-    line = textLayout.createLine();
-  }
-  textLayout.endLayout();
-}
+
+    QSize minimumSizeHint() const override {
+      return QSize();
+    }
+
+  private:
+    int m_longest_line_width;
+
+    void on_text_changed() {
+      m_longest_line_width = get_longest_line_width();
+      updateGeometry();
+    }
+
+    int get_longest_line_width() const {
+      auto longest = 0;
+      for(auto i = 0; i < document()->blockCount(); ++i) {
+        auto block = document()->findBlockByNumber(i);
+        if(block.isValid()) {
+          longest = std::max(longest,
+            fontMetrics().horizontalAdvance(block.text()));
+        }
+      }
+      return longest;
+    }
+};
+
+class TextAreaBox::ElidedLabel : public QWidget {
+  public:
+
+    explicit ElidedLabel(QWidget *parent = nullptr)
+      : QWidget(parent) {}
+
+    void set_text(const QString &text) {
+      m_text = text;
+      update();
+    }
+
+    void set_text_color(const QColor& color) {
+      m_text_color = color;
+      update();
+    }
+
+    void set_alignment(Qt::Alignment alignment) {
+      m_alignment = alignment;
+      update();
+    }
+
+    void set_line_height(int line_height) {
+      m_line_height = line_height;
+      update();
+    }
+
+    QSize sizeHint() const override {
+      return {width(), height()};
+    }
+
+  protected:
+    void paintEvent(QPaintEvent *event) override {
+      auto painter = QPainter(this);
+      painter.setPen(m_text_color);
+      painter.setFont(font());
+      auto fontMetrics = painter.fontMetrics();
+      auto y = m_line_height - fontMetrics.height();
+      auto textLayout = QTextLayout(m_text, painter.font());
+      auto opt = textLayout.textOption();
+      opt.setAlignment(m_alignment);
+      textLayout.setTextOption(opt);
+      textLayout.beginLayout();
+      auto line = textLayout.createLine();
+      while(line.isValid()) {
+        line.setLineWidth(width());
+        auto next_line_y = y + m_line_height;
+        if (height() >= next_line_y + m_line_height) {
+          line.draw(&painter, QPoint(0, y));
+          y = next_line_y;
+        } else {
+          auto last_line = m_text.mid(line.textStart());
+          auto elided_last_line = fontMetrics.elidedText(last_line,
+            Qt::ElideRight, width());
+          painter.drawText(QPoint(0, y + fontMetrics.ascent()),
+            elided_last_line);
+          line = textLayout.createLine();
+          break;
+        }
+        line = textLayout.createLine();
+      }
+      textLayout.endLayout();
+    }
+
+  private:
+    QMargins m_padding;
+    QString m_text;
+    Qt::Alignment m_alignment;
+    QColor m_text_color;
+    int m_line_height;
+};
 
 void TextAreaBox::StyleProperties::clear() {
   m_styles.clear();

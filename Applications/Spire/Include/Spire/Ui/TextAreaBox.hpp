@@ -75,47 +75,8 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      class ContentSizedTextEdit : public QTextEdit {
-        public:
-
-          explicit ContentSizedTextEdit(const QString& text,
-            QWidget* parent = nullptr);
-
-          QSize sizeHint() const override;
-
-          QSize minimumSizeHint() const override;
-
-        private:
-          int m_longest_line_width;
-
-          void on_text_changed();
-          int get_longest_line_width() const;
-      };
-      class ElidedLabel : public QWidget {
-        public:
-
-          explicit ElidedLabel(QWidget *parent = nullptr);
-
-          void set_text(const QString &text);
-
-          void set_text_color(const QColor& color);
-
-          void set_alignment(Qt::Alignment alignment);
-
-          void set_line_height(int line_height);
-
-          QSize sizeHint() const override;
-
-        protected:
-          void paintEvent(QPaintEvent *event) override;
-
-        private:
-          QMargins m_padding;
-          QString m_text;
-          Qt::Alignment m_alignment;
-          QColor m_text_color;
-          int m_line_height;
-      };
+      class ContentSizedTextEdit;
+      class ElidedLabel;
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
         QMargins m_border_sizes;
