@@ -1010,9 +1010,6 @@ UiProfile Spire::make_list_view_profile() {
               label->setFixedWidth(scale_height(random_size));
             }
           }
-          auto style = get_style(*label);
-          style.get(Disabled()).set(TextColor(QColor(0xC8C8C8)));
-          set_style(*label, std::move(style));
           return label;
         });
       apply_widget_properties(list_view, profile.get_properties());
