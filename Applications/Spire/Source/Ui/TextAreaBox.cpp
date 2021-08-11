@@ -250,8 +250,8 @@ void TextAreaBox::set_read_only(bool read_only) {
   update_layout();
 }
 
-connection
-    TextAreaBox::connect_submit_signal(const SubmitSignal::slot_type& slot) const {
+connection TextAreaBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
 }
 
@@ -268,7 +268,8 @@ void TextAreaBox::changeEvent(QEvent* event) {
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
-    m_submit_signal(m_model->get_current());
+    m_submission = m_model->get_current();
+    m_submit_signal(m_submission);
   } else if(event->type() == QEvent::Wheel) {
     if(m_text_edit->isReadOnly()) {
       return true;
