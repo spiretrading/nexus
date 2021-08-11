@@ -357,23 +357,21 @@ void TextAreaBox::update_display_text() {
     if(line_count > 0) {
       auto lines = [&] {
         auto lines = QStringList();
-        auto block = m_text_edit->document()->begin();
-        while(block.isValid()) {
-          auto block_text = block.text();
-          if(!block.layout()) {
-            continue;
+        for(auto i = 0; i < m_text_edit->document()->blockCount(); ++ i) {
+          auto block = m_text_edit->document()->findBlockByNumber(i);
+          if(block.isValid()) {
+            auto block_text = block.text();
+            for(int i = 0; i != block.layout()->lineCount(); ++i) {
+              auto line = block.layout()->lineAt(i);
+              lines.append(block_text.mid(line.textStart(), line.textLength()));
+            }
+            if(!lines.isEmpty()) {
+              lines.back().push_back("\n");
+            }
+            if(lines.count() > line_count) {
+              break;
+            }
           }
-          for(int i = 0; i != block.layout()->lineCount(); ++i) {
-            auto line = block.layout()->lineAt(i);
-            lines.append(block_text.mid(line.textStart(), line.textLength()));
-          }
-          if(!lines.isEmpty()) {
-            lines.back().push_back("\n");
-          }
-          if(lines.count() > line_count) {
-            break;
-          }
-          block = block.next();
         }
         return lines;
       }();
