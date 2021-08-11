@@ -247,9 +247,7 @@ void TextAreaBox::set_read_only(bool read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     unmatch(*this, ReadOnly());
   }
-  update_display_text();
-  update_placeholder_text();
-  update_text_edit_width();
+  update_layout();
 }
 
 connection
@@ -285,12 +283,7 @@ void TextAreaBox::mousePressEvent(QMouseEvent* event) {
 }
 
 void TextAreaBox::resizeEvent(QResizeEvent* event) {
-  update_text_edit_width();
-  m_stacked_widget->setMinimumSize(size() - get_border_size() -
-    get_padding_size());
-  m_stacked_widget->adjustSize();
-  update_display_text();
-  update_placeholder_text();
+  update_layout();
   QWidget::resizeEvent(event);
 }
 
@@ -427,6 +420,15 @@ void TextAreaBox::update_document_line_height() {
   auto cursor = m_text_edit->textCursor();
   cursor.setPosition(cursor_pos);
   m_text_edit->setTextCursor(cursor);
+}
+
+void TextAreaBox::update_layout() {
+  update_text_edit_width();
+  m_stacked_widget->setMinimumSize(size() - get_border_size() -
+    get_padding_size());
+  m_stacked_widget->adjustSize();
+  update_display_text();
+  update_placeholder_text();
 }
 
 void TextAreaBox::update_line_height() {
