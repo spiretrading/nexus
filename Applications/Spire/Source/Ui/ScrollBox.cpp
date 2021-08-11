@@ -357,7 +357,8 @@ void ScrollBox::update_layout() {
   auto body_size = [&] {
     auto body_width = [&] {
       if(m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Expanding) {
-        return m_viewport->width() - padding_size.width();
+        return m_viewport->width() -
+          padding_size.width() - scroll_bar_size.width();
       } else if(m_body->sizeHint().width() != -1 &&
           (m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Preferred ||
           m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Fixed)) {
@@ -367,7 +368,8 @@ void ScrollBox::update_layout() {
     }();
     auto body_height = [&] {
       if(m_body->sizePolicy().verticalPolicy() == QSizePolicy::Expanding) {
-        return m_viewport->height() - padding_size.height();
+        return m_viewport->height() -
+          padding_size.height() - scroll_bar_size.height();
       } else if(m_body->sizeHint().height() != -1 &&
           (m_body->sizePolicy().verticalPolicy() == QSizePolicy::Preferred ||
           m_body->sizePolicy().verticalPolicy() == QSizePolicy::Fixed)) {
