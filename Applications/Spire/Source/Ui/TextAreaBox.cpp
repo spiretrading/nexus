@@ -276,8 +276,9 @@ void TextAreaBox::changeEvent(QEvent* event) {
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_scroll_box && event->type() == QEvent::Resize) {
     update_text_edit_width();
+    m_stacked_widget->setMinimumSize(size() - compute_border_size() -
+      compute_padding_size());
     m_stacked_widget->adjustSize();
-    m_stacked_widget->setMinimumSize(size() - compute_border_size());
     update_display_text();
     update_placeholder_text();
   } else if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
@@ -503,8 +504,8 @@ void TextAreaBox::update_text_alignment() {
 void TextAreaBox::update_text_edit_width() {
   auto border_size = compute_border_size();
   auto padding_size = compute_padding_size();
-  if(m_text_edit->document()->size().toSize().height() +
-      padding_size.height() > height() - border_size.height() &&
+  if(m_text_edit->document()->size().toSize().height() > height() -
+      padding_size.height() - border_size.height() &&
       !m_text_edit->isReadOnly()) {
     m_text_edit->setFixedWidth(width() -
       m_scroll_box->get_vertical_scroll_bar().width() - border_size.width() -
