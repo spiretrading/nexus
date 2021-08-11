@@ -15,8 +15,8 @@ namespace {
     TypedUiProperty<int>* m_width;
     TypedUiProperty<int>* m_height;
 
-    SizeFilter(TypedUiProperty<int>* width, TypedUiProperty<int>* height,
-      QObject* parent)
+    SizeFilter(TypedUiProperty<int>* width,
+      TypedUiProperty<int>* height, QObject* parent)
       : QObject(parent),
         m_width(width),
         m_height(height) {}
@@ -32,7 +32,7 @@ namespace {
         }
       }
       return QObject::eventFilter(object, event);
-    };
+    }
   };
 }
 
