@@ -73,6 +73,8 @@ namespace Spire {
        */
       void scroll_to(const QWidget& widget);
 
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;

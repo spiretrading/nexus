@@ -18,7 +18,7 @@ namespace Spire {
        * @param parent The parent widget.
        */
       explicit ScrollableListBox(
-        ListView* list_view, QWidget* parent = nullptr);
+        ListView& list_view, QWidget* parent = nullptr);
 
     private:
       ListView* m_list_view;

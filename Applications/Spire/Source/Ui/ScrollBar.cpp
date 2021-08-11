@@ -153,14 +153,16 @@ void ScrollBar::mouseMoveEvent(QMouseEvent* event) {
     if(position != m_drag_position) {
       auto region = get_size(m_orientation, size()) -
         get_size(m_orientation, m_thumb->size());
-      auto delta = std::clamp(position - m_drag_position,
-        -m_thumb_position, region - m_thumb_position);
-      auto updated_thumb_position =
-        static_cast<double>(m_thumb_position + delta);
-      set_position(static_cast<int>(
-        std::ceil((updated_thumb_position * (m_range.m_end - m_range.m_start) +
-        region * m_range.m_start) / region)));
-      m_drag_position += delta;
+      if(region >= 0) {
+        auto delta = std::clamp(position - m_drag_position,
+          -m_thumb_position, region - m_thumb_position);
+        auto updated_thumb_position =
+          static_cast<double>(m_thumb_position + delta);
+        set_position(static_cast<int>(std::ceil(
+          (updated_thumb_position * (m_range.m_end - m_range.m_start) +
+            region * m_range.m_start) / region)));
+        m_drag_position += delta;
+      }
     }
   }
   QWidget::mouseMoveEvent(event);

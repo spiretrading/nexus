@@ -23,6 +23,11 @@ namespace {
     }
     return 0;
   }
+
+  QSize toSize(QMargins margins) {
+    return QSize(
+      margins.left() + margins.right(), margins.top() + margins.bottom());
+  }
 }
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
@@ -138,7 +143,21 @@ void ScrollBox::scroll_to(const QWidget& widget) {
         right_point - visible_width);
     }
   }
+}
 
+QSize ScrollBox::sizeHint() const {
+  auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
+  if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
+      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
+    size.rwidth() +=
+      m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
+  }
+  if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
+      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
+    size.rheight() +=
+      m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
+  }
+  return size;
 }
 
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
@@ -315,9 +334,9 @@ void ScrollBox::on_horizontal_scroll(int position) {
 void ScrollBox::update_ranges() {
   auto bar_width = get_scroll_bar_width(*m_scrollable_layer);
   auto bar_height = get_scroll_bar_height(*m_scrollable_layer);
-  auto viewport_size = m_body->size() + QSize(bar_width, bar_height) +
-    QSize(m_padding.left() + m_padding.right(),
-      m_padding.top() + m_padding.bottom());
+  auto viewport_size =
+    m_body->size() + QSize(bar_width, bar_height) + toSize(m_padding);
+  setMaximumSize(viewport_size + toSize(m_borders));
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
     if(viewport_size.height() <= height()) {
       if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
@@ -340,12 +359,12 @@ void ScrollBox::update_ranges() {
       return;
     }
   }
-  auto vertical_range = std::max(m_body->height() - (height() -
-    m_borders.left() - m_borders.right()) + m_padding.top() +
-    m_padding.bottom() + bar_height, 0);
-  auto horizontal_range = std::max(m_body->width() - (width() -
-    m_borders.left() - m_borders.right()) + m_padding.left() +
-    m_padding.right() + bar_width, 0);
+  auto vertical_range = std::max(m_body->height() -
+    (height() - m_borders.left() - m_borders.right()) +
+    m_padding.top() + m_padding.bottom() + bar_height, 0);
+  auto horizontal_range = std::max(m_body->width() -
+    (width() - m_borders.left() - m_borders.right()) +
+    m_padding.left() + m_padding.right() + bar_width, 0);
   m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
   m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(

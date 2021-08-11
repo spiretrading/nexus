@@ -22,22 +22,22 @@ namespace {
   }
 }
 
-ScrollableListBox::ScrollableListBox(ListView* list_view, QWidget* parent)
+ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
-      m_list_view(list_view) {
+      m_list_view(&list_view) {
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   m_scroll_box = new ScrollBox(m_list_view);
   layout->addWidget(m_scroll_box);
   setLayout(layout);
-  auto style = get_style(*m_list_view);
-  style.get(Any()).set(EdgeNavigation::CONTAIN);
-  set_style(*m_list_view, std::move(style));
   proxy_style(*this, *m_scroll_box);
   set_style(*this, make_default_style());
   m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
       [=] (const auto& current) { on_current(current); });
+  auto style = get_style(*m_list_view);
+  style.get(Any()).set(EdgeNavigation::CONTAIN);
+  set_style(*m_list_view, std::move(style));
 }
 
 void ScrollableListBox::on_current(const optional<int>& current) {

@@ -1368,7 +1368,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
         set(direction.get()).
         set(overflow.get());
       set_style(*list_view, std::move(style));
-      auto scrollable_list_box = new ScrollableListBox(list_view);
+      auto scrollable_list_box = new ScrollableListBox(*list_view);
       apply_widget_properties(scrollable_list_box, profile.get_properties());
       return scrollable_list_box;
     });
