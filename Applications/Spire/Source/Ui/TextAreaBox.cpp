@@ -367,6 +367,9 @@ void TextAreaBox::update_display_text() {
             auto line = block.layout()->lineAt(i);
             lines.append(block_text.mid(line.textStart(), line.textLength()));
           }
+          if(!lines.isEmpty()) {
+            lines.back().push_back("\n");
+          }
           if(lines.count() > line_count) {
             break;
           }
@@ -388,7 +391,7 @@ void TextAreaBox::update_display_text() {
           last_line.append(ELLIPSES_CHAR);
         }
         m_text_edit->blockSignals(true);
-        m_text_edit->setText(lines.join("\n"));
+        m_text_edit->setText(lines.join(""));
         m_text_edit->blockSignals(false);
       }
     }
