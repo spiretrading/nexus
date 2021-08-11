@@ -957,8 +957,10 @@ UiProfile Spire::make_list_view_profile() {
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
-  properties.push_back(make_standard_property("change_item_index", 0));
-  properties.push_back(make_standard_property("select_item", -1));
+  properties.push_back(make_standard_property("change_item_index", -1));
+  properties.push_back(make_standard_property("select_item", 0));
+  properties.push_back(make_standard_property("disable_item", -1));
+  properties.push_back(make_standard_property("enable_item", -1));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
@@ -1001,14 +1003,16 @@ UiProfile Spire::make_list_view_profile() {
         new ListView(list_model, [&] (const auto& model, auto index) {
           auto label = make_label(model.get<QString>(index));
           if(random_height_seed.get() == 0) {
+            auto random_size = random_generator.bounded(30, 70);
             if(direction.get() == Qt::Vertical) {
-              label->setFixedHeight(
-                scale_height(random_generator.bounded(30, 70)));
+              label->setFixedHeight(scale_height(random_size));
             } else {
-              label->setFixedWidth(
-                scale_height(random_generator.bounded(30, 70)));
+              label->setFixedWidth(scale_height(random_size));
             }
           }
+          auto style = get_style(*label);
+          style.get(Disabled()).set(TextColor(QColor(0xC8C8C8)));
+          set_style(*label, std::move(style));
           return label;
         });
       apply_widget_properties(list_view, profile.get_properties());
@@ -1061,6 +1065,18 @@ UiProfile Spire::make_list_view_profile() {
           list_view->get_selection_model()->set_current(none);
         } else if(index >= 0 && index < list_model->get_size()) {
           list_view->get_selection_model()->set_current(index);
+        }
+      });
+      auto& disable_item = get<int>("disable_item", profile.get_properties());
+      disable_item.connect_changed_signal([=] (auto value) {
+        if(auto item = list_view->get_list_item(value)) {
+          item->setDisabled(true);
+        }
+      });
+      auto& enable_item = get<int>("enable_item", profile.get_properties());
+      enable_item.connect_changed_signal([=] (auto value) {
+        if(auto item = list_view->get_list_item(value)) {
+          item->setDisabled(false);
         }
       });
       list_view->get_current_model()->connect_current_signal(
