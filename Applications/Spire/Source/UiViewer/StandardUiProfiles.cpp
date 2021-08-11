@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -17,6 +18,7 @@
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
@@ -605,6 +607,19 @@ UiProfile Spire::make_delete_icon_button_profile() {
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_destination_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("DestinationListItem"), properties,
+    [] (auto& profile) {
+      auto item = new DestinationListItem(
+        GetDefaultDestinationDatabase().FromId(DefaultDestinations::TSX()));
+      apply_widget_properties(item, profile.get_properties());
+      return item;
     });
   return profile;
 }

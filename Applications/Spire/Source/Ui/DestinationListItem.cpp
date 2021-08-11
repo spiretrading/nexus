@@ -1,0 +1,41 @@
+#include "Spire/Ui/DestinationListItem.hpp"
+#include <QVBoxLayout>
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/TextBox.hpp"
+
+using namespace Nexus;
+using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  auto NAME_LABEL_STYLE(StyleSheet style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(10));
+    style.get(ReadOnly() && Disabled()).
+      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80))).
+      set(PaddingTop(scale_height(2)));
+    return style;
+  }
+}
+
+DestinationListItem::DestinationListItem(DestinationDatabase::Entry destination,
+    QWidget* parent)
+    : QWidget(parent),
+      m_destination(std::move(destination)) {
+  auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  auto value_label = make_label(QString::fromStdString(m_destination.m_id));
+  value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  layout->addWidget(value_label);
+  auto name_label = make_label(
+    QString::fromStdString(m_destination.m_description));
+  name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
+  layout->addWidget(name_label);
+}
+
+const DestinationDatabase::Entry& DestinationListItem::get_destination() const {
+  return m_destination;
+}
