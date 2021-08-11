@@ -125,6 +125,12 @@ namespace Styles {
       /** Returns the selection model. */
       const std::shared_ptr<SelectionModel>& get_selection_model() const;
 
+      /**
+       * Returns the ListItem at a specified index, or <code>nullptr</code> iff
+       * the index is out of range.
+       */
+      ListItem* get_list_item(int index);
+
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;

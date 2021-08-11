@@ -72,6 +72,15 @@ namespace Spire {
       /** Returns the horizontal ScrollBar. */
       ScrollBar& get_horizontal_scroll_bar();
 
+      /**
+       * Scrolls to a widget, ensuring that it's visible. If the widget is
+       * already visible fully then no action is taken.
+       * @param widget The widget to scroll to.
+       */
+      void scroll_to(const QWidget& widget);
+
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;

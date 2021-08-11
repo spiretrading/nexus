@@ -31,6 +31,7 @@
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/Tag.hpp"
@@ -1289,8 +1290,8 @@ UiProfile Spire::make_scroll_box_profile() {
     "vertical_display_policy", display_policy_property));
   properties.push_back(make_standard_property("horizontal-padding", 10));
   properties.push_back(make_standard_property("vertical-padding", 10));
-  properties.push_back(make_standard_property("border-color",
-    QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+  properties.push_back(
+    make_standard_property("border-color", QColor::fromRgb(0xC8C8C8)));
   properties.push_back(make_standard_property("rows", 10));
   properties.push_back(make_standard_property("columns", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,
@@ -1298,8 +1299,8 @@ UiProfile Spire::make_scroll_box_profile() {
       auto label = new QLabel();
       auto& columns = get<int>("columns", profile.get_properties());
       auto& rows = get<int>("rows", profile.get_properties());
-      label->setPixmap(QPixmap::fromImage(make_grid_image(scale(100, 100),
-        columns.get(), rows.get())));
+      label->setPixmap(QPixmap::fromImage(
+        make_grid_image(scale(100, 100), columns.get(), rows.get())));
       auto scroll_box = new ScrollBox(label);
       scroll_box->setFixedSize(scale(320, 240));
       apply_widget_properties(scroll_box, profile.get_properties());
@@ -1313,31 +1314,64 @@ UiProfile Spire::make_scroll_box_profile() {
       vertical_display_policy.connect_changed_signal([=] (auto value) {
         scroll_box->set_vertical(value);
       });
-      auto& horizontal_padding = get<int>("horizontal-padding",
-        profile.get_properties());
+      auto& horizontal_padding =
+        get<int>("horizontal-padding", profile.get_properties());
       horizontal_padding.connect_changed_signal([=] (auto padding) {
         auto style = get_style(*scroll_box);
-        style.get(Any()).
-          set(Styles::horizontal_padding(padding));
+        style.get(Any()).set(Styles::horizontal_padding(padding));
         set_style(*scroll_box, std::move(style));
       });
-      auto& vertical_padding = get<int>("vertical-padding",
-        profile.get_properties());
+      auto& vertical_padding =
+        get<int>("vertical-padding", profile.get_properties());
       vertical_padding.connect_changed_signal([=] (auto padding) {
         auto style = get_style(*scroll_box);
-        style.get(Any()).
-          set(Styles::vertical_padding(padding));
+        style.get(Any()).set(Styles::vertical_padding(padding));
         set_style(*scroll_box, std::move(style));
       });
-      auto& border_color = get<QColor>("border-color",
-        profile.get_properties());
+      auto& border_color =
+        get<QColor>("border-color", profile.get_properties());
       border_color.connect_changed_signal([=] (const auto& color) {
         auto style = get_style(*scroll_box);
-        style.get(Any()).
-          set(Styles::border(scale_width(1), color));
+        style.get(Any()).set(border(scale_width(1), color));
         set_style(*scroll_box, std::move(style));
       });
       return scroll_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_scrollable_list_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto direction_property = define_enum<Qt::Orientation>(
+    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
+  properties.push_back(
+    make_standard_enum_property("direction", direction_property));
+  auto overflow_property = define_enum<Overflow>(
+    {{"NONE", Overflow::NONE}, {"WRAP", Overflow::WRAP}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
+  auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
+    [] (auto& profile) {
+      auto& direction =
+        get<Qt::Orientation>("direction", profile.get_properties());
+      auto& overflow = get<Overflow>("overflow", profile.get_properties());
+      auto list_model = std::make_shared<ArrayListModel>();
+      for(auto i = 0; i < 15; ++i) {
+        list_model->push(QString::fromUtf8("Item%1").arg(i));
+      }
+      auto list_view = new ListView(list_model,
+        [] (const auto& model, auto index) {
+          return make_label(model.get<QString>(index));
+        });
+      auto style = get_style(*list_view);
+      style.get(Any()).
+        set(direction.get()).
+        set(overflow.get());
+      set_style(*list_view, std::move(style));
+      auto scrollable_list_box = new ScrollableListBox(*list_view);
+      apply_widget_properties(scrollable_list_box, profile.get_properties());
+      return scrollable_list_box;
     });
   return profile;
 }

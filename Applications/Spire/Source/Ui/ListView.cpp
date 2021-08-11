@@ -146,6 +146,13 @@ const std::shared_ptr<ListView::SelectionModel>&
   return m_selection_model;
 }
 
+ListItem* ListView::get_list_item(int index) {
+  if(index < 0 || index >= static_cast<int>(m_items.size())) {
+    return nullptr;
+  }
+  return m_items[index]->m_item;
+}
+
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);

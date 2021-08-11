@@ -58,22 +58,6 @@ namespace {
     layout->addLayout(button_layout);
     return container;
   }
-
-  struct SizeAdjustedContainer : QWidget {
-    SizeAdjustedContainer(QWidget* body) {
-      auto layout = new QVBoxLayout();
-      layout->setContentsMargins({});
-      layout->addWidget(body);
-      setLayout(layout);
-    }
-
-    bool event(QEvent* event) override {
-      if(event->type() == QEvent::LayoutRequest) {
-        adjustSize();
-      }
-      return QWidget::event(event);
-    }
-  };
 }
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
@@ -126,6 +110,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_region_list_item_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
+  add(make_scrollable_list_box_profile());
   add(make_search_box_profile());
   add(make_security_list_item_profile());
   add(make_tag_profile());
@@ -184,7 +169,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   auto stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+  m_center_stage->setWidget(profile.get_widget());
   m_center_stage->setAlignment(Qt::AlignCenter);
   stage->addWidget(m_center_stage);
   m_event_log = new QTextEdit();
@@ -210,6 +195,6 @@ void UiViewerWindow::on_rebuild() {
   profile.remove_widget();
   update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
-  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+  m_center_stage->setWidget(profile.get_widget());
   delete previous_widget;
 }
