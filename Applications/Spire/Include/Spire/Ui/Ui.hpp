@@ -16,6 +16,7 @@ namespace Spire {
   class Button;
   class CheckBox;
   class DecimalBox;
+  class DestinationListItem;
   class DropShadow;
   class DurationBox;
   class FilteredTableModel;
