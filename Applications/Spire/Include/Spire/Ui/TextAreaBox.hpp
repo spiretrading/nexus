@@ -117,6 +117,8 @@ namespace Styles {
       };
       struct StyleProperties {
         Styles::StyleSheetMap m_styles;
+        QMargins m_border_sizes;
+        QMargins m_padding;
         boost::optional<Qt::Alignment> m_alignment;
         boost::optional<QFont> m_font;
         boost::optional<int> m_size;
@@ -140,8 +142,8 @@ namespace Styles {
 
       void commit_placeholder_style();
       void commit_style();
-      QSize compute_border_size() const;
-      QSize compute_padding_size() const;
+      QSize get_border_size() const;
+      QSize get_padding_size() const;
       bool is_placeholder_shown() const;
       void update_display_text();
       void update_document_line_height();
