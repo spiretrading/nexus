@@ -1352,9 +1352,6 @@ UiProfile Spire::make_scrollable_list_box_profile() {
     make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
     [] (auto& profile) {
-      auto& direction =
-        get<Qt::Orientation>("direction", profile.get_properties());
-      auto& overflow = get<Overflow>("overflow", profile.get_properties());
       auto list_model = std::make_shared<ArrayListModel>();
       for(auto i = 0; i < 15; ++i) {
         list_model->push(QString::fromUtf8("Item%1").arg(i));
@@ -1363,13 +1360,21 @@ UiProfile Spire::make_scrollable_list_box_profile() {
         [] (const auto& model, auto index) {
           return make_label(model.get<QString>(index));
         });
-      auto style = get_style(*list_view);
-      style.get(Any()).
-        set(direction.get()).
-        set(overflow.get());
-      set_style(*list_view, std::move(style));
       auto scrollable_list_box = new ScrollableListBox(*list_view);
       apply_widget_properties(scrollable_list_box, profile.get_properties());
+      auto& direction =
+        get<Qt::Orientation>("direction", profile.get_properties());
+      direction.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
+      });
+      auto& overflow = get<Overflow>("overflow", profile.get_properties());
+      overflow.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
+      });
       return scrollable_list_box;
     });
   return profile;
