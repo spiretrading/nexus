@@ -374,9 +374,11 @@ void TextAreaBox::update_display_text() {
     }
     auto line_count = std::floor((height() - get_padding_size().height()) /
       static_cast<double>(m_computed_line_height));
+    auto is_elided = false;
     if(line_count > 0) {
       auto lines = QStringList();
-      for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
+      for(auto i = 0; i < m_text_edit->document()->blockCount() && !is_elided;
+          ++i) {
         auto block = m_text_edit->document()->findBlockByNumber(i);
         if(block.isValid()) {
           auto block_text = block.text();
@@ -388,13 +390,10 @@ void TextAreaBox::update_display_text() {
           if(!lines.isEmpty()) {
             lines.back().push_back("\n");
           }
-          if(lines.count() > line_count) {
-            break;
-          }
+          is_elided = lines.count() > line_count;
         }
       }
-      if(lines.count() > line_count) {
-        auto is_elided = lines.count() > line_count;
+      if(is_elided) {
         while(lines.count() > line_count) {
           lines.pop_back();
         }
