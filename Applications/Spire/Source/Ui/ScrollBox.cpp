@@ -80,8 +80,10 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
   m_horizontal_display_policy = policy;
   if(m_horizontal_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_horizontal_scroll_bar().hide();
+    updateGeometry();
   } else if(m_horizontal_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_horizontal_scroll_bar().show();
+    updateGeometry();
   }
   update_ranges();
 }
@@ -97,8 +99,10 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
   m_vertical_display_policy = policy;
   if(m_vertical_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_vertical_scroll_bar().hide();
+    updateGeometry();
   } else if(m_vertical_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_vertical_scroll_bar().show();
+    updateGeometry();
   }
   update_ranges();
 }
@@ -150,12 +154,16 @@ void ScrollBox::scroll_to(const QWidget& widget) {
 QSize ScrollBox::sizeHint() const {
   auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
   if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
-      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
+      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
+      m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
     size.rwidth() +=
       m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
   }
   if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
-      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
+      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
+      m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
     size.rheight() +=
       m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
   }
@@ -388,10 +396,12 @@ void ScrollBox::update_layout() {
         contents_size.height() <= size().height()) {
       if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
         m_scrollable_layer->get_vertical_scroll_bar().hide();
+        updateGeometry();
         return;
       }
       if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
         m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        updateGeometry();
         return;
       }
     }
@@ -400,10 +410,12 @@ void ScrollBox::update_layout() {
     if(contents_size.height() <= height() - scroll_bar_size.height()) {
       if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
         m_scrollable_layer->get_vertical_scroll_bar().hide();
+        updateGeometry();
         return;
       }
     } else if(!m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
       m_scrollable_layer->get_vertical_scroll_bar().show();
+      updateGeometry();
       return;
     }
   }
@@ -411,10 +423,12 @@ void ScrollBox::update_layout() {
     if(contents_size.width() <= width() - scroll_bar_size.width()) {
       if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
         m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        updateGeometry();
         return;
       }
     } else if(!m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
+      updateGeometry();
       return;
     }
   }
