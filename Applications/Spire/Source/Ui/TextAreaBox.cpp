@@ -372,7 +372,7 @@ void TextAreaBox::update_display_text() {
       m_text_edit->setText(m_model->get_current());
       m_text_edit->blockSignals(false);
     }
-    auto line_count = std::floor(height() - get_padding_size().height() /
+    auto line_count = std::floor((height() - get_padding_size().height()) /
       static_cast<double>(m_computed_line_height));
     if(line_count > 0) {
       auto lines = QStringList();
