@@ -19,6 +19,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
+#include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
@@ -620,6 +621,33 @@ UiProfile Spire::make_destination_list_item_profile() {
         GetDefaultDestinationDatabase().FromId(DefaultDestinations::TSX()));
       apply_widget_properties(item, profile.get_properties());
       return item;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_drop_down_list_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property("item_count", 15));
+  properties.push_back(make_standard_property<QString>("item_label", "item"));
+  auto profile = UiProfile(QString::fromUtf8("DropDownList"), properties,
+    [] (auto& profile) {
+      auto& item_count = get<int>("item_count", profile.get_properties());
+      auto& item_text = get<QString>("item_label", profile.get_properties());
+      auto button = make_label_button("DropDownList");
+      button->connect_clicked_signal([&, button] {
+        auto list_model = std::make_shared<ArrayListModel>();
+        for(auto i = 0; i < item_count.get(); ++i) {
+          list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
+        }
+        auto list_view =
+          new ListView(list_model, [&] (const auto& model, auto index) {
+            return make_label(model.get<QString>(index));
+          });
+        auto drop_down_list = new DropDownList(*list_view, button);
+        drop_down_list->window()->setAttribute(Qt::WA_DeleteOnClose);
+        drop_down_list->show();
+      });
+      return button;
     });
   return profile;
 }
@@ -1403,6 +1431,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
         style.get(Any()).set(value);
         set_style(*list_view, std::move(style));
       });
+      scrollable_list_box->setMaximumHeight(scale_height(150));
       return scrollable_list_box;
     });
   return profile;
