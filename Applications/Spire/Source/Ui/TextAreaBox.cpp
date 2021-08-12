@@ -412,9 +412,6 @@ void TextAreaBox::update_display_text() {
         m_text_edit->blockSignals(false);
       }
     }
-    update_text_alignment();
-    update_document_line_height();
-    return;
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
     m_text_edit->setText(m_model->get_current());
   }
