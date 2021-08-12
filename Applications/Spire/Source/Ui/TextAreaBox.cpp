@@ -399,10 +399,12 @@ void TextAreaBox::update_display_text() {
         }
         auto& last_line = lines.back();
         last_line = m_text_edit->fontMetrics().elidedText(last_line,
-          Qt::ElideRight, width() - get_border_size().width() -
-          get_padding_size().width() -
+          Qt::ElideRight, m_text_edit->width() -
           m_text_edit->fontMetrics().horizontalAdvance(ELLIPSES_CHAR));
-        if(is_elided && !last_line.endsWith(ELLIPSES_CHAR)) {
+        if(!last_line.endsWith(ELLIPSES_CHAR)) {
+          if(last_line.endsWith('\n')) {
+            last_line.remove(last_line.size() - 1, 1);
+          }
           last_line.append(ELLIPSES_CHAR);
         }
         m_text_edit->blockSignals(true);
