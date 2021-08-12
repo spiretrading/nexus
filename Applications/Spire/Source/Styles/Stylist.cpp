@@ -77,6 +77,8 @@ struct Stylist::StyleEventFilter : QObject {
       m_stylist->match(Active());
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_stylist->unmatch(Active());
+    } else if(event->type() == QEvent::ParentChange) {
+      m_stylist->set_style(m_stylist->get_style());
     }
     return QObject::eventFilter(watched, event);
   }
