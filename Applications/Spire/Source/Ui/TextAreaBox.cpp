@@ -73,11 +73,10 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
     QSize sizeHint() const override {
       auto margins = contentsMargins();
-      auto desired_size = QSize(m_longest_line_width,
-        document()->size().toSize().height());
-      auto size = desired_size + QSize(
-        margins.left() + margins.right(), margins.top() +
-        margins.bottom());
+      auto desired_size =
+        QSize(m_longest_line_width, document()->size().toSize().height());
+      auto size = desired_size + QSize(margins.left() + margins.right(),
+        margins.top() + margins.bottom());
       if(!isReadOnly()) {
         size.rwidth() += cursorWidth();
       }
@@ -101,8 +100,8 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       for(auto i = 0; i < document()->blockCount(); ++i) {
         auto block = document()->findBlockByNumber(i);
         if(block.isValid()) {
-          longest = std::max(longest,
-            fontMetrics().horizontalAdvance(block.text()));
+          longest =
+            std::max(longest, fontMetrics().horizontalAdvance(block.text()));
         }
       }
       return longest;
@@ -184,10 +183,10 @@ void TextAreaBox::StyleProperties::clear() {
   m_styles.clear();
   m_border_sizes = {};
   m_padding = {};
-  m_alignment = none;
-  m_font = none;
+  m_alignment = Qt::AlignLeft;
+  m_font = {};
   m_size = none;
-  m_color = none;
+  m_color = {};
 }
 
 TextAreaBox::TextAreaBox(QWidget* parent)
@@ -218,10 +217,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_scroll_box = new ScrollBox(m_stacked_widget, this);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
-  m_scroll_box->get_vertical_scroll_bar().adjustSize();
   m_scroll_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-  m_scroll_box->installEventFilter(this);
-  m_scroll_box->findChild<ScrollableLayer*>()->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scroll_box);
@@ -286,13 +282,9 @@ void TextAreaBox::changeEvent(QEvent* event) {
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_text_edit && event->type() == QEvent::FocusOut) {
+  if(event->type() == QEvent::FocusOut) {
     m_submission = m_model->get_current();
     m_submit_signal(m_submission);
-  } else if(event->type() == QEvent::Wheel) {
-    if(m_text_edit->isReadOnly()) {
-      return true;
-    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -307,17 +299,28 @@ void TextAreaBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+void TextAreaBox::apply_block_formatting(
+    const std::function<void(const QTextBlock&)> format) {
+  auto cursor_pos = m_text_edit->textCursor().position();
+  for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
+    auto block = m_text_edit->document()->findBlockByNumber(i);
+    if(block.isValid()) {
+      format(block);
+    }
+  }
+  auto cursor = m_text_edit->textCursor();
+  cursor.setPosition(cursor_pos);
+  m_text_edit->setTextCursor(cursor);
+}
+
 void TextAreaBox::commit_placeholder_style() {
-  auto alignment = m_placeholder_styles.m_alignment.value_or(
-    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  m_placeholder->set_alignment(alignment);
-  auto font = m_placeholder_styles.m_font.value_or(QFont());
+  m_placeholder->set_alignment(m_placeholder_styles.m_alignment);
+  auto font = m_placeholder_styles.m_font;
   if(m_placeholder_styles.m_size) {
     font.setPixelSize(*m_placeholder_styles.m_size);
   }
   m_placeholder->setFont(font);
-  m_placeholder->set_text_color(m_placeholder_styles.m_color.value_or(
-    QColor()));
+  m_placeholder->set_text_color(m_placeholder_styles.m_color);
   update_placeholder_text();
 }
 
@@ -327,12 +330,10 @@ void TextAreaBox::commit_style() {
       background: transparent;
       border-width: 0px;)");
   m_text_edit_styles.m_styles.write(stylesheet);
-  auto alignment = m_text_edit_styles.m_alignment.value_or(
-    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  if(alignment != m_text_edit->alignment()) {
+  if(m_text_edit_styles.m_alignment!= m_text_edit->alignment()) {
     update_text_alignment();
   }
-  auto font = m_text_edit_styles.m_font.value_or(QFont());
+  auto font = m_text_edit_styles.m_font;
   if(m_text_edit_styles.m_size) {
     font.setPixelSize(*m_text_edit_styles.m_size);
   }
@@ -371,30 +372,27 @@ void TextAreaBox::update_display_text() {
       m_text_edit->setText(m_model->get_current());
       m_text_edit->blockSignals(false);
     }
-    auto line_count = std::floor(static_cast<double>((height() -
-      get_padding_size().height())) /
+    auto line_count = std::floor(height() - get_padding_size().height() /
       static_cast<double>(m_computed_line_height));
     if(line_count > 0) {
-      auto lines = [&] {
-        auto lines = QStringList();
-        for(auto i = 0; i < m_text_edit->document()->blockCount(); ++ i) {
-          auto block = m_text_edit->document()->findBlockByNumber(i);
-          if(block.isValid()) {
-            auto block_text = block.text();
-            for(int i = 0; i != block.layout()->lineCount(); ++i) {
-              auto line = block.layout()->lineAt(i);
-              lines.append(block_text.mid(line.textStart(), line.textLength()));
-            }
-            if(!lines.isEmpty()) {
-              lines.back().push_back("\n");
-            }
-            if(lines.count() > line_count) {
-              break;
-            }
+      auto lines = QStringList();
+      for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
+        auto block = m_text_edit->document()->findBlockByNumber(i);
+        if(block.isValid()) {
+          auto block_text = block.text();
+          for(int i = 0; i != block.layout()->lineCount(); ++i) {
+            auto line = block.layout()->lineAt(i);
+            lines.append(
+              block_text.mid(line.textStart(), line.textLength()));
+          }
+          if(!lines.isEmpty()) {
+            lines.back().push_back("\n");
+          }
+          if(lines.count() > line_count) {
+            break;
           }
         }
-        return lines;
-      }();
+      }
       if(lines.count() > line_count) {
         auto is_elided = lines.count() > line_count;
         while(lines.count() > line_count) {
@@ -424,23 +422,16 @@ void TextAreaBox::update_display_text() {
 }
 
 void TextAreaBox::update_document_line_height() {
-  auto cursor_pos = m_text_edit->textCursor().position();
-  for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
-    auto block = m_text_edit->document()->findBlockByNumber(i);
-    if(block.isValid()) {
-      auto cursor = m_text_edit->textCursor();
-      cursor.setPosition(block.position());
-      m_text_edit->setTextCursor(cursor);
-      auto block_format = cursor.blockFormat();
-      block_format.setLineHeight(m_computed_line_height,
-        QTextBlockFormat::FixedHeight);
-      cursor.setBlockFormat(block_format);
-      m_text_edit->setTextCursor(cursor);
-    }
-  }
-  auto cursor = m_text_edit->textCursor();
-  cursor.setPosition(cursor_pos);
-  m_text_edit->setTextCursor(cursor);
+  apply_block_formatting([=] (const auto& block) {
+    auto cursor = m_text_edit->textCursor();
+    cursor.setPosition(block.position());
+    m_text_edit->setTextCursor(cursor);
+    auto block_format = cursor.blockFormat();
+    block_format.setLineHeight(m_computed_line_height,
+      QTextBlockFormat::FixedHeight);
+    cursor.setBlockFormat(block_format);
+    m_text_edit->setTextCursor(cursor);
+  });
 }
 
 void TextAreaBox::update_layout() {
@@ -453,8 +444,7 @@ void TextAreaBox::update_layout() {
 }
 
 void TextAreaBox::update_line_height() {
-  m_computed_line_height =
-    static_cast<int>(static_cast<double>(m_text_edit->font().pixelSize()) *
+  m_computed_line_height = static_cast<int>(m_text_edit->font().pixelSize() *
     *m_text_edit_styles.m_line_height);
   m_placeholder->set_line_height(m_computed_line_height);
   m_scroll_box->get_vertical_scroll_bar().set_line_size(
@@ -475,31 +465,24 @@ void TextAreaBox::update_placeholder_text() {
 }
 
 void TextAreaBox::update_text_alignment() {
-  auto alignment = m_text_edit_styles.m_alignment.value_or(Qt::AlignLeft);
-  auto cursor_pos = m_text_edit->textCursor().position();
-  for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
-    auto block = m_text_edit->document()->findBlockByNumber(i);
-    if(block.isValid()) {
+  apply_block_formatting(
+    [=, alignment = m_text_edit_styles.m_alignment] (const auto& block) {
       auto cursor = m_text_edit->textCursor();
       cursor.setPosition(block.position());
       m_text_edit->setTextCursor(cursor);
-      m_text_edit->setAlignment(alignment);
-    }
-  }
-  auto cursor = m_text_edit->textCursor();
-  cursor.setPosition(cursor_pos);
-  m_text_edit->setTextCursor(cursor);
+      m_text_edit->setAlignment(m_text_edit_styles.m_alignment);
+    });
 }
 
 void TextAreaBox::update_text_edit_width() {
   auto border_size = get_border_size();
   auto padding_size = get_padding_size();
-  if(m_text_edit->document()->size().toSize().height() > height() -
-      padding_size.height() - border_size.height() &&
-      !m_text_edit->isReadOnly()) {
+  if(!is_read_only() &&
+      m_text_edit->document()->size().toSize().height() >
+      height() - padding_size.height() - border_size.height()) {
     m_text_edit->setFixedWidth(width() -
-      m_scroll_box->get_vertical_scroll_bar().width() - border_size.width() -
-      padding_size.width());
+      m_scroll_box->get_vertical_scroll_bar().sizeHint().width() -
+      border_size.width() - padding_size.width());
   } else {
     m_text_edit->setFixedWidth(width() - border_size.width() -
       padding_size.width());

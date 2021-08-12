@@ -81,10 +81,10 @@ namespace Styles {
         Styles::StyleSheetMap m_styles;
         QMargins m_border_sizes;
         QMargins m_padding;
-        boost::optional<Qt::Alignment> m_alignment;
-        boost::optional<QFont> m_font;
+        Qt::Alignment m_alignment;
+        QFont m_font;
         boost::optional<int> m_size;
-        boost::optional<QColor> m_color;
+        QColor m_color;
         boost::optional<double> m_line_height;
 
         void clear();
@@ -102,6 +102,8 @@ namespace Styles {
       QString m_placeholder_text;
       int m_computed_line_height;
 
+      void apply_block_formatting(
+        const std::function<void(const QTextBlock& block)> formatting);
       void commit_placeholder_style();
       void commit_style();
       QSize get_border_size() const;
