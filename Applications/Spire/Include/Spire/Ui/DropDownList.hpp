@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  //! Represents a pop-up drop down list.
+  /** Represents a pop-up drop down list. */
   class DropDownList : public QWidget {
     public:
 
