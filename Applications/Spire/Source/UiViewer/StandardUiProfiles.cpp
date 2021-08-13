@@ -1434,7 +1434,6 @@ UiProfile Spire::make_scrollable_list_box_profile() {
         style.get(Any()).set(value);
         set_style(*list_view, std::move(style));
       });
-      scrollable_list_box->setMaximumHeight(scale_height(150));
       return scrollable_list_box;
     });
   return profile;

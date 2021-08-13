@@ -21,7 +21,6 @@ namespace {
 DropDownList::DropDownList(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view) {
-  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   auto scrollable_list_box = new ScrollableListBox(*m_list_view, this);
@@ -31,17 +30,18 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
   layout->addWidget(scrollable_list_box);
   m_panel = new OverlayPanel(this, parent);
   m_panel->set_closed_on_blur(true);
+  m_panel->layout()->itemAt(0)->widget()->setSizePolicy(QSizePolicy::Minimum,
+    QSizePolicy::Preferred);
 }
 
 bool DropDownList::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     auto list_item = m_list_view->get_list_item(0);
-    if(!list_item) {
-      return QWidget::event(event);
+    if(list_item) {
+      setMaximumHeight(10 * list_item->sizeHint().height());
+      setMinimumWidth(m_panel->parentWidget()->size().width());
+      m_panel->show();
     }
-    setMaximumHeight(10 * list_item->sizeHint().height());
-    setMinimumWidth(m_panel->parentWidget()->size().width());
-    m_panel->show();
   }
   return QWidget::event(event);
 }
