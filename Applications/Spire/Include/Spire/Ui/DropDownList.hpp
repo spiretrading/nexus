@@ -15,7 +15,7 @@ namespace Spire {
        * @param parent The parent widget. Used to determine the position of the
                DropDownList.
        */
-      DropDownList(ListView& list_view, QWidget* parent = nullptr);
+      explicit DropDownList(ListView& list_view, QWidget* parent = nullptr);
 
     protected:
       bool event(QEvent* event) override;
