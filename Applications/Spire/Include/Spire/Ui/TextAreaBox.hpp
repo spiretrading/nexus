@@ -100,7 +100,7 @@ namespace Styles {
       int m_computed_line_height;
 
       void apply_block_formatting(
-        const std::function<void(const QTextBlock& block)> formatting);
+        const std::function<void(const QTextBlock& block)>& formatting);
       void commit_placeholder_style();
       void commit_style();
       QSize get_border_size() const;

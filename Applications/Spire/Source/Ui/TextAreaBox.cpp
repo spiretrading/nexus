@@ -54,7 +54,6 @@ namespace {
 
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
-
     explicit ContentSizedTextEdit(const QString& text,
         QWidget* parent = nullptr)
         : QTextEdit(parent) {
@@ -90,8 +89,11 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     int m_longest_line_width;
 
     void on_text_changed() {
+      auto previous_longest_line = m_longest_line_width;
       m_longest_line_width = get_longest_line_width();
-      updateGeometry();
+      if(m_longest_line_width != previous_longest_line) {
+        updateGeometry();
+      }
     }
 
     int get_longest_line_width() const {
@@ -109,9 +111,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
 class TextAreaBox::ElidedLabel : public QWidget {
   public:
-
-    explicit ElidedLabel(QWidget *parent = nullptr)
-      : QWidget(parent) {}
+    using QWidget::QWidget;
 
     void set_text(const QString &text) {
       m_text = text;
@@ -133,24 +133,19 @@ class TextAreaBox::ElidedLabel : public QWidget {
       update();
     }
 
-    QSize sizeHint() const override {
-      return {width(), height()};
-    }
-
   protected:
     void paintEvent(QPaintEvent *event) override {
       auto painter = QPainter(this);
       painter.setPen(m_text_color);
       painter.setFont(font());
-      auto fontMetrics = painter.fontMetrics();
-      auto y = m_line_height - fontMetrics.height();
+      auto y = m_line_height - painter.fontMetrics().height();
       auto textLayout = QTextLayout(m_text, painter.font());
       auto opt = textLayout.textOption();
       opt.setAlignment(m_alignment);
       textLayout.setTextOption(opt);
       textLayout.beginLayout();
-      auto line = textLayout.createLine();
-      while(line.isValid()) {
+      for(auto line = textLayout.createLine(); line.isValid();
+          line = textLayout.createLine()) {
         line.setLineWidth(width());
         auto next_line_y = y + m_line_height;
         if (height() >= next_line_y + m_line_height) {
@@ -158,14 +153,13 @@ class TextAreaBox::ElidedLabel : public QWidget {
           y = next_line_y;
         } else {
           auto last_line = m_text.mid(line.textStart());
-          auto elided_last_line = fontMetrics.elidedText(last_line,
+          auto elided_last_line = painter.fontMetrics().elidedText(last_line,
             Qt::ElideRight, width());
-          painter.drawText(QPoint(0, y + fontMetrics.ascent()),
+          painter.drawText(QPoint(0, y + painter.fontMetrics().ascent()),
             elided_last_line);
           line = textLayout.createLine();
           break;
         }
-        line = textLayout.createLine();
       }
       textLayout.endLayout();
     }
@@ -254,7 +248,6 @@ bool TextAreaBox::is_read_only() const {
 
 void TextAreaBox::set_read_only(bool read_only) {
   m_text_edit->setReadOnly(read_only);
-  m_scroll_box->get_vertical_scroll_bar().set_position(0);
   if(read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
     match(*this, ReadOnly());
@@ -291,7 +284,7 @@ void TextAreaBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TextAreaBox::apply_block_formatting(
-    const std::function<void(const QTextBlock&)> format) {
+    const std::function<void(const QTextBlock&)>& format) {
   auto cursor_pos = m_text_edit->textCursor().position();
   for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
     auto block = m_text_edit->document()->findBlockByNumber(i);
@@ -416,7 +409,6 @@ void TextAreaBox::update_document_line_height() {
   apply_block_formatting([=] (const auto& block) {
     auto cursor = m_text_edit->textCursor();
     cursor.setPosition(block.position());
-    m_text_edit->setTextCursor(cursor);
     auto block_format = cursor.blockFormat();
     block_format.setLineHeight(m_computed_line_height,
       QTextBlockFormat::FixedHeight);
@@ -461,7 +453,7 @@ void TextAreaBox::update_text_alignment() {
       auto cursor = m_text_edit->textCursor();
       cursor.setPosition(block.position());
       m_text_edit->setTextCursor(cursor);
-      m_text_edit->setAlignment(m_text_edit_styles.m_alignment);
+      m_text_edit->setAlignment(alignment);
     });
 }
 
