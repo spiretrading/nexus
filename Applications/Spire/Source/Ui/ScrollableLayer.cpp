@@ -12,25 +12,26 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
     : QWidget(parent),
       m_vertical_scroll_bar(new ScrollBar(Qt::Orientation::Vertical, this)),
       m_horizontal_scroll_bar(
-        new ScrollBar(Qt::Orientation::Horizontal, this)) {
+        new ScrollBar(Qt::Orientation::Horizontal, this)),
+      m_corner_box(new Box(nullptr)) {
   auto layout = new QGridLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->setColumnStretch(0, 1);
-  m_transparent_spacer =
+  auto spacer =
     new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding);
-  layout->addItem(m_transparent_spacer, 0, 0);
+  layout->addItem(spacer, 0, 0);
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
-  auto corner_box = new Box(nullptr);
-  auto style = get_style(*corner_box);
+  auto style = get_style(*m_corner_box);
   style.get(Any()).set(BackgroundColor(QColor(0xFF, 0xFF, 0xFF)));
-  set_style(*corner_box, std::move(style));
-  corner_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-  layout->addWidget(corner_box, 1, 1);
-  update_mask();
+  set_style(*m_corner_box, std::move(style));
+  m_corner_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+  layout->addWidget(m_corner_box, 1, 1);
+  setAttribute(Qt::WA_TransparentForMouseEvents);
   m_vertical_scroll_bar->installEventFilter(this);
   m_horizontal_scroll_bar->installEventFilter(this);
+  m_corner_box->installEventFilter(this);
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
@@ -82,9 +83,8 @@ void ScrollableLayer::wheelEvent(QWheelEvent* event) {
 }
 
 bool ScrollableLayer::eventFilter(QObject* watched, QEvent* event) {
-  if((watched == m_vertical_scroll_bar || watched == m_horizontal_scroll_bar) &&
-      (event->type() == QEvent::Resize || event->type() == QEvent::Show ||
-      event->type() == QEvent::Hide)) {
+  if(event->type() == QEvent::Resize ||
+      event->type() == QEvent::Show || event->type() == QEvent::Hide) {
     update_mask();
   }
   return QWidget::eventFilter(watched, event);
@@ -95,17 +95,24 @@ void ScrollableLayer::resizeEvent(QResizeEvent* event) {
 }
 
 void ScrollableLayer::update_mask() {
-  if(m_vertical_scroll_bar->isHidden() &&
-      m_horizontal_scroll_bar->isHidden()) {
+  if(m_vertical_scroll_bar->isHidden() && m_horizontal_scroll_bar->isHidden()) {
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+    return;
+  }
+  auto region = [&] {
+    if(m_vertical_scroll_bar->isVisible() &&
+        m_horizontal_scroll_bar->isVisible()) {
+      return QPolygon(m_vertical_scroll_bar->geometry()).united(
+        m_horizontal_scroll_bar->geometry()).united(m_corner_box->geometry());
+    } else if(m_vertical_scroll_bar->isVisible()) {
+      return QPolygon(m_vertical_scroll_bar->geometry());
+    }
+    return QPolygon(m_horizontal_scroll_bar->geometry());
+  }();
+  if(region.isEmpty()) {
     setAttribute(Qt::WA_TransparentForMouseEvents);
   } else {
-    auto region =
-      QPolygon(geometry()).subtracted(m_transparent_spacer->geometry());
-    if(region.isEmpty()) {
-      setAttribute(Qt::WA_TransparentForMouseEvents);
-    } else {
-      setAttribute(Qt::WA_TransparentForMouseEvents, false);
-      setMask(region);
-    }
+    setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    setMask(region);
   }
 }
