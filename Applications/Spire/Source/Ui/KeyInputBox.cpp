@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
+#include <QVBoxLayout>
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -39,7 +40,9 @@ namespace {
 
   void clear(QLayout& layout) {
     while(auto item = layout.takeAt(0)) {
-      item->widget()->deleteLater();
+      if(item->widget()) {
+        item->widget()->deleteLater();
+      }
       delete item;
     }
   }
@@ -83,8 +86,9 @@ KeyInputBox::KeyInputBox(
       m_status(Status::UNINITIALIZED) {
   setFocusPolicy(Qt::StrongFocus);
   auto layers = new LayeredWidget();
-  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body = new QWidget();
+  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layers->add(m_body);
   layers->add(new Caret(this));
   auto layout = new QHBoxLayout();
@@ -95,7 +99,7 @@ KeyInputBox::KeyInputBox(
   set_style(*input_box, std::move(input_box_style));
   layout->addWidget(input_box);
   setLayout(layout);
-  auto body_layout = new QHBoxLayout();
+  auto body_layout = new QVBoxLayout();
   body_layout->setContentsMargins({});
   m_body->setLayout(body_layout);
   set_status(Status::NONE);
@@ -125,6 +129,7 @@ void KeyInputBox::focusOutEvent(QFocusEvent* event) {
 }
 
 void KeyInputBox::keyPressEvent(QKeyEvent* event) {
+  qDebug() << m_body->size();
   auto key = event->key();
   if(key == Qt::Key_Shift ||
       key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
@@ -186,12 +191,12 @@ void KeyInputBox::set_status(Status status) {
     auto& layout = *m_body->layout();
     clear(layout);
     layout.setSpacing(0);
-    auto prompt = new TextBox(tr("Enter Keys"));
+    auto prompt = make_label(tr("Enter Keys"));
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     prompt->set_read_only(true);
     prompt->setDisabled(true);
     auto style = get_style(*prompt);
-    style.get(Any()).set(vertical_padding(0));
+    style.get(Disabled() && ReadOnly()).set(TextColor(QColor(0xA0A0A0)));
     set_style(*prompt, std::move(style));
     layout.addWidget(prompt);
   }
