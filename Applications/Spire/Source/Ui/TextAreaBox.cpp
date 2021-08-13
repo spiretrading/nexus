@@ -215,6 +215,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_placeholder->setCursor(m_text_edit->cursor());
   m_placeholder->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_scroll_box = new ScrollBox(m_stacked_widget, this);
+  m_scroll_box->setFocusProxy(m_text_edit);
   m_scroll_box->set(ScrollBox::DisplayPolicy::NEVER,
     ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -287,11 +288,6 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
     m_submit_signal(m_submission);
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void TextAreaBox::mousePressEvent(QMouseEvent* event) {
-  m_text_edit->setFocus();
-  QWidget::mousePressEvent(event);
 }
 
 void TextAreaBox::resizeEvent(QResizeEvent* event) {

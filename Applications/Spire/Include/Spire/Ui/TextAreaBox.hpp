@@ -71,7 +71,6 @@ namespace Styles {
     protected:
       void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
