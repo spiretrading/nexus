@@ -135,8 +135,6 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-      QSize sizeHint() const override;
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -146,7 +144,6 @@ namespace Styles {
         ListItem* m_item;
         int m_index;
       };
-      struct BodyContainer;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ArrayListModel> m_list_model;
       ViewBuilder m_view_builder;
@@ -155,7 +152,6 @@ namespace Styles {
       boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
-      BodyContainer* m_container;
       int m_item_gap;
       int m_overflow_gap;
       Qt::Orientation m_direction;

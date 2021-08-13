@@ -103,6 +103,7 @@ namespace Spire {
       void on_style();
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
+      void update_layout();
       void update_ranges();
   };
 }

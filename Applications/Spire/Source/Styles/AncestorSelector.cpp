@@ -1,4 +1,5 @@
 #include "Spire/Styles/AncestorSelector.hpp"
+#include <deque>
 #include <QWidget>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
@@ -52,4 +53,27 @@ std::unordered_set<Stylist*> Spire::Styles::select(
     }
   }
   return selection;
+}
+
+std::vector<QWidget*> Spire::Styles::build_reach(
+    const AncestorSelector& selector, QWidget& source) {
+  auto reach = std::unordered_set<QWidget*>();
+  auto bases = build_reach(selector.get_base(), source);
+  reach.insert(bases.begin(), bases.end());
+  auto ancestors = std::deque<QWidget*>();
+  for(auto base : bases) {
+    if(auto parent = base->parentWidget()) {
+      ancestors.push_back(parent);
+    }
+  }
+  while(!ancestors.empty()) {
+    auto ancestor = ancestors.front();
+    ancestors.pop_front();
+    auto ancestor_reach = build_reach(selector.get_ancestor(), *ancestor);
+    reach.insert(ancestor_reach.begin(), ancestor_reach.end());
+    if(auto parent = ancestor->parentWidget()) {
+      ancestors.push_back(parent);
+    }
+  }
+  return std::vector(reach.begin(), reach.end());
 }

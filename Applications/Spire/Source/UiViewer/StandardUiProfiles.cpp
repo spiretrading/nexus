@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -17,6 +18,7 @@
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
@@ -610,6 +612,19 @@ UiProfile Spire::make_delete_icon_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_destination_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("DestinationListItem"), properties,
+    [] (auto& profile) {
+      auto item = new DestinationListItem(
+        GetDefaultDestinationDatabase().FromId(DefaultDestinations::TSX()));
+      apply_widget_properties(item, profile.get_properties());
+      return item;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -943,8 +958,10 @@ UiProfile Spire::make_list_view_profile() {
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
-  properties.push_back(make_standard_property("change_item_index", 0));
-  properties.push_back(make_standard_property("select_item", -1));
+  properties.push_back(make_standard_property("change_item_index", -1));
+  properties.push_back(make_standard_property("select_item", 0));
+  properties.push_back(make_standard_property("disable_item", -1));
+  properties.push_back(make_standard_property("enable_item", -1));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
@@ -987,14 +1004,16 @@ UiProfile Spire::make_list_view_profile() {
         new ListView(list_model, [&] (const auto& model, auto index) {
           auto label = make_label(model.get<QString>(index));
           if(random_height_seed.get() == 0) {
+            auto random_size = random_generator.bounded(30, 70);
             if(direction.get() == Qt::Vertical) {
-              label->setFixedHeight(
-                scale_height(random_generator.bounded(30, 70)));
+              label->setFixedHeight(scale_height(random_size));
             } else {
-              label->setFixedWidth(
-                scale_height(random_generator.bounded(30, 70)));
+              label->setFixedWidth(scale_height(random_size));
             }
           }
+          auto style = get_style(*label);
+          style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
+          set_style(*label, std::move(style));
           return label;
         });
       apply_widget_properties(list_view, profile.get_properties());
@@ -1047,6 +1066,18 @@ UiProfile Spire::make_list_view_profile() {
           list_view->get_selection_model()->set_current(none);
         } else if(index >= 0 && index < list_model->get_size()) {
           list_view->get_selection_model()->set_current(index);
+        }
+      });
+      auto& disable_item = get<int>("disable_item", profile.get_properties());
+      disable_item.connect_changed_signal([=] (auto value) {
+        if(auto item = list_view->get_list_item(value)) {
+          item->setDisabled(true);
+        }
+      });
+      auto& enable_item = get<int>("enable_item", profile.get_properties());
+      enable_item.connect_changed_signal([=] (auto value) {
+        if(auto item = list_view->get_list_item(value)) {
+          item->setDisabled(false);
         }
       });
       list_view->get_current_model()->connect_current_signal(
@@ -1353,9 +1384,6 @@ UiProfile Spire::make_scrollable_list_box_profile() {
     make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
     [] (auto& profile) {
-      auto& direction =
-        get<Qt::Orientation>("direction", profile.get_properties());
-      auto& overflow = get<Overflow>("overflow", profile.get_properties());
       auto list_model = std::make_shared<ArrayListModel>();
       for(auto i = 0; i < 15; ++i) {
         list_model->push(QString::fromUtf8("Item%1").arg(i));
@@ -1364,13 +1392,21 @@ UiProfile Spire::make_scrollable_list_box_profile() {
         [] (const auto& model, auto index) {
           return make_label(model.get<QString>(index));
         });
-      auto style = get_style(*list_view);
-      style.get(Any()).
-        set(direction.get()).
-        set(overflow.get());
-      set_style(*list_view, std::move(style));
       auto scrollable_list_box = new ScrollableListBox(*list_view);
       apply_widget_properties(scrollable_list_box, profile.get_properties());
+      auto& direction =
+        get<Qt::Orientation>("direction", profile.get_properties());
+      direction.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
+      });
+      auto& overflow = get<Overflow>("overflow", profile.get_properties());
+      overflow.connect_changed_signal([=] (auto value) {
+        auto style = get_style(*list_view);
+        style.get(Any()).set(value);
+        set_style(*list_view, std::move(style));
+      });
       return scrollable_list_box;
     });
   return profile;
