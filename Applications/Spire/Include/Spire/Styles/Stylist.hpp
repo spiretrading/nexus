@@ -45,7 +45,7 @@ namespace Spire::Styles {
   using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
   /** Specifies whether an element is visible. */
-  enum class VisibilityOption {
+  enum class Visibility {
 
     /** The element is visible. */
     VISIBLE,
@@ -56,9 +56,6 @@ namespace Spire::Styles {
     /** The element is treated as if it has a width and height of 0. */
     NONE
   };
-
-  /** Sets the display mode. */
-  using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
 
   template<typename T>
   class RevertExpression;
@@ -186,7 +183,7 @@ namespace Spire::Styles {
       std::shared_ptr<StyleSheet> m_style;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
-      VisibilityOption m_visibility;
+      Visibility m_visibility;
       std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
       std::unordered_set<Selector, SelectorHash> m_matching_selectors;

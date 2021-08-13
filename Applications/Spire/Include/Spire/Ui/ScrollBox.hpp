@@ -2,6 +2,7 @@
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/ComponentSelector.hpp"
+#include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -65,6 +66,15 @@ namespace Spire {
       /** Sets the horizontal and vertical display policies. */
       void set(DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy);
 
+      /**
+       * Scrolls to a widget, ensuring that it's visible. If the widget is
+       * already visible fully then no action is taken.
+       * @param widget The widget to scroll to.
+       */
+      void scroll_to(const QWidget& widget);
+
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -75,10 +85,19 @@ namespace Spire {
       QWidget* m_body;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
+      QWidget* m_viewport;
       ScrollableLayer* m_scrollable_layer;
+      QMargins m_padding;
+      QMargins m_borders;
+      Styles::StyleSheetMap m_border_styles;
+      Styles::StyleSheetMap m_padding_styles;
 
+      void commit_border_styles();
+      void commit_padding_styles();
+      void on_style();
       void on_vertical_scroll(int position);
       void on_horizontal_scroll(int position);
+      void update_layout();
       void update_ranges();
   };
 }

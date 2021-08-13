@@ -95,12 +95,17 @@ void ScrollableLayer::resizeEvent(QResizeEvent* event) {
 }
 
 void ScrollableLayer::update_mask() {
-  auto region =
-    QPolygon(geometry()).subtracted(m_transparent_spacer->geometry());
-  if(region.isEmpty()) {
+  if(m_vertical_scroll_bar->isHidden() &&
+      m_horizontal_scroll_bar->isHidden()) {
     setAttribute(Qt::WA_TransparentForMouseEvents);
   } else {
-    setAttribute(Qt::WA_TransparentForMouseEvents, false);
-    setMask(region);
+    auto region =
+      QPolygon(geometry()).subtracted(m_transparent_spacer->geometry());
+    if(region.isEmpty()) {
+      setAttribute(Qt::WA_TransparentForMouseEvents);
+    } else {
+      setAttribute(Qt::WA_TransparentForMouseEvents, false);
+      setMask(region);
+    }
   }
 }

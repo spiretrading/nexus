@@ -30,6 +30,12 @@ namespace Spire::Styles {
        */
       BasicProperty(Expression expression);
 
+      /**
+       * Constructs a BasicProperty assigned to a ConstantExpression.
+       * @param value The value used to construct the ConstantExpression.
+       */
+      BasicProperty(Type value);
+
       /** Returns the property's Expression. */
       const Expression& get_expression() const;
 
@@ -44,6 +50,10 @@ namespace Spire::Styles {
   template<typename T, typename G>
   BasicProperty<T, G>::BasicProperty(Expression expression)
     : m_expression(std::move(expression)) {}
+
+  template<typename T, typename G>
+  BasicProperty<T, G>::BasicProperty(Type value)
+    : BasicProperty(ConstantExpression(std::move(value))) {}
 
   template<typename T, typename G>
   const typename BasicProperty<T, G>::Expression&

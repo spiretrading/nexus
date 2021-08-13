@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/BasicProperty.hpp"
+#include "Spire/Styles/EnumProperty.hpp"
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -17,6 +18,10 @@ namespace Spire::Styles {
       /** Stores a BasicProperty. */
       template<typename T, typename G>
       Property(BasicProperty<T, G> property);
+
+      /** Stores an enum property. */
+      template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+      Property(T property);
 
       /** Returns the underlying property's type. */
       std::type_index get_type() const;
@@ -78,6 +83,10 @@ namespace Spire::Styles {
   Property::Property(BasicProperty<T, G> property)
     : m_entry(
         std::make_shared<Entry<BasicProperty<T, G>>>(std::move(property))) {}
+
+  template<typename T, typename>
+  Property::Property(T property)
+    : Property(EnumProperty<T>(property)) {}
 
   template<typename U>
   const U& Property::as() const {

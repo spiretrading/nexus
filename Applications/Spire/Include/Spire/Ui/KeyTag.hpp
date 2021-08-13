@@ -44,8 +44,8 @@ namespace Styles {
        * @param model The current key's model.
        * @param parent The parent widget.
        */
-      explicit KeyTag(std::shared_ptr<KeyModel> model,
-        QWidget* parent = nullptr);
+      explicit KeyTag(
+        std::shared_ptr<KeyModel> model, QWidget* parent = nullptr);
 
       /** Returns the model. */
       const std::shared_ptr<KeyModel>& get_model() const;

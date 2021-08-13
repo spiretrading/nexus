@@ -46,6 +46,16 @@ struct Stylist::StyleEventFilter : QObject {
   StyleEventFilter(Stylist& stylist)
       : QObject(stylist.m_widget),
         m_stylist(&stylist) {
+    auto& widget = *stylist.m_widget;
+    if(widget.hasFocus()) {
+      m_stylist->match(Focus());
+    }
+    if(!widget.isEnabled()) {
+      m_stylist->match(Disabled());
+    }
+    if(widget.isActiveWindow()) {
+      m_stylist->match(Active());
+    }
     connect(qApp,
       &QApplication::focusChanged, this, &StyleEventFilter::on_focus_changed);
   }
@@ -77,6 +87,12 @@ struct Stylist::StyleEventFilter : QObject {
       m_stylist->match(Active());
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_stylist->unmatch(Active());
+    } else if(event->type() == QEvent::Show) {
+      if(m_stylist->m_widget->isActiveWindow()) {
+        m_stylist->match(Active());
+      } else {
+        m_stylist->unmatch(Active());
+      }
     }
     return QObject::eventFilter(watched, event);
   }
@@ -224,7 +240,7 @@ Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
       m_style(std::make_shared<StyleSheet>()),
-      m_visibility(VisibilityOption::VISIBLE),
+      m_visibility(Visibility::VISIBLE),
       m_evaluated_block(in_place_init),
       m_evaluated_property(typeid(void)),
       m_is_handling_enabled_signal(false) {
@@ -380,14 +396,14 @@ void Stylist::apply_style() {
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
       if(visibility != m_visibility) {
-        if(visibility == VisibilityOption::VISIBLE) {
+        if(visibility == Visibility::VISIBLE) {
           m_widget->show();
-        } else if(visibility == VisibilityOption::NONE) {
+        } else if(visibility == Visibility::NONE) {
           auto size = m_widget->sizePolicy();
           size.setRetainSizeWhenHidden(false);
           m_widget->setSizePolicy(size);
           m_widget->hide();
-        } else if(visibility == VisibilityOption::INVISIBLE) {
+        } else if(visibility == Visibility::INVISIBLE) {
           auto size = m_widget->sizePolicy();
           size.setRetainSizeWhenHidden(true);
           m_widget->setSizePolicy(size);
@@ -396,9 +412,9 @@ void Stylist::apply_style() {
         m_visibility = visibility;
       }
     });
-  } else if(m_visibility != VisibilityOption::VISIBLE) {
+  } else if(m_visibility != Visibility::VISIBLE) {
     m_widget->show();
-    m_visibility = VisibilityOption::VISIBLE;
+    m_visibility = Visibility::VISIBLE;
   }
 }
 

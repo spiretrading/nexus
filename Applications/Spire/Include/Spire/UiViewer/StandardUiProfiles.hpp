@@ -20,8 +20,14 @@ namespace Spire {
   /** Returns a UiProfile for the DeleteIconButton. */
   UiProfile make_delete_icon_button_profile();
 
+  /** Returns a UiProfile for the DestinationListItem. */
+  UiProfile make_destination_list_item_profile();
+
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
+
+  /** Returns a UiProfile for the DurationFilterPanel. */
+  UiProfile make_duration_filter_panel_profile();
 
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
@@ -65,8 +71,14 @@ namespace Spire {
   /** Returns a UiProfile for the QuantityBox. */
   UiProfile make_quantity_box_profile();
 
+  /** Returns a UiProfile for the QuantityFilterPanel. */
+  UiProfile make_quantity_filter_panel_profile();
+
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
+
+  /** Returns a UiProfile for the RegionListItem. */
+  UiProfile make_region_list_item_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();
@@ -74,8 +86,17 @@ namespace Spire {
   /** Returns a UiProfile for the ScrollBox. */
   UiProfile make_scroll_box_profile();
 
+  /** Returns a UiProfile for the ScrollableListBox. */
+  UiProfile make_scrollable_list_box_profile();
+
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
+
+  /** Returns a UiProfile for the SecurityListItem. */
+  UiProfile make_security_list_item_profile();
+
+  /** Returns a UiProfile for the Tag. */
+  UiProfile make_tag_profile();
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();
