@@ -1,7 +1,7 @@
 #include "Spire/Styles/Stylist.hpp"
 #include <deque>
 #include <QApplication>
-#include <QEvent>
+#include <QFocusEvent>
 #include <QTimer>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
@@ -46,6 +46,16 @@ struct Stylist::StyleEventFilter : QObject {
   StyleEventFilter(Stylist& stylist)
       : QObject(stylist.m_widget),
         m_stylist(&stylist) {
+    auto& widget = *stylist.m_widget;
+    if(widget.hasFocus()) {
+      m_stylist->match(Focus());
+    }
+    if(!widget.isEnabled()) {
+      m_stylist->match(Disabled());
+    }
+    if(widget.isActiveWindow()) {
+      m_stylist->match(Active());
+    }
     connect(qApp,
       &QApplication::focusChanged, this, &StyleEventFilter::on_focus_changed);
   }
@@ -53,8 +63,14 @@ struct Stylist::StyleEventFilter : QObject {
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::FocusIn) {
       m_stylist->match(Focus());
+      auto& focus_event = static_cast<const QFocusEvent&>(*event);
+      if(focus_event.reason() == Qt::TabFocus ||
+          focus_event.reason() == Qt::BacktabFocusReason) {
+        m_stylist->match(FocusVisible());
+      }
     } else if(event->type() == QEvent::FocusOut) {
       m_stylist->unmatch(Focus());
+      m_stylist->unmatch(FocusVisible());
     } else if(event->type() == QEvent::Enter) {
       if(m_stylist->m_widget->isEnabled()) {
         m_stylist->match(Hover());
@@ -71,6 +87,14 @@ struct Stylist::StyleEventFilter : QObject {
       m_stylist->match(Active());
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_stylist->unmatch(Active());
+    } else if(event->type() == QEvent::Show) {
+      if(m_stylist->m_widget->isActiveWindow()) {
+        m_stylist->match(Active());
+      } else {
+        m_stylist->unmatch(Active());
+      }
+    } else if(event->type() == QEvent::ParentChange) {
+      m_stylist->set_style(m_stylist->get_style());
     }
     return QObject::eventFilter(watched, event);
   }
@@ -152,15 +176,7 @@ void Stylist::set_style(StyleSheet style) {
 }
 
 bool Stylist::is_match(const Selector& selector) const {
-  if(m_matching_selectors.find(selector) != m_matching_selectors.end()) {
-    return true;
-  }
-  for(auto proxy : m_proxies) {
-    if(proxy->is_match(selector)) {
-      return true;
-    }
-  }
-  return false;
+  return m_matching_selectors.find(selector) != m_matching_selectors.end();
 }
 
 const Block& Stylist::get_computed_block() const {
@@ -226,9 +242,10 @@ Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
       m_style(std::make_shared<StyleSheet>()),
-      m_visibility(VisibilityOption::VISIBLE),
+      m_visibility(Visibility::VISIBLE),
       m_evaluated_block(in_place_init),
-      m_evaluated_property(typeid(void)) {
+      m_evaluated_property(typeid(void)),
+      m_is_handling_enabled_signal(false) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -333,7 +350,7 @@ void Stylist::apply(Stylist& source, std::vector<AppliedProperty> properties) {
 void Stylist::apply_rules() {
   auto applied_properties =
     std::unordered_map<Stylist*, std::vector<AppliedProperty>>();
-  for_each_principal([&] (Stylist* principal) {
+  for_each_principal([&] (auto principal) {
     for(auto& base_rule : principal->m_style->get_rules()) {
       auto selection = select(base_rule.get_selector(), *this);
       auto rule = std::shared_ptr<const Rule>(principal->m_style, &base_rule);
@@ -381,14 +398,14 @@ void Stylist::apply_style() {
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
       if(visibility != m_visibility) {
-        if(visibility == VisibilityOption::VISIBLE) {
+        if(visibility == Visibility::VISIBLE) {
           m_widget->show();
-        } else if(visibility == VisibilityOption::NONE) {
+        } else if(visibility == Visibility::NONE) {
           auto size = m_widget->sizePolicy();
           size.setRetainSizeWhenHidden(false);
           m_widget->setSizePolicy(size);
           m_widget->hide();
-        } else if(visibility == VisibilityOption::INVISIBLE) {
+        } else if(visibility == Visibility::INVISIBLE) {
           auto size = m_widget->sizePolicy();
           size.setRetainSizeWhenHidden(true);
           m_widget->setSizePolicy(size);
@@ -397,9 +414,9 @@ void Stylist::apply_style() {
         m_visibility = visibility;
       }
     });
-  } else if(m_visibility != VisibilityOption::VISIBLE) {
+  } else if(m_visibility != Visibility::VISIBLE) {
     m_widget->show();
-    m_visibility = VisibilityOption::VISIBLE;
+    m_visibility = Visibility::VISIBLE;
   }
 }
 
@@ -414,7 +431,7 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = boost::optional<Property>();
   auto reverted_property = boost::optional<Property>();
   auto targets = std::unordered_set<const Stylist*>();
-  for_each_principal([&] (const Stylist* principal) {
+  for_each_principal([&] (auto principal) {
     targets.insert(principal);
   });
   auto contains_one_of = [] (const std::unordered_set<Stylist*>& container,
@@ -443,7 +460,7 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
     }
   };
   for(auto& source : m_blocks) {
-    source->m_source->for_each_principal([&] (Stylist* principal) {
+    source->m_source->for_each_principal([&] (auto principal) {
       auto sources = std::unordered_set{source->m_source, principal};
       for(auto& rule : principal->m_style->get_rules()) {
         auto selection = select(rule.get_selector(), sources);
@@ -468,7 +485,13 @@ void Stylist::connect_animation() {
 }
 
 void Stylist::on_enable() {
+  if(m_is_handling_enabled_signal) {
+    return;
+  }
+  m_is_handling_enabled_signal = true;
   apply_rules();
+  m_enable_signal();
+  m_is_handling_enabled_signal = false;
 }
 
 void Stylist::on_animation() {

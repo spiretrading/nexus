@@ -52,7 +52,7 @@ namespace {
     style.get(Disabled() / Body()).
       set(BackgroundColor(QColor("#00000000"))).
       set(Fill(QColor("#C8C8C8")));
-    style.get(+Any() < ReadOnly()).set(Visibility(VisibilityOption::NONE));
+    style.get(+Any() < ReadOnly()).set(Visibility::NONE);
     set_style(*button, std::move(style));
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
@@ -302,9 +302,8 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
   auto style = Spire::Styles::get_style(*m_text_box);
-  style.get(+Any() %
-    (is_a<Button>() && !matches(Visibility(VisibilityOption::NONE)))).set(
-      PaddingRight(scale_width(26)));
+  style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
+    PaddingRight(scale_width(26)));
   set_style(*m_text_box, std::move(style));
   proxy_style(*this, *m_text_box);
   connect_style_signal(*this, [=] { on_style(); });
@@ -348,6 +347,11 @@ bool DecimalBox::is_read_only() const {
 
 void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(is_read_only);
+  if(is_read_only) {
+    match(*this, ReadOnly());
+  } else {
+    unmatch(*this, ReadOnly());
+  }
 }
 
 connection DecimalBox::connect_submit_signal(

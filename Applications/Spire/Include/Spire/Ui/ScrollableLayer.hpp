@@ -28,9 +28,16 @@ namespace Spire {
 
       void wheelEvent(QWheelEvent* event) override;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
+
     private:
       ScrollBar* m_vertical_scroll_bar;
       ScrollBar* m_horizontal_scroll_bar;
+      Box* m_corner_box;
+
+      void update_mask();
   };
 }
 

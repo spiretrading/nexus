@@ -21,10 +21,30 @@ namespace {
       return left < right;
     }
   }
+
+  template<typename T, typename... U>
+  bool is_equal_any(const std::any& left, const std::any& right) {
+    if(left.type() == typeid(T)) {
+      return std::any_cast<const T&>(left) == std::any_cast<const T&>(right);
+    }
+    if constexpr(sizeof...(U) == 0) {
+      return false;
+    } else {
+      return is_equal_any<U...>(left, right);
+    }
+  }
 }
 
 MarketToken::MarketToken(MarketCode code)
   : m_code(code) {}
+
+bool MarketToken::operator ==(MarketToken token) const {
+  return m_code == token.m_code;
+}
+
+bool MarketToken::operator !=(MarketToken token) const {
+  return !(*this == token);
+}
 
 PositionSideToken::PositionSideToken(Side side)
   : m_side(side) {}
@@ -36,6 +56,14 @@ QString PositionSideToken::to_string() const {
     return QObject::tr("Short");
   }
   return QObject::tr("Flat");
+}
+
+bool PositionSideToken::operator ==(PositionSideToken token) const {
+  return m_side == token.m_side;
+}
+
+bool PositionSideToken::operator !=(PositionSideToken token) const {
+  return !(*this == token);
 }
 
 QTime Spire::to_qtime(const posix_time::time_duration& time) {
@@ -225,6 +253,16 @@ const QString& Spire::displayText(OrderType type) {
 QString Spire::displayTextAny(const std::any& value) {
   auto translated_value = to_qvariant(value);
   return CustomVariantItemDelegate().displayText(translated_value);
+}
+
+bool Spire::is_equal(const std::any& left, const std::any& right) {
+  if(left.type() != right.type()) {
+    return false;
+  }
+  return is_equal_any<bool, int, Quantity, double, ptime,
+    posix_time::time_duration, std::string, CurrencyId, MarketToken, Money,
+    Region, OrderStatus, OrderType, PositionSideToken, Security, Side,
+    TimeInForce, QColor, QString>(left, right);
 }
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)

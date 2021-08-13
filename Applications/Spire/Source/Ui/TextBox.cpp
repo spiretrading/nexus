@@ -28,7 +28,7 @@ namespace {
       set(text_style(font, QColor::fromRgb(0, 0, 0))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(horizontal_padding(scale_width(8))).
-      set(vertical_padding(scale_height(7)));
+      set(vertical_padding(scale_height(5)));
     style.get(Hover() || Focus()).
       set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
     style.get(ReadOnly()).
@@ -165,6 +165,9 @@ bool TextBox::is_read_only() const {
 }
 
 void TextBox::set_read_only(bool read_only) {
+  if(m_line_edit->isReadOnly() == read_only) {
+    return;
+  }
   m_line_edit->setReadOnly(read_only);
   m_line_edit->setCursorPosition(0);
   if(read_only) {
@@ -480,4 +483,18 @@ void TextBox::on_style() {
         });
     }
   });
+}
+
+TextBox* Spire::make_label(QString label, QWidget* parent) {
+  auto text_box = new TextBox(std::move(label), parent);
+  text_box->setDisabled(true);
+  text_box->set_read_only(true);
+  auto style = get_style(*text_box);
+  style.get(Any()).
+    set(border_size(0)).
+    set(vertical_padding(0));
+  style.get(ReadOnly() && Disabled()).
+    set(TextColor(QColor::fromRgb(0, 0, 0)));
+  set_style(*text_box, std::move(style));
+  return text_box;
 }

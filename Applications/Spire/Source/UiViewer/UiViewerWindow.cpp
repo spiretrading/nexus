@@ -6,11 +6,10 @@
 #include <QSplitter>
 #include <QTextEdit>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ScrollBarStyle.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 #include "Spire/UiViewer/UiPropertyTableView.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Spire;
 
@@ -44,7 +43,6 @@ namespace {
       })").arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(3)));
-    widget_list->verticalScrollBar()->setStyle(new ScrollBarStyle(widget_list));
     return widget_list;
   }
 
@@ -62,10 +60,13 @@ namespace {
   }
 
   struct SizeAdjustedContainer : QWidget {
-    SizeAdjustedContainer(QWidget* body) {
+    QWidget* m_body;
+
+    SizeAdjustedContainer(QWidget* body)
+        : m_body(body) {
       auto layout = new QVBoxLayout();
       layout->setContentsMargins({});
-      layout->addWidget(body);
+      layout->addWidget(m_body);
       setLayout(layout);
     }
 
@@ -104,24 +105,36 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
   add(make_box_profile());
   add(make_check_box_profile());
-  add(make_color_selector_button_profile());
-  add(make_currency_combo_box_profile());
   add(make_decimal_box_profile());
   add(make_decimal_filter_panel_profile());
+  add(make_delete_icon_button_profile());
+  add(make_destination_list_item_profile());
   add(make_duration_box_profile());
+  add(make_duration_filter_panel_profile());
   add(make_filter_panel_profile());
-  add(make_flat_button_profile());
   add(make_icon_button_profile());
+  add(make_info_tip_profile());
   add(make_integer_box_profile());
   add(make_integer_filter_panel_profile());
   add(make_key_input_box_profile());
   add(make_key_tag_profile());
+  add(make_label_button_profile());
+  add(make_label_profile());
   add(make_list_item_profile());
+  add(make_list_view_profile());
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());
   add(make_overlay_panel_profile());
+  add(make_quantity_box_profile());
+  add(make_quantity_filter_panel_profile());
+  add(make_radio_button_profile());
+  add(make_region_list_item_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
+  add(make_scrollable_list_box_profile());
+  add(make_search_box_profile());
+  add(make_security_list_item_profile());
+  add(make_tag_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_tooltip_profile());
@@ -202,6 +215,6 @@ void UiViewerWindow::on_rebuild() {
   profile.remove_widget();
   update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
-  m_center_stage->setWidget(profile.get_widget());
+  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   delete previous_widget;
 }

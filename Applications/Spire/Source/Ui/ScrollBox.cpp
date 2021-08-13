@@ -1,20 +1,53 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  QSize get_scroll_bar_size(ScrollableLayer& layer) {
+    auto width = [&] {
+      if(layer.get_vertical_scroll_bar().isVisible()) {
+        return layer.get_vertical_scroll_bar().width();
+      }
+      return 0;
+    }();
+    auto height = [&] {
+      if(layer.get_horizontal_scroll_bar().isVisible()) {
+        return layer.get_horizontal_scroll_bar().height();
+      }
+      return 0;
+    }();
+    return {width, height};
+  }
+
+  QSize toSize(QMargins margins) {
+    return QSize(
+      margins.left() + margins.right(), margins.top() + margins.bottom());
+  }
+}
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_body(body) {
-  auto layers = new LayeredWidget(this);
-  auto viewport = new QWidget();
+      m_body(body),
+      m_horizontal_display_policy(DisplayPolicy::ON_OVERFLOW),
+      m_vertical_display_policy(DisplayPolicy::ON_OVERFLOW),
+      m_border_styles([=] { commit_border_styles(); }),
+      m_padding_styles([=] { commit_padding_styles(); }) {
+  setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+  auto layers = new LayeredWidget();
+  m_viewport = new QWidget();
+  m_viewport->setObjectName(
+    QString("0x%1").arg(reinterpret_cast<std::intptr_t>(m_viewport)));
+  m_viewport->installEventFilter(this);
   m_body->installEventFilter(this);
-  m_body->setParent(viewport);
-  layers->add(viewport);
+  m_body->setParent(m_viewport);
+  layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
     [=] (auto position) { on_vertical_scroll(position); });
@@ -23,11 +56,17 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
-  auto layout = new QHBoxLayout(this);
+  auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   layout->addWidget(layers);
+  setLayout(layout);
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
+  connect_style_signal(*this, [=] { on_style(); });
+}
+
+QWidget& ScrollBox::get_body() {
+  return *m_body;
 }
 
 ScrollBox::DisplayPolicy ScrollBox::get_horizontal_display_policy() const {
@@ -41,8 +80,10 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
   m_horizontal_display_policy = policy;
   if(m_horizontal_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_horizontal_scroll_bar().hide();
+    updateGeometry();
   } else if(m_horizontal_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_horizontal_scroll_bar().show();
+    updateGeometry();
   }
   update_ranges();
 }
@@ -58,8 +99,10 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
   m_vertical_display_policy = policy;
   if(m_vertical_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_vertical_scroll_bar().hide();
+    updateGeometry();
   } else if(m_vertical_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_vertical_scroll_bar().show();
+    updateGeometry();
   }
   update_ranges();
 }
@@ -68,20 +111,83 @@ void ScrollBox::set(DisplayPolicy policy) {
   set(policy, policy);
 }
 
-void ScrollBox::set(DisplayPolicy horizontal_policy,
-    DisplayPolicy vertical_policy) {
+void ScrollBox::set(
+    DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy) {
   set_horizontal(horizontal_policy);
   set_vertical(vertical_policy);
 }
 
+void ScrollBox::scroll_to(const QWidget& widget) {
+  auto widget_position =
+    m_body->mapFromGlobal(widget.parentWidget()->mapToGlobal(widget.pos()));
+  auto scroll_bar_size = get_scroll_bar_size(*m_scrollable_layer);
+  auto visible_width = m_viewport->width() - scroll_bar_size.width();
+  auto x_scroll_position =
+    m_scrollable_layer->get_horizontal_scroll_bar().get_position();
+  if(widget.width() > visible_width ||
+      x_scroll_position > widget_position.x()) {
+    m_scrollable_layer->get_horizontal_scroll_bar().set_position(
+      widget_position.x());
+  } else {
+    auto right_point = widget_position.x() + widget.width();
+    if(x_scroll_position + visible_width < right_point) {
+      m_scrollable_layer->get_horizontal_scroll_bar().set_position(
+        right_point - visible_width);
+    }
+  }
+  auto visible_height = m_viewport->height() - scroll_bar_size.height();
+  auto y_scroll_position =
+    m_scrollable_layer->get_vertical_scroll_bar().get_position();
+  if(widget.height() > visible_height ||
+      y_scroll_position > widget_position.y()) {
+    m_scrollable_layer->get_vertical_scroll_bar().set_position(
+      widget_position.y());
+  } else {
+    auto bottom_point = widget_position.y() + widget.height();
+    if(y_scroll_position + visible_height < bottom_point) {
+      m_scrollable_layer->get_vertical_scroll_bar().set_position(
+        bottom_point - visible_height);
+    }
+  }
+}
+
+QSize ScrollBox::sizeHint() const {
+  auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
+  if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
+      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
+      m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
+    size.rwidth() +=
+      m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
+  }
+  if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
+      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
+      m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
+    size.rheight() +=
+      m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
+  }
+  return size;
+}
+
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_viewport) {
+    if(event->type() == QEvent::Resize ||
+        event->type() == QEvent::LayoutRequest) {
+      m_viewport->updateGeometry();
+      update_layout();
+    }
+    return QWidget::eventFilter(watched, event);
+  }
   if(watched != m_body) {
     if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
       update_ranges();
     }
   }
-  if(event->type() == QEvent::Resize) {
-    update_ranges();
+  if(watched != m_viewport) {
+    if(event->type() == QEvent::Resize) {
+      update_ranges();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -94,48 +200,258 @@ void ScrollBox::resizeEvent(QResizeEvent* event) {
   update_ranges();
 }
 
+void ScrollBox::wheelEvent(QWheelEvent* event) {
+  m_scrollable_layer->wheelEvent(event);
+}
+
+void ScrollBox::commit_border_styles() {
+  auto stylesheet = QString(
+    R"(#0x%1 {
+        border-style: solid;)").arg(reinterpret_cast<std::intptr_t>(this));
+  m_border_styles.write(stylesheet);
+  if(m_borders != layout()->contentsMargins()) {
+    layout()->setContentsMargins(m_borders);
+  }
+  if(stylesheet != styleSheet()) {
+    setStyleSheet(stylesheet);
+    style()->unpolish(this);
+    style()->polish(this);
+  }
+}
+
+void ScrollBox::commit_padding_styles() {
+  auto stylesheet =
+    QString("#0x%1 {").arg(reinterpret_cast<std::intptr_t>(m_viewport));
+  m_padding_styles.write(stylesheet);
+  if(stylesheet != m_viewport->styleSheet()) {
+    m_viewport->setStyleSheet(stylesheet);
+    m_viewport->style()->unpolish(m_viewport);
+    m_viewport->style()->polish(m_viewport);
+  }
+  on_horizontal_scroll(
+    m_scrollable_layer->get_horizontal_scroll_bar().get_position());
+  on_vertical_scroll(
+    m_scrollable_layer->get_vertical_scroll_bar().get_position());
+  update_ranges();
+}
+
+void ScrollBox::on_style() {
+  m_border_styles.clear();
+  m_padding_styles.clear();
+  m_borders = {};
+  m_padding = {};
+  m_border_styles.buffer([&] {
+    m_padding_styles.buffer([&] {
+      auto& stylist = find_stylist(*this);
+      for(auto& property : stylist.get_computed_block()) {
+        property.visit(
+          [&] (const BorderTopSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_border_styles.set("border-top-width", size);
+              m_borders.setTop(size);
+            });
+          },
+          [&] (const BorderRightSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_border_styles.set("border-right-width", size);
+              m_borders.setRight(size);
+            });
+          },
+          [&] (const BorderBottomSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_border_styles.set("border-bottom-width", size);
+              m_borders.setBottom(size);
+            });
+          },
+          [&] (const BorderLeftSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_border_styles.set("border-left-width", size);
+              m_borders.setLeft(size);
+            });
+          },
+          [&] (const BorderTopColor& color) {
+            stylist.evaluate(color, [=] (auto color) {
+              m_border_styles.set("border-top-color", color);
+            });
+          },
+          [&] (const BorderRightColor& color) {
+            stylist.evaluate(color, [=] (auto color) {
+              m_border_styles.set("border-right-color", color);
+            });
+          },
+          [&] (const BorderBottomColor& color) {
+            stylist.evaluate(color, [=] (auto color) {
+              m_border_styles.set("border-bottom-color", color);
+            });
+          },
+          [&] (const BorderLeftColor& color) {
+            stylist.evaluate(color, [=] (auto color) {
+              m_border_styles.set("border-left-color", color);
+            });
+          },
+          [&] (const BorderTopLeftRadius& radius) {
+            stylist.evaluate(radius, [=] (auto radius) {
+              m_border_styles.set("border-top-left-radius", radius);
+            });
+          },
+          [&] (const BorderTopRightRadius& radius) {
+            stylist.evaluate(radius, [=] (auto radius) {
+              m_border_styles.set("border-top-right-radius", radius);
+            });
+          },
+          [&] (const BorderBottomRightRadius& radius) {
+            stylist.evaluate(radius, [=] (auto radius) {
+              m_border_styles.set("border-bottom-right-radius", radius);
+            });
+          },
+          [&] (const BorderBottomLeftRadius& radius) {
+            stylist.evaluate(radius, [=] (auto radius) {
+              m_border_styles.set("border-bottom-left-radius", radius);
+            });
+          },
+          [&] (const BackgroundColor& color) {
+            stylist.evaluate(color, [=] (auto color) {
+              m_padding_styles.set("background-color", color);
+            });
+          },
+          [&] (const PaddingTop& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_padding_styles.set("padding-top", size);
+              m_padding.setTop(size);
+            });
+          },
+          [&] (const PaddingRight& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_padding_styles.set("padding-right", size);
+              m_padding.setRight(size);
+            });
+          },
+          [&] (const PaddingBottom& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_padding_styles.set("padding-bottom", size);
+              m_padding.setBottom(size);
+            });
+          },
+          [&] (const PaddingLeft& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_padding_styles.set("padding-left", size);
+              m_padding.setLeft(size);
+            });
+          });
+      }
+    });
+  });
+}
+
 void ScrollBox::on_vertical_scroll(int position) {
-  m_body->move(m_body->pos().x(), -position);
+  m_body->move(m_body->pos().x(), -position + m_padding.top());
 }
 
 void ScrollBox::on_horizontal_scroll(int position) {
-  m_body->move(-position, m_body->pos().y());
+  m_body->move(-position + m_padding.left(), m_body->pos().y());
 }
 
-void ScrollBox::update_ranges() {
-  auto bar_width = [&] {
-    if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
-      return m_scrollable_layer->get_vertical_scroll_bar().width();
-    }
-    return 0;
+void ScrollBox::update_layout() {
+  auto scroll_bar_size = get_scroll_bar_size(*m_scrollable_layer);
+  auto padding_size = toSize(m_padding);
+  auto contents_size = m_body->size() + toSize(m_borders) + padding_size;
+  const auto EXPAND = QSizePolicy::GrowFlag | QSizePolicy::IgnoreFlag;
+  if(!(m_body->sizePolicy().horizontalPolicy() & EXPAND)) {
+    setMaximumWidth(contents_size.width() + scroll_bar_size.width());
+  }
+  if(!(m_body->sizePolicy().verticalPolicy() & EXPAND)) {
+    setMaximumHeight(contents_size.height() + scroll_bar_size.height());
+  }
+  auto body_size = [&] {
+    auto body_width = [&] {
+      if(m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Expanding) {
+        return m_viewport->width() -
+          padding_size.width() - scroll_bar_size.width();
+      } else if(m_body->sizeHint().width() != -1 &&
+          (m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Preferred ||
+          m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Fixed)) {
+        return m_body->sizeHint().width();
+      }
+      return m_body->width();
+    }();
+    auto body_height = [&] {
+      if(m_body->sizePolicy().verticalPolicy() == QSizePolicy::Expanding) {
+        return m_viewport->height() -
+          padding_size.height() - scroll_bar_size.height();
+      } else if(m_body->sizeHint().height() != -1 &&
+          (m_body->sizePolicy().verticalPolicy() == QSizePolicy::Preferred ||
+          m_body->sizePolicy().verticalPolicy() == QSizePolicy::Fixed)) {
+        return m_body->sizeHint().height();
+      }
+      return m_body->height();
+    }();
+    return QSize(body_width, body_height);
   }();
-  auto bar_height = [&] {
-    if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
-      return m_scrollable_layer->get_horizontal_scroll_bar().height();
+  if(body_size != m_body->size()) {
+    m_body->resize(body_size);
+  }
+  if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
+    if(contents_size.width() <= size().width() &&
+        contents_size.height() <= size().height()) {
+      if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_vertical_scroll_bar().hide();
+        updateGeometry();
+        return;
+      }
+      if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        updateGeometry();
+        return;
+      }
     }
-    return 0;
-  }();
-  auto viewport_size = m_body->size() + QSize(bar_width, bar_height);
-  setMaximumSize(viewport_size);
+  }
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.height() <= height()) {
-      m_scrollable_layer->get_vertical_scroll_bar().hide();
-    } else {
+    if(contents_size.height() <= height() - scroll_bar_size.height()) {
+      if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_vertical_scroll_bar().hide();
+        updateGeometry();
+        return;
+      }
+    } else if(!m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
       m_scrollable_layer->get_vertical_scroll_bar().show();
+      updateGeometry();
+      return;
     }
   }
   if(m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(viewport_size.width() <= width()) {
-      m_scrollable_layer->get_horizontal_scroll_bar().hide();
-    } else {
+    if(contents_size.width() <= width() - scroll_bar_size.width()) {
+      if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
+        m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        updateGeometry();
+        return;
+      }
+    } else if(!m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
+      updateGeometry();
+      return;
     }
   }
-  auto vertical_range = std::max(m_body->height() - height() + bar_height, 0);
-  auto horizontal_range = std::max(m_body->width() - width() + bar_width, 0);
-  m_scrollable_layer->get_vertical_scroll_bar().set_range(0, vertical_range);
-  m_scrollable_layer->get_vertical_scroll_bar().set_page_size(height());
+}
+
+void ScrollBox::update_ranges() {
+  update_layout();
+  auto scroll_bar_size = get_scroll_bar_size(*m_scrollable_layer);
+  auto range = m_body->size() + toSize(m_padding) + scroll_bar_size -
+    m_viewport->size();
+  m_scrollable_layer->get_vertical_scroll_bar().set_range(
+    0, std::max(range.height(), 0));
+  m_scrollable_layer->get_vertical_scroll_bar().set_page_size(
+    m_viewport->height());
   m_scrollable_layer->get_horizontal_scroll_bar().set_range(
-    0, horizontal_range);
-  m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(width());
+    0, std::max(range.width(), 0));
+  m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
+    m_viewport->width());
+}
+
+std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
+    ScrollBox& box, const Body& body) const {
+  auto stylists = std::unordered_set<Stylist*>();
+  stylists.insert(&find_stylist(box.get_body()));
+  return stylists;
 }

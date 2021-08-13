@@ -40,7 +40,7 @@ Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
       m_styles([=] { commit_style(); }) {
-  setObjectName("Box");
+  setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);
@@ -52,6 +52,10 @@ Box::Box(QWidget* body, QWidget* parent)
     m_container = nullptr;
   }
   connect_style_signal(*this, [=] { on_style(); });
+}
+
+QWidget* Box::get_body() {
+  return m_body;
 }
 
 QSize Box::sizeHint() const {
@@ -94,6 +98,23 @@ QSize Box::sizeHint() const {
   return *m_size_hint;
 }
 
+bool Box::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+    updateGeometry();
+  }
+  return QWidget::event(event);
+}
+
+void Box::mouseMoveEvent(QMouseEvent* event) {
+  if(!rect().contains(event->pos())) {
+    unmatch(*this, Hover());
+  } else {
+    match(*this, Hover());
+  }
+  QWidget::mouseMoveEvent(event);
+}
+
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
@@ -132,8 +153,8 @@ void Box::resizeEvent(QResizeEvent* event) {
 
 void Box::commit_style() {
   auto stylesheet = QString(
-    R"(#Box {
-        border-style: solid;)");
+    R"(#0x%1 {
+        border-style: solid;)").arg(reinterpret_cast<std::intptr_t>(this));
   m_styles.write(stylesheet);
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
@@ -284,4 +305,13 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
     set(horizontal_padding(0));
   set_style(*box, std::move(style));
   return box;
+}
+
+std::unordered_set<Stylist*> BaseComponentFinder<Box, Body>::operator ()(
+    Box& box, const Body& body) const {
+  auto stylists = std::unordered_set<Stylist*>();
+  if(auto body = box.get_body()) {
+    stylists.insert(&find_stylist(*body));
+  }
+  return stylists;
 }

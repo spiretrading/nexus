@@ -2,9 +2,8 @@
 #include <QIcon>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 
+using namespace boost::posix_time;
 using namespace Spire;
 
 void Spire::draw_border(const QRect& region, const QColor& color,
@@ -16,6 +15,22 @@ void Spire::draw_border(const QRect& region, const QColor& color,
     painter->fillRect(rect, color);
   }
   painter->restore();
+}
+
+QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
+    time_duration fade_speed) {
+  auto animation = new QPropertyAnimation(target, "windowOpacity", target);
+  animation->setDuration(fade_speed.total_milliseconds());
+  animation->setEasingCurve(QEasingCurve::Linear);
+  if(!reverse) {
+    animation->setStartValue(0);
+    animation->setEndValue(1);
+  } else {
+    animation->setStartValue(1);
+    animation->setEndValue(0);
+  }
+  animation->start(QAbstractAnimation::DeleteWhenStopped);
+  return animation;
 }
 
 QImage Spire::imageFromSvg(const QString& path, const QSize& size) {

@@ -15,8 +15,8 @@ namespace {
     TypedUiProperty<int>* m_width;
     TypedUiProperty<int>* m_height;
 
-    SizeFilter(TypedUiProperty<int>* width, TypedUiProperty<int>* height,
-      QObject* parent)
+    SizeFilter(TypedUiProperty<int>* width,
+      TypedUiProperty<int>* height, QObject* parent)
       : QObject(parent),
         m_width(width),
         m_height(height) {}
@@ -32,7 +32,7 @@ namespace {
         }
       }
       return QObject::eventFilter(object, event);
-    };
+    }
   };
 }
 
@@ -156,7 +156,7 @@ std::shared_ptr<TypedUiProperty<Money>> Spire::make_standard_property<Money>(
   return std::make_shared<StandardUiProperty<Money>>(std::move(name), value,
     [] (QWidget* parent, StandardUiProperty<Money>& property) {
       auto setter = new QDoubleSpinBox(parent);
-      setter->setMinimum(std::numeric_limits<double>::min());
+      setter->setMinimum(std::numeric_limits<double>::lowest());
       setter->setMaximum(std::numeric_limits<double>::max());
       property.connect_changed_signal([=] (auto value) {
         setter->setValue(static_cast<double>(value));
@@ -165,6 +165,27 @@ std::shared_ptr<TypedUiProperty<Money>> Spire::make_standard_property<Money>(
         [&] (const auto& value) {
           if(auto money = Money::FromValue(value.toStdString())) {
             property.set(*money);
+          }
+        });
+      return setter;
+    });
+}
+
+template<>
+std::shared_ptr<TypedUiProperty<Quantity>>
+    Spire::make_standard_property<Quantity>(QString name, Quantity value) {
+  return std::make_shared<StandardUiProperty<Quantity>>(std::move(name), value,
+    [] (QWidget* parent, StandardUiProperty<Quantity>& property) {
+      auto setter = new QDoubleSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<double>::lowest());
+      setter->setMaximum(std::numeric_limits<double>::max());
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<double>(value));
+      });
+      QObject::connect(setter, &QDoubleSpinBox::textChanged,
+        [&] (const auto& value) {
+          if(auto quantity = Quantity::FromValue(value.toStdString())) {
+            property.set(*quantity);
           }
         });
       return setter;

@@ -15,47 +15,71 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
-#include "Spire/Charting/TrendLine.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  /*! Wraps a MarketCode so that it can be displayed in a model. */
+  /** Wraps a MarketCode so that it can be displayed in a model. **/
   struct MarketToken {
 
-    //! Wraps the MarketCode.
+    /** Wraps the MarketCode. */
     Nexus::MarketCode m_code;
 
-    //! Constructs a default token.
+    /** Constructs a default token. */
     MarketToken() = default;
 
-    //! Wraps a MarketCode.
-    /*!
-      \param code The MarketCode to wrap.
-    */
+    /**
+     * Wraps a MarketCode.
+     * @param code The MarketCode to wrap.
+     */
     MarketToken(Nexus::MarketCode code);
+
+    /**
+     * Returns <code>true</code> iff <i>token</i> has the same <i>code</i> as
+     * <code>this</code>.
+     */
+    bool operator ==(MarketToken token) const;
+
+    /**
+     * Returns <code>true</code> iff <i>token</i> has a different <i>code</i>
+     * from <code>this</code>.
+     */
+    bool operator !=(MarketToken token) const;
   };
 
-  /*! Wraps a Side so that it can be displayed within the context of a
-      position.
+  /**
+   * Wraps a Side so that it can be displayed within the context of a
+   * position.
    */
   struct PositionSideToken {
 
-    //! Wraps the Side.
+    /** Wraps the Side. */
     Nexus::Side m_side;
 
-    //! Constructs a default token.
+    /** Constructs a default token. */
     PositionSideToken() = default;
 
-    //! Wraps a Side.
-    /*!
-      \param side The Side to wrap.
-    */
+    /**
+     * Wraps a Side.
+     * @param side The Side to wrap.
+     */
     PositionSideToken(Nexus::Side side);
 
-    //! Returns the string representation of this Side.
+    /** Returns the string representation of this Side. */
     QString to_string() const;
+
+    /**
+     * Returns <code>true</code> iff <i>token</i> has the same <i>side</i> as
+     * <code>this</code>.
+     */
+    bool operator ==(PositionSideToken token) const;
+
+    /**
+     * Returns <code>true</code> iff <i>token</i> has a different <i>side</i>
+     * from <code>this</code>.
+     */
+    bool operator !=(PositionSideToken token) const;
   };
 }
 
@@ -72,66 +96,71 @@ Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Spire::MarketToken);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
-Q_DECLARE_METATYPE(Spire::TrendLineStyle);
+
+/** Add back this style when charting is implemented. */
+//Q_DECLARE_METATYPE(Spire::TrendLineStyle);
 Q_DECLARE_METATYPE(std::any);
 
 namespace Spire {
 
-  //! Converts a posix time duration into a QTime.
+  /** Converts a posix time duration into a QTime. */
   QTime to_qtime(const boost::posix_time::time_duration& time);
 
-  //! Converts a QTime into a posix time duration.
+  /** Converts a QTime into a posix time duration. */
   boost::posix_time::time_duration to_time_duration(const QTime& time);
 
-  //! Converts a QDateTime into a posix timestamp.
+  /** Converts a QDateTime into a posix timestamp. */
   QDateTime to_qdate_time(const boost::posix_time::ptime& time);
 
-  //! Converts a posix timestamp into a QDateTime.
+  /** Converts a posix timestamp into a QDateTime. */
   boost::posix_time::ptime to_ptime(const QDateTime& time);
 
-  //! Converts an std::any to a QVariant.
+  /** Converts an std::any to a QVariant. */
   QVariant to_qvariant(const std::any& value);
 
-  //! Registers the custom QVariant types.
+  /** Registers the custom QVariant types. */
   void register_custom_qt_variants();
 
-  //! Returns the text representation of a TimeInForce.
+  /** Returns the text representation of a TimeInForce. */
   const QString& displayText(Nexus::TimeInForce time_in_force);
 
-  //! Returns the text representation of a Side.
+  /** Returns the text representation of a Side. */
   const QString& displayText(Nexus::Side side);
 
-  //! Returns the text representation of an OrderStatus.
+  /** Returns the text representation of an OrderStatus. */
   const QString& displayText(Nexus::OrderStatus status);
 
-  //! Returns the text representation of an OrderType.
+  /** Returns the text representation of an OrderType. */
   const QString& displayText(Nexus::OrderType type);
 
-  //! Returns the text representation of the value stored within an std::any.
+  /** Returns the text representation of the value stored within an std::any. */
   QString displayTextAny(const std::any& value);
 
-  /*! Implements Qt's item delegate to support the custom QVariant types. */
+  /** Tests if two <code>std::any</code> have equal types and values. */
+  bool is_equal(const std::any& left, const std::any& right);
+
+  /** Implements Qt's item delegate to support the custom QVariant types. **/
   class CustomVariantItemDelegate : public QStyledItemDelegate {
     public:
 
-      //! Constructs an item delegate for custom variants.
-      /*!
-        \param parent The parent object.
-      */
+      /**
+       * Constructs an item delegate for custom variants.
+       * @param parent The parent object.
+       */
       explicit CustomVariantItemDelegate(QObject* parent = nullptr);
 
       QString displayText(const QVariant& value,
         const QLocale& locale = QLocale()) const override;
   };
 
-  /*! Implements Qt's proxy model to support the custom QVariant types. */
+  /** Implements Qt's proxy model to support the custom QVariant types. **/
   class CustomVariantSortFilterProxyModel : public QSortFilterProxyModel {
     public:
 
-      //! Constructs a proxy model for custom variants.
-      /*!
-        \param parent The parent object.
-      */
+      /**
+       * Constructs a proxy model for custom variants.
+       * @param parent The parent object.
+       */
       explicit CustomVariantSortFilterProxyModel(QObject* parent = nullptr);
 
     protected:

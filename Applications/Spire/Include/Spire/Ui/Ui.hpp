@@ -1,10 +1,9 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/optional/optional.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <QHeaderView>
 #include <QImage>
-#include <QLineEdit>
+#include <QPropertyAnimation>
 #include <QRect>
 #include <QSize>
 #include <QString>
@@ -15,52 +14,41 @@ namespace Spire {
   class ArrayTableModel;
   class Box;
   class Button;
-  class CalendarDayWidget;
-  class CalendarModel;
-  class CalendarWidget;
   class CheckBox;
-  class ColonWidget;
-  class DateInputWidget;
   class DecimalBox;
-  template<typename T> class DecimalBoxAdaptor;
-  class DecimalSpinBox;
-  class Dialog;
-  class DropDownMenu;
-  class DropDownMenuItem;
-  class DropDownMenuList;
+  class DestinationListItem;
   class DropShadow;
   class DurationBox;
   class FilteredTableModel;
   class FilterPanel;
-  class FlatButton;
   class Icon;
+<<<<<<< HEAD
   class IconButton;
   class IntegerSpinBox;
   class KeyInputBox;
   class KeySequenceInputField;
+=======
+  class InfoTip;
+>>>>>>> spire2018
   class LayeredWidget;
+  class ListItem;
   class ListModel;
+  class ListView;
   class MoneyBox;
-  class MoneyInputWidget;
-  class MonthAndYearSpinBox;
   class OverlayPanel;
-  class PropertiesWindowButtonsWidget;
-  class QuantitySpinBox;
-  class RangeInputSlider;
-  class RangeInputWidget;
-  class RealSpinBox;
+  class RegionListItem;
   class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
-  class ScalarWidget;
-  class ScrollArea;
   class ScrollBar;
   class ScrollBox;
   class ScrollableLayer;
+  class ScrollableListBox;
+  class SearchBox;
+  class SecurityListItem;
   class SecurityStack;
-  class SecurityWidget;
   class SortedTableModel;
-  class TabWidget;
   class TableModel;
+  class Tag;
   class TextBox;
   class TimeBox;
   class TitleBar;
@@ -69,45 +57,57 @@ namespace Spire {
   class TranslatedTableModel;
   class Window;
 
-  //! Draws a border inside the given region.
-  /*!
-    \param region The region to draw a border inside of.
-    \param color The border's color.
-    \param painter The QPainter instance that draws the border.
-  */
-  void draw_border(const QRect& region, const QColor& color,
-    QPainter* painter);
+  /**
+   * Draws a border inside the given region.
+   * @param region The region to draw a border inside of.
+   * @param color The border's color.
+   * @param painter The QPainter instance that draws the border.
+   */
+  void draw_border(const QRect& region, const QColor& color, QPainter* painter);
 
-  //! Builds a QImage from an SVG resource where the size of the SVG is equal
-  //! to the image as a whole.
-  /*!
-    \param path The path to the SVG resource.
-    \param size The size of the image to render.
-    \return An image rendered from the SVG resource to the specified size.
-  */
+  /**
+   * Fades a window in by animating its window opacity. The returned animation
+   * is deleted on completion.
+   * @param target The window to fade in or out. Used as the parent for the
+   *               returned QPropertyAnimation.
+   * @param reverse True iff the animation should be reversed (fade out).
+   * @param fade_speed_ms The fade speed, in milliseconds.
+   * @returns The animation assigned to the target.
+   */
+  QPropertyAnimation* fade_window(
+    QObject* target, bool reverse, boost::posix_time::time_duration fade_speed);
+
+  /**
+   * Builds a QImage from an SVG resource where the size of the SVG is equal
+   * to the image as a whole.
+   * @param path The path to the SVG resource.
+   * @param size The size of the image to render.
+   * @return An image rendered from the SVG resource to the specified size.
+   */
   QImage imageFromSvg(const QString& path, const QSize& size);
 
-  //! Builds a QImage from an SVG resource where the size of the SVG is embedded
-  //! within the image.
-  /*!
-    \param path The path to the SVG resource.
-    \param size The size of the image to render.
-    \param box The location and size to render the SVG within the image.
-    \return An image rendered from the SVG resource to the specified dimensions.
-  */
+  /**
+   * Builds a QImage from an SVG resource where the size of the SVG is embedded
+   * within the image.
+   * @param path The path to the SVG resource.
+   * @param size The size of the image to render.
+   * @param box The location and size to render the SVG within the image.
+   * @return An image rendered from the SVG resource to the specified
+   *         dimensions.
+   */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
 
-  //! Constructs a horizontal Spire-styled table header with fixed size,
-  //! immovable, column headers.
-  /*
-    \param parent The parent widget.
-  */
+  /**
+   * Constructs a horizontal Spire-styled table header with fixed size,
+   * immovable, column headers.
+   * @param parent The parent widget.
+   */
   QHeaderView* make_fixed_header(QWidget* parent);
 
-  //! Constructs a horizontal, Spire-styled, table header.
-  /*
-    \param parent The parent widget.
-  */
+  /**
+   * Constructs a horizontal, Spire-styled, table header.
+   * @param parent The parent widget.
+   */
   QHeaderView* make_header(QWidget* parent);
 }
 

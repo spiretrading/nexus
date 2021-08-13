@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
+#include "Spire/Styles/ComponentSelector.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -23,20 +24,20 @@ namespace Styles {
   using BorderLeftSize = BasicProperty<int, struct BorderLeftSizeTag>;
 
   /** Sets the radius of the border's top left corner. */
-  using BorderTopLeftRadius = BasicProperty<int,
-    struct BorderTopLeftRadiusTag>;
+  using BorderTopLeftRadius =
+    BasicProperty<int, struct BorderTopLeftRadiusTag>;
 
   /** Sets the radius of the border's top right corner. */
-  using BorderTopRightRadius = BasicProperty<int,
-    struct BorderTopRightRadiusTag>;
+  using BorderTopRightRadius =
+    BasicProperty<int, struct BorderTopRightRadiusTag>;
 
   /** Sets the radius of the border's bottom right corner. */
-  using BorderBottomRightRadius = BasicProperty<int,
-    struct BorderBottomRightRadiusTag>;
+  using BorderBottomRightRadius =
+    BasicProperty<int, struct BorderBottomRightRadiusTag>;
 
   /** Sets the radius of the border's bottom left corner. */
-  using BorderBottomLeftRadius = BasicProperty<int,
-    struct BorderBottomLeftRadiusTag>;
+  using BorderBottomLeftRadius =
+    BasicProperty<int, struct BorderBottomLeftRadiusTag>;
 
   /** Composes all border radius properties. */
   using BorderRadius = CompositeProperty<BorderTopLeftRadius,
@@ -84,8 +85,8 @@ namespace Styles {
   using VerticalPadding = CompositeProperty<PaddingTop, PaddingBottom>;
 
   /** Composes all paddings into a single property. */
-  using Padding = CompositeProperty<PaddingTop, PaddingRight, PaddingBottom,
-    PaddingLeft>;
+  using Padding =
+    CompositeProperty<PaddingTop, PaddingRight, PaddingBottom, PaddingLeft>;
 
   /** Sets the alignment of the body. */
   using BodyAlign = BasicProperty<Qt::AlignmentFlag, struct BodyAlignTag>;
@@ -148,9 +149,14 @@ namespace Styles {
        */
       explicit Box(QWidget* body, QWidget* parent = nullptr);
 
+      /** Returns the body or a <code>nullptr</code>. */
+      QWidget* get_body();
+
       QSize sizeHint() const override;
 
     protected:
+      bool event(QEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -170,6 +176,11 @@ namespace Styles {
    * @param parent The parent widget.
    */
   Box* make_input_box(QWidget* body, QWidget* parent = nullptr);
+}
+
+namespace Spire::Styles {
+  template<>
+  struct ComponentFinder<Box, Body> : BaseComponentFinder<Box, Body> {};
 }
 
 #endif

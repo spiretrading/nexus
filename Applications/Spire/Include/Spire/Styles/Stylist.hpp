@@ -41,8 +41,11 @@ namespace Spire::Styles {
   /** Selects the focused widget. */
   using Focus = StateSelector<void, struct FocusSelectorTag>;
 
+  /** Selects a widget if it was focused using a non-pointing device. */
+  using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
+
   /** Specifies whether an element is visible. */
-  enum class VisibilityOption {
+  enum class Visibility {
 
     /** The element is visible. */
     VISIBLE,
@@ -53,9 +56,6 @@ namespace Spire::Styles {
     /** The element is treated as if it has a width and height of 0. */
     NONE
   };
-
-  /** Sets the display mode. */
-  using Visibility = BasicProperty<VisibilityOption, struct VisibilityTag>;
 
   template<typename T>
   class RevertExpression;
@@ -183,7 +183,7 @@ namespace Spire::Styles {
       std::shared_ptr<StyleSheet> m_style;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
-      VisibilityOption m_visibility;
+      Visibility m_visibility;
       std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
       std::unordered_set<Selector, SelectorHash> m_matching_selectors;
@@ -196,6 +196,7 @@ namespace Spire::Styles {
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
+      bool m_is_handling_enabled_signal;
       QMetaObject::Connection m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);

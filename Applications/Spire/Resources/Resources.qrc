@@ -20,9 +20,6 @@
         <file>Fonts/Roboto/Roboto-ThinItalic.ttf</file>
         <file>Icons/logo.gif</file>
         <file>Icons/search.svg</file>
-        <file>Icons/36.png</file>
-        <file>Icons/124.png</file>
-        <file>Icons/840.png</file>
         <file>Icons/check.svg</file>
         <file>Icons/check-with-box.svg</file>
         <file>Icons/column-border.png</file>
@@ -98,5 +95,13 @@
         <file>Icons/delete-row.svg</file>
         <file>Icons/arrow-down.svg</file>
         <file>Icons/arrow-up.svg</file>
+        <file>Icons/radio-check.svg</file>
+        <file>Icons/delete.svg</file>
+        <file>Icons/magnifying-glass.svg</file>
+        <file>Icons/market-symbol.svg</file>
+        <file>Icons/security-symbol.svg</file>
+        <file>Icons/flag_icons/aus.svg</file>
+        <file>Icons/flag_icons/can.svg</file>
+        <file>Icons/flag_icons/usa.svg</file>
     </qresource>
 </RCC>

@@ -10,9 +10,9 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any()).set(Fill(QColor::fromRgb(0x75, 0x5E, 0xEC)));
-    style.get(Hover()).set(Fill(QColor::fromRgb(0x4B, 0x23, 0xAB)));
-    style.get(Disabled()).set(Fill(QColor::fromRgb(0xD0, 0xD0, 0xD0)));
+    style.get(Any()).set(Fill(QColor(0x755EEC)));
+    style.get(Hover()).set(Fill(QColor(0x4B23AB)));
+    style.get(Disabled()).set(Fill(QColor(0xD0D0D0)));
     return style;
   }
 }
@@ -20,8 +20,8 @@ namespace {
 Icon::Icon(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_icon(std::move(icon)),
-      m_background_color(QColor::fromRgb(0xF5, 0xF5, 0xF5)),
-      m_fill(QColor::fromRgb(0x75, 0x5E, 0xEC)) {
+      m_background_color(QColor(0xF5F5F5)),
+      m_fill(QColor(0x755EEC)) {
   setAttribute(Qt::WA_Hover);
   set_style(*this, DEFAULT_STYLE());
   connect_style_signal(*this, [=] { on_style(); });
@@ -38,7 +38,9 @@ void Icon::paintEvent(QPaintEvent* event) {
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
   image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-  image_painter.fillRect(icon.rect(), m_fill);
+  if(m_fill) {
+    image_painter.fillRect(icon.rect(), *m_fill);
+  }
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
   if(m_border_color) {
@@ -49,14 +51,20 @@ void Icon::paintEvent(QPaintEvent* event) {
 void Icon::on_style() {
   auto& stylist = find_stylist(*this);
   auto& block = stylist.get_computed_block();
-  m_background_color = QColor::fromRgb(0xF5, 0xF5, 0xF5);
-  m_fill = QColor::fromRgb(0x75, 0x5E, 0xEC);
+  m_background_color = QColor(0xF5F5F5);
+  m_fill = QColor(0x755EEC);
   m_border_color = none;
   for(auto& property : block) {
     property.visit(
       [&] (const BackgroundColor& color) {
         stylist.evaluate(color, [=] (auto color) {
           m_background_color = color;
+          update();
+        });
+      },
+      [&] (const IconImage& image) {
+        stylist.evaluate(image, [=] (auto image) {
+          m_icon = std::move(image);
           update();
         });
       },

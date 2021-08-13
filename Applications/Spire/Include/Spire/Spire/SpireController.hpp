@@ -4,21 +4,22 @@
 #include <vector>
 #include "Spire/Login/LoginController.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Toolbar/Toolbar.hpp"
 
 namespace Spire {
 
-  //! Controller for the application as a whole.
+  /** Controller for the application as a whole. */
   class SpireController {
     public:
 
-      //! Constructs a controller in a state ready to execute a new instance of
-      //! the application.
+      /**
+       * Constructs a controller in a state ready to execute a new instance of
+       * the application.
+       */
       SpireController();
 
       ~SpireController();
 
-      //! Begins running the application.
+      /** Begins running the application. */
       void open();
 
     private:
@@ -29,7 +30,6 @@ namespace Spire {
       };
       State m_state;
       std::unique_ptr<LoginController> m_login_controller;
-      std::unique_ptr<ToolbarController> m_toolbar_controller;
 
       SpireController(const SpireController&) = delete;
       SpireController& operator =(const SpireController&) = delete;

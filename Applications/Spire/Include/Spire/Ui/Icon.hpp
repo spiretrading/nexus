@@ -6,8 +6,11 @@
 namespace Spire {
 namespace Styles {
 
+  /** Sets the icon image of an icon. */
+  using IconImage = BasicProperty<QImage, struct IconImageTag>;
+
   /** Sets the fill color of an icon. */
-  using Fill = BasicProperty<QColor, struct FillTag>;
+  using Fill = BasicProperty<boost::optional<QColor>, struct FillTag>;
 }
 
   /** Displays an icon. */
@@ -29,7 +32,7 @@ namespace Styles {
     private:
       QImage m_icon;
       QColor m_background_color;
-      QColor m_fill;
+      boost::optional<QColor> m_fill;
       boost::optional<QColor> m_border_color;
 
       void on_style();
