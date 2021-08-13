@@ -115,6 +115,7 @@ class TextAreaBox::ElidedLabel : public QWidget {
 
     void set_text(const QString &text) {
       m_text = text;
+      m_text_layout.setText(m_text);
       update();
     }
 
@@ -125,6 +126,9 @@ class TextAreaBox::ElidedLabel : public QWidget {
 
     void set_alignment(Qt::Alignment alignment) {
       m_alignment = alignment;
+      auto opt = m_text_layout.textOption();
+      opt.setAlignment(m_alignment);
+      m_text_layout.setTextOption(opt);
       update();
     }
 
@@ -134,18 +138,20 @@ class TextAreaBox::ElidedLabel : public QWidget {
     }
 
   protected:
+    void changeEvent(QEvent* event) override {
+      if(event->type() == QEvent::FontChange) {
+        m_text_layout.setFont(font());
+      }
+    }
+
     void paintEvent(QPaintEvent *event) override {
       auto painter = QPainter(this);
       painter.setPen(m_text_color);
       painter.setFont(font());
       auto y = m_line_height - painter.fontMetrics().height();
-      auto textLayout = QTextLayout(m_text, painter.font());
-      auto opt = textLayout.textOption();
-      opt.setAlignment(m_alignment);
-      textLayout.setTextOption(opt);
-      textLayout.beginLayout();
-      for(auto line = textLayout.createLine(); line.isValid();
-          line = textLayout.createLine()) {
+      m_text_layout.beginLayout();
+      for(auto line = m_text_layout.createLine(); line.isValid();
+          line = m_text_layout.createLine()) {
         line.setLineWidth(width());
         auto next_line_y = y + m_line_height;
         if (height() >= next_line_y + m_line_height) {
@@ -157,16 +163,17 @@ class TextAreaBox::ElidedLabel : public QWidget {
             Qt::ElideRight, width());
           painter.drawText(QPoint(0, y + painter.fontMetrics().ascent()),
             elided_last_line);
-          line = textLayout.createLine();
+          line = m_text_layout.createLine();
           break;
         }
       }
-      textLayout.endLayout();
+      m_text_layout.endLayout();
     }
 
   private:
     QMargins m_padding;
     QString m_text;
+    QTextLayout m_text_layout;
     Qt::Alignment m_alignment;
     QColor m_text_color;
     int m_line_height;
