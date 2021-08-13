@@ -46,6 +46,16 @@ struct Stylist::StyleEventFilter : QObject {
   StyleEventFilter(Stylist& stylist)
       : QObject(stylist.m_widget),
         m_stylist(&stylist) {
+    auto& widget = *stylist.m_widget;
+    if(widget.hasFocus()) {
+      m_stylist->match(Focus());
+    }
+    if(!widget.isEnabled()) {
+      m_stylist->match(Disabled());
+    }
+    if(widget.isActiveWindow()) {
+      m_stylist->match(Active());
+    }
     connect(qApp,
       &QApplication::focusChanged, this, &StyleEventFilter::on_focus_changed);
   }
@@ -77,6 +87,12 @@ struct Stylist::StyleEventFilter : QObject {
       m_stylist->match(Active());
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_stylist->unmatch(Active());
+    } else if(event->type() == QEvent::Show) {
+      if(m_stylist->m_widget->isActiveWindow()) {
+        m_stylist->match(Active());
+      } else {
+        m_stylist->unmatch(Active());
+      }
     } else if(event->type() == QEvent::ParentChange) {
       m_stylist->set_style(m_stylist->get_style());
     }
