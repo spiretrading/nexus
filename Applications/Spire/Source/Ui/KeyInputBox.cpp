@@ -89,7 +89,11 @@ KeyInputBox::KeyInputBox(
   layers->add(new Caret(this));
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  layout->addWidget(make_input_box(layers, this));
+  auto input_box = make_input_box(layers, this);
+  auto input_box_style = get_style(*input_box);
+  input_box_style.get(Any()).set(vertical_padding(scale_height(3)));
+  set_style(*input_box, std::move(input_box_style));
+  layout->addWidget(input_box);
   setLayout(layout);
   auto body_layout = new QHBoxLayout();
   body_layout->setContentsMargins({});
@@ -122,9 +126,11 @@ void KeyInputBox::focusOutEvent(QFocusEvent* event) {
 
 void KeyInputBox::keyPressEvent(QKeyEvent* event) {
   auto key = event->key();
-  if(key == Qt::Key_Shift || key == Qt::Key_Meta || key == Qt::Key_Control ||
-      key == Qt::Key_Alt) {
+  if(key == Qt::Key_Shift ||
+      key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
     return;
+  } else if(key == Qt::Key_Enter) {
+    transition_submission();
   } else if(event->modifiers() == 0) {
     if(key == Qt::Key_Delete || key == Qt::Key_Backspace) {
       m_submission = m_current->get_current();
@@ -132,7 +138,7 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
     } else if(key == Qt::Key_Escape &&
         m_current->set_current(key) == QValidator::Invalid) {
       m_current->set_current(m_submission);
-    } else if(key == Qt::Key_Enter || key == Qt::Key_Tab) {
+    } else if(key == Qt::Key_Return || key == Qt::Key_Tab) {
       transition_submission();
     } else {
       m_current->set_current(key);
@@ -162,6 +168,9 @@ void KeyInputBox::transition_status() {
 }
 
 void KeyInputBox::transition_submission() {
+  if(m_status == Status::PROMPT) {
+    return;
+  }
   m_submission = m_current->get_current();
   m_submit_signal(m_submission);
 }

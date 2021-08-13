@@ -13,12 +13,11 @@ namespace {
   const auto MODIFIER_BACKGROUND_COLOR = QColor("#FFEDCD");
 
   auto TAG_STYLE(StyleSheet style) {
-    style.get(ReadOnly()).
+    style.get(ReadOnly() && Disabled()).
       set(border_radius(scale_width(3))).
       set(border_size(0)).
       set(horizontal_padding(scale_width(4))).
-      set(vertical_padding(scale_height(2))).
-      set(TextColor(QColor::fromRgb(0, 0, 0)));
+      set(vertical_padding(scale_height(2)));
     return style;
   }
 
@@ -58,10 +57,9 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_text_box = new TextBox(this);
-  m_text_box->set_read_only(true);
-  proxy_style(*this, *m_text_box);
-  set_style(*m_text_box, TAG_STYLE(get_style(*m_text_box)));
+  m_label = make_label("");
+  proxy_style(*this, *m_label);
+  set_style(*m_label, TAG_STYLE(get_style(*m_label)));
   auto style = get_style(*this);
   style.get(Any()).
     set(BackgroundColor(DEFAULT_BACKGROUND_COLOR));
@@ -70,7 +68,7 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   style.get(EscapeKeyState()).
     set(BackgroundColor(ESCAPE_BACKGROUND_COLOR));
   set_style(*this, std::move(style));
-  layout->addWidget(m_text_box);
+  layout->addWidget(m_label);
   m_current_connection = m_model->connect_current_signal([=] (auto key) {
     on_current_key(key);
   });
@@ -82,7 +80,7 @@ const std::shared_ptr<KeyModel>& KeyTag::get_model() const {
 }
 
 void KeyTag::on_current_key(Qt::Key key) {
-  m_text_box->get_model()->set_current(get_key_text(key));
+  m_label->get_model()->set_current(get_key_text(key));
   switch(key) {
     case Qt::Key_Alt:
     case Qt::Key_Control:
