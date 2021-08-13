@@ -1,6 +1,7 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -61,16 +62,17 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
   m_panel->set_closed_on_blur(true);
   m_panel->layout()->itemAt(0)->widget()->setSizePolicy(QSizePolicy::Minimum,
     QSizePolicy::Preferred);
+  if(auto list_item = m_list_view->get_list_item(0)) {
+    setMaximumHeight(10 * list_item->sizeHint().height());
+    auto border_size = get_border_size(*m_panel);
+    setMinimumWidth(m_panel->parentWidget()->size().width() -
+      border_size.width());
+  }
 }
 
 bool DropDownList::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
-    auto list_item = m_list_view->get_list_item(0);
-    if(list_item) {
-      setMaximumHeight(10 * list_item->sizeHint().height());
-      auto border_size = get_border_size(*m_panel);
-      setMinimumWidth(m_panel->parentWidget()->size().width() -
-        border_size.width());
+    if(m_list_view->get_list_model()->get_size() > 0) {
       m_panel->show();
     }
   }
