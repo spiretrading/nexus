@@ -54,7 +54,6 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   auto scrollable_list_box = new ScrollableListBox(*m_list_view, this);
-  scrollable_list_box->setFocusProxy(m_list_view);
   set_style(*scrollable_list_box,
     SCROLLABLE_LIST_STYLE(get_style(*scrollable_list_box)));
   layout->addWidget(scrollable_list_box);
