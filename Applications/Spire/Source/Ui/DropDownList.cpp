@@ -16,6 +16,36 @@ namespace {
       set(border_size(0));
     return style;
   }
+
+  auto get_border_size(QWidget& widget) {
+    auto border_size = QSize(0, 0);
+    auto& stylist = find_stylist(widget);
+    auto block = stylist.get_computed_block();
+    for(auto& property : block) {
+      property.visit(
+        [&] (const BorderTopSize& size) {
+          stylist.evaluate(size, [&] (auto size) {
+            border_size.rheight() += size;
+          });
+        },
+        [&] (const BorderRightSize& size) {
+          stylist.evaluate(size, [&] (auto size) {
+            border_size.rwidth() += size;
+          });
+        },
+        [&] (const BorderBottomSize& size) {
+          stylist.evaluate(size, [&] (auto size) {
+            border_size.rheight() += size;
+          });
+        },
+        [&] (const BorderLeftSize& size) {
+          stylist.evaluate(size, [&] (auto size) {
+            border_size.rwidth() += size;
+          });
+        });
+    }
+    return border_size;
+  }
 }
 
 DropDownList::DropDownList(ListView& list_view, QWidget* parent)
@@ -39,7 +69,9 @@ bool DropDownList::event(QEvent* event) {
     auto list_item = m_list_view->get_list_item(0);
     if(list_item) {
       setMaximumHeight(10 * list_item->sizeHint().height());
-      setMinimumWidth(m_panel->parentWidget()->size().width());
+      auto border_size = get_border_size(*m_panel);
+      setMinimumWidth(m_panel->parentWidget()->size().width() -
+        border_size.width());
       m_panel->show();
     }
   }
