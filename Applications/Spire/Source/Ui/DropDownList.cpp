@@ -17,36 +17,6 @@ namespace {
       set(border_size(0));
     return style;
   }
-
-  auto get_border_size(QWidget& widget) {
-    auto border_size = QSize(0, 0);
-    auto& stylist = find_stylist(widget);
-    auto block = stylist.get_computed_block();
-    for(auto& property : block) {
-      property.visit(
-        [&] (const BorderTopSize& size) {
-          stylist.evaluate(size, [&] (auto size) {
-            border_size.rheight() += size;
-          });
-        },
-        [&] (const BorderRightSize& size) {
-          stylist.evaluate(size, [&] (auto size) {
-            border_size.rwidth() += size;
-          });
-        },
-        [&] (const BorderBottomSize& size) {
-          stylist.evaluate(size, [&] (auto size) {
-            border_size.rheight() += size;
-          });
-        },
-        [&] (const BorderLeftSize& size) {
-          stylist.evaluate(size, [&] (auto size) {
-            border_size.rwidth() += size;
-          });
-        });
-    }
-    return border_size;
-  }
 }
 
 DropDownList::DropDownList(ListView& list_view, QWidget* parent)
@@ -64,9 +34,9 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
     QSizePolicy::Preferred);
   if(auto list_item = m_list_view->get_list_item(0)) {
     setMaximumHeight(10 * list_item->sizeHint().height());
-    auto border_size = get_border_size(*m_panel);
+    get_panel_border_size();
     setMinimumWidth(m_panel->parentWidget()->size().width() -
-      border_size.width());
+      m_panel_border_size.width());
   }
 }
 
@@ -77,4 +47,32 @@ bool DropDownList::event(QEvent* event) {
     }
   }
   return QWidget::event(event);
+}
+
+void DropDownList::get_panel_border_size() {
+  m_panel_border_size = {0, 0};
+  auto& stylist = find_stylist(*m_panel);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_border_size.rheight() += size;
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_border_size.rwidth() += size;
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_border_size.rheight() += size;
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_border_size.rwidth() += size;
+        });
+      });
+  }
 }

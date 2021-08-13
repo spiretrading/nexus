@@ -23,6 +23,9 @@ namespace Spire {
     private:
       ListView* m_list_view;
       OverlayPanel* m_panel;
+      QSize m_panel_border_size;
+
+      void get_panel_border_size();
   };
 }
 
