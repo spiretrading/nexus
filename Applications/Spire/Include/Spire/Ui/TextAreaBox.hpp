@@ -66,8 +66,6 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-      QSize sizeHint() const override;
-
     protected:
       void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;

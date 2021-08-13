@@ -11,7 +11,6 @@
 #include "Spire/Ui/ScrollBox.hpp"
 
 using namespace boost;
-using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -271,10 +270,6 @@ connection TextAreaBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-QSize TextAreaBox::sizeHint() const {
-  return m_scroll_box->sizeHint();
-}
-
 void TextAreaBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_placeholder_text();
@@ -373,13 +368,15 @@ void TextAreaBox::update_display_text() {
     auto is_elided = false;
     if(line_count > 0) {
       auto lines = QStringList();
-      for(auto i = 0; i < m_text_edit->document()->blockCount() && !is_elided;
-          ++i) {
-        auto block = m_text_edit->document()->findBlockByNumber(i);
+      for(auto block_index = 0;
+          block_index < m_text_edit->document()->blockCount() && !is_elided;
+          ++block_index) {
+        auto block = m_text_edit->document()->findBlockByNumber(block_index);
         if(block.isValid()) {
           auto block_text = block.text();
-          for(int i = 0; i != block.layout()->lineCount(); ++i) {
-            auto line = block.layout()->lineAt(i);
+          for(int line_index = 0; line_index != block.layout()->lineCount();
+              ++line_index) {
+            auto line = block.layout()->lineAt(line_index);
             lines.append(
               block_text.mid(line.textStart(), line.textLength()));
           }
