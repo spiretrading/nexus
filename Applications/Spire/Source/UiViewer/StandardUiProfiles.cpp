@@ -837,11 +837,8 @@ UiProfile Spire::make_key_input_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
-    auto& width = get<int>("width", profile.get_properties());
-    width.set(scale_width(100));
-    auto& height = get<int>("height", profile.get_properties());
-    height.set(scale_height(34));
     auto box = new KeyInputBox();
+    box->setFixedSize(scale_width(100), scale_height(30));
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
@@ -859,10 +856,9 @@ UiProfile Spire::make_key_input_box_profile() {
     });
     box->get_current()->connect_current_signal(
       profile.make_event_slot<QKeySequence>(QString::fromUtf8("Current")));
-    box->get_current()->connect_current_signal(
-      [&current] (const auto& value) {
-        current.set(value.toString());
-      });
+    box->get_current()->connect_current_signal([&current] (const auto& value) {
+      current.set(value.toString());
+    });
     box->connect_submit_signal(
       profile.make_event_slot<QKeySequence>(QString::fromUtf8("Submit")));
     return box;

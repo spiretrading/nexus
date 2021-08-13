@@ -22,14 +22,8 @@ namespace Spire {
   class FilteredTableModel;
   class FilterPanel;
   class Icon;
-<<<<<<< HEAD
-  class IconButton;
-  class IntegerSpinBox;
-  class KeyInputBox;
-  class KeySequenceInputField;
-=======
   class InfoTip;
->>>>>>> spire2018
+  class KeyInputBox;
   class LayeredWidget;
   class ListItem;
   class ListModel;
