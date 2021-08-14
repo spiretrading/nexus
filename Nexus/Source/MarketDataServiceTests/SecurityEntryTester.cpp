@@ -60,8 +60,12 @@ namespace {
       REQUIRE(snapshot->m_marketQuotes.size() == marketQuotes.size());
       for(auto& marketQuote : marketQuotes) {
         REQUIRE_NOTHROW(snapshot->m_marketQuotes.at((*marketQuote)->m_market));
-        REQUIRE(snapshot->m_marketQuotes.at((*marketQuote)->m_market) ==
-          marketQuote);
+        REQUIRE(
+          snapshot->m_marketQuotes.at((*marketQuote)->m_market).GetSequence() ==
+          marketQuote.GetSequence());
+        REQUIRE(
+          snapshot->m_marketQuotes.at((*marketQuote)->m_market).GetValue() ==
+          marketQuote.GetValue());
       }
     }
 
@@ -91,13 +95,17 @@ namespace {
       REQUIRE(snapshot->m_askBook.size() == expectedAsks.size());
       REQUIRE(snapshot->m_bidBook.size() == expectedBids.size());
       for(auto& ask : expectedAsks) {
+        auto sequenced_ask =
+          Beam::Queries::SequencedValue(ask->GetValue(), ask.GetSequence());
         auto quoteIterator = find(snapshot->m_askBook.begin(),
-          snapshot->m_askBook.end(), ask);
+          snapshot->m_askBook.end(), sequenced_ask);
         REQUIRE(quoteIterator != snapshot->m_askBook.end());
       }
       for(auto& bid : expectedBids) {
+        auto sequenced_bid =
+          Beam::Queries::SequencedValue(bid->GetValue(), bid.GetSequence());
         auto quoteIterator = find(snapshot->m_bidBook.begin(),
-          snapshot->m_bidBook.end(), bid);
+          snapshot->m_bidBook.end(), sequenced_bid);
         REQUIRE(quoteIterator != snapshot->m_bidBook.end());
       }
     }
