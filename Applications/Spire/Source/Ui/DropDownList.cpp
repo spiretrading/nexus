@@ -24,32 +24,41 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
       m_list_view(&list_view) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  auto scrollable_list_box = new ScrollableListBox(*m_list_view, this);
-  set_style(*scrollable_list_box,
-    SCROLLABLE_LIST_STYLE(get_style(*scrollable_list_box)));
-  layout->addWidget(scrollable_list_box);
+  m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
+  set_style(*m_scrollable_list_box,
+    SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
+  layout->addWidget(m_scrollable_list_box);
   m_panel = new OverlayPanel(this, parent);
   m_panel->set_closed_on_blur(true);
-  m_panel->layout()->itemAt(0)->widget()->setSizePolicy(QSizePolicy::Minimum,
-    QSizePolicy::Preferred);
-  if(auto list_item = m_list_view->get_list_item(0)) {
-    setMaximumHeight(10 * list_item->sizeHint().height());
-    get_panel_border_size();
-    setMinimumWidth(m_panel->parentWidget()->size().width() -
-      m_panel_border_size.width());
-  }
+  on_panel_style();
+  connect_style_signal(*m_panel, [=] { on_panel_style(); });
+}
+
+QSize DropDownList::sizeHint() const {
+  auto width = std::max(m_panel->parentWidget()->size().width() -
+    m_panel_border_size.width(), m_scrollable_list_box->sizeHint().width());
+  auto height = [=] {
+    if(auto list_item = m_list_view->get_list_item(0)) {
+      return std::min(10 * list_item->sizeHint().height(),
+        m_scrollable_list_box->sizeHint().height());
+    }
+    return 0;
+  }();
+  return {width, height};
 }
 
 bool DropDownList::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     if(m_list_view->get_list_model()->get_size() > 0) {
       m_panel->show();
+      auto margins = m_panel->layout()->contentsMargins();
+      m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);
     }
   }
   return QWidget::event(event);
 }
 
-void DropDownList::get_panel_border_size() {
+void DropDownList::on_panel_style() {
   m_panel_border_size = {0, 0};
   auto& stylist = find_stylist(*m_panel);
   for(auto& property : stylist.get_computed_block()) {
