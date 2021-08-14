@@ -7,6 +7,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -32,19 +33,33 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
   m_panel->set_closed_on_blur(true);
   on_panel_style();
   connect_style_signal(*m_panel, [=] { on_panel_style(); });
+  parent->installEventFilter(this);
+  m_scrollable_list_box->installEventFilter(this);
 }
 
 QSize DropDownList::sizeHint() const {
-  auto width = std::max(m_panel->parentWidget()->size().width() -
-    m_panel_border_size.width(), m_scrollable_list_box->sizeHint().width());
-  auto height = [=] {
-    if(auto list_item = m_list_view->get_list_item(0)) {
-      return std::min(10 * list_item->sizeHint().height(),
-        m_scrollable_list_box->sizeHint().height());
-    }
-    return 0;
-  }();
-  return {width, height};
+  if(!m_size_hint) {
+    auto width = std::max(m_panel->parentWidget()->size().width() -
+      m_panel_border_size.width(), m_scrollable_list_box->sizeHint().width());
+    auto height = [=] {
+      if(auto list_item = m_list_view->get_list_item(0)) {
+        return std::min(10 * list_item->sizeHint().height(),
+          m_scrollable_list_box->sizeHint().height());
+      }
+      return 0;
+    }();
+    m_size_hint.emplace(width, height);
+  }
+  return *m_size_hint;
+}
+
+bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize ||
+      event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+    updateGeometry();
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 bool DropDownList::event(QEvent* event) {

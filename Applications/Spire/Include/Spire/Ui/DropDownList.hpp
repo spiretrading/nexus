@@ -20,6 +20,7 @@ namespace Spire {
       QSize sizeHint() const override;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
 
     private:
@@ -27,6 +28,7 @@ namespace Spire {
       ScrollableListBox* m_scrollable_list_box;
       OverlayPanel* m_panel;
       QSize m_panel_border_size;
+      mutable boost::optional<QSize> m_size_hint;
 
       void on_panel_style();
   };
