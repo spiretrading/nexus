@@ -3,7 +3,6 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
-#include <QVBoxLayout>
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -57,6 +56,7 @@ namespace {
         const auto BLINK_RATE = 500;
         blink_timer->setInterval(BLINK_RATE);
         blink_timer->start();
+        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
         setFixedWidth(scale_width(1));
       }
 
@@ -99,7 +99,7 @@ KeyInputBox::KeyInputBox(
   set_style(*input_box, std::move(input_box_style));
   layout->addWidget(input_box);
   setLayout(layout);
-  auto body_layout = new QVBoxLayout();
+  auto body_layout = new QHBoxLayout();
   body_layout->setContentsMargins({});
   m_body->setLayout(body_layout);
   set_status(Status::NONE);
@@ -129,7 +129,6 @@ void KeyInputBox::focusOutEvent(QFocusEvent* event) {
 }
 
 void KeyInputBox::keyPressEvent(QKeyEvent* event) {
-  qDebug() << m_body->size();
   auto key = event->key();
   if(key == Qt::Key_Shift ||
       key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
@@ -159,7 +158,9 @@ void KeyInputBox::layout_key_sequence() {
     clear(layout);
     layout.setSpacing(scale_width(4));
     for(auto key : split(m_current->get_current())) {
-      layout.addWidget(new KeyTag(make_constant_value_model(key)));
+      auto tag = new KeyTag(make_constant_value_model(key));
+      tag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+      layout.addWidget(tag);
     }
   }
 }
