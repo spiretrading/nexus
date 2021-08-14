@@ -106,7 +106,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SecurityOrderSimulator<C>::Submit(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       auto isLive = true;
       order->With([&] (auto status, auto& reports) {
         auto& lastReport = reports.back();
@@ -132,7 +132,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SecurityOrderSimulator<C>::Cancel(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       order->With([&] (auto status, auto& reports) {
         if(IsTerminal(status) || reports.empty()) {
           return;
@@ -151,7 +151,7 @@ namespace Nexus::OrderExecutionService {
   void SecurityOrderSimulator<C>::Update(
       const std::shared_ptr<PrimitiveOrder>& order,
       const ExecutionReport& executionReport) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       order->With([&] (auto status, auto& executionReports) {
         if(IsTerminal(status) || executionReports.empty() &&
             executionReport.m_status != OrderStatus::PENDING_NEW) {
@@ -174,7 +174,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SecurityOrderSimulator<C>::Recover(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       m_orders.push_back(order);
       UpdateOrder(*order);
     });

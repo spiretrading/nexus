@@ -108,39 +108,39 @@ namespace Nexus {
       m_openTime = m_timeClient->GetTime();
       m_pendingLoadCount = 4 * m_securities.size();
       for(auto& security : m_securities) {
-        m_routines.Spawn([=] {
+        m_routines.Spawn([=, this] {
           ReplayMarketData(security,
-            [=] (const auto& query) {
+            [this] (const auto& query) {
               return m_dataStore->LoadBboQuotes(query);
             },
-            [=] (const auto& value) {
+            [this] (const auto& value) {
               return m_feedClient->Publish(value);
             });
         });
-        m_routines.Spawn([=] {
+        m_routines.Spawn([=, this] {
           ReplayMarketData(security,
-            [=] (const auto& query) {
+            [this] (const auto& query) {
               return m_dataStore->LoadMarketQuotes(query);
             },
-            [=] (const auto& value) {
+            [this] (const auto& value) {
               return m_feedClient->Publish(value);
             });
         });
-        m_routines.Spawn([=] {
+        m_routines.Spawn([=, this] {
           ReplayMarketData(security,
-            [=] (const auto& query) {
+            [this] (const auto& query) {
               return m_dataStore->LoadBookQuotes(query);
             },
-            [=] (const auto& value) {
+            [this] (const auto& value) {
               return m_feedClient->Publish(value);
             });
         });
-        m_routines.Spawn([=] {
+        m_routines.Spawn([=, this] {
           ReplayMarketData(security,
-            [=] (const auto& query) {
+            [this] (const auto& query) {
               return m_dataStore->LoadTimeAndSales(query);
             },
-            [=] (const auto& value) {
+            [this] (const auto& value) {
               return m_feedClient->Publish(value);
             });
         });
