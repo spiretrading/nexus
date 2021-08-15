@@ -209,7 +209,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
     m_orderSubmissionPublisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
-      [=] (const auto& orderRecord) {
+      [this] (const auto& orderRecord) {
         return Beam::Queries::SequencedValue(
           static_cast<const Order*>(LoadOrder(orderRecord).get()),
           orderRecord.GetSequence());
@@ -221,7 +221,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       Beam::ScopedQueueWriter<const Order*> queue) {
     m_orderSubmissionPublisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
-      [=] (const auto& orderRecord) {
+      [this] (const auto& orderRecord) {
         return static_cast<const Order*>(LoadOrder(orderRecord).get());
       }));
   }

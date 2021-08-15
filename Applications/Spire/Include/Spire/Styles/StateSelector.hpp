@@ -48,6 +48,21 @@ namespace Spire::Styles {
       bool operator !=(const StateSelector& selector) const;
   };
 
+  /** Selects the widget that is or belongs to the active window. */
+  using Active = StateSelector<void, struct ActiveSelectorTag>;
+
+  /** Selects the disabled widget. */
+  using Disabled = StateSelector<void, struct DisabledSelectorTag>;
+
+  /** Selects the hovered widget. */
+  using Hover = StateSelector<void, struct HoverSelectorTag>;
+
+  /** Selects the focused widget. */
+  using Focus = StateSelector<void, struct FocusSelectorTag>;
+
+  /** Selects a widget if it was focused using a non-pointing device. */
+  using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
+
   template<typename T, typename G>
   std::unordered_set<Stylist*> select(const StateSelector<T, G>& selector,
       std::unordered_set<Stylist*> sources) {

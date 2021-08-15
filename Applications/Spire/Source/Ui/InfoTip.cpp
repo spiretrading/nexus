@@ -121,7 +121,7 @@ void InfoTip::fade_out() {
 
 QPainterPath InfoTip::get_arrow_path() const {
   auto path = QPainterPath();
-  auto polygon = [&] () -> QPolygonF {
+  auto polygon = [&] () -> QPolygon {
     auto margins = get_margins();
     auto left_x = ARROW_X_POSITION() + DROP_SHADOW_WIDTH();
     auto tip_x = left_x + ARROW_SIZE().width() / 2;
