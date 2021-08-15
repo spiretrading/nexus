@@ -1,7 +1,4 @@
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
-#ifdef slots
-  #undef slots
-#endif
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>

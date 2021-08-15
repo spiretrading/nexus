@@ -142,7 +142,7 @@ void RiskWebServlet::OnPortfolioUpgrade(const HttpRequest& request,
   auto subscriber = std::make_shared<PortfolioSubscriber>(
     session->GetAccount(), std::move(channel));
   Routines::Spawn(
-    [=] {
+    [=, this] {
       while(true) {
         auto frame = subscriber->m_client.Read();
         auto buffer = SharedBuffer();
@@ -180,7 +180,7 @@ void RiskWebServlet::OnPortfolioRequest(
   }
   subscriber->m_subscriptionId = idHeader;
   m_tasks.Push(
-    [=] {
+    [=, this] {
       auto groups =
         m_serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
         subscriber->m_account);

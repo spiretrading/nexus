@@ -64,7 +64,7 @@ namespace {
       }
       m_administrationEnvironment.GetClient().StoreEntitlements(
         m_serviceLocatorEnvironment.GetRoot().GetAccount(), entitlements);
-      auto marketDataClientFactory = [=] {
+      auto marketDataClientFactory = [this] {
         return std::make_unique<MarketDataClientBox>(MakeMarketDataClient());
       };
       m_container.emplace(Initialize(m_serviceLocatorEnvironment.GetRoot(),

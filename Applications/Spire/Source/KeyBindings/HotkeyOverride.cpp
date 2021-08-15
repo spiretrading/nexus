@@ -47,25 +47,25 @@ bool HotkeyOverride::nativeEvent(const QByteArray& eventType, void* message,
   if(winMessage->message == WM_HOTKEY) {
     optional<QKeyEvent> keyEvent;
     if(winMessage->wParam == HOTKEY_ALT_F4_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::ALT;
+      Qt::KeyboardModifiers modifiers = Qt::AltModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_F4, modifiers);
     } else if(winMessage->wParam == HOTKEY_SHIFT_F11_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::SHIFT;
+      Qt::KeyboardModifiers modifiers = Qt::ShiftModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_F11, modifiers);
     } else if(winMessage->wParam == HOTKEY_SHIFT_F12_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::SHIFT;
+      Qt::KeyboardModifiers modifiers = Qt::ShiftModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_F12, modifiers);
     } else if(winMessage->wParam == HOTKEY_CTRL_F11_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::CTRL;
+      Qt::KeyboardModifiers modifiers = Qt::ControlModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_F11, modifiers);
     } else if(winMessage->wParam == HOTKEY_CTRL_F12_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::CTRL;
+      Qt::KeyboardModifiers modifiers = Qt::ControlModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_F12, modifiers);
     } else if(winMessage->wParam == HOTKEY_ALT_ESC_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::ALT;
+      Qt::KeyboardModifiers modifiers = Qt::AltModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_Escape, modifiers);
     } else if(winMessage->wParam == HOTKEY_CTRL_ESC_INDEX) {
-      Qt::KeyboardModifiers modifiers = Qt::CTRL;
+      Qt::KeyboardModifiers modifiers = Qt::ControlModifier;
       keyEvent = QKeyEvent(QEvent::KeyPress, Qt::Key_Escape, modifiers);
     }
     if(keyEvent.is_initialized()) {

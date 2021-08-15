@@ -72,7 +72,7 @@ TEST_SUITE("ConsolidatedRiskController") {
       &m_adminClients.GetAdministrationClient(),
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
-      [=] {
+      [this] {
         return m_adminClients.MakeTimer(seconds(1));
       },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
@@ -91,7 +91,7 @@ TEST_SUITE("ConsolidatedRiskController") {
       &m_adminClients.GetAdministrationClient(),
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
-      [=] {
+      [this] {
         return m_adminClients.MakeTimer(seconds(1));
       },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,

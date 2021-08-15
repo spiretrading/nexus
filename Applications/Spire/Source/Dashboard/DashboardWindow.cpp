@@ -1,7 +1,4 @@
 #include "Spire/Dashboard/DashboardWindow.hpp"
-#ifdef slots
-  #undef slots
-#endif
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/algorithm/string/trim.hpp>

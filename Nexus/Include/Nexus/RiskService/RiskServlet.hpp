@@ -288,7 +288,7 @@ namespace Nexus::RiskService {
         inventory.m_transactionCount = baseInventory.m_transactionCount -
           inventory.m_transactionCount;
         updatedSnapshot.m_inventories.push_back(inventory);
-        m_tasks.Push([=, key =
+        m_tasks.Push([this, key =
             RiskPortfolioKey(account, inventory.m_position.m_key.m_index)] {
           m_volumes[key] = -1;
         });

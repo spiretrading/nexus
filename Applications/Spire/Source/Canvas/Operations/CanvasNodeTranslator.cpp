@@ -677,19 +677,19 @@ namespace {
     template<typename T0, typename T1, typename T2, typename R>
     struct Operation {
       R operator()(const T0& condition, const T1& consequent,
-          const T2& default) const {
-        return condition ? consequent : default;
+          const T2& other) const {
+        return condition ? consequent : other;
       }
     };
 
     template<typename T0, typename T1, typename T2, typename R>
     static Translation Template(const Translation& condition,
-        const Translation& consequent, const Translation& default,
+        const Translation& consequent, const Translation& other,
         CanvasNodeTranslationContext& context) {
       return Aspen::lift(Operation<T0, T1, T2, R>(),
         condition.Extract<Aspen::Box<T0>>(),
         consequent.Extract<Aspen::Box<T1>>(),
-        default.Extract<Aspen::Box<T2>>());
+        other.Extract<Aspen::Box<T2>>());
     }
 
     using SupportedTypes = IfNodeSignatures::type;

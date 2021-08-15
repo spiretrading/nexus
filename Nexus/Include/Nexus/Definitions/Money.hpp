@@ -377,16 +377,16 @@ namespace Details {
 
 namespace Details {
   template<typename T>
-  constexpr const T MoneyDefinitions<T>::ZERO(0);
+  const T MoneyDefinitions<T>::ZERO(0);
 
   template<typename T>
-  constexpr const T MoneyDefinitions<T>::ONE(1);
+  const T MoneyDefinitions<T>::ONE(1);
 
   template<typename T>
-  constexpr const T MoneyDefinitions<T>::CENT(T(1) / 100);
+  const T MoneyDefinitions<T>::CENT(T(1) / 100);
 
   template<typename T>
-  constexpr const T MoneyDefinitions<T>::BIP(T(1) / 10000);
+  const T MoneyDefinitions<T>::BIP(T(1) / 10000);
 }
 }
 

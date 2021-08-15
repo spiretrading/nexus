@@ -142,7 +142,7 @@ namespace Nexus::Accounting {
   inline PositionOrderBook::PositionOrderBook()
       : m_orderSequenceNumber(0) {
     m_liveOrders.SetComputation(
-      [=] {
+      [this] {
         auto orders = std::vector<const OrderExecutionService::Order*>();
         for(auto& entry : m_securityEntries | boost::adaptors::map_values) {
           std::transform(entry.m_asks.begin(), entry.m_asks.end(),
@@ -153,7 +153,7 @@ namespace Nexus::Accounting {
         return orders;
       });
     m_openingOrders.SetComputation(
-      [=] {
+      [this] {
         auto orders = std::vector<const OrderExecutionService::Order*>();
         for(auto& entry : m_securityEntries | boost::adaptors::map_values) {
           if(entry.m_position == 0) {
@@ -194,7 +194,7 @@ namespace Nexus::Accounting {
         return orders;
       });
     m_positions.SetComputation(
-      [=] {
+      [this] {
         auto positions = std::vector<PositionEntry>();
         for(auto& securityEntryPair : m_securityEntries) {
           if(securityEntryPair.second.m_position != 0) {

@@ -130,7 +130,7 @@ namespace Spire {
 
   template<typename T>
   LuaReactor<T>& LuaReactor<T>::operator =(LuaReactor&& reactor) {
-    if(m_luaClose != nullptr) {
+    if(m_luaState != nullptr) {
       lua_close(m_luaState);
     }
     m_functionName = std::move(reactor.m_functionName);

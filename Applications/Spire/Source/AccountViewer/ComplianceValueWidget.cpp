@@ -1,5 +1,4 @@
 #include "Spire/AccountViewer/ComplianceValueWidget.hpp"
-#include <boost/variant/static_visitor.hpp>
 #include <QSpinBox>
 #include "Spire/InputWidgets/CurrencyInputWidget.hpp"
 #include "Spire/InputWidgets/MoneySpinBox.hpp"
@@ -16,16 +15,14 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  struct ComplianceValueConverter :
-      public boost::static_visitor<ComplianceValue> {
+  struct ComplianceValueConverter {
     template<typename T>
     ComplianceValue operator ()(const T& value) const {
       return value;
     }
   };
 
-  struct ValueConverter :
-      public boost::static_visitor<ValueListInputDialog::Value> {
+  struct ValueConverter {
     template<typename T>
     ValueListInputDialog::Value operator ()(const T& value) const {
       return {};
@@ -36,7 +33,7 @@ namespace {
     }
   };
 
-  struct ComplianceWidgetVisitor : public boost::static_visitor<QWidget*> {
+  struct ComplianceWidgetVisitor {
     bool m_isReadOnly;
     UserProfile* m_userProfile;
     QWidget* m_parent;
@@ -96,7 +93,7 @@ namespace {
     }
   };
 
-  struct SetValueVisitor : public boost::static_visitor<> {
+  struct SetValueVisitor {
     QWidget* m_widget;
 
     SetValueVisitor(QWidget* widget)

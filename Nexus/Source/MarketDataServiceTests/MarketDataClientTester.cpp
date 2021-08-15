@@ -61,7 +61,7 @@ namespace {
 
     std::unique_ptr<ClientEntry> MakeClient() {
       auto builder = TestServiceProtocolClientBuilder(
-        [=] {
+        [this] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
             "test", *m_serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
