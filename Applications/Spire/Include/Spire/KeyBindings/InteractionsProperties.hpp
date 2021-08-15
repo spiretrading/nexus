@@ -62,14 +62,14 @@ namespace Serialization {
         std::int64_t defaultQuantity;
         shuttle.Shuttle("default_quantity", defaultQuantity);
         value.m_defaultQuantity = defaultQuantity;
-        std::array<std::int64_t, KeyModifiers::COUNT> quantityIncrements;
+        std::array<std::int64_t, Spire::KeyModifiers::COUNT> quantityIncrements;
         shuttle.Shuttle("quantity_increments", quantityIncrements);
-        for(auto i = 0; i < KeyModifiers::COUNT; ++i) {
+        for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           value.m_quantityIncrements[i] = quantityIncrements[i];
         }
-        std::array<std::int64_t, KeyModifiers::COUNT> priceIncrements;
+        std::array<std::int64_t, Spire::KeyModifiers::COUNT> priceIncrements;
         shuttle.Shuttle("price_increments", priceIncrements);
-        for(auto i = 0; i < KeyModifiers::COUNT; ++i) {
+        for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           value.m_priceIncrements[i] = Nexus::Money{
             Nexus::Quantity{priceIncrements[i]} / Nexus::Quantity::MULTIPLIER};
         }
@@ -77,14 +77,14 @@ namespace Serialization {
         std::int64_t defaultQuantity = static_cast<std::int64_t>(
           value.m_defaultQuantity);
         shuttle.Shuttle("default_quantity", defaultQuantity);
-        std::array<std::int64_t, KeyModifiers::COUNT> quantityIncrements;
-        for(auto i = 0; i < KeyModifiers::COUNT; ++i) {
+        std::array<std::int64_t, Spire::KeyModifiers::COUNT> quantityIncrements;
+        for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           quantityIncrements[i] = static_cast<std::int64_t>(
             value.m_quantityIncrements[i]);
         }
         shuttle.Shuttle("quantity_increments", quantityIncrements);
-        std::array<std::int64_t, KeyModifiers::COUNT> priceIncrements;
-        for(auto i = 0; i < KeyModifiers::COUNT; ++i) {
+        std::array<std::int64_t, Spire::KeyModifiers::COUNT> priceIncrements;
+        for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           priceIncrements[i] = static_cast<std::int64_t>(
             static_cast<Nexus::Quantity>(value.m_priceIncrements[i]) *
             Nexus::Quantity::MULTIPLIER);

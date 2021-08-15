@@ -1,7 +1,4 @@
 #include "Spire/BookView/BookViewModel.hpp"
-#ifdef slots
-  #undef slots
-#endif
 #include <tuple>
 #include <Beam/Utilities/HashTuple.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -465,7 +462,7 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
 void BookViewModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
   auto slotHandler = m_slotHandler;
-  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();
+  for(auto task = slotHandler->TryPop(); task && slotHandler.use_count() != 1;
       task = slotHandler->TryPop()) {
     (*task)();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();

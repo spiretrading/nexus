@@ -16,9 +16,9 @@ void ValueLabel::Initialize(const string& label,
     Ref<UserProfile> userProfile) {
   m_label = label;
   m_converter.emplace(Ref(userProfile));
-  QSizePolicy sizePolicy(QSizePolicy::Maximum, sizePolicy().verticalPolicy());
-  sizePolicy.setHorizontalStretch(1);
-  setSizePolicy(sizePolicy);
+  QSizePolicy policy(QSizePolicy::Maximum, sizePolicy().verticalPolicy());
+  policy.setHorizontalStretch(1);
+  setSizePolicy(policy);
   QString text;
   if(!m_label.empty()) {
     text = "<span style=\"font-weight: bold;\">" +

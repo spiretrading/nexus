@@ -1,5 +1,4 @@
 #include "Spire/InputWidgets/ValueListInputWidget.hpp"
-#include <boost/variant/static_visitor.hpp>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QLocale>
@@ -16,7 +15,7 @@ using namespace Spire::UI;
 using namespace std;
 
 namespace {
-  struct QVariantConverter : static_visitor<QVariant> {
+  struct QVariantConverter {
     template<typename T>
     QVariant operator ()(const T& value) const {
       return QVariant::fromValue(value);

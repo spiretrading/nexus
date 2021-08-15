@@ -8,9 +8,6 @@
 #include <QMessageBox>
 #include <QScreen>
 #include <QStandardPaths>
-#ifdef slots
-  #undef slots
-#endif
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"

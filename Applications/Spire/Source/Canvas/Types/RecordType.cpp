@@ -58,7 +58,7 @@ CanvasType::Compatibility RecordType::GetCompatibility(
   auto& recordType = static_cast<const RecordType&>(type);
   auto isEqual = true;
   for(const auto& selfField : m_fields) {
-    auto& field = FindField(recordType, selfField.m_name);
+    auto field = FindField(recordType, selfField.m_name);
     if(!field.is_initialized()) {
       return Compatibility::NONE;
     }

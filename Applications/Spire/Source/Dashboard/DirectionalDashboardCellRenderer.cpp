@@ -1,6 +1,5 @@
 #include "Spire/Dashboard/DirectionalDashboardCellRenderer.hpp"
 #include <boost/variant/apply_visitor.hpp>
-#include <boost/variant/static_visitor.hpp>
 #include <QPainter>
 #include "Nexus/Definitions/Security.hpp"
 
@@ -13,7 +12,7 @@ using namespace Spire::UI;
 using namespace std;
 
 namespace {
-  struct VariantVisitor : public static_visitor<QVariant> {
+  struct VariantVisitor {
     QVariant operator ()(const string& value) const {
       return QString::fromStdString(value);
     }

@@ -147,7 +147,7 @@ void TimeAndSalesModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
 void TimeAndSalesModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
   auto slotHandler = m_slotHandler;
-  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();
+  for(auto task = slotHandler->TryPop(); task && slotHandler.use_count() != 1;
       task = slotHandler->TryPop()) {
     (*task)();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
