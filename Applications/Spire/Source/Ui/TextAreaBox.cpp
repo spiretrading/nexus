@@ -432,7 +432,6 @@ void TextAreaBox::update_layout() {
   m_stacked_widget->setMinimumSize(size() - get_border_size() -
     get_padding_size());
   m_stacked_widget->adjustSize();
-  update_display_text();
   update_placeholder_text();
 }
 
@@ -483,10 +482,12 @@ void TextAreaBox::update_text_edit_width() {
 }
 
 void TextAreaBox::on_current(const QString& current) {
-  if(m_text_edit->toPlainText() != current) {
-    m_text_edit->setText(current);
-    update_display_text();
-  }
+  auto cursor_pos = m_text_edit->textCursor().position();
+  m_text_edit->setText(current);
+  auto cursor = m_text_edit->textCursor();
+  cursor.setPosition(cursor_pos);
+  m_text_edit->setTextCursor(cursor);
+  update_display_text();
 }
 
 void TextAreaBox::on_cursor_position() {
@@ -619,9 +620,10 @@ void TextAreaBox::on_style() {
 }
 
 void TextAreaBox::on_text_changed() {
-  if(!is_read_only() && m_text_edit->toPlainText() != m_model->get_current()) {
-    m_model->set_current(m_text_edit->toPlainText());
+  if(is_read_only() || m_text_edit->toPlainText() == m_model->get_current()) {
+    return;
   }
+  m_model->set_current(m_text_edit->toPlainText());
   update_text_edit_width();
   m_stacked_widget->adjustSize();
   updateGeometry();
