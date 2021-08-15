@@ -59,7 +59,8 @@ namespace {
       REQUIRE(snapshot.is_initialized());
       REQUIRE(snapshot->m_marketQuotes.size() == marketQuotes.size());
       for(auto& marketQuote : marketQuotes) {
-        REQUIRE_NOTHROW(snapshot->m_marketQuotes.at((*marketQuote)->m_market));
+        REQUIRE_NOTHROW(static_cast<void>(
+          snapshot->m_marketQuotes.at((*marketQuote)->m_market)));
         REQUIRE(
           snapshot->m_marketQuotes.at((*marketQuote)->m_market).GetSequence() ==
           marketQuote.GetSequence());
