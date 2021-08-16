@@ -20,7 +20,7 @@ EventHandler::EventHandler()
 void EventHandler::on_expired() {
   auto start = microsec_clock::universal_time();
   auto tasks = m_tasks;
-  for(auto task = tasks->TryPop(); task && !tasks.unique();
+  for(auto task = tasks->TryPop(); task && tasks.use_count() != 1;
       task = tasks->TryPop()) {
     (*task)();
     auto duration = microsec_clock::universal_time();

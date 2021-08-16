@@ -8,41 +8,12 @@
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Styles/AncestorSelector.hpp"
-#include "Spire/Styles/AndSelector.hpp"
-#include "Spire/Styles/Any.hpp"
-#include "Spire/Styles/ChildSelector.hpp"
-#include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/EvaluatedBlock.hpp"
-#include "Spire/Styles/FlipSelector.hpp"
-#include "Spire/Styles/IsASelector.hpp"
-#include "Spire/Styles/NotSelector.hpp"
-#include "Spire/Styles/OrSelector.hpp"
-#include "Spire/Styles/PathSelector.hpp"
-#include "Spire/Styles/ParentSelector.hpp"
-#include "Spire/Styles/PropertyMatchSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
-#include "Spire/Styles/SiblingSelector.hpp"
-#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
 namespace Spire::Styles {
-
-  /** Selects the widget that is or belongs to the active window. */
-  using Active = StateSelector<void, struct ActiveSelectorTag>;
-
-  /** Selects the disabled widget. */
-  using Disabled = StateSelector<void, struct DisabledSelectorTag>;
-
-  /** Selects the hovered widget. */
-  using Hover = StateSelector<void, struct HoverSelectorTag>;
-
-  /** Selects the focused widget. */
-  using Focus = StateSelector<void, struct FocusSelectorTag>;
-
-  /** Selects a widget if it was focused using a non-pointing device. */
-  using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
   /** Specifies whether an element is visible. */
   enum class Visibility {
@@ -56,9 +27,6 @@ namespace Spire::Styles {
     /** The element is treated as if it has a width and height of 0. */
     NONE
   };
-
-  template<typename T>
-  class RevertExpression;
 
   /** Keeps track of a widget's styling. */
   class Stylist {

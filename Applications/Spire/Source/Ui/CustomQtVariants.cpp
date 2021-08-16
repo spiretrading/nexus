@@ -135,6 +135,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<QColor>(value));
   } else if(value.type() == typeid(QString)) {
     return QVariant::fromValue(std::any_cast<QString>(value));
+  } else if(value.type() == typeid(QKeySequence)) {
+    return QVariant::fromValue(std::any_cast<QKeySequence>(value));
   }
   return QVariant();
 }
@@ -312,6 +314,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return Spire::displayText(value.value<TimeInForce>().GetType());
+  } else if(value.canConvert<QKeySequence>()) {
+    return value.value<QKeySequence>().toString();
   } else if(value.canConvert<std::any>()) {
     auto translated_value = to_qvariant(value.value<std::any>());
     return displayText(translated_value, locale);
@@ -383,6 +387,10 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     auto& rightEntry = GetDefaultMarketDatabase().FromCode(
       right_variant.value<MarketToken>().m_code);
     return leftEntry.m_displayName < rightEntry.m_displayName;
+  } else if(left_variant.canConvert<QKeySequence>()) {
+    auto left = left_variant.value<QKeySequence>().toString();
+    auto right = right_variant.value<QKeySequence>().toString();
+    return left < right;
   }
   if(left_variant == right_variant) {
     return left.row() < right.row();

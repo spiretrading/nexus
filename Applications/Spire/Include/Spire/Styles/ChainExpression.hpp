@@ -50,15 +50,15 @@ namespace Spire::Styles {
    * @param expression The series of expressions to chain.
    * @return A ChainExpression sequencing all sub-expressions together.
    */
+  template<typename T>
+  decltype(auto) chain(T&& expression) {
+    return std::forward<T>(expression);
+  }
+
   template<typename T, typename... U>
   auto chain(T&& head, U&&... expression) {
     return ChainExpression(
       std::forward<T>(head), chain(std::forward<U>(expression)...));
-  }
-
-  template<typename T>
-  decltype(auto) chain(T&& expression) {
-    return std::forward<T>(expression);
   }
 
   template<typename T>

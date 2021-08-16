@@ -24,6 +24,7 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -221,10 +222,10 @@ namespace {
     auto& default_increment =
       get<Type>("default_increment", profile.get_properties());
     auto button = make_label_button(QString::fromUtf8("Click me"));
-    auto min_model =
-      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_min.get());
-    auto max_model =
-      std::make_shared<LocalScalarValueModel<optional<Type>>>(default_max.get());
+    auto min_model = std::make_shared<LocalScalarValueModel<optional<Type>>>(
+      default_min.get());
+    auto max_model = std::make_shared<LocalScalarValueModel<optional<Type>>>(
+      default_max.get());
     button->connect_clicked_signal([&, button, min_model, max_model] {
       min_model->set_increment(default_increment.get());
       max_model->set_increment(default_increment.get());
@@ -254,8 +255,8 @@ namespace {
     properties.push_back(make_standard_property("title", default_title));
     properties.push_back(make_standard_property("default_minimum", Type(1)));
     properties.push_back(make_standard_property("default_maximum", Type(10)));
-    properties.push_back(make_standard_property(
-      "default_increment", default_increment));
+    properties.push_back(
+      make_standard_property("default_increment", default_increment));
   }
 
   optional<time_duration> parse_duration(const QString& duration) {
@@ -859,6 +860,40 @@ UiProfile Spire::make_integer_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_key_input_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
+    auto box = new KeyInputBox();
+    box->setFixedSize(scale_width(100), scale_height(26));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      if(value.isEmpty()) {
+        if(box->get_current()->get_current() != QKeySequence()) {
+          box->get_current()->set_current(QKeySequence());
+        }
+      } else {
+        auto sequence = QKeySequence(value);
+        if(sequence.count() != 0 && sequence[0] != Qt::Key::Key_unknown &&
+            box->get_current()->get_current() != sequence) {
+          box->get_current()->set_current(sequence);
+        }
+      }
+    });
+    box->get_current()->connect_current_signal(
+      profile.make_event_slot<QKeySequence>(QString::fromUtf8("Current")));
+    box->get_current()->connect_current_signal([&current] (const auto& value) {
+      current.set(value.toString());
+    });
+    box->connect_submit_signal(
+      profile.make_event_slot<QKeySequence>(QString::fromUtf8("Submit")));
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_key_tag_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1184,8 +1219,8 @@ UiProfile Spire::make_overlay_panel_profile() {
           content_layout->setSpacing(scale_width(5));
           content_layout->setContentsMargins(
             {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
-          content_layout->addWidget(new QLabel(QString::fromUtf8("Start Date:")),
-            0, 0);
+          content_layout->addWidget(
+            new QLabel(QString::fromUtf8("Start Date:")), 0, 0);
           auto text_box1 = new TextBox();
           text_box1->setFixedSize(scale(120, 26));
           content_layout->addWidget(text_box1, 0, 1);

@@ -246,8 +246,8 @@ namespace Nexus {
   }
 
   template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, bool> operator ==(T lhs, U rhs) {
+  constexpr std::enable_if_t<std::is_convertible_v<T, Quantity>, bool>
+      operator ==(T lhs, Quantity rhs) {
     return Quantity(lhs) == rhs;
   }
 

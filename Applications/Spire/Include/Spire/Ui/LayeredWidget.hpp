@@ -1,6 +1,7 @@
 #ifndef SPIRE_LAYERED_WIDGET_HPP
 #define SPIRE_LAYERED_WIDGET_HPP
 #include <vector>
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
@@ -21,6 +22,7 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      mutable boost::optional<QSize> m_size_hint;
       std::vector<QWidget*> m_layers;
   };
 }
