@@ -32,8 +32,7 @@ TEST_SUITE("LynxFeeHandling") {
   TEST_CASE("zero_quantity") {
     auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
-      std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-      Money::ZERO);
+      &CalculateFee, Money::ZERO);
   }
 
   TEST_CASE("active") {
@@ -41,8 +40,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       LynxFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
-      std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-      expectedFee);
+      &CalculateFee, expectedFee);
   }
 
   TEST_CASE("passive") {
@@ -50,9 +48,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       LynxFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
-      LiquidityFlag::PASSIVE,
-      std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-      expectedFee);
+      LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
   }
 
   TEST_CASE("subdollar_active") {
@@ -60,9 +56,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
       LynxFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
-      LiquidityFlag::ACTIVE,
-      std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-      expectedFee);
+      LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
   }
 
   TEST_CASE("subdollar_passive") {
@@ -70,9 +64,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
       LynxFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
-      LiquidityFlag::PASSIVE,
-      std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-      expectedFee);
+      LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -108,9 +100,7 @@ TEST_SUITE("LynxFeeHandling") {
       auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
         LynxFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
-        LiquidityFlag::ACTIVE,
-        std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-        expectedFee);
+        LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
     }
   }
 
@@ -136,9 +126,7 @@ TEST_SUITE("LynxFeeHandling") {
       auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
         LynxFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
-        LiquidityFlag::ACTIVE,
-        std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-        expectedFee);
+        LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
     }
   }
 }

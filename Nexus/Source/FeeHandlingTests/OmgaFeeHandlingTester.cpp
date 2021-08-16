@@ -50,7 +50,7 @@ TEST_SUITE("OmgaFeeHandling") {
     fields.m_quantity = 0;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), Money::ZERO);
+        std::placeholders::_2, std::placeholders::_3), Money::ZERO);
   }
 
   TEST_CASE("default_active") {
@@ -61,7 +61,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("default_passive") {
@@ -72,7 +72,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("default_hidden_passive") {
@@ -83,7 +83,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("default_hidden_active") {
@@ -94,7 +94,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("etf_active") {
@@ -105,7 +105,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("etf_passive") {
@@ -116,7 +116,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("odd_lot_active") {
@@ -127,7 +127,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("odd_lot_passive") {
@@ -138,7 +138,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_active") {
@@ -149,7 +149,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_passive") {
@@ -160,7 +160,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_hidden_passive") {
@@ -171,7 +171,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_hidden_active") {
@@ -182,7 +182,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_etf_active") {
@@ -193,7 +193,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_etf_passive") {
@@ -204,7 +204,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_odd_lot_active") {
@@ -215,7 +215,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("subdollar_odd_lot_passive") {
@@ -226,7 +226,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("hidden_etf_active") {
@@ -237,7 +237,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("hidden_etf_passive") {
@@ -248,7 +248,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("odd_lot_etf_active") {
@@ -259,7 +259,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("odd_lot_etf_passive") {
@@ -270,7 +270,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("odd_lot_hidden_etf_active") {
@@ -281,7 +281,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("odd_lot_hidden_etf_passive") {
@@ -292,7 +292,7 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -345,6 +345,6 @@ TEST_SUITE("OmgaFeeHandling") {
       OmgaFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2, std::placeholders::_3), expectedFee);
+        std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 }

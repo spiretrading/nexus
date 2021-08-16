@@ -79,12 +79,10 @@ namespace Nexus::MarketDataService {
       Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterMarketDataFeedMessages(Beam::Store(slots));
     Beam::Services::AddMessageSlot<SetSecurityInfoMessage>(Beam::Store(slots),
-      std::bind(&MarketDataFeedServlet::OnSetSecurityInfoMessage, this,
-        std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataFeedServlet::OnSetSecurityInfoMessage, this));
     Beam::Services::AddMessageSlot<SendMarketDataFeedMessages>(
-      Beam::Store(slots), std::bind(
-        &MarketDataFeedServlet::OnSendMarketDataFeedMessages, this,
-        std::placeholders::_1, std::placeholders::_2));
+      Beam::Store(slots), std::bind_front(
+        &MarketDataFeedServlet::OnSendMarketDataFeedMessages, this));
   }
 
   template<typename C, typename R>

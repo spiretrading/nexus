@@ -90,7 +90,7 @@ namespace Nexus {
         m_timeEnvironment(m_startTime) {
     try {
       m_eventLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&BacktesterEventHandler::EventLoop, this));
+        std::bind_front(&BacktesterEventHandler::EventLoop, this));
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;
