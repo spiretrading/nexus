@@ -7,6 +7,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost::gregorian;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -76,7 +77,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
         if(current) {
           return *current;
         }
-        return QDate::currentDate();
+        return day_clock::local_day();
       }();
       on_current(initial_date);
     }
@@ -113,7 +114,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
         arg(get_month_name(m_displayed_month)).arg(m_displayed_year));
     }
 
-    void on_current(const boost::optional<QDate>& date) {
+    void on_current(const boost::optional<date>& date) {
       if(date) {
         m_displayed_month = date->month();
         m_displayed_year = date->year();
@@ -123,10 +124,10 @@ class CalendarDatePicker::MonthSelector : public QWidget {
 };
 
 CalendarDatePicker::CalendarDatePicker(QWidget* parent)
-  : CalendarDatePicker(std::make_shared<LocalDateModel>(QDate::currentDate()),
-      parent) {}
+  : CalendarDatePicker(std::make_shared<LocalDateModel>(
+      day_clock::local_day()), parent) {}
 
-CalendarDatePicker::CalendarDatePicker(QDate current, QWidget* parent)
+CalendarDatePicker::CalendarDatePicker(date current, QWidget* parent)
   : CalendarDatePicker(std::make_shared<LocalDateModel>(current), parent) {}
 
 CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
