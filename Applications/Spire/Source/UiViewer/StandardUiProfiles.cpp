@@ -645,7 +645,7 @@ UiProfile Spire::make_drop_down_box_profile() {
           return make_label(model.get<QString>(index));
         });
       auto drop_down_box = new DropDownBox(*list_view);
-      drop_down_box->setFixedSize(scale_width(112), scale_height(26));
+      drop_down_box->setFixedWidth(scale_width(112));
       apply_widget_properties(drop_down_box, profile.get_properties());
       drop_down_box->connect_submit_signal(
         profile.make_event_slot<optional<std::any>>(

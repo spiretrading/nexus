@@ -25,8 +25,10 @@ namespace {
       set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
     style.get(Disabled() >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
-    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
+    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
       set(PaddingRight(scale_width(8)));
+    style.get(Disabled() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
+      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
     return style;
   }
 }
@@ -38,9 +40,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto container_layout = new QHBoxLayout(container);
   container_layout->setContentsMargins({});
   container_layout->setSpacing(0);
-  m_text_box = new TextBox();
-  m_text_box->set_read_only(true);
-  m_text_box->setFocusPolicy(Qt::NoFocus);
+  m_text_box = make_label("");
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_box->setAttribute(Qt::WA_TransparentForMouseEvents);
   container_layout->addWidget(m_text_box);
