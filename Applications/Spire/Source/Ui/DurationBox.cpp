@@ -193,7 +193,7 @@ namespace {
     }
 
     optional<Decimal> get_minimum() const {
-      return 0;
+      return Decimal(0);
     }
 
     optional<Decimal> get_maximum() const {

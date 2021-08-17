@@ -165,7 +165,7 @@ namespace Details {
 
   template<typename W, typename I>
   bool BaseComponentFinder<W, I>::register_id() {
-    return ComponentRegistry::register_id(typeid(Widget), typeid(Id),
+    return ComponentRegistry<Id>::register_id(typeid(Widget), typeid(Id),
       [] (QWidget& widget, const Id& id) {
         return BaseComponentFinder()(static_cast<Widget&>(widget), id);
       });

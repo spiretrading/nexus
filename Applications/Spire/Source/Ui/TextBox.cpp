@@ -88,6 +88,9 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
   return TextStyle(Font(std::move(font)), TextColor(color));
 }
 
+TextBox::StyleProperties::StyleProperties(std::function<void ()> commit)
+  : m_styles(std::move(commit)) {}
+
 void TextBox::StyleProperties::clear() {
   m_styles.clear();
   m_alignment = none;
@@ -104,8 +107,8 @@ TextBox::TextBox(QString current, QWidget* parent)
 
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
-      m_line_edit_styles{[=] { commit_style(); }},
-      m_placeholder_styles{[=] { commit_placeholder_style(); }},
+      m_line_edit_styles([=] { commit_style(); }),
+      m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_rejected(false) {

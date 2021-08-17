@@ -1,8 +1,7 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
-#include "Spire/Styles/ComponentSelector.hpp"
+#include "Spire/Styles/Selectors.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

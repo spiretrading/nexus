@@ -2,6 +2,7 @@
 #define SPIRE_STYLES_REVERT_EXPRESSION_HPP
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
+#include "Spire/Styles/Stylist.hpp"
 
 namespace Spire::Styles {
 

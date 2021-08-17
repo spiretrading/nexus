@@ -58,7 +58,7 @@ namespace Styles {
       };
       std::shared_ptr<KeyModel> m_model;
       boost::signals2::scoped_connection m_current_connection;
-      TextBox* m_text_box;
+      TextBox* m_label;
       State m_state;
 
       void on_current_key(Qt::Key key);
