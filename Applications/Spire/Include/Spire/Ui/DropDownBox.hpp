@@ -26,6 +26,15 @@ namespace Spire {
        */
       explicit DropDownBox(ListView& list_view, QWidget* parent = nullptr);
     
+      /** Returns <code>true</code> iff this DropDownBox is read-only. */
+      bool is_read_only() const;
+
+      /**
+       * Sets the read-only state.
+       * @param is_read_only True iff the DropDownBox should be read-only.
+       */
+      void set_read_only(bool is_read_only);
+
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -42,6 +51,7 @@ namespace Spire {
       Button* m_button;
       DropDownList* m_drop_down_list;
       boost::optional<int> m_submission_index;
+      bool m_is_read_only;
       boost::signals2::scoped_connection m_list_view_submit_connection;
       boost::signals2::scoped_connection m_list_view_current_connection;
 

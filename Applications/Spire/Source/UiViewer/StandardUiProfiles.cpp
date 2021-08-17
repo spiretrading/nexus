@@ -630,6 +630,7 @@ UiProfile Spire::make_destination_list_item_profile() {
 UiProfile Spire::make_drop_down_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("read_only", false));
   properties.push_back(make_standard_property("item_count", 15));
   properties.push_back(make_standard_property<QString>("item_label", "item"));
   auto profile = UiProfile(QString::fromUtf8("DropDownBox"), properties,
@@ -647,6 +648,10 @@ UiProfile Spire::make_drop_down_box_profile() {
       auto drop_down_box = new DropDownBox(*list_view);
       drop_down_box->setFixedWidth(scale_width(112));
       apply_widget_properties(drop_down_box, profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        drop_down_box->set_read_only(is_read_only);
+      });
       drop_down_box->connect_submit_signal(
         profile.make_event_slot<optional<std::any>>(
           QString::fromUtf8("Submit")));

@@ -25,6 +25,8 @@ namespace {
       set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
     style.get(Disabled() >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    style.get(ReadOnly() >> is_a<Icon>()).
+      set(Visibility::NONE);
     style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
       set(PaddingRight(scale_width(8)));
     style.get(Disabled() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
@@ -35,7 +37,8 @@ namespace {
 
 DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
-      m_list_view(&list_view) {
+      m_list_view(&list_view),
+      m_is_read_only(false) {
   auto container = new QWidget();
   auto container_layout = new QHBoxLayout(container);
   container_layout->setContentsMargins({});
@@ -80,6 +83,21 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_button->installEventFilter(this);
   m_drop_down_list->window()->installEventFilter(this);
   m_list_view->installEventFilter(this);
+}
+
+bool DropDownBox::is_read_only() const {
+  return m_is_read_only;
+}
+
+void DropDownBox::set_read_only(bool is_read_only) {
+  m_is_read_only = is_read_only;
+  if(m_is_read_only) {
+    match(*this, ReadOnly());
+    match(*m_input_box, ReadOnly());
+  } else {
+    unmatch(*this, ReadOnly());
+    unmatch(*m_input_box, ReadOnly());
+  }
 }
 
 connection DropDownBox::connect_submit_signal(
@@ -138,13 +156,18 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Down:
     case Qt::Key_Up:
-      m_drop_down_list->show();
+      if(!m_is_read_only) {
+        m_drop_down_list->show();
+      }
       break;
   }
   QWidget::keyPressEvent(event);
 }
 
 void DropDownBox::on_click() {
+  if(m_is_read_only) {
+    return;
+  }
   if(m_drop_down_list->isVisible()) {
     m_drop_down_list->hide();
   } else {
