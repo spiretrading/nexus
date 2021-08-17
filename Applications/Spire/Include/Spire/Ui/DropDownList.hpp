@@ -13,7 +13,7 @@ namespace Spire {
        * Constructs a DropDownList.
        * @param list_view The list view which contains a list of items.
        * @param parent The parent widget. Used to determine the position of the
-               DropDownList.
+       *               DropDownList.
        */
       explicit DropDownList(ListView& list_view, QWidget* parent = nullptr);
 
