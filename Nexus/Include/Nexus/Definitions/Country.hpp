@@ -319,7 +319,7 @@ namespace Details {
 
 namespace Details {
   template<typename T>
-  constexpr const T CountryCodeDefinitions<T>::NONE(~0);
+  const T CountryCodeDefinitions<T>::NONE(~0);
 }
 }
 

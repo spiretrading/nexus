@@ -30,6 +30,8 @@ namespace Spire::Styles {
   class PropertyMatchSelector;
   class PseudoElement;
   template<typename T, typename G> class PseudoElementSelector;
+  template<typename T>
+  class RevertExpression;
   class Rule;
   class Selector;
   class SelectorRegistry;

@@ -94,6 +94,12 @@ namespace Spire::Styles {
     return expression.make_evaluator(stylist);
   }
 
+  template<typename E, typename = std::enable_if_t<is_expression_v<E>>>
+  Evaluator<expression_type_t<E>> make_evaluator(
+      const E& expression, const Stylist& stylist) {
+    return make_evaluator(expression, stylist);
+  }
+
   template<typename T>
   Expression<T>::Expression(Type value)
     : Expression(ConstantExpression(std::move(value))) {}

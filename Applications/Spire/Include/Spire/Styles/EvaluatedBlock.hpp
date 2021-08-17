@@ -68,20 +68,6 @@ namespace Spire::Styles {
       std::vector<EvaluatedProperty> m_properties;
   };
 
-  /**
-   * Finds an evaluated property of a given type within an EvaluatedBlock.
-   * @param block The block to search.
-   */
-  template<typename P>
-  boost::optional<const typename P::Type&> find(const EvaluatedBlock& block) {
-    for(auto& property : block.get_properties()) {
-      if(property.get_property_type() == typeid(P)) {
-        return property.as<typename P::Type>();
-      }
-    }
-    return boost::none;
-  }
-
   template<typename T>
   void EvaluatedBlock::remove() {
     if constexpr(is_composite_property_v<T>) {

@@ -135,6 +135,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<QColor>(value));
   } else if(value.type() == typeid(QString)) {
     return QVariant::fromValue(std::any_cast<QString>(value));
+  } else if(value.type() == typeid(QKeySequence)) {
+    return QVariant::fromValue(std::any_cast<QKeySequence>(value));
   }
   return QVariant();
 }
@@ -383,6 +385,10 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     auto& rightEntry = GetDefaultMarketDatabase().FromCode(
       right_variant.value<MarketToken>().m_code);
     return leftEntry.m_displayName < rightEntry.m_displayName;
+  } else if(left_variant.canConvert<QKeySequence>()) {
+    auto left = left_variant.value<QKeySequence>().toString();
+    auto right = right_variant.value<QKeySequence>().toString();
+    return left < right;
   }
   if(left_variant == right_variant) {
     return left.row() < right.row();

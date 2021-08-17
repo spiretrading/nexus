@@ -36,7 +36,7 @@ namespace Nexus {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(392);
         entry.m_code = "JPY";
-        entry.m_sign = u8"\u00A5";
+        entry.m_sign = reinterpret_cast<const char*>(u8"\u00A5");
         database.Add(entry);
       }
       {
@@ -50,7 +50,7 @@ namespace Nexus {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(1001);
         entry.m_code = "XBT";
-        entry.m_sign = u8"\u20BF";
+        entry.m_sign = reinterpret_cast<const char*>(u8"\u20BF");
         database.Add(entry);
       }
       return database;

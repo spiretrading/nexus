@@ -330,7 +330,7 @@ namespace Nexus::OrderExecutionService {
     auto accounts = m_serviceLocatorClient->LoadAllAccounts();
     auto routines = Beam::Routines::RoutineHandlerGroup();
     for(auto& account : accounts) {
-      routines.Spawn([=] {
+      routines.Spawn([=, this] {
         Recover(account);
       });
     }

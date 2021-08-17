@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
+#include "Spire/Styles/Selectors.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;

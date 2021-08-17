@@ -168,7 +168,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   void AsyncHistoricalDataStore<D>::Store(const SecurityInfo& info) {
     m_securityInfo.Store(info);
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       m_dataStore->Store(info);
     });
   }

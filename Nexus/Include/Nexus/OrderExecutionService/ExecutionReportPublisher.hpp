@@ -81,7 +81,7 @@ namespace Nexus::OrderExecutionService {
           boost::optional<std::vector<ExecutionReport>>();
         order->GetPublisher().Monitor(
           Beam::MakeCallbackQueueWriter<ExecutionReport>(
-            [=] (const auto& executionReport) {
+            [=, this] (const auto& executionReport) {
               m_publisher.Push(ExecutionReportEntry(order, executionReport));
             }), Beam::Store(executionReportSnapshot));
         if(executionReportSnapshot) {
@@ -106,10 +106,10 @@ namespace Nexus::OrderExecutionService {
       }
     });
     m_pipe.emplace(std::move(orders),
-      Beam::MakeCallbackQueueWriter<const Order*>([=] (auto order) {
+      Beam::MakeCallbackQueueWriter<const Order*>([this] (auto order) {
         order->GetPublisher().Monitor(
           Beam::MakeCallbackQueueWriter<ExecutionReport>(
-          [=] (const auto& executionReport) {
+          [=, this] (const auto& executionReport) {
             m_publisher.Push(ExecutionReportEntry(order, executionReport));
           }));
       }));

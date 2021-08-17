@@ -1,6 +1,5 @@
 #ifndef SPIRE_DECIMAL_BOX_HPP
 #define SPIRE_DECIMAL_BOX_HPP
-#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional/optional.hpp>
 #include <QHash>
 #include "Spire/Spire/Decimal.hpp"

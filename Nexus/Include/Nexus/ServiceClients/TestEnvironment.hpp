@@ -310,7 +310,7 @@ namespace Nexus {
         m_uidClient, m_administrationClient);
       m_orderExecutionClient.emplace(m_orderExecutionEnvironment->MakeClient(
         m_serviceLocatorClient));
-      auto transitionTimerFactory = [=] {
+      auto transitionTimerFactory = [this] {
         return std::make_unique<Beam::Threading::TimerBox>(
           std::make_unique<Beam::TimeService::Tests::TestTimer>(
             boost::posix_time::seconds(1), Beam::Ref(m_timeEnvironment)));

@@ -23,6 +23,7 @@ namespace Spire {
   class FilterPanel;
   class Icon;
   class InfoTip;
+  class KeyInputBox;
   class LayeredWidget;
   class ListItem;
   class ListModel;

@@ -128,6 +128,7 @@ namespace Styles {
         boost::optional<int> m_size;
         boost::optional<QLineEdit::EchoMode> m_echo_mode;
 
+        StyleProperties(std::function<void ()> commit);
         void clear();
       };
       struct TextValidator;
