@@ -345,7 +345,7 @@ void TextAreaBox::commit_style() {
       m_computed_line_height);
     update_display_text();
   } else {
-    m_computed_line_height = m_text_edit->font().pixelSize();
+    m_computed_line_height = m_text_edit->fontMetrics().height();
   }
   if(stylesheet != m_text_edit->styleSheet()) {
     m_text_edit->setStyleSheet(stylesheet);
