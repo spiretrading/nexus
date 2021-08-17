@@ -111,7 +111,9 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
 class TextAreaBox::ElidedLabel : public QWidget {
   public:
-    using QWidget::QWidget;
+    ElidedLabel(QWidget* parent = nullptr)
+        : QWidget(parent),
+          m_line_height(0) {}
 
     void set_text(const QString &text) {
       m_text = text;
@@ -140,6 +142,9 @@ class TextAreaBox::ElidedLabel : public QWidget {
   protected:
     void changeEvent(QEvent* event) override {
       if(event->type() == QEvent::FontChange) {
+        if(m_line_height == 0) {
+          m_line_height = fontMetrics().height();
+        }
         m_text_layout.setFont(font());
       }
     }
