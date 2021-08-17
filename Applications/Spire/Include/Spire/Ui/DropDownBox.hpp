@@ -24,7 +24,7 @@ namespace Spire {
        * @param list_view The list view displayed in the drop down list.
        * @param parent The parent widget.
        */
-      DropDownBox(ListView& list_view, QWidget* parent = nullptr);
+      explicit DropDownBox(ListView& list_view, QWidget* parent = nullptr);
     
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
@@ -54,4 +54,4 @@ namespace Spire {
   };
 }
 
-#endif 
+#endif
