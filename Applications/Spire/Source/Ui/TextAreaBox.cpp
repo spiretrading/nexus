@@ -6,7 +6,6 @@
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ScrollableLayer.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 
@@ -56,7 +55,8 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
     explicit ContentSizedTextEdit(const QString& text,
         QWidget* parent = nullptr)
-        : QTextEdit(parent) {
+        : QTextEdit(parent),
+          m_longest_line_width(0) {
       setLineWrapMode(QTextEdit::WidgetWidth);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -179,6 +179,9 @@ class TextAreaBox::ElidedLabel : public QWidget {
     int m_line_height;
 };
 
+TextAreaBox::StyleProperties::StyleProperties(std::function<void ()> commit)
+  : m_styles(std::move(commit)) {}
+
 void TextAreaBox::StyleProperties::clear() {
   m_styles.clear();
   m_border_sizes = {};
@@ -198,8 +201,8 @@ TextAreaBox::TextAreaBox(QString current, QWidget* parent)
 
 TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
-      m_placeholder_styles{[=] { commit_placeholder_style(); }},
-      m_text_edit_styles{[=] { commit_style(); }},
+      m_placeholder_styles([=] { commit_placeholder_style(); }),
+      m_text_edit_styles([=] { commit_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
   m_text_edit = new ContentSizedTextEdit(m_model->get_current(), this);
@@ -335,7 +338,14 @@ void TextAreaBox::commit_style() {
   if(m_text_edit_styles.m_line_height &&
       (font.pixelSize() * *m_text_edit_styles.m_line_height) !=
       m_computed_line_height) {
-    update_line_height();
+    m_computed_line_height = static_cast<int>(m_text_edit->font().pixelSize() *
+      *m_text_edit_styles.m_line_height);
+    m_placeholder->set_line_height(m_computed_line_height);
+    m_scroll_box->get_vertical_scroll_bar().set_line_size(
+      m_computed_line_height);
+    update_display_text();
+  } else {
+    m_computed_line_height = m_text_edit->font().pixelSize();
   }
   if(stylesheet != m_text_edit->styleSheet()) {
     m_text_edit->setStyleSheet(stylesheet);
@@ -366,8 +376,8 @@ void TextAreaBox::update_display_text() {
       m_text_edit->setText(m_model->get_current());
       m_text_edit->blockSignals(false);
     }
-    auto line_count = std::floor((height() - get_padding_size().height()) /
-      static_cast<double>(m_computed_line_height));
+    auto line_count = (height() - get_padding_size().height()) /
+      m_computed_line_height;
     auto is_elided = false;
     if(line_count > 0) {
       auto lines = QStringList();
@@ -377,7 +387,7 @@ void TextAreaBox::update_display_text() {
         auto block = m_text_edit->document()->findBlockByNumber(block_index);
         if(block.isValid()) {
           auto block_text = block.text();
-          for(int line_index = 0; line_index != block.layout()->lineCount();
+          for(auto line_index = 0; line_index != block.layout()->lineCount();
               ++line_index) {
             auto line = block.layout()->lineAt(line_index);
             lines.append(
@@ -433,15 +443,6 @@ void TextAreaBox::update_layout() {
     get_padding_size());
   m_stacked_widget->adjustSize();
   update_placeholder_text();
-}
-
-void TextAreaBox::update_line_height() {
-  m_computed_line_height = static_cast<int>(m_text_edit->font().pixelSize() *
-    *m_text_edit_styles.m_line_height);
-  m_placeholder->set_line_height(m_computed_line_height);
-  m_scroll_box->get_vertical_scroll_bar().set_line_size(
-    m_computed_line_height);
-  update_display_text();
 }
 
 void TextAreaBox::update_placeholder_text() {

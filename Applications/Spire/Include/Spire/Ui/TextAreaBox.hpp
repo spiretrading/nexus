@@ -84,6 +84,7 @@ namespace Styles {
         QColor m_color;
         boost::optional<double> m_line_height;
 
+        StyleProperties(std::function<void ()> commit);
         void clear();
       };
       mutable SubmitSignal m_submit_signal;
@@ -109,7 +110,6 @@ namespace Styles {
       void update_display_text();
       void update_document_line_height();
       void update_layout();
-      void update_line_height();
       void update_placeholder_text();
       void update_text_alignment();
       void update_text_edit_width();
