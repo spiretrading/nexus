@@ -59,6 +59,7 @@ if(MSVC)
   add_definitions(/external:anglebrackets)
   add_definitions(/external:W0)
   add_definitions(/wd4250)
+  add_definitions(/wd4723)
 endif()
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR
     ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
