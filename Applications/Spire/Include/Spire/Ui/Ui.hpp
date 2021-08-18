@@ -43,6 +43,7 @@ namespace Spire {
   class SortedTableModel;
   class TableModel;
   class Tag;
+  class TextAreaBox;
   class TextBox;
   class TimeBox;
   class TitleBar;

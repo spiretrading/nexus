@@ -120,6 +120,14 @@ void ScrollBox::set(
   set_vertical(vertical_policy);
 }
 
+ScrollBar& ScrollBox::get_vertical_scroll_bar() {
+  return m_scrollable_layer->get_vertical_scroll_bar();
+}
+
+ScrollBar& ScrollBox::get_horizontal_scroll_bar() {
+  return m_scrollable_layer->get_horizontal_scroll_bar();
+}
+
 void ScrollBox::scroll_to(const QWidget& widget) {
   auto widget_position =
     m_body->mapFromGlobal(widget.parentWidget()->mapToGlobal(widget.pos()));
