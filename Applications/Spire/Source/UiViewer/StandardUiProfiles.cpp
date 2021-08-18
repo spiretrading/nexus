@@ -817,6 +817,7 @@ UiProfile Spire::make_info_tip_profile() {
 UiProfile Spire::make_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
     make_standard_property<QString>("label", QString::fromUtf8("Label")));
   auto profile = UiProfile(QString::fromUtf8("InputBox"), properties,
@@ -824,6 +825,14 @@ UiProfile Spire::make_input_box_profile() {
       auto& label = get<QString>("label", profile.get_properties());
       auto input_box = make_input_box(make_label(label.get()));
       apply_widget_properties(input_box, profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        if(is_read_only) {
+          match(*input_box, ReadOnly());
+        } else {
+          unmatch(*input_box, ReadOnly());
+        }
+      });
       return input_box;
     });
   return profile;
