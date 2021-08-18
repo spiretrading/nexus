@@ -70,8 +70,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_drop_down_list = new DropDownList(*m_list_view, this);
   auto list_model = m_list_view->get_list_model();
   for(auto i = 0; i < list_model->get_size(); ++i) {
-    auto item = m_list_view->get_list_item(i);
-    if(item) {
+    if(auto item = m_list_view->get_list_item(i)) {
       item->setFocusPolicy(Qt::NoFocus);
     }
   }
@@ -108,39 +107,33 @@ connection DropDownBox::connect_submit_signal(
 
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
-    auto key_event = static_cast<QKeyEvent*>(event);
-    if(watched == m_drop_down_list->window()) {
+    if(m_drop_down_list->isVisible()) {
+      auto key_event = static_cast<QKeyEvent*>(event);
       switch(key_event->key()) {
-        case Qt::Key_Down:
-        case Qt::Key_Up:
-        case Qt::Key_Home:
-        case Qt::Key_End:
-        case Qt::Key_PageUp:
-        case Qt::Key_PageDown:
-          QCoreApplication::sendEvent(m_list_view, event);
+        case Qt::Key_Tab:
+        case Qt::Key_Backtab:
+          m_drop_down_list->hide();
+          QCoreApplication::sendEvent(m_button, event);
           break;
-        default:
-        {
-          auto text = key_event->text();
-          if(text.size() == 1 &&
-              (text[0].isLetterOrNumber() || text[0] == '_')) {
-            QCoreApplication::sendEvent(m_list_view, event);
-            break;
-          }
-        }
+        case Qt::Key_Escape:
+          m_list_view->get_current_model()->set_current(m_submission_index);
+          m_drop_down_list->hide();
+          break;
       }
-    }
-    if(m_drop_down_list->isVisible() && (key_event->key() == Qt::Key_Tab ||
-        key_event->key() == Qt::Key_Backtab)) {
-      m_drop_down_list->hide();
-      QCoreApplication::sendEvent(m_button, event);
-    } else if(m_drop_down_list->isVisible() &&
-        key_event->key() == Qt::Key_Escape) {
-      on_escape_press();
     }
   } else if(event->type() == QEvent::Close &&
       watched == m_drop_down_list->window()) {
-    on_panel_close();
+    m_drop_down_list->hide();
+    if(!m_button->hasFocus()) {
+      update_submission();
+      m_list_view->get_selection_model()->set_current(m_submission_index);
+      unmatch(*m_input_box, Focus());
+    }
+  } else if(event->type() == QEvent::Show &&
+      watched == m_drop_down_list->window()) {
+    m_list_view->setFocus();
+    m_list_view->get_current_model()->set_current(
+      m_list_view->get_current_model()->get_current());
   } else if(event->type() == QEvent::FocusIn) {
     match(*m_input_box, Focus());
   } else if(event->type() == QEvent::FocusOut) {
@@ -179,31 +172,16 @@ void DropDownBox::on_click() {
 void DropDownBox::on_list_view_current(const boost::optional<int>& current) {
   auto text_current = [&] {
     if(current) {
-      return displayTextAny(
-        m_list_view->get_list_model()->get<QString>(*current));
+      return displayTextAny(m_list_view->get_list_model()->at(*current));
     }
     return QString("");
   }();
-  m_text_box->get_model()->set_current(text_current);
+  m_text_box->get_model()->set_current(std::move(text_current));
 }
 
 void DropDownBox::on_list_view_submit(const std::any& submission) {
   update_submission();
   m_drop_down_list->hide();
-}
-
-void DropDownBox::on_escape_press() {
-  m_list_view->get_current_model()->set_current(m_submission_index);
-  m_drop_down_list->hide();
-}
-
-void DropDownBox::on_panel_close() {
-  m_drop_down_list->hide();
-  if(!m_button->hasFocus()) {
-    update_submission();
-    m_list_view->get_selection_model()->set_current(m_submission_index);
-    unmatch(*m_input_box, Focus());
-  }
 }
 
 void DropDownBox::update_submission() {

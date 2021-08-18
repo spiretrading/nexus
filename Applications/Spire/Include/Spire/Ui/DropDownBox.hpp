@@ -58,8 +58,6 @@ namespace Spire {
       void on_click();
       void on_list_view_current(const boost::optional<int>& current);
       void on_list_view_submit(const std::any& submission);
-      void on_escape_press();
-      void on_panel_close();
       void update_submission();
   };
 }
