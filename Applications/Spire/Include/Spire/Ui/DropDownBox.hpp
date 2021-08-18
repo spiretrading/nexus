@@ -7,7 +7,8 @@
 namespace Spire {
 
   /**
-   * Represents a widget which allows the user to choose one value from a list.
+   * Represents a widget which allows the user to choose one value from
+   * a drop down list.
    */
   class DropDownBox : public QWidget {
     public:

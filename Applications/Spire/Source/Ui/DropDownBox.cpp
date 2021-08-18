@@ -170,7 +170,7 @@ void DropDownBox::on_click() {
 }
 
 void DropDownBox::on_list_view_current(const boost::optional<int>& current) {
-  auto text_current = [&] {
+  auto text_current = [=] {
     if(current) {
       return displayTextAny(m_list_view->get_list_model()->at(*current));
     }
