@@ -70,9 +70,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_drop_down_list = new DropDownList(*m_list_view, this);
   auto list_model = m_list_view->get_list_model();
   for(auto i = 0; i < list_model->get_size(); ++i) {
-    if(auto item = m_list_view->get_list_item(i)) {
-      item->setFocusPolicy(Qt::NoFocus);
-    }
+    m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
   }
   m_button->connect_clicked_signal([=] { on_click(); });
   m_list_view_current_connection =
