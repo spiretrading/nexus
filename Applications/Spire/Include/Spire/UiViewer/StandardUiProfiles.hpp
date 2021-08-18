@@ -44,6 +44,9 @@ namespace Spire {
   /** Returns a UiProfile for the IntoTip. */
   UiProfile make_info_tip_profile();
 
+  /** Returns a UiProfile for the InputBox. */
+  UiProfile make_input_box_profile();
+
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
 
