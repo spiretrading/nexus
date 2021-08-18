@@ -22,7 +22,8 @@ namespace {
 
 DropDownList::DropDownList(ListView& list_view, QWidget* parent)
     : QWidget(parent),
-      m_list_view(&list_view) {
+      m_list_view(&list_view),
+      m_panel_border_size(0, 0) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
