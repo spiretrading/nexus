@@ -104,41 +104,41 @@ connection DropDownBox::connect_submit_signal(
 }
 
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
-    if(m_drop_down_list->isVisible()) {
-      auto key_event = static_cast<QKeyEvent*>(event);
-      switch(key_event->key()) {
-        case Qt::Key_Tab:
-        case Qt::Key_Backtab:
-          m_drop_down_list->hide();
-          QCoreApplication::sendEvent(m_button, event);
-          break;
-        case Qt::Key_Escape:
-          m_list_view->get_current_model()->set_current(m_submission_index);
-          m_drop_down_list->hide();
-          break;
-      }
-    }
-  } else if(event->type() == QEvent::Close &&
-      watched == m_drop_down_list->window()) {
-    m_drop_down_list->hide();
-    if(!m_button->hasFocus()) {
-      update_submission();
-      m_list_view->get_selection_model()->set_current(m_submission_index);
-      unmatch(*m_input_box, Focus());
-    }
-  } else if(event->type() == QEvent::Show &&
-      watched == m_drop_down_list->window()) {
-    m_list_view->setFocus();
-    m_list_view->get_current_model()->set_current(
-      m_list_view->get_current_model()->get_current());
-  } else if(event->type() == QEvent::FocusIn) {
+  if(event->type() == QEvent::FocusIn) {
     match(*m_input_box, Focus());
   } else if(event->type() == QEvent::FocusOut) {
     if(m_drop_down_list->isVisible()) {
       match(*m_input_box, Focus());
     } else {
       unmatch(*m_input_box, Focus());
+    }
+  } else if(event->type() == QEvent::KeyPress) {
+    if(m_drop_down_list->isVisible()) {
+      auto key_event = static_cast<QKeyEvent*>(event);
+      switch(key_event->key()) {
+      case Qt::Key_Tab:
+      case Qt::Key_Backtab:
+        m_drop_down_list->hide();
+        QCoreApplication::sendEvent(m_button, event);
+        break;
+      case Qt::Key_Escape:
+        m_list_view->get_current_model()->set_current(m_submission_index);
+        m_drop_down_list->hide();
+        break;
+      }
+    }
+  } else if(watched == m_drop_down_list->window()) {
+    if(event->type() == QEvent::Close) {
+      m_drop_down_list->hide();
+      if(!m_button->hasFocus()) {
+        update_submission();
+        m_list_view->get_selection_model()->set_current(m_submission_index);
+        unmatch(*m_input_box, Focus());
+      }
+    } else if(event->type() == QEvent::Show) {
+      m_list_view->setFocus();
+      m_list_view->get_current_model()->set_current(
+        m_list_view->get_current_model()->get_current());
     }
   }
   return QWidget::eventFilter(watched, event);
