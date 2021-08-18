@@ -3,8 +3,15 @@
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <QWidget>
 #include "Spire/Spire/ScalarValueModel.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  using Today = StateSelector<void, struct TodayTag>;
+
+  using OutOfMonth = StateSelector<void, struct OutOfMonthTag>;
+}
 
   using OptionalDateModel =
     ScalarValueModel<boost::optional<boost::gregorian::date>>;
@@ -14,6 +21,8 @@ namespace Spire {
 
   class CalendarDatePicker : public QWidget {
     public:
+
+      using SubmitSignal = Signal<void (boost::gregorian::date day)>;
 
       CalendarDatePicker(QWidget* parent = nullptr);
 
@@ -25,8 +34,12 @@ namespace Spire {
 
       const std::shared_ptr<OptionalDateModel>& get_model() const;
 
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
+
     private:
       class MonthSelector;
+      mutable SubmitSignal m_submit_signal;
       std::shared_ptr<OptionalDateModel> m_model;
       MonthSelector* m_month_selector;
       ListView* m_calendar_view;

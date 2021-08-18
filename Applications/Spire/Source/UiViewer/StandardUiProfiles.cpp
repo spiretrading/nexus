@@ -15,6 +15,7 @@
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -44,6 +45,7 @@
 #include "Spire/UiViewer/UiProfile.hpp"
 
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -328,6 +330,20 @@ UiProfile Spire::make_box_profile() {
         set_style(*box, std::move(style));
       });
       return box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_calendar_date_picker_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("CalendarDatePicker"), properties,
+    [] (auto& profile) {
+      auto calendar = new CalendarDatePicker(nullptr);
+      apply_widget_properties(calendar, profile.get_properties());
+      calendar->connect_submit_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Submit")));
+      return calendar;
     });
   return profile;
 }

@@ -16,6 +16,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 using DateModel = ValueModel<date>;
 using LocalDateModel = LocalValueModel<date>;
+using MonthModel = LocalValueModel<date>;
 
 namespace {
   const auto DISPLAYED_DAYS = 42;
@@ -23,13 +24,31 @@ namespace {
   class CalendarDayButton : public QWidget {
     public:
 
-      CalendarDayButton(
-          std::shared_ptr<DateModel> model, QWidget* parent = nullptr)
+      CalendarDayButton(std::shared_ptr<DateModel> model,
+          std::shared_ptr<MonthModel> month_model, QWidget* parent = nullptr)
           : QWidget(parent),
-            m_model(std::move(model)) {
+            m_model(std::move(model)),
+            m_month_model(std::move(month_model)) {
         auto layout = new QHBoxLayout(this);
         layout->setContentsMargins({});
         m_button = make_label_button("", this);
+        proxy_style(*this, *m_button);
+        auto style = get_style(*m_button);
+        style.get(Any() / Body()).
+          set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
+          set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+          set(border_radius(scale_width(3))).
+          set(TextColor(QColor::fromRgb(0x000000)));
+        style.get(OutOfMonth() / Body()).
+          set(TextColor(QColor::fromRgb(0xA0A0A0)));
+        style.get(Today() / Body()).
+          set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
+          set(TextColor(QColor::fromRgb(0xDB8700)));
+        style.get((Hover() || Press()) / Body()).
+          set(BackgroundColor(QColor::fromRgb(0xF2F2FF)));
+        style.get(Disabled() / Body()).
+          set(TextColor(QColor::fromRgb(0xC8C8C8)));
+        set_style(*m_button, std::move(style));
         layout->addWidget(m_button);
         on_current(m_model->get_current());
         m_model->connect_current_signal([=] (auto day) { on_current(day); });
@@ -37,28 +56,28 @@ namespace {
 
     private:
       std::shared_ptr<DateModel> m_model;
+      std::shared_ptr<MonthModel> m_month_model;
       // TODO: should this just be a label; isn't the ListItem a button?
       Button* m_button;
 
       void on_current(date day) {
         static_cast<TextBox*>(&m_button->get_body())->get_model()->set_current(
           QString("%12").arg(day.day()));
+        if(day == day_clock::local_day()) {
+          qDebug() << "today";
+          match(*this, Today());
+        } else {
+          unmatch(*this, Today());
+        }
+        // TODO: maybe MonthModel only needs an int.
+        if(day.month() == m_month_model->get_current().month()) {
+          //qDebug() << "out of month";
+          match (*this, OutOfMonth());
+        } else {
+          unmatch(*this, OutOfMonth());
+        }
       }
   };
-
-  auto date_button_builder(const ArrayListModel& model, int index) {
-    auto m = model.get<std::shared_ptr<LocalDateModel>>(index);
-    auto button = new CalendarDayButton(std::move(m));
-    button->setFixedSize(scale(24, 24));
-    auto style = get_style(*button);
-    style.get(Body()).
-      set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
-      set(border_radius(scale_width(3))).
-      set(TextAlign(Qt::AlignCenter)).
-      set(padding(0));
-    set_style(*button, std::move(style));
-    return button;
-  }
 
   auto make_header_label(QString text, QWidget* parent) {
     auto label = make_label(text, parent);
@@ -90,23 +109,16 @@ namespace {
   }
 }
 
-namespace Spire {
-namespace Styles {
-
-  using Today = StateSelector<void, struct TodayTag>;
-
-  using OutOfMonth = StateSelector<void, struct OutOfMonthTag>;
-}
-}
-
 class CalendarDatePicker::MonthSelector : public QWidget {
   public:
 
     using UpdateSignal = Signal<void ()>;
 
-    MonthSelector(std::shared_ptr<OptionalDateModel> model,
+    MonthSelector(std::shared_ptr<OptionalDateModel> date_model,
         QWidget* parent = nullptr)
-        : m_model(std::move(model)) {
+        : m_date_model(std::move(date_model)) {
+       m_model = std::make_shared<MonthModel>(
+            m_date_model->get_current().value_or(day_clock::local_day()));
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       layout->setSpacing(0);
@@ -130,10 +142,10 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       m_next_button->connect_clicked_signal([=] { adjust_month(1); });
       layout->addWidget(m_next_button);
       layout->addSpacing(scale_width(4));
-      m_model->connect_current_signal(
+      m_date_model->connect_current_signal(
         [=] (const auto& date) { on_current(date); });
       auto initial_date = [&] {
-        auto current = m_model->get_current();
+        auto current = m_date_model->get_current();
         if(current) {
           return *current;
         }
@@ -150,6 +162,10 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       return m_displayed_month;
     }
 
+    std::shared_ptr<MonthModel> get_model() const {
+      return m_model;
+    }
+
     connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
       return m_update_signal.connect(slot);
@@ -157,7 +173,8 @@ class CalendarDatePicker::MonthSelector : public QWidget {
 
   private:
     mutable UpdateSignal m_update_signal;
-    std::shared_ptr<OptionalDateModel> m_model;
+    std::shared_ptr<MonthModel> m_model;
+    std::shared_ptr<OptionalDateModel> m_date_model;
     int m_displayed_month;
     int m_displayed_year;
     // TODO: use boost month names?
@@ -225,7 +242,21 @@ CalendarDatePicker::CalendarDatePicker(
   populate_calendar([=] (auto index, auto day) {
     m_calendar_model->push(std::make_shared<LocalDateModel>(day));
   });
-  m_calendar_view = new ListView(m_calendar_model, date_button_builder, this);
+  m_calendar_view = new ListView(m_calendar_model,
+    [=] (const ArrayListModel& model, int index) {
+      auto button = new CalendarDayButton(
+        model.get<std::shared_ptr<LocalDateModel>>(index),
+        m_month_selector->get_model());
+      button->setFixedSize(scale(24, 24));
+      auto style = get_style(*button);
+      style.get(Body()).
+        set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+        set(border_radius(scale_width(3))).
+        set(TextAlign(Qt::AlignCenter)).
+        set(padding(0));
+      set_style(*button, std::move(style));
+      return button;
+    }, this);
   // TODO: fixed height only
   m_calendar_view->setFixedSize(scale(182, 144));
   auto calendar_style = get_style(*m_calendar_view);
@@ -235,12 +266,24 @@ CalendarDatePicker::CalendarDatePicker(
     set(Overflow(Overflow::WRAP));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
+  m_calendar_view->get_selection_model()->connect_current_signal(
+    [=] (const auto& index) {
+      if(index) {
+        m_submit_signal(m_calendar_model->
+          get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
+      }
+    });
   layout->addWidget(m_calendar_view);
 }
 
 const std::shared_ptr<OptionalDateModel>&
     CalendarDatePicker::get_model() const {
   return m_model;
+}
+
+connection CalendarDatePicker::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
 }
 
 void CalendarDatePicker::populate_calendar(const std::function<
