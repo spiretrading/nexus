@@ -167,25 +167,13 @@ CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
   create_calendar_model();
   m_calendar_view = new ListView(m_calendar_model, date_button_builder, this);
   // TODO: fixed height only
-  m_calendar_view->setFixedSize(scale(scale(182, 144)));
-  auto calendar_style = get_style(*m_calendar_view);
+  m_calendar_view->setFixedSize(scale(182, 144));
+  //auto calendar_style = get_style(*m_calendar_view);
+  auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
     set(Overflow(Overflow::WRAP));
   set_style(*m_calendar_view, std::move(calendar_style));
-  m_calendar_model->connect_operation_signal(
-    [=] (const auto& operation) {
-      visit(operation,
-        [&] (const ListModel::UpdateOperation& operation) {
-          auto item = m_calendar_view->get_list_item(operation.m_index);
-          item->setFixedSize(scale(24, 24));
-          auto style = StyleSheet();
-          style.get(Any()).
-            set(BackgroundColor(QColor::fromRgb(0xFF, 0x0, 0x0))).
-            set(padding(0));
-          set_style(*item, std::move(style));
-        });
-    });
   update_calendar_model();
   layout->addWidget(m_calendar_view);
 }
@@ -202,9 +190,7 @@ void CalendarDatePicker::create_calendar_model() {
 }
 
 void CalendarDatePicker::update_calendar_model() {
-  for(auto i = 0; i < DISPLAYED_DAYS; ++i) {
-    m_calendar_model->set(i, m_model->get_current());
-  }
+  // TODO:
 }
 
 void CalendarDatePicker::on_current(const boost::optional<date>& date) {
