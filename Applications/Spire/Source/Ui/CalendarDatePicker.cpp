@@ -11,17 +11,44 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::gregorian;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
+using DateModel = ValueModel<date>;
+using LocalDateModel = LocalValueModel<date>;
 
 namespace {
   const auto DISPLAYED_DAYS = 42;
 
+  class CalendarDayButton : public QWidget {
+    public:
+
+      CalendarDayButton(
+          std::shared_ptr<DateModel> model, QWidget* parent = nullptr)
+          : QWidget(parent),
+            m_model(std::move(model)) {
+        auto layout = new QHBoxLayout(this);
+        layout->setContentsMargins({});
+        m_button = make_label_button("", this);
+        layout->addWidget(m_button);
+        on_current(m_model->get_current());
+        m_model->connect_current_signal([=] (auto day) { on_current(day); });
+      }
+
+    private:
+      std::shared_ptr<DateModel> m_model;
+      // TODO: should this just be a label; isn't the ListItem a button?
+      Button* m_button;
+
+      void on_current(date day) {
+        static_cast<TextBox*>(&m_button->get_body())->get_model()->set_current(
+          QString("%12").arg(day.day()));
+      }
+  };
+
   auto date_button_builder(const ArrayListModel& model, int index) {
-    // TODO:
-    //auto button = make_label_button(
-    //  QString("%1").arg(model.get<date>(index).month()));
-    auto button = make_label_button(QString("%1").arg(index));
+    auto m = model.get<std::shared_ptr<LocalDateModel>>(index);
+    auto button = new CalendarDayButton(std::move(m));
     button->setFixedSize(scale(24, 24));
     auto style = get_style(*button);
     style.get(Body()).
@@ -53,6 +80,7 @@ namespace {
     auto layout = new QHBoxLayout(header);
     layout->setContentsMargins({});
     layout->setSpacing(0);
+    // TODO: use boost day names?
     auto locale = QLocale();
     layout->addWidget(make_header_label(locale.dayName(7).at(0), header));
     for(auto i = 1; i < 7; ++i) {
@@ -62,9 +90,21 @@ namespace {
   }
 }
 
+namespace Spire {
+namespace Styles {
+
+  using Today = StateSelector<void, struct TodayTag>;
+
+  using OutOfMonth = StateSelector<void, struct OutOfMonthTag>;
+}
+}
+
 class CalendarDatePicker::MonthSelector : public QWidget {
   public:
-    MonthSelector(std::shared_ptr<DateModel> model,
+
+    using UpdateSignal = Signal<void ()>;
+
+    MonthSelector(std::shared_ptr<OptionalDateModel> model,
         QWidget* parent = nullptr)
         : m_model(std::move(model)) {
       auto layout = new QHBoxLayout(this);
@@ -102,10 +142,25 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       on_current(initial_date);
     }
 
+    int get_year() const {
+      return m_displayed_year;
+    }
+
+    int get_month() const {
+      return m_displayed_month;
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const {
+      return m_update_signal.connect(slot);
+    }
+
   private:
-    std::shared_ptr<DateModel> m_model;
+    mutable UpdateSignal m_update_signal;
+    std::shared_ptr<OptionalDateModel> m_model;
     int m_displayed_month;
     int m_displayed_year;
+    // TODO: use boost month names?
     QLocale m_locale;
     Button* m_previous_button;
     TextBox* m_label;
@@ -122,6 +177,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       } else {
         m_displayed_month = adjusted_month;
       }
+      m_update_signal();
       update_label();
     }
 
@@ -144,14 +200,15 @@ class CalendarDatePicker::MonthSelector : public QWidget {
 };
 
 CalendarDatePicker::CalendarDatePicker(QWidget* parent)
-  : CalendarDatePicker(std::make_shared<LocalDateModel>(
+  : CalendarDatePicker(std::make_shared<LocalOptionalDateModel>(
       day_clock::local_day()), parent) {}
 
 CalendarDatePicker::CalendarDatePicker(date current, QWidget* parent)
-  : CalendarDatePicker(std::make_shared<LocalDateModel>(current), parent) {}
+  : CalendarDatePicker(
+    std::make_shared<LocalOptionalDateModel>(current), parent) {}
 
-CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
-    QWidget* parent)
+CalendarDatePicker::CalendarDatePicker(
+    std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
       m_calendar_view(nullptr),
@@ -161,15 +218,18 @@ CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
     scale_height(4));
   layout->setSpacing(scale_height(4));
   m_month_selector = new MonthSelector(m_model, this);
+  m_month_selector->connect_update_signal([=] { update_calendar_model(); });
   layout->addWidget(m_month_selector);
   auto header = make_day_header(this);
   layout->addWidget(header);
-  create_calendar_model();
+  populate_calendar([=] (auto index, auto day) {
+    m_calendar_model->push(std::make_shared<LocalDateModel>(day));
+  });
   m_calendar_view = new ListView(m_calendar_model, date_button_builder, this);
   // TODO: fixed height only
   m_calendar_view->setFixedSize(scale(182, 144));
-  //auto calendar_style = get_style(*m_calendar_view);
-  auto calendar_style = StyleSheet();
+  auto calendar_style = get_style(*m_calendar_view);
+  //auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
     set(Overflow(Overflow::WRAP));
@@ -178,21 +238,31 @@ CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
   layout->addWidget(m_calendar_view);
 }
 
-const std::shared_ptr<DateModel>& CalendarDatePicker::get_model() const {
+const std::shared_ptr<OptionalDateModel>&
+    CalendarDatePicker::get_model() const {
   return m_model;
 }
 
-void CalendarDatePicker::create_calendar_model() {
-  m_calendar_model = std::make_shared<ArrayListModel>();
+void CalendarDatePicker::populate_calendar(const std::function<
+    void (int index, boost::gregorian::date day)> assign) {
+  auto day =
+    date(m_month_selector->get_year(), m_month_selector->get_month(), 1);
+  if(day.day_of_week() != 0) {
+    day += days(-day.day_of_week());
+  }
   for(auto i = 0; i < DISPLAYED_DAYS; ++i) {
-    m_calendar_model->push(date());
+    assign(i, day);
+    day += days(1);
   }
 }
 
 void CalendarDatePicker::update_calendar_model() {
-  // TODO:
+  populate_calendar([=] (auto index, auto day) {
+    m_calendar_model->
+      get<std::shared_ptr<LocalDateModel>>(index)->set_current(day);
+  });
 }
 
-void CalendarDatePicker::on_current(const boost::optional<date>& date) {
+void CalendarDatePicker::on_current(const boost::optional<date>& day) {
   update_calendar_model();
 }
