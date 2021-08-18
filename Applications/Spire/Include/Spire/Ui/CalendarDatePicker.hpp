@@ -29,7 +29,11 @@ namespace Spire {
       class MonthSelector;
       std::shared_ptr<DateModel> m_model;
       MonthSelector* m_month_selector;
+      ListView* m_calendar_view;
+      std::shared_ptr<ArrayListModel> m_calendar_model;
 
+      void create_calendar_model();
+      void update_calendar_model();
       void on_current(const boost::optional<boost::gregorian::date>& date);
   };
 }

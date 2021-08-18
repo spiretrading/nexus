@@ -4,7 +4,10 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::gregorian;
@@ -12,6 +15,24 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto DISPLAYED_DAYS = 42;
+
+  auto date_button_builder(const ArrayListModel& model, int index) {
+    // TODO:
+    //auto button = make_label_button(
+    //  QString("%1").arg(model.get<date>(index).month()));
+    auto button = make_label_button(QString("%1").arg(index));
+    button->setFixedSize(scale(24, 24));
+    auto style = get_style(*button);
+    style.get(Body()).
+      set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+      set(border_radius(scale_width(3))).
+      set(TextAlign(Qt::AlignCenter)).
+      set(padding(0));
+    set_style(*button, std::move(style));
+    return button;
+  }
+
   auto make_header_label(QString text, QWidget* parent) {
     auto label = make_label(text, parent);
     label->setFixedSize(scale(24, 24));
@@ -43,7 +64,6 @@ namespace {
 
 class CalendarDatePicker::MonthSelector : public QWidget {
   public:
-
     MonthSelector(std::shared_ptr<DateModel> model,
         QWidget* parent = nullptr)
         : m_model(std::move(model)) {
@@ -133,7 +153,9 @@ CalendarDatePicker::CalendarDatePicker(date current, QWidget* parent)
 CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
     QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_calendar_view(nullptr),
+      m_calendar_model(std::make_shared<ArrayListModel>()) {
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(4), scale_width(8), scale_width(4),
     scale_height(4));
@@ -142,8 +164,49 @@ CalendarDatePicker::CalendarDatePicker(std::shared_ptr<DateModel> model,
   layout->addWidget(m_month_selector);
   auto header = make_day_header(this);
   layout->addWidget(header);
+  create_calendar_model();
+  m_calendar_view = new ListView(m_calendar_model, date_button_builder, this);
+  // TODO: fixed height only
+  m_calendar_view->setFixedSize(scale(scale(182, 144)));
+  auto calendar_style = get_style(*m_calendar_view);
+  calendar_style.get(Any()).
+    set(Qt::Horizontal).
+    set(Overflow(Overflow::WRAP));
+  set_style(*m_calendar_view, std::move(calendar_style));
+  m_calendar_model->connect_operation_signal(
+    [=] (const auto& operation) {
+      visit(operation,
+        [&] (const ListModel::UpdateOperation& operation) {
+          auto item = m_calendar_view->get_list_item(operation.m_index);
+          item->setFixedSize(scale(24, 24));
+          auto style = StyleSheet();
+          style.get(Any()).
+            set(BackgroundColor(QColor::fromRgb(0xFF, 0x0, 0x0))).
+            set(padding(0));
+          set_style(*item, std::move(style));
+        });
+    });
+  update_calendar_model();
+  layout->addWidget(m_calendar_view);
 }
 
 const std::shared_ptr<DateModel>& CalendarDatePicker::get_model() const {
   return m_model;
+}
+
+void CalendarDatePicker::create_calendar_model() {
+  m_calendar_model = std::make_shared<ArrayListModel>();
+  for(auto i = 0; i < DISPLAYED_DAYS; ++i) {
+    m_calendar_model->push(date());
+  }
+}
+
+void CalendarDatePicker::update_calendar_model() {
+  for(auto i = 0; i < DISPLAYED_DAYS; ++i) {
+    m_calendar_model->set(i, m_model->get_current());
+  }
+}
+
+void CalendarDatePicker::on_current(const boost::optional<date>& date) {
+  update_calendar_model();
 }
