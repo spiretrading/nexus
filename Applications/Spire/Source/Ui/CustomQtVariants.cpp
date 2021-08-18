@@ -314,8 +314,6 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return Spire::displayText(value.value<TimeInForce>().GetType());
-  } else if(value.canConvert<QKeySequence>()) {
-    return value.value<QKeySequence>().toString();
   } else if(value.canConvert<std::any>()) {
     auto translated_value = to_qvariant(value.value<std::any>());
     return displayText(translated_value, locale);
