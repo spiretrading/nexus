@@ -40,6 +40,7 @@
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/Tag.hpp"
+#include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -1565,6 +1566,72 @@ UiProfile Spire::make_tag_profile() {
       tag->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       tag->setMinimumSize(0, 0);
       return tag;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_text_area_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<bool>("read_only"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property<int>("line-height", 120));
+  auto horizontal_alignment_property = define_enum<Qt::Alignment>(
+    {{"LEFT", Qt::AlignLeft},
+     {"RIGHT", Qt::AlignRight},
+     {"CENTER", Qt::AlignHCenter},
+     {"JUSTIFY", Qt::AlignJustify}});
+  properties.push_back(make_standard_enum_property(
+    "horizontal-align", horizontal_alignment_property));
+  auto profile = UiProfile(QString::fromUtf8("TextAreaBox"), properties,
+    [] (auto& profile) {
+      auto text_area_box = new TextAreaBox();
+      apply_widget_properties(text_area_box, profile.get_properties());
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& value) {
+        if(text_area_box->get_model()->get_current() != value) {
+          text_area_box->get_model()->set_current(value);
+        }
+        text_area_box->adjustSize();
+      });
+      text_area_box->get_model()->connect_current_signal(
+        [&] (const auto& value) {
+          if(current.get() != value) {
+            current.set(value);
+          }
+        });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        text_area_box->set_read_only(is_read_only);
+      });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& text) {
+        text_area_box->set_placeholder(text);
+      });
+      auto& line_height = get<int>("line-height", profile.get_properties());
+      line_height.connect_changed_signal(
+        [=] (auto line_height) {
+          auto style = get_style(*text_area_box);
+          style.get(Any()).set(LineHeight(
+            static_cast<double>(line_height) / 100));
+          set_style(*text_area_box, style);
+        });
+      auto& horizontal_alignment = get<Qt::Alignment>("horizontal-align",
+        profile.get_properties());
+      horizontal_alignment.connect_changed_signal(
+        [&, text_area_box] (auto alignment) {
+          auto style = get_style(*text_area_box);
+          style.get(Any()).
+            set(TextAlign(
+              Qt::Alignment(alignment) | Qt::AlignTop));
+          set_style(*text_area_box, std::move(style));
+        });
+      text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
+        QString::fromUtf8("Submit")));
+      text_area_box->get_model()->connect_current_signal(
+        profile.make_event_slot<QString>(QString::fromUtf8("Current")));
+      return text_area_box;
     });
   return profile;
 }
