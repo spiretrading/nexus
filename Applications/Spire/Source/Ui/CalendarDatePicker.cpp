@@ -23,12 +23,12 @@ namespace {
 
   class CalendarDayButton : public QWidget {
     public:
-
       CalendarDayButton(std::shared_ptr<DateModel> model,
           std::shared_ptr<MonthModel> month_model, QWidget* parent = nullptr)
           : QWidget(parent),
             m_model(std::move(model)),
             m_month_model(std::move(month_model)) {
+        setFixedSize(scale(24, 24));
         auto layout = new QHBoxLayout(this);
         layout->setContentsMargins({});
         m_button = make_label_button("", this);
@@ -64,14 +64,11 @@ namespace {
         static_cast<TextBox*>(&m_button->get_body())->get_model()->set_current(
           QString("%12").arg(day.day()));
         if(day == day_clock::local_day()) {
-          qDebug() << "today";
           match(*this, Today());
         } else {
           unmatch(*this, Today());
         }
-        // TODO: maybe MonthModel only needs an int.
         if(day.month() == m_month_model->get_current().month()) {
-          //qDebug() << "out of month";
           match (*this, OutOfMonth());
         } else {
           unmatch(*this, OutOfMonth());
@@ -111,9 +108,6 @@ namespace {
 
 class CalendarDatePicker::MonthSelector : public QWidget {
   public:
-
-    using UpdateSignal = Signal<void ()>;
-
     MonthSelector(std::shared_ptr<OptionalDateModel> date_model,
         QWidget* parent = nullptr)
         : m_date_model(std::move(date_model)) {
@@ -126,7 +120,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       m_previous_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-left.svg", scale(16, 16)));
       m_previous_button->setFixedSize(scale(16, 16));
-      m_previous_button->connect_clicked_signal([=] { adjust_month(-1); });
+      m_previous_button->connect_clicked_signal([=] { decrement(); });
       layout->addWidget(m_previous_button);
       layout->addSpacing(scale_width(8));
       m_label = make_label("", this);
@@ -139,7 +133,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       m_next_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-right.svg", scale(16, 16)));
       m_next_button->setFixedSize(scale(16, 16));
-      m_next_button->connect_clicked_signal([=] { adjust_month(1); });
+      m_next_button->connect_clicked_signal([=] { increment(); });
       layout->addWidget(m_next_button);
       layout->addSpacing(scale_width(4));
       m_date_model->connect_current_signal(
@@ -154,47 +148,26 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       on_current(initial_date);
     }
 
-    int get_year() const {
-      return m_displayed_year;
-    }
-
-    int get_month() const {
-      return m_displayed_month;
-    }
-
     std::shared_ptr<MonthModel> get_model() const {
       return m_model;
     }
 
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const {
-      return m_update_signal.connect(slot);
-    }
-
   private:
-    mutable UpdateSignal m_update_signal;
     std::shared_ptr<MonthModel> m_model;
     std::shared_ptr<OptionalDateModel> m_date_model;
-    int m_displayed_month;
-    int m_displayed_year;
     // TODO: use boost month names?
     QLocale m_locale;
     Button* m_previous_button;
     TextBox* m_label;
     Button* m_next_button;
 
-    void adjust_month(int adjustment) {
-      auto adjusted_month = m_displayed_month + adjustment;
-      if(adjusted_month > 12) {
-        m_displayed_month = 1;
-        ++m_displayed_year;
-      } else if(adjusted_month < 1) {
-        m_displayed_month = 12;
-        --m_displayed_year;
-      } else {
-        m_displayed_month = adjusted_month;
-      }
-      m_update_signal();
+    void decrement() {
+      m_model->set_current(m_model->get_current() - months(1));
+      update_label();
+    }
+
+    void increment() {
+      m_model->set_current(m_model->get_current() + months(1));
       update_label();
     }
 
@@ -204,13 +177,13 @@ class CalendarDatePicker::MonthSelector : public QWidget {
 
     void update_label() {
       m_label->get_model()->set_current(QString("%1 %2").
-        arg(get_month_name(m_displayed_month)).arg(m_displayed_year));
+        arg(get_month_name(m_model->get_current().month())).
+        arg(m_model->get_current().year()));
     }
 
     void on_current(const boost::optional<date>& date) {
       if(date) {
-        m_displayed_month = date->month();
-        m_displayed_year = date->year();
+        m_model->set_current(*date);
         update_label();
       }
     }
@@ -235,7 +208,8 @@ CalendarDatePicker::CalendarDatePicker(
     scale_height(4));
   layout->setSpacing(scale_height(4));
   m_month_selector = new MonthSelector(m_model, this);
-  m_month_selector->connect_update_signal([=] { update_calendar_model(); });
+  m_month_selector->get_model()->connect_current_signal(
+    [=] (auto current) { update_calendar_model(); });
   layout->addWidget(m_month_selector);
   auto header = make_day_header(this);
   layout->addWidget(header);
@@ -244,21 +218,11 @@ CalendarDatePicker::CalendarDatePicker(
   });
   m_calendar_view = new ListView(m_calendar_model,
     [=] (const ArrayListModel& model, int index) {
-      auto button = new CalendarDayButton(
+      return new CalendarDayButton(
         model.get<std::shared_ptr<LocalDateModel>>(index),
         m_month_selector->get_model());
-      button->setFixedSize(scale(24, 24));
-      auto style = get_style(*button);
-      style.get(Body()).
-        set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
-        set(border_radius(scale_width(3))).
-        set(TextAlign(Qt::AlignCenter)).
-        set(padding(0));
-      set_style(*button, std::move(style));
-      return button;
     }, this);
-  // TODO: fixed height only
-  m_calendar_view->setFixedSize(scale(182, 144));
+  m_calendar_view->setFixedWidth(scale_width(182));
   auto calendar_style = get_style(*m_calendar_view);
   //auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
@@ -266,11 +230,14 @@ CalendarDatePicker::CalendarDatePicker(
     set(Overflow(Overflow::WRAP));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
+  m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
   m_calendar_view->get_selection_model()->connect_current_signal(
     [=] (const auto& index) {
       if(index) {
-        m_submit_signal(m_calendar_model->
-          get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
+        auto current = m_calendar_model->
+          get<std::shared_ptr<LocalDateModel>>(*index)->get_current();
+        m_model->set_current(current);
+        m_submit_signal(current);
       }
     });
   layout->addWidget(m_calendar_view);
@@ -288,8 +255,8 @@ connection CalendarDatePicker::connect_submit_signal(
 
 void CalendarDatePicker::populate_calendar(const std::function<
     void (int index, boost::gregorian::date day)> assign) {
-  auto day =
-    date(m_month_selector->get_year(), m_month_selector->get_month(), 1);
+  auto displayed_month = m_month_selector->get_model()->get_current();
+  auto day = date(displayed_month.year(), displayed_month.month(), 1);
   if(day.day_of_week() != 0) {
     day += days(-day.day_of_week());
   }
@@ -307,5 +274,10 @@ void CalendarDatePicker::update_calendar_model() {
 }
 
 void CalendarDatePicker::on_current(const boost::optional<date>& day) {
-  update_calendar_model();
+  if(day) {
+    auto display = m_month_selector->get_model()->get_current();
+    if(display.month() != day->month() || display.year() != day->year()) {
+      update_calendar_model();
+    }
+  }
 }
