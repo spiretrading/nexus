@@ -17,6 +17,7 @@ namespace Spire {
   class CheckBox;
   class DecimalBox;
   class DestinationListItem;
+  class DropDownList;
   class DropShadow;
   class DurationBox;
   class FilteredTableModel;
@@ -43,6 +44,7 @@ namespace Spire {
   class SortedTableModel;
   class TableModel;
   class Tag;
+  class TextAreaBox;
   class TextBox;
   class TimeBox;
   class TitleBar;

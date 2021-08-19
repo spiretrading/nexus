@@ -26,6 +26,9 @@ namespace Spire {
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
+  /** Returns a UiProfile for the DropDownList. */
+  UiProfile make_drop_down_list_profile();
+
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
 
@@ -40,6 +43,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the IntoTip. */
   UiProfile make_info_tip_profile();
+
+  /** Returns a UiProfile for the InputBox. */
+  UiProfile make_input_box_profile();
 
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
@@ -103,6 +109,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the Tag. */
   UiProfile make_tag_profile();
+
+  /** Returns a UiProfile for the TextAreaBox. */
+  UiProfile make_text_area_box_profile();
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();
