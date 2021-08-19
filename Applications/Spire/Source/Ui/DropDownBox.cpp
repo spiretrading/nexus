@@ -36,42 +36,112 @@ namespace {
   }
 }
 
+class DropDownBox::ButtonContainer : public QWidget {
+  public:
+    ButtonContainer(QWidget* parent)
+        : QWidget(parent) {
+      auto layout = new QHBoxLayout(this);
+      layout->setContentsMargins({});
+      layout->setSpacing(0);
+      m_label = make_label("");
+      m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      m_label->setAttribute(Qt::WA_TransparentForMouseEvents);
+      layout->addWidget(m_label);
+      auto icon_layout = new QVBoxLayout();
+      icon_layout->setContentsMargins({});
+      icon_layout->setSpacing(0);
+      icon_layout->addStretch();
+      auto drop_down_icon = new Icon(
+        imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+      drop_down_icon->setFixedSize(scale(6, 4));
+      drop_down_icon->setFocusPolicy(Qt::NoFocus);
+      icon_layout->addWidget(drop_down_icon);
+      icon_layout->addStretch();
+      layout->addLayout(icon_layout);
+    }
+
+    const std::shared_ptr<TextModel>& get_text_model() const {
+      return m_label->get_model();
+    }
+
+  private:
+    TextBox* m_label;
+};
+
+class DropDownBox::DropDownListWrapper : public QWidget {
+  public:
+    DropDownListWrapper(ListView& list_view, QWidget* parent)
+        : QWidget(parent),
+          m_list_view(&list_view) {
+      m_drop_down_list = new DropDownList(*m_list_view, parent);
+      auto list_model = m_list_view->get_list_model();
+      for(auto i = 0; i < list_model->get_size(); ++i) {
+        m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
+      }
+      m_list_view->installEventFilter(this);
+      get_panel()->installEventFilter(this);
+    }
+
+    QWidget* get_panel() const {
+      return m_drop_down_list->window();
+    }
+
+  protected:
+    bool eventFilter(QObject* watched, QEvent* event) {
+      if(watched == m_list_view) {
+        if(event->type() == QEvent::KeyPress) {
+          auto key_event = static_cast<QKeyEvent*>(event);
+          switch(key_event->key()) {
+            case Qt::Key_Tab:
+            case Qt::Key_Backtab:
+            case Qt::Key_Escape:
+              hide();
+              QCoreApplication::sendEvent(parentWidget(), event);
+              break;
+          }
+        }
+      } else if(watched == get_panel()) {
+        if(event->type() == QEvent::Close) {
+          hide();
+        } else if(event->type() == QEvent::Show) {
+          m_list_view->setFocus();
+          m_list_view->get_current_model()->set_current(
+            m_list_view->get_current_model()->get_current());
+        }
+      }
+      return QWidget::eventFilter(watched, event);
+    }
+
+    bool event(QEvent* event) override {
+      if(event->type() == QEvent::Show) {
+        m_drop_down_list->show();
+      } else if(event->type() == QEvent::Hide) {
+        m_drop_down_list->hide();
+      }
+      return QWidget::event(event);
+    }
+
+  private:
+    ListView* m_list_view;
+    DropDownList* m_drop_down_list;
+};
+
 DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view),
+      m_submission(m_list_view->get_current_model()->get_current()),
       m_is_read_only(false) {
-  auto container = new QWidget();
-  auto container_layout = new QHBoxLayout(container);
-  container_layout->setContentsMargins({});
-  container_layout->setSpacing(0);
-  m_text_box = make_label("");
-  m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_text_box->setAttribute(Qt::WA_TransparentForMouseEvents);
-  container_layout->addWidget(m_text_box);
-  auto icon_layout = new QVBoxLayout();
-  icon_layout->setContentsMargins({});
-  icon_layout->setSpacing(0);
-  icon_layout->addStretch();
-  auto drop_down_icon = new Icon(
-    imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
-  drop_down_icon->setFixedSize(scale(6, 4));
-  drop_down_icon->setFocusPolicy(Qt::NoFocus);
-  icon_layout->addWidget(drop_down_icon);
-  icon_layout->addStretch();
-  container_layout->addLayout(icon_layout);
-  m_input_box = make_input_box(container);
+  m_button_container = new ButtonContainer(this);
+  m_input_box = make_input_box(m_button_container);
   m_button = new Button(m_input_box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_button);
+  m_drop_down_list = new DropDownListWrapper(*m_list_view, this);
+  m_drop_down_list->hide();
   proxy_style(*this, *m_input_box);
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
-  m_drop_down_list = new DropDownList(*m_list_view, this);
-  auto list_model = m_list_view->get_list_model();
-  for(auto i = 0; i < list_model->get_size(); ++i) {
-    m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
-  }
   m_button->connect_clicked_signal([=] { on_click(); });
   m_list_view_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
@@ -79,8 +149,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_list_view_submit_connection = m_list_view->connect_submit_signal(
     [=] (auto& submission) { on_list_view_submit(submission); });
   m_button->installEventFilter(this);
-  m_drop_down_list->window()->installEventFilter(this);
-  m_list_view->installEventFilter(this);
+  m_drop_down_list->get_panel()->installEventFilter(this);
 }
 
 bool DropDownBox::is_read_only() const {
@@ -104,41 +173,24 @@ connection DropDownBox::connect_submit_signal(
 }
 
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusIn) {
-    match(*m_input_box, Focus());
-  } else if(event->type() == QEvent::FocusOut) {
-    if(m_drop_down_list->isVisible()) {
+  if(watched == m_button) {
+    if(event->type() == QEvent::FocusIn) {
       match(*m_input_box, Focus());
-    } else {
-      unmatch(*m_input_box, Focus());
-    }
-  } else if(event->type() == QEvent::KeyPress) {
-    if(m_drop_down_list->isVisible()) {
-      auto key_event = static_cast<QKeyEvent*>(event);
-      switch(key_event->key()) {
-      case Qt::Key_Tab:
-      case Qt::Key_Backtab:
-        m_drop_down_list->hide();
-        QCoreApplication::sendEvent(m_button, event);
-        break;
-      case Qt::Key_Escape:
-        m_list_view->get_current_model()->set_current(m_submission_index);
-        m_drop_down_list->hide();
-        break;
-      }
-    }
-  } else if(watched == m_drop_down_list->window()) {
-    if(event->type() == QEvent::Close) {
-      m_drop_down_list->hide();
-      if(!m_button->hasFocus()) {
-        update_submission();
-        m_list_view->get_selection_model()->set_current(m_submission_index);
+    } else if(event->type() == QEvent::FocusOut) {
+      if(m_drop_down_list->isVisible()) {
+        match(*m_input_box, Focus());
+      } else {
         unmatch(*m_input_box, Focus());
       }
-    } else if(event->type() == QEvent::Show) {
-      m_list_view->setFocus();
-      m_list_view->get_current_model()->set_current(
-        m_list_view->get_current_model()->get_current());
+    }
+  } else if(watched == m_drop_down_list->get_panel()) {
+    if(event->type() == QEvent::Close) {
+      if(!m_button->hasFocus()) {
+        update_submission();
+        unmatch(*m_input_box, Focus());
+      } else {
+        update_current();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -151,6 +203,9 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
       if(!m_is_read_only) {
         m_drop_down_list->show();
       }
+      break;
+    case Qt::Key_Escape:
+      update_current();
       break;
   }
   QWidget::keyPressEvent(event);
@@ -174,19 +229,24 @@ void DropDownBox::on_list_view_current(const boost::optional<int>& current) {
     }
     return QString("");
   }();
-  m_text_box->get_model()->set_current(std::move(text_current));
+  m_button_container->get_text_model()->set_current(std::move(text_current));
 }
 
 void DropDownBox::on_list_view_submit(const std::any& submission) {
-  update_submission();
   m_drop_down_list->hide();
+  update_submission();
+}
+
+void DropDownBox::update_current() {
+  if(m_submission != m_list_view->get_current_model()->get_current()) {
+    m_list_view->get_current_model()->set_current(m_submission);
+  }
 }
 
 void DropDownBox::update_submission() {
-  m_submission_index = m_list_view->get_current_model()->get_current();
-  if(m_submission_index) {
-    m_submit_signal(m_list_view->get_list_model()->at(*m_submission_index));
-  } else {
-    m_submit_signal(none);
+  m_submission = m_list_view->get_current_model()->get_current();
+  if(m_submission) {
+    m_submit_signal(m_list_view->get_list_model()->at(*m_submission));
   }
+  m_list_view->get_selection_model()->set_current(m_submission);
 }

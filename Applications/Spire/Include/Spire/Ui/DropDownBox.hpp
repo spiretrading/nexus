@@ -17,8 +17,7 @@ namespace Spire {
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
-      using SubmitSignal =
-        Signal<void (const boost::optional<std::any>& submission)>;
+      using SubmitSignal = Signal<void (const std::any& submission)>;
     
       /**
        * Constructs a DropDownBox.
@@ -45,13 +44,15 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      class ButtonContainer;
+      class DropDownListWrapper;
       mutable SubmitSignal m_submit_signal;
       ListView* m_list_view;
-      TextBox* m_text_box;
+      ButtonContainer* m_button_container;
       Box* m_input_box;
       Button* m_button;
-      DropDownList* m_drop_down_list;
-      boost::optional<int> m_submission_index;
+      DropDownListWrapper* m_drop_down_list;
+      boost::optional<int> m_submission;
       bool m_is_read_only;
       boost::signals2::scoped_connection m_list_view_submit_connection;
       boost::signals2::scoped_connection m_list_view_current_connection;
@@ -59,6 +60,7 @@ namespace Spire {
       void on_click();
       void on_list_view_current(const boost::optional<int>& current);
       void on_list_view_submit(const std::any& submission);
+      void update_current();
       void update_submission();
   };
 }
