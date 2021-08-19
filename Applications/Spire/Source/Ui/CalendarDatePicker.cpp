@@ -38,7 +38,8 @@ namespace {
           set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
           set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
           set(border_radius(scale_width(3))).
-          set(TextColor(QColor::fromRgb(0x000000)));
+          set(TextColor(QColor::fromRgb(0x000000))).
+          set(padding(0));
         style.get(OutOfMonth() / Body()).
           set(TextColor(QColor::fromRgb(0xA0A0A0)));
         style.get(Today() / Body()).
