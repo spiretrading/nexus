@@ -1,8 +1,8 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include <QCoreApplication>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QKeyEvent>
+#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Button.hpp"
