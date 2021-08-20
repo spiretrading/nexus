@@ -44,16 +44,13 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      class ButtonContainer;
       class DropDownListWrapper;
       mutable SubmitSignal m_submit_signal;
       ListView* m_list_view;
-      ButtonContainer* m_button_container;
-      Box* m_input_box;
+      TextBox* m_text_box;
       Button* m_button;
       DropDownListWrapper* m_drop_down_list;
       boost::optional<int> m_submission;
-      bool m_is_read_only;
       boost::signals2::scoped_connection m_list_view_submit_connection;
       boost::signals2::scoped_connection m_list_view_current_connection;
 
