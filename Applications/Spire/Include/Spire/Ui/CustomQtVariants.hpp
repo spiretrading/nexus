@@ -83,6 +83,7 @@ namespace Spire {
   };
 }
 
+Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
 Q_DECLARE_METATYPE(Nexus::CurrencyId);
