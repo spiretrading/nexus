@@ -274,8 +274,12 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<gregorian::date>()) {
     auto date = value.value<gregorian::date>();
-    return
-      QString("%1-%2-%3").arg(date.year()).arg(date.month()).arg(date.day());
+    auto format = std::locale(std::locale(""),
+      new boost::gregorian::date_facet("%Y-%m-%d"));
+    auto stream = std::ostringstream();
+    stream.imbue(format);
+    stream << date;
+    return QString::fromStdString(stream.str());
   } else if(value.canConvert<ptime>()) {
     auto time_value = ToLocalTime(value.value<ptime>());
     auto currentTime = ToLocalTime(
