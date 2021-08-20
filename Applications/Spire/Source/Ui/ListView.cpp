@@ -256,6 +256,7 @@ void ListView::navigate(
   if(i == m_current_model->get_current()) {
     return;
   }
+  m_navigation_box = m_items[i]->m_item->frameGeometry();
   m_current_model->set_current(i);
 }
 
@@ -311,11 +312,6 @@ void ListView::cross(int direction) {
     i += direction;
   }
   if(candidate == -1 || candidate == m_current_model->get_current()) {
-    if(direction == 1) {
-      navigate_next();
-    } else {
-      navigate_previous();
-    }
     return;
   }
   m_current_model->set_current(candidate);
