@@ -74,6 +74,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
         : QWidget(parent),
           m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
+      m_drop_down_list->setFocusProxy(m_list_view);
       auto list_model = m_list_view->get_list_model();
       for(auto i = 0; i < list_model->get_size(); ++i) {
         m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
@@ -87,7 +88,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
     }
 
   protected:
-    bool eventFilter(QObject* watched, QEvent* event) {
+    bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_list_view) {
         if(event->type() == QEvent::KeyPress) {
           auto key_event = static_cast<QKeyEvent*>(event);
@@ -103,10 +104,8 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       } else if(watched == get_panel()) {
         if(event->type() == QEvent::Close) {
           hide();
-        } else if(event->type() == QEvent::Show) {
-          m_list_view->setFocus();
-          m_list_view->get_current_model()->set_current(
-            m_list_view->get_current_model()->get_current());
+        } else if(event->type() == QEvent::KeyPress) {
+          QCoreApplication::sendEvent(m_list_view, event);
         }
       }
       return QWidget::eventFilter(watched, event);
