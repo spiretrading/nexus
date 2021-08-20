@@ -111,13 +111,14 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       return QWidget::eventFilter(watched, event);
     }
 
-    bool event(QEvent* event) override {
-      if(event->type() == QEvent::Show) {
-        m_drop_down_list->show();
-      } else if(event->type() == QEvent::Hide) {
-        m_drop_down_list->hide();
-      }
-      return QWidget::event(event);
+    void showEvent(QShowEvent* event) override {
+      m_drop_down_list->show();
+      QWidget::showEvent(event);
+    }
+
+    void hideEvent(QHideEvent* event) override {
+      m_drop_down_list->hide();
+      QWidget::hideEvent(event);
     }
 
   private:
