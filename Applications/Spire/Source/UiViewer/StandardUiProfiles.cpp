@@ -341,7 +341,11 @@ UiProfile Spire::make_calendar_date_picker_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile(QString::fromUtf8("CalendarDatePicker"), properties,
     [] (auto& profile) {
-      auto calendar = new CalendarDatePicker(nullptr);
+      auto model = std::make_shared<LocalOptionalDateModel>();
+      // TODO: add as settable properties
+      model->set_minimum(date(2021, 6, 15));
+      model->set_maximum(date(2021, 9, 1));
+      auto calendar = new CalendarDatePicker(model, nullptr);
       apply_widget_properties(calendar, profile.get_properties());
       calendar->connect_submit_signal(profile.make_event_slot<
         optional<date>>(QString::fromUtf8("Submit")));

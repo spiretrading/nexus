@@ -226,14 +226,18 @@ CalendarDatePicker::CalendarDatePicker(
         m_month_selector->get_model());
     }, this);
   m_calendar_view->setFixedWidth(scale_width(182));
-  auto calendar_style = get_style(*m_calendar_view);
-  //auto calendar_style = StyleSheet();
+  auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
     set(Overflow(Overflow::WRAP));
   calendar_style.get(Any() >> is_a<ListItem>() >> is_a<Box>()).
     set(border_size(0)).
     set(horizontal_padding(0));
+  //calendar_style.get(Any() >> is_a<ListItem> / Selected()).
+  //  set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
+  //  set(TextColor(QColor::fromRgb(0xFFFFFF)));
+  calendar_style.get(Any() > (Hover() || Focus()) >> is_a<ListItem>() >> is_a<Box>()).
+    set(border_size(0));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
   m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
@@ -276,6 +280,18 @@ void CalendarDatePicker::update_calendar_model() {
   populate_calendar([=] (auto index, auto day) {
     m_calendar_model->
       get<std::shared_ptr<LocalDateModel>>(index)->set_current(day);
+    auto minimum = m_model->get_minimum();
+    auto maximum = m_model->get_maximum();
+    if(minimum && maximum) {
+      m_calendar_view->get_list_item(index)->setDisabled(
+        day < *minimum || day > *maximum);
+    } else {
+      if(minimum) {
+        m_calendar_view->get_list_item(index)->setDisabled(day < *minimum);
+      } else if(maximum) {
+        m_calendar_view->get_list_item(index)->setDisabled(day > *maximum);
+      }
+    }
   });
 }
 
