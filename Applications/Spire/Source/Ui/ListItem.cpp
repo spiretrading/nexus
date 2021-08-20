@@ -13,7 +13,7 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
       set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
-      set(horizontal_padding(scale_width(0)));
+      set(horizontal_padding(scale_width(8)));
     style.get(Hover()).set(
       BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
     style.get(Focus()).set(
