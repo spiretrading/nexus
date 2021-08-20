@@ -1,4 +1,5 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -41,15 +42,22 @@ namespace {
           set(TextAlign(Qt::AlignCenter)).
           set(TextColor(QColor::fromRgb(0x000000))).
           set(padding(0));
-        style.get(OutOfMonth()).
+        style.get(OutOfMonth() && !Disabled()).
           set(TextColor(QColor::fromRgb(0xA0A0A0)));
-        style.get(Today()).
+        style.get(Today() && !Disabled()).
           set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
           set(TextColor(QColor::fromRgb(0xDB8700)));
         style.get(Hover() || Press()).
-          set(BackgroundColor(QColor::fromRgb(0xF2F2FF)));
+          set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
+          set(border_size(0));
+        style.get(Focus()).
+          set(border_size(0));
         style.get(Disabled()).
+          set(border_size(0)).
           set(TextColor(QColor::fromRgb(0xC8C8C8)));
+        style.get(+Any() << (is_a<ListItem>() >> (is_a<Box>() && Selected()))).
+          set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
+          set(TextColor(QColor::fromRgb(0xFFFFFF)));
         set_style(*this, std::move(style));
         layout->addWidget(m_label);
         on_current(m_model->get_current());
@@ -212,7 +220,7 @@ CalendarDatePicker::CalendarDatePicker(
   layout->setSpacing(scale_height(4));
   m_month_selector = new MonthSelector(m_model, this);
   m_month_selector->get_model()->connect_current_signal(
-    [=] (auto current) { update_calendar_model(); });
+    [=] (auto current) { on_current_month(current); });
   layout->addWidget(m_month_selector);
   auto header = make_day_header(this);
   layout->addWidget(header);
@@ -233,34 +241,24 @@ CalendarDatePicker::CalendarDatePicker(
   calendar_style.get(Any() >> is_a<ListItem>() >> is_a<Box>()).
     set(border_size(0)).
     set(horizontal_padding(0));
-  //calendar_style.get(Any() >> is_a<ListItem> / Selected()).
-  //  set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
-  //  set(TextColor(QColor::fromRgb(0xFFFFFF)));
-  calendar_style.get(Any() > (Hover() || Focus()) >> is_a<ListItem>() >> is_a<Box>()).
-    set(border_size(0));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
   m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
-  m_calendar_view->get_selection_model()->connect_current_signal(
-    [=] (const auto& index) {
-      if(index) {
-        auto current = m_calendar_model->
-          get<std::shared_ptr<LocalDateModel>>(*index)->get_current();
-        m_model->set_current(current);
-        m_submit_signal(current);
-      }
-    });
+  m_selection_connection =
+    m_calendar_view->get_selection_model()->connect_current_signal(
+      [=] (const auto& index) {
+        if(index) {
+          auto current = m_calendar_model->
+            get<std::shared_ptr<LocalDateModel>>(*index)->get_current();
+          m_model->set_current(current);
+        }
+      });
   layout->addWidget(m_calendar_view);
 }
 
 const std::shared_ptr<OptionalDateModel>&
     CalendarDatePicker::get_model() const {
   return m_model;
-}
-
-connection CalendarDatePicker::connect_submit_signal(
-    const SubmitSignal::slot_type& slot) const {
-  return m_submit_signal.connect(slot);
 }
 
 void CalendarDatePicker::populate_calendar(const std::function<
@@ -274,6 +272,12 @@ void CalendarDatePicker::populate_calendar(const std::function<
     assign(i, day);
     day += days(1);
   }
+}
+
+void CalendarDatePicker::set_selection(
+    const boost::optional<int>& index) {
+      auto blocker = shared_connection_block(m_selection_connection);
+  m_calendar_view->get_selection_model()->set_current(index);
 }
 
 void CalendarDatePicker::update_calendar_model() {
@@ -293,6 +297,22 @@ void CalendarDatePicker::update_calendar_model() {
       }
     }
   });
+  m_calendar_view->get_selection_model()->set_current({});
+  set_selection({});
+  auto current = m_model->get_current();
+  auto month = m_month_selector->get_model()->get_current();
+  if(!current.is_initialized()) {
+    window()->setFixedSize(window()->width() + 20, window()->height() + 20);
+  }
+  if(current &&
+      current->month() == month.month() && current->year() == month.year()) {
+    for(auto i = 0; i < m_calendar_model->get_size(); ++i) {
+      if(m_calendar_model->get<
+          std::shared_ptr<LocalDateModel>>(i)->get_current() == current) {
+        set_selection(i);
+      }
+    }
+  }
 }
 
 void CalendarDatePicker::on_current(const boost::optional<date>& day) {
@@ -301,5 +321,14 @@ void CalendarDatePicker::on_current(const boost::optional<date>& day) {
     if(display.month() != day->month() || display.year() != day->year()) {
       update_calendar_model();
     }
+  }
+}
+
+void CalendarDatePicker::on_current_month(date month) {
+  auto displayed_month =
+    m_calendar_model->get<std::shared_ptr<LocalDateModel>>(8)->get_current();
+  if(month.month() != displayed_month.month() ||
+      month.year() != displayed_month.year()) {
+    update_calendar_model();
   }
 }

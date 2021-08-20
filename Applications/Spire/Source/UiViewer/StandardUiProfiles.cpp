@@ -347,8 +347,8 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       model->set_maximum(date(2021, 9, 1));
       auto calendar = new CalendarDatePicker(model, nullptr);
       apply_widget_properties(calendar, profile.get_properties());
-      calendar->connect_submit_signal(profile.make_event_slot<
-        optional<date>>(QString::fromUtf8("Submit")));
+      calendar->get_model()->connect_current_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Current")));
       return calendar;
     });
   return profile;

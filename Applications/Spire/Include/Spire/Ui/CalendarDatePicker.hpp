@@ -22,8 +22,6 @@ namespace Styles {
   class CalendarDatePicker : public QWidget {
     public:
 
-      using SubmitSignal = Signal<void (boost::gregorian::date day)>;
-
       CalendarDatePicker(QWidget* parent = nullptr);
 
       CalendarDatePicker(boost::gregorian::date current,
@@ -34,21 +32,20 @@ namespace Styles {
 
       const std::shared_ptr<OptionalDateModel>& get_model() const;
 
-      boost::signals2::connection connect_submit_signal(
-        const SubmitSignal::slot_type& slot) const;
-
     private:
       class MonthSelector;
-      mutable SubmitSignal m_submit_signal;
       std::shared_ptr<OptionalDateModel> m_model;
       MonthSelector* m_month_selector;
       ListView* m_calendar_view;
       std::shared_ptr<ArrayListModel> m_calendar_model;
+      boost::signals2::scoped_connection m_selection_connection;
 
       void populate_calendar(const std::function<
         void (int index, boost::gregorian::date day)> assign);
+      void set_selection(const boost::optional<int>& index);
       void update_calendar_model();
       void on_current(const boost::optional<boost::gregorian::date>& day);
+      void on_current_month(boost::gregorian::date month);
   };
 }
 
