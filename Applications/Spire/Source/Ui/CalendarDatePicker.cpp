@@ -93,6 +93,7 @@ namespace {
 
   auto make_day_header(QWidget* parent) {
     auto header = new QWidget(parent);
+    header->setFixedSize(scale(168, 26));
     auto layout = new QHBoxLayout(header);
     layout->setContentsMargins({});
     layout->setSpacing(0);
@@ -111,8 +112,9 @@ class CalendarDatePicker::MonthSelector : public QWidget {
     MonthSelector(std::shared_ptr<OptionalDateModel> date_model,
         QWidget* parent = nullptr)
         : m_date_model(std::move(date_model)) {
-       m_model = std::make_shared<MonthModel>(
-            m_date_model->get_current().value_or(day_clock::local_day()));
+      m_model = std::make_shared<MonthModel>(
+        m_date_model->get_current().value_or(day_clock::local_day()));
+      setFixedSize(scale(168, 26));
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       layout->setSpacing(0);
@@ -203,6 +205,7 @@ CalendarDatePicker::CalendarDatePicker(
       m_model(std::move(model)),
       m_calendar_view(nullptr),
       m_calendar_model(std::make_shared<ArrayListModel>()) {
+  setFixedSize(scale(176, 214));
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(4), scale_width(8), scale_width(4),
     scale_height(4));
