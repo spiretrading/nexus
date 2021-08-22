@@ -27,9 +27,9 @@ namespace {
     style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
       set(PaddingRight(scale_width(22)));
     style.get(ReadOnly() >> is_a<Icon>()).
-      set(Visibility::NONE);
+      set(Visibility::INVISIBLE);
     style.get(ReadOnly() >> is_a<Button>()).
-      set(Visibility::NONE);
+      set(Visibility::INVISIBLE);
     style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
       set(PaddingRight(scale_width(0)));
     style.get(Disabled() >> is_a<Icon>()).
@@ -165,6 +165,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         match(*m_text_box, Focus());
       } else {
         unmatch(*m_text_box, Focus());
+        update_submission();
       }
     } else if(event->type() == QEvent::Enter) {
       match(*m_text_box, Hover());
@@ -188,21 +189,20 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Down:
     case Qt::Key_Up:
-      if(!m_text_box->is_read_only()) {
-        m_drop_down_list->show();
-      }
+      m_drop_down_list->show();
+      QCoreApplication::sendEvent(m_list_view, event);
       break;
     case Qt::Key_Escape:
       update_current();
+      break;
+    default:
+      QCoreApplication::sendEvent(m_list_view, event);
       break;
   }
   QWidget::keyPressEvent(event);
 }
 
 void DropDownBox::on_click() {
-  if(m_text_box->is_read_only()) {
-    return;
-  }
   if(m_drop_down_list->isVisible()) {
     m_drop_down_list->hide();
   } else {
