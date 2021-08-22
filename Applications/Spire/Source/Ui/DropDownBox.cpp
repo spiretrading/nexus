@@ -187,11 +187,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
 
 void DropDownBox::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
-    case Qt::Key_Down:
-    case Qt::Key_Up:
-      m_drop_down_list->show();
-      QCoreApplication::sendEvent(m_list_view, event);
-      break;
     case Qt::Key_Escape:
       update_current();
       break;
