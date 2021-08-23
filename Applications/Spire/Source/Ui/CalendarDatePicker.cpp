@@ -55,6 +55,7 @@ namespace {
         style.get(Focus()).
           set(border_color(QColor::fromRgb(0, 0, 0, 0)));
         style.get(Disabled()).
+          set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
           set(border_color(QColor::fromRgb(0, 0, 0, 0))).
           set(TextColor(QColor::fromRgb(0xC8C8C8)));
         style.get(+Any() << (is_a<ListItem>() >> (is_a<Box>() && Selected()))).
