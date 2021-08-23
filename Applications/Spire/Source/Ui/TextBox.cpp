@@ -116,7 +116,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-2, 0, 0, 0);
+  m_line_edit->setTextMargins(-2, 0, -4, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
