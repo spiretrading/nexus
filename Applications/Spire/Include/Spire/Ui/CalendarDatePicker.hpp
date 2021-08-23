@@ -32,6 +32,9 @@ namespace Styles {
 
       const std::shared_ptr<OptionalDateModel>& get_model() const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       class MonthSelector;
       std::shared_ptr<OptionalDateModel> m_model;

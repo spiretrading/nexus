@@ -1,6 +1,8 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QApplication>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -139,6 +141,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       label_style.get(Disabled() && ReadOnly()).
         set(TextAlign(Qt::AlignCenter));
       set_style(*m_label, std::move(label_style));
+      m_label->setFocusPolicy(Qt::NoFocus);
       layout->addWidget(m_label);
       layout->addSpacing(scale_width(8));
       m_next_button = make_icon_button(
@@ -221,6 +224,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_month_selector = new MonthSelector(m_model, this);
   m_month_selector->get_model()->connect_current_signal(
     [=] (auto current) { on_current_month(current); });
+  m_month_selector->installEventFilter(this);
   layout->addWidget(m_month_selector);
   auto header = make_day_header(this);
   layout->addWidget(header);
@@ -233,11 +237,14 @@ CalendarDatePicker::CalendarDatePicker(
         model.get<std::shared_ptr<LocalDateModel>>(index),
         m_month_selector->get_model());
     }, this);
-  setFocusProxy(m_calendar_view);
   m_calendar_view->setFixedSize(scale(168, 144));
+  setFocusProxy(m_calendar_view);
+  m_month_selector->setFocusProxy(m_calendar_view);
+  m_calendar_view->installEventFilter(this);
   auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
+    set(EdgeNavigation(EdgeNavigation::CONTAIN)).
     set(Overflow(Overflow::WRAP));
   calendar_style.get(Any() >> is_a<ListItem>() >> is_a<Box>()).
     set(border_size(0)).
@@ -268,6 +275,29 @@ CalendarDatePicker::CalendarDatePicker(
 const std::shared_ptr<OptionalDateModel>&
     CalendarDatePicker::get_model() const {
   return m_model;
+}
+
+bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(watched == m_month_selector &&
+        (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)) {
+      qApp->sendEvent(m_calendar_view, e);
+    } else {
+      auto current_index = m_calendar_view->get_current_model()->get_current();
+      if(current_index) {
+        if(*current_index == 0 && e->key() == Qt::Key_Left) {
+          m_model->set_current(*m_model->get_current() - days(1));
+          return true;
+        } else if(*current_index == DISPLAYED_DAYS - 1 &&
+            e->key() == Qt::Key_Right) {
+          m_model->set_current(*m_model->get_current() + days(1));
+          return true;
+        }
+      }
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void CalendarDatePicker::populate_calendar(const std::function<
