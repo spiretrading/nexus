@@ -51,11 +51,11 @@ namespace {
           set(TextColor(QColor::fromRgb(0xDB8700)));
         style.get(Hover() || Press()).
           set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
-          set(border_size(0));
+          set(border_color(QColor::fromRgb(0, 0, 0, 0)));
         style.get(Focus()).
-          set(border_size(0));
+          set(border_color(QColor::fromRgb(0, 0, 0, 0)));
         style.get(Disabled()).
-          set(border_size(0)).
+          set(border_color(QColor::fromRgb(0, 0, 0, 0))).
           set(TextColor(QColor::fromRgb(0xC8C8C8)));
         style.get(+Any() << (is_a<ListItem>() >> (is_a<Box>() && Selected()))).
           set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
