@@ -21,19 +21,27 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
-    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
-      set(PaddingRight(scale_width(22)));
     style.get(ReadOnly() >> is_a<Icon>()).
       set(Visibility::INVISIBLE);
     style.get(ReadOnly() >> is_a<Button>()).
       set(Visibility::INVISIBLE);
-    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListView>()))).
-      set(PaddingRight(scale_width(0)));
     style.get(Disabled() >> is_a<Icon>()).
       set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    return style;
+  }
+
+  auto ICON_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
+    return style;
+  }
+
+  auto TEXT_BOX_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(PaddingRight(scale_width(22)));
+    style.get(ReadOnly()).
+      set(PaddingRight(scale_width(0)));
     return style;
   }
 }
@@ -104,6 +112,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_box->setFocusPolicy(Qt::NoFocus);
+  set_style(*m_text_box, TEXT_BOX_STYLE(get_style(*m_text_box)));
   layers->add(m_text_box);
   auto icon_layer = new QWidget();
   icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -115,10 +124,11 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto drop_down_icon = new Icon(
     imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   drop_down_icon->setFixedSize(scale(6, 4));
+  set_style(*drop_down_icon, ICON_STYLE(get_style(*drop_down_icon)));
   icon_layer_layout->addWidget(drop_down_icon);
   icon_layer_layout->addSpacing(scale_width(8));
   layers->add(icon_layer);
-  m_button = new Button(nullptr);
+  m_button = new Button(new QWidget());
   m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layers->add(m_button);
   auto layout = new QHBoxLayout(this);
