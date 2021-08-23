@@ -38,6 +38,7 @@ namespace Styles {
       MonthSelector* m_month_selector;
       ListView* m_calendar_view;
       std::shared_ptr<ArrayListModel> m_calendar_model;
+      boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_selection_connection;
 
       void populate_calendar(const std::function<
