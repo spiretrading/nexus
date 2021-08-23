@@ -44,6 +44,7 @@ namespace Styles {
         void (int index, boost::gregorian::date day)> assign);
       void set_selection(const boost::optional<int>& index);
       void update_calendar_model();
+      void update_selection(boost::gregorian::date day);
       void on_current(const boost::optional<boost::gregorian::date>& day);
       void on_current_month(boost::gregorian::date month);
   };

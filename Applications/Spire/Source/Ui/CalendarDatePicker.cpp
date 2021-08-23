@@ -233,7 +233,7 @@ CalendarDatePicker::CalendarDatePicker(
         model.get<std::shared_ptr<LocalDateModel>>(index),
         m_month_selector->get_model());
     }, this);
-  m_calendar_view->setFixedWidth(scale_width(182));
+  m_calendar_view->setFixedSize(scale(168, 144));
   auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
@@ -306,11 +306,16 @@ void CalendarDatePicker::update_calendar_model() {
   }
   if(current &&
       current->month() == month.month() && current->year() == month.year()) {
-    for(auto i = 0; i < m_calendar_model->get_size(); ++i) {
-      if(m_calendar_model->get<
-          std::shared_ptr<LocalDateModel>>(i)->get_current() == current) {
-        set_selection(i);
-      }
+    update_selection(*current);
+  }
+}
+
+void CalendarDatePicker::update_selection(date day) {
+  for(auto i = 0; i < m_calendar_model->get_size(); ++i) {
+    if(m_calendar_model->
+        get<std::shared_ptr<LocalDateModel>>(i)->get_current() == day) {
+      set_selection(i);
+      break;
     }
   }
 }
@@ -319,7 +324,10 @@ void CalendarDatePicker::on_current(const boost::optional<date>& day) {
   if(day) {
     auto display = m_month_selector->get_model()->get_current();
     if(display.month() != day->month() || display.year() != day->year()) {
+      set_selection({});
       update_calendar_model();
+    } else {
+      update_selection(*day);
     }
   }
 }

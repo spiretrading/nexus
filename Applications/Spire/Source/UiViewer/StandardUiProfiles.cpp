@@ -293,6 +293,16 @@ namespace {
     }
     return image;
   }
+
+  auto parse_date(const QString& string) -> boost::optional<date> {
+    try {
+      auto parsed_date = from_string(string.toStdString());
+      if(!parsed_date.is_not_a_date()) {
+        return parsed_date;
+      }
+    } catch(const std::exception&) {}
+    return {};
+  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -339,14 +349,34 @@ UiProfile Spire::make_box_profile() {
 UiProfile Spire::make_calendar_date_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property(
+    "current", QString::fromUtf8("2021-08-25")));
+  properties.push_back(make_standard_property(
+    "min", QString::fromUtf8("2021-07-15")));
+  properties.push_back(make_standard_property(
+    "max", QString::fromUtf8("2021-09-15")));
   auto profile = UiProfile(QString::fromUtf8("CalendarDatePicker"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
-      // TODO: add as settable properties
-      model->set_minimum(date(2021, 6, 15));
-      model->set_maximum(date(2021, 9, 1));
+      auto& current = get<QString>("current", profile.get_properties());
+      model->set_current(from_string(current.get().toStdString()));
+      auto& min = get<QString>("min", profile.get_properties());
+      model->set_minimum(from_string(min.get().toStdString()));
+      auto& max = get<QString>("max", profile.get_properties());
+      model->set_maximum(from_string(max.get().toStdString()));
       auto calendar = new CalendarDatePicker(model, nullptr);
       apply_widget_properties(calendar, profile.get_properties());
+      current.connect_changed_signal([=] (const auto& value) {
+        auto date = parse_date(value);
+        if(date && !date->is_not_a_date() && *date != model->get_current()) {
+          model->set_current(*date);
+        }
+      });
+      calendar->get_model()->connect_current_signal([&current] (auto day) {
+        if(day) {
+          current.set(displayTextAny(*day));
+        }
+      });
       calendar->get_model()->connect_current_signal(profile.make_event_slot<
         optional<date>>(QString::fromUtf8("Current")));
       return calendar;
