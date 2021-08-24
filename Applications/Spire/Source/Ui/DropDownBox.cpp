@@ -50,7 +50,8 @@ class DropDownBox::DropDownListWrapper : public QWidget {
   public:
     DropDownListWrapper(ListView& list_view, QWidget* parent)
         : QWidget(parent),
-          m_list_view(&list_view) {
+          m_list_view(&list_view),
+          m_is_hidden_by_blur(false) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
       m_drop_down_list->setFocusProxy(m_list_view);
       auto list_model = m_list_view->get_list_model();
@@ -65,6 +66,14 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       return m_drop_down_list->window();
     }
 
+    bool is_hidden_by_blur() const {
+      return m_is_hidden_by_blur;
+    }
+
+    void clear_hidden_by_blur() {
+      m_is_hidden_by_blur = false;
+    }
+
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_list_view) {
@@ -75,13 +84,19 @@ class DropDownBox::DropDownListWrapper : public QWidget {
             case Qt::Key_Backtab:
             case Qt::Key_Escape:
               hide();
+              parentWidget()->setFocus();
               QCoreApplication::sendEvent(parentWidget(), event);
               break;
           }
         }
       } else if(watched == get_panel()) {
         if(event->type() == QEvent::Close) {
-          hide();
+          if(isVisible()) {
+            hide();
+            m_is_hidden_by_blur = true;
+          } else {
+            m_is_hidden_by_blur = false;
+          }
         } else if(event->type() == QEvent::KeyPress) {
           QCoreApplication::sendEvent(m_list_view, event);
         }
@@ -102,6 +117,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
   private:
     ListView* m_list_view;
     DropDownList* m_drop_down_list;
+    bool m_is_hidden_by_blur;
 };
 
 DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
@@ -176,6 +192,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       } else {
         unmatch(*m_text_box, Focus());
         update_submission();
+        m_drop_down_list->clear_hidden_by_blur();
       }
     } else if(event->type() == QEvent::Enter) {
       match(*m_text_box, Hover());
@@ -184,15 +201,17 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_drop_down_list->get_panel()) {
     if(event->type() == QEvent::Close) {
-      if(!m_button->hasFocus()) {
-        update_submission();
-        unmatch(*m_text_box, Focus());
-      } else {
-        update_current();
-      }
+      unmatch(*m_text_box, Focus());
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool DropDownBox::event(QEvent* event) {
+  if(event->type() == QEvent::WindowActivate) {
+    m_drop_down_list->clear_hidden_by_blur();
+  }
+  return QWidget::event(event);
 }
 
 void DropDownBox::keyPressEvent(QKeyEvent* event) {
@@ -208,8 +227,8 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DropDownBox::on_click() {
-  if(m_drop_down_list->isVisible()) {
-    m_drop_down_list->hide();
+  if(m_drop_down_list->is_hidden_by_blur()) {
+    m_drop_down_list->clear_hidden_by_blur();
   } else {
     m_drop_down_list->show();
   }
