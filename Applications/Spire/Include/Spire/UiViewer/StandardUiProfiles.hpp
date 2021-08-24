@@ -74,6 +74,9 @@ namespace Spire {
   /** Returns a UiProfile for the MoneyFilterPanel. */
   UiProfile make_money_filter_panel_profile();
 
+  /** Returns a UiProfile for the OrderFieldInfoTip. */
+  UiProfile make_order_field_info_tip_profile();
+
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 

@@ -29,6 +29,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/OrderFieldInfoTip.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -1195,6 +1196,47 @@ UiProfile Spire::make_money_filter_panel_profile() {
     properties, Money::CENT, QString::fromUtf8("Filter by Money"));
   auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"),
     properties, setup_scalar_filter_panel_profile<MoneyBox>);
+  return profile;
+}
+
+UiProfile Spire::make_order_field_info_tip_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  //properties.push_back(make_standard_property<QString>("placeholder"));
+  auto profile = UiProfile(QString::fromUtf8("OrderFieldInfoTip"), properties,
+    [] (auto& profile) {
+      auto label = make_label("Hover me!");
+      apply_widget_properties(label, profile.get_properties());
+      auto model = OrderFieldInfoTip::Model{};
+      model.m_tag.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
+      model.m_tag.m_name = "jasldfja sd asdjlfk asdfj lasd";
+      model.m_tag.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      model.m_tag.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      model.m_tag.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      auto req = OrderFieldInfoTip::Model::Tag{};
+      req.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
+      req.m_name = "Req name";
+      req.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      req.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      req.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      model.m_prerequisites.push_back(req);
+      auto req1 = OrderFieldInfoTip::Model::Tag{};
+      req1.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
+      req1.m_name = "Req name";
+      req1.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      req1.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      req1.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      model.m_prerequisites.push_back(req1);
+      auto req2 = OrderFieldInfoTip::Model::Tag{};
+      //req2.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
+      req2.m_name = "Req name";
+      //req2.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      //req2.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      //req2.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+      model.m_prerequisites.push_back(req2);
+      auto tip = new OrderFieldInfoTip(std::move(model), label);
+      return label;
+    });
   return profile;
 }
 
