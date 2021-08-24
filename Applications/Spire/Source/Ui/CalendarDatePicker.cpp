@@ -250,6 +250,8 @@ CalendarDatePicker::CalendarDatePicker(
   calendar_style.get(Any() >> is_a<ListItem>() >> is_a<Box>()).
     set(border_size(0)).
     set(horizontal_padding(0));
+  calendar_style.get(Any() >> is_a<ListItem>() >> (is_a<Box>() && Hover())).
+    set(BackgroundColor(QColor::fromRgb(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
   m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
