@@ -39,6 +39,7 @@ namespace Styles {
       class MonthSelector;
       std::shared_ptr<OptionalDateModel> m_model;
       MonthSelector* m_month_selector;
+      QWidget* m_day_header;
       ListView* m_calendar_view;
       std::shared_ptr<ArrayListModel> m_calendar_model;
       boost::signals2::scoped_connection m_current_connection;

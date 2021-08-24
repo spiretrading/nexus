@@ -142,7 +142,7 @@ class CalendarDatePicker::MonthSelector : public QWidget {
       label_style.get(Disabled() && ReadOnly()).
         set(TextAlign(Qt::AlignCenter));
       set_style(*m_label, std::move(label_style));
-      m_label->setFocusPolicy(Qt::NoFocus);
+      m_label->installEventFilter(this);
       layout->addWidget(m_label);
       layout->addSpacing(scale_width(8));
       m_next_button = make_icon_button(
@@ -165,6 +165,14 @@ class CalendarDatePicker::MonthSelector : public QWidget {
 
     std::shared_ptr<MonthModel> get_model() const {
       return m_model;
+    }
+
+  protected:
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::MouseButtonPress) {
+        parentWidget()->setFocus();
+      }
+      return QWidget::eventFilter(watched, event);
     }
 
   private:
@@ -227,8 +235,9 @@ CalendarDatePicker::CalendarDatePicker(
     [=] (auto current) { on_current_month(current); });
   m_month_selector->installEventFilter(this);
   layout->addWidget(m_month_selector);
-  auto header = make_day_header(this);
-  layout->addWidget(header);
+  m_day_header = make_day_header(this);
+  m_day_header->installEventFilter(this);
+  layout->addWidget(m_day_header);
   populate_calendar([=] (auto index, auto day) {
     m_calendar_model->push(std::make_shared<LocalDateModel>(day));
   });
@@ -281,6 +290,9 @@ const std::shared_ptr<OptionalDateModel>&
 }
 
 bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_day_header && event->type() == QEvent::MouseButtonPress) {
+    m_calendar_view->setFocus();
+  }
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(watched == m_month_selector &&
