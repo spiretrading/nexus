@@ -80,14 +80,6 @@ bool ListItem::eventFilter(QObject* watched, QEvent* event) {
     m_current_signal();
   } else if(event->type() == QEvent::FocusOut) {
     unmatch(*m_box, Focus());
-  } else if(event->type() == QEvent::Enter) {
-    if(isEnabled()) {
-      match(*m_box, Hover());
-    }
-  } else if(event->type() == QEvent::Leave) {
-    if(isEnabled()) {
-      unmatch(*m_box, Hover());
-    }
   }
   return QWidget::eventFilter(watched, event);
 }
