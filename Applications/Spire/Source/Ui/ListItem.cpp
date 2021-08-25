@@ -1,5 +1,6 @@
 #include "Spire/Ui/ListItem.hpp"
 #include <QEvent>
+#include <QFocusEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -49,6 +50,9 @@ bool ListItem::is_selected() const {
 }
 
 void ListItem::set_selected(bool is_selected) {
+  if(!isEnabled()) {
+    return;
+  }
   m_is_selected = is_selected;
   if(m_is_selected) {
     match(*m_box, Selected());
@@ -69,14 +73,21 @@ connection ListItem::connect_submit_signal(
 
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    match(*m_box, Focus());
+    auto focus_event = static_cast<QFocusEvent*>(event);
+    if(focus_event->reason() != Qt::MouseFocusReason) {
+      match(*m_box, Focus());
+    }
     m_current_signal();
   } else if(event->type() == QEvent::FocusOut) {
     unmatch(*m_box, Focus());
   } else if(event->type() == QEvent::Enter) {
-    match(*m_box, Hover());
+    if(isEnabled()) {
+      match(*m_box, Hover());
+    }
   } else if(event->type() == QEvent::Leave) {
-    unmatch(*m_box, Hover());
+    if(isEnabled()) {
+      unmatch(*m_box, Hover());
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
