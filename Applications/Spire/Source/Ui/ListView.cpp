@@ -5,7 +5,6 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -20,8 +19,9 @@ namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
 
-  QWidget* default_view_builder(const ArrayListModel& model, int index) {
-    return make_label(displayTextAny(model.at(index)));
+  QWidget* default_view_builder(
+      const std::shared_ptr<ListModel>& model, int index) {
+    return make_label(displayTextAny(model->at(index)));
   }
 
   auto reverse(QBoxLayout::Direction direction) {
@@ -40,16 +40,16 @@ namespace {
   }
 }
 
-ListView::ListView(std::shared_ptr<ArrayListModel> list_model, QWidget* parent)
+ListView::ListView(std::shared_ptr<ListModel> list_model, QWidget* parent)
   : ListView(std::move(list_model), default_view_builder, parent) {}
 
-ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
+ListView::ListView(std::shared_ptr<ListModel> list_model,
   ViewBuilder view_builder, QWidget* parent)
   : ListView(std::move(list_model), std::move(view_builder),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<LocalValueModel<optional<int>>>(), parent) {}
 
-ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
+ListView::ListView(std::shared_ptr<ListModel> list_model,
     ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
     std::shared_ptr<SelectionModel> selection_model, QWidget* parent)
     : QWidget(parent),
@@ -66,7 +66,7 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
-    auto item = new ListItem(m_view_builder(*m_list_model, i));
+    auto item = new ListItem(m_view_builder(m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i});
     item->connect_current_signal([=, item = m_items.back().get()] {
       on_item_current(*item);
@@ -105,7 +105,7 @@ ListView::ListView(std::shared_ptr<ArrayListModel> list_model,
     [=] (const auto& selection) { on_selection(selection); });
 }
 
-const std::shared_ptr<ArrayListModel>& ListView::get_list_model() const {
+const std::shared_ptr<ListModel>& ListView::get_list_model() const {
   return m_list_model;
 }
 
@@ -319,7 +319,7 @@ void ListView::cross(int direction) {
 }
 
 void ListView::add_item(int index) {
-  auto item = new ListItem(m_view_builder(*m_list_model, index));
+  auto item = new ListItem(m_view_builder(m_list_model, index));
   m_items.emplace(m_items.begin() + index, new ItemEntry{item, index});
   item->connect_current_signal([=, item = m_items[index].get()] {
     on_item_current(*item);
