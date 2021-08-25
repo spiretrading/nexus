@@ -17,7 +17,6 @@ namespace {
     font.setWeight(60);
     font.setPixelSize(scale_width(12));
     style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
       set(Font(font)).
       set(TextColor(QColor::fromRgb(0x808080)));
     return style;
@@ -29,7 +28,6 @@ namespace {
     font.setPixelSize(scale_width(10));
     font.setItalic(true);
     style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
       set(Font(font)).
       set(TextColor(QColor::fromRgb(0x4B23A0))).
       set(LineHeight(scale_height(1.13))).
@@ -48,10 +46,9 @@ namespace {
     auto value_label =
       new TextBox(QString::fromStdString(value.m_value), container);
     value_label->set_read_only(true);
-    value_label->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Expanding);
+    value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
     auto value_style = get_style(*value_label);
     value_style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
       set(FontSize(scale_height(10))).
       set(TextAlign(Qt::AlignTop));
     set_style(*value_label, std::move(value_style));
@@ -64,7 +61,6 @@ namespace {
       QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
       set(FontSize(scale_height(10))).
       set(PaddingLeft(scale_width(8)));
     set_style(*description_label, std::move(description_style));
@@ -76,7 +72,8 @@ namespace {
       const std::vector<OrderFieldInfoTip::Model::AllowedValue>& values,
       QWidget* parent) {
     auto container = new QWidget(parent);
-    container->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+    container->setSizePolicy(
+      QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto layout = new QVBoxLayout(container);
     layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
@@ -98,7 +95,6 @@ namespace {
     header->set_read_only(true);
     auto header_style = get_style(*header);
     header_style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
       set(FontSize(scale_height(10)));
     set_style(*header, std::move(header_style));
     layout->addWidget(header);
@@ -127,14 +123,14 @@ namespace {
     auto prerequisites_label = new TextAreaBox(prerequisite_text, container);
     prerequisites_label->set_read_only(true);
     prerequisites_label->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Expanding);
+      QSizePolicy::Expanding, QSizePolicy::Preferred);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     layout->addWidget(prerequisites_label);
     auto box = new Box(container, parent);
     box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto box_style = get_style(*box);
     box_style.get(Any()).
-      set(BorderTopColor(QColor::fromRgb(0x00E0E0))).
+      set(BorderTopColor(QColor::fromRgb(0xE0E0E0))).
       set(BorderTopSize(scale_height(1))).
       set(padding(scale_width(18)));
     set_style(*box, std::move(box_style));
@@ -161,10 +157,11 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
   description_layout->addWidget(name_label);
   auto description_label =
     new TextAreaBox(QString::fromStdString(model.m_tag.m_description), this);
+  description_label->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Minimum);
   description_label->set_read_only(true);
   auto description_style = get_style(*description_label);
   description_style.get(ReadOnly()).
-    set(BackgroundColor(QColor::fromRgb(0xFF0000))).
     set(PaddingTop(scale_height(6)));
   set_style(*description_label, std::move(description_style));
   description_layout->addWidget(description_label);
@@ -187,4 +184,5 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
   }
   auto tip = new InfoTip(this, parent);
   tip->set_interactive(true);
+  body_layout->activate();
 }

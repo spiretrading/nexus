@@ -76,6 +76,35 @@ namespace {
         m_shift_increment(20 * m_default_increment) {}
   };
 
+  auto get_test_string(int length) {
+    static auto lorem = QString("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce dolor urna, tincidunt a risus eget, sagittis sodales nisl. Suspendisse suscipit justo ac quam maximus tincidunt nec non velit. Phasellus in dui sed ante eleifend congue vitae ac neque. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Duis nec nisl pharetra, maximus sem ut, facilisis mi. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. In fermentum diam vel ante condimentum, sed rutrum mauris elementum.");
+    return lorem.left(std::min(length, lorem.length() - 1));
+  }
+
+  auto generate_order_field_info_tip_model(int value_count,
+      int prerequisite_count, int min_prerequisite_value_count,
+      int max_prerequisite_value_count) {
+    auto model = OrderFieldInfoTip::Model{};
+    auto generator = QRandomGenerator(0);
+    for(auto i = 0; i < value_count; ++i) {
+      model.m_tag.m_values.push_back({QString::number(i + 1).toStdString(),
+        get_test_string(generator.bounded(10, 150)).toStdString()});
+    }
+    for(auto i = 0; i < prerequisite_count; ++i) {
+      auto prerequisite = OrderFieldInfoTip::Model::Tag{};
+      prerequisite.m_name =
+        get_test_string(generator.bounded(10, 20)).toStdString();
+      auto value_count = generator.bounded(min_prerequisite_value_count,
+          max_prerequisite_value_count);
+      for(auto j = 0; j < value_count; ++j) {
+        prerequisite.m_values.push_back(
+          {QString::number(j + 1).toStdString()});
+      }
+      model.m_prerequisites.push_back(prerequisite);
+    }
+    return model;
+  }
+
   template<typename B>
   auto setup_decimal_box_profile(UiProfile& profile) {
     using Type = std::decay_t<decltype(*std::declval<B>().get_model())>::Scalar;
@@ -1202,38 +1231,31 @@ UiProfile Spire::make_money_filter_panel_profile() {
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  //properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("name", get_test_string(20)));
+  properties.push_back(make_standard_property(
+    "description", get_test_string(100)));
+  properties.push_back(make_standard_property("value-count", 4));
+  properties.push_back(make_standard_property("pre.-count", 4));
+  properties.push_back(make_standard_property("pre.-min-value-count", 3));
+  properties.push_back(make_standard_property("pre.-max-value-count", 8));
   auto profile = UiProfile(QString::fromUtf8("OrderFieldInfoTip"), properties,
     [] (auto& profile) {
       auto label = make_label("Hover me!");
       apply_widget_properties(label, profile.get_properties());
-      auto model = OrderFieldInfoTip::Model{};
-      model.m_tag.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
-      model.m_tag.m_name = "jasldfja sd asdjlfk asdfj lasd";
-      model.m_tag.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      model.m_tag.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      model.m_tag.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      auto req = OrderFieldInfoTip::Model::Tag{};
-      req.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
-      req.m_name = "Req name";
-      req.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      req.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      req.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      model.m_prerequisites.push_back(req);
-      auto req1 = OrderFieldInfoTip::Model::Tag{};
-      req1.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
-      req1.m_name = "Req name";
-      req1.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      req1.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      req1.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      model.m_prerequisites.push_back(req1);
-      auto req2 = OrderFieldInfoTip::Model::Tag{};
-      //req2.m_description = "ajsld kfjlasjldk fjlka sjdlf jasldfj asdfjlasd fjlasdf";
-      req2.m_name = "Req name";
-      //req2.m_values.push_back({"A", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      //req2.m_values.push_back({"B", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      //req2.m_values.push_back({"C", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"});
-      model.m_prerequisites.push_back(req2);
+      auto& value_count = get<int>("value-count", profile.get_properties());
+      auto& prerequisite_count =
+        get<int>("pre.-count", profile.get_properties());
+      auto& min_value_count =
+        get<int>("pre.-min-value-count", profile.get_properties());
+      auto& max_value_count =
+        get<int>("pre.-max-value-count", profile.get_properties());
+      auto model = generate_order_field_info_tip_model(
+        value_count.get(), prerequisite_count.get(), min_value_count.get(),
+        max_value_count.get());
+      model.m_tag.m_name =
+        get<QString>("name", profile.get_properties()).get().toStdString();
+      model.m_tag.m_description = get<QString>("description",
+        profile.get_properties()).get().toStdString();
       auto tip = new OrderFieldInfoTip(std::move(model), label);
       return label;
     });
