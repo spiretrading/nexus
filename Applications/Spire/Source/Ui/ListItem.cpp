@@ -1,5 +1,4 @@
 #include "Spire/Ui/ListItem.hpp"
-#include <QEvent>
 #include <QFocusEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
