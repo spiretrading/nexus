@@ -47,12 +47,15 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void changeEvent(QEvent* event) override;
 
     private:
       mutable SubmitSignal m_current_signal;
       Box* m_box;
       Button* m_button;
       bool m_is_selected;
+
+      void update_selected_style();
   };
 }
 
