@@ -201,7 +201,7 @@ namespace Nexus::MarketDataService::Tests {
     return MarketDataClientBox(
       std::in_place_type<MarketDataClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-        std::bind(boost::factory<
+        std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_market_data_client", std::ref(m_serverConnection)),
         boost::factory<

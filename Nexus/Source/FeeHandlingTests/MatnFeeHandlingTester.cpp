@@ -46,7 +46,7 @@ TEST_SUITE("MatnFeeHandling") {
     auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       Money::ZERO);
   }
 
@@ -56,14 +56,14 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, 5 * Money::ONE, 100,
       LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
       MatnFeeTable::PriceClass::DEFAULT);
     TestFeeCalculation(feeTable, 5 * Money::ONE, 10000, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
@@ -73,14 +73,14 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, 5 * Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
       MatnFeeTable::PriceClass::DEFAULT);
     TestFeeCalculation(feeTable, 5 * Money::ONE, 10000, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
@@ -90,14 +90,14 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestFeeCalculation(feeTable, Money::ONE, 10000, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
@@ -107,14 +107,14 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     TestFeeCalculation(feeTable, Money::ONE, 10000, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
@@ -124,14 +124,14 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
       MatnFeeTable::PriceClass::SUBDOLLAR);
     TestFeeCalculation(feeTable, Money::CENT, 10000, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
@@ -141,14 +141,14 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
     auto expectedMaxFee = LookupFee(feeTable,
       MatnFeeTable::GeneralIndex::MAX_CHARGE,
       MatnFeeTable::PriceClass::SUBDOLLAR);
     TestFeeCalculation(feeTable, Money::CENT, 10000, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedMaxFee);
   }
 
@@ -158,7 +158,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::Category::ETF);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
+        MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("passive_etf_trade") {
@@ -167,7 +167,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::Category::ETF);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
+        MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("active_odd_lot_trade") {
@@ -176,7 +176,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
   }
 
@@ -186,7 +186,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
   }
 
@@ -196,7 +196,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
+        MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("passive_odd_lot_etf") {
@@ -205,7 +205,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::Category::ODD_LOT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
+        MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -255,7 +255,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, 5 * Money::ONE, 100,
       LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
-      MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
+        MatnFeeTable::Classification::DEFAULT, std::placeholders::_2),
       expectedFee);
   }
 }

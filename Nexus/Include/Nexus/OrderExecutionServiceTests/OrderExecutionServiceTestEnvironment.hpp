@@ -166,7 +166,7 @@ namespace Nexus::OrderExecutionService::Tests {
     return OrderExecutionClientBox(
       std::in_place_type<OrderExecutionClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(serviceLocatorClient,
-        std::bind(boost::factory<
+        std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_order_execution_client", std::ref(m_serverConnection)),
         boost::factory<
