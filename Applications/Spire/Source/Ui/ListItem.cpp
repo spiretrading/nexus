@@ -50,7 +50,11 @@ bool ListItem::is_selected() const {
 
 void ListItem::set_selected(bool is_selected) {
   m_is_selected = is_selected;
-  update_selected_style();
+  if(m_is_selected) {
+    match(*m_box, Selected());
+  } else {
+    unmatch(*m_box, Selected());
+  }
 }
 
 connection ListItem::connect_current_signal(
@@ -74,23 +78,4 @@ bool ListItem::eventFilter(QObject* watched, QEvent* event) {
     unmatch(*m_box, Focus());
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void ListItem::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::EnabledChange) {
-    update_selected_style();
-  }
-  QWidget::changeEvent(event);
-}
-
-void ListItem::update_selected_style() {
-  if(isEnabled()) {
-    if(m_is_selected) {
-      match(*m_box, Selected());
-    } else {
-      unmatch(*m_box, Selected());
-    }
-  } else {
-    unmatch(*m_box, Selected());
-  }
 }
