@@ -41,12 +41,14 @@ namespace {
   auto make_value_widget(const OrderFieldInfoTip::Model::AllowedValue& value,
       QWidget* parent) {
     auto container = new QWidget(parent);
+    container->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto layout = new QHBoxLayout(container);
     layout->setContentsMargins({});
     layout->setSpacing(0);
     auto value_label =
       new TextBox(QString::fromStdString(value.m_value), container);
     value_label->set_read_only(true);
+    value_label->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Expanding);
     auto value_style = get_style(*value_label);
     value_style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
@@ -58,6 +60,8 @@ namespace {
     auto description_label =
       new TextAreaBox(QString::fromStdString(value.m_description), container);
     description_label->set_read_only(true);
+    description_label->setSizePolicy(
+      QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
       set(BackgroundColor(QColor::fromRgb(255, 0, 0))).
@@ -72,9 +76,11 @@ namespace {
       const std::vector<OrderFieldInfoTip::Model::AllowedValue>& values,
       QWidget* parent) {
     auto container = new QWidget(parent);
+    container->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto layout = new QVBoxLayout(container);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    layout->setContentsMargins(
+      scale_width(18), scale_height(18), scale_width(18), scale_height(18));
+    layout->setSpacing(scale_height(8));
     for(const auto& value : values) {
       layout->addWidget(make_value_widget(value, container));
     }
@@ -120,35 +126,56 @@ namespace {
     }();
     auto prerequisites_label = new TextAreaBox(prerequisite_text, container);
     prerequisites_label->set_read_only(true);
+    prerequisites_label->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Expanding);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     layout->addWidget(prerequisites_label);
-    return container;
+    auto box = new Box(container, parent);
+    box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto box_style = get_style(*box);
+    box_style.get(Any()).
+      set(BorderTopColor(QColor::fromRgb(0x00E0E0))).
+      set(BorderTopSize(scale_height(1))).
+      set(padding(scale_width(18)));
+    set_style(*box, std::move(box_style));
+    return box;
   }
 }
 
 OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
     : QWidget(parent) {
   auto container = new QWidget(this);
+  container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   auto container_layout = new QVBoxLayout(container);
   container_layout->setContentsMargins({});
   container_layout->setSpacing(0);
+  auto description_container = new QWidget(this);
+  auto description_layout = new QVBoxLayout(description_container);
+  description_layout->setContentsMargins(scale_width(18), scale_height(18),
+    scale_width(18), 0);
+  description_layout->setSpacing(0);
   auto name_label =
     new TextBox(QString::fromStdString(model.m_tag.m_name), this);
   name_label->set_read_only(true);
   set_style(*name_label, NAME_STYLE());
-  container_layout->addWidget(name_label);
+  description_layout->addWidget(name_label);
   auto description_label =
     new TextAreaBox(QString::fromStdString(model.m_tag.m_description), this);
   description_label->set_read_only(true);
   auto description_style = get_style(*description_label);
   description_style.get(ReadOnly()).
+    set(BackgroundColor(QColor::fromRgb(0xFF0000))).
     set(PaddingTop(scale_height(6)));
-  container_layout->addWidget(description_label);
+  set_style(*description_label, std::move(description_style));
+  description_layout->addWidget(description_label);
+  container_layout->addWidget(description_container);
   if(!model.m_tag.m_values.empty()) {
     container_layout->addWidget(
       make_values_container(model.m_tag.m_values, this));
   }
   auto scroll_box = new ScrollBox(container, this);
+  scroll_box->setFixedWidth(scale_width(280));
+  scroll_box->setMaximumHeight(scale_height(240));
   auto body_layout = new QVBoxLayout(this);
   body_layout->setSpacing(0);
   body_layout->setContentsMargins({});
