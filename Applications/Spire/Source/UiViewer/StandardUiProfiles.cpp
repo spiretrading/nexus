@@ -995,14 +995,7 @@ UiProfile Spire::make_list_item_profile() {
   properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
-      auto box = new TextBox("Test Component");
-      box->setAttribute(Qt::WA_TranslucentBackground);
-      box->set_read_only(true);
-      box->setDisabled(true);
-      auto style = get_style(*box);
-      style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
-      set_style(*box, std::move(style));
-      auto item = new ListItem(box);
+      auto item = new ListItem(make_label(QString::fromUtf8("Test Component")));
       item->setFixedWidth(scale_width(100));
       apply_widget_properties(item, profile.get_properties());
       item->connect_current_signal(
