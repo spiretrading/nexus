@@ -1,13 +1,10 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QCloseEvent>
-#include <QEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
-#include <QPropertyAnimation>
+#include <QMouseEvent>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -46,7 +43,7 @@ namespace {
 }
 
 OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
-    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint |
+    : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
         Qt::NoDropShadowWindowHint),
       m_body(body),
       m_is_closed_on_blur(true),
@@ -81,6 +78,13 @@ bool OverlayPanel::is_closed_on_blur() const {
 }
 
 void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
+  if(m_is_closed_on_blur != is_closed_on_blur) {
+    if(is_closed_on_blur) {
+      setWindowFlag(Qt::Popup);
+    } else {
+      setWindowFlag(Qt::Tool);
+    }
+  }
   m_is_closed_on_blur = is_closed_on_blur;
 }
 
@@ -114,21 +118,11 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
 
 void OverlayPanel::showEvent(QShowEvent* event) {
   position();
-  activateWindow();
   QWidget::showEvent(event);
 }
 
-bool OverlayPanel::event(QEvent* event) {
-  if(event->type() == QEvent::WindowDeactivate) {
-    if(m_is_closed_on_blur && isVisible()) {
-      close();
-    }
-  }
-  return QWidget::event(event);
-}
-
 void OverlayPanel::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape && isVisible()) {
+  if(event->key() == Qt::Key_Escape) {
     close();
     return;
   }
