@@ -1,5 +1,4 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QMouseEvent>
