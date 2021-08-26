@@ -54,6 +54,8 @@ namespace {
     VerticalOffsetWrapper(QWidget* body)
         : m_body(body) {
       auto layout = new QVBoxLayout();
+      layout->setAlignment(
+        Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
       layout->setContentsMargins({});
       layout->addSpacerItem(
         new QSpacerItem(0, 1, QSizePolicy::Minimum, QSizePolicy::Fixed));
