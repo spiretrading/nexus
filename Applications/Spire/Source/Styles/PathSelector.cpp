@@ -31,12 +31,10 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   return sources;
 }
 
-std::vector<QWidget*> Spire::Styles::build_reach(
+std::unordered_set<QWidget*> Spire::Styles::build_reach(
     const PathSelector& selector, QWidget& source) {
-  auto reach = std::unordered_set<QWidget*>();
-  auto first = build_reach(selector.get_first(), source);
-  reach.insert(first.begin(), first.end());
+  auto reach = build_reach(selector.get_first(), source);
   auto second = build_reach(selector.get_second(), source);
   reach.insert(second.begin(), second.end());
-  return std::vector(reach.begin(), reach.end());
+  return reach;
 }

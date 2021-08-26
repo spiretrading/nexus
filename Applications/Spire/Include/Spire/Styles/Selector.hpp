@@ -70,12 +70,14 @@ namespace Spire::Styles {
       };
       friend std::unordered_set<Stylist*>
         select(const Selector&, std::unordered_set<Stylist*>);
-      friend std::vector<QWidget*> build_reach(const Selector&, QWidget&);
+      friend std::unordered_set<QWidget*> build_reach(
+        const Selector&, QWidget&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_is_equal;
       std::function<std::unordered_set<Stylist*> (
         const Selector&, std::unordered_set<Stylist*>)> m_select;
-      std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_reach;
+      std::function<std::unordered_set<QWidget*> (const Selector&, QWidget&)>
+        m_reach;
   };
 
   /**
@@ -83,18 +85,18 @@ namespace Spire::Styles {
    * @param selector The Selector to match.
    * @param sources The set if Stylists to match.
    * @return The set of of all Stylists that match the <i>selector<i>.
-'  */
-  std::unordered_set<Stylist*>
-    select(const Selector& selector, std::unordered_set<Stylist*> sources);
+   */
+  std::unordered_set<Stylist*> select(
+    const Selector& selector, std::unordered_set<Stylist*> sources);
 
   /**
    * Returns all Stylists that match a Selector.
    * @param selector The Selector to match.
    * @param source The Stylist to match.
    * @return The set of of all Stylists that match the <i>selector<i>.
-'  */
-  std::unordered_set<Stylist*>
-    select(const Selector& selector, Stylist& source);
+   */
+  std::unordered_set<Stylist*> select(
+    const Selector& selector, Stylist& source);
 
   /**
    * Returns the list of all widgets that could be selected by one of the rules
@@ -103,7 +105,8 @@ namespace Spire::Styles {
    * @param source The widget that the <i>style</i> belongs to.
    * @return A list of all widgets that could be selected by the <i>style</i>.
    */
-  std::vector<QWidget*> build_reach(const StyleSheet& style, QWidget& source);
+  std::unordered_set<QWidget*> build_reach(
+    const StyleSheet& style, QWidget& source);
 
   /**
    * Returns the list of all widgets that could be selected by a Selector.
@@ -112,10 +115,11 @@ namespace Spire::Styles {
    * @return A list of all widgets that could be selected by the
    *         <i>selector</i>.
    */
-  std::vector<QWidget*> build_reach(const Selector& selector, QWidget& source);
+  std::unordered_set<QWidget*> build_reach(
+    const Selector& selector, QWidget& source);
 
   template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
-  std::vector<QWidget*> build_reach(const T& selector, QWidget& source) {
+  std::unordered_set<QWidget*> build_reach(const T& selector, QWidget& source) {
     return {&source};
   }
 

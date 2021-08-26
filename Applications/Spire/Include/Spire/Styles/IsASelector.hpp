@@ -43,8 +43,11 @@ namespace Spire::Styles {
     return IsASelector(std::in_place_type<T>);
   }
 
-  std::unordered_set<Stylist*>
-    select(const IsASelector& selector, std::unordered_set<Stylist*> sources);
+  std::unordered_set<Stylist*> select(
+    const IsASelector& selector, std::unordered_set<Stylist*> sources);
+
+  std::unordered_set<QWidget*> build_reach(
+    const IsASelector& selector, QWidget& source);
 
   template<typename T>
   IsASelector::IsASelector(std::in_place_type_t<T>)

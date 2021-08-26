@@ -26,17 +26,17 @@ std::unordered_set<Stylist*>
   return select(selector, std::unordered_set{&source});
 }
 
-std::vector<QWidget*> Spire::Styles::build_reach(
+std::unordered_set<QWidget*> Spire::Styles::build_reach(
     const Selector& selector, QWidget& source) {
   return selector.m_reach(selector, source);
 }
 
-std::vector<QWidget*> Spire::Styles::build_reach(
+std::unordered_set<QWidget*> Spire::Styles::build_reach(
     const StyleSheet& style, QWidget& source) {
   auto reach = std::unordered_set<QWidget*>();
   for(auto& rule : style.get_rules()) {
     auto sub_reach = build_reach(rule.get_selector(), source);
     reach.insert(sub_reach.begin(), sub_reach.end());
   }
-  return std::vector(reach.begin(), reach.end());
+  return reach;
 }

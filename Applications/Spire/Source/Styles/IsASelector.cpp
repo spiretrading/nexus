@@ -33,3 +33,11 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   }
   return sources;
 }
+
+std::unordered_set<QWidget*> Spire::Styles::build_reach(
+    const IsASelector& selector, QWidget& source) {
+  if(selector.is_instance(source)) {
+    return {&source};
+  }
+  return {};
+}

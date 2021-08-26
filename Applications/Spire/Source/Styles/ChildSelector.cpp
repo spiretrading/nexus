@@ -53,19 +53,18 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   return selection;
 }
 
-std::vector<QWidget*> Spire::Styles::build_reach(
+std::unordered_set<QWidget*> Spire::Styles::build_reach(
     const ChildSelector& selector, QWidget& source) {
   auto reach = std::unordered_set<QWidget*>();
-  auto bases = build_reach(selector.get_base(), source);
-  reach.insert(bases.begin(), bases.end());
-  for(auto base : bases) {
+  for(auto base : build_reach(selector.get_base(), source)) {
+    reach.insert(base);
     for(auto child : base->children()) {
       if(child->isWidgetType()) {
-        auto child_reach = build_reach(selector.get_child(),
-          *static_cast<QWidget*>(child));
+        auto child_reach =
+          build_reach(selector.get_child(), *static_cast<QWidget*>(child));
         reach.insert(child_reach.begin(), child_reach.end());
       }
     }
   }
-  return std::vector(reach.begin(), reach.end());
+  return reach;
 }

@@ -29,7 +29,7 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   return select(selector.get_selector(), std::move(sources));
 }
 
-std::vector<QWidget*>
-    Spire::Styles::build_reach(const FlipSelector& selector, QWidget& source) {
+std::unordered_set<QWidget*> Spire::Styles::build_reach(
+    const FlipSelector& selector, QWidget& source) {
   return build_reach(selector.get_selector(), source);
 }

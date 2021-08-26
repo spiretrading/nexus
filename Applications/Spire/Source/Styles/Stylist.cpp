@@ -166,8 +166,7 @@ const StyleSheet& Stylist::get_style() const {
 void Stylist::set_style(StyleSheet style) {
   m_style = std::make_shared<StyleSheet>(std::move(style));
   m_enable_connections.clear();
-  auto reach = build_reach(*m_style, *m_widget);
-  for(auto widget : reach) {
+  for(auto widget : build_reach(*m_style, *m_widget)) {
     if(widget != m_widget) {
       m_enable_connections.push_back(
         find_stylist(*widget).connect_enable_signal([=] { on_enable(); }));
