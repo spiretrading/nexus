@@ -207,13 +207,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool DropDownBox::event(QEvent* event) {
-  if(event->type() == QEvent::WindowActivate) {
-    m_drop_down_list->clear_hidden_by_blur();
-  }
-  return QWidget::event(event);
-}
-
 void DropDownBox::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Escape:
