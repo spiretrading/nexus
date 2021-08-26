@@ -123,16 +123,12 @@ namespace Details {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterChartingServices(Store(slots));
     RegisterChartingMessages(Store(slots));
-    QuerySecurityService::AddRequestSlot(Store(slots), std::bind(
-      &ChartingServlet::OnQuerySecurityRequest, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3));
+    QuerySecurityService::AddRequestSlot(Store(slots),
+      std::bind_front(&ChartingServlet::OnQuerySecurityRequest, this));
     Beam::Services::AddMessageSlot<EndSecurityQueryMessage>(Store(slots),
-      std::bind(&ChartingServlet::OnEndSecurityQuery, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityTimePriceSeriesService::AddSlot(Store(slots), std::bind(
-      &ChartingServlet::OnLoadSecurityTimePriceSeriesRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-      std::placeholders::_4, std::placeholders::_5));
+      std::bind_front(&ChartingServlet::OnEndSecurityQuery, this));
+    LoadSecurityTimePriceSeriesService::AddSlot(Store(slots), std::bind_front(
+      &ChartingServlet::OnLoadSecurityTimePriceSeriesRequest, this));
   }
 
   template<typename C, typename M>
@@ -234,9 +230,9 @@ namespace Details {
         realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
         MarketDataService::QueryMarketDataClient(*m_marketDataClient,
           realTimeQuery, m_tasks.GetSlot<MarketDataType>(std::bind(
-          &ChartingServlet::OnQueryUpdate<
-          typename Query::Index, MarketDataType>, this, query.GetIndex(),
-          std::placeholders::_1, std::ref(queryEntry))));
+            &ChartingServlet::OnQueryUpdate<
+              typename Query::Index, MarketDataType>, this, query.GetIndex(),
+            std::placeholders::_1, std::ref(queryEntry))));
       });
     }
     auto result = SecurityChartingQueryResult();

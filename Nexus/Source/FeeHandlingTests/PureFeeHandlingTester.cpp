@@ -56,13 +56,13 @@ TEST_SUITE("PureFeeHandling") {
     auto feeTable = MakeFeeTable();
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
-      std::placeholders::_2), Money::ZERO);
+        std::placeholders::_2), Money::ZERO);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
-      std::placeholders::_2), Money::ZERO);
+        std::placeholders::_2), Money::ZERO);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(&CalculateFee, std::placeholders::_1, GetUnlistedSecurity(),
-      std::placeholders::_2), Money::ZERO);
+        std::placeholders::_2), Money::ZERO);
   }
 
   TEST_CASE("tsx_default_active") {
@@ -71,7 +71,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_default_passive") {
@@ -80,7 +80,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_designated_active") {
@@ -89,7 +89,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1,
-      GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+        GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_designated_passive") {
@@ -98,7 +98,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+        GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_subdollar_designated_active") {
@@ -107,7 +107,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
       LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+        GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_subdollar_designated_passive") {
@@ -116,7 +116,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DESIGNATED);
     TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+        GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_subdollar_active") {
@@ -125,7 +125,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
       LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_subdollar_passive") {
@@ -134,7 +134,7 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_venture_default_active") {
@@ -143,7 +143,7 @@ TEST_SUITE("PureFeeHandling") {
       LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_venture_default_passive") {
@@ -152,7 +152,7 @@ TEST_SUITE("PureFeeHandling") {
       LiquidityFlag::PASSIVE, PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_venture_subdollar_active") {
@@ -161,7 +161,7 @@ TEST_SUITE("PureFeeHandling") {
       LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 50 * Money::CENT, 100,
       LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_venture_subdollar_passive") {
@@ -170,7 +170,7 @@ TEST_SUITE("PureFeeHandling") {
       LiquidityFlag::PASSIVE, PureFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, 50 * Money::CENT, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("tsx_venture_subdime_active") {
@@ -179,10 +179,10 @@ TEST_SUITE("PureFeeHandling") {
       LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
       LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
     TestFeeCalculation(feeTable, Money::CENT, 10000000, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
-      std::placeholders::_2), feeTable.m_tsxVentureListedSubdimeCap);
+        std::placeholders::_2), feeTable.m_tsxVentureListedSubdimeCap);
   }
 
   TEST_CASE("tsx_venture_subdime_passive") {
@@ -191,10 +191,10 @@ TEST_SUITE("PureFeeHandling") {
       LiquidityFlag::PASSIVE, PureFeeTable::PriceClass::SUBDIME);
     TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
       LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-      GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
+        GetTsxVentureSecurity(), std::placeholders::_2), expectedFee);
     TestFeeCalculation(feeTable, Money::CENT, 10000000, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
-      std::placeholders::_2), -feeTable.m_tsxVentureListedSubdimeCap);
+        std::placeholders::_2), -feeTable.m_tsxVentureListedSubdimeCap);
   }
 
   TEST_CASE("odd_lot") {
@@ -202,16 +202,16 @@ TEST_SUITE("PureFeeHandling") {
     auto expectedFee = feeTable.m_oddLot;
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -261,9 +261,9 @@ TEST_SUITE("PureFeeHandling") {
       PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1, GetTsxSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1, GetUnlistedSecurity(),
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
   }
 }

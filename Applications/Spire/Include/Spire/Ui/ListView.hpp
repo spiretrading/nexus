@@ -76,8 +76,8 @@ namespace Styles {
        * @return The QWidget that shall be used to display the value in the
        *         <i>model</i> at the given <i>index</i>.
        */
-      using ViewBuilder =
-        std::function<QWidget* (const ArrayListModel& model, int index)>;
+      using ViewBuilder = std::function<
+        QWidget* (const std::shared_ptr<ListModel>& model, int index)>;
 
       /**
        * Signals that the current item was submitted.
@@ -91,8 +91,8 @@ namespace Styles {
        * @param list_model The model of values to display.
        * @param parent The parent widget.
        */
-      explicit ListView(std::shared_ptr<ArrayListModel> list_model,
-        QWidget* parent = nullptr);
+      explicit ListView(
+        std::shared_ptr<ListModel> list_model, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
@@ -100,7 +100,7 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<ArrayListModel> list_model,
+      ListView(std::shared_ptr<ListModel> list_model,
         ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /**
@@ -111,13 +111,13 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<ArrayListModel> list_model,
+      ListView(std::shared_ptr<ListModel> list_model,
         ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
         std::shared_ptr<SelectionModel> selection_model,
         QWidget* parent = nullptr);
 
       /** Returns the list of values displayed. */
-      const std::shared_ptr<ArrayListModel>& get_list_model() const;
+      const std::shared_ptr<ListModel>& get_list_model() const;
   
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
@@ -145,7 +145,7 @@ namespace Styles {
         int m_index;
       };
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<ArrayListModel> m_list_model;
+      std::shared_ptr<ListModel> m_list_model;
       ViewBuilder m_view_builder;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<SelectionModel> m_selection_model;

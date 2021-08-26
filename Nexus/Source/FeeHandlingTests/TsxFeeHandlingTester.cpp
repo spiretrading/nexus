@@ -49,8 +49,8 @@ TEST_SUITE("TsxFeeHandling") {
     fields.m_quantity = 0;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1,
-      TsxFeeTable::Classification::DEFAULT, std::placeholders::_2,
-      std::placeholders::_3), expectedFee);
+        TsxFeeTable::Classification::DEFAULT, std::placeholders::_2,
+        std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("active_interlisted_subdollar") {
@@ -61,8 +61,8 @@ TEST_SUITE("TsxFeeHandling") {
     fields.m_quantity = 100;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(CalculateFee, std::placeholders::_1,
-      TsxFeeTable::Classification::INTERLISTED, std::placeholders::_2,
-      std::placeholders::_3), expectedFee);
+        TsxFeeTable::Classification::INTERLISTED, std::placeholders::_2,
+        std::placeholders::_3), expectedFee);
   }
 
   TEST_CASE("passive_interlisted_subdollar") {
@@ -73,7 +73,7 @@ TEST_SUITE("TsxFeeHandling") {
     fields.m_quantity = 100;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(CalculateFee, std::placeholders::_1,
-      TsxFeeTable::Classification::INTERLISTED, std::placeholders::_2,
-      std::placeholders::_3), expectedFee);
+        TsxFeeTable::Classification::INTERLISTED, std::placeholders::_2,
+        std::placeholders::_3), expectedFee);
   }
 }

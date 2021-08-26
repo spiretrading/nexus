@@ -673,7 +673,7 @@ UiProfile Spire::make_drop_down_list_profile() {
         }
         auto list_view =
           new ListView(list_model, [&] (const auto& model, auto index) {
-            return make_label(model.get<QString>(index));
+            return make_label(model->get<QString>(index));
           });
         auto drop_down_list = new DropDownList(*list_view, button);
         drop_down_list->window()->setAttribute(Qt::WA_DeleteOnClose);
@@ -1025,14 +1025,7 @@ UiProfile Spire::make_list_item_profile() {
   properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
-      auto box = new TextBox("Test Component");
-      box->setAttribute(Qt::WA_TranslucentBackground);
-      box->set_read_only(true);
-      box->setDisabled(true);
-      auto style = get_style(*box);
-      style.get(Disabled()).set(TextColor(QColor::fromRgb(0, 0, 0)));
-      set_style(*box, std::move(style));
-      auto item = new ListItem(box);
+      auto item = new ListItem(make_label(QString::fromUtf8("Test Component")));
       item->setFixedWidth(scale_width(100));
       apply_widget_properties(item, profile.get_properties());
       item->connect_current_signal(
@@ -1119,7 +1112,7 @@ UiProfile Spire::make_list_view_profile() {
         });
       auto list_view =
         new ListView(list_model, [&] (const auto& model, auto index) {
-          auto label = make_label(model.get<QString>(index));
+          auto label = make_label(model->get<QString>(index));
           if(random_height_seed.get() == 0) {
             auto random_size = random_generator.bounded(30, 70);
             if(direction.get() == Qt::Vertical) {
@@ -1541,7 +1534,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       }
       auto list_view = new ListView(list_model,
         [] (const auto& model, auto index) {
-          return make_label(model.get<QString>(index));
+          return make_label(model->get<QString>(index));
         });
       auto scrollable_list_box = new ScrollableListBox(*list_view);
       apply_widget_properties(scrollable_list_box, profile.get_properties());

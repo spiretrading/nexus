@@ -47,13 +47,33 @@ namespace {
     style.get(Disabled() / Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
+
+  struct VerticalOffsetWrapper : public QWidget {
+    QWidget* m_body;
+
+    VerticalOffsetWrapper(QWidget* body)
+        : m_body(body) {
+      auto layout = new QVBoxLayout();
+      layout->setAlignment(
+        Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
+      layout->setContentsMargins({});
+      layout->addSpacerItem(
+        new QSpacerItem(0, 1, QSizePolicy::Minimum, QSizePolicy::Fixed));
+      layout->addWidget(m_body);
+      setLayout(layout);
+      setFocusProxy(m_body);
+    }
+
+    QSize sizeHint() const override {
+      return m_body->sizeHint();
+    }
+  };
 }
 
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
-    ContentSizedTextEdit(const QString& text, QWidget* parent)
-        : QTextEdit(parent),
-          m_longest_line_width(0) {
+    ContentSizedTextEdit(const QString& text)
+        : m_longest_line_width(0) {
       setLineWrapMode(QTextEdit::WidgetWidth);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -202,10 +222,10 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_text_edit_styles([=] { commit_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
-  m_text_edit = new ContentSizedTextEdit(m_model->get_current(), this);
+  m_text_edit = new ContentSizedTextEdit(m_model->get_current());
   m_text_edit->installEventFilter(this);
   m_stacked_widget = new QStackedWidget(this);
-  m_stacked_widget->addWidget(m_text_edit);
+  m_stacked_widget->addWidget(new VerticalOffsetWrapper(m_text_edit));
   setFocusProxy(m_text_edit);
   connect(m_text_edit->document(),
     &QTextDocument::contentsChanged, this, &TextAreaBox::on_text_changed);
