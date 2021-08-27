@@ -1,4 +1,5 @@
 #include "Spire/Ui/ListView.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QHBoxLayout>
@@ -356,13 +357,15 @@ void ListView::remove_item(int index) {
       m_current_model->set_current(*m_current_model->get_current() - 1);
     }
   }
-  if(m_selection_model->get_current()) {
+  if(m_selection_model->get_current() &&
+      *m_selection_model->get_current() >= index) {
+    auto blocker = shared_connection_block(m_selection_connection);
     if(m_selection_model->get_current() == index) {
-      m_selection_model->set_current(*m_selection_model->get_current());
-    } else if(m_selection_model->get_current() > index) {
-      m_selection_model->set_current(*m_selection_model->get_current() - 1);
+      m_selected = none;
+    } else {
+      m_selected = *m_selection_model->get_current() - 1;
     }
-    m_selected = m_selection_model->get_current();
+    m_selection_model->set_current(m_selected);
   }
   update_layout();
 }
