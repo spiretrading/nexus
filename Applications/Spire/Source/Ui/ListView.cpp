@@ -357,10 +357,10 @@ void ListView::remove_item(int index) {
     }
   }
   if(m_selection_model->get_current()) {
+    m_selected = none;
     if(m_selection_model->get_current() == index) {
       m_selection_model->set_current(*m_selection_model->get_current());
     } else if(m_selection_model->get_current() > index) {
-      m_selected = none;
       m_selection_model->set_current(*m_selection_model->get_current() - 1);
     }
     m_selected = m_selection_model->get_current();
