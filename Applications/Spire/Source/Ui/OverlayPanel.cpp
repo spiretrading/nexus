@@ -1,13 +1,10 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QCloseEvent>
-#include <QEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
-#include <QPropertyAnimation>
+#include <QMouseEvent>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -19,7 +16,6 @@ namespace {
   const auto DROP_SHADOW_OFFSET = QPoint(0, 3);
   const auto DROP_SHADOW_RADIUS = 5;
   const auto DROP_SHADOW_SIZE = 5;
-  const auto FADE_SPEED_MS = 100;
 
   auto DROP_SHADOW_HEIGHT() {
     static auto height = scale_height(DROP_SHADOW_SIZE);
@@ -47,11 +43,10 @@ namespace {
 }
 
 OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
-    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint |
+    : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
         Qt::NoDropShadowWindowHint),
       m_body(body),
       m_is_closed_on_blur(true),
-      m_is_closed(false),
       m_positioning(Positioning::PARENT) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
@@ -83,7 +78,15 @@ bool OverlayPanel::is_closed_on_blur() const {
 }
 
 void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
+  if(m_is_closed_on_blur == is_closed_on_blur) {
+    return;
+  }
   m_is_closed_on_blur = is_closed_on_blur;
+  if(m_is_closed_on_blur) {
+    setWindowFlag(Qt::Popup);
+  } else {
+    setWindowFlag(Qt::Tool);
+  }
 }
 
 OverlayPanel::Positioning OverlayPanel::get_positioning() const {
@@ -116,44 +119,15 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
 
 void OverlayPanel::showEvent(QShowEvent* event) {
   position();
-  fade(false);
-  activateWindow();
-  m_is_closed = false;
   QWidget::showEvent(event);
 }
 
-void OverlayPanel::closeEvent(QCloseEvent* event) {
-  if(windowOpacity() == 1.0) {
-    fade(true);
-    event->ignore();
-  } else {
-    event->accept();
-    m_is_closed = true;
-  }
-}
-
-bool OverlayPanel::event(QEvent* event) {
-  if(event->type() == QEvent::WindowDeactivate) {
-    if(m_is_closed_on_blur && !m_is_closed) {
-      fade(true);
-    }
-  }
-  return QWidget::event(event);
-}
-
 void OverlayPanel::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape && !m_is_closed) {
-    fade(true);
+  if(event->key() == Qt::Key_Escape) {
+    close();
     return;
   }
   QWidget::keyPressEvent(event);
-}
-
-void OverlayPanel::fade(bool reverse) {
-  auto animation = fade_window(this, reverse, milliseconds(FADE_SPEED_MS));
-  if(reverse) {
-    connect(animation, &QPropertyAnimation::finished, [=] { close(); });
-  }
 }
 
 void OverlayPanel::position() {
