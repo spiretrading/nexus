@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -20,6 +21,7 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/DropDownBoxAdaptor.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
@@ -39,6 +41,7 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
+#include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -137,6 +140,25 @@ namespace {
     return box;
   }
 
+  template<typename B>
+  auto setup_drop_down_box_adaptor_profile(UiProfile& profile) {
+    using Type = std::decay_t<B>::Type;
+    auto box = new SideBox();
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<Type>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      box->get_model()->set_current(value);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal([=] (auto is_read_only) {
+      box->set_read_only(is_read_only);
+    });
+    box->connect_submit_signal(
+      profile.make_event_slot<Type>(QString::fromUtf8("Submit")));
+    return box;
+  }
+
   auto setup_checkable_profile(UiProfile& profile, CheckBox* check_box) {
     auto& label = get<QString>("label", profile.get_properties());
     check_box->set_label(label.get());
@@ -213,6 +235,15 @@ namespace {
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties,
       DecimalBoxProfileProperties(1));
+  }
+
+  template<typename T>
+  void populate_drop_down_box_adaptor_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      std::vector<std::pair<QString, T>>& current_property) {
+    properties.push_back(make_standard_enum_property(
+      "current", current_property));
+    properties.push_back(make_standard_property("read_only", false));
   }
 
   template<typename B>
@@ -1561,6 +1592,17 @@ UiProfile Spire::make_security_list_item_profile() {
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
+  return profile;
+}
+
+UiProfile Spire::make_side_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Side>(
+    {{"Buy", Side::ASK}, {"Sell", Side::BID}});
+  populate_drop_down_box_adaptor_properties<Side>(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("SideBox"),
+    properties, setup_drop_down_box_adaptor_profile<SideBox>);
   return profile;
 }
 
