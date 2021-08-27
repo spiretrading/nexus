@@ -90,9 +90,8 @@ namespace Nexus::ChartingService {
     RegisterChartingServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterChartingMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<SecurityQueryMessage>(
-      Beam::Store(m_clientHandler.GetSlots()), std::bind(
-      &ChartingClient::OnSecurityQuery, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3));
+      Beam::Store(m_clientHandler.GetSlots()),
+      std::bind_front(&ChartingClient::OnSecurityQuery, this));
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to connect to the charting server."));

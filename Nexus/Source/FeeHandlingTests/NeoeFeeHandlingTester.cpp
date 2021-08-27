@@ -44,10 +44,10 @@ TEST_SUITE("NeoeFeeHandling") {
     auto orderFields = MakeOrderFields(Money::ONE);
     TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
       LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
-      false, orderFields, std::placeholders::_2), Money::ZERO);
+        false, orderFields, std::placeholders::_2), Money::ZERO);
     TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
       LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1, true,
-      orderFields, std::placeholders::_2), Money::ZERO);
+        orderFields, std::placeholders::_2), Money::ZERO);
   }
 
   TEST_CASE("active") {
@@ -59,7 +59,7 @@ TEST_SUITE("NeoeFeeHandling") {
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
         LiquidityFlag::ACTIVE,
         std::bind(&CalculateFee, std::placeholders::_1, false, orderFields,
-        std::placeholders::_2), expectedFee);
+          std::placeholders::_2), expectedFee);
     }
     {
       auto orderFields = MakeOrderFields(Money::ONE);
@@ -68,7 +68,7 @@ TEST_SUITE("NeoeFeeHandling") {
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
         LiquidityFlag::ACTIVE,
         std::bind(&CalculateFee, std::placeholders::_1, true, orderFields,
-        std::placeholders::_2), expectedFee);
+          std::placeholders::_2), expectedFee);
     }
   }
 
@@ -80,7 +80,7 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
         LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-        false, orderFields, std::placeholders::_2), expectedFee);
+          false, orderFields, std::placeholders::_2), expectedFee);
     }
     {
       auto orderFields = MakeOrderFields(Money::ONE);
@@ -88,7 +88,7 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::PriceClass::DEFAULT);
       TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
         LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-        true, orderFields, std::placeholders::_2), expectedFee);
+          true, orderFields, std::placeholders::_2), expectedFee);
     }
   }
 
@@ -100,7 +100,7 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-        false, orderFields, std::placeholders::_2), expectedFee);
+          false, orderFields, std::placeholders::_2), expectedFee);
     }
     {
       auto orderFields = MakeOrderFields(Money::CENT);
@@ -108,7 +108,7 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-        true, orderFields, std::placeholders::_2), expectedFee);
+          true, orderFields, std::placeholders::_2), expectedFee);
     }
   }
 
@@ -120,7 +120,7 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-        false, orderFields, std::placeholders::_2), expectedFee);
+          false, orderFields, std::placeholders::_2), expectedFee);
     }
     {
       auto orderFields = MakeOrderFields(Money::CENT);
@@ -128,7 +128,7 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-        true, orderFields, std::placeholders::_2), expectedFee);
+          true, orderFields, std::placeholders::_2), expectedFee);
     }
   }
 

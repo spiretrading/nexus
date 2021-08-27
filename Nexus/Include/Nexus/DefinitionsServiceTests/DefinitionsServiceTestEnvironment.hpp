@@ -100,7 +100,7 @@ namespace Nexus::DefinitionsService::Tests {
     return DefinitionsClientBox(std::in_place_type<DefinitionsClient<
       ServiceProtocolClientBuilder>>, ServiceProtocolClientBuilder(
         serviceLocatorClient,
-        std::bind(boost::factory<
+        std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_definitions_client", std::ref(m_serverConnection)),
         boost::factory<

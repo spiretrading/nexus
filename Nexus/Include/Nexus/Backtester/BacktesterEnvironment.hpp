@@ -186,7 +186,7 @@ namespace Nexus {
                 m_marketDataClient, m_timeClient)));
       m_orderExecutionClient.emplace(m_orderExecutionEnvironment->MakeClient(
         m_serviceLocatorClient));
-      auto transitionTimerFactory = std::bind(
+      auto transitionTimerFactory = std::bind_front(
         boost::factory<std::unique_ptr<Beam::Threading::TimerBox>>(),
         std::in_place_type<Beam::Threading::TriggerTimer>);
       m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,

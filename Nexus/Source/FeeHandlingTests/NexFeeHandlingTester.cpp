@@ -31,8 +31,7 @@ TEST_SUITE("NexFeeHandling") {
     auto feeTable = MakeFeeTable();
     auto orderFields = MakeOrderFields(Money::ONE);
     TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
-      LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
-      std::placeholders::_2), Money::ZERO);
+      LiquidityFlag::NONE, &CalculateFee, Money::ZERO);
   }
 
   TEST_CASE("execution") {
@@ -40,7 +39,6 @@ TEST_SUITE("NexFeeHandling") {
     auto orderFields = MakeOrderFields(Money::ONE);
     auto expectedFee = Money::ONE;
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
-      std::bind(&CalculateFee, std::placeholders::_1, std::placeholders::_2),
-      expectedFee);
+      &CalculateFee, expectedFee);
   }
 }

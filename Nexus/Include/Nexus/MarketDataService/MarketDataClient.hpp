@@ -185,8 +185,7 @@ namespace Nexus::MarketDataService {
   MarketDataClient<B>::MarketDataClient(BF&& clientBuilder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder),
-              std::bind(&MarketDataClient::OnReconnect, this,
-              std::placeholders::_1)),
+              std::bind_front(&MarketDataClient::OnReconnect, this)),
             m_orderImbalancePublisher(Beam::Ref(m_clientHandler)),
             m_bboQuotePublisher(Beam::Ref(m_clientHandler)),
             m_bookQuotePublisher(Beam::Ref(m_clientHandler)),

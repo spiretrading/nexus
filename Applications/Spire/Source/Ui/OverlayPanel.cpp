@@ -78,14 +78,15 @@ bool OverlayPanel::is_closed_on_blur() const {
 }
 
 void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
-  if(m_is_closed_on_blur != is_closed_on_blur) {
-    if(is_closed_on_blur) {
-      setWindowFlag(Qt::Popup);
-    } else {
-      setWindowFlag(Qt::Tool);
-    }
+  if(m_is_closed_on_blur == is_closed_on_blur) {
+    return;
   }
   m_is_closed_on_blur = is_closed_on_blur;
+  if(m_is_closed_on_blur) {
+    setWindowFlag(Qt::Popup);
+  } else {
+    setWindowFlag(Qt::Tool);
+  }
 }
 
 OverlayPanel::Positioning OverlayPanel::get_positioning() const {
