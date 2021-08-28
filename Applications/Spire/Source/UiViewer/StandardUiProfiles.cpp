@@ -643,8 +643,8 @@ UiProfile Spire::make_drop_down_box_profile() {
         list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
       }
       auto list_view =
-        new ListView(list_model, [&] (const auto& model, auto index) {
-          return make_label(model.get<QString>(index));
+        new ListView(list_model, [] (const auto& model, auto index) {
+          return make_label(model->get<QString>(index));
         });
       auto drop_down_box = new DropDownBox(*list_view);
       drop_down_box->setFixedWidth(scale_width(112));
