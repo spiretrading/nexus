@@ -220,13 +220,9 @@ void DropDownBox::on_click() {
 }
 
 void DropDownBox::on_current(const optional<int>& current) {
-  m_current_index = current;
-  if(m_current_index) {
-    m_current = m_list_view->get_list_model()->at(*m_current_index);
-  }
   auto get_current_text = [=] {
-    if(m_current_index) {
-      return displayTextAny(m_current);
+    if(current) {
+      return displayTextAny(m_list_view->get_list_model()->at(*current));
     }
     return QString("");
   };
@@ -245,8 +241,8 @@ void DropDownBox::update_current() {
 }
 
 void DropDownBox::update_submission() {
-  m_submission = m_current_index;
+  m_submission = m_list_view->get_current_model()->get_current();
   if(m_submission) {
-    m_submit_signal(m_current);
+    m_submit_signal(m_list_view->get_list_model()->at(*m_submission));
   }
 }
