@@ -19,39 +19,39 @@ TEST_SUITE("AncestorSelector") {
   TEST_CASE("selection") {
     run_test([] {
       auto selector = AncestorSelector(Any(), Any());
-      auto root = new QWidget();
-      auto l1 = new QWidget(root);
-      auto l2 = new QWidget(l1);
-      auto l3 = new QWidget(l2);
-      auto l4 = new QWidget(l3);
+      auto root = QWidget();
+      auto l1 = QWidget(&root);
+      auto l2 = QWidget(&l1);
+      auto l3 = QWidget(&l2);
+      auto l4 = QWidget(&l3);
       {
-        auto selection = select(selector, {&find_stylist(*l4)});
+        auto selection = select(selector, {&find_stylist(l4)});
         REQUIRE(selection.size() == 4);
-        REQUIRE(selection.contains(&find_stylist(*l3)));
-        REQUIRE(selection.contains(&find_stylist(*l2)));
-        REQUIRE(selection.contains(&find_stylist(*l1)));
-        REQUIRE(selection.contains(&find_stylist(*root)));
+        REQUIRE(selection.contains(&find_stylist(l3)));
+        REQUIRE(selection.contains(&find_stylist(l2)));
+        REQUIRE(selection.contains(&find_stylist(l1)));
+        REQUIRE(selection.contains(&find_stylist(root)));
       }
       {
-        auto selection = select(selector, {&find_stylist(*l3)});
+        auto selection = select(selector, {&find_stylist(l3)});
         REQUIRE(selection.size() == 3);
-        REQUIRE(selection.contains(&find_stylist(*l2)));
-        REQUIRE(selection.contains(&find_stylist(*l1)));
-        REQUIRE(selection.contains(&find_stylist(*root)));
+        REQUIRE(selection.contains(&find_stylist(l2)));
+        REQUIRE(selection.contains(&find_stylist(l1)));
+        REQUIRE(selection.contains(&find_stylist(root)));
       }
       {
-        auto selection = select(selector, {&find_stylist(*l2)});
+        auto selection = select(selector, {&find_stylist(l2)});
         REQUIRE(selection.size() == 2);
-        REQUIRE(selection.contains(&find_stylist(*l1)));
-        REQUIRE(selection.contains(&find_stylist(*root)));
+        REQUIRE(selection.contains(&find_stylist(l1)));
+        REQUIRE(selection.contains(&find_stylist(root)));
       }
       {
-        auto selection = select(selector, {&find_stylist(*l1)});
+        auto selection = select(selector, {&find_stylist(l1)});
         REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(*root)));
+        REQUIRE(selection.contains(&find_stylist(root)));
       }
       {
-        auto selection = select(selector, {&find_stylist(*root)});
+        auto selection = select(selector, {&find_stylist(root)});
         REQUIRE(selection.empty());
       }
     });

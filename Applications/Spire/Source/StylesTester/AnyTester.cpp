@@ -22,8 +22,8 @@ TEST_SUITE("Any") {
 
   TEST_CASE("single_selection") {
     run_test([] {
-      auto widget = new QWidget();
-      auto& stylist = find_stylist(*widget);
+      auto widget = QWidget();
+      auto& stylist = find_stylist(widget);
       auto selection = select(Any(), {&stylist});
       REQUIRE(selection.size() == 1);
       REQUIRE(selection.contains(&stylist));
@@ -32,10 +32,10 @@ TEST_SUITE("Any") {
 
   TEST_CASE("multiple_selection") {
     run_test([] {
-      auto widget1 = new QWidget();
-      auto widget2 = new QWidget();
-      auto& stylist1 = find_stylist(*widget1);
-      auto& stylist2 = find_stylist(*widget2);
+      auto widget1 = QWidget();
+      auto widget2 = QWidget();
+      auto& stylist1 = find_stylist(widget1);
+      auto& stylist2 = find_stylist(widget2);
       auto selection = select(Any(), {&stylist1, &stylist2});
       REQUIRE(selection.contains(&stylist1));
       REQUIRE(selection.contains(&stylist2));
