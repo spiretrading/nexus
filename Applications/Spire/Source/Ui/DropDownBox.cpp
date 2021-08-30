@@ -61,8 +61,8 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       m_panel->installEventFilter(this);
     }
 
-    QWidget* get_panel() const {
-      return m_panel;
+    QWidget& get_panel() const {
+      return *m_panel;
     }
 
   protected:
@@ -153,7 +153,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_submit_connection = m_list_view->connect_submit_signal(
     [=] (auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
-  m_drop_down_list->get_panel()->installEventFilter(this);
+  m_drop_down_list->get_panel().installEventFilter(this);
 }
 
 bool DropDownBox::is_read_only() const {
@@ -190,7 +190,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Leave) {
       unmatch(*m_text_box, Hover());
     }
-  } else if(watched == m_drop_down_list->get_panel()) {
+  } else if(watched == &m_drop_down_list->get_panel()) {
     if(event->type() == QEvent::Close) {
       unmatch(*m_text_box, Focus());
     }
