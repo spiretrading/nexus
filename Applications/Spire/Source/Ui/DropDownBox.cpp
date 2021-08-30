@@ -45,16 +45,6 @@ namespace {
       set(PaddingRight(scale_width(0)));
     return style;
   }
-
-  boost::optional<int> get_index(std::shared_ptr<ListModel> list_model,
-      const QString& value) {
-    for(auto i = 0; i < list_model->get_size(); ++i) {
-      if(displayTextAny(list_model->at(i)) == value) {
-        return i;
-      }
-    }
-    return none;
-  }
 }
 
 class DropDownBox::DropDownListWrapper : public QWidget {
@@ -159,9 +149,9 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_button->connect_clicked_signal([=] { on_click(); });
   m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
-      [=] (auto& current) { on_current(current); });
+      [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_list_view->connect_submit_signal(
-    [=] (auto& submission) { on_submit(submission); });
+    [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
   m_drop_down_list->get_panel().installEventFilter(this);
 }
@@ -194,6 +184,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       } else {
         unmatch(*m_text_box, Focus());
         update_submission();
+        m_list_view->get_selection_model()->set_current(m_submission);
       }
     } else if(event->type() == QEvent::Enter) {
       match(*m_text_box, Hover());
@@ -228,33 +219,34 @@ void DropDownBox::on_click() {
   }
 }
 
-void DropDownBox::on_current(const boost::optional<int>& current) {
-  auto text_current = [=] {
-    if(current) {
-      return displayTextAny(m_list_view->get_list_model()->at(*current));
+void DropDownBox::on_current(const optional<int>& current) {
+  m_current_index = current;
+  if(m_current_index) {
+    m_current = m_list_view->get_list_model()->at(*m_current_index);
+  }
+  auto get_current_text = [=] {
+    if(m_current_index) {
+      return displayTextAny(m_current);
     }
     return QString("");
-  }();
-  m_text_box->get_model()->set_current(std::move(text_current));
+  };
+  m_text_box->get_model()->set_current(get_current_text());
 }
 
 void DropDownBox::on_submit(const std::any& submission) {
   m_drop_down_list->hide();
-  m_submission = submission;
-  m_submit_signal(m_submission);
+  update_submission();
 }
 
 void DropDownBox::update_current() {
-  m_list_view->get_current_model()->set_current(
-    get_index(m_list_view->get_list_model(), displayTextAny(m_submission)));
+  if(m_submission != m_list_view->get_current_model()->get_current()) {
+    m_list_view->get_current_model()->set_current(m_submission);
+  }
 }
 
 void DropDownBox::update_submission() {
-  auto index = get_index(m_list_view->get_list_model(),
-    m_text_box->get_model()->get_current());
-  if(index) {
-    m_list_view->get_selection_model()->set_current(*index);
-    m_submission = m_list_view->get_list_model()->at(*index);
-    m_submit_signal(m_submission);
+  m_submission = m_current_index;
+  if(m_submission) {
+    m_submit_signal(m_current);
   }
 }
