@@ -220,13 +220,13 @@ void DropDownBox::on_click() {
 }
 
 void DropDownBox::on_current(const optional<int>& current) {
-  auto get_current_text = [=] {
+  auto text = [&] {
     if(current) {
       return displayTextAny(m_list_view->get_list_model()->at(*current));
     }
     return QString("");
-  };
-  m_text_box->get_model()->set_current(get_current_text());
+  }();
+  m_text_box->get_model()->set_current(text);
 }
 
 void DropDownBox::on_submit(const std::any& submission) {
