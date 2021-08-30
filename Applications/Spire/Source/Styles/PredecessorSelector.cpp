@@ -34,16 +34,20 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
   auto selection = std::unordered_set<Stylist*>();
   for(auto source : select(selector.get_base(), std::move(sources))) {
-    if(auto parent = source->get_widget().parentWidget()) {
-      auto parent_selection = select(selector.get_predecessor(),
-        find_stylist(*parent));
-      if(!parent_selection.empty()) {
+    auto predecessor = source->get_widget().parentWidget();
+    while(predecessor) {
+      auto predecessor_selection =
+        select(selector.get_predecessor(), find_stylist(*predecessor));
+      if(!predecessor_selection.empty()) {
         if(is_flipped) {
           selection.insert(source);
         } else {
-          selection.insert(parent_selection.begin(), parent_selection.end());
+          selection.insert(
+            predecessor_selection.begin(), predecessor_selection.end());
         }
+        break;
       }
+      predecessor = predecessor->parentWidget();
     }
   }
   return selection;

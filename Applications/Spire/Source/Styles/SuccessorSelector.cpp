@@ -1,4 +1,5 @@
 #include "Spire/Styles/SuccessorSelector.hpp"
+#include <deque>
 #include <QWidget>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
@@ -36,17 +37,29 @@ std::unordered_set<Stylist*> Spire::Styles::select(
   auto selection = std::unordered_set<Stylist*>();
   auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
   for(auto source : select(selector.get_base(), std::move(sources))) {
+    auto successors = std::deque<QWidget*>();
     for(auto child : source->get_widget().children()) {
       if(child->isWidgetType()) {
-        auto child_selection = select(selector.get_successor(),
-          find_stylist(*static_cast<QWidget*>(child)));
-        if(!child_selection.empty()) {
-          if(is_flipped) {
-            selection.insert(source);
-            break;
-          } else {
-            selection.insert(child_selection.begin(), child_selection.end());
-          }
+        successors.push_back(static_cast<QWidget*>(child));
+      }
+    }
+    while(!successors.empty()) {
+      auto successor = successors.front();
+      successors.pop_front();
+      auto successor_selection = select(selector.get_successor(),
+        find_stylist(*static_cast<QWidget*>(successor)));
+      if(!successor_selection.empty()) {
+        if(is_flipped) {
+          selection.insert(source);
+        } else {
+          selection.insert(
+            successor_selection.begin(), successor_selection.end());
+        }
+        break;
+      }
+      for(auto child : successor->children()) {
+        if(child->isWidgetType()) {
+          successors.push_back(static_cast<QWidget*>(child));
         }
       }
     }
