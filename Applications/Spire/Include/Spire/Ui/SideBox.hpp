@@ -7,10 +7,6 @@
 namespace Spire {
 
   template<>
-  DropDownBoxAdaptor<Nexus::Side>::DropDownBoxAdaptor(QWidget* parent)
-    : DropDownBoxAdaptor(Nexus::Side::NONE, parent) {}
-
-  template<>
   void DropDownBoxAdaptor<Nexus::Side>::populate_data(
       std::shared_ptr<ArrayListModel> list_model) {
     list_model->push(static_cast<Nexus::Side>(Nexus::Side::ASK));

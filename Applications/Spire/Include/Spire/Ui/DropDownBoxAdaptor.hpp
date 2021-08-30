@@ -78,6 +78,10 @@ namespace Spire {
   };
 
   template<typename T>
+  DropDownBoxAdaptor<T>::DropDownBoxAdaptor(QWidget* parent)
+    : DropDownBoxAdaptor(Type::NONE, parent) {}
+
+  template<typename T>
   DropDownBoxAdaptor<T>::DropDownBoxAdaptor(Type current, QWidget* parent)
     : DropDownBoxAdaptor(std::make_shared<LocalValueModel<Type>>(current),
       parent) {}

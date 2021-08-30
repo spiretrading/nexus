@@ -143,7 +143,7 @@ namespace {
   template<typename B>
   auto setup_drop_down_box_adaptor_profile(UiProfile& profile) {
     using Type = std::decay_t<B>::Type;
-    auto box = new SideBox();
+    auto box = new B();
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<Type>("current", profile.get_properties());
