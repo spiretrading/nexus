@@ -32,8 +32,8 @@ namespace Spire::Styles {
    */
   NotSelector operator !(Selector selector);
 
-  std::unordered_set<Stylist*>
-    select(const NotSelector& selector, std::unordered_set<Stylist*> sources);
+  std::unordered_set<Stylist*> select(
+    const NotSelector& selector, std::unordered_set<Stylist*> sources);
 }
 
 #endif

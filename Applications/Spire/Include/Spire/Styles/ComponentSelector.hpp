@@ -94,12 +94,12 @@ namespace Spire::Styles {
     using SelectCallable =
       std::function<std::unordered_set<Stylist*> (QWidget&, const Id&)>;
 
-    static bool register_id(std::type_index widget, std::type_index id,
-      SelectCallable callable);
+    static bool register_id(
+      std::type_index widget, std::type_index id, SelectCallable callable);
     static std::unordered_set<Stylist*> select(const Id& id, Stylist&);
 
-    static inline
-      std::unordered_map<std::type_index, SelectCallable> m_registry;
+    static inline std::unordered_map<std::type_index, SelectCallable>
+      m_registry;
   };
 
   template<typename W, typename I>
@@ -107,8 +107,8 @@ namespace Spire::Styles {
     using Widget = W;
     using Id = I;
 
-    std::unordered_set<Stylist*>
-      operator ()(Widget& widget, const Id& id) const;
+    std::unordered_set<Stylist*> operator ()(
+      Widget& widget, const Id& id) const;
     static bool register_id();
 
     static inline const auto initializer = register_id();

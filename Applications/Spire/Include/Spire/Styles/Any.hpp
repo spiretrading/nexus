@@ -13,8 +13,8 @@ namespace Spire::Styles {
       bool operator !=(const Any& selector) const;
   };
 
-  std::unordered_set<Stylist*>
-    select(const Any& selector, std::unordered_set<Stylist*> sources);
+  std::unordered_set<Stylist*> select(
+    const Any& selector, std::unordered_set<Stylist*> sources);
 }
 
 #endif
