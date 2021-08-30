@@ -224,7 +224,7 @@ void DropDownBox::on_current(const optional<int>& current) {
     if(current) {
       return displayTextAny(m_list_view->get_list_model()->at(*current));
     }
-    return QString("");
+    return QString();
   }();
   m_text_box->get_model()->set_current(text);
 }
