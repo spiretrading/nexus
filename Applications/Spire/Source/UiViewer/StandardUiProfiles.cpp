@@ -674,8 +674,8 @@ UiProfile Spire::make_drop_down_box_profile() {
         list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
       }
       auto list_view =
-        new ListView(list_model, [&] (const auto& model, auto index) {
-          return make_label(model.get<QString>(index));
+        new ListView(list_model, [] (const auto& model, auto index) {
+          return make_label(model->get<QString>(index));
         });
       auto drop_down_box = new DropDownBox(*list_view);
       drop_down_box->setFixedWidth(scale_width(112));
@@ -708,7 +708,7 @@ UiProfile Spire::make_drop_down_list_profile() {
         }
         auto list_view =
           new ListView(list_model, [&] (const auto& model, auto index) {
-            return make_label(model.get<QString>(index));
+            return make_label(model->get<QString>(index));
           });
         auto drop_down_list = new DropDownList(*list_view, button);
         drop_down_list->window()->setAttribute(Qt::WA_DeleteOnClose);
@@ -1147,7 +1147,7 @@ UiProfile Spire::make_list_view_profile() {
         });
       auto list_view =
         new ListView(list_model, [&] (const auto& model, auto index) {
-          auto label = make_label(model.get<QString>(index));
+          auto label = make_label(model->get<QString>(index));
           if(random_height_seed.get() == 0) {
             auto random_size = random_generator.bounded(30, 70);
             if(direction.get() == Qt::Vertical) {
@@ -1535,7 +1535,7 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       }
       auto list_view = new ListView(list_model,
         [] (const auto& model, auto index) {
-          return make_label(model.get<QString>(index));
+          return make_label(model->get<QString>(index));
         });
       auto scrollable_list_box = new ScrollableListBox(*list_view);
       apply_widget_properties(scrollable_list_box, profile.get_properties());

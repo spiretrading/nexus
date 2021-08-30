@@ -115,7 +115,6 @@ namespace Styles {
       void update_text_edit_width();
       void on_current(const QString& current);
       void on_cursor_position();
-      void on_placeholder_style();
       void on_style();
       void on_text_changed();
   };

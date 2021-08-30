@@ -51,12 +51,12 @@ namespace Spire {
       Button* m_button;
       DropDownListWrapper* m_drop_down_list;
       boost::optional<int> m_submission;
-      boost::signals2::scoped_connection m_list_view_submit_connection;
-      boost::signals2::scoped_connection m_list_view_current_connection;
+      boost::signals2::scoped_connection m_submit_connection;
+      boost::signals2::scoped_connection m_current_connection;
 
       void on_click();
-      void on_list_view_current(const boost::optional<int>& current);
-      void on_list_view_submit(const std::any& submission);
+      void on_current(const boost::optional<int>& current);
+      void on_submit(const std::any& submission);
       void update_current();
       void update_submission();
   };

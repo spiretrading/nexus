@@ -14,6 +14,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -50,36 +51,27 @@ class DropDownBox::DropDownListWrapper : public QWidget {
   public:
     DropDownListWrapper(ListView& list_view, QWidget* parent)
         : QWidget(parent),
-          m_list_view(&list_view),
-          m_is_hidden_by_blur(false) {
+          m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
+      m_panel = m_drop_down_list->window();
       m_drop_down_list->setFocusProxy(m_list_view);
-      auto list_model = m_list_view->get_list_model();
-      for(auto i = 0; i < list_model->get_size(); ++i) {
+      for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
         m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
       }
       m_list_view->installEventFilter(this);
-      get_panel()->installEventFilter(this);
+      m_panel->installEventFilter(this);
     }
 
-    QWidget* get_panel() const {
-      return m_drop_down_list->window();
-    }
-
-    bool is_hidden_by_blur() const {
-      return m_is_hidden_by_blur;
-    }
-
-    void clear_hidden_by_blur() {
-      m_is_hidden_by_blur = false;
+    QWidget& get_panel() const {
+      return *m_panel;
     }
 
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_list_view) {
         if(event->type() == QEvent::KeyPress) {
-          auto key_event = static_cast<QKeyEvent*>(event);
-          switch(key_event->key()) {
+          auto& key_event = *static_cast<QKeyEvent*>(event);
+          switch(key_event.key()) {
             case Qt::Key_Tab:
             case Qt::Key_Backtab:
             case Qt::Key_Escape:
@@ -89,16 +81,17 @@ class DropDownBox::DropDownListWrapper : public QWidget {
               break;
           }
         }
-      } else if(watched == get_panel()) {
+      } else if(watched == m_panel) {
         if(event->type() == QEvent::Close) {
-          if(isVisible()) {
-            hide();
-            m_is_hidden_by_blur = true;
-          } else {
-            m_is_hidden_by_blur = false;
-          }
+          hide();
         } else if(event->type() == QEvent::KeyPress) {
           QCoreApplication::sendEvent(m_list_view, event);
+        } else if(event->type() == QEvent::MouseButtonPress) {
+          auto& mouse_event = *static_cast<QMouseEvent*>(event);
+          if(parentWidget()->rect().contains(
+              parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
+            m_panel->setAttribute(Qt::WA_NoMouseReplay);
+          }
         }
       }
       return QWidget::eventFilter(watched, event);
@@ -117,13 +110,12 @@ class DropDownBox::DropDownListWrapper : public QWidget {
   private:
     ListView* m_list_view;
     DropDownList* m_drop_down_list;
-    bool m_is_hidden_by_blur;
+    QWidget* m_panel;
 };
 
 DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
-      m_list_view(&list_view),
-      m_submission(m_list_view->get_current_model()->get_current()) {
+      m_list_view(&list_view) {
   auto layers = new LayeredWidget();
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -155,13 +147,13 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   m_button->connect_clicked_signal([=] { on_click(); });
-  m_list_view_current_connection =
+  m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
-      [=] (auto& current) { on_list_view_current(current); });
-  m_list_view_submit_connection = m_list_view->connect_submit_signal(
-    [=] (auto& submission) { on_list_view_submit(submission); });
+      [=] (const auto& current) { on_current(current); });
+  m_submit_connection = m_list_view->connect_submit_signal(
+    [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
-  m_drop_down_list->get_panel()->installEventFilter(this);
+  m_drop_down_list->get_panel().installEventFilter(this);
 }
 
 bool DropDownBox::is_read_only() const {
@@ -192,14 +184,14 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       } else {
         unmatch(*m_text_box, Focus());
         update_submission();
-        m_drop_down_list->clear_hidden_by_blur();
+        m_list_view->get_selection_model()->set_current(m_submission);
       }
     } else if(event->type() == QEvent::Enter) {
       match(*m_text_box, Hover());
     } else if(event->type() == QEvent::Leave) {
       unmatch(*m_text_box, Hover());
     }
-  } else if(watched == m_drop_down_list->get_panel()) {
+  } else if(watched == &m_drop_down_list->get_panel()) {
     if(event->type() == QEvent::Close) {
       unmatch(*m_text_box, Focus());
     }
@@ -220,24 +212,24 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DropDownBox::on_click() {
-  if(m_drop_down_list->is_hidden_by_blur()) {
-    m_drop_down_list->clear_hidden_by_blur();
+  if(m_drop_down_list->isVisible()) {
+    m_drop_down_list->hide();
   } else {
     m_drop_down_list->show();
   }
 }
 
-void DropDownBox::on_list_view_current(const boost::optional<int>& current) {
-  auto text_current = [=] {
+void DropDownBox::on_current(const optional<int>& current) {
+  auto text = [&] {
     if(current) {
       return displayTextAny(m_list_view->get_list_model()->at(*current));
     }
-    return QString("");
+    return QString();
   }();
-  m_text_box->get_model()->set_current(std::move(text_current));
+  m_text_box->get_model()->set_current(text);
 }
 
-void DropDownBox::on_list_view_submit(const std::any& submission) {
+void DropDownBox::on_submit(const std::any& submission) {
   m_drop_down_list->hide();
   update_submission();
 }
@@ -253,5 +245,4 @@ void DropDownBox::update_submission() {
   if(m_submission) {
     m_submit_signal(m_list_view->get_list_model()->at(*m_submission));
   }
-  m_list_view->get_selection_model()->set_current(m_submission);
 }
