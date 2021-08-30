@@ -54,8 +54,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
       m_panel = m_drop_down_list->window();
       m_drop_down_list->setFocusProxy(m_list_view);
-      auto list_model = m_list_view->get_list_model();
-      for(auto i = 0; i < list_model->get_size(); ++i) {
+      for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
         m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
       }
       m_list_view->installEventFilter(this);
