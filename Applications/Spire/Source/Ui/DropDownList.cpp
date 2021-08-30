@@ -6,7 +6,6 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
-#include "Spire/Ui/ScrollBox.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -28,7 +27,6 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
-  m_scrollable_list_box->get_scroll_box().setFocusPolicy(Qt::NoFocus);
   set_style(*m_scrollable_list_box,
     SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
   layout->addWidget(m_scrollable_list_box);
