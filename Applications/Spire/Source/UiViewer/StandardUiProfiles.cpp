@@ -19,6 +19,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
+#include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
@@ -623,6 +624,39 @@ UiProfile Spire::make_destination_list_item_profile() {
         GetDefaultDestinationDatabase().FromId(DefaultDestinations::TSX()));
       apply_widget_properties(item, profile.get_properties());
       return item;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_drop_down_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("read_only", false));
+  properties.push_back(make_standard_property("item_count", 15));
+  properties.push_back(make_standard_property<QString>("item_label", "item"));
+  auto profile = UiProfile(QString::fromUtf8("DropDownBox"), properties,
+    [] (auto& profile) {
+      auto& item_count = get<int>("item_count", profile.get_properties());
+      auto& item_text = get<QString>("item_label", profile.get_properties());
+      auto list_model = std::make_shared<ArrayListModel>();
+      for(auto i = 0; i < item_count.get(); ++i) {
+        list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
+      }
+      auto list_view =
+        new ListView(list_model, [] (const auto& model, auto index) {
+          return make_label(model->get<QString>(index));
+        });
+      auto drop_down_box = new DropDownBox(*list_view);
+      drop_down_box->setFixedWidth(scale_width(112));
+      apply_widget_properties(drop_down_box, profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        drop_down_box->set_read_only(is_read_only);
+      });
+      drop_down_box->connect_submit_signal(
+        profile.make_event_slot<optional<std::any>>(
+          QString::fromUtf8("Submit")));
+      return drop_down_box;
     });
   return profile;
 }
