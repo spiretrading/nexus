@@ -114,8 +114,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
 
 DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
-      m_list_view(&list_view),
-      m_submission(m_list_view->get_current_model()->get_current()) {
+      m_list_view(&list_view) {
   auto layers = new LayeredWidget();
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
