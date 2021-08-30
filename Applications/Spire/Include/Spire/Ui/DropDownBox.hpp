@@ -50,7 +50,7 @@ namespace Spire {
       TextBox* m_text_box;
       Button* m_button;
       DropDownListWrapper* m_drop_down_list;
-      boost::optional<int> m_submission;
+      std::any m_submission;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 

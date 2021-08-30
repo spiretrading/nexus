@@ -14,6 +14,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -43,6 +44,16 @@ namespace {
     style.get(ReadOnly()).
       set(PaddingRight(scale_width(0)));
     return style;
+  }
+
+  boost::optional<int> get_index(std::shared_ptr<ListModel> list_model,
+      const QString& value) {
+    for(auto i = 0; i < list_model->get_size(); ++i) {
+      if(displayTextAny(list_model->at(i)) == value) {
+        return i;
+      }
+    }
+    return none;
   }
 }
 
@@ -229,19 +240,21 @@ void DropDownBox::on_current(const boost::optional<int>& current) {
 
 void DropDownBox::on_submit(const std::any& submission) {
   m_drop_down_list->hide();
-  update_submission();
+  m_submission = submission;
+  m_submit_signal(m_submission);
 }
 
 void DropDownBox::update_current() {
-  if(m_submission != m_list_view->get_current_model()->get_current()) {
-    m_list_view->get_current_model()->set_current(m_submission);
-  }
+  m_list_view->get_current_model()->set_current(
+    get_index(m_list_view->get_list_model(), displayTextAny(m_submission)));
 }
 
 void DropDownBox::update_submission() {
-  m_submission = m_list_view->get_current_model()->get_current();
-  if(m_submission) {
-    m_submit_signal(m_list_view->get_list_model()->at(*m_submission));
+  auto index = get_index(m_list_view->get_list_model(),
+    m_text_box->get_model()->get_current());
+  if(index) {
+    m_list_view->get_selection_model()->set_current(*index);
+    m_submission = m_list_view->get_list_model()->at(*index);
+    m_submit_signal(m_submission);
   }
-  m_list_view->get_selection_model()->set_current(m_submission);
 }
