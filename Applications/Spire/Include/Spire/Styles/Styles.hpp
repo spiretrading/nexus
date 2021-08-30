@@ -7,7 +7,6 @@ namespace Spire::Styles {
   class Any;
   template<typename T, typename G> class BasicProperty;
   class Block;
-  class ChildSelector;
   template<typename T, typename G> class ComponentId;
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
@@ -24,8 +23,8 @@ namespace Spire::Styles {
   template<typename T> class LinearExpression;
   class NotSelector;
   class OrSelector;
-  class ParentSelector;
   class PathSelector;
+  class PredecessorSelector;
   class Property;
   class PropertyMatchSelector;
   class PseudoElement;
@@ -40,6 +39,7 @@ namespace Spire::Styles {
   class StyleSheet;
   class StyleSheetMap;
   class Stylist;
+  class SuccessorSelector;
 }
 
 #endif
