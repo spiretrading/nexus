@@ -148,11 +148,11 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   m_button->connect_clicked_signal([=] { on_click(); });
-  m_list_view_current_connection =
+  m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
-      [=] (auto& current) { on_list_view_current(current); });
-  m_list_view_submit_connection = m_list_view->connect_submit_signal(
-    [=] (auto& submission) { on_list_view_submit(submission); });
+      [=] (auto& current) { on_current(current); });
+  m_submit_connection = m_list_view->connect_submit_signal(
+    [=] (auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
   m_drop_down_list->get_panel()->installEventFilter(this);
 }
@@ -219,7 +219,7 @@ void DropDownBox::on_click() {
   }
 }
 
-void DropDownBox::on_list_view_current(const boost::optional<int>& current) {
+void DropDownBox::on_current(const boost::optional<int>& current) {
   auto text_current = [=] {
     if(current) {
       return displayTextAny(m_list_view->get_list_model()->at(*current));
@@ -229,7 +229,7 @@ void DropDownBox::on_list_view_current(const boost::optional<int>& current) {
   m_text_box->get_model()->set_current(std::move(text_current));
 }
 
-void DropDownBox::on_list_view_submit(const std::any& submission) {
+void DropDownBox::on_submit(const std::any& submission) {
   m_drop_down_list->hide();
   update_submission();
 }
