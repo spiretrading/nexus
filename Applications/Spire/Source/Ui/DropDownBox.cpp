@@ -69,8 +69,8 @@ class DropDownBox::DropDownListWrapper : public QWidget {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_list_view) {
         if(event->type() == QEvent::KeyPress) {
-          auto key_event = static_cast<QKeyEvent*>(event);
-          switch(key_event->key()) {
+          auto& key_event = *static_cast<QKeyEvent*>(event);
+          switch(key_event.key()) {
             case Qt::Key_Tab:
             case Qt::Key_Backtab:
             case Qt::Key_Escape:
@@ -86,9 +86,9 @@ class DropDownBox::DropDownListWrapper : public QWidget {
         } else if(event->type() == QEvent::KeyPress) {
           QCoreApplication::sendEvent(m_list_view, event);
         } else if(event->type() == QEvent::MouseButtonPress) {
-          auto mouse_event = static_cast<QMouseEvent*>(event);
+          auto& mouse_event = *static_cast<QMouseEvent*>(event);
           if(parentWidget()->rect().contains(
-              parentWidget()->mapFromGlobal(mouse_event->globalPos()))) {
+              parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
             m_panel->setAttribute(Qt::WA_NoMouseReplay);
           }
         }
