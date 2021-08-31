@@ -57,7 +57,7 @@ namespace Spire {
       /**
        * Sets the read-only state.
        * @param is_read_only True iff the DropDownBoxAdaptor should be
-       *                     read-only.
+       *        read-only.
        */
       void set_read_only(bool is_read_only);
 
