@@ -21,6 +21,37 @@ namespace Spire::Styles {
   template<typename T>
   constexpr auto is_selector_v = is_selector_t<T>::value;
 
+  /**
+   * The type of callable used to signal a change in the selected Stylists.
+   * @param additions The set of Stylists added to the selection.
+   * @param removals The set of Stylists removed from the selection.
+   */
+  using SelectionUpdate = std::function<
+    void (const std::unordered_set<const Stylist*>& additions,
+      const std::unordered_set<const Stylist*> removals)>;
+
+  /** Stores a scoped connection to a select operation. */
+  class SelectConnection {
+    public:
+
+      /** Constructs a stateless connection. */
+      SelectConnection() = default;
+
+      /**
+       * Constructs a stateful connection.
+       * @param args The arguments representing the state of the connection.
+       */
+      template<typename T, typename... U>
+      explicit SelectConnection(T&& arg, U&&... args);
+
+      SelectConnection(const SelectConnection&) = delete;
+
+      SelectConnection(SelectConnection&&) = default;
+
+    private:
+      std::shared_ptr<void> m_state;
+  };
+
   /** Selects the widget to apply a style rule to. */
   class Selector {
     public:
@@ -70,15 +101,31 @@ namespace Spire::Styles {
       };
       friend std::unordered_set<Stylist*>
         select(const Selector&, std::unordered_set<Stylist*>);
+      friend SelectConnection select(
+        const Selector&, const Stylist&, const SelectionUpdate&);
       friend std::unordered_set<QWidget*> build_reach(
         const Selector&, QWidget&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_is_equal;
       std::function<std::unordered_set<Stylist*> (
         const Selector&, std::unordered_set<Stylist*>)> m_select;
+      std::function<SelectConnection (
+        const Selector&, const Stylist&, const SelectionUpdate&)>
+        m_select_connection;
       std::function<std::unordered_set<QWidget*> (const Selector&, QWidget&)>
         m_reach;
   };
+
+  /**
+   * Returns the set of Stylists selected by a Selector. Updates to the
+   * selection ared provided through a specified callback.
+   * @param selector The Selector used to select Stylists.
+   * @param base The Stylist used as the base of the selection.
+   * @param on_update The callable to invoke when the selection updates.
+   * @return A scoped connection used to receive selection updates.
+   */
+  SelectConnection select(const Selector& selector, const Stylist& base,
+    const SelectionUpdate& on_update);
 
   /**
    * Returns all Stylists that match a Selector.
@@ -123,6 +170,12 @@ namespace Spire::Styles {
     return {&source};
   }
 
+  template<typename T, typename... U>
+  SelectConnection::SelectConnection(T&& arg, U&&... args)
+    : m_state(std::make_shared<
+        std::tuple<std::remove_reference_t<T>, std::remove_reference_t<U>...>>(
+          std::forward<T>(arg), std::forward<U>(args)...)) {}
+
   template<typename T, typename>
   Selector::Selector(T selector)
     : m_selector(std::move(selector)),
@@ -134,6 +187,10 @@ namespace Spire::Styles {
       }),
       m_select([] (const Selector& self, std::unordered_set<Stylist*> source) {
         return select(self.as<T>(), std::move(source));
+      }),
+      m_select_connection([] (const Selector& self, const Stylist& base,
+            const SelectionUpdate& on_update) {
+        return select(self.as<T>(), base, on_update);
       }),
       m_reach([] (const Selector& self, QWidget& widget) {
         return build_reach(self.as<T>(), widget);

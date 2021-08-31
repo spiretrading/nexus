@@ -26,6 +26,11 @@ std::unordered_set<Stylist*>
   return select(selector, std::unordered_set{&source});
 }
 
+SelectConnection Spire::Styles::select(const Selector& selector,
+    const Stylist& base, const SelectionUpdate& on_update) {
+  return selector.m_select_connection(selector, base, on_update);
+}
+ 
 std::unordered_set<QWidget*> Spire::Styles::build_reach(
     const Selector& selector, QWidget& source) {
   return selector.m_reach(selector, source);

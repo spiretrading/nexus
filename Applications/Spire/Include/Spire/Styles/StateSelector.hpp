@@ -65,37 +65,25 @@ namespace Spire::Styles {
   /** Selects a widget if it was focused using a non-pointing device. */
   using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
-  /**
-   * Implements the SelectorExecutor associated with a StateSelector.
-   * @param <T> The type of StateSelector to execute.
-   * @param <F> The type of callable receiving updates.
-   */
-  template<typename T, typename F>
-  class StateExecutor {
-    public:
-
-      /** The type of StateSelector to execute. */
-      using Selector = T;
-
-      /** The type of callable receiving updates. */
-      using UpdateSlot = F;
-
-      /**
-       * Constructs a StateExecutor.
-       * @param selector The StateSelector to execute.
-       * @param base The QWidget to monitor for the specified <i>selector</i>.
-       * @param on_update The callable invoked on an update.
-       */
-      StateExecutor(
-        const Selector& selector, const QWidget& base, UpdateSlot on_update);
-
-    private:
-      const QWidget* m_base;
-      UpdateSlot m_on_update;
-      boost::signals2::scoped_connection m_match_connection;
-
-      void on_match(bool is_match);
-  };
+  template<typename T, typename G>
+  SelectConnection select(const StateSelector<T, G>& selector,
+      const Stylist& base, const SelectionUpdate& on_update) {
+    auto connection = base.connect_match_signal(selector,
+      [=, &base] (auto is_match) {
+        if(is_match) {
+          on_update(
+            std::unordered_set{&base}, std::unordered_set<const Stylist*>());
+        } else {
+          on_update(
+            std::unordered_set<const Stylist*>(), std::unordered_set{&base});
+        }
+      });
+    if(base.is_match(selector)) {
+      on_update(
+        std::unordered_set{&base}, std::unordered_set<const Stylist*>());
+    }
+    return SelectConnection(std::move(connection));
+  }
 
   template<typename T, typename G>
   std::unordered_set<Stylist*> select(const StateSelector<T, G>& selector,
@@ -141,28 +129,6 @@ namespace Spire::Styles {
   bool StateSelector<void, G>::operator !=(
       const StateSelector& selector) const {
     return !(*this == selector);
-  }
-
-  template<typename T, typename F>
-  StateExecutor<T, F>::StateExecutor(
-      const Selector& selector, const QWidget& base, UpdateSlot on_update)
-      : m_base(&base),
-        m_on_update(std::move(on_update)) {
-    auto& stylist = find_stylist(base);
-    m_match_connection = stylist.connect_match_signal(
-      selector, [this] (auto is_match) { on_match(is_match); });
-    if(stylist.is_match(selector)) {
-      on_match(true);
-    }
-  }
-
-  template<typename T, typename F>
-  void StateExecutor<T, F>::on_match(bool is_match) {
-    if(is_match) {
-      m_on_update(std::unordered_set{m_base});
-    } else {
-      m_on_update(std::unordered_set<const QWidget*>());
-    }
   }
 }
 

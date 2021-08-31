@@ -12,6 +12,10 @@ namespace {
   using Foo = StateSelector<void, struct FooTag>;
   using Bar = StateSelector<void, struct BarTag>;
   using Baz = StateSelector<int, struct BazTag>;
+  struct Update {
+    std::unordered_set<const Stylist*> m_additions;
+    std::unordered_set<const Stylist*> m_removals;
+  };
 }
 
 TEST_SUITE("StateSelector") {
@@ -24,23 +28,32 @@ TEST_SUITE("StateSelector") {
   TEST_CASE("executor") {
     run_test([] {
       auto w1 = QWidget();
-      auto updates = std::deque<std::unordered_set<const QWidget*>>();
-      auto executor = StateExecutor(
-        Foo(), w1, [&] (const auto& matches) { updates.push_back(matches); });
+      auto updates = std::deque<Update>();
+      auto connection = select(Foo(), find_stylist(w1),
+        [&] (const auto& additions, const auto& removals) {
+          updates.push_back({additions, removals});
+        });
       REQUIRE(updates.empty());
       match(w1, Foo());
       REQUIRE(updates.size() == 1);
-      auto matches = updates.front();
-      updates.pop_front();
-      REQUIRE(matches.size() == 1);
-      REQUIRE(matches.contains(&w1));
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+      }
       match(w1, Foo());
       REQUIRE(updates.empty());
       unmatch(w1, Foo());
       REQUIRE(updates.size() == 1);
-      auto empty_matches = updates.front();
-      updates.pop_front();
-      REQUIRE(empty_matches.empty());
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.empty());
+        REQUIRE(matches.m_removals.size() == 1);
+        REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
+      }
     });
   }
 
@@ -48,14 +61,17 @@ TEST_SUITE("StateSelector") {
     run_test([] {
       auto w1 = QWidget();
       match(w1, Foo());
-      auto updates = std::deque<std::unordered_set<const QWidget*>>();
-      auto executor = StateExecutor(
-        Foo(), w1, [&] (const auto& matches) { updates.push_back(matches); });
+      auto updates = std::deque<Update>();
+      auto connection = select(Foo(), find_stylist(w1),
+        [&] (const auto& additions, const auto& removals) {
+          updates.push_back({additions, removals});
+        });
       REQUIRE(updates.size() == 1);
       auto matches = updates.front();
       updates.pop_front();
-      REQUIRE(matches.size() == 1);
-      REQUIRE(matches.contains(&w1));
+      REQUIRE(matches.m_additions.size() == 1);
+      REQUIRE(matches.m_removals.empty());
+      REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
     });
   }
 
