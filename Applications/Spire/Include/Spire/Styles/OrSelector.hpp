@@ -38,6 +38,9 @@ namespace Spire::Styles {
    */
   OrSelector operator ||(Selector left, Selector right);
 
+  SelectConnection select(const OrSelector& selector, const Stylist& base,
+    const SelectionUpdate& on_update);
+
   std::unordered_set<Stylist*> select(
     const OrSelector& selector, std::unordered_set<Stylist*> sources);
 }

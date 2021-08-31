@@ -27,6 +27,51 @@ OrSelector Spire::Styles::operator ||(Selector left, Selector right) {
   return OrSelector(std::move(left), std::move(right));
 }
 
+SelectConnection Spire::Styles::select(const OrSelector& selector,
+    const Stylist& base, const SelectionUpdate& on_update) {
+  struct Executor {
+    SelectConnection m_left;
+    SelectConnection m_right;
+    std::unordered_map<const Stylist*, int> m_selection;
+    SelectionUpdate m_on_update;
+
+    Executor(const OrSelector& selector, const Stylist& base,
+      const SelectionUpdate& on_update)
+      : m_left(select(selector.get_left(), base,
+          std::bind_front(&Executor::on_update, this))),
+        m_right(select(selector.get_right(), base,
+          std::bind_front(&Executor::on_update, this))),
+        m_on_update(on_update) {}
+
+    void on_update(std::unordered_set<const Stylist*>&& additions,
+        std::unordered_set<const Stylist*>&& removals) {
+      for(auto i = additions.begin(); i != additions.end();) {
+        auto& selection = m_selection[*i];
+        ++selection;
+        if(selection != 1) {
+          i = additions.erase(i);
+        } else {
+          ++i;
+        }
+      }
+      for(auto i = removals.begin(); i != removals.end();) {
+        auto& selection = m_selection[*i];
+        --selection;
+        if(selection != 0) {
+          i = removals.erase(i);
+        } else {
+          ++i;
+        }
+      }
+      if(!additions.empty() || !removals.empty()) {
+        m_on_update(std::move(additions), std::move(removals));
+      }
+    }
+  };
+  return SelectConnection(
+    std::make_unique<Executor>(selector, base, on_update));
+}
+
 std::unordered_set<Stylist*> Spire::Styles::select(
     const OrSelector& selector, std::unordered_set<Stylist*> sources) {
   auto left = select(selector.get_left(), sources);

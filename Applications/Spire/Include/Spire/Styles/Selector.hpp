@@ -26,9 +26,9 @@ namespace Spire::Styles {
    * @param additions The set of Stylists added to the selection.
    * @param removals The set of Stylists removed from the selection.
    */
-  using SelectionUpdate = std::function<
-    void (const std::unordered_set<const Stylist*>& additions,
-      const std::unordered_set<const Stylist*> removals)>;
+  using SelectionUpdate = std::function<void (
+    std::unordered_set<const Stylist*>&& additions,
+    std::unordered_set<const Stylist*>&& removals)>;
 
   /** Stores a scoped connection to a select operation. */
   class SelectConnection {
