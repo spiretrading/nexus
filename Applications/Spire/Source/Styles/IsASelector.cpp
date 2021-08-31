@@ -20,6 +20,14 @@ bool IsASelector::operator !=(const IsASelector& selector) const {
   return !(*this == selector);
 }
 
+SelectConnection Spire::Styles::select(const IsASelector& selector,
+    const Stylist& base, const SelectionUpdate& on_update) {
+  if(!base.get_pseudo_element() && selector.is_instance(base.get_widget())) {
+    on_update({&base}, {});
+  }
+  return {};
+}
+
 std::unordered_set<Stylist*> Spire::Styles::select(
     const IsASelector& selector, std::unordered_set<Stylist*> sources) {
   for(auto i = sources.begin(); i != sources.end();) {

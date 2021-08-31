@@ -32,6 +32,9 @@ namespace Spire::Styles {
    */
   FlipSelector operator +(Selector base);
 
+  SelectConnection select(const FlipSelector& selector, const Stylist& base,
+    const SelectionUpdate& on_update);
+
   std::unordered_set<Stylist*> select(
     const FlipSelector& selector, std::unordered_set<Stylist*> sources);
 

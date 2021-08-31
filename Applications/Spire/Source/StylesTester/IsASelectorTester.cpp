@@ -1,3 +1,4 @@
+#include <deque>
 #include <doctest/doctest.h>
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/IsASelector.hpp"
@@ -7,6 +8,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  struct Update {
+    std::unordered_set<const Stylist*> m_additions;
+    std::unordered_set<const Stylist*> m_removals;
+  };
+
   struct A : QWidget {
     using QWidget::QWidget;
   };
@@ -22,6 +28,79 @@ TEST_SUITE("IsASelector") {
       IsASelector(std::in_place_type<A>) == IsASelector(std::in_place_type<A>));
     REQUIRE(
       IsASelector(std::in_place_type<A>) != IsASelector(std::in_place_type<B>));
+  }
+
+  TEST_CASE("select_exact") {
+    run_test([] {
+      auto b = B();
+      auto updates = std::deque<Update>();
+      auto connection =
+        select(IsASelector(std::in_place_type<B>), find_stylist(b),
+          [&] (const auto& additions, const auto& removals) {
+            updates.push_back({additions, removals});
+          });
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(b)));
+      }
+    });
+  }
+
+  TEST_CASE("select_base_from_derived") {
+    run_test([] {
+      auto a = A();
+      auto updates = std::deque<Update>();
+      auto connection =
+        select(IsASelector(std::in_place_type<B>), find_stylist(a),
+          [&] (const auto& additions, const auto& removals) {
+            updates.push_back({additions, removals});
+          });
+      REQUIRE(updates.empty());
+    });
+  }
+
+  TEST_CASE("select_derived_from_parent") {
+    run_test([] {
+      auto b = B();
+      auto updates = std::deque<Update>();
+      auto connection =
+        select(IsASelector(std::in_place_type<A>), find_stylist(b),
+          [&] (const auto& additions, const auto& removals) {
+            updates.push_back({additions, removals});
+          });
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(b)));
+      }
+    });
+  }
+
+  TEST_CASE("select_derived_from_base") {
+    run_test([] {
+      auto b = B();
+      auto updates = std::deque<Update>();
+      auto connection =
+        select(IsASelector(std::in_place_type<QWidget>), find_stylist(b),
+          [&] (const auto& additions, const auto& removals) {
+            updates.push_back({additions, removals});
+          });
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(b)));
+      }
+    });
   }
 
   TEST_CASE("derived_selection") {

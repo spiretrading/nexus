@@ -47,6 +47,9 @@ namespace Spire::Styles {
       ~Stylist();
 
       /** Returns the QWidget being styled. */
+      const QWidget& get_widget() const;
+
+      /** Returns the QWidget being styled. */
       QWidget& get_widget();
 
       /** Returns the PseudoElement represented. */

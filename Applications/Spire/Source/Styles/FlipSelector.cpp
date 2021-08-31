@@ -24,6 +24,11 @@ FlipSelector Spire::Styles::operator +(Selector selector) {
   return FlipSelector(std::move(selector));
 }
 
+SelectConnection Spire::Styles::select(const FlipSelector& selector,
+    const Stylist& base, const SelectionUpdate& on_update) {
+  return select(selector.get_selector(), base, on_update);
+}
+
 std::unordered_set<Stylist*> Spire::Styles::select(
     const FlipSelector& selector, std::unordered_set<Stylist*> sources) {
   return select(selector.get_selector(), std::move(sources));
