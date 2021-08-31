@@ -22,6 +22,15 @@ NotSelector Spire::Styles::operator !(Selector selector) {
   return NotSelector(std::move(selector));
 }
 
+SelectConnection Spire::Styles::select(const NotSelector& selector,
+    const Stylist& base, const SelectionUpdate& on_update) {
+  return select(selector.get_selector(), base,
+    [=] (std::unordered_set<const Stylist*>&& additions,
+        std::unordered_set<const Stylist*>&& removals) {
+      on_update(std::move(removals), std::move(additions));
+    });
+}
+
 std::unordered_set<Stylist*> Spire::Styles::select(
     const NotSelector& selector, std::unordered_set<Stylist*> sources) {
   for(auto selected : select(selector.get_selector(), sources)) {
