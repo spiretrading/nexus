@@ -1228,6 +1228,7 @@ UiProfile Spire::make_money_filter_panel_profile() {
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("close_on_blur", true));
+  properties.push_back(make_standard_property("draggable", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
     {{"NONE", OverlayPanel::Positioning::NONE},
      {"PARENT", OverlayPanel::Positioning::PARENT}});
@@ -1237,6 +1238,7 @@ UiProfile Spire::make_overlay_panel_profile() {
     [=] (auto& profile) {
       auto& close_on_blur =
         get<bool>("close_on_blur", profile.get_properties());
+      auto& draggable = get<bool>("draggable", profile.get_properties());
       auto& positioning =
         get<OverlayPanel::Positioning>("positioning", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
@@ -1244,7 +1246,7 @@ UiProfile Spire::make_overlay_panel_profile() {
       auto positioning_connection = std::make_shared<scoped_connection>();
       auto panel = QPointer<OverlayPanel>();
       button->connect_clicked_signal(
-        [=, &profile, &close_on_blur, &positioning] () mutable {
+        [=, &profile, &close_on_blur, &draggable, &positioning] () mutable {
           if(panel && !close_on_blur.get()) {
             return;
           }
@@ -1287,6 +1289,7 @@ UiProfile Spire::make_overlay_panel_profile() {
           panel = new OverlayPanel(body, button);
           panel->setAttribute(Qt::WA_DeleteOnClose);
           panel->set_closed_on_blur(close_on_blur.get());
+          panel->set_is_draggable(draggable.get());
           panel->set_positioning(positioning.get());
           panel->show();
         });

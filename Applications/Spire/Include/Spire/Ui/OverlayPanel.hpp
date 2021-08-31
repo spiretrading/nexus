@@ -41,10 +41,20 @@ namespace Spire {
 
       /**
        * Sets whether the panel closes on blur event.
-       * @param is_closed_on_blur Sets the panel to be colsed on blur event iff
-       *                          is_closed_on_blur is true.
+       * @param is_closed_on_blur Sets the panel to be closed on blur event iff
+       *                          is_closed_on_blur is <code>true</code>.
        */
       void set_closed_on_blur(bool is_closed_on_blur);
+
+      /** Returns <code>true</code> if the panel can be dragged. */
+      bool is_draggable() const;
+
+      /**
+       * Sets whether the panel can be dragged.
+       * @param is_draggable Sets the panel to be draggable iff is_draggable is
+                             <code>true</code>.
+       */
+      void set_is_draggable(bool is_draggable);
 
       /** Returns the positioning of the panel relative to the parent. */
       Positioning get_positioning() const;
@@ -63,6 +73,7 @@ namespace Spire {
     private:
       QWidget* m_body;
       bool m_is_closed_on_blur;
+      bool m_is_draggable;
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
 

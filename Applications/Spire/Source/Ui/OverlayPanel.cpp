@@ -47,6 +47,7 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
         Qt::NoDropShadowWindowHint),
       m_body(body),
       m_is_closed_on_blur(true),
+      m_is_draggable(true),
       m_positioning(Positioning::PARENT) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
@@ -89,6 +90,14 @@ void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
   }
 }
 
+bool OverlayPanel::is_draggable() const {
+  return m_is_draggable;
+}
+
+void OverlayPanel::set_is_draggable(bool is_draggable) {
+  m_is_draggable = is_draggable;
+}
+
 OverlayPanel::Positioning OverlayPanel::get_positioning() const {
   return m_positioning;
 }
@@ -102,7 +111,7 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::MouseButtonPress) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       m_mouse_pressed_position = mouse_event->pos();
-    } else if(event->type() == QEvent::MouseMove) {
+    } else if(event->type() == QEvent::MouseMove && m_is_draggable) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       if(mouse_event->buttons() & Qt::LeftButton &&
           m_positioning != Positioning::PARENT) {
