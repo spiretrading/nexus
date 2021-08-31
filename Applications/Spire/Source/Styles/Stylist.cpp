@@ -222,6 +222,10 @@ void Stylist::remove_proxy(QWidget& widget) {
 void Stylist::match(const Selector& selector) {
   if(m_matching_selectors.insert(selector).second) {
     apply_rules();
+    auto match_signal = m_match_signals.find(selector);
+    if(match_signal != m_match_signals.end()) {
+      match_signal->second(true);
+    }
     m_enable_signal();
   }
 }
@@ -229,6 +233,10 @@ void Stylist::match(const Selector& selector) {
 void Stylist::unmatch(const Selector& selector) {
   if(m_matching_selectors.erase(selector) != 0) {
     apply_rules();
+    auto match_signal = m_match_signals.find(selector);
+    if(match_signal != m_match_signals.end()) {
+      match_signal->second(false);
+    }
     m_enable_signal();
   }
 }
@@ -236,6 +244,11 @@ void Stylist::unmatch(const Selector& selector) {
 connection Stylist::connect_style_signal(
     const StyleSignal::slot_type& slot) const {
   return m_style_signal.connect(slot);
+}
+
+connection Stylist::connect_match_signal(
+    const Selector& selector, const MatchSignal::slot_type& slot) const {
+  return m_match_signals[selector].connect(slot);
 }
 
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)

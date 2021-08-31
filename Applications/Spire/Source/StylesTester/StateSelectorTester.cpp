@@ -1,3 +1,4 @@
+#include <deque>
 #include <doctest/doctest.h>
 #include <QWidget>
 #include "Spire/SpireTester/SpireTester.hpp"
@@ -18,6 +19,44 @@ TEST_SUITE("StateSelector") {
     REQUIRE(Foo() == Foo());
     REQUIRE(Baz(0) == Baz(0));
     REQUIRE(Baz(0) != Baz(1));
+  }
+
+  TEST_CASE("executor") {
+    run_test([] {
+      auto w1 = QWidget();
+      auto updates = std::deque<std::unordered_set<const QWidget*>>();
+      auto executor = StateExecutor(
+        Foo(), w1, [&] (const auto& matches) { updates.push_back(matches); });
+      REQUIRE(updates.empty());
+      match(w1, Foo());
+      REQUIRE(updates.size() == 1);
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.size() == 1);
+      REQUIRE(matches.contains(&w1));
+      match(w1, Foo());
+      REQUIRE(updates.empty());
+      unmatch(w1, Foo());
+      REQUIRE(updates.size() == 1);
+      auto empty_matches = updates.front();
+      updates.pop_front();
+      REQUIRE(empty_matches.empty());
+    });
+  }
+
+  TEST_CASE("executor_initialization") {
+    run_test([] {
+      auto w1 = QWidget();
+      match(w1, Foo());
+      auto updates = std::deque<std::unordered_set<const QWidget*>>();
+      auto executor = StateExecutor(
+        Foo(), w1, [&] (const auto& matches) { updates.push_back(matches); });
+      REQUIRE(updates.size() == 1);
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.size() == 1);
+      REQUIRE(matches.contains(&w1));
+    });
   }
 
   TEST_CASE("selection") {

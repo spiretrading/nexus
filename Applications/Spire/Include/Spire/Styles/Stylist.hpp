@@ -38,6 +38,12 @@ namespace Spire::Styles {
        */
       using StyleSignal = Signal<void ()>;
 
+      /**
+       * Signals that a Selector was matched or unmatched.
+       * @param is_match <code>true</code> iff the associated Selector matches.
+       */
+      using MatchSignal = Signal<void (bool is_match)>;
+
       ~Stylist();
 
       /** Returns the QWidget being styled. */
@@ -102,6 +108,10 @@ namespace Spire::Styles {
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 
+      /** Connects a slot to the MatchSignal. */
+      boost::signals2::connection connect_match_signal(
+        const Selector& selector, const MatchSignal::slot_type& slot) const;
+
     private:
       struct StyleEventFilter;
       struct SelectorHash {
@@ -155,6 +165,8 @@ namespace Spire::Styles {
       std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
       std::unordered_set<Selector, SelectorHash> m_matching_selectors;
+      mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
+        m_match_signals;
       std::unordered_set<Stylist*> m_dependents;
       std::vector<boost::signals2::scoped_connection> m_enable_connections;
       std::unordered_map<Stylist*, std::shared_ptr<BlockEntry>>
