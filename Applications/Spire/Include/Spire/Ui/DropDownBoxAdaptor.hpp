@@ -69,13 +69,13 @@ namespace Spire {
         mutable SubmitSignal m_submit_signal;
         std::shared_ptr<ValueModel<Type>> m_model;
         std::shared_ptr<ArrayListModel> m_list_model;
+        std::unordered_map<Type, int> m_indexes;
         ListView* m_list_view;
         DropDownBox* m_drop_down_box;
         boost::signals2::scoped_connection m_current_connection;
 
         void populate_data();
         void on_current(const Type& current);
-        boost::optional<int> to_item_index(const Type& value);
   };
 
   template<typename T>
@@ -94,12 +94,17 @@ namespace Spire {
         m_model(std::move(model)),
         m_list_model(std::make_shared<ArrayListModel>()) {
     populate_data();
+    for(auto i = 0; i < m_list_model->get_size(); ++i) {
+      m_indexes[m_list_model->get<Type>(i)] = i;
+    }
     m_list_view = new ListView(m_list_model,
       [] (const auto& model, auto index) {
         return make_label(displayTextAny(model->at(index)));
       });
-    m_list_view->get_current_model()->set_current(
-      to_item_index(m_model->get_current()));
+    if(auto index = m_indexes.find(m_model->get_current());
+        index != m_indexes.end()) {
+      m_list_view->get_current_model()->set_current(index->second);
+    }
     m_drop_down_box = new DropDownBox(*m_list_view);
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});
@@ -135,17 +140,9 @@ namespace Spire {
 
   template<typename T>
   void DropDownBoxAdaptor<T>::on_current(const Type& current) {
-    m_list_view->get_current_model()->set_current(to_item_index(current));
-  }
-
-  template<typename T>
-  boost::optional<int> DropDownBoxAdaptor<T>::to_item_index(const Type& type) {
-    for(auto i = 0; i < m_list_model->get_size(); ++i) {
-      if(type == m_list_model->get<Type>(i)) {
-        return i;
-      }
+    if(auto index = m_indexes.find(current); index != m_indexes.end()) {
+      m_list_view->get_current_model()->set_current(index->second);
     }
-    return boost::none;
   }
 }
 
