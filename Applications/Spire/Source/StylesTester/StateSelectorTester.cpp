@@ -25,7 +25,7 @@ TEST_SUITE("StateSelector") {
     REQUIRE(Baz(0) != Baz(1));
   }
 
-  TEST_CASE("executor") {
+  TEST_CASE("select") {
     run_test([] {
       auto w1 = QWidget();
       auto updates = std::deque<Update>();
@@ -57,7 +57,7 @@ TEST_SUITE("StateSelector") {
     });
   }
 
-  TEST_CASE("executor_initialization") {
+  TEST_CASE("select_initialization") {
     run_test([] {
       auto w1 = QWidget();
       match(w1, Foo());

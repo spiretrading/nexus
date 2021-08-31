@@ -71,16 +71,13 @@ namespace Spire::Styles {
     auto connection = base.connect_match_signal(selector,
       [=, &base] (auto is_match) {
         if(is_match) {
-          on_update(
-            std::unordered_set{&base}, std::unordered_set<const Stylist*>());
+          on_update({&base}, {});
         } else {
-          on_update(
-            std::unordered_set<const Stylist*>(), std::unordered_set{&base});
+          on_update({}, {&base});
         }
       });
     if(base.is_match(selector)) {
-      on_update(
-        std::unordered_set{&base}, std::unordered_set<const Stylist*>());
+      on_update({&base}, {});
     }
     return SelectConnection(std::move(connection));
   }

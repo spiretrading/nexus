@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_ANY_HPP
 #define SPIRE_STYLES_ANY_HPP
 #include <unordered_set>
+#include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
@@ -12,6 +13,9 @@ namespace Spire::Styles {
 
       bool operator !=(const Any& selector) const;
   };
+
+  SelectConnection select(const Any& selector, const Stylist& base,
+    const SelectionUpdate& on_update);
 
   std::unordered_set<Stylist*> select(
     const Any& selector, std::unordered_set<Stylist*> sources);

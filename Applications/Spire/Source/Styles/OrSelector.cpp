@@ -30,18 +30,18 @@ OrSelector Spire::Styles::operator ||(Selector left, Selector right) {
 SelectConnection Spire::Styles::select(const OrSelector& selector,
     const Stylist& base, const SelectionUpdate& on_update) {
   struct Executor {
-    SelectConnection m_left;
-    SelectConnection m_right;
     std::unordered_map<const Stylist*, int> m_selection;
     SelectionUpdate m_on_update;
+    SelectConnection m_left;
+    SelectConnection m_right;
 
     Executor(const OrSelector& selector, const Stylist& base,
       const SelectionUpdate& on_update)
-      : m_left(select(selector.get_left(), base,
+      : m_on_update(on_update),
+        m_left(select(selector.get_left(), base,
           std::bind_front(&Executor::on_update, this))),
         m_right(select(selector.get_right(), base,
-          std::bind_front(&Executor::on_update, this))),
-        m_on_update(on_update) {}
+          std::bind_front(&Executor::on_update, this))) {}
 
     void on_update(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
