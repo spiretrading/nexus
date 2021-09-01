@@ -1,8 +1,10 @@
 #include "Spire/Ui/OverlayPanel.hpp"
+#include <QApplication>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QScreen>
+#include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 
@@ -43,12 +45,12 @@ namespace {
 }
 
 OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
-    : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
-        Qt::NoDropShadowWindowHint),
+    : QWidget(parent,
+        Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
       m_body(body),
-      m_is_closed_on_blur(true),
       m_is_draggable(true),
       m_positioning(Positioning::PARENT) {
+  set_closed_on_blur(true);
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -74,6 +76,20 @@ QWidget& OverlayPanel::get_body() {
   return *m_body;
 }
 
+void OverlayPanel::add_child(OverlayPanel* panel) {
+  panel->installEventFilter(this);
+  m_child_panels.push_back(panel);
+}
+
+void OverlayPanel::remove_child(OverlayPanel* panel) {
+  if(auto item =
+      std::find(m_child_panels.begin(), m_child_panels.end(), panel);
+      item != m_child_panels.end()) {
+    (*item)->removeEventFilter(this);
+    m_child_panels.erase(item);
+  }
+}
+
 bool OverlayPanel::is_closed_on_blur() const {
   return m_is_closed_on_blur;
 }
@@ -84,9 +100,9 @@ void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
   }
   m_is_closed_on_blur = is_closed_on_blur;
   if(m_is_closed_on_blur) {
-    setWindowFlag(Qt::Popup);
+    setWindowFlag(Qt::WindowDoesNotAcceptFocus);
   } else {
-    setWindowFlag(Qt::Tool);
+    setWindowFlag(Qt::WindowDoesNotAcceptFocus, false);
   }
 }
 
@@ -106,12 +122,22 @@ void OverlayPanel::set_positioning(Positioning positioning) {
   m_positioning = positioning;
 }
 
+bool OverlayPanel::event(QEvent* event) {
+  if(event->type() == QEvent::WindowDeactivate) {
+    if(!child_has_focus() && m_is_closed_on_blur) {
+      close();
+    }
+  }
+  return QWidget::event(event);
+}
+
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
     if(event->type() == QEvent::MouseButtonPress) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       m_mouse_pressed_position = mouse_event->pos();
-    } else if(event->type() == QEvent::MouseMove && m_is_draggable) {
+    } else if(event->type() == QEvent::MouseMove && m_is_draggable &&
+        m_positioning != Positioning::PARENT) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       if(mouse_event->buttons() & Qt::LeftButton &&
           m_positioning != Positioning::PARENT) {
@@ -121,6 +147,10 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == parentWidget()->window()) {
     if(event->type() == QEvent::Move) {
       position();
+    }
+  } else {
+    if(event->type() == QEvent::Destroy) {
+      remove_child(static_cast<OverlayPanel*>(watched));
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -137,6 +167,21 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
     return;
   }
   QWidget::keyPressEvent(event);
+}
+
+bool OverlayPanel::child_has_focus() {
+  for(auto child : m_child_panels) {
+    if(child->isActiveWindow()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void OverlayPanel::hide_children() {
+  for(auto child : m_child_panels) {
+    child->hide();
+  }
 }
 
 void OverlayPanel::position() {

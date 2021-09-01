@@ -1260,10 +1260,11 @@ UiProfile Spire::make_overlay_panel_profile() {
             scale_width(1), scale_height(1), scale_width(1), scale_height(1));
           auto create_button = make_label_button("Show child panel", body);
           create_button->connect_clicked_signal(
-            [=, &close_on_blur, &draggable, &positioning] {
+            [=, &close_on_blur, &draggable, &positioning, &panel] {
               auto nested_body = new QWidget();
               nested_body->setFixedSize(scale(200, 200));
               auto child_panel = new OverlayPanel(nested_body, create_button);
+              panel->add_child(child_panel);
               child_panel->setFixedSize(scale(200, 200));
               child_panel->setAttribute(Qt::WA_DeleteOnClose);
               child_panel->set_closed_on_blur(close_on_blur.get());

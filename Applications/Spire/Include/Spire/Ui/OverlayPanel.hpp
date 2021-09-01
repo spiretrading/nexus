@@ -26,13 +26,17 @@ namespace Spire {
        * @param body The widget displayed in the OverlayPanel.
        * @param parent The parent widget that shows the OverlayPanel.
        */
-      OverlayPanel(QWidget* body, QWidget* parent);
+      explicit OverlayPanel(QWidget* body, QWidget* parent);
 
       /** Returns the body component displayed in the panel. */
       const QWidget& get_body() const;
 
       /** Returns the body component displayed in the panel. */
       QWidget& get_body();
+
+      void add_child(OverlayPanel* panel);
+
+      void remove_child(OverlayPanel* panel);
 
       /**
        * Returns <code>true</code> when the panel can be closed on blur event.
@@ -66,17 +70,21 @@ namespace Spire {
       void set_positioning(Positioning positioning);
 
     protected:
+      bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void showEvent(QShowEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
       QWidget* m_body;
+      std::vector<OverlayPanel*> m_child_panels;
       bool m_is_closed_on_blur;
       bool m_is_draggable;
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
 
+      bool child_has_focus();
+      void hide_children();
       void position();
   };
 }
