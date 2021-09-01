@@ -31,7 +31,7 @@ export class HttpGroupSuggestionModel extends GroupSuggestionModel {
   }
 
   public async addGroup(directory: Beam.DirectoryEntry): Promise<void> {
-    return this._model.addGroup(directory);
+    await this._model.addGroup(directory);
   }
 
   private account: Beam.DirectoryEntry;
