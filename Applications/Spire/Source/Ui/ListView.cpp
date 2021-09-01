@@ -449,6 +449,8 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
 void ListView::on_current(const boost::optional<int>& current) {
   if(current) {
     m_items[*current]->m_item->setFocus();
+  } else {
+    setFocus();
   }
 }
 
