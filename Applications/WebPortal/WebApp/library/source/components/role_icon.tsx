@@ -258,16 +258,3 @@ export class RoleIcon extends React.Component<Properties, State> {
   private static readonly ADMINISTRATOR_TOOLTIP_TEXT = 'Admin';
   private static readonly SERVICE_TOOLTIP_TEXT = 'Service';
 }
-
-export namespace RoleIcon {
-
-  /** IconSize*/
-  export enum ImageSize {
-
-    /** Don't overide default icon sizes.*/
-    DEFAULT,
-
-    /** Set a 14px icon size.*/
-    SMALL
-  }
-}
