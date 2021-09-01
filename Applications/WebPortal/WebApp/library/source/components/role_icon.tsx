@@ -37,8 +37,6 @@ interface State {
 /** Displays a panel of icons highlighting an account's roles. */
 export class RoleIcon extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    readonly: false,
-    isExtraSmall: false,
     onClick: () => {},
     onTouch: () => {}
   };
