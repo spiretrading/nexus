@@ -148,7 +148,8 @@ namespace {
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
-      box->get_model()->set_current(value);
+      box->get_current_model()->set_current(
+        static_cast<std::underlying_type_t<Type::Type>>(value));
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {

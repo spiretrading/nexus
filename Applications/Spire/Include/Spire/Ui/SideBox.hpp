@@ -6,13 +6,27 @@
 
 namespace Spire {
 
-  template<>
-  void DropDownBoxAdaptor<Nexus::Side>::populate_data() {
-    m_list_model->push(static_cast<Nexus::Side>(Nexus::Side::ASK));
-    m_list_model->push(static_cast<Nexus::Side>(Nexus::Side::BID));
-  }
+  /**
+   * Displays a widget for choosing a side from a drop down list.
+   */
+  class SideBox : public DropDownBoxAdaptor<Nexus::Side> {
+    public:
 
-  using SideBox = DropDownBoxAdaptor<Nexus::Side>;
+      /**
+       * Constructs a SideBox with a LocalValueModel.
+       * @param parent The parent widget.
+       */
+      explicit SideBox(QWidget* parent = nullptr);
+
+      /**
+       * Constructs a SideBox.
+       * @param current_model The current value's model.
+       * @param parent The parent widget.
+       */
+      explicit SideBox(
+        std::shared_ptr<ValueModel<boost::optional<int>>> current_model,
+        QWidget* parent = nullptr);
+  };
 }
 
 #endif
