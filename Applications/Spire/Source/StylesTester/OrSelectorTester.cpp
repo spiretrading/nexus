@@ -48,6 +48,15 @@ TEST_SUITE("OrSelector") {
         REQUIRE(matches.m_removals.size() == 1);
         REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
       }
+      match(w1, Focus());
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+      }
     });
   }
 
@@ -67,119 +76,6 @@ TEST_SUITE("OrSelector") {
       REQUIRE(matches.m_additions.size() == 1);
       REQUIRE(matches.m_removals.empty());
       REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
-    });
-  }
-
-  TEST_CASE("selection") {
-    run_test([] {
-      auto selector = OrSelector(Hover(), Focus());
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.empty());
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Hover());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Focus());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Hover());
-        match(w1, Focus());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w2, Hover());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w2, Focus());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w2, Hover());
-        match(w2, Focus());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 1);
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Hover());
-        match(w2, Hover());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 2);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Focus());
-        match(w2, Focus());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 2);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Hover());
-        match(w2, Focus());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 2);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
-      {
-        auto w1 = QWidget();
-        auto w2 = QWidget();
-        match(w1, Focus());
-        match(w2, Hover());
-        auto selection =
-          select(selector, {&find_stylist(w1), &find_stylist(w2)});
-        REQUIRE(selection.size() == 2);
-        REQUIRE(selection.contains(&find_stylist(w1)));
-        REQUIRE(selection.contains(&find_stylist(w2)));
-      }
     });
   }
 }

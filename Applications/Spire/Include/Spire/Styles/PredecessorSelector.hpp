@@ -43,11 +43,8 @@ namespace Spire::Styles {
     return PredecessorSelector(std::move(base), std::move(predecessor));
   }
 
-  std::unordered_set<Stylist*> select(
-    const PredecessorSelector& selector, std::unordered_set<Stylist*> sources);
-
-  std::unordered_set<QWidget*> build_reach(
-    const PredecessorSelector& selector, QWidget& source);
+  SelectConnection select(const PredecessorSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 }
 
 #endif

@@ -25,24 +25,7 @@ PropertyMatchSelector Spire::Styles::matches(Property property) {
   return PropertyMatchSelector(std::move(property));
 }
 
-std::unordered_set<Stylist*>
-    Spire::Styles::select(const PropertyMatchSelector& selector,
-      std::unordered_set<Stylist*> sources) {
-  for(auto i = sources.begin(); i != sources.end();) {
-    auto& source = **i;
-    auto& block = source.get_computed_block();
-    auto is_missing_property = true;
-    for(auto& property : block) {
-      if(property == selector.get_property()) {
-        is_missing_property = false;
-        break;
-      }
-    }
-    if(is_missing_property) {
-      i = sources.erase(i);
-    } else {
-      ++i;
-    }
-  }
-  return sources;
+SelectConnection Spire::Styles::select(const PropertyMatchSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return {};
 }

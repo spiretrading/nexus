@@ -168,6 +168,7 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
+#if 0 // TODO
   m_style = std::make_shared<StyleSheet>(std::move(style));
   m_enable_connections.clear();
   for(auto widget : build_reach(*m_style, *m_widget)) {
@@ -177,6 +178,7 @@ void Stylist::set_style(StyleSheet style) {
     }
   }
   apply_rules();
+#endif
 }
 
 bool Stylist::is_match(const Selector& selector) const {
@@ -369,11 +371,13 @@ void Stylist::apply_rules() {
     std::unordered_map<Stylist*, std::vector<AppliedProperty>>();
   for_each_principal([&] (auto principal) {
     for(auto& base_rule : principal->m_style->get_rules()) {
+#if 0 // TODO
       auto selection = select(base_rule.get_selector(), *this);
       auto rule = std::shared_ptr<const Rule>(principal->m_style, &base_rule);
       for(auto& selected : selection) {
         merge(applied_properties[selected], rule);
       }
+#endif
     }
   });
   auto previous_dependents = std::move(m_dependents);
@@ -480,10 +484,12 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
     source->m_source->for_each_principal([&] (auto principal) {
       auto sources = std::unordered_set{source->m_source, principal};
       for(auto& rule : principal->m_style->get_rules()) {
+#if 0 // TODO
         auto selection = select(rule.get_selector(), sources);
         if(contains_one_of(selection, targets)) {
           swap_properties(rule);
         }
+#endif
       }
     });
   }

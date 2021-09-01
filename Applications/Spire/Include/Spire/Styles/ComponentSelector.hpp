@@ -142,8 +142,8 @@ namespace Details {
     return {};
   }
 
-  std::unordered_set<Stylist*> select(
-    const ComponentSelector& selector, std::unordered_set<Stylist*> sources);
+  SelectConnection select(const ComponentSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 
   template<typename T, typename G>
   std::unordered_set<Stylist*>
@@ -152,15 +152,9 @@ namespace Details {
   }
 
   template<typename T, typename G>
-  std::unordered_set<Stylist*> select(
-      const ComponentId<T, G>& id, std::unordered_set<Stylist*> sources) {
-    auto selection = std::unordered_set<Stylist*>();
-    for(auto source : sources) {
-      auto source_selection =
-        ComponentRegistry<ComponentId<T, G>>::select(id, *source);
-      selection.insert(source_selection.begin(), source_selection.end());
-    }
-    return selection;
+  SelectConnection select(const ComponentId<T, G>& selector,
+      const Stylist& base, const SelectionUpdateSignal& on_update) {
+    return {};
   }
 
   template<typename W, typename I>

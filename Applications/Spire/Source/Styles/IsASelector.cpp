@@ -27,25 +27,3 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
   }
   return {};
 }
-
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const IsASelector& selector, std::unordered_set<Stylist*> sources) {
-  for(auto i = sources.begin(); i != sources.end();) {
-    auto& source = **i;
-    if(source.get_pseudo_element() ||
-        !selector.is_instance(source.get_widget())) {
-      i = sources.erase(i);
-    } else {
-      ++i;
-    }
-  }
-  return sources;
-}
-
-std::unordered_set<QWidget*> Spire::Styles::build_reach(
-    const IsASelector& selector, QWidget& source) {
-  if(selector.is_instance(source)) {
-    return {&source};
-  }
-  return {};
-}

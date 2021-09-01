@@ -2,7 +2,6 @@
 #include <deque>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
-#include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -54,59 +53,4 @@ SelectConnection Spire::Styles::select(const DescendantSelector& selector,
       }
       return descendants;
     }), base, on_update);
-}
-
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const DescendantSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto selection = std::unordered_set<Stylist*>();
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    auto descendants = std::deque<QWidget*>();
-    for(auto child : source->get_widget().children()) {
-      if(child->isWidgetType()) {
-        descendants.push_back(static_cast<QWidget*>(child));
-      }
-    }
-    while(!descendants.empty()) {
-      auto descendant = descendants.front();
-      descendants.pop_front();
-      auto descendant_selection = select(selector.get_descendant(),
-        find_stylist(*static_cast<QWidget*>(descendant)));
-      if(!descendant_selection.empty()) {
-        if(is_flipped) {
-          selection.insert(source);
-          break;
-        } else {
-          selection.insert(
-            descendant_selection.begin(), descendant_selection.end());
-        }
-      }
-      for(auto child : descendant->children()) {
-        if(child->isWidgetType()) {
-          descendants.push_back(static_cast<QWidget*>(child));
-        }
-      }
-    }
-  }
-  return selection;
-}
-
-std::unordered_set<QWidget*> Spire::Styles::build_reach(
-    const DescendantSelector& selector, QWidget& source) {
-  auto reach = build_reach(selector.get_base(), source);
-  auto descendants = std::deque<QWidget*>();
-  descendants.insert(descendants.end(), reach.begin(), reach.end());
-  while(!descendants.empty()) {
-    auto base = descendants.front();
-    descendants.pop_front();
-    for(auto child : base->children()) {
-      if(child->isWidgetType()) {
-        auto widget = static_cast<QWidget*>(child);
-        descendants.push_back(widget);
-        auto child_reach = build_reach(selector.get_descendant(), *widget);
-        reach.insert(child_reach.begin(), child_reach.end());
-      }
-    }
-  }
-  return reach;
 }

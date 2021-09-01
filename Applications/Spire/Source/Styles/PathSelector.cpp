@@ -1,5 +1,4 @@
 #include "Spire/Styles/PathSelector.hpp"
-#include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -24,17 +23,7 @@ bool PathSelector::operator !=(const PathSelector& selector) const {
   return !(*this == selector);
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const PathSelector& selector, std::unordered_set<Stylist*> sources) {
-  sources = select(selector.get_first(), std::move(sources));
-  sources = select(selector.get_second(), std::move(sources));
-  return sources;
-}
-
-std::unordered_set<QWidget*> Spire::Styles::build_reach(
-    const PathSelector& selector, QWidget& source) {
-  auto reach = build_reach(selector.get_first(), source);
-  auto second = build_reach(selector.get_second(), source);
-  reach.insert(second.begin(), second.end());
-  return reach;
+SelectConnection Spire::Styles::select(const PathSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return {};
 }

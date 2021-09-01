@@ -10,16 +10,6 @@
 class QWidget;
 
 namespace Spire::Styles {
-  template<typename T, typename = void>
-  struct is_selector_t : std::false_type {};
-
-  template<typename T>
-  struct is_selector_t<T, std::enable_if_t<std::is_same_v<decltype(
-    select(std::declval<T>(), std::declval<std::unordered_set<Stylist*>>())),
-    std::unordered_set<Stylist*>>>> : std::true_type {};
-
-  template<typename T>
-  constexpr auto is_selector_v = is_selector_t<T>::value;
 
   /**
    * The type of callable used to signal a change in the selected Stylists.
@@ -55,6 +45,19 @@ namespace Spire::Styles {
     private:
       std::shared_ptr<void> m_state;
   };
+
+  /** Type trait indicating whether a type satisfies the Selector model. */
+  template<typename T, typename = void>
+  struct is_selector_t : std::false_type {};
+
+  template<typename T>
+  struct is_selector_t<T, std::enable_if_t<std::is_same_v<
+    decltype(select(std::declval<const T&>(), std::declval<const Stylist&>(),
+      std::declval<const SelectionUpdateSignal&>())), SelectConnection>>> :
+    std::true_type {};
+
+  template<typename T>
+  constexpr auto is_selector_v = is_selector_t<T>::value;
 
   /** Selects the widget to apply a style rule to. */
   class Selector {
@@ -103,21 +106,13 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
-      friend std::unordered_set<Stylist*>
-        select(const Selector&, std::unordered_set<Stylist*>);
       friend SelectConnection select(
         const Selector&, const Stylist&, const SelectionUpdateSignal&);
-      friend std::unordered_set<QWidget*> build_reach(
-        const Selector&, QWidget&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_is_equal;
-      std::function<std::unordered_set<Stylist*> (
-        const Selector&, std::unordered_set<Stylist*>)> m_select;
       std::function<SelectConnection (
         const Selector&, const Stylist&, const SelectionUpdateSignal&)>
-        m_select_connection;
-      std::function<std::unordered_set<QWidget*> (const Selector&, QWidget&)>
-        m_reach;
+        m_select;
   };
 
   /**
@@ -131,49 +126,6 @@ namespace Spire::Styles {
   SelectConnection select(const Selector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
 
-  /**
-   * Returns all Stylists that match a Selector.
-   * @param selector The Selector to match.
-   * @param sources The set if Stylists to match.
-   * @return The set of of all Stylists that match the <i>selector<i>.
-   */
-  std::unordered_set<Stylist*> select(
-    const Selector& selector, std::unordered_set<Stylist*> sources);
-
-  /**
-   * Returns all Stylists that match a Selector.
-   * @param selector The Selector to match.
-   * @param source The Stylist to match.
-   * @return The set of of all Stylists that match the <i>selector<i>.
-   */
-  std::unordered_set<Stylist*> select(
-    const Selector& selector, Stylist& source);
-
-  /**
-   * Returns the list of all widgets that could be selected by one of the rules
-   * belonging to a StyleSheet.
-   * @param style The StyleSheet to compute the list of.
-   * @param source The widget that the <i>style</i> belongs to.
-   * @return A list of all widgets that could be selected by the <i>style</i>.
-   */
-  std::unordered_set<QWidget*> build_reach(
-    const StyleSheet& style, QWidget& source);
-
-  /**
-   * Returns the list of all widgets that could be selected by a Selector.
-   * @param selector The Selector to compute the list of.
-   * @param source The widget that the <i>selector</i> belongs to.
-   * @return A list of all widgets that could be selected by the
-   *         <i>selector</i>.
-   */
-  std::unordered_set<QWidget*> build_reach(
-    const Selector& selector, QWidget& source);
-
-  template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
-  std::unordered_set<QWidget*> build_reach(const T& selector, QWidget& source) {
-    return {&source};
-  }
-
   template<typename T, typename... U>
   SelectConnection::SelectConnection(T&& arg, U&&... args)
     : m_state(std::make_shared<
@@ -184,20 +136,12 @@ namespace Spire::Styles {
   Selector::Selector(T selector)
     : m_selector(std::move(selector)),
       m_is_equal([] (const Selector& self, const Selector& selector) {
-        if(selector.get_type() != typeid(T)) {
-          return false;
-        }
-        return self.as<T>() == selector.as<T>();
+        return selector.get_type() == typeid(T) &&
+          self.as<T>() == selector.as<T>();
       }),
-      m_select([] (const Selector& self, std::unordered_set<Stylist*> source) {
-        return select(self.as<T>(), std::move(source));
-      }),
-      m_select_connection([] (const Selector& self, const Stylist& base,
+      m_select([] (const Selector& self, const Stylist& base,
           const SelectionUpdateSignal& on_update) {
         return select(self.as<T>(), base, on_update);
-      }),
-      m_reach([] (const Selector& self, QWidget& widget) {
-        return build_reach(self.as<T>(), widget);
       }) {}
 
   template<typename U>

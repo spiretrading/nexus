@@ -83,20 +83,6 @@ namespace Spire::Styles {
   }
 
   template<typename T, typename G>
-  std::unordered_set<Stylist*> select(const StateSelector<T, G>& selector,
-      std::unordered_set<Stylist*> sources) {
-    for(auto i = sources.begin(); i != sources.end();) {
-      auto& source = **i;
-      if(!source.is_match(selector)) {
-        i = sources.erase(i);
-      } else {
-        ++i;
-      }
-    }
-    return sources;
-  }
-
-  template<typename T, typename G>
   StateSelector<T, G>::StateSelector(Type data)
     : m_data(std::move(data)) {}
 

@@ -1,9 +1,6 @@
 #include "Spire/Styles/AncestorSelector.hpp"
-#include <deque>
-#include <unordered_map>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
-#include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -46,49 +43,4 @@ SelectConnection Spire::Styles::select(const AncestorSelector& selector,
       }
       return ancestors;
     }), base, on_update);
-}
-
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const AncestorSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  auto selection = std::unordered_set<Stylist*>();
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    auto ancestor = source->get_widget().parentWidget();
-    while(ancestor) {
-      auto ancestor_selection =
-        select(selector.get_ancestor(), find_stylist(*ancestor));
-      if(!ancestor_selection.empty()) {
-        if(is_flipped) {
-          selection.insert(source);
-          break;
-        } else {
-          selection.insert(
-            ancestor_selection.begin(), ancestor_selection.end());
-        }
-      }
-      ancestor = ancestor->parentWidget();
-    }
-  }
-  return selection;
-}
-
-std::unordered_set<QWidget*> Spire::Styles::build_reach(
-    const AncestorSelector& selector, QWidget& source) {
-  auto reach = build_reach(selector.get_base(), source);
-  auto ancestors = std::deque<QWidget*>();
-  for(auto base : reach) {
-    if(auto parent = base->parentWidget()) {
-      ancestors.push_back(parent);
-    }
-  }
-  while(!ancestors.empty()) {
-    auto ancestor = ancestors.front();
-    ancestors.pop_front();
-    auto ancestor_reach = build_reach(selector.get_ancestor(), *ancestor);
-    reach.insert(ancestor_reach.begin(), ancestor_reach.end());
-    if(auto parent = ancestor->parentWidget()) {
-      ancestors.push_back(parent);
-    }
-  }
-  return reach;
 }

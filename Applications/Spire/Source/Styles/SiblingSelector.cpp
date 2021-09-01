@@ -2,7 +2,7 @@
 #include <unordered_set>
 #include <QLayout>
 #include <QWidget>
-#include "Spire/Styles/FlipSelector.hpp"
+#include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -32,37 +32,24 @@ SiblingSelector Spire::Styles::operator %(Selector base, Selector sibling) {
   return SiblingSelector(std::move(base), std::move(sibling));
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const SiblingSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  auto selection = std::unordered_set<Stylist*>();
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    if(!source->get_widget().parentWidget()) {
-      continue;
-    }
-    auto siblings = source->get_widget().parent()->children();
-    auto i = 0;
-    while(i != siblings.size()) {
-      auto child = siblings[i];
-      if(child != &source->get_widget()) {
-        if(auto sibling = qobject_cast<QWidget*>(child)) {
-          auto sibling_selection = select(selector.get_sibling(),
-            find_stylist(*sibling));
-          if(!sibling_selection.empty()) {
-            if(is_flipped) {
-              selection.insert(source);
-              break;
-            } else {
-              selection.insert(
-                sibling_selection.begin(), sibling_selection.end());
-            }
+SelectConnection Spire::Styles::select(const SiblingSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return select(CombinatorSelector(selector.get_base(), selector.get_sibling(),
+    [] (const Stylist& stylist) {
+      auto siblings = std::unordered_set<const Stylist*>();
+      auto widgets = stylist.get_widget().parent()->children();
+      auto i = 0;
+      while(i != widgets.size()) {
+        auto child = widgets[i];
+        if(child != &stylist.get_widget()) {
+          if(auto sibling = qobject_cast<QWidget*>(child)) {
+            siblings.insert(&find_stylist(*sibling));
+          } else if(auto layout = qobject_cast<QLayout*>(child)) {
+            widgets.append(layout->children());
           }
-        } else if(auto layout = qobject_cast<QLayout*>(child)) {
-          siblings.append(layout->children());
         }
+        ++i;
       }
-      ++i;
-    }
-  }
-  return selection;
+      return siblings;
+    }), base, on_update);
 }

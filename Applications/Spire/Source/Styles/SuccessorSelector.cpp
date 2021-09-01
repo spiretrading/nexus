@@ -1,8 +1,4 @@
 #include "Spire/Styles/SuccessorSelector.hpp"
-#include <deque>
-#include <QWidget>
-#include "Spire/Styles/FlipSelector.hpp"
-#include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -32,53 +28,7 @@ SuccessorSelector Spire::Styles::operator >(Selector base, Selector successor) {
   return SuccessorSelector(std::move(base), std::move(successor));
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const SuccessorSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto selection = std::unordered_set<Stylist*>();
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    auto successors = std::deque<QWidget*>();
-    for(auto child : source->get_widget().children()) {
-      if(child->isWidgetType()) {
-        successors.push_back(static_cast<QWidget*>(child));
-      }
-    }
-    while(!successors.empty()) {
-      auto successor = successors.front();
-      successors.pop_front();
-      auto successor_selection = select(selector.get_successor(),
-        find_stylist(*static_cast<QWidget*>(successor)));
-      if(!successor_selection.empty()) {
-        if(is_flipped) {
-          selection.insert(source);
-        } else {
-          selection.insert(
-            successor_selection.begin(), successor_selection.end());
-        }
-        break;
-      }
-      for(auto child : successor->children()) {
-        if(child->isWidgetType()) {
-          successors.push_back(static_cast<QWidget*>(child));
-        }
-      }
-    }
-  }
-  return selection;
-}
-
-std::unordered_set<QWidget*> Spire::Styles::build_reach(
-    const SuccessorSelector& selector, QWidget& source) {
-  auto reach = std::unordered_set<QWidget*>();
-  for(auto base : build_reach(selector.get_base(), source)) {
-    reach.insert(base);
-    for(auto child : base->children()) {
-      if(child->isWidgetType()) {
-        auto child_reach =
-          build_reach(selector.get_successor(), *static_cast<QWidget*>(child));
-        reach.insert(child_reach.begin(), child_reach.end());
-      }
-    }
-  }
-  return reach;
+SelectConnection Spire::Styles::select(const SuccessorSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return {};
 }

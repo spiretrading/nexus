@@ -40,9 +40,6 @@ namespace Spire::Styles {
 
   SelectConnection select(const OrSelector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
-
-  std::unordered_set<Stylist*> select(
-    const OrSelector& selector, std::unordered_set<Stylist*> sources);
 }
 
 #endif

@@ -62,11 +62,3 @@ SelectConnection Spire::Styles::select(const NotSelector& selector,
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
 }
-
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const NotSelector& selector, std::unordered_set<Stylist*> sources) {
-  for(auto selected : select(selector.get_selector(), sources)) {
-    sources.erase(selected);
-  }
-  return sources;
-}

@@ -38,11 +38,8 @@ namespace Spire::Styles {
    */
   SuccessorSelector operator >(Selector base, Selector successor);
 
-  std::unordered_set<Stylist*> select(
-    const SuccessorSelector& selector, std::unordered_set<Stylist*> sources);
-
-  std::unordered_set<QWidget*> build_reach(
-    const SuccessorSelector& selector, QWidget& source);
+  SelectConnection select(const SuccessorSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 }
 
 #endif

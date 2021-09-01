@@ -30,17 +30,9 @@ std::size_t Spire::Styles::hash_value(const ComponentSelector& element) {
   return std::hash<std::type_index>()(element.get_type());
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const ComponentSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto selection = std::unordered_set<Stylist*>();
-  for(auto source : sources) {
-    auto i = get_registry().find(selector.get_type());
-    if(i != get_registry().end()) {
-      auto source_selection = i->second(selector, *source);
-      selection.insert(source_selection.begin(), source_selection.end());
-    }
-  }
-  return selection;
+SelectConnection Spire::Styles::select(const ComponentSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return {};
 }
 
 bool Spire::Styles::Details::register_id(

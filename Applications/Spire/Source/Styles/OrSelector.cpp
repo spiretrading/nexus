@@ -71,17 +71,3 @@ SelectConnection Spire::Styles::select(const OrSelector& selector,
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
 }
-
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const OrSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto left = select(selector.get_left(), sources);
-  if(left.empty()) {
-    return select(selector.get_right(), std::move(sources));
-  }
-  auto right = select(selector.get_right(), std::move(sources));
-  if(right.empty()) {
-    return left;
-  }
-  left.insert(right.begin(), right.end());
-  return left;
-}

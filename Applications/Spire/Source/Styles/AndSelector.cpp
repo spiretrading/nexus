@@ -1,5 +1,5 @@
 #include "Spire/Styles/AndSelector.hpp"
-#include <unordered_set>
+#include <unordered_map>
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -71,28 +71,4 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
   };
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
-}
-
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const AndSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto left = select(selector.get_left(), sources);
-  if(left.empty()) {
-    return {};
-  }
-  auto right = select(selector.get_right(), sources);
-  if(right.empty()) {
-    return {};
-  }
-  if(left.size() == 1 && right.size() == 1 && *left.begin() == *right.begin()) {
-    return left;
-  }
-  for(auto i = left.begin(); i != left.end();) {
-    auto match = *i;
-    if(right.find(match) == right.end()) {
-      i = left.erase(i);
-    } else {
-      ++i;
-    }
-  }
-  return left;
 }
