@@ -12,4 +12,9 @@ export abstract class GroupSuggestionModel {
    */
   public abstract loadSuggestions(prefix: string):
     Promise<Beam.DirectoryEntry[]>;
+
+  /** Add the group to the list of groups loaded.
+   * @param directory - The group to add.
+   */
+  public abstract addGroup(directory: Beam.DirectoryEntry): void;
 }
