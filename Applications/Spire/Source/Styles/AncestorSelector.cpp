@@ -2,6 +2,7 @@
 #include <deque>
 #include <unordered_map>
 #include <QWidget>
+#include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
@@ -34,90 +35,17 @@ AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
 
 SelectConnection Spire::Styles::select(const AncestorSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
-  struct Executor {
-    struct AncestorEntry {
-      int m_count;
-      SelectConnection m_connection;
-      std::unordered_set<const Stylist*> m_selection;
-
-      AncestorEntry()
-        : m_count(0) {}
-    };
-    Selector m_ancestor_selector;
-    SelectionUpdateSignal m_on_update;
-    SelectConnection m_base_connection;
-    std::unordered_map<const Stylist*, AncestorEntry> m_ancestors;
-    std::unordered_map<const Stylist*, int> m_selection;
-
-    Executor(const AncestorSelector& selector, const Stylist& base,
-      const SelectionUpdateSignal& on_update)
-      : m_ancestor_selector(selector.get_ancestor()),
-        m_on_update(on_update),
-        m_base_connection(select(selector.get_base(), base,
-          std::bind_front(&Executor::on_base, this))) {}
-
-    void on_base(std::unordered_set<const Stylist*>&& additions,
-        std::unordered_set<const Stylist*>&& removals) {
-      for(auto addition : additions) {
-        auto ancestor = addition->get_widget().parentWidget();
-        while(ancestor) {
-          auto& stylist = find_stylist(*ancestor);
-          auto& entry = m_ancestors[&stylist];
-          ++entry.m_count;
-          if(entry.m_count == 1) {
-            entry.m_connection = select(m_ancestor_selector, stylist,
-              std::bind_front(&Executor::on_ancestor, this, std::ref(entry)));
-          }
-          ancestor = ancestor->parentWidget();
-        }
+  return select(CombinatorSelector(selector.get_base(), selector.get_ancestor(),
+    [] (const Stylist& stylist) {
+      auto ancestors = std::unordered_set<const Stylist*>();
+      auto ancestor = stylist.get_widget().parentWidget();
+      while(ancestor) {
+        auto& stylist = find_stylist(*ancestor);
+        ancestors.insert(&find_stylist(*ancestor));
+        ancestor = ancestor->parentWidget();
       }
-      for(auto removal : removals) {
-        auto ancestor = removal->get_widget().parentWidget();
-        while(ancestor) {
-          auto& stylist = find_stylist(*ancestor);
-          auto& entry = m_ancestors[&stylist];
-          --entry.m_count;
-          if(entry.m_count == 0) {
-            auto removals = std::move(entry.m_selection);
-            entry.m_selection.clear();
-            on_ancestor(entry, {}, std::move(removals));
-            m_ancestors.erase(&stylist);
-          }
-          ancestor = ancestor->parentWidget();
-        }
-      }
-    }
-
-    void on_ancestor(
-        AncestorEntry& entry, std::unordered_set<const Stylist*>&& additions,
-        std::unordered_set<const Stylist*>&& removals) {
-      for(auto i = additions.begin(); i != additions.end();) {
-        entry.m_selection.insert(*i);
-        auto& count = m_selection[*i];
-        ++count;
-        if(count != 1) {
-          i = additions.erase(i);
-        } else {
-          ++i;
-        }
-      }
-      for(auto i = removals.begin(); i != removals.end();) {
-        entry.m_selection.erase(*i);
-        auto& count = m_selection[*i];
-        --count;
-        if(count != 0) {
-          i = removals.erase(i);
-        } else {
-          ++i;
-        }
-      }
-      if(!additions.empty() || !removals.empty()) {
-        m_on_update(std::move(additions), std::move(removals));
-      }
-    }
-  };
-  return SelectConnection(
-    std::make_unique<Executor>(selector, base, on_update));
+      return ancestors;
+    }), base, on_update);
 }
 
 std::unordered_set<Stylist*> Spire::Styles::select(

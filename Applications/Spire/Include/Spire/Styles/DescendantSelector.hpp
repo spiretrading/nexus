@@ -38,6 +38,9 @@ namespace Spire::Styles {
    */
   DescendantSelector operator >>(Selector base, Selector descendant);
 
+  SelectConnection select(const DescendantSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+
   std::unordered_set<Stylist*> select(
     const DescendantSelector& selector, std::unordered_set<Stylist*> sources);
 

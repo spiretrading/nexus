@@ -7,6 +7,7 @@ namespace Spire::Styles {
   class Any;
   template<typename T, typename G> class BasicProperty;
   class Block;
+  class CombinatorSelector;
   template<typename T, typename G> class ComponentId;
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
