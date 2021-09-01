@@ -18,7 +18,7 @@ namespace Spire {
   class DecimalBox;
   class DestinationListItem;
   class DropDownBox;
-  template<typename T> class DropDownBoxAdaptor;
+  class DropDownBoxAdaptor;
   class DropDownList;
   class DropShadow;
   class DurationBox;

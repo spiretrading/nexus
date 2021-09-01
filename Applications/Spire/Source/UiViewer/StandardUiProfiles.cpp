@@ -142,22 +142,28 @@ namespace {
 
   template<typename B>
   auto setup_drop_down_box_adaptor_profile(UiProfile& profile) {
-    using Type = std::decay_t<B>::Type;
     auto box = new B();
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
-    auto& current = get<Type>("current", profile.get_properties());
+    auto& current = get<int>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
-      box->get_current_model()->set_current(
-        static_cast<std::underlying_type_t<Type::Type>>(value));
+      box->get_current_model()->set_current(value);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
       box->set_read_only(is_read_only);
     });
     box->connect_submit_signal(
-      profile.make_event_slot<Type>(QString::fromUtf8("Submit")));
+      profile.make_event_slot<std::any>(QString::fromUtf8("Submit")));
     return box;
+  }
+
+  void populate_drop_down_box_adaptor_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      std::vector<std::pair<QString, int>>& current_property) {
+    properties.push_back(make_standard_enum_property(
+      "current", current_property));
+    properties.push_back(make_standard_property("read_only", false));
   }
 
   auto setup_checkable_profile(UiProfile& profile, CheckBox* check_box) {
@@ -236,15 +242,6 @@ namespace {
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties,
       DecimalBoxProfileProperties(1));
-  }
-
-  template<typename T>
-  void populate_drop_down_box_adaptor_properties(
-      std::vector<std::shared_ptr<UiProperty>>& properties,
-      std::vector<std::pair<QString, T>>& current_property) {
-    properties.push_back(make_standard_enum_property(
-      "current", current_property));
-    properties.push_back(make_standard_property("read_only", false));
   }
 
   template<typename B>
@@ -1599,9 +1596,8 @@ UiProfile Spire::make_security_list_item_profile() {
 UiProfile Spire::make_side_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto current_property = define_enum<Side>(
-    {{"Buy", Side::ASK}, {"Sell", Side::BID}});
-  populate_drop_down_box_adaptor_properties<Side>(properties, current_property);
+  auto current_property = define_enum<int>({{"Buy", 0}, {"Sell", 1}});
+  populate_drop_down_box_adaptor_properties(properties, current_property);
   auto profile = UiProfile(QString::fromUtf8("SideBox"),
     properties, setup_drop_down_box_adaptor_profile<SideBox>);
   return profile;

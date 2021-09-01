@@ -9,7 +9,7 @@ namespace Spire {
   /**
    * Displays a widget for choosing a side from a drop down list.
    */
-  class SideBox : public DropDownBoxAdaptor<Nexus::Side> {
+  class SideBox : public DropDownBoxAdaptor {
     public:
 
       /**
