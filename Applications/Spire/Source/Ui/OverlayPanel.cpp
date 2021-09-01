@@ -77,6 +77,9 @@ QWidget& OverlayPanel::get_body() {
 }
 
 void OverlayPanel::add_child(OverlayPanel* panel) {
+  if(panel == nullptr) {
+    return;
+  }
   panel->installEventFilter(this);
   m_child_panels.push_back(panel);
 }

@@ -292,6 +292,36 @@ namespace {
     }
     return image;
   }
+
+  auto create_panel_body() {
+    auto body = new QWidget();
+    body->setFixedSize(scale(200, 200));
+    auto container_layout = new QVBoxLayout(body);
+    container_layout->setSpacing(0);
+    container_layout->setContentsMargins(scale_width(1),
+      scale_height(1), scale_width(1), scale_height(1));
+    auto create_button = make_label_button("Show child panel", body);
+    container_layout->addWidget(create_button);
+    auto close_button = make_label_button("Close", body);
+    close_button->connect_clicked_signal([=] { body->window()->close(); });
+    container_layout->addWidget(close_button);
+    return body;
+  }
+
+  void create_child_panel(bool close_on_blur, bool draggable,
+      OverlayPanel::Positioning positioning, Button* parent) {
+    auto body = create_panel_body();
+    auto panel = new OverlayPanel(body, parent);
+    auto button = body->findChild<Button*>();
+    button->connect_clicked_signal([=] {
+      create_child_panel(close_on_blur, draggable, positioning, button);
+    });
+    panel->setAttribute(Qt::WA_DeleteOnClose);
+    panel->set_closed_on_blur(close_on_blur);
+    panel->set_is_draggable(draggable);
+    panel->set_positioning(positioning);
+    panel->show();
+  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -1234,10 +1264,6 @@ UiProfile Spire::make_overlay_panel_profile() {
      {"PARENT", OverlayPanel::Positioning::PARENT}});
   properties.push_back(
     make_standard_enum_property("positioning", positioning_property));
-  //properties.push_back(make_standard_property("2nd-close_on_blur", false));
-  //properties.push_back(make_standard_property("2nd-draggable", true));
-  //properties.push_back(
-  //  make_standard_enum_property("2nd-positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
     [=] (auto& profile) {
       auto& close_on_blur =
@@ -1252,28 +1278,14 @@ UiProfile Spire::make_overlay_panel_profile() {
           if(panel && !close_on_blur.get()) {
             return;
           }
-          auto body = new QWidget();
-          body->setFixedSize(scale(200, 200));
-          auto container_layout = new QVBoxLayout(body);
-          container_layout->setSpacing(0);
-          container_layout->setContentsMargins(
-            scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-          auto create_button = make_label_button("Show child panel", body);
-          create_button->connect_clicked_signal(
-            [=, &close_on_blur, &draggable, &positioning, &panel] {
-              auto nested_body = new QWidget();
-              nested_body->setFixedSize(scale(200, 200));
-              auto child_panel = new OverlayPanel(nested_body, create_button);
-              panel->add_child(child_panel);
-              child_panel->setFixedSize(scale(200, 200));
-              child_panel->setAttribute(Qt::WA_DeleteOnClose);
-              child_panel->set_closed_on_blur(close_on_blur.get());
-              child_panel->set_is_draggable(draggable.get());
-              child_panel->set_positioning(positioning.get());
-              child_panel->show();
-            });
-          container_layout->addWidget(create_button);
+          auto body = create_panel_body();
           panel = new OverlayPanel(body, button);
+          auto child_button = body->findChild<Button*>();
+          child_button->connect_clicked_signal(
+            [=, &close_on_blur, &draggable, &positioning] {
+              create_child_panel(close_on_blur.get(), draggable.get(),
+                positioning.get(), child_button);
+            });
           panel->setAttribute(Qt::WA_DeleteOnClose);
           panel->set_closed_on_blur(close_on_blur.get());
           panel->set_is_draggable(draggable.get());
