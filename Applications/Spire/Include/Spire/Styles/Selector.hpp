@@ -48,6 +48,10 @@ namespace Spire::Styles {
 
       SelectConnection(SelectConnection&&) = default;
 
+      SelectConnection& operator =(const SelectConnection&) = delete;
+
+      SelectConnection& operator =(SelectConnection&&) = default;
+
     private:
       std::shared_ptr<void> m_state;
   };
