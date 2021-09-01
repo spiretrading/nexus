@@ -1,19 +1,13 @@
 #include <deque>
 #include <doctest/doctest.h>
 #include <QWidget>
-#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/StylesTester/StylesTester.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  struct Update {
-    std::unordered_set<const Stylist*> m_additions;
-    std::unordered_set<const Stylist*> m_removals;
-  };
-}
+using namespace Spire::Styles::Tests;
 
 TEST_SUITE("Any") {
   TEST_CASE("equality") {
@@ -24,7 +18,7 @@ TEST_SUITE("Any") {
   TEST_CASE("select") {
     run_test([] {
       auto w1 = QWidget();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection = select(Any(), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});

@@ -1,18 +1,14 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/StylesTester/StylesTester.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
+using namespace Spire::Styles::Tests;
 
 namespace {
-  struct Update {
-    std::unordered_set<const Stylist*> m_additions;
-    std::unordered_set<const Stylist*> m_removals;
-  };
-
   struct A : QWidget {
     using QWidget::QWidget;
   };
@@ -33,7 +29,7 @@ TEST_SUITE("IsASelector") {
   TEST_CASE("select_exact") {
     run_test([] {
       auto b = B();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection =
         select(IsASelector(std::in_place_type<B>), find_stylist(b),
           [&] (const auto& additions, const auto& removals) {
@@ -53,7 +49,7 @@ TEST_SUITE("IsASelector") {
   TEST_CASE("select_base_from_derived") {
     run_test([] {
       auto a = A();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection =
         select(IsASelector(std::in_place_type<B>), find_stylist(a),
           [&] (const auto& additions, const auto& removals) {
@@ -66,7 +62,7 @@ TEST_SUITE("IsASelector") {
   TEST_CASE("select_derived_from_parent") {
     run_test([] {
       auto b = B();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection =
         select(IsASelector(std::in_place_type<A>), find_stylist(b),
           [&] (const auto& additions, const auto& removals) {
@@ -86,7 +82,7 @@ TEST_SUITE("IsASelector") {
   TEST_CASE("select_derived_from_base") {
     run_test([] {
       auto b = B();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection =
         select(IsASelector(std::in_place_type<QWidget>), find_stylist(b),
           [&] (const auto& additions, const auto& removals) {

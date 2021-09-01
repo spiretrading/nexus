@@ -39,7 +39,7 @@ namespace Spire::Styles {
   AncestorSelector operator <<(Selector base, Selector ancestor);
 
   SelectConnection select(const AncestorSelector& selector, const Stylist& base,
-    const SelectionUpdate& on_update);
+    const SelectionUpdateSignal& on_update);
 
   std::unordered_set<Stylist*> select(
     const AncestorSelector& selector, std::unordered_set<Stylist*> sources);

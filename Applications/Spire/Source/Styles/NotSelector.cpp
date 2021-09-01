@@ -23,14 +23,14 @@ NotSelector Spire::Styles::operator !(Selector selector) {
 }
 
 SelectConnection Spire::Styles::select(const NotSelector& selector,
-    const Stylist& base, const SelectionUpdate& on_update) {
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
   struct Executor {
     const Stylist* m_base;
-    SelectionUpdate m_on_update;
+    SelectionUpdateSignal m_on_update;
     SelectConnection m_connection;
 
     Executor(const NotSelector& selector, const Stylist& base,
-        const SelectionUpdate& on_update)
+        const SelectionUpdateSignal& on_update)
         : m_base(&base) {
       auto is_included = false;
       m_on_update = [&] (

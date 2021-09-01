@@ -26,7 +26,7 @@ namespace Spire::Styles {
    * @param additions The set of Stylists added to the selection.
    * @param removals The set of Stylists removed from the selection.
    */
-  using SelectionUpdate = std::function<void (
+  using SelectionUpdateSignal = std::function<void (
     std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals)>;
 
@@ -106,7 +106,7 @@ namespace Spire::Styles {
       friend std::unordered_set<Stylist*>
         select(const Selector&, std::unordered_set<Stylist*>);
       friend SelectConnection select(
-        const Selector&, const Stylist&, const SelectionUpdate&);
+        const Selector&, const Stylist&, const SelectionUpdateSignal&);
       friend std::unordered_set<QWidget*> build_reach(
         const Selector&, QWidget&);
       std::any m_selector;
@@ -114,7 +114,7 @@ namespace Spire::Styles {
       std::function<std::unordered_set<Stylist*> (
         const Selector&, std::unordered_set<Stylist*>)> m_select;
       std::function<SelectConnection (
-        const Selector&, const Stylist&, const SelectionUpdate&)>
+        const Selector&, const Stylist&, const SelectionUpdateSignal&)>
         m_select_connection;
       std::function<std::unordered_set<QWidget*> (const Selector&, QWidget&)>
         m_reach;
@@ -129,7 +129,7 @@ namespace Spire::Styles {
    * @return A scoped connection used to receive selection updates.
    */
   SelectConnection select(const Selector& selector, const Stylist& base,
-    const SelectionUpdate& on_update);
+    const SelectionUpdateSignal& on_update);
 
   /**
    * Returns all Stylists that match a Selector.
@@ -193,7 +193,7 @@ namespace Spire::Styles {
         return select(self.as<T>(), std::move(source));
       }),
       m_select_connection([] (const Selector& self, const Stylist& base,
-            const SelectionUpdate& on_update) {
+          const SelectionUpdateSignal& on_update) {
         return select(self.as<T>(), base, on_update);
       }),
       m_reach([] (const Selector& self, QWidget& widget) {

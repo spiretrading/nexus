@@ -12,7 +12,7 @@ bool Any::operator !=(const Any& selector) const {
 }
 
 SelectConnection Spire::Styles::select(const Any& selector, const Stylist& base,
-    const SelectionUpdate& on_update) {
+    const SelectionUpdateSignal& on_update) {
   on_update({&base}, {});
   return {};
 }

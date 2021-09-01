@@ -27,7 +27,7 @@ std::unordered_set<Stylist*>
 }
 
 SelectConnection Spire::Styles::select(const Selector& selector,
-    const Stylist& base, const SelectionUpdate& on_update) {
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
   return selector.m_select_connection(selector, base, on_update);
 }
  

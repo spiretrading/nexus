@@ -1,21 +1,18 @@
 #include <deque>
 #include <doctest/doctest.h>
 #include <QWidget>
-#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/StylesTester/StylesTester.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
+using namespace Spire::Styles::Tests;
 
 namespace {
   using Foo = StateSelector<void, struct FooTag>;
   using Bar = StateSelector<void, struct BarTag>;
   using Baz = StateSelector<int, struct BazTag>;
-  struct Update {
-    std::unordered_set<const Stylist*> m_additions;
-    std::unordered_set<const Stylist*> m_removals;
-  };
 }
 
 TEST_SUITE("StateSelector") {
@@ -28,7 +25,7 @@ TEST_SUITE("StateSelector") {
   TEST_CASE("select") {
     run_test([] {
       auto w1 = QWidget();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection = select(Foo(), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});
@@ -61,7 +58,7 @@ TEST_SUITE("StateSelector") {
     run_test([] {
       auto w1 = QWidget();
       match(w1, Foo());
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection = select(Foo(), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});

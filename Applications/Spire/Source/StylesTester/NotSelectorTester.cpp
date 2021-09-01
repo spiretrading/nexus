@@ -1,18 +1,12 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/Selectors.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/StylesTester/StylesTester.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  struct Update {
-    std::unordered_set<const Stylist*> m_additions;
-    std::unordered_set<const Stylist*> m_removals;
-  };
-}
+using namespace Spire::Styles::Tests;
 
 TEST_SUITE("NotSelector") {
   TEST_CASE("equality") {
@@ -25,7 +19,7 @@ TEST_SUITE("NotSelector") {
     run_test([] {
       auto w1 = QWidget();
       match(w1, Hover());
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection = select(NotSelector(Hover()), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});
@@ -46,7 +40,7 @@ TEST_SUITE("NotSelector") {
   TEST_CASE("select_initialization") {
     run_test([] {
       auto w1 = QWidget();
-      auto updates = std::deque<Update>();
+      auto updates = std::deque<SelectionUpdate>();
       auto connection = select(NotSelector(Hover()), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});

@@ -67,7 +67,7 @@ namespace Spire::Styles {
 
   template<typename T, typename G>
   SelectConnection select(const StateSelector<T, G>& selector,
-      const Stylist& base, const SelectionUpdate& on_update) {
+      const Stylist& base, const SelectionUpdateSignal& on_update) {
     auto connection = base.connect_match_signal(selector,
       [=, &base] (auto is_match) {
         if(is_match) {

@@ -21,7 +21,7 @@ bool IsASelector::operator !=(const IsASelector& selector) const {
 }
 
 SelectConnection Spire::Styles::select(const IsASelector& selector,
-    const Stylist& base, const SelectionUpdate& on_update) {
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
   if(!base.get_pseudo_element() && selector.is_instance(base.get_widget())) {
     on_update({&base}, {});
   }

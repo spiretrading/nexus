@@ -25,7 +25,7 @@ FlipSelector Spire::Styles::operator +(Selector selector) {
 }
 
 SelectConnection Spire::Styles::select(const FlipSelector& selector,
-    const Stylist& base, const SelectionUpdate& on_update) {
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(selector.get_selector(), base, on_update);
 }
 

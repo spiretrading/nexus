@@ -39,7 +39,7 @@ namespace Spire::Styles {
   AndSelector operator &&(Selector left, Selector right);
 
   SelectConnection select(const AndSelector& selector, const Stylist& base,
-    const SelectionUpdate& on_update);
+    const SelectionUpdateSignal& on_update);
 
   std::unordered_set<Stylist*> select(
     const AndSelector& selector, std::unordered_set<Stylist*> sources);

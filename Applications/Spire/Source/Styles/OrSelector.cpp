@@ -28,15 +28,15 @@ OrSelector Spire::Styles::operator ||(Selector left, Selector right) {
 }
 
 SelectConnection Spire::Styles::select(const OrSelector& selector,
-    const Stylist& base, const SelectionUpdate& on_update) {
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
   struct Executor {
     std::unordered_map<const Stylist*, int> m_selection;
-    SelectionUpdate m_on_update;
+    SelectionUpdateSignal m_on_update;
     SelectConnection m_left;
     SelectConnection m_right;
 
     Executor(const OrSelector& selector, const Stylist& base,
-      const SelectionUpdate& on_update)
+      const SelectionUpdateSignal& on_update)
       : m_on_update(on_update),
         m_left(select(selector.get_left(), base,
           std::bind_front(&Executor::on_update, this))),

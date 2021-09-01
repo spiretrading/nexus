@@ -33,7 +33,7 @@ namespace Spire::Styles {
   NotSelector operator !(Selector selector);
 
   SelectConnection select(const NotSelector& selector, const Stylist& base,
-    const SelectionUpdate& on_update);
+    const SelectionUpdateSignal& on_update);
 
   std::unordered_set<Stylist*> select(
     const NotSelector& selector, std::unordered_set<Stylist*> sources);
