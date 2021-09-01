@@ -64,7 +64,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     }
     const group = Beam.DirectoryEntry.makeAccount(this.nextId, name);
     this._groups.push(group);
-    await this.groupSuggestionModel.addGroup(group);
+    this.groupSuggestionModel.addGroup(group);
     ++this.nextId;
     return group;
   }

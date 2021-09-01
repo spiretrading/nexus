@@ -31,7 +31,10 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
     return suggestions;
   }
 
-  public async addGroup(directory: Beam.DirectoryEntry): Promise<void> {
+  public addGroup(directory: Beam.DirectoryEntry): void {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
     this._groups.push(directory);
   }
 

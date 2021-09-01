@@ -48,7 +48,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     const group = await this.serviceClients.administrationClient.createGroup(
       name);
     this._groups.push(group);
-    await this._groupSuggestionModel.addGroup(group);
+    this._groupSuggestionModel.addGroup(group);
     return group;
   }
 

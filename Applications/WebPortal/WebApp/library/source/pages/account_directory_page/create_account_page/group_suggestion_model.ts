@@ -16,5 +16,5 @@ export abstract class GroupSuggestionModel {
   /** Add the group to the list of groups loaded.
    * @param directory - The group to add.
    */
-  public abstract addGroup(directory: Beam.DirectoryEntry): Promise<void>;
+  public abstract addGroup(directory: Beam.DirectoryEntry): void;
 }
