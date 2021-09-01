@@ -27,7 +27,7 @@ export class RolePanel extends React.Component<Properties, State> {
       <div style={RolePanel.STYLE.containerStyle}>
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
-          isExtraSmall={true}
+          isExtraSmall
           readonly
           role={Nexus.AccountRoles.Role.TRADER}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
@@ -37,7 +37,7 @@ export class RolePanel extends React.Component<Properties, State> {
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.TRADER)}/>
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
-          isExtraSmall={true}
+          isExtraSmall
           readonly
           role={Nexus.AccountRoles.Role.MANAGER}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
@@ -47,7 +47,7 @@ export class RolePanel extends React.Component<Properties, State> {
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.MANAGER)}/>
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
-          isExtraSmall={true}
+          isExtraSmall
           readonly
           role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
@@ -57,7 +57,7 @@ export class RolePanel extends React.Component<Properties, State> {
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
-          isExtraSmall={true}
+          isExtraSmall
           readonly
           role={Nexus.AccountRoles.Role.SERVICE}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
