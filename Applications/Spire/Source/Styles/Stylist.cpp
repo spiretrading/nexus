@@ -168,17 +168,14 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-#if 0 // TODO
-  m_style = std::make_shared<StyleSheet>(std::move(style));
-  m_enable_connections.clear();
-  for(auto widget : build_reach(*m_style, *m_widget)) {
-    if(widget != m_widget) {
-      m_enable_connections.push_back(
-        find_stylist(*widget).connect_enable_signal([=] { on_enable(); }));
-    }
+  m_selector_connections.clear();
+  if(!m_selection.empty()) {
+    on_selection_update({}, std::move(m_selection));
   }
-  apply_rules();
-#endif
+  for(auto& rule : style.get_rules()) {
+    m_selector_connections.push_back(select(rule.get_selector(), *this,
+      std::bind_front(&Stylist::on_selection_update, this)));
+  }
 }
 
 bool Stylist::is_match(const Selector& selector) const {
@@ -232,7 +229,6 @@ void Stylist::match(const Selector& selector) {
     if(match_signal != m_match_signals.end()) {
       match_signal->second(true);
     }
-    m_enable_signal();
   }
 }
 
@@ -243,7 +239,6 @@ void Stylist::unmatch(const Selector& selector) {
     if(match_signal != m_match_signals.end()) {
       match_signal->second(false);
     }
-    m_enable_signal();
   }
 }
 
@@ -263,8 +258,7 @@ Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
       m_style(std::make_shared<StyleSheet>()),
       m_visibility(Visibility::VISIBLE),
       m_evaluated_block(in_place_init),
-      m_evaluated_property(typeid(void)),
-      m_is_handling_enabled_signal(false) {
+      m_evaluated_property(typeid(void)) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
     m_widget->installEventFilter(m_style_event_filter.get());
@@ -496,25 +490,10 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   return reverted_property;
 }
 
-connection Stylist::connect_enable_signal(
-    const EnableSignal::slot_type& slot) const {
-  return m_enable_signal.connect(slot);
-}
-
 void Stylist::connect_animation() {
   m_animation_connection = QObject::connect(
     &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); });
   m_last_frame = std::chrono::steady_clock::now();
-}
-
-void Stylist::on_enable() {
-  if(m_is_handling_enabled_signal) {
-    return;
-  }
-  m_is_handling_enabled_signal = true;
-  apply_rules();
-  m_enable_signal();
-  m_is_handling_enabled_signal = false;
 }
 
 void Stylist::on_animation() {
@@ -530,6 +509,11 @@ void Stylist::on_animation() {
     }
   }
   m_last_frame = std::chrono::steady_clock::now();
+}
+
+void Stylist::on_selection_update(
+    std::unordered_set<const Stylist*>&& additions,
+    std::unordered_set<const Stylist*>&& removals) {
 }
 
 const Stylist& Spire::Styles::find_stylist(const QWidget& widget) {

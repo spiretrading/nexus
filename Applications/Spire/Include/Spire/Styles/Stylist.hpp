@@ -146,18 +146,16 @@ namespace Spire::Styles {
         EvaluatorEntry(Property property, Evaluator<Type> evaluator);
         void animate() override;
       };
-      using EnableSignal = Signal<void ()>;
       friend Stylist& find_stylist(QWidget& widget);
-      friend void add_pseudo_element(QWidget& source,
-        const PseudoElement& pseudo_element);
+      friend void add_pseudo_element(
+        QWidget& source, const PseudoElement& pseudo_element);
       friend boost::signals2::connection connect_style_signal(
         const QWidget& widget, const PseudoElement& pseudo_element,
         const Stylist::StyleSignal::slot_type& slot);
       template<typename T>
-      friend Evaluator<T>
-        make_evaluator(RevertExpression<T> expression, const Stylist& stylist);
+      friend Evaluator<T> make_evaluator(
+        RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
-      mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
@@ -171,7 +169,8 @@ namespace Spire::Styles {
       mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
         m_match_signals;
       std::unordered_set<Stylist*> m_dependents;
-      std::vector<boost::signals2::scoped_connection> m_enable_connections;
+      std::vector<SelectConnection> m_selector_connections;
+      std::unordered_set<const Stylist*> m_selection;
       std::unordered_map<Stylist*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
@@ -179,7 +178,6 @@ namespace Spire::Styles {
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
-      bool m_is_handling_enabled_signal;
       QMetaObject::Connection m_animation_connection;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
@@ -202,11 +200,10 @@ namespace Spire::Styles {
         find_reverted_property(std::type_index type) const;
       template<typename T>
       Evaluator<T> revert(std::type_index type) const;
-      boost::signals2::connection connect_enable_signal(
-        const EnableSignal::slot_type& slot) const;
       void connect_animation();
-      void on_enable();
       void on_animation();
+      void on_selection_update(std::unordered_set<const Stylist*>&& additions,
+        std::unordered_set<const Stylist*>&& removals);
   };
 
   /** Returns the Stylist associated with a widget. */
