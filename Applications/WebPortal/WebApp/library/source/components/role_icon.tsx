@@ -8,7 +8,7 @@ interface Properties {
   /** The size of the element to display. */
   displaySize: DisplaySize;
 
-  /** */
+  /** Determines if the role icon should be even smaller. */
   isExtraSmall?: boolean;
 
   /** The role the icon represents. */
