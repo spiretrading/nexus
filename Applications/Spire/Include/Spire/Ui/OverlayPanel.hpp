@@ -34,10 +34,6 @@ namespace Spire {
       /** Returns the body component displayed in the panel. */
       QWidget& get_body();
 
-      void add_child(OverlayPanel* panel);
-
-      void remove_child(OverlayPanel* panel);
-
       /**
        * Returns <code>true</code> when the panel can be closed on blur event.
        */

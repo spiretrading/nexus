@@ -1257,38 +1257,67 @@ UiProfile Spire::make_money_filter_panel_profile() {
 
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property("close-on-blur", false));
   properties.push_back(make_standard_property("draggable", true));
+  properties.push_back(make_standard_property("close_on_blur", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
-    {{"NONE", OverlayPanel::Positioning::NONE},
-     {"PARENT", OverlayPanel::Positioning::PARENT}});
+    { {"NONE", OverlayPanel::Positioning::NONE},
+     {"PARENT", OverlayPanel::Positioning::PARENT} });
   properties.push_back(
     make_standard_enum_property("positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
-    [=] (auto& profile) {
-      auto& close_on_blur =
-        get<bool>("close-on-blur", profile.get_properties());
+    [=](auto& profile) {
       auto& draggable = get<bool>("draggable", profile.get_properties());
+      auto& close_on_blur =
+        get<bool>("close_on_blur", profile.get_properties());
       auto& positioning =
         get<OverlayPanel::Positioning>("positioning", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto panel = QPointer<OverlayPanel>();
       button->connect_clicked_signal(
-        [=, &profile, &close_on_blur, &draggable, &positioning] () mutable {
-          if(panel && !close_on_blur.get()) {
+        [=, &profile, &draggable, &close_on_blur, &positioning]() mutable {
+          if (panel && !close_on_blur.get()) {
             return;
           }
-          auto body = create_panel_body();
-          panel = new OverlayPanel(body, button);
-          auto child_button = body->findChild<Button*>();
-          child_button->connect_clicked_signal(
-            [=, &close_on_blur, &draggable, &positioning] {
-              create_child_panel(close_on_blur.get(), draggable.get(),
-                positioning.get(), child_button);
+          auto body = new QWidget();
+          auto container_layout = new QVBoxLayout(body);
+          container_layout->setSpacing(0);
+          container_layout->setContentsMargins(
+            scale_width(1), scale_height(1), scale_width(1), scale_height(1));
+          auto title_layout = new QHBoxLayout();
+          title_layout->setSpacing(scale_width(3));
+          auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
+          title_layout->addWidget(title_name);
+          auto close_button =
+            make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
+          close_button->setFixedSize(scale(26, 26));
+          close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+          close_button->connect_clicked_signal([=] {
+            close_button->window()->close();
             });
+          title_layout->addWidget(close_button);
+          container_layout->addLayout(title_layout);
+          container_layout->addSpacing(scale_height(3));
+          auto content_layout = new QGridLayout();
+          content_layout->setSpacing(scale_width(5));
+          content_layout->setContentsMargins(
+            { scale_width(4), scale_height(4), scale_width(4), scale_height(4) });
+          content_layout->addWidget(
+            new QLabel(QString::fromUtf8("Start Date:")), 0, 0);
+          auto text_box1 = new TextBox();
+          text_box1->setFixedSize(scale(120, 26));
+          content_layout->addWidget(text_box1, 0, 1);
+          content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")),
+            1, 0);
+          auto text_box2 = new TextBox();
+          text_box2->setFixedSize(scale(120, 26));
+          content_layout->addWidget(text_box2, 1, 1);
+          content_layout->addWidget(make_label_button(
+            QString::fromUtf8("Reset")), 2, 1);
+          container_layout->addLayout(content_layout);
+          panel = new OverlayPanel(body, button);
           panel->setAttribute(Qt::WA_DeleteOnClose);
-          panel->set_closed_on_blur(close_on_blur.get());
           panel->set_is_draggable(draggable.get());
+          panel->set_closed_on_blur(close_on_blur.get());
           panel->set_positioning(positioning.get());
           panel->show();
         });

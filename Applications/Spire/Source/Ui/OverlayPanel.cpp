@@ -76,37 +76,12 @@ QWidget& OverlayPanel::get_body() {
   return *m_body;
 }
 
-void OverlayPanel::add_child(OverlayPanel* panel) {
-  if(panel == nullptr) {
-    return;
-  }
-  panel->installEventFilter(this);
-  m_child_panels.push_back(panel);
-}
-
-void OverlayPanel::remove_child(OverlayPanel* panel) {
-  if(auto item =
-      std::find(m_child_panels.begin(), m_child_panels.end(), panel);
-      item != m_child_panels.end()) {
-    (*item)->removeEventFilter(this);
-    m_child_panels.erase(item);
-  }
-}
-
 bool OverlayPanel::is_closed_on_blur() const {
   return m_is_closed_on_blur;
 }
 
 void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
-  if(m_is_closed_on_blur == is_closed_on_blur) {
-    return;
-  }
   m_is_closed_on_blur = is_closed_on_blur;
-  if(m_is_closed_on_blur) {
-    setWindowFlag(Qt::WindowDoesNotAcceptFocus);
-  } else {
-    setWindowFlag(Qt::WindowDoesNotAcceptFocus, false);
-  }
 }
 
 bool OverlayPanel::is_draggable() const {
@@ -127,7 +102,7 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 
 bool OverlayPanel::event(QEvent* event) {
   if(event->type() == QEvent::WindowDeactivate) {
-    if(!child_has_focus() && m_is_closed_on_blur) {
+    if(m_is_closed_on_blur) {
       close();
     }
   }
@@ -151,10 +126,6 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Move) {
       position();
     }
-  } else {
-    if(event->type() == QEvent::Destroy) {
-      remove_child(static_cast<OverlayPanel*>(watched));
-    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -170,21 +141,6 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
     return;
   }
   QWidget::keyPressEvent(event);
-}
-
-bool OverlayPanel::child_has_focus() {
-  for(auto child : m_child_panels) {
-    if(child->isActiveWindow()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void OverlayPanel::hide_children() {
-  for(auto child : m_child_panels) {
-    child->hide();
-  }
 }
 
 void OverlayPanel::position() {
