@@ -1,10 +1,8 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QApplication>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QScreen>
-#include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 
@@ -48,9 +46,9 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
     : QWidget(parent,
         Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
       m_body(body),
+      m_is_closed_on_blur(true),
       m_is_draggable(true),
       m_positioning(Positioning::PARENT) {
-  set_closed_on_blur(true);
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);

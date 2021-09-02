@@ -26,7 +26,7 @@ namespace Spire {
        * @param body The widget displayed in the OverlayPanel.
        * @param parent The parent widget that shows the OverlayPanel.
        */
-      explicit OverlayPanel(QWidget* body, QWidget* parent);
+      OverlayPanel(QWidget* body, QWidget* parent);
 
       /** Returns the body component displayed in the panel. */
       const QWidget& get_body() const;
@@ -73,14 +73,11 @@ namespace Spire {
 
     private:
       QWidget* m_body;
-      std::vector<OverlayPanel*> m_child_panels;
       bool m_is_closed_on_blur;
       bool m_is_draggable;
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
 
-      bool child_has_focus();
-      void hide_children();
       void position();
   };
 }

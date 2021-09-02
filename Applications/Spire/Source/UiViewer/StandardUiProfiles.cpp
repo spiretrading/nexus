@@ -292,36 +292,6 @@ namespace {
     }
     return image;
   }
-
-  auto create_panel_body() {
-    auto body = new QWidget();
-    body->setFixedSize(scale(200, 200));
-    auto container_layout = new QVBoxLayout(body);
-    container_layout->setSpacing(0);
-    container_layout->setContentsMargins(scale_width(1),
-      scale_height(1), scale_width(1), scale_height(1));
-    auto create_button = make_label_button("Show child panel", body);
-    container_layout->addWidget(create_button);
-    auto close_button = make_label_button("Close", body);
-    close_button->connect_clicked_signal([=] { body->window()->close(); });
-    container_layout->addWidget(close_button);
-    return body;
-  }
-
-  void create_child_panel(bool close_on_blur, bool draggable,
-      OverlayPanel::Positioning positioning, Button* parent) {
-    auto body = create_panel_body();
-    auto panel = new OverlayPanel(body, parent);
-    auto button = body->findChild<Button*>();
-    button->connect_clicked_signal([=] {
-      create_child_panel(close_on_blur, draggable, positioning, button);
-    });
-    panel->setAttribute(Qt::WA_DeleteOnClose);
-    panel->set_closed_on_blur(close_on_blur);
-    panel->set_is_draggable(draggable);
-    panel->set_positioning(positioning);
-    panel->show();
-  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -1260,7 +1230,7 @@ UiProfile Spire::make_overlay_panel_profile() {
   properties.push_back(make_standard_property("draggable", true));
   properties.push_back(make_standard_property("close_on_blur", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
-    { {"NONE", OverlayPanel::Positioning::NONE},
+    {{"NONE", OverlayPanel::Positioning::NONE},
      {"PARENT", OverlayPanel::Positioning::PARENT} });
   properties.push_back(
     make_standard_enum_property("positioning", positioning_property));
@@ -1275,7 +1245,7 @@ UiProfile Spire::make_overlay_panel_profile() {
       auto panel = QPointer<OverlayPanel>();
       button->connect_clicked_signal(
         [=, &profile, &draggable, &close_on_blur, &positioning]() mutable {
-          if (panel && !close_on_blur.get()) {
+          if(panel && !close_on_blur.get()) {
             return;
           }
           auto body = new QWidget();
