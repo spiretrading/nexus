@@ -134,14 +134,23 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 }
 
 Stylist::~Stylist() {
-  m_widget = nullptr;
-  m_evaluators.clear();
   get_animation_timer().disconnect(m_animation_connection);
-  for(auto& block : m_source_to_block) {
-    block.first->m_dependents.erase(this);
+  for(auto& rule : m_rules) {
+    auto selection = std::move(rule->m_selection);
+    rule->m_selection.clear();
+    selection.erase(this);
+    if(!selection.empty()) {
+      on_selection_update(*rule, {}, std::move(selection));
+    }
   }
-  while(!m_dependents.empty()) {
-    remove_dependent(**m_dependents.begin());
+  while(!m_sources.empty()) {
+    auto& source = m_sources.back();
+    if(source.m_source != this) {
+      source.m_source->on_selection_update(
+        const_cast<RuleEntry&>(*source.m_rule), {}, {this});
+    } else {
+      m_sources.pop_back();
+    }
   }
   while(!m_proxies.empty()) {
     remove_proxy(*m_proxies.front()->m_widget);
@@ -168,7 +177,6 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-  m_style = std::move(style);
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     rule->m_selection.clear();
@@ -177,6 +185,7 @@ void Stylist::set_style(StyleSheet style) {
     }
   }
   m_rules.clear();
+  m_style = std::move(style);
   for(auto& r : m_style.get_rules()) {
     auto rule = std::make_unique<RuleEntry>();
     rule->m_rule = r;
@@ -195,8 +204,8 @@ const Block& Stylist::get_computed_block() const {
     return *m_computed_block;
   }
   m_computed_block.emplace();
-  for(auto& entry : m_blocks) {
-    merge(*m_computed_block, entry->m_block);
+  for(auto& source : m_sources) {
+    merge(*m_computed_block, source.m_rule->m_rule.get_block());
   }
   for(auto principal : m_principals) {
     merge(*m_computed_block, principal->get_computed_block());
@@ -296,27 +305,16 @@ void Stylist::for_each_principal(F&& f) const {
   }
 }
 
-void Stylist::remove_dependent(Stylist& dependent) {
-// TODO  dependent.apply(*this, {});
-  dependent.m_source_to_block.erase(this);
-  dependent.m_blocks.erase(
-    std::find_if(dependent.m_blocks.begin(), dependent.m_blocks.end(),
-      [&] (const auto& block) {
-        return block->m_source == this;
-      }));
-  m_dependents.erase(&dependent);
+void Stylist::apply(Stylist& source, const RuleEntry& rule) {
+  m_sources.push_back({&source, &rule});
+  apply_proxies();
 }
 
-void Stylist::apply(Stylist& source, const RuleEntry& rule) {
-  auto i = m_source_to_block.find(&source);
-  if(i == m_source_to_block.end()) {
-    auto entry = std::make_shared<BlockEntry>(&source, rule.m_rule.get_block());
-    m_blocks.push_back(entry);
-    m_source_to_block.insert(std::pair(&source, std::move(entry))).first;
-  } else {
-    auto& block = i->second;
-    block->m_block = rule.m_rule.get_block();
-  }
+void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
+  m_sources.erase(std::find_if(m_sources.begin(), m_sources.end(),
+    [&] (const auto& entry) {
+      return entry.m_rule == &rule;
+    }));
   apply_proxies();
 }
 
@@ -376,48 +374,6 @@ void Stylist::apply_proxies() {
 optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = boost::optional<Property>();
   auto reverted_property = boost::optional<Property>();
-#if 0 // TODO
-  auto targets = std::unordered_set<const Stylist*>();
-  for_each_principal([&] (auto principal) {
-    targets.insert(principal);
-  });
-  auto contains_one_of = [] (const std::unordered_set<Stylist*>& container,
-      const std::unordered_set<const Stylist*>& targets) {
-    if(container.size() <= targets.size()) {
-      for(auto target : container) {
-        if(targets.find(target) != targets.end()) {
-          return true;
-        }
-      }
-    } else {
-      for(auto target : targets) {
-        if(container.find(const_cast<Stylist*>(target)) != container.end()) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
-  auto swap_properties = [&] (const Rule& rule) {
-    if(auto update = find(rule.get_block(), type)) {
-      if(property) {
-        reverted_property.emplace(std::move(*property));
-      }
-      property = std::move(update);
-    }
-  };
-  for(auto& source : m_blocks) {
-    source->m_source->for_each_principal([&] (auto principal) {
-      auto sources = std::unordered_set{source->m_source, principal};
-      for(auto& rule : principal.get_style().get_rules()) {
-        auto selection = select(rule.get_selector(), sources);
-        if(contains_one_of(selection, targets)) {
-          swap_properties(rule);
-        }
-      }
-    });
-  }
-#endif
   return reverted_property;
 }
 
@@ -445,9 +401,14 @@ void Stylist::on_animation() {
 void Stylist::on_selection_update(
     RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals) {
+  for(auto removal : removals) {
+    rule.m_selection.erase(removal);
+    auto& stylist = const_cast<Stylist&>(*removal);
+    stylist.unapply(*this, rule);
+  }
   for(auto addition : additions) {
+    rule.m_selection.insert(addition);
     auto& stylist = const_cast<Stylist&>(*addition);
-    m_dependents.insert(&stylist);
     stylist.apply(*this, rule);
   }
 }

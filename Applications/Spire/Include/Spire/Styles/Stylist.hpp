@@ -117,17 +117,17 @@ namespace Spire::Styles {
 
     private:
       struct StyleEventFilter;
+      struct SelectorHash {
+        std::size_t operator ()(const Selector& selector) const;
+      };
       struct RuleEntry {
         Rule m_rule;
         std::unordered_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
-      struct SelectorHash {
-        std::size_t operator ()(const Selector& selector) const;
-      };
-      struct BlockEntry {
+      struct Source {
         Stylist* m_source;
-        Block m_block;
+        const RuleEntry* m_rule;
       };
       struct BaseEvaluatorEntry {
         Property m_property;
@@ -158,27 +158,24 @@ namespace Spire::Styles {
         RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
       QWidget* m_widget;
-      StyleSheet m_style;
       boost::optional<PseudoElement> m_pseudo_element;
-      std::unique_ptr<StyleEventFilter> m_style_event_filter;
+      StyleSheet m_style;
+      std::vector<Source> m_sources;
       std::vector<std::unique_ptr<RuleEntry>> m_rules;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
-      Visibility m_visibility;
-      std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
+      std::vector<Stylist*> m_principals;
       std::unordered_set<Selector, SelectorHash> m_matches;
       mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
         m_match_signals;
-      std::unordered_set<Stylist*> m_dependents;
-      std::unordered_map<Stylist*, std::shared_ptr<BlockEntry>>
-        m_source_to_block;
-      std::vector<std::shared_ptr<BlockEntry>> m_blocks;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
       QMetaObject::Connection m_animation_connection;
+      Visibility m_visibility;
+      std::unique_ptr<StyleEventFilter> m_style_event_filter;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
@@ -187,8 +184,9 @@ namespace Spire::Styles {
       void for_each_principal(F&& f);
       template<typename F>
       void for_each_principal(F&& f) const;
-      void remove_dependent(Stylist& dependent);
+      void clear_rules();
       void apply(Stylist& source, const RuleEntry& rule);
+      void unapply(Stylist& source, const RuleEntry& rule);
       void apply();
       void apply_proxies();
       boost::optional<Property> find_reverted_property(
