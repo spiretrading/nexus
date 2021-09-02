@@ -7,6 +7,10 @@
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+namespace Details {
+  SelectConnection select_pseudo_element(const PseudoElement& element,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+}
 
   /** Represents a sub-section of a widget. */
   class PseudoElement {
@@ -89,7 +93,8 @@ namespace Spire::Styles {
   template<typename T, typename G>
   SelectConnection select(const PseudoElementSelector<T, G>& selector,
       const Stylist& base, const SelectionUpdateSignal& on_update) {
-    return {};
+    return Details::select_pseudo_element(
+      PseudoElement(selector), base, on_update);
   }
 
   template<typename T, typename G>
