@@ -138,14 +138,27 @@ Stylist::~Stylist() {
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     rule->m_selection.clear();
-    selection.erase(this);
+    for(auto i = selection.begin(); i != selection.end();) {
+      auto& selected = const_cast<Stylist&>(**i);
+      if(selected.m_widget == m_widget) {
+        if(&selected != this) {
+          selected.m_sources.erase(std::remove_if(selected.m_sources.begin(),
+            selected.m_sources.end(), [&] (const auto& entry) {
+              return entry.m_source == this;
+            }));
+        }
+        i = selection.erase(i);
+      } else {
+        ++i;
+      }
+    }
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
   while(!m_sources.empty()) {
     auto& source = m_sources.back();
-    if(source.m_source != this) {
+    if(source.m_source->m_widget != m_widget) {
       source.m_source->on_selection_update(
         const_cast<RuleEntry&>(*source.m_rule), {}, {this});
     } else {
