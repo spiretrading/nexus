@@ -1,5 +1,6 @@
 #include "Spire/Ui/ListView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QApplication>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QHBoxLayout>
@@ -449,7 +450,7 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
 void ListView::on_current(const boost::optional<int>& current) {
   if(current) {
     m_items[*current]->m_item->setFocus();
-  } else {
+  } else if(isAncestorOf(QApplication::focusWidget())) {
     setFocus();
   }
 }
