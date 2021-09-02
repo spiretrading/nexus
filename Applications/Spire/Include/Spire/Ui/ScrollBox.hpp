@@ -43,6 +43,9 @@ namespace Spire {
       explicit ScrollBox(QWidget* body, QWidget* parent = nullptr);
 
       /** Returns the body. */
+      const QWidget& get_body() const;
+
+      /** Returns the body. */
       QWidget& get_body();
 
       /** Returns the horizontal display policy. */

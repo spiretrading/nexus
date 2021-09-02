@@ -4,8 +4,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using SelectCallable = std::function<
-    std::unordered_set<Stylist*> (const ComponentSelector&, Stylist&)>;
+  using SelectCallable = std::function<SelectConnection (
+    const ComponentSelector&, const Stylist&, const SelectionUpdateSignal&)>;
 
   auto& get_registry() {
     static auto registry =
@@ -32,6 +32,10 @@ std::size_t Spire::Styles::hash_value(const ComponentSelector& element) {
 
 SelectConnection Spire::Styles::select(const ComponentSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
+  auto i = get_registry().find(selector.get_type());
+  if(i != get_registry().end()) {
+    return i->second(selector, base, on_update);
+  }
   return {};
 }
 
