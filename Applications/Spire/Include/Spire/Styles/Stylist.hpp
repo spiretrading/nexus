@@ -117,16 +117,17 @@ namespace Spire::Styles {
 
     private:
       struct StyleEventFilter;
+      struct RuleEntry {
+        Rule m_rule;
+        std::unordered_set<const Stylist*> m_selection;
+        SelectConnection m_connection;
+      };
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
       };
-      struct AppliedProperty {
-        Property m_property;
-        std::shared_ptr<const Rule> m_rule;
-      };
       struct BlockEntry {
         Stylist* m_source;
-        std::vector<AppliedProperty> m_properties;
+        Block m_block;
       };
       struct BaseEvaluatorEntry {
         Property m_property;
@@ -157,20 +158,19 @@ namespace Spire::Styles {
         RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
       QWidget* m_widget;
+      StyleSheet m_style;
       boost::optional<PseudoElement> m_pseudo_element;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
-      std::shared_ptr<StyleSheet> m_style;
+      std::vector<std::unique_ptr<RuleEntry>> m_rules;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
       Visibility m_visibility;
       std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
-      std::unordered_set<Selector, SelectorHash> m_matching_selectors;
+      std::unordered_set<Selector, SelectorHash> m_matches;
       mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
         m_match_signals;
       std::unordered_set<Stylist*> m_dependents;
-      std::vector<SelectConnection> m_selector_connections;
-      std::unordered_set<const Stylist*> m_selection;
       std::unordered_map<Stylist*, std::shared_ptr<BlockEntry>>
         m_source_to_block;
       std::vector<std::shared_ptr<BlockEntry>> m_blocks;
@@ -183,26 +183,22 @@ namespace Spire::Styles {
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
       Stylist& operator =(const Stylist&) = delete;
-      static void merge(
-        Block& block, const std::vector<AppliedProperty>& properties);
-      static void merge(std::vector<AppliedProperty>& properties,
-        std::shared_ptr<const Rule> rule);
       template<typename F>
       void for_each_principal(F&& f);
       template<typename F>
       void for_each_principal(F&& f) const;
       void remove_dependent(Stylist& dependent);
-      void apply(Stylist& source, std::vector<AppliedProperty> properties);
-      void apply_rules();
-      void apply_style();
-      void apply_proxy_styles();
-      boost::optional<Property>
-        find_reverted_property(std::type_index type) const;
+      void apply(Stylist& source, const RuleEntry& rule);
+      void apply();
+      void apply_proxies();
+      boost::optional<Property> find_reverted_property(
+        std::type_index type) const;
       template<typename T>
       Evaluator<T> revert(std::type_index type) const;
       void connect_animation();
       void on_animation();
-      void on_selection_update(std::unordered_set<const Stylist*>&& additions,
+      void on_selection_update(RuleEntry& rule,
+        std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals);
   };
 

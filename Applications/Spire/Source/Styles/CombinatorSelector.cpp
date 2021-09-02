@@ -46,11 +46,11 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     Selector m_match_selector;
     CombinatorSelector::SelectionBuilder m_selection_builder;
     SelectionUpdateSignal m_on_update;
-    SelectConnection m_base_connection;
     std::unordered_map<const Stylist*, MatchEntry> m_match_entries;
     std::unordered_map<const Stylist*, std::unordered_set<const Stylist*>>
       m_selection;
     std::unordered_map<const Stylist*, int> m_match_counts;
+    SelectConnection m_base_connection;
 
     Executor(const CombinatorSelector& selector, const Stylist& base,
       const SelectionUpdateSignal& on_update)

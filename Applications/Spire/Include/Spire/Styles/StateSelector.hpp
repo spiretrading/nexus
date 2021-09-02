@@ -68,14 +68,14 @@ namespace Spire::Styles {
   template<typename T, typename G>
   SelectConnection select(const StateSelector<T, G>& selector,
       const Stylist& base, const SelectionUpdateSignal& on_update) {
-    auto connection = base.connect_match_signal(selector,
-      [=, &base] (auto is_match) {
+    auto connection = boost::signals2::scoped_connection(
+      base.connect_match_signal(selector, [=, &base] (auto is_match) {
         if(is_match) {
           on_update({&base}, {});
         } else {
           on_update({}, {&base});
         }
-      });
+      }));
     if(base.is_match(selector)) {
       on_update({&base}, {});
     }
