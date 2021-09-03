@@ -1,4 +1,5 @@
 #include "Spire/Ui/OverlayPanel.hpp"
+#include <QApplication>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QMouseEvent>
@@ -100,7 +101,17 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 
 bool OverlayPanel::event(QEvent* event) {
   if(event->type() == QEvent::WindowDeactivate) {
-    if(m_is_closed_on_blur) {
+    auto is_ancestor = [&] {
+      auto child = qApp->activeWindow();
+      while(child) {
+        if(child == this) {
+          return true;
+        }
+        child = child->parentWidget();
+      }
+      return false;
+    }();
+    if(m_is_closed_on_blur && !is_ancestor) {
       close();
     }
   }
