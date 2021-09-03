@@ -166,6 +166,14 @@ namespace Styles {
    * @param parent The parent widget.
    */
   TextBox* make_label(QString label, QWidget* parent = nullptr);
+
+  /**
+   * Returns a TextBox as a label using a model.
+   * @param model The current value's model.
+   * @param parent The parent widget.
+   */
+  TextBox* make_label(std::shared_ptr<TextModel> model,
+    QWidget* parent = nullptr);
 }
 
 #endif

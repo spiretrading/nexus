@@ -489,7 +489,11 @@ void TextBox::on_style() {
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {
-  auto text_box = new TextBox(std::move(label), parent);
+  return make_label(std::make_shared<LocalTextModel>(std::move(label)), parent);
+}
+
+TextBox* Spire::make_label(std::shared_ptr<TextModel> model, QWidget* parent) {
+  auto text_box = new TextBox(std::move(model), parent);
   text_box->setDisabled(true);
   text_box->set_read_only(true);
   auto style = get_style(*text_box);
