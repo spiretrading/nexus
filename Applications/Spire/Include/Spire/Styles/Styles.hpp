@@ -24,8 +24,8 @@ namespace Spire::Styles {
   template<typename T> class LinearExpression;
   class NotSelector;
   class OrSelector;
+  class ParentSelector;
   class PathSelector;
-  class PredecessorSelector;
   class Property;
   class PropertyMatchSelector;
   class PseudoElement;

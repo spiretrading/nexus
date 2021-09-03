@@ -19,17 +19,12 @@ namespace {
   }
 }
 
-TEST_SUITE("PredecessorSelector") {
+TEST_SUITE("ParentSelector") {
   TEST_CASE("equality") {
-    REQUIRE(
-      PredecessorSelector(Any(), Any()) == PredecessorSelector(Any(), Any()));
-    REQUIRE(
-      PredecessorSelector(Any(), Any()) != PredecessorSelector(Any(), Hover()));
-    REQUIRE(
-      PredecessorSelector(Any(), Any()) != PredecessorSelector(Hover(), Any()));
-    REQUIRE(
-      PredecessorSelector(Any(), Hover()) != PredecessorSelector(Any(), Any()));
-    REQUIRE(
-      PredecessorSelector(Hover(), Any()) != PredecessorSelector(Any(), Any()));
+    REQUIRE(ParentSelector(Any(), Any()) == ParentSelector(Any(), Any()));
+    REQUIRE(ParentSelector(Any(), Any()) != ParentSelector(Any(), Hover()));
+    REQUIRE(ParentSelector(Any(), Any()) != ParentSelector(Hover(), Any()));
+    REQUIRE(ParentSelector(Any(), Hover()) != ParentSelector(Any(), Any()));
+    REQUIRE(ParentSelector(Hover(), Any()) != ParentSelector(Any(), Any()));
   }
 }
