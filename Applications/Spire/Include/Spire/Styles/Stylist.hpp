@@ -122,6 +122,7 @@ namespace Spire::Styles {
       };
       struct RuleEntry {
         Rule m_rule;
+        int m_priority;
         std::unordered_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
@@ -184,7 +185,6 @@ namespace Spire::Styles {
       void for_each_principal(F&& f);
       template<typename F>
       void for_each_principal(F&& f) const;
-      void clear_rules();
       void apply(Stylist& source, const RuleEntry& rule);
       void unapply(Stylist& source, const RuleEntry& rule);
       void apply();

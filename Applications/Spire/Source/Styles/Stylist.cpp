@@ -190,6 +190,7 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
+  static auto priority = 0;
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     rule->m_selection.clear();
@@ -201,6 +202,8 @@ void Stylist::set_style(StyleSheet style) {
   m_style = std::move(style);
   for(auto& r : m_style.get_rules()) {
     auto rule = std::make_unique<RuleEntry>();
+    rule->m_priority = priority;
+    ++priority;
     rule->m_rule = r;
     rule->m_connection = select(rule->m_rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*rule)));
@@ -319,15 +322,17 @@ void Stylist::for_each_principal(F&& f) const {
 }
 
 void Stylist::apply(Stylist& source, const RuleEntry& rule) {
-  m_sources.push_back({&source, &rule});
+  auto i = std::lower_bound(m_sources.begin(), m_sources.end(), rule,
+    [&] (const auto& left, const auto& right) {
+      return left.m_rule->m_priority < right.m_priority;
+    });
+  m_sources.insert(i, {&source, &rule});
   apply_proxies();
 }
 
 void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
   m_sources.erase(std::find_if(m_sources.begin(), m_sources.end(),
-    [&] (const auto& entry) {
-      return entry.m_rule == &rule;
-    }));
+    [&] (const auto& entry) { return entry.m_rule == &rule; }));
   apply_proxies();
 }
 
