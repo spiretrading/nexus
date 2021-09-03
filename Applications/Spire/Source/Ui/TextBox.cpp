@@ -17,6 +17,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  void apply_label_style(TextBox& text_box) {
+    text_box.setDisabled(true);
+    text_box.set_read_only(true);
+    auto style = get_style(text_box);
+    style.get(Any()).
+      set(border_size(0)).
+      set(vertical_padding(0));
+    style.get(ReadOnly() && Disabled()).
+      set(TextColor(QColor::fromRgb(0, 0, 0)));
+    set_style(text_box, std::move(style));
+  }
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -489,19 +501,13 @@ void TextBox::on_style() {
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {
-  return make_label(std::make_shared<LocalTextModel>(std::move(label)), parent);
+  auto text_box = new TextBox(std::move(label), parent);
+  apply_label_style(*text_box);
+  return text_box;
 }
 
 TextBox* Spire::make_label(std::shared_ptr<TextModel> model, QWidget* parent) {
   auto text_box = new TextBox(std::move(model), parent);
-  text_box->setDisabled(true);
-  text_box->set_read_only(true);
-  auto style = get_style(*text_box);
-  style.get(Any()).
-    set(border_size(0)).
-    set(vertical_padding(0));
-  style.get(ReadOnly() && Disabled()).
-    set(TextColor(QColor::fromRgb(0, 0, 0)));
-  set_style(*text_box, std::move(style));
+  apply_label_style(*text_box);
   return text_box;
 }
