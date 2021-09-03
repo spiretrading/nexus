@@ -12,6 +12,15 @@ CombinatorSelector::CombinatorSelector(
     m_match(std::move(match)),
     m_selection_builder(std::move(selection_builder)) {}
 
+CombinatorSelector::CombinatorSelector(Selector base, Selector match,
+  StaticSelectionBuilder selection_builder)
+  : CombinatorSelector(std::move(base), std::move(match),
+      [selection_builder = std::move(selection_builder)] (
+          const Stylist& stylist, const SelectionUpdateSignal& on_update) {
+        on_update(selection_builder(stylist), {});
+        return SelectConnection();
+      }) {}
+
 const Selector& CombinatorSelector::get_base() const {
   return m_base;
 }
@@ -49,6 +58,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     bool m_is_flipped;
     CombinatorSelector::SelectionBuilder m_selection_builder;
     SelectionUpdateSignal m_on_update;
+    std::unordered_map<const Stylist*, SelectConnection> m_base_connections;
     std::unordered_map<const Stylist*, MatchEntry> m_match_entries;
     std::unordered_map<const Stylist*, std::unordered_set<const Stylist*>>
       m_selection;
@@ -70,16 +80,8 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     void on_base(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
       for(auto addition : additions) {
-        auto selection = m_selection_builder(*addition);
-        m_selection[addition].insert(selection.begin(), selection.end());
-        for(auto stylist : selection) {
-          auto& entry = m_match_entries[stylist];
-          ++entry.m_count;
-          if(entry.m_count == 1) {
-            entry.m_connection = select(m_match_selector, *stylist,
-              std::bind_front(&Executor::on_match, this, std::ref(entry)));
-          }
-        }
+        m_base_connections[addition] = m_selection_builder(*addition,
+          std::bind_front(&Executor::on_selection, this, std::ref(*addition)));
       }
       for(auto removal : removals) {
         for(auto selection : m_selection[removal]) {
@@ -93,6 +95,20 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           }
         }
         m_selection.erase(removal);
+      }
+    }
+
+    void on_selection(const Stylist& base,
+        std::unordered_set<const Stylist*>&& additions,
+        std::unordered_set<const Stylist*>&& removals) {
+      m_selection[&base].insert(additions.begin(), additions.end());
+      for(auto stylist : additions) {
+        auto& entry = m_match_entries[stylist];
+        ++entry.m_count;
+        if(entry.m_count == 1) {
+          entry.m_connection = select(m_match_selector, *stylist,
+            std::bind_front(&Executor::on_match, this, std::ref(entry)));
+        }
       }
     }
 
