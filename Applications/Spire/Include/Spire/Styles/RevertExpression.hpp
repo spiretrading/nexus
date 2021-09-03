@@ -42,8 +42,8 @@ namespace Spire::Styles {
   constexpr auto revert = RevertPolymorph();
 
   template<typename T>
-  Evaluator<T>
-      make_evaluator(RevertExpression<T> expression, const Stylist& stylist) {
+  Evaluator<T> make_evaluator(
+      RevertExpression<T> expression, const Stylist& stylist) {
     using Type = T;
     struct RevertEvaluator {
       const Stylist* m_stylist;
