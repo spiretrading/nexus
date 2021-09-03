@@ -79,6 +79,7 @@ namespace Spire {
       QPoint m_mouse_pressed_position;
 
       void position();
+      void on_focus_changed(QWidget* previous, QWidget* current);
   };
 }
 
