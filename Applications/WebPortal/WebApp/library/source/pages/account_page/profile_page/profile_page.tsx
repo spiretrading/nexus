@@ -166,6 +166,30 @@ export class ProfilePage extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const lastLogin = (() => {
+      const serverDateTime = this.props.identity.lastLoginTime;
+      if(serverDateTime.equals(Beam.DateTime.NEG_INFIN) ||
+          serverDateTime.equals(Beam.DateTime.POS_INFIN) ||
+          serverDateTime.equals(Beam.DateTime.NOT_A_DATE_TIME)) {
+        return 'Never';
+      } else {
+        const localizedDate = new Date(Date.UTC(
+          serverDateTime.date.year,
+          serverDateTime.date.month - 1,
+          serverDateTime.date.day
+        ));
+        return `${localizedDate.toLocaleDateString()} ${
+          localizedDate.toLocaleTimeString()}`;
+      }
+    })();
+    const registrationDate = (() => {
+      const localizedDate = new Date(Date.UTC(
+        this.props.identity.registrationTime.date.year,
+        this.props.identity.registrationTime.date.month - 1,
+        this.props.identity.registrationTime.date.day
+      ));
+      return localizedDate.toLocaleDateString();
+    })();
     const groupsList = (() => {
       const list = [];
       for(const group of this.props.groups) {
@@ -296,13 +320,17 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     return (
       <PageWrapper>
+        <div>
+
+        </div>
+
         <div style={ProfilePage.STYLE.page}>
           <div style={ProfilePage.STYLE.pagePadding}/>
           <div style={contentWidth}>
             <Dali.VBoxLayout width='100%'>
               <Dali.Padding size='18px'/>
               <div style={ProfilePage.STYLE.lastLoginBox}>
-                {'Last login: ' + this.props.identity.lastLoginTime.toString()}
+                {`Last login: ${lastLogin}`}
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <div style={ProfilePage.STYLE.headerStyler}>
@@ -368,7 +396,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <FormEntry name='Registration Date'
                       displaySize={this.props.displaySize}>
                     <TextField displaySize={this.props.displaySize}
-                      value={this.props.identity.registrationTime.toString()}
+                      value={registrationDate}
                       readonly/>
                   </FormEntry>
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
