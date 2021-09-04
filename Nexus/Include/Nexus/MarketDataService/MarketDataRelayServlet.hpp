@@ -240,17 +240,13 @@ namespace Nexus::MarketDataService {
         this, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::ref(m_timeAndSaleSubscriptions)));
     LoadSecuritySnapshotService::AddSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnLoadSecuritySnapshot, this,
-        std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRelayServlet::OnLoadSecuritySnapshot, this));
     LoadSecurityTechnicalsService::AddSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnLoadSecurityTechnicals, this,
-        std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRelayServlet::OnLoadSecurityTechnicals, this));
     QuerySecurityInfoService::AddSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnQuerySecurityInfo, this,
-        std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots),
-      std::bind(&MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this,
-        std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRelayServlet::OnQuerySecurityInfo, this));
+    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind_front(
+      &MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this));
   }
 
   template<typename C, typename M, typename A>

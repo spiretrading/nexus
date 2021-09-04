@@ -26,6 +26,9 @@ namespace Spire {
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
+  /** Returns a UiProfile for the DropDownBox. */
+  UiProfile make_drop_down_box_profile();
+
   /** Returns a UiProfile for the DropDownList. */
   UiProfile make_drop_down_list_profile();
 

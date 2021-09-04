@@ -51,8 +51,7 @@ namespace {
       RegisterMarketDataRegistryServices(Store(m_server.GetSlots()));
       RegisterMarketDataRegistryMessages(Store(m_server.GetSlots()));
       QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind(&Fixture::OnQuerySecurityBboQuotes, this,
-        std::placeholders::_1, std::placeholders::_2));
+        std::bind_front(&Fixture::OnQuerySecurityBboQuotes, this));
     }
 
     template<typename T>

@@ -273,8 +273,8 @@ namespace Nexus::Compliance {
       }
       auto rules = std::vector<ComplianceRuleEntry>();
       m_complianceClient->MonitorComplianceRuleEntries(directoryEntry,
-        m_tasks.GetSlot<ComplianceRuleEntry>(std::bind(
-          &ComplianceRuleSet::OnComplianceUpdate, this, std::placeholders::_1)),
+        m_tasks.GetSlot<ComplianceRuleEntry>(
+          std::bind_front(&ComplianceRuleSet::OnComplianceUpdate, this)),
         Beam::Store(rules));
       for(auto& rule : rules) {
         UpdateComplianceEntry(rule, *entry);

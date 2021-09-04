@@ -58,9 +58,6 @@ namespace {
           set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
           set(border_color(QColor::fromRgb(0, 0, 0, 0))).
           set(TextColor(QColor::fromRgb(0xC8C8C8)));
-        style.get(+Any() << (is_a<ListItem>() >> (is_a<Box>() && Selected()))).
-          set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
-          set(TextColor(QColor::fromRgb(0xFFFFFF)));
         set_style(*this, std::move(style));
         layout->addWidget(m_label);
         on_current(m_model->get_current());
@@ -242,9 +239,9 @@ CalendarDatePicker::CalendarDatePicker(
     m_calendar_model->push(std::make_shared<LocalDateModel>(day));
   });
   m_calendar_view = new ListView(m_calendar_model,
-    [=] (const ArrayListModel& model, int index) {
+    [=] (const std::shared_ptr<ListModel>& model, int index) {
       return new CalendarDayLabel(
-        model.get<std::shared_ptr<LocalDateModel>>(index),
+        model->get<std::shared_ptr<LocalDateModel>>(index),
         m_month_selector->get_model());
     }, this);
   m_calendar_view->setFixedSize(scale(168, 144));
@@ -256,11 +253,15 @@ CalendarDatePicker::CalendarDatePicker(
     set(Qt::Horizontal).
     set(EdgeNavigation(EdgeNavigation::CONTAIN)).
     set(Overflow(Overflow::WRAP));
-  calendar_style.get(Any() >> is_a<ListItem>() >> is_a<Box>()).
+  calendar_style.get(Any() >> is_a<ListItem>()).
     set(border_size(0)).
-    set(horizontal_padding(0));
-  calendar_style.get(Any() >> is_a<ListItem>() >> (is_a<Box>() && Hover())).
+    set(padding(0));
+  calendar_style.get(Any() >> (is_a<ListItem>() && Hover())).
     set(BackgroundColor(QColor::fromRgb(0xFFFFFF)));
+  calendar_style.get(
+      Any() >> (is_a<ListItem>() && Selected()) >> is_a<CalendarDayLabel>()).
+    set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
+    set(TextColor(QColor::fromRgb(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
   m_model->connect_current_signal([=] (const auto& day) { on_current(day); });

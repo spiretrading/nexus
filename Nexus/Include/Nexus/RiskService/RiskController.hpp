@@ -182,17 +182,17 @@ namespace Nexus::RiskService {
       m_stateModel->GetRiskState(), &*m_orderExecutionClient,
       std::move(destinations));
     m_orderExecutionClient->QueryOrderSubmissions(realTimeQuery,
-      m_tasks.GetSlot<OrderExecutionService::SequencedOrder>(std::bind(
-        &RiskController::OnOrderSubmission, this, std::placeholders::_1)));
+      m_tasks.GetSlot<OrderExecutionService::SequencedOrder>(
+        std::bind_front(&RiskController::OnOrderSubmission, this)));
     m_portfolioController->GetPublisher().Monitor(
-      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(std::bind(
-        &RiskController::OnPortfolioUpdate, this, std::placeholders::_1)));
+      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(
+        std::bind_front(&RiskController::OnPortfolioUpdate, this)));
     m_administrationClient->GetRiskParametersPublisher(m_account).Monitor(
-      m_tasks.GetSlot<RiskParameters>(std::bind(
-        &RiskController::OnRiskParametersUpdate, this, std::placeholders::_1)));
+      m_tasks.GetSlot<RiskParameters>(
+        std::bind_front(&RiskController::OnRiskParametersUpdate, this)));
     m_transitionTimer->GetPublisher().Monitor(
-      m_tasks.GetSlot<Beam::Threading::Timer::Result>(std::bind(
-        &RiskController::OnTransitionTimer, this, std::placeholders::_1)));
+      m_tasks.GetSlot<Beam::Threading::Timer::Result>(
+        std::bind_front(&RiskController::OnTransitionTimer, this)));
     m_transitionTimer->Start();
     m_statePublisher.Push(m_stateModel->GetRiskState());
   }
@@ -253,9 +253,8 @@ namespace Nexus::RiskService {
       [] (const auto& order) { return order->GetInfo().m_orderId; });
     for(auto& order : excludedOrders) {
       order->GetPublisher().Monitor(
-        m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
-          std::bind(&RiskController::OnExecutionReport, this, std::ref(*order),
-            std::placeholders::_1)));
+        m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
+          &RiskController::OnExecutionReport, this, std::ref(*order))));
     }
     return {std::move(portfolio), Beam::Queries::Increment(sequence),
       std::move(excludedOrders)};
@@ -312,9 +311,8 @@ namespace Nexus::RiskService {
     m_snapshotSequence = std::max(m_snapshotSequence, order.GetSequence());
     m_excludedOrders.insert((*order)->GetInfo().m_orderId);
     (*order)->GetPublisher().Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
-        std::bind(&RiskController::OnExecutionReport, this, std::ref(**order),
-          std::placeholders::_1)));
+      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
+        &RiskController::OnExecutionReport, this, std::ref(**order))));
   }
 
   template<typename A, typename M, typename O, typename R, typename T,

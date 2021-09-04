@@ -94,8 +94,8 @@ namespace Nexus::Accounting {
         std::vector<OrderExecutionService::ExecutionReportEntry>>();
       m_executionReportPublisher.Monitor(
         m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
-          std::bind(&PortfolioController::OnExecutionReport, this,
-            std::placeholders::_1)), Beam::Store(snapshot));
+          std::bind_front(&PortfolioController::OnExecutionReport, this)),
+          Beam::Store(snapshot));
       if(snapshot) {
         for(auto& report : *snapshot) {
           OnExecutionReport(report);
@@ -123,8 +123,8 @@ namespace Nexus::Accounting {
       } catch(const std::exception&) {
       }
       m_marketDataClient->QueryBboQuotes(Beam::Queries::MakeRealTimeQuery(
-        security), m_tasks.GetSlot<BboQuote>(std::bind(
-          &PortfolioController::OnBbo, this, security, std::placeholders::_1)));
+        security), m_tasks.GetSlot<BboQuote>(std::bind_front(
+          &PortfolioController::OnBbo, this, security)));
       m_securities.insert(security);
     }
   }

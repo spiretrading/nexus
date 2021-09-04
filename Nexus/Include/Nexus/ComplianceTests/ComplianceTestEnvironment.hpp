@@ -101,7 +101,7 @@ namespace Nexus::Compliance::Tests {
     return ComplianceClientBox(
       std::in_place_type<ComplianceClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-        std::bind(boost::factory<std::unique_ptr<
+        std::bind_front(boost::factory<std::unique_ptr<
           ServiceProtocolClientBuilder::Channel>>(), "test_compliance_client",
           std::ref(m_serverConnection)),
         boost::factory<

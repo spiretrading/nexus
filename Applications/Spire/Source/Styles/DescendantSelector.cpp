@@ -1,11 +1,66 @@
 #include "Spire/Styles/DescendantSelector.hpp"
 #include <deque>
+#include <QChildEvent>
 #include <QWidget>
-#include "Spire/Styles/FlipSelector.hpp"
+#include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
+
+namespace {
+  struct DescendantObserver : public QObject {
+    std::function<void (std::unordered_set<const Stylist*>&& descendants)>
+      m_on_descendants_added;
+
+    DescendantObserver(const Stylist& stylist,
+        std::function<void (std::unordered_set<const Stylist*>&&)>&&
+          on_descendants_added)
+        : m_on_descendants_added(std::move(on_descendants_added)) {
+      auto descendants = build_descendants(stylist.get_widget());
+      const_cast<Stylist&>(stylist).get_widget().installEventFilter(this);
+      for(auto descendant : descendants) {
+        const_cast<Stylist&>(*descendant).get_widget().installEventFilter(this);
+      }
+      m_on_descendants_added(std::move(descendants));
+    }
+
+    std::unordered_set<const Stylist*> build_descendants(
+        const QWidget& root) const {
+      auto descendants = std::unordered_set<const Stylist*>();
+      auto breadth_traversal = std::deque<const QWidget*>();
+      breadth_traversal.push_back(&root);
+      while(!breadth_traversal.empty()) {
+        auto widget = breadth_traversal.front();
+        breadth_traversal.pop_front();
+        for(auto child : widget->children()) {
+          if(child->isWidgetType()) {
+            auto& child_widget = static_cast<QWidget&>(*child);
+            breadth_traversal.push_back(&child_widget);
+            descendants.insert(&find_stylist(child_widget));
+          }
+        }
+      }
+      return descendants;
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::ChildAdded) {
+        auto& child_event = static_cast<QChildEvent&>(*event);
+        if(child_event.child()->isWidgetType()) {
+          auto descendants = build_descendants(
+            static_cast<const QWidget&>(*child_event.child()));
+          for(auto descendant : descendants) {
+            const_cast<Stylist&>(*descendant).get_widget().installEventFilter(
+              this);
+          }
+          m_on_descendants_added(std::move(descendants));
+        }
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
+}
 
 DescendantSelector::DescendantSelector(Selector base, Selector descendant)
   : m_base(std::move(base)),
@@ -33,59 +88,14 @@ DescendantSelector Spire::Styles::operator >>(
   return DescendantSelector(std::move(base), std::move(descendant));
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const DescendantSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto selection = std::unordered_set<Stylist*>();
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    auto descendants = std::deque<QWidget*>();
-    for(auto child : source->get_widget().children()) {
-      if(child->isWidgetType()) {
-        descendants.push_back(static_cast<QWidget*>(child));
-      }
-    }
-    while(!descendants.empty()) {
-      auto descendant = descendants.front();
-      descendants.pop_front();
-      auto descendant_selection = select(selector.get_descendant(),
-        find_stylist(*static_cast<QWidget*>(descendant)));
-      if(!descendant_selection.empty()) {
-        if(is_flipped) {
-          selection.insert(source);
-          break;
-        } else {
-          selection.insert(
-            descendant_selection.begin(), descendant_selection.end());
-        }
-      }
-      for(auto child : descendant->children()) {
-        if(child->isWidgetType()) {
-          descendants.push_back(static_cast<QWidget*>(child));
-        }
-      }
-    }
-  }
-  return selection;
-}
-
-std::vector<QWidget*> Spire::Styles::build_reach(
-    const DescendantSelector& selector, QWidget& source) {
-  auto reach = std::unordered_set<QWidget*>();
-  auto bases = build_reach(selector.get_base(), source);
-  reach.insert(bases.begin(), bases.end());
-  auto descendants = std::deque<QWidget*>();
-  descendants.insert(descendants.end(), bases.begin(), bases.end());
-  while(!descendants.empty()) {
-    auto base = descendants.front();
-    descendants.pop_front();
-    for(auto child : base->children()) {
-      if(child->isWidgetType()) {
-        auto widget = static_cast<QWidget*>(child);
-        descendants.push_back(widget);
-        auto child_reach = build_reach(selector.get_descendant(), *widget);
-        reach.insert(child_reach.begin(), child_reach.end());
-      }
-    }
-  }
-  return std::vector(reach.begin(), reach.end());
+SelectConnection Spire::Styles::select(const DescendantSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return select(CombinatorSelector(selector.get_base(),
+    selector.get_descendant(),
+    [] (const Stylist& stylist, const SelectionUpdateSignal& on_update) {
+      return SelectConnection(std::make_unique<DescendantObserver>(stylist,
+        [=] (std::unordered_set<const Stylist*>&& descendants) {
+          on_update(std::move(descendants), {});
+        }));
+    }), base, on_update);
 }

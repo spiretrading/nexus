@@ -34,9 +34,10 @@ namespace {
     Fixture() {
       auto serviceLocatorClient = m_serviceLocatorEnvironment.MakeClient();
       auto serverConnection = std::make_shared<TestServerConnection>();
-      m_complianceClient.emplace(TestServiceProtocolClientBuilder(std::bind(
-        factory<std::unique_ptr<TestServiceProtocolClientBuilder::Channel>>(),
-        "test", std::ref(*serverConnection)),
+      m_complianceClient.emplace(TestServiceProtocolClientBuilder(
+        std::bind_front(
+          factory<std::unique_ptr<TestServiceProtocolClientBuilder::Channel>>(),
+          "test", std::ref(*serverConnection)),
         factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>()));
       m_complianceRuleSet.emplace(&*m_complianceClient,
         std::move(serviceLocatorClient),

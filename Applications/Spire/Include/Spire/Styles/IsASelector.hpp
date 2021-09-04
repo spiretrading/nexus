@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <unordered_set>
 #include <QWidget>
+#include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
@@ -43,8 +44,8 @@ namespace Spire::Styles {
     return IsASelector(std::in_place_type<T>);
   }
 
-  std::unordered_set<Stylist*>
-    select(const IsASelector& selector, std::unordered_set<Stylist*> sources);
+  SelectConnection select(const IsASelector& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 
   template<typename T>
   IsASelector::IsASelector(std::in_place_type_t<T>)
