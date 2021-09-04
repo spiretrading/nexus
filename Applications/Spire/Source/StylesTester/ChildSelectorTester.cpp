@@ -1,23 +1,11 @@
 #include <doctest/doctest.h>
 #include <QWidget>
-#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Styles/Stylist.hpp"
+#include "Spire/StylesTester/StylesTester.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  std::vector<QWidget*> make_graph() {
-    auto nodes = std::vector<QWidget*>();
-    nodes.push_back(new QWidget());
-    nodes.push_back(new QWidget(nodes.back()));
-    nodes.push_back(new QWidget(nodes.back()));
-    nodes.push_back(new QWidget(nodes.back()));
-    nodes.push_back(new QWidget(nodes.back()));
-    return nodes;
-  }
-}
+using namespace Spire::Styles::Tests;
 
 TEST_SUITE("ChildSelector") {
   TEST_CASE("equality") {
@@ -26,5 +14,45 @@ TEST_SUITE("ChildSelector") {
     REQUIRE(ChildSelector(Any(), Any()) != ChildSelector(Hover(), Any()));
     REQUIRE(ChildSelector(Any(), Hover()) != ChildSelector(Any(), Any()));
     REQUIRE(ChildSelector(Hover(), Any()) != ChildSelector(Any(), Any()));
+  }
+
+  TEST_CASE("selection") {
+    run_test([] {
+      auto graph = make_graph();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(ChildSelector(Hover(), Focus()),
+        find_stylist(*graph["B"]), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      REQUIRE(updates.empty());
+      match(*graph["B"], Hover());
+      REQUIRE(updates.empty());
+      match(*graph["D"], Focus());
+      require_selection(updates, graph, {"D"}, {});
+      match(*graph["C"], Focus());
+      require_selection(updates, graph, {"C"}, {});
+      graph["D"]->setParent(nullptr);
+      require_selection(updates, graph, {}, {"D"});
+      graph["C"]->setParent(nullptr);
+      require_selection(updates, graph, {}, {"C"});
+      auto child = QWidget();
+      graph["Z"] = &child;
+      match(child, Focus());
+      REQUIRE(updates.empty());
+      child.setParent(graph["B"]);
+      require_selection(updates, graph, {"Z"}, {});
+    });
+  }
+
+  TEST_CASE("selection") {
+    run_test([] {
+      auto graph = make_graph();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(ChildSelector(Any(), Any()),
+        find_stylist(*graph["B"]), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      require_selection(updates, graph, {"C", "D"}, {});
+    });
   }
 }

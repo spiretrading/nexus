@@ -9,20 +9,36 @@ using namespace Spire::Styles;
 
 namespace {
   struct ChildObserver : public QObject {
-    std::function<void (const Stylist& child)> m_on_child_added;
+    SelectionUpdateSignal m_on_update;
 
-    ChildObserver(const Stylist& stylist,
-        std::function<void (const Stylist& child)> on_child_added)
-        : m_on_child_added(std::move(on_child_added)) {
-      const_cast<Stylist&>(stylist).get_widget().installEventFilter(this);
+    ChildObserver(
+        const Stylist& stylist, const SelectionUpdateSignal& on_update)
+        : m_on_update(on_update) {
+      auto children = std::unordered_set<const Stylist*>();
+      for(auto child : stylist.get_widget().children()) {
+        if(child->isWidgetType()) {
+          children.insert(&find_stylist(static_cast<QWidget&>(*child)));
+        }
+      }
+      if(!children.empty()) {
+        m_on_update(std::move(children), {});
+      }
+      stylist.get_widget().installEventFilter(this);
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ChildAdded) {
         auto& child_event = static_cast<QChildEvent&>(*event);
         if(child_event.child()->isWidgetType()) {
-          m_on_child_added(
-            find_stylist(static_cast<const QWidget&>(*child_event.child())));
+          m_on_update(
+            {&find_stylist(static_cast<const QWidget&>(*child_event.child()))},
+            {});
+        }
+      } else if(event->type() == QEvent::ChildRemoved) {
+        auto& child_event = static_cast<QChildEvent&>(*event);
+        if(child_event.child()->isWidgetType()) {
+          m_on_update({},
+            {&find_stylist(static_cast<const QWidget&>(*child_event.child()))});
         }
       }
       return QObject::eventFilter(watched, event);
@@ -58,18 +74,7 @@ SelectConnection Spire::Styles::select(const ChildSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_child(),
     [] (const Stylist& stylist, const SelectionUpdateSignal& on_update) {
-      auto children = std::unordered_set<const Stylist*>();
-      for(auto child : stylist.get_widget().children()) {
-        if(child->isWidgetType()) {
-          children.insert(&find_stylist(static_cast<QWidget&>(*child)));
-        }
-      }
-      if(!children.empty()) {
-        on_update(std::move(children), {});
-      }
-      return SelectConnection(std::make_unique<ChildObserver>(stylist,
-        [=] (const Stylist& child) {
-          on_update({&child}, {});
-        }));
+      return SelectConnection(
+        std::make_unique<ChildObserver>(stylist, on_update));
     }), base, on_update);
 }

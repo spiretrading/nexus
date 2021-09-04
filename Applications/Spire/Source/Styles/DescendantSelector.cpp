@@ -18,9 +18,9 @@ namespace {
           on_descendants_added)
         : m_on_descendants_added(std::move(on_descendants_added)) {
       auto descendants = build_descendants(stylist.get_widget());
-      const_cast<Stylist&>(stylist).get_widget().installEventFilter(this);
+      stylist.get_widget().installEventFilter(this);
       for(auto descendant : descendants) {
-        const_cast<Stylist&>(*descendant).get_widget().installEventFilter(this);
+        descendant->get_widget().installEventFilter(this);
       }
       m_on_descendants_added(std::move(descendants));
     }
@@ -51,8 +51,7 @@ namespace {
           auto descendants = build_descendants(
             static_cast<const QWidget&>(*child_event.child()));
           for(auto descendant : descendants) {
-            const_cast<Stylist&>(*descendant).get_widget().installEventFilter(
-              this);
+            descendant->get_widget().installEventFilter(this);
           }
           m_on_descendants_added(std::move(descendants));
         }

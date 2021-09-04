@@ -173,11 +173,7 @@ Stylist::~Stylist() {
   }
 }
 
-const QWidget& Stylist::get_widget() const {
-  return *m_widget;
-}
-
-QWidget& Stylist::get_widget() {
+QWidget& Stylist::get_widget() const {
   return *m_widget;
 }
 
