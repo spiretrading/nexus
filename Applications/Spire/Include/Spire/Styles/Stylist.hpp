@@ -185,6 +185,11 @@ namespace Spire::Styles {
       void for_each_principal(F&& f);
       template<typename F>
       void for_each_principal(F&& f) const;
+      template<typename F>
+      void for_each_proxy(F&& f);
+      template<typename F>
+      void for_each_proxy(F&& f) const;
+      void apply(const StyleSheet& style);
       void apply(Stylist& source, const RuleEntry& rule);
       void unapply(Stylist& source, const RuleEntry& rule);
       void apply();

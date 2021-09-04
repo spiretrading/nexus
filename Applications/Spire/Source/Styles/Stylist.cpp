@@ -190,7 +190,6 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-  static auto priority = 0;
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     rule->m_selection.clear();
@@ -200,15 +199,7 @@ void Stylist::set_style(StyleSheet style) {
   }
   m_rules.clear();
   m_style = std::move(style);
-  for(auto& r : m_style.get_rules()) {
-    auto rule = std::make_unique<RuleEntry>();
-    rule->m_priority = priority;
-    ++priority;
-    rule->m_rule = r;
-    rule->m_connection = select(rule->m_rule.get_selector(), *this,
-      std::bind_front(&Stylist::on_selection_update, this, std::ref(*rule)));
-    m_rules.push_back(std::move(rule));
-  }
+  for_each_proxy([&] (auto& proxy) { proxy.apply(m_style); });
 }
 
 bool Stylist::is_match(const Selector& selector) const {
@@ -239,7 +230,7 @@ void Stylist::add_proxy(QWidget& widget) {
   if(i == m_proxies.end()) {
     m_proxies.push_back(&stylist);
     stylist.m_principals.push_back(this);
-    stylist.apply_proxies();
+    stylist.apply(m_style);
   }
 }
 
@@ -304,20 +295,43 @@ void Stylist::for_each_principal(F&& f) {
     principals.pop_front();
     principals.insert(principals.end(), principal->m_principals.begin(),
       principal->m_principals.end());
-    std::forward<F>(f)(principal);
+    std::forward<F>(f)(*principal);
   }
 }
 
 template<typename F>
 void Stylist::for_each_principal(F&& f) const {
-  auto principals = std::deque<const Stylist*>();
-  principals.push_back(this);
-  while(!principals.empty()) {
-    auto principal = principals.front();
-    principals.pop_front();
-    principals.insert(principals.end(), principal->m_principals.begin(),
-      principal->m_principals.end());
-    std::forward<F>(f)(principal);
+  const_cast<Stylist*>(this)->for_each_principal(std::forward<F>(f));
+}
+
+template<typename F>
+void Stylist::for_each_proxy(F&& f) {
+  auto proxies = std::deque<Stylist*>();
+  proxies.push_back(this);
+  while(!proxies.empty()) {
+    auto proxy = proxies.front();
+    proxies.pop_front();
+    proxies.insert(
+      proxies.end(), proxy->m_proxies.begin(), proxy->m_proxies.end());
+    std::forward<F>(f)(*proxy);
+  }
+}
+
+template<typename F>
+void Stylist::for_each_proxy(F&& f) const {
+  const_cast<Stylist*>(this)->for_each_proxy(std::forward<F>(f));
+}
+
+void Stylist::apply(const StyleSheet& style) {
+  static auto priority = 0;
+  for(auto& rule : style.get_rules()) {
+    auto entry = std::make_unique<RuleEntry>();
+    entry->m_priority = priority;
+    ++priority;
+    entry->m_rule = rule;
+    entry->m_connection = select(entry->m_rule.get_selector(), *this,
+      std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
+    m_rules.push_back(std::move(entry));
   }
 }
 
@@ -392,20 +406,14 @@ void Stylist::apply_proxies() {
 optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto property = optional<Property>();
   auto reverted_property = optional<Property>();
-  for(auto& source : m_sources) {
-    if(auto p = find(source.m_rule->m_rule.get_block(), type)) {
-      reverted_property = std::move(property);
-      property.emplace(*p);
-    }
-  }
-  for(auto principal : m_principals) {
-    for(auto& source : principal->m_sources) {
+  for_each_principal([&] (auto& principal) {
+    for(auto& source : principal.m_sources) {
       if(auto p = find(source.m_rule->m_rule.get_block(), type)) {
         reverted_property = std::move(property);
         property.emplace(*p);
       }
     }
-  }
+  });
   return reverted_property;
 }
 
