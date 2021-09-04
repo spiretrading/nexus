@@ -1,6 +1,6 @@
 #include "Spire/Styles/ParentSelector.hpp"
 #include <QWidget>
-#include "Spire/Styles/FlipSelector.hpp"
+#include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -26,36 +26,13 @@ bool ParentSelector::operator !=(const ParentSelector& selector) const {
   return !(*this == selector);
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const ParentSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  auto selection = std::unordered_set<Stylist*>();
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    if(auto parent = source->get_widget().parentWidget()) {
-      auto parent_selection = select(selector.get_parent(),
-        find_stylist(*parent));
-      if(!parent_selection.empty()) {
-        if(is_flipped) {
-          selection.insert(source);
-        } else {
-          selection.insert(parent_selection.begin(), parent_selection.end());
-        }
+SelectConnection Spire::Styles::select(const ParentSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return select(CombinatorSelector(selector.get_base(),
+    selector.get_parent(), [] (const Stylist& stylist) {
+      if(auto parent = stylist.get_widget().parentWidget()) {
+        return std::unordered_set<const Stylist*>{&find_stylist(*parent)};
       }
-    }
-  }
-  return selection;
-}
-
-std::vector<QWidget*> Spire::Styles::build_reach(
-    const ParentSelector& selector, QWidget& source) {
-  auto reach = std::unordered_set<QWidget*>();
-  auto bases = build_reach(selector.get_base(), source);
-  reach.insert(bases.begin(), bases.end());
-  for(auto base : bases) {
-    if(auto parent = base->parentWidget()) {
-      auto parent_reach = build_reach(selector.get_parent(), *parent);
-      reach.insert(parent_reach.begin(), parent_reach.end());
-    }
-  }
-  return std::vector(reach.begin(), reach.end());
+      return std::unordered_set<const Stylist*>();
+    }), base, on_update);
 }

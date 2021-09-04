@@ -68,6 +68,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   connect_style_signal(*this, [=] { on_style(); });
 }
 
+const QWidget& ScrollBox::get_body() const {
+  return *m_body;
+}
+
 QWidget& ScrollBox::get_body() {
   return *m_body;
 }
@@ -460,9 +464,9 @@ void ScrollBox::update_ranges() {
     m_viewport->width());
 }
 
-std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
-    ScrollBox& box, const Body& body) const {
-  auto stylists = std::unordered_set<Stylist*>();
-  stylists.insert(&find_stylist(box.get_body()));
-  return stylists;
+SelectConnection BaseComponentFinder<ScrollBox, Body>::operator ()(
+    const ScrollBox& box, const Body& body,
+    const SelectionUpdateSignal& on_update) const {
+  on_update({&find_stylist(box.get_body())}, {});
+  return {};
 }

@@ -2,12 +2,15 @@
 #define SPIRE_PSEUDO_ELEMENT_HPP
 #include <any>
 #include <functional>
-#include <typeindex>
-#include <unordered_set>
 #include <utility>
+#include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+namespace Details {
+  SelectConnection select_pseudo_element(const PseudoElement& element,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+}
 
   /** Represents a sub-section of a widget. */
   class PseudoElement {
@@ -29,13 +32,14 @@ namespace Spire::Styles {
       bool operator !=(const PseudoElement& selector) const;
 
     private:
-      friend std::unordered_set<Stylist*>
-        select(const PseudoElement&, std::unordered_set<Stylist*>);
+      friend SelectConnection select(
+        const PseudoElement&, const Stylist&, const SelectionUpdateSignal&);
       std::any m_pseudo_element;
-      std::function<
-        bool (const PseudoElement&, const PseudoElement&)> m_is_equal;
-      std::function<std::unordered_set<Stylist*> (
-        const PseudoElement&, std::unordered_set<Stylist*>)> m_select;
+      std::function<bool (const PseudoElement&, const PseudoElement&)>
+        m_is_equal;
+      std::function<SelectConnection (
+        const PseudoElement&, const Stylist&, const SelectionUpdateSignal&)>
+        m_select;
   };
 
   /**
@@ -83,20 +87,14 @@ namespace Spire::Styles {
   /** Returns the hash value of a PseudoElement. */
   std::size_t hash_value(const PseudoElement& element);
 
-  std::unordered_set<Stylist*>
-    select(const PseudoElement& selector, std::unordered_set<Stylist*> sources);
+  SelectConnection select(const PseudoElement& element, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 
   template<typename T, typename G>
-  std::unordered_set<Stylist*>
-      select(const PseudoElementSelector<T, G>& selector,
-        std::unordered_set<Stylist*> sources) {
-    auto selection = std::unordered_set<Stylist*>();
-    for(auto source : sources) {
-      if(auto pseudo_stylist = find_stylist(source->get_widget(), selector)) {
-        selection.insert(pseudo_stylist);
-      }
-    }
-    return selection;
+  SelectConnection select(const PseudoElementSelector<T, G>& selector,
+      const Stylist& base, const SelectionUpdateSignal& on_update) {
+    return Details::select_pseudo_element(
+      PseudoElement(selector), base, on_update);
   }
 
   template<typename T, typename G>
@@ -107,10 +105,10 @@ namespace Spire::Styles {
           left.as<PseudoElementSelector<T, G>>() ==
             right.as<PseudoElementSelector<T, G>>();
       }),
-      m_select([] (
-          const PseudoElement& element, std::unordered_set<Stylist*> sources) {
-        return
-          select(element.as<PseudoElementSelector<T, G>>(), std::move(sources));
+      m_select([] (const PseudoElement& element, const Stylist& base,
+          const SelectionUpdateSignal& on_update) {
+        return select(
+          element.as<PseudoElementSelector<T, G>>(), base, on_update);
       }) {}
 
   template<typename U>

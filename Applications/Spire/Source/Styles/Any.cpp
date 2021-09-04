@@ -11,7 +11,8 @@ bool Any::operator !=(const Any& selector) const {
   return !(*this == selector);
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const Any& selector, std::unordered_set<Stylist*> sources) {
-  return sources;
+SelectConnection Spire::Styles::select(const Any& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update) {
+  on_update({&base}, {});
+  return {};
 }
