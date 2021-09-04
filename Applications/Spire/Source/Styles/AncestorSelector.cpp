@@ -17,10 +17,6 @@ namespace {
           on_ancestors_added)
         : m_on_ancestors_added(std::move(on_ancestors_added)) {
       auto ancestors = build_ancestors(stylist.get_widget());
-      const_cast<Stylist&>(stylist).get_widget().installEventFilter(this);
-      for(auto ancestor : ancestors) {
-        const_cast<Stylist&>(*ancestor).get_widget().installEventFilter(this);
-      }
       m_on_ancestors_added(std::move(ancestors));
     }
 
@@ -38,9 +34,6 @@ namespace {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ParentChange) {
         auto ancestors = build_ancestors(static_cast<QWidget&>(*watched));
-        for(auto ancestor : ancestors) {
-          const_cast<Stylist&>(*ancestor).get_widget().installEventFilter(this);
-        }
         m_on_ancestors_added(std::move(ancestors));
       }
       return QObject::eventFilter(watched, event);
@@ -80,5 +73,5 @@ SelectConnection Spire::Styles::select(const AncestorSelector& selector,
         [=] (std::unordered_set<const Stylist*>&& ancestors) {
           on_update(std::move(ancestors), {});
         }));
-    }), base, on_update);
+     }), base, on_update);
 }
