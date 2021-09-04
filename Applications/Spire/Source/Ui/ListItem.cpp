@@ -41,6 +41,7 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   }
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
+  proxy_style(*this, *m_box);
   set_style(*m_box, DEFAULT_STYLE());
 }
 
@@ -51,9 +52,9 @@ bool ListItem::is_selected() const {
 void ListItem::set_selected(bool is_selected) {
   m_is_selected = is_selected;
   if(m_is_selected) {
-    match(*m_box, Selected());
+    match(*this, Selected());
   } else {
-    unmatch(*m_box, Selected());
+    unmatch(*this, Selected());
   }
 }
 
@@ -69,14 +70,14 @@ connection ListItem::connect_submit_signal(
 
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    match(*m_box, Focus());
+    match(*this, Focus());
     m_current_signal();
   } else if(event->type() == QEvent::FocusOut) {
-    unmatch(*m_box, Focus());
+    unmatch(*this, Focus());
   } else if(event->type() == QEvent::Enter) {
-    match(*m_box, Hover());
+    match(*this, Hover());
   } else if(event->type() == QEvent::Leave) {
-    unmatch(*m_box, Hover());
+    unmatch(*this, Hover());
   }
   return QWidget::eventFilter(watched, event);
 }
