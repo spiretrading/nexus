@@ -33,9 +33,7 @@ SelectConnection Spire::Styles::select(const NotSelector& selector,
         const SelectionUpdateSignal& on_update)
         : m_base(&base) {
       auto is_included = false;
-      m_on_update = [&] (
-          std::unordered_set<const Stylist*>&& additions,
-          std::unordered_set<const Stylist*>&& removals) {
+      m_on_update = [&] (auto&& additions, auto&& removals) {
         is_included = true;
         if(!additions.empty()) {
           on_update(std::move(additions), {});

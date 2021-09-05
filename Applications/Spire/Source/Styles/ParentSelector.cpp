@@ -63,7 +63,7 @@ bool ParentSelector::operator !=(const ParentSelector& selector) const {
 SelectConnection Spire::Styles::select(const ParentSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_parent(),
-    [] (const Stylist& stylist, const SelectionUpdateSignal& on_update) {
+    [] (const auto& stylist, const auto& on_update) {
       return SelectConnection(
         std::make_unique<ParentObserver>(stylist, on_update));
     }), base, on_update);

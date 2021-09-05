@@ -27,7 +27,7 @@ bool PathSelector::operator !=(const PathSelector& selector) const {
 SelectConnection Spire::Styles::select(const PathSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_first(), selector.get_second(),
-    [] (const Stylist& stylist) {
+    [] (const auto& stylist) {
       return std::unordered_set{&stylist};
     }), base, on_update);
 }

@@ -16,7 +16,7 @@ CombinatorSelector::CombinatorSelector(Selector base, Selector match,
   StaticSelectionBuilder selection_builder)
   : CombinatorSelector(std::move(base), std::move(match),
       [selection_builder = std::move(selection_builder)] (
-          const Stylist& stylist, const SelectionUpdateSignal& on_update) {
+          const auto& stylist, const auto& on_update) {
         on_update(selection_builder(stylist), {});
         return SelectConnection();
       }) {}

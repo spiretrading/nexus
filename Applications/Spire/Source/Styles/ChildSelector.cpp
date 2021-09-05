@@ -73,7 +73,7 @@ ChildSelector Spire::Styles::operator >(Selector base, Selector child) {
 SelectConnection Spire::Styles::select(const ChildSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_child(),
-    [] (const Stylist& stylist, const SelectionUpdateSignal& on_update) {
+    [] (const auto& stylist, const auto& on_update) {
       return SelectConnection(
         std::make_unique<ChildObserver>(stylist, on_update));
     }), base, on_update);

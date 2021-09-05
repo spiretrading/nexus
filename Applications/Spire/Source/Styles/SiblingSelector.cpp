@@ -35,7 +35,7 @@ SiblingSelector Spire::Styles::operator %(Selector base, Selector sibling) {
 SelectConnection Spire::Styles::select(const SiblingSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_sibling(),
-    [] (const Stylist& stylist) {
+    [] (const auto& stylist) {
       auto siblings = std::unordered_set<const Stylist*>();
       auto widgets = stylist.get_widget().parent()->children();
       auto i = 0;
