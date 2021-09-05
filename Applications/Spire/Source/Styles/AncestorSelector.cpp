@@ -9,21 +9,30 @@ using namespace Spire::Styles;
 
 namespace {
   struct AncestorObserver : public QObject {
-    std::function<void (std::unordered_set<const Stylist*>&& ancestors)>
-      m_on_ancestors_added;
+    SelectionUpdateSignal m_on_update;
+    std::unordered_map<const Stylist*, const Stylist*> m_parents;
 
-    AncestorObserver(const Stylist& stylist,
-        std::function<void (std::unordered_set<const Stylist*>&&)>&&
-          on_ancestors_added)
-        : m_on_ancestors_added(std::move(on_ancestors_added)) {
+    AncestorObserver(
+        const Stylist& stylist, const SelectionUpdateSignal& on_update)
+        : m_on_update(std::move(on_update)) {
       auto ancestors = build_ancestors(stylist.get_widget());
-      m_on_ancestors_added(std::move(ancestors));
+      for(auto ancestor : ancestors) {
+        if(auto parent = ancestor->get_widget().parentWidget()) {
+          m_parents[ancestor] = &find_stylist(*parent);
+        }
+        ancestor->get_widget().installEventFilter(this);
+      }
+      m_on_update(std::move(ancestors), {});
+      if(auto parent = stylist.get_widget().parentWidget()) {
+        m_parents[&stylist] = &find_stylist(*parent);
+      }
+      stylist.get_widget().installEventFilter(this);
     }
 
     std::unordered_set<const Stylist*> build_ancestors(
-        const QWidget& root) const {
+        const QWidget& descendant) const {
       auto ancestors = std::unordered_set<const Stylist*>();
-      auto ancestor = root.parentWidget();
+      auto ancestor = descendant.parentWidget();
       while(ancestor) {
         ancestors.insert(&find_stylist(*ancestor));
         ancestor = ancestor->parentWidget();
@@ -33,8 +42,45 @@ namespace {
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ParentChange) {
-        auto ancestors = build_ancestors(static_cast<QWidget&>(*watched));
-        m_on_ancestors_added(std::move(ancestors));
+        auto& widget = static_cast<const QWidget&>(*watched);
+        auto& stylist = find_stylist(widget);
+        auto parent = m_parents.find(&stylist);
+        auto removals = [&] {
+          if(parent != m_parents.end()) {
+            auto ancestors = build_ancestors(parent->second->get_widget());
+            ancestors.insert(parent->second);
+            return ancestors;
+          }
+          return std::unordered_set<const Stylist*>();
+        }();
+        if(auto parent = widget.parentWidget()) {
+          m_parents[&stylist] = &find_stylist(*parent);
+        } else {
+          m_parents.erase(&stylist);
+        }
+        auto ancestors = build_ancestors(widget);
+        auto [base, complement] = [&] {
+          if(ancestors.size() <= removals.size()) {
+            return std::tuple{&ancestors, &removals};
+          }
+          return std::tuple{&removals, &ancestors};
+        }();
+        for(auto i = base->begin(); i != base->end();) {
+          auto stylist = *i;
+          if(complement->contains(stylist)) {
+            complement->erase(stylist);
+            i = base->erase(i);
+          } else {
+            ++i;
+          }
+        }
+        for(auto removal : removals) {
+          removal->get_widget().removeEventFilter(this);
+        }
+        for(auto ancestor : ancestors) {
+          ancestor->get_widget().installEventFilter(this);
+        }
+        m_on_update(std::move(ancestors), std::move(removals));
       }
       return QObject::eventFilter(watched, event);
     }
@@ -68,10 +114,8 @@ AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
 SelectConnection Spire::Styles::select(const AncestorSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_ancestor(),
-    [] (const Stylist& stylist, const SelectionUpdateSignal& on_update) {
-      return SelectConnection(std::make_unique<AncestorObserver>(stylist,
-        [=] (std::unordered_set<const Stylist*>&& ancestors) {
-          on_update(std::move(ancestors), {});
-        }));
-     }), base, on_update);
+    [] (const auto& stylist, const auto& on_update) {
+      return SelectConnection(
+        std::make_unique<AncestorObserver>(stylist, on_update));
+    }), base, on_update);
 }
