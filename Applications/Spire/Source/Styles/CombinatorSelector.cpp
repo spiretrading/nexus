@@ -16,7 +16,7 @@ CombinatorSelector::CombinatorSelector(Selector base, Selector match,
   StaticSelectionBuilder selection_builder)
   : CombinatorSelector(std::move(base), std::move(match),
       [selection_builder = std::move(selection_builder)] (
-          const Stylist& stylist, const SelectionUpdateSignal& on_update) {
+          const auto& stylist, const auto& on_update) {
         on_update(selection_builder(stylist), {});
         return SelectConnection();
       }) {}
@@ -102,6 +102,13 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
       m_selection[&base].insert(additions.begin(), additions.end());
+      auto consolidated_additions = std::unordered_set<const Stylist*>();
+      auto consolidated_removals = std::unordered_set<const Stylist*>();
+      auto on_update = std::move(m_on_update);
+      m_on_update = [&] (auto&& additions, auto&& removals) {
+        consolidated_additions.insert(additions.begin(), additions.end());
+        consolidated_removals.insert(removals.begin(), removals.end());
+      };
       for(auto stylist : additions) {
         auto& entry = m_match_entries[stylist];
         ++entry.m_count;
@@ -109,6 +116,24 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           entry.m_connection = select(m_match_selector, *stylist,
             std::bind_front(&Executor::on_match, this, std::ref(entry)));
         }
+      }
+      for(auto stylist : removals) {
+        auto entry = m_match_entries.find(stylist);
+        if(entry == m_match_entries.end()) {
+          continue;
+        }
+        --entry->second.m_count;
+        if(entry->second.m_count == 0) {
+          auto removals = std::move(entry->second.m_selection);
+          entry->second.m_selection.clear();
+          on_match(entry->second, {}, std::move(removals));
+          m_match_entries.erase(entry);
+        }
+      }
+      m_on_update = std::move(on_update);
+      if(!consolidated_additions.empty() || !consolidated_removals.empty()) {
+        m_on_update(
+          std::move(consolidated_additions), std::move(consolidated_removals));
       }
     }
 

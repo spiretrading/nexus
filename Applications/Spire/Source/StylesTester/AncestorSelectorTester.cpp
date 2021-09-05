@@ -1,8 +1,6 @@
-#include <deque>
 #include <doctest/doctest.h>
 #include <QWidget>
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/StylesTester/StylesTester.hpp"
 
 using namespace Spire;
@@ -20,40 +18,38 @@ TEST_SUITE("AncestorSelector") {
 
   TEST_CASE("select") {
     run_test([] {
-      auto root = QWidget();
-      auto l1 = QWidget(&root);
-      auto l2 = QWidget(&l1);
-      auto l3 = QWidget(&l2);
-      auto l4 = QWidget(&l3);
+      auto graph = make_graph();
       auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(
-        AncestorSelector(Hover(), Focus()), find_stylist(l3),
-        [&] (const auto& additions, const auto& removals) {
-          updates.push_back({additions, removals});
+      auto connection = select(AncestorSelector(Hover(), Focus()),
+        find_stylist(*graph["G"]), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
         });
       REQUIRE(updates.empty());
-      match(l3, Hover());
+      match(*graph["G"], Hover());
       REQUIRE(updates.empty());
-      match(l1, Focus());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.size() == 1);
-        REQUIRE(matches.m_removals.empty());
-        REQUIRE(matches.m_additions.contains(&find_stylist(l1)));
-      }
-      unmatch(l3, Hover());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.empty());
-        REQUIRE(matches.m_removals.size() == 1);
-        REQUIRE(matches.m_removals.contains(&find_stylist(l1)));
-      }
-      match(l1, Focus());
-      REQUIRE(updates.empty());
+      match(*graph["D"], Focus());
+      require_selection(updates, graph, {"D"}, {});
+      match(*graph["A"], Focus());
+      require_selection(updates, graph, {"A"}, {});
+      match(*graph["B"], Focus());
+      require_selection(updates, graph, {"B"}, {});
+      match(*graph["C"], Focus());
+      graph["G"]->setParent(graph["C"]);
+      require_selection(updates, graph, {"C"}, {"D"});
+      graph["G"]->setParent(nullptr);
+      require_selection(updates, graph, {}, {"C", "B", "A"});
+    });
+  }
+
+  TEST_CASE("initial_selection") {
+    run_test([] {
+      auto graph = make_graph();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(AncestorSelector(Any(), Any()),
+        find_stylist(*graph["G"]), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      require_selection(updates, graph, {"D", "B", "A"}, {});
     });
   }
 }

@@ -1,6 +1,5 @@
 #ifndef SPIRE_STATE_SELECTOR_HPP
 #define SPIRE_STATE_SELECTOR_HPP
-#include <unordered_set>
 #include <utility>
 #include <boost/signals2/connection.hpp>
 #include "Spire/Styles/Styles.hpp"

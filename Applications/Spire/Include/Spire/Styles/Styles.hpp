@@ -36,6 +36,7 @@ namespace Spire::Styles {
   class Rule;
   class Selector;
   class SelectorRegistry;
+  class SelectConnection;
   class SiblingSelector;
   template<typename T, typename G> class StateSelector;
   class StyleSheet;

@@ -34,7 +34,7 @@ std::size_t Spire::Styles::hash_value(const PseudoElement& element) {
   return std::hash<std::type_index>()(element.get_type());
 }
 
-std::size_t std::hash<PseudoElement>::operator
-    ()(const PseudoElement& element) const {
+std::size_t std::hash<PseudoElement>::operator ()(
+    const PseudoElement& element) const {
   return hash_value(element);
 }

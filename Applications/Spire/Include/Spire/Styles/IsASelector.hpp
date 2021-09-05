@@ -3,9 +3,8 @@
 #include <functional>
 #include <typeindex>
 #include <type_traits>
-#include <unordered_set>
 #include <QWidget>
-#include "Spire/Styles/Selector.hpp"
+#include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {

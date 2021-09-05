@@ -94,8 +94,6 @@ struct Stylist::StyleEventFilter : QObject {
       } else {
         m_stylist->unmatch(Active());
       }
-    } else if(event->type() == QEvent::ParentChange) {
-      m_stylist->set_style(m_stylist->get_style());
     }
     return QObject::eventFilter(watched, event);
   }
@@ -173,11 +171,7 @@ Stylist::~Stylist() {
   }
 }
 
-const QWidget& Stylist::get_widget() const {
-  return *m_widget;
-}
-
-QWidget& Stylist::get_widget() {
+QWidget& Stylist::get_widget() const {
   return *m_widget;
 }
 

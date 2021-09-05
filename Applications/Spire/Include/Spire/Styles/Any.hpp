@@ -1,7 +1,6 @@
 #ifndef SPIRE_STYLES_ANY_HPP
 #define SPIRE_STYLES_ANY_HPP
-#include <unordered_set>
-#include "Spire/Styles/Selector.hpp"
+#include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
