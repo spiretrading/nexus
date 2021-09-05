@@ -4,7 +4,7 @@
 #include <functional>
 #include <typeindex>
 #include <unordered_map>
-#include "Spire/Styles/Selector.hpp"
+#include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/Stylist.hpp"
 

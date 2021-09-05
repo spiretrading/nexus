@@ -1,5 +1,5 @@
 #include "Spire/Styles/ParentSelector.hpp"
-#include <QChildEvent>
+#include <QEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"

@@ -2,8 +2,9 @@
 #define SPIRE_PSEUDO_ELEMENT_HPP
 #include <any>
 #include <functional>
+#include <typeindex>
 #include <utility>
-#include "Spire/Styles/Selector.hpp"
+#include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
