@@ -44,7 +44,7 @@ TEST_SUITE("ChildSelector") {
     });
   }
 
-  TEST_CASE("selection") {
+  TEST_CASE("initial_selection") {
     run_test([] {
       auto graph = make_graph();
       auto updates = std::deque<SelectionUpdate>();

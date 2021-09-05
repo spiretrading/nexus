@@ -119,6 +119,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
       }
       for(auto stylist : removals) {
         auto entry = m_match_entries.find(stylist);
+        if(entry == m_match_entries.end()) {
+          continue;
+        }
         --entry->second.m_count;
         if(entry->second.m_count == 0) {
           auto removals = std::move(entry->second.m_selection);
