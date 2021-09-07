@@ -101,8 +101,13 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
   private:
     int m_longest_line_width;
+    QString m_reference_text;
 
     void on_text_changed() {
+      auto current_text = toPlainText();
+      if(!current_text.endsWith(ELLIPSES_CHAR)) {
+        m_reference_text = std::move(current_text);
+      }
       auto previous_longest_line = m_longest_line_width;
       m_longest_line_width = get_longest_line_width();
       if(m_longest_line_width != previous_longest_line) {
@@ -111,13 +116,10 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     }
 
     int get_longest_line_width() const {
+      auto lines = m_reference_text.split('\n');
       auto longest = 0;
-      for(auto i = 0; i < document()->blockCount(); ++i) {
-        auto block = document()->findBlockByNumber(i);
-        if(block.isValid()) {
-          longest =
-            std::max(longest, fontMetrics().horizontalAdvance(block.text()));
-        }
+      for(const auto& line : lines) {
+        longest = std::max(longest, fontMetrics().horizontalAdvance(line));
       }
       return longest;
     }
