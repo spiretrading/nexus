@@ -18,8 +18,6 @@ using namespace Spire::Styles;
 
 namespace {
   void apply_label_style(TextBox& text_box) {
-    text_box.setDisabled(true);
-    text_box.set_read_only(true);
     auto style = get_style(text_box);
     style.get(Any()).
       set(border_size(0)).
@@ -27,6 +25,8 @@ namespace {
     style.get(ReadOnly() && Disabled()).
       set(TextColor(QColor::fromRgb(0, 0, 0)));
     set_style(text_box, std::move(style));
+    text_box.setDisabled(true);
+    text_box.set_read_only(true);
   }
 
   auto DEFAULT_STYLE() {
