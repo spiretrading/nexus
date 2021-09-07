@@ -376,8 +376,6 @@ void TextBox::commit_style() {
   }
   if(stylesheet != m_line_edit->styleSheet()) {
     m_line_edit->setStyleSheet(stylesheet);
-    m_line_edit->style()->unpolish(this);
-    m_line_edit->style()->polish(this);
   }
   update_display_text();
 }
@@ -401,8 +399,6 @@ void TextBox::commit_placeholder_style() {
   m_placeholder->setFont(font);
   if(stylesheet != m_placeholder->styleSheet()) {
     m_placeholder->setStyleSheet(stylesheet);
-    m_placeholder->style()->unpolish(this);
-    m_placeholder->style()->polish(this);
   }
   update_placeholder_text();
 }

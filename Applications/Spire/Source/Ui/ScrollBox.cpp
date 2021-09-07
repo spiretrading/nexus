@@ -229,8 +229,6 @@ void ScrollBox::commit_border_styles() {
   }
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
-    style()->unpolish(this);
-    style()->polish(this);
   }
 }
 
@@ -240,8 +238,6 @@ void ScrollBox::commit_padding_styles() {
   m_padding_styles.write(stylesheet);
   if(stylesheet != m_viewport->styleSheet()) {
     m_viewport->setStyleSheet(stylesheet);
-    m_viewport->style()->unpolish(m_viewport);
-    m_viewport->style()->polish(m_viewport);
   }
   on_horizontal_scroll(
     m_scrollable_layer->get_horizontal_scroll_bar().get_position());

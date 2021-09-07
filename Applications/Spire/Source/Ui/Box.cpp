@@ -162,8 +162,6 @@ void Box::commit_style() {
   m_styles.write(stylesheet);
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
-    style()->unpolish(this);
-    style()->polish(this);
     if(m_body) {
       m_size_hint = none;
       updateGeometry();
