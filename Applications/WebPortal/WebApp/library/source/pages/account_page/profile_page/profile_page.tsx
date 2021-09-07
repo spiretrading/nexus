@@ -176,7 +176,10 @@ export class ProfilePage extends React.Component<Properties, State> {
         const localizedDate = new Date(Date.UTC(
           serverDateTime.date.year,
           serverDateTime.date.month - 1,
-          serverDateTime.date.day
+          serverDateTime.date.day,
+          serverDateTime.timeOfDay.split().hours,
+          serverDateTime.timeOfDay.split().minutes,
+          serverDateTime.timeOfDay.split().seconds
         ));
         return `${localizedDate.toLocaleDateString()} ${
           localizedDate.toLocaleTimeString()}`;
@@ -186,7 +189,10 @@ export class ProfilePage extends React.Component<Properties, State> {
       const localizedDate = new Date(Date.UTC(
         this.props.identity.registrationTime.date.year,
         this.props.identity.registrationTime.date.month - 1,
-        this.props.identity.registrationTime.date.day
+        this.props.identity.registrationTime.date.day,
+        this.props.identity.registrationTime.timeOfDay.split().hours,
+        this.props.identity.registrationTime.timeOfDay.split().minutes,
+        this.props.identity.registrationTime.timeOfDay.split().seconds
       ));
       return localizedDate.toLocaleDateString();
     })();
@@ -320,10 +326,6 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     return (
       <PageWrapper>
-        <div>
-
-        </div>
-
         <div style={ProfilePage.STYLE.page}>
           <div style={ProfilePage.STYLE.pagePadding}/>
           <div style={contentWidth}>
