@@ -366,8 +366,6 @@ void TextAreaBox::commit_style() {
   }
   if(stylesheet != m_text_edit->styleSheet()) {
     m_text_edit->setStyleSheet(stylesheet);
-    m_text_edit->style()->unpolish(this);
-    m_text_edit->style()->polish(this);
   }
 }
 
