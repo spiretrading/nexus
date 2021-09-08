@@ -91,10 +91,9 @@ FocusObserver::FocusObserver(const QWidget& widget)
     : m_widget(&widget),
       m_state(State::NONE) {
   if(m_widget->hasFocus()) {
-    m_state |= State::FOCUS;
-    m_state |= State::FOCUS_IN;
+    m_state = State::FOCUS | State::FOCUS_IN;
   } else if(m_widget->isAncestorOf(QApplication::focusWidget())) {
-    m_state |= State::FOCUS_IN;
+    m_state = State::FOCUS_IN;
   }
   m_old_state = m_state;
   m_focus_event_filter = std::make_unique<FocusEventFilter>(*this);
