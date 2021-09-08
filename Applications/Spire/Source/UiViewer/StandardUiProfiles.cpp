@@ -23,6 +23,7 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
@@ -820,6 +821,86 @@ UiProfile Spire::make_filter_panel_profile() {
         panel->show();
       });
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_focus_observer_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto test_widget_property = define_enum<int>(
+    {{"DurationBox", 0}, {"ListItem", 1}, {"LabelButton", 2}, {"ListView", 3}});
+  properties.push_back(
+    make_standard_enum_property("widget", test_widget_property));
+  auto profile = UiProfile(QString::fromUtf8("FocusObserver"), properties,
+    [] (auto& profile) {
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("StateSignal"));
+      auto to_string = [] (auto state) -> QString {
+        if(state == FocusObserver::State::NONE) {
+          return "NONE";
+        }
+        QString focus_state;
+        if((state & FocusObserver::State::FOCUS) ==
+            FocusObserver::State::FOCUS) {
+          focus_state = "FOCUS";
+        }
+        if((state & FocusObserver::State::FOCUS_IN) ==
+            FocusObserver::State::FOCUS_IN) {
+          if(!focus_state.isEmpty()) {
+            focus_state += " | ";
+          }
+          focus_state += "FOCUS_IN";
+        }
+        if((state & FocusObserver::State::FOCUS_VISIBLE) ==
+            FocusObserver::State::FOCUS_VISIBLE) {
+          if(!focus_state.isEmpty()) {
+            focus_state += " | ";
+          }
+          focus_state += "FOCUS_VISIBLE";
+        }
+        return focus_state;
+      };
+      auto& test_widget = get<int>("widget", profile.get_properties());
+      auto widget = [&] () -> QWidget* {
+        auto value = test_widget.get();
+        if(value == 0) {
+          return new DurationBox();
+        } else if(value == 1) {
+          return new ListItem(make_label(QString::fromUtf8("ListItem")));
+        } else if(value == 2) {
+          return make_label_button("Label Button");
+        } else {
+          auto item_count = 10;
+          auto list_model = std::make_shared<ArrayListModel>();
+          for(auto i = 0; i < item_count; ++i) {
+            list_model->push(QString::fromUtf8("Item%1").arg(i));
+          }
+          auto list_view = new ListView(list_model);
+          for(auto i = 0; i < item_count; ++i) {
+            auto item_focus_observer = new FocusObserver(
+              *list_view->get_list_item(i));
+            item_focus_observer->connect_state_signal([=] (auto state) {
+              filter_slot(QString("%1").arg(to_string(state)));
+            });
+          }
+          auto timer = new QTimer(list_view);
+          QObject::connect(timer, &QTimer::timeout, [=] {
+            if(auto& current = list_view->get_current_model()->get_current()) {
+              list_view->get_current_model()->
+                set_current((*current + 1) % item_count);
+            }
+          });
+          timer->start(3000);
+          return list_view;
+        }
+      }();
+      apply_widget_properties(widget, profile.get_properties());
+      auto focus_observer = new FocusObserver(*widget);
+      focus_observer->connect_state_signal([=] (auto state) {
+        filter_slot(QString("%1").arg(to_string(state)));
+      });
+      return widget;
     });
   return profile;
 }
