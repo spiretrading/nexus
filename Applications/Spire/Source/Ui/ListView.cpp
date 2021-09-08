@@ -1,6 +1,5 @@
 #include "Spire/Ui/ListView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QApplication>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QHBoxLayout>
@@ -64,6 +63,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
+      m_user_triggered_move(false),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
@@ -199,6 +199,7 @@ void ListView::append_query(const QString& query) {
     while(i != start) {
       if(m_items[i]->m_item->isEnabled() && displayTextAny(
           m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
+        m_user_triggered_move = true;
         m_current_model->set_current(i);
         break;
       }
@@ -259,6 +260,7 @@ void ListView::navigate(
     return;
   }
   m_navigation_box = m_items[i]->m_item->frameGeometry();
+  m_user_triggered_move = true;
   m_current_model->set_current(i);
 }
 
@@ -316,6 +318,7 @@ void ListView::cross(int direction) {
   if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
+  m_user_triggered_move = true;
   m_current_model->set_current(candidate);
   m_navigation_box = navigation_box;
 }
@@ -448,14 +451,18 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
 }
 
 void ListView::on_current(const boost::optional<int>& current) {
-  if(current) {
+  if(current && (hasFocus() || isAncestorOf(focusWidget()))) {
     m_items[*current]->m_item->setFocus();
-  } else if(isAncestorOf(QApplication::focusWidget())) {
+  } else if(isAncestorOf(focusWidget())) {
     setFocus();
+  }
+  if(m_selection_mode != SelectionMode::NONE && m_user_triggered_move) {
+    m_selection_model->set_current(*current);
   }
 }
 
 void ListView::on_selection(const optional<int>& selected) {
+  m_user_triggered_move = false;
   if(m_selected == selected) {
     return;
   }
