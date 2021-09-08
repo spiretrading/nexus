@@ -103,18 +103,18 @@ namespace Spire {
     : m_view_builder(&default_view_builder) {}
 
   template<typename T>
-  EnumBox<T>::EnumBox(Settings settings, QWidget* parent) {
+  EnumBox<T>::EnumBox(Settings settings, QWidget* parent)
+      : m_current(std::move(settings.m_current)) {
     if(!settings.m_cases) {
       auto model = std::make_shared<ArrayListModel>();
-      model->push(settings.m_current->get_current());
+      model->push(m_current->get_current());
       settings.m_cases = std::move(model);
-    } if(!settings.m_current) {
-      settings.m_current =
+    } if(!m_current) {
+      m_current =
         std::make_shared<LocalValueModel<Type>>(settings.m_cases->get<Type>(0));
     }
     auto list_view = new ListView(settings.m_cases,
-      std::make_shared<ListIndexValueModel<Type>>(
-        settings.m_cases, settings.m_current),
+      std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current),
       std::make_shared<LocalValueModel<boost::optional<int>>>(),
       [view_builder = settings.m_view_builder] (const auto& model, auto index) {
         return view_builder(model->get<Type>(index));
