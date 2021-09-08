@@ -70,6 +70,8 @@ bool DropDownList::event(QEvent* event) {
       auto margins = m_panel->layout()->contentsMargins();
       m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);
     }
+  } else if(event->type() == QEvent::HideToParent) {
+    m_panel->hide();
   }
   return QWidget::event(event);
 }

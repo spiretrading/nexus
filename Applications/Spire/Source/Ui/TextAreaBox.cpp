@@ -54,6 +54,8 @@ namespace {
     VerticalOffsetWrapper(QWidget* body)
         : m_body(body) {
       auto layout = new QVBoxLayout();
+      layout->setAlignment(
+        Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
       layout->setContentsMargins({});
       layout->addSpacerItem(
         new QSpacerItem(0, 1, QSizePolicy::Minimum, QSizePolicy::Fixed));
@@ -367,8 +369,6 @@ void TextAreaBox::commit_style() {
   }
   if(stylesheet != m_text_edit->styleSheet()) {
     m_text_edit->setStyleSheet(stylesheet);
-    m_text_edit->style()->unpolish(this);
-    m_text_edit->style()->polish(this);
   }
 }
 

@@ -1,10 +1,44 @@
 #include "Spire/Styles/ParentSelector.hpp"
+#include <QEvent>
 #include <QWidget>
-#include "Spire/Styles/FlipSelector.hpp"
+#include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
+
+namespace {
+  struct ParentObserver : public QObject {
+    SelectionUpdateSignal m_on_update;
+    QWidget* m_parent;
+
+    ParentObserver(
+        const Stylist& stylist, const SelectionUpdateSignal& on_update)
+        : m_on_update(on_update),
+          m_parent(stylist.get_widget().parentWidget()) {
+      if(m_parent) {
+        m_on_update({&find_stylist(*m_parent)}, {});
+      }
+      stylist.get_widget().installEventFilter(this);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::ParentChange) {
+        auto& widget = static_cast<QWidget&>(*watched);
+        auto old_parent = m_parent;
+        m_parent = widget.parentWidget();
+        if(m_parent && old_parent) {
+          m_on_update({&find_stylist(*m_parent)}, {&find_stylist(*old_parent)});
+        } else if(m_parent) {
+          m_on_update({&find_stylist(*m_parent)}, {});
+        } else {
+          m_on_update({}, {&find_stylist(*old_parent)});
+        }
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
+}
 
 ParentSelector::ParentSelector(Selector base, Selector parent)
   : m_base(std::move(base)),
@@ -26,36 +60,11 @@ bool ParentSelector::operator !=(const ParentSelector& selector) const {
   return !(*this == selector);
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const ParentSelector& selector, std::unordered_set<Stylist*> sources) {
-  auto is_flipped = selector.get_base().get_type() == typeid(FlipSelector);
-  auto selection = std::unordered_set<Stylist*>();
-  for(auto source : select(selector.get_base(), std::move(sources))) {
-    if(auto parent = source->get_widget().parentWidget()) {
-      auto parent_selection = select(selector.get_parent(),
-        find_stylist(*parent));
-      if(!parent_selection.empty()) {
-        if(is_flipped) {
-          selection.insert(source);
-        } else {
-          selection.insert(parent_selection.begin(), parent_selection.end());
-        }
-      }
-    }
-  }
-  return selection;
-}
-
-std::vector<QWidget*> Spire::Styles::build_reach(
-    const ParentSelector& selector, QWidget& source) {
-  auto reach = std::unordered_set<QWidget*>();
-  auto bases = build_reach(selector.get_base(), source);
-  reach.insert(bases.begin(), bases.end());
-  for(auto base : bases) {
-    if(auto parent = base->parentWidget()) {
-      auto parent_reach = build_reach(selector.get_parent(), *parent);
-      reach.insert(parent_reach.begin(), parent_reach.end());
-    }
-  }
-  return std::vector(reach.begin(), reach.end());
+SelectConnection Spire::Styles::select(const ParentSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return select(CombinatorSelector(selector.get_base(), selector.get_parent(),
+    [] (const auto& stylist, const auto& on_update) {
+      return SelectConnection(
+        std::make_unique<ParentObserver>(stylist, on_update));
+    }), base, on_update);
 }
