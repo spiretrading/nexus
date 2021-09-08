@@ -29,6 +29,7 @@ namespace Spire {
   class InfoTip;
   class KeyInputBox;
   class LayeredWidget;
+  template<typename T> class ListIndexValueModel;
   class ListItem;
   class ListModel;
   class ListView;

@@ -1,9 +1,11 @@
 #ifndef SPIRE_ENUM_BOX_HPP
 #define SPIRE_ENUM_BOX_HPP
 #include <QHBoxLayout>
-#include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/ListIndexValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -57,6 +59,9 @@ namespace Spire {
 
         /** The ViewBuilder to use. */
         ViewBuilder m_view_builder;
+
+        /** Constructs Settings using default values. */
+        Settings();
       };
 
       /**
@@ -64,7 +69,7 @@ namespace Spire {
        * @param settings The settings used by the EnumBox.
        * @param parent The parent widget.
        */
-      explicit EnumBox(const Settings& settings, QWidget* parent = nullptr)
+      explicit EnumBox(Settings settings, QWidget* parent = nullptr);
 
       /** Returns the model representing the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
@@ -81,7 +86,7 @@ namespace Spire {
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
-        const SubmitSignal::slot_type& slot) const;
+        const typename SubmitSignal::slot_type& slot) const;
 
     private:
       std::shared_ptr<CurrentModel> m_current;
@@ -94,13 +99,26 @@ namespace Spire {
   }
 
   template<typename T>
-  EnumBox<T>::EnumBox(const Settings& settings, QWidget* parent) {
+  EnumBox<T>::Settings::Settings()
+    : m_view_builder(&default_view_builder) {}
+
+  template<typename T>
+  EnumBox<T>::EnumBox(Settings settings, QWidget* parent) {
     if(!settings.m_cases) {
       auto model = std::make_shared<ArrayListModel>();
-      model->push(*settings.m_current);
+      model->push(settings.m_current->get_current());
       settings.m_cases = std::move(model);
+    } if(!settings.m_current) {
+      settings.m_current =
+        std::make_shared<LocalValueModel<Type>>(settings.m_cases->get<Type>(0));
     }
-    auto list_view = new ListView(settings.m_cases);
+    auto list_view = new ListView(settings.m_cases,
+      std::make_shared<ListIndexValueModel<Type>>(
+        settings.m_cases, settings.m_current),
+      std::make_shared<LocalValueModel<boost::optional<int>>>(),
+      [view_builder = settings.m_view_builder] (const auto& model, auto index) {
+        return view_builder(model->get<Type>(index));
+      });
     m_drop_down_box = new DropDownBox(*list_view);
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});
@@ -125,7 +143,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection EnumBox<T>::connect_submit_signal(
-      const SubmitSignal::slot_type& slot) const {
+      const typename SubmitSignal::slot_type& slot) const {
     return m_drop_down_box->connect_submit_signal([=] (const auto& submission) {
       slot(std::any_cast<const Type&>(submission));
     });

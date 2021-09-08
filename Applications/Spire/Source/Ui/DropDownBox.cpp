@@ -146,6 +146,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_drop_down_list->hide();
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
+  on_current(get_current_model()->get_current());
   m_button->connect_clicked_signal([=] { on_click(); });
   m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
