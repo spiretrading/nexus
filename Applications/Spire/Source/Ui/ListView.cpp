@@ -21,11 +21,6 @@ namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
 
-  QWidget* default_view_builder(
-      const std::shared_ptr<ListModel>& model, int index) {
-    return make_label(displayTextAny(model->at(index)));
-  }
-
   auto reverse(QBoxLayout::Direction direction) {
     if(direction == QBoxLayout::TopToBottom) {
       return QBoxLayout::LeftToRight;
@@ -42,23 +37,30 @@ namespace {
   }
 }
 
+QWidget* ListView::default_view_builder(
+    const std::shared_ptr<ListModel>& model, int index) {
+  return make_label(displayTextAny(model->at(index)));
+}
+
 ListView::ListView(std::shared_ptr<ListModel> list_model, QWidget* parent)
   : ListView(std::move(list_model), default_view_builder, parent) {}
 
 ListView::ListView(std::shared_ptr<ListModel> list_model,
   ViewBuilder view_builder, QWidget* parent)
-  : ListView(std::move(list_model), std::move(view_builder),
+  : ListView(std::move(list_model),
       std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<int>>>(), parent) {}
+      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::move(view_builder), parent) {}
 
 ListView::ListView(std::shared_ptr<ListModel> list_model,
-    ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
-    std::shared_ptr<SelectionModel> selection_model, QWidget* parent)
+    std::shared_ptr<CurrentModel> current_model,
+    std::shared_ptr<SelectionModel> selection_model, ViewBuilder view_builder,
+    QWidget* parent)
     : QWidget(parent),
       m_list_model(std::move(list_model)),
-      m_view_builder(std::move(view_builder)),
       m_current_model(std::move(current_model)),
       m_selection_model(std::move(selection_model)),
+      m_view_builder(std::move(view_builder)),
       m_selected(m_selection_model->get_current()),
       m_direction(Qt::Vertical),
       m_edge_navigation(EdgeNavigation::WRAP),

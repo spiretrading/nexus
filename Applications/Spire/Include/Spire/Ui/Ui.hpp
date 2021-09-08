@@ -22,6 +22,7 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
+  template<typename T> class EnumBox;
   class FilteredTableModel;
   class FilterPanel;
   class Icon;

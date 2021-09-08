@@ -156,6 +156,20 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_drop_down_list->get_panel().installEventFilter(this);
 }
 
+const std::shared_ptr<ListModel>& DropDownBox::get_list_model() const {
+  return m_list_view->get_list_model();
+}
+  
+const std::shared_ptr<DropDownBox::CurrentModel>&
+    DropDownBox::get_current_model() const {
+  return m_list_view->get_current_model();
+}
+
+const std::shared_ptr<DropDownBox::SelectionModel>&
+    DropDownBox::get_selection_model() const {
+  return m_list_view->get_selection_model();
+}
+
 bool DropDownBox::is_read_only() const {
   return m_text_box->is_read_only();
 }
