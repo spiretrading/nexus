@@ -102,25 +102,27 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 }
 
 bool OverlayPanel::event(QEvent* event) {
-  if(event->type() == QEvent::WindowDeactivate && m_is_closed_on_blur) {
-    auto is_ancestor = [&] {
-      auto current = qApp->activeWindow();
-      while(current) {
-        if(current == this) {
-          return true;
+  if(m_is_closed_on_blur) {
+    if(event->type() == QEvent::WindowDeactivate) {
+      auto is_ancestor = [&] {
+        auto current = qApp->activeWindow();
+        while(current) {
+          if(current == this) {
+            return true;
+          }
+          current = current->parentWidget();
         }
-        current = current->parentWidget();
+        return false;
+      }();
+      if(!is_ancestor) {
+        close();
       }
-      return false;
-    }();
-    if(!is_ancestor) {
-      close();
-    }
-  } else if(event->type() == QEvent::WindowActivate && m_is_closed_on_blur) {
-    for(auto child : findChildren<QWidget*>()) {
-      auto child_window = static_cast<QWidget*>(child)->window();
-      if(child_window != this) {
-        child_window->close();
+    } else if(event->type() == QEvent::WindowActivate) {
+      for(auto child : findChildren<QWidget*>()) {
+        auto child_window = static_cast<QWidget*>(child)->window();
+        if(child_window != this) {
+          child_window->close();
+        }
       }
     }
   }
