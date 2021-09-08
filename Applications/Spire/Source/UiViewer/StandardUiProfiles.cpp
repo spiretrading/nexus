@@ -1106,6 +1106,7 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(make_standard_property("select_item", 0));
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
+  properties.push_back(make_standard_property("auto_set_current_null", false));
   auto profile = UiProfile(QString::fromUtf8("ListView"), properties,
     [=] (auto& profile) {
       auto& random_height_seed =
@@ -1224,6 +1225,16 @@ UiProfile Spire::make_list_view_profile() {
           item->setDisabled(false);
         }
       });
+      auto& auto_set_current_null = get<bool>("auto_set_current_null",
+        profile.get_properties());
+      list_view->get_current_model()->connect_current_signal(
+        [&, list_view] (const auto& current) {
+          if(current && auto_set_current_null.get()) {
+            QTimer::singleShot(2000, [list_view] {
+              list_view->get_current_model()->set_current(none);
+            });
+          }
+        });
       list_view->get_current_model()->connect_current_signal(
         profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       list_view->get_selection_model()->connect_current_signal(

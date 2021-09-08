@@ -68,6 +68,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   connect_style_signal(*this, [=] { on_style(); });
 }
 
+const QWidget& ScrollBox::get_body() const {
+  return *m_body;
+}
+
 QWidget& ScrollBox::get_body() {
   return *m_body;
 }
@@ -225,8 +229,6 @@ void ScrollBox::commit_border_styles() {
   }
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
-    style()->unpolish(this);
-    style()->polish(this);
   }
 }
 
@@ -236,8 +238,6 @@ void ScrollBox::commit_padding_styles() {
   m_padding_styles.write(stylesheet);
   if(stylesheet != m_viewport->styleSheet()) {
     m_viewport->setStyleSheet(stylesheet);
-    m_viewport->style()->unpolish(m_viewport);
-    m_viewport->style()->polish(m_viewport);
   }
   on_horizontal_scroll(
     m_scrollable_layer->get_horizontal_scroll_bar().get_position());
@@ -460,9 +460,9 @@ void ScrollBox::update_ranges() {
     m_viewport->width());
 }
 
-std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
-    ScrollBox& box, const Body& body) const {
-  auto stylists = std::unordered_set<Stylist*>();
-  stylists.insert(&find_stylist(box.get_body()));
-  return stylists;
+SelectConnection BaseComponentFinder<ScrollBox, Body>::operator ()(
+    const ScrollBox& box, const Body& body,
+    const SelectionUpdateSignal& on_update) const {
+  on_update({&find_stylist(box.get_body())}, {});
+  return {};
 }

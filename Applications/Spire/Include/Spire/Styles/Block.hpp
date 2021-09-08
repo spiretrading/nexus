@@ -86,16 +86,16 @@ namespace Spire::Styles {
    * Finds a property of a given type within a Block.
    * @param block The block to search.
    */
-  boost::optional<Property>
-    find(const Block& block, const std::type_index& type);
+  boost::optional<Property> find(
+    const Block& block, const std::type_index& type);
 
   /**
    * Finds a property of a given type within a Block.
    * @param block The block to search.
    */
   template<typename T>
-  boost::optional<CompositeProperty<T>> find(const Block& block,
-      std::in_place_type_t<CompositeProperty<T>>) {
+  boost::optional<CompositeProperty<T>> find(
+      const Block& block, std::in_place_type_t<CompositeProperty<T>>) {
     if(auto head = find<T>(block)) {
       return CompositeProperty(std::move(*head));
     }
@@ -107,12 +107,12 @@ namespace Spire::Styles {
    * @param block The block to search.
    */
   template<typename T, typename... U>
-  boost::optional<CompositeProperty<T, U...>> find(const Block& block,
-      std::in_place_type_t<CompositeProperty<T, U...>>) {
+  boost::optional<CompositeProperty<T, U...>> find(
+      const Block& block, std::in_place_type_t<CompositeProperty<T, U...>>) {
     if(auto head = find<T>(block)) {
       if(auto tail = find(block, std::in_place_type<CompositeProperty<U...>>)) {
-        return CompositeProperty(std::move(*head),
-          std::move(tail->get<U>())...);
+        return CompositeProperty(
+          std::move(*head), std::move(tail->get<U>())...);
       }
     }
     return boost::none;
@@ -142,7 +142,7 @@ namespace Spire::Styles {
 
   template<typename... T>
   void Block::remove(const CompositeProperty<T...>& property) {
-    for_each(property, [&] (const auto& property) {
+    for_each(property, [] (const auto& property) {
       remove(property);
     });
   }
