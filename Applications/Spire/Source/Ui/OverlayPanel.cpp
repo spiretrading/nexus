@@ -102,7 +102,7 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 }
 
 bool OverlayPanel::event(QEvent* event) {
-  if(event->type() == QEvent::WindowDeactivate) {
+  if(event->type() == QEvent::WindowDeactivate && m_is_closed_on_blur) {
     auto is_ancestor = [&] {
       auto current = qApp->activeWindow();
       while(current) {
@@ -116,7 +116,7 @@ bool OverlayPanel::event(QEvent* event) {
     if(!is_ancestor) {
       close();
     }
-  } else if(event->type() == QEvent::WindowActivate) {
+  } else if(event->type() == QEvent::WindowActivate && m_is_closed_on_blur) {
     for(auto child : findChildren<QWidget*>()) {
       auto child_window = static_cast<QWidget*>(child)->window();
       if(child_window != this) {
@@ -209,7 +209,7 @@ void OverlayPanel::position() {
 }
 
 void OverlayPanel::on_focus_changed(QWidget* previous, QWidget* current) {
-  if(qApp->focusWindow() == nullptr) {
+  if(qApp->focusWindow() == nullptr && m_is_closed_on_blur) {
     close();
   }
 }
