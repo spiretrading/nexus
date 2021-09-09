@@ -2,6 +2,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QPainter>
+#include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
@@ -57,8 +58,6 @@ namespace {
       layout->setAlignment(
         Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
       layout->setContentsMargins({});
-      layout->addSpacerItem(
-        new QSpacerItem(0, 1, QSizePolicy::Minimum, QSizePolicy::Fixed));
       layout->addWidget(m_body);
       setLayout(layout);
       setFocusProxy(m_body);
@@ -75,7 +74,9 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     ContentSizedTextEdit(const QString& text)
         : m_longest_line_width(0) {
       setLineWrapMode(QTextEdit::WidgetWidth);
+      horizontalScrollBar()->blockSignals(true);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      verticalScrollBar()->blockSignals(true);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       document()->setDocumentMargin(0);
       setFrameShape(QFrame::NoFrame);
