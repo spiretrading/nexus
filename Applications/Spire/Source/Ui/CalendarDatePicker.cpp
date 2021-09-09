@@ -317,7 +317,8 @@ void CalendarDatePicker::populate_calendar(const std::function<
 }
 
 void CalendarDatePicker::update_calendar_model() {
-  populate_calendar([=] (auto index, auto day) {
+  auto current_set = false;
+  populate_calendar([&] (auto index, auto day) {
     auto current_block = shared_connection_block(m_list_current_connection);
     m_calendar_model->
       get<std::shared_ptr<LocalDateModel>>(index)->set_current(day);
@@ -333,24 +334,14 @@ void CalendarDatePicker::update_calendar_model() {
         m_calendar_view->get_list_item(index)->setDisabled(day > *maximum);
       }
     }
-  });
-  auto current_set = false;
-  for(auto i = 0; i < m_calendar_model->get_size(); ++i) {
-    if(auto model = m_calendar_model->get<std::shared_ptr<LocalDateModel>>(i);
-        model->get_current() == m_model->get_current()) {
+    if(auto current = m_model->get_current();  day == current) {
       auto current_block =
         shared_connection_block(m_list_current_connection);
-      m_calendar_view->get_current_model()->set_current(i);
+      m_calendar_view->get_current_model()->set_current(index);
       current_set = true;
-      m_calendar_view->get_selection_model()->set_current(i);
-      if(!m_month_selector->hasFocus() &&
-          !m_month_selector->isAncestorOf(focusWidget())) {
-        auto current = *m_calendar_view->get_selection_model()->get_current();
-        m_calendar_view->get_list_item(current)->setFocus();
-      }
-      break;
+      m_calendar_view->get_selection_model()->set_current(index);
     }
-  }
+  });
   if(!current_set) {
     m_calendar_view->get_selection_model()->set_current({});
   }
