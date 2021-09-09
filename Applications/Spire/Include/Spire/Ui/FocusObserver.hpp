@@ -34,6 +34,7 @@ namespace Spire {
 
       /**
        * Signals that the state has changed.
+       * @param state The changed focus state.
        */
       using StateSignal = Signal<void (State state)>;
 
