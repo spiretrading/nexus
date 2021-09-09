@@ -41,20 +41,6 @@ namespace {
     return style;
   }
 
-  auto TITLE_STYLE() {
-    auto style = StyleSheet();
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(text_style(font, QColor::fromRgb(0, 0, 0))).
-      set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter));
-    style.get(!Active()).
-      set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
-    return style;
-  }
-
   auto WINDOW_BUTTON_STYLE() {
     auto style = StyleSheet();
     style.get(Any() >> is_a<Icon>()).
@@ -83,7 +69,12 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_container_layout->setContentsMargins({});
   m_container_layout->setSpacing(0);
   m_title_label = make_label("", this);
-  set_style(*m_title_label, TITLE_STYLE());
+  auto title_style = get_style(*m_title_label);
+  title_style.get(ReadOnly() && Disabled()).
+    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+  title_style.get(!Active()).
+    set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+  set_style(*m_title_label, std::move(title_style));
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_container_layout->addWidget(m_title_label);
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
