@@ -21,12 +21,14 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
+  template<typename T> class EnumBox;
   class FilteredTableModel;
   class FilterPanel;
   class Icon;
   class InfoTip;
   class KeyInputBox;
   class LayeredWidget;
+  template<typename T> class ListIndexValueModel;
   class ListItem;
   class ListModel;
   class ListView;

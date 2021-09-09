@@ -146,6 +146,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_drop_down_list->hide();
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
+  on_current(get_current_model()->get_current());
   m_button->connect_clicked_signal([=] { on_click(); });
   m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
@@ -154,6 +155,20 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
     [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
   m_drop_down_list->get_panel().installEventFilter(this);
+}
+
+const std::shared_ptr<ListModel>& DropDownBox::get_list_model() const {
+  return m_list_view->get_list_model();
+}
+  
+const std::shared_ptr<DropDownBox::CurrentModel>&
+    DropDownBox::get_current_model() const {
+  return m_list_view->get_current_model();
+}
+
+const std::shared_ptr<DropDownBox::SelectionModel>&
+    DropDownBox::get_selection_model() const {
+  return m_list_view->get_selection_model();
 }
 
 bool DropDownBox::is_read_only() const {

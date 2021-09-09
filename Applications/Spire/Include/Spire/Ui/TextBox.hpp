@@ -51,7 +51,7 @@ namespace Styles {
   /** A LocalValueModel over an optional QString. */
   using LocalOptionalTextModel = LocalValueModel<boost::optional<QString>>;
 
-  /** Displays a one-line text box. */
+  /** Displays a single line of text within a box. */
   class TextBox : public QWidget {
     public:
 
