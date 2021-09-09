@@ -38,8 +38,8 @@ namespace Spire::Styles {
    */
   SiblingSelector operator %(Selector base, Selector sibling);
 
-  std::unordered_set<Stylist*> select(
-    const SiblingSelector& selector, std::unordered_set<Stylist*> sources);
+  SelectConnection select(const SiblingSelector& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 }
 
 #endif

@@ -1,4 +1,5 @@
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Styles/Selectors.hpp"
 
 using namespace Nexus;
 using namespace Spire;

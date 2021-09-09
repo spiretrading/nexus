@@ -97,16 +97,15 @@ namespace Nexus::OrderExecutionService {
     }
     auto query = Beam::Queries::MakeCurrentQuery(security);
     marketDataClient.QueryBboQuotes(query, m_tasks.GetSlot<BboQuote>(
-      std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
+      std::bind_front(&SecurityOrderSimulator::OnBbo, this)));
     marketDataClient.QueryTimeAndSales(query, m_tasks.GetSlot<TimeAndSale>(
-      std::bind(&SecurityOrderSimulator::OnTimeAndSale, this,
-        std::placeholders::_1)));
+      std::bind_front(&SecurityOrderSimulator::OnTimeAndSale, this)));
   }
 
   template<typename C>
   void SecurityOrderSimulator<C>::Submit(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       auto isLive = true;
       order->With([&] (auto status, auto& reports) {
         auto& lastReport = reports.back();
@@ -132,7 +131,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SecurityOrderSimulator<C>::Cancel(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       order->With([&] (auto status, auto& reports) {
         if(IsTerminal(status) || reports.empty()) {
           return;
@@ -151,7 +150,7 @@ namespace Nexus::OrderExecutionService {
   void SecurityOrderSimulator<C>::Update(
       const std::shared_ptr<PrimitiveOrder>& order,
       const ExecutionReport& executionReport) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       order->With([&] (auto status, auto& executionReports) {
         if(IsTerminal(status) || executionReports.empty() &&
             executionReport.m_status != OrderStatus::PENDING_NEW) {
@@ -174,7 +173,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SecurityOrderSimulator<C>::Recover(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       m_orders.push_back(order);
       UpdateOrder(*order);
     });

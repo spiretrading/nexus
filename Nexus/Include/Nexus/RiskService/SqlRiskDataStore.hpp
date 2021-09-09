@@ -3,7 +3,7 @@
 #include <memory>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include <boost/function_output_iterator.hpp>
+#include <boost/iterator/function_output_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <Viper/Viper.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"

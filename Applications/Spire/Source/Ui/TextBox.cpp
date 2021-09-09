@@ -17,6 +17,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  void apply_label_style(TextBox& text_box) {
+    auto style = get_style(text_box);
+    style.get(Any()).
+      set(border_size(0)).
+      set(vertical_padding(0));
+    style.get(ReadOnly() && Disabled()).
+      set(TextColor(QColor::fromRgb(0, 0, 0)));
+    set_style(text_box, std::move(style));
+    text_box.setDisabled(true);
+    text_box.set_read_only(true);
+  }
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -88,6 +100,9 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
   return TextStyle(Font(std::move(font)), TextColor(color));
 }
 
+TextBox::StyleProperties::StyleProperties(std::function<void ()> commit)
+  : m_styles(std::move(commit)) {}
+
 void TextBox::StyleProperties::clear() {
   m_styles.clear();
   m_alignment = none;
@@ -104,8 +119,8 @@ TextBox::TextBox(QString current, QWidget* parent)
 
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
-      m_line_edit_styles{[=] { commit_style(); }},
-      m_placeholder_styles{[=] { commit_placeholder_style(); }},
+      m_line_edit_styles([=] { commit_style(); }),
+      m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_rejected(false) {
@@ -113,7 +128,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-2, 0, 0, 0);
+  m_line_edit->setTextMargins(-2, 0, -4, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
@@ -361,8 +376,6 @@ void TextBox::commit_style() {
   }
   if(stylesheet != m_line_edit->styleSheet()) {
     m_line_edit->setStyleSheet(stylesheet);
-    m_line_edit->style()->unpolish(this);
-    m_line_edit->style()->polish(this);
   }
   update_display_text();
 }
@@ -386,8 +399,6 @@ void TextBox::commit_placeholder_style() {
   m_placeholder->setFont(font);
   if(stylesheet != m_placeholder->styleSheet()) {
     m_placeholder->setStyleSheet(stylesheet);
-    m_placeholder->style()->unpolish(this);
-    m_placeholder->style()->polish(this);
   }
   update_placeholder_text();
 }
@@ -487,14 +498,12 @@ void TextBox::on_style() {
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {
   auto text_box = new TextBox(std::move(label), parent);
-  text_box->setDisabled(true);
-  text_box->set_read_only(true);
-  auto style = get_style(*text_box);
-  style.get(Any()).
-    set(border_size(0)).
-    set(vertical_padding(0));
-  style.get(ReadOnly() && Disabled()).
-    set(TextColor(QColor::fromRgb(0, 0, 0)));
-  set_style(*text_box, std::move(style));
+  apply_label_style(*text_box);
+  return text_box;
+}
+
+TextBox* Spire::make_label(std::shared_ptr<TextModel> model, QWidget* parent) {
+  auto text_box = new TextBox(std::move(model), parent);
+  apply_label_style(*text_box);
   return text_box;
 }

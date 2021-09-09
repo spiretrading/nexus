@@ -220,7 +220,7 @@ namespace Details {
       return m_orderExecutionDriver->Submit(orderInfo);
     }
     auto orderEntry = std::make_shared<OrderEntry>(orderInfo);
-    m_submissionTasks.Push([=] {
+    m_submissionTasks.Push([=, this] {
       Submit(orderEntry);
     });
     m_orders.Insert(orderEntry->m_order);
@@ -231,7 +231,7 @@ namespace Details {
   void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
-    m_submissionTasks.Push([=] {
+    m_submissionTasks.Push([=, this] {
       if(auto driverOrderId = m_orderIds.FindValue(orderId)) {
         m_orderExecutionDriver->Cancel(session, *driverOrderId);
       } else {
@@ -245,7 +245,7 @@ namespace Details {
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    m_submissionTasks.Push([=] {
+    m_submissionTasks.Push([=, this] {
       auto driverOrderId = m_orderIds.FindValue(orderId);
       if(driverOrderId) {
         auto sanitizedExecutionReport = executionReport;
@@ -410,8 +410,9 @@ namespace Details {
     orderEntry->m_driverOrder = driverOrder;
     orderEntry->m_driverOrder->GetPublisher().Monitor(
       m_executionReportTasks.GetSlot<OrderExecutionService::ExecutionReport>(
-        std::bind(&InternalMatchingOrderExecutionDriver::OnExecutionReport,
-          this, std::weak_ptr<OrderEntry>(orderEntry), std::placeholders::_1)));
+        std::bind_front(
+          &InternalMatchingOrderExecutionDriver::OnExecutionReport, this,
+          std::weak_ptr<OrderEntry>(orderEntry))));
   }
 
   template<typename B, typename M, typename T, typename U, typename D>

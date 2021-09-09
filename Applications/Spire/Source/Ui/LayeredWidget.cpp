@@ -1,7 +1,25 @@
 #include "Spire/Ui/LayeredWidget.hpp"
 #include <QEvent>
 
+using namespace boost;
 using namespace Spire;
+
+namespace {
+  void update_size(LayeredWidget& layers, QWidget& widget) {
+    auto size = widget.size();
+    if(widget.sizePolicy().horizontalPolicy() & QSizePolicy::ExpandFlag &&
+        layers.width() != size.width()) {
+      size.setWidth(layers.width());
+    }
+    if(widget.sizePolicy().verticalPolicy() & QSizePolicy::ExpandFlag &&
+        layers.height() != size.height()) {
+      size.setHeight(layers.height());
+    }
+    if(size != widget.size()) {
+      widget.resize(size);
+    }
+  }
+}
 
 void LayeredWidget::add(QWidget* widget) {
   widget->setParent(this);
@@ -9,20 +27,28 @@ void LayeredWidget::add(QWidget* widget) {
     m_layers.back()->stackUnder(widget);
   }
   m_layers.push_back(widget);
-  widget->setGeometry(0, 0, width(), height());
+  widget->move(0, 0);
+  widget->resize(widget->sizeHint());
+  update_size(*this, *widget);
 }
 
 QSize LayeredWidget::sizeHint() const {
-  auto size = QSize();
-  for(auto layer : m_layers) {
-    size.setWidth(std::max(size.width(), layer->sizeHint().width()));
-    size.setHeight(std::max(size.height(), layer->sizeHint().height()));
+  if(m_size_hint) {
+    return *m_size_hint;
   }
-  return size;
+  m_size_hint.emplace();
+  for(auto layer : m_layers) {
+    m_size_hint->setWidth(
+      std::max(m_size_hint->width(), layer->sizeHint().width()));
+    m_size_hint->setHeight(
+      std::max(m_size_hint->height(), layer->sizeHint().height()));
+  }
+  return *m_size_hint;
 }
 
 bool LayeredWidget::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
     updateGeometry();
   }
   return QWidget::event(event);
@@ -30,6 +56,6 @@ bool LayeredWidget::event(QEvent* event) {
 
 void LayeredWidget::resizeEvent(QResizeEvent* event) {
   for(auto layer : m_layers) {
-    layer->setGeometry(0, 0, width(), height());
+    update_size(*this, *layer);
   }
 }

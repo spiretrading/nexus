@@ -73,17 +73,15 @@ namespace Nexus::RiskService {
   template<typename BF>
   RiskClient<B>::RiskClient(BF&& clientBuilder)
       try : m_clientHandler(std::forward<BF>(clientBuilder),
-              std::bind(&RiskClient::OnReconnect, this,
-              std::placeholders::_1)) {
+              std::bind_front(&RiskClient::OnReconnect, this)) {
     RegisterRiskServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterRiskMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<InventoryMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&RiskClient::OnInventoryUpdate, this, std::placeholders::_1,
-      std::placeholders::_2));
-    m_publisher.SetInitializationFunction([=] (auto& publisher) {
+      std::bind_front(&RiskClient::OnInventoryUpdate, this));
+    m_publisher.SetInitializationFunction([this] (auto& publisher) {
       publisher.emplace();
-      m_tasks.Push([=] {
+      m_tasks.Push([this] {
         auto entries = std::vector<RiskInventoryEntry>();
         try {
           auto client = m_clientHandler.GetClient();
@@ -155,7 +153,7 @@ namespace Nexus::RiskService {
   template<typename B>
   void RiskClient<B>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       if(!m_publisher.IsAvailable()) {
         return;
       }
@@ -189,7 +187,7 @@ namespace Nexus::RiskService {
   template<typename B>
   void RiskClient<B>::OnInventoryUpdate(ServiceProtocolClient& client,
       const std::vector<InventoryUpdate>& inventories) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       for(auto& update : inventories) {
         if(update.inventory.m_transactionCount == 0) {
           m_publisher->Delete(RiskPortfolioKey(update.account,

@@ -28,6 +28,7 @@ namespace Spire {
   template<typename T>
   class AssociativeValueModel : public ValueModel<T> {
     public:
+      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
 
       using Type = typename ValueModel<T>::Type;
 
@@ -41,9 +42,9 @@ namespace Spire {
        * Constructs an AssociativeValueModel with a default value used when
        * the BooleanModel whose current value is <code>true</code> is set to
        * <code>false</code>.
-       * @param default The default value.
+       * @param default_value The default value.
        */
-      explicit AssociativeValueModel(Type default);
+      explicit AssociativeValueModel(Type default_value);
 
       /**
        * Returns a BooleanModel whose current value is <code>true</code>
@@ -120,9 +121,9 @@ namespace Spire {
     : AssociativeValueModel(Type{}) {}
 
   template<typename T>
-  AssociativeValueModel<T>::AssociativeValueModel(Type default) {
+  AssociativeValueModel<T>::AssociativeValueModel(Type default_value) {
     auto model = std::make_shared<InnerModel>();
-    m_default = &m_models.emplace(std::move(default), model).first->first;
+    m_default = &m_models.emplace(std::move(default_value), model).first->first;
     m_current = m_default;
     model->m_current = true;
     model->m_slot = [=, value = m_current] (auto current) {

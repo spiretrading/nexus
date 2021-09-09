@@ -28,6 +28,7 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   m_scroll_box = new ScrollBox(m_list_view);
+  m_scroll_box->setFocusPolicy(Qt::NoFocus);
   layout->addWidget(m_scroll_box);
   setLayout(layout);
   proxy_style(*this, *m_scroll_box);

@@ -130,7 +130,7 @@ namespace Nexus::SoupBinTcp {
       m_sequenceNumber = loginAcceptedPacket.m_sequenceNumber;
       m_timer->Start();
       m_heartbeatLoop = Beam::Routines::Spawn(
-        std::bind(&SoupBinTcpClient::HeartbeatLoop, this));
+        std::bind_front(&SoupBinTcpClient::HeartbeatLoop, this));
     } catch(const std::exception&) {
       Close();
       BOOST_RETHROW;

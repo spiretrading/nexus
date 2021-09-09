@@ -3,8 +3,6 @@
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
-class QSpacerItem;
-
 namespace Spire {
 
   /**
@@ -35,9 +33,9 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      QSpacerItem* m_transparent_spacer;
       ScrollBar* m_vertical_scroll_bar;
       ScrollBar* m_horizontal_scroll_bar;
+      Box* m_corner_box;
 
       void update_mask();
   };

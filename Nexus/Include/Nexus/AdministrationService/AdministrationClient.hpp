@@ -378,18 +378,15 @@ namespace Nexus::AdministrationService {
   AdministrationClient<B>::AdministrationClient(BF&& clientBuilder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder),
-              std::bind(&AdministrationClient::OnReconnect, this,
-              std::placeholders::_1)) {
+              std::bind_front(&AdministrationClient::OnReconnect, this)) {
     RegisterAdministrationServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterAdministrationMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<RiskParametersMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&AdministrationClient::OnRiskParametersMessage, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+      std::bind_front(&AdministrationClient::OnRiskParametersMessage, this));
     Beam::Services::AddMessageSlot<RiskStateMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&AdministrationClient::OnRiskStateMessage, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+      std::bind_front(&AdministrationClient::OnRiskStateMessage, this));
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
@@ -584,7 +581,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return *m_riskParameterPublishers.GetOrInsert(account, [&] {
       auto publisher = std::make_shared<RiskParameterPublisher>();
-      m_tasks.Push([=] {
+      m_tasks.Push([=, this] {
         try {
           auto client = m_clientHandler.GetClient();
           auto parameters =
@@ -619,7 +616,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return *m_riskStatePublishers.GetOrInsert(account, [&] {
       auto publisher = std::make_shared<RiskStatePublisher>();
-      m_tasks.Push([=] {
+      m_tasks.Push([=, this] {
         try {
           auto client = m_clientHandler.GetClient();
           auto state = client->template SendRequest<MonitorRiskStateService>(
@@ -817,7 +814,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void AdministrationClient<B>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       RecoverRiskParameters(*client);
       RecoverRiskState(*client);
     });
@@ -883,7 +880,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       if(auto publisher = m_riskParameterPublishers.FindValue(account)) {
         try {
           (*publisher)->Push(riskParameters);
@@ -899,7 +896,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       RiskService::RiskState riskState) {
-    m_tasks.Push([=] {
+    m_tasks.Push([=, this] {
       if(auto publisher = m_riskStatePublishers.FindValue(account)) {
         try {
           (*publisher)->Push(riskState);

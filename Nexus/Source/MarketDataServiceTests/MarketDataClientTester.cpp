@@ -51,8 +51,7 @@ namespace {
       RegisterMarketDataRegistryServices(Store(m_server.GetSlots()));
       RegisterMarketDataRegistryMessages(Store(m_server.GetSlots()));
       QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind(&Fixture::OnQuerySecurityBboQuotes, this,
-        std::placeholders::_1, std::placeholders::_2));
+        std::bind_front(&Fixture::OnQuerySecurityBboQuotes, this));
     }
 
     template<typename T>
@@ -61,7 +60,7 @@ namespace {
 
     std::unique_ptr<ClientEntry> MakeClient() {
       auto builder = TestServiceProtocolClientBuilder(
-        [=] {
+        [this] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
             "test", *m_serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());

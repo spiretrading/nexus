@@ -8,41 +8,12 @@
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Styles/AncestorSelector.hpp"
-#include "Spire/Styles/AndSelector.hpp"
-#include "Spire/Styles/Any.hpp"
-#include "Spire/Styles/ChildSelector.hpp"
-#include "Spire/Styles/DescendantSelector.hpp"
 #include "Spire/Styles/EvaluatedBlock.hpp"
-#include "Spire/Styles/FlipSelector.hpp"
-#include "Spire/Styles/IsASelector.hpp"
-#include "Spire/Styles/NotSelector.hpp"
-#include "Spire/Styles/OrSelector.hpp"
-#include "Spire/Styles/PathSelector.hpp"
-#include "Spire/Styles/ParentSelector.hpp"
-#include "Spire/Styles/PropertyMatchSelector.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
-#include "Spire/Styles/SiblingSelector.hpp"
-#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
 namespace Spire::Styles {
-
-  /** Selects the widget that is or belongs to the active window. */
-  using Active = StateSelector<void, struct ActiveSelectorTag>;
-
-  /** Selects the disabled widget. */
-  using Disabled = StateSelector<void, struct DisabledSelectorTag>;
-
-  /** Selects the hovered widget. */
-  using Hover = StateSelector<void, struct HoverSelectorTag>;
-
-  /** Selects the focused widget. */
-  using Focus = StateSelector<void, struct FocusSelectorTag>;
-
-  /** Selects a widget if it was focused using a non-pointing device. */
-  using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
   /** Specifies whether an element is visible. */
   enum class Visibility {
@@ -57,9 +28,6 @@ namespace Spire::Styles {
     NONE
   };
 
-  template<typename T>
-  class RevertExpression;
-
   /** Keeps track of a widget's styling. */
   class Stylist {
     public:
@@ -70,10 +38,16 @@ namespace Spire::Styles {
        */
       using StyleSignal = Signal<void ()>;
 
+      /**
+       * Signals that a Selector was matched or unmatched.
+       * @param is_match <code>true</code> iff the associated Selector matches.
+       */
+      using MatchSignal = Signal<void (bool is_match)>;
+
       ~Stylist();
 
       /** Returns the QWidget being styled. */
-      QWidget& get_widget();
+      QWidget& get_widget() const;
 
       /** Returns the PseudoElement represented. */
       const boost::optional<PseudoElement>& get_pseudo_element() const;
@@ -134,18 +108,24 @@ namespace Spire::Styles {
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 
+      /** Connects a slot to the MatchSignal. */
+      boost::signals2::connection connect_match_signal(
+        const Selector& selector, const MatchSignal::slot_type& slot) const;
+
     private:
       struct StyleEventFilter;
       struct SelectorHash {
         std::size_t operator ()(const Selector& selector) const;
       };
-      struct AppliedProperty {
-        Property m_property;
-        std::shared_ptr<const Rule> m_rule;
+      struct RuleEntry {
+        Rule m_rule;
+        int m_priority;
+        std::unordered_set<const Stylist*> m_selection;
+        SelectConnection m_connection;
       };
-      struct BlockEntry {
+      struct Source {
         Stylist* m_source;
-        std::vector<AppliedProperty> m_properties;
+        const RuleEntry* m_rule;
       };
       struct BaseEvaluatorEntry {
         Property m_property;
@@ -165,65 +145,61 @@ namespace Spire::Styles {
         EvaluatorEntry(Property property, Evaluator<Type> evaluator);
         void animate() override;
       };
-      using EnableSignal = Signal<void ()>;
       friend Stylist& find_stylist(QWidget& widget);
-      friend void add_pseudo_element(QWidget& source,
-        const PseudoElement& pseudo_element);
+      friend void add_pseudo_element(
+        QWidget& source, const PseudoElement& pseudo_element);
       friend boost::signals2::connection connect_style_signal(
         const QWidget& widget, const PseudoElement& pseudo_element,
         const Stylist::StyleSignal::slot_type& slot);
       template<typename T>
-      friend Evaluator<T>
-        make_evaluator(RevertExpression<T> expression, const Stylist& stylist);
+      friend Evaluator<T> make_evaluator(
+        RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
-      mutable EnableSignal m_enable_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
-      std::unique_ptr<StyleEventFilter> m_style_event_filter;
-      std::shared_ptr<StyleSheet> m_style;
+      StyleSheet m_style;
+      std::vector<Source> m_sources;
+      std::vector<std::unique_ptr<RuleEntry>> m_rules;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
-      Visibility m_visibility;
-      std::vector<Stylist*> m_principals;
       std::vector<Stylist*> m_proxies;
-      std::unordered_set<Selector, SelectorHash> m_matching_selectors;
-      std::unordered_set<Stylist*> m_dependents;
-      std::vector<boost::signals2::scoped_connection> m_enable_connections;
-      std::unordered_map<Stylist*, std::shared_ptr<BlockEntry>>
-        m_source_to_block;
-      std::vector<std::shared_ptr<BlockEntry>> m_blocks;
+      std::vector<Stylist*> m_principals;
+      std::unordered_set<Selector, SelectorHash> m_matches;
+      mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
+        m_match_signals;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
-      bool m_is_handling_enabled_signal;
       QMetaObject::Connection m_animation_connection;
+      Visibility m_visibility;
+      std::unique_ptr<StyleEventFilter> m_style_event_filter;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
       Stylist(const Stylist&) = delete;
       Stylist& operator =(const Stylist&) = delete;
-      static void merge(
-        Block& block, const std::vector<AppliedProperty>& properties);
-      static void merge(std::vector<AppliedProperty>& properties,
-        std::shared_ptr<const Rule> rule);
       template<typename F>
       void for_each_principal(F&& f);
       template<typename F>
       void for_each_principal(F&& f) const;
-      void remove_dependent(Stylist& dependent);
-      void apply(Stylist& source, std::vector<AppliedProperty> properties);
-      void apply_rules();
-      void apply_style();
-      void apply_proxy_styles();
-      boost::optional<Property>
-        find_reverted_property(std::type_index type) const;
+      template<typename F>
+      void for_each_proxy(F&& f);
+      template<typename F>
+      void for_each_proxy(F&& f) const;
+      void apply(const StyleSheet& style);
+      void apply(Stylist& source, const RuleEntry& rule);
+      void unapply(Stylist& source, const RuleEntry& rule);
+      void apply();
+      void apply_proxies();
+      boost::optional<Property> find_reverted_property(
+        std::type_index type) const;
       template<typename T>
       Evaluator<T> revert(std::type_index type) const;
-      boost::signals2::connection connect_enable_signal(
-        const EnableSignal::slot_type& slot) const;
       void connect_animation();
-      void on_enable();
       void on_animation();
+      void on_selection_update(RuleEntry& rule,
+        std::unordered_set<const Stylist*>&& additions,
+        std::unordered_set<const Stylist*>&& removals);
   };
 
   /** Returns the Stylist associated with a widget. */

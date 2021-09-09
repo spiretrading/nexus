@@ -174,15 +174,13 @@ namespace Nexus::RiskService {
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterRiskServices(Store(slots));
     RegisterRiskMessages(Store(slots));
-    LoadInventorySnapshotService::AddSlot(Beam::Store(slots), std::bind(
-      &RiskServlet::OnLoadInventorySnapshot, this, std::placeholders::_1,
-      std::placeholders::_2));
-    ResetRegionService::AddSlot(Beam::Store(slots), std::bind(
-      &RiskServlet::OnResetRegion, this, std::placeholders::_1,
-      std::placeholders::_2));
+    LoadInventorySnapshotService::AddSlot(Beam::Store(slots),
+      std::bind_front(&RiskServlet::OnLoadInventorySnapshot, this));
+    ResetRegionService::AddSlot(
+      Beam::Store(slots), std::bind_front(&RiskServlet::OnResetRegion, this));
     SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
-      std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
-        std::placeholders::_1));
+      std::bind_front(
+        &RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this));
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -231,11 +229,11 @@ namespace Nexus::RiskService {
       &*m_timeClient, &*m_dataStore, m_exchangeRates, m_markets,
       m_destinations);
     m_controller->GetRiskStatePublisher().Monitor(
-      m_tasks.GetSlot<RiskStateEntry>(std::bind(&RiskServlet::OnRiskState, this,
-        std::placeholders::_1)));
+      m_tasks.GetSlot<RiskStateEntry>(
+        std::bind_front(&RiskServlet::OnRiskState, this)));
     m_controller->GetPortfolioPublisher().Monitor(
-      m_tasks.GetSlot<RiskInventoryEntry>(std::bind(&RiskServlet::OnPortfolio,
-        this, std::placeholders::_1)));
+      m_tasks.GetSlot<RiskInventoryEntry>(
+        std::bind_front(&RiskServlet::OnPortfolio, this)));
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -288,7 +286,7 @@ namespace Nexus::RiskService {
         inventory.m_transactionCount = baseInventory.m_transactionCount -
           inventory.m_transactionCount;
         updatedSnapshot.m_inventories.push_back(inventory);
-        m_tasks.Push([=, key =
+        m_tasks.Push([this, key =
             RiskPortfolioKey(account, inventory.m_position.m_key.m_index)] {
           m_volumes[key] = -1;
         });

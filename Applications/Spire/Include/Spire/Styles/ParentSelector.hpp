@@ -5,7 +5,7 @@
 
 namespace Spire::Styles {
 
-  /** Selects a widget if a parent is selected. */
+  /** Selects a widget's parent. */
   class ParentSelector {
     public:
 
@@ -43,11 +43,8 @@ namespace Spire::Styles {
     return ParentSelector(std::move(base), std::move(parent));
   }
 
-  std::unordered_set<Stylist*> select(
-    const ParentSelector& selector, std::unordered_set<Stylist*> sources);
-
-  std::vector<QWidget*> build_reach(
-    const ParentSelector& selector, QWidget& source);
+  SelectConnection select(const ParentSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 }
 
 #endif

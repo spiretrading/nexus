@@ -153,8 +153,8 @@ namespace Nexus::OrderExecutionService {
   template<typename BF>
   OrderExecutionClient<B>::OrderExecutionClient(BF&& clientBuilder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      try : m_clientHandler(std::forward<BF>(clientBuilder), std::bind(
-              &OrderExecutionClient::OnReconnect, this, std::placeholders::_1)),
+      try : m_clientHandler(std::forward<BF>(clientBuilder),
+              std::bind_front(&OrderExecutionClient::OnReconnect, this)),
             m_orderSubmissionPublisher(Beam::Ref(m_clientHandler)),
             m_executionReportPublisher(Beam::Ref(m_clientHandler)) {
     Queries::RegisterQueryTypes(
@@ -167,8 +167,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       template AddMessageHandler<ExecutionReportMessage>();
     Beam::Services::AddMessageSlot<OrderUpdateMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&OrderExecutionClient::OnOrderUpdate, this,
-        std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&OrderExecutionClient::OnOrderUpdate, this));
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
@@ -209,7 +208,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
     m_orderSubmissionPublisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
-      [=] (const auto& orderRecord) {
+      [this] (const auto& orderRecord) {
         return Beam::Queries::SequencedValue(
           static_cast<const Order*>(LoadOrder(orderRecord).get()),
           orderRecord.GetSequence());
@@ -221,7 +220,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       Beam::ScopedQueueWriter<const Order*> queue) {
     m_orderSubmissionPublisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
-      [=] (const auto& orderRecord) {
+      [this] (const auto& orderRecord) {
         return static_cast<const Order*>(LoadOrder(orderRecord).get());
       }));
   }

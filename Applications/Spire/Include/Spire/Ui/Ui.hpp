@@ -17,13 +17,18 @@ namespace Spire {
   class CheckBox;
   class DecimalBox;
   class DestinationListItem;
+  class DropDownBox;
+  class DropDownList;
   class DropShadow;
   class DurationBox;
+  template<typename T> class EnumBox;
   class FilteredTableModel;
   class FilterPanel;
   class Icon;
   class InfoTip;
+  class KeyInputBox;
   class LayeredWidget;
+  template<typename T> class ListIndexValueModel;
   class ListItem;
   class ListModel;
   class ListView;
@@ -42,6 +47,7 @@ namespace Spire {
   class SortedTableModel;
   class TableModel;
   class Tag;
+  class TextAreaBox;
   class TextBox;
   class TimeBox;
   class TitleBar;

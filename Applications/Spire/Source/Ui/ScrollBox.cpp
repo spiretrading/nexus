@@ -42,6 +42,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
   auto layers = new LayeredWidget();
   m_viewport = new QWidget();
+  m_viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_viewport->setObjectName(
     QString("0x%1").arg(reinterpret_cast<std::intptr_t>(m_viewport)));
   m_viewport->installEventFilter(this);
@@ -49,6 +50,8 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_body->setParent(m_viewport);
   layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
+  m_scrollable_layer->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
     [=] (auto position) { on_vertical_scroll(position); });
   m_scrollable_layer->get_horizontal_scroll_bar().connect_position_signal(
@@ -63,6 +66,10 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
   connect_style_signal(*this, [=] { on_style(); });
+}
+
+const QWidget& ScrollBox::get_body() const {
+  return *m_body;
 }
 
 QWidget& ScrollBox::get_body() {
@@ -80,8 +87,10 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
   m_horizontal_display_policy = policy;
   if(m_horizontal_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_horizontal_scroll_bar().hide();
+    updateGeometry();
   } else if(m_horizontal_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_horizontal_scroll_bar().show();
+    updateGeometry();
   }
   update_ranges();
 }
@@ -97,8 +106,10 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
   m_vertical_display_policy = policy;
   if(m_vertical_display_policy == DisplayPolicy::NEVER) {
     m_scrollable_layer->get_vertical_scroll_bar().hide();
+    updateGeometry();
   } else if(m_vertical_display_policy == DisplayPolicy::ALWAYS) {
     m_scrollable_layer->get_vertical_scroll_bar().show();
+    updateGeometry();
   }
   update_ranges();
 }
@@ -111,6 +122,14 @@ void ScrollBox::set(
     DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy) {
   set_horizontal(horizontal_policy);
   set_vertical(vertical_policy);
+}
+
+ScrollBar& ScrollBox::get_vertical_scroll_bar() {
+  return m_scrollable_layer->get_vertical_scroll_bar();
+}
+
+ScrollBar& ScrollBox::get_horizontal_scroll_bar() {
+  return m_scrollable_layer->get_horizontal_scroll_bar();
 }
 
 void ScrollBox::scroll_to(const QWidget& widget) {
@@ -150,12 +169,16 @@ void ScrollBox::scroll_to(const QWidget& widget) {
 QSize ScrollBox::sizeHint() const {
   auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
   if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
-      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
+      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
+      m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
     size.rwidth() +=
       m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
   }
   if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
-      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
+      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
+      m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW &&
+      m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
     size.rheight() +=
       m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
   }
@@ -206,8 +229,6 @@ void ScrollBox::commit_border_styles() {
   }
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
-    style()->unpolish(this);
-    style()->polish(this);
   }
 }
 
@@ -217,8 +238,6 @@ void ScrollBox::commit_padding_styles() {
   m_padding_styles.write(stylesheet);
   if(stylesheet != m_viewport->styleSheet()) {
     m_viewport->setStyleSheet(stylesheet);
-    m_viewport->style()->unpolish(m_viewport);
-    m_viewport->style()->polish(m_viewport);
   }
   on_horizontal_scroll(
     m_scrollable_layer->get_horizontal_scroll_bar().get_position());
@@ -388,10 +407,12 @@ void ScrollBox::update_layout() {
         contents_size.height() <= size().height()) {
       if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
         m_scrollable_layer->get_vertical_scroll_bar().hide();
+        updateGeometry();
         return;
       }
       if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
         m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        updateGeometry();
         return;
       }
     }
@@ -400,10 +421,12 @@ void ScrollBox::update_layout() {
     if(contents_size.height() <= height() - scroll_bar_size.height()) {
       if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
         m_scrollable_layer->get_vertical_scroll_bar().hide();
+        updateGeometry();
         return;
       }
     } else if(!m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
       m_scrollable_layer->get_vertical_scroll_bar().show();
+      updateGeometry();
       return;
     }
   }
@@ -411,10 +434,12 @@ void ScrollBox::update_layout() {
     if(contents_size.width() <= width() - scroll_bar_size.width()) {
       if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
         m_scrollable_layer->get_horizontal_scroll_bar().hide();
+        updateGeometry();
         return;
       }
     } else if(!m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
       m_scrollable_layer->get_horizontal_scroll_bar().show();
+      updateGeometry();
       return;
     }
   }
@@ -435,9 +460,9 @@ void ScrollBox::update_ranges() {
     m_viewport->width());
 }
 
-std::unordered_set<Stylist*> BaseComponentFinder<ScrollBox, Body>::operator ()(
-    ScrollBox& box, const Body& body) const {
-  auto stylists = std::unordered_set<Stylist*>();
-  stylists.insert(&find_stylist(box.get_body()));
-  return stylists;
+SelectConnection BaseComponentFinder<ScrollBox, Body>::operator ()(
+    const ScrollBox& box, const Body& body,
+    const SelectionUpdateSignal& on_update) const {
+  on_update({&find_stylist(box.get_body())}, {});
+  return {};
 }

@@ -90,9 +90,8 @@ namespace Nexus::ChartingService {
     RegisterChartingServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterChartingMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<SecurityQueryMessage>(
-      Beam::Store(m_clientHandler.GetSlots()), std::bind(
-      &ChartingClient::OnSecurityQuery, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3));
+      Beam::Store(m_clientHandler.GetSlots()),
+      std::bind_front(&ChartingClient::OnSecurityQuery, this));
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to connect to the charting server."));
@@ -107,7 +106,7 @@ namespace Nexus::ChartingService {
   void ChartingClient<B>::QuerySecurity(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      m_queryRoutines.Spawn([=, queue = std::move(queue)] () mutable {
+      m_queryRoutines.Spawn([=, this, queue = std::move(queue)] () mutable {
         auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
           query.GetFilter());
         auto conversionQueue = Beam::MakeConverterQueueWriter<
@@ -133,7 +132,7 @@ namespace Nexus::ChartingService {
         }
       });
     } else {
-      m_queryRoutines.Spawn([=, queue = std::move(queue)] () mutable {
+      m_queryRoutines.Spawn([=, this, queue = std::move(queue)] () mutable {
         try {
           auto client = m_clientHandler.GetClient();
           auto id = ++m_nextQueryId;

@@ -115,8 +115,7 @@ namespace Nexus::Compliance {
     RegisterComplianceMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<ComplianceRuleEntryMessage>(
       Store(m_clientHandler.GetSlots()),
-      std::bind(&ComplianceClient::OnComplianceRuleEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&ComplianceClient::OnComplianceRuleEntry, this));
   } catch(const std::exception&) {
     Beam::Services::RethrowNestedServiceException(
       "Failed to connect to the compliance server.");

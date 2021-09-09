@@ -1,8 +1,7 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
-#include "Spire/Styles/ComponentSelector.hpp"
+#include "Spire/Styles/Selectors.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -148,6 +147,9 @@ namespace Styles {
        * @param parent The parent widget.
        */
       explicit Box(QWidget* body, QWidget* parent = nullptr);
+
+      /** Returns the body or a <code>nullptr</code>. */
+      const QWidget* get_body() const;
 
       /** Returns the body or a <code>nullptr</code>. */
       QWidget* get_body();

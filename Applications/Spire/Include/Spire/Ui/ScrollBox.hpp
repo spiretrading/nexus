@@ -43,6 +43,9 @@ namespace Spire {
       explicit ScrollBox(QWidget* body, QWidget* parent = nullptr);
 
       /** Returns the body. */
+      const QWidget& get_body() const;
+
+      /** Returns the body. */
       QWidget& get_body();
 
       /** Returns the horizontal display policy. */
@@ -65,6 +68,12 @@ namespace Spire {
 
       /** Sets the horizontal and vertical display policies. */
       void set(DisplayPolicy horizontal_policy, DisplayPolicy vertical_policy);
+
+      /** Returns the vertical ScrollBar. */
+      ScrollBar& get_vertical_scroll_bar();
+
+      /** Returns the horizontal ScrollBar. */
+      ScrollBar& get_horizontal_scroll_bar();
 
       /**
        * Scrolls to a widget, ensuring that it's visible. If the widget is
