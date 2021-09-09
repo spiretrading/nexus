@@ -102,14 +102,16 @@ connection FocusObserver::connect_state_signal(
 
 FocusObserver::State Spire::operator |(FocusObserver::State left,
     FocusObserver::State right) {
-  return static_cast<FocusObserver::State>(static_cast<std::uint8_t>(left) |
-    static_cast<std::uint8_t>(right));
+  return static_cast<FocusObserver::State>(
+    static_cast<std::underlying_type_t<FocusObserver::State>>(left) |
+    static_cast<std::underlying_type_t<FocusObserver::State>>(right));
 }
 
 FocusObserver::State Spire::operator &(FocusObserver::State left,
     FocusObserver::State right) {
-  return static_cast<FocusObserver::State>(static_cast<std::uint8_t>(left) &
-    static_cast<std::uint8_t>(right));
+  return static_cast<FocusObserver::State>(
+    static_cast<std::underlying_type_t<FocusObserver::State>>(left) &
+    static_cast<std::underlying_type_t<FocusObserver::State>>(right));
 }
 
 FocusObserver::State& Spire::operator |=(FocusObserver::State& left,
