@@ -353,9 +353,9 @@ UiProfile Spire::make_calendar_date_picker_profile() {
   properties.push_back(make_standard_property(
     "current", QString::fromUtf8("2021-08-25")));
   properties.push_back(make_standard_property(
-    "min", QString::fromUtf8("2021-07-15")));
+    "min", QString::fromUtf8("2021-06-15")));
   properties.push_back(make_standard_property(
-    "max", QString::fromUtf8("2021-09-15")));
+    "max", QString::fromUtf8("2021-10-15")));
   auto profile = UiProfile(QString::fromUtf8("CalendarDatePicker"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();

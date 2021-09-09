@@ -43,15 +43,14 @@ namespace Styles {
       ListView* m_calendar_view;
       std::shared_ptr<ArrayListModel> m_calendar_model;
       boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_selection_connection;
+      boost::signals2::scoped_connection m_list_current_connection;
 
       void populate_calendar(const std::function<
         void (int index, boost::gregorian::date day)> assign);
-      void set_selection(const boost::optional<int>& index);
       void update_calendar_model();
-      void update_selection(boost::gregorian::date day);
       void on_current(const boost::optional<boost::gregorian::date>& day);
       void on_current_month(boost::gregorian::date month);
+      void on_list_current(const boost::optional<int> index);
   };
 }
 

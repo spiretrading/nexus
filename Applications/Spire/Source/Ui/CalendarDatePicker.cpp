@@ -264,24 +264,11 @@ CalendarDatePicker::CalendarDatePicker(
     set(TextColor(QColor::fromRgb(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
-  m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
   m_current_connection =
+    m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
+  m_list_current_connection =
     m_calendar_view->get_current_model()->connect_current_signal(
-      [=] (auto index) {
-        if(index) {
-          m_model->set_current(m_calendar_model->
-            get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
-        }
-      });
-  m_selection_connection =
-    m_calendar_view->get_selection_model()->connect_current_signal(
-      [=] (const auto& index) {
-        if(index &&
-            index != m_calendar_view->get_current_model()->get_current()) {
-          m_model->set_current(m_calendar_model->
-            get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
-        }
-      });
+      [=] (auto index) { on_list_current(index); });
   layout->addWidget(m_calendar_view);
 }
 
@@ -329,16 +316,9 @@ void CalendarDatePicker::populate_calendar(const std::function<
   }
 }
 
-void CalendarDatePicker::set_selection(
-    const boost::optional<int>& index) {
-  auto current_block = shared_connection_block(m_current_connection);
-  m_calendar_view->get_current_model()->set_current(index);
-  auto selection_blocker = shared_connection_block(m_selection_connection);
-  m_calendar_view->get_selection_model()->set_current(index);
-}
-
 void CalendarDatePicker::update_calendar_model() {
   populate_calendar([=] (auto index, auto day) {
+    auto current_block = shared_connection_block(m_list_current_connection);
     m_calendar_model->
       get<std::shared_ptr<LocalDateModel>>(index)->set_current(day);
     auto minimum = m_model->get_minimum();
@@ -354,26 +334,25 @@ void CalendarDatePicker::update_calendar_model() {
       }
     }
   });
-  m_calendar_view->get_selection_model()->set_current({});
-  set_selection({});
-  auto current = m_model->get_current();
-  auto month = m_month_selector->get_model()->get_current();
-  if(!current.is_initialized()) {
-    window()->setFixedSize(window()->width() + 20, window()->height() + 20);
-  }
-  if(current &&
-      current->month() == month.month() && current->year() == month.year()) {
-    update_selection(*current);
-  }
-}
-
-void CalendarDatePicker::update_selection(date day) {
+  auto current_set = false;
   for(auto i = 0; i < m_calendar_model->get_size(); ++i) {
-    if(m_calendar_model->
-        get<std::shared_ptr<LocalDateModel>>(i)->get_current() == day) {
-      set_selection(i);
+    if(auto model = m_calendar_model->get<std::shared_ptr<LocalDateModel>>(i);
+        model->get_current() == m_model->get_current()) {
+      auto current_block =
+        shared_connection_block(m_list_current_connection);
+      m_calendar_view->get_current_model()->set_current(i);
+      current_set = true;
+      m_calendar_view->get_selection_model()->set_current(i);
+      if(!m_month_selector->hasFocus() &&
+          !m_month_selector->isAncestorOf(focusWidget())) {
+        auto current = *m_calendar_view->get_selection_model()->get_current();
+        m_calendar_view->get_list_item(current)->setFocus();
+      }
       break;
     }
+  }
+  if(!current_set) {
+    m_calendar_view->get_selection_model()->set_current({});
   }
 }
 
@@ -381,10 +360,7 @@ void CalendarDatePicker::on_current(const boost::optional<date>& day) {
   if(day) {
     auto display = m_month_selector->get_model()->get_current();
     if(display.month() != day->month() || display.year() != day->year()) {
-      set_selection({});
       update_calendar_model();
-    } else {
-      update_selection(*day);
     }
   }
 }
@@ -395,5 +371,12 @@ void CalendarDatePicker::on_current_month(date month) {
   if(month.month() != displayed_month.month() ||
       month.year() != displayed_month.year()) {
     update_calendar_model();
+  }
+}
+
+void CalendarDatePicker::on_list_current(const boost::optional<int> index) {
+  if(index) {
+    m_model->set_current(m_calendar_model->
+      get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
   }
 }
