@@ -5,24 +5,6 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  QObject* find_focus_event_filter_from_parent(QWidget& widget) {
-    auto parent = &widget;
-    while (parent) {
-      if(parent->isWindow()) {
-        break;
-      }
-      auto filter = parent->findChild<QObject*>("FocusEventFilter",
-        Qt::FindDirectChildrenOnly);
-      if(filter) {
-        return filter;
-      }
-      parent = parent->parentWidget();
-    }
-    return nullptr;
-  }
-}
-
 struct FocusObserver::FocusEventFilter : QObject {
   FocusObserver* m_observer;
   Qt::FocusReason m_focus_reason;
@@ -31,7 +13,6 @@ struct FocusObserver::FocusEventFilter : QObject {
       : QObject(const_cast<QWidget*>(observer.m_widget)),
         m_observer(&observer),
         m_focus_reason(Qt::MouseFocusReason) {
-    setObjectName("FocusEventFilter");
     qApp->installEventFilter(this);
     QObject::connect(qApp,
       &QApplication::focusChanged, this, &FocusEventFilter::on_focus_changed);
@@ -46,6 +27,12 @@ struct FocusObserver::FocusEventFilter : QObject {
   }
 
   void on_focus_changed(QWidget* old, QWidget* now) {
+    static auto widget_focus_visible = std::pair<QWidget*, bool>();
+    static auto previous_widget_focus_visible = widget_focus_visible;
+    if(widget_focus_visible.first != now &&
+        previous_widget_focus_visible != widget_focus_visible) {
+      previous_widget_focus_visible = widget_focus_visible;
+    }
     auto state = m_observer->m_state;
     if(m_observer->m_widget == now) {
       m_observer->m_state = State::FOCUS | State::FOCUS_IN;
@@ -60,23 +47,25 @@ struct FocusObserver::FocusEventFilter : QObject {
         case Qt::BacktabFocusReason:
         case Qt::ShortcutFocusReason:
           m_observer->m_state |= State::FOCUS_VISIBLE;
+          widget_focus_visible = std::make_pair(now, true);
           break;
         case Qt::ActiveWindowFocusReason:
         case Qt::PopupFocusReason:
           if((m_observer->m_old_state & State::FOCUS_VISIBLE) ==
               State::FOCUS_VISIBLE) {
             m_observer->m_state |= State::FOCUS_VISIBLE;
+            widget_focus_visible = std::make_pair(now, true);
           }
           break;
         case Qt::OtherFocusReason:
-          if(old) {
-            auto filter = find_focus_event_filter_from_parent(*old);
-            if(filter && (static_cast<FocusEventFilter*>(filter)->
-                m_observer->m_old_state & State::FOCUS_VISIBLE) ==
-                State::FOCUS_VISIBLE) {
-              m_observer->m_state |= State::FOCUS_VISIBLE;
-            }
+          if(previous_widget_focus_visible.first == old &&
+              previous_widget_focus_visible.second) {
+            m_observer->m_state |= State::FOCUS_VISIBLE;
+            widget_focus_visible = std::make_pair(now, true);
           }
+          break;
+        default:
+          widget_focus_visible = std::make_pair(now, false);
           break;
         }
     }
