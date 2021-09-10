@@ -318,6 +318,8 @@ void CalendarDatePicker::populate_calendar(const std::function<
 
 void CalendarDatePicker::update_calendar_model() {
   auto current_set = false;
+  auto list_has_focus =
+    m_calendar_view->hasFocus() || m_calendar_view->isAncestorOf(focusWidget());
   populate_calendar([&] (auto index, auto day) {
     auto current_block = shared_connection_block(m_list_current_connection);
     m_calendar_model->
@@ -344,6 +346,9 @@ void CalendarDatePicker::update_calendar_model() {
   });
   if(!current_set) {
     m_calendar_view->get_selection_model()->set_current({});
+  }
+  if(list_has_focus) {
+    m_calendar_view->setFocus();
   }
 }
 
