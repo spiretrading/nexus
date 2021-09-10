@@ -123,7 +123,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
-      m_is_rejected(false) {
+      m_is_rejected(false),
+      m_has_update(false) {
   auto layers = new LayeredWidget(this);
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
@@ -243,6 +244,9 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
       key_event.ignore();
       return true;
+    } else if(key_event.key() == Qt::Key_Enter ||
+        key_event.key() == Qt::Key_Return) {
+      m_has_update = true;
     }
   } else if(event->type() == QEvent::Resize) {
     update_display_text();
@@ -404,6 +408,7 @@ void TextBox::commit_placeholder_style() {
 }
 
 void TextBox::on_current(const QString& current) {
+  m_has_update = true;
   if(m_is_rejected) {
     m_is_rejected = false;
     unmatch(*this, Rejected());
@@ -414,11 +419,12 @@ void TextBox::on_current(const QString& current) {
 
 void TextBox::on_editing_finished() {
   if(!is_read_only()) {
-    if(!m_line_edit->hasFocus() && m_submission == m_model->get_current()) {
+    if(!m_has_update) {
       return;
     }
     if(m_model->get_state() == QValidator::Acceptable) {
       m_submission = m_model->get_current();
+      m_has_update = false;
       m_submit_signal(m_submission);
     } else {
       m_reject_signal(m_model->get_current());
