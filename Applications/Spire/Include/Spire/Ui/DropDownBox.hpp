@@ -2,6 +2,7 @@
 #define SPIRE_DROP_DOWN_BOX_HPP
 #include <any>
 #include <QWidget>
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -12,6 +13,16 @@ namespace Spire {
    */
   class DropDownBox : public QWidget {
     public:
+
+      /**
+       * The type of model representing the index of the current value.
+       */
+      using CurrentModel = ListView::CurrentModel;
+
+      /**
+       * The type of model representing the index of the selected value.
+       */
+      using SelectionModel = ListView::SelectionModel;
 
       /**
        * Signals that the value was submitted.
@@ -25,7 +36,16 @@ namespace Spire {
        * @param parent The parent widget.
        */
       explicit DropDownBox(ListView& list_view, QWidget* parent = nullptr);
-    
+
+      /** Returns the list of selectable values. */
+      const std::shared_ptr<ListModel>& get_list_model() const;
+  
+      /** Returns the current model. */
+      const std::shared_ptr<CurrentModel>& get_current_model() const;
+
+      /** Returns the selection model. */
+      const std::shared_ptr<SelectionModel>& get_selection_model() const;
+
       /** Returns <code>true</code> iff this DropDownBox is read-only. */
       bool is_read_only() const;
 

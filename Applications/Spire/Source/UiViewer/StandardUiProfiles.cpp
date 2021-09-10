@@ -1073,7 +1073,8 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", -1));
-  properties.push_back(make_standard_property("select_item", 0));
+  properties.push_back(make_standard_property("current_item", -1));
+  properties.push_back(make_standard_property("select_item", -1));
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
@@ -1174,6 +1175,14 @@ UiProfile Spire::make_list_view_profile() {
         auto style = get_style(*list_view);
         style.get(Any()).set(value);
         set_style(*list_view, std::move(style));
+      });
+      auto& current_item = get<int>("current_item", profile.get_properties());
+      current_item.connect_changed_signal([=] (auto index) {
+        if(index == -1) {
+          list_view->get_current_model()->set_current(none);
+        } else if(index >= 0 && index < list_model->get_size()) {
+          list_view->get_current_model()->set_current(index);
+        }
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
       select_item.connect_changed_signal([=] (auto index) {
