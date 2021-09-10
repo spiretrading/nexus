@@ -10,6 +10,7 @@
 #include <qt_windows.h>
 #include <windowsx.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
 using namespace boost;
@@ -184,7 +185,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       }
     }
     auto pos = m_title_bar->mapFromGlobal({x, y});
-    if(m_title_bar->get_title_label()->geometry().contains(pos)) {
+    if(m_title_bar->get_title_label().geometry().contains(pos)) {
       *result = HTCAPTION;
       return true;
     }
