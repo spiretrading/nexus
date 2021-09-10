@@ -1,7 +1,6 @@
 #ifndef SPIRE_TITLE_BAR_HPP
 #define SPIRE_TITLE_BAR_HPP
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
@@ -24,8 +23,8 @@ namespace Spire {
        */
       void set_icon(const QImage& icon);
 
-      /** Returns the title text QLabel. */
-      QLabel* get_title_label() const;
+      /** Returns the title text label. */
+      const TextBox& get_title_label() const;
 
     protected:
       void changeEvent(QEvent* event) override;
@@ -33,10 +32,9 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      QHBoxLayout* m_layout;
-      QImage m_icon;
-      Button* m_icon_button;
-      QLabel* m_title_label;
+      QHBoxLayout* m_container_layout;
+      Button* m_window_button;
+      TextBox* m_title_label;
       Button* m_minimize_button;
       Button* m_maximize_button;
       Button* m_restore_button;
@@ -48,8 +46,6 @@ namespace Spire {
       void on_maximize_button_press();
       void on_restore_button_press();
       void on_close_button_press();
-      void set_icon(const QImage& icon, const QColor& hover_color);
-      void set_title_text_stylesheet(const QColor& font_color);
   };
 }
 
