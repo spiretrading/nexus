@@ -89,10 +89,6 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       setText(m_model->get_current());
     }
 
-    bool is_desired_width() const {
-      return width() >= m_longest_line_width;
-    }
-
     QSize sizeHint() const override {
       auto margins = contentsMargins();
       auto desired_size =
@@ -420,7 +416,7 @@ void TextAreaBox::update_display_text() {
           is_elided = lines.count() > line_count;
         }
       }
-      if(is_elided && !m_text_edit->is_desired_width()) {
+      if(is_elided) {
         while(lines.count() > line_count) {
           lines.pop_back();
         }
