@@ -24,7 +24,7 @@ namespace Spire {
       void set_icon(const QImage& icon);
 
       /** Returns the title text label. */
-      TextBox* get_title_label() const;
+      const TextBox& get_title_label() const;
 
     protected:
       void changeEvent(QEvent* event) override;
@@ -33,7 +33,6 @@ namespace Spire {
 
     private:
       QHBoxLayout* m_container_layout;
-      QImage m_icon;
       Button* m_window_button;
       TextBox* m_title_label;
       Button* m_minimize_button;

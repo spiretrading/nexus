@@ -61,7 +61,6 @@ namespace {
 
 TitleBar::TitleBar(QImage icon, QWidget* parent)
     : QWidget(parent),
-      m_icon(std::move(icon)),
       m_window_button(nullptr) {
   setFixedHeight(scale_height(26));
   auto container = new QWidget(this);
@@ -106,23 +105,21 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(new Box(container, this));
-  set_icon(m_icon);
+  set_icon(icon);
   connect_window_signals();
 }
 
 void TitleBar::set_icon(const QImage& icon) {
-  m_icon = icon;
   delete m_window_button;
   m_window_button = make_icon_button(icon, this);
   m_window_button->setFixedSize(scale(26, 26));
   m_window_button->setFocusPolicy(Qt::NoFocus);
-  auto icon_button_style = WINDOW_BUTTON_STYLE();
-  set_style(*m_window_button, std::move(icon_button_style));
+  set_style(*m_window_button, WINDOW_BUTTON_STYLE());
   m_container_layout->insertWidget(0, m_window_button);
 }
 
-TextBox* TitleBar::get_title_label() const {
-  return m_title_label;
+const TextBox& TitleBar::get_title_label() const {
+  return *m_title_label;
 }
 
 void TitleBar::changeEvent(QEvent* event) {

@@ -185,7 +185,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       }
     }
     auto pos = m_title_bar->mapFromGlobal({x, y});
-    if(m_title_bar->get_title_label()->geometry().contains(pos)) {
+    if(m_title_bar->get_title_label().geometry().contains(pos)) {
       *result = HTCAPTION;
       return true;
     }
