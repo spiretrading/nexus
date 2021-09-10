@@ -16,20 +16,18 @@ namespace Spire {
         /** The state indicates a widget doesn't have focus. */
         NONE = 0,
 
-        /** The state indicates a widget gets focus. */
-        FOCUS = 0x01,
+        /** The state indicates a widget or any of its descendants has focus. */
+        FOCUS_IN = 0x01,
+
+        /** The state indicates a widget has focus. */
+        FOCUS = FOCUS_IN | 0x02,
 
         /**
-         * The state indicates a widget or one of this widget's children
-         * gets focus.
+         * The state indicates a widget gets focus via non-pointing device or
+         * through receiving programmatic focus from a component that had
+         * <code>FOCUS_VISIBLE</code>.
          */
-        FOCUS_IN = 0x02,
-
-        /**
-         * The state indicates a widget gets focus via keyboard or other
-         * non-pointing device.
-         */
-        FOCUS_VISIBLE = 0x04
+        FOCUS_VISIBLE = FOCUS | 0x04
       };
 
       /**
@@ -59,30 +57,6 @@ namespace Spire {
       State m_old_state;
       std::shared_ptr<FocusEventFilter> m_focus_event_filter;
   };
-
-  /**
-   * Provides a bitwise inclusive OR operator for FocusObserver::State.
-   * @param left The left hand operand.
-   * @param right The right hand operand.
-   */
-  FocusObserver::State operator |(FocusObserver::State left,
-    FocusObserver::State right);
-
-  /**
-   * Provides a bitwise AND operator for FocusObserver::State.
-   * @param left The left hand operand.
-   * @param right The right hand operand.
-   */
-  FocusObserver::State operator &(FocusObserver::State left,
-    FocusObserver::State right);
-
-  /**
-   * Provides a compound operator |= for FocusObserver::State.
-   * @param left The left hand operand.
-   * @param right The right hand operand.
-   */
-  FocusObserver::State& operator |=(FocusObserver::State& left,
-    FocusObserver::State right);
 }
 
 #endif

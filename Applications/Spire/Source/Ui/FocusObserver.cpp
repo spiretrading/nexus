@@ -10,7 +10,7 @@ struct FocusObserver::FocusEventFilter : QObject {
   Qt::FocusReason m_focus_reason;
 
   FocusEventFilter(FocusObserver& observer)
-      : QObject(nullptr),
+      : QObject(),
         m_observer(&observer),
         m_focus_reason(Qt::MouseFocusReason) {
     qApp->installEventFilter(this);
@@ -35,7 +35,7 @@ struct FocusObserver::FocusEventFilter : QObject {
     }
     auto state = m_observer->m_state;
     if(m_observer->m_widget == now) {
-      m_observer->m_state = State::FOCUS | State::FOCUS_IN;
+      m_observer->m_state = State::FOCUS;
     } else if(m_observer->m_widget->isAncestorOf(now)) {
       m_observer->m_state = State::FOCUS_IN;
     } else {
@@ -46,21 +46,20 @@ struct FocusObserver::FocusEventFilter : QObject {
         case Qt::TabFocusReason:
         case Qt::BacktabFocusReason:
         case Qt::ShortcutFocusReason:
-          m_observer->m_state |= State::FOCUS_VISIBLE;
+          m_observer->m_state = State::FOCUS_VISIBLE;
           widget_focus_visible = std::make_pair(now, true);
           break;
         case Qt::ActiveWindowFocusReason:
         case Qt::PopupFocusReason:
-          if((m_observer->m_old_state & State::FOCUS_VISIBLE) ==
-              State::FOCUS_VISIBLE) {
-            m_observer->m_state |= State::FOCUS_VISIBLE;
+          if(m_observer->m_old_state == State::FOCUS_VISIBLE) {
+            m_observer->m_state = State::FOCUS_VISIBLE;
             widget_focus_visible = std::make_pair(now, true);
           }
           break;
         case Qt::OtherFocusReason:
           if(previous_widget_focus_visible.first == old &&
               previous_widget_focus_visible.second) {
-            m_observer->m_state |= State::FOCUS_VISIBLE;
+            m_observer->m_state = State::FOCUS_VISIBLE;
             widget_focus_visible = std::make_pair(now, true);
           }
           break;
@@ -80,7 +79,7 @@ FocusObserver::FocusObserver(const QWidget& widget)
     : m_widget(&widget),
       m_state(State::NONE) {
   if(m_widget->hasFocus()) {
-    m_state = State::FOCUS | State::FOCUS_IN;
+    m_state = State::FOCUS;
   } else if(m_widget->isAncestorOf(QApplication::focusWidget())) {
     m_state = State::FOCUS_IN;
   }
@@ -95,23 +94,4 @@ FocusObserver::State FocusObserver::get_state() const {
 connection FocusObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
   return m_state_signal.connect(slot);
-}
-
-FocusObserver::State Spire::operator |(FocusObserver::State left,
-    FocusObserver::State right) {
-  return static_cast<FocusObserver::State>(
-    static_cast<std::underlying_type_t<FocusObserver::State>>(left) |
-    static_cast<std::underlying_type_t<FocusObserver::State>>(right));
-}
-
-FocusObserver::State Spire::operator &(FocusObserver::State left,
-    FocusObserver::State right) {
-  return static_cast<FocusObserver::State>(
-    static_cast<std::underlying_type_t<FocusObserver::State>>(left) &
-    static_cast<std::underlying_type_t<FocusObserver::State>>(right));
-}
-
-FocusObserver::State& Spire::operator |=(FocusObserver::State& left,
-    FocusObserver::State right) {
-  return left = left | right;
 }

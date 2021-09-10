@@ -839,30 +839,16 @@ UiProfile Spire::make_focus_observer_profile() {
       observers.clear();
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("StateSignal"));
-      auto to_string = [] (auto state) -> QString {
+      auto to_string = [] (auto state) {
         if(state == FocusObserver::State::NONE) {
           return "NONE";
+        } else if(state == FocusObserver::State::FOCUS_IN) {
+          return "FOCUS_IN";
+        } else if(state == FocusObserver::State::FOCUS) {
+          return "FOCUS";
+        } else {
+          return "FOCUS_VISIBLE";
         }
-        QString focus_state;
-        if((state & FocusObserver::State::FOCUS) ==
-            FocusObserver::State::FOCUS) {
-          focus_state = "FOCUS";
-        }
-        if((state & FocusObserver::State::FOCUS_IN) ==
-            FocusObserver::State::FOCUS_IN) {
-          if(!focus_state.isEmpty()) {
-            focus_state += " | ";
-          }
-          focus_state += "FOCUS_IN";
-        }
-        if((state & FocusObserver::State::FOCUS_VISIBLE) ==
-            FocusObserver::State::FOCUS_VISIBLE) {
-          if(!focus_state.isEmpty()) {
-            focus_state += " | ";
-          }
-          focus_state += "FOCUS_VISIBLE";
-        }
-        return focus_state;
       };
       auto& test_widget = get<int>("widget", profile.get_properties());
       auto widget = [&] () -> QWidget* {
