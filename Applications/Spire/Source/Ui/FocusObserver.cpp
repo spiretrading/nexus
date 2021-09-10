@@ -14,7 +14,7 @@ struct FocusObserver::FocusEventFilter : QObject {
         m_observer(&observer),
         m_focus_reason(Qt::MouseFocusReason) {
     qApp->installEventFilter(this);
-    QObject::connect(qApp,
+    connect(qApp,
       &QApplication::focusChanged, this, &FocusEventFilter::on_focus_changed);
   }
 
