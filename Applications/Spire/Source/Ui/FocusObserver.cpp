@@ -10,7 +10,7 @@ struct FocusObserver::FocusEventFilter : QObject {
   Qt::FocusReason m_focus_reason;
 
   FocusEventFilter(FocusObserver& observer)
-      : QObject(const_cast<QWidget*>(observer.m_widget)),
+      : QObject(nullptr),
         m_observer(&observer),
         m_focus_reason(Qt::MouseFocusReason) {
     qApp->installEventFilter(this);
@@ -85,10 +85,7 @@ FocusObserver::FocusObserver(const QWidget& widget)
     m_state = State::FOCUS_IN;
   }
   m_old_state = m_state;
-  m_focus_event_filter = std::make_unique<FocusEventFilter>(*this);
-  QObject::connect(m_widget, &QObject::destroyed, [=] (QObject*) {
-    delete this;
-  });
+  m_focus_event_filter = std::make_shared<FocusEventFilter>(*this);
 }
 
 FocusObserver::State FocusObserver::get_state() const {

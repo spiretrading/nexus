@@ -54,6 +54,8 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+auto observers = std::vector<std::shared_ptr<FocusObserver>>();
+
 namespace {
   template<typename T>
   struct DecimalBoxProfileProperties {
@@ -834,6 +836,7 @@ UiProfile Spire::make_focus_observer_profile() {
     make_standard_enum_property("widget", test_widget_property));
   auto profile = UiProfile(QString::fromUtf8("FocusObserver"), properties,
     [] (auto& profile) {
+      observers.clear();
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("StateSignal"));
       auto to_string = [] (auto state) -> QString {
@@ -878,11 +881,12 @@ UiProfile Spire::make_focus_observer_profile() {
           }
           auto list_view = new ListView(list_model);
           for(auto i = 0; i < item_count; ++i) {
-            auto item_focus_observer = new FocusObserver(
+            auto item_focus_observer = std::make_shared<FocusObserver>(
               *list_view->get_list_item(i));
             item_focus_observer->connect_state_signal([=] (auto state) {
               filter_slot(QString("%1").arg(to_string(state)));
             });
+            observers.push_back(item_focus_observer);
           }
           auto timer = new QTimer(list_view);
           QObject::connect(timer, &QTimer::timeout, [=] {
@@ -896,10 +900,11 @@ UiProfile Spire::make_focus_observer_profile() {
         }
       }();
       apply_widget_properties(widget, profile.get_properties());
-      auto focus_observer = new FocusObserver(*widget);
+      auto focus_observer = std::make_shared<FocusObserver>(*widget);
       focus_observer->connect_state_signal([=] (auto state) {
         filter_slot(QString("%1").arg(to_string(state)));
       });
+      observers.push_back(focus_observer);
       return widget;
     });
   return profile;

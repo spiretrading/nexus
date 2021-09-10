@@ -57,7 +57,7 @@ namespace Spire {
       const QWidget* m_widget;
       State m_state;
       State m_old_state;
-      std::unique_ptr<FocusEventFilter> m_focus_event_filter;
+      std::shared_ptr<FocusEventFilter> m_focus_event_filter;
   };
 
   /**
