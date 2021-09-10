@@ -58,9 +58,11 @@ namespace {
       layout->setAlignment(
         Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
       layout->setContentsMargins({});
+      m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layout->addWidget(m_body);
       setLayout(layout);
       setFocusProxy(m_body);
+      proxy_style(*this, *body);
     }
 
     QSize sizeHint() const override {
