@@ -73,8 +73,9 @@ namespace {
 
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
-    ContentSizedTextEdit(const QString& text)
-        : m_longest_line_width(0) {
+    ContentSizedTextEdit(std::shared_ptr<TextModel> model)
+        : m_longest_line_width(0),
+          m_model(std::move(model)) {
       setLineWrapMode(QTextEdit::WidgetWidth);
       horizontalScrollBar()->blockSignals(true);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -85,7 +86,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       setAcceptRichText(false);
       connect(this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
       setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-      setText(text);
+      setText(m_model->get_current());
     }
 
     QSize sizeHint() const override {
@@ -106,6 +107,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
   private:
     int m_longest_line_width;
+    std::shared_ptr<TextModel> m_model;
 
     void on_text_changed() {
       auto previous_longest_line = m_longest_line_width;
@@ -116,13 +118,10 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     }
 
     int get_longest_line_width() const {
+      auto lines = m_model->get_current().split('\n');
       auto longest = 0;
-      for(auto i = 0; i < document()->blockCount(); ++i) {
-        auto block = document()->findBlockByNumber(i);
-        if(block.isValid()) {
-          longest =
-            std::max(longest, fontMetrics().horizontalAdvance(block.text()));
-        }
+      for(const auto& line : lines) {
+        longest = std::max(longest, fontMetrics().horizontalAdvance(line));
       }
       return longest;
     }
@@ -225,7 +224,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_text_edit_styles([=] { commit_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()) {
-  m_text_edit = new ContentSizedTextEdit(m_model->get_current());
+  m_text_edit = new ContentSizedTextEdit(m_model);
   m_text_edit->installEventFilter(this);
   m_stacked_widget = new QStackedWidget(this);
   m_stacked_widget->addWidget(new VerticalOffsetWrapper(m_text_edit));
@@ -498,6 +497,7 @@ void TextAreaBox::update_text_edit_width() {
     m_text_edit->setFixedWidth(
       width() - border_size.width() - padding_size.width());
   }
+  update_display_text();
 }
 
 void TextAreaBox::on_current(const QString& current) {
