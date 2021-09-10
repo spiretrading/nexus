@@ -414,6 +414,9 @@ void TextBox::on_current(const QString& current) {
 
 void TextBox::on_editing_finished() {
   if(!is_read_only()) {
+    if(!m_line_edit->hasFocus() && m_submission == m_model->get_current()) {
+      return;
+    }
     if(m_model->get_state() == QValidator::Acceptable) {
       m_submission = m_model->get_current();
       m_submit_signal(m_submission);
