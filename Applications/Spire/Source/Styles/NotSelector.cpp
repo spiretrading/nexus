@@ -22,10 +22,41 @@ NotSelector Spire::Styles::operator !(Selector selector) {
   return NotSelector(std::move(selector));
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const NotSelector& selector, std::unordered_set<Stylist*> sources) {
-  for(auto selected : select(selector.get_selector(), sources)) {
-    sources.erase(selected);
-  }
-  return sources;
+SelectConnection Spire::Styles::select(const NotSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  struct Executor {
+    const Stylist* m_base;
+    SelectionUpdateSignal m_on_update;
+    SelectConnection m_connection;
+
+    Executor(const NotSelector& selector, const Stylist& base,
+        const SelectionUpdateSignal& on_update)
+        : m_base(&base) {
+      auto is_included = false;
+      m_on_update = [&] (auto&& additions, auto&& removals) {
+        is_included = true;
+        if(!additions.empty()) {
+          on_update(std::move(additions), {});
+        }
+      };
+      m_connection = select(selector.get_selector(), *m_base,
+        std::bind_front(&Executor::on_update, this));
+      m_on_update = on_update;
+      if(!is_included) {
+        m_on_update({m_base}, {});
+      }
+    }
+
+    void on_update(
+        std::unordered_set<const Stylist*>&& additions,
+        std::unordered_set<const Stylist*>&& removals) {
+      if(additions.contains(m_base)) {
+        m_on_update({}, {m_base});
+      } else if(removals.contains(m_base)) {
+        m_on_update({m_base}, {});
+      }
+    }
+  };
+  return SelectConnection(
+    std::make_unique<Executor>(selector, base, on_update));
 }

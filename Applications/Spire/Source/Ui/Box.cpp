@@ -54,6 +54,10 @@ Box::Box(QWidget* body, QWidget* parent)
   connect_style_signal(*this, [=] { on_style(); });
 }
 
+const QWidget* Box::get_body() const {
+  return m_body;
+}
+
 QWidget* Box::get_body() {
   return m_body;
 }
@@ -158,8 +162,6 @@ void Box::commit_style() {
   m_styles.write(stylesheet);
   if(stylesheet != styleSheet()) {
     setStyleSheet(stylesheet);
-    style()->unpolish(this);
-    style()->polish(this);
     if(m_body) {
       m_size_hint = none;
       updateGeometry();
@@ -307,11 +309,10 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
   return box;
 }
 
-std::unordered_set<Stylist*> BaseComponentFinder<Box, Body>::operator ()(
-    Box& box, const Body& body) const {
-  auto stylists = std::unordered_set<Stylist*>();
+SelectConnection BaseComponentFinder<Box, Body>::operator ()(const Box& box,
+    const Body& body, const SelectionUpdateSignal& on_update) const {
   if(auto body = box.get_body()) {
-    stylists.insert(&find_stylist(*body));
+    on_update({&find_stylist(*body)}, {});
   }
-  return stylists;
+  return {};
 }

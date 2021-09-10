@@ -1,7 +1,7 @@
 #ifndef SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
 #define SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
-#include <unordered_set>
 #include "Spire/Styles/Property.hpp"
+#include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
@@ -34,8 +34,8 @@ namespace Spire::Styles {
    */
   PropertyMatchSelector matches(Property property);
 
-  std::unordered_set<Stylist*> select(const PropertyMatchSelector& selector,
-    std::unordered_set<Stylist*> sources);
+  SelectConnection select(const PropertyMatchSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 }
 
 #endif

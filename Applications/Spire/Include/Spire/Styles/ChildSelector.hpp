@@ -5,12 +5,12 @@
 
 namespace Spire::Styles {
 
-  /** Selects a widget if one of its children is selected. */
+  /** Selects all of a widget's children. */
   class ChildSelector {
     public:
 
       /**
-       * Constructs an ChildSelector.
+       * Constructs a ChildSelector.
        * @param base The selector for the base widget.
        * @param child The selector for the child.
        */
@@ -38,11 +38,8 @@ namespace Spire::Styles {
    */
   ChildSelector operator >(Selector base, Selector child);
 
-  std::unordered_set<Stylist*> select(
-    const ChildSelector& selector, std::unordered_set<Stylist*> sources);
-
-  std::vector<QWidget*> build_reach(
-    const ChildSelector& selector, QWidget& source);
+  SelectConnection select(const ChildSelector& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 }
 
 #endif

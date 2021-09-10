@@ -1,4 +1,5 @@
 #include "Spire/Ui/ListView.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QHBoxLayout>
@@ -19,11 +20,6 @@ namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
 
-  QWidget* default_view_builder(
-      const std::shared_ptr<ListModel>& model, int index) {
-    return make_label(displayTextAny(model->at(index)));
-  }
-
   auto reverse(QBoxLayout::Direction direction) {
     if(direction == QBoxLayout::TopToBottom) {
       return QBoxLayout::LeftToRight;
@@ -40,28 +36,36 @@ namespace {
   }
 }
 
+QWidget* ListView::default_view_builder(
+    const std::shared_ptr<ListModel>& model, int index) {
+  return make_label(displayTextAny(model->at(index)));
+}
+
 ListView::ListView(std::shared_ptr<ListModel> list_model, QWidget* parent)
   : ListView(std::move(list_model), default_view_builder, parent) {}
 
 ListView::ListView(std::shared_ptr<ListModel> list_model,
   ViewBuilder view_builder, QWidget* parent)
-  : ListView(std::move(list_model), std::move(view_builder),
+  : ListView(std::move(list_model),
       std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<int>>>(), parent) {}
+      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::move(view_builder), parent) {}
 
 ListView::ListView(std::shared_ptr<ListModel> list_model,
-    ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
-    std::shared_ptr<SelectionModel> selection_model, QWidget* parent)
+    std::shared_ptr<CurrentModel> current_model,
+    std::shared_ptr<SelectionModel> selection_model, ViewBuilder view_builder,
+    QWidget* parent)
     : QWidget(parent),
       m_list_model(std::move(list_model)),
-      m_view_builder(std::move(view_builder)),
       m_current_model(std::move(current_model)),
       m_selection_model(std::move(selection_model)),
+      m_view_builder(std::move(view_builder)),
       m_selected(m_selection_model->get_current()),
       m_direction(Qt::Vertical),
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
+      m_user_triggered_move(false),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
@@ -197,6 +201,7 @@ void ListView::append_query(const QString& query) {
     while(i != start) {
       if(m_items[i]->m_item->isEnabled() && displayTextAny(
           m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
+        m_user_triggered_move = true;
         m_current_model->set_current(i);
         break;
       }
@@ -257,6 +262,7 @@ void ListView::navigate(
     return;
   }
   m_navigation_box = m_items[i]->m_item->frameGeometry();
+  m_user_triggered_move = true;
   m_current_model->set_current(i);
 }
 
@@ -314,6 +320,7 @@ void ListView::cross(int direction) {
   if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
+  m_user_triggered_move = true;
   m_current_model->set_current(candidate);
   m_navigation_box = navigation_box;
 }
@@ -356,13 +363,15 @@ void ListView::remove_item(int index) {
       m_current_model->set_current(*m_current_model->get_current() - 1);
     }
   }
-  if(m_selection_model->get_current()) {
+  if(m_selection_model->get_current() &&
+      *m_selection_model->get_current() >= index) {
+    auto blocker = shared_connection_block(m_selection_connection);
     if(m_selection_model->get_current() == index) {
-      m_selection_model->set_current(*m_selection_model->get_current());
-    } else if(m_selection_model->get_current() > index) {
-      m_selection_model->set_current(*m_selection_model->get_current() - 1);
+      m_selected = none;
+    } else {
+      m_selected = *m_selection_model->get_current() - 1;
     }
-    m_selected = m_selection_model->get_current();
+    m_selection_model->set_current(m_selected);
   }
   update_layout();
 }
@@ -444,12 +453,18 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
 }
 
 void ListView::on_current(const boost::optional<int>& current) {
-  if(current) {
+  if(current && (hasFocus() || isAncestorOf(focusWidget()))) {
     m_items[*current]->m_item->setFocus();
+  } else if(isAncestorOf(focusWidget())) {
+    setFocus();
+  }
+  if(m_selection_mode != SelectionMode::NONE && m_user_triggered_move) {
+    m_selection_model->set_current(*current);
   }
 }
 
 void ListView::on_selection(const optional<int>& selected) {
+  m_user_triggered_move = false;
   if(m_selected == selected) {
     return;
   }

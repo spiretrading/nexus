@@ -164,9 +164,9 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   return button;
 }
 
-std::unordered_set<Stylist*> BaseComponentFinder<Button, Body>::operator ()(
-    Button& button, const Body& body) const {
-  auto stylists = std::unordered_set<Stylist*>();
-  stylists.insert(&find_stylist(button.get_body()));
-  return stylists;
+SelectConnection BaseComponentFinder<Button, Body>::operator ()(
+    const Button& button, const Body& body,
+    const SelectionUpdateSignal& on_update) const {
+  on_update({&find_stylist(button.get_body())}, {});
+  return {};
 }

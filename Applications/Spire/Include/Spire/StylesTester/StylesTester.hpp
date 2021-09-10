@@ -1,0 +1,51 @@
+#ifndef SPIRE_STYLES_TESTER_HPP
+#define SPIRE_STYLES_TESTER_HPP
+#include <deque>
+#include <unordered_map>
+#include <unordered_set>
+#include <string>
+#include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Styles/Styles.hpp"
+
+class QWidget;
+
+namespace Spire::Styles::Tests {
+
+  /** Stores the arguments passed to a SelectionUpdateSignal. */
+  struct SelectionUpdate {
+
+    /** The additions passed to the update slot. */
+    std::unordered_set<const Stylist*> m_additions;
+
+    /** The removals passed to the update slot. */
+    std::unordered_set<const Stylist*> m_removals;
+  };
+
+  /**
+   * Returns a graph of QWidget's structured as per the below diagram:
+   *        A
+   *        |
+   *        B
+   *       / \
+   *      C   D
+   *     / \ / \
+   *    E  F G  H
+   */
+  std::unordered_map<std::string, QWidget*> make_graph();
+
+  /**
+   * Tests that there is an SelectionUpdate containing additions and removals
+   * indexed by name from a specified graph.
+   * Pops off the update from the update queue.
+   * @param updates The queue of updates used to verify the selection.
+   * @param graph The graph of QWidgets to test indexed by name.
+   * @param additions The expected set of QWidget's added to the selection.
+   * @param removals The expected set of QWidget's removed from the selection.
+   */
+  void require_selection(std::deque<SelectionUpdate>& updates,
+    const std::unordered_map<std::string, QWidget*>& graph,
+    const std::unordered_set<std::string>& expected_additions,
+    const std::unordered_set<std::string>& expected_removals);
+}
+
+#endif

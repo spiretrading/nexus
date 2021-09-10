@@ -109,6 +109,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_decimal_filter_panel_profile());
   add(make_delete_icon_button_profile());
   add(make_destination_list_item_profile());
+  add(make_drop_down_box_profile());
   add(make_drop_down_list_profile());
   add(make_duration_box_profile());
   add(make_duration_filter_panel_profile());
@@ -191,23 +192,23 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   }
   auto& profile = m_profiles.at(current->text());
   update_table(profile);
-  auto stage = new QSplitter(Qt::Vertical);
+  m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
   m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   m_center_stage->setAlignment(Qt::AlignCenter);
-  stage->addWidget(m_center_stage);
+  m_stage->addWidget(m_center_stage);
   m_event_log = new QTextEdit();
   m_event_log->setReadOnly(true);
-  stage->addWidget(m_event_log);
-  stage->setSizes({350, 150});
-  auto previous_stage = m_body->replaceWidget(STAGE_INDEX, stage);
+  m_stage->addWidget(m_event_log);
+  m_stage->setSizes({350, 150});
+  auto previous_stage = m_body->replaceWidget(STAGE_INDEX, m_stage);
   delete previous_stage;
   profile.connect_event_signal(
     [this] (const auto& name, const auto& arguments) {
       on_event(name, arguments);
     });
   m_line_count = 0;
-  stage->show();
+  m_stage->show();
 }
 
 void UiViewerWindow::on_reset() {
@@ -221,4 +222,7 @@ void UiViewerWindow::on_rebuild() {
   auto previous_widget = m_center_stage->takeWidget();
   m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   delete previous_widget;
+  m_stage->replaceWidget(0, new QWidget(this));
+  auto previous_stage = m_stage->replaceWidget(0, m_center_stage);
+  delete previous_stage;
 }

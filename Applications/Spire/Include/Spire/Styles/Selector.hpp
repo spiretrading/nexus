@@ -3,20 +3,21 @@
 #include <any>
 #include <typeindex>
 #include <type_traits>
-#include <unordered_set>
 #include <Beam/Utilities/Functional.hpp>
+#include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
 
-class QWidget;
-
 namespace Spire::Styles {
+
+  /** Type trait indicating whether a type satisfies the Selector model. */
   template<typename T, typename = void>
   struct is_selector_t : std::false_type {};
 
   template<typename T>
-  struct is_selector_t<T, std::enable_if_t<std::is_same_v<decltype(
-    select(std::declval<T>(), std::declval<std::unordered_set<Stylist*>>())),
-    std::unordered_set<Stylist*>>>> : std::true_type {};
+  struct is_selector_t<T, std::enable_if_t<std::is_same_v<
+    decltype(select(std::declval<const T&>(), std::declval<const Stylist&>(),
+      std::declval<const SelectionUpdateSignal&>())), SelectConnection>>> :
+    std::true_type {};
 
   template<typename T>
   constexpr auto is_selector_v = is_selector_t<T>::value;
@@ -68,71 +69,36 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
-      friend std::unordered_set<Stylist*>
-        select(const Selector&, std::unordered_set<Stylist*>);
-      friend std::vector<QWidget*> build_reach(const Selector&, QWidget&);
+      friend SelectConnection select(
+        const Selector&, const Stylist&, const SelectionUpdateSignal&);
       std::any m_selector;
       std::function<bool (const Selector&, const Selector&)> m_is_equal;
-      std::function<std::unordered_set<Stylist*> (
-        const Selector&, std::unordered_set<Stylist*>)> m_select;
-      std::function<std::vector<QWidget*> (const Selector&, QWidget&)> m_reach;
+      std::function<SelectConnection (
+        const Selector&, const Stylist&, const SelectionUpdateSignal&)>
+        m_select;
   };
 
   /**
-   * Returns all Stylists that match a Selector.
-   * @param selector The Selector to match.
-   * @param sources The set if Stylists to match.
-   * @return The set of of all Stylists that match the <i>selector<i>.
-'  */
-  std::unordered_set<Stylist*>
-    select(const Selector& selector, std::unordered_set<Stylist*> sources);
-
-  /**
-   * Returns all Stylists that match a Selector.
-   * @param selector The Selector to match.
-   * @param source The Stylist to match.
-   * @return The set of of all Stylists that match the <i>selector<i>.
-'  */
-  std::unordered_set<Stylist*>
-    select(const Selector& selector, Stylist& source);
-
-  /**
-   * Returns the list of all widgets that could be selected by one of the rules
-   * belonging to a StyleSheet.
-   * @param style The StyleSheet to compute the list of.
-   * @param source The widget that the <i>style</i> belongs to.
-   * @return A list of all widgets that could be selected by the <i>style</i>.
+   * Returns the set of Stylists selected by a Selector. Updates to the
+   * selection ared provided through a specified callback.
+   * @param selector The Selector used to select Stylists.
+   * @param base The Stylist used as the base of the selection.
+   * @param on_update The callable to invoke when the selection updates.
+   * @return A scoped connection used to receive selection updates.
    */
-  std::vector<QWidget*> build_reach(const StyleSheet& style, QWidget& source);
-
-  /**
-   * Returns the list of all widgets that could be selected by a Selector.
-   * @param selector The Selector to compute the list of.
-   * @param source The widget that the <i>selector</i> belongs to.
-   * @return A list of all widgets that could be selected by the
-   *         <i>selector</i>.
-   */
-  std::vector<QWidget*> build_reach(const Selector& selector, QWidget& source);
-
-  template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
-  std::vector<QWidget*> build_reach(const T& selector, QWidget& source) {
-    return {&source};
-  }
+  SelectConnection select(const Selector& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 
   template<typename T, typename>
   Selector::Selector(T selector)
     : m_selector(std::move(selector)),
       m_is_equal([] (const Selector& self, const Selector& selector) {
-        if(selector.get_type() != typeid(T)) {
-          return false;
-        }
-        return self.as<T>() == selector.as<T>();
+        return selector.get_type() == typeid(T) &&
+          self.as<T>() == selector.as<T>();
       }),
-      m_select([] (const Selector& self, std::unordered_set<Stylist*> source) {
-        return select(self.as<T>(), std::move(source));
-      }),
-      m_reach([] (const Selector& self, QWidget& widget) {
-        return build_reach(self.as<T>(), widget);
+      m_select([] (const Selector& self, const Stylist& base,
+          const SelectionUpdateSignal& on_update) {
+        return select(self.as<T>(), base, on_update);
       }) {}
 
   template<typename U>

@@ -28,6 +28,7 @@ namespace Spire {
       QSplitter* m_body;
       QListWidget* m_widget_list;
       int m_line_count;
+      QSplitter* m_stage;
       QScrollArea* m_center_stage;
       QTextEdit* m_event_log;
       QPushButton* m_reset_button;

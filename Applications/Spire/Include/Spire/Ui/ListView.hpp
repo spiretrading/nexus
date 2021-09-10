@@ -86,6 +86,13 @@ namespace Styles {
       using SubmitSignal = Signal<void (const std::any& submission)>;
 
       /**
+       * The default view builder which uses a label styled TextBox to display
+       * the text representation of its value.
+       */
+      static QWidget* default_view_builder(
+        const std::shared_ptr<ListModel>& model, int index);
+
+      /**
        * Constructs a ListView using default local models and a default view
        * builder.
        * @param list_model The model of values to display.
@@ -105,16 +112,16 @@ namespace Styles {
 
       /**
        * Constructs a ListView.
+       * @param list_model The list model which holds a list of items.
        * @param current_model The current value's model.
        * @param selection_model The selection value's model.
-       * @param list_model The list model which holds a list of items.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<ListModel> list_model,
-        ViewBuilder view_builder, std::shared_ptr<CurrentModel> current_model,
+        std::shared_ptr<CurrentModel> current_model,
         std::shared_ptr<SelectionModel> selection_model,
-        QWidget* parent = nullptr);
+        ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /** Returns the list of values displayed. */
       const std::shared_ptr<ListModel>& get_list_model() const;
@@ -146,9 +153,9 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ListModel> m_list_model;
-      ViewBuilder m_view_builder;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<SelectionModel> m_selection_model;
+      ViewBuilder m_view_builder;
       boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
@@ -158,6 +165,7 @@ namespace Styles {
       Styles::EdgeNavigation m_edge_navigation;
       Styles::Overflow m_overflow;
       Styles::SelectionMode m_selection_mode;
+      bool m_user_triggered_move;
       QRect m_navigation_box;
       QString m_query;
       QTimer* m_query_timer;
