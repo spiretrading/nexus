@@ -39,6 +39,7 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
+#include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -213,6 +214,34 @@ namespace {
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties,
       DecimalBoxProfileProperties(1));
+  }
+
+  template<typename B>
+  auto setup_enum_box_profile(UiProfile& profile) {
+    using Type = B::Type;
+    auto box = new B();
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<Type>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      box->get_current()->set_current(value);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal([=] (auto is_read_only) {
+      box->set_read_only(is_read_only);
+    });
+    box->connect_submit_signal(
+      profile.make_event_slot<std::any>(QString::fromUtf8("Submit")));
+    return box;
+  }
+
+  template<typename T>
+  void populate_enum_box_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      std::vector<std::pair<QString, T>>& current_property) {
+    properties.push_back(make_standard_enum_property(
+      "current", current_property));
+    properties.push_back(make_standard_property("read_only", false));
   }
 
   template<typename B>
@@ -1581,6 +1610,17 @@ UiProfile Spire::make_security_list_item_profile() {
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
+  return profile;
+}
+
+UiProfile Spire::make_side_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Side>(
+    {{"Buy", Side::ASK}, {"Sell", Side::BID}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("SideBox"),
+    properties, setup_enum_box_profile<SideBox>);
   return profile;
 }
 

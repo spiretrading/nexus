@@ -44,6 +44,7 @@ namespace Spire {
   class SearchBox;
   class SecurityListItem;
   class SecurityStack;
+  class SideBox;
   class SortedTableModel;
   class TableModel;
   class Tag;
