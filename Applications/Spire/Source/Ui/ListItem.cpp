@@ -43,7 +43,7 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   layout->addWidget(m_button);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
-  set_style(*m_button, DEFAULT_STYLE());
+  set_style(*this, DEFAULT_STYLE());
 }
 
 bool ListItem::is_selected() const {
