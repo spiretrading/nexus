@@ -127,8 +127,7 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::MouseMove && m_is_draggable &&
         m_positioning != Positioning::PARENT) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
-      if(mouse_event->buttons() & Qt::LeftButton &&
-          m_positioning != Positioning::PARENT) {
+      if(mouse_event->buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event->pos() - m_mouse_pressed_position));
       }
     }
