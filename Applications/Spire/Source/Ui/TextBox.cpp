@@ -23,7 +23,7 @@ namespace {
       set(border_size(0)).
       set(vertical_padding(0));
     style.get(ReadOnly() && Disabled()).
-      set(TextColor(QColor::fromRgb(0, 0, 0)));
+      set(TextColor(QColor(Qt::black)));
     set_style(text_box, std::move(style));
     text_box.setDisabled(true);
     text_box.set_read_only(true);
@@ -35,33 +35,33 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(text_style(font, QColor::fromRgb(0, 0, 0))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xC8C8C8))).
+      set(text_style(font, QColor(Qt::black))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(5)));
     style.get(Hover() || Focus()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
       set(horizontal_padding(0));
     style.get(Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border_color(QColor(0xC8C8C8))).
+      set(TextColor(QColor(0xC8C8C8)));
     style.get(ReadOnly() && Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Rejected()).
       set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
         linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
       set(border_color(
         chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
-    style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+    style.get(Placeholder()).set(TextColor(QColor(0xA0A0A0)));
     style.get(Disabled() / Placeholder()).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 }

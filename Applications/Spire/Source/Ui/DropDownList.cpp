@@ -14,7 +14,7 @@ using namespace Spire::Styles;
 namespace {
   auto SCROLLABLE_LIST_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0));
     return style;
   }
