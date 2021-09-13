@@ -54,8 +54,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-auto observers = std::vector<std::shared_ptr<FocusObserver>>();
-
 namespace {
   template<typename T>
   struct DecimalBoxProfileProperties {
@@ -834,8 +832,10 @@ UiProfile Spire::make_focus_observer_profile() {
     {{"DurationBox", 0}, {"ListItem", 1}, {"LabelButton", 2}, {"ListView", 3}});
   properties.push_back(
     make_standard_enum_property("widget", test_widget_property));
+  properties.push_back(make_standard_property("observer_count", 1));
   auto profile = UiProfile(QString::fromUtf8("FocusObserver"), properties,
     [] (auto& profile) {
+      static auto observers = std::vector<std::shared_ptr<FocusObserver>>();
       observers.clear();
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("StateSignal"));
@@ -886,11 +886,15 @@ UiProfile Spire::make_focus_observer_profile() {
         }
       }();
       apply_widget_properties(widget, profile.get_properties());
-      auto focus_observer = std::make_shared<FocusObserver>(*widget);
-      focus_observer->connect_state_signal([=] (auto state) {
-        filter_slot(QString("%1").arg(to_string(state)));
-      });
-      observers.push_back(focus_observer);
+      auto& observer_count = get<int>("observer_count",
+        profile.get_properties());
+      for(int i = 0; i < observer_count.get(); ++i) {
+        auto focus_observer = std::make_shared<FocusObserver>(*widget);
+        focus_observer->connect_state_signal([=] (auto state) {
+          filter_slot(QString("%1").arg(to_string(state)));
+          });
+        observers.push_back(focus_observer);
+      }
       return widget;
     });
   return profile;

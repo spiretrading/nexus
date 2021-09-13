@@ -52,10 +52,7 @@ namespace Spire {
     private:
       struct FocusEventFilter;
       mutable StateSignal m_state_signal;
-      const QWidget* m_widget;
-      State m_state;
-      State m_old_state;
-      std::shared_ptr<FocusEventFilter> m_focus_event_filter;
+      std::shared_ptr<FocusEventFilter> m_worker;
   };
 }
 
