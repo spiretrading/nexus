@@ -37,10 +37,12 @@ namespace Styles {
 
     private:
       class MonthSelector;
+      class CalendarDayLabel;
       std::shared_ptr<OptionalDateModel> m_model;
       MonthSelector* m_month_selector;
       QWidget* m_day_header;
       ListView* m_calendar_view;
+      std::vector<CalendarDayLabel*> m_day_labels;
       std::shared_ptr<ArrayListModel> m_calendar_model;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_list_current_connection;
@@ -48,7 +50,6 @@ namespace Styles {
       void populate_calendar(const std::function<
         void (int index, boost::gregorian::date day)> assign);
       void update_calendar_model();
-      void on_current(const boost::optional<boost::gregorian::date>& day);
       void on_current_month(boost::gregorian::date month);
       void on_list_current(const boost::optional<int> index);
   };

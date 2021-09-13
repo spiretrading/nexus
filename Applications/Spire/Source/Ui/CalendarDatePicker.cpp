@@ -24,66 +24,6 @@ using MonthModel = LocalValueModel<date>;
 namespace {
   const auto DISPLAYED_DAYS = 42;
 
-  class CalendarDayLabel : public QWidget {
-    public:
-      CalendarDayLabel(std::shared_ptr<DateModel> model,
-          std::shared_ptr<MonthModel> month_model, QWidget* parent = nullptr)
-          : QWidget(parent),
-            m_model(std::move(model)),
-            m_month_model(std::move(month_model)) {
-        setFixedSize(scale(24, 24));
-        auto layout = new QHBoxLayout(this);
-        layout->setContentsMargins({});
-        m_label = make_label("", this);
-        proxy_style(*this, *m_label);
-        auto style = get_style(*m_label);
-        style.get(Any()).
-          set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
-          set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
-          set(border_radius(scale_width(3))).
-          set(TextAlign(Qt::AlignCenter)).
-          set(TextColor(QColor::fromRgb(0x000000))).
-          set(padding(0));
-        style.get(OutOfMonth() && !Disabled()).
-          set(TextColor(QColor::fromRgb(0xA0A0A0)));
-        style.get(Today() && !Disabled()).
-          set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
-          set(TextColor(QColor::fromRgb(0xDB8700)));
-        style.get(Hover() || Press()).
-          set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
-          set(border_color(QColor::fromRgb(0, 0, 0, 0)));
-        style.get(Focus()).
-          set(border_color(QColor::fromRgb(0, 0, 0, 0)));
-        style.get(Disabled()).
-          set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
-          set(border_color(QColor::fromRgb(0, 0, 0, 0))).
-          set(TextColor(QColor::fromRgb(0xC8C8C8)));
-        set_style(*this, std::move(style));
-        layout->addWidget(m_label);
-        on_current(m_model->get_current());
-        m_model->connect_current_signal([=] (auto day) { on_current(day); });
-      }
-
-    private:
-      std::shared_ptr<DateModel> m_model;
-      std::shared_ptr<MonthModel> m_month_model;
-      TextBox* m_label;
-
-      void on_current(date day) {
-        m_label->get_model()->set_current(QString("%12").arg(day.day()));
-        if(day == day_clock::local_day()) {
-          match(*this, Today());
-        } else {
-          unmatch(*this, Today());
-        }
-        if(day.month() == m_month_model->get_current().month()) {
-          unmatch(*this, OutOfMonth());
-        } else {
-          match(*this, OutOfMonth());
-        }
-      }
-  };
-
   auto make_header_label(QString text, QWidget* parent) {
     auto label = make_label(text, parent);
     label->setFocusPolicy(Qt::NoFocus);
@@ -208,6 +148,88 @@ class CalendarDatePicker::MonthSelector : public QWidget {
     }
 };
 
+class CalendarDatePicker::CalendarDayLabel : public QWidget {
+  public:
+    CalendarDayLabel(std::shared_ptr<DateModel> model,
+        std::shared_ptr<MonthModel> month_model, QWidget* parent = nullptr)
+        : QWidget(parent),
+          m_model(std::move(model)),
+          m_month_model(std::move(month_model)),
+          m_is_release_ignored(false) {
+      setObjectName(QString("CDL %1").arg(reinterpret_cast<std::intptr_t>(this)));
+      setFixedSize(scale(24, 24));
+      auto layout = new QHBoxLayout(this);
+      layout->setContentsMargins({});
+      m_label = make_label("", this);
+      proxy_style(*this, *m_label);
+      auto style = get_style(*m_label);
+      style.get(Any()).
+        set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
+        set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+        set(border_radius(scale_width(3))).
+        set(TextAlign(Qt::AlignCenter)).
+        set(TextColor(QColor::fromRgb(0x000000))).
+        set(padding(0));
+      style.get(OutOfMonth() && !Disabled()).
+        set(TextColor(QColor::fromRgb(0xA0A0A0)));
+      style.get(Today() && !Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
+        set(TextColor(QColor::fromRgb(0xDB8700)));
+      style.get(Hover() || Press()).
+        set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      style.get(Focus()).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+        set(TextColor(QColor::fromRgb(0xC8C8C8)));
+      set_style(*this, std::move(style));
+      layout->addWidget(m_label);
+      on_current(m_model->get_current());
+      m_model->connect_current_signal([=] (auto day) { on_current(day); });
+      installEventFilter(this);
+    }
+
+    void set_release_ignored(bool is_ignored) {
+      m_is_release_ignored = is_ignored;
+    }
+
+  protected:
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::MouseButtonRelease) {
+        auto e = static_cast<QMouseEvent*>(event);
+        if(e->button() == Qt::LeftButton) {
+          if(m_is_release_ignored) {
+            m_is_release_ignored = false;
+            return true;
+          }
+        }
+      }
+      return QWidget::eventFilter(watched, event);
+    }
+
+  private:
+    std::shared_ptr<DateModel> m_model;
+    std::shared_ptr<MonthModel> m_month_model;
+    TextBox* m_label;
+    bool m_is_release_ignored;
+
+    void on_current(date day) {
+      m_label->get_model()->set_current(QString("%12").arg(day.day()));
+      if(day == day_clock::local_day()) {
+        match(*this, Today());
+      } else {
+        unmatch(*this, Today());
+      }
+      if(day.month() == m_month_model->get_current().month()) {
+        unmatch(*this, OutOfMonth());
+      } else {
+        match(*this, OutOfMonth());
+      }
+    }
+};
+
 CalendarDatePicker::CalendarDatePicker(QWidget* parent)
   : CalendarDatePicker(std::make_shared<LocalOptionalDateModel>(
       day_clock::local_day()), parent) {}
@@ -240,9 +262,11 @@ CalendarDatePicker::CalendarDatePicker(
   });
   m_calendar_view = new ListView(m_calendar_model,
     [=] (const std::shared_ptr<ListModel>& model, int index) {
-      return new CalendarDayLabel(
+      auto label = new CalendarDayLabel(
         model->get<std::shared_ptr<LocalDateModel>>(index),
         m_month_selector->get_model());
+      m_day_labels.push_back(label);
+      return label;
     }, this);
   m_calendar_view->setFixedSize(scale(168, 144));
   setFocusProxy(m_calendar_view);
@@ -264,8 +288,6 @@ CalendarDatePicker::CalendarDatePicker(
     set(TextColor(QColor::fromRgb(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
-  m_current_connection =
-    m_model->connect_current_signal([=] (const auto& day) { on_current(day); });
   m_list_current_connection =
     m_calendar_view->get_current_model()->connect_current_signal(
       [=] (auto index) { on_list_current(index); });
@@ -352,20 +374,15 @@ void CalendarDatePicker::update_calendar_model() {
   }
 }
 
-void CalendarDatePicker::on_current(const boost::optional<date>& day) {
-  if(day) {
-    auto display = m_month_selector->get_model()->get_current();
-    if(display.month() != day->month() || display.year() != day->year()) {
-      update_calendar_model();
-    }
-  }
-}
-
 void CalendarDatePicker::on_current_month(date month) {
   auto displayed_month =
     m_calendar_model->get<std::shared_ptr<LocalDateModel>>(8)->get_current();
   if(month.month() != displayed_month.month() ||
       month.year() != displayed_month.year()) {
+    if(qApp->mouseButtons() == Qt::LeftButton) {
+      m_day_labels[*m_calendar_view->get_current_model()->get_current()]->
+        set_release_ignored(true);
+    }
     update_calendar_model();
   }
 }
