@@ -125,6 +125,10 @@ bool OverlayPanel::event(QEvent* event) {
         }
       }
     }
+  } else if(event->type() == QEvent::ParentAboutToChange) {
+    parentWidget()->window()->removeEventFilter(this);
+  } else if(event->type() == QEvent::ParentChange) {
+    parentWidget()->window()->installEventFilter(this);
   }
   return QWidget::event(event);
 }
