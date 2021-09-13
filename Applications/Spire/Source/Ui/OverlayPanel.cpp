@@ -105,17 +105,7 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 bool OverlayPanel::event(QEvent* event) {
   if(m_is_closed_on_blur) {
     if(event->type() == QEvent::WindowDeactivate) {
-      auto is_ancestor = [&] {
-        auto current = qApp->activeWindow();
-        while(current) {
-          if(current == this) {
-            return true;
-          }
-          current = current->parentWidget();
-        }
-        return false;
-      }();
-      if(!is_ancestor) {
+      if(!is_ancestor(qApp->activeWindow())) {
         close();
       }
     } else if(event->type() == QEvent::WindowActivate) {
@@ -169,6 +159,17 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
+bool OverlayPanel::is_ancestor(QWidget* widget) {
+  auto current = widget;
+  while(current) {
+    if(current == this) {
+      return true;
+    }
+    current = current->parentWidget();
+  }
+  return false;
+}
+
 void OverlayPanel::position() {
   if(m_positioning == Positioning::PARENT) {
     auto parent_geometry = parentWidget()->rect();
@@ -212,7 +213,8 @@ void OverlayPanel::position() {
 }
 
 void OverlayPanel::on_focus_changed(QWidget* previous, QWidget* current) {
-  if(qApp->focusWindow() == nullptr && m_is_closed_on_blur && m_was_activated) {
+  if(qApp->focusWindow() == nullptr &&
+      m_is_closed_on_blur && m_was_activated) {
     close();
   }
 }
