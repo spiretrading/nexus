@@ -418,10 +418,7 @@ void TextBox::on_current(const QString& current) {
 }
 
 void TextBox::on_editing_finished() {
-  if(!is_read_only()) {
-    if(!m_has_update) {
-      return;
-    }
+  if(!is_read_only() && m_has_update) {
     if(m_model->get_state() == QValidator::Acceptable) {
       m_submission = m_model->get_current();
       m_has_update = false;
