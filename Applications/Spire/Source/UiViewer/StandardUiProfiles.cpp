@@ -275,17 +275,17 @@ namespace {
       int row_count) {
     auto image = QImage(QSize(cell_size.width() * column_count,
       cell_size.height() * row_count), QImage::Format_RGB32);
-    image.fill(QColor::fromRgb(0x56, 0xC4, 0xC5));
+    image.fill(QColor(0x56C4C5));
     auto painter = QPainter(&image);
     for(auto row = 0; row < row_count; ++row) {
       for(auto column = row % 2; column < column_count; column += 2) {
         auto cell_rect = QRect(QPoint(column * cell_size.width(),
           row * cell_size.width()), cell_size);
-        painter.fillRect(cell_rect, QColor::fromRgb(0xA2, 0x21, 0x8E));
+        painter.fillRect(cell_rect, QColor(0xA2218E));
         painter.fillRect(cell_rect - QMargins(scale_width(1), scale_height(1),
           scale_width(1), scale_height(1)),
-          QColor::fromRgb(0xFD, 0xC7, 0x77));
-        painter.setPen(QColor::fromRgb(0x02, 0x38, 0x88));
+          QColor(0xFDC777));
+        painter.setPen(QColor(0x023888));
         cell_rect.translate(translate(5, 5) +
           QPoint(0, painter.fontMetrics().height()));
         painter.drawText(cell_rect.topLeft(),
@@ -1039,7 +1039,7 @@ UiProfile Spire::make_label_button_profile() {
   properties.push_back(
     make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
   properties.push_back(make_standard_property<QColor>("pressed-color",
-    QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    QColor(0x4B23A0)));
   auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
@@ -1506,7 +1506,7 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("horizontal-padding", 10));
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(
-    make_standard_property("border-color", QColor::fromRgb(0xC8C8C8)));
+    make_standard_property("border-color", QColor(0xC8C8C8)));
   properties.push_back(make_standard_property("rows", 10));
   properties.push_back(make_standard_property("columns", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,

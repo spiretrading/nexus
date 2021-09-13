@@ -15,7 +15,7 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
+      set(BackgroundColor(QColor(0xEBEBEB))).
       set(border_radius(scale_width(3))).
       set(border_size(0));
     style.get(Any() >> is_a<TextBox>()).
@@ -29,7 +29,7 @@ namespace {
 
   auto DELETE_BUTTON_STYLE(StyleSheet style) {
     style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent)));
     return style;
   }
 }
