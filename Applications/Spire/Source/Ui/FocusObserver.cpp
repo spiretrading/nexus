@@ -41,7 +41,7 @@ struct FocusObserver::FocusEventFilter : QObject {
     } else {
       m_observer->m_state = State::NONE;
     }
-    if(m_observer->m_state != State::NONE) {
+    if(m_observer->m_state == State::FOCUS) {
       switch(m_focus_reason) {
         case Qt::TabFocusReason:
         case Qt::BacktabFocusReason:
