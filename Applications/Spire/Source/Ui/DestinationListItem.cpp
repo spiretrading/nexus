@@ -13,7 +13,7 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(10));
     style.get(ReadOnly() && Disabled()).
-      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80))).
+      set(text_style(font, QColor(0x808080))).
       set(PaddingTop(scale_height(2)));
     return style;
   }

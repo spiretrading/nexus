@@ -20,7 +20,7 @@ namespace {
     font.setPixelSize(scale_width(12));
     style.get(Any()).
       set(border_size(0)).
-      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80)));
+      set(text_style(font, QColor(0x808080)));
     return style;
   }
 }

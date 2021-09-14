@@ -23,6 +23,7 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
@@ -302,17 +303,17 @@ namespace {
       int row_count) {
     auto image = QImage(QSize(cell_size.width() * column_count,
       cell_size.height() * row_count), QImage::Format_RGB32);
-    image.fill(QColor::fromRgb(0x56, 0xC4, 0xC5));
+    image.fill(QColor(0x56C4C5));
     auto painter = QPainter(&image);
     for(auto row = 0; row < row_count; ++row) {
       for(auto column = row % 2; column < column_count; column += 2) {
         auto cell_rect = QRect(QPoint(column * cell_size.width(),
           row * cell_size.width()), cell_size);
-        painter.fillRect(cell_rect, QColor::fromRgb(0xA2, 0x21, 0x8E));
+        painter.fillRect(cell_rect, QColor(0xA2218E));
         painter.fillRect(cell_rect - QMargins(scale_width(1), scale_height(1),
           scale_width(1), scale_height(1)),
-          QColor::fromRgb(0xFD, 0xC7, 0x77));
-        painter.setPen(QColor::fromRgb(0x02, 0x38, 0x88));
+          QColor(0xFDC777));
+        painter.setPen(QColor(0x023888));
         cell_rect.translate(translate(5, 5) +
           QPoint(0, painter.fontMetrics().height()));
         painter.drawText(cell_rect.topLeft(),
@@ -853,6 +854,81 @@ UiProfile Spire::make_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_focus_observer_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto test_widget_property = define_enum<int>(
+    {{"DurationBox", 0}, {"ListItem", 1}, {"LabelButton", 2}, {"ListView", 3}});
+  properties.push_back(
+    make_standard_enum_property("widget", test_widget_property));
+  properties.push_back(make_standard_property("observer_count", 1));
+  auto profile = UiProfile(QString::fromUtf8("FocusObserver"), properties,
+    [] (auto& profile) {
+      static auto observers = std::vector<std::shared_ptr<FocusObserver>>();
+      observers.clear();
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("StateSignal"));
+      auto to_string = [] (auto state) {
+        if(state == FocusObserver::State::NONE) {
+          return "NONE";
+        } else if(state == FocusObserver::State::FOCUS_IN) {
+          return "FOCUS_IN";
+        } else if(state == FocusObserver::State::FOCUS) {
+          return "FOCUS";
+        } else {
+          return "FOCUS_VISIBLE";
+        }
+      };
+      auto& test_widget = get<int>("widget", profile.get_properties());
+      auto widget = [&] () -> QWidget* {
+        auto value = test_widget.get();
+        if(value == 0) {
+          return new DurationBox();
+        } else if(value == 1) {
+          return new ListItem(make_label(QString::fromUtf8("ListItem")));
+        } else if(value == 2) {
+          return make_label_button("Label Button");
+        } else {
+          auto item_count = 10;
+          auto list_model = std::make_shared<ArrayListModel>();
+          for(auto i = 0; i < item_count; ++i) {
+            list_model->push(QString::fromUtf8("Item%1").arg(i));
+          }
+          auto list_view = new ListView(list_model);
+          for(auto i = 0; i < item_count; ++i) {
+            auto item_focus_observer = std::make_shared<FocusObserver>(
+              *list_view->get_list_item(i));
+            item_focus_observer->connect_state_signal([=] (auto state) {
+              filter_slot(QString("%1").arg(to_string(state)));
+            });
+            observers.push_back(item_focus_observer);
+          }
+          auto timer = new QTimer(list_view);
+          QObject::connect(timer, &QTimer::timeout, [=] {
+            if(auto& current = list_view->get_current_model()->get_current()) {
+              list_view->get_current_model()->
+                set_current((*current + 1) % item_count);
+            }
+          });
+          timer->start(3000);
+          return list_view;
+        }
+      }();
+      apply_widget_properties(widget, profile.get_properties());
+      auto& observer_count = get<int>("observer_count",
+        profile.get_properties());
+      for(int i = 0; i < observer_count.get(); ++i) {
+        auto focus_observer = std::make_shared<FocusObserver>(*widget);
+        focus_observer->connect_state_signal([=] (auto state) {
+          filter_slot(QString("%1").arg(to_string(state)));
+          });
+        observers.push_back(focus_observer);
+      }
+      return widget;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1018,7 +1094,7 @@ UiProfile Spire::make_label_button_profile() {
   properties.push_back(
     make_standard_property<QString>("label", QString::fromUtf8("Click me!")));
   properties.push_back(make_standard_property<QColor>("pressed-color",
-    QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    QColor(0x4B23A0)));
   auto profile = UiProfile(QString::fromUtf8("LabelButton"), properties,
     [] (auto& profile) {
       auto& label = get<QString>("label", profile.get_properties());
@@ -1485,7 +1561,7 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("horizontal-padding", 10));
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(
-    make_standard_property("border-color", QColor::fromRgb(0xC8C8C8)));
+    make_standard_property("border-color", QColor(0xC8C8C8)));
   properties.push_back(make_standard_property("rows", 10));
   properties.push_back(make_standard_property("columns", 10));
   auto profile = UiProfile(QString::fromUtf8("ScrollBox"), properties,

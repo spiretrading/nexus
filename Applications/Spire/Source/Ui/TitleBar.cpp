@@ -27,26 +27,26 @@ namespace {
   auto BUTTON_STYLE() {
     auto style = StyleSheet();
     style.get(Any() / Body()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+      set(BackgroundColor(QColor(0xF5F5F5)));
     style.get((Hover() || Press()) / Body()).
-      set(BackgroundColor(QColor::fromRgb(0xE0, 0xE0, 0xE0)));
+      set(BackgroundColor(QColor(0xE0E0E0)));
     style.get(Any() >> is_a<Icon>()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent)));
     style.get(Active() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0x0, 0x0, 0x0)));
+      set(Fill(QColor(Qt::black)));
     style.get(!Active() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+      set(Fill(QColor(0xA0A0A0)));
     style.get(Hover() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0x0, 0x0, 0x0)));
+      set(Fill(QColor(Qt::black)));
     return style;
   }
 
   auto WINDOW_BUTTON_STYLE() {
     auto style = StyleSheet();
     style.get(Any() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0x0, 0x0, 0x0)));
+      set(Fill(QColor(Qt::black)));
     style.get(!Active() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+      set(Fill(QColor(0xA0A0A0)));
     return style;
   }
 
@@ -70,9 +70,9 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_title_label = make_label("", this);
   auto title_style = get_style(*m_title_label);
   title_style.get(ReadOnly() && Disabled()).
-    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5)));
+    set(BackgroundColor(QColor(0xF5F5F5)));
   title_style.get(!Active()).
-    set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+    set(TextColor(QColor(0xA0A0A0)));
   set_style(*m_title_label, std::move(title_style));
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_container_layout->addWidget(m_title_label);
@@ -97,9 +97,9 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   auto close_button_style = BUTTON_STYLE();
   close_button_style.get((Hover() || Press()) / Body()).
-    set(BackgroundColor(QColor::fromRgb(0xE6, 0x3F, 0x44)));
+    set(BackgroundColor(QColor(0xE63F44)));
   close_button_style.get((Hover() || Press()) >> is_a<Icon>()).
-    set(Fill(QColor::fromRgb(0xFF, 0xFF, 0xFF)));
+    set(Fill(QColor(0xFFFFFF)));
   set_style(*m_close_button, std::move(close_button_style));
   m_container_layout->addWidget(m_close_button);
   auto layout = new QHBoxLayout(this);
