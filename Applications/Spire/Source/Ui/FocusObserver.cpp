@@ -96,6 +96,9 @@ FocusObserver::FocusObserver(const QWidget& widget) {
   } else {
     m_worker = std::shared_ptr<FocusEventFilter>(
       new FocusEventFilter(widget), [] (auto* p) {
+        if(!p) {
+          return;
+        }
         if(p->m_widget) {
           widget_workers.erase(p->m_widget);
         }
