@@ -1,6 +1,7 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -33,6 +34,7 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
   m_panel = new OverlayPanel(this, parent);
   m_panel->set_closed_on_blur(true);
   on_panel_style();
+  setFocusProxy(m_list_view);
   connect_style_signal(*m_panel, [=] { on_panel_style(); });
   parent->installEventFilter(this);
   m_scrollable_list_box->installEventFilter(this);
@@ -69,6 +71,11 @@ bool DropDownList::event(QEvent* event) {
       m_panel->show();
       auto margins = m_panel->layout()->contentsMargins();
       m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);
+      if(auto current = m_list_view->get_current_model()->get_current()) {
+        m_list_view->get_list_item(*current)->setFocus(Qt::TabFocusReason);
+      } else {
+        m_panel->setFocus(Qt::TabFocusReason);
+      }
     }
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();

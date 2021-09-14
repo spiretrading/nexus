@@ -56,6 +56,7 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
   layout->addWidget(box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
+  setFocusProxy(m_body);
   auto shadow = new QGraphicsDropShadowEffect();
   shadow->setColor(DROP_SHADOW_COLOR);
   shadow->setOffset(translate(DROP_SHADOW_OFFSET));
