@@ -1,5 +1,6 @@
 #ifndef SPIRE_OVERLAY_PANEL_HPP
 #define SPIRE_OVERLAY_PANEL_HPP
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -78,10 +79,13 @@ namespace Spire {
       bool m_was_activated;
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
+      FocusObserver m_focus_observer;
+      FocusObserver m_parent_focus_observer;
 
       bool is_ancestor(QWidget* widget);
       void position();
-      void on_focus_changed(QWidget* previous, QWidget* current);
+      void on_focus(FocusObserver::State state);
+      void on_parent_focus(FocusObserver::State state);
   };
 }
 

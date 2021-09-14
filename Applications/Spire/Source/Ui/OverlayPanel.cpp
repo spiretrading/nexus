@@ -50,7 +50,9 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_is_closed_on_blur(true),
       m_is_draggable(true),
       m_was_activated(false),
-      m_positioning(Positioning::PARENT) {
+      m_positioning(Positioning::PARENT),
+      m_focus_observer(*this),
+      m_parent_focus_observer(*parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -64,10 +66,14 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
   shadow->setOffset(translate(DROP_SHADOW_OFFSET));
   shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
   box->setGraphicsEffect(shadow);
+  m_focus_observer.connect_state_signal([=] (auto state) {
+    on_focus(state);
+  });
+  m_parent_focus_observer.connect_state_signal([=] (auto state) {
+    on_parent_focus(state);
+  });
   m_body->installEventFilter(this);
   parent->window()->installEventFilter(this);
-  connect(
-    qApp, &QApplication::focusChanged, this, &OverlayPanel::on_focus_changed);
 }
 
 const QWidget& OverlayPanel::get_body() const {
@@ -103,15 +109,7 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 }
 
 bool OverlayPanel::event(QEvent* event) {
-  if(m_is_closed_on_blur) {
-    if(event->type() == QEvent::WindowDeactivate) {
-      if(!is_ancestor(qApp->activeWindow())) {
-        close();
-      }
-    } else if(event->type() == QEvent::WindowActivate) {
-      m_was_activated = true;
-    }
-  } else if(event->type() == QEvent::ParentAboutToChange) {
+  if(event->type() == QEvent::ParentAboutToChange) {
     parentWidget()->window()->removeEventFilter(this);
   } else if(event->type() == QEvent::ParentChange) {
     parentWidget()->window()->installEventFilter(this);
@@ -131,16 +129,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
         move(pos() + (mouse_event->pos() - m_mouse_pressed_position));
       }
     }
-  } else if(watched == parentWidget()->window()) {
-    if(event->type() == QEvent::Move) {
-      position();
-    } else if(event->type() == QEvent::WindowDeactivate &&
-        m_is_closed_on_blur && !isActiveWindow() && m_was_activated) {
-      close();
-    } else if(event->type() == QEvent::WindowActivate && m_is_closed_on_blur &&
-        m_was_activated) {
-      close();
-    }
+  } else if(
+      watched == parentWidget()->window() && event->type() == QEvent::Move) {
+    position();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -211,9 +202,25 @@ void OverlayPanel::position() {
   }
 }
 
-void OverlayPanel::on_focus_changed(QWidget* previous, QWidget* current) {
-  if(qApp->focusWindow() == nullptr &&
-      m_is_closed_on_blur && m_was_activated) {
+void OverlayPanel::on_focus(FocusObserver::State state) {
+  if(m_is_closed_on_blur) {
+
+    if(state == FocusObserver::State::NONE) {
+      if(!is_ancestor(qApp->activeWindow())) {
+        close();
+      }
+    } else if(state == FocusObserver::State::FOCUS_IN) {
+      m_was_activated = true;
+    }
+  }
+}
+
+void OverlayPanel::on_parent_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE && m_is_closed_on_blur &&
+      !isActiveWindow() && m_was_activated) {
+    close();
+  } else if(state == FocusObserver::State::FOCUS_IN && m_is_closed_on_blur &&
+      m_was_activated) {
     close();
   }
 }
