@@ -113,9 +113,11 @@ namespace Spire {
       m_current =
         std::make_shared<LocalValueModel<Type>>(settings.m_cases->get<Type>(0));
     }
-    auto list_view = new ListView(settings.m_cases,
-      std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current),
-      std::make_shared<LocalValueModel<boost::optional<int>>>(),
+    auto list_view_current =
+      std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current);
+    auto list_view = new ListView(settings.m_cases, list_view_current,
+      std::make_shared<LocalValueModel<boost::optional<int>>>(
+        list_view_current->get_current()),
       [view_builder = settings.m_view_builder] (const auto& model, auto index) {
         return view_builder(model->get<Type>(index));
       });
