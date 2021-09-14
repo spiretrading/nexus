@@ -154,7 +154,6 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_submit_connection = m_list_view->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
-  m_drop_down_list->get_panel().installEventFilter(this);
 }
 
 const std::shared_ptr<ListModel>& DropDownBox::get_list_model() const {
@@ -205,10 +204,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       match(*m_text_box, Hover());
     } else if(event->type() == QEvent::Leave) {
       unmatch(*m_text_box, Hover());
-    }
-  } else if(watched == &m_drop_down_list->get_panel()) {
-    if(event->type() == QEvent::Close) {
-      unmatch(*m_text_box, Focus());
     }
   }
   return QWidget::eventFilter(watched, event);
