@@ -13,14 +13,14 @@ struct FocusObserver::FocusEventFilter : QObject {
   Qt::FocusReason m_focus_reason;
 
   FocusEventFilter(const QWidget& widget)
-      : QObject(),
-        m_widget(&widget),
-        m_state(State::NONE),
+      : m_widget(&widget),
         m_focus_reason(Qt::MouseFocusReason) {
     if(m_widget->hasFocus()) {
       m_state = State::FOCUS;
     } else if(m_widget->isAncestorOf(QApplication::focusWidget())) {
       m_state = State::FOCUS_IN;
+    } else {
+      m_state = State::NONE;
     }
     m_old_state = m_state;
     qApp->installEventFilter(this);
@@ -46,12 +46,6 @@ struct FocusObserver::FocusEventFilter : QObject {
     auto state = m_state;
     if(m_widget == now) {
       m_state = State::FOCUS;
-    } else if(m_widget->isAncestorOf(now)) {
-      m_state = State::FOCUS_IN;
-    } else {
-      m_state = State::NONE;
-    }
-    if(m_state == State::FOCUS) {
       switch(m_focus_reason) {
         case Qt::TabFocusReason:
         case Qt::BacktabFocusReason:
@@ -77,6 +71,10 @@ struct FocusObserver::FocusEventFilter : QObject {
           widget_focus_visible = std::make_pair(now, false);
           break;
         }
+    } else if(m_widget->isAncestorOf(now)) {
+      m_state = State::FOCUS_IN;
+    } else {
+      m_state = State::NONE;
     }
     if(state != m_state) {
       m_old_state = state;
@@ -98,13 +96,12 @@ FocusObserver::FocusObserver(const QWidget& widget) {
   } else {
     m_worker = std::shared_ptr<FocusEventFilter>(
       new FocusEventFilter(widget), [] (auto* p) {
-        if(p->m_widget != nullptr) {
+        if(p->m_widget) {
           widget_workers.erase(p->m_widget);
         }
         p->deleteLater();
-      }
-    );
-    QObject::connect(&widget, &QObject::destroyed, [&widget] (QObject*) {
+      });
+    QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
       auto worker = widget_workers.find(&widget);
       if(worker != widget_workers.end()) {
         worker->second.lock()->m_widget = nullptr;
