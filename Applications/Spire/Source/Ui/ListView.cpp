@@ -321,8 +321,8 @@ void ListView::cross(int direction) {
     return;
   }
   m_user_triggered_move = true;
-  m_current_model->set_current(candidate);
   m_navigation_box = navigation_box;
+  m_current_model->set_current(candidate);
 }
 
 void ListView::add_item(int index) {
