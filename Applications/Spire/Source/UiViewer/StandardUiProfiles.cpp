@@ -220,10 +220,10 @@ namespace {
   template<typename B>
   auto setup_enum_box_profile(UiProfile& profile) {
     using Type = B::Type;
-    auto box = new B();
+    auto& current = get<Type>("current", profile.get_properties());
+    auto box = new B(current.get());
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
-    auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       box->get_current()->set_current(value);
     });
