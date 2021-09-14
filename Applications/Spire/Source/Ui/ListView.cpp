@@ -458,8 +458,14 @@ void ListView::on_current(const boost::optional<int>& current) {
   } else if(isAncestorOf(focusWidget())) {
     setFocus();
   }
-  if(m_selection_mode != SelectionMode::NONE && m_user_triggered_move) {
-    m_selection_model->set_current(*current);
+  if(m_user_triggered_move) {
+    if(m_selection_mode != SelectionMode::NONE) {
+      m_selection_model->set_current(*current);
+    }
+  } else if(current) {
+    m_navigation_box =  m_items[*current]->m_item->frameGeometry();
+  } else {
+    m_navigation_box = QRect();
   }
 }
 

@@ -235,21 +235,21 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
       set(BodyAlign(Qt::AlignCenter)).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(border(scale_width(1), QColor(0xC8C8C8))).
       set(horizontal_padding(scale_width(4)));
     style.get(Hover() || Focus()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border_color(QColor(0xC8C8C8)));
     style.get(ReadOnly() && Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Rejected()).
       set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
         linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
@@ -260,7 +260,7 @@ namespace {
 
   auto HOUR_FIELD_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(horizontal_padding(scale_width(0))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
@@ -270,7 +270,7 @@ namespace {
 
   auto MINUTE_FIELD_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(horizontal_padding(scale_width(0))).
       set(LeadingZeros(2)).
@@ -281,7 +281,7 @@ namespace {
 
   auto SECOND_FIELD_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(horizontal_padding(scale_width(0))).
       set(LeadingZeros(2)).set(TrailingZeros(3)).
@@ -293,9 +293,9 @@ namespace {
   auto COLON_FIELD_STYLE(StyleSheet style) {
     style.get(Any() > Colon()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-      set(TextColor(QColor::fromRgb(0, 0, 0)));
+      set(TextColor(QColor(Qt::black)));
     style.get(Disabled() > Colon()).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 

@@ -27,14 +27,14 @@ namespace {
     style.get(ReadOnly() >> is_a<Button>()).
       set(Visibility::INVISIBLE);
     style.get(Disabled() >> is_a<Icon>()).
-      set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(Fill(QColor(0xC8C8C8)));
     return style;
   }
 
   auto ICON_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(Fill(QColor::fromRgb(0x33, 0x33, 0x33)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(Fill(QColor(0x333333)));
     return style;
   }
 

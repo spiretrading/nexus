@@ -145,6 +145,7 @@ namespace Styles {
       QString m_placeholder_text;
       TextValidator* m_text_validator;
       bool m_is_rejected;
+      bool m_has_update;
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
