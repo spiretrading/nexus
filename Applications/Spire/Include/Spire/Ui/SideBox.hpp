@@ -37,9 +37,6 @@ namespace Spire {
        */
       explicit SideBox(std::shared_ptr<SideModel> current,
         QWidget* parent = nullptr);
-
-    private:
-      Settings setup(std::shared_ptr<SideModel> current);
   };
 }
 
