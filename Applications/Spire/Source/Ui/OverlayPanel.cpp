@@ -51,8 +51,7 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_is_draggable(true),
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
-      m_focus_observer(*this),
-      m_parent_focus_observer(*parent) {
+      m_focus_observer(*this) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -69,7 +68,8 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
   m_focus_observer.connect_state_signal([=] (auto state) {
     on_focus(state);
   });
-  m_parent_focus_observer.connect_state_signal([=] (auto state) {
+  m_parent_focus_observer = std::make_unique<FocusObserver>(*parent->window());
+  m_parent_focus_observer->connect_state_signal([=] (auto state) {
     on_parent_focus(state);
   });
   m_body->installEventFilter(this);
@@ -113,6 +113,8 @@ bool OverlayPanel::event(QEvent* event) {
     parentWidget()->window()->removeEventFilter(this);
   } else if(event->type() == QEvent::ParentChange) {
     parentWidget()->window()->installEventFilter(this);
+    m_parent_focus_observer =
+      std::make_unique<FocusObserver>(*parentWidget()->window());
   }
   return QWidget::event(event);
 }
@@ -204,11 +206,9 @@ void OverlayPanel::position() {
 
 void OverlayPanel::on_focus(FocusObserver::State state) {
   if(m_is_closed_on_blur) {
-
-    if(state == FocusObserver::State::NONE) {
-      if(!is_ancestor(qApp->activeWindow())) {
-        close();
-      }
+    if(state == FocusObserver::State::NONE &&
+        !is_ancestor(qApp->activeWindow())) {
+      close();
     } else if(state == FocusObserver::State::FOCUS_IN) {
       m_was_activated = true;
     }

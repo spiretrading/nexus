@@ -80,7 +80,7 @@ namespace Spire {
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
       FocusObserver m_focus_observer;
-      FocusObserver m_parent_focus_observer;
+      std::unique_ptr<FocusObserver> m_parent_focus_observer;
 
       bool is_ancestor(QWidget* widget);
       void position();
