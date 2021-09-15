@@ -389,6 +389,8 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       });
       calendar->get_model()->connect_current_signal(profile.make_event_slot<
         optional<date>>(QString::fromUtf8("Current")));
+      calendar->connect_submit_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Submit")));
       return calendar;
     });
   return profile;

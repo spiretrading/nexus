@@ -295,12 +295,21 @@ CalendarDatePicker::CalendarDatePicker(
   m_list_current_connection =
     m_calendar_view->get_current_model()->connect_current_signal(
       [=] (auto index) { on_list_current(index); });
+  m_calendar_view->connect_submit_signal([=] (const auto& model) {
+    on_submit(
+      std::any_cast<std::shared_ptr<LocalDateModel>>(model)->get_current());
+  });
   layout->addWidget(m_calendar_view);
 }
 
 const std::shared_ptr<OptionalDateModel>&
     CalendarDatePicker::get_model() const {
   return m_model;
+}
+
+connection CalendarDatePicker::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
 }
 
 bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
@@ -426,4 +435,8 @@ void CalendarDatePicker::on_list_current(const boost::optional<int> index) {
     m_model->set_current(m_calendar_model->
       get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
   }
+}
+
+void CalendarDatePicker::on_submit(date day) const {
+  m_submit_signal(day);
 }
