@@ -1,7 +1,6 @@
 #include "Spire/Styles/Stylist.hpp"
 #include <deque>
 #include <QApplication>
-#include <QFocusEvent>
 #include <QTimer>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
@@ -48,31 +47,16 @@ struct Stylist::StyleEventFilter : QObject {
       : QObject(stylist.m_widget),
         m_stylist(&stylist) {
     auto& widget = *stylist.m_widget;
-    if(widget.hasFocus()) {
-      m_stylist->match(Focus());
-    }
     if(!widget.isEnabled()) {
       m_stylist->match(Disabled());
     }
     if(widget.isActiveWindow()) {
       m_stylist->match(Active());
     }
-    connect(qApp,
-      &QApplication::focusChanged, this, &StyleEventFilter::on_focus_changed);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::FocusIn) {
-      m_stylist->match(Focus());
-      auto& focus_event = static_cast<const QFocusEvent&>(*event);
-      if(focus_event.reason() == Qt::TabFocus ||
-          focus_event.reason() == Qt::BacktabFocusReason) {
-        m_stylist->match(FocusVisible());
-      }
-    } else if(event->type() == QEvent::FocusOut) {
-      m_stylist->unmatch(Focus());
-      m_stylist->unmatch(FocusVisible());
-    } else if(event->type() == QEvent::Enter) {
+    if(event->type() == QEvent::Enter) {
       if(m_stylist->m_widget->isEnabled()) {
         m_stylist->match(Hover());
       }
@@ -96,20 +80,6 @@ struct Stylist::StyleEventFilter : QObject {
       }
     }
     return QObject::eventFilter(watched, event);
-  }
-
-  void on_focus_changed(QWidget* old, QWidget* now) {
-    auto proxy = m_stylist->m_widget->focusProxy();
-    while(proxy) {
-      if(proxy == now) {
-        m_stylist->match(Focus());
-        break;
-      } else if(proxy == old) {
-        m_stylist->unmatch(Focus());
-        break;
-      }
-      proxy = proxy->focusProxy();
-    }
   }
 
   void poll_mouse() {
