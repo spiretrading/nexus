@@ -10,8 +10,6 @@ using namespace Spire::Styles;
 using namespace Spire::Styles::Tests;
 
 namespace {
-  using Foo = StateSelector<void, struct FooTag>;
-  using Bar = StateSelector<void, struct BarTag>;
   using Baz = StateSelector<int, struct BazTag>;
 }
 

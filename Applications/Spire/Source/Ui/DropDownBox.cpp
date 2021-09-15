@@ -191,13 +191,8 @@ connection DropDownBox::connect_submit_signal(
 
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_button) {
-    if(event->type() == QEvent::FocusIn) {
-      match(*m_text_box, Focus());
-    } else if(event->type() == QEvent::FocusOut) {
-      if(m_drop_down_list->isVisible()) {
-        match(*m_text_box, Focus());
-      } else {
-        unmatch(*m_text_box, Focus());
+    if(event->type() == QEvent::FocusOut) {
+      if(!m_drop_down_list->isVisible()) {
         update_submission();
         m_list_view->get_selection_model()->set_current(m_submission);
       }
@@ -205,10 +200,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       match(*m_text_box, Hover());
     } else if(event->type() == QEvent::Leave) {
       unmatch(*m_text_box, Hover());
-    }
-  } else if(watched == &m_drop_down_list->get_panel()) {
-    if(event->type() == QEvent::Close) {
-      unmatch(*m_text_box, Focus());
     }
   }
   return QWidget::eventFilter(watched, event);

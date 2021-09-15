@@ -41,6 +41,9 @@ namespace Spire {
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
 
+  /** Returns a UiProfile for the FocusObserver. */
+  UiProfile make_focus_observer_profile();
+
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
 
