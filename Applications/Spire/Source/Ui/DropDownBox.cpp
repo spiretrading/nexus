@@ -62,10 +62,6 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       m_panel->installEventFilter(this);
     }
 
-    QWidget& get_panel() const {
-      return *m_panel;
-    }
-
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_list_view) {
