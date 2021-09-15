@@ -69,9 +69,8 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
     on_focus(state);
   });
   m_parent_focus_observer = std::make_unique<FocusObserver>(*parent->window());
-  m_parent_focus_observer->connect_state_signal([=] (auto state) {
-    on_parent_focus(state);
-  });
+  m_parent_focus_connection = m_parent_focus_observer->connect_state_signal(
+    [=] (auto state) { on_parent_focus(state); });
   m_body->installEventFilter(this);
   parent->window()->installEventFilter(this);
 }

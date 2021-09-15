@@ -81,6 +81,7 @@ namespace Spire {
       QPoint m_mouse_pressed_position;
       FocusObserver m_focus_observer;
       std::unique_ptr<FocusObserver> m_parent_focus_observer;
+      boost::signals2::scoped_connection m_parent_focus_connection;
 
       bool is_ancestor(QWidget* widget);
       void position();
