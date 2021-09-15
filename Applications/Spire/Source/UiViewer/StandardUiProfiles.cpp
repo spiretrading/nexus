@@ -1382,6 +1382,43 @@ UiProfile Spire::make_overlay_panel_profile() {
               create_child_panel(close_on_blur.get(), draggable.get(),
                 positioning.get(), child_button);
             });
+          auto create_children_button =
+            make_label_button("Show reparent-able panel");
+          create_children_button->connect_clicked_signal([=] {
+            auto create_body = [&] {
+              auto body = new QWidget();
+              body->setFixedSize(scale(200, 200));
+              auto layout = new QVBoxLayout(body);
+              layout->setContentsMargins({});
+              auto reparent_button =
+                make_label_button("Reparent to UiViewer window", body);
+              reparent_button->connect_clicked_signal([=] {
+                auto& label =
+                  static_cast<TextBox&>(reparent_button->get_body());
+                if(body->window()->parent() == panel) {
+                  label.get_model()->set_current("Reparent to UiViewer window");
+                  body->window()->setParent(panel->parentWidget()->window());
+                } else {
+                  label.get_model()->set_current("Reparent to panel");
+                  body->window()->setParent(panel);
+                }
+              });
+              layout->addWidget(reparent_button);
+              auto close_button = make_label_button("Close", body);
+              close_button->connect_clicked_signal([=] {
+                body->window()->close();
+              });
+              layout->addWidget(close_button);
+              return body;
+            };
+            auto child_panel = new OverlayPanel(create_body(), panel);
+            child_panel->setAttribute(Qt::WA_DeleteOnClose);
+            child_panel->set_is_draggable(true);
+            child_panel->set_closed_on_blur(false);
+            child_panel->set_positioning(OverlayPanel::Positioning::NONE);
+            child_panel->show();
+          });
+          body->layout()->addWidget(create_children_button);
           panel->setAttribute(Qt::WA_DeleteOnClose);
           panel->set_closed_on_blur(close_on_blur.get());
           panel->set_is_draggable(draggable.get());
