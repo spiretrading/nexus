@@ -361,11 +361,19 @@ UiProfile Spire::make_calendar_date_picker_profile() {
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
       auto& current = get<QString>("current", profile.get_properties());
-      model->set_current(from_string(current.get().toStdString()));
+      model->set_current(parse_date(current.get()));
       auto& min = get<QString>("min", profile.get_properties());
-      model->set_minimum(from_string(min.get().toStdString()));
+      if(auto min_date = parse_date(min.get())) {
+        model->set_minimum(min_date);
+      } else {
+        model->set_minimum(date(1900, 1, 1));
+      }
       auto& max = get<QString>("max", profile.get_properties());
-      model->set_maximum(from_string(max.get().toStdString()));
+      if(auto max_date = parse_date(max.get())) {
+        model->set_maximum(*max_date);
+      } else {
+        model->set_maximum(date(2100, 12, 31));
+      }
       auto calendar = new CalendarDatePicker(model, nullptr);
       apply_widget_properties(calendar, profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {

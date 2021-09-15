@@ -316,7 +316,6 @@ void ListView::cross(int direction) {
   if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
-  m_user_triggered_move = true;
   m_navigation_box = navigation_box;
   m_current_model->set_current(candidate);
 }
