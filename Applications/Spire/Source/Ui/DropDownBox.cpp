@@ -196,10 +196,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         update_submission();
         m_list_view->get_selection_model()->set_current(m_submission);
       }
-    } else if(event->type() == QEvent::Enter) {
-      match(*m_text_box, Hover());
-    } else if(event->type() == QEvent::Leave) {
-      unmatch(*m_text_box, Hover());
     }
   }
   return QWidget::eventFilter(watched, event);

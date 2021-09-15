@@ -24,6 +24,8 @@ namespace Spire {
   template<typename T> class EnumBox;
   class FilteredTableModel;
   class FilterPanel;
+  class FocusObserver;
+  class HoverObserver;
   class Icon;
   class InfoTip;
   class KeyInputBox;
