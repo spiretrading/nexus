@@ -156,7 +156,6 @@ class CalendarDatePicker::CalendarDayLabel : public QWidget {
           m_model(std::move(model)),
           m_month_model(std::move(month_model)),
           m_is_release_ignored(false) {
-      setObjectName(QString("CDL %1").arg(reinterpret_cast<std::intptr_t>(this)));
       setFixedSize(scale(24, 24));
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
