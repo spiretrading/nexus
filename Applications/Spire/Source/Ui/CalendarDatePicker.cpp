@@ -164,7 +164,7 @@ class CalendarDatePicker::CalendarDayLabel : public QWidget {
       proxy_style(*this, *m_label);
       auto style = get_style(*m_label);
       style.get(Any()).
-        set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
+        set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
         set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
         set(border_radius(scale_width(3))).
         set(TextAlign(Qt::AlignCenter)).
@@ -285,6 +285,7 @@ CalendarDatePicker::CalendarDatePicker(
   calendar_style.get(
       Any() >> (is_a<ListItem>() && Selected()) >> is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
+    set(border(0, QColor::fromRgb(0, 0, 0, 0))).
     set(TextColor(QColor::fromRgb(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   update_calendar_model();
