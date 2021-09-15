@@ -1,6 +1,5 @@
 #include "Spire/Ui/ListView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QEvent>
 #include <QKeyEvent>
 #include <QHBoxLayout>
 #include <QTimer>
@@ -65,7 +64,6 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
-      m_user_triggered_move(false),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
@@ -201,7 +199,6 @@ void ListView::append_query(const QString& query) {
     while(i != start) {
       if(m_items[i]->m_item->isEnabled() && displayTextAny(
           m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
-        m_user_triggered_move = true;
         m_current_model->set_current(i);
         break;
       }
@@ -262,7 +259,6 @@ void ListView::navigate(
     return;
   }
   m_navigation_box = m_items[i]->m_item->frameGeometry();
-  m_user_triggered_move = true;
   m_current_model->set_current(i);
 }
 
@@ -320,7 +316,6 @@ void ListView::cross(int direction) {
   if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
-  m_user_triggered_move = true;
   m_current_model->set_current(candidate);
   m_navigation_box = navigation_box;
 }
@@ -337,14 +332,14 @@ void ListView::add_item(int index) {
   for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
     ++(*i)->m_index;
   }
+  auto selection = m_selection_model->get_current();
   if(m_current_model->get_current() &&
-      m_current_model->get_current() >= index) {
+      *m_current_model->get_current() >= index) {
     m_current_model->set_current(*m_current_model->get_current() + 1);
   }
-  if(m_selection_model->get_current() &&
-      m_selection_model->get_current() >= index) {
-    m_selection_model->set_current(*m_selection_model->get_current() + 1);
-    m_selected = m_selection_model->get_current();
+  if(selection && *selection >= index) {
+    m_selected = *selection + 1;
+    m_selection_model->set_current(m_selected);
   }
   update_layout();
 }
@@ -356,6 +351,7 @@ void ListView::remove_item(int index) {
   for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
     --(*i)->m_index;
   }
+  auto selection = m_selection_model->get_current();
   if(m_current_model->get_current()) {
     if(m_current_model->get_current() == index) {
       m_current_model->set_current(*m_current_model->get_current());
@@ -363,13 +359,12 @@ void ListView::remove_item(int index) {
       m_current_model->set_current(*m_current_model->get_current() - 1);
     }
   }
-  if(m_selection_model->get_current() &&
-      *m_selection_model->get_current() >= index) {
+  if(selection && *selection >= index) {
     auto blocker = shared_connection_block(m_selection_connection);
-    if(m_selection_model->get_current() == index) {
+    if(selection == index) {
       m_selected = none;
     } else {
-      m_selected = *m_selection_model->get_current() - 1;
+      m_selected = *selection - 1;
     }
     m_selection_model->set_current(m_selected);
   }
@@ -458,19 +453,17 @@ void ListView::on_current(const boost::optional<int>& current) {
   } else if(isAncestorOf(focusWidget())) {
     setFocus();
   }
-  if(m_user_triggered_move) {
-    if(m_selection_mode != SelectionMode::NONE) {
-      m_selection_model->set_current(*current);
-    }
-  } else if(current) {
+  if(current) {
     m_navigation_box =  m_items[*current]->m_item->frameGeometry();
   } else {
     m_navigation_box = QRect();
   }
+  if(m_selection_mode != SelectionMode::NONE) {
+    m_selection_model->set_current(current);
+  }
 }
 
 void ListView::on_selection(const optional<int>& selected) {
-  m_user_triggered_move = false;
   if(m_selected == selected) {
     return;
   }
