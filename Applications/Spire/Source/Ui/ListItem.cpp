@@ -21,6 +21,9 @@ namespace {
       border_color(QColor(0x4B23A0)));
     style.get(Selected()).set(
       BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_color(QColor(Qt::transparent)));
     return style;
   }
 }

@@ -61,6 +61,9 @@ namespace Spire::Styles {
   /** Selects the focused widget. */
   using Focus = StateSelector<void, struct FocusSelectorTag>;
 
+  /** Selects the widget that has focus or has a child that has focus. */
+  using FocusIn = StateSelector<void, struct FocusInSelectorTag>;
+
   /** Selects a widget if it was focused using a non-pointing device. */
   using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
@@ -80,6 +83,15 @@ namespace Spire::Styles {
     }
     return SelectConnection(std::move(connection));
   }
+
+  SelectConnection select(const Focus& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+
+  SelectConnection select(const FocusIn& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+
+  SelectConnection select(const FocusVisible& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 
   template<typename T, typename G>
   StateSelector<T, G>::StateSelector(Type data)

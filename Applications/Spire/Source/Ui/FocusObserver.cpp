@@ -51,24 +51,24 @@ struct FocusObserver::FocusEventFilter : QObject {
         case Qt::BacktabFocusReason:
         case Qt::ShortcutFocusReason:
           m_state = State::FOCUS_VISIBLE;
-          widget_focus_visible = std::pair(now, true);
+          widget_focus_visible = {now, true};
           break;
         case Qt::ActiveWindowFocusReason:
         case Qt::PopupFocusReason:
           if(m_old_state == State::FOCUS_VISIBLE) {
             m_state = State::FOCUS_VISIBLE;
-            widget_focus_visible = std::pair(now, true);
+            widget_focus_visible = {now, true};
           }
           break;
         case Qt::OtherFocusReason:
           if(previous_widget_focus_visible.first == old &&
               previous_widget_focus_visible.second) {
             m_state = State::FOCUS_VISIBLE;
-            widget_focus_visible = std::pair(now, true);
+            widget_focus_visible = {now, true};
           }
           break;
         default:
-          widget_focus_visible = std::pair(now, false);
+          widget_focus_visible = {now, false};
           break;
         }
     } else if(m_widget->isAncestorOf(now)) {
@@ -122,4 +122,11 @@ FocusObserver::State FocusObserver::get_state() const {
 connection FocusObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
   return m_worker->connect_state_signal(slot);
+}
+
+bool Spire::is_set(FocusObserver::State left, FocusObserver::State right) {
+  return static_cast<FocusObserver::State>(
+    static_cast<std::underlying_type_t<FocusObserver::State>>(left) &
+    static_cast<std::underlying_type_t<FocusObserver::State>>(right)) !=
+    FocusObserver::State::NONE;
 }
