@@ -288,6 +288,9 @@ CalendarDatePicker::CalendarDatePicker(
     set(border(0, QColor::fromRgb(0, 0, 0, 0))).
     set(TextColor(QColor::fromRgb(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
+  m_model->connect_current_signal([=] (auto date) {
+    on_current(date);
+  });
   update_calendar_model();
   m_list_current_connection =
     m_calendar_view->get_current_model()->connect_current_signal(
@@ -326,6 +329,17 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+int CalendarDatePicker::get_index(boost::gregorian::date day) const {
+  auto index = 0;
+  for(; index < m_calendar_view->get_list_model()->get_size(); ++index) {
+    if(m_calendar_view->get_list_model()->get<std::shared_ptr<
+        LocalDateModel>>(index)->get_current() == day) {
+      break;
+    }
+  }
+  return index;
+}
+
 void CalendarDatePicker::populate_calendar(const std::function<
     void (int index, boost::gregorian::date day)> assign) {
   auto displayed_month = m_month_selector->get_model()->get_current();
@@ -337,6 +351,13 @@ void CalendarDatePicker::populate_calendar(const std::function<
     assign(i, day);
     day += days(1);
   }
+}
+
+void CalendarDatePicker::set_current_index(const boost::optional<int>& index) {
+  auto current_block =
+    shared_connection_block(m_list_current_connection);
+  m_calendar_view->get_current_model()->set_current(index);
+  m_calendar_view->get_selection_model()->set_current(index);
 }
 
 void CalendarDatePicker::update_calendar_model() {
@@ -372,6 +393,18 @@ void CalendarDatePicker::update_calendar_model() {
   }
   if(list_has_focus) {
     m_calendar_view->setFocus();
+  }
+}
+
+void CalendarDatePicker::on_current(const boost::optional<date>& day) {
+  if(day) {
+    if(auto current = m_calendar_view->get_current_model()->get_current();
+        *day != m_calendar_view->get_list_model()->get<std::shared_ptr<
+        LocalDateModel>>(*current)->get_current()) {
+      set_current_index(get_index(*day));
+    }
+  } else {
+    set_current_index({});
   }
 }
 

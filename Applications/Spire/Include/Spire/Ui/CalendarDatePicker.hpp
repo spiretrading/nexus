@@ -47,9 +47,12 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_list_current_connection;
 
+      int get_index(boost::gregorian::date day) const;
       void populate_calendar(const std::function<
         void (int index, boost::gregorian::date day)> assign);
+      void set_current_index(const boost::optional<int>& index);
       void update_calendar_model();
+      void on_current(const boost::optional<boost::gregorian::date>& day);
       void on_current_month(boost::gregorian::date month);
       void on_list_current(const boost::optional<int> index);
   };
