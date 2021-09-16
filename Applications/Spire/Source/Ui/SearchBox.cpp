@@ -13,32 +13,32 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xC8C8C8))).
       set(vertical_padding(scale_height(4))).
       set(horizontal_padding(scale_width(5)));
     style.get(Hover() || Focus()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      set(border_color(QColor(0x4B23A0)));
     style.get(Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border_color(QColor(0xC8C8C8)));
     style.get(Any() >> (is_a<Icon>() && !(+Any() << is_a<Button>()))).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(Fill(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(Fill(QColor(0xA0A0A0)));
     style.get(Disabled() >> (is_a<Icon>() && !(+Any() << is_a<Button>()))).
-      set(Fill(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(Fill(QColor(0xC8C8C8)));
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
     style.get(Any() >> is_a<TextBox>()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
-      set(text_style(font, QColor::fromRgb(0, 0, 0))).
+      set(text_style(font, QColor(Qt::black))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(vertical_padding(0)).
       set(horizontal_padding(scale_width(5)));
     style.get(Disabled() >> is_a<TextBox>()).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 }

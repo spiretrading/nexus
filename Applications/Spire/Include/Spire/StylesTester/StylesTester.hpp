@@ -5,11 +5,16 @@
 #include <unordered_set>
 #include <string>
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 class QWidget;
 
 namespace Spire::Styles::Tests {
+
+  /** Selectors provided for testing purposes. */
+  using Foo = StateSelector<void, struct FooSelectorTag>;
+  using Bar = StateSelector<void, struct BarSelectorTag>;
 
   /** Stores the arguments passed to a SelectionUpdateSignal. */
   struct SelectionUpdate {

@@ -48,13 +48,13 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
       m_track_scroll_timer(this) {
   m_thumb = new Box(nullptr, nullptr);
   auto thumb_style = StyleSheet();
-  thumb_style.get(Any()).set(BackgroundColor(QColor("#C8C8C8")));
+  thumb_style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
   set_style(*m_thumb, std::move(thumb_style));
   m_track = new Box(m_thumb, this);
   auto track_style = get_style(*m_track);
   track_style.get(Any()).
-    set(border(0, QColor(0, 0, 0))).
-    set(BackgroundColor(QColor("#FFFFFF")));
+    set(border(0, QColor(Qt::black))).
+    set(BackgroundColor(QColor(0xFFFFFF)));
   if(m_orientation == Qt::Orientation::Vertical) {
     m_thumb->setSizePolicy(
       QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);

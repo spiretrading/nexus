@@ -49,8 +49,8 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(border(scale_width(1), QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xA0A0A0)));
     return style;
   }
 }

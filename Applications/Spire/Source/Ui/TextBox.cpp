@@ -23,7 +23,7 @@ namespace {
       set(border_size(0)).
       set(vertical_padding(0));
     style.get(ReadOnly() && Disabled()).
-      set(TextColor(QColor::fromRgb(0, 0, 0)));
+      set(TextColor(QColor(Qt::black)));
     set_style(text_box, std::move(style));
     text_box.setDisabled(true);
     text_box.set_read_only(true);
@@ -35,33 +35,33 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(255, 255, 255))).
-      set(border(scale_width(1), QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(text_style(font, QColor::fromRgb(0, 0, 0))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xC8C8C8))).
+      set(text_style(font, QColor(Qt::black))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(5)));
     style.get(Hover() || Focus()).
-      set(border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
       set(horizontal_padding(0));
     style.get(Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-      set(border_color(QColor::fromRgb(0xC8, 0xC8, 0xC8))).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border_color(QColor(0xC8C8C8))).
+      set(TextColor(QColor(0xC8C8C8)));
     style.get(ReadOnly() && Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Rejected()).
       set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
         linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
       set(border_color(
         chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
-    style.get(Placeholder()).set(TextColor(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+    style.get(Placeholder()).set(TextColor(QColor(0xA0A0A0)));
     style.get(Disabled() / Placeholder()).
-      set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 }
@@ -123,7 +123,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
-      m_is_rejected(false) {
+      m_is_rejected(false),
+      m_has_update(false) {
   auto layers = new LayeredWidget(this);
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
@@ -243,6 +244,9 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
       key_event.ignore();
       return true;
+    } else if(key_event.key() == Qt::Key_Enter ||
+        key_event.key() == Qt::Key_Return) {
+      m_has_update = true;
     }
   } else if(event->type() == QEvent::Resize) {
     update_display_text();
@@ -404,6 +408,7 @@ void TextBox::commit_placeholder_style() {
 }
 
 void TextBox::on_current(const QString& current) {
+  m_has_update = true;
   if(m_is_rejected) {
     m_is_rejected = false;
     unmatch(*this, Rejected());
@@ -413,9 +418,10 @@ void TextBox::on_current(const QString& current) {
 }
 
 void TextBox::on_editing_finished() {
-  if(!is_read_only()) {
+  if(!is_read_only() && m_has_update) {
     if(m_model->get_state() == QValidator::Acceptable) {
       m_submission = m_model->get_current();
+      m_has_update = false;
       m_submit_signal(m_submission);
     } else {
       m_reject_signal(m_model->get_current());

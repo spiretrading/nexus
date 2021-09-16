@@ -10,22 +10,22 @@ using namespace Spire::Styles::Tests;
 
 TEST_SUITE("NotSelector") {
   TEST_CASE("equality") {
-    REQUIRE(NotSelector(Any()) == NotSelector(Any()));
-    REQUIRE(NotSelector(Any()) != NotSelector(Hover()));
-    REQUIRE(NotSelector(Hover()) != NotSelector(Any()));
+    REQUIRE(NotSelector(Foo()) == NotSelector(Foo()));
+    REQUIRE(NotSelector(Foo()) != NotSelector(Bar()));
+    REQUIRE(NotSelector(Bar()) != NotSelector(Foo()));
   }
 
   TEST_CASE("select") {
     run_test([] {
       auto w1 = QWidget();
-      match(w1, Hover());
+      match(w1, Foo());
       auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(NotSelector(Hover()), find_stylist(w1),
+      auto connection = select(NotSelector(Foo()), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});
         });
       REQUIRE(updates.empty());
-      unmatch(w1, Hover());
+      unmatch(w1, Foo());
       REQUIRE(updates.size() == 1);
       {
         auto matches = updates.front();
@@ -41,7 +41,7 @@ TEST_SUITE("NotSelector") {
     run_test([] {
       auto w1 = QWidget();
       auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(NotSelector(Hover()), find_stylist(w1),
+      auto connection = select(NotSelector(Foo()), find_stylist(w1),
         [&] (const auto& additions, const auto& removals) {
           updates.push_back({additions, removals});
         });
@@ -53,7 +53,7 @@ TEST_SUITE("NotSelector") {
         REQUIRE(matches.m_removals.empty());
         REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
       }
-      match(w1, Hover());
+      match(w1, Foo());
       REQUIRE(updates.size() == 1);
       {
         auto matches = updates.front();

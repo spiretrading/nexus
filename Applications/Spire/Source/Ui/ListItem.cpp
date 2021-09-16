@@ -11,16 +11,19 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(Qt::transparent))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(5)));
     style.get(Hover()).set(
-      BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
+      BackgroundColor(QColor(0xF2F2FF)));
     style.get(Focus()).set(
-      border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      border_color(QColor(0x4B23A0)));
     style.get(Selected()).set(
-      BackgroundColor(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
+      BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_color(QColor(Qt::transparent)));
     return style;
   }
 }
@@ -43,7 +46,7 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   layout->addWidget(m_button);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
-  set_style(*m_button, DEFAULT_STYLE());
+  set_style(*this, DEFAULT_STYLE());
 }
 
 bool ListItem::is_selected() const {
