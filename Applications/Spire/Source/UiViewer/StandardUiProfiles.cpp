@@ -41,6 +41,7 @@
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/Tag.hpp"
+#include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
@@ -1679,6 +1680,18 @@ UiProfile Spire::make_tag_profile() {
       tag->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       tag->setMinimumSize(0, 0);
       return tag;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_tag_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("TagBox"), properties,
+    [] (auto& profile) {
+      auto tag_box = new TagBox(std::make_shared<ArrayListModel>());
+      apply_widget_properties(tag_box, profile.get_properties());
+      return tag_box;
     });
   return profile;
 }

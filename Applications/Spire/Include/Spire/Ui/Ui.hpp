@@ -47,6 +47,7 @@ namespace Spire {
   class SortedTableModel;
   class TableModel;
   class Tag;
+  class TagBox;
   class TextAreaBox;
   class TextBox;
   class TimeBox;
