@@ -54,6 +54,12 @@ namespace Spire {
       mutable StateSignal m_state_signal;
       std::shared_ptr<FocusEventFilter> m_worker;
   };
+
+  /**
+   * Tests if a state is a superset of another.
+   * @return <code>true</code> iff <i>left</i> is a superset of <i>right</i>.
+   */
+  bool is_set(FocusObserver::State left, FocusObserver::State right);
 }
 
 #endif

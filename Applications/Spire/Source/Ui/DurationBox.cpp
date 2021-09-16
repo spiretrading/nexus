@@ -239,7 +239,7 @@ namespace {
       set(BodyAlign(Qt::AlignCenter)).
       set(border(scale_width(1), QColor(0xC8C8C8))).
       set(horizontal_padding(scale_width(4)));
-    style.get(Hover() || Focus()).
+    style.get(Hover() || FocusIn()).
       set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor(Qt::transparent))).
@@ -456,14 +456,9 @@ QSize DurationBox::sizeHint() const {
 }
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusIn) {
-    if(!m_is_read_only) {
-      find_stylist(*this).match(Focus());
-    }
-  } else if(event->type() == QEvent::FocusOut) {
+  if(event->type() == QEvent::FocusOut) {
     if(!m_is_read_only && !m_hour_field->hasFocus() &&
         !m_minute_field->hasFocus() && !m_second_field->hasFocus()) {
-      find_stylist(*this).unmatch(Focus());
       on_submit();
     }
   } else if(event->type() == QEvent::KeyPress) {
