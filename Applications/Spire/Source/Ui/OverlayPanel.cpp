@@ -51,7 +51,8 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_is_draggable(true),
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
-      m_focus_observer(*this) {
+      m_focus_observer(*this),
+      m_parent_focus_observer(*parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -65,11 +66,10 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
   shadow->setOffset(translate(DROP_SHADOW_OFFSET));
   shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
   box->setGraphicsEffect(shadow);
-  m_focus_observer.connect_state_signal([=] (auto state) {
+  m_focus_connection = m_focus_observer.connect_state_signal([=] (auto state) {
     on_focus(state);
   });
-  m_parent_focus_observer = std::make_unique<FocusObserver>(*parent->window());
-  m_parent_focus_connection = m_parent_focus_observer->connect_state_signal(
+  m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
     [=] (auto state) { on_parent_focus(state); });
   m_body->installEventFilter(this);
   parent->window()->installEventFilter(this);
