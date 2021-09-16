@@ -107,17 +107,6 @@ void OverlayPanel::set_positioning(Positioning positioning) {
   m_positioning = positioning;
 }
 
-bool OverlayPanel::event(QEvent* event) {
-  if(event->type() == QEvent::ParentAboutToChange) {
-    parentWidget()->window()->removeEventFilter(this);
-  } else if(event->type() == QEvent::ParentChange) {
-    parentWidget()->window()->installEventFilter(this);
-    m_parent_focus_observer =
-      std::make_unique<FocusObserver>(*parentWidget()->window());
-  }
-  return QWidget::event(event);
-}
-
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
     if(event->type() == QEvent::MouseButtonPress) {
