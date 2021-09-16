@@ -1,7 +1,9 @@
 #include "Spire/Ui/TagBox.hpp"
 #include <QHBoxLayout>
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/Tag.hpp"
 
 using namespace Spire;
 
@@ -9,7 +11,11 @@ TagBox::TagBox(std::shared_ptr<ListModel> model, QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  m_list_view = new ListView(std::move(model), this);
+  m_list_view = new ListView(std::move(model),
+    [=] (const auto& list_model, auto index) {
+      auto item = list_model->at(index);
+      return new Tag(displayTextAny(item));
+    }, this);
   auto input_box = make_input_box(m_list_view, this);
   layout->addWidget(input_box);
 }

@@ -8,6 +8,10 @@ namespace Spire {
   class TagBox : public QWidget {
     public:
 
+      using DeleteSignal = Signal<void (int index)>;
+
+      using SubmitSignal = Signal<void (const QString& text)>;
+
       explicit TagBox(std::shared_ptr<ListModel> model,
         QWidget* parent = nullptr);
 
@@ -15,6 +19,7 @@ namespace Spire {
 
     private:
       ListView* m_list_view;
+      TextBox* m_text_box;
   };
 }
 

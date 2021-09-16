@@ -1689,7 +1689,11 @@ UiProfile Spire::make_tag_box_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile(QString::fromUtf8("TagBox"), properties,
     [] (auto& profile) {
-      auto tag_box = new TagBox(std::make_shared<ArrayListModel>());
+      auto model = std::make_shared<ArrayListModel>();
+      model->push(QString("ONE"));
+      model->push(QString("TWO"));
+      model->push(QString("THREE"));
+      auto tag_box = new TagBox(model);
       apply_widget_properties(tag_box, profile.get_properties());
       return tag_box;
     });
