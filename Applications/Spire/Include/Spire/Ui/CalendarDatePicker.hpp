@@ -38,14 +38,14 @@ namespace Styles {
        * current date defaults to today's local date.
        * @param parent The parent widget.
        */
-      CalendarDatePicker(QWidget* parent = nullptr);
+      explicit CalendarDatePicker(QWidget* parent = nullptr);
 
       /**
        * Constructs a CalendarDatePicker using a LocalOptionalDateModel.
        * @param current The current date.
        * @param parent The parent widget.
        */
-      CalendarDatePicker(boost::gregorian::date current,
+      explicit CalendarDatePicker(boost::gregorian::date current,
         QWidget* parent = nullptr);
 
       /**
@@ -53,7 +53,7 @@ namespace Styles {
        * @param model The current value's model.
        * @param parent The parent widget.
        */
-      CalendarDatePicker(std::shared_ptr<OptionalDateModel> model,
+      explicit CalendarDatePicker(std::shared_ptr<OptionalDateModel> model,
         QWidget* parent = nullptr);
 
       /** Returns the model. */
@@ -86,7 +86,7 @@ namespace Styles {
       void update_calendar_model();
       void on_current(const boost::optional<boost::gregorian::date>& day);
       void on_current_month(boost::gregorian::date month);
-      void on_list_current(const boost::optional<int> index);
+      void on_list_current(const boost::optional<int>& index);
       void on_submit(boost::gregorian::date day) const;
   };
 }

@@ -25,8 +25,7 @@ namespace {
   const auto DISPLAYED_DAYS = 42;
 
   auto make_header_label(QString text, QWidget* parent) {
-    auto label = make_label(text, parent);
-    label->setFocusPolicy(Qt::NoFocus);
+    auto label = make_label(std::move(text), parent);
     label->setFixedSize(scale(24, 24));
     auto style = get_style(*label);
     auto font = QFont("Roboto");
@@ -60,7 +59,8 @@ class CalendarDatePicker::MonthSelector : public QWidget {
   public:
     MonthSelector(std::shared_ptr<OptionalDateModel> date_model,
         QWidget* parent = nullptr)
-        : m_date_model(std::move(date_model)) {
+        : QWidget(parent),
+          m_date_model(std::move(date_model)) {
       m_model = std::make_shared<MonthModel>(
         m_date_model->get_current().value_or(day_clock::local_day()));
       setFixedSize(scale(168, 26));
@@ -293,7 +293,7 @@ CalendarDatePicker::CalendarDatePicker(
   update_calendar_model();
   m_list_current_connection =
     m_calendar_view->get_current_model()->connect_current_signal(
-      [=] (auto index) { on_list_current(index); });
+      [=] (const auto& index) { on_list_current(index); });
   m_calendar_view->connect_submit_signal([=] (const auto& model) {
     on_submit(
       std::any_cast<std::shared_ptr<LocalDateModel>>(model)->get_current());
@@ -365,7 +365,6 @@ void CalendarDatePicker::set_current_index(const boost::optional<int>& index) {
   auto current_block =
     shared_connection_block(m_list_current_connection);
   m_calendar_view->get_current_model()->set_current(index);
-  m_calendar_view->get_selection_model()->set_current(index);
 }
 
 void CalendarDatePicker::update_calendar_model() {
@@ -388,7 +387,7 @@ void CalendarDatePicker::update_calendar_model() {
         m_calendar_view->get_list_item(index)->setDisabled(day > *maximum);
       }
     }
-    if(auto current = m_model->get_current();  day == current) {
+    if(auto current = m_model->get_current(); day == current) {
       auto current_block =
         shared_connection_block(m_list_current_connection);
       m_calendar_view->get_current_model()->set_current(index);
@@ -429,7 +428,7 @@ void CalendarDatePicker::on_current_month(date month) {
   }
 }
 
-void CalendarDatePicker::on_list_current(const boost::optional<int> index) {
+void CalendarDatePicker::on_list_current(const boost::optional<int>& index) {
   if(index) {
     m_model->set_current(m_calendar_model->
       get<std::shared_ptr<LocalDateModel>>(*index)->get_current());
