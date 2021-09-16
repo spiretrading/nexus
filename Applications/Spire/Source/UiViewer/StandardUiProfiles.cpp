@@ -218,12 +218,11 @@ namespace {
   }
 
   template<typename B>
-  auto setup_enum_box_profile(UiProfile& profile) {
+  auto setup_enum_box_profile(B* box, UiProfile& profile) {
     using Type = B::Type;
-    auto& current = get<Type>("current", profile.get_properties());
-    auto box = new B(current.get());
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
+    auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       box->get_current()->set_current(value);
     });
@@ -1695,8 +1694,8 @@ UiProfile Spire::make_side_box_profile() {
   auto current_property = define_enum<Side>(
     {{"Buy", Side::ASK}, {"Sell", Side::BID}});
   populate_enum_box_properties(properties, current_property);
-  auto profile = UiProfile(QString::fromUtf8("SideBox"),
-    properties, setup_enum_box_profile<SideBox>);
+  auto profile = UiProfile(QString::fromUtf8("SideBox"), properties,
+    std::bind_front(setup_enum_box_profile<SideBox>, make_side_box()));
   return profile;
 }
 

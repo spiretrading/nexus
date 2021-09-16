@@ -13,32 +13,30 @@ namespace Spire {
   using LocalSideModel = LocalValueModel<Nexus::Side>;
   
   /**
-   * Displays a DropDownBox which allows the user to choose a Nexus::Side.
+   * An EnumBox specialized for a Nexus::Side.
    */
-  class SideBox : public EnumBox<Nexus::Side> {
-    public:
+  using SideBox = EnumBox<Nexus::Side>;
 
-      /**
-       * Constructs a SideBox using a LocalSideModel.
-       * @param parent The parent widget.
-       */
-      explicit SideBox(QWidget* parent = nullptr);
+  /**
+   * Returns a new SideBox using a LocalSideModel.
+   * @param parent The parent widget.
+   */
+  SideBox* make_side_box(QWidget* parent = nullptr);
 
-      /**
-       * Constructs a SideBox using a LocalSideModel and initial current value.
-       * @param current The initial current value.
-       * @param parent The parent widget.
-       */
-      explicit SideBox(Nexus::Side current, QWidget* parent = nullptr);
+  /**
+   * Returns a new SideBox using a LocalSideModel and initial current value.
+   * @param current The initial current value.
+   * @param parent The parent widget.
+   */
+  SideBox* make_side_box(Nexus::Side current, QWidget* parent = nullptr);
 
-      /**
-       * Constructs a SideBox.
-       * @param model The current value's model.
-       * @param parent The parent widget.
-       */
-      explicit SideBox(std::shared_ptr<SideModel> model,
-        QWidget* parent = nullptr);
-  };
+  /**
+   * Returns a SideBox.
+   * @param model The current value's model.
+   * @param parent The parent widget.
+   */
+   SideBox* make_side_box(
+     std::shared_ptr<SideModel> model, QWidget* parent = nullptr);
 }
 
 #endif
