@@ -177,10 +177,10 @@ const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
 
 const QString& Spire::displayText(Side side) {
   if(side == Side::ASK) {
-    static const auto value = QObject::tr("Buy");
+    static const auto value = QObject::tr("Sell");
     return value;
   } else if(side == Side::BID) {
-    static const auto value = QObject::tr("Sell");
+    static const auto value = QObject::tr("Buy");
     return value;
   } else {
     static const auto value = QObject::tr("None");

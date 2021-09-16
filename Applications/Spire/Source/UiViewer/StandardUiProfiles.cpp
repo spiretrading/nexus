@@ -1692,7 +1692,7 @@ UiProfile Spire::make_side_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_property = define_enum<Side>(
-    {{"Buy", Side::ASK}, {"Sell", Side::BID}});
+    {{"Buy", Side::BID}, {"Sell", Side::ASK}});
   populate_enum_box_properties(properties, current_property);
   auto profile = UiProfile(QString::fromUtf8("SideBox"), properties,
     std::bind_front(setup_enum_box_profile<SideBox>, make_side_box()));
