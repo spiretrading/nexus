@@ -52,8 +52,6 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
       m_focus_observer(*this) {
-  static auto num = 0;
-  setObjectName(QString("OP %1").arg(++num));
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -195,11 +193,6 @@ void OverlayPanel::position() {
 }
 
 void OverlayPanel::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
-    qDebug() << objectName() << " NONE";
-  } else {
-    qDebug() << objectName() << " other focus type";
-  }
   if(m_is_closed_on_blur) {
     if(state == FocusObserver::State::NONE) {
       close();
