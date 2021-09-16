@@ -83,7 +83,6 @@ namespace Spire {
       std::unique_ptr<FocusObserver> m_parent_focus_observer;
       boost::signals2::scoped_connection m_parent_focus_connection;
 
-      bool is_ancestor(QWidget* widget);
       void position();
       void on_focus(FocusObserver::State state);
       void on_parent_focus(FocusObserver::State state);

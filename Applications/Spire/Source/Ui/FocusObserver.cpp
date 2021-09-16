@@ -1,6 +1,7 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include <QApplication>
 #include <QFocusEvent>
+#include "Spire/Spire/Utility.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -17,7 +18,7 @@ struct FocusObserver::FocusEventFilter : QObject {
         m_focus_reason(Qt::MouseFocusReason) {
     if(m_widget->hasFocus()) {
       m_state = State::FOCUS;
-    } else if(m_widget->isAncestorOf(QApplication::focusWidget())) {
+    } else if(is_ancestor(m_widget, QApplication::focusWidget())) {
       m_state = State::FOCUS_IN;
     } else {
       m_state = State::NONE;
@@ -30,7 +31,7 @@ struct FocusObserver::FocusEventFilter : QObject {
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::FocusIn && watched->isWidgetType() &&
-        m_widget->isAncestorOf(static_cast<QWidget*>(watched))) {
+        is_ancestor(m_widget, static_cast<QWidget*>(watched))) {
       m_focus_reason = static_cast<QFocusEvent*>(event)->reason();
     }
     return QObject::eventFilter(watched, event);
@@ -71,7 +72,7 @@ struct FocusObserver::FocusEventFilter : QObject {
           widget_focus_visible = {now, false};
           break;
         }
-    } else if(m_widget->isAncestorOf(now)) {
+    } else if(is_ancestor(m_widget, now)) {
       m_state = State::FOCUS_IN;
     } else {
       m_state = State::NONE;

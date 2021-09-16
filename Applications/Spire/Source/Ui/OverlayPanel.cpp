@@ -52,6 +52,8 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
       m_focus_observer(*this) {
+  static auto num = 0;
+  setObjectName(QString("OP %1").arg(++num));
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -150,17 +152,6 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
-bool OverlayPanel::is_ancestor(QWidget* widget) {
-  auto current = widget;
-  while(current) {
-    if(current == this) {
-      return true;
-    }
-    current = current->parentWidget();
-  }
-  return false;
-}
-
 void OverlayPanel::position() {
   if(m_positioning == Positioning::PARENT) {
     auto parent_geometry = parentWidget()->rect();
@@ -204,9 +195,13 @@ void OverlayPanel::position() {
 }
 
 void OverlayPanel::on_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    qDebug() << objectName() << " NONE";
+  } else {
+    qDebug() << objectName() << " other focus type";
+  }
   if(m_is_closed_on_blur) {
-    if(state == FocusObserver::State::NONE &&
-        !is_ancestor(qApp->activeWindow())) {
+    if(state == FocusObserver::State::NONE) {
       close();
     } else if(state == FocusObserver::State::FOCUS_IN) {
       m_was_activated = true;
