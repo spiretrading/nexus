@@ -7,13 +7,14 @@ using namespace Spire;
 
 namespace {
   SideBox::Settings setup() {
-    static auto settings = SideBox::Settings();
-    if(!settings.m_cases) {
+    static auto settings = [] {
+      auto settings = SideBox::Settings();
       auto cases = std::make_shared<ArrayListModel>();
       cases->push(Side(Side::BID));
       cases->push(Side(Side::ASK));
       settings.m_cases = std::move(cases);
-    }
+      return settings;
+    }();
     return settings;
   }
 }
