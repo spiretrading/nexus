@@ -12,6 +12,7 @@
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -22,27 +23,23 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
+    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(PaddingRight(scale_width(22)));
+    style.get(Any() >> is_a<Icon>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(Fill(QColor(0x333333)));
+    style.get(Any() >> is_a<OverlayPanel>()).
+      set(BorderTopSize(0));
+    style.get(Focus() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(PaddingRight(scale_width(0)));
     style.get(ReadOnly() >> is_a<Icon>()).
       set(Visibility::INVISIBLE);
     style.get(ReadOnly() >> is_a<Button>()).
       set(Visibility::INVISIBLE);
     style.get(Disabled() >> is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
-    return style;
-  }
-
-  auto ICON_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(Fill(QColor(0x333333)));
-    return style;
-  }
-
-  auto TEXT_BOX_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(PaddingRight(scale_width(22)));
-    style.get(ReadOnly()).
-      set(PaddingRight(scale_width(0)));
     return style;
   }
 }
@@ -60,10 +57,6 @@ class DropDownBox::DropDownListWrapper : public QWidget {
       }
       m_list_view->installEventFilter(this);
       m_panel->installEventFilter(this);
-    }
-
-    QWidget& get_panel() const {
-      return *m_panel;
     }
 
   protected:
@@ -120,7 +113,6 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_box->setFocusPolicy(Qt::NoFocus);
-  set_style(*m_text_box, TEXT_BOX_STYLE(get_style(*m_text_box)));
   layers->add(m_text_box);
   auto icon_layer = new QWidget();
   icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -132,7 +124,6 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto drop_down_icon = new Icon(
     imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   drop_down_icon->setFixedSize(scale(6, 4));
-  set_style(*drop_down_icon, ICON_STYLE(get_style(*drop_down_icon)));
   icon_layer_layout->addWidget(drop_down_icon);
   icon_layer_layout->addSpacing(scale_width(8));
   layers->add(icon_layer);
@@ -154,7 +145,6 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   m_submit_connection = m_list_view->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
-  m_drop_down_list->get_panel().installEventFilter(this);
 }
 
 const std::shared_ptr<ListModel>& DropDownBox::get_list_model() const {
