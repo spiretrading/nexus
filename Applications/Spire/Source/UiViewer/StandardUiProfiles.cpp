@@ -24,6 +24,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
@@ -925,6 +926,33 @@ UiProfile Spire::make_focus_observer_profile() {
         observers.push_back(focus_observer);
       }
       return widget;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_hover_observer_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("HoverObserver"), properties,
+    [] (auto& profile) {
+      auto container = new QWidget();
+      container->setFixedSize(scale(300, 200));
+      apply_widget_properties(container, profile.get_properties());
+      auto overlap_box1 = make_input_box(new QWidget(), container);
+      overlap_box1->setFixedSize(100, 100);
+      overlap_box1->move(translate(0, 50));
+      auto overlap_box2 = make_input_box(new QWidget(), container);
+      overlap_box2->setFixedSize(scale(100, 100));
+      overlap_box2->move(translate(50, 100));
+      auto grandchild_box = make_input_box(new QWidget());
+      grandchild_box->setSizePolicy(
+        QSizePolicy::Expanding, QSizePolicy::Expanding);
+      auto child_box = make_input_box(grandchild_box);
+      child_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      auto parent_box = make_input_box(child_box, container);
+      parent_box->setFixedSize(125, 150);
+      parent_box->move(translate(175, 50));
+      return container;
     });
   return profile;
 }

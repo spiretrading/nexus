@@ -1,5 +1,6 @@
 #ifndef SPIRE_HOVER_OBSERVER_HPP
 #define SPIRE_HOVER_OBSERVER_HPP
+#include <QTimer>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -43,6 +44,12 @@ namespace Spire {
       /** Connects a slot to the hover state signal. */
       boost::signals2::connection connect_state_signal(
         const StateSignal::slot_type& slot) const;
+
+    private:
+      mutable StateSignal m_state_signal;
+      static QTimer m_poll_timer;
+
+      static void on_poll_timeout();
   };
 
   /**

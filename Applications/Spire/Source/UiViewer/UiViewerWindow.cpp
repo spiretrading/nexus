@@ -115,6 +115,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_duration_filter_panel_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
+  add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_info_tip_profile());
   add(make_input_box_profile());
