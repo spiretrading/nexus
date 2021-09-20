@@ -32,7 +32,7 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
     SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
   layout->addWidget(m_scrollable_list_box);
   m_panel = new OverlayPanel(*this, parent);
-  m_panel->set_closed_on_blur(true);
+  m_panel->set_closed_on_focus_out(true);
   on_panel_style();
   connect_style_signal(*m_panel, [=] { on_panel_style(); });
   if(parent) {

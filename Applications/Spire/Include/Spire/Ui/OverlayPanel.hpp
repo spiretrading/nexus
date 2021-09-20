@@ -36,16 +36,18 @@ namespace Spire {
       QWidget& get_body();
 
       /**
-       * Returns <code>true</code> when the panel can be closed on blur event.
+       * Returns <code>true</code> when the panel can be closed on a focus out
+       * event.
        */
-      bool is_closed_on_blur() const;
+      bool is_closed_on_focus_out() const;
 
       /**
-       * Sets whether the panel closes on blur event.
-       * @param is_closed_on_blur Sets the panel to be closed on blur event iff
-       *                          is_closed_on_blur is <code>true</code>.
+       * Sets whether the panel closes on focus out event.
+       * @param is_closed_on_focus_out Sets the panel to be closed on a focus
+                                       out event iff is_closed_on_focus_out is
+                                       <code>true</code>.
        */
-      void set_closed_on_blur(bool is_closed_on_blur);
+      void set_closed_on_focus_out(bool is_closed_on_focus_out);
 
       /** Returns <code>true</code> if the panel can be dragged. */
       bool is_draggable() const;
@@ -73,7 +75,7 @@ namespace Spire {
 
     private:
       QWidget* m_body;
-      bool m_is_closed_on_blur;
+      bool m_is_closed_on_focus_out;
       bool m_is_draggable;
       bool m_was_activated;
       Positioning m_positioning;

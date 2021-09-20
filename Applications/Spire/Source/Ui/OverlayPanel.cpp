@@ -47,7 +47,7 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
     : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
         Qt::NoDropShadowWindowHint),
       m_body(&body),
-      m_is_closed_on_blur(true),
+      m_is_closed_on_focus_out(true),
       m_is_draggable(true),
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
@@ -84,12 +84,12 @@ QWidget& OverlayPanel::get_body() {
   return *m_body;
 }
 
-bool OverlayPanel::is_closed_on_blur() const {
-  return m_is_closed_on_blur;
+bool OverlayPanel::is_closed_on_focus_out() const {
+  return m_is_closed_on_focus_out;
 }
 
-void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
-  m_is_closed_on_blur = is_closed_on_blur;
+void OverlayPanel::set_closed_on_focus_out(bool is_closed_on_focus_out) {
+  m_is_closed_on_focus_out = is_closed_on_focus_out;
 }
 
 bool OverlayPanel::is_draggable() const {
@@ -183,7 +183,7 @@ void OverlayPanel::position() {
 }
 
 void OverlayPanel::on_focus(FocusObserver::State state) {
-  if(m_is_closed_on_blur) {
+  if(m_is_closed_on_focus_out) {
     if(state == FocusObserver::State::NONE) {
       close();
     } else if(state == FocusObserver::State::FOCUS_IN) {
@@ -193,11 +193,11 @@ void OverlayPanel::on_focus(FocusObserver::State state) {
 }
 
 void OverlayPanel::on_parent_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE && m_is_closed_on_blur &&
+  if(state == FocusObserver::State::NONE && m_is_closed_on_focus_out &&
       !isActiveWindow() && m_was_activated) {
     close();
-  } else if(state == FocusObserver::State::FOCUS_IN && m_is_closed_on_blur &&
-      m_was_activated) {
+  } else if(state == FocusObserver::State::FOCUS_IN &&
+      m_is_closed_on_focus_out && m_was_activated) {
     close();
   }
 }

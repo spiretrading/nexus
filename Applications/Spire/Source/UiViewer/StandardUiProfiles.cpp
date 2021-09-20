@@ -339,16 +339,16 @@ namespace {
     return body;
   }
 
-  void create_child_panel(bool close_on_blur, bool draggable,
+  void create_child_panel(bool close_on_focus_out, bool draggable,
       OverlayPanel::Positioning positioning, Button* parent) {
     auto body = create_panel_body();
     auto panel = new OverlayPanel(*body, parent);
     auto button = body->findChild<Button*>();
     button->connect_clicked_signal([=] {
-      create_child_panel(close_on_blur, draggable, positioning, button);
+      create_child_panel(close_on_focus_out, draggable, positioning, button);
     });
     panel->setAttribute(Qt::WA_DeleteOnClose);
-    panel->set_closed_on_blur(close_on_blur);
+    panel->set_closed_on_focus_out(close_on_focus_out);
     panel->set_is_draggable(draggable);
     panel->set_positioning(positioning);
     panel->show();
@@ -1397,7 +1397,7 @@ UiProfile Spire::make_order_type_box_profile() {
 
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property("close-on-blur", false));
+  properties.push_back(make_standard_property("close-on-focus-out", false));
   properties.push_back(make_standard_property("draggable", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
     {{"NONE", OverlayPanel::Positioning::NONE},
@@ -1406,28 +1406,29 @@ UiProfile Spire::make_overlay_panel_profile() {
     make_standard_enum_property("positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
     [=] (auto& profile) {
-      auto& close_on_blur =
-        get<bool>("close-on-blur", profile.get_properties());
+      auto& close_on_focus_out =
+        get<bool>("close-on-focus-out", profile.get_properties());
       auto& draggable = get<bool>("draggable", profile.get_properties());
       auto& positioning =
         get<OverlayPanel::Positioning>("positioning", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto panel = QPointer<OverlayPanel>();
       button->connect_clicked_signal(
-        [=, &profile, &close_on_blur, &draggable, &positioning] () mutable {
-          if(panel && !close_on_blur.get()) {
+        [=, &profile, &close_on_focus_out, &draggable, &positioning]
+            () mutable {
+          if(panel && !close_on_focus_out.get()) {
             return;
           }
           auto body = create_panel_body();
           panel = new OverlayPanel(*body, button);
           auto child_button = body->findChild<Button*>();
           child_button->connect_clicked_signal(
-            [=, &close_on_blur, &draggable, &positioning] {
-              create_child_panel(close_on_blur.get(), draggable.get(),
+            [=, &close_on_focus_out, &draggable, &positioning] {
+              create_child_panel(close_on_focus_out.get(), draggable.get(),
                 positioning.get(), child_button);
             });
           panel->setAttribute(Qt::WA_DeleteOnClose);
-          panel->set_closed_on_blur(close_on_blur.get());
+          panel->set_closed_on_focus_out(close_on_focus_out.get());
           panel->set_is_draggable(draggable.get());
           panel->set_positioning(positioning.get());
           panel->show();
