@@ -1131,16 +1131,23 @@ UiProfile Spire::make_label_profile() {
 UiProfile Spire::make_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("current", false));
   properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
       auto item = new ListItem(make_label(QString::fromUtf8("Test Component")));
       item->setFixedWidth(scale_width(100));
       apply_widget_properties(item, profile.get_properties());
-      item->connect_current_signal(
-        profile.make_event_slot(QString::fromUtf8("Current")));
       item->connect_submit_signal(
         profile.make_event_slot(QString::fromUtf8("Submit")));
+      auto& current = get<bool>("current", profile.get_properties());
+      current.connect_changed_signal([=] (auto value) {
+        if(value) {
+          match(*item, Current());
+        } else {
+          unmatch(*item, Current());
+        }
+      });
       auto& selected = get<bool>("selected", profile.get_properties());
       selected.connect_changed_signal([=] (auto value) {
         item->set_selected(value);

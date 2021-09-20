@@ -150,6 +150,7 @@ namespace Styles {
       struct ItemEntry {
         ListItem* m_item;
         int m_index;
+        bool m_is_current;
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ListModel> m_list_model;
@@ -182,13 +183,13 @@ namespace Styles {
       void cross_next();
       void cross_previous();
       void cross(int direction);
+      void set_current(boost::optional<int> current);
       void add_item(int index);
       void remove_item(int index);
       void update_layout();
       void on_list_operation(const ListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);
       void on_selection(const boost::optional<int>& selected);
-      void on_item_current(ItemEntry& item);
       void on_item_submitted(ItemEntry& item);
       void on_style();
       void on_query_timer_expired();

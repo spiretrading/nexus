@@ -69,10 +69,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_query_timer(new QTimer(this)) {
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list_model, i));
-    m_items.emplace_back(new ItemEntry{item, i});
-    item->connect_current_signal([=, item = m_items.back().get()] {
-      on_item_current(*item);
-    });
+    m_items.emplace_back(new ItemEntry{item, i, false});
     item->connect_submit_signal([=, item = m_items.back().get()] {
       on_item_submitted(*item);
     });
@@ -199,7 +196,7 @@ void ListView::append_query(const QString& query) {
     while(i != start) {
       if(m_items[i]->m_item->isEnabled() && displayTextAny(
           m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
-        m_current_model->set_current(i);
+        set_current(i);
         break;
       }
       ++i;
@@ -259,7 +256,7 @@ void ListView::navigate(
     return;
   }
   m_navigation_box = m_items[i]->m_item->frameGeometry();
-  m_current_model->set_current(i);
+  set_current(i);
 }
 
 void ListView::cross_previous() {
@@ -316,16 +313,33 @@ void ListView::cross(int direction) {
   if(candidate == -1 || candidate == m_current_model->get_current()) {
     return;
   }
-  m_current_model->set_current(candidate);
   m_navigation_box = navigation_box;
+  set_current(candidate);
+}
+
+void ListView::set_current(optional<int> current) {
+  if(!current && !m_current_model->get_current()) {
+    return;
+  }
+  if(auto& previous_index = m_current_model->get_current()) {
+    auto& previous_item = *m_items[*previous_index];
+    if(previous_index == current && previous_item.m_is_current) {
+      return;
+    }
+    previous_item.m_is_current = false;
+    unmatch(*previous_item.m_item, Current());
+  }
+  if(current) {
+    auto& item = *m_items[*current];
+    item.m_is_current = true;
+    match(*item.m_item, Current());
+  }
+  m_current_model->set_current(current);
 }
 
 void ListView::add_item(int index) {
   auto item = new ListItem(m_view_builder(m_list_model, index));
-  m_items.emplace(m_items.begin() + index, new ItemEntry{item, index});
-  item->connect_current_signal([=, item = m_items[index].get()] {
-    on_item_current(*item);
-  });
+  m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
   item->connect_submit_signal([=, item = m_items[index].get()] {
     on_item_submitted(*item);
   });
@@ -335,7 +349,7 @@ void ListView::add_item(int index) {
   auto selection = m_selection_model->get_current();
   if(m_current_model->get_current() &&
       *m_current_model->get_current() >= index) {
-    m_current_model->set_current(*m_current_model->get_current() + 1);
+    set_current(*m_current_model->get_current() + 1);
   }
   if(selection && *selection >= index) {
     m_selected = *selection + 1;
@@ -354,9 +368,9 @@ void ListView::remove_item(int index) {
   auto selection = m_selection_model->get_current();
   if(m_current_model->get_current()) {
     if(m_current_model->get_current() == index) {
-      m_current_model->set_current(*m_current_model->get_current());
+      set_current(*m_current_model->get_current());
     } else if(m_current_model->get_current() > index) {
-      m_current_model->set_current(*m_current_model->get_current() - 1);
+      set_current(*m_current_model->get_current() - 1);
     }
   }
   if(selection && *selection >= index) {
@@ -476,21 +490,9 @@ void ListView::on_selection(const optional<int>& selected) {
   }
 }
 
-void ListView::on_item_current(ItemEntry& item) {
-  m_navigation_box = item.m_item->frameGeometry();
-  if(m_current_model->get_current() != item.m_index) {
-    m_current_model->set_current(item.m_index);
-  }
-}
-
 void ListView::on_item_submitted(ItemEntry& item) {
   m_navigation_box = item.m_item->frameGeometry();
-  if(m_selection_mode != SelectionMode::NONE) {
-    m_selection_model->set_current(item.m_index);
-  }
-  if(m_current_model->get_current() != item.m_index) {
-    m_current_model->set_current(item.m_index);
-  }
+  set_current(item.m_index);
   m_submit_signal(m_list_model->at(item.m_index));
 }
 
