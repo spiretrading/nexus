@@ -26,7 +26,7 @@ namespace Spire {
        * @param body The widget displayed in the OverlayPanel.
        * @param parent The parent widget that shows the OverlayPanel.
        */
-      OverlayPanel(QWidget* body, QWidget* parent);
+      OverlayPanel(QWidget& body, QWidget* parent);
 
       /** Returns the body component displayed in the panel. */
       const QWidget& get_body() const;

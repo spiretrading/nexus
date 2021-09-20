@@ -1424,7 +1424,7 @@ UiProfile Spire::make_overlay_panel_profile() {
           content_layout->addWidget(make_label_button(
             QString::fromUtf8("Reset")), 2, 1);
           container_layout->addLayout(content_layout);
-          panel = new OverlayPanel(body, button);
+          panel = new OverlayPanel(*body, button);
           panel->setAttribute(Qt::WA_DeleteOnClose);
           panel->set_closed_on_blur(close_on_blur.get());
           panel->set_positioning(positioning.get());
