@@ -50,21 +50,20 @@ class DropDownBox::DropDownListWrapper : public QWidget {
         : QWidget(parent),
           m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
+      setFocusProxy(m_drop_down_list);
       m_panel = m_drop_down_list->window();
       m_panel->installEventFilter(this);
     }
 
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(watched == m_panel) {
-        if(event->type() == QEvent::Close) {
-          hide();
-        } else if(event->type() == QEvent::MouseButtonPress) {
-          auto& mouse_event = *static_cast<QMouseEvent*>(event);
-          if(parentWidget()->rect().contains(
-              parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
-            m_panel->setAttribute(Qt::WA_NoMouseReplay);
-          }
+      if(event->type() == QEvent::Close) {
+        hide();
+      } else if(event->type() == QEvent::MouseButtonPress) {
+        auto& mouse_event = *static_cast<QMouseEvent*>(event);
+        if(parentWidget()->rect().contains(
+            parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
+          m_panel->setAttribute(Qt::WA_NoMouseReplay);
         }
       }
       return QWidget::eventFilter(watched, event);
@@ -72,7 +71,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
 
     void showEvent(QShowEvent* event) override {
       m_drop_down_list->show();
-      m_drop_down_list->setFocus();
+      setFocus();
       QWidget::showEvent(event);
     }
 
