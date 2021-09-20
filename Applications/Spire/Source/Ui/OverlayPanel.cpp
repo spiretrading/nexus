@@ -51,8 +51,7 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
       m_is_draggable(true),
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
-      m_focus_observer(*this),
-      m_parent_focus_observer(*parent) {
+      m_focus_observer(*this) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   setFocusProxy(m_body);
@@ -70,10 +69,13 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
   m_focus_connection = m_focus_observer.connect_state_signal([=] (auto state) {
     on_focus(state);
   });
-  m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
-    [=] (auto state) { on_parent_focus(state); });
+  if(parent) {
+    m_parent_focus_observer = std::make_unique<FocusObserver>(*parent);
+    m_parent_focus_connection = m_parent_focus_observer->connect_state_signal(
+      [=] (auto state) { on_parent_focus(state); });
+    parent->window()->installEventFilter(this);
+  }
   m_body->installEventFilter(this);
-  parent->window()->installEventFilter(this);
 }
 
 const QWidget& OverlayPanel::get_body() const {
