@@ -5,6 +5,44 @@
 
 namespace Spire {
 
+  class HoverSingleton {
+    public:
+
+      enum class State : std::uint8_t {
+        NONE = 0,
+        MOUSE_OVER = 0x01,
+        MOUSE_IN = MOUSE_OVER | 0x02,
+      };
+
+      using StateSignal = Signal<void (State state)>;
+
+      static HoverSingleton* instance();
+
+      void add(const QWidget& widget);
+
+      State get_state(const QWidget& widget) const;
+
+      boost::signals2::connection connect_state_signal(
+        const QWidget& widget,
+        const std::function<void (State state)>& callback);
+
+    private:
+      struct Entry {
+        State m_state;
+        StateSignal m_state_signal;
+      };
+      HoverSingleton();
+      static HoverSingleton* m_instance;
+      StateSignal m_state_signal;
+      std::unordered_map<const QWidget*, Entry> m_entries;
+      QTimer m_poll_timer;
+      QWidget* m_current;
+
+      void on_poll_timeout();
+  };
+
+  bool is_set(HoverSingleton::State left, HoverSingleton::State right);
+
   /**
    * An observer class signalling when a mouse's position intersects a QWidget.
    */

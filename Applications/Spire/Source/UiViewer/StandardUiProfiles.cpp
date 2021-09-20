@@ -938,6 +938,7 @@ UiProfile Spire::make_hover_observer_profile() {
       auto container = new QWidget();
       container->setFixedSize(scale(300, 200));
       apply_widget_properties(container, profile.get_properties());
+      auto box1_body = new QWidget();
       auto overlap_box1 = make_input_box(new QWidget(), container);
       overlap_box1->setFixedSize(100, 100);
       overlap_box1->move(translate(0, 50));
@@ -952,6 +953,27 @@ UiProfile Spire::make_hover_observer_profile() {
       auto parent_box = make_input_box(child_box, container);
       parent_box->setFixedSize(125, 150);
       parent_box->move(translate(175, 50));
+      auto hover_observer = HoverSingleton::instance();
+      hover_observer->add(*overlap_box1);
+      hover_observer->connect_state_signal(*overlap_box1,
+        profile.make_event_slot<HoverSingleton::State>(
+          QString::fromUtf8("overlap_box1")));
+      hover_observer->add(*overlap_box2);
+      hover_observer->connect_state_signal(*overlap_box2,
+        profile.make_event_slot<HoverSingleton::State>(
+          QString::fromUtf8("overlap_box2")));
+      hover_observer->add(*grandchild_box);
+      hover_observer->connect_state_signal(*grandchild_box,
+        profile.make_event_slot<HoverSingleton::State>(
+          QString::fromUtf8("grandchild_box")));
+      hover_observer->add(*child_box);
+      hover_observer->connect_state_signal(*child_box,
+        profile.make_event_slot<HoverSingleton::State>(
+          QString::fromUtf8("child_box")));
+      hover_observer->add(*parent_box);
+      hover_observer->connect_state_signal(*parent_box,
+        profile.make_event_slot<HoverSingleton::State>(
+          QString::fromUtf8("parent_box")));
       return container;
     });
   return profile;
