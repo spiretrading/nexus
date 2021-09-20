@@ -128,6 +128,9 @@ namespace Spire {
   /** Returns a UiProfile for the TimeBox. */
   UiProfile make_time_box_profile();
 
+  /** Returns a UiProfile for the TimeInForceBox. */
+  UiProfile make_time_in_force_box_profile();
+
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
 }

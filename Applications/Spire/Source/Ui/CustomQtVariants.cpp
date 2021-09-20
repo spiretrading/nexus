@@ -144,30 +144,38 @@ QVariant Spire::to_qvariant(const std::any& value) {
 void Spire::register_custom_qt_variants() {}
 
 const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
+  static const auto en_dash = QChar(0x2013);
   auto type = time_in_force.GetType();
-  if(type == TimeInForce::Type::DAY) {
-    static const auto value = QObject::tr("DAY");
+   if(type == TimeInForce::Type::DAY) {
+    static const auto value = QObject::tr("0 ") + en_dash + QObject::tr(" Day");
     return value;
   } else if(type == TimeInForce::Type::FOK) {
-    static const auto value = QObject::tr("FOK");
+    static const auto value =
+      QObject::tr("4 ") + en_dash + QObject::tr(" Fill or Kill (FOK)");
     return value;
   } else if(type == TimeInForce::Type::GTC) {
-    static const auto value = QObject::tr("GTC");
+    static const auto value =
+      QObject::tr("1 ") + en_dash + QObject::tr(" Good Till Cancel (GTC)");
     return value;
   } else if(type == TimeInForce::Type::GTD) {
-    static const auto value = QObject::tr("GTD");
+    static const auto value =
+      QObject::tr("6 ") + en_dash + QObject::tr(" Good Till Date");
     return value;
   } else if(type == TimeInForce::Type::GTX) {
-    static const auto value = QObject::tr("GTX");
+    static const auto value =
+      QObject::tr("5 ") + en_dash + QObject::tr(" Good Till Crossing (GTX)");
     return value;
   } else if(type == TimeInForce::Type::IOC) {
-    static const auto value = QObject::tr("IOC");
+    static const auto value =
+      QObject::tr("3 ") + en_dash + QObject::tr(" Immediate or Cancel (IOC)");
     return value;
   } else if(type == TimeInForce::Type::MOC) {
-    static const auto value = QObject::tr("MOC");
+    static const auto value =
+      QObject::tr("7 ") + en_dash + QObject::tr(" At the Close");
     return value;
   } else if(type == TimeInForce::Type::OPG) {
-    static const auto value = QObject::tr("OPG");
+    static const auto value =
+      QObject::tr("2 ") + en_dash + QObject::tr(" At the Opening (OPG)");
     return value;
   } else {
     static const auto value = QObject::tr("NONE");
