@@ -51,30 +51,14 @@ class DropDownBox::DropDownListWrapper : public QWidget {
           m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
       m_panel = m_drop_down_list->window();
-      m_drop_down_list->installEventFilter(this);
       m_panel->installEventFilter(this);
     }
 
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(watched == m_drop_down_list) {
-        if(event->type() == QEvent::KeyPress) {
-          auto& key_event = *static_cast<QKeyEvent*>(event);
-          switch(key_event.key()) {
-            case Qt::Key_Tab:
-            case Qt::Key_Backtab:
-            case Qt::Key_Escape:
-              hide();
-              parentWidget()->setFocus();
-              QCoreApplication::sendEvent(parentWidget(), event);
-              break;
-          }
-        }
-      } else if(watched == m_panel) {
+      if(watched == m_panel) {
         if(event->type() == QEvent::Close) {
           hide();
-        } else if(event->type() == QEvent::KeyPress) {
-          QCoreApplication::sendEvent(m_list_view, event);
         } else if(event->type() == QEvent::MouseButtonPress) {
           auto& mouse_event = *static_cast<QMouseEvent*>(event);
           if(parentWidget()->rect().contains(
@@ -88,6 +72,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
 
     void showEvent(QShowEvent* event) override {
       m_drop_down_list->show();
+      m_drop_down_list->setFocus();
       QWidget::showEvent(event);
     }
 

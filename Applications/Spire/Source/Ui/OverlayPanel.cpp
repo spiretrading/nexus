@@ -50,8 +50,8 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
       m_positioning(Positioning::PARENT) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
-  setFocusProxy(m_body);
   auto box = new Box(m_body);
+  setFocusProxy(box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());
   layout->addWidget(box);
