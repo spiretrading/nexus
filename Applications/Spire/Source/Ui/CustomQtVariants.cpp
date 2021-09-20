@@ -233,16 +233,16 @@ const QString& Spire::displayText(OrderStatus status) {
 
 const QString& Spire::displayText(OrderType type) {
   if(type == OrderType::MARKET) {
-    static const auto value = QObject::tr("MKT");
+    static const auto value = QObject::tr("Market");
     return value;
   } else if(type == OrderType::LIMIT) {
-    static const auto value = QObject::tr("LMT");
+    static const auto value = QObject::tr("Limit");
     return value;
   } else if(type == OrderType::PEGGED) {
-    static const auto value = QObject::tr("PEG");
+    static const auto value = QObject::tr("Pegged");
     return value;
   } else if(type == OrderType::STOP) {
-    static const auto value = QObject::tr("STP");
+    static const auto value = QObject::tr("Stop");
     return value;
   } else {
     static const auto value = QObject::tr("None");
