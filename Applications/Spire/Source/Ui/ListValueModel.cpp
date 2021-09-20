@@ -13,17 +13,15 @@ ListValueModel::ListValueModel(std::shared_ptr<ListModel> source, int index)
 QValidator::State ListValueModel::get_state() const {
   if(m_index < 0 || m_index >= m_source->get_size()) {
     return QValidator::State::Invalid;
-  } else {
-    return QValidator::State::Acceptable;
   }
+  return QValidator::State::Acceptable;
 }
 
 const ListValueModel::Type& ListValueModel::get_current() const {
   if(get_state() == QValidator::State::Acceptable) {
     return m_source->at(m_index);
-  } else {
-    return m_empty_value;
   }
+  return m_empty_value;
 }
 
 QValidator::State ListValueModel::set_current(const Type& value) {
