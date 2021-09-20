@@ -2,6 +2,7 @@
 #define SPIRE_LIST_VALUE_MODEL_HPP
 #include <any>
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -28,6 +29,15 @@ namespace Spire {
 
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const override;
+
+    private:
+      mutable CurrentSignal m_current_signal;
+      std::shared_ptr<ListModel> m_source;
+      int m_index;
+      std::any m_empty_value;
+      boost::signals2::scoped_connection m_operation_connection;
+
+      void on_operation(const ListModel::Operation& operation);
   };
 }
 
