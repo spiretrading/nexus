@@ -43,10 +43,10 @@ namespace {
   }
 }
 
-OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
-    : QWidget(parent,
-        Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
-      m_body(body),
+OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
+    : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
+        Qt::NoDropShadowWindowHint),
+      m_body(&body),
       m_is_closed_on_blur(true),
       m_is_draggable(true),
       m_was_activated(false),
@@ -55,6 +55,7 @@ OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
       m_parent_focus_observer(*parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
+  setFocusProxy(m_body);
   auto box = new Box(m_body);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());

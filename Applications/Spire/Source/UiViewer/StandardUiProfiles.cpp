@@ -31,6 +31,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -40,6 +41,7 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
+#include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -216,6 +218,34 @@ namespace {
       DecimalBoxProfileProperties(1));
   }
 
+  template<typename B, typename B* (*F)(QWidget*)>
+  auto setup_enum_box_profile(UiProfile& profile) {
+    using Type = B::Type;
+    auto box = F(nullptr);
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<Type>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      box->get_current()->set_current(value);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal([=] (auto is_read_only) {
+      box->set_read_only(is_read_only);
+    });
+    box->connect_submit_signal(
+      profile.make_event_slot<std::any>(QString::fromUtf8("Submit")));
+    return box;
+  }
+
+  template<typename T>
+  void populate_enum_box_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      std::vector<std::pair<QString, T>>& current_property) {
+    properties.push_back(make_standard_enum_property(
+      "current", current_property));
+    properties.push_back(make_standard_property("read_only", false));
+  }
+
   template<typename B>
   auto setup_scalar_filter_panel_profile(UiProfile& profile) {
     using Type = std::decay_t<decltype(*std::declval<B>().get_model())>::Scalar;
@@ -312,7 +342,7 @@ namespace {
   void create_child_panel(bool close_on_blur, bool draggable,
       OverlayPanel::Positioning positioning, Button* parent) {
     auto body = create_panel_body();
-    auto panel = new OverlayPanel(body, parent);
+    auto panel = new OverlayPanel(*body, parent);
     auto button = body->findChild<Button*>();
     button->connect_clicked_signal([=] {
       create_child_panel(close_on_blur, draggable, positioning, button);
@@ -1351,6 +1381,20 @@ UiProfile Spire::make_money_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_order_type_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<OrderType>(
+    {{"Limit", OrderType::LIMIT},
+     {"Market", OrderType::MARKET},
+     {"Pegged", OrderType::PEGGED},
+     {"Stop", OrderType::STOP}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("OrderTypeBox"), properties,
+    std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
+  return profile;
+}
+
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("close-on-blur", false));
@@ -1375,7 +1419,7 @@ UiProfile Spire::make_overlay_panel_profile() {
             return;
           }
           auto body = create_panel_body();
-          panel = new OverlayPanel(body, button);
+          panel = new OverlayPanel(*body, button);
           auto child_button = body->findChild<Button*>();
           child_button->connect_clicked_signal(
             [=, &close_on_blur, &draggable, &positioning] {
@@ -1659,6 +1703,17 @@ UiProfile Spire::make_security_list_item_profile() {
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
+  return profile;
+}
+
+UiProfile Spire::make_side_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Side>(
+    {{"Buy", Side::BID}, {"Sell", Side::ASK}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("SideBox"), properties,
+    std::bind_front(setup_enum_box_profile<SideBox, make_side_box>));
   return profile;
 }
 
