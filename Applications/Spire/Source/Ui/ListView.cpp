@@ -35,6 +35,18 @@ namespace {
   }
 }
 
+void ListView::ItemEntry::set_current(bool is_current) {
+  if(m_is_current == is_current) {
+    return;
+  }
+  m_is_current = is_current;
+  if(m_is_current) {
+    match(*m_item, Current());
+  } else {
+    unmatch(*m_item, Current());
+  }
+}
+
 QWidget* ListView::default_view_builder(
     const std::shared_ptr<ListModel>& model, int index) {
   return make_label(displayTextAny(model->at(index)));
@@ -57,6 +69,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
     : QWidget(parent),
       m_list_model(std::move(list_model)),
       m_current_model(std::move(current_model)),
+      m_last_current(m_current_model->get_current()),
       m_selection_model(std::move(selection_model)),
       m_view_builder(std::move(view_builder)),
       m_selected(m_selection_model->get_current()),
@@ -183,7 +196,6 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         } else {
           QWidget::keyPressEvent(event);
         }
-        break;
       }
   }
 }
@@ -326,14 +338,12 @@ void ListView::set_current(optional<int> current) {
     if(previous_index == current && previous_item.m_is_current) {
       return;
     }
-    previous_item.m_is_current = false;
-    unmatch(*previous_item.m_item, Current());
+    previous_item.set_current(false);
   }
   if(current) {
-    auto& item = *m_items[*current];
-    item.m_is_current = true;
-    match(*item.m_item, Current());
+    m_items[*current]->set_current(true);
   }
+  m_last_current = current;
   m_current_model->set_current(current);
 }
 
@@ -461,14 +471,19 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
     });
 }
 
-void ListView::on_current(const boost::optional<int>& current) {
+void ListView::on_current(const optional<int>& current) {
+  if(m_last_current && m_last_current != current) {
+    m_items[*m_last_current]->set_current(false);
+  }
   if(current && (hasFocus() || isAncestorOf(focusWidget()))) {
     m_items[*current]->m_item->setFocus();
   } else if(isAncestorOf(focusWidget())) {
     setFocus();
   }
   if(current) {
-    m_navigation_box =  m_items[*current]->m_item->frameGeometry();
+    auto& item = *m_items[*current];
+    m_navigation_box = item.m_item->frameGeometry();
+    item.set_current(true);
   } else {
     m_navigation_box = QRect();
   }

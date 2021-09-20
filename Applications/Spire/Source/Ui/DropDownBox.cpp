@@ -51,17 +51,13 @@ class DropDownBox::DropDownListWrapper : public QWidget {
           m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
       m_panel = m_drop_down_list->window();
-      m_drop_down_list->setFocusProxy(m_list_view);
-      for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
-        m_list_view->get_list_item(i)->setFocusPolicy(Qt::NoFocus);
-      }
-      m_list_view->installEventFilter(this);
+      m_drop_down_list->installEventFilter(this);
       m_panel->installEventFilter(this);
     }
 
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(watched == m_list_view) {
+      if(watched == m_drop_down_list) {
         if(event->type() == QEvent::KeyPress) {
           auto& key_event = *static_cast<QKeyEvent*>(event);
           switch(key_event.key()) {

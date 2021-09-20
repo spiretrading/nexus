@@ -151,10 +151,13 @@ namespace Styles {
         ListItem* m_item;
         int m_index;
         bool m_is_current;
+
+        void set_current(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ListModel> m_list_model;
       std::shared_ptr<CurrentModel> m_current_model;
+      boost::optional<int> m_last_current;
       std::shared_ptr<SelectionModel> m_selection_model;
       ViewBuilder m_view_builder;
       boost::optional<int> m_selected;
