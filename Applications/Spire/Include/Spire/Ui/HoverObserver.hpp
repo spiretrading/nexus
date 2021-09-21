@@ -53,6 +53,7 @@ namespace Spire {
       static std::unordered_map<const QWidget*, Entry> m_entries;
       static QTimer m_poll_timer;
       static QWidget* m_current;
+      static Qt::MouseButtons m_buttons;
       const QWidget* m_widget;
 
       static void setup_timer();
