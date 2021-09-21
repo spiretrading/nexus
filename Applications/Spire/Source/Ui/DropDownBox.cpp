@@ -62,6 +62,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   layout->addWidget(layers);
   m_drop_down_list = new DropDownList(list_view, this);
   m_drop_down_list->installEventFilter(this);
+  m_drop_down_list->window()->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   on_current(get_current_model()->get_current());
@@ -119,11 +120,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       unmatch(*m_text_box, Hover());
     }
   } else if(watched == m_drop_down_list) {
-    if(event->type() == QEvent::Show) {
-      match(*this, PopUp());
-    } else if(event->type() == QEvent::Hide) {
-      unmatch(*this, PopUp());
-    } else if(event->type() == QEvent::KeyPress) {
+    if(event->type() == QEvent::KeyPress) {
       auto key = static_cast<QKeyEvent*>(event)->key();
       auto is_next = [&] {
         if(key == Qt::Key_Tab) {
@@ -137,6 +134,16 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         m_drop_down_list->hide();
         focusNextPrevChild(*is_next);
       }
+    }
+  } else if(watched == m_drop_down_list->window()) {
+    if(event->type() == QEvent::Close) {
+      auto& close_event = static_cast<QCloseEvent&>(*event);
+      close_event.ignore();
+      m_drop_down_list->hide();
+    } else if(event->type() == QEvent::Show) {
+      match(*this, PopUp());
+    } else if(event->type() == QEvent::Hide) {
+      unmatch(*this, PopUp());
     }
   }
   return QWidget::eventFilter(watched, event);
