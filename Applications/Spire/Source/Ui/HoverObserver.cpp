@@ -62,8 +62,7 @@ void HoverObserver::on_poll_timeout() {
       m_current = nullptr;
     });
   }
-  if(m_current != previous ||
-      (m_buttons == Qt::NoButton && m_buttons != previous_buttons)) {
+  if(m_current != previous || m_buttons != previous_buttons) {
     auto previous_parent = previous;
     auto updated_widgets = get_ancestors(previous_parent);
     auto current_parent = m_current;
