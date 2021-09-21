@@ -6,6 +6,17 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto get_ancestors(QWidget* widget) {
+    auto ancestors = std::vector<QWidget*>();
+    while(widget != nullptr) {
+      ancestors.push_back(widget);
+      widget = widget->parentWidget();
+    }
+    return ancestors;
+  }
+}
+
 std::unordered_map<const QWidget*, HoverObserver::Entry>
   HoverObserver::m_entries;
 QTimer HoverObserver::m_poll_timer = QTimer();
@@ -49,13 +60,12 @@ void HoverObserver::on_poll_timeout() {
     });
   }
   if(m_current != previous) {
-    auto updated_widgets = std::vector<QWidget*>();
     auto previous_parent = previous;
-    while(previous_parent != nullptr) {
-      updated_widgets.push_back(previous_parent);
-      previous_parent = previous_parent->parentWidget();
-    }
+    auto updated_widgets = get_ancestors(previous_parent);
     auto current_parent = m_current;
+    auto current_widgets = get_ancestors(current_parent);
+    updated_widgets.insert(
+      updated_widgets.end(), current_widgets.begin(), current_widgets.end());
     while(current_parent != nullptr) {
       updated_widgets.push_back(current_parent);
       current_parent = current_parent->parentWidget();
