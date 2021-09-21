@@ -22,7 +22,9 @@ HoverObserver::HoverObserver(const QWidget& widget)
   if(!m_entries.contains(&widget)) {
     // TODO: initial state
     m_entries.insert(std::pair(&widget, Entry{State::NONE}));
-    // TODO: when widget is destroyed
+    widget.connect(&widget, &QObject::destroyed, [=, &widget] {
+      m_entries.erase(&widget);
+    });
   }
 }
 
