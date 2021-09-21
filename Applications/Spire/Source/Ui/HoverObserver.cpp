@@ -75,7 +75,6 @@ void HoverObserver::on_poll_timeout() {
       current_parent = current_parent->parentWidget();
     }
     auto last = std::unique(updated_widgets.begin(), updated_widgets.end());
-    qDebug() << qApp->mouseButtons();
     for(auto i = updated_widgets.begin(); i != last; ++i) {
       if(m_entries.contains(*i)) {
         auto& entry = m_entries.at(*i);
