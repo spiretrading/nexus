@@ -17,7 +17,6 @@ HoverObserver::HoverObserver(const QWidget& widget)
     setup_timer();
   }
   if(!m_entries.contains(&widget)) {
-    // TODO: initial state
     m_entries.insert(std::pair(&widget, Entry{State::NONE}));
     widget.connect(&widget, &QObject::destroyed, [=, &widget] {
       m_entries.erase(&widget);
