@@ -144,7 +144,6 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void focusInEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:

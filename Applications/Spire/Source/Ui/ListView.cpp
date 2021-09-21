@@ -80,7 +80,6 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
-  setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i, false});
@@ -90,6 +89,11 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
   }
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
+  }
+  if(m_last_current) {
+    m_items[*m_last_current]->m_item->setFocusPolicy(Qt::StrongFocus);
+  } else if(!m_items.empty()) {
+    m_items.front()->m_item->setFocusPolicy(Qt::StrongFocus);
   }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
@@ -149,12 +153,6 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void ListView::focusInEvent(QFocusEvent* event) {
-  if(auto& current = m_current_model->get_current()) {
-    m_items[*current]->m_item->setFocus(event->reason());
-  }
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
@@ -373,6 +371,8 @@ void ListView::add_item(int index) {
 }
 
 void ListView::remove_item(int index) {
+  auto had_focus =
+    (m_items[index]->m_item->focusPolicy() & Qt::StrongFocus) != Qt::NoFocus;
   auto item = m_items[index]->m_item;
   item->deleteLater();
   m_items.erase(m_items.begin() + index);
