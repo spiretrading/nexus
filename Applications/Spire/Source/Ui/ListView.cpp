@@ -91,9 +91,6 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
   }
-  if(m_last_current) {
-    setFocusProxy(m_items[*m_last_current]->m_item);
-  }
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   auto body = new QWidget();
@@ -152,6 +149,12 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void ListView::focusInEvent(QFocusEvent* event) {
+  if(auto& current = m_current_model->get_current()) {
+    m_items[*current]->m_item->setFocus(event->reason());
+  }
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
@@ -485,7 +488,6 @@ void ListView::on_current(const optional<int>& current) {
     auto& item = *m_items[*current];
     m_navigation_box = item.m_item->frameGeometry();
     item.set_current(true);
-    setFocusProxy(item.m_item);
   } else {
     m_navigation_box = QRect();
   }
