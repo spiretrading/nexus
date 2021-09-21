@@ -44,8 +44,8 @@ namespace {
 }
 
 OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
-    : QWidget(&parent, Qt::Popup | Qt::FramelessWindowHint |
-        Qt::NoDropShadowWindowHint),
+    : QWidget(&parent,
+        Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
       m_body(&body),
       m_is_closed_on_focus_out(true),
       m_is_draggable(true),
