@@ -9,7 +9,6 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -21,92 +20,26 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-      set(PaddingRight(scale_width(22)));
-    style.get(Any() >> is_a<Icon>()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(Fill(QColor(0x333333)));
-    style.get(Any() >> is_a<OverlayPanel>()).
-      set(BorderTopSize(0));
-    style.get(Focus() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(Any() >> is_a<Icon>()).set(Fill(QColor(0x333333)));
+    style.get(ReadOnly() >> is_a<Icon>()).set(Visibility::NONE);
+    style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
+    style.get(Any() >> is_a<TextBox>()).set(PaddingRight(scale_width(14)));
+    style.get(PopUp() >> is_a<TextBox>() ||
+      (+Any() >> is_a<Button>() && (Hover() || FocusIn())) >> is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-      set(PaddingRight(scale_width(0)));
-    style.get(ReadOnly() >> is_a<Icon>()).
-      set(Visibility::INVISIBLE);
-    style.get(ReadOnly() >> is_a<Button>()).
-      set(Visibility::INVISIBLE);
-    style.get(Disabled() >> is_a<Icon>()).
-      set(Fill(QColor(0xC8C8C8)));
+    style.get(ReadOnly() >> is_a<TextBox>()).set(PaddingRight(scale_width(0)));
+    style.get(Any() >> is_a<OverlayPanel>()).set(BorderTopSize(0));
     return style;
   }
 }
 
-class DropDownBox::DropDownListWrapper : public QWidget {
-  public:
-    DropDownListWrapper(ListView& list_view, DropDownBox& parent)
-        : QWidget(&parent) {
-      m_drop_down_list = new DropDownList(list_view, &parent);
-      m_drop_down_list->installEventFilter(this);
-      m_panel = m_drop_down_list->window();
-      m_panel->installEventFilter(this);
-    }
-
-  protected:
-    bool eventFilter(QObject* watched, QEvent* event) override {
-      if(watched == m_drop_down_list) {
-        if(event->type() == QEvent::KeyPress) {
-          auto key = static_cast<QKeyEvent*>(event)->key();
-          auto is_next = [&] {
-            if(key == Qt::Key_Tab) {
-              return optional<bool>(true);
-            } else if(key == Qt::Key_Backtab) {
-              return optional<bool>(false);
-            }
-            return optional<bool>();
-          }();
-          if(is_next) {
-            hide();
-            static_cast<DropDownBox&>(*parent()).focusNextPrevChild(*is_next);
-          }
-        }
-      } else if(watched == m_panel) {
-        if(event->type() == QEvent::Close) {
-          hide();
-        } else if(event->type() == QEvent::MouseButtonPress) {
-          auto& mouse_event = *static_cast<QMouseEvent*>(event);
-          if(parentWidget()->rect().contains(
-              parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
-            m_panel->setAttribute(Qt::WA_NoMouseReplay);
-          }
-        }
-      }
-      return QWidget::eventFilter(watched, event);
-    }
-
-    void showEvent(QShowEvent* event) override {
-      m_drop_down_list->show();
-      m_drop_down_list->setFocus();
-      QWidget::showEvent(event);
-    }
-
-    void hideEvent(QHideEvent* event) override {
-      m_drop_down_list->hide();
-      QWidget::hideEvent(event);
-    }
-
-  private:
-    DropDownList* m_drop_down_list;
-    QWidget* m_panel;
-};
-
 DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view) {
-  auto layers = new LayeredWidget();
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_box->setFocusPolicy(Qt::NoFocus);
+  auto layers = new LayeredWidget();
   layers->add(m_text_box);
   auto icon_layer = new QWidget();
   icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -115,8 +48,8 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   icon_layer_layout->setContentsMargins({});
   icon_layer_layout->setSpacing(0);
   icon_layer_layout->addStretch();
-  auto drop_down_icon = new Icon(
-    imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+  auto drop_down_icon =
+    new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   drop_down_icon->setFixedSize(scale(6, 4));
   icon_layer_layout->addWidget(drop_down_icon);
   icon_layer_layout->addSpacing(scale_width(8));
@@ -127,8 +60,8 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  m_drop_down_list = new DropDownListWrapper(*m_list_view, *this);
-  m_drop_down_list->hide();
+  m_drop_down_list = new DropDownList(list_view, this);
+  m_drop_down_list->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   on_current(get_current_model()->get_current());
@@ -185,6 +118,23 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Leave) {
       unmatch(*m_text_box, Hover());
     }
+  } else if(watched == m_drop_down_list) {
+    if(event->type() == QEvent::KeyPress) {
+      auto key = static_cast<QKeyEvent*>(event)->key();
+      auto is_next = [&] {
+        if(key == Qt::Key_Tab) {
+          return optional<bool>(true);
+        } else if(key == Qt::Key_Backtab) {
+          return optional<bool>(false);
+        }
+        return optional<bool>();
+      }();
+      if(is_next) {
+        m_drop_down_list->hide();
+        unmatch(*this, PopUp());
+        focusNextPrevChild(*is_next);
+      }
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -196,7 +146,6 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
       break;
     default:
       QCoreApplication::sendEvent(m_list_view, event);
-      break;
   }
   QWidget::keyPressEvent(event);
 }
@@ -204,8 +153,11 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
 void DropDownBox::on_click() {
   if(m_drop_down_list->isVisible()) {
     m_drop_down_list->hide();
+    unmatch(*this, PopUp());
   } else {
     m_drop_down_list->show();
+    m_drop_down_list->setFocus();
+    match(*this, PopUp());
   }
 }
 
@@ -221,6 +173,7 @@ void DropDownBox::on_current(const optional<int>& current) {
 
 void DropDownBox::on_submit(const std::any& submission) {
   m_drop_down_list->hide();
+  unmatch(*this, PopUp());
   update_submission();
 }
 
