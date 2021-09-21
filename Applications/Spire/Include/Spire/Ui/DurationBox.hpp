@@ -95,11 +95,13 @@ namespace Styles {
       DecimalBox* m_second_field;
       bool m_is_read_only;
       bool m_is_rejected;
+      bool m_has_update;
 
       void on_current(
         const boost::optional<boost::posix_time::time_duration>& current);
       void on_submit();
       void on_reject();
+      void update_empty_fields();
   };
 
   /**
