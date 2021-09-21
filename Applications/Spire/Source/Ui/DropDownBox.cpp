@@ -116,7 +116,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_button) {
     if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && !m_drop_down_list->isVisible()) {
-        update_submission();
+        submit();
         m_list_view->get_selection_model()->set_current(m_submission);
       }
     } else if(event->type() == QEvent::Enter) {
@@ -128,17 +128,21 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::KeyPress) {
       if(!is_read_only()) {
         auto key = static_cast<QKeyEvent*>(event)->key();
-        auto is_next = [&] {
-          if(key == Qt::Key_Tab) {
-            return optional<bool>(true);
-          } else if(key == Qt::Key_Backtab) {
-            return optional<bool>(false);
+        if(key == Qt::Key_Escape) {
+          revert_current();
+        } else {
+          auto is_next = [&] {
+            if(key == Qt::Key_Tab) {
+              return optional<bool>(true);
+            } else if(key == Qt::Key_Backtab) {
+              return optional<bool>(false);
+            }
+            return optional<bool>();
+          }();
+          if(is_next) {
+            m_drop_down_list->hide();
+            focusNextPrevChild(*is_next);
           }
-          return optional<bool>();
-        }();
-        if(is_next) {
-          m_drop_down_list->hide();
-          focusNextPrevChild(*is_next);
         }
       }
     }
@@ -163,7 +167,7 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
   }
   switch(event->key()) {
     case Qt::Key_Escape:
-      update_current();
+      revert_current();
       break;
     default:
       QCoreApplication::sendEvent(m_list_view, event);
@@ -198,16 +202,16 @@ void DropDownBox::on_submit(const std::any& submission) {
     return;
   }
   m_drop_down_list->hide();
-  update_submission();
+  submit();
 }
 
-void DropDownBox::update_current() {
+void DropDownBox::revert_current() {
   if(m_submission != m_list_view->get_current_model()->get_current()) {
     m_list_view->get_current_model()->set_current(m_submission);
   }
 }
 
-void DropDownBox::update_submission() {
+void DropDownBox::submit() {
   m_submission = m_list_view->get_current_model()->get_current();
   if(m_submission) {
     m_submit_signal(m_list_view->get_list_model()->at(*m_submission));

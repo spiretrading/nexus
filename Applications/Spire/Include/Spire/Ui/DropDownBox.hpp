@@ -81,8 +81,8 @@ namespace Styles {
       void on_click();
       void on_current(const boost::optional<int>& current);
       void on_submit(const std::any& submission);
-      void update_current();
-      void update_submission();
+      void revert_current();
+      void submit();
   };
 }
 
