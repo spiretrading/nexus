@@ -4,11 +4,10 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ListValueModel::ListValueModel(std::shared_ptr<ListModel> source, int index)
-    : m_source(std::move(source)),
-      m_index(index) {
-  m_operation_connection = m_source->connect_operation_signal(
-    std::bind_front(&ListValueModel::on_operation, this));
-}
+  : m_source(std::move(source)),
+    m_index(index),
+    m_operation_connection(m_source->connect_operation_signal(
+      std::bind_front(&ListValueModel::on_operation, this))) {}
 
 QValidator::State ListValueModel::get_state() const {
   if(m_index < 0 || m_index >= m_source->get_size()) {
@@ -21,7 +20,7 @@ const ListValueModel::Type& ListValueModel::get_current() const {
   if(get_state() == QValidator::State::Acceptable) {
     return m_source->at(m_index);
   }
-  return m_empty_value;
+  return m_value.get_current();
 }
 
 QValidator::State ListValueModel::set_current(const Type& value) {
