@@ -80,6 +80,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
+  setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i, false});
@@ -267,10 +268,6 @@ void ListView::navigate(
       }
     }
   } while(i != start && !m_items[i]->m_item->isEnabled());
-  if(i == m_current_model->get_current()) {
-    return;
-  }
-  m_navigation_box = m_items[i]->m_item->frameGeometry();
   set_current(i);
 }
 
@@ -325,11 +322,12 @@ void ListView::cross(int direction) {
     }
     i += direction;
   }
-  if(candidate == -1 || candidate == m_current_model->get_current()) {
+  if(candidate == -1) {
     return;
   }
   m_navigation_box = navigation_box;
   set_current(candidate);
+  m_navigation_box = navigation_box;
 }
 
 void ListView::set_current(optional<int> current) {

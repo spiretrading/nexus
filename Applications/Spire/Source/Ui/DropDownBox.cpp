@@ -20,14 +20,19 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).set(Fill(QColor(0x333333)));
-    style.get(ReadOnly() >> is_a<Icon>()).set(Visibility::NONE);
+    style.get(Any() >> is_a<Icon>()).
+      set(Fill(QColor(0x333333))).
+      set(BackgroundColor(QColor(Qt::transparent)));
     style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
+    style.get(ReadOnly() >> is_a<Icon>()).set(Visibility::NONE);
     style.get(Any() >> is_a<TextBox>()).set(PaddingRight(scale_width(14)));
     style.get(PopUp() >> is_a<TextBox>() ||
       (+Any() >> is_a<Button>() && (Hover() || FocusIn())) >> is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly() >> is_a<TextBox>()).set(PaddingRight(scale_width(0)));
+    style.get(ReadOnly() >> is_a<TextBox>()).
+      set(horizontal_padding(0)).
+      set(border_color(QColor(Qt::transparent))).
+      set(BackgroundColor(QColor(Qt::transparent)));
     style.get(Any() >> is_a<OverlayPanel>()).set(BorderTopSize(0));
     return style;
   }
@@ -110,7 +115,7 @@ connection DropDownBox::connect_submit_signal(
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_button) {
     if(event->type() == QEvent::FocusOut) {
-      if(!m_drop_down_list->isVisible()) {
+      if(!is_read_only() && !m_drop_down_list->isVisible()) {
         update_submission();
         m_list_view->get_selection_model()->set_current(m_submission);
       }
@@ -121,18 +126,20 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_drop_down_list) {
     if(event->type() == QEvent::KeyPress) {
-      auto key = static_cast<QKeyEvent*>(event)->key();
-      auto is_next = [&] {
-        if(key == Qt::Key_Tab) {
-          return optional<bool>(true);
-        } else if(key == Qt::Key_Backtab) {
-          return optional<bool>(false);
+      if(!is_read_only()) {
+        auto key = static_cast<QKeyEvent*>(event)->key();
+        auto is_next = [&] {
+          if(key == Qt::Key_Tab) {
+            return optional<bool>(true);
+          } else if(key == Qt::Key_Backtab) {
+            return optional<bool>(false);
+          }
+          return optional<bool>();
+        }();
+        if(is_next) {
+          m_drop_down_list->hide();
+          focusNextPrevChild(*is_next);
         }
-        return optional<bool>();
-      }();
-      if(is_next) {
-        m_drop_down_list->hide();
-        focusNextPrevChild(*is_next);
       }
     }
   } else if(watched == m_drop_down_list->window()) {
@@ -150,6 +157,10 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void DropDownBox::keyPressEvent(QKeyEvent* event) {
+  if(is_read_only()) {
+    QWidget::keyPressEvent(event);
+    return;
+  }
   switch(event->key()) {
     case Qt::Key_Escape:
       update_current();
@@ -161,6 +172,9 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DropDownBox::on_click() {
+  if(is_read_only()) {
+    return;
+  }
   if(m_drop_down_list->isVisible()) {
     m_drop_down_list->hide();
   } else {
@@ -180,6 +194,9 @@ void DropDownBox::on_current(const optional<int>& current) {
 }
 
 void DropDownBox::on_submit(const std::any& submission) {
+  if(is_read_only()) {
+    return;
+  }
   m_drop_down_list->hide();
   update_submission();
 }
