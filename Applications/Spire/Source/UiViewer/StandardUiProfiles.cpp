@@ -953,27 +953,21 @@ UiProfile Spire::make_hover_observer_profile() {
       auto parent_box = make_input_box(child_box, container);
       parent_box->setFixedSize(125, 150);
       parent_box->move(translate(175, 50));
-      auto hover_observer = HoverSingleton::instance();
-      hover_observer->add(*overlap_box1);
-      hover_observer->connect_state_signal(*overlap_box1,
-        profile.make_event_slot<HoverSingleton::State>(
-          QString::fromUtf8("overlap_box1")));
-      hover_observer->add(*overlap_box2);
-      hover_observer->connect_state_signal(*overlap_box2,
-        profile.make_event_slot<HoverSingleton::State>(
-          QString::fromUtf8("overlap_box2")));
-      hover_observer->add(*grandchild_box);
-      hover_observer->connect_state_signal(*grandchild_box,
-        profile.make_event_slot<HoverSingleton::State>(
-          QString::fromUtf8("grandchild_box")));
-      hover_observer->add(*child_box);
-      hover_observer->connect_state_signal(*child_box,
-        profile.make_event_slot<HoverSingleton::State>(
-          QString::fromUtf8("child_box")));
-      hover_observer->add(*parent_box);
-      hover_observer->connect_state_signal(*parent_box,
-        profile.make_event_slot<HoverSingleton::State>(
-          QString::fromUtf8("parent_box")));
+      auto overlap1_observer = HoverObserver(*overlap_box1);
+      overlap1_observer.connect_state_signal(
+        profile.make_event_slot<HoverObserver::State>("Overlap1"));
+      auto overlap2_observer = HoverObserver(*overlap_box2);
+      overlap2_observer.connect_state_signal(
+        profile.make_event_slot<HoverObserver::State>("Overlap2"));
+      auto grandchild_observer = HoverObserver(*grandchild_box);
+      grandchild_observer.connect_state_signal(
+        profile.make_event_slot<HoverObserver::State>("Grandchild"));
+      auto child_observer = HoverObserver(*child_box);
+      child_observer.connect_state_signal(
+        profile.make_event_slot<HoverObserver::State>("Child"));
+      auto parent_observer = HoverObserver(*parent_box);
+      parent_observer.connect_state_signal(
+        profile.make_event_slot<HoverObserver::State>("Parent"));
       return container;
     });
   return profile;

@@ -6,48 +6,36 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-HoverSingleton* HoverSingleton::m_instance = nullptr;
+std::unordered_map<const QWidget*, HoverObserver::Entry>
+  HoverObserver::m_entries;
+QTimer HoverObserver::m_poll_timer = QTimer();
+QWidget* HoverObserver::m_current = nullptr;
 
-HoverSingleton::HoverSingleton()
-    : m_current(nullptr) {
-  m_poll_timer.setInterval(50);
-  QObject::connect(
-    &m_poll_timer, &QTimer::timeout, [=] { on_poll_timeout(); });
-  m_poll_timer.start();
-}
-
-HoverSingleton* HoverSingleton::instance() {
-  if(!m_instance) {
-    m_instance = new HoverSingleton();
+HoverObserver::HoverObserver(const QWidget& widget)
+    : m_widget(&widget) {
+  if(m_poll_timer.interval() == 0) {
+    m_poll_timer.setInterval(50);
+    QObject::connect(
+      &m_poll_timer, &QTimer::timeout, [=] { on_poll_timeout(); });
+    m_poll_timer.start();
   }
-  return m_instance;
-}
-
-void HoverSingleton::add(const QWidget& widget) {
   if(!m_entries.contains(&widget)) {
+    // TODO: initial state
     m_entries.insert(std::pair(&widget, Entry{State::NONE}));
-    widget.connect(&widget, &QObject::destroyed, [&] {
-      m_entries.erase(&widget);
-    });
+    // TODO: when widget is destroyed
   }
 }
 
-HoverSingleton::State HoverSingleton::get_state(const QWidget& widget) const {
-  if(m_entries.find(&widget) != m_entries.end()) {
-    return m_entries.at(&widget).m_state;
-  }
-  return State::NONE;
+HoverObserver::State HoverObserver::get_state() const {
+  return m_entries.at(m_widget).m_state;
 }
 
-connection HoverSingleton::connect_state_signal(const QWidget& widget,
-    const std::function<void (State state)>& callback) {
-  if(m_entries.contains(&widget)) {
-    return m_entries.at(&widget).m_state_signal.connect(callback);
-  }
-  return {};
+connection HoverObserver::connect_state_signal(
+    const StateSignal::slot_type& slot) const {
+  return m_entries.at(m_widget).m_state_signal.connect(slot);
 }
 
-void HoverSingleton::on_poll_timeout() {
+void HoverObserver::on_poll_timeout() {
   auto previous = m_current;
   m_current = qApp->widgetAt(QCursor::pos());
   if(m_current != previous) {
@@ -83,40 +71,6 @@ void HoverSingleton::on_poll_timeout() {
       }
     }
   }
-}
-
-bool Spire::is_set(HoverSingleton::State left, HoverSingleton::State right) {
-  return static_cast<HoverSingleton::State>(
-    static_cast<std::underlying_type_t<HoverSingleton::State>>(left) &
-    static_cast<std::underlying_type_t<HoverSingleton::State>>(right)) !=
-    HoverSingleton::State::NONE;
-}
-
-
-
-QTimer HoverObserver::m_poll_timer = QTimer();
-
-HoverObserver::HoverObserver(const QWidget& widget) {
-  if(m_poll_timer.interval() == 0) {
-    m_poll_timer.setInterval(10);
-    QObject::connect(
-      &m_poll_timer, &QTimer::timeout, [=] { on_poll_timeout(); });
-    m_poll_timer.start();
-  }
-}
-
-HoverObserver::State HoverObserver::get_state() const {
-  return State::NONE;
-}
-
-connection HoverObserver::connect_state_signal(
-    const StateSignal::slot_type& slot) const {
-  return m_state_signal.connect(slot);
-}
-
-void HoverObserver::on_poll_timeout() {
-  static auto count = 0;
-  qDebug() << "timeout: " << ++count;
 }
 
 bool Spire::is_set(HoverObserver::State left, HoverObserver::State right) {

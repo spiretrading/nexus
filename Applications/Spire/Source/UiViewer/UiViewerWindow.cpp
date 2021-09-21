@@ -178,15 +178,15 @@ void UiViewerWindow::on_event(const QString& name,
       }
       if(argument.type() == typeid(std::nullptr_t)) {
         log += QString::fromUtf8("null");
-      } else if(argument.type() == typeid(HoverSingleton::State)) {
-        switch(std::any_cast<HoverSingleton::State>(argument)) {
-          case HoverSingleton::State::NONE:
+      } else if(argument.type() == typeid(HoverObserver::State)) {
+        switch(std::any_cast<HoverObserver::State>(argument)) {
+          case HoverObserver::State::NONE:
             log += QString::fromUtf8("NONE");
             break;
-          case HoverSingleton::State::MOUSE_IN:
+          case HoverObserver::State::MOUSE_IN:
             log += QString::fromUtf8("MOUSE_IN");
             break;
-          case HoverSingleton::State::MOUSE_OVER:
+          case HoverObserver::State::MOUSE_OVER:
             log += QString::fromUtf8("MOUSE_OVER");
             break;
         }

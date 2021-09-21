@@ -47,26 +47,25 @@ namespace {
   struct HoverExecutor {
     Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
-    //HoverObserver m_observer;
+    HoverObserver m_observer;
     scoped_connection m_connection;
     bool m_is_match;
 
     HoverExecutor(const Stylist& base, const SelectionUpdateSignal& on_update)
         : m_stylist(const_cast<Stylist*>(&base)),
-          m_on_update(on_update) {
-      auto observer = HoverSingleton::instance();
-      observer->add(m_stylist->get_widget());
-      m_connection = observer->connect_state_signal(m_stylist->get_widget(),
-        std::bind_front(&HoverExecutor::on_state, this));
-      m_is_match = is_set(observer->get_state(m_stylist->get_widget()),
-        HoverSingleton::State::MOUSE_OVER);
+          m_on_update(on_update),
+          m_observer(m_stylist->get_widget()),
+          m_connection(m_observer.connect_state_signal(
+            std::bind_front(&HoverExecutor::on_state, this))),
+          m_is_match(
+            is_set(m_observer.get_state(), HoverObserver::State::MOUSE_OVER)) {
       if(m_is_match) {
         m_on_update({m_stylist}, {});
       }
     }
 
-    void on_state(HoverSingleton::State state) {
-      auto is_hovered = is_set(state, HoverSingleton::State::MOUSE_OVER);
+    void on_state(HoverObserver::State state) {
+      auto is_hovered = is_set(state, HoverObserver::State::MOUSE_OVER);
       if(m_is_match) {
         if(!is_hovered) {
           m_is_match = false;
