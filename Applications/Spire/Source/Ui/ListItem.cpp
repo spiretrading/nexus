@@ -32,6 +32,7 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   layout->setContentsMargins({});
   m_box = new Box(component);
   m_button = new Button(m_box, this);
+  m_button->setFocusPolicy(Qt::ClickFocus);
   if(component->isEnabled()) {
     setFocusProxy(component);
   } else {

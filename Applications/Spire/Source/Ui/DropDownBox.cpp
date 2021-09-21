@@ -2,9 +2,7 @@
 #include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -51,19 +49,48 @@ class DropDownBox::DropDownListWrapper : public QWidget {
           m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
       setFocusProxy(m_drop_down_list);
+      m_drop_down_list->installEventFilter(this);
       m_panel = m_drop_down_list->window();
       m_panel->installEventFilter(this);
     }
 
   protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::Close) {
-        hide();
-      } else if(event->type() == QEvent::MouseButtonPress) {
-        auto& mouse_event = *static_cast<QMouseEvent*>(event);
-        if(parentWidget()->rect().contains(
-            parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
-          m_panel->setAttribute(Qt::WA_NoMouseReplay);
+      if(watched == m_drop_down_list) {
+        if(event->type() == QEvent::KeyPress) {
+          auto& key_event = *static_cast<QKeyEvent*>(event);
+          if(key_event.key() == Qt::Key_Tab ||
+              key_event.key() == Qt::Key_Backtab) {
+            hide();
+            auto chain = parentWidget();
+            while(chain) {
+              auto focus_widget = [&] {
+                if(key_event.key() == Qt::Key_Tab) {
+                  return chain->nextInFocusChain();
+                }
+                return chain->previousInFocusChain();
+              }();
+              chain = focus_widget;
+              if(chain == parentWidget()) {
+                chain = nullptr;
+              } else if(chain && (chain->focusPolicy() & Qt::TabFocus) != 0) {
+                break;
+              }
+            }
+            if(chain) {
+              chain->setFocus(Qt::FocusReason::TabFocusReason);
+            }
+          }
+        }
+      } else if(watched == m_panel) {
+        if(event->type() == QEvent::Close) {
+          hide();
+        } else if(event->type() == QEvent::MouseButtonPress) {
+          auto& mouse_event = *static_cast<QMouseEvent*>(event);
+          if(parentWidget()->rect().contains(
+              parentWidget()->mapFromGlobal(mouse_event.globalPos()))) {
+            m_panel->setAttribute(Qt::WA_NoMouseReplay);
+          }
         }
       }
       return QWidget::eventFilter(watched, event);
