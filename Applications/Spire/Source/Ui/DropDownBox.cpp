@@ -119,7 +119,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       unmatch(*m_text_box, Hover());
     }
   } else if(watched == m_drop_down_list) {
-    if(event->type() == QEvent::KeyPress) {
+    if(event->type() == QEvent::Show) {
+      match(*this, PopUp());
+    } else if(event->type() == QEvent::Hide) {
+      unmatch(*this, PopUp());
+    } else if(event->type() == QEvent::KeyPress) {
       auto key = static_cast<QKeyEvent*>(event)->key();
       auto is_next = [&] {
         if(key == Qt::Key_Tab) {
@@ -131,7 +135,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       }();
       if(is_next) {
         m_drop_down_list->hide();
-        unmatch(*this, PopUp());
         focusNextPrevChild(*is_next);
       }
     }
@@ -153,11 +156,9 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
 void DropDownBox::on_click() {
   if(m_drop_down_list->isVisible()) {
     m_drop_down_list->hide();
-    unmatch(*this, PopUp());
   } else {
     m_drop_down_list->show();
     m_drop_down_list->setFocus();
-    match(*this, PopUp());
   }
 }
 
@@ -173,7 +174,6 @@ void DropDownBox::on_current(const optional<int>& current) {
 
 void DropDownBox::on_submit(const std::any& submission) {
   m_drop_down_list->hide();
-  unmatch(*this, PopUp());
   update_submission();
 }
 
