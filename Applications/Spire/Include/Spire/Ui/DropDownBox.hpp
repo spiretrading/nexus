@@ -65,6 +65,7 @@ namespace Spire {
 
     private:
       class DropDownListWrapper;
+      friend class DropDownListWrapper;
       mutable SubmitSignal m_submit_signal;
       ListView* m_list_view;
       TextBox* m_text_box;

@@ -44,11 +44,9 @@ namespace {
 
 class DropDownBox::DropDownListWrapper : public QWidget {
   public:
-    DropDownListWrapper(ListView& list_view, QWidget* parent)
-        : QWidget(parent),
-          m_list_view(&list_view) {
-      m_drop_down_list = new DropDownList(*m_list_view, parent);
-      setFocusProxy(m_drop_down_list);
+    DropDownListWrapper(ListView& list_view, DropDownBox& parent)
+        : QWidget(&parent) {
+      m_drop_down_list = new DropDownList(list_view, &parent);
       m_drop_down_list->installEventFilter(this);
       m_panel = m_drop_down_list->window();
       m_panel->installEventFilter(this);
@@ -58,28 +56,18 @@ class DropDownBox::DropDownListWrapper : public QWidget {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_drop_down_list) {
         if(event->type() == QEvent::KeyPress) {
-          auto& key_event = *static_cast<QKeyEvent*>(event);
-          if(key_event.key() == Qt::Key_Tab ||
-              key_event.key() == Qt::Key_Backtab) {
+          auto key = static_cast<QKeyEvent*>(event)->key();
+          auto is_next = [&] {
+            if(key == Qt::Key_Tab) {
+              return optional<bool>(true);
+            } else if(key == Qt::Key_Backtab) {
+              return optional<bool>(false);
+            }
+            return optional<bool>();
+          }();
+          if(is_next) {
             hide();
-            auto chain = parentWidget();
-            while(chain) {
-              auto focus_widget = [&] {
-                if(key_event.key() == Qt::Key_Tab) {
-                  return chain->nextInFocusChain();
-                }
-                return chain->previousInFocusChain();
-              }();
-              chain = focus_widget;
-              if(chain == parentWidget()) {
-                chain = nullptr;
-              } else if(chain && (chain->focusPolicy() & Qt::TabFocus) != 0) {
-                break;
-              }
-            }
-            if(chain) {
-              chain->setFocus(Qt::FocusReason::TabFocusReason);
-            }
+            static_cast<DropDownBox&>(*parent()).focusNextPrevChild(*is_next);
           }
         }
       } else if(watched == m_panel) {
@@ -98,7 +86,7 @@ class DropDownBox::DropDownListWrapper : public QWidget {
 
     void showEvent(QShowEvent* event) override {
       m_drop_down_list->show();
-      setFocus();
+      m_drop_down_list->setFocus();
       QWidget::showEvent(event);
     }
 
@@ -108,7 +96,6 @@ class DropDownBox::DropDownListWrapper : public QWidget {
     }
 
   private:
-    ListView* m_list_view;
     DropDownList* m_drop_down_list;
     QWidget* m_panel;
 };
@@ -140,7 +127,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  m_drop_down_list = new DropDownListWrapper(*m_list_view, this);
+  m_drop_down_list = new DropDownListWrapper(*m_list_view, *this);
   m_drop_down_list->hide();
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
