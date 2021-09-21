@@ -55,6 +55,7 @@ namespace Spire {
       static QWidget* m_current;
       const QWidget* m_widget;
 
+      static void setup_timer();
       static void on_poll_timeout();
   };
 

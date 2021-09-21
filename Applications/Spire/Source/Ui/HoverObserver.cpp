@@ -14,10 +14,7 @@ QWidget* HoverObserver::m_current = nullptr;
 HoverObserver::HoverObserver(const QWidget& widget)
     : m_widget(&widget) {
   if(m_poll_timer.interval() == 0) {
-    m_poll_timer.setInterval(50);
-    QObject::connect(
-      &m_poll_timer, &QTimer::timeout, [=] { on_poll_timeout(); });
-    m_poll_timer.start();
+    setup_timer();
   }
   if(!m_entries.contains(&widget)) {
     // TODO: initial state
@@ -37,9 +34,21 @@ connection HoverObserver::connect_state_signal(
   return m_entries.at(m_widget).m_state_signal.connect(slot);
 }
 
+void HoverObserver::setup_timer() {
+  m_poll_timer.setInterval(50);
+  QObject::connect(
+    &m_poll_timer, &QTimer::timeout, [=] { on_poll_timeout(); });
+  m_poll_timer.start();
+}
+
 void HoverObserver::on_poll_timeout() {
   auto previous = m_current;
   m_current = qApp->widgetAt(QCursor::pos());
+  if(m_current) {
+    m_current->connect(m_current, &QObject::destroyed, [=] {
+      m_current = nullptr;
+    });
+  }
   if(m_current != previous) {
     auto updated_widgets = std::vector<QWidget*>();
     auto previous_parent = previous;
