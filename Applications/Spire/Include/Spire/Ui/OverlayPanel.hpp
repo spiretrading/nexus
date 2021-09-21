@@ -27,7 +27,7 @@ namespace Spire {
        * @param body The widget displayed in the OverlayPanel.
        * @param parent The parent widget that shows the OverlayPanel.
        */
-      OverlayPanel(QWidget& body, QWidget* parent);
+      OverlayPanel(QWidget& body, QWidget& parent);
 
       /** Returns the body component displayed in the panel. */
       const QWidget& get_body() const;
@@ -82,7 +82,7 @@ namespace Spire {
       QPoint m_mouse_pressed_position;
       FocusObserver m_focus_observer;
       boost::signals2::scoped_connection m_focus_connection;
-      std::unique_ptr<FocusObserver> m_parent_focus_observer;
+      FocusObserver m_parent_focus_observer;
       boost::signals2::scoped_connection m_parent_focus_connection;
 
       void position();

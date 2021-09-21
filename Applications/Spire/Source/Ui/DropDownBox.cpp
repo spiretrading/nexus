@@ -46,8 +46,8 @@ namespace {
 
 class DropDownBox::DropDownListWrapper : public QWidget {
   public:
-    DropDownListWrapper(ListView& list_view, QWidget* parent)
-        : QWidget(parent),
+    DropDownListWrapper(ListView& list_view, QWidget& parent)
+        : QWidget(&parent),
           m_list_view(&list_view) {
       m_drop_down_list = new DropDownList(*m_list_view, parent);
       m_panel = m_drop_down_list->window();
@@ -133,7 +133,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  m_drop_down_list = new DropDownListWrapper(*m_list_view, this);
+  m_drop_down_list = new DropDownListWrapper(*m_list_view, *this);
   m_drop_down_list->hide();
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);

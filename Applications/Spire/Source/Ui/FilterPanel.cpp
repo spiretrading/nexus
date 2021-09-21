@@ -25,8 +25,8 @@ namespace {
   }
 }
 
-FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
-    : QWidget(parent),
+FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
+    : QWidget(&parent),
       m_body(body) {
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);

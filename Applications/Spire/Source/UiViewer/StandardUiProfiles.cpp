@@ -263,7 +263,7 @@ namespace {
       min_model->set_increment(default_increment.get());
       max_model->set_increment(default_increment.get());
       auto panel = new ScalarFilterPanel<B>(min_model, max_model,
-        default_min.get(), default_max.get(), title.get(), button);
+        default_min.get(), default_max.get(), title.get(), *button);
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
       panel->connect_submit_signal([=] (const auto& min, const auto& max) {
@@ -342,7 +342,7 @@ namespace {
   void create_child_panel(bool close_on_focus_out, bool draggable,
       OverlayPanel::Positioning positioning, Button* parent) {
     auto body = create_panel_body();
-    auto panel = new OverlayPanel(*body, parent);
+    auto panel = new OverlayPanel(*body, *parent);
     auto button = body->findChild<Button*>();
     button->connect_clicked_signal([=] {
       create_child_panel(close_on_focus_out, draggable, positioning, button);
@@ -642,7 +642,7 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
         max_model->set_increment(pow(Decimal(10), -decimal_places.get()));
         auto panel = new DecimalFilterPanel(min_model, max_model,
           to_decimal(default_min.get()), to_decimal(default_max.get()),
-          title.get(), button);
+          title.get(), *button);
         auto filter_slot =
           profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
         panel->connect_submit_signal([=] (const auto& min, const auto& max) {
@@ -740,7 +740,7 @@ UiProfile Spire::make_drop_down_list_profile() {
           new ListView(list_model, [&] (const auto& model, auto index) {
             return make_label(model->get<QString>(index));
           });
-        auto drop_down_list = new DropDownList(*list_view, button);
+        auto drop_down_list = new DropDownList(*list_view, *button);
         drop_down_list->window()->setAttribute(Qt::WA_DeleteOnClose);
         drop_down_list->show();
       });
@@ -823,7 +823,7 @@ UiProfile Spire::make_duration_filter_panel_profile() {
       button->connect_clicked_signal([&, button, min_model, max_model] {
         auto panel = new ScalarFilterPanel<DurationBox>(min_model, max_model,
           parse_duration(default_min.get()), parse_duration(default_max.get()),
-          QString::fromUtf8("Filter by Duration"), button);
+          QString::fromUtf8("Filter by Duration"), *button);
         auto filter_slot =
           profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
         panel->connect_submit_signal([=] (const auto& min, const auto& max) {
@@ -874,7 +874,7 @@ UiProfile Spire::make_filter_panel_profile() {
         auto max_text = new TextBox();
         max_text->setFixedSize(scale(120, 26));
         component_layout->addWidget(max_text, 1, 1);
-        auto panel = new FilterPanel(title.get(), component, button);
+        auto panel = new FilterPanel(title.get(), component, *button);
         panel->window()->setAttribute(Qt::WA_DeleteOnClose);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
@@ -1420,7 +1420,7 @@ UiProfile Spire::make_overlay_panel_profile() {
             return;
           }
           auto body = create_panel_body();
-          panel = new OverlayPanel(*body, button);
+          panel = new OverlayPanel(*body, *button);
           auto child_button = body->findChild<Button*>();
           child_button->connect_clicked_signal(
             [=, &close_on_focus_out, &draggable, &positioning] {
