@@ -168,6 +168,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       panel->setMask(QPolygon(panel->rect()).subtracted(
         QRect(panel->mapFromGlobal(intersection.topLeft()),
           intersection.size())));
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
+        m_drop_down_list->window()->setAttribute(Qt::WA_NoMouseReplay);
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
