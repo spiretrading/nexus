@@ -22,6 +22,7 @@ std::unordered_map<const QWidget*, HoverObserver::Entry>
 QTimer HoverObserver::m_poll_timer = QTimer();
 QWidget* HoverObserver::m_current = nullptr;
 Qt::MouseButtons HoverObserver::m_buttons = Qt::NoButton;
+QWidget* HoverObserver::m_pressed_widget = nullptr;
 
 HoverObserver::HoverObserver(const QWidget& widget)
     : m_widget(&widget) {
@@ -55,14 +56,22 @@ void HoverObserver::setup_timer() {
 void HoverObserver::on_poll_timeout() {
   auto previous = m_current;
   m_current = qApp->widgetAt(QCursor::pos());
-  auto previous_buttons = m_buttons;
-  m_buttons = qApp->mouseButtons();
-  if(m_current) {
+  if(m_current != previous) {
     m_current->connect(m_current, &QObject::destroyed, [=] {
       m_current = nullptr;
+      m_pressed_widget = nullptr;
     });
   }
-  if(m_current != previous || m_buttons != previous_buttons) {
+  auto previous_buttons = m_buttons;
+  m_buttons = qApp->mouseButtons();
+  if(previous_buttons == Qt::NoButton && previous_buttons != m_buttons &&
+      m_current) {
+    m_pressed_widget = m_current;
+  } else if(m_current != m_pressed_widget || m_buttons == Qt::NoButton) {
+    m_pressed_widget = nullptr;
+  }
+  if((m_current != previous && !m_pressed_widget) ||
+      (previous_buttons != Qt::NoButton && m_buttons == Qt::NoButton)) {
     auto previous_parent = previous;
     auto updated_widgets = get_ancestors(previous_parent);
     auto current_parent = m_current;

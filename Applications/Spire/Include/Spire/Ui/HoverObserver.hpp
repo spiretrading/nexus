@@ -54,6 +54,7 @@ namespace Spire {
       static QTimer m_poll_timer;
       static QWidget* m_current;
       static Qt::MouseButtons m_buttons;
+      static QWidget* m_pressed_widget;
       const QWidget* m_widget;
 
       static void setup_timer();
