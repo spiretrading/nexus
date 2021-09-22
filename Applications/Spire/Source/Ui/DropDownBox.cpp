@@ -157,14 +157,14 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::ShowToParent) {
       auto panel = m_drop_down_list->window();
       auto offset = [=] {
-        if(mapToGlobal(QPoint(0, 0)).y() < panel->pos().y()) {
+        if(mapToGlobal(QPoint()).y() < panel->pos().y()) {
           return QPoint(0, -scale_height(1));
         }
         return QPoint(0, scale_height(1));
       }();
       panel->move(panel->pos() + offset);
       auto intersection = panel->geometry().intersected(
-        QRect(mapToGlobal(QPoint(0, 0)), size()));
+        QRect(mapToGlobal(QPoint()), size()));
       panel->setMask(QPolygon(panel->rect()).subtracted(
         QRect(panel->mapFromGlobal(intersection.topLeft()),
           intersection.size())));
