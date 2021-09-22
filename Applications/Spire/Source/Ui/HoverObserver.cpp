@@ -31,7 +31,7 @@ HoverObserver::HoverObserver(const QWidget& widget)
   }
   if(!m_entries.contains(&widget)) {
     m_entries.insert(std::pair(&widget, Entry{State::NONE}));
-    widget.connect(&widget, &QObject::destroyed, [=, &widget] {
+    QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
       m_entries.erase(&widget);
     });
   }
@@ -57,7 +57,7 @@ void HoverObserver::on_poll_timeout() {
   auto previous = m_current;
   m_current = qApp->widgetAt(QCursor::pos());
   if(m_current != previous) {
-    m_current->connect(m_current, &QObject::destroyed, [=] {
+    QObject::connect(m_current, &QObject::destroyed, [=] (auto) {
       m_current = nullptr;
       m_pressed_widget = nullptr;
     });
