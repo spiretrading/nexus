@@ -7,7 +7,10 @@
 namespace Spire {
 namespace Styles {
 
-  /** Selects the selected widget. */
+  /** Selects the current item. */
+  using Current = StateSelector<void, struct CurrentSelectorTag>;
+
+  /** Selects the selected item. */
   using Selected = StateSelector<void, struct SelectedSelectorTag>;
 }
 
@@ -15,19 +18,16 @@ namespace Styles {
   class ListItem : public QWidget {
     public:
 
-      /** Signals that the item received focus. */
-      using CurrentSignal = Signal<void ()>;
-  
       /** Signals that the item was submitted. */
       using SubmitSignal = Signal<void ()>;
-  
+
       /**
        * Constructs a ListItem.
        * @param component The component to display.
        * @param parent The parent widget.
        */
       explicit ListItem(QWidget* component, QWidget* parent = nullptr);
-  
+
       /** Returns <code>true</code> iff this ListItem is selected. */
       bool is_selected() const;
 
@@ -37,22 +37,14 @@ namespace Styles {
        */
       void set_selected(bool is_selected);
 
-      /** Connects a slot to the current signal. */
-      boost::signals2::connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const;
-  
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-
     private:
-      mutable SubmitSignal m_current_signal;
+      bool m_is_selected;
       Box* m_box;
       Button* m_button;
-      bool m_is_selected;
   };
 }
 
