@@ -80,6 +80,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
+  setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i, false});
@@ -90,11 +91,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
   }
-  if(m_last_current) {
-    m_items[*m_last_current]->m_item->setFocusPolicy(Qt::StrongFocus);
-  } else if(!m_items.empty()) {
-    m_items.front()->m_item->setFocusPolicy(Qt::StrongFocus);
-  }
+  update_focus(m_last_current);
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   auto body = new QWidget();
@@ -349,6 +346,26 @@ void ListView::set_current(optional<int> current) {
   m_current_model->set_current(current);
 }
 
+void ListView::update_focus(optional<int> current) {
+  if(m_focus_index && m_focus_index != current) {
+    m_items[*m_focus_index]->m_item->setFocusPolicy(Qt::ClickFocus);
+  }
+  if(current) {
+    m_focus_index = *current;
+  } else if(!m_items.empty()) {
+    m_focus_index = 0;
+  } else {
+    m_focus_index = none;
+  }
+  if(m_focus_index) {
+    auto& item = *m_items[*m_focus_index]->m_item;
+    item.setFocusPolicy(Qt::StrongFocus);
+    setFocusProxy(&item);
+  } else {
+    setFocusProxy(nullptr);
+  }
+}
+
 void ListView::add_item(int index) {
   auto item = new ListItem(m_view_builder(m_list_model, index));
   m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
@@ -371,8 +388,6 @@ void ListView::add_item(int index) {
 }
 
 void ListView::remove_item(int index) {
-  auto had_focus =
-    (m_items[index]->m_item->focusPolicy() & Qt::StrongFocus) != Qt::NoFocus;
   auto item = m_items[index]->m_item;
   item->deleteLater();
   m_items.erase(m_items.begin() + index);
@@ -476,6 +491,7 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
 }
 
 void ListView::on_current(const optional<int>& current) {
+  update_focus(current);
   if(m_last_current && m_last_current != current) {
     m_items[*m_last_current]->set_current(false);
   }

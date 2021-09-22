@@ -158,6 +158,7 @@ namespace Styles {
       std::shared_ptr<ListModel> m_list_model;
       std::shared_ptr<CurrentModel> m_current_model;
       boost::optional<int> m_last_current;
+      boost::optional<int> m_focus_index;
       std::shared_ptr<SelectionModel> m_selection_model;
       ViewBuilder m_view_builder;
       boost::optional<int> m_selected;
@@ -187,6 +188,7 @@ namespace Styles {
       void cross_previous();
       void cross(int direction);
       void set_current(boost::optional<int> current);
+      void update_focus(boost::optional<int> current);
       void add_item(int index);
       void remove_item(int index);
       void update_layout();
