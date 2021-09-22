@@ -13,13 +13,11 @@ using namespace Spire::Styles;
 namespace {
   const auto MARGIN_SIZE = 8;
 
-  auto HEADER_STYLE() {
-    auto style = StyleSheet();
+  auto HEADER_STYLE(StyleSheet style) {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(12));
-    style.get(Any()).
-      set(border_size(0)).
+    style.get(ReadOnly() && Disabled()).
       set(text_style(font, QColor(0x808080)));
     return style;
   }
@@ -33,10 +31,8 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
   layout->setContentsMargins(
     scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
     scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
-  auto header = new TextBox(std::move(title));
-  header->set_read_only(true);
-  header->setFocusPolicy(Qt::NoFocus);
-  set_style(*header, HEADER_STYLE());
+  auto header = make_label(std::move(title));
+  set_style(*header, HEADER_STYLE(get_style(*header)));
   layout->addWidget(header);
   layout->addSpacing(scale_height(18));
   layout->addWidget(m_body);
