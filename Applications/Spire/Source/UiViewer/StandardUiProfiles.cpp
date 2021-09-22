@@ -1899,14 +1899,14 @@ UiProfile Spire::make_time_in_force_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_property = define_enum<TimeInForce>(
-    {{"0", TimeInForce(TimeInForce::Type::DAY)},
-     {"1", TimeInForce(TimeInForce::Type::GTC)},
-     {"2", TimeInForce(TimeInForce::Type::OPG)},
-     {"3", TimeInForce(TimeInForce::Type::IOC)},
-     {"4", TimeInForce(TimeInForce::Type::FOK)},
-     {"5", TimeInForce(TimeInForce::Type::GTX)},
-     {"6", TimeInForce(TimeInForce::Type::GTD)},
-     {"7", TimeInForce(TimeInForce::Type::MOC)}});
+    {{"Day", TimeInForce(TimeInForce::Type::DAY)},
+     {"GTC", TimeInForce(TimeInForce::Type::GTC)},
+     {"OPG", TimeInForce(TimeInForce::Type::OPG)},
+     {"IOC", TimeInForce(TimeInForce::Type::IOC)},
+     {"FOK", TimeInForce(TimeInForce::Type::FOK)},
+     {"GTX", TimeInForce(TimeInForce::Type::GTX)},
+     {"GTD", TimeInForce(TimeInForce::Type::GTD)},
+     {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
   populate_enum_box_properties(properties, current_property);
   auto profile = UiProfile(QString::fromUtf8("TimeInForceBox"), properties,
     std::bind_front(setup_enum_box_profile<TimeInForceBox,
