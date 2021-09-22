@@ -355,7 +355,7 @@ void TextAreaBox::commit_style() {
   }
   m_text_edit->setFont(font);
   if(m_text_edit_styles.m_line_height &&
-      font.pixelSize() * *m_text_edit_styles.m_line_height !=
+      static_cast<int>(font.pixelSize() * *m_text_edit_styles.m_line_height) !=
       m_computed_line_height) {
     m_computed_line_height = static_cast<int>(m_text_edit->font().pixelSize() *
       *m_text_edit_styles.m_line_height);
