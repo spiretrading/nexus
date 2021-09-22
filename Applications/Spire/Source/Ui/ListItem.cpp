@@ -11,16 +11,19 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(Qt::transparent))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(5)));
     style.get(Hover()).set(
-      BackgroundColor(QColor::fromRgb(0xF2, 0xF2, 0xFF)));
+      BackgroundColor(QColor(0xF2F2FF)));
     style.get(Focus()).set(
-      border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      border_color(QColor(0x4B23A0)));
     style.get(Selected()).set(
-      BackgroundColor(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
+      BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_color(QColor(Qt::transparent)));
     return style;
   }
 }
@@ -41,7 +44,9 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
   }
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
-  set_style(*m_box, DEFAULT_STYLE());
+  proxy_style(*m_button, *m_box);
+  proxy_style(*this, *m_button);
+  set_style(*this, DEFAULT_STYLE());
 }
 
 bool ListItem::is_selected() const {
@@ -51,9 +56,9 @@ bool ListItem::is_selected() const {
 void ListItem::set_selected(bool is_selected) {
   m_is_selected = is_selected;
   if(m_is_selected) {
-    match(*m_box, Selected());
+    match(*this, Selected());
   } else {
-    unmatch(*m_box, Selected());
+    unmatch(*this, Selected());
   }
 }
 
@@ -69,14 +74,7 @@ connection ListItem::connect_submit_signal(
 
 bool ListItem::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    match(*m_box, Focus());
     m_current_signal();
-  } else if(event->type() == QEvent::FocusOut) {
-    unmatch(*m_box, Focus());
-  } else if(event->type() == QEvent::Enter) {
-    match(*m_box, Hover());
-  } else if(event->type() == QEvent::Leave) {
-    unmatch(*m_box, Hover());
   }
   return QWidget::eventFilter(watched, event);
 }

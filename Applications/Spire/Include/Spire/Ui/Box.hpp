@@ -149,6 +149,9 @@ namespace Styles {
       explicit Box(QWidget* body, QWidget* parent = nullptr);
 
       /** Returns the body or a <code>nullptr</code>. */
+      const QWidget* get_body() const;
+
+      /** Returns the body or a <code>nullptr</code>. */
       QWidget* get_body();
 
       QSize sizeHint() const override;

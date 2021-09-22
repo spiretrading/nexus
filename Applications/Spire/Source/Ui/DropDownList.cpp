@@ -14,7 +14,7 @@ using namespace Spire::Styles;
 namespace {
   auto SCROLLABLE_LIST_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0));
     return style;
   }
@@ -26,15 +26,18 @@ DropDownList::DropDownList(ListView& list_view, QWidget* parent)
       m_panel_border_size(0, 0) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
+  setFocusProxy(m_list_view);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
   set_style(*m_scrollable_list_box,
     SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
   layout->addWidget(m_scrollable_list_box);
-  m_panel = new OverlayPanel(this, parent);
+  m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_blur(true);
   on_panel_style();
   connect_style_signal(*m_panel, [=] { on_panel_style(); });
-  parent->installEventFilter(this);
+  if(parent) {
+    parent->installEventFilter(this);
+  }
   m_scrollable_list_box->installEventFilter(this);
 }
 
@@ -70,6 +73,8 @@ bool DropDownList::event(QEvent* event) {
       auto margins = m_panel->layout()->contentsMargins();
       m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);
     }
+  } else if(event->type() == QEvent::HideToParent) {
+    m_panel->hide();
   }
   return QWidget::event(event);
 }

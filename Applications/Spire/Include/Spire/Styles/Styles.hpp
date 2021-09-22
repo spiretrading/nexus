@@ -8,6 +8,7 @@ namespace Spire::Styles {
   template<typename T, typename G> class BasicProperty;
   class Block;
   class ChildSelector;
+  class CombinatorSelector;
   template<typename T, typename G> class ComponentId;
   class ComponentSelector;
   template<typename... T> class CompositeProperty;
@@ -35,6 +36,7 @@ namespace Spire::Styles {
   class Rule;
   class Selector;
   class SelectorRegistry;
+  class SelectConnection;
   class SiblingSelector;
   template<typename T, typename G> class StateSelector;
   class StyleSheet;

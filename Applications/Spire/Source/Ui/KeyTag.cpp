@@ -8,9 +8,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto DEFAULT_BACKGROUND_COLOR = QColor("#C5EBC4");
-  const auto ESCAPE_BACKGROUND_COLOR = QColor("#C6E6FF");
-  const auto MODIFIER_BACKGROUND_COLOR = QColor("#FFEDCD");
+  const auto DEFAULT_BACKGROUND_COLOR = QColor(0xC5EBC4);
+  const auto ESCAPE_BACKGROUND_COLOR = QColor(0xC6E6FF);
+  const auto MODIFIER_BACKGROUND_COLOR = QColor(0xFFEDCD);
 
   auto TAG_STYLE(StyleSheet style) {
     style.get(ReadOnly() && Disabled()).

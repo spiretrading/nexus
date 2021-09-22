@@ -108,15 +108,15 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   auto tooltip = new Tooltip(tooltip_text, button);
   auto style = StyleSheet();
   style.get(Body()).
-    set(BackgroundColor(QColor::fromRgb(0xF5, 0xF5, 0xF5))).
-    set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0)));
+    set(BackgroundColor(QColor(0xF5F5F5))).
+    set(border(scale_width(1), QColor(Qt::transparent)));
   style.get((Hover() || Press()) / Body()).
-    set(BackgroundColor(QColor::fromRgb(0xE0, 0xE0, 0xE0)));
+    set(BackgroundColor(QColor(0xE0E0E0)));
   style.get(Focus() / Body()).
     set(border_color(QColor(0x4B, 0x23, 0xA0)));
   style.get(Any() >> is_a<Icon>()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(Fill(QColor::fromRgb(0x53, 0x53, 0x53)));
+    set(BackgroundColor(QColor(Qt::transparent))).
+    set(Fill(QColor(0x535353)));
   style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
     set(Fill(QColor(0x4B, 0x23, 0xA0)));
   style.get(Disabled() / Body() >> is_a<Icon>()).
@@ -130,12 +130,12 @@ Button* Spire::make_delete_icon_button(QWidget* parent) {
     scale(16, 16)), parent);
   auto style = get_style(*button);
   style.get(Any() >> is_a<Box>()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0)));
+    set(BackgroundColor(QColor(Qt::transparent)));
   style.get(Any() >> is_a<Icon>()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(Fill(QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+    set(BackgroundColor(QColor(Qt::transparent))).
+    set(Fill(QColor(0xA0A0A0)));
   style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
-    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
+    set(BackgroundColor(QColor(0xEBEBEB))).
     set(Fill(QColor(0x4B, 0x23, 0xA0)));
   style.get(Disabled() / Body() >> is_a<Icon>()).
     set(Fill(QColor(0xD0, 0xD0, 0xD0)));
@@ -150,23 +150,23 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   auto style = StyleSheet();
   style.get(Body()).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-    set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
-    set(BackgroundColor(QColor::fromRgb(0xEB, 0xEB, 0xEB))).
+    set(border(scale_width(1), QColor(Qt::transparent))).
+    set(BackgroundColor(QColor(0xEBEBEB))).
     set(horizontal_padding(scale_width(8)));
   style.get((Hover() || Press()) / Body()).
-    set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-    set(BackgroundColor(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    set(TextColor(QColor(0xFFFFFF))).
+    set(BackgroundColor(QColor(0x4B23A0)));
   style.get(Focus() / Body()).set(
-    border_color(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    border_color(QColor(0x4B23A0)));
   style.get(Disabled() / Body()).
-    set(TextColor(QColor::fromRgb(0xC8, 0xC8, 0xC8)));
+    set(TextColor(QColor(0xC8C8C8)));
   set_style(*button, std::move(style));
   return button;
 }
 
-std::unordered_set<Stylist*> BaseComponentFinder<Button, Body>::operator ()(
-    Button& button, const Body& body) const {
-  auto stylists = std::unordered_set<Stylist*>();
-  stylists.insert(&find_stylist(button.get_body()));
-  return stylists;
+SelectConnection BaseComponentFinder<Button, Body>::operator ()(
+    const Button& button, const Body& body,
+    const SelectionUpdateSignal& on_update) const {
+  on_update({&find_stylist(button.get_body())}, {});
+  return {};
 }

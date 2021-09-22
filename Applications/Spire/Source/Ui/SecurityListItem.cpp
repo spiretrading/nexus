@@ -20,7 +20,7 @@ namespace {
   auto FLAG_ICON_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(none));
     return style;
   }
@@ -30,7 +30,7 @@ namespace {
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(10));
     style.get(ReadOnly() && Disabled()).
-      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80))).
+      set(text_style(font, QColor(0x808080))).
       set(PaddingBottom(0)).
       set(PaddingTop(scale_height(4)));
     return style;

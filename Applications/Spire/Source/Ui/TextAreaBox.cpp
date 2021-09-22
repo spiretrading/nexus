@@ -2,6 +2,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QPainter>
+#include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
@@ -27,22 +28,22 @@ namespace {
       set(border(scale_width(1), QColor(0xC8C8C8))).
       set(LineHeight(1.20)).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft))).
-      set(text_style(font, QColor::fromRgb(0, 0, 0))).
-      set(TextColor(QColor::fromRgb(0, 0, 0))).
+      set(text_style(font, QColor(Qt::black))).
+      set(TextColor(QColor(Qt::black))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(5)));
     style.get(Hover() || Focus()).set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
       set(horizontal_padding(0));
     style.get(Disabled()).
       set(BackgroundColor(QColor(0xF5F5F5))).
       set(border_color(QColor(0xC8C8C8))).
       set(TextColor(QColor(0xC8C8C8)));
     style.get(ReadOnly() && Disabled()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Placeholder()).set(TextColor(QColor(0xA0A0A0)));
     style.get(Disabled() / Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
@@ -57,11 +58,11 @@ namespace {
       layout->setAlignment(
         Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
       layout->setContentsMargins({});
-      layout->addSpacerItem(
-        new QSpacerItem(0, 1, QSizePolicy::Minimum, QSizePolicy::Fixed));
+      m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layout->addWidget(m_body);
       setLayout(layout);
       setFocusProxy(m_body);
+      proxy_style(*this, *body);
     }
 
     QSize sizeHint() const override {
@@ -75,7 +76,9 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     ContentSizedTextEdit(const QString& text)
         : m_longest_line_width(0) {
       setLineWrapMode(QTextEdit::WidgetWidth);
+      horizontalScrollBar()->blockSignals(true);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      verticalScrollBar()->blockSignals(true);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       document()->setDocumentMargin(0);
       setFrameShape(QFrame::NoFrame);
@@ -366,8 +369,6 @@ void TextAreaBox::commit_style() {
   }
   if(stylesheet != m_text_edit->styleSheet()) {
     m_text_edit->setStyleSheet(stylesheet);
-    m_text_edit->style()->unpolish(this);
-    m_text_edit->style()->polish(this);
   }
 }
 

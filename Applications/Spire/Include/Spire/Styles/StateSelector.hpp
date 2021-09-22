@@ -1,6 +1,7 @@
 #ifndef SPIRE_STATE_SELECTOR_HPP
 #define SPIRE_STATE_SELECTOR_HPP
 #include <utility>
+#include <boost/signals2/connection.hpp>
 #include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
@@ -60,22 +61,37 @@ namespace Spire::Styles {
   /** Selects the focused widget. */
   using Focus = StateSelector<void, struct FocusSelectorTag>;
 
+  /** Selects the widget that has focus or has a child that has focus. */
+  using FocusIn = StateSelector<void, struct FocusInSelectorTag>;
+
   /** Selects a widget if it was focused using a non-pointing device. */
   using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
   template<typename T, typename G>
-  std::unordered_set<Stylist*> select(const StateSelector<T, G>& selector,
-      std::unordered_set<Stylist*> sources) {
-    for(auto i = sources.begin(); i != sources.end();) {
-      auto& source = **i;
-      if(!source.is_match(selector)) {
-        i = sources.erase(i);
-      } else {
-        ++i;
-      }
+  SelectConnection select(const StateSelector<T, G>& selector,
+      const Stylist& base, const SelectionUpdateSignal& on_update) {
+    auto connection = boost::signals2::scoped_connection(
+      base.connect_match_signal(selector, [=, &base] (auto is_match) {
+        if(is_match) {
+          on_update({&base}, {});
+        } else {
+          on_update({}, {&base});
+        }
+      }));
+    if(base.is_match(selector)) {
+      on_update({&base}, {});
     }
-    return sources;
+    return SelectConnection(std::move(connection));
   }
+
+  SelectConnection select(const Focus& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+
+  SelectConnection select(const FocusIn& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
+
+  SelectConnection select(const FocusVisible& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update);
 
   template<typename T, typename G>
   StateSelector<T, G>::StateSelector(Type data)

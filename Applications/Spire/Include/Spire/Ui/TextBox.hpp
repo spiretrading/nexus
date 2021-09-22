@@ -51,7 +51,7 @@ namespace Styles {
   /** A LocalValueModel over an optional QString. */
   using LocalOptionalTextModel = LocalValueModel<boost::optional<QString>>;
 
-  /** Displays a one-line text box. */
+  /** Displays a single line of text within a box. */
   class TextBox : public QWidget {
     public:
 
@@ -145,6 +145,7 @@ namespace Styles {
       QString m_placeholder_text;
       TextValidator* m_text_validator;
       bool m_is_rejected;
+      bool m_has_update;
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
@@ -166,6 +167,14 @@ namespace Styles {
    * @param parent The parent widget.
    */
   TextBox* make_label(QString label, QWidget* parent = nullptr);
+
+  /**
+   * Returns a TextBox as a label using a model.
+   * @param model The current value's model.
+   * @param parent The parent widget.
+   */
+  TextBox* make_label(std::shared_ptr<TextModel> model,
+    QWidget* parent = nullptr);
 }
 
 #endif

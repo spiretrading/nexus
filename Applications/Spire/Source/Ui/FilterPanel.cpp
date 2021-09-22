@@ -20,7 +20,7 @@ namespace {
     font.setPixelSize(scale_width(12));
     style.get(Any()).
       set(border_size(0)).
-      set(text_style(font, QColor::fromRgb(0x80, 0x80, 0x80)));
+      set(text_style(font, QColor(0x808080)));
     return style;
   }
 }
@@ -45,7 +45,7 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
   reset_button->setFixedHeight(scale_height(26));
   layout->addWidget(reset_button, 0, Qt::AlignRight);
   reset_button->connect_clicked_signal([=] { m_reset_signal(); });
-  m_panel = new OverlayPanel(this, parent);
+  m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_blur(true);
 }
 

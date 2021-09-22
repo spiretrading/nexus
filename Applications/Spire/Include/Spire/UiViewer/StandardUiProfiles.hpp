@@ -23,6 +23,9 @@ namespace Spire {
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
+  /** Returns a UiProfile for the DropDownBox. */
+  UiProfile make_drop_down_box_profile();
+
   /** Returns a UiProfile for the DropDownList. */
   UiProfile make_drop_down_list_profile();
 
@@ -34,6 +37,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
+
+  /** Returns a UiProfile for the FocusObserver. */
+  UiProfile make_focus_observer_profile();
 
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
@@ -77,6 +83,9 @@ namespace Spire {
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
+  /** Returns a UiProfile for the OrderTypeBox. */
+  UiProfile make_order_type_box_profile();
+
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
@@ -106,6 +115,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the SecurityListItem. */
   UiProfile make_security_list_item_profile();
+
+  /** Returns a UiProfile for the SideBox. */
+  UiProfile make_side_box_profile();
 
   /** Returns a UiProfile for the Tag. */
   UiProfile make_tag_profile();

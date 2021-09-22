@@ -1,6 +1,4 @@
 #include "Spire/Styles/FlipSelector.hpp"
-#include <QWidget>
-#include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -24,12 +22,7 @@ FlipSelector Spire::Styles::operator +(Selector selector) {
   return FlipSelector(std::move(selector));
 }
 
-std::unordered_set<Stylist*> Spire::Styles::select(
-    const FlipSelector& selector, std::unordered_set<Stylist*> sources) {
-  return select(selector.get_selector(), std::move(sources));
-}
-
-std::vector<QWidget*>
-    Spire::Styles::build_reach(const FlipSelector& selector, QWidget& source) {
-  return build_reach(selector.get_selector(), source);
+SelectConnection Spire::Styles::select(const FlipSelector& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return select(selector.get_selector(), base, on_update);
 }
