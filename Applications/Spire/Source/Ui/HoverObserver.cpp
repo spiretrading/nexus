@@ -69,21 +69,16 @@ void HoverObserver::on_poll_timeout() {
     auto current_widgets = get_ancestors(current_parent);
     updated_widgets.insert(
       updated_widgets.end(), current_widgets.begin(), current_widgets.end());
-    while(current_parent != nullptr) {
-      updated_widgets.push_back(current_parent);
-      current_parent = current_parent->parentWidget();
-    }
     auto last = std::unique(updated_widgets.begin(), updated_widgets.end());
     for(auto i = updated_widgets.begin(); i != last; ++i) {
       if(m_entries.contains(*i)) {
         auto& entry = m_entries.at(*i);
-        if(qApp->mouseButtons() == Qt::NoButton && *i == m_current) {
+        if(m_buttons == Qt::NoButton && *i == m_current) {
           if(entry.m_state != State::MOUSE_OVER) {
             entry.m_state = State::MOUSE_OVER;
             entry.m_state_signal(entry.m_state);
           }
-        } else if(qApp->mouseButtons() == Qt::NoButton &&
-            (*i)->isAncestorOf(m_current)) {
+        } else if(m_buttons == Qt::NoButton && (*i)->isAncestorOf(m_current)) {
           if(entry.m_state != State::MOUSE_IN) {
             entry.m_state = State::MOUSE_IN;
             entry.m_state_signal(entry.m_state);
