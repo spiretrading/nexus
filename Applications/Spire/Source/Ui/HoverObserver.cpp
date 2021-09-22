@@ -56,7 +56,7 @@ void HoverObserver::setup_timer() {
 void HoverObserver::on_poll_timeout() {
   auto previous = m_current;
   m_current = qApp->widgetAt(QCursor::pos());
-  if(m_current != previous) {
+  if(m_current && m_current != previous) {
     QObject::connect(m_current, &QObject::destroyed, [=] (auto) {
       m_current = nullptr;
       m_pressed_widget = nullptr;
