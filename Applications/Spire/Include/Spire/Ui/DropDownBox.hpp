@@ -6,6 +6,11 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects a widget displaying a pop-up, ie. the DropDownBox's list. */
+  using PopUp = StateSelector<void, struct PopUpSelectorTag>;
+}
 
   /**
    * Represents a widget which allows the user to choose one value from
@@ -64,12 +69,11 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      class DropDownListWrapper;
       mutable SubmitSignal m_submit_signal;
       ListView* m_list_view;
       TextBox* m_text_box;
       Button* m_button;
-      DropDownListWrapper* m_drop_down_list;
+      DropDownList* m_drop_down_list;
       boost::optional<int> m_submission;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
@@ -77,8 +81,8 @@ namespace Spire {
       void on_click();
       void on_current(const boost::optional<int>& current);
       void on_submit(const std::any& submission);
-      void update_current();
-      void update_submission();
+      void revert_current();
+      void submit();
   };
 }
 

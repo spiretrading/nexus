@@ -142,7 +142,7 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
     } else if(key == Qt::Key_Escape &&
         m_current->set_current(key) == QValidator::Invalid) {
       m_current->set_current(m_submission);
-    } else if(key == Qt::Key_Return || key == Qt::Key_Tab) {
+    } else if(key == Qt::Key_Return) {
       transition_submission();
     } else {
       m_current->set_current(key);
