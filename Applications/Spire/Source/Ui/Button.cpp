@@ -71,7 +71,7 @@ void Button::keyReleaseEvent(QKeyEvent* event) {
       }
       break;
     default:
-      QWidget::keyPressEvent(event);
+      QWidget::keyReleaseEvent(event);
   }
 }
 
