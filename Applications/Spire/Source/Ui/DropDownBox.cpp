@@ -33,7 +33,6 @@ namespace {
       set(horizontal_padding(0)).
       set(border_color(QColor(Qt::transparent))).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Any() >> is_a<OverlayPanel>()).set(BorderTopSize(0));
     return style;
   }
 }
@@ -153,6 +152,9 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       m_drop_down_list->hide();
     } else if(event->type() == QEvent::Show) {
       match(*this, PopUp());
+    } else if(event->type() == QEvent::Hide) {
+      unmatch(*this, PopUp());
+    } else if(event->type() == QEvent::ShowToParent) {
       auto panel = m_drop_down_list->window();
       auto offset = [=] {
         if(mapToGlobal(QPoint(0, 0)).y() < panel->pos().y()) {
@@ -166,8 +168,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       panel->setMask(QPolygon(panel->rect()).subtracted(
         QRect(panel->mapFromGlobal(intersection.topLeft()),
           intersection.size())));
-    } else if(event->type() == QEvent::Hide) {
-      unmatch(*this, PopUp());
     }
   }
   return QWidget::eventFilter(watched, event);
