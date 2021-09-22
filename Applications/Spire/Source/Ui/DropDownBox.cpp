@@ -28,8 +28,6 @@ namespace {
     style.get(Any() >> is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0x333333)));
-    style.get(Any() >> is_a<OverlayPanel>()).
-      set(BorderTopSize(0));
     style.get(Focus() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
@@ -92,6 +90,19 @@ class DropDownBox::DropDownListWrapper : public QWidget {
 
     void showEvent(QShowEvent* event) override {
       m_drop_down_list->show();
+      auto parent = parentWidget();
+      auto offset = [=] {
+        if(parent->mapToGlobal(QPoint(0, 0)).y() < m_panel->pos().y()) {
+          return QPoint(0, -scale_height(1));
+        }
+        return QPoint(0, scale_height(1));
+      }();
+      m_panel->move(m_panel->pos() + offset);
+      auto intersection = m_panel->geometry().intersected(
+        QRect(parent->mapToGlobal(QPoint(0, 0)), parent->size()));
+      m_panel->setMask(QPolygon(m_panel->rect()).subtracted(
+        QRect(m_panel->mapFromGlobal(intersection.topLeft()),
+          intersection.size())));
       QWidget::showEvent(event);
     }
 
