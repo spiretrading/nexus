@@ -297,13 +297,13 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
     set(border(scale_width(1), QColor(0xC8C8C8))).
     set(horizontal_padding(scale_width(8))).
     set(vertical_padding(scale_height(5)));
-  style.get(Hover() || Focus()).set(border_color(QColor(0x4B23A0)));
+  style.get(Hover() || FocusIn()).set(border_color(QColor(0x4B23A0)));
   style.get(Disabled()).
     set(BackgroundColor(QColor(0xF5F5F5))).
     set(border_color(QColor(0xC8C8C8)));
   style.get(ReadOnly()).
-    set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-    set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+    set(BackgroundColor(QColor(Qt::transparent))).
+    set(border_color(QColor(Qt::transparent))).
     set(horizontal_padding(0));
   set_style(*box, std::move(style));
   return box;

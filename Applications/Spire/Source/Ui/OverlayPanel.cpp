@@ -36,20 +36,21 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
-      set(border(scale_width(1), QColor::fromRgb(0xA0, 0xA0, 0xA0)));
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xA0A0A0)));
     return style;
   }
 }
 
-OverlayPanel::OverlayPanel(QWidget* body, QWidget* parent)
+OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
     : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
         Qt::NoDropShadowWindowHint),
-      m_body(body),
+      m_body(&body),
       m_is_closed_on_blur(true),
       m_positioning(Positioning::PARENT) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
+  setFocusProxy(m_body);
   auto box = new Box(m_body);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());

@@ -165,7 +165,6 @@ namespace Styles {
       Styles::EdgeNavigation m_edge_navigation;
       Styles::Overflow m_overflow;
       Styles::SelectionMode m_selection_mode;
-      bool m_user_triggered_move;
       QRect m_navigation_box;
       QString m_query;
       QTimer* m_query_timer;

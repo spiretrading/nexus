@@ -114,6 +114,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_duration_box_profile());
   add(make_duration_filter_panel_profile());
   add(make_filter_panel_profile());
+  add(make_focus_observer_profile());
   add(make_icon_button_profile());
   add(make_info_tip_profile());
   add(make_input_box_profile());
@@ -128,6 +129,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());
   add(make_order_field_info_tip_profile());
+  add(make_order_type_box_profile());
   add(make_overlay_panel_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
@@ -138,6 +140,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_scrollable_list_box_profile());
   add(make_search_box_profile());
   add(make_security_list_item_profile());
+  add(make_side_box_profile());
   add(make_tag_profile());
   add(make_text_area_box_profile());
   add(make_text_box_profile());

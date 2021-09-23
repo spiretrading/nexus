@@ -9,14 +9,14 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0))).
+      set(BackgroundColor(QColor(Qt::black))).
       set(border_size(0));
     auto font = QFont("Roboto");
     font.setWeight(60);
     font.setPixelSize(scale_width(10));
     style.get(Any() >> is_a<TextBox>()).
       set(Font(font)).
-      set(TextColor(QColor::fromRgb(0xFF, 0xFF, 0xFF))).
+      set(TextColor(QColor(0xFFFFFF))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(horizontal_padding(scale_width(8)));
     return style;

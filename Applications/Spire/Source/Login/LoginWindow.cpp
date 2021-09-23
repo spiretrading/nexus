@@ -29,13 +29,13 @@ namespace {
   auto CLOSE_BUTTON_STYLE() {
     auto style = StyleSheet();
     style.get(Body()).
-      set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-      set(Fill(QColor::fromRgb(0xE2, 0xE0, 0xFF)));
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(Fill(QColor(0xE2E0FF)));
     style.get(!Active() / Body()).
-      set(Fill(QColor::fromRgb(0xBA, 0xB3, 0xD9)));
+      set(Fill(QColor(0xBAB3D9)));
     style.get(Hover() / Body()).
-      set(BackgroundColor(QColor::fromRgb(0x32, 0x14, 0x71))).
-      set(Fill(QColor::fromRgb(0xE6, 0x3F, 0x45)));
+      set(BackgroundColor(QColor(0x321471))).
+      set(Fill(QColor(0xE63F45)));
     return style;
   }
 
