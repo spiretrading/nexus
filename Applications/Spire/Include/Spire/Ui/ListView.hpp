@@ -125,7 +125,7 @@ namespace Styles {
 
       /** Returns the list of values displayed. */
       const std::shared_ptr<ListModel>& get_list_model() const;
-  
+
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
 

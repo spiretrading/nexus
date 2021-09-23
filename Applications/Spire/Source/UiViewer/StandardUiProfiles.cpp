@@ -1769,7 +1769,6 @@ UiProfile Spire::make_text_area_box_profile() {
         if(text_area_box->get_model()->get_current() != value) {
           text_area_box->get_model()->set_current(value);
         }
-        text_area_box->adjustSize();
       });
       text_area_box->get_model()->connect_current_signal(
         [&] (const auto& value) {
