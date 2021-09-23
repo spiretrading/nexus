@@ -120,7 +120,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     int get_longest_line_width() const {
       auto lines = m_model->get_current().split('\n');
       auto longest = 0;
-      for(const auto& line : lines) {
+      for(auto& line : lines) {
         longest = std::max(longest, fontMetrics().horizontalAdvance(line));
       }
       return longest;
