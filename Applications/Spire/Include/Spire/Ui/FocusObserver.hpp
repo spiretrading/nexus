@@ -7,7 +7,7 @@ namespace Spire {
   /** Represents an observer to keep track of the focus states of a widget. */
   class FocusObserver {
     public:
-      
+
       /**
        * Specifies the focus state.
        */

@@ -34,7 +34,7 @@ namespace Styles {
        * @param submission The submitted value.
        */
       using SubmitSignal = Signal<void (const std::any& submission)>;
-    
+
       /**
        * Constructs a DropDownBox.
        * @param list_view The list view displayed in the drop down list.
@@ -44,7 +44,7 @@ namespace Styles {
 
       /** Returns the list of selectable values. */
       const std::shared_ptr<ListModel>& get_list_model() const;
-  
+
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
 

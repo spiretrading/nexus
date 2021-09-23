@@ -219,7 +219,7 @@ TEST_SUITE("ArrayListModel") {
       REQUIRE(operation.m_index == 2);
     });
   }
-  
+
   TEST_CASE("transactions") {
     auto model = ArrayListModel();
     auto operations = std::deque<ListModel::Operation>();

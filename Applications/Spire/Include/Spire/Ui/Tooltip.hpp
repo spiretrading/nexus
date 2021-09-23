@@ -8,7 +8,7 @@ namespace Spire {
   /** Represents a Spire-styled tooltip. */
   class Tooltip : public QObject {
     public:
-  
+
       /**
        * Constructs a Tooltip.
        * @param text The Tooltip's label text.
