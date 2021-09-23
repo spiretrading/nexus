@@ -12,8 +12,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 64);
-  const auto DROP_SHADOW_OFFSET = QPoint(0, 3);
+  const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 38);
+  const auto DROP_SHADOW_OFFSET = QPoint(0, 0);
   const auto DROP_SHADOW_RADIUS = 5;
   const auto DROP_SHADOW_SIZE = 5;
 
