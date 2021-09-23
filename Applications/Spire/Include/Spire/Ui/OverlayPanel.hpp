@@ -68,6 +68,7 @@ namespace Spire {
       QPoint m_mouse_pressed_position;
 
       void position();
+      void update_mask();
   };
 }
 

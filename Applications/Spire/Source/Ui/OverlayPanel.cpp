@@ -132,10 +132,7 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
 }
 
 void OverlayPanel::resizeEvent(QResizeEvent* event) {
-  auto intersection = geometry().intersected(
-    QRect(parentWidget()->mapToGlobal(QPoint()), parentWidget()->size()));
-  setMask(QPolygon(rect()).subtracted(
-    QRect(mapFromGlobal(intersection.topLeft()), intersection.size())));
+  update_mask();
   QWidget::resizeEvent(event);
 }
 
@@ -166,5 +163,13 @@ void OverlayPanel::position() {
     }();
     move(offset);
     update();
+    update_mask();
   }
+}
+
+void OverlayPanel::update_mask() {
+  auto intersection = geometry().intersected(
+    QRect(parentWidget()->mapToGlobal(QPoint()), parentWidget()->size()));
+  setMask(QPolygon(rect()).subtracted(
+    QRect(mapFromGlobal(intersection.topLeft()), intersection.size())));
 }
