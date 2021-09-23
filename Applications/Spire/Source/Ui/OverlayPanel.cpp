@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QScreen>
+#include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 
@@ -143,6 +144,9 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry = parentWidget()->screen()->availableGeometry();
     auto panel_size = size();
+    if(auto win = windowHandle()) {
+      win->resize(panel_size);
+    }
     auto x = [&] {
       auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
       if(x < screen_geometry.left()) {
@@ -153,7 +157,7 @@ void OverlayPanel::position() {
       }
       return x;
     }();
-    auto offset = [&] {
+    auto pos = [&] {
       if((parent_bottom_left.y() + panel_size.height()) >
           screen_geometry.bottom()) {
         return QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
@@ -161,7 +165,7 @@ void OverlayPanel::position() {
       }
       return QPoint(x, parent_bottom_left.y() + 1 - DROP_SHADOW_HEIGHT());
     }();
-    move(offset);
+    move(pos);
     update();
     update_mask();
   }
