@@ -188,18 +188,6 @@ void DropDownBox::on_click() {
   } else {
     m_drop_down_list->show();
     m_drop_down_list->setFocus();
-    auto panel = m_drop_down_list->window();
-    auto offset = [=] {
-      if(mapToGlobal(QPoint()).y() < panel->pos().y()) {
-        return QPoint(0, -scale_height(1));
-      }
-      return QPoint(0, scale_height(1));
-    }();
-    panel->move(panel->pos() + offset);
-    auto intersection = panel->geometry().intersected(
-      QRect(mapToGlobal(QPoint()), size()));
-    panel->setMask(QPolygon(panel->rect()).subtracted(
-      (panel->mapFromGlobal(intersection.topLeft()), intersection.size())));
   }
 }
 
