@@ -253,9 +253,9 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     &QTextEdit::cursorPositionChanged, this, &TextAreaBox::on_cursor_position);
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) { on_current(value); });
-  //connect(m_text_edit->document()->documentLayout(),
-  //  &QAbstractTextDocumentLayout::documentSizeChanged,
-  //  [=] (const auto& size) { m_stacked_widget->adjustSize(); });
+  connect(m_text_edit->document()->documentLayout(),
+    &QAbstractTextDocumentLayout::documentSizeChanged,
+    [=] (const auto& size) { m_stacked_widget->adjustSize(); });
 }
 
 const std::shared_ptr<TextModel>& TextAreaBox::get_model() const {
@@ -276,7 +276,6 @@ bool TextAreaBox::is_read_only() const {
 }
 
 void TextAreaBox::set_read_only(bool read_only) {
-  qDebug() << "set_read_only: " << read_only;
   if(m_text_edit->isReadOnly() == read_only) {
     return;
   }
@@ -288,14 +287,7 @@ void TextAreaBox::set_read_only(bool read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     unmatch(*this, ReadOnly());
   }
-  update_text_edit_width();
-  update_display_text();
-  update_text_alignment();
-  update_document_line_height();
-  m_stacked_widget->setMinimumSize(
-    size() - get_border_size() - get_padding_size());
-  m_stacked_widget->adjustSize();
-  update_placeholder_text();
+  update_layout();
 }
 
 connection TextAreaBox::connect_submit_signal(
@@ -319,15 +311,7 @@ bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void TextAreaBox::resizeEvent(QResizeEvent* event) {
-  qDebug() << "resizeEvent: " << event;
-  update_text_edit_width();
-  update_display_text();
-  update_text_alignment();
-  update_document_line_height();
-  m_stacked_widget->setMinimumSize(
-    size() - get_border_size() - get_padding_size());
-  m_stacked_widget->adjustSize();
-  update_placeholder_text();
+  update_layout();
   QWidget::resizeEvent(event);
 }
 
@@ -357,7 +341,6 @@ void TextAreaBox::commit_placeholder_style() {
 }
 
 void TextAreaBox::commit_style() {
-  qDebug() << "commit_style";
   auto stylesheet = QString(
     R"(QTextEdit {
       background: transparent;
@@ -380,8 +363,6 @@ void TextAreaBox::commit_style() {
     m_scroll_box->get_vertical_scroll_bar().set_line_size(
       m_computed_line_height);
     update_display_text();
-    update_text_alignment();
-    update_document_line_height();
   } else {
     m_computed_line_height = m_text_edit->fontMetrics().height();
   }
@@ -406,7 +387,6 @@ QSize TextAreaBox::get_padding_size() const {
 }
 
 void TextAreaBox::update_display_text() {
-  qDebug() << "update_display_text";
   if(is_read_only()) {
     if(m_text_edit->toPlainText() != m_model->get_current()) {
       m_text_edit->blockSignals(true);
@@ -458,10 +438,11 @@ void TextAreaBox::update_display_text() {
   } else if(m_text_edit->toPlainText() != m_model->get_current()) {
     m_text_edit->setText(m_model->get_current());
   }
+  update_text_alignment();
+  update_document_line_height();
 }
 
 void TextAreaBox::update_document_line_height() {
-  qDebug() << "update_document_line_height";
   apply_block_formatting([&] (const auto& block) {
     auto cursor = m_text_edit->textCursor();
     cursor.setPosition(block.position());
@@ -471,6 +452,14 @@ void TextAreaBox::update_document_line_height() {
     cursor.setBlockFormat(block_format);
     m_text_edit->setTextCursor(cursor);
   });
+}
+
+void TextAreaBox::update_layout() {
+  update_text_edit_width();
+  m_stacked_widget->setMinimumSize(
+    size() - get_border_size() - get_padding_size());
+  m_stacked_widget->adjustSize();
+  update_placeholder_text();
 }
 
 void TextAreaBox::update_placeholder_text() {
@@ -486,7 +475,6 @@ void TextAreaBox::update_placeholder_text() {
 }
 
 void TextAreaBox::update_text_alignment() {
-  qDebug() << "update_text_alignment";
   apply_block_formatting(
     [&, alignment = m_text_edit_styles.m_alignment] (const auto& block) {
       auto cursor = m_text_edit->textCursor();
@@ -497,7 +485,6 @@ void TextAreaBox::update_text_alignment() {
 }
 
 void TextAreaBox::update_text_edit_width() {
-  qDebug() << "update_text_edit_width";
   auto border_size = get_border_size();
   auto padding_size = get_padding_size();
   if(!is_read_only() &&
@@ -510,18 +497,16 @@ void TextAreaBox::update_text_edit_width() {
     m_text_edit->setFixedWidth(
       width() - border_size.width() - padding_size.width());
   }
+  update_display_text();
 }
 
 void TextAreaBox::on_current(const QString& current) {
-  qDebug() << "on_current: " << current;
   auto cursor_pos = m_text_edit->textCursor().position();
   m_text_edit->setText(current);
   auto cursor = m_text_edit->textCursor();
   cursor.setPosition(cursor_pos);
   m_text_edit->setTextCursor(cursor);
   update_display_text();
-  update_text_alignment();
-  update_document_line_height();
 }
 
 void TextAreaBox::on_cursor_position() {
@@ -657,12 +642,8 @@ void TextAreaBox::on_text_changed() {
   if(is_read_only() || m_text_edit->toPlainText() == m_model->get_current()) {
     return;
   }
-  qDebug() << "on_text_changed";
   m_model->set_current(m_text_edit->toPlainText());
   update_text_edit_width();
-  update_display_text();
-  update_text_alignment();
-  update_document_line_height();
   m_stacked_widget->adjustSize();
   updateGeometry();
   update_placeholder_text();

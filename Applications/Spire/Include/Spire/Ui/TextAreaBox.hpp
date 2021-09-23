@@ -109,7 +109,7 @@ namespace Styles {
       bool is_placeholder_shown() const;
       void update_display_text();
       void update_document_line_height();
-      //void update_layout();
+      void update_layout();
       void update_placeholder_text();
       void update_text_alignment();
       void update_text_edit_width();
