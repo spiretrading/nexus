@@ -11,10 +11,8 @@ namespace Spire {
 
   /** A LocalValueModel over a Nexus::Side. */
   using LocalSideModel = LocalValueModel<Nexus::Side>;
-  
-  /**
-   * An EnumBox specialized for a Nexus::Side.
-   */
+
+  /** An EnumBox specialized for a Nexus::Side. */
   using SideBox = EnumBox<Nexus::Side>;
 
   /**
