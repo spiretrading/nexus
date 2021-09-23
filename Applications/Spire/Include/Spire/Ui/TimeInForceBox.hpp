@@ -11,7 +11,7 @@ namespace Spire {
 
   /** A LocalValueModel over a Nexus::TimeInForce. */
   using LocalTimeInForceModel = LocalValueModel<Nexus::TimeInForce>;
-  
+
   /**
    * An EnumBox specialized for a Nexus::TimeInForce.
    */
