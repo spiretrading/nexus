@@ -17,8 +17,10 @@ namespace {
     font.setWeight(60);
     font.setPixelSize(scale_width(12));
     style.get(ReadOnly()).
+      set(BackgroundColor(QColor(Qt::transparent))).
       set(Font(font)).
-      set(TextColor(QColor::fromRgb(0x808080)));
+      set(TextColor(QColor::fromRgb(0x808080))).
+      set(horizontal_padding(0));
     return style;
   }
 
@@ -28,6 +30,7 @@ namespace {
     font.setPixelSize(scale_width(10));
     font.setItalic(true);
     style.get(ReadOnly()).
+      set(border_color(QColor(Qt::transparent))).
       set(Font(font)).
       set(TextColor(QColor::fromRgb(0x4B23A0))).
       set(LineHeight(scale_height(1.13))).
@@ -91,8 +94,8 @@ namespace {
     auto layout = new QVBoxLayout(container);
     layout->setContentsMargins({});
     layout->setSpacing(0);
-    auto header = new TextBox(QObject::tr("Prerequisites"), container);
-    header->set_read_only(true);
+    auto header = make_label(QObject::tr("Prerequisites"), container);
+    header->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     auto header_style = get_style(*header);
     header_style.get(ReadOnly()).
       set(FontSize(scale_height(10)));
@@ -122,12 +125,9 @@ namespace {
     }();
     auto prerequisites_label = new TextAreaBox(prerequisite_text, container);
     prerequisites_label->set_read_only(true);
-    prerequisites_label->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Preferred);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     layout->addWidget(prerequisites_label);
     auto box = new Box(container, parent);
-    box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto box_style = get_style(*box);
     box_style.get(Any()).
       set(BorderTopColor(QColor::fromRgb(0xE0E0E0))).
@@ -140,6 +140,7 @@ namespace {
 
 OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
     : QWidget(parent) {
+  setFixedWidth(280);
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   auto container_layout = new QVBoxLayout(container);
@@ -151,12 +152,13 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
     scale_width(18), 0);
   description_layout->setSpacing(0);
   auto name_label =
-    new TextBox(QString::fromStdString(model.m_tag.m_name), this);
+    make_label(QString::fromStdString(model.m_tag.m_name), this);
   name_label->set_read_only(true);
   set_style(*name_label, NAME_STYLE());
   description_layout->addWidget(name_label);
   auto description_label =
     new TextAreaBox(QString::fromStdString(model.m_tag.m_description), this);
+  description_label->adjustSize();
   description_label->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Minimum);
   description_label->set_read_only(true);
@@ -171,16 +173,14 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
       make_values_container(model.m_tag.m_values, this));
   }
   auto scroll_box = new ScrollBox(container, this);
-  scroll_box->setFixedWidth(scale_width(280));
   scroll_box->setMaximumHeight(scale_height(240));
   auto body_layout = new QVBoxLayout(this);
   body_layout->setSpacing(0);
   body_layout->setContentsMargins({});
   body_layout->addWidget(scroll_box);
   if(!model.m_prerequisites.empty()) {
-    auto prerequisites_container =
-      new Box(make_prerequisite_container(model.m_prerequisites, this), this);
-    body_layout->addWidget(prerequisites_container);
+    body_layout->addWidget(
+      make_prerequisite_container(model.m_prerequisites, this));
   }
   auto tip = new InfoTip(this, parent);
   tip->set_interactive(true);
