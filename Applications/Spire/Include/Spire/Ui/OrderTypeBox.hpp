@@ -11,10 +11,8 @@ namespace Spire {
 
   /** A LocalValueModel over a Nexus::OrderType. */
   using LocalOrderTypeModel = LocalValueModel<Nexus::OrderType>;
-  
-  /**
-   * An EnumBox specialized for a Nexus::OrderType.
-   */
+
+  /** An EnumBox specialized for a Nexus::OrderType. */
   using OrderTypeBox = EnumBox<Nexus::OrderType>;
 
   /**
