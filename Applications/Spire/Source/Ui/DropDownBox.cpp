@@ -82,7 +82,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
 const std::shared_ptr<ListModel>& DropDownBox::get_list_model() const {
   return m_list_view->get_list_model();
 }
-  
+
 const std::shared_ptr<DropDownBox::CurrentModel>&
     DropDownBox::get_current_model() const {
   return m_list_view->get_current_model();

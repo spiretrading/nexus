@@ -4,7 +4,7 @@
 #include "Spire/Ui/EnumBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
-namespace Spire {  
+namespace Spire {
 
   /** A ValueModel over a Nexus::TimeInForce. */
   using TimeInForceModel = ValueModel<Nexus::TimeInForce>;
