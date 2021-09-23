@@ -507,6 +507,7 @@ void ListView::on_current(const optional<int>& current) {
   } else {
     m_navigation_box = QRect();
   }
+  m_last_current = current;
   if(m_selection_mode != SelectionMode::NONE) {
     m_selection_model->set_current(current);
   }
