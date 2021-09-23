@@ -184,5 +184,4 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
   }
   auto tip = new InfoTip(this, parent);
   tip->set_interactive(true);
-  body_layout->activate();
 }
