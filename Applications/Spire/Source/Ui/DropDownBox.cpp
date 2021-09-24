@@ -65,7 +65,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  m_drop_down_list = new DropDownList(list_view, this);
+  m_drop_down_list = new DropDownList(list_view, *this);
   m_drop_down_list->installEventFilter(this);
   m_drop_down_list->window()->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
