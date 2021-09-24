@@ -60,6 +60,16 @@ namespace {
     return container;
   }
 
+  auto get_hover_state_name(HoverObserver::State state) {
+    switch(state) {
+      case HoverObserver::State::MOUSE_IN:
+        return QString::fromUtf8("MOUSE_IN");
+      case HoverObserver::State::MOUSE_OVER:
+        return QString::fromUtf8("MOUSE_OVER");
+    }
+    return QString::fromUtf8("NONE");
+  }
+
   struct SizeAdjustedContainer : QWidget {
     QWidget* m_body;
 
@@ -180,17 +190,8 @@ void UiViewerWindow::on_event(const QString& name,
       if(argument.type() == typeid(std::nullptr_t)) {
         log += QString::fromUtf8("null");
       } else if(argument.type() == typeid(HoverObserver::State)) {
-        switch(std::any_cast<HoverObserver::State>(argument)) {
-          case HoverObserver::State::NONE:
-            log += QString::fromUtf8("NONE");
-            break;
-          case HoverObserver::State::MOUSE_IN:
-            log += QString::fromUtf8("MOUSE_IN");
-            break;
-          case HoverObserver::State::MOUSE_OVER:
-            log += QString::fromUtf8("MOUSE_OVER");
-            break;
-        }
+        log +=
+          get_hover_state_name(std::any_cast<HoverObserver::State>(argument));
       } else {
         log += displayTextAny(argument);
       }
