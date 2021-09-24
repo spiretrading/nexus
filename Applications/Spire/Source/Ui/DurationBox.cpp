@@ -506,11 +506,7 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void DurationBox::on_current(const optional<time_duration>& current) {
-  if(current == m_submission) {
-    m_has_update = false;
-  } else {
-    m_has_update = true;
-  }
+  m_has_update = current != m_submission;
   if(m_is_rejected) {
     m_is_rejected = false;
     unmatch(*this, Rejected());
@@ -534,7 +530,6 @@ void DurationBox::on_reject() {
   auto submission = m_submission;
   m_reject_signal(current);
   m_model->set_current(submission);
-  m_has_update = false;
   if(!m_is_rejected) {
     m_is_rejected = true;
     match(*this, Rejected());
