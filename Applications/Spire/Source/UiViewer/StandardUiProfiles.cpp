@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <stack>
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
@@ -967,7 +968,7 @@ UiProfile Spire::make_hover_observer_profile() {
   auto profile = UiProfile(QString::fromUtf8("HoverObserver"), properties,
     [] (auto& profile) {
       auto container = new QWidget();
-      container->setFixedSize(scale(300, 200));
+      container->setFixedSize(scale(350, 300));
       apply_widget_properties(container, profile.get_properties());
       auto box1_body = new QWidget();
       auto overlap_box1 = make_input_box(new QWidget(), container);
@@ -976,29 +977,49 @@ UiProfile Spire::make_hover_observer_profile() {
       auto overlap_box2 = make_input_box(new QWidget(), container);
       overlap_box2->setFixedSize(scale(100, 100));
       overlap_box2->move(translate(50, 100));
-      auto grandchild_box = make_input_box(new QWidget());
-      grandchild_box->setSizePolicy(
-        QSizePolicy::Expanding, QSizePolicy::Expanding);
-      auto child_box = make_input_box(grandchild_box);
-      child_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      auto parent_box = make_input_box(child_box, container);
-      parent_box->setFixedSize(125, 150);
-      parent_box->move(translate(175, 50));
       auto overlap1_observer = HoverObserver(*overlap_box1);
       overlap1_observer.connect_state_signal(
         profile.make_event_slot<HoverObserver::State>("Overlap1"));
       auto overlap2_observer = HoverObserver(*overlap_box2);
       overlap2_observer.connect_state_signal(
         profile.make_event_slot<HoverObserver::State>("Overlap2"));
-      auto grandchild_observer = HoverObserver(*grandchild_box);
-      grandchild_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Grandchild"));
-      auto child_observer = HoverObserver(*child_box);
-      child_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Child"));
-      auto parent_observer = HoverObserver(*parent_box);
-      parent_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Parent"));
+      auto box_stack = std::make_shared<std::stack<Box*>>();
+      auto parent_box = make_input_box(new QWidget(), container);
+      box_stack->push(parent_box);
+      parent_box->setFixedSize(scale(175, 200));
+      parent_box->move(translate(175, 0));
+      auto add_button = make_label_button("Add Child", container);
+      add_button->move(translate(75, 225));
+      add_button->connect_clicked_signal([=] {
+        auto parent_box = box_stack->top();
+        auto box = make_input_box(new QWidget(), parent_box);
+        box->setFixedSize(parent_box->size().shrunkBy({scale_width(10),
+          scale_height(10), scale_width(10), scale_height(10)}));
+        box->move(translate(10, 10));
+        box->show();
+        box_stack->push(box);
+      });
+      auto remove_button = make_label_button("Remove Child", container);
+      remove_button->move(translate(200, 225));
+      remove_button->connect_clicked_signal([=] {
+        if(box_stack->size() > 1) {
+          auto box = box_stack->top();
+          box_stack->pop();
+          box->deleteLater();
+        }
+      });
+      auto left_button = make_label_button("Move Left", container);
+      left_button->move(translate(75, 265));
+      left_button->connect_clicked_signal([=] {
+        container->window()->move(
+          container->window()->x() - scale_width(50), container->window()->y());
+      });
+      auto right_button = make_label_button("Move Right", container);
+      right_button->move(translate(200, 265));
+      right_button->connect_clicked_signal([=] {
+        container->window()->move(
+          container->window()->x() + scale_width(50), container->window()->y());
+      });
       return container;
     });
   return profile;
