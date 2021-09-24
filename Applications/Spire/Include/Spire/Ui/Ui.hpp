@@ -25,6 +25,7 @@ namespace Spire {
   class FilteredTableModel;
   class FilterPanel;
   class FocusObserver;
+  class GlobalPositionObserver;
   class HoverObserver;
   class Icon;
   class InfoTip;

@@ -1,104 +1,84 @@
 #include "Spire/Ui/HoverObserver.hpp"
-#include <unordered_set>
-#include <QApplication>
-#include <qt_windows.h>
+#include <unordered_map>
+#include <QChildEvent>
+#include "Spire/Ui/GlobalPositionObserver.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  auto get_ancestors(QWidget* widget) {
-    auto ancestors = std::vector<QWidget*>();
-    while(widget != nullptr) {
-      ancestors.push_back(widget);
-      widget = widget->parentWidget();
+struct HoverObserver::EventFilter : QObject {
+  mutable StateSignal m_state_signal;
+  QWidget* m_widget;
+  State m_state;
+  GlobalPositionObserver m_position_observer;
+  std::unordered_map<QWidget*, std::unique_ptr<HoverObserver>>
+    m_children_observers;
+
+  EventFilter(QWidget& widget)
+      : m_widget(&widget),
+        m_state(State::NONE),
+        m_position_observer(widget) {
+    widget.installEventFilter(this);
+    m_position_observer.connect_position_signal(
+      std::bind_front(&EventFilter::on_position, this));
+  }
+
+  void set_state(State state) {
+    if(state == m_state) {
+      return;
     }
-    return ancestors;
+    m_state = state;
+    m_state_signal(state);
   }
-}
 
-std::unordered_map<const QWidget*, HoverObserver::Entry>
-  HoverObserver::m_entries;
-QTimer HoverObserver::m_poll_timer = QTimer();
-QWidget* HoverObserver::m_current = nullptr;
-Qt::MouseButtons HoverObserver::m_buttons = Qt::NoButton;
-QWidget* HoverObserver::m_pressed_widget = nullptr;
+  bool eventFilter(QObject* watched, QEvent* event) override {
+    if(event->type() == QEvent::Enter) {
+      set_state(State::MOUSE_OVER);
+    } else if(event->type() == QEvent::Leave) {
+      set_state(State::NONE);
+    } else if(event->type() == QEvent::ChildAdded) {
+      auto& child_event = static_cast<QChildEvent&>(*event);
+      if(child_event.child()->isWidgetType()) {
+        auto& child = static_cast<QWidget&>(*child_event.child());
+        auto child_observer = std::make_unique<HoverObserver>(child);
+        child_observer->connect_state_signal(
+          std::bind_front(&EventFilter::on_hover, this));
+        m_children_observers.insert(
+          std::pair(&child, std::move(child_observer)));
+      }
+    } else if(event->type() == QEvent::ChildRemoved) {
+      auto& child_event = static_cast<QChildEvent&>(*event);
+      if(child_event.child()->isWidgetType()) {
+        auto& child = static_cast<QWidget&>(*child_event.child());
+        m_children_observers.erase(&child);
+      }
+    }
+    return QObject::eventFilter(watched, event);
+  }
 
-HoverObserver::HoverObserver(const QWidget& widget)
-    : m_widget(&widget) {
-  if(m_poll_timer.interval() == 0) {
-    setup_timer();
+  void on_hover(State state) {}
+
+  void on_position(const QPoint& position) {
+    if(QRect(position, m_widget->size()).contains(QCursor::pos())) {
+      set_state(State::MOUSE_OVER);
+    } else {
+      set_state(State::NONE);
+    }
   }
-  if(!m_entries.contains(&widget)) {
-    m_entries.insert(std::pair(&widget, Entry{State::NONE}));
-    QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
-      m_entries.erase(&widget);
-    });
-  }
-}
+};
+
+HoverObserver::HoverObserver(QWidget& widget)
+  : m_event_filter(std::make_unique<EventFilter>(widget)) {}
+
+HoverObserver::~HoverObserver() = default;
 
 HoverObserver::State HoverObserver::get_state() const {
-  return m_entries.at(m_widget).m_state;
+  return m_event_filter->m_state;
 }
 
 connection HoverObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
-  return m_entries.at(m_widget).m_state_signal.connect(slot);
-}
-
-void HoverObserver::setup_timer() {
-  m_poll_timer.setInterval(50);
-  QObject::connect(
-    &m_poll_timer, &QTimer::timeout, [=] { on_poll_timeout(); });
-  m_poll_timer.start();
-}
-
-void HoverObserver::on_poll_timeout() {
-  auto previous = m_current;
-  m_current = qApp->widgetAt(QCursor::pos());
-  if(m_current && m_current != previous) {
-    QObject::connect(m_current, &QObject::destroyed, [=] (auto) {
-      m_current = nullptr;
-      m_pressed_widget = nullptr;
-    });
-  }
-  auto previous_buttons = m_buttons;
-  m_buttons = qApp->mouseButtons();
-  if(previous_buttons == Qt::NoButton && previous_buttons != m_buttons &&
-      m_current) {
-    m_pressed_widget = m_current;
-  } else if(m_current != m_pressed_widget || m_buttons == Qt::NoButton) {
-    m_pressed_widget = nullptr;
-  }
-  if((m_current != previous && !m_pressed_widget) ||
-      (previous_buttons != Qt::NoButton && m_buttons == Qt::NoButton)) {
-    auto previous_parent = previous;
-    auto updated_widgets = get_ancestors(previous_parent);
-    auto current_parent = m_current;
-    auto current_widgets = get_ancestors(current_parent);
-    updated_widgets.insert(
-      updated_widgets.end(), current_widgets.begin(), current_widgets.end());
-    auto last = std::unique(updated_widgets.begin(), updated_widgets.end());
-    for(auto i = updated_widgets.begin(); i != last; ++i) {
-      if(m_entries.contains(*i)) {
-        auto& entry = m_entries.at(*i);
-        if(m_buttons == Qt::NoButton && *i == m_current) {
-          if(entry.m_state != State::MOUSE_OVER) {
-            entry.m_state = State::MOUSE_OVER;
-            entry.m_state_signal(entry.m_state);
-          }
-        } else if(m_buttons == Qt::NoButton && (*i)->isAncestorOf(m_current)) {
-          if(entry.m_state != State::MOUSE_IN) {
-            entry.m_state = State::MOUSE_IN;
-            entry.m_state_signal(entry.m_state);
-          }
-        } else if(entry.m_state != State::NONE) {
-          entry.m_state = State::NONE;
-          entry.m_state_signal(entry.m_state);
-        }
-      }
-    }
-  }
+  return m_event_filter->m_state_signal.connect(slot);
 }
 
 bool Spire::is_set(HoverObserver::State left, HoverObserver::State right) {
