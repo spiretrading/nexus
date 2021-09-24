@@ -57,8 +57,7 @@ namespace Spire {
        * @param parent The parent widget showing the panel.
        */
       ScalarFilterPanel(boost::optional<Type> default_min,
-        boost::optional<Type> default_max, QString title,
-        QWidget* parent = nullptr);
+        boost::optional<Type> default_max, QString title, QWidget& parent);
 
       /**
        * Constructs a ScalarFilterPanel.
@@ -71,8 +70,7 @@ namespace Spire {
        */
       ScalarFilterPanel(std::shared_ptr<Model> min_model,
         std::shared_ptr<Model> max_model, boost::optional<Type> default_min,
-        boost::optional<Type> default_max, QString title,
-        QWidget* parent = nullptr);
+        boost::optional<Type> default_max, QString title, QWidget& parent);
 
       /** Returns the minimum value's model. */
       const std::shared_ptr<Model>& get_min_model() const;
@@ -116,7 +114,7 @@ namespace Spire {
 
   template<typename T>
   ScalarFilterPanel<T>::ScalarFilterPanel(boost::optional<Type> default_min,
-    boost::optional<Type> default_max, QString title, QWidget* parent)
+    boost::optional<Type> default_max, QString title, QWidget& parent)
     : ScalarFilterPanel(
         std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
         std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
@@ -126,8 +124,8 @@ namespace Spire {
   template<typename T>
   ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<Model> min_model,
       std::shared_ptr<Model> max_model, boost::optional<Type> default_min,
-      boost::optional<Type> default_max, QString title, QWidget* parent)
-      : QWidget(parent),
+      boost::optional<Type> default_max, QString title, QWidget& parent)
+      : QWidget(&parent),
         m_min_model(std::move(min_model)),
         m_max_model(std::move(max_model)),
         m_default_min(std::move(default_min)),

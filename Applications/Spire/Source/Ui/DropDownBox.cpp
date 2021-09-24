@@ -64,7 +64,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  m_drop_down_list = new DropDownList(list_view, this);
+  m_drop_down_list = new DropDownList(list_view, *this);
   m_drop_down_list->installEventFilter(this);
   m_drop_down_list->window()->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
@@ -154,11 +154,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
       unmatch(*this, PopUp());
-    } else if(event->type() == QEvent::MouseButtonPress) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
-        m_drop_down_list->window()->setAttribute(Qt::WA_NoMouseReplay);
-      }
     }
   }
   return QWidget::eventFilter(watched, event);

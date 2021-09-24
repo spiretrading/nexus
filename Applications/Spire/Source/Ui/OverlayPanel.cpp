@@ -1,4 +1,5 @@
 #include "Spire/Ui/OverlayPanel.hpp"
+#include <QApplication>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QMouseEvent>
@@ -43,12 +44,16 @@ namespace {
   }
 }
 
-OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
-    : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint |
-        Qt::NoDropShadowWindowHint),
+OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
+    : QWidget(&parent,
+        Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
       m_body(&body),
-      m_is_closed_on_blur(true),
-      m_positioning(Positioning::PARENT) {
+      m_is_closed_on_focus_out(true),
+      m_is_draggable(true),
+      m_was_activated(false),
+      m_positioning(Positioning::PARENT),
+      m_focus_observer(*this),
+      m_parent_focus_observer(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -63,8 +68,13 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget* parent)
   shadow->setOffset(translate(DROP_SHADOW_OFFSET));
   shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
   box->setGraphicsEffect(shadow);
+  m_focus_connection = m_focus_observer.connect_state_signal([=] (auto state) {
+    on_focus(state);
+  });
+  m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
+    [=] (auto state) { on_parent_focus(state); });
+  parent.window()->installEventFilter(this);
   m_body->installEventFilter(this);
-  parent->window()->installEventFilter(this);
 }
 
 const QWidget& OverlayPanel::get_body() const {
@@ -75,20 +85,20 @@ QWidget& OverlayPanel::get_body() {
   return *m_body;
 }
 
-bool OverlayPanel::is_closed_on_blur() const {
-  return m_is_closed_on_blur;
+bool OverlayPanel::is_closed_on_focus_out() const {
+  return m_is_closed_on_focus_out;
 }
 
-void OverlayPanel::set_closed_on_blur(bool is_closed_on_blur) {
-  if(m_is_closed_on_blur == is_closed_on_blur) {
-    return;
-  }
-  m_is_closed_on_blur = is_closed_on_blur;
-  if(m_is_closed_on_blur) {
-    setWindowFlag(Qt::Popup);
-  } else {
-    setWindowFlag(Qt::Tool);
-  }
+void OverlayPanel::set_closed_on_focus_out(bool is_closed_on_focus_out) {
+  m_is_closed_on_focus_out = is_closed_on_focus_out;
+}
+
+bool OverlayPanel::is_draggable() const {
+  return m_is_draggable;
+}
+
+void OverlayPanel::set_is_draggable(bool is_draggable) {
+  m_is_draggable = is_draggable;
 }
 
 OverlayPanel::Positioning OverlayPanel::get_positioning() const {
@@ -104,17 +114,16 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::MouseButtonPress) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
       m_mouse_pressed_position = mouse_event->pos();
-    } else if(event->type() == QEvent::MouseMove) {
+    } else if(event->type() == QEvent::MouseMove && m_is_draggable &&
+        m_positioning != Positioning::PARENT) {
       auto mouse_event = static_cast<QMouseEvent*>(event);
-      if(mouse_event->buttons() & Qt::LeftButton &&
-          m_positioning != Positioning::PARENT) {
+      if(mouse_event->buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event->pos() - m_mouse_pressed_position));
       }
     }
-  } else if(watched == parentWidget()->window()) {
-    if(event->type() == QEvent::Move) {
-      position();
-    }
+  } else if(
+      watched == parentWidget()->window() && event->type() == QEvent::Move) {
+    position();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -144,9 +153,6 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry = parentWidget()->screen()->availableGeometry();
     auto panel_size = size();
-    if(auto win = windowHandle()) {
-      win->resize(panel_size);
-    }
     auto x = [&] {
       auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
       if(x < screen_geometry.left()) {
@@ -168,6 +174,26 @@ void OverlayPanel::position() {
     move(pos);
     update();
     update_mask();
+  }
+}
+
+void OverlayPanel::on_focus(FocusObserver::State state) {
+  if(m_is_closed_on_focus_out) {
+    if(state == FocusObserver::State::NONE) {
+      close();
+    } else if(state == FocusObserver::State::FOCUS_IN) {
+      m_was_activated = true;
+    }
+  }
+}
+
+void OverlayPanel::on_parent_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE && m_is_closed_on_focus_out &&
+      !isActiveWindow() && m_was_activated) {
+    close();
+  } else if(state == FocusObserver::State::FOCUS_IN &&
+      m_is_closed_on_focus_out && m_was_activated) {
+    close();
   }
 }
 
