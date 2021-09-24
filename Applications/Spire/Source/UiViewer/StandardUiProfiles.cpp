@@ -32,6 +32,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -1175,16 +1176,23 @@ UiProfile Spire::make_label_profile() {
 UiProfile Spire::make_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("current", false));
   properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile(QString::fromUtf8("ListItem"), properties,
     [] (auto& profile) {
       auto item = new ListItem(make_label(QString::fromUtf8("Test Component")));
       item->setFixedWidth(scale_width(100));
       apply_widget_properties(item, profile.get_properties());
-      item->connect_current_signal(
-        profile.make_event_slot(QString::fromUtf8("Current")));
       item->connect_submit_signal(
         profile.make_event_slot(QString::fromUtf8("Submit")));
+      auto& current = get<bool>("current", profile.get_properties());
+      current.connect_changed_signal([=] (auto value) {
+        if(value) {
+          match(*item, Current());
+        } else {
+          unmatch(*item, Current());
+        }
+      });
       auto& selected = get<bool>("selected", profile.get_properties());
       selected.connect_changed_signal([=] (auto value) {
         item->set_selected(value);
@@ -1394,6 +1402,20 @@ UiProfile Spire::make_money_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_order_type_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<OrderType>(
+    {{"Limit", OrderType::LIMIT},
+     {"Market", OrderType::MARKET},
+     {"Pegged", OrderType::PEGGED},
+     {"Stop", OrderType::STOP}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("OrderTypeBox"), properties,
+    std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
+  return profile;
+}
+
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("close_on_blur", true));
@@ -1453,7 +1475,7 @@ UiProfile Spire::make_overlay_panel_profile() {
           content_layout->addWidget(make_label_button(
             QString::fromUtf8("Reset")), 2, 1);
           container_layout->addLayout(content_layout);
-          panel = new OverlayPanel(body, button);
+          panel = new OverlayPanel(*body, button);
           panel->setAttribute(Qt::WA_DeleteOnClose);
           panel->set_closed_on_blur(close_on_blur.get());
           panel->set_positioning(positioning.get());
@@ -1790,7 +1812,6 @@ UiProfile Spire::make_text_area_box_profile() {
         if(text_area_box->get_model()->get_current() != value) {
           text_area_box->get_model()->set_current(value);
         }
-        text_area_box->adjustSize();
       });
       text_area_box->get_model()->connect_current_signal(
         [&] (const auto& value) {

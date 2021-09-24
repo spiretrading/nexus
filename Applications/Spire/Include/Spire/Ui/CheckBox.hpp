@@ -34,7 +34,7 @@ namespace Styles {
        * @param parent The parent widget.
        */
       explicit CheckBox(QWidget* parent = nullptr);
-  
+
       /**
        * Constructs a CheckBox.
        * @param model The check state's model.
