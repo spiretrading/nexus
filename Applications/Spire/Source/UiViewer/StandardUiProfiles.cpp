@@ -45,6 +45,7 @@
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
@@ -1893,6 +1894,25 @@ UiProfile Spire::make_time_box_profile() {
           QString::fromUtf8("Reject")));
       return time_box;
     });
+  return profile;
+}
+
+UiProfile Spire::make_time_in_force_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<TimeInForce>(
+    {{"Day", TimeInForce(TimeInForce::Type::DAY)},
+     {"GTC", TimeInForce(TimeInForce::Type::GTC)},
+     {"OPG", TimeInForce(TimeInForce::Type::OPG)},
+     {"IOC", TimeInForce(TimeInForce::Type::IOC)},
+     {"FOK", TimeInForce(TimeInForce::Type::FOK)},
+     {"GTX", TimeInForce(TimeInForce::Type::GTX)},
+     {"GTD", TimeInForce(TimeInForce::Type::GTD)},
+     {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("TimeInForceBox"), properties,
+    std::bind_front(setup_enum_box_profile<TimeInForceBox,
+      make_time_in_force_box>));
   return profile;
 }
 

@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QScreen>
+#include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 
@@ -13,8 +14,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 64);
-  const auto DROP_SHADOW_OFFSET = QPoint(0, 3);
+  const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 38);
+  const auto DROP_SHADOW_OFFSET = QPoint(0, 0);
   const auto DROP_SHADOW_RADIUS = 5;
   const auto DROP_SHADOW_SIZE = 5;
 
@@ -140,18 +141,18 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
+void OverlayPanel::resizeEvent(QResizeEvent* event) {
+  update_mask();
+  QWidget::resizeEvent(event);
+}
+
 void OverlayPanel::position() {
   if(m_positioning == Positioning::PARENT) {
     auto parent_geometry = parentWidget()->rect();
     auto parent_bottom_left = parentWidget()->mapToGlobal(
       parent_geometry.bottomLeft());
     auto screen_geometry = parentWidget()->screen()->availableGeometry();
-    auto panel_size = [&] {
-      if(layout()->contentsMargins() == DROP_SHADOW_MARGINS()) {
-        return size() - QSize(0, DROP_SHADOW_HEIGHT());
-      }
-      return size();
-    }();
+    auto panel_size = size();
     auto x = [&] {
       auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
       if(x < screen_geometry.left()) {
@@ -162,23 +163,17 @@ void OverlayPanel::position() {
       }
       return x;
     }();
-    auto rect = [&] () -> QRect {
+    auto pos = [&] {
       if((parent_bottom_left.y() + panel_size.height()) >
           screen_geometry.bottom()) {
-        auto margins = QMargins(DROP_SHADOW_WIDTH(), DROP_SHADOW_HEIGHT(),
-          DROP_SHADOW_WIDTH(), 0);
-        layout()->setContentsMargins(margins);
-        return {QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
-          panel_size.height() + 1), panel_size};
-      } else {
-        auto margins = QMargins(DROP_SHADOW_WIDTH(), 0, DROP_SHADOW_WIDTH(),
-          DROP_SHADOW_HEIGHT());
-        layout()->setContentsMargins(margins);
-        return {QPoint(x, parent_bottom_left.y() + 1), panel_size};
+        return QPoint(x, parent_bottom_left.y() - parent_geometry.height() -
+          panel_size.height() + 1 + DROP_SHADOW_HEIGHT());
       }
+      return QPoint(x, parent_bottom_left.y() + 1 - DROP_SHADOW_HEIGHT());
     }();
-    setGeometry(rect);
+    move(pos);
     update();
+    update_mask();
   }
 }
 
@@ -200,4 +195,11 @@ void OverlayPanel::on_parent_focus(FocusObserver::State state) {
       m_is_closed_on_focus_out && m_was_activated) {
     close();
   }
+}
+
+void OverlayPanel::update_mask() {
+  auto intersection = geometry().intersected(
+    QRect(parentWidget()->mapToGlobal(QPoint()), parentWidget()->size()));
+  setMask(QPolygon(rect()).subtracted(
+    QRect(mapFromGlobal(intersection.topLeft()), intersection.size())));
 }

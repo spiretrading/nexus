@@ -33,7 +33,6 @@ namespace {
       set(horizontal_padding(0)).
       set(border_color(QColor(Qt::transparent))).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Any() >> is_a<OverlayPanel>()).set(BorderTopSize(0));
     return style;
   }
 }
