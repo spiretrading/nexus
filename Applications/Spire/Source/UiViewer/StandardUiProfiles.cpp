@@ -47,6 +47,7 @@
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
@@ -705,11 +706,7 @@ UiProfile Spire::make_drop_down_box_profile() {
       for(auto i = 0; i < item_count.get(); ++i) {
         list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
       }
-      auto list_view =
-        new ListView(list_model, [] (const auto& model, auto index) {
-          return make_label(model->get<QString>(index));
-        });
-      auto drop_down_box = new DropDownBox(*list_view);
+      auto drop_down_box = new DropDownBox(list_model);
       drop_down_box->setFixedWidth(scale_width(112));
       apply_widget_properties(drop_down_box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -1958,6 +1955,25 @@ UiProfile Spire::make_time_box_profile() {
           QString::fromUtf8("Reject")));
       return time_box;
     });
+  return profile;
+}
+
+UiProfile Spire::make_time_in_force_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<TimeInForce>(
+    {{"Day", TimeInForce(TimeInForce::Type::DAY)},
+     {"GTC", TimeInForce(TimeInForce::Type::GTC)},
+     {"OPG", TimeInForce(TimeInForce::Type::OPG)},
+     {"IOC", TimeInForce(TimeInForce::Type::IOC)},
+     {"FOK", TimeInForce(TimeInForce::Type::FOK)},
+     {"GTX", TimeInForce(TimeInForce::Type::GTX)},
+     {"GTD", TimeInForce(TimeInForce::Type::GTD)},
+     {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("TimeInForceBox"), properties,
+    std::bind_front(setup_enum_box_profile<TimeInForceBox,
+      make_time_in_force_box>));
   return profile;
 }
 

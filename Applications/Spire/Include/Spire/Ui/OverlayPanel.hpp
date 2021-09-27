@@ -72,6 +72,7 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
       void showEvent(QShowEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       QWidget* m_body;
@@ -88,6 +89,7 @@ namespace Spire {
       void position();
       void on_focus(FocusObserver::State state);
       void on_parent_focus(FocusObserver::State state);
+      void update_mask();
   };
 }
 

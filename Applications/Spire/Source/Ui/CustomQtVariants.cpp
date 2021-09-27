@@ -146,7 +146,7 @@ void Spire::register_custom_qt_variants() {}
 const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
   auto type = time_in_force.GetType();
   if(type == TimeInForce::Type::DAY) {
-    static const auto value = QObject::tr("DAY");
+    static const auto value = QObject::tr("Day");
     return value;
   } else if(type == TimeInForce::Type::FOK) {
     static const auto value = QObject::tr("FOK");
