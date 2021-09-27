@@ -102,6 +102,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<Quantity>(value));
   } else if(value.type() == typeid(double)) {
     return QVariant::fromValue(std::any_cast<double>(value));
+  } else if(value.type() == typeid(gregorian::date)) {
+    return QVariant::fromValue(std::any_cast<gregorian::date>(value));
   } else if(value.type() == typeid(ptime)) {
     return QVariant::fromValue(std::any_cast<ptime>(value));
   } else if(value.type() == typeid(posix_time::time_duration)) {
@@ -259,7 +261,7 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   if(left.type() != right.type()) {
     return false;
   }
-  return is_equal_any<bool, int, Quantity, double, ptime,
+  return is_equal_any<bool, int, Quantity, double, gregorian::date, ptime,
     posix_time::time_duration, std::string, CurrencyId, MarketToken, Money,
     Region, OrderStatus, OrderType, PositionSideToken, Security, Side,
     TimeInForce, QColor, QString>(left, right);
@@ -270,7 +272,14 @@ CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
-  if(value.canConvert<ptime>()) {
+  if(value.canConvert<gregorian::date>()) {
+    auto format = std::locale(std::locale(""),
+      new boost::gregorian::date_facet("%Y-%m-%d"));
+    auto stream = std::ostringstream();
+    stream.imbue(format);
+    stream << value.value<gregorian::date>();
+    return QString::fromStdString(stream.str());
+  } else if(value.canConvert<ptime>()) {
     auto time_value = ToLocalTime(value.value<ptime>());
     auto currentTime = ToLocalTime(
       boost::posix_time::second_clock::universal_time());
@@ -340,7 +349,10 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   if(left_variant.type() != right_variant.type()) {
     return QSortFilterProxyModel::lessThan(left, right);
   }
-  if(left_variant.canConvert<ptime>()) {
+  if(left_variant.canConvert<gregorian::date>()) {
+    return compare(left_variant.value<gregorian::date>(),
+      right_variant.value<gregorian::date>(), left, right);
+  } else if(left_variant.canConvert<ptime>()) {
     return compare(left_variant.value<ptime>(), right_variant.value<ptime>(),
       left, right);
   } else if(left_variant.canConvert<posix_time::time_duration>()) {
