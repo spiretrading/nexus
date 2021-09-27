@@ -4,6 +4,16 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  QPoint get_position(const QWidget& widget) {
+    if(auto parent = widget.parentWidget()) {
+      return parent->mapToGlobal(widget.pos());
+    } else {
+      return widget.pos();
+    }
+  }
+}
+
 struct GlobalPositionObserver::EventFilter : QObject {
   mutable PositionSignal m_position_signal;
   QWidget* m_widget;
@@ -12,7 +22,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
-        m_position(m_widget->mapToGlobal(m_widget->pos())) {
+        m_position(::get_position(*m_widget)) {
     m_widget->installEventFilter(this);
     observe_parent();
   }
@@ -36,7 +46,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::Move) {
-      set_position(m_widget->mapToGlobal(m_widget->pos()));
+      set_position(::get_position(*m_widget));
     } else if(event->type() == QEvent::ParentChange) {
       observe_parent();
     }
@@ -44,7 +54,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
   }
 
   void on_position(const QPoint& position) {
-    set_position(m_widget->mapToGlobal(m_widget->pos()));
+    set_position(::get_position(*m_widget));
   }
 };
 

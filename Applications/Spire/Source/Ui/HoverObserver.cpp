@@ -1,10 +1,25 @@
 #include "Spire/Ui/HoverObserver.hpp"
 #include <unordered_map>
+#include <QApplication>
 #include <QChildEvent>
 #include "Spire/Ui/GlobalPositionObserver.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  HoverObserver::State get_state(const QWidget& widget, QPoint position) {
+    auto cursor = QCursor::pos();
+    if(QRect(position, widget.size()).contains(cursor)) {
+      if(qApp->widgetAt(cursor) == &widget) {
+        return HoverObserver::State::MOUSE_IN;
+      } else {
+        return HoverObserver::State::MOUSE_OVER;
+      }
+    }
+    return HoverObserver::State::NONE;
+  }
+}
 
 struct HoverObserver::EventFilter : QObject {
   mutable StateSignal m_state_signal;
@@ -21,6 +36,7 @@ struct HoverObserver::EventFilter : QObject {
     widget.installEventFilter(this);
     m_position_observer.connect_position_signal(
       std::bind_front(&EventFilter::on_position, this));
+    set_state(::get_state(widget, m_position_observer.get_position()));
   }
 
   void set_state(State state) {
@@ -33,7 +49,7 @@ struct HoverObserver::EventFilter : QObject {
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::Enter) {
-      set_state(State::MOUSE_OVER);
+      set_state(::get_state(*m_widget, m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
       set_state(State::NONE);
     } else if(event->type() == QEvent::ChildAdded) {
@@ -45,25 +61,25 @@ struct HoverObserver::EventFilter : QObject {
           std::bind_front(&EventFilter::on_hover, this));
         m_children_observers.insert(
           std::pair(&child, std::move(child_observer)));
+        set_state(::get_state(*m_widget, m_position_observer.get_position()));
       }
     } else if(event->type() == QEvent::ChildRemoved) {
       auto& child_event = static_cast<QChildEvent&>(*event);
       if(child_event.child()->isWidgetType()) {
         auto& child = static_cast<QWidget&>(*child_event.child());
         m_children_observers.erase(&child);
+        set_state(::get_state(*m_widget, m_position_observer.get_position()));
       }
     }
     return QObject::eventFilter(watched, event);
   }
 
-  void on_hover(State state) {}
+  void on_hover(State state) {
+    set_state(::get_state(*m_widget, m_position_observer.get_position()));
+  }
 
   void on_position(const QPoint& position) {
-    if(QRect(position, m_widget->size()).contains(QCursor::pos())) {
-      set_state(State::MOUSE_OVER);
-    } else {
-      set_state(State::NONE);
-    }
+    set_state(::get_state(*m_widget, position));
   }
 };
 
