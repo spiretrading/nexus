@@ -34,7 +34,8 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
   m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_focus_out(true);
   on_panel_style();
-  connect_style_signal(*m_panel, [=] { on_panel_style(); });
+  m_panel_style_connection =
+    connect_style_signal(*m_panel, [=] { on_panel_style(); });
   parent.installEventFilter(this);
   m_scrollable_list_box->installEventFilter(this);
 }
