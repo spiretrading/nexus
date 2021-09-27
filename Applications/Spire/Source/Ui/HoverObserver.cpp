@@ -11,9 +11,10 @@ namespace {
   HoverObserver::State get_state(const QWidget& widget, QPoint position) {
     auto cursor = QCursor::pos();
     if(QRect(position, widget.size()).contains(cursor)) {
-      if(qApp->widgetAt(cursor) == &widget) {
+      auto hovered_widget = qApp->widgetAt(cursor);
+      if(hovered_widget == &widget) {
         return HoverObserver::State::MOUSE_IN;
-      } else {
+      } else if(widget.isAncestorOf(hovered_widget)) {
         return HoverObserver::State::MOUSE_OVER;
       }
     }
