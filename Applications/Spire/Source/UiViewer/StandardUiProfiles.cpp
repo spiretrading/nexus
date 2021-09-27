@@ -31,6 +31,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/MonthSpinner.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
@@ -51,6 +52,7 @@
 #include "Spire/UiViewer/UiProfile.hpp"
 
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -1386,6 +1388,52 @@ UiProfile Spire::make_money_filter_panel_profile() {
     properties, Money::CENT, QString::fromUtf8("Filter by Money"));
   auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"),
     properties, setup_scalar_filter_panel_profile<MoneyBox>);
+  return profile;
+}
+
+UiProfile Spire::make_month_spinner_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_day = day_clock::local_day();
+  properties.push_back(make_standard_property("month", 0));
+  properties.push_back(make_standard_property("year", 0));
+  auto profile = UiProfile(QString::fromUtf8("MonthSpinner"), properties,
+    [] (auto& profile) {
+      auto month_spinner = new MonthSpinner();
+      apply_widget_properties(month_spinner, profile.get_properties());
+      month_spinner->setFixedSize(scale(168, 26));
+      auto& month = get<int>("month", profile.get_properties());
+      month.connect_changed_signal([=] (auto value) {
+        auto current = month_spinner->get_model()->get_current();
+        if(current.month() != value) {
+          try {
+            month_spinner->get_model()->set_current({current.year(),
+              static_cast<gregorian_calendar::month_type>(value),
+              current.day()});
+          } catch(const std::exception&) {}
+        }
+      });
+      month.set(month_spinner->get_model()->get_current().month());
+      auto& year = get<int>("year", profile.get_properties());
+      year.connect_changed_signal([=] (auto year) {
+        auto current = month_spinner->get_model()->get_current();
+        if(current.year() != year) {
+          try {
+            month_spinner->get_model()->set_current({
+              static_cast<gregorian_calendar::year_type>(year), current.month(),
+              current.day()});
+          } catch(const std::exception&) {}
+        }
+      });
+      year.set(month_spinner->get_model()->get_current().year());
+      month_spinner->get_model()->connect_current_signal([&] (auto current) {
+        month.set(current.month());
+        year.set(current.year());
+      });
+      month_spinner->get_model()->connect_current_signal(
+        profile.make_event_slot<date>(QString::fromUtf8("Current")));
+      return month_spinner;
+    });
   return profile;
 }
 

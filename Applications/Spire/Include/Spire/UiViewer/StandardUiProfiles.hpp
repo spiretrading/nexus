@@ -80,6 +80,9 @@ namespace Spire {
   /** Returns a UiProfile for the MoneyFilterPanel. */
   UiProfile make_money_filter_panel_profile();
 
+  /** Returns a UiProfile for the MonthSpinner. */
+  UiProfile make_month_spinner_profile();
+
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 

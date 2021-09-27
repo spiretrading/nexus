@@ -33,6 +33,7 @@ namespace Spire {
   class ListModel;
   class ListView;
   class MoneyBox;
+  class MonthSelector;
   class OverlayPanel;
   class RegionListItem;
   class RowViewListModel;
