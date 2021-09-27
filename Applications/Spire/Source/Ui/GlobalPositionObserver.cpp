@@ -41,6 +41,8 @@ struct GlobalPositionObserver::EventFilter : QObject {
         std::make_unique<GlobalPositionObserver>(*m_widget->parentWidget());
       m_parent_observer->connect_position_signal(
         std::bind_front(&EventFilter::on_position, this));
+    } else {
+      m_parent_observer = nullptr;
     }
   }
 

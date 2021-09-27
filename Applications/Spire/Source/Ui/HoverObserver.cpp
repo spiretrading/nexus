@@ -57,6 +57,8 @@ struct HoverObserver::EventFilter : QObject {
       set_state(::get_state(*m_widget, m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
       set_state(State::NONE);
+    } else if(event->type() == QEvent::MouseMove) {
+      set_state(::get_state(*m_widget, m_position_observer.get_position()));
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child_event = static_cast<QChildEvent&>(*event);
       if(child_event.child()->isWidgetType()) {
