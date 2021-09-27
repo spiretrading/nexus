@@ -138,6 +138,8 @@ namespace Styles {
       Box* m_box;
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
+      boost::signals2::scoped_connection m_style_connection;
+      boost::signals2::scoped_connection m_placeholder_style_connection;
       QLabel* m_placeholder;
       StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_current_connection;

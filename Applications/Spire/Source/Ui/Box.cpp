@@ -51,7 +51,7 @@ Box::Box(QWidget* body, QWidget* parent)
   } else {
     m_container = nullptr;
   }
-  connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
 const QWidget* Box::get_body() const {
