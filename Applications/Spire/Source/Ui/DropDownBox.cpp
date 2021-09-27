@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -37,9 +38,23 @@ namespace {
   }
 }
 
-DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
-    : QWidget(parent),
-      m_list_view(&list_view) {
+DropDownBox::DropDownBox(std::shared_ptr<ListModel> list_model, QWidget* parent)
+  : DropDownBox(std::move(list_model), ListView::default_view_builder, parent) {}
+
+DropDownBox::DropDownBox(std::shared_ptr<ListModel> list_model,
+  ViewBuilder view_builder, QWidget* parent)
+  : DropDownBox(std::move(list_model),
+      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::move(view_builder), parent) {}
+
+DropDownBox::DropDownBox(std::shared_ptr<ListModel> list_model,
+    std::shared_ptr<CurrentModel> current_model,
+    std::shared_ptr<SelectionModel> selection_model, ViewBuilder view_builder,
+    QWidget* parent)
+    : QWidget(parent) {
+  m_list_view = new ListView(std::move(list_model), std::move(current_model),
+    std::move(selection_model), std::move(view_builder));
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_box->setFocusPolicy(Qt::NoFocus);
@@ -64,7 +79,7 @@ DropDownBox::DropDownBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  m_drop_down_list = new DropDownList(list_view, *this);
+  m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
   m_drop_down_list->window()->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
