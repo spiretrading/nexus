@@ -704,11 +704,7 @@ UiProfile Spire::make_drop_down_box_profile() {
       for(auto i = 0; i < item_count.get(); ++i) {
         list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
       }
-      auto list_view =
-        new ListView(list_model, [] (const auto& model, auto index) {
-          return make_label(model->get<QString>(index));
-        });
-      auto drop_down_box = new DropDownBox(*list_view);
+      auto drop_down_box = new DropDownBox(list_model);
       drop_down_box->setFixedWidth(scale_width(112));
       apply_widget_properties(drop_down_box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
