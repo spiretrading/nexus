@@ -1,6 +1,5 @@
 #ifndef SPIRE_HOVER_OBSERVER_HPP
 #define SPIRE_HOVER_OBSERVER_HPP
-#include <QTimer>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -36,7 +35,9 @@ namespace Spire {
        * Constructs a HoverObserver.
        * @param widget The widget to monitor for its hover state.
        */
-      explicit HoverObserver(const QWidget& widget);
+      explicit HoverObserver(QWidget& widget);
+
+      ~HoverObserver();
 
       /** Returns the current state. */
       State get_state() const;
@@ -46,19 +47,8 @@ namespace Spire {
         const StateSignal::slot_type& slot) const;
 
     private:
-      struct Entry {
-        State m_state;
-        StateSignal m_state_signal;
-      };
-      static std::unordered_map<const QWidget*, Entry> m_entries;
-      static QTimer m_poll_timer;
-      static QWidget* m_current;
-      static Qt::MouseButtons m_buttons;
-      static QWidget* m_pressed_widget;
-      const QWidget* m_widget;
-
-      static void setup_timer();
-      static void on_poll_timeout();
+      struct EventFilter;
+      std::unique_ptr<EventFilter> m_event_filter;
   };
 
   /**

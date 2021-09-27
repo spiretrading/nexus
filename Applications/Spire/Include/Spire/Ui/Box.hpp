@@ -165,6 +165,7 @@ namespace Styles {
       QWidget* m_body;
       QRect m_body_geometry;
       Styles::StyleSheetMap m_styles;
+      boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
       void commit_style();

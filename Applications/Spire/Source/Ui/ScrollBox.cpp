@@ -65,7 +65,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   setLayout(layout);
   setFocusPolicy(Qt::StrongFocus);
   update_ranges();
-  connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
 const QWidget& ScrollBox::get_body() const {

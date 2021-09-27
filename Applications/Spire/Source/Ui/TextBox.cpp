@@ -153,8 +153,9 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   setFocusProxy(m_box);
   proxy_style(*this, *m_box);
   add_pseudo_element(*this, Placeholder());
-  connect_style_signal(*this, [=] { on_style(); });
-  connect_style_signal(*this, Placeholder(), [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_placeholder_style_connection =
+    connect_style_signal(*this, Placeholder(), [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);

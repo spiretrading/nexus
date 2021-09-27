@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <stack>
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
@@ -46,6 +47,7 @@
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
@@ -264,7 +266,7 @@ namespace {
       min_model->set_increment(default_increment.get());
       max_model->set_increment(default_increment.get());
       auto panel = new ScalarFilterPanel<B>(min_model, max_model,
-        default_min.get(), default_max.get(), title.get(), button);
+        default_min.get(), default_max.get(), title.get(), *button);
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
       panel->connect_submit_signal([=] (const auto& min, const auto& max) {
@@ -323,6 +325,36 @@ namespace {
       }
     }
     return image;
+  }
+
+  auto create_panel_body() {
+    auto body = new QWidget();
+    body->setFixedSize(scale(200, 200));
+    auto container_layout = new QVBoxLayout(body);
+    container_layout->setSpacing(0);
+    container_layout->setContentsMargins(scale_width(1),
+      scale_height(1), scale_width(1), scale_height(1));
+    auto create_button = make_label_button("Show child panel", body);
+    container_layout->addWidget(create_button);
+    auto close_button = make_label_button("Close", body);
+    close_button->connect_clicked_signal([=] { body->window()->close(); });
+    container_layout->addWidget(close_button);
+    return body;
+  }
+
+  void create_child_panel(bool close_on_focus_out, bool draggable,
+      OverlayPanel::Positioning positioning, Button* parent) {
+    auto body = create_panel_body();
+    auto panel = new OverlayPanel(*body, *parent);
+    auto button = body->findChild<Button*>();
+    button->connect_clicked_signal([=] {
+      create_child_panel(close_on_focus_out, draggable, positioning, button);
+    });
+    panel->setAttribute(Qt::WA_DeleteOnClose);
+    panel->set_closed_on_focus_out(close_on_focus_out);
+    panel->set_is_draggable(draggable);
+    panel->set_positioning(positioning);
+    panel->show();
   }
 }
 
@@ -613,7 +645,7 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
         max_model->set_increment(pow(Decimal(10), -decimal_places.get()));
         auto panel = new DecimalFilterPanel(min_model, max_model,
           to_decimal(default_min.get()), to_decimal(default_max.get()),
-          title.get(), button);
+          title.get(), *button);
         auto filter_slot =
           profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
         panel->connect_submit_signal([=] (const auto& min, const auto& max) {
@@ -674,11 +706,7 @@ UiProfile Spire::make_drop_down_box_profile() {
       for(auto i = 0; i < item_count.get(); ++i) {
         list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
       }
-      auto list_view =
-        new ListView(list_model, [] (const auto& model, auto index) {
-          return make_label(model->get<QString>(index));
-        });
-      auto drop_down_box = new DropDownBox(*list_view);
+      auto drop_down_box = new DropDownBox(list_model);
       drop_down_box->setFixedWidth(scale_width(112));
       apply_widget_properties(drop_down_box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -711,7 +739,7 @@ UiProfile Spire::make_drop_down_list_profile() {
           new ListView(list_model, [&] (const auto& model, auto index) {
             return make_label(model->get<QString>(index));
           });
-        auto drop_down_list = new DropDownList(*list_view, button);
+        auto drop_down_list = new DropDownList(*list_view, *button);
         drop_down_list->window()->setAttribute(Qt::WA_DeleteOnClose);
         drop_down_list->show();
       });
@@ -794,7 +822,7 @@ UiProfile Spire::make_duration_filter_panel_profile() {
       button->connect_clicked_signal([&, button, min_model, max_model] {
         auto panel = new ScalarFilterPanel<DurationBox>(min_model, max_model,
           parse_duration(default_min.get()), parse_duration(default_max.get()),
-          QString::fromUtf8("Filter by Duration"), button);
+          QString::fromUtf8("Filter by Duration"), *button);
         auto filter_slot =
           profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
         panel->connect_submit_signal([=] (const auto& min, const auto& max) {
@@ -845,7 +873,7 @@ UiProfile Spire::make_filter_panel_profile() {
         auto max_text = new TextBox();
         max_text->setFixedSize(scale(120, 26));
         component_layout->addWidget(max_text, 1, 1);
-        auto panel = new FilterPanel(title.get(), component, button);
+        auto panel = new FilterPanel(title.get(), component, *button);
         panel->window()->setAttribute(Qt::WA_DeleteOnClose);
         panel->connect_reset_signal(profile.make_event_slot(
           QString::fromUtf8("ResetSignal")));
@@ -937,7 +965,7 @@ UiProfile Spire::make_hover_observer_profile() {
   auto profile = UiProfile(QString::fromUtf8("HoverObserver"), properties,
     [] (auto& profile) {
       auto container = new QWidget();
-      container->setFixedSize(scale(300, 200));
+      container->setFixedSize(scale(350, 300));
       apply_widget_properties(container, profile.get_properties());
       auto box1_body = new QWidget();
       auto overlap_box1 = make_input_box(new QWidget(), container);
@@ -946,29 +974,64 @@ UiProfile Spire::make_hover_observer_profile() {
       auto overlap_box2 = make_input_box(new QWidget(), container);
       overlap_box2->setFixedSize(scale(100, 100));
       overlap_box2->move(translate(50, 100));
-      auto grandchild_box = make_input_box(new QWidget());
-      grandchild_box->setSizePolicy(
-        QSizePolicy::Expanding, QSizePolicy::Expanding);
-      auto child_box = make_input_box(grandchild_box);
-      child_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      auto parent_box = make_input_box(child_box, container);
-      parent_box->setFixedSize(125, 150);
-      parent_box->move(translate(175, 50));
-      auto overlap1_observer = HoverObserver(*overlap_box1);
-      overlap1_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Overlap1"));
-      auto overlap2_observer = HoverObserver(*overlap_box2);
-      overlap2_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Overlap2"));
-      auto grandchild_observer = HoverObserver(*grandchild_box);
-      grandchild_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Grandchild"));
-      auto child_observer = HoverObserver(*child_box);
-      child_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Child"));
-      auto parent_observer = HoverObserver(*parent_box);
-      parent_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Parent"));
+      auto overlap1_observer = std::make_shared<HoverObserver>(*overlap_box1);
+      auto to_string = [] (HoverObserver::State state) {
+        switch(state) {
+          case HoverObserver::State::MOUSE_IN:
+            return QString::fromUtf8("MOUSE_IN");
+          case HoverObserver::State::MOUSE_OVER:
+            return QString::fromUtf8("MOUSE_OVER");
+        }
+        return QString::fromUtf8("NONE");
+      };
+      overlap1_observer->connect_state_signal(
+        [=, slot = profile.make_event_slot<QString>("Overlap1")] (auto state) {
+          overlap1_observer;
+          slot(to_string(state));
+        });
+      auto overlap2_observer = std::make_shared<HoverObserver>(*overlap_box2);
+      overlap2_observer->connect_state_signal(
+        [=, slot = profile.make_event_slot<QString>("Overlap2")] (auto state) {
+          overlap2_observer;
+          slot(to_string(state));
+        });
+      auto box_stack = std::make_shared<std::stack<Box*>>();
+      auto parent_box = make_input_box(new QWidget(), container);
+      box_stack->push(parent_box);
+      parent_box->setFixedSize(scale(175, 200));
+      parent_box->move(translate(175, 0));
+      auto add_button = make_label_button("Add Child", container);
+      add_button->move(translate(75, 225));
+      add_button->connect_clicked_signal([=] {
+        auto parent_box = box_stack->top();
+        auto box = make_input_box(new QWidget(), parent_box);
+        box->setFixedSize(parent_box->size().shrunkBy({scale_width(10),
+          scale_height(10), scale_width(10), scale_height(10)}));
+        box->move(translate(10, 10));
+        box->show();
+        box_stack->push(box);
+      });
+      auto remove_button = make_label_button("Remove Child", container);
+      remove_button->move(translate(200, 225));
+      remove_button->connect_clicked_signal([=] {
+        if(box_stack->size() > 1) {
+          auto box = box_stack->top();
+          box_stack->pop();
+          box->deleteLater();
+        }
+      });
+      auto left_button = make_label_button("Move Left", container);
+      left_button->move(translate(75, 265));
+      left_button->connect_clicked_signal([=] {
+        container->window()->move(
+          container->window()->x() - scale_width(50), container->window()->y());
+      });
+      auto right_button = make_label_button("Move Right", container);
+      right_button->move(translate(200, 265));
+      right_button->connect_clicked_signal([=] {
+        container->window()->move(
+          container->window()->x() + scale_width(50), container->window()->y());
+      });
       return container;
     });
   return profile;
@@ -1418,7 +1481,8 @@ UiProfile Spire::make_order_type_box_profile() {
 
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property("close_on_blur", true));
+  properties.push_back(make_standard_property("close-on-focus-out", false));
+  properties.push_back(make_standard_property("draggable", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
     {{"NONE", OverlayPanel::Positioning::NONE},
      {"PARENT", OverlayPanel::Positioning::PARENT}});
@@ -1426,58 +1490,30 @@ UiProfile Spire::make_overlay_panel_profile() {
     make_standard_enum_property("positioning", positioning_property));
   auto profile = UiProfile(QString::fromUtf8("OverlayPanel"), properties,
     [=] (auto& profile) {
-      auto& close_on_blur =
-        get<bool>("close_on_blur", profile.get_properties());
+      auto& close_on_focus_out =
+        get<bool>("close-on-focus-out", profile.get_properties());
+      auto& draggable = get<bool>("draggable", profile.get_properties());
       auto& positioning =
         get<OverlayPanel::Positioning>("positioning", profile.get_properties());
       auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto close_on_blur_connection = std::make_shared<scoped_connection>();
-      auto positioning_connection = std::make_shared<scoped_connection>();
       auto panel = QPointer<OverlayPanel>();
       button->connect_clicked_signal(
-        [=, &profile, &close_on_blur, &positioning] () mutable {
-          if(panel && !close_on_blur.get()) {
+        [=, &profile, &close_on_focus_out, &draggable, &positioning]
+            () mutable {
+          if(panel && !close_on_focus_out.get()) {
             return;
           }
-          auto body = new QWidget();
-          auto container_layout = new QVBoxLayout(body);
-          container_layout->setSpacing(0);
-          container_layout->setContentsMargins(
-            scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-          auto title_layout = new QHBoxLayout();
-          title_layout->setSpacing(scale_width(3));
-          auto title_name = new QLabel(QString::fromUtf8("Filter Date"));
-          title_layout->addWidget(title_name);
-          auto close_button =
-            make_icon_button(imageFromSvg(":/Icons/close.svg", scale(26, 26)));
-          close_button->setFixedSize(scale(26, 26));
-          close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-          close_button->connect_clicked_signal([=] {
-            close_button->window()->close();
-          });
-          title_layout->addWidget(close_button);
-          container_layout->addLayout(title_layout);
-          container_layout->addSpacing(scale_height(3));
-          auto content_layout = new QGridLayout();
-          content_layout->setSpacing(scale_width(5));
-          content_layout->setContentsMargins(
-            {scale_width(4), scale_height(4), scale_width(4), scale_height(4)});
-          content_layout->addWidget(
-            new QLabel(QString::fromUtf8("Start Date:")), 0, 0);
-          auto text_box1 = new TextBox();
-          text_box1->setFixedSize(scale(120, 26));
-          content_layout->addWidget(text_box1, 0, 1);
-          content_layout->addWidget(new QLabel(QString::fromUtf8("End Date:")),
-            1, 0);
-          auto text_box2 = new TextBox();
-          text_box2->setFixedSize(scale(120, 26));
-          content_layout->addWidget(text_box2, 1, 1);
-          content_layout->addWidget(make_label_button(
-            QString::fromUtf8("Reset")), 2, 1);
-          container_layout->addLayout(content_layout);
-          panel = new OverlayPanel(*body, button);
+          auto body = create_panel_body();
+          panel = new OverlayPanel(*body, *button);
+          auto child_button = body->findChild<Button*>();
+          child_button->connect_clicked_signal(
+            [=, &close_on_focus_out, &draggable, &positioning] {
+              create_child_panel(close_on_focus_out.get(), draggable.get(),
+                positioning.get(), child_button);
+            });
           panel->setAttribute(Qt::WA_DeleteOnClose);
-          panel->set_closed_on_blur(close_on_blur.get());
+          panel->set_closed_on_focus_out(close_on_focus_out.get());
+          panel->set_is_draggable(draggable.get());
           panel->set_positioning(positioning.get());
           panel->show();
         });
@@ -1934,6 +1970,25 @@ UiProfile Spire::make_time_box_profile() {
           QString::fromUtf8("Reject")));
       return time_box;
     });
+  return profile;
+}
+
+UiProfile Spire::make_time_in_force_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<TimeInForce>(
+    {{"Day", TimeInForce(TimeInForce::Type::DAY)},
+     {"GTC", TimeInForce(TimeInForce::Type::GTC)},
+     {"OPG", TimeInForce(TimeInForce::Type::OPG)},
+     {"IOC", TimeInForce(TimeInForce::Type::IOC)},
+     {"FOK", TimeInForce(TimeInForce::Type::FOK)},
+     {"GTX", TimeInForce(TimeInForce::Type::GTX)},
+     {"GTD", TimeInForce(TimeInForce::Type::GTD)},
+     {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile(QString::fromUtf8("TimeInForceBox"), properties,
+    std::bind_front(setup_enum_box_profile<TimeInForceBox,
+      make_time_in_force_box>));
   return profile;
 }
 

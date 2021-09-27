@@ -306,7 +306,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
     PaddingRight(scale_width(26)));
   set_style(*m_text_box, std::move(style));
   proxy_style(*this, *m_text_box);
-  connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
   if(auto current = m_model->get_current()) {

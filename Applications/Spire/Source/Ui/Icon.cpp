@@ -24,7 +24,7 @@ Icon::Icon(QImage icon, QWidget* parent)
       m_fill(QColor(0x755EEC)) {
   setAttribute(Qt::WA_Hover);
   set_style(*this, DEFAULT_STYLE());
-  connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
 QSize Icon::sizeHint() const {

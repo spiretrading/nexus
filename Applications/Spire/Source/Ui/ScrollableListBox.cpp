@@ -32,7 +32,8 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
   layout->addWidget(m_scroll_box);
   setLayout(layout);
   proxy_style(*this, *m_scroll_box);
-  connect_style_signal(*m_list_view, [=] { on_list_view_style(); });
+  m_list_view_style_connection =
+    connect_style_signal(*m_list_view, [=] { on_list_view_style(); });
   set_style(*this, make_default_style());
   m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(

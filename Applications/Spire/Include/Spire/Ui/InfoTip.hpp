@@ -1,5 +1,6 @@
 #ifndef SPIRE_INFO_TIP_HPP
 #define SPIRE_INFO_TIP_HPP
+#include <boost/signals2/connection.hpp>
 #include <QTimer>
 #include <QWidget>
 
@@ -48,6 +49,7 @@ namespace Spire {
       QColor m_background_color;
       QColor m_border_color;
       int m_border_size;
+      boost::signals2::scoped_connection m_style_connection;
 
       void fade_in();
       void fade_out();
