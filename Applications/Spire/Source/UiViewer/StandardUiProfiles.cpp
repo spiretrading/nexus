@@ -974,12 +974,27 @@ UiProfile Spire::make_hover_observer_profile() {
       auto overlap_box2 = make_input_box(new QWidget(), container);
       overlap_box2->setFixedSize(scale(100, 100));
       overlap_box2->move(translate(50, 100));
-      auto overlap1_observer = HoverObserver(*overlap_box1);
-      overlap1_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Overlap1"));
-      auto overlap2_observer = HoverObserver(*overlap_box2);
-      overlap2_observer.connect_state_signal(
-        profile.make_event_slot<HoverObserver::State>("Overlap2"));
+      auto overlap1_observer = std::make_shared<HoverObserver>(*overlap_box1);
+      auto to_string = [] (HoverObserver::State state) {
+        switch(state) {
+          case HoverObserver::State::MOUSE_IN:
+            return QString::fromUtf8("MOUSE_IN");
+          case HoverObserver::State::MOUSE_OVER:
+            return QString::fromUtf8("MOUSE_OVER");
+        }
+        return QString::fromUtf8("NONE");
+      };
+      overlap1_observer->connect_state_signal(
+        [=, slot = profile.make_event_slot<QString>("Overlap1")] (auto state) {
+          overlap1_observer;
+          slot(to_string(state));
+        });
+      auto overlap2_observer = std::make_shared<HoverObserver>(*overlap_box2);
+      overlap2_observer->connect_state_signal(
+        [=, slot = profile.make_event_slot<QString>("Overlap2")] (auto state) {
+          overlap2_observer;
+          slot(to_string(state));
+        });
       auto box_stack = std::make_shared<std::stack<Box*>>();
       auto parent_box = make_input_box(new QWidget(), container);
       box_stack->push(parent_box);
