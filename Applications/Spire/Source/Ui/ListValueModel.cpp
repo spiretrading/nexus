@@ -20,7 +20,8 @@ const ListValueModel::Type& ListValueModel::get_current() const {
   if(get_state() == QValidator::State::Acceptable) {
     return m_source->at(m_index);
   }
-  return m_value.get_current();
+  static auto value = std::any();
+  return value;
 }
 
 QValidator::State ListValueModel::set_current(const Type& value) {

@@ -1,7 +1,6 @@
 #ifndef SPIRE_LIST_VALUE_MODEL_HPP
 #define SPIRE_LIST_VALUE_MODEL_HPP
 #include <any>
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -35,7 +34,6 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       std::shared_ptr<ListModel> m_source;
       int m_index;
-      LocalValueModel<std::any> m_value;
       boost::signals2::scoped_connection m_operation_connection;
 
       void on_operation(const ListModel::Operation& operation);
