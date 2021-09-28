@@ -48,7 +48,7 @@ namespace Spire {
 
     private:
       struct EventFilter;
-      std::unique_ptr<EventFilter> m_event_filter;
+      std::shared_ptr<EventFilter> m_event_filter;
   };
 
   /**

@@ -94,8 +94,33 @@ struct HoverObserver::EventFilter : QObject {
   }
 };
 
-HoverObserver::HoverObserver(QWidget& widget)
-  : m_event_filter(std::make_unique<EventFilter>(widget)) {}
+HoverObserver::HoverObserver(QWidget& widget) {
+  static auto widget_workers = std::unordered_map<const QWidget*,
+    std::weak_ptr<EventFilter>>();
+  auto worker = widget_workers.find(&widget);
+  if(worker != widget_workers.end()) {
+    m_event_filter = worker->second.lock();
+  } else {
+    m_event_filter = std::shared_ptr<EventFilter>(
+      new EventFilter(widget), [] (auto* p) {
+        if(!p) {
+          return;
+        }
+        if(p->m_widget) {
+          widget_workers.erase(p->m_widget);
+        }
+        p->deleteLater();
+      });
+    QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
+      auto worker = widget_workers.find(&widget);
+      if(worker != widget_workers.end()) {
+        worker->second.lock()->m_widget = nullptr;
+        widget_workers.erase(worker);
+      }
+    });
+    widget_workers.emplace(&widget, m_event_filter);
+  }
+}
 
 HoverObserver::~HoverObserver() = default;
 
