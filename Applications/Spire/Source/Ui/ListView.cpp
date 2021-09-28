@@ -207,11 +207,18 @@ void ListView::append_query(const QString& query) {
   if(!m_items.empty()) {
     auto start = m_current_model->get_current().get_value_or(-1);
     auto i = (start + 1) % static_cast<int>(m_items.size());
+    auto is_repeated_query = m_query.count(m_query.at(0)) == m_query.count();
     while(i != start) {
-      if(m_items[i]->m_item->isEnabled() && displayTextAny(
-          m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
-        set_current(i);
-        break;
+      if(m_items[i]->m_item->isEnabled())
+        if(is_repeated_query && displayTextAny(
+            m_list_model->at(i)).toLower().startsWith(m_query.at(0))) {
+          set_current(i);
+          break;
+        } else if(displayTextAny(m_list_model->at(i)).toLower().startsWith(
+            m_query.toLower())) {
+          set_current(i);
+          break;
+        }
       }
       ++i;
       if(i == m_items.size()) {
