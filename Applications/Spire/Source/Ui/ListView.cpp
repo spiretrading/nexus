@@ -209,7 +209,7 @@ void ListView::append_query(const QString& query) {
     auto i = (start + 1) % static_cast<int>(m_items.size());
     auto is_repeated_query = m_query.count(m_query.at(0)) == m_query.count();
     while(i != start) {
-      if(m_items[i]->m_item->isEnabled())
+      if(m_items[i]->m_item->isEnabled()) {
         if(is_repeated_query && displayTextAny(
             m_list_model->at(i)).toLower().startsWith(m_query.at(0))) {
           set_current(i);
