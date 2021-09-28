@@ -886,7 +886,7 @@ UiProfile Spire::make_focus_observer_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
-    {{"DurationBox", 0}, {"ListItem", 1}, {"LabelButton", 2}, {"ListView", 3}});
+    {{"DurationBox", 0}, {"LabelButton", 1}, {"ListView", 2}});
   properties.push_back(
     make_standard_enum_property("widget", test_widget_property));
   properties.push_back(make_standard_property("observer_count", 1));
@@ -913,9 +913,14 @@ UiProfile Spire::make_focus_observer_profile() {
         if(value == 0) {
           return new DurationBox();
         } else if(value == 1) {
-          return new ListItem(make_label(QString::fromUtf8("ListItem")));
-        } else if(value == 2) {
-          return make_label_button("Label Button");
+          auto label_button = make_label_button("Label Button");
+          auto style = get_style(*label_button);
+          style.get(Focus() / Body()).set(
+            border_color(QColor(Qt::transparent)));
+          style.get(FocusVisible() / Body()).set(
+            border_color(QColor(0x4B23A0)));
+          set_style(*label_button, std::move(style));
+          return label_button;
         } else {
           auto item_count = 10;
           auto list_model = std::make_shared<ArrayListModel>();
