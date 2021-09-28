@@ -35,7 +35,7 @@ namespace {
       }
     }
 
-    bool is_match(FocusObserver::State state) {
+    bool is_match(FocusObserver::State state) const {
       return state == m_expected_state ||
         m_expected_state == FocusObserver::State::FOCUS &&
         is_set(state, m_expected_state);
