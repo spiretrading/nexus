@@ -122,8 +122,6 @@ HoverObserver::HoverObserver(QWidget& widget) {
   }
 }
 
-HoverObserver::~HoverObserver() = default;
-
 HoverObserver::State HoverObserver::get_state() const {
   return m_event_filter->m_state;
 }

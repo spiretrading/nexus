@@ -37,8 +37,6 @@ namespace Spire {
        */
       explicit HoverObserver(QWidget& widget);
 
-      ~HoverObserver();
-
       /** Returns the current state. */
       State get_state() const;
 
