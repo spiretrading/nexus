@@ -10,6 +10,13 @@ using namespace boost::gregorian;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto BUTTON_SIZE() {
+    static auto size = scale(16, 16);
+    return size;
+  }
+}
+
 MonthSpinner::MonthSpinner(QWidget* parent)
   : MonthSpinner(
       std::make_shared<LocalDateModel>(day_clock::local_day()), parent) {}
@@ -25,8 +32,8 @@ MonthSpinner::MonthSpinner(std::shared_ptr<DateModel> model,
   layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
   layout->setSpacing(scale_width(8));
   m_previous_button = make_icon_button(
-    imageFromSvg(":Icons/calendar-arrow-left.svg", scale(16, 16)));
-  m_previous_button->setFixedSize(scale(16, 16));
+    imageFromSvg(":Icons/calendar-arrow-left.svg", BUTTON_SIZE()));
+  m_previous_button->setFixedSize(BUTTON_SIZE());
   m_previous_button->connect_clicked_signal([=] { decrement(); });
   layout->addWidget(m_previous_button);
   m_label = make_label("", this);
@@ -36,8 +43,8 @@ MonthSpinner::MonthSpinner(std::shared_ptr<DateModel> model,
   set_style(*m_label, std::move(label_style));
   layout->addWidget(m_label);
   m_next_button = make_icon_button(
-    imageFromSvg(":Icons/calendar-arrow-right.svg", scale(16, 16)));
-  m_next_button->setFixedSize(scale(16, 16));
+    imageFromSvg(":Icons/calendar-arrow-right.svg", BUTTON_SIZE()));
+  m_next_button->setFixedSize(BUTTON_SIZE());
   m_next_button->connect_clicked_signal([=] { increment(); });
   layout->addWidget(m_next_button);
   m_model->connect_current_signal([=] (auto date) { on_current(date); });

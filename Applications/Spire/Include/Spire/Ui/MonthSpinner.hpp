@@ -12,13 +12,13 @@ namespace Spire {
   /** A LocalValueModel over a date. */
   using LocalDateModel = LocalValueModel<boost::gregorian::date>;
 
-  /** Represents an inputting for selecting a month and year. */
+  /** Represents an input for selecting a month and year. */
   class MonthSpinner : public QWidget {
     public:
 
       /**
-       * Constructs a MonthSpinner using a LocalDateModel and using the
-       * system's current date as the initial date.
+       * Constructs a MonthSpinner using a LocalDateModel and the system's
+       * current date as the initial date.
        * @param parent The parent widget.
        */
       explicit MonthSpinner(QWidget* parent = nullptr);

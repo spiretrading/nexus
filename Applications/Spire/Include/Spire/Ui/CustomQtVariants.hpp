@@ -1,8 +1,8 @@
 #ifndef SPIRE_CUSTOM_VARIANTS_HPP
 #define SPIRE_CUSTOM_VARIANTS_HPP
 #include <any>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
