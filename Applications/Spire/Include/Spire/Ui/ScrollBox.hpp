@@ -100,6 +100,7 @@ namespace Spire {
       QMargins m_borders;
       Styles::StyleSheetMap m_border_styles;
       Styles::StyleSheetMap m_padding_styles;
+      boost::signals2::scoped_connection m_style_connection;
 
       void commit_border_styles();
       void commit_padding_styles();

@@ -146,7 +146,7 @@ void Spire::register_custom_qt_variants() {}
 const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
   auto type = time_in_force.GetType();
   if(type == TimeInForce::Type::DAY) {
-    static const auto value = QObject::tr("DAY");
+    static const auto value = QObject::tr("Day");
     return value;
   } else if(type == TimeInForce::Type::FOK) {
     static const auto value = QObject::tr("FOK");
@@ -177,10 +177,10 @@ const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
 
 const QString& Spire::displayText(Side side) {
   if(side == Side::ASK) {
-    static const auto value = QObject::tr("Ask");
+    static const auto value = QObject::tr("Sell");
     return value;
   } else if(side == Side::BID) {
-    static const auto value = QObject::tr("Bid");
+    static const auto value = QObject::tr("Buy");
     return value;
   } else {
     static const auto value = QObject::tr("None");
@@ -233,16 +233,16 @@ const QString& Spire::displayText(OrderStatus status) {
 
 const QString& Spire::displayText(OrderType type) {
   if(type == OrderType::MARKET) {
-    static const auto value = QObject::tr("MKT");
+    static const auto value = QObject::tr("Market");
     return value;
   } else if(type == OrderType::LIMIT) {
-    static const auto value = QObject::tr("LMT");
+    static const auto value = QObject::tr("Limit");
     return value;
   } else if(type == OrderType::PEGGED) {
-    static const auto value = QObject::tr("PEG");
+    static const auto value = QObject::tr("Pegged");
     return value;
   } else if(type == OrderType::STOP) {
-    static const auto value = QObject::tr("STP");
+    static const auto value = QObject::tr("Stop");
     return value;
   } else {
     static const auto value = QObject::tr("None");

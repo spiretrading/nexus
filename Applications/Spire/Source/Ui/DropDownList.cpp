@@ -20,21 +20,23 @@ namespace {
   }
 }
 
-DropDownList::DropDownList(ListView& list_view, QWidget* parent)
-    : QWidget(parent),
+DropDownList::DropDownList(ListView& list_view, QWidget& parent)
+    : QWidget(&parent),
       m_list_view(&list_view),
       m_panel_border_size(0, 0) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
+  setFocusProxy(m_list_view);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
   set_style(*m_scrollable_list_box,
     SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
   layout->addWidget(m_scrollable_list_box);
-  m_panel = new OverlayPanel(this, parent);
-  m_panel->set_closed_on_blur(true);
+  m_panel = new OverlayPanel(*this, parent);
+  m_panel->set_closed_on_focus_out(true);
   on_panel_style();
-  connect_style_signal(*m_panel, [=] { on_panel_style(); });
-  parent->installEventFilter(this);
+  m_panel_style_connection =
+    connect_style_signal(*m_panel, [=] { on_panel_style(); });
+  parent.installEventFilter(this);
   m_scrollable_list_box->installEventFilter(this);
 }
 

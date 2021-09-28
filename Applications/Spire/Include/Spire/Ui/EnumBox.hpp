@@ -113,13 +113,12 @@ namespace Spire {
       m_current =
         std::make_shared<LocalValueModel<Type>>(settings.m_cases->get<Type>(0));
     }
-    auto list_view = new ListView(settings.m_cases,
+    m_drop_down_box = new DropDownBox(settings.m_cases,
       std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current),
       std::make_shared<LocalValueModel<boost::optional<int>>>(),
       [view_builder = settings.m_view_builder] (const auto& model, auto index) {
         return view_builder(model->get<Type>(index));
       });
-    m_drop_down_box = new DropDownBox(*list_view);
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});
     layout->addWidget(m_drop_down_box);
