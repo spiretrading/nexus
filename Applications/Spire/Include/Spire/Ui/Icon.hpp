@@ -34,6 +34,7 @@ namespace Styles {
       QColor m_background_color;
       boost::optional<QColor> m_fill;
       boost::optional<QColor> m_border_color;
+      boost::signals2::scoped_connection m_style_connection;
 
       void on_style();
   };

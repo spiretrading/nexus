@@ -105,7 +105,7 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
   set_style(*this, DEFAULT_STYLE());
   update_layout();
   proxy_style(*this, *m_box);
-  connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   const auto QUERY_TIMEOUT_MS = 500;
   m_query_timer->setSingleShot(true);
   m_query_timer->setInterval(QUERY_TIMEOUT_MS);
