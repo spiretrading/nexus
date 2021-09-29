@@ -67,6 +67,9 @@ namespace Spire::Styles {
   /** Selects a widget if it was focused using a non-pointing device. */
   using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
+  /** Selects the checked widget. */
+  using Checked = StateSelector<void, struct CheckedSelectorTag>;
+
   template<typename T, typename G>
   SelectConnection select(const StateSelector<T, G>& selector,
       const Stylist& base, const SelectionUpdateSignal& on_update) {

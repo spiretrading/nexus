@@ -6,11 +6,6 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-namespace Styles {
-
-  /** Selects a checked CheckBox. */
-  using Checked = StateSelector<void, struct CheckedTag>;
-}
 
   /** A ValueModel over a bool. */
   using BooleanModel = ValueModel<bool>;
