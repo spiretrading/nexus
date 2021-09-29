@@ -35,9 +35,10 @@ namespace Spire {
     private:
       mutable CurrentSignal m_current_signal;
       std::shared_ptr<ValueModel<Type>> m_model;
+      CustomVariantItemDelegate m_delegate;
       ToString m_to_string;
       ToType m_to_type;
-      CustomVariantItemDelegate m_delegate;
+      QString m_current;
 
       QString to_string(const Type& value);
       void on_current(const Type& current);
@@ -46,14 +47,16 @@ namespace Spire {
   template<typename T>
   ToTextModel<T>::ToTextModel(
     std::shared_ptr<ValueModel<Type>> model, const ToType& to_type)
-    : ToTextModel(std::move(model), &ToTextModel::to_string, to_type) {}
+    : ToTextModel(std::move(model), std::bind(
+        &ToTextModel::to_string, this, std::placeholders::_1), to_type) {}
 
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Type>> model,
       const ToString& to_string, const ToType& to_type)
       : m_model(std::move(model)),
         m_to_string(to_string),
-        m_to_type(to_type) {
+        m_to_type(to_type),
+        m_current(m_to_string(m_model->get_current())) {
     m_model->connect_current_signal([=] (const auto& current) {
       on_current(current);
     });
@@ -66,7 +69,7 @@ namespace Spire {
 
   template<typename T>
   const QString& ToTextModel<T>::get_current() const {
-    return m_to_string(m_model->get_current());
+    return m_current;
   }
 
   template<typename T>
@@ -90,7 +93,8 @@ namespace Spire {
 
   template<typename T>
   void ToTextModel<T>::on_current(const Type& current) {
-    m_current_signal(m_to_string(current));
+    m_current = m_to_string(current);
+    m_current_signal(m_current);
   }
 }
 
