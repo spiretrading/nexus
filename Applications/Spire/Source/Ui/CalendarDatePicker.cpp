@@ -3,6 +3,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::gregorian;
@@ -22,7 +23,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     explicit MonthSpinner(
         std::shared_ptr<DateModel> model, QWidget* parent = nullptr)
         : QWidget(parent),
-        m_model(std::move(model)) {
+          m_model(std::move(model)) {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
       layout->setSpacing(scale_width(8));
