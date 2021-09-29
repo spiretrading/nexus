@@ -94,6 +94,8 @@ namespace Styles {
       StyleProperties m_text_edit_styles;
       ElidedLabel* m_placeholder;
       StyleProperties m_placeholder_styles;
+      boost::signals2::scoped_connection m_style_connection;
+      boost::signals2::scoped_connection m_placeholder_style_connection;
       ScrollBox* m_scroll_box;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;

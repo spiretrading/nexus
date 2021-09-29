@@ -31,6 +31,7 @@ namespace Spire {
   template<typename T> class ListIndexValueModel;
   class ListItem;
   class ListModel;
+  class ListValueModel;
   class ListView;
   class MoneyBox;
   class MonthSelector;
