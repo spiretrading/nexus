@@ -15,6 +15,7 @@
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -31,7 +32,6 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
-#include "Spire/Ui/MonthSpinner.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
@@ -356,6 +356,16 @@ namespace {
     panel->set_positioning(positioning);
     panel->show();
   }
+
+  auto parse_date(const QString& string) -> boost::optional<date> {
+    try {
+      auto parsed_date = from_string(string.toStdString());
+      if(!parsed_date.is_not_a_date()) {
+        return parsed_date;
+      }
+    } catch(const std::exception&) {}
+    return {};
+  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -395,6 +405,55 @@ UiProfile Spire::make_box_profile() {
         set_style(*box, std::move(style));
       });
       return box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_calendar_date_picker_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_date = boost::gregorian::day_clock::local_day();
+  properties.push_back(make_standard_property(
+    "current", displayTextAny(current_date)));
+  properties.push_back(make_standard_property(
+    "min", displayTextAny(current_date - boost::gregorian::months(2))));
+  properties.push_back(make_standard_property(
+    "max", displayTextAny(current_date + boost::gregorian::months(2))));
+  auto profile = UiProfile(QString::fromUtf8("CalendarDatePicker"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<LocalOptionalDateModel>();
+      auto& current = get<QString>("current", profile.get_properties());
+      model->set_current(parse_date(current.get()));
+      auto& min = get<QString>("min", profile.get_properties());
+      if(auto min_date = parse_date(min.get())) {
+        model->set_minimum(min_date);
+      } else {
+        model->set_minimum(date(1900, 1, 1));
+      }
+      auto& max = get<QString>("max", profile.get_properties());
+      if(auto max_date = parse_date(max.get())) {
+        model->set_maximum(*max_date);
+      } else {
+        model->set_maximum(date(2100, 12, 31));
+      }
+      auto calendar = new CalendarDatePicker(model, nullptr);
+      apply_widget_properties(calendar, profile.get_properties());
+      current.connect_changed_signal([=] (const auto& value) {
+        auto date = parse_date(value);
+        if(date && !date->is_not_a_date() && *date != model->get_current()) {
+          model->set_current(*date);
+        }
+      });
+      calendar->get_model()->connect_current_signal([&current] (auto day) {
+        if(day) {
+          current.set(displayTextAny(*day));
+        }
+      });
+      calendar->get_model()->connect_current_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Current")));
+      calendar->connect_submit_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Submit")));
+      return calendar;
     });
   return profile;
 }
@@ -1389,52 +1448,6 @@ UiProfile Spire::make_money_filter_panel_profile() {
     properties, Money::CENT, QString::fromUtf8("Filter by Money"));
   auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"),
     properties, setup_scalar_filter_panel_profile<MoneyBox>);
-  return profile;
-}
-
-UiProfile Spire::make_month_spinner_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto current_day = day_clock::local_day();
-  properties.push_back(make_standard_property("month", 0));
-  properties.push_back(make_standard_property("year", 0));
-  auto profile = UiProfile(QString::fromUtf8("MonthSpinner"), properties,
-    [] (auto& profile) {
-      auto month_spinner = new MonthSpinner();
-      apply_widget_properties(month_spinner, profile.get_properties());
-      month_spinner->setFixedSize(scale(168, 26));
-      auto& month = get<int>("month", profile.get_properties());
-      month.connect_changed_signal([=] (auto value) {
-        auto current = month_spinner->get_model()->get_current();
-        if(current.month() != value) {
-          try {
-            month_spinner->get_model()->set_current({current.year(),
-              static_cast<gregorian_calendar::month_type>(value),
-              current.day()});
-          } catch(const std::exception&) {}
-        }
-      });
-      month.set(month_spinner->get_model()->get_current().month());
-      auto& year = get<int>("year", profile.get_properties());
-      year.connect_changed_signal([=] (auto year) {
-        auto current = month_spinner->get_model()->get_current();
-        if(current.year() != year) {
-          try {
-            month_spinner->get_model()->set_current({
-              static_cast<gregorian_calendar::year_type>(year), current.month(),
-              current.day()});
-          } catch(const std::exception&) {}
-        }
-      });
-      year.set(month_spinner->get_model()->get_current().year());
-      month_spinner->get_model()->connect_current_signal([&] (auto current) {
-        month.set(current.month());
-        year.set(current.year());
-      });
-      month_spinner->get_model()->connect_current_signal(
-        profile.make_event_slot<date>(QString::fromUtf8("Current")));
-      return month_spinner;
-    });
   return profile;
 }
 

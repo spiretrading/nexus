@@ -14,6 +14,7 @@ namespace Spire {
   class ArrayTableModel;
   class Box;
   class Button;
+  class CalendarDatePicker;
   class CheckBox;
   class DecimalBox;
   class DestinationListItem;
@@ -34,7 +35,6 @@ namespace Spire {
   class ListValueModel;
   class ListView;
   class MoneyBox;
-  class MonthSelector;
   class OverlayPanel;
   class RegionListItem;
   class RowViewListModel;
