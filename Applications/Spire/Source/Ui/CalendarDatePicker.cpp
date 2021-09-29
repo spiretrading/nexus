@@ -12,7 +12,6 @@ using namespace Spire::Styles;
 
 class CalendarDatePicker::MonthSpinner : public QWidget {
   public:
-
     explicit MonthSpinner(QWidget* parent = nullptr)
       : MonthSpinner(
           std::make_shared<LocalDateModel>(day_clock::local_day()), parent) {}
