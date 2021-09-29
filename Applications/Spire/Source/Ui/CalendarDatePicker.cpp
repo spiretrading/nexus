@@ -92,6 +92,9 @@ CalendarDatePicker::CalendarDatePicker(
   m_month_spinner = new MonthSpinner(std::make_shared<LocalDateModel>(
     m_model->get_current().get_value_or(day_clock::local_day())), this);
   layout->addWidget(m_month_spinner);
+  m_model->connect_current_signal([=] (const auto& current) {
+    on_current(current);
+  });
 }
 
 const std::shared_ptr<OptionalDateModel>&
@@ -102,4 +105,10 @@ const std::shared_ptr<OptionalDateModel>&
 connection CalendarDatePicker::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+void CalendarDatePicker::on_current(const boost::optional<date>& current) {
+  if(current) {
+    m_month_spinner->get_model()->set_current(*current);
+  }
 }
