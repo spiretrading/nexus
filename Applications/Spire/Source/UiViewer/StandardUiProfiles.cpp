@@ -436,7 +436,7 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       } else {
         model->set_maximum(date(2100, 12, 31));
       }
-      auto calendar = new CalendarDatePicker(model, nullptr);
+      auto calendar = new CalendarDatePicker(model);
       apply_widget_properties(calendar, profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
         auto date = parse_date(value);
