@@ -185,7 +185,7 @@ void NavigationView::insert_tab(int index, QWidget* page,
     set(border_color(QColor(Qt::transparent))).
     set(border_size(0)).
     set(padding(0));
-  style.get((Hover() || Selected()) >> is_a<TextBox>()).
+  style.get((Checked() || Hover() || Selected()) >> is_a<TextBox>()).
     set(TextColor(QColor(0x4B23A0)));
   style.get(Disabled() >> is_a<TextBox>()).
     set(TextColor(QColor(0xC8C8C8)));
