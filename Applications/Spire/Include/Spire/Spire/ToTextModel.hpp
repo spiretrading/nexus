@@ -74,14 +74,13 @@ namespace Spire {
 
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<ModelType>> model,
-      ToString to_string, ToType to_type)
-      : m_model(std::move(model)),
-        m_to_string(std::move(to_string)),
-        m_to_type(std::move(to_type)),
-        m_current(m_to_string(m_model->get_current())) {
-    m_current_connection = m_model->connect_current_signal(
-      [=] (const auto& current) { on_current(current); });
-  }
+    ToString to_string, ToType to_type)
+    : m_model(std::move(model)),
+      m_to_string(std::move(to_string)),
+      m_to_type(std::move(to_type)),
+      m_current(m_to_string(m_model->get_current())),
+      m_current_connection(m_model->connect_current_signal(
+        [=] (const auto& current) { on_current(current); })) {}
 
   template<typename T>
   QValidator::State ToTextModel<T>::get_state() const {
