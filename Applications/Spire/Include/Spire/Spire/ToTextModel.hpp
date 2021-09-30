@@ -38,7 +38,7 @@ namespace Spire {
        * @param to_type The QString to value conversion function.
        */
       ToTextModel(std::shared_ptr<ValueModel<Type>> model,
-          const ToString& to_string, const ToType& to_type);
+        const ToString& to_string, const ToType& to_type);
 
       QValidator::State get_state() const override;
 
@@ -56,6 +56,7 @@ namespace Spire {
       ToString m_to_string;
       ToType m_to_type;
       QString m_current;
+      boost::signals2::scoped_connection m_current_connection;
 
       QString to_string(const Type& value);
       void on_current(const Type& current);
@@ -74,9 +75,8 @@ namespace Spire {
         m_to_string(to_string),
         m_to_type(to_type),
         m_current(m_to_string(m_model->get_current())) {
-    m_model->connect_current_signal([=] (const auto& current) {
-      on_current(current);
-    });
+    m_current_connection = m_model->connect_current_signal(
+      [=] (const auto& current) { on_current(current); });
   }
 
   template<typename T>
