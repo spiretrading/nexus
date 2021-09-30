@@ -5,20 +5,38 @@
 
 namespace Spire {
 
+  /**
+   * Implements a model that wraps a reference model and converts its values to
+   * and from their string representations.
+   */
   template<typename T>
   class ToTextModel : public ValueModel<QString> {
     public:
 
+      /** The type used by the reference model. */
       using Type = T;
 
+      /** Function for converting a value to a QString. */
       using ToString = std::function<QString (const Type& value)>;
 
+      /** Function for converting a QString to a value. */
       using ToType =
         std::function<boost::optional<Type> (const QString& value)>;
 
+      /**
+       * Constructs a ToTextModel.
+       * @param model The reference model.
+       * @param to_type The QString to value conversion function.
+       */
       ToTextModel(
         std::shared_ptr<ValueModel<Type>> model, const ToType& to_type);
 
+      /**
+       * Constructs a ToTextModel.
+       * @param model The reference model.
+       * @param to_string The value to QString conversion function.
+       * @param to_type The QString to value conversion function.
+       */
       ToTextModel(std::shared_ptr<ValueModel<Type>> model,
           const ToString& to_string, const ToType& to_type);
 
