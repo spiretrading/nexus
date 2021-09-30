@@ -79,7 +79,8 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
       m_selection_mode(SelectionMode::SINGLE),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
-      m_query_timer(new QTimer(this)) {
+      m_query_timer(new QTimer(this)),
+      m_focus_reason(Qt::OtherFocusReason) {
   setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list_model, i));
@@ -343,6 +344,7 @@ void ListView::set_current(optional<int> current) {
     m_items[*current]->set_current(true);
   }
   m_last_current = current;
+  m_focus_reason = Qt::ShortcutFocusReason;
   m_current_model->set_current(current);
 }
 
@@ -496,10 +498,11 @@ void ListView::on_current(const optional<int>& current) {
     m_items[*m_last_current]->set_current(false);
   }
   if(current && (hasFocus() || isAncestorOf(focusWidget()))) {
-    m_items[*current]->m_item->setFocus();
+    m_items[*current]->m_item->setFocus(m_focus_reason);
   } else if(isAncestorOf(focusWidget())) {
     setFocus();
   }
+  m_focus_reason = Qt::OtherFocusReason;
   if(current) {
     auto& item = *m_items[*current];
     m_navigation_box = item.m_item->frameGeometry();

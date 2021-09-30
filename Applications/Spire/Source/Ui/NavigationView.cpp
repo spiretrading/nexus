@@ -65,6 +65,7 @@ class NavigationView::NavigationTab : public QWidget {
   public:
     explicit NavigationTab(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
+      setFocusPolicy(Qt::StrongFocus);
       auto layers = new LayeredWidget();
       layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto container = new LabelContainer(std::move(label));
