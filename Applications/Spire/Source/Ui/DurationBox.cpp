@@ -483,7 +483,6 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
           m_minute_field->get_model()->get_current() ||
           m_second_field->get_model()->get_current())) {
         on_submit();
-        return true;
       }
     } else if(key_event.key() == Qt::Key_Left &&
         (field == m_minute_field || field == m_second_field)) {
