@@ -98,8 +98,6 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<bool>(value));
   } else if(value.type() == typeid(int)) {
     return QVariant::fromValue(std::any_cast<int>(value));
-  } else if(value.type() == typeid(Quantity)) {
-    return QVariant::fromValue(std::any_cast<Quantity>(value));
   } else if(value.type() == typeid(double)) {
     return QVariant::fromValue(std::any_cast<double>(value));
   } else if(value.type() == typeid(ptime)) {
@@ -175,6 +173,30 @@ const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
   }
 }
 
+boost::optional<TimeInForce> Spire::to_time_in_force(const QString& string) {
+  auto lower = string.toLower();
+  if(lower == QObject::tr("day")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::DAY);
+  } else if(lower == QObject::tr("fok")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::FOK);
+  } else if(lower == QObject::tr("gtc")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::GTC);
+  } else if(lower == QObject::tr("gtd")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::GTD);
+  } else if(lower == QObject::tr("gtx")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::GTX);
+  } else if(lower == QObject::tr("ioc")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::IOC);
+  } else if(lower == QObject::tr("moc")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::MOC);
+  } else if(lower == QObject::tr("opg")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::OPG);
+  } else if(lower == QObject::tr("none")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::NONE);
+  }
+  return boost::none;
+}
+
 const QString& Spire::displayText(Side side) {
   if(side == Side::ASK) {
     static const auto value = QObject::tr("Sell");
@@ -186,6 +208,18 @@ const QString& Spire::displayText(Side side) {
     static const auto value = QObject::tr("None");
     return value;
   }
+}
+
+boost::optional<Side> Spire::to_side(const QString& string) {
+  auto lower = string.toLower();
+  if(lower == QObject::tr("sell")) {
+    return boost::optional<Side>(Side::ASK);
+  } else if(lower == QObject::tr("buy")) {
+    return boost::optional<Side>(Side::BID);
+  } else if(lower == QObject::tr("none")) {
+    return boost::optional<Side>(Side::NONE);
+  }
+  return boost::none;
 }
 
 const QString& Spire::displayText(OrderStatus status) {
@@ -231,6 +265,38 @@ const QString& Spire::displayText(OrderStatus status) {
   }
 }
 
+boost::optional<OrderStatus> Spire::to_order_status(const QString& string) {
+  auto lower = string.toLower();
+  if(lower == QObject::tr("pending new")) {
+    return boost::optional<OrderStatus>(OrderStatus::PENDING_NEW);
+  } else if(lower == QObject::tr("rejected")) {
+    return boost::optional<OrderStatus>(OrderStatus::REJECTED);
+  } else if(lower == QObject::tr("new")) {
+    return boost::optional<OrderStatus>(OrderStatus::NEW);
+  } else if(lower == QObject::tr("partially filled")) {
+    return boost::optional<OrderStatus>(OrderStatus::PARTIALLY_FILLED);
+  } else if(lower == QObject::tr("expired")) {
+    return boost::optional<OrderStatus>(OrderStatus::EXPIRED);
+  } else if(lower == QObject::tr("canceled")) {
+    return boost::optional<OrderStatus>(OrderStatus::CANCELED);
+  } else if(lower == QObject::tr("suspended")) {
+    return boost::optional<OrderStatus>(OrderStatus::SUSPENDED);
+  } else if(lower == QObject::tr("stopped")) {
+    return boost::optional<OrderStatus>(OrderStatus::STOPPED);
+  } else if(lower == QObject::tr("filled")) {
+    return boost::optional<OrderStatus>(OrderStatus::FILLED);
+  } else if(lower == QObject::tr("done for day")) {
+    return boost::optional<OrderStatus>(OrderStatus::DONE_FOR_DAY);
+  } else if(lower == QObject::tr("pending cancel")) {
+    return boost::optional<OrderStatus>(OrderStatus::PENDING_CANCEL);
+  } else if(lower == QObject::tr("cancel reject")) {
+    return boost::optional<OrderStatus>(OrderStatus::CANCEL_REJECT);
+  } else if(lower == QObject::tr("none")) {
+    return boost::optional<OrderStatus>(OrderStatus::NONE);
+  }
+  return boost::none;
+}
+
 const QString& Spire::displayText(OrderType type) {
   if(type == OrderType::MARKET) {
     static const auto value = QObject::tr("Market");
@@ -248,6 +314,22 @@ const QString& Spire::displayText(OrderType type) {
     static const auto value = QObject::tr("None");
     return value;
   }
+}
+
+boost::optional<Nexus::OrderType> Spire::to_order_type(const QString& string) {
+  auto lower = string.toLower();
+  if(lower == QObject::tr("market")) {
+    return boost::optional<OrderType>(OrderType::MARKET);
+  } else if(lower == QObject::tr("limit")) {
+    return boost::optional<OrderType>(OrderType::LIMIT);
+  } else if(lower == QObject::tr("pegged")) {
+    return boost::optional<OrderType>(OrderType::PEGGED);
+  } else if(lower == QObject::tr("stop")) {
+    return boost::optional<OrderType>(OrderType::STOP);
+  } else if(lower == QObject::tr("none")) {
+    return boost::optional<OrderType>(OrderType::NONE);
+  }
+  return boost::none;
 }
 
 QString Spire::displayTextAny(const std::any& value) {
