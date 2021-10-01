@@ -112,7 +112,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_current_connection;
 
       void on_current(int index);
-      void on_submit(const std::any& submission);
+      void on_list_submit(const std::any& submission);
+      void on_list_current(const boost::optional<int>& current);
       void on_associative_value_current(int index, bool value);
   };
 }

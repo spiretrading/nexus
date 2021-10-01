@@ -159,7 +159,9 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
     set(BorderTopColor(QColor(0xD0D0D0)));
   set_style(*this, std::move(style));
   m_navigation_list->connect_submit_signal(
-    std::bind_front(&NavigationView::on_submit, this));
+    std::bind_front(&NavigationView::on_list_submit, this));
+  m_navigation_list->get_current_model()->connect_current_signal(
+    std::bind_front(&NavigationView::on_list_current, this));
 }
 
 const std::shared_ptr<NavigationView::CurrentModel>&
@@ -177,7 +179,7 @@ void NavigationView::insert_tab(int index, QWidget* page,
     throw std::out_of_range("The index is out of range.");
   }
   if(!page) {
-    throw std::out_of_range("The page is null.");
+    return;
   }
   static_pointer_cast<ArrayListModel>(m_navigation_list->get_list_model())->
     insert(tab_label, index);
@@ -242,24 +244,29 @@ void NavigationView::set_tab_enabled(int index, bool is_enabled) {
     if(!m_stacked_widget->widget(m_current_model->get_current())->isEnabled()) {
       m_current_model->set_current(index);
     }
-  } else if(!is_enabled && m_current_model->get_current() == index) {
-    auto new_index = [=] {
-      for(auto i = index + 1; i < get_tab_count(); ++i) {
-        if(m_navigation_list->get_list_item(i)->isEnabled()) {
-          return i;
+  } else {
+    if(m_current_model->get_current() == index) {
+      auto new_index = [=] {
+        for(auto i = index + 1; i < get_tab_count(); ++i) {
+          if(m_navigation_list->get_list_item(i)->isEnabled()) {
+            return i;
+          }
         }
-      }
-      for(auto i = index - 1; i > -1; --i) {
-        if(m_navigation_list->get_list_item(i)->isEnabled()) {
-          return i;
+        for(auto i = index - 1; i > -1; --i) {
+          if(m_navigation_list->get_list_item(i)->isEnabled()) {
+            return i;
+          }
         }
+        return -1;
+      }();
+      if(new_index > -1) {
+        m_current_model->set_current(new_index);
+      } else {
+        m_navigation_list->setEnabled(false);
       }
-      return -1;
-    }();
-    if(new_index > -1) {
-      m_current_model->set_current(new_index);
-    } else {
-      m_navigation_list->setEnabled(false);
+    } else if(m_navigation_list->get_current_model()->get_current() == index) {
+      m_navigation_list->get_current_model()->set_current(
+        m_current_model->get_current());
     }
   }
 }
@@ -274,9 +281,17 @@ void NavigationView::on_current(int index) {
   }
 }
 
-void NavigationView::on_submit(const std::any& submission) {
+void NavigationView::on_list_submit(const std::any& submission) {
   m_associative_model.get_association(
     std::any_cast<QString>(submission))->set_current(true);
+}
+
+void NavigationView::on_list_current(const boost::optional<int>& current) {
+  if(current) {
+    m_stacked_widget->setFocusPolicy(Qt::TabFocus);
+    setTabOrder(m_stacked_widget, m_navigation_list->get_list_item(*current));
+    m_stacked_widget->setFocusPolicy(Qt::NoFocus);
+  }
 }
 
 void NavigationView::on_associative_value_current(int index, bool value) {
