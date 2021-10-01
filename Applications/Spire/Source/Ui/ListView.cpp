@@ -210,14 +210,16 @@ void ListView::append_query(const QString& query) {
     auto is_repeated_query = m_query.count(m_query.at(0)) == m_query.count();
     auto short_match = boost::optional<int>();
     while(i != start) {
-      if(m_items[i]->m_item->isEnabled() && displayTextAny(
-          m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
-        short_match = boost::none;
-        set_current(i);
-        break;
-      } else if(is_repeated_query && !short_match && displayTextAny(
-          m_list_model->at(i)).toLower().startsWith(m_query[0])) {
-        short_match = i;
+      if(m_items[i]->m_item->isEnabled()) {
+        if(displayTextAny(
+            m_list_model->at(i)).toLower().startsWith(m_query.toLower())) {
+          short_match = boost::none;
+          set_current(i);
+          break;
+        } else if(is_repeated_query && !short_match && displayTextAny(
+            m_list_model->at(i)).toLower().startsWith(m_query[0])) {
+          short_match = i;
+        }
       }
       ++i;
       if(i == m_items.size()) {
