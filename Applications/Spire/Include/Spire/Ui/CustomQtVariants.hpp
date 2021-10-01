@@ -169,7 +169,7 @@ namespace Spire {
   bool is_equal(const std::any& left, const std::any& right);
 
   /**
-   * Constructs an instance of the given type from a QString.
+   * Constructs an instance of the given type from its string representation.
    * @param T The type to construct.
    * @param string The string used to instantiate the object.
    * @returns An initialized optional iff construction was successful and the
