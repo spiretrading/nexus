@@ -172,7 +172,8 @@ namespace Spire {
    * Constructs an instance of the given type from a QString.
    * @param T The type to construct.
    * @param string The string used to instantiate the object.
-   * @returns An initialized optional iff construction was successful.
+   * @returns An initialized optional iff construction was successful and the
+              object is valid.
    */
   template<typename T>
   boost::optional<T> to_type(const QString& string) {
