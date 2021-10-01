@@ -50,7 +50,7 @@ namespace Spire {
        * @param page The component displayed in the page area.
        * @param tab_label The text value associated with the page.
        */
-      void add_tab(QWidget* page, const QString& tab_label);
+      void add_tab(QWidget& page, const QString& tab_label);
 
       /**
        * Inserts a tab with a page and label at the specified index.
@@ -60,7 +60,7 @@ namespace Spire {
        * @throws <code>std::out_of_range</code> -
        *         <code>index < 0 or index > get_tab_count()</code>.
        */
-      void insert_tab(int index, QWidget* page, const QString& tab_label);
+      void insert_tab(int index, QWidget& page, const QString& tab_label);
 
       /** Gets the number of tabs in the NavigationView. */
       int get_tab_count() const;
@@ -81,7 +81,7 @@ namespace Spire {
        * @throws <code>std::out_of_range</code> -
        *         <code>index < 0 or index >= get_tab_count()</code>.
        */
-      QWidget* get_page(int index) const;
+      QWidget& get_page(int index) const;
 
       /**
        * Returns <code>true</code> iff the tab at the specified index is enabled.

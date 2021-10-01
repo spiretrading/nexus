@@ -22,8 +22,8 @@ class NavigationView::SelectLine : public QWidget {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       auto box = new Box(nullptr);
-      proxy_style(*this, *box);
       layout->addWidget(box);
+      proxy_style(*this, *box);
     }
 };
 
@@ -34,8 +34,8 @@ class NavigationView::Tab : public QWidget {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       auto box = new Box(nullptr);
-      proxy_style(*this, *box);
       layout->addWidget(box);
+      proxy_style(*this, *box);
     }
 };
 
@@ -97,8 +97,8 @@ class NavigationView::Separator : public QWidget {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       auto box = new Box(nullptr);
-      proxy_style(*this, *box);
       layout->addWidget(box);
+      proxy_style(*this, *box);
     }
 };
 
@@ -169,17 +169,14 @@ const std::shared_ptr<NavigationView::CurrentModel>&
   return m_current_model;
 }
 
-void NavigationView::add_tab(QWidget* page, const QString& tab_label) {
+void NavigationView::add_tab(QWidget& page, const QString& tab_label) {
   insert_tab(get_tab_count(), page, tab_label);
 }
 
-void NavigationView::insert_tab(int index, QWidget* page,
+void NavigationView::insert_tab(int index, QWidget& page,
     const QString& tab_label) {
   if(index < 0 || index > get_tab_count()) {
     throw std::out_of_range("The index is out of range.");
-  }
-  if(!page) {
-    return;
   }
   static_pointer_cast<ArrayListModel>(m_navigation_list->get_list_model())->
     insert(tab_label, index);
@@ -198,7 +195,7 @@ void NavigationView::insert_tab(int index, QWidget* page,
   style.get((Checked() && Disabled()) >> is_a<SelectLine>()).
     set(BackgroundColor(QColor(0xC8C8C8)));
   set_style(*m_navigation_list->get_list_item(index), std::move(style));
-  m_stacked_widget->insertWidget(index, page);
+  m_stacked_widget->insertWidget(index, &page);
   m_associative_model.get_association(tab_label)->connect_current_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
 }
@@ -214,11 +211,11 @@ QString NavigationView::get_tab_label(int index) const {
   return m_navigation_list->get_list_model()->get<QString>(index);
 }
 
-QWidget* NavigationView::get_page(int index) const {
+QWidget& NavigationView::get_page(int index) const {
   if(index < 0 || index >= get_tab_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_stacked_widget->widget(index);
+  return *m_stacked_widget->widget(index);
 }
 
 bool NavigationView::is_tab_enabled(int index) const {
@@ -241,7 +238,7 @@ void NavigationView::set_tab_enabled(int index, bool is_enabled) {
     if(!m_navigation_list->isEnabled()) {
       m_navigation_list->setEnabled(true);
     }
-    if(!m_stacked_widget->widget(m_current_model->get_current())->isEnabled()) {
+    if(!m_stacked_widget->currentWidget()->isEnabled()) {
       m_current_model->set_current(index);
     }
   } else {
