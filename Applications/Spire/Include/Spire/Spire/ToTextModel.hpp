@@ -32,7 +32,6 @@ namespace Spire {
        */
       ToTextModel(std::shared_ptr<ValueModel<ModelType>> model);
 
-
       /**
        * Constructs a ToTextModel.
        * @param model The reference model.
