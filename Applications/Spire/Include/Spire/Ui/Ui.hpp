@@ -14,6 +14,7 @@ namespace Spire {
   class ArrayTableModel;
   class Box;
   class Button;
+  template<typename T> class CastListModel;
   class CheckBox;
   class DecimalBox;
   class DestinationListItem;
@@ -34,6 +35,7 @@ namespace Spire {
   template<typename T> class ListIndexValueModel;
   class ListItem;
   class ListModel;
+  class ListValueModel;
   class ListView;
   class MoneyBox;
   class OverlayPanel;
