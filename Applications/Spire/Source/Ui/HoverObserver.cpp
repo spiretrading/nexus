@@ -23,17 +23,23 @@ namespace {
 }
 
 struct HoverObserver::EventFilter : QObject {
+  struct Child {
+    std::unique_ptr<HoverObserver> m_observer;
+    boost::signals2::scoped_connection m_state_connection;
+  };
   mutable StateSignal m_state_signal;
   QWidget* m_widget;
   State m_state;
   GlobalPositionObserver m_position_observer;
-  std::unordered_map<QWidget*, std::unique_ptr<HoverObserver>>
+  std::unordered_map<QWidget*, Child>
     m_children_observers;
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
         m_state(State::NONE),
         m_position_observer(widget) {
+    widget.connect(
+      &widget, &QObject::destroyed, this, &EventFilter::on_widget_destroyed);
     widget.installEventFilter(this);
     m_position_observer.connect_position_signal(
       std::bind_front(&EventFilter::on_position, this));
@@ -77,11 +83,12 @@ struct HoverObserver::EventFilter : QObject {
   }
 
   void add(QWidget& child) {
-    auto child_observer = std::make_unique<HoverObserver>(child);
-    child_observer->connect_state_signal(
+    auto observer = std::make_unique<HoverObserver>(child);
+    auto connection = observer->connect_state_signal(
       std::bind_front(&EventFilter::on_hover, this));
+    auto child_entry = Child{std::move(observer), std::move(connection)};
     m_children_observers.insert(
-      std::pair(&child, std::move(child_observer)));
+      std::pair(&child, std::move(child_entry)));
     set_state(::get_state(*m_widget, m_position_observer.get_position()));
   }
 
@@ -91,6 +98,10 @@ struct HoverObserver::EventFilter : QObject {
 
   void on_position(const QPoint& position) {
     set_state(::get_state(*m_widget, position));
+  }
+
+  void on_widget_destroyed() {
+    m_children_observers.clear();
   }
 };
 
