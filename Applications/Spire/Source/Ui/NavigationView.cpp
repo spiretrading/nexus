@@ -198,6 +198,9 @@ void NavigationView::insert_tab(int index, QWidget& page,
   m_stacked_widget->insertWidget(index, &page);
   m_associative_model.get_association(tab_label)->connect_current_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
+  if(index == m_current_model->get_current()) {
+    on_current(index);
+  }
 }
 
 int NavigationView::get_tab_count() const {
