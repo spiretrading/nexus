@@ -356,6 +356,30 @@ namespace {
     panel->set_positioning(positioning);
     panel->show();
   }
+
+  struct HoverBox {
+    Box* m_box;
+    HoverObserver m_observer;
+    boost::signals2::connection m_connection;
+
+    HoverBox(QString name, Box* box, UiProfile& profile)
+      : m_box(box),
+        m_observer(*m_box),
+        m_connection(m_observer.connect_state_signal(
+          [=, slot = profile.make_event_slot<QString>(std::move(name))] (
+              HoverObserver::State state) {
+            auto to_string = [] (HoverObserver::State state) {
+              switch(state) {
+                case HoverObserver::State::MOUSE_IN:
+                  return QString::fromUtf8("MOUSE_IN");
+                case HoverObserver::State::MOUSE_OVER:
+                  return QString::fromUtf8("MOUSE_OVER");
+              }
+              return QString::fromUtf8("NONE");
+            };
+            slot(to_string(state));
+          })) {}
+  };
 }
 
 UiProfile Spire::make_box_profile() {
@@ -971,45 +995,30 @@ UiProfile Spire::make_hover_observer_profile() {
       auto overlap_box1 = make_input_box(new QWidget(), container);
       overlap_box1->setFixedSize(100, 100);
       overlap_box1->move(translate(0, 50));
+      auto box1 =
+        std::make_shared<HoverBox>("overlap_box1", overlap_box1, profile);
       auto overlap_box2 = make_input_box(new QWidget(), container);
       overlap_box2->setFixedSize(scale(100, 100));
       overlap_box2->move(translate(50, 100));
-      auto overlap1_observer = std::make_shared<HoverObserver>(*overlap_box1);
-      auto to_string = [] (HoverObserver::State state) {
-        switch(state) {
-          case HoverObserver::State::MOUSE_IN:
-            return QString::fromUtf8("MOUSE_IN");
-          case HoverObserver::State::MOUSE_OVER:
-            return QString::fromUtf8("MOUSE_OVER");
-        }
-        return QString::fromUtf8("NONE");
-      };
-      overlap1_observer->connect_state_signal(
-        [=, slot = profile.make_event_slot<QString>("Overlap1")] (auto state) {
-          overlap1_observer;
-          slot(to_string(state));
-        });
-      auto overlap2_observer = std::make_shared<HoverObserver>(*overlap_box2);
-      overlap2_observer->connect_state_signal(
-        [=, slot = profile.make_event_slot<QString>("Overlap2")] (auto state) {
-          overlap2_observer;
-          slot(to_string(state));
-        });
-      auto box_stack = std::make_shared<std::stack<Box*>>();
+      auto box2 =
+        std::make_shared<HoverBox>("overlap_box2", overlap_box2, profile);
+      auto box_stack = std::make_shared<std::stack<HoverBox>>();
       auto parent_box = make_input_box(new QWidget(), container);
-      box_stack->push(parent_box);
+      auto parent_box_observer = HoverObserver(*parent_box);
+      box_stack->push(HoverBox("parent", parent_box, profile));
       parent_box->setFixedSize(scale(175, 200));
       parent_box->move(translate(175, 0));
       auto add_button = make_label_button("Add Child", container);
       add_button->move(translate(75, 225));
-      add_button->connect_clicked_signal([=] {
+      add_button->connect_clicked_signal([=, &profile] {
         auto parent_box = box_stack->top();
-        auto box = make_input_box(new QWidget(), parent_box);
-        box->setFixedSize(parent_box->size().shrunkBy({scale_width(10),
+        auto box = make_input_box(new QWidget(), parent_box.m_box);
+        box->setFixedSize(parent_box.m_box->size().shrunkBy({scale_width(10),
           scale_height(10), scale_width(10), scale_height(10)}));
         box->move(translate(10, 10));
         box->show();
-        box_stack->push(box);
+        box_stack->push(
+          HoverBox(QString("child_%1").arg(box_stack->size()), box, profile));
       });
       auto remove_button = make_label_button("Remove Child", container);
       remove_button->move(translate(200, 225));
@@ -1017,7 +1026,7 @@ UiProfile Spire::make_hover_observer_profile() {
         if(box_stack->size() > 1) {
           auto box = box_stack->top();
           box_stack->pop();
-          box->deleteLater();
+          box.m_box->deleteLater();
         }
       });
       auto left_button = make_label_button("Move Left", container);
