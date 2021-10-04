@@ -17,20 +17,28 @@ namespace Spire {
     public:
 
       /** The type used by the reference model. */
-      using ModelType = T;
+      using Source = T;
 
-      /** Function for converting a value to a QString. */
-      using ToString = std::function<QString (const ModelType& value)>;
+      /**
+       * Function for converting a value to a QString.
+       * @param value The value to convert to a string.
+       * @returns The string representation of the given value.
+       */
+      using ToString = std::function<QString (const Source& value)>;
 
-      /** Function for converting a QString to a value. */
-      using ToType =
-        std::function<boost::optional<ModelType> (const QString& value)>;
+      /**
+       * Function for converting a QString to a value.
+       * @param value The string representation.
+       * @returns An initialized optional iff the conversion was successful.
+       */
+      using FromString =
+        std::function<boost::optional<Source> (const QString& value)>;
 
       /**
        * Constructs a ToTextModel with default conversion functions.
        * @param model The reference model.
        */
-      ToTextModel(std::shared_ptr<ValueModel<ModelType>> model);
+      explicit ToTextModel(std::shared_ptr<ValueModel<Source>> model);
 
       /**
        * Constructs a ToTextModel.
@@ -38,25 +46,25 @@ namespace Spire {
        * @param to_string The value to QString conversion function.
        */
       ToTextModel(
-        std::shared_ptr<ValueModel<ModelType>> model, ToString to_string);
+        std::shared_ptr<ValueModel<Source>> model, ToString to_string);
 
       /**
        * Constructs a ToTextModel.
        * @param model The reference model.
-       * @param to_type The QString to value conversion function.
+       * @param from_string The QString to value conversion function.
        */
       ToTextModel(
-        std::shared_ptr<ValueModel<ModelType>> model, ToType to_type);
+        std::shared_ptr<ValueModel<Source>> model, FromString from_string);
 
       /**
        * Constructs a ToTextModel.
        * @param model The reference model.
        * @param to_string The value to QString conversion function.
-       * @param to_type The QString to value conversion function.
+       * @param from_string The QString to value conversion function.
        */
       ToTextModel(
-        std::shared_ptr<ValueModel<ModelType>> model, ToString to_string,
-        ToType to_type);
+        std::shared_ptr<ValueModel<Source>> model, ToString to_string,
+        FromString from_string);
 
       QValidator::State get_state() const override;
 
@@ -69,34 +77,34 @@ namespace Spire {
 
     private:
       mutable CurrentSignal m_current_signal;
-      std::shared_ptr<ValueModel<ModelType>> m_model;
-      CustomVariantItemDelegate m_delegate;
+      std::shared_ptr<ValueModel<Source>> m_model;
       ToString m_to_string;
-      ToType m_to_type;
+      FromString m_from_string;
       QString m_current;
       boost::signals2::scoped_connection m_current_connection;
 
-      QString to_string(const ModelType& value) const;
-      void on_current(const ModelType& current);
+      void on_current(const Source& current);
   };
 
   template<typename T>
-  ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<ModelType>> model)
+  ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> model)
     : ToTextModel(model, std::bind_front(&ToTextModel::to_string, this),
-        std::bind_front(&Spire::to_type, this)) {}
+        std::bind_front(&Spire::from_string, this)) {}
 
   template<typename T>
   ToTextModel<T>::ToTextModel(
-    std::shared_ptr<ValueModel<ModelType>> model, ToType to_type)
+    std::shared_ptr<ValueModel<Source>> model, FromString from_string)
     : ToTextModel(std::move(model),
-        std::bind_front(&ToTextModel::to_string, this), to_type) {}
+        [] (const Source& value) {
+          return CustomVariantItemDelegate().displayText(value);
+        }, from_string) {}
 
   template<typename T>
-  ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<ModelType>> model,
-    ToString to_string, ToType to_type)
+  ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> model,
+    ToString to_string, FromString from_string)
     : m_model(std::move(model)),
       m_to_string(std::move(to_string)),
-      m_to_type(std::move(to_type)),
+      m_from_string(std::move(from_string)),
       m_current(m_to_string(m_model->get_current())),
       m_current_connection(m_model->connect_current_signal(
         [=] (const auto& current) { on_current(current); })) {}
@@ -113,7 +121,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State ToTextModel<T>::set_current(const QString& value) {
-    if(auto current = m_to_type(value)) {
+    if(auto current = m_from_string(value)) {
       return m_model->set_current(*current);
     }
     return QValidator::Invalid;
@@ -126,12 +134,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QString ToTextModel<T>::to_string(const ModelType& value) const {
-    return m_delegate.displayText(value);
-  }
-
-  template<typename T>
-  void ToTextModel<T>::on_current(const ModelType& current) {
+  void ToTextModel<T>::on_current(const Source& current) {
     m_current = m_to_string(current);
     m_current_signal(m_current);
   }

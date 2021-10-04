@@ -33,6 +33,15 @@ namespace {
       return is_equal_any<U...>(left, right);
     }
   }
+
+  template<typename T>
+  boost::optional<T> from_string_lexical_cast(const QString& string) {
+    try {
+      return boost::lexical_cast<T>(string.toStdString());
+    } catch(const boost::bad_lexical_cast&) {
+      return boost::none;
+    }
+  }
 }
 
 MarketToken::MarketToken(MarketCode code)
@@ -173,30 +182,6 @@ const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
   }
 }
 
-boost::optional<TimeInForce> Spire::to_time_in_force(const QString& string) {
-  auto lower = string.toLower();
-  if(lower == QObject::tr("day")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::DAY);
-  } else if(lower == QObject::tr("fok")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::FOK);
-  } else if(lower == QObject::tr("gtc")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::GTC);
-  } else if(lower == QObject::tr("gtd")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::GTD);
-  } else if(lower == QObject::tr("gtx")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::GTX);
-  } else if(lower == QObject::tr("ioc")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::IOC);
-  } else if(lower == QObject::tr("moc")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::MOC);
-  } else if(lower == QObject::tr("opg")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::OPG);
-  } else if(lower == QObject::tr("none")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::NONE);
-  }
-  return boost::none;
-}
-
 const QString& Spire::displayText(Side side) {
   if(side == Side::ASK) {
     static const auto value = QObject::tr("Sell");
@@ -208,18 +193,6 @@ const QString& Spire::displayText(Side side) {
     static const auto value = QObject::tr("None");
     return value;
   }
-}
-
-boost::optional<Side> Spire::to_side(const QString& string) {
-  auto lower = string.toLower();
-  if(lower == QObject::tr("sell")) {
-    return boost::optional<Side>(Side::ASK);
-  } else if(lower == QObject::tr("buy")) {
-    return boost::optional<Side>(Side::BID);
-  } else if(lower == QObject::tr("none")) {
-    return boost::optional<Side>(Side::NONE);
-  }
-  return boost::none;
 }
 
 const QString& Spire::displayText(OrderStatus status) {
@@ -265,38 +238,6 @@ const QString& Spire::displayText(OrderStatus status) {
   }
 }
 
-boost::optional<OrderStatus> Spire::to_order_status(const QString& string) {
-  auto lower = string.toLower();
-  if(lower == QObject::tr("pending new")) {
-    return boost::optional<OrderStatus>(OrderStatus::PENDING_NEW);
-  } else if(lower == QObject::tr("rejected")) {
-    return boost::optional<OrderStatus>(OrderStatus::REJECTED);
-  } else if(lower == QObject::tr("new")) {
-    return boost::optional<OrderStatus>(OrderStatus::NEW);
-  } else if(lower == QObject::tr("partially filled")) {
-    return boost::optional<OrderStatus>(OrderStatus::PARTIALLY_FILLED);
-  } else if(lower == QObject::tr("expired")) {
-    return boost::optional<OrderStatus>(OrderStatus::EXPIRED);
-  } else if(lower == QObject::tr("canceled")) {
-    return boost::optional<OrderStatus>(OrderStatus::CANCELED);
-  } else if(lower == QObject::tr("suspended")) {
-    return boost::optional<OrderStatus>(OrderStatus::SUSPENDED);
-  } else if(lower == QObject::tr("stopped")) {
-    return boost::optional<OrderStatus>(OrderStatus::STOPPED);
-  } else if(lower == QObject::tr("filled")) {
-    return boost::optional<OrderStatus>(OrderStatus::FILLED);
-  } else if(lower == QObject::tr("done for day")) {
-    return boost::optional<OrderStatus>(OrderStatus::DONE_FOR_DAY);
-  } else if(lower == QObject::tr("pending cancel")) {
-    return boost::optional<OrderStatus>(OrderStatus::PENDING_CANCEL);
-  } else if(lower == QObject::tr("cancel reject")) {
-    return boost::optional<OrderStatus>(OrderStatus::CANCEL_REJECT);
-  } else if(lower == QObject::tr("none")) {
-    return boost::optional<OrderStatus>(OrderStatus::NONE);
-  }
-  return boost::none;
-}
-
 const QString& Spire::displayText(OrderType type) {
   if(type == OrderType::MARKET) {
     static const auto value = QObject::tr("Market");
@@ -314,22 +255,6 @@ const QString& Spire::displayText(OrderType type) {
     static const auto value = QObject::tr("None");
     return value;
   }
-}
-
-boost::optional<Nexus::OrderType> Spire::to_order_type(const QString& string) {
-  auto lower = string.toLower();
-  if(lower == QObject::tr("market")) {
-    return boost::optional<OrderType>(OrderType::MARKET);
-  } else if(lower == QObject::tr("limit")) {
-    return boost::optional<OrderType>(OrderType::LIMIT);
-  } else if(lower == QObject::tr("pegged")) {
-    return boost::optional<OrderType>(OrderType::PEGGED);
-  } else if(lower == QObject::tr("stop")) {
-    return boost::optional<OrderType>(OrderType::STOP);
-  } else if(lower == QObject::tr("none")) {
-    return boost::optional<OrderType>(OrderType::NONE);
-  }
-  return boost::none;
 }
 
 QString Spire::displayTextAny(const std::any& value) {
@@ -476,4 +401,163 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return left.row() < right.row();
   }
   return QSortFilterProxyModel::lessThan(left, right);
+}
+
+template<>
+boost::optional<int> Spire::from_string(const QString& string) {
+  return from_string_lexical_cast<int>(string);
+}
+
+template<>
+boost::optional<double> Spire::from_string(const QString& string) {
+  return from_string_lexical_cast<double>(string);
+}
+
+template<>
+boost::optional<ptime> Spire::from_string(const QString& string) {
+  return from_string_lexical_cast<ptime>(string);
+}
+
+template<>
+boost::optional<posix_time::time_duration>
+    Spire::from_string(const QString& string) {
+  return from_string_lexical_cast<posix_time::time_duration>(string);
+}
+
+template<>
+boost::optional<std::string> Spire::from_string(const QString& string) {
+  return string.toStdString();
+}
+
+template<>
+boost::optional<CurrencyId> Spire::from_string(const QString& string) {
+  if(auto id = ParseCurrency(string.toStdString());
+      id != CurrencyId::NONE) {
+    return id;
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<Money> Spire::from_string(const QString& string) {
+  return Money::FromValue(string.toStdString());
+}
+
+template<>
+boost::optional<Quantity> Spire::from_string(const QString& string) {
+  return Quantity::FromValue(string.toStdString());
+}
+
+template<>
+boost::optional<Region> Spire::from_string(const QString& string) {
+  return Region(string.toStdString());
+}
+
+template<>
+boost::optional<OrderStatus> Spire::from_string(const QString& string) {
+  if(string == QObject::tr("Pending New")) {
+    return boost::optional<OrderStatus>(OrderStatus::PENDING_NEW);
+  } else if(string == QObject::tr("Rejected")) {
+    return boost::optional<OrderStatus>(OrderStatus::REJECTED);
+  } else if(string == QObject::tr("New")) {
+    return boost::optional<OrderStatus>(OrderStatus::NEW);
+  } else if(string == QObject::tr("Partially Filled")) {
+    return boost::optional<OrderStatus>(OrderStatus::PARTIALLY_FILLED);
+  } else if(string == QObject::tr("Expired")) {
+    return boost::optional<OrderStatus>(OrderStatus::EXPIRED);
+  } else if(string == QObject::tr("Canceled")) {
+    return boost::optional<OrderStatus>(OrderStatus::CANCELED);
+  } else if(string == QObject::tr("Suspended")) {
+    return boost::optional<OrderStatus>(OrderStatus::SUSPENDED);
+  } else if(string == QObject::tr("Stopped")) {
+    return boost::optional<OrderStatus>(OrderStatus::STOPPED);
+  } else if(string == QObject::tr("Filled")) {
+    return boost::optional<OrderStatus>(OrderStatus::FILLED);
+  } else if(string == QObject::tr("Done For Day")) {
+    return boost::optional<OrderStatus>(OrderStatus::DONE_FOR_DAY);
+  } else if(string == QObject::tr("Pending Cancel")) {
+    return boost::optional<OrderStatus>(OrderStatus::PENDING_CANCEL);
+  } else if(string == QObject::tr("Cancel Reject")) {
+    return boost::optional<OrderStatus>(OrderStatus::CANCEL_REJECT);
+  } else if(string == QObject::tr("None")) {
+    return boost::optional<OrderStatus>(OrderStatus::NONE);
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<OrderType> Spire::from_string(const QString& string) {
+  if(string == QObject::tr("Market")) {
+    return boost::optional<OrderType>(OrderType::MARKET);
+  } else if(string == QObject::tr("Limit")) {
+    return boost::optional<OrderType>(OrderType::LIMIT);
+  } else if(string == QObject::tr("Pegged")) {
+    return boost::optional<OrderType>(OrderType::PEGGED);
+  } else if(string == QObject::tr("Stop")) {
+    return boost::optional<OrderType>(OrderType::STOP);
+  } else if(string == QObject::tr("None")) {
+    return boost::optional<OrderType>(OrderType::NONE);
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<Security> Spire::from_string(const QString& string) {
+  if(auto security = Nexus::ParseSecurity(string.toStdString());
+      security != Security()) {
+    return security;
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<Side> Spire::from_string(const QString& string) {
+  if(string == QObject::tr("Sell")) {
+    return boost::optional<Side>(Side::ASK);
+  } else if(string == QObject::tr("Buy")) {
+    return boost::optional<Side>(Side::BID);
+  } else if(string == QObject::tr("None")) {
+    return boost::optional<Side>(Side::NONE);
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<TimeInForce> Spire::from_string(const QString& string) {
+  if(string == QObject::tr("DAY")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::DAY);
+  } else if(string == QObject::tr("FOK")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::FOK);
+  } else if(string == QObject::tr("GTC")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::GTC);
+  } else if(string == QObject::tr("GTD")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::GTD);
+  } else if(string == QObject::tr("GTX")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::GTX);
+  } else if(string == QObject::tr("IOC")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::IOC);
+  } else if(string == QObject::tr("MOC")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::MOC);
+  } else if(string == QObject::tr("OPG")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::OPG);
+  } else if(string == QObject::tr("NONE")) {
+    return boost::optional<TimeInForce>(TimeInForce::Type::NONE);
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<QColor> Spire::from_string(const QString& string) {
+  if(auto color = QColor(string); color.isValid()) {
+    return color;
+  }
+  return boost::none;
+}
+
+template<>
+boost::optional<QKeySequence> Spire::from_string(const QString& string) {
+  if(auto sequence = QKeySequence(string); !sequence.isEmpty()) {
+    return sequence;
+  }
+  return boost::none;
 }

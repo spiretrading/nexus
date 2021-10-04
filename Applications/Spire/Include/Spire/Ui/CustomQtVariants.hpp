@@ -125,42 +125,14 @@ namespace Spire {
   /** Returns the text representation of a TimeInForce. */
   const QString& displayText(Nexus::TimeInForce time_in_force);
 
-  /**
-   * Returns a TimeInForce that's represented by the given string.
-   * @param string The string representation.
-   * @returns An initialized optional iff the string represents a TimeInForce.
-   */
-  boost::optional<Nexus::TimeInForce> to_time_in_force(const QString& string);
-
   /** Returns the text representation of a Side. */
   const QString& displayText(Nexus::Side side);
-
-  /**
-   * Returns a Side that's represented by the given string.
-   * @param string The string representation.
-   * @returns An initialized optional iff the string represents a Side.
-   */
-  boost::optional<Nexus::Side> to_side(const QString& string);
 
   /** Returns the text representation of an OrderStatus. */
   const QString& displayText(Nexus::OrderStatus status);
 
-  /**
-   * Returns a OrderStatus that's represented by the given string.
-   * @param string The string representation.
-   * @returns An initialized optional iff the string represents a OrderStatus.
-   */
-  boost::optional<Nexus::OrderStatus> to_order_status(const QString& string);
-
   /** Returns the text representation of an OrderType. */
   const QString& displayText(Nexus::OrderType type);
-
-  /**
-   * Returns a OrderType that's represented by the given string.
-   * @param string The string representation.
-   * @returns An initialized optional iff the string represents a OrderType.
-   */
-  boost::optional<Nexus::OrderType> to_order_type(const QString& string);
 
   /** Returns the text representation of the value stored within an std::any. */
   QString displayTextAny(const std::any& value);
@@ -176,53 +148,7 @@ namespace Spire {
               object is valid.
    */
   template<typename T>
-  boost::optional<T> to_type(const QString& string) {
-    using Type = T;
-    if constexpr(std::is_same_v<Type, bool> ||
-        std::is_same_v<Type, int> ||
-        std::is_same_v<Type, double> ||
-        std::is_same_v<Type, boost::posix_time::ptime> ||
-        std::is_same_v<Type, boost::posix_time::time_duration>) {
-      try {
-        return boost::lexical_cast<Type>(string.toStdString());
-      } catch(const boost::bad_lexical_cast&) {}
-    } else if constexpr(std::is_same_v<Type, std::string>) {
-      return string.toStdString();
-    } else if constexpr(std::is_same_v<Type, Nexus::CurrencyId>) {
-      if(auto id = Nexus::ParseCurrency(string.toStdString());
-          id != Nexus::CurrencyId::NONE) {
-        return id;
-      }
-    } else if constexpr(std::is_same_v<Type, Nexus::Money>) {
-      return Nexus::Money::FromValue(string.toStdString());
-    } else if constexpr(std::is_same_v<Type, Nexus::Quantity>) {
-      return Nexus::Quantity::FromValue(string.toStdString());
-    } else if constexpr(std::is_same_v<Type, Nexus::Region>) {
-      return Nexus::Region(string.toStdString());
-    } else if constexpr(std::is_same_v<Type, Nexus::OrderStatus>) {
-      return to_order_status(string);
-    } else if constexpr(std::is_same_v<Type, Nexus::OrderType>) {
-      return to_order_type(string);
-    } else if constexpr(std::is_same_v<Type, Nexus::Security>) {
-      if(auto security = Nexus::ParseSecurity(string.toStdString());
-          security != Nexus::Security()) {
-        return security;
-      }
-    } else if constexpr(std::is_same_v<Type, Nexus::Side>) {
-      return to_side(string);
-    } else if constexpr(std::is_same_v<Type, Nexus::TimeInForce>) {
-      return to_time_in_force(string);
-    } else if constexpr(std::is_same_v<Type, QColor>) {
-      if(auto color = QColor(string); color.isValid()) {
-        return color;
-      }
-    } else if constexpr(std::is_same_v<Type, QKeySequence>) {
-      if(auto sequence = QKeySequence(string); !sequence.isEmpty()) {
-        return sequence;
-      }
-    }
-    return boost::none;
-  }
+  boost::optional<T> from_string(const QString& string) = delete;
 
   /** Implements Qt's item delegate to support the custom QVariant types. **/
   class CustomVariantItemDelegate : public QStyledItemDelegate {
@@ -252,6 +178,55 @@ namespace Spire {
       bool lessThan(const QModelIndex& left,
         const QModelIndex& right) const override;
   };
+
+  template<>
+  boost::optional<int> from_string(const QString& string);
+
+  template<>
+  boost::optional<double> from_string(const QString& string);
+
+  template<>
+  boost::optional<boost::posix_time::ptime> from_string(const QString& string);
+
+  template<>
+  boost::optional<boost::posix_time::time_duration>
+    from_string(const QString& string);
+
+  template<>
+  boost::optional<std::string> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::CurrencyId> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Money> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Quantity> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Region> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::OrderStatus> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::OrderType> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Security> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Side> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::TimeInForce> from_string(const QString& string);
+
+  template<>
+  boost::optional<QColor> from_string(const QString& string);
+
+  template<>
+  boost::optional<QKeySequence> from_string(const QString& string);
 }
 
 #endif
