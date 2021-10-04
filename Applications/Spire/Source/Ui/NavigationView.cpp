@@ -124,7 +124,7 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
   navigation_list_layout->setContentsMargins({});
   navigation_list_layout->setSpacing(0);
   m_navigation_list = new ListView(std::make_shared<ArrayListModel>(),
-    [&] (const auto& model, auto index) {
+    [] (const auto& model, auto index) {
       return new NavigationTab(model->get<QString>(index));
     });
   m_navigation_list->setFixedHeight(scale_height(28));

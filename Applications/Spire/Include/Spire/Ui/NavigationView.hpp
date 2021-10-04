@@ -29,7 +29,7 @@ namespace Spire {
       using LocalCurrentModel = LocalValueModel<int>;
 
       /**
-       * Constructs a NavigationView using a localCurrentModel.
+       * Constructs a NavigationView using a LocalCurrentModel.
        * @param parent The parent widget.
        */
       explicit NavigationView(QWidget* parent = nullptr);
