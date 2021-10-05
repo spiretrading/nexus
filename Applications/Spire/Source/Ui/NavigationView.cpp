@@ -169,17 +169,17 @@ const std::shared_ptr<NavigationView::CurrentModel>&
   return m_current_model;
 }
 
-void NavigationView::add_tab(QWidget& page, const QString& tab_label) {
-  insert_tab(get_tab_count(), page, tab_label);
+void NavigationView::add_tab(QWidget& page, const QString& label) {
+  insert_tab(get_count(), page, label);
 }
 
 void NavigationView::insert_tab(int index, QWidget& page,
-    const QString& tab_label) {
-  if(index < 0 || index > get_tab_count()) {
+    const QString& label) {
+  if(index < 0 || index > get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
   static_pointer_cast<ArrayListModel>(m_navigation_list->get_list_model())->
-    insert(tab_label, index);
+    insert(label, index);
   auto style = StyleSheet();
   style.get(Any()).
     set(BackgroundColor(QColor(Qt::transparent))).
@@ -196,40 +196,40 @@ void NavigationView::insert_tab(int index, QWidget& page,
     set(BackgroundColor(QColor(0xC8C8C8)));
   set_style(*m_navigation_list->get_list_item(index), std::move(style));
   m_stacked_widget->insertWidget(index, &page);
-  m_associative_model.get_association(tab_label)->connect_current_signal(
+  m_associative_model.get_association(label)->connect_current_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
   if(index == m_current_model->get_current()) {
     on_current(index);
   }
 }
 
-int NavigationView::get_tab_count() const {
+int NavigationView::get_count() const {
   return m_navigation_list->get_list_model()->get_size();
 }
 
-QString NavigationView::get_tab_label(int index) const {
-  if(index < 0 || index >= get_tab_count()) {
+QString NavigationView::get_label(int index) const {
+  if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
   return m_navigation_list->get_list_model()->get<QString>(index);
 }
 
 QWidget& NavigationView::get_page(int index) const {
-  if(index < 0 || index >= get_tab_count()) {
+  if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
   return *m_stacked_widget->widget(index);
 }
 
-bool NavigationView::is_tab_enabled(int index) const {
-  if(index < 0 || index >= get_tab_count()) {
+bool NavigationView::is_enabled(int index) const {
+  if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
   return m_navigation_list->get_list_item(index)->isEnabled();
 }
 
-void NavigationView::set_tab_enabled(int index, bool is_enabled) {
-  if(index < 0 || index >= get_tab_count()) {
+void NavigationView::set_enabled(int index, bool is_enabled) {
+  if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
   if(!isEnabled()) {
@@ -246,7 +246,7 @@ void NavigationView::set_tab_enabled(int index, bool is_enabled) {
     }
   } else if(m_current_model->get_current() == index) {
     auto new_index = [=] {
-      for(auto i = index + 1; i < get_tab_count(); ++i) {
+      for(auto i = index + 1; i < get_count(); ++i) {
         if(m_navigation_list->get_list_item(i)->isEnabled()) {
           return i;
         }
@@ -267,7 +267,7 @@ void NavigationView::set_tab_enabled(int index, bool is_enabled) {
 }
 
 void NavigationView::on_current(int index) {
-  if(index < 0 || index >= get_tab_count()) {
+  if(index < 0 || index >= get_count()) {
     return;
   }
   m_associative_model.get_association(m_navigation_list->get_list_model()->

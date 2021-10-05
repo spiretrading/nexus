@@ -1407,7 +1407,7 @@ UiProfile Spire::make_navigation_view_profile() {
       navigation_view->get_current_model()->connect_current_signal(
         [=] (auto current) {
           filter_slot(QString("%1_%2").arg(current).
-            arg(navigation_view->get_tab_label(current)));
+            arg(navigation_view->get_label(current)));
         });
       auto page1 = new QWidget();
       page1->setFixedSize(scale(160, 100));
@@ -1441,13 +1441,13 @@ UiProfile Spire::make_navigation_view_profile() {
       auto& tab_enabled = get<bool>("tab_enabled", profile.get_properties());
       tab_enabled.connect_changed_signal([=, &tab_index] (auto value) {
         auto index = tab_index.get();
-        if(index >= 0 && index < navigation_view->get_tab_count()) {
-          navigation_view->set_tab_enabled(index, value);
+        if(index >= 0 && index < navigation_view->get_count()) {
+          navigation_view->set_enabled(index, value);
         }
       });
       auto& current = get<int>("current", profile.get_properties());
       current.connect_changed_signal([=] (auto index) {
-        if(index >= 0 && index < navigation_view->get_tab_count()) {
+        if(index >= 0 && index < navigation_view->get_count()) {
           navigation_view->get_current_model()->set_current(index);
         }
       });
