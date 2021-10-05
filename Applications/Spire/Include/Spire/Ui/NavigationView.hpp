@@ -2,9 +2,7 @@
 #define SPIRE_NAVIGATION_VIEW_HPP
 #include <any>
 #include <QStackedWidget>
-#include <QWidget>
 #include "Spire/Spire/AssociativeValueModel.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
