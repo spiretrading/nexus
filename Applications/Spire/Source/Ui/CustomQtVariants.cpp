@@ -35,11 +35,11 @@ namespace {
   }
 
   template<typename T>
-  boost::optional<T> from_string_lexical_cast(const QString& string) {
+  optional<T> from_string_lexical_cast(const QString& string) {
     try {
-      return boost::lexical_cast<T>(string.toStdString());
-    } catch(const boost::bad_lexical_cast&) {
-      return boost::none;
+      return lexical_cast<T>(string.toStdString());
+    } catch(const bad_lexical_cast&) {
+      return none;
     }
   }
 }
@@ -280,7 +280,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   if(value.canConvert<ptime>()) {
     auto time_value = ToLocalTime(value.value<ptime>());
     auto currentTime = ToLocalTime(
-      boost::posix_time::second_clock::universal_time());
+      posix_time::second_clock::universal_time());
     if(time_value.date() == currentTime.date()) {
       return QString::fromStdString(to_simple_string(time_value).substr(12));
     } else {
@@ -404,160 +404,160 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
 }
 
 template<>
-boost::optional<int> Spire::from_string(const QString& string) {
+optional<int> Spire::from_string(const QString& string) {
   return from_string_lexical_cast<int>(string);
 }
 
 template<>
-boost::optional<double> Spire::from_string(const QString& string) {
+optional<double> Spire::from_string(const QString& string) {
   return from_string_lexical_cast<double>(string);
 }
 
 template<>
-boost::optional<ptime> Spire::from_string(const QString& string) {
+optional<ptime> Spire::from_string(const QString& string) {
   return from_string_lexical_cast<ptime>(string);
 }
 
 template<>
-boost::optional<posix_time::time_duration>
+optional<posix_time::time_duration>
     Spire::from_string(const QString& string) {
   return from_string_lexical_cast<posix_time::time_duration>(string);
 }
 
 template<>
-boost::optional<std::string> Spire::from_string(const QString& string) {
+optional<std::string> Spire::from_string(const QString& string) {
   return string.toStdString();
 }
 
 template<>
-boost::optional<CurrencyId> Spire::from_string(const QString& string) {
+optional<CurrencyId> Spire::from_string(const QString& string) {
   if(auto id = ParseCurrency(string.toStdString());
       id != CurrencyId::NONE) {
     return id;
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<Money> Spire::from_string(const QString& string) {
+optional<Money> Spire::from_string(const QString& string) {
   return Money::FromValue(string.toStdString());
 }
 
 template<>
-boost::optional<Quantity> Spire::from_string(const QString& string) {
+optional<Quantity> Spire::from_string(const QString& string) {
   return Quantity::FromValue(string.toStdString());
 }
 
 template<>
-boost::optional<Region> Spire::from_string(const QString& string) {
+optional<Region> Spire::from_string(const QString& string) {
   return Region(string.toStdString());
 }
 
 template<>
-boost::optional<OrderStatus> Spire::from_string(const QString& string) {
+optional<OrderStatus> Spire::from_string(const QString& string) {
   if(string == QObject::tr("Pending New")) {
-    return boost::optional<OrderStatus>(OrderStatus::PENDING_NEW);
+    return optional<OrderStatus>(OrderStatus::PENDING_NEW);
   } else if(string == QObject::tr("Rejected")) {
-    return boost::optional<OrderStatus>(OrderStatus::REJECTED);
+    return optional<OrderStatus>(OrderStatus::REJECTED);
   } else if(string == QObject::tr("New")) {
-    return boost::optional<OrderStatus>(OrderStatus::NEW);
+    return optional<OrderStatus>(OrderStatus::NEW);
   } else if(string == QObject::tr("Partially Filled")) {
-    return boost::optional<OrderStatus>(OrderStatus::PARTIALLY_FILLED);
+    return optional<OrderStatus>(OrderStatus::PARTIALLY_FILLED);
   } else if(string == QObject::tr("Expired")) {
-    return boost::optional<OrderStatus>(OrderStatus::EXPIRED);
+    return optional<OrderStatus>(OrderStatus::EXPIRED);
   } else if(string == QObject::tr("Canceled")) {
-    return boost::optional<OrderStatus>(OrderStatus::CANCELED);
+    return optional<OrderStatus>(OrderStatus::CANCELED);
   } else if(string == QObject::tr("Suspended")) {
-    return boost::optional<OrderStatus>(OrderStatus::SUSPENDED);
+    return optional<OrderStatus>(OrderStatus::SUSPENDED);
   } else if(string == QObject::tr("Stopped")) {
-    return boost::optional<OrderStatus>(OrderStatus::STOPPED);
+    return optional<OrderStatus>(OrderStatus::STOPPED);
   } else if(string == QObject::tr("Filled")) {
-    return boost::optional<OrderStatus>(OrderStatus::FILLED);
+    return optional<OrderStatus>(OrderStatus::FILLED);
   } else if(string == QObject::tr("Done For Day")) {
-    return boost::optional<OrderStatus>(OrderStatus::DONE_FOR_DAY);
+    return optional<OrderStatus>(OrderStatus::DONE_FOR_DAY);
   } else if(string == QObject::tr("Pending Cancel")) {
-    return boost::optional<OrderStatus>(OrderStatus::PENDING_CANCEL);
+    return optional<OrderStatus>(OrderStatus::PENDING_CANCEL);
   } else if(string == QObject::tr("Cancel Reject")) {
-    return boost::optional<OrderStatus>(OrderStatus::CANCEL_REJECT);
+    return optional<OrderStatus>(OrderStatus::CANCEL_REJECT);
   } else if(string == QObject::tr("None")) {
-    return boost::optional<OrderStatus>(OrderStatus::NONE);
+    return optional<OrderStatus>(OrderStatus::NONE);
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<OrderType> Spire::from_string(const QString& string) {
+optional<OrderType> Spire::from_string(const QString& string) {
   if(string == QObject::tr("Market")) {
-    return boost::optional<OrderType>(OrderType::MARKET);
+    return optional<OrderType>(OrderType::MARKET);
   } else if(string == QObject::tr("Limit")) {
-    return boost::optional<OrderType>(OrderType::LIMIT);
+    return optional<OrderType>(OrderType::LIMIT);
   } else if(string == QObject::tr("Pegged")) {
-    return boost::optional<OrderType>(OrderType::PEGGED);
+    return optional<OrderType>(OrderType::PEGGED);
   } else if(string == QObject::tr("Stop")) {
-    return boost::optional<OrderType>(OrderType::STOP);
+    return optional<OrderType>(OrderType::STOP);
   } else if(string == QObject::tr("None")) {
-    return boost::optional<OrderType>(OrderType::NONE);
+    return optional<OrderType>(OrderType::NONE);
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<Security> Spire::from_string(const QString& string) {
-  if(auto security = Nexus::ParseSecurity(string.toStdString());
+optional<Security> Spire::from_string(const QString& string) {
+  if(auto security = ParseSecurity(string.toStdString());
       security != Security()) {
     return security;
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<Side> Spire::from_string(const QString& string) {
+optional<Side> Spire::from_string(const QString& string) {
   if(string == QObject::tr("Sell")) {
-    return boost::optional<Side>(Side::ASK);
+    return optional<Side>(Side::ASK);
   } else if(string == QObject::tr("Buy")) {
-    return boost::optional<Side>(Side::BID);
+    return optional<Side>(Side::BID);
   } else if(string == QObject::tr("None")) {
-    return boost::optional<Side>(Side::NONE);
+    return optional<Side>(Side::NONE);
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<TimeInForce> Spire::from_string(const QString& string) {
+optional<TimeInForce> Spire::from_string(const QString& string) {
   if(string == QObject::tr("DAY")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::DAY);
+    return optional<TimeInForce>(TimeInForce::Type::DAY);
   } else if(string == QObject::tr("FOK")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::FOK);
+    return optional<TimeInForce>(TimeInForce::Type::FOK);
   } else if(string == QObject::tr("GTC")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::GTC);
+    return optional<TimeInForce>(TimeInForce::Type::GTC);
   } else if(string == QObject::tr("GTD")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::GTD);
+    return optional<TimeInForce>(TimeInForce::Type::GTD);
   } else if(string == QObject::tr("GTX")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::GTX);
+    return optional<TimeInForce>(TimeInForce::Type::GTX);
   } else if(string == QObject::tr("IOC")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::IOC);
+    return optional<TimeInForce>(TimeInForce::Type::IOC);
   } else if(string == QObject::tr("MOC")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::MOC);
+    return optional<TimeInForce>(TimeInForce::Type::MOC);
   } else if(string == QObject::tr("OPG")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::OPG);
+    return optional<TimeInForce>(TimeInForce::Type::OPG);
   } else if(string == QObject::tr("NONE")) {
-    return boost::optional<TimeInForce>(TimeInForce::Type::NONE);
+    return optional<TimeInForce>(TimeInForce::Type::NONE);
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<QColor> Spire::from_string(const QString& string) {
+optional<QColor> Spire::from_string(const QString& string) {
   if(auto color = QColor(string); color.isValid()) {
     return color;
   }
-  return boost::none;
+  return none;
 }
 
 template<>
-boost::optional<QKeySequence> Spire::from_string(const QString& string) {
+optional<QKeySequence> Spire::from_string(const QString& string) {
   if(auto sequence = QKeySequence(string); !sequence.isEmpty()) {
     return sequence;
   }
-  return boost::none;
+  return none;
 }
