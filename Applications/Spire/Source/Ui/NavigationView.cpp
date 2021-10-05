@@ -279,7 +279,7 @@ void NavigationView::on_list_submit(const std::any& submission) {
     std::any_cast<QString>(submission))->set_current(true);
 }
 
-void NavigationView::on_list_current(const boost::optional<int>& current) {
+void NavigationView::on_list_current(const optional<int>& current) {
   if(current) {
     m_stacked_widget->setFocusPolicy(Qt::TabFocus);
     setTabOrder(m_stacked_widget, m_navigation_list->get_list_item(*current));
