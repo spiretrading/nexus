@@ -280,12 +280,8 @@ CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<gregorian::date>()) {
-    auto format = std::locale(std::locale(""),
-      new boost::gregorian::date_facet("%Y-%m-%d"));
-    auto stream = std::ostringstream();
-    stream.imbue(format);
-    stream << value.value<gregorian::date>();
-    return QString::fromStdString(stream.str());
+    return QString::fromStdString(
+      to_iso_extended_string(value.value<gregorian::date>()));
   } else if(value.canConvert<ptime>()) {
     auto time_value = ToLocalTime(value.value<ptime>());
     auto currentTime = ToLocalTime(
