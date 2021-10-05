@@ -103,7 +103,7 @@ class NavigationView::Separator : public QWidget {
 };
 
 NavigationView::NavigationView(QWidget* parent)
-  : NavigationView(std::make_shared<LocalCurrentModel>(), parent) {}
+  : NavigationView(std::make_shared<LocalValueModel<int>>(), parent) {}
 
 NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
     QWidget* parent)

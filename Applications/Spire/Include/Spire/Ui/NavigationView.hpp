@@ -14,17 +14,8 @@ namespace Spire {
   class NavigationView : public QWidget {
     public:
 
-      /**
-       * A ValueModel over an integer to represent the current of the
-       * NavigationView.
-       */
+      /** Models the index of the currently selected tab. */
       using CurrentModel = ValueModel<int>;
-
-      /**
-       * A LocalValueModel over an integer to represent the local
-       * current of the NavigationView.
-       */
-      using LocalCurrentModel = LocalValueModel<int>;
 
       /**
        * Constructs a NavigationView using a LocalCurrentModel.
