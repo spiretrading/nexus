@@ -88,8 +88,11 @@ namespace Spire {
 
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> model)
-    : ToTextModel(model, std::bind_front(&ToTextModel::to_string, this),
-        std::bind_front(&Spire::from_string, this)) {}
+    : ToTextModel(std::move(model), [] (const Source& value) {
+          return CustomVariantItemDelegate().displayText(value);
+        }, [] (const QString& string) {
+          return from_string<Source>(string);
+        }) {}
 
   template<typename T>
   ToTextModel<T>::ToTextModel(
