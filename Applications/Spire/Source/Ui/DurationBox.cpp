@@ -364,7 +364,8 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_read_only(false),
-      m_is_rejected(false) {
+      m_is_rejected(false),
+      m_has_update(false) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto hour_model = std::make_shared<HourModel>(m_model);
@@ -459,21 +460,32 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusOut) {
     if(!m_is_read_only && !m_hour_field->hasFocus() &&
         !m_minute_field->hasFocus() && !m_second_field->hasFocus()) {
-      on_submit();
+      if(m_has_update) {
+        on_submit();
+      } else {
+        update_empty_fields();
+      }
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    auto field = [&] () -> QWidget* {
+    auto [field, is_field_empty] = [&] () -> std::pair<QWidget*, bool> {
       if(m_minute_field->hasFocus()) {
-        return m_minute_field;
+        return {m_minute_field, !m_minute_field->get_model()->get_current()};
       } else if(m_second_field->hasFocus()) {
-        return m_second_field;
+        return {m_second_field, !m_second_field->get_model()->get_current()};
       } else if(m_hour_field->hasFocus()) {
-        return m_hour_field;
+        return {m_hour_field, !m_hour_field->get_model()->get_current()};
       }
-      return nullptr;
+      return {nullptr, true};
     }();
-    if(key_event.key() == Qt::Key_Left &&
+    if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
+      if(is_field_empty && (m_hour_field->get_model()->get_current() ||
+          m_minute_field->get_model()->get_current() ||
+          m_second_field->get_model()->get_current())) {
+        on_submit();
+        return true;
+      }
+    } else if(key_event.key() == Qt::Key_Left &&
         (field == m_minute_field || field == m_second_field)) {
       if(auto editor = field->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0) {
@@ -501,6 +513,7 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void DurationBox::on_current(const optional<time_duration>& current) {
+  m_has_update = current != m_submission;
   if(m_is_rejected) {
     m_is_rejected = false;
     unmatch(*this, Rejected());
@@ -512,17 +525,8 @@ void DurationBox::on_submit() {
     on_reject();
   } else {
     m_submission = m_model->get_current();
-    if(m_submission) {
-      if(!m_hour_field->get_model()->get_current()) {
-        m_hour_field->get_model()->set_current(0);
-      }
-      if(!m_minute_field->get_model()->get_current()) {
-        m_minute_field->get_model()->set_current(0);
-      }
-      if(!m_second_field->get_model()->get_current()) {
-        m_second_field->get_model()->set_current(Decimal(0));
-      }
-    }
+    update_empty_fields();
+    m_has_update = false;
     auto submission = m_submission;
     m_submit_signal(submission);
   }
@@ -536,6 +540,20 @@ void DurationBox::on_reject() {
   if(!m_is_rejected) {
     m_is_rejected = true;
     match(*this, Rejected());
+  }
+}
+
+void DurationBox::update_empty_fields() {
+  if(m_submission) {
+    if(!m_hour_field->get_model()->get_current()) {
+      m_hour_field->get_model()->set_current(0);
+    }
+    if(!m_minute_field->get_model()->get_current()) {
+      m_minute_field->get_model()->set_current(0);
+    }
+    if(!m_second_field->get_model()->get_current()) {
+      m_second_field->get_model()->set_current(Decimal(0));
+    }
   }
 }
 

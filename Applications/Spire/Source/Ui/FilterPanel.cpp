@@ -23,8 +23,8 @@ namespace {
   }
 }
 
-FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
-    : QWidget(parent),
+FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
+    : QWidget(&parent),
       m_body(body) {
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
@@ -42,7 +42,7 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
   layout->addWidget(reset_button, 0, Qt::AlignRight);
   reset_button->connect_clicked_signal([=] { m_reset_signal(); });
   m_panel = new OverlayPanel(*this, parent);
-  m_panel->set_closed_on_blur(true);
+  m_panel->set_closed_on_focus_out(true);
 }
 
 const QWidget& FilterPanel::get_body() const {

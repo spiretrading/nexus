@@ -120,7 +120,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     int get_longest_line_width() const {
       auto lines = m_model->get_current().split('\n');
       auto longest = 0;
-      for(const auto& line : lines) {
+      for(auto& line : lines) {
         longest = std::max(longest, fontMetrics().horizontalAdvance(line));
       }
       return longest;
@@ -246,8 +246,9 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layout->addWidget(m_scroll_box);
   proxy_style(*this, *m_scroll_box);
   add_pseudo_element(*this, Placeholder());
-  connect_style_signal(*this, [=] { on_style(); });
-  connect_style_signal(*this, Placeholder(), [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_placeholder_style_connection =
+    connect_style_signal(*this, Placeholder(), [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
   connect(m_text_edit,
     &QTextEdit::cursorPositionChanged, this, &TextAreaBox::on_cursor_position);
@@ -355,7 +356,7 @@ void TextAreaBox::commit_style() {
   }
   m_text_edit->setFont(font);
   if(m_text_edit_styles.m_line_height &&
-      font.pixelSize() * *m_text_edit_styles.m_line_height !=
+      static_cast<int>(font.pixelSize() * *m_text_edit_styles.m_line_height) !=
       m_computed_line_height) {
     m_computed_line_height = static_cast<int>(m_text_edit->font().pixelSize() *
       *m_text_edit_styles.m_line_height);

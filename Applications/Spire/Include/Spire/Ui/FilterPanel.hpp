@@ -19,7 +19,7 @@ namespace Spire {
        * @param body The component displayed in the FilterPanel.
        * @param parent The parent widget that shows the panel.
        */
-      FilterPanel(QString title, QWidget* body, QWidget* parent = nullptr);
+      FilterPanel(QString title, QWidget* body, QWidget& parent);
 
       /** Returns the body displayed in the panel. */
       const QWidget& get_body() const;

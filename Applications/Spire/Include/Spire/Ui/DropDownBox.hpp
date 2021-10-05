@@ -30,17 +30,46 @@ namespace Styles {
       using SelectionModel = ListView::SelectionModel;
 
       /**
+       * The type of function used to build a QWidget representing a value.
+       */
+      using ViewBuilder = ListView::ViewBuilder;
+
+      /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
       using SubmitSignal = Signal<void (const std::any& submission)>;
 
       /**
-       * Constructs a DropDownBox.
-       * @param list_view The list view displayed in the drop down list.
+       * Constructs a DropDownBox using default local models and a default view
+       * builder.
+       * @param list_model The model of values to display.
        * @param parent The parent widget.
        */
-      explicit DropDownBox(ListView& list_view, QWidget* parent = nullptr);
+      explicit DropDownBox(std::shared_ptr<ListModel> list_model,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox using default local models.
+       * @param list_model The model of values to display.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      DropDownBox(std::shared_ptr<ListModel> list_model,
+        ViewBuilder view_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list_model The model of values to display.
+       * @param current_model The current value's model.
+       * @param selection_model The selection value's model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      DropDownBox(std::shared_ptr<ListModel> list_model,
+        std::shared_ptr<CurrentModel> current_model,
+        std::shared_ptr<SelectionModel> selection_model,
+        ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /** Returns the list of selectable values. */
       const std::shared_ptr<ListModel>& get_list_model() const;
