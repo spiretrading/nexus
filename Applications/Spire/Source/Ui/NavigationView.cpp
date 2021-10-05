@@ -244,41 +244,34 @@ void NavigationView::set_tab_enabled(int index, bool is_enabled) {
     if(!m_stacked_widget->currentWidget()->isEnabled()) {
       m_current_model->set_current(index);
     }
-  } else {
-    if(m_current_model->get_current() == index) {
-      auto new_index = [=] {
-        for(auto i = index + 1; i < get_tab_count(); ++i) {
-          if(m_navigation_list->get_list_item(i)->isEnabled()) {
-            return i;
-          }
+  } else if(m_current_model->get_current() == index) {
+    auto new_index = [=] {
+      for(auto i = index + 1; i < get_tab_count(); ++i) {
+        if(m_navigation_list->get_list_item(i)->isEnabled()) {
+          return i;
         }
-        for(auto i = index - 1; i > -1; --i) {
-          if(m_navigation_list->get_list_item(i)->isEnabled()) {
-            return i;
-          }
-        }
-        return -1;
-      }();
-      if(new_index > -1) {
-        m_current_model->set_current(new_index);
-      } else {
-        m_navigation_list->setEnabled(false);
       }
-    } else if(m_navigation_list->get_current_model()->get_current() == index) {
-      m_navigation_list->get_current_model()->set_current(
-        m_current_model->get_current());
+      for(auto i = index - 1; i > -1; --i) {
+        if(m_navigation_list->get_list_item(i)->isEnabled()) {
+          return i;
+        }
+      }
+      return -1;
+    }();
+    if(new_index > -1) {
+      m_current_model->set_current(new_index);
+    } else {
+      m_navigation_list->setEnabled(false);
     }
   }
 }
 
 void NavigationView::on_current(int index) {
-  if(index < 0 || index >= get_tab_count() || !isEnabled()) {
+  if(index < 0 || index >= get_tab_count()) {
     return;
   }
-  if(is_tab_enabled(index)) {
-    m_associative_model.get_association(m_navigation_list->get_list_model()->
-      get<QString>(index))->set_current(true);
-  }
+  m_associative_model.get_association(m_navigation_list->get_list_model()->
+    get<QString>(index))->set_current(true);
 }
 
 void NavigationView::on_list_submit(const std::any& submission) {
