@@ -15,6 +15,7 @@ namespace Spire {
   class Box;
   class Button;
   class CalendarDatePicker;
+  template<typename T> class CastListModel;
   class CheckBox;
   class DecimalBox;
   class DestinationListItem;

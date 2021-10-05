@@ -468,17 +468,24 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    auto field = [&] () -> QWidget* {
+    auto [field, is_field_empty] = [&] () -> std::pair<QWidget*, bool> {
       if(m_minute_field->hasFocus()) {
-        return m_minute_field;
+        return {m_minute_field, !m_minute_field->get_model()->get_current()};
       } else if(m_second_field->hasFocus()) {
-        return m_second_field;
+        return {m_second_field, !m_second_field->get_model()->get_current()};
       } else if(m_hour_field->hasFocus()) {
-        return m_hour_field;
+        return {m_hour_field, !m_hour_field->get_model()->get_current()};
       }
-      return nullptr;
+      return {nullptr, true};
     }();
-    if(key_event.key() == Qt::Key_Left &&
+    if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
+      if(is_field_empty && (m_hour_field->get_model()->get_current() ||
+          m_minute_field->get_model()->get_current() ||
+          m_second_field->get_model()->get_current())) {
+        on_submit();
+        return true;
+      }
+    } else if(key_event.key() == Qt::Key_Left &&
         (field == m_minute_field || field == m_second_field)) {
       if(auto editor = field->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0) {

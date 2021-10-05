@@ -4,20 +4,10 @@
 
 using namespace Spire;
 
-namespace {
-  boost::optional<int> to_int(const QString& text) {
-    auto ok = false;
-    if(auto number = text.toInt(&ok); ok) {
-      return number;
-    }
-    return boost::none;
-  }
-}
-
 TEST_SUITE("ToTextModel") {
   TEST_CASE("state") {
     auto local_model = std::make_shared<LocalValueModel<int>>(1);
-    auto model = ToTextModel<int>(local_model, to_int);
+    auto model = ToTextModel<int>(local_model);
     REQUIRE(model.get_state() == QValidator::Acceptable);
     local_model->set_current(2);
     REQUIRE(model.get_state() == QValidator::Acceptable);
@@ -31,7 +21,7 @@ TEST_SUITE("ToTextModel") {
 
   TEST_CASE("current") {
     auto local_model = std::make_shared<LocalValueModel<int>>(1);
-    auto model = ToTextModel<int>(local_model, to_int);
+    auto model = ToTextModel<int>(local_model);
     REQUIRE(model.get_current() == QString("1"));
     local_model->set_current(2);
     REQUIRE(model.get_current() == QString("2"));
@@ -43,7 +33,7 @@ TEST_SUITE("ToTextModel") {
 
   TEST_CASE("current_signal") {
     auto local_model = std::make_shared<LocalValueModel<int>>(1);
-    auto model = ToTextModel<int>(local_model, to_int);
+    auto model = ToTextModel<int>(local_model);
     auto current = QString();
     auto call_count = 0;
     model.connect_current_signal([&] (auto value) {

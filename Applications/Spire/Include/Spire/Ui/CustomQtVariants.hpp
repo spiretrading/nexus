@@ -3,6 +3,7 @@
 #include <any>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/optional/optional.hpp>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
@@ -141,6 +142,16 @@ namespace Spire {
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);
 
+  /**
+   * Constructs an instance of the given type from its string representation.
+   * @param T The type to construct.
+   * @param string The string used to instantiate the object.
+   * @returns An initialized optional iff construction was successful and the
+              object is valid.
+   */
+  template<typename T>
+  boost::optional<T> from_string(const QString& string) = delete;
+
   /** Implements Qt's item delegate to support the custom QVariant types. **/
   class CustomVariantItemDelegate : public QStyledItemDelegate {
     public:
@@ -169,6 +180,55 @@ namespace Spire {
       bool lessThan(const QModelIndex& left,
         const QModelIndex& right) const override;
   };
+
+  template<>
+  boost::optional<int> from_string(const QString& string);
+
+  template<>
+  boost::optional<double> from_string(const QString& string);
+
+  template<>
+  boost::optional<boost::posix_time::ptime> from_string(const QString& string);
+
+  template<>
+  boost::optional<boost::posix_time::time_duration>
+    from_string(const QString& string);
+
+  template<>
+  boost::optional<std::string> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::CurrencyId> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Money> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Quantity> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Region> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::OrderStatus> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::OrderType> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Security> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::Side> from_string(const QString& string);
+
+  template<>
+  boost::optional<Nexus::TimeInForce> from_string(const QString& string);
+
+  template<>
+  boost::optional<QColor> from_string(const QString& string);
+
+  template<>
+  boost::optional<QKeySequence> from_string(const QString& string);
 }
 
 #endif
