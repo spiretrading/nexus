@@ -20,9 +20,7 @@ class RequiredDateModel : public DateModel {
       : m_model(std::move(model)),
         m_current(m_model->get_current().value_or(day_clock::local_day())),
         m_current_connection(m_model->connect_current_signal(
-          [=] (const auto& current) {
-            on_current(current);
-          })) {}
+          [=] (const auto& current) { on_current(current); })) {}
 
     const Type& get_current() const override {
       return m_current;
