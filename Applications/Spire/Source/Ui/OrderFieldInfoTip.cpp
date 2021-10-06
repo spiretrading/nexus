@@ -76,8 +76,6 @@ namespace {
       const std::vector<OrderFieldInfoTip::Model::AllowedValue>& values,
       QWidget* parent) {
     auto container = new QWidget(parent);
-    container->setSizePolicy(
-      QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto layout = new QVBoxLayout(container);
     layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
@@ -96,7 +94,6 @@ namespace {
     layout->setContentsMargins({});
     layout->setSpacing(0);
     auto header = make_label(QObject::tr("Prerequisites"), container);
-    header->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     auto header_style = get_style(*header);
     header_style.get(ReadOnly()).
       set(FontSize(scale_height(10)));
@@ -160,8 +157,6 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
   auto description_label =
     new TextAreaBox(QString::fromStdString(model.m_tag.m_description), this);
   description_label->adjustSize();
-  description_label->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Minimum);
   description_label->set_read_only(true);
   auto description_style = get_style(*description_label);
   description_style.get(ReadOnly()).
