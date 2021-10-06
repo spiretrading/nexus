@@ -49,7 +49,7 @@ namespace {
     auto value_label =
       new TextBox(QString::fromStdString(value.m_value), container);
     value_label->set_read_only(true);
-    value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     auto value_style = get_style(*value_label);
     value_style.get(ReadOnly()).
       set(FontSize(scale_height(10))).
@@ -61,13 +61,13 @@ namespace {
       new TextAreaBox(QString::fromStdString(value.m_description), container);
     description_label->set_read_only(true);
     description_label->setSizePolicy(
-      QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+      QSizePolicy::MinimumExpanding, QSizePolicy::Maximum);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
       set(FontSize(scale_height(10))).
       set(PaddingLeft(scale_width(8)));
     set_style(*description_label, std::move(description_style));
-    layout->addWidget(description_label);
+    layout->addWidget(description_label, 0, Qt::AlignTop);
     return container;
   }
 
