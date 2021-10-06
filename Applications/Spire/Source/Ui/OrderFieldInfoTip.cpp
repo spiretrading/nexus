@@ -87,8 +87,7 @@ namespace {
   }
 
   auto make_prerequisite_container(
-      const std::vector<OrderFieldInfoTip::Model::Tag>& prerequisites,
-      QWidget* parent) {
+      const QString& prerequisites, QWidget* parent) {
     auto container = new QWidget(parent);
     auto layout = new QVBoxLayout(container);
     layout->setContentsMargins({});
@@ -99,29 +98,8 @@ namespace {
       set(FontSize(scale_height(10)));
     set_style(*header, std::move(header_style));
     layout->addWidget(header);
-    auto prerequisite_text = [&] {
-      auto text = QString();
-      for(auto tag_index = std::size_t(0);
-          tag_index < prerequisites.size(); ++tag_index) {
-        auto tag = prerequisites[tag_index];
-        text.append(QString::fromStdString(tag.m_name));
-        if(!tag.m_values.empty()) {
-          text.append(" = \"");
-          for(auto i = std::size_t(0); i < tag.m_values.size(); ++i) {
-            text.append(QString::fromStdString(tag.m_values[i].m_value));
-            if(i < tag.m_values.size() - 1) {
-              text.append(" | ");
-            }
-          }
-          text.append("\"");
-        }
-        if(tag_index < prerequisites.size() - 1) {
-          text.append(", ");
-        }
-      }
-      return text;
-    }();
-    auto prerequisites_label = new TextAreaBox(prerequisite_text, container);
+    auto prerequisites_label =
+      new TextAreaBox(prerequisites, container);
     prerequisites_label->set_read_only(true);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     layout->addWidget(prerequisites_label);
@@ -134,6 +112,29 @@ namespace {
     set_style(*box, std::move(box_style));
     return box;
   }
+}
+
+QString OrderFieldInfoTip::Model::get_prerequisites() const {
+  auto text = QString();
+  for(auto tag_index = std::size_t(0);
+      tag_index < m_prerequisites.size(); ++tag_index) {
+    auto tag = m_prerequisites[tag_index];
+    text.append(QString::fromStdString(tag.m_name));
+    if(!tag.m_values.empty()) {
+      text.append(" = \"");
+      for(auto i = std::size_t(0); i < tag.m_values.size(); ++i) {
+        text.append(QString::fromStdString(tag.m_values[i].m_value));
+        if(i < tag.m_values.size() - 1) {
+          text.append(" | ");
+        }
+      }
+      text.append("\"");
+    }
+    if(tag_index < m_prerequisites.size() - 1) {
+      text.append(", ");
+    }
+  }
+  return text;
 }
 
 OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
@@ -176,7 +177,7 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
   body_layout->addWidget(scroll_box);
   if(!model.m_prerequisites.empty()) {
     body_layout->addWidget(
-      make_prerequisite_container(model.m_prerequisites, this));
+      make_prerequisite_container(model.get_prerequisites(), this));
   }
   auto tip = new InfoTip(this, parent);
   tip->set_interactive(true);

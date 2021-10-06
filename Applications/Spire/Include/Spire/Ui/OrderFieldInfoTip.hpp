@@ -22,6 +22,8 @@ namespace Spire {
 
         Tag m_tag;
         std::vector<Tag> m_prerequisites;
+
+        QString get_prerequisites() const;
       };
 
       OrderFieldInfoTip(Model model, QWidget* parent);
