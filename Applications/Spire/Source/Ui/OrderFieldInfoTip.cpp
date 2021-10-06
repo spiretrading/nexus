@@ -56,8 +56,7 @@ namespace {
       set(FontSize(scale_height(10))).
       set(TextAlign(Qt::AlignTop));
     set_style(*value_label, std::move(value_style));
-    value_label->setFixedHeight(scale_height(48));
-    layout->addWidget(value_label);
+    layout->addWidget(value_label, 0, Qt::AlignTop);
     auto description_label =
       new TextAreaBox(QString::fromStdString(value.m_description), container);
     description_label->set_read_only(true);
