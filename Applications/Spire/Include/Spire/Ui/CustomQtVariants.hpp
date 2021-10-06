@@ -188,6 +188,9 @@ namespace Spire {
   boost::optional<double> from_string(const QString& string);
 
   template<>
+  boost::optional<boost::gregorian::date> from_string(const QString& string);
+
+  template<>
   boost::optional<boost::posix_time::ptime> from_string(const QString& string);
 
   template<>

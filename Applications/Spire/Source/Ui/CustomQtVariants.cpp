@@ -422,6 +422,11 @@ optional<double> Spire::from_string(const QString& string) {
 }
 
 template<>
+optional<gregorian::date> Spire::from_string(const QString& string) {
+  return from_string_lexical_cast<gregorian::date>(string);
+}
+
+template<>
 optional<ptime> Spire::from_string(const QString& string) {
   return from_string_lexical_cast<ptime>(string);
 }
