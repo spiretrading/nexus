@@ -89,11 +89,8 @@ namespace Spire {
       void set_enabled(int index, bool is_enabled);
 
     private:
-      class SelectLine;
-      class Tab;
       class LabelContainer;
       class NavigationTab;
-      class Separator;
       std::shared_ptr<CurrentModel> m_current_model;
       ListView* m_navigation_list;
       QStackedWidget* m_stacked_widget;

@@ -15,29 +15,38 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Styles;
 
-class NavigationView::SelectLine : public QWidget {
-  public:
-    explicit SelectLine(QWidget* parent = nullptr)
-        : QWidget(parent) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      auto box = new Box(nullptr);
-      layout->addWidget(box);
-      proxy_style(*this, *box);
-    }
-};
+namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any() >> is_a<ListView>()).
+      set(EdgeNavigation::CONTAIN).
+      set(Overflow::NONE).
+      set(Qt::Horizontal).
+      set(SelectionMode::SINGLE);
+    style.get(Any() >> (is_a<Box>() && !(+Any() << is_a<ListView>()))).
+      set(BorderTopSize(scale_height(1))).
+      set(BorderTopColor(QColor(0xD0D0D0)));
+    return style;
+  }
 
-class NavigationView::Tab : public QWidget {
-  public:
-    explicit Tab(QWidget* parent = nullptr)
-        : QWidget(parent) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      auto box = new Box(nullptr);
-      layout->addWidget(box);
-      proxy_style(*this, *box);
-    }
-};
+  auto LIST_ITEM_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
+      set(border_size(0)).
+      set(padding(0));
+    style.get((Checked() || Hover()) >> is_a<TextBox>()).
+      set(TextColor(QColor(0x4B23A0)));
+    style.get(Disabled() >> is_a<TextBox>()).
+      set(TextColor(QColor(0xC8C8C8)));
+    style.get(Checked() >> (is_a<TextBox>() % is_a<Box>())).
+      set(BackgroundColor(QColor(0x4B23A0)));
+    style.get((Checked() && Disabled()) >> (is_a<TextBox>() % is_a<Box>())).
+      set(BackgroundColor(QColor(0xC8C8C8)));
+    return style;
+  }
+}
 
 class NavigationView::LabelContainer : public QWidget {
   public:
@@ -50,7 +59,7 @@ class NavigationView::LabelContainer : public QWidget {
       auto text_box = make_label(std::move(label));
       text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       body_layout->addWidget(text_box);
-      auto select_line = new SelectLine();
+      auto select_line = new Box(nullptr);
       select_line->setFixedHeight(scale_height(2));
       body_layout->addWidget(select_line);
       auto box = new Box(body);
@@ -71,7 +80,7 @@ class NavigationView::NavigationTab : public QWidget {
       auto container = new LabelContainer(std::move(label));
       container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layers->add(container);
-      auto tab = new Tab();
+      auto tab = new Box(nullptr);
       tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layers->add(tab);
       auto layout = new QHBoxLayout(this);
@@ -80,26 +89,15 @@ class NavigationView::NavigationTab : public QWidget {
       auto style = StyleSheet();
       style.get(Any() >> is_a<LabelContainer>()).
         set(horizontal_padding(scale_width(8)));
-      style.get(Any() >> is_a<Tab>()).
+      style.get(Any() >> (is_a<Box>() && !(+Any() << is_a<LabelContainer>()))).
         set(border(scale_width(1), QColor(Qt::transparent)));
-      style.get(FocusVisible() >> is_a<Tab>()).
+      style.get(FocusVisible() >>
+          (is_a<Box>() && !(+Any() << is_a<LabelContainer>()))).
         set(border_color(QColor(0x4B23A0)));
       style.get(FocusVisible() >> is_a<TextBox>()).
         set(TextColor(QColor(0x4B23A0)));
       set_style(*this, std::move(style));
   }
-};
-
-class NavigationView::Separator : public QWidget {
-  public:
-    explicit Separator(QWidget* parent = nullptr)
-        : QWidget(parent) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      auto box = new Box(nullptr);
-      layout->addWidget(box);
-      proxy_style(*this, *box);
-    }
 };
 
 NavigationView::NavigationView(QWidget* parent)
@@ -131,7 +129,7 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
   navigation_list_layout->addWidget(m_navigation_list);
   navigation_list_layout->addStretch();
   navigation_menu_layout->addLayout(navigation_list_layout);
-  auto separator = new Separator();
+  auto separator = new Box(nullptr);
   separator->setFixedHeight(scale_height(5));
   navigation_menu_layout->addWidget(separator);
   layout->addWidget(navigation_menu);
@@ -148,16 +146,7 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
   content_block_layout->addLayout(content_layout);
   content_block_layout->addStretch();
   layout->addLayout(content_block_layout);
-  auto style = StyleSheet();
-  style.get(Any() >> is_a<ListView>()).
-    set(EdgeNavigation::CONTAIN).
-    set(Overflow::NONE).
-    set(Qt::Horizontal).
-    set(SelectionMode::SINGLE);
-  style.get(Any() >> is_a<Separator>()).
-    set(BorderTopSize(scale_height(1))).
-    set(BorderTopColor(QColor(0xD0D0D0)));
-  set_style(*this, std::move(style));
+  set_style(*this, DEFAULT_STYLE());
   m_navigation_list->connect_submit_signal(
     std::bind_front(&NavigationView::on_list_submit, this));
   m_navigation_list->get_current_model()->connect_current_signal(
@@ -180,21 +169,7 @@ void NavigationView::insert_tab(int index, QWidget& page,
   }
   static_pointer_cast<ArrayListModel>(m_navigation_list->get_list_model())->
     insert(label, index);
-  auto style = StyleSheet();
-  style.get(Any()).
-    set(BackgroundColor(QColor(Qt::transparent))).
-    set(border_color(QColor(Qt::transparent))).
-    set(border_size(0)).
-    set(padding(0));
-  style.get((Checked() || Hover()) >> is_a<TextBox>()).
-    set(TextColor(QColor(0x4B23A0)));
-  style.get(Disabled() >> is_a<TextBox>()).
-    set(TextColor(QColor(0xC8C8C8)));
-  style.get(Checked() >> is_a<SelectLine>()).
-    set(BackgroundColor(QColor(0x4B23A0)));
-  style.get((Checked() && Disabled()) >> is_a<SelectLine>()).
-    set(BackgroundColor(QColor(0xC8C8C8)));
-  set_style(*m_navigation_list->get_list_item(index), std::move(style));
+  set_style(*m_navigation_list->get_list_item(index), LIST_ITEM_STYLE());
   m_stacked_widget->insertWidget(index, &page);
   m_associative_model.get_association(label)->connect_current_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
