@@ -52,6 +52,7 @@ namespace {
     value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     auto value_style = get_style(*value_label);
     value_style.get(ReadOnly()).
+      set(border_size(0)).
       set(FontSize(scale_height(10))).
       set(TextAlign(Qt::AlignTop));
     set_style(*value_label, std::move(value_style));
