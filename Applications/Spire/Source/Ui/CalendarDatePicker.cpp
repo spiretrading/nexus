@@ -2,6 +2,7 @@
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -33,7 +34,11 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       m_previous_button->setFixedSize(BUTTON_SIZE);
       m_previous_button->connect_clicked_signal([=] { decrement(); });
       layout->addWidget(m_previous_button);
-      m_label = make_label("", this);
+      m_label = make_label(std::make_shared<ToTextModel<date>>(m_model,
+        [] (const date& current) {
+          return QString("%1 %2").
+            arg(current.month().as_long_string()).arg(current.year());
+        }), this);
       auto label_style = get_style(*m_label);
       label_style.get(Disabled() && ReadOnly()).
         set(TextAlign(Qt::AlignCenter));
@@ -44,8 +49,6 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       m_next_button->setFixedSize(BUTTON_SIZE);
       m_next_button->connect_clicked_signal([=] { increment(); });
       layout->addWidget(m_next_button);
-      m_model->connect_current_signal([=] (auto date) { update_label(); });
-      update_label();
     }
 
     const std::shared_ptr<DateModel>& get_model() const {
@@ -63,11 +66,6 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     }
     void increment() {
       m_model->set_current(m_model->get_current() + months(1));
-    }
-    void update_label() {
-      m_label->get_model()->set_current(QString("%1 %2").
-        arg(m_model->get_current().month().as_long_string()).
-        arg(m_model->get_current().year()));
     }
 };
 
