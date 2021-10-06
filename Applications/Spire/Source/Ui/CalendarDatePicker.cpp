@@ -7,19 +7,53 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-class CalendarDatePicker::MonthSpinner : public QWidget {
+class RequiredDateModel : public DateModel {
   public:
-    explicit MonthSpinner(QWidget* parent = nullptr)
-      : MonthSpinner(
-          std::make_shared<LocalDateModel>(day_clock::local_day()), parent) {}
 
-    explicit MonthSpinner(date date, QWidget* parent = nullptr)
-      : MonthSpinner(std::make_shared<LocalDateModel>(date), parent) {}
+    RequiredDateModel(std::shared_ptr<OptionalDateModel> model)
+      : m_model(std::move(model)),
+        m_current(m_model->get_current().value_or(day_clock::local_day())),
+        m_current_connection(m_model->connect_current_signal(
+          [=] (const auto& current) {
+            on_current(current);
+          })) {}
+
+    const Type& get_current() const override {
+      return m_current;
+    }
+
+    QValidator::State set_current(const date& value) override {
+      m_current = value;
+      m_current_signal(m_current);
+      return QValidator::State::Acceptable;
+    }
+
+    connection connect_current_signal(
+        const typename CurrentSignal::slot_type& slot) const override {
+      return m_current_signal.connect(slot);
+    }
+
+  private:
+    mutable CurrentSignal m_current_signal;
+    std::shared_ptr<OptionalDateModel> m_model;
+    scoped_connection m_current_connection;
+    date m_current;
+
+    void on_current(const boost::optional<date>& current) {
+      if(current) {
+        set_current(*current);
+      }
+    }
+};
+
+class MonthSpinner : public QWidget {
+  public:
 
     explicit MonthSpinner(
         std::shared_ptr<DateModel> model, QWidget* parent = nullptr)
@@ -64,6 +98,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     void decrement() {
       m_model->set_current(m_model->get_current() - months(1));
     }
+
     void increment() {
       m_model->set_current(m_model->get_current() + months(1));
     }
@@ -87,12 +122,9 @@ CalendarDatePicker::CalendarDatePicker(
     scale_width(4), scale_height(8), scale_width(4), scale_height(4));
   layout->setSpacing(scale_height(4));
   setFixedWidth(scale_width(176));
-  m_month_spinner = new MonthSpinner(std::make_shared<LocalDateModel>(
-    m_model->get_current().get_value_or(day_clock::local_day())), this);
-  layout->addWidget(m_month_spinner);
-  m_model->connect_current_signal([=] (const auto& current) {
-    on_current(current);
-  });
+  auto month_spinner =
+    new MonthSpinner(std::make_shared<RequiredDateModel>(m_model), this);
+  layout->addWidget(month_spinner);
 }
 
 const std::shared_ptr<OptionalDateModel>&
@@ -103,10 +135,4 @@ const std::shared_ptr<OptionalDateModel>&
 connection CalendarDatePicker::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
-}
-
-void CalendarDatePicker::on_current(const boost::optional<date>& current) {
-  if(current) {
-    m_month_spinner->get_model()->set_current(*current);
-  }
 }

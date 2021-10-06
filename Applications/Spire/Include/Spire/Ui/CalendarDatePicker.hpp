@@ -60,12 +60,8 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      class MonthSpinner;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<OptionalDateModel> m_model;
-      MonthSpinner* m_month_spinner;
-
-      void on_current(const boost::optional<boost::gregorian::date>& current);
   };
 }
 
