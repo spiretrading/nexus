@@ -27,8 +27,7 @@ class RequiredDateModel : public DateModel {
     }
 
     QValidator::State set_current(const date& value) override {
-      m_current = value;
-      m_current_signal(m_current);
+      m_model->set_current(value);
       return QValidator::State::Acceptable;
     }
 
@@ -44,8 +43,9 @@ class RequiredDateModel : public DateModel {
     date m_current;
 
     void on_current(const boost::optional<date>& current) {
-      if(current) {
-        set_current(*current);
+      if(current && current != m_current) {
+        m_current = *current;
+        m_current_signal(m_current);
       }
     }
 };
