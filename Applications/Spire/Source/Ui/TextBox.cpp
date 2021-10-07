@@ -9,7 +9,6 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/LayeredWidget.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -195,8 +194,6 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_submission(m_model->get_current()),
       m_is_rejected(false),
       m_has_update(false) {
-  auto layers = new LayeredWidget(this);
-  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
@@ -204,8 +201,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
-  layers->add(m_line_edit);
-  m_box = new PlaceholderBox(layers);
+  m_box = new PlaceholderBox(m_line_edit);
   m_box->setFocusProxy(m_line_edit);
   setCursor(m_line_edit->cursor());
   setFocusPolicy(m_line_edit->focusPolicy());
