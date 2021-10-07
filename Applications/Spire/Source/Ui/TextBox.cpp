@@ -114,10 +114,6 @@ class TextBox::PlaceholderBox : public Box {
       update();
     }
 
-    bool is_text_visible() const {
-      return m_is_text_visible;
-    }
-
     void set_text_visible(bool is_visible) {
       if(is_visible != m_is_text_visible) {
         m_is_text_visible = is_visible;
