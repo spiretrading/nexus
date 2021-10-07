@@ -135,7 +135,7 @@ class TextBox::PlaceholderBox : public Box {
     }
 
   protected:
-    void paintEvent(QPaintEvent* event) {
+    void paintEvent(QPaintEvent* event) override {
       Box::paintEvent(event);
       if(m_is_text_visible) {
         auto painter = QPainter(this);
