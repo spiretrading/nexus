@@ -447,8 +447,7 @@ void TextBox::commit_style() {
 }
 
 void TextBox::commit_placeholder_style() {
-  m_box->set_style_properties(
-    m_placeholder_styles, compute_decoration_margins());
+  m_box->set_style_properties(m_placeholder_styles, m_placeholder_margins);
 }
 
 void TextBox::on_current(const QString& current) {
