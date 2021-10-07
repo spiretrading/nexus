@@ -151,6 +151,7 @@ namespace Styles {
       bool m_has_update;
       mutable boost::optional<QSize> m_size_hint;
 
+      QMargins compute_decoration_margins() const;
       QSize compute_decoration_size() const;
       bool is_placeholder_shown() const;
       void elide_text();

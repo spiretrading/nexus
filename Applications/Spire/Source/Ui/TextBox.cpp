@@ -125,32 +125,18 @@ class TextBox::PlaceholderBox : public Box {
       }
     }
 
-    void set_alignment(Qt::Alignment alignment) {
-      if(alignment != m_alignment) {
-        m_alignment = alignment;
-        update();
+    void set_style_properties(const TextBox::StyleProperties& properties,
+        const QMargins& margins) {
+      m_alignment = properties.m_alignment.value_or(
+        Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
+      auto font = properties.m_font.value_or(QFont());
+      if(properties.m_size) {
+        font.setPixelSize(*properties.m_size);
       }
-    }
-
-    void set_font(const QFont& font) {
-      if(font != m_font) {
-        m_font = font;
-        update();
-      }
-    }
-
-    void set_text_color(const QColor& color) {
-      if(color != m_text_color) {
-        m_text_color = color;
-        update();
-      }
-    }
-
-    void set_margins(const QMargins& margins) {
-      if(margins != m_margins) {
-        m_margins = margins;
-        update();
-      }
+      m_font = font;
+      m_text_color = properties.m_text_color;
+      m_margins = margins;
+      update();
     }
 
   protected:
@@ -365,36 +351,41 @@ void TextBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-QSize TextBox::compute_decoration_size() const {
-  auto decoration_size = QSize(0, 0);
+QMargins TextBox::compute_decoration_margins() const {
+  auto margins = QMargins();
   for(auto& property : get_evaluated_block(*m_box)) {
     property.visit(
       [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        decoration_size.rheight() += size;
+        margins.setTop(margins.top() + size);
       },
       [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        decoration_size.rwidth() += size;
+        margins.setRight(margins.right() + size);
       },
       [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        decoration_size.rheight() += size;
+        margins.setBottom(margins.bottom() + size);
       },
       [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        decoration_size.rwidth() += size;
+        margins.setLeft(margins.left() + size);
       },
       [&] (std::in_place_type_t<PaddingTop>, int size) {
-        decoration_size.rheight() += size;
+        margins.setTop(margins.top() + size);
       },
       [&] (std::in_place_type_t<PaddingRight>, int size) {
-        decoration_size.rwidth() += size;
+        margins.setRight(margins.right() + size);
       },
       [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        decoration_size.rheight() += size;
+        margins.setBottom(margins.bottom() + size);
       },
       [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        decoration_size.rwidth() += size;
+        margins.setLeft(margins.left() + size);
       });
   }
-  return decoration_size;
+  return margins;
+}
+
+QSize TextBox::compute_decoration_size() const {
+  auto margins = compute_decoration_margins();
+  return {margins.left() + margins.right(), margins.top() + margins.bottom()};
 }
 
 bool TextBox::is_placeholder_shown() const {
@@ -456,15 +447,8 @@ void TextBox::commit_style() {
 }
 
 void TextBox::commit_placeholder_style() {
-  m_box->set_alignment(m_placeholder_styles.m_alignment.value_or(
-    Qt::Alignment(Qt::AlignmentFlag::AlignLeft)));
-  auto font = m_placeholder_styles.m_font.value_or(QFont());
-  if(m_placeholder_styles.m_size) {
-    font.setPixelSize(*m_placeholder_styles.m_size);
-  }
-  m_box->set_font(font);
-  m_box->set_text_color(m_placeholder_styles.m_text_color);
-  m_box->set_margins(m_placeholder_margins);
+  m_box->set_style_properties(
+    m_placeholder_styles, compute_decoration_margins());
 }
 
 void TextBox::on_current(const QString& current) {
