@@ -16,25 +16,25 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Styles;
 
-class NavigationView::SelectLine : public Box {
+class SelectLine : public Box {
   public:
     explicit SelectLine(QWidget* parent = nullptr)
       : Box(nullptr, parent) {}
 };
 
-class NavigationView::Separator : public Box {
+class Separator : public Box {
   public:
     explicit Separator(QWidget* parent = nullptr)
       : Box(nullptr, parent) {}
 };
 
-class NavigationView::Tab : public Box {
+class Tab : public Box {
   public:
     explicit Tab(QWidget* parent = nullptr)
       : Box(nullptr, parent) {}
 };
 
-class NavigationView::LabelContainer : public QWidget {
+class LabelContainer : public QWidget {
   public:
     explicit LabelContainer(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
@@ -56,7 +56,7 @@ class NavigationView::LabelContainer : public QWidget {
     }
 };
 
-class NavigationView::NavigationTab : public QWidget {
+class NavigationTab : public QWidget {
   public:
     explicit NavigationTab(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
@@ -82,7 +82,7 @@ class NavigationView::NavigationTab : public QWidget {
       style.get(FocusVisible() >> is_a<TextBox>()).
         set(TextColor(QColor(0x4B23A0)));
       set_style(*this, std::move(style));
-  }
+    }
 };
 
 NavigationView::NavigationView(QWidget* parent)

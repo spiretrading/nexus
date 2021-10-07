@@ -89,11 +89,6 @@ namespace Spire {
       void set_enabled(int index, bool is_enabled);
 
     private:
-      class SelectLine;
-      class Separator;
-      class Tab;
-      class LabelContainer;
-      class NavigationTab;
       std::shared_ptr<CurrentModel> m_current_model;
       std::shared_ptr<ArrayListModel> m_navigation_list_model;
       ListView* m_navigation_list;
