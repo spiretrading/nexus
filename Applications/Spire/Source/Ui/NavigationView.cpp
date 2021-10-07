@@ -5,6 +5,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
