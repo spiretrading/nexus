@@ -351,41 +351,36 @@ void TextBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-QMargins TextBox::compute_decoration_margins() const {
-  auto margins = QMargins();
+QSize TextBox::compute_decoration_size() const {
+  auto decoration_size = QSize(0, 0);
   for(auto& property : get_evaluated_block(*m_box)) {
     property.visit(
       [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        margins.setTop(margins.top() + size);
+        decoration_size.rheight() += size;
       },
       [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        margins.setRight(margins.right() + size);
+        decoration_size.rwidth() += size;
       },
       [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        margins.setBottom(margins.bottom() + size);
+        decoration_size.rheight() += size;
       },
       [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        margins.setLeft(margins.left() + size);
+        decoration_size.rwidth() += size;
       },
       [&] (std::in_place_type_t<PaddingTop>, int size) {
-        margins.setTop(margins.top() + size);
+        decoration_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingRight>, int size) {
-        margins.setRight(margins.right() + size);
+        decoration_size.rwidth() += size;
       },
       [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        margins.setBottom(margins.bottom() + size);
+        decoration_size.rheight() += size;
       },
       [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        margins.setLeft(margins.left() + size);
+        decoration_size.rwidth() += size;
       });
   }
-  return margins;
-}
-
-QSize TextBox::compute_decoration_size() const {
-  auto margins = compute_decoration_margins();
-  return {margins.left() + margins.right(), margins.top() + margins.bottom()};
+  return decoration_size;
 }
 
 bool TextBox::is_placeholder_shown() const {
