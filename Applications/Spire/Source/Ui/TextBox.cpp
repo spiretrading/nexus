@@ -424,8 +424,8 @@ void TextBox::commit_style() {
     R"(QLineEdit {
       background: transparent;
       border-width: 0px;
-      padding: 0px;)");
-  m_placeholder_styles.m_styles.set("color", m_line_edit_styles.m_text_color);
+      color: %1;
+      padding: 0px;)").arg(m_line_edit_styles.m_text_color.name());
   m_line_edit_styles.m_styles.write(stylesheet);
   auto alignment = m_line_edit_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
