@@ -95,6 +95,7 @@ namespace Spire {
       class LabelContainer;
       class NavigationTab;
       std::shared_ptr<CurrentModel> m_current_model;
+      std::shared_ptr<ArrayListModel> m_navigation_list_model;
       ListView* m_navigation_list;
       QStackedWidget* m_stacked_widget;
       AssociativeValueModel<QString> m_associative_model;

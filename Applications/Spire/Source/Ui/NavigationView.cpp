@@ -106,7 +106,8 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
   auto navigation_list_layout = new QHBoxLayout();
   navigation_list_layout->setContentsMargins({});
   navigation_list_layout->setSpacing(0);
-  m_navigation_list = new ListView(std::make_shared<ArrayListModel>(),
+  m_navigation_list_model = std::make_shared<ArrayListModel>();
+  m_navigation_list = new ListView(m_navigation_list_model,
     [] (const auto& model, auto index) {
       return new NavigationTab(model->get<QString>(index));
     });
@@ -161,8 +162,7 @@ void NavigationView::insert_tab(int index, QWidget& page,
   if(index < 0 || index > get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  static_pointer_cast<ArrayListModel>(m_navigation_list->get_list_model())->
-    insert(label, index);
+  m_navigation_list_model->insert(label, index);
   auto style = StyleSheet();
   style.get(Any()).
     set(BackgroundColor(QColor(Qt::transparent))).
@@ -187,14 +187,14 @@ void NavigationView::insert_tab(int index, QWidget& page,
 }
 
 int NavigationView::get_count() const {
-  return m_navigation_list->get_list_model()->get_size();
+  return m_navigation_list_model->get_size();
 }
 
 QString NavigationView::get_label(int index) const {
   if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_navigation_list->get_list_model()->get<QString>(index);
+  return m_navigation_list_model->get<QString>(index);
 }
 
 QWidget& NavigationView::get_page(int index) const {
@@ -253,8 +253,8 @@ void NavigationView::on_current(int index) {
   if(index < 0 || index >= get_count()) {
     return;
   }
-  m_associative_model.get_association(m_navigation_list->get_list_model()->
-    get<QString>(index))->set_current(true);
+  m_associative_model.get_association(
+    m_navigation_list_model->get<QString>(index))->set_current(true);
 }
 
 void NavigationView::on_list_submit(const std::any& submission) {
