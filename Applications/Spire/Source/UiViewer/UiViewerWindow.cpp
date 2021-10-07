@@ -105,6 +105,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
   add(make_box_profile());
   add(make_check_box_profile());
+  add(make_closed_filter_panel_profile());
   add(make_decimal_box_profile());
   add(make_decimal_filter_panel_profile());
   add(make_delete_icon_button_profile());

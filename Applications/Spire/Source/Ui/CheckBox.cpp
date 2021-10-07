@@ -2,7 +2,6 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -113,10 +112,6 @@ void CheckBox::set_read_only(bool is_read_only) {
       unmatch(*this, ReadOnly());
     }
   }
-}
-
-QSize CheckBox::sizeHint() const {
-  return scale(80, 16);
 }
 
 void CheckBox::on_checked(bool is_checked) {

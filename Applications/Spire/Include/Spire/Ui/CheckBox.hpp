@@ -2,6 +2,7 @@
 #define SPIRE_CHECK_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -58,8 +59,6 @@ namespace Styles {
        *                     true.
        */
       void set_read_only(bool is_read_only);
-
-      QSize sizeHint() const override;
 
     protected:
       void changeEvent(QEvent* event) override;

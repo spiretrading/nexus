@@ -1,0 +1,240 @@
+#include "Spire/Ui/ClosedFilterPanel.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
+#include <QEvent>
+#include <QHBoxLayout>
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
+#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
+
+using namespace boost;
+using namespace boost::signals2;
+using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  struct ItemEntry {
+    std::any m_data;
+    std::shared_ptr<BooleanModel> m_model;
+    int m_index;
+  };
+
+  auto SCROLLABLE_LIST_STYLE(StyleSheet style) {
+    style.get(Any() >> is_a<ListView>()).
+      set(EdgeNavigation::CONTAIN);
+    style.get(Any() >> is_a<ListItem>()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_size(0)).
+      set(PaddingLeft(scale_width(8))).
+      set(PaddingRight(scale_width(10))).
+      set(vertical_padding(scale_height(5)));
+    return style;
+  }
+
+  auto make_check_box(const std::shared_ptr<ListModel>& model, int index) {
+    auto item = model->get<ItemEntry>(index);
+    auto check_box = new CheckBox(item.m_model);
+    check_box->set_label(displayTextAny(item.m_data));
+    check_box->setLayoutDirection(Qt::RightToLeft);
+    check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    return check_box;
+  }
+}
+
+class ClosedFilterPanelModelAdaptor : public ListModel {
+  public:
+    ClosedFilterPanelModelAdaptor(std::shared_ptr<TableModel> source)
+        : m_source(std::move(source)) {
+      m_source_connection = m_source->connect_operation_signal(
+        std::bind_front(&ClosedFilterPanelModelAdaptor::on_operation, this));
+      for(auto i = 0; i < m_source->get_row_size(); ++i) {
+        auto boolean_model =
+          std::make_shared<LocalBooleanModel>(m_source->get<bool>(i, 1));
+        m_data.emplace_back(ItemEntry{m_source->at(i, 0), boolean_model, i});
+        boolean_model->connect_current_signal(
+          std::bind_front(&ClosedFilterPanelModelAdaptor::on_current, this,
+            &std::any_cast<ItemEntry&>(m_data.back())));
+      }
+    }
+
+    int get_size() const override {
+      return m_source->get_row_size();
+    }
+
+    const std::any& at(int index) const override {
+      if(index < 0 || index >= get_size()) {
+        throw std::out_of_range("The index is out of range.");
+      }
+      return m_data[index];
+    }
+
+    boost::signals2::connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      m_transaction.transact([&] {
+        visit(operation,
+          [&] (const TableModel::AddOperation& operation) {
+            add_item(operation.m_index);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
+            remove_item(operation.m_index);
+          },
+          [&] (const TableModel::UpdateOperation& operation) {
+            if(operation.m_column == 1) {
+              std::any_cast<ItemEntry&>(m_data[operation.m_row]).m_model->
+                set_current(m_source->get<bool>(operation.m_row, 1));
+            }
+          });
+        });
+    }
+
+    void on_current(ItemEntry* item, bool is_checked) {
+      auto blocker = shared_connection_block(m_source_connection);
+      m_source->set(item->m_index, 1, is_checked);
+      m_transaction.push(UpdateOperation{item->m_index});
+    }
+
+    void add_item(int index) {
+      auto boolean_model =
+        std::make_shared<LocalBooleanModel>(m_source->get<bool>(index, 1));
+      m_data.emplace(m_data.begin() + index,
+        ItemEntry{m_source->at(index, 0), boolean_model, index});
+      boolean_model->connect_current_signal(
+        std::bind_front(&ClosedFilterPanelModelAdaptor::on_current, this,
+          &std::any_cast<ItemEntry&>(m_data.back())));
+      for(auto i = m_data.begin() + index + 1; i != m_data.end(); ++i) {
+        ++(std::any_cast<ItemEntry&>(*i).m_index);
+      }
+      m_transaction.push(AddOperation{index});
+    }
+
+    void remove_item(int index) {
+      m_data.erase(m_data.begin() + index);
+      for(auto i = m_data.begin() + index; i != m_data.end(); ++i) {
+        --(std::any_cast<ItemEntry&>(*i).m_index);
+      }
+      m_transaction.push(RemoveOperation{index});
+    }
+
+  private:
+    std::shared_ptr<TableModel> m_source;
+    std::vector<std::any> m_data;
+    ListModelTransactionLog m_transaction;
+    scoped_connection m_source_connection;
+};
+
+ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
+    QString title, QWidget& parent)
+    : QWidget(&parent),
+      m_model(std::move(model)),
+      m_submission(std::make_shared<ArrayListModel>()),
+      m_model_connection(m_model->connect_operation_signal(
+        std::bind_front(&ClosedFilterPanel::on_operation, this))) {
+  for(auto i = 0; i < m_model->get_row_size(); ++i) {
+    if(m_model->get<bool>(i, 1)) {
+      m_submission->push(m_model->at(i, 0));
+    }
+  }
+  m_filter_panel = new FilterPanel(std::move(title), this, parent);
+  m_filter_panel->connect_reset_signal(
+    std::bind_front(&ClosedFilterPanel::on_reset, this));
+  m_list_view =
+    new ListView(std::make_shared<ClosedFilterPanelModelAdaptor>(m_model),
+      make_check_box);
+  m_scrollable_list_box = new ScrollableListBox(*m_list_view);
+  set_style(*m_scrollable_list_box,
+    SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->addWidget(m_scrollable_list_box);
+  m_scrollable_list_box->installEventFilter(this);
+}
+
+const std::shared_ptr<TableModel>& ClosedFilterPanel::get_model() const {
+  return m_model;
+}
+
+connection ClosedFilterPanel::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
+}
+
+QSize ClosedFilterPanel::sizeHint() const {
+  if(!m_size_hint) {
+    auto size = m_scrollable_list_box->sizeHint();
+    m_size_hint.emplace(std::max(scale_width(160), size.width()),
+      std::clamp(size.height(), scale_height(54), scale_height(158)));
+  }
+  return *m_size_hint;
+}
+
+bool ClosedFilterPanel::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+    updateGeometry();
+    m_filter_panel->window()->adjustSize();
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+bool ClosedFilterPanel::event(QEvent* event) {
+  if(event->type() == QEvent::ShowToParent) {
+    m_filter_panel->show();
+  } else if(event->type() == QEvent::HideToParent) {
+    m_filter_panel->hide();
+  }
+  return QWidget::event(event);
+}
+
+void ClosedFilterPanel::on_reset() {
+  for(auto i = 0; i < m_model->get_row_size(); ++i) {
+    m_model->set(i, 1, true);
+  }
+}
+
+void ClosedFilterPanel::on_operation(const TableModel::Operation& operation) {
+  visit(operation,
+    [=] (const TableModel::UpdateOperation& operation) {
+      auto value = displayTextAny(m_model->at(operation.m_row, 0));
+      auto i = 0;
+      for(i = 0; i < m_submission->get_size(); ++i) {
+        if(value == displayTextAny(m_submission->at(i))) {
+          break;
+        }
+      }
+      if(i < m_submission->get_size()) {
+        if(!m_model->get<bool>(operation.m_row, 1)) {
+          m_submission->remove(i);
+        }
+      } else {
+        if(m_model->get<bool>(operation.m_row, 1)) {
+          m_submission->push(m_model->at(operation.m_row, 0));
+        }
+      }
+      m_submit_signal(m_submission);
+    },
+    [=] (const TableModel::AddOperation& operation) {
+      if(m_model->get<bool>(operation.m_index, 1)) {
+        m_submission->push(m_model->at(operation.m_index, 0));
+      }
+    },
+    [=] (const TableModel::RemoveOperation& operation) {
+      auto index = m_submission->get_size();
+      while(--index >= 0) {
+        m_submission->remove(index);
+      }
+      for(auto i = 0; i < m_model->get_row_size(); ++i) {
+        if(m_model->get<bool>(i, 1)) {
+          m_submission->push(m_model->at(i, 0));
+        }
+      }
+    });
+}

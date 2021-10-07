@@ -16,6 +16,7 @@ namespace Spire {
   class Button;
   template<typename T> class CastListModel;
   class CheckBox;
+  class ClosedFilterPanel;
   class DecimalBox;
   class DestinationListItem;
   class DropDownBox;
