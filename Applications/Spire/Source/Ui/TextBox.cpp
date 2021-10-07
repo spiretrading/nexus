@@ -519,9 +519,54 @@ void TextBox::on_style() {
   auto& placeholder_stylist = *find_stylist(*this, Placeholder());
   merge(block, placeholder_stylist.get_computed_block());
   m_placeholder_styles.clear();
+  m_placeholder_margins = {};
   m_placeholder_styles.m_styles.buffer([&] {
     for(auto& property : block) {
       property.visit(
+        [&] (const BorderLeftSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setLeft(m_placeholder_margins.left() + size);
+          });
+        },
+        [&] (const BorderTopSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setTop(m_placeholder_margins.top() + size);
+          });
+        },
+        [&] (const BorderRightSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setRight(
+              m_placeholder_margins.right() + size);
+          });
+        },
+        [&] (const BorderBottomSize& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setBottom(
+              m_placeholder_margins.bottom() + size);
+          });
+        },
+        [&] (const PaddingLeft& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setLeft(m_placeholder_margins.left() + size);
+          });
+        },
+        [&] (const PaddingTop& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setTop(m_placeholder_margins.top() + size);
+          });
+        },
+        [&] (const PaddingRight& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setRight(
+              m_placeholder_margins.right() + size);
+          });
+        },
+        [&] (const PaddingBottom& size) {
+          placeholder_stylist.evaluate(size, [=] (auto size) {
+            m_placeholder_margins.setBottom(
+              m_placeholder_margins.bottom() + size);
+          });
+        },
         [&] (const TextColor& color) {
           placeholder_stylist.evaluate(color, [=] (auto color) {
             m_placeholder_styles.m_text_color = color;

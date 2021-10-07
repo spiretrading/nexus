@@ -143,6 +143,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
       StyleProperties m_placeholder_styles;
+      QMargins m_placeholder_margins;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       TextValidator* m_text_validator;
