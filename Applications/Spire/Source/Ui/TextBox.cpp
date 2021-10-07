@@ -99,7 +99,6 @@ struct TextBox::TextValidator : QValidator {
 
 class TextBox::PlaceholderBox : public Box {
   public:
-
     explicit PlaceholderBox(QWidget* body, QWidget* parent = nullptr)
       : Box(body, parent),
         m_is_text_visible(false) {}
