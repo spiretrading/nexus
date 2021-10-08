@@ -14,7 +14,7 @@ namespace {
   auto NAME_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
-    font.setWeight(60);
+    font.setWeight(65);
     font.setPixelSize(scale_width(12));
     style.get(ReadOnly()).
       set(BackgroundColor(QColor(Qt::transparent))).

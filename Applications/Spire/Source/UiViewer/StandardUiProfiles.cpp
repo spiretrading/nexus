@@ -1460,24 +1460,6 @@ UiProfile Spire::make_navigation_view_profile() {
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-
-      //struct Model {
-
-      //  struct AllowedValue {
-      //    std::string m_value;
-      //    std::string m_description;
-      //  };
-
-      //  struct Tag {
-      //    std::string m_name;
-      //    std::string m_description;
-      //    std::vector<AllowedValue> m_values;
-      //  };
-
-      //  Tag m_tag;
-      //  std::vector<Tag> m_prerequisites;
-      //};
-
   properties.push_back(
     make_standard_property("name", QString::fromUtf8("TestOrderFieldInfoTip")));
   properties.push_back(make_standard_property("description", QString::fromUtf8(
