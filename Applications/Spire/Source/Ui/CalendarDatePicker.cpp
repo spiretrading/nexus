@@ -14,6 +14,40 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  const auto DISPLAYED_DAYS = 42;
+
+  auto make_header_label(QString text, QWidget* parent) {
+    auto label = make_label(std::move(text), parent);
+    label->setFixedSize(scale(24, 24));
+    auto style = get_style(*label);
+    auto font = QFont("Roboto");
+    font.setWeight(60);
+    font.setPixelSize(scale_width(12));
+    style.get(Disabled() && ReadOnly()).
+      set(Font(font)).
+      set(TextAlign(Qt::AlignCenter)).
+      set(TextColor(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    set_style(*label, std::move(style));
+    return label;
+  }
+
+  auto make_day_header(QWidget* parent) {
+    auto header = new QWidget(parent);
+    header->setFocusPolicy(Qt::NoFocus);
+    header->setFixedSize(scale(168, 26));
+    auto layout = new QHBoxLayout(header);
+    layout->setContentsMargins({});
+    layout->setSpacing(0);
+    auto locale = QLocale();
+    layout->addWidget(make_header_label(locale.dayName(7).at(0), header));
+    for(auto i = 1; i < 7; ++i) {
+      layout->addWidget(make_header_label(locale.dayName(i).at(0), header));
+    }
+    return header;
+  }
+}
+
 class RequiredDateModel : public DateModel {
   public:
     RequiredDateModel(std::shared_ptr<OptionalDateModel> model)
@@ -122,6 +156,7 @@ CalendarDatePicker::CalendarDatePicker(
   auto month_spinner =
     new MonthSpinner(std::make_shared<RequiredDateModel>(m_model), this);
   layout->addWidget(month_spinner);
+  layout->addWidget(make_day_header(this));
 }
 
 const std::shared_ptr<OptionalDateModel>&
