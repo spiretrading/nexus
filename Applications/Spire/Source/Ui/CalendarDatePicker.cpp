@@ -30,8 +30,6 @@ class RequiredDateModel : public DateModel {
     QValidator::State set_current(const date& value) override {
       m_current = value;
       m_current_signal(m_current);
-      auto blocker = shared_connection_block(m_current_connection);
-      m_model->set_current(value);
       return QValidator::State::Acceptable;
     }
 
@@ -48,8 +46,7 @@ class RequiredDateModel : public DateModel {
 
     void on_current(const boost::optional<date>& current) {
       if(current) {
-        m_current = *current;
-        m_current_signal(m_current);
+        set_current(*current);
       }
     }
 };
