@@ -104,6 +104,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   m_rebuild_button = new QPushButton(QString::fromUtf8("Rebuild"));
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
   add(make_box_profile());
+  add(make_calendar_date_picker_profile());
   add(make_check_box_profile());
   add(make_decimal_box_profile());
   add(make_decimal_filter_panel_profile());
