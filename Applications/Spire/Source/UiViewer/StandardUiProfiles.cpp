@@ -1471,7 +1471,8 @@ UiProfile Spire::make_order_field_info_tip_profile() {
   properties.push_back(
     make_standard_property("value3", QString::fromUtf8("C,Test value 3.")));
   properties.push_back(
-    make_standard_property("value4", QString::fromUtf8("D,Test value 4.")));
+    make_standard_property("value4", QString::fromUtf8(
+      "D,Test value 4 with an unnecessarily long, multiple line description.")));
   properties.push_back(make_standard_property(
     "prereq1", QString::fromUtf8("Prerequisite1,A,B,C,D,E")));
   properties.push_back(make_standard_property(
