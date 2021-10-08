@@ -141,9 +141,6 @@ namespace Styles {
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
       boost::signals2::scoped_connection m_style_connection;
-      boost::signals2::scoped_connection m_placeholder_style_connection;
-      StyleProperties m_placeholder_styles;
-      QMargins m_placeholder_margins;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       TextValidator* m_text_validator;
@@ -157,7 +154,6 @@ namespace Styles {
       void update_display_text();
       void update_placeholder_text();
       void commit_style();
-      void commit_placeholder_style();
       void on_current(const QString& current);
       void on_editing_finished();
       void on_text_edited(const QString& text);
