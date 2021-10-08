@@ -454,8 +454,24 @@ const StyleSheet& Spire::Styles::get_style(const QWidget& widget) {
   return find_stylist(widget).get_style();
 }
 
+const StyleSheet& Spire::Styles::get_style(
+    const QWidget& widget, const PseudoElement& pseudo_element) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    return stylist->get_style();
+  }
+  static auto EMPTY = StyleSheet();
+  return EMPTY;
+}
+
 void Spire::Styles::set_style(QWidget& widget, StyleSheet style) {
   find_stylist(widget).set_style(std::move(style));
+}
+
+void Spire::Styles::set_style(
+    QWidget& widget, const PseudoElement& pseudo_element, StyleSheet style) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    stylist->set_style(std::move(style));
+  }
 }
 
 const Block& Spire::Styles::get_computed_block(QWidget& widget) {

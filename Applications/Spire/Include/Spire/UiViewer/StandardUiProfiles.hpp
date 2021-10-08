@@ -80,6 +80,9 @@ namespace Spire {
   /** Returns a UiProfile for the MoneyFilterPanel. */
   UiProfile make_money_filter_panel_profile();
 
+  /** Returns a UiProfile for the NavigationView. */
+  UiProfile make_navigation_view_profile();
+
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
