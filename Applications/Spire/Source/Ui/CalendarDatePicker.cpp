@@ -16,7 +16,6 @@ using namespace Spire::Styles;
 
 class RequiredDateModel : public DateModel {
   public:
-
     RequiredDateModel(std::shared_ptr<OptionalDateModel> model)
       : m_model(std::move(model)),
         m_current(m_model->get_current().value_or(day_clock::local_day())),
@@ -53,7 +52,6 @@ class RequiredDateModel : public DateModel {
 
 class MonthSpinner : public QWidget {
   public:
-
     explicit MonthSpinner(
         std::shared_ptr<DateModel> model, QWidget* parent = nullptr)
         : QWidget(parent),
