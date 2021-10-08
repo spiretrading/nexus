@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include <QImageReader>
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
@@ -32,6 +33,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
@@ -1448,6 +1450,70 @@ UiProfile Spire::make_money_filter_panel_profile() {
     properties, Money::CENT, QString::fromUtf8("Filter by Money"));
   auto profile = UiProfile(QString::fromUtf8("MoneyFilterPanel"),
     properties, setup_scalar_filter_panel_profile<MoneyBox>);
+  return profile;
+}
+
+UiProfile Spire::make_navigation_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("tab_index", 0));
+  properties.push_back(make_standard_property("tab_enabled", true));
+  properties.push_back(make_standard_property("current", 0));
+  auto profile = UiProfile(QString::fromUtf8("NavigationView"), properties,
+    [=] (auto& profile) {
+      auto navigation_view = new NavigationView();
+      apply_widget_properties(navigation_view, profile.get_properties());
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("CurrentSignal"));
+      navigation_view->get_current_model()->connect_current_signal(
+        [=] (auto current) {
+          filter_slot(QString("%1_%2").arg(current).
+            arg(navigation_view->get_label(current)));
+        });
+      auto page1 = new QWidget();
+      page1->setFixedSize(scale(160, 100));
+      auto layout1 = new QVBoxLayout(page1);
+      layout1->setSpacing(scale_width(5));
+      layout1->addWidget(make_label_button(QString::fromUtf8("Button1")));
+      layout1->addWidget(make_label_button(QString::fromUtf8("Button2")));
+      navigation_view->add_tab(*page1, QString::fromUtf8("NavTab1"));
+      auto page2 = new QWidget();
+      page2->setFixedSize(scale(300, 90));
+      auto layout2 = new QGridLayout(page2);
+      layout2->setSpacing(scale_width(5));
+      layout2->addWidget(make_label(QString::fromUtf8("Start Date:")), 0, 0);
+      auto text_box1 = new TextBox();
+      layout2->addWidget(text_box1, 0, 1);
+      layout2->addWidget(make_label(QString::fromUtf8("End Date:")), 1, 0);
+      auto text_box2 = new TextBox();
+      layout2->addWidget(text_box2, 1, 1);
+      navigation_view->add_tab(*page2, QString::fromUtf8("NavTab2"));
+      auto page3 = new QWidget();
+      auto reader = QImageReader(":/Icons/color-picker-display.png");
+      auto image = QPixmap::fromImage(reader.read());
+      image = image.scaled(QSize(450, 400));
+      auto label = new QLabel();
+      label->setPixmap(std::move(image));
+      auto layout3 = new QVBoxLayout(page3);
+      layout3->setSpacing(scale_width(5));
+      layout3->addWidget(label);
+      navigation_view->add_tab(*page3, QString::fromUtf8("NavTab3"));
+      auto& tab_index = get<int>("tab_index", profile.get_properties());
+      auto& tab_enabled = get<bool>("tab_enabled", profile.get_properties());
+      tab_enabled.connect_changed_signal([=, &tab_index] (auto value) {
+        auto index = tab_index.get();
+        if(index >= 0 && index < navigation_view->get_count()) {
+          navigation_view->set_enabled(index, value);
+        }
+      });
+      auto& current = get<int>("current", profile.get_properties());
+      current.connect_changed_signal([=] (auto index) {
+        if(index >= 0 && index < navigation_view->get_count()) {
+          navigation_view->get_current_model()->set_current(index);
+        }
+      });
+      return navigation_view;
+    });
   return profile;
 }
 
