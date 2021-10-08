@@ -137,14 +137,14 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_model;
-      PlaceholderBox* m_box;
       QLineEdit* m_line_edit;
+      TextValidator* m_text_validator;
+      PlaceholderBox* m_box;
       StyleProperties m_line_edit_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
-      TextValidator* m_text_validator;
       bool m_is_rejected;
       bool m_has_update;
       mutable boost::optional<QSize> m_size_hint;

@@ -125,7 +125,8 @@ class TextBox::PlaceholderBox : public Box {
       m_font = {};
       m_text_color = {};
       auto& stylist = find_stylist(*parentWidget());
-      for(auto& property : stylist.get_computed_block()) {
+      auto block = stylist.get_computed_block();
+      for(auto& property : block) {
         property.visit(
           [&] (const BorderLeftSize& size) {
             stylist.evaluate(size, [=] (auto size) {
@@ -169,7 +170,8 @@ class TextBox::PlaceholderBox : public Box {
           });
       }
       auto& placeholder_stylist = *find_stylist(*parentWidget(), Placeholder());
-      for(auto& property : placeholder_stylist.get_computed_block()) {
+      merge(block, placeholder_stylist.get_computed_block());
+      for(auto& property : block) {
         property.visit(
           [&] (const TextColor& color) {
             placeholder_stylist.evaluate(color, [=] (auto color) {
@@ -263,10 +265,9 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
-  m_box = new PlaceholderBox(m_line_edit);
-  m_box->setFocusProxy(m_line_edit);
   setCursor(m_line_edit->cursor());
   setFocusPolicy(m_line_edit->focusPolicy());
+  m_box = new PlaceholderBox(m_line_edit);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
