@@ -95,7 +95,7 @@ namespace Styles {
       const QString& get_submission() const;
 
       /** Sets the placeholder value. */
-      void set_placeholder(const QString& value);
+      void set_placeholder(const QString& placeholder);
 
       /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
@@ -141,6 +141,7 @@ namespace Styles {
       QLineEdit* m_line_edit;
       StyleProperties m_line_edit_styles;
       boost::signals2::scoped_connection m_style_connection;
+      boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       TextValidator* m_text_validator;
@@ -149,7 +150,7 @@ namespace Styles {
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
-      bool is_placeholder_shown() const;
+      bool is_placeholder_visible() const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
