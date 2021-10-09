@@ -135,6 +135,53 @@ class MonthSpinner : public QWidget {
     }
 };
 
+class CalendarDayLabel : public QWidget {
+  public:
+    CalendarDayLabel(
+        date day, date::month_type month, QWidget* parent = nullptr)
+        : QWidget(parent) {
+      setFixedSize(scale(24, 24));
+      auto layout = new QHBoxLayout(this);
+      layout->setContentsMargins({});
+      auto label = make_label("", this);
+      proxy_style(*this, *label);
+      auto style = get_style(*label);
+      style.get(Any()).
+        set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+        set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+        set(border_radius(scale_width(3))).
+        set(TextAlign(Qt::AlignCenter)).
+        set(TextColor(QColor::fromRgb(0x000000))).
+        set(padding(0));
+      style.get(OutOfMonth() && !Disabled()).
+        set(TextColor(QColor::fromRgb(0xA0A0A0)));
+      style.get(Today() && !Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
+        set(TextColor(QColor::fromRgb(0xDB8700)));
+      style.get(Hover() || Press()).
+        set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      style.get(Focus()).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+        set(TextColor(QColor::fromRgb(0xC8C8C8)));
+      set_style(*this, std::move(style));
+      layout->addWidget(label);
+      if(day == day_clock::local_day()) {
+        match(*this, Today());
+      } else {
+        unmatch(*this, Today());
+      }
+      if(day.month() == month) {
+        unmatch(*this, OutOfMonth());
+      } else {
+        match(*this, OutOfMonth());
+      }
+    }
+};
+
 CalendarDatePicker::CalendarDatePicker(QWidget* parent)
   : CalendarDatePicker(
       std::make_shared<LocalOptionalDateModel>(day_clock::local_day()),
