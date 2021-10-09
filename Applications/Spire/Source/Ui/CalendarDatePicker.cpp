@@ -171,12 +171,8 @@ class CalendarDayLabel : public QWidget {
       layout->addWidget(label);
       if(day == day_clock::local_day()) {
         match(*this, Today());
-      } else {
-        unmatch(*this, Today());
       }
-      if(day.month() == month) {
-        unmatch(*this, OutOfMonth());
-      } else {
+      if(day.month() != month) {
         match(*this, OutOfMonth());
       }
     }
