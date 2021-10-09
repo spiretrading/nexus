@@ -15,8 +15,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto DISPLAYED_DAYS = 42;
-
   auto make_header_label(QString text, QWidget* parent) {
     auto label = make_label(std::move(text), parent);
     label->setFixedSize(scale(24, 24));
@@ -143,7 +141,7 @@ class CalendarDayLabel : public QWidget {
       setFixedSize(scale(24, 24));
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
-      auto label = make_label("", this);
+      auto label = make_label(QString("%12").arg(day.day()), this);
       proxy_style(*this, *label);
       auto style = get_style(*label);
       style.get(Any()).
