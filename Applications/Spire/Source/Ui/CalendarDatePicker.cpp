@@ -14,6 +14,38 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto make_header_label(QString text, QWidget* parent) {
+    auto font = QFont("Roboto");
+    font.setWeight(60);
+    font.setPixelSize(scale_width(12));
+    auto label = make_label(std::move(text), parent);
+    label->setFixedSize(scale(24, 24));
+    auto style = get_style(*label);
+    style.get(Disabled() && ReadOnly()).
+      set(Font(font)).
+      set(TextAlign(Qt::AlignCenter)).
+      set(TextColor(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+    set_style(*label, std::move(style));
+    return label;
+  }
+
+  auto make_day_header(QWidget* parent) {
+    auto header = new QWidget(parent);
+    header->setFocusPolicy(Qt::NoFocus);
+    header->setFixedSize(scale(168, 26));
+    auto layout = new QHBoxLayout(header);
+    layout->setContentsMargins({});
+    layout->setSpacing(0);
+    auto locale = QLocale();
+    layout->addWidget(make_header_label(locale.dayName(7).at(0), header));
+    for(auto i = 1; i < 7; ++i) {
+      layout->addWidget(make_header_label(locale.dayName(i).at(0), header));
+    }
+    return header;
+  }
+}
+
 class RequiredDateModel : public DateModel {
   public:
     RequiredDateModel(std::shared_ptr<OptionalDateModel> model)
@@ -101,6 +133,49 @@ class MonthSpinner : public QWidget {
     }
 };
 
+class CalendarDayLabel : public QWidget {
+  public:
+    CalendarDayLabel(
+        date day, date::month_type month, QWidget* parent = nullptr)
+        : QWidget(parent) {
+      setFixedSize(scale(24, 24));
+      auto label = make_label(QString("%12").arg(day.day()), this);
+      proxy_style(*this, *label);
+      auto style = get_style(*label);
+      style.get(Any()).
+        set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
+        set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+        set(border_radius(scale_width(3))).
+        set(TextAlign(Qt::AlignCenter)).
+        set(TextColor(QColor::fromRgb(0x000000))).
+        set(padding(0));
+      style.get(OutOfMonth() && !Disabled()).
+        set(TextColor(QColor::fromRgb(0xA0A0A0)));
+      style.get(Today() && !Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
+        set(TextColor(QColor::fromRgb(0xDB8700)));
+      style.get(Hover() || Press()).
+        set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      style.get(Focus()).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
+        set(border_color(QColor::fromRgb(0, 0, 0, 0))).
+        set(TextColor(QColor::fromRgb(0xC8C8C8)));
+      set_style(*this, std::move(style));
+      if(day == day_clock::local_day()) {
+        match(*this, Today());
+      }
+      if(day.month() != month) {
+        match(*this, OutOfMonth());
+      }
+      auto layout = new QHBoxLayout(this);
+      layout->setContentsMargins({});
+      layout->addWidget(label);
+    }
+};
+
 CalendarDatePicker::CalendarDatePicker(QWidget* parent)
   : CalendarDatePicker(
       std::make_shared<LocalOptionalDateModel>(day_clock::local_day()),
@@ -122,6 +197,7 @@ CalendarDatePicker::CalendarDatePicker(
   auto month_spinner =
     new MonthSpinner(std::make_shared<RequiredDateModel>(m_model), this);
   layout->addWidget(month_spinner);
+  layout->addWidget(make_day_header(this));
 }
 
 const std::shared_ptr<OptionalDateModel>&

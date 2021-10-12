@@ -1,9 +1,18 @@
 #ifndef SPIRE_CALENDAR_DATE_PICKER_HPP
 #define SPIRE_CALENDAR_DATE_PICKER_HPP
 #include <QWidget>
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects today. */
+  using Today = StateSelector<void, struct TodayTag>;
+
+  /** Selects a day outside of the current month. */
+  using OutOfMonth = StateSelector<void, struct OutOfMonthTag>;
+}
 
   /** A ValueModel over a date. */
   using DateModel = ValueModel<boost::gregorian::date>;
