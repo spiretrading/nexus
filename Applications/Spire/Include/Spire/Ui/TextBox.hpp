@@ -95,7 +95,7 @@ namespace Styles {
       const QString& get_submission() const;
 
       /** Sets the placeholder value. */
-      void set_placeholder(const QString& value);
+      void set_placeholder(const QString& placeholder);
 
       /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
@@ -126,37 +126,35 @@ namespace Styles {
         boost::optional<Qt::Alignment> m_alignment;
         boost::optional<QFont> m_font;
         boost::optional<int> m_size;
+        QColor m_text_color;
         boost::optional<QLineEdit::EchoMode> m_echo_mode;
 
         StyleProperties(std::function<void ()> commit);
         void clear();
       };
       struct TextValidator;
+      class PlaceholderBox;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_model;
-      Box* m_box;
       QLineEdit* m_line_edit;
+      TextValidator* m_text_validator;
+      PlaceholderBox* m_box;
       StyleProperties m_line_edit_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
-      QLabel* m_placeholder;
-      StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
-      QString m_placeholder_text;
-      TextValidator* m_text_validator;
       bool m_is_rejected;
       bool m_has_update;
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
-      bool is_placeholder_shown() const;
+      bool is_placeholder_visible() const;
       void elide_text();
       void update_display_text();
       void update_placeholder_text();
       void commit_style();
-      void commit_placeholder_style();
       void on_current(const QString& current);
       void on_editing_finished();
       void on_text_edited(const QString& text);

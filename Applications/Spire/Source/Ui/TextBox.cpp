@@ -1,6 +1,7 @@
 #include "Spire/Ui/TextBox.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -8,7 +9,6 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/LayeredWidget.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -96,6 +96,139 @@ struct TextBox::TextValidator : QValidator {
   }
 };
 
+class TextBox::PlaceholderBox : public Box {
+  public:
+    explicit PlaceholderBox(QWidget* body)
+      : Box(body),
+        m_is_placeholder_visible(false) {}
+
+    const QString& get_placeholder() const {
+      return m_placeholder;
+    }
+
+    void set_placeholder(const QString& placeholder) {
+      m_placeholder = placeholder;
+      update_elision();
+      update();
+    }
+
+    void set_placeholder_visible(bool is_visible) {
+      if(is_visible != m_is_placeholder_visible) {
+        m_is_placeholder_visible = is_visible;
+        update();
+      }
+    }
+
+    void update_style() {
+      m_margins = {};
+      m_alignment = Qt::AlignLeft;
+      m_font = {};
+      m_text_color = {};
+      auto& stylist = find_stylist(*parentWidget());
+      auto block = stylist.get_computed_block();
+      for(auto& property : block) {
+        property.visit(
+          [&] (const BorderLeftSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setLeft(m_margins.left() + size);
+            });
+          },
+          [&] (const BorderTopSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setTop(m_margins.top() + size);
+            });
+          },
+          [&] (const BorderRightSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setRight(m_margins.right() + size);
+            });
+          },
+          [&] (const BorderBottomSize& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setBottom(m_margins.bottom() + size);
+            });
+          },
+          [&] (const PaddingLeft& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setLeft(m_margins.left() + size);
+            });
+          },
+          [&] (const PaddingTop& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setTop(m_margins.top() + size);
+            });
+          },
+          [&] (const PaddingRight& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setRight(m_margins.right() + size);
+            });
+          },
+          [&] (const PaddingBottom& size) {
+            stylist.evaluate(size, [=] (auto size) {
+              m_margins.setBottom(m_margins.bottom() + size);
+            });
+          });
+      }
+      auto& placeholder_stylist = *find_stylist(*parentWidget(), Placeholder());
+      merge(block, placeholder_stylist.get_computed_block());
+      for(auto& property : block) {
+        property.visit(
+          [&] (const TextColor& color) {
+            placeholder_stylist.evaluate(color, [=] (auto color) {
+              m_text_color = color;
+            });
+          },
+          [&] (const TextAlign& alignment) {
+            placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
+              m_alignment = alignment;
+            });
+          },
+          [&] (const Font& font) {
+            placeholder_stylist.evaluate(font, [=] (auto font) {
+              m_font = font;
+            });
+          },
+          [&] (const FontSize& size) {
+            placeholder_stylist.evaluate(size, [=] (auto size) {
+              m_font.setPixelSize(size);
+            });
+          });
+      }
+      update_elision();
+      update();
+    }
+
+  protected:
+    void paintEvent(QPaintEvent* event) override {
+      Box::paintEvent(event);
+      if(m_is_placeholder_visible) {
+        auto painter = QPainter(this);
+        painter.setFont(m_font);
+        painter.setPen(m_text_color);
+        painter.drawText(rect() - m_margins, m_alignment, m_elided_placeholder);
+      }
+    }
+
+    void resizeEvent(QResizeEvent* event) override {
+      update_elision();
+      Box::resizeEvent(event);
+    }
+
+  private:
+    QString m_placeholder;
+    QString m_elided_placeholder;
+    bool m_is_placeholder_visible;
+    QMargins m_margins;
+    Qt::Alignment m_alignment;
+    QFont m_font;
+    QColor m_text_color;
+
+    void update_elision() {
+      m_elided_placeholder = QFontMetrics(m_font).elidedText(m_placeholder,
+        Qt::ElideRight, width() - m_margins.left() - m_margins.right());
+    }
+};
+
 TextStyle Spire::Styles::text_style(QFont font, QColor color) {
   return TextStyle(Font(std::move(font)), TextColor(color));
 }
@@ -108,6 +241,7 @@ void TextBox::StyleProperties::clear() {
   m_alignment = none;
   m_font = none;
   m_size = none;
+  m_text_color = QColor();
   m_echo_mode = none;
 }
 
@@ -120,13 +254,10 @@ TextBox::TextBox(QString current, QWidget* parent)
 TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
       m_line_edit_styles([=] { commit_style(); }),
-      m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_model(std::move(model)),
       m_submission(m_model->get_current()),
       m_is_rejected(false),
       m_has_update(false) {
-  auto layers = new LayeredWidget(this);
-  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_line_edit = new QLineEdit(m_model->get_current());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
@@ -134,19 +265,9 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_text_validator = new TextValidator(m_model, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
-  layers->add(m_line_edit);
-  m_placeholder = new QLabel();
-  m_placeholder->setCursor(m_line_edit->cursor());
-  m_placeholder->setTextFormat(Qt::PlainText);
-  m_placeholder->setMargin(0);
-  m_placeholder->setIndent(0);
-  m_placeholder->setTextInteractionFlags(Qt::NoTextInteraction);
-  m_placeholder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  layers->add(m_placeholder);
-  m_box = new Box(layers);
-  m_box->setFocusProxy(m_line_edit);
   setCursor(m_line_edit->cursor());
   setFocusPolicy(m_line_edit->focusPolicy());
+  m_box = new PlaceholderBox(m_line_edit);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_box);
@@ -172,8 +293,8 @@ const QString& TextBox::get_submission() const {
   return m_submission;
 }
 
-void TextBox::set_placeholder(const QString& value) {
-  m_placeholder_text = value;
+void TextBox::set_placeholder(const QString& placeholder) {
+  m_box->set_placeholder(placeholder);
   update_placeholder_text();
 }
 
@@ -196,13 +317,13 @@ void TextBox::set_read_only(bool read_only) {
   update_placeholder_text();
 }
 
-connection
-    TextBox::connect_submit_signal(const SubmitSignal::slot_type& slot) const {
+connection TextBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
 }
 
-connection
-    TextBox::connect_reject_signal(const RejectSignal::slot_type& slot) const {
+connection TextBox::connect_reject_signal(
+    const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
 }
 
@@ -251,7 +372,6 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::Resize) {
     update_display_text();
-    update_placeholder_text();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -259,13 +379,12 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_display_text();
-    update_placeholder_text();
   }
   QWidget::changeEvent(event);
 }
 
 void TextBox::mousePressEvent(QMouseEvent* event) {
-  if(is_placeholder_shown()) {
+  if(is_placeholder_visible()) {
     m_line_edit->setFocus();
   }
   QWidget::mousePressEvent(event);
@@ -283,7 +402,6 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
 
 void TextBox::resizeEvent(QResizeEvent* event) {
   update_display_text();
-  update_placeholder_text();
   QWidget::resizeEvent(event);
 }
 
@@ -319,9 +437,9 @@ QSize TextBox::compute_decoration_size() const {
   return decoration_size;
 }
 
-bool TextBox::is_placeholder_shown() const {
+bool TextBox::is_placeholder_visible() const {
   return !is_read_only() && m_model->get_current().isEmpty() &&
-    !m_placeholder_text.isEmpty();
+    !m_box->get_placeholder().isEmpty();
 }
 
 void TextBox::elide_text() {
@@ -347,16 +465,7 @@ void TextBox::update_display_text() {
 }
 
 void TextBox::update_placeholder_text() {
-  if(is_placeholder_shown()) {
-    auto font_metrics = m_placeholder->fontMetrics();
-    auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
-    auto elided_text =
-      font_metrics.elidedText(m_placeholder_text, Qt::ElideRight, rect.width());
-    m_placeholder->setText(elided_text);
-    m_placeholder->show();
-  } else {
-    m_placeholder->hide();
-  }
+  m_box->set_placeholder_visible(is_placeholder_visible());
 }
 
 void TextBox::commit_style() {
@@ -383,29 +492,6 @@ void TextBox::commit_style() {
     m_line_edit->setStyleSheet(stylesheet);
   }
   update_display_text();
-}
-
-void TextBox::commit_placeholder_style() {
-  auto stylesheet = QString(
-    R"(QLabel {
-      background: transparent;
-      border-width: 0px;
-      padding: 0px;)");
-  m_placeholder_styles.m_styles.write(stylesheet);
-  auto alignment = m_placeholder_styles.m_alignment.value_or(
-    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  if(alignment != m_placeholder->alignment()) {
-    m_placeholder->setAlignment(alignment);
-  }
-  auto font = m_placeholder_styles.m_font.value_or(QFont());
-  if(m_placeholder_styles.m_size) {
-    font.setPixelSize(*m_placeholder_styles.m_size);
-  }
-  m_placeholder->setFont(font);
-  if(stylesheet != m_placeholder->styleSheet()) {
-    m_placeholder->setStyleSheet(stylesheet);
-  }
-  update_placeholder_text();
 }
 
 void TextBox::on_current(const QString& current) {
@@ -441,10 +527,9 @@ void TextBox::on_text_edited(const QString& text) {
 
 void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
-  auto block = stylist.get_computed_block();
   m_line_edit_styles.clear();
   m_line_edit_styles.m_styles.buffer([&] {
-    for(auto& property : block) {
+    for(auto& property : stylist.get_computed_block()) {
       property.visit(
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
@@ -473,34 +558,7 @@ void TextBox::on_style() {
         });
     }
   });
-  auto& placeholder_stylist = *find_stylist(*this, Placeholder());
-  merge(block, placeholder_stylist.get_computed_block());
-  m_placeholder_styles.clear();
-  m_placeholder_styles.m_styles.buffer([&] {
-    for(auto& property : block) {
-      property.visit(
-        [&] (const TextColor& color) {
-          placeholder_stylist.evaluate(color, [=] (auto color) {
-            m_placeholder_styles.m_styles.set("color", color);
-          });
-        },
-        [&] (const TextAlign& alignment) {
-          placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
-            m_placeholder_styles.m_alignment = alignment;
-          });
-        },
-        [&] (const Font& font) {
-          placeholder_stylist.evaluate(font, [=] (auto font) {
-            m_placeholder_styles.m_font = font;
-          });
-        },
-        [&] (const FontSize& size) {
-          placeholder_stylist.evaluate(size, [=] (auto size) {
-            m_placeholder_styles.m_size = size;
-          });
-        });
-    }
-  });
+  m_box->update_style();
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {
