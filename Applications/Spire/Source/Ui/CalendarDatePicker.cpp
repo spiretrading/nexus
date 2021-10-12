@@ -16,12 +16,12 @@ using namespace Spire::Styles;
 
 namespace {
   auto make_header_label(QString text, QWidget* parent) {
-    auto label = make_label(std::move(text), parent);
-    label->setFixedSize(scale(24, 24));
-    auto style = get_style(*label);
     auto font = QFont("Roboto");
     font.setWeight(60);
     font.setPixelSize(scale_width(12));
+    auto label = make_label(std::move(text), parent);
+    label->setFixedSize(scale(24, 24));
+    auto style = get_style(*label);
     style.get(Disabled() && ReadOnly()).
       set(Font(font)).
       set(TextAlign(Qt::AlignCenter)).
@@ -139,8 +139,6 @@ class CalendarDayLabel : public QWidget {
         date day, date::month_type month, QWidget* parent = nullptr)
         : QWidget(parent) {
       setFixedSize(scale(24, 24));
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
       auto label = make_label(QString("%12").arg(day.day()), this);
       proxy_style(*this, *label);
       auto style = get_style(*label);
@@ -166,13 +164,15 @@ class CalendarDayLabel : public QWidget {
         set(border_color(QColor::fromRgb(0, 0, 0, 0))).
         set(TextColor(QColor::fromRgb(0xC8C8C8)));
       set_style(*this, std::move(style));
-      layout->addWidget(label);
       if(day == day_clock::local_day()) {
         match(*this, Today());
       }
       if(day.month() != month) {
         match(*this, OutOfMonth());
       }
+      auto layout = new QHBoxLayout(this);
+      layout->setContentsMargins({});
+      layout->addWidget(label);
     }
 };
 
