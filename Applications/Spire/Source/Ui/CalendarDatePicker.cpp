@@ -1,6 +1,5 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -197,7 +196,6 @@ class CalendarDayLabel : public QWidget {
             })),
           m_month_model(std::move(month_model)) {
       setFixedSize(scale(24, 24));
-      // TODO: ToTextModel?
       m_label = make_label("", this);
       proxy_style(*this, *m_label);
       auto style = get_style(*m_label);
@@ -282,7 +280,6 @@ CalendarDatePicker::CalendarDatePicker(
   calendar_view->setFixedSize(scale(168, 144));
   setFocusProxy(calendar_view);
   month_spinner->setFocusProxy(calendar_view);
-  calendar_view->installEventFilter(this);
   auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
