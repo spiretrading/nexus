@@ -50,12 +50,44 @@ namespace {
   }
 }
 
-class CalendarListModel : public ListModel {
+class CalendarModel {
   public:
     static const int DAY_COUNT = 42;
 
+    using Dates = std::array<date, DAY_COUNT>;
+
+    explicit CalendarModel(date current) {
+      set_current(m_current);
+    }
+
+    void set_current(date current) {
+      if(current != m_current) {
+        m_current = current;
+        auto day = date(m_current.year(), m_current.month(), 1);
+        if(day.day_of_week() != 0) {
+          day += days(-day.day_of_week());
+        }
+        for(auto i = 0; i < DAY_COUNT; ++i) {
+          m_dates[i] = day;
+          day += days(1);
+        }
+      }
+    }
+
+    const Dates& get_dates() {
+      return m_dates;
+    }
+
+  private:
+    Dates m_dates;
+    date m_current;
+};
+
+class CalendarListModel : public ListModel {
+  public:
     CalendarListModel(std::shared_ptr<DateModel> model)
         : m_model(std::move(model)),
+          m_calendar_model(m_model->get_current()),
           m_current_connection(m_model->connect_current_signal(
             [=] (auto current) { on_current(current); })) {
       on_current(m_model->get_current());
@@ -66,7 +98,7 @@ class CalendarListModel : public ListModel {
     }
 
     int get_size() const override {
-      return DAY_COUNT;
+      return m_dates.size();
     }
 
     const std::any& at(int index) const override {
@@ -81,18 +113,15 @@ class CalendarListModel : public ListModel {
   private:
     std::shared_ptr<DateModel> m_model;
     scoped_connection m_current_connection;
-    std::array<std::any, DAY_COUNT> m_dates;
+    CalendarModel m_calendar_model;
+    std::array<std::any, CalendarModel::DAY_COUNT> m_dates;
     ListModelTransactionLog m_transaction;
 
     void on_current(date current) {
-      auto day = date(current.year(), current.month(), 1);
-      if(day.day_of_week() != 0) {
-        day += days(-day.day_of_week());
-      }
-      for(auto i = 0; i < DAY_COUNT; ++i) {
-        m_dates[i] = day;
+      m_calendar_model.set_current(current);
+      for(auto i = 0; i < static_cast<int>(m_dates.size()); ++i) {
+        m_dates[i] = m_calendar_model.get_dates()[i];
         m_transaction.push(UpdateOperation{i});
-        day += days(1);
       }
     }
 };
