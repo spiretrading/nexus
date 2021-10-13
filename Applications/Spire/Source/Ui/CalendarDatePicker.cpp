@@ -1,11 +1,16 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListValueModel.hpp"
+#include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -45,6 +50,53 @@ namespace {
     return header;
   }
 }
+
+class CalendarListModel : public ListModel {
+  public:
+    static const int DAY_COUNT = 42;
+
+    CalendarListModel(std::shared_ptr<DateModel> model)
+        : m_model(std::move(model)),
+          m_current_connection(m_model->connect_current_signal(
+            [=] (auto current) { on_current(current); })) {
+      on_current(m_model->get_current());
+    }
+
+    const std::shared_ptr<DateModel>& get_model() const {
+      return m_model;
+    }
+
+    int get_size() const override {
+      return DAY_COUNT;
+    }
+
+    const std::any& at(int index) const override {
+      return m_dates[index];
+    }
+
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+  private:
+    std::shared_ptr<DateModel> m_model;
+    scoped_connection m_current_connection;
+    std::array<std::any, DAY_COUNT> m_dates;
+    ListModelTransactionLog m_transaction;
+
+    void on_current(date current) {
+      auto day = date(current.year(), current.month(), 1);
+      if(day.day_of_week() != 0) {
+        day += days(-day.day_of_week());
+      }
+      for(auto i = 0; i < DAY_COUNT; ++i) {
+        m_dates[i] = day;
+        m_transaction.push(UpdateOperation{i});
+        day += days(1);
+      }
+    }
+};
 
 class RequiredDateModel : public DateModel {
   public:
@@ -135,13 +187,20 @@ class MonthSpinner : public QWidget {
 
 class CalendarDayLabel : public QWidget {
   public:
-    CalendarDayLabel(
-        date day, date::month_type month, QWidget* parent = nullptr)
-        : QWidget(parent) {
+    CalendarDayLabel(std::shared_ptr<ListValueModel> model,
+        std::shared_ptr<DateModel> month_model, QWidget* parent = nullptr)
+        : QWidget(parent),
+          m_model(std::move(model)),
+          m_current_connection(m_model->connect_current_signal(
+            [=] (const auto& current) {
+              on_current(std::any_cast<date>(current));
+            })),
+          m_month_model(std::move(month_model)) {
       setFixedSize(scale(24, 24));
-      auto label = make_label(QString("%12").arg(day.day()), this);
-      proxy_style(*this, *label);
-      auto style = get_style(*label);
+      // TODO: ToTextModel?
+      m_label = make_label("", this);
+      proxy_style(*this, *m_label);
+      auto style = get_style(*m_label);
       style.get(Any()).
         set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
         set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
@@ -164,15 +223,30 @@ class CalendarDayLabel : public QWidget {
         set(border_color(QColor::fromRgb(0, 0, 0, 0))).
         set(TextColor(QColor::fromRgb(0xC8C8C8)));
       set_style(*this, std::move(style));
-      if(day == day_clock::local_day()) {
-        match(*this, Today());
-      }
-      if(day.month() != month) {
-        match(*this, OutOfMonth());
-      }
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
-      layout->addWidget(label);
+      layout->addWidget(m_label);
+      on_current(std::any_cast<date>(m_model->get_current()));
+    }
+
+  private:
+    std::shared_ptr<ListValueModel> m_model;
+    scoped_connection m_current_connection;
+    std::shared_ptr<DateModel> m_month_model;
+    TextBox* m_label;
+
+    void on_current(date day) {
+      m_label->get_model()->set_current(QString("%12").arg(day.day()));
+      if(day == day_clock::local_day()) {
+        match(*this, Today());
+      } else {
+        unmatch(*this, Today());
+      }
+      if(day.month() != m_month_model->get_current().month()) {
+        match(*this, OutOfMonth());
+      } else {
+        unmatch(*this, OutOfMonth());
+      }
     }
 };
 
@@ -198,6 +272,34 @@ CalendarDatePicker::CalendarDatePicker(
     new MonthSpinner(std::make_shared<RequiredDateModel>(m_model), this);
   layout->addWidget(month_spinner);
   layout->addWidget(make_day_header(this));
+  auto calendar_view = new ListView(
+    std::make_shared<CalendarListModel>(month_spinner->get_model()),
+    [=] (const std::shared_ptr<ListModel>& model, int index) {
+      return new CalendarDayLabel(
+        std::make_shared<ListValueModel>(model, index),
+        month_spinner->get_model());
+    }, this);
+  calendar_view->setFixedSize(scale(168, 144));
+  setFocusProxy(calendar_view);
+  month_spinner->setFocusProxy(calendar_view);
+  calendar_view->installEventFilter(this);
+  auto calendar_style = StyleSheet();
+  calendar_style.get(Any()).
+    set(Qt::Horizontal).
+    set(EdgeNavigation(EdgeNavigation::CONTAIN)).
+    set(Overflow(Overflow::WRAP));
+  calendar_style.get(Any() >> is_a<ListItem>()).
+    set(border_size(0)).
+    set(padding(0));
+  calendar_style.get(Any() >> (is_a<ListItem>() && Hover())).
+    set(BackgroundColor(QColor::fromRgb(0xFFFFFF)));
+  calendar_style.get(
+      Any() >> (is_a<ListItem>() && Selected()) >> is_a<CalendarDayLabel>()).
+    set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
+    set(border(0, QColor::fromRgb(0, 0, 0, 0))).
+    set(TextColor(QColor::fromRgb(0xFFFFFF)));
+  set_style(*calendar_view, std::move(calendar_style));
+  layout->addWidget(calendar_view);
 }
 
 const std::shared_ptr<OptionalDateModel>&
