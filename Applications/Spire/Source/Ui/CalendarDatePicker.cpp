@@ -29,7 +29,7 @@ namespace {
     style.get(Disabled() && ReadOnly()).
       set(Font(font)).
       set(TextAlign(Qt::AlignCenter)).
-      set(TextColor(QColor::fromRgb(0x4B, 0x23, 0xA0)));
+      set(TextColor(QColor(0x4B23A0)));
     set_style(*label, std::move(style));
     return label;
   }
@@ -74,7 +74,7 @@ class CalendarModel {
       }
     }
 
-    const Dates& get_dates() {
+    const Dates& get_dates() const {
       return m_dates;
     }
 
@@ -229,26 +229,26 @@ class CalendarDayLabel : public QWidget {
       proxy_style(*this, *m_label);
       auto style = get_style(*m_label);
       style.get(Any()).
-        set(BackgroundColor(QColor::fromRgb(0, 0, 0, 0))).
-        set(border(scale_width(1), QColor::fromRgb(0, 0, 0, 0))).
+        set(BackgroundColor(QColor(Qt::transparent))).
+        set(border(scale_width(1), QColor(Qt::transparent))).
         set(border_radius(scale_width(3))).
         set(TextAlign(Qt::AlignCenter)).
-        set(TextColor(QColor::fromRgb(0x000000))).
+        set(TextColor(QColor(Qt::black))).
         set(padding(0));
       style.get(OutOfMonth() && !Disabled()).
-        set(TextColor(QColor::fromRgb(0xA0A0A0)));
+        set(TextColor(QColor(0xA0A0A0)));
       style.get(Today() && !Disabled()).
-        set(BackgroundColor(QColor::fromRgb(0xFFF2AB))).
-        set(TextColor(QColor::fromRgb(0xDB8700)));
+        set(BackgroundColor(QColor(0xFFF2AB))).
+        set(TextColor(QColor(0xDB8700)));
       style.get(Hover() || Press()).
-        set(BackgroundColor(QColor::fromRgb(0xF2F2FF))).
-        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+        set(BackgroundColor(QColor(0xF2F2FF))).
+        set(border_color(QColor(Qt::transparent)));
       style.get(Focus()).
-        set(border_color(QColor::fromRgb(0, 0, 0, 0)));
+        set(border_color(QColor(Qt::transparent)));
       style.get(Disabled()).
-        set(BackgroundColor(QColor::fromRgb(0xFFFFFF))).
-        set(border_color(QColor::fromRgb(0, 0, 0, 0))).
-        set(TextColor(QColor::fromRgb(0xC8C8C8)));
+        set(BackgroundColor(QColor(0xFFFFFF))).
+        set(border_color(QColor(Qt::transparent))).
+        set(TextColor(QColor(0xC8C8C8)));
       set_style(*this, std::move(style));
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
@@ -263,7 +263,7 @@ class CalendarDayLabel : public QWidget {
     TextBox* m_label;
 
     void on_current(date day) {
-      m_label->get_model()->set_current(QString("%12").arg(day.day()));
+      m_label->get_model()->set_current(QString("%1").arg(day.day()));
       if(day == day_clock::local_day()) {
         match(*this, Today());
       } else {
@@ -318,12 +318,12 @@ CalendarDatePicker::CalendarDatePicker(
     set(border_size(0)).
     set(padding(0));
   calendar_style.get(Any() >> (is_a<ListItem>() && Hover())).
-    set(BackgroundColor(QColor::fromRgb(0xFFFFFF)));
+    set(BackgroundColor(QColor(0xFFFFFF)));
   calendar_style.get(
       Any() >> (is_a<ListItem>() && Selected()) >> is_a<CalendarDayLabel>()).
-    set(BackgroundColor(QColor::fromRgb(0x4B23A0))).
-    set(border(0, QColor::fromRgb(0, 0, 0, 0))).
-    set(TextColor(QColor::fromRgb(0xFFFFFF)));
+    set(BackgroundColor(QColor(0x4B23A0))).
+    set(border(0, QColor(Qt::transparent))).
+    set(TextColor(QColor(0xFFFFFF)));
   set_style(*calendar_view, std::move(calendar_style));
   layout->addWidget(calendar_view);
 }
