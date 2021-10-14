@@ -133,6 +133,11 @@ void OverlayPanel::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
+void OverlayPanel::closeEvent(QCloseEvent* event) {
+  m_was_activated = false;
+  QWidget::closeEvent(event);
+}
+
 void OverlayPanel::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     close();
