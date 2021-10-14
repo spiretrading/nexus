@@ -61,7 +61,6 @@ connection FilterPanel::connect_reset_signal(
 bool FilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
-    m_panel->activateWindow();
     m_body->setFocus();
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();

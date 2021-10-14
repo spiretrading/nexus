@@ -534,21 +534,21 @@ UiProfile Spire::make_closed_filter_panel_profile() {
         model->remove(value);
       });
       auto button = make_label_button(QString::fromUtf8("Click me"));
-      button->connect_clicked_signal([&, button, model] {
-        auto panel = new ClosedFilterPanel(model,
-          QString::fromUtf8("Filter by something"), *button);
-        auto submit_filter_slot =
-          profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-        panel->connect_submit_signal(
-          [=] (const std::shared_ptr<ListModel>& submission) {
-            auto result = QString();
-            for(auto i = 0; i < submission->get_size(); ++i) {
-              result += displayTextAny(submission->at(i)) + " ";
-            }
-            submit_filter_slot(result);
-          });
-        panel->window()->setAttribute(Qt::WA_DeleteOnClose);
+      auto panel = new ClosedFilterPanel(model,
+        QString::fromUtf8("Filter by something"), *button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<ListModel>& submission) {
+          auto result = QString();
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            result += displayTextAny(submission->at(i)) + " ";
+          }
+          submit_filter_slot(result);
+        });
+      button->connect_clicked_signal([=] {
         panel->show();
+        panel->activateWindow();
       });
       return button;
     });

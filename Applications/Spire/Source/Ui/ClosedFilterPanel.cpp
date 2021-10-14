@@ -156,6 +156,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
   layout->setContentsMargins({});
   layout->addWidget(m_scrollable_list_box);
   m_scrollable_list_box->installEventFilter(this);
+  window()->installEventFilter(this);
 }
 
 const std::shared_ptr<TableModel>& ClosedFilterPanel::get_model() const {
@@ -177,10 +178,14 @@ QSize ClosedFilterPanel::sizeHint() const {
 }
 
 bool ClosedFilterPanel::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
+  if(m_scrollable_list_box == watched &&
+      event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
     updateGeometry();
     m_filter_panel->window()->adjustSize();
+  } else if(window() == watched && event->type() == QEvent::Close) {
+    m_filter_panel->hide();
+    hide();
   }
   return QWidget::eventFilter(watched, event);
 }
