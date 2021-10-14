@@ -121,8 +121,12 @@ class CalendarListModel : public ListModel {
       m_calendar_model.set_current(current);
       for(auto i = 0; i < static_cast<int>(m_dates.size()); ++i) {
         m_dates[i] = m_calendar_model.get_dates()[i];
-        m_transaction.push(UpdateOperation{i});
       }
+      m_transaction.transact([&] {
+        for(auto i = 0; i < static_cast<int>(m_dates.size()); ++i) {
+          m_transaction.push(UpdateOperation{i});
+        }
+      });
     }
 };
 
