@@ -71,6 +71,11 @@ namespace Styles {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      ListView* m_calendar_view;
+      boost::signals2::scoped_connection m_list_current_connection;
+
+      void on_list_current(const boost::optional<int>& index);
+      void on_submit(boost::gregorian::date day);
   };
 }
 

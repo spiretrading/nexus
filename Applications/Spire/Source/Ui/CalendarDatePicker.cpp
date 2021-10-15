@@ -138,7 +138,7 @@ class RequiredDateModel : public DateModel {
     scoped_connection m_current_connection;
     date m_current;
 
-    void on_current(const boost::optional<date>& current) {
+    void on_current(const optional<date>& current) {
       if(current) {
         set_current(*current);
       }
@@ -282,16 +282,24 @@ CalendarDatePicker::CalendarDatePicker(
     new MonthSpinner(std::make_shared<RequiredDateModel>(m_model), this);
   layout->addWidget(month_spinner);
   layout->addWidget(make_day_header(this));
-  auto calendar_view = new ListView(
+  m_calendar_view = new ListView(
     std::make_shared<CalendarListModel>(month_spinner->get_model()),
     [=] (const std::shared_ptr<ListModel>& model, int index) {
       return new CalendarDayLabel(
         std::make_shared<ListValueModel>(model, index),
         month_spinner->get_model());
     }, this);
-  calendar_view->setFixedSize(scale(168, 144));
-  setFocusProxy(calendar_view);
-  month_spinner->setFocusProxy(calendar_view);
+  m_calendar_view->setFixedSize(scale(168, 144));
+  setFocusProxy(m_calendar_view);
+  month_spinner->setFocusProxy(m_calendar_view);
+  m_calendar_view->installEventFilter(this);
+  layout->addWidget(m_calendar_view);
+  m_list_current_connection =
+    m_calendar_view->get_current_model()->connect_current_signal(
+      [=] (const auto& index) { on_list_current(index); });
+  m_calendar_view->connect_submit_signal([=] (const auto& value) {
+    on_submit(std::any_cast<date>(value));
+  });
   auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
@@ -307,8 +315,7 @@ CalendarDatePicker::CalendarDatePicker(
     set(BackgroundColor(QColor(0x4B23A0))).
     set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));
-  set_style(*calendar_view, std::move(calendar_style));
-  layout->addWidget(calendar_view);
+  set_style(*m_calendar_view, std::move(calendar_style));
 }
 
 const std::shared_ptr<OptionalDateModel>&
@@ -319,4 +326,14 @@ const std::shared_ptr<OptionalDateModel>&
 connection CalendarDatePicker::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+void CalendarDatePicker::on_list_current(const optional<int>& index) {
+  if(index) {
+    m_model->set_current(m_calendar_view->get_list_model()->get<date>(*index));
+  }
+}
+
+void CalendarDatePicker::on_submit(date day) {
+  m_submit_signal(day);
 }
