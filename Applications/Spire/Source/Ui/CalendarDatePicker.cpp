@@ -361,14 +361,13 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-int CalendarDatePicker::get_index(date day) const {
-  auto index = 0;
-  for(; index < m_calendar_view->get_list_model()->get_size(); ++index) {
-    if(m_calendar_view->get_list_model()->get<date>(index) == day) {
-      break;
+boost::optional<int> CalendarDatePicker::get_index(date day) const {
+  for(auto i = 0; i < m_calendar_view->get_list_model()->get_size(); ++i) {
+    if(m_calendar_view->get_list_model()->get<date>(i) == day) {
+      return i;
     }
   }
-  return index;
+  return {};
 }
 
 void CalendarDatePicker::set_current_index(const optional<int>& index) {
@@ -378,6 +377,7 @@ void CalendarDatePicker::set_current_index(const optional<int>& index) {
 }
 
 void CalendarDatePicker::on_current(const optional<date>& current) {
+  qDebug() << "on_current";
   if(current) {
     if(auto current_date = m_model->get_current()) {
       if(current_date->month() == current->month() &&
@@ -390,7 +390,7 @@ void CalendarDatePicker::on_current(const optional<date>& current) {
   }
 }
 
-void CalendarDatePicker::on_current_month(boost::gregorian::date month) {
+void CalendarDatePicker::on_current_month(date month) {
   auto current_set = false;
   auto list_has_focus =
     m_calendar_view->hasFocus() || m_calendar_view->isAncestorOf(focusWidget());

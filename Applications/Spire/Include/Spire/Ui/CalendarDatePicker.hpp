@@ -79,7 +79,7 @@ namespace Styles {
       ListView* m_calendar_view;
       boost::signals2::scoped_connection m_list_current_connection;
 
-      int get_index(boost::gregorian::date day) const;
+      boost::optional<int> get_index(boost::gregorian::date day) const;
       void set_current_index(const boost::optional<int>& index);
       void on_current(const boost::optional<boost::gregorian::date>& current);
       void on_current_month(boost::gregorian::date month);
