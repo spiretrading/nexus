@@ -377,7 +377,6 @@ void CalendarDatePicker::set_current_index(const optional<int>& index) {
 }
 
 void CalendarDatePicker::on_current(const optional<date>& current) {
-  qDebug() << "on_current";
   if(current) {
     if(auto current_date = m_model->get_current()) {
       if(current_date->month() == current->month() &&
