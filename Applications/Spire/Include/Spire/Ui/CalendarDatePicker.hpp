@@ -68,12 +68,21 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
+      class MonthSpinner;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      MonthSpinner* m_month_spinner;
       ListView* m_calendar_view;
       boost::signals2::scoped_connection m_list_current_connection;
 
+      int get_index(boost::gregorian::date day) const;
+      void set_current_index(const boost::optional<int>& index);
+      void on_current(const boost::optional<boost::gregorian::date>& current);
+      void on_current_month(boost::gregorian::date month);
       void on_list_current(const boost::optional<int>& index);
       void on_submit(boost::gregorian::date day);
   };
