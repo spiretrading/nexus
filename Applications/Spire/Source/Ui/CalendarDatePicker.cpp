@@ -19,7 +19,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const int CALENDAR_DAY_COUNT = 42;
+  const auto CALENDAR_DAY_COUNT = 42;
 
   std::array<date, CALENDAR_DAY_COUNT> get_calendar_dates(date day) {
     day = date(day.year(), day.month(), 1);
@@ -28,8 +28,7 @@ namespace {
     }
     auto dates = std::array<date, CALENDAR_DAY_COUNT>();
     for(auto i = 0; i < CALENDAR_DAY_COUNT; ++i) {
-      dates[i] = day;
-      day += days(1);
+      dates[i] = day + days(i);
     }
     return dates;
   }
