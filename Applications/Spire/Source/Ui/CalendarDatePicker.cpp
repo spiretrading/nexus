@@ -390,6 +390,12 @@ void CalendarDatePicker::on_current(const optional<date>& current) {
 }
 
 void CalendarDatePicker::on_current_month(date month) {
+  // TODO: clean up, clarify
+  if(auto current = m_model->get_current();
+      m_calendar_view->get_current_model()->get_current() &&
+      month.month() == current->month() && month.year() == current->year()) {
+    return;
+  }
   auto current_set = false;
   auto list_has_focus =
     m_calendar_view->hasFocus() || m_calendar_view->isAncestorOf(focusWidget());
@@ -412,11 +418,10 @@ void CalendarDatePicker::on_current_month(date month) {
         shared_connection_block(m_list_current_connection);
       m_calendar_view->get_current_model()->set_current(i);
       current_set = true;
-      m_calendar_view->get_selection_model()->set_current(i);
     }
   }
   if(!current_set) {
-    m_calendar_view->get_selection_model()->set_current({});
+    set_current_index({});
   }
   if(list_has_focus) {
     m_calendar_view->setFocus();
