@@ -24,8 +24,8 @@ namespace {
     int m_index;
   };
 
-  auto SCROLLABLE_LIST_STYLE(StyleSheet style) {
-    style.get(Any() >> is_a<ListView>()).
+  auto LIST_VIEW_STYLE(StyleSheet style) {
+    style.get(Any()).
       set(EdgeNavigation::CONTAIN);
     style.get(Any() >> is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
@@ -149,9 +149,8 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
   m_list_view =
     new ListView(std::make_shared<ClosedFilterPanelModelAdaptor>(m_model),
       make_check_box);
+  set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
-  set_style(*m_scrollable_list_box,
-    SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scrollable_list_box);
@@ -182,7 +181,6 @@ bool ClosedFilterPanel::eventFilter(QObject* watched, QEvent* event) {
       event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
     updateGeometry();
-    m_filter_panel->window()->adjustSize();
   } else if(window() == watched && event->type() == QEvent::Close) {
     m_filter_panel->hide();
     hide();
