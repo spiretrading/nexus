@@ -275,7 +275,7 @@ CalendarDatePicker::CalendarDatePicker(
     std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)) {
-  m_model->connect_current_signal([=] (auto current) {
+  m_current_connection = m_model->connect_current_signal([=] (auto current) {
     on_current(current);
   });
   auto layout = new QVBoxLayout(this);
@@ -325,6 +325,7 @@ CalendarDatePicker::CalendarDatePicker(
     set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
+  on_current(m_model->get_current());
 }
 
 const std::shared_ptr<OptionalDateModel>&
@@ -378,27 +379,16 @@ void CalendarDatePicker::set_current_index(const optional<int>& index) {
 
 void CalendarDatePicker::on_current(const optional<date>& current) {
   if(current) {
-    if(auto current_date = m_model->get_current()) {
-      if(current_date->month() == current->month() &&
-          current_date->year() == current->year()) {
-        set_current_index(get_index(*current));
-      }
-    }
+    set_current_index(get_index(*current));
   } else {
     set_current_index({});
   }
 }
 
 void CalendarDatePicker::on_current_month(date month) {
-  // TODO: clean up, clarify
-  if(auto current = m_model->get_current();
-      m_calendar_view->get_current_model()->get_current() &&
-      month.month() == current->month() && month.year() == current->year()) {
-    return;
-  }
-  auto current_set = false;
-  auto list_has_focus =
-    m_calendar_view->hasFocus() || m_calendar_view->isAncestorOf(focusWidget());
+  auto current_index = optional<int>();
+  auto list_has_focus = m_calendar_view->hasFocus() ||
+    m_calendar_view->isAncestorOf(focusWidget());
   for(auto i = 0; i < m_calendar_view->get_list_model()->get_size(); ++i) {
     auto minimum = m_model->get_minimum();
     auto maximum = m_model->get_maximum();
@@ -414,14 +404,11 @@ void CalendarDatePicker::on_current_month(date month) {
       }
     }
     if(auto current_date = m_model->get_current(); current == current_date) {
-      auto current_block =
-        shared_connection_block(m_list_current_connection);
-      m_calendar_view->get_current_model()->set_current(i);
-      current_set = true;
+      current_index = i;
     }
   }
-  if(!current_set) {
-    set_current_index({});
+  if(current_index != m_calendar_view->get_current_model()->get_current()) {
+    set_current_index(current_index);
   }
   if(list_has_focus) {
     m_calendar_view->setFocus();
@@ -430,6 +417,7 @@ void CalendarDatePicker::on_current_month(date month) {
 
 void CalendarDatePicker::on_list_current(const optional<int>& index) {
   if(index) {
+    auto current_block = shared_connection_block(m_current_connection);
     m_model->set_current(m_calendar_view->get_list_model()->get<date>(*index));
   }
 }

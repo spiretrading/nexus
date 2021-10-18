@@ -75,6 +75,7 @@ namespace Styles {
       class MonthSpinner;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      boost::signals2::scoped_connection m_current_connection;
       MonthSpinner* m_month_spinner;
       ListView* m_calendar_view;
       boost::signals2::scoped_connection m_list_current_connection;
