@@ -24,15 +24,20 @@ namespace {
     int m_index;
   };
 
-  auto LIST_VIEW_STYLE(StyleSheet style) {
+  auto LIST_ITEM_STYLE() {
+    auto style = StyleSheet();
     style.get(Any()).
-      set(EdgeNavigation::CONTAIN);
-    style.get(Any() >> is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingLeft(scale_width(8))).
       set(PaddingRight(scale_width(10))).
       set(vertical_padding(scale_height(5)));
+    return style;
+  }
+
+  auto LIST_VIEW_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(EdgeNavigation::CONTAIN);
     return style;
   }
 
@@ -137,19 +142,24 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
       m_model(std::move(model)),
       m_submission(std::make_shared<ArrayListModel>()),
       m_model_connection(m_model->connect_operation_signal(
-        std::bind_front(&ClosedFilterPanel::on_operation, this))) {
+        std::bind_front(&ClosedFilterPanel::on_table_model_operation, this))) {
   for(auto i = 0; i < m_model->get_row_size(); ++i) {
     if(m_model->get<bool>(i, 1)) {
       m_submission->push(m_model->at(i, 0));
     }
   }
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
   m_list_view =
     new ListView(std::make_shared<ClosedFilterPanelModelAdaptor>(m_model),
       make_check_box);
   set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
+  for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
+    set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
+  }
+  m_list_view->get_list_model()->connect_operation_signal(
+    std::bind_front(&ClosedFilterPanel::on_list_model_operation, this));
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   layout->addWidget(m_scrollable_list_box);
   m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal(
@@ -203,7 +213,8 @@ void ClosedFilterPanel::on_reset() {
   }
 }
 
-void ClosedFilterPanel::on_operation(const TableModel::Operation& operation) {
+void ClosedFilterPanel::on_table_model_operation(
+    const TableModel::Operation& operation) {
   visit(operation,
     [=] (const TableModel::UpdateOperation& operation) {
       auto value = displayTextAny(m_model->at(operation.m_row, 0));
@@ -239,5 +250,14 @@ void ClosedFilterPanel::on_operation(const TableModel::Operation& operation) {
           m_submission->push(m_model->at(i, 0));
         }
       }
+    });
+}
+
+void ClosedFilterPanel::on_list_model_operation(
+    const ListModel::Operation& operation) {
+  visit(operation,
+    [=] (const ListModel::AddOperation& operation) {
+      set_style(*m_list_view->get_list_item(operation.m_index),
+        LIST_ITEM_STYLE());
     });
 }

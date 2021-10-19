@@ -52,7 +52,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_model_connection;
 
       void on_reset();
-      void on_operation(const TableModel::Operation& operation);
+      void on_table_model_operation(const TableModel::Operation& operation);
+      void on_list_model_operation(const ListModel::Operation& operation);
   };
 }
 
