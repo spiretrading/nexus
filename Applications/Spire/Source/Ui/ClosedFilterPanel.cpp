@@ -73,7 +73,7 @@ class ClosedFilterPanelModelAdaptor : public ListModel {
       return m_data[index];
     }
 
-    boost::signals2::connection connect_operation_signal(
+    connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override {
       return m_transaction.connect_operation_signal(slot);
     }
@@ -109,7 +109,7 @@ class ClosedFilterPanelModelAdaptor : public ListModel {
         ItemEntry{m_source->at(index, 0), boolean_model, index});
       boolean_model->connect_current_signal(
         std::bind_front(&ClosedFilterPanelModelAdaptor::on_current, this,
-          &std::any_cast<ItemEntry&>(m_data.back())));
+          &std::any_cast<ItemEntry&>(m_data[index])));
       for(auto i = m_data.begin() + index + 1; i != m_data.end(); ++i) {
         ++(std::any_cast<ItemEntry&>(*i).m_index);
       }
@@ -143,9 +143,6 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
       m_submission->push(m_model->at(i, 0));
     }
   }
-  m_filter_panel = new FilterPanel(std::move(title), this, parent);
-  m_filter_panel->connect_reset_signal(
-    std::bind_front(&ClosedFilterPanel::on_reset, this));
   m_list_view =
     new ListView(std::make_shared<ClosedFilterPanelModelAdaptor>(m_model),
       make_check_box);
@@ -154,6 +151,9 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scrollable_list_box);
+  m_filter_panel = new FilterPanel(std::move(title), this, parent);
+  m_filter_panel->connect_reset_signal(
+    std::bind_front(&ClosedFilterPanel::on_reset, this));
   m_scrollable_list_box->installEventFilter(this);
   window()->installEventFilter(this);
 }
