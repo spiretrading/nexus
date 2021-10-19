@@ -427,6 +427,50 @@ void ListView::remove_item(int index) {
   update_layout();
 }
 
+void ListView::move_item(int source, int destination) {
+  auto direction = [&] {
+    if(source < destination) {
+      for(auto i = std::next(m_items.begin(), source + 1);
+          i != std::next(m_items.begin(), destination + 1); ++i) {
+        --(*i)->m_index;
+      }
+      std::rotate(std::next(m_items.begin(), source), std::next(m_items.begin(),
+        source + 1), std::next(m_items.begin(), destination + 1));
+      return -1;
+    } else {
+      for(auto i = std::next(m_items.begin(), destination);
+          i != std::next(m_items.begin(), source); ++i) {
+        ++(*i)->m_index;
+      }
+      std::rotate(std::next(m_items.rbegin(), m_items.size() - source - 1),
+        std::next(m_items.rbegin(), m_items.size() - source), std::next(
+        m_items.rbegin(), m_items.size() - destination));
+      return 1;
+    }
+  }();
+  m_items[destination]->m_index = destination;
+  auto adjust = [&] (auto& value) {
+    if(value && (*value >= source || *value <= destination)) {
+      *value += direction;
+      return true;
+    }
+    return false;
+  };
+  adjust(m_last_current);
+  adjust(m_focus_index);
+  auto selection = m_selection_model->get_current();
+  auto current = m_current_model->get_current();
+  if(adjust(current)) {
+    m_current_model->set_current(current);
+  }
+  if(adjust(selection)) {
+    auto blocker = shared_connection_block(m_selection_connection);
+    m_selected = selection;
+    m_selection_model->set_current(*m_selected);
+  }
+  update_layout();
+}
+
 void ListView::update_layout() {
   auto& body = *m_box->get_body();
   if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
@@ -500,6 +544,9 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
     },
     [&] (const ListModel::RemoveOperation& operation) {
       remove_item(operation.m_index);
+    },
+    [&] (const ListModel::MoveOperation& operation) {
+      move_item(operation.m_source, operation.m_destination);
     });
 }
 
