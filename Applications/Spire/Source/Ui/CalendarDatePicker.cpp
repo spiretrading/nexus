@@ -324,7 +324,6 @@ CalendarDatePicker::CalendarDatePicker(
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   setFocusProxy(m_calendar_view);
-  setFixedWidth(scale_width(176));
   on_current(m_model->get_current());
 }
 
