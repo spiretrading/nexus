@@ -363,12 +363,13 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
 }
 
 boost::optional<int> CalendarDatePicker::get_index(date day) const {
-  for(auto i = 0; i < m_calendar_view->get_list_model()->get_size(); ++i) {
-    if(m_calendar_view->get_list_model()->get<date>(i) == day) {
-      return i;
-    }
+  auto first_date = m_calendar_view->get_list_model()->get<date>(0);
+  auto last_date =  m_calendar_view->get_list_model()->get<date>(
+    m_calendar_view->get_list_model()->get_size() - 1);
+  if(day < first_date || last_date < day) {
+    return {};
   }
-  return {};
+  return date_duration(day - first_date).days();
 }
 
 void CalendarDatePicker::set_current_index(const optional<int>& index) {
@@ -389,21 +390,13 @@ void CalendarDatePicker::on_current_month(date month) {
   auto current_index = optional<int>();
   auto list_has_focus = m_calendar_view->hasFocus() ||
     m_calendar_view->isAncestorOf(focusWidget());
+  auto minimum = m_model->get_minimum();
+  auto maximum = m_model->get_maximum();
   for(auto i = 0; i < m_calendar_view->get_list_model()->get_size(); ++i) {
-    auto minimum = m_model->get_minimum();
-    auto maximum = m_model->get_maximum();
     auto current = m_calendar_view->get_list_model()->get<date>(i);
-    if(minimum && maximum) {
-      m_calendar_view->get_list_item(i)->setDisabled(
-        current < *minimum || current > *maximum);
-    } else {
-      if(minimum) {
-        m_calendar_view->get_list_item(i)->setDisabled(current < *minimum);
-      } else if(maximum) {
-        m_calendar_view->get_list_item(i)->setDisabled(current > *maximum);
-      }
-    }
-    if(auto current_date = m_model->get_current(); current == current_date) {
+    m_calendar_view->get_list_item(i)->setDisabled(
+      current < *minimum || current > *maximum);
+    if(current == m_model->get_current()) {
       current_index = i;
     }
   }
