@@ -36,18 +36,28 @@ namespace Spire {
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       FocusObserver m_focus_observer;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::optional<boost::gregorian::date> m_submission;
+      bool m_is_modified;
+      bool m_is_rejected;
       IntegerBox* m_year_field;
       TextBox* m_year_dash;
       IntegerBox* m_month_field;
       IntegerBox* m_day_field;
       OverlayPanel* m_panel;
 
+      void on_current(const boost::optional<boost::gregorian::date>& current);
+      void on_field_current(const boost::optional<int>& current);
       void on_focus(FocusObserver::State state);
+      void on_submit();
   };
 }
 

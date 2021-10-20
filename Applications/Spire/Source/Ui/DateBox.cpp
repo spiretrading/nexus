@@ -1,5 +1,6 @@
 #include "Spire/Ui/DateBox.hpp"
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -7,6 +8,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::signals2;
 using namespace Spire;
@@ -53,7 +55,13 @@ DateBox::DateBox(date current, QWidget* parent)
 DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_focus_observer(*this),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_is_modified(false),
+      m_is_rejected(false) {
+  m_current_connection = m_model->connect_current_signal(
+    [=] (const auto& current) {
+      on_current(current);
+    });
   m_focus_observer.connect_state_signal([=] (auto state) {
     on_focus(state);
   });
@@ -101,10 +109,50 @@ connection DateBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
+bool DateBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+      on_submit();
+    } else if(e->key() == Qt::Key_Escape) {
+      m_model->set_current(m_submission);
+      m_is_modified = false;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void DateBox::on_current(const optional<date>& current) {
+  m_is_modified = true;
+}
+
+void DateBox::on_field_current(const boost::optional<int>& current) {
+  m_model->set_current(date(*m_year_field->get_model()->get_current(),
+    *m_month_field->get_model()->get_current(),
+    *m_day_field->get_model()->get_current()));
+}
+
 void DateBox::on_focus(FocusObserver::State state) {
   if(is_set(FocusObserver::State::FOCUS_IN, state)) {
     m_panel->show();
   } else {
+    if(m_is_modified) {
+      on_submit();
+    }
     m_panel->hide();
   }
+}
+
+void DateBox::on_submit() {
+  // TODO: does acceptable mean in the [min, max] range?
+  if(m_model->get_state() == QValidator::Acceptable) {
+    m_submission = m_model->get_current();
+    // TODO: guarantee that submission is not null?
+    m_submit_signal(*m_submission);
+  } else {
+    m_model->set_current(m_submission);
+    m_is_rejected = true;
+    m_reject_signal();
+  }
+  m_is_modified = false;
 }
