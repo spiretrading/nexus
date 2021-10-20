@@ -337,7 +337,9 @@ void ListView::cross(int direction) {
   }
   m_navigation_box = navigation_box;
   set_current(candidate);
-  m_navigation_box = navigation_box;
+  if(candidate == m_current_model->get_current()) {
+    m_navigation_box = navigation_box;
+  }
 }
 
 void ListView::set_current(optional<int> current) {
