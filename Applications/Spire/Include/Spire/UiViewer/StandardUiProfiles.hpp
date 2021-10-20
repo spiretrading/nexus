@@ -14,6 +14,9 @@ namespace Spire {
   /** Returns a UiProfile for the CheckBox. */
   UiProfile make_check_box_profile();
 
+  /** Returns a UiProfile for the DateBox. */
+  UiProfile make_date_box_profile();
+
   /** Returns a UiProfile for the DecimalBox. */
   UiProfile make_decimal_box_profile();
 

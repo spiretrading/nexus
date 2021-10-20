@@ -19,6 +19,7 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
@@ -468,6 +469,40 @@ UiProfile Spire::make_check_box_profile() {
     [=] (auto& profile) {
       return setup_checkable_profile(profile, new CheckBox());
     });
+}
+
+UiProfile Spire::make_date_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_date = boost::gregorian::day_clock::local_day();
+  properties.push_back(make_standard_property(
+    "current", displayTextAny(current_date)));
+  properties.push_back(make_standard_property(
+    "min", displayTextAny(current_date - boost::gregorian::months(2))));
+  properties.push_back(make_standard_property(
+    "max", displayTextAny(current_date + boost::gregorian::months(2))));
+  auto profile = UiProfile(QString::fromUtf8("DateBox"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<LocalOptionalDateModel>();
+      auto& current = get<QString>("current", profile.get_properties());
+      model->set_current(parse_date(current.get()));
+      auto& min = get<QString>("min", profile.get_properties());
+      if(auto min_date = parse_date(min.get())) {
+        model->set_minimum(min_date);
+      } else {
+        model->set_minimum(date(1900, 1, 1));
+      }
+      auto& max = get<QString>("max", profile.get_properties());
+      if(auto max_date = parse_date(max.get())) {
+        model->set_maximum(*max_date);
+      } else {
+        model->set_maximum(date(2100, 12, 31));
+      }
+      auto date_box = new DateBox(model);
+      apply_widget_properties(date_box, profile.get_properties());
+      return date_box;
+    });
+  return profile;
 }
 
 UiProfile Spire::make_decimal_box_profile() {
