@@ -2,6 +2,7 @@
 #define SPIRE_DATE_BOX_HPP
 #include <QWidget>
 #include "Spire/Ui/CalendarDatePicker.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 
 namespace Spire {
@@ -36,6 +37,7 @@ namespace Spire {
         const RejectSignal::slot_type& slot) const;
 
     private:
+      FocusObserver m_focus_observer;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDateModel> m_model;
@@ -43,6 +45,9 @@ namespace Spire {
       TextBox* m_year_dash;
       IntegerBox* m_month_field;
       IntegerBox* m_day_field;
+      OverlayPanel* m_panel;
+
+      void on_focus(FocusObserver::State state);
   };
 }
 

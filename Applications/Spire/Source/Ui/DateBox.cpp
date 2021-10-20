@@ -4,6 +4,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::gregorian;
@@ -51,11 +52,16 @@ DateBox::DateBox(date current, QWidget* parent)
 
 DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
+      m_focus_observer(*this),
       m_model(std::move(model)) {
+  m_focus_observer.connect_state_signal([=] (auto state) {
+    on_focus(state);
+  });
   auto body = new QWidget(this);
   auto body_layout = new QHBoxLayout(body);
   body_layout->setContentsMargins({});
   body_layout->setSpacing(0);
+  body_layout->addStretch(1);
   auto input_box = make_input_box(body, this);
   auto input_box_style = get_style(*input_box);
   input_box_style.get(Any()).
@@ -73,6 +79,12 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   body_layout->addWidget(make_dash());
   m_day_field = make_integer_field(1, 31, tr("DD"), 2, scale(28, 26));
   body_layout->addWidget(m_day_field);
+  body_layout->addStretch(1);
+  auto calendar = new CalendarDatePicker(m_model, this);
+  m_panel = new OverlayPanel(*calendar, *this);
+  m_panel->set_is_draggable(false);
+  calendar->adjustSize();
+  setFixedWidth(calendar->width() + 2);
 }
 
 const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
@@ -87,4 +99,12 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
+}
+
+void DateBox::on_focus(FocusObserver::State state) {
+  if(is_set(FocusObserver::State::FOCUS_IN, state)) {
+    m_panel->show();
+  } else {
+    m_panel->hide();
+  }
 }
