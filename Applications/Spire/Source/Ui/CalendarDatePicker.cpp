@@ -1,6 +1,6 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QApplication>
+#include <QCoreApplication>
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -342,7 +342,7 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(watched == m_month_spinner &&
         (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)) {
-      qApp->sendEvent(m_calendar_view, e);
+      QCoreApplication::sendEvent(m_calendar_view, e);
     } else {
       auto current_index = m_calendar_view->get_current_model()->get_current();
       if(current_index) {
