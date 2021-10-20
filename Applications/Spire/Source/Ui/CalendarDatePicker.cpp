@@ -282,7 +282,6 @@ CalendarDatePicker::CalendarDatePicker(
   layout->setContentsMargins(
     scale_width(4), scale_height(8), scale_width(4), scale_height(4));
   layout->setSpacing(scale_height(4));
-  setFixedWidth(scale_width(176));
   m_month_spinner =
     new MonthSpinner(std::make_shared<RequiredDateModel>(m_model), this);
   m_month_spinner->installEventFilter(this);
@@ -299,7 +298,6 @@ CalendarDatePicker::CalendarDatePicker(
     on_current_month(current);
   });
   m_calendar_view->setFixedSize(scale(168, 144));
-  setFocusProxy(m_calendar_view);
   m_month_spinner->setFocusProxy(m_calendar_view);
   m_calendar_view->installEventFilter(this);
   layout->addWidget(m_calendar_view);
@@ -325,6 +323,8 @@ CalendarDatePicker::CalendarDatePicker(
     set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
+  setFocusProxy(m_calendar_view);
+  setFixedWidth(scale_width(176));
   on_current(m_model->get_current());
 }
 
