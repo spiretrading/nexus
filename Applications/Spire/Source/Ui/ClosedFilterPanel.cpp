@@ -10,6 +10,8 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 
 using namespace boost;
@@ -160,11 +162,16 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
   m_list_view->get_list_model()->connect_operation_signal(
     std::bind_front(&ClosedFilterPanel::on_list_model_operation, this));
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
+  m_scrollable_list_box->setMinimumSize(scale_width(160), scale_height(54));
+  m_scrollable_list_box->setMaximumHeight(scale_height(158));
+  if(m_scrollable_list_box->sizeHint().height() >
+      m_scrollable_list_box->maximumHeight()) {
+    m_scrollable_list_box->get_scroll_box().get_vertical_scroll_bar().show();
+  }
   layout->addWidget(m_scrollable_list_box);
   m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal(
     std::bind_front(&ClosedFilterPanel::on_reset, this));
-  m_scrollable_list_box->installEventFilter(this);
   window()->installEventFilter(this);
 }
 
@@ -177,21 +184,8 @@ connection ClosedFilterPanel::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-QSize ClosedFilterPanel::sizeHint() const {
-  if(!m_size_hint) {
-    auto size = m_scrollable_list_box->sizeHint();
-    m_size_hint.emplace(std::max(scale_width(160), size.width()),
-      std::clamp(size.height(), scale_height(54), scale_height(158)));
-  }
-  return *m_size_hint;
-}
-
 bool ClosedFilterPanel::eventFilter(QObject* watched, QEvent* event) {
-  if(m_scrollable_list_box == watched &&
-      event->type() == QEvent::LayoutRequest) {
-    m_size_hint = none;
-    updateGeometry();
-  } else if(window() == watched && event->type() == QEvent::Close) {
+  if(window() == watched && event->type() == QEvent::Close) {
     m_filter_panel->hide();
     hide();
   }
