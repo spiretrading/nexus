@@ -54,7 +54,7 @@ namespace {
   }
 }
 
-DateBox::DateBox(date current, QWidget* parent)
+DateBox::DateBox(const optional<date>& current, QWidget* parent)
   : DateBox(std::make_shared<LocalOptionalDateModel>(current), parent) {}
 
 DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
@@ -204,10 +204,11 @@ void DateBox::on_submit() {
     m_submit_signal(m_submission);
     m_is_modified = false;
   } else {
+    auto submission = m_model->get_current();
     m_model->set_current(m_submission);
     m_is_rejected = true;
     m_is_modified = false;
-    m_reject_signal();
+    m_reject_signal(submission);
     if(!m_is_rejected) {
       m_is_rejected = true;
       match(*this, Rejected());

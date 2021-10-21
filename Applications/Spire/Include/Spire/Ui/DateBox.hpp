@@ -6,6 +6,18 @@
 #include "Spire/Ui/IntegerBox.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Specifies the accepted date format. */
+  enum class DateFormat {
+
+    /** The month and day can be input in a MM-DD format. */
+    MMDD,
+
+    /** The year, month, and day can be input in a YYYY-MM-DD format. */
+    YYYYMMDD
+  };
+}
 
   class DateBox : public QWidget {
     public:
@@ -17,11 +29,15 @@ namespace Spire {
       using SubmitSignal = Signal<
         void (const boost::optional<boost::gregorian::date>& submission)>;
 
-      /** Signals that the current value was rejected as a submission. */
-      using RejectSignal = Signal<void ()>;
+      /**
+       * Signals that the current value was rejected as a submission.
+       * @param value The rejected value.
+       */
+      using RejectSignal = Signal<
+        void (const boost::optional<boost::gregorian::date>& value)>;
 
-      explicit DateBox(
-        boost::gregorian::date current, QWidget* parent = nullptr);
+      explicit DateBox(const boost::optional<boost::gregorian::date>& current,
+        QWidget* parent = nullptr);
 
       explicit DateBox(
         std::shared_ptr<OptionalDateModel> model, QWidget* parent = nullptr);

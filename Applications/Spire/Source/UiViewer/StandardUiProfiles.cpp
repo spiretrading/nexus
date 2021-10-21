@@ -481,6 +481,7 @@ UiProfile Spire::make_date_box_profile() {
     "min", displayTextAny(current_date - boost::gregorian::months(2))));
   properties.push_back(make_standard_property(
     "max", displayTextAny(current_date + boost::gregorian::months(2))));
+  properties.push_back(make_standard_property("year_field", true));
   auto profile = UiProfile(QString::fromUtf8("DateBox"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
@@ -500,6 +501,12 @@ UiProfile Spire::make_date_box_profile() {
       }
       auto date_box = new DateBox(model);
       apply_widget_properties(date_box, profile.get_properties());
+      date_box->get_model()->connect_current_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Current")));
+      date_box->connect_submit_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Submit")));
+      date_box->connect_reject_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Reject")));
       return date_box;
     });
   return profile;
