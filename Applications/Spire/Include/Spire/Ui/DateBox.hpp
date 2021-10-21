@@ -14,8 +14,8 @@ namespace Spire {
        * Signals that the current value is being submitted.
        * @param submission The submitted date.
        */
-      using SubmitSignal =
-        Signal<void (const boost::gregorian::date& submission)>;
+      using SubmitSignal = Signal<
+        void (const boost::optional<boost::gregorian::date>& submission)>;
 
       /** Signals that the current value was rejected as a submission. */
       using RejectSignal = Signal<void ()>;
@@ -54,9 +54,11 @@ namespace Spire {
       IntegerBox* m_day_field;
       OverlayPanel* m_panel;
 
+      void populate_input_fields();
       void on_current(const boost::optional<boost::gregorian::date>& current);
-      void on_field_current(const boost::optional<int>& current);
+      void on_field_current();
       void on_focus(FocusObserver::State state);
+      void on_reject();
       void on_submit();
   };
 }

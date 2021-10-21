@@ -3,6 +3,10 @@
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -10,6 +14,7 @@
 
 using namespace boost;
 using namespace boost::gregorian;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -71,28 +76,57 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   body_layout->setSpacing(0);
   body_layout->addStretch(1);
   auto input_box = make_input_box(body, this);
-  auto input_box_style = get_style(*input_box);
-  input_box_style.get(Any()).
+  proxy_style(*this, *input_box);
+  auto style = get_style(*input_box);
+  style.get(Any()).
     set(vertical_padding(0));
-  set_style(*input_box, std::move(input_box_style));
+  style.get(Rejected()).
+    set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+      linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
+    set(border_color(
+      chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
+  set_style(*this, std::move(style));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(input_box);
   m_year_field = make_integer_field(0, 9999, tr("YYYY"), 4, scale(38, 26));
+  m_year_field->get_model()->connect_current_signal([=] (const auto& current) {
+    on_field_current();
+  });
+  m_year_field->connect_reject_signal([=] (const auto& value) {
+    on_reject();
+  });
+  m_year_field->findChild<QLineEdit*>()->installEventFilter(this);
   body_layout->addWidget(m_year_field);
   m_year_dash = make_dash();
   body_layout->addWidget(m_year_dash);
   m_month_field = make_integer_field(1, 12, tr("MM"), 2, scale(28, 26));
+  m_month_field->get_model()->connect_current_signal([=] (const auto& current) {
+    on_field_current();
+  });
+  m_month_field->connect_reject_signal([=] (const auto& value) {
+    on_reject();
+  });
+  m_month_field->findChild<QLineEdit*>()->installEventFilter(this);
   body_layout->addWidget(m_month_field);
   body_layout->addWidget(make_dash());
   m_day_field = make_integer_field(1, 31, tr("DD"), 2, scale(28, 26));
+  m_day_field->get_model()->connect_current_signal([=] (const auto& current) {
+    on_field_current();
+  });
+  m_day_field->connect_reject_signal([=] (const auto& value) {
+    on_reject();
+  });
+  m_day_field->findChild<QLineEdit*>()->installEventFilter(this);
   body_layout->addWidget(m_day_field);
   body_layout->addStretch(1);
   auto calendar = new CalendarDatePicker(m_model, this);
   m_panel = new OverlayPanel(*calendar, *this);
   m_panel->set_is_draggable(false);
   calendar->adjustSize();
+  // TODO: + 2
   setFixedWidth(calendar->width() + 2);
+  populate_input_fields();
 }
 
 const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
@@ -122,14 +156,30 @@ bool DateBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void DateBox::on_current(const optional<date>& current) {
-  m_is_modified = true;
+void DateBox::populate_input_fields() {
+  if(auto current = m_model->get_current()) {
+    m_year_field->get_model()->set_current(optional<int>(current->year()));
+    m_month_field->get_model()->set_current(optional<int>(current->month()));
+    m_day_field->get_model()->set_current(optional<int>(current->day()));
+  } else {
+    m_year_field->get_model()->set_current({});
+    m_month_field->get_model()->set_current({});
+    m_day_field->get_model()->set_current({});
+  }
 }
 
-void DateBox::on_field_current(const boost::optional<int>& current) {
-  m_model->set_current(date(*m_year_field->get_model()->get_current(),
-    *m_month_field->get_model()->get_current(),
-    *m_day_field->get_model()->get_current()));
+void DateBox::on_current(const optional<date>& current) {
+  m_is_modified = true;
+  populate_input_fields();
+  if(m_is_rejected) {
+    m_is_rejected = false;
+    unmatch(*this, Rejected());
+  }
+}
+
+void DateBox::on_field_current() {
+  // TODO: set model current, block signal
+  m_is_modified = true;
 }
 
 void DateBox::on_focus(FocusObserver::State state) {
@@ -143,16 +193,24 @@ void DateBox::on_focus(FocusObserver::State state) {
   }
 }
 
+void DateBox::on_reject() {
+  m_is_rejected = true;
+}
+
 void DateBox::on_submit() {
-  // TODO: does acceptable mean in the [min, max] range?
-  if(m_model->get_state() == QValidator::Acceptable) {
+  if(auto current = m_model->get_current();
+      m_model->get_minimum() < current && current < m_model->get_maximum()) {
     m_submission = m_model->get_current();
-    // TODO: guarantee that submission is not null?
-    m_submit_signal(*m_submission);
+    m_submit_signal(m_submission);
+    m_is_modified = false;
   } else {
     m_model->set_current(m_submission);
     m_is_rejected = true;
+    m_is_modified = false;
     m_reject_signal();
+    if(!m_is_rejected) {
+      m_is_rejected = true;
+      match(*this, Rejected());
+    }
   }
-  m_is_modified = false;
 }
