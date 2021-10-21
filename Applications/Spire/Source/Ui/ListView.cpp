@@ -343,10 +343,11 @@ void ListView::cross(int direction) {
 }
 
 void ListView::set_current(optional<int> current) {
-  if(!current && !m_current_model->get_current()) {
+  if(!current && !m_current_model->get_current() || m_items.empty()) {
     return;
   }
-  if(auto& previous_index = m_current_model->get_current()) {
+  if(auto& previous_index = m_current_model->get_current();
+      previous_index && *previous_index < static_cast<int>(m_items.size())) {
     auto& previous_item = *m_items[*previous_index];
     if(previous_index == current && previous_item.m_is_current) {
       return;
@@ -354,6 +355,9 @@ void ListView::set_current(optional<int> current) {
     previous_item.set_current(false);
   }
   if(current) {
+    if(*current >= static_cast<int>(m_items.size())) {
+      current = static_cast<int>(m_items.size()) - 1;
+    }
     m_items[*current]->set_current(true);
   }
   m_last_current = current;
@@ -362,7 +366,8 @@ void ListView::set_current(optional<int> current) {
 }
 
 void ListView::update_focus(optional<int> current) {
-  if(m_focus_index && m_focus_index != current) {
+  if(m_focus_index && m_focus_index != current &&
+      *m_focus_index < static_cast<int>(m_items.size())) {
     m_items[*m_focus_index]->m_item->setFocusPolicy(Qt::ClickFocus);
   }
   if(current) {
