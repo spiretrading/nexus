@@ -46,7 +46,6 @@ namespace Spire {
       ListView* m_list_view;
       ScrollableListBox* m_scrollable_list_box;
       std::shared_ptr<ArrayListModel> m_submission;
-      mutable boost::optional<QSize> m_size_hint;
       boost::signals2::scoped_connection m_model_connection;
 
       void on_reset();

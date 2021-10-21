@@ -548,7 +548,6 @@ UiProfile Spire::make_closed_filter_panel_profile() {
         });
       button->connect_clicked_signal([=] {
         panel->show();
-        panel->activateWindow();
       });
       return button;
     });
