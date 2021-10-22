@@ -123,6 +123,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   auto calendar = new CalendarDatePicker(m_model, this);
   m_panel = new OverlayPanel(*calendar, *this);
   m_panel->set_is_draggable(false);
+  m_panel->set_closed_on_focus_out(false);
   calendar->adjustSize();
   // TODO: + 2
   setFixedWidth(calendar->width() + 2);
@@ -199,7 +200,7 @@ void DateBox::on_reject() {
 
 void DateBox::on_submit() {
   if(auto current = m_model->get_current();
-      m_model->get_minimum() < current && current < m_model->get_maximum()) {
+      m_model->get_minimum() <= current && current <= m_model->get_maximum()) {
     m_submission = m_model->get_current();
     m_submit_signal(m_submission);
     m_is_modified = false;
