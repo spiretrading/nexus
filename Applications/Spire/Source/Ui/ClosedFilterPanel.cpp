@@ -51,6 +51,21 @@ namespace {
     check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     return check_box;
   }
+
+  void invalidate_children_recursively(QWidget& widget) {
+    for(auto child : widget.children()) {
+      if(!child->isWidgetType()) {
+        continue;
+      }
+      if(auto w = qobject_cast<QWidget*>(child)) {
+        invalidate_children_recursively(*w);
+        w->updateGeometry();
+        if(w->layout()) {
+          w->layout()->invalidate();
+        }
+      }
+    }
+  }
 }
 
 class ClosedFilterPanelModelAdaptor : public ListModel {
@@ -253,5 +268,9 @@ void ClosedFilterPanel::on_list_model_operation(
     [=] (const ListModel::AddOperation& operation) {
       set_style(*m_list_view->get_list_item(operation.m_index),
         LIST_ITEM_STYLE());
+      invalidate_children_recursively(*window());
+    },
+    [=] (const ListModel::RemoveOperation& operation) {
+      invalidate_children_recursively(*window());
     });
 }
