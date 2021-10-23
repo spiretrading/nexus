@@ -393,14 +393,15 @@ void CalendarDatePicker::on_current_month(date month) {
   auto maximum = m_model->get_maximum();
   for(auto i = 0; i < m_calendar_view->get_list_model()->get_size(); ++i) {
     auto current = m_calendar_view->get_list_model()->get<date>(i);
-    if(current < *minimum || current > *maximum) {
-      auto item = m_calendar_view->get_list_item(i);
+    auto item = m_calendar_view->get_list_item(i);
+    auto is_disabled = current < *minimum || current > *maximum;
+    if(is_disabled) {
       if(item->hasFocus()) {
         m_calendar_view->setFocusProxy(nullptr);
         m_calendar_view->setFocus();
       }
-      item->setDisabled(true);
     }
+    item->setDisabled(is_disabled);
     if(current == m_model->get_current()) {
       current_index = i;
     }
