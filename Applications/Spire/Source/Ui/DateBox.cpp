@@ -125,8 +125,16 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   m_panel->set_is_draggable(false);
   m_panel->set_closed_on_focus_out(false);
   calendar->adjustSize();
-  // TODO: + 2
-  setFixedWidth(calendar->width() + 2);
+  setFixedWidth(calendar->width());
+  for(auto& property : get_evaluated_block(*m_panel->findChild<Box*>())) {
+    property.visit(
+      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+        setFixedWidth(width() + size);
+      },
+      [&] (std::in_place_type_t<BorderRightSize>, int size) {
+        setFixedWidth(width() + size);
+      });
+  }
   populate_input_fields();
 }
 
