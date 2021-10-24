@@ -2,6 +2,8 @@
 #define NEXUS_TELEMETRY_CLIENT_BOX_HPP
 #include <type_traits>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
+#include "Nexus/TelemetryService/AccountQuery.hpp"
 #include "Nexus/TelemetryService/TelemetryService.hpp"
 
 namespace Nexus::TelemetryService {
@@ -34,11 +36,25 @@ namespace Nexus::TelemetryService {
       explicit TelemetryClientBox(
         const std::unique_ptr<TelemetryClientBox>& client);
 
+      void QueryTelemetryEvents(const AccountQuery& query,
+        Beam::ScopedQueueWriter<SequencedTelemetryEvent> queue);
+
+      void QueryTelemetryEvents(const AccountQuery& query,
+        Beam::ScopedQueueWriter<TelemetryEvent> queue);
+
+      void Record(const std::string& name, const Beam::JsonObject& data);
+
       void Close();
 
     private:
       struct VirtualTelemetryClient {
         virtual ~VirtualTelemetryClient() = default;
+        virtual void QueryTelemetryEvents(const AccountQuery& query,
+          Beam::ScopedQueueWriter<SequencedTelemetryEvent> queue) = 0;
+        virtual void QueryTelemetryEvents(const AccountQuery& query,
+          Beam::ScopedQueueWriter<TelemetryEvent> queue) = 0;
+        virtual void Record(
+          const std::string& name, const Beam::JsonObject& data) = 0;
         virtual void Close() = 0;
       };
       template<typename C>
@@ -48,6 +64,12 @@ namespace Nexus::TelemetryService {
 
         template<typename... Args>
         WrappedTelemetryClient(Args&&... args);
+        void QueryTelemetryEvents(const AccountQuery& query,
+          Beam::ScopedQueueWriter<SequencedTelemetryEvent> queue) override;
+        void QueryTelemetryEvents(const AccountQuery& query,
+          Beam::ScopedQueueWriter<TelemetryEvent> queue) override;
+        void Record(const std::string& name, const Beam::JsonObject& data)
+          override;
         void Close() override;
       };
       std::shared_ptr<VirtualTelemetryClient> m_client;
@@ -75,6 +97,23 @@ namespace Nexus::TelemetryService {
     const std::unique_ptr<TelemetryClientBox>& client)
       : TelemetryClientBox(*client) {}
 
+  inline void TelemetryClientBox::QueryTelemetryEvents(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedTelemetryEvent> queue) {
+    m_client->QueryTelemetryEvents(query, std::move(queue));
+  }
+
+  inline void TelemetryClientBox::QueryTelemetryEvents(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<TelemetryEvent> queue) {
+    m_client->QueryTelemetryEvents(query, std::move(queue));
+  }
+
+  inline void TelemetryClientBox::Record(
+      const std::string& name, const Beam::JsonObject& data) {
+    m_client->Record(name, data);
+  }
+
   inline void TelemetryClientBox::Close() {
     m_client->Close();
   }
@@ -84,6 +123,26 @@ namespace Nexus::TelemetryService {
   TelemetryClientBox::WrappedTelemetryClient<C>::WrappedTelemetryClient(
     Args&&... args)
       : m_client(std::forward<Args>(args)...) {}
+
+  template<typename C>
+  void TelemetryClientBox::WrappedTelemetryClient<C>::QueryTelemetryEvents(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<SequencedTelemetryEvent> queue) {
+    m_client->QueryTelemetryEvents(query, std::move(queue));
+  }
+
+  template<typename C>
+  void TelemetryClientBox::WrappedTelemetryClient<C>::QueryTelemetryEvents(
+      const AccountQuery& query,
+      Beam::ScopedQueueWriter<TelemetryEvent> queue) {
+    m_client->QueryTelemetryEvents(query, std::move(queue));
+  }
+
+  template<typename C>
+  void TelemetryClientBox::WrappedTelemetryClient<C>::Record(
+      const std::string& name, const Beam::JsonObject& data) {
+    m_client->Record(name, data);
+  }
 
   template<typename C>
   void TelemetryClientBox::WrappedTelemetryClient<C>::Close() {
