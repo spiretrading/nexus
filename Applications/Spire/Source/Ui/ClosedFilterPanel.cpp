@@ -24,6 +24,7 @@ namespace {
     std::any m_data;
     std::shared_ptr<BooleanModel> m_model;
     int m_index;
+    scoped_connection m_connection;
   };
 
   auto LIST_ITEM_STYLE() {
@@ -43,28 +44,28 @@ namespace {
     return style;
   }
 
-  auto make_check_box(const std::shared_ptr<ListModel>& model, int index) {
-    auto item = model->get<ItemEntry>(index);
-    auto check_box = new CheckBox(item.m_model);
-    check_box->set_label(displayTextAny(item.m_data));
-    check_box->setLayoutDirection(Qt::RightToLeft);
-    check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    return check_box;
-  }
-
   void invalidate_children_recursively(QWidget& widget) {
     for(auto child : widget.children()) {
       if(!child->isWidgetType()) {
         continue;
       }
-      if(auto w = qobject_cast<QWidget*>(child)) {
-        invalidate_children_recursively(*w);
-        w->updateGeometry();
-        if(w->layout()) {
-          w->layout()->invalidate();
+      if(auto widget = qobject_cast<QWidget*>(child)) {
+        invalidate_children_recursively(*widget);
+        widget->updateGeometry();
+        if(widget->layout()) {
+          widget->layout()->invalidate();
         }
       }
     }
+  }
+
+  auto make_check_box(const std::shared_ptr<ListModel>& model, int index) {
+    auto item = model->get<std::shared_ptr<ItemEntry>>(index);
+    auto check_box = new CheckBox(item->m_model);
+    check_box->set_label(displayTextAny(item->m_data));
+    check_box->setLayoutDirection(Qt::RightToLeft);
+    check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    return check_box;
   }
 }
 
@@ -78,10 +79,12 @@ class ClosedFilterPanelModelAdaptor : public ListModel {
       for(auto i = 0; i < m_source->get_row_size(); ++i) {
         auto boolean_model =
           std::make_shared<LocalBooleanModel>(m_source->get<bool>(i, 1));
-        m_data.emplace_back(ItemEntry{m_source->at(i, 0), boolean_model, i});
-        boolean_model->connect_current_signal(
+        auto entry = std::make_shared<ItemEntry>(
+          m_source->at(i, 0), boolean_model, i);
+        entry->m_connection = boolean_model->connect_current_signal(
           std::bind_front(&ClosedFilterPanelModelAdaptor::on_current, this,
-            &std::any_cast<ItemEntry&>(m_data.back())));
+            entry));
+        m_data.emplace_back(entry);
       }
     }
 
@@ -112,14 +115,17 @@ class ClosedFilterPanelModelAdaptor : public ListModel {
           },
           [&] (const TableModel::UpdateOperation& operation) {
             if(operation.m_column == 1) {
-              std::any_cast<ItemEntry&>(m_data[operation.m_row]).m_model->
-                set_current(m_source->get<bool>(operation.m_row, 1));
+              auto entry = std::any_cast<std::shared_ptr<ItemEntry>>(
+                m_data[operation.m_row]);
+              auto blocker = shared_connection_block(entry->m_connection);
+              entry->m_model->set_current(
+                m_source->get<bool>(operation.m_row, 1));
             }
           });
         });
     }
 
-    void on_current(ItemEntry* item, bool is_checked) {
+    void on_current(std::shared_ptr<ItemEntry> item, bool is_checked) {
       auto blocker = shared_connection_block(m_source_connection);
       m_source->set(item->m_index, 1, is_checked);
       m_transaction.push(UpdateOperation{item->m_index});
@@ -128,13 +134,14 @@ class ClosedFilterPanelModelAdaptor : public ListModel {
     void add_item(int index) {
       auto boolean_model =
         std::make_shared<LocalBooleanModel>(m_source->get<bool>(index, 1));
-      m_data.emplace(m_data.begin() + index,
-        ItemEntry{m_source->at(index, 0), boolean_model, index});
-      boolean_model->connect_current_signal(
+      auto entry = std::make_shared<ItemEntry>(
+        m_source->at(index, 0), boolean_model, index);
+      entry->m_connection = boolean_model->connect_current_signal(
         std::bind_front(&ClosedFilterPanelModelAdaptor::on_current, this,
-          &std::any_cast<ItemEntry&>(m_data[index])));
+          entry));
+      m_data.emplace(m_data.begin() + index, entry);
       for(auto i = m_data.begin() + index + 1; i != m_data.end(); ++i) {
-        ++(std::any_cast<ItemEntry&>(*i).m_index);
+        ++(std::any_cast<std::shared_ptr<ItemEntry>>(*i)->m_index);
       }
       m_transaction.push(AddOperation{index});
     }
@@ -142,7 +149,7 @@ class ClosedFilterPanelModelAdaptor : public ListModel {
     void remove_item(int index) {
       m_data.erase(m_data.begin() + index);
       for(auto i = m_data.begin() + index; i != m_data.end(); ++i) {
-        --(std::any_cast<ItemEntry&>(*i).m_index);
+        --(std::any_cast<std::shared_ptr<ItemEntry>>(*i)->m_index);
       }
       m_transaction.push(RemoveOperation{index});
     }
@@ -227,21 +234,19 @@ void ClosedFilterPanel::on_table_model_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [=] (const TableModel::UpdateOperation& operation) {
-      auto value = displayTextAny(m_model->at(operation.m_row, 0));
-      auto i = 0;
-      for(i = 0; i < m_submission->get_size(); ++i) {
-        if(value == displayTextAny(m_submission->at(i))) {
-          break;
+      auto index = [=] {
+        auto value = displayTextAny(m_model->at(operation.m_row, 0));
+        for(auto i = 0; i < m_submission->get_size(); ++i) {
+          if(value == displayTextAny(m_submission->at(i))) {
+            return i;
+          }
         }
-      }
-      if(i < m_submission->get_size()) {
-        if(!m_model->get<bool>(operation.m_row, 1)) {
-          m_submission->remove(i);
-        }
-      } else {
-        if(m_model->get<bool>(operation.m_row, 1)) {
-          m_submission->push(m_model->at(operation.m_row, 0));
-        }
+        return -1;
+      }();
+      if(index >= 0 && !m_model->get<bool>(operation.m_row, 1)) {
+        m_submission->remove(index);
+      } else if(index == -1 && m_model->get<bool>(operation.m_row, 1)) {
+        m_submission->push(m_model->at(operation.m_row, 0));
       }
       m_submit_signal(m_submission);
     },
