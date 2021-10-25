@@ -42,7 +42,6 @@ namespace {
   auto make_value_widget(const OrderFieldInfoTip::Model::AllowedValue& value,
       QWidget* parent) {
     auto container = new QWidget(parent);
-    container->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     auto layout = new QHBoxLayout(container);
     layout->setContentsMargins({});
     layout->setSpacing(0);
@@ -157,7 +156,6 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
   description_layout->addWidget(name_label);
   auto description_label =
     new TextAreaBox(QString::fromStdString(model.m_tag.m_description), this);
-  description_label->adjustSize();
   description_label->set_read_only(true);
   auto description_style = get_style(*description_label);
   description_style.get(ReadOnly()).
