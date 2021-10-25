@@ -71,9 +71,10 @@ namespace {
 class ClosedFilterPanelModelAdaptor : public ListModel {
   public:
     ClosedFilterPanelModelAdaptor(std::shared_ptr<TableModel> source)
-        : m_source(std::move(source)) {
-      m_source_connection = m_source->connect_operation_signal(
-        std::bind_front(&ClosedFilterPanelModelAdaptor::on_operation, this));
+        : m_source(std::move(source)),
+          m_source_connection(m_source->connect_operation_signal(
+            std::bind_front(
+              &ClosedFilterPanelModelAdaptor::on_operation, this))) {
       for(auto i = 0; i < m_source->get_row_size(); ++i) {
         auto boolean_model =
           std::make_shared<LocalBooleanModel>(m_source->get<bool>(i, 1));
