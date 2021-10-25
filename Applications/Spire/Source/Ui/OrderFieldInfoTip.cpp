@@ -138,6 +138,7 @@ QString OrderFieldInfoTip::Model::get_prerequisites() const {
 
 OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
     : QWidget(parent) {
+  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setFixedWidth(280);
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
