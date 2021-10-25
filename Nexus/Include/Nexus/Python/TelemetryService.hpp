@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <pybind11/pybind11.h>
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
+#include "Nexus/TelemetryService/TelemetryDataStoreBox.hpp"
 #include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
@@ -11,11 +12,21 @@ namespace Nexus::Python {
   NEXUS_EXPORT_DLL pybind11::class_<TelemetryService::TelemetryClientBox>&
     GetExportedTelemetryClientBox();
 
+  /** Returns the exported TelemetryDataStoreBox. */
+  NEXUS_EXPORT_DLL pybind11::class_<TelemetryService::TelemetryDataStoreBox>&
+    GetExportedTelemetryDataStoreBox();
+
   /**
    * Exports the ApplicationTelemetryClient class.
    * @param module The module to export to.
    */
   void ExportApplicationTelemetryClient(pybind11::module& module);
+
+  /**
+   * Exports the LocalTelemetryDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportLocalTelemetryDataStore(pybind11::module& module);
 
   /**
    * Exports the TelemetryEvent struct.
@@ -65,6 +76,39 @@ namespace Nexus::Python {
         pybind11::init<std::shared_ptr<Client>>());
     }
     return client;
+  }
+
+  /**
+   * Exports a TelemetryDataStore class.
+   * @param <DataStore> The type of TelemetryDataStore to export.
+   * @param module The module to export to.
+   * @param name The name of the class.
+   * @return The exported TelemetryDataStore.
+   */
+  template<typename DataStore>
+  auto ExportTelemetryDataStore(
+      pybind11::module& module, const std::string& name) {
+    auto dataStore = pybind11::class_<DataStore, std::shared_ptr<DataStore>>(
+      module, name.c_str()).
+      def("load_telemetry_events", static_cast<
+        std::vector<TelemetryService::SequencedTelemetryEvent> (
+          DataStore::*)(const TelemetryService::AccountQuery&)>(
+            &DataStore::LoadTelemetryEvents)).
+      def("store", static_cast<void (DataStore::*)(
+        const TelemetryService::SequencedAccountTelemetryEvent&)>(
+          &DataStore::Store)).
+      def("store", static_cast<void (DataStore::*)(
+        const std::vector<TelemetryService::SequencedAccountTelemetryEvent>&)>(
+          &DataStore::Store)).
+      def("close", &DataStore::Close);
+    if constexpr(
+        !std::is_same_v<DataStore, TelemetryService::TelemetryDataStoreBox>) {
+      pybind11::implicitly_convertible<DataStore,
+        TelemetryService::TelemetryDataStoreBox>();
+      GetExportedTelemetryDataStoreBox().def(
+        pybind11::init<std::shared_ptr<DataStore>>());
+    }
+    return dataStore;
   }
 }
 
