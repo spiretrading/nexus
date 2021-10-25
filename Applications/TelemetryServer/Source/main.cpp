@@ -43,7 +43,8 @@ namespace {
       MetaTelemetryServlet<std::unique_ptr<LiveNtpTimeClient>,
         ApplicationAdministrationClient::Client*, ApplicationDataStore*>,
       ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
+    BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
+    std::shared_ptr<LiveTimer>>;
 }
 
 int main(int argc, const char** argv) {
@@ -52,7 +53,7 @@ int main(int argc, const char** argv) {
       "\nCopyright (C) 2021 Spire Trading Inc.");
     auto serviceConfig = TryOrNest([&] {
       return ServiceConfiguration::Parse(GetNode(config, "server"),
-        RiskService::SERVICE_NAME);
+        TelemetryService::SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
