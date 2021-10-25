@@ -58,9 +58,9 @@ namespace Nexus::TelemetryService {
       void Close();
 
     private:
-      template<typename T>
+      template<typename U>
       using RequestToken =
-        Beam::Services::RequestToken<ServiceProtocolClient, T>;
+        Beam::Services::RequestToken<ServiceProtocolClient, U>;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<D> m_dataStore;

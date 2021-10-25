@@ -12,8 +12,9 @@
 namespace Nexus::TelemetryService {
   inline const auto& GetTelemetryEventRow() {
     static auto ROW = Viper::Row<TelemetryEvent>().
-      add_column("session_id", &TelemetryEvent::m_sessionId).
-      add_column("name", &TelemetryEvent::m_name).
+      add_column(
+        "session_id", Viper::varchar(32), &TelemetryEvent::m_sessionId).
+      add_column("name", Viper::varchar(256), &TelemetryEvent::m_name).
       add_column("data",
         [] (auto& row) {
           auto buffer = Beam::IO::SharedBuffer();
