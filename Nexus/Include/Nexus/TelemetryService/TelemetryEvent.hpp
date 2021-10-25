@@ -24,6 +24,8 @@ namespace Nexus::TelemetryService {
 
     /** The data associated with the event. */
     Beam::JsonObject m_data;
+
+    bool operator ==(const TelemetryEvent& right) const = default;
   };
 
   inline std::ostream& operator <<(
