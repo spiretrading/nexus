@@ -29,6 +29,18 @@ namespace Nexus::Python {
   void ExportLocalTelemetryDataStore(pybind11::module& module);
 
   /**
+   * Exports the MySqlTelemetryDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportMySqlTelemetryDataStore(pybind11::module& module);
+
+  /**
+   * Exports the SqliteTelemetryDataStore class.
+   * @param module The module to export to.
+   */
+  void ExportSqliteTelemetryDataStore(pybind11::module& module);
+
+  /**
    * Exports the TelemetryEvent struct.
    * @param module The module to export to.
    */

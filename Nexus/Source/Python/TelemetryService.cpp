@@ -1,9 +1,11 @@
 #include "Nexus/Python/TelemetryService.hpp"
-#include <Beam/IO/ConnectException.hpp>
 #include <Beam/Python/Beam.hpp>
-#include <boost/throw_exception.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
+#include <Viper/MySql/Connection.hpp>
+#include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Nexus/TelemetryService/LocalTelemetryDataStore.hpp"
+#include "Nexus/TelemetryService/SqlTelemetryDataStore.hpp"
 #include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonTelemetryClient.hpp"
 #include "Nexus/Python/ToPythonTelemetryDataStore.hpp"
@@ -60,6 +62,32 @@ void Nexus::Python::ExportLocalTelemetryDataStore(module& module) {
           &LocalTelemetryDataStore::LoadTelemetryEvents));
 }
 
+void Nexus::Python::ExportMySqlTelemetryDataStore(pybind11::module& module) {
+  using SqlDataStore =
+    SqlTelemetryDataStore<SqlConnection<Viper::MySql::Connection>>;
+  using DataStore = ToPythonTelemetryDataStore<SqlDataStore>;
+  ExportTelemetryDataStore<DataStore>(module, "MySqlTelemetryDataStore").
+    def(init([] (std::string host, unsigned int port, std::string username,
+        std::string password, std::string database) {
+      return std::make_shared<DataStore>([=] {
+        return SqlConnection(
+          Viper::MySql::Connection(host, port, username, password, database));
+      });
+    }), call_guard<GilRelease>());
+}
+
+void Nexus::Python::ExportSqliteTelemetryDataStore(pybind11::module& module) {
+  using SqlDataStore =
+    SqlTelemetryDataStore<SqlConnection<Viper::Sqlite3::Connection>>;
+  using DataStore = ToPythonTelemetryDataStore<SqlDataStore>;
+  ExportTelemetryDataStore<DataStore>(module, "SqliteTelemetryDataStore").
+    def(init([] (std::string path) {
+      return std::make_shared<DataStore>([=] {
+        return SqlConnection(Viper::Sqlite3::Connection(path));
+      });
+    }), call_guard<GilRelease>());
+}
+
 void Nexus::Python::ExportTelemetryEvent(module& module) {
   class_<TelemetryEvent>(module, "TelemetryEvent").
     def(init()).
@@ -81,6 +109,8 @@ void Nexus::Python::ExportTelemetryService(module& module) {
     submodule, "TelemetryClientBox");
   ExportApplicationTelemetryClient(submodule);
   ExportLocalTelemetryDataStore(submodule);
+  ExportMySqlTelemetryDataStore(submodule);
+  ExportSqliteTelemetryDataStore(submodule);
   ExportTelemetryEvent(submodule);
   auto testModule = submodule.def_submodule("tests");
   ExportTelemetryServiceTestEnvironment(testModule);

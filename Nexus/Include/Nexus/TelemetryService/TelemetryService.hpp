@@ -5,10 +5,12 @@
 namespace Nexus::TelemetryService {
   class AccountTelemetryEventEntry;
   class LocalTelemetryDataStore;
+  template<typename C> class SqlTelemetryDataStore;
   template<typename B, typename T> class TelemetryClient;
   class TelemetryClientBox;
   struct TelemetryDataStore;
   class TelemetryDataStoreBox;
+  class TelemetryDataStoreException;
   struct TelemetryEvent;
   class TelemetryRegistry;
   template<typename C, typename T, typename A, typename D>
