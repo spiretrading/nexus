@@ -26,11 +26,12 @@ namespace {
       set(BackgroundColor(QColor(Qt::transparent)));
     style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
     style.get(ReadOnly() >> is_a<Icon>()).set(Visibility::NONE);
-    style.get(Any() >> is_a<TextBox>()).set(PaddingRight(scale_width(14)));
+    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(PaddingRight(scale_width(14)));
     style.get(PopUp() >> is_a<TextBox>() ||
       (+Any() >> is_a<Button>() && (Hover() || FocusIn())) >> is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly() >> is_a<TextBox>()).
+    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(0)).
       set(border_color(QColor(Qt::transparent))).
       set(BackgroundColor(QColor(Qt::transparent)));
@@ -81,7 +82,9 @@ DropDownBox::DropDownBox(std::shared_ptr<ListModel> list_model,
   layout->addWidget(layers);
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
-  m_drop_down_list->window()->installEventFilter(this);
+  auto window = m_drop_down_list->window();
+  window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
+  window->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   on_current(get_current_model()->get_current());
@@ -169,6 +172,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
       unmatch(*this, PopUp());
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
+        m_drop_down_list->window()->setAttribute(Qt::WA_NoMouseReplay);
+      }
     }
   }
   return QWidget::eventFilter(watched, event);

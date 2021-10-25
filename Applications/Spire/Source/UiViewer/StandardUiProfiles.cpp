@@ -16,6 +16,7 @@
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -54,6 +55,7 @@
 #include "Spire/UiViewer/UiProfile.hpp"
 
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -357,6 +359,16 @@ namespace {
     panel->set_positioning(positioning);
     panel->show();
   }
+
+  auto parse_date(const QString& string) -> boost::optional<date> {
+    try {
+      auto parsed_date = from_string(string.toStdString());
+      if(!parsed_date.is_not_a_date()) {
+        return parsed_date;
+      }
+    } catch(const std::exception&) {}
+    return {};
+  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -396,6 +408,55 @@ UiProfile Spire::make_box_profile() {
         set_style(*box, std::move(style));
       });
       return box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_calendar_date_picker_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_date = boost::gregorian::day_clock::local_day();
+  properties.push_back(make_standard_property(
+    "current", displayTextAny(current_date)));
+  properties.push_back(make_standard_property(
+    "min", displayTextAny(current_date - boost::gregorian::months(2))));
+  properties.push_back(make_standard_property(
+    "max", displayTextAny(current_date + boost::gregorian::months(2))));
+  auto profile = UiProfile(QString::fromUtf8("CalendarDatePicker"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<LocalOptionalDateModel>();
+      auto& current = get<QString>("current", profile.get_properties());
+      model->set_current(parse_date(current.get()));
+      auto& min = get<QString>("min", profile.get_properties());
+      if(auto min_date = parse_date(min.get())) {
+        model->set_minimum(min_date);
+      } else {
+        model->set_minimum(date(1900, 1, 1));
+      }
+      auto& max = get<QString>("max", profile.get_properties());
+      if(auto max_date = parse_date(max.get())) {
+        model->set_maximum(*max_date);
+      } else {
+        model->set_maximum(date(2100, 12, 31));
+      }
+      auto calendar = new CalendarDatePicker(model);
+      apply_widget_properties(calendar, profile.get_properties());
+      current.connect_changed_signal([=] (const auto& value) {
+        auto date = parse_date(value);
+        if(date && !date->is_not_a_date() && *date != model->get_current()) {
+          model->set_current(*date);
+        }
+      });
+      calendar->get_model()->connect_current_signal([&current] (auto day) {
+        if(day) {
+          current.set(displayTextAny(*day));
+        }
+      });
+      calendar->get_model()->connect_current_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Current")));
+      calendar->connect_submit_signal(profile.make_event_slot<
+        optional<date>>(QString::fromUtf8("Submit")));
+      return calendar;
     });
   return profile;
 }

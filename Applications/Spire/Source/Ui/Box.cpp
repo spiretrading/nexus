@@ -41,6 +41,8 @@ Box::Box(QWidget* body, QWidget* parent)
       m_body(body),
       m_styles([=] { commit_style(); }) {
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+  auto box_layout = new QHBoxLayout(this);
+  box_layout->setContentsMargins({});
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);

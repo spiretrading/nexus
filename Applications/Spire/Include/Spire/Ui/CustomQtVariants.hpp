@@ -1,6 +1,7 @@
 #ifndef SPIRE_CUSTOM_VARIANTS_HPP
 #define SPIRE_CUSTOM_VARIANTS_HPP
 #include <any>
+#include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
 #include <QSortFilterProxyModel>
@@ -84,6 +85,7 @@ namespace Spire {
   };
 }
 
+Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
 Q_DECLARE_METATYPE(Nexus::CurrencyId);
@@ -184,6 +186,9 @@ namespace Spire {
 
   template<>
   boost::optional<double> from_string(const QString& string);
+
+  template<>
+  boost::optional<boost::gregorian::date> from_string(const QString& string);
 
   template<>
   boost::optional<boost::posix_time::ptime> from_string(const QString& string);

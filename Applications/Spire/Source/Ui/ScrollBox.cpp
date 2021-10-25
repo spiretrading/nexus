@@ -171,14 +171,14 @@ QSize ScrollBox::sizeHint() const {
   if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
       m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
       m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
-      m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
+      !m_scrollable_layer->get_vertical_scroll_bar().isHidden()) {
     size.rwidth() +=
       m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
   }
   if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
       m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
       m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW &&
-      m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
+      !m_scrollable_layer->get_horizontal_scroll_bar().isHidden()) {
     size.rheight() +=
       m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
   }

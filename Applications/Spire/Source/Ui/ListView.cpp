@@ -337,14 +337,17 @@ void ListView::cross(int direction) {
   }
   m_navigation_box = navigation_box;
   set_current(candidate);
-  m_navigation_box = navigation_box;
+  if(candidate == m_current_model->get_current()) {
+    m_navigation_box = navigation_box;
+  }
 }
 
 void ListView::set_current(optional<int> current) {
-  if(!current && !m_current_model->get_current()) {
+  if(!current && !m_current_model->get_current() || m_items.empty()) {
     return;
   }
-  if(auto& previous_index = m_current_model->get_current()) {
+  if(auto& previous_index = m_current_model->get_current();
+      previous_index && *previous_index < static_cast<int>(m_items.size())) {
     auto& previous_item = *m_items[*previous_index];
     if(previous_index == current && previous_item.m_is_current) {
       return;
@@ -352,6 +355,9 @@ void ListView::set_current(optional<int> current) {
     previous_item.set_current(false);
   }
   if(current) {
+    if(*current >= static_cast<int>(m_items.size())) {
+      current = static_cast<int>(m_items.size()) - 1;
+    }
     m_items[*current]->set_current(true);
   }
   m_last_current = current;
@@ -360,7 +366,8 @@ void ListView::set_current(optional<int> current) {
 }
 
 void ListView::update_focus(optional<int> current) {
-  if(m_focus_index && m_focus_index != current) {
+  if(m_focus_index && m_focus_index != current &&
+      *m_focus_index < static_cast<int>(m_items.size())) {
     m_items[*m_focus_index]->m_item->setFocusPolicy(Qt::ClickFocus);
   }
   if(current) {
@@ -423,6 +430,50 @@ void ListView::remove_item(int index) {
       m_selected = *selection - 1;
     }
     m_selection_model->set_current(m_selected);
+  }
+  update_layout();
+}
+
+void ListView::move_item(int source, int destination) {
+  auto direction = [&] {
+    if(source < destination) {
+      for(auto i = std::next(m_items.begin(), source + 1);
+          i != std::next(m_items.begin(), destination + 1); ++i) {
+        --(*i)->m_index;
+      }
+      std::rotate(std::next(m_items.begin(), source), std::next(m_items.begin(),
+        source + 1), std::next(m_items.begin(), destination + 1));
+      return -1;
+    } else {
+      for(auto i = std::next(m_items.begin(), destination);
+          i != std::next(m_items.begin(), source); ++i) {
+        ++(*i)->m_index;
+      }
+      std::rotate(std::next(m_items.rbegin(), m_items.size() - source - 1),
+        std::next(m_items.rbegin(), m_items.size() - source), std::next(
+        m_items.rbegin(), m_items.size() - destination));
+      return 1;
+    }
+  }();
+  m_items[destination]->m_index = destination;
+  auto adjust = [&] (auto& value) {
+    if(value && (*value >= source || *value <= destination)) {
+      *value += direction;
+      return true;
+    }
+    return false;
+  };
+  adjust(m_last_current);
+  adjust(m_focus_index);
+  auto selection = m_selection_model->get_current();
+  auto current = m_current_model->get_current();
+  if(adjust(current)) {
+    m_current_model->set_current(current);
+  }
+  if(adjust(selection)) {
+    auto blocker = shared_connection_block(m_selection_connection);
+    m_selected = selection;
+    m_selection_model->set_current(*m_selected);
   }
   update_layout();
 }
@@ -500,6 +551,9 @@ void ListView::on_list_operation(const ListModel::Operation& operation) {
     },
     [&] (const ListModel::RemoveOperation& operation) {
       remove_item(operation.m_index);
+    },
+    [&] (const ListModel::MoveOperation& operation) {
+      move_item(operation.m_source, operation.m_destination);
     });
 }
 

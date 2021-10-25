@@ -193,6 +193,7 @@ namespace Styles {
       void update_focus(boost::optional<int> current);
       void add_item(int index);
       void remove_item(int index);
+      void move_item(int source, int destination);
       void update_layout();
       void on_list_operation(const ListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);
