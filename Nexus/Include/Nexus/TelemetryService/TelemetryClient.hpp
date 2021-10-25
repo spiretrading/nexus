@@ -129,8 +129,8 @@ namespace Nexus::TelemetryService {
         constexpr auto threshold = 10;
         if(updates.size() >= threshold) {
           client->template SendRequest<RecordService>(updates);
+          updates.clear();
         }
-        updates.clear();
       });
     }, "Failed to submit records.");
   }
