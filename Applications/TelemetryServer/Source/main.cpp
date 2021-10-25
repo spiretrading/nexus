@@ -1,6 +1,5 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
-#include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
@@ -14,11 +13,10 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/lexical_cast.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
-#include "Nexus/TelemetryService/TelemetryServlet.hpp"
 #include "Nexus/TelemetryService/SqlTelemetryDataStore.hpp"
+#include "Nexus/TelemetryService/TelemetryServlet.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
