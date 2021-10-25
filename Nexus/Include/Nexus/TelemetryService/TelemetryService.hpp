@@ -3,12 +3,16 @@
 #include <string>
 
 namespace Nexus::TelemetryService {
+  class AccountTelemetryEventEntry;
   class LocalTelemetryDataStore;
-  template<typename B> class TelemetryClient;
+  template<typename B, typename T> class TelemetryClient;
   class TelemetryClientBox;
   struct TelemetryDataStore;
   class TelemetryDataStoreBox;
   struct TelemetryEvent;
+  class TelemetryRegistry;
+  template<typename C, typename T, typename A, typename D>
+  class TelemetryServlet;
   struct TelemetrySession;
 
   /** Standard name for the telemetry service. */

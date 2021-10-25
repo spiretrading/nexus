@@ -8,10 +8,12 @@ namespace Nexus::TelemetryService {
 
   /** Stores session info for a TelemetryServlet. */
   struct TelemetrySession : Beam::ServiceLocator::AuthenticatedSession {
-    public:
 
-      /** The session's roles. */
-      AdministrationService::AccountRoles m_roles;
+    /** The unique session id. */
+    std::string m_sessionId;
+
+    /** The session's roles. */
+    AdministrationService::AccountRoles m_roles;
   };
 }
 

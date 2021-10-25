@@ -1,11 +1,11 @@
 #ifndef NEXUS_TELEMETRY_CLIENT_HPP
 #define NEXUS_TELEMETRY_CLIENT_HPP
+#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Collections/SynchronizedList.hpp>
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TelemetryService/TelemetryService.hpp"
@@ -16,20 +16,25 @@ namespace Nexus::TelemetryService {
   /**
    * Client used to access the telemetry services.
    * @param <B> The type used to build ServiceProtocolClients to the server.
+   * @param <T> The type of TimeClient used to timestamp each event.
    */
-  template<typename B>
+  template<typename B, typename T>
   class TelemetryClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
       using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
 
+      /** The type of TimeClient used to timestamp each event. */
+      using TimeClient = Beam::GetTryDereferenceType<T>;
+
       /**
        * Constructs a TelemetryClient.
        * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       * @param timeClient Initializes the TimeClient.
        */
-      template<typename BF>
-      explicit TelemetryClient(BF&& clientBuilder);
+      template<typename BF, typename TF>
+      explicit TelemetryClient(BF&& clientBuilder, TF&& timeClient);
 
       ~TelemetryClient();
 
@@ -68,6 +73,7 @@ namespace Nexus::TelemetryService {
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
       Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
+      Beam::GetOptionalLocalPtr<T> m_timeClient;
       QueryClientPublisher<TelemetryEvent, AccountQuery,
         QueryAccountTelemetryService, EndAccountTelemetryEventQueryMessage>
           m_accountTelemetryEventPublisher;
@@ -79,10 +85,11 @@ namespace Nexus::TelemetryService {
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
   };
 
-  template<typename B>
-  template<typename BF>
-  TelemetryClient<B>::TelemetryClient(BF&& clientBuilder)
+  template<typename B, typename T>
+  template<typename BF, typename TF>
+  TelemetryClient<B, T>::TelemetryClient(BF&& clientBuilder, TF&& timeClient)
       try : m_clientHandler(std::forward<BF>(clientBuilder)),
+            m_timeClient(std::forward<TF>(timeClient)),
             m_accountTelemetryEventPublisher(Beam::Ref(m_clientHandler)) {
     Queries::RegisterQueryTypes(
       Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
@@ -95,30 +102,30 @@ namespace Nexus::TelemetryService {
       "Failed to connect to the telemetry server."));
   }
 
-  template<typename B>
-  TelemetryClient<B>::~TelemetryClient() {
+  template<typename B, typename T>
+  TelemetryClient<B, T>::~TelemetryClient() {
     Close();
   }
 
-  template<typename B>
-  void TelemetryClient<B>::QueryTelemetryEvents(const AccountQuery& query,
+  template<typename B, typename T>
+  void TelemetryClient<B, T>::QueryTelemetryEvents(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedTelemetryEvent> queue) {
     m_accountTelemetryEventPublisher.SubmitQuery(query, std::move(queue));
   }
 
-  template<typename B>
-  void TelemetryClient<B>::QueryTelemetryEvents(const AccountQuery& query,
+  template<typename B, typename T>
+  void TelemetryClient<B, T>::QueryTelemetryEvents(const AccountQuery& query,
       Beam::ScopedQueueWriter<TelemetryEvent> queue) {
     m_accountTelemetryEventPublisher.SubmitQuery(query, std::move(queue));
   }
 
-  template<typename B>
-  void TelemetryClient<B>::Record(
+  template<typename B, typename T>
+  void TelemetryClient<B, T>::Record(
       const std::string& name, const Beam::JsonObject& data) {
     Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_clientHandler.GetClient();
       m_updates.With([&] (auto& updates) {
-        updates.emplace_back(name, data);
+        updates.emplace_back(name, m_timeClient->GetTime(), data);
         constexpr auto threshold = 10;
         if(updates.size() >= threshold) {
           client->template SendRequest<RecordService>(updates);
@@ -128,8 +135,8 @@ namespace Nexus::TelemetryService {
     }, "Failed to submit records.");
   }
 
-  template<typename B>
-  void TelemetryClient<B>::Close() {
+  template<typename B, typename T>
+  void TelemetryClient<B, T>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
@@ -149,8 +156,8 @@ namespace Nexus::TelemetryService {
     m_openState.Close();
   }
 
-  template<typename B>
-  void TelemetryClient<B>::OnReconnect(
+  template<typename B, typename T>
+  void TelemetryClient<B, T>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
     m_accountTelemetryEventPublisher.Recover(*client);
   }

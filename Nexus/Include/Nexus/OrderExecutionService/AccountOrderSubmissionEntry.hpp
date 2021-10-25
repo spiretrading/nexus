@@ -56,7 +56,7 @@ namespace Nexus::OrderExecutionService {
   };
 
   /**
-   * Returns the InitialSequences for a AccountOrderSubmissionEntry.
+   * Returns the InitialSequences for an AccountOrderSubmissionEntry.
    * @param dataStore The DataStore to load the InitialSequences from.
    * @param account The account to load the InitialSequences for.
    * @return The set of InitialSequences for the specified <i>account</i>.

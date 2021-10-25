@@ -1,6 +1,5 @@
 #ifndef NEXUS_TELEMETRY_SERVICES_HPP
 #define NEXUS_TELEMETRY_SERVICES_HPP
-#include <Beam/Json/JsonObject.hpp>
 #include <Beam/Queries/QueryResult.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -12,7 +11,8 @@
 namespace Nexus::TelemetryService {
   using AccountTelemetryQueryResult =
     Beam::Queries::QueryResult<SequencedTelemetryEvent>;
-  BEAM_DEFINE_RECORD(RecordUpdate, std::string, name, Beam::JsonObject, data);
+  BEAM_DEFINE_RECORD(RecordUpdate, std::string, name,
+    boost::posix_time::ptime, timestamp, Beam::JsonObject, data);
 
   BEAM_DEFINE_SERVICES(TelemetryServices,
 
