@@ -7,6 +7,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TelemetryService/TelemetryRegistry.hpp"
 #include "Nexus/TelemetryService/TelemetryService.hpp"
 #include "Nexus/TelemetryService/TelemetryServices.hpp"
