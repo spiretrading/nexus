@@ -73,6 +73,8 @@ namespace Nexus::TelemetryService {
 
       TelemetryServlet(const TelemetryServlet&) = delete;
       TelemetryServlet& operator =(const TelemetryServlet&) = delete;
+      void Publish(const TelemetryEvent& event,
+        const Beam::ServiceLocator::DirectoryEntry& account);
       void OnQueryAccountTelemetry(
         RequestToken<QueryAccountTelemetryService>& request,
         const AccountQuery& query);
@@ -116,12 +118,19 @@ namespace Nexus::TelemetryService {
     session.m_sessionId = Beam::ServiceLocator::GenerateSessionId();
     session.m_roles = m_administrationClient->LoadAccountRoles(
       session.GetAccount());
+    auto event = TelemetryEvent(session.m_sessionId,
+      "telemetry_service.accepted", m_timeClient->GetTime(), {});
+    Publish(event, session.GetAccount());
   }
 
   template<typename C, typename T, typename A, typename D>
   void TelemetryServlet<C, T, A, D>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_telemetryEventSubscriptions.RemoveAll(client);
+    auto& session = client.GetSession();
+    auto event = TelemetryEvent(session.m_sessionId,
+      "telemetry_service.closed", m_timeClient->GetTime(), {});
+    Publish(event, session.GetAccount());
   }
 
   template<typename C, typename T, typename A, typename D>
@@ -133,6 +142,23 @@ namespace Nexus::TelemetryService {
     m_tasks.Wait();
     m_dataStore->Close();
     m_openState.Close();
+  }
+
+  template<typename C, typename T, typename A, typename D>
+  void TelemetryServlet<C, T, A, D>::Publish(const TelemetryEvent& event,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    m_registry.Publish(Beam::Queries::IndexedValue(event, account),
+      [&] {
+        return LoadInitialSequences(*m_dataStore, account);
+      },
+      [&] (const auto& event) {
+        m_dataStore->Store(event);
+        m_telemetryEventSubscriptions.Publish(event,
+          [&] (const auto& clients) {
+            Beam::Services::BroadcastRecordMessage<TelemetryEventMessage>(
+              clients, event);
+          });
+      });
   }
 
   template<typename C, typename T, typename A, typename D>
@@ -173,18 +199,7 @@ namespace Nexus::TelemetryService {
         session.m_sessionId, i->name, revisedTimestamp, i->data);
     }
     for(auto i = revisedUpdates.rbegin(); i != revisedUpdates.rend(); ++i) {
-      m_registry.Publish(Beam::Queries::IndexedValue(*i, account),
-        [&] {
-          return LoadInitialSequences(*m_dataStore, account);
-        },
-        [&] (const auto& event) {
-          m_dataStore->Store(event);
-          m_telemetryEventSubscriptions.Publish(event,
-            [&] (const auto& clients) {
-              Beam::Services::BroadcastRecordMessage<TelemetryEventMessage>(
-                clients, event);
-            });
-        });
+      Publish(*i, account);
     }
   }
 }
