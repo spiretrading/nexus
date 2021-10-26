@@ -99,6 +99,8 @@ namespace Spire {
       void OnCurrentChanged(const QModelIndex& current,
         const QModelIndex& previous);
       void OnTaskContextMenu(const QPoint& position);
+      void OnPositionsAdded(const QModelIndex& parent, int first, int last);
+      void OnPositionsRemoved(const QModelIndex& parent, int first, int last);
       void OnPinTaskToggled(const QModelIndex& topLeft,
         const QModelIndex& bottomRight, const QVector<int>& roles);
       void OnUpdateTimer();

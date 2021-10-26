@@ -89,6 +89,10 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_ui->setupUi(this);
   setWindowTitle(QString::fromStdString(m_model->GetName()) + tr(" - Blotter"));
   m_ui->m_openPositionsTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
+  connect(&m_model->GetOpenPositionsModel(), &OpenPositionsModel::rowsInserted,
+    this, &BlotterWindow::OnPositionsAdded);
+  connect(&m_model->GetOpenPositionsModel(), &OpenPositionsModel::rowsRemoved,
+    this, &BlotterWindow::OnPositionsRemoved);
   m_ui->m_profitAndLossTab->SetModel(Ref(*m_userProfile),
     Ref(m_model->GetProfitAndLossModel()));
   m_ui->m_orderLogTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
@@ -188,8 +192,8 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_ui->m_taskTable->installEventFilter(this);
   connect(m_ui->m_taskTable, &QTableView::customContextMenuRequested, this,
     &BlotterWindow::OnTaskContextMenu);
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &BlotterWindow::OnUpdateTimer);
+  connect(
+    &m_updateTimer, &QTimer::timeout, this, &BlotterWindow::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
   m_profitAndLossUpdateConnection =
     m_model->GetProfitAndLossModel().ConnectProfitAndLossUpdateSignal(
@@ -206,6 +210,12 @@ void BlotterWindow::showEvent(QShowEvent* event) {
   auto showData = JsonObject();
   showData["id"] = reinterpret_cast<std::intptr_t>(this);
   showData["name"] = m_model->GetName();
+  showData["account"] = [&] {
+    auto account = JsonObject();
+    account["name"] = m_model->GetExecutingAccount().m_name;
+    account["id"] = static_cast<int>(m_model->GetExecutingAccount().m_id);
+    return account;
+  }();
   m_userProfile->GetTelemetryClient().Record("spire.blotter.show", showData);
   for(auto i = 0; i != m_model->GetTasksModel().rowCount(); ++i) {
     auto& entry = m_model->GetTasksModel().GetEntry(i);
@@ -407,6 +417,36 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
     } else {
       m_model->Unlink(blotter);
     }
+  }
+}
+
+void BlotterWindow::OnPositionsAdded(
+    const QModelIndex& parent, int first, int last) {
+  for(auto i = first; i <= last; ++i) {
+    auto positionData = JsonObject();
+    positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
+    auto& position = m_model->GetOpenPositionsModel().GetOpenPositions()[i];
+    positionData["index"] = i;
+    positionData["security"] = [&] {
+      auto security = JsonObject();
+      security["symbol"] = position.m_key.m_index.GetSymbol();
+      security["market"] = ToString(
+        position.m_key.m_index.GetMarket(), m_userProfile->GetMarketDatabase());
+      return security;
+    }();
+    m_userProfile->GetTelemetryClient().Record(
+      "spire.blotter.position_added", positionData);
+  }
+}
+
+void BlotterWindow::OnPositionsRemoved(
+    const QModelIndex& parent, int first, int last) {
+  for(auto i = first; i <= last; ++i) {
+    auto positionData = JsonObject();
+    positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
+    positionData["index"] = i;
+    m_userProfile->GetTelemetryClient().Record(
+      "spire.blotter.position_removed", positionData);
   }
 }
 
