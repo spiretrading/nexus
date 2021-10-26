@@ -426,13 +426,13 @@ void BlotterWindow::OnPositionsAdded(
   for(auto i = first; i <= last; ++i) {
     auto positionData = JsonObject();
     positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
-    auto& position = positions[i];
     positionData["index"] = i;
     positionData["security"] = [&] {
       auto security = JsonObject();
+      auto& position = positions[i];
       security["symbol"] = position.m_key.m_index.GetSymbol();
-      security["market"] = ToString(
-        position.m_key.m_index.GetMarket(), m_userProfile->GetMarketDatabase());
+      security["market"] = ToString(position.m_key.m_index.GetMarket(),
+        m_userProfile->GetMarketDatabase());
       return security;
     }();
     m_userProfile->GetTelemetryClient().Record(
