@@ -95,6 +95,8 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_ui->m_activityLogTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
   m_proxyModel = new CustomVariantSortFilterProxyModel(Ref(*m_userProfile));
   m_proxyModel->setSourceModel(&m_model->GetTasksModel());
+  connect(&m_model->GetTasksModel(), &BlotterTasksModel::dataChanged, this,
+    &BlotterWindow::OnPinTaskToggled);
   m_ui->m_taskTable->setModel(m_proxyModel);
   m_ui->m_taskTable->setItemDelegate(new BlotterTaskEntryItemDelegate(
     Ref(*m_userProfile)));
@@ -201,17 +203,26 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
 
 void BlotterWindow::showEvent(QShowEvent* event) {
   m_userProfile->GetBlotterSettings().RemoveRecentlyClosedWindow(*this);
-  auto telemetryData = JsonObject();
-  telemetryData["name"] = m_model->GetName();
-  m_userProfile->GetTelemetryClient().Record(
-    "spire.blotter.show", telemetryData);
+  auto showData = JsonObject();
+  showData["id"] = reinterpret_cast<std::intptr_t>(this);
+  showData["name"] = m_model->GetName();
+  m_userProfile->GetTelemetryClient().Record("spire.blotter.show", showData);
+  for(auto i = 0; i != m_model->GetTasksModel().rowCount(); ++i) {
+    auto& entry = m_model->GetTasksModel().GetEntry(i);
+    if(entry.m_sticky) {
+      auto pinData = JsonObject();
+      pinData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
+      pinData["task_id"] = entry.m_task->GetId();
+      pinData["is_pinned"] = entry.m_sticky;
+      m_userProfile->GetTelemetryClient().Record("spire.blotter.pin", pinData);
+    }
+  }
 }
 
 void BlotterWindow::closeEvent(QCloseEvent* event) {
-  auto telemetryData = JsonObject();
-  telemetryData["name"] = m_model->GetName();
-  m_userProfile->GetTelemetryClient().Record(
-    "spire.blotter.close", telemetryData);
+  auto closeData = JsonObject();
+  closeData["id"] = reinterpret_cast<std::intptr_t>(this);
+  m_userProfile->GetTelemetryClient().Record("spire.blotter.close", closeData);
   blotterWindows.erase(m_model);
   if(m_model->IsPersistent()) {
     m_userProfile->GetBlotterSettings().AddRecentlyClosedWindow(*this);
@@ -397,6 +408,20 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
       m_model->Unlink(blotter);
     }
   }
+}
+
+void BlotterWindow::OnPinTaskToggled(const QModelIndex& topLeft,
+    const QModelIndex& bottomRight, const QVector<int>& roles) {
+  if(topLeft.column() != BlotterTasksModel::STICKY_COLUMN ||
+      topLeft != bottomRight) {
+    return;
+  }
+  auto& entry = m_model->GetTasksModel().GetEntry(topLeft.column());
+  auto pinData = JsonObject();
+  pinData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
+  pinData["task_id"] = entry.m_task->GetId();
+  pinData["is_pinned"] = entry.m_sticky;
+  m_userProfile->GetTelemetryClient().Record("spire.blotter.pin", pinData);
 }
 
 void BlotterWindow::OnUpdateTimer() {
