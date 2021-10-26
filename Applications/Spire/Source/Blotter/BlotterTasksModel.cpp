@@ -328,6 +328,9 @@ bool BlotterTasksModel::setData(
     return false;
   }
   auto& entry = m_entries[index.row()];
+  if(entry->m_sticky == value.value<bool>()) {
+    return false;
+  }
   entry->m_sticky = value.value<bool>();
   if(!entry->m_sticky && IsTerminal(entry->m_state)) {
     m_pendingExpiryEntries.insert(entry.get());
