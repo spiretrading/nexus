@@ -422,10 +422,11 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
 
 void BlotterWindow::OnPositionsAdded(
     const QModelIndex& parent, int first, int last) {
+  auto positions = m_model->GetOpenPositionsModel().GetOpenPositions();
   for(auto i = first; i <= last; ++i) {
     auto positionData = JsonObject();
     positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
-    auto& position = m_model->GetOpenPositionsModel().GetOpenPositions()[i];
+    auto& position = positions[i];
     positionData["index"] = i;
     positionData["security"] = [&] {
       auto security = JsonObject();
