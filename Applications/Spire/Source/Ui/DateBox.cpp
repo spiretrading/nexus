@@ -227,7 +227,6 @@ void DateBox::on_reject() {
 }
 
 void DateBox::on_submit() {
-
   if(auto current = get_current();
       m_model->get_minimum() <= current && current <= m_model->get_maximum()) {
     m_submission = m_model->get_current();
