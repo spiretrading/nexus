@@ -65,11 +65,15 @@ namespace Styles {
       bool m_is_modified;
       bool m_is_rejected;
       IntegerBox* m_year_field;
+      boost::signals2::scoped_connection m_year_connection;
       TextBox* m_year_dash;
       IntegerBox* m_month_field;
+      boost::signals2::scoped_connection m_month_connection;
       IntegerBox* m_day_field;
+      boost::signals2::scoped_connection m_day_connection;
       OverlayPanel* m_panel;
 
+      boost::optional<boost::gregorian::date> get_current() const;
       void populate_input_fields();
       void on_current(const boost::optional<boost::gregorian::date>& current);
       void on_field_current();

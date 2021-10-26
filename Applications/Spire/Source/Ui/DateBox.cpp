@@ -1,4 +1,5 @@
 #include "Spire/Ui/DateBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -61,6 +62,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_focus_observer(*this),
       m_model(std::move(model)),
+      m_submission(m_model->get_current()),
       m_is_modified(false),
       m_is_rejected(false) {
   m_current_connection = m_model->connect_current_signal(
@@ -90,9 +92,8 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   layout->setContentsMargins({});
   layout->addWidget(input_box);
   m_year_field = make_integer_field(0, 9999, tr("YYYY"), 4, scale(38, 26));
-  m_year_field->get_model()->connect_current_signal([=] (const auto& current) {
-    on_field_current();
-  });
+  m_year_connection = m_year_field->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_field_current(); });
   m_year_field->connect_reject_signal([=] (const auto& value) {
     on_reject();
   });
@@ -101,9 +102,8 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   m_year_dash = make_dash();
   body_layout->addWidget(m_year_dash);
   m_month_field = make_integer_field(1, 12, tr("MM"), 2, scale(28, 26));
-  m_month_field->get_model()->connect_current_signal([=] (const auto& current) {
-    on_field_current();
-  });
+  m_month_connection = m_month_field->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_field_current(); });
   m_month_field->connect_reject_signal([=] (const auto& value) {
     on_reject();
   });
@@ -111,9 +111,8 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   body_layout->addWidget(m_month_field);
   body_layout->addWidget(make_dash());
   m_day_field = make_integer_field(1, 31, tr("DD"), 2, scale(28, 26));
-  m_day_field->get_model()->connect_current_signal([=] (const auto& current) {
-    on_field_current();
-  });
+  m_day_connection = m_day_field->get_model()->connect_current_signal(
+    [=] (const auto& current) { on_field_current(); });
   m_day_field->connect_reject_signal([=] (const auto& value) {
     on_reject();
   });
@@ -165,7 +164,24 @@ bool DateBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+optional<date> DateBox::get_current() const {
+  auto year = m_year_field->get_model()->get_current();
+  auto month = m_month_field->get_model()->get_current();
+  auto day = m_day_field->get_model()->get_current();
+  if(year && month && day) {
+    try {
+      return date(*year, *month, *day);
+    } catch (const std::exception&) {
+      return {};
+    }
+  }
+  return {};
+}
+
 void DateBox::populate_input_fields() {
+  auto year_blocker = shared_connection_block(m_year_connection);
+  auto month_blocker = shared_connection_block(m_month_connection);
+  auto day_blocker = shared_connection_block(m_day_connection);
   if(auto current = m_model->get_current()) {
     m_year_field->get_model()->set_current(optional<int>(current->year()));
     m_month_field->get_model()->set_current(optional<int>(current->month()));
@@ -187,8 +203,12 @@ void DateBox::on_current(const optional<date>& current) {
 }
 
 void DateBox::on_field_current() {
-  // TODO: set model current, block signal
   m_is_modified = true;
+  auto current = get_current();
+  if(current && current != m_model->get_current()) {
+    auto blocker = shared_connection_block(m_current_connection);
+    m_model->set_current(current);
+  }
 }
 
 void DateBox::on_focus(FocusObserver::State state) {
@@ -207,7 +227,8 @@ void DateBox::on_reject() {
 }
 
 void DateBox::on_submit() {
-  if(auto current = m_model->get_current();
+
+  if(auto current = get_current();
       m_model->get_minimum() <= current && current <= m_model->get_maximum()) {
     m_submission = m_model->get_current();
     m_submit_signal(m_submission);
@@ -215,7 +236,6 @@ void DateBox::on_submit() {
   } else {
     auto submission = m_model->get_current();
     m_model->set_current(m_submission);
-    m_is_rejected = true;
     m_is_modified = false;
     m_reject_signal(submission);
     if(!m_is_rejected) {
