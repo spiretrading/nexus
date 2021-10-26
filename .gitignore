@@ -434,3 +434,6 @@ package-lock.json
 
 # Config files.
 config.yml
+
+# MacOS files.
+**/.DS_Store

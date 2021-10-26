@@ -8,7 +8,9 @@
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDataStoreException.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
+#include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/TraversalExpressionVisitor.hpp"
 
 namespace Nexus::OrderExecutionService {

@@ -137,7 +137,7 @@ namespace Nexus::RiskService::Tests {
     return RiskClientBox(
       std::in_place_type<RiskClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-        std::bind(boost::factory<
+        std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_risk_client", std::ref(m_serverConnection)),
         boost::factory<

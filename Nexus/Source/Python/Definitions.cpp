@@ -415,12 +415,12 @@ void Nexus::Python::ExportMoney(module& module) {
     def(self - self).
     def(self / self).
     def(-self).
-    def(int() * self).
-    def(double() * self).
     def(Quantity() * self).
-    def(self / int()).
+    def(double() * self).
+    def(int() * self).
+    def(self / Quantity()).
     def(self / double()).
-    def(self / Quantity());
+    def(self / int());
   implicitly_convertible<std::int32_t, Money>();
   implicitly_convertible<std::int64_t, Money>();
   implicitly_convertible<double, Money>();
@@ -502,58 +502,56 @@ void Nexus::Python::ExportQuantity(module& module) {
         return static_cast<double>(self);
       }).
     def(self < self).
-    def(self < int()).
-    def(int() < self).
     def(self < double()).
     def(double() < self).
+    def(self < int()).
+    def(int() < self).
     def(self <= self).
-    def(self <= int()).
-    def(int() <= self).
     def(self <= double()).
     def(double() <= self).
+    def(self <= int()).
+    def(int() <= self).
     def(self == self).
-    def(self == int()).
-    def(int() == self).
     def(self == double()).
     def(double() == self).
+    def(self == int()).
+    def(int() == self).
     def(self != self).
-    def(self != int()).
-    def(int() != self).
     def(self != double()).
     def(double() != self).
+    def(self != int()).
+    def(int() != self).
     def(self >= self).
-    def(self >= int()).
-    def(int() >= self).
     def(self >= double()).
     def(double() >= self).
+    def(self >= int()).
+    def(int() >= self).
     def(self > self).
-    def(self > int()).
-    def(int() > self).
     def(self > double()).
     def(double() > self).
+    def(self > int()).
+    def(int() > self).
     def(self + self).
-    def(self + int()).
-    def(int() + self).
     def(self + double()).
     def(double() + self).
+    def(self + int()).
+    def(int() + self).
     def(self - self).
-    def(self - int()).
-    def(int() - self).
     def(self - double()).
     def(double() - self).
+    def(self - int()).
+    def(int() - self).
     def(self * self).
-    def(self * int()).
-    def(int() * self).
     def(self * double()).
     def(double() * self).
+    def(self * int()).
+    def(int() * self).
     def(self / self).
-    def(self / int()).
-    def(int() / self).
     def(self / double()).
     def(double() / self).
-    def(-self).
-    def(int() * self).
-    def(double() * self);
+    def(self / int()).
+    def(int() / self).
+    def(-self);
   implicitly_convertible<std::int32_t, Quantity>();
   implicitly_convertible<std::int64_t, Quantity>();
   implicitly_convertible<double, Quantity>();

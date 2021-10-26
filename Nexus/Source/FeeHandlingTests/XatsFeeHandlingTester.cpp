@@ -31,6 +31,6 @@ TEST_SUITE("XatsFeeHandling") {
     auto expectedFee = Money::ZERO;
     TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1, false,
-      std::placeholders::_2), expectedFee);
+        std::placeholders::_2), expectedFee);
   }
 }

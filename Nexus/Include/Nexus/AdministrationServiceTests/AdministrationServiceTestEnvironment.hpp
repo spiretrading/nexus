@@ -188,7 +188,7 @@ namespace Nexus::AdministrationService::Tests {
     return AdministrationClientBox(std::in_place_type<
       AdministrationClient<ServiceProtocolClientBuilder>>,
         ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-          std::bind(boost::factory<std::unique_ptr<
+          std::bind_front(boost::factory<std::unique_ptr<
             ServiceProtocolClientBuilder::Channel>>(),
             "test_administration_client", std::ref(m_serverConnection)),
           boost::factory<

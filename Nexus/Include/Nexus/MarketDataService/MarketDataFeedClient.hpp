@@ -254,8 +254,7 @@ namespace Nexus::MarketDataService {
       Beam::ServiceLocator::Authenticate(authenticator, m_client);
       m_samplingTimer->GetPublisher().Monitor(
         m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind(&MarketDataFeedClient::OnTimerExpired, this,
-        std::placeholders::_1)));
+        std::bind_front(&MarketDataFeedClient::OnTimerExpired, this)));
       m_samplingTimer->Start();
     } catch(const std::exception&) {
       Close();

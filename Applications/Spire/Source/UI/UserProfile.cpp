@@ -12,6 +12,7 @@ using namespace boost;
 using namespace boost::local_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -25,7 +26,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
-    ServiceClientsBox serviceClients)
+    ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
@@ -36,6 +37,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
       m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
       m_serviceClients(std::move(serviceClients)),
+      m_telemetryClient(std::move(telemetryClient)),
       m_profilePath(path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
@@ -90,6 +92,10 @@ const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
 
 ServiceClientsBox& UserProfile::GetServiceClients() const {
   return m_serviceClients;
+}
+
+TelemetryClientBox& UserProfile::GetTelemetryClient() const {
+  return m_telemetryClient;
 }
 
 void UserProfile::CreateProfilePath() const {

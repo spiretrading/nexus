@@ -260,114 +260,84 @@ namespace Nexus::AdministrationService {
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterAdministrationServices(Store(slots));
     RegisterAdministrationMessages(Store(slots));
-    LoadAccountsByRolesService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountsByRoles, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadAdministratorsRootEntryService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAdministratorsRootEntry, this,
-      std::placeholders::_1));
-    LoadServicesRootEntryService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadServicesRootEntry, this,
-      std::placeholders::_1));
-    LoadTradingGroupsRootEntryService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadTradingGroupsRootEntry, this,
-      std::placeholders::_1));
-    CheckAdministratorService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnCheckAdministratorRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadAccountRolesService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountRolesRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadSupervisedAccountRolesService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadSupervisedAccountRolesRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    LoadParentTradingGroupService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadParentTradingGroupRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadAccountIdentityService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountIdentityRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    StoreAccountIdentityService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnStoreAccountIdentityRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    LoadAccountsByRolesService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadAccountsByRoles, this));
+    LoadAdministratorsRootEntryService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadAdministratorsRootEntry, this));
+    LoadServicesRootEntryService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadServicesRootEntry, this));
+    LoadTradingGroupsRootEntryService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadTradingGroupsRootEntry, this));
+    CheckAdministratorService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnCheckAdministratorRequest, this));
+    LoadAccountRolesService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadAccountRolesRequest, this));
+    LoadSupervisedAccountRolesService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadSupervisedAccountRolesRequest, this));
+    LoadParentTradingGroupService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadParentTradingGroupRequest, this));
+    LoadAccountIdentityService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadAccountIdentityRequest, this));
+    StoreAccountIdentityService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnStoreAccountIdentityRequest, this));
     LoadTradingGroupService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnLoadTradingGroupRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadAdministratorsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAdministratorsRequest, this,
-      std::placeholders::_1));
-    LoadServicesService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadServicesRequest, this,
-      std::placeholders::_1));
-    LoadEntitlementsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadEntitlementsRequest, this,
-      std::placeholders::_1));
-    LoadAccountEntitlementsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountEntitlementsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    StoreEntitlementsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnStoreEntitlementsRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    MonitorRiskParametersService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnMonitorRiskParametersRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    StoreRiskParametersService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnStoreRiskParametersRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    MonitorRiskStateService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnMonitorRiskStateRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    StoreRiskStateService::AddRequestSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnStoreRiskStateRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    LoadManagedTradingGroupsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadManagedTradingGroupsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadAccountModificationRequestService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountModificationRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadAccountModificationRequestIdsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountModificationRequestIds, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-      std::placeholders::_4));
-    LoadManagedAccountModificationRequestIdsService::AddSlot(Store(slots),
-      std::bind(
-      &AdministrationServlet::OnLoadManagedAccountModificationRequestIds, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-      std::placeholders::_4));
-    LoadEntitlementModificationService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnLoadEntitlementModification, this,
-      std::placeholders::_1, std::placeholders::_2));
-    SubmitEntitlementModificationRequestService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnSubmitEntitlementModificationRequest,
-      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-      std::placeholders::_4));
+      std::bind_front(&AdministrationServlet::OnLoadTradingGroupRequest, this));
+    LoadAdministratorsService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadAdministratorsRequest, this));
+    LoadServicesService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadServicesRequest, this));
+    LoadEntitlementsService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadEntitlementsRequest, this));
+    LoadAccountEntitlementsService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadAccountEntitlementsRequest, this));
+    StoreEntitlementsService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnStoreEntitlementsRequest, this));
+    MonitorRiskParametersService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnMonitorRiskParametersRequest, this));
+    StoreRiskParametersService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnStoreRiskParametersRequest, this));
+    MonitorRiskStateService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnMonitorRiskStateRequest, this));
+    StoreRiskStateService::AddRequestSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnStoreRiskStateRequest, this));
+    LoadManagedTradingGroupsService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadManagedTradingGroupsRequest, this));
+    LoadAccountModificationRequestService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnLoadAccountModificationRequest, this));
+    LoadAccountModificationRequestIdsService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnLoadAccountModificationRequestIds, this));
+    LoadManagedAccountModificationRequestIdsService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnLoadManagedAccountModificationRequestIds,
+          this));
+    LoadEntitlementModificationService::AddSlot(Store(slots), std::bind_front(
+      &AdministrationServlet::OnLoadEntitlementModification, this));
+    SubmitEntitlementModificationRequestService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnSubmitEntitlementModificationRequest, this));
     LoadRiskModificationService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnLoadRiskModification, this,
-      std::placeholders::_1, std::placeholders::_2));
-    SubmitRiskModificationRequestService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnSubmitRiskModificationRequest,
-      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-      std::placeholders::_4));
-    LoadAccountModificationRequestStatusService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnLoadAccountModificationRequestStatus,
-      this, std::placeholders::_1, std::placeholders::_2));
-    ApproveAccountModificationRequestService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnApproveAccountModificationRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    RejectAccountModificationRequestService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnRejectAccountModificationRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    LoadMessageService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadMessage, this, std::placeholders::_1,
-      std::placeholders::_2));
-    LoadMessageIdsService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadMessageIds, this, std::placeholders::_1,
-      std::placeholders::_2));
-    SendAccountModificationRequestMessageService::AddSlot(Store(slots),
-      std::bind(&AdministrationServlet::OnSendAccountModificationRequestMessage,
-      this, std::placeholders::_1, std::placeholders::_2,
-      std::placeholders::_3));
+      std::bind_front(&AdministrationServlet::OnLoadRiskModification, this));
+    SubmitRiskModificationRequestService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnSubmitRiskModificationRequest, this));
+    LoadAccountModificationRequestStatusService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnLoadAccountModificationRequestStatus, this));
+    ApproveAccountModificationRequestService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnApproveAccountModificationRequest, this));
+    RejectAccountModificationRequestService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnRejectAccountModificationRequest, this));
+    LoadMessageService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadMessage, this));
+    LoadMessageIdsService::AddSlot(Store(slots),
+      std::bind_front(&AdministrationServlet::OnLoadMessageIds, this));
+    SendAccountModificationRequestMessageService::AddSlot(
+      Store(slots), std::bind_front(
+        &AdministrationServlet::OnSendAccountModificationRequestMessage, this));
   }
 
   template<typename C, typename S, typename D>

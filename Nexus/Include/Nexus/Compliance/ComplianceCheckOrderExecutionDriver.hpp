@@ -131,9 +131,9 @@ namespace Nexus::Compliance {
     }
     auto& driverOrder = m_orderExecutionDriver->Submit(orderInfo);
     driverOrder.GetPublisher().Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind(
-        &ComplianceCheckOrderExecutionDriver::OnExecutionReport, this,
-        std::ref(order), std::placeholders::_1)));
+      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
+        &ComplianceCheckOrderExecutionDriver::OnExecutionReport,
+        this, std::ref(order))));
     return order;
   }
 

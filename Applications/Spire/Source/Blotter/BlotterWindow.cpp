@@ -201,9 +201,17 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
 
 void BlotterWindow::showEvent(QShowEvent* event) {
   m_userProfile->GetBlotterSettings().RemoveRecentlyClosedWindow(*this);
+  auto telemetryData = JsonObject();
+  telemetryData["name"] = m_model->GetName();
+  m_userProfile->GetTelemetryClient().Record(
+    "spire.blotter.show", telemetryData);
 }
 
 void BlotterWindow::closeEvent(QCloseEvent* event) {
+  auto telemetryData = JsonObject();
+  telemetryData["name"] = m_model->GetName();
+  m_userProfile->GetTelemetryClient().Record(
+    "spire.blotter.close", telemetryData);
   blotterWindows.erase(m_model);
   if(m_model->IsPersistent()) {
     m_userProfile->GetBlotterSettings().AddRecentlyClosedWindow(*this);

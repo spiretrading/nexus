@@ -20,4 +20,5 @@ PYBIND11_MODULE(_nexus, module) {
   ExportServiceClients(module);
   ExportBacktester(module);
   ExportTechnicalAnalysis(module);
+  ExportTelemetryService(module);
 }

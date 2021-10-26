@@ -153,9 +153,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_markets(std::move(markets)),
       m_destinations(std::move(destinations)),
       m_accountsPipe(std::move(accounts),
-        m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(std::bind(
-        &ConsolidatedRiskController::OnAccount, this,
-        std::placeholders::_1))) {}
+        m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(
+          std::bind_front(&ConsolidatedRiskController::OnAccount, this))) {}
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename A, typename M, typename O, typename R, typename T,
@@ -194,12 +193,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return;
     }
     controller->GetRiskStatePublisher().Monitor(m_tasks.GetSlot<RiskState>(
-      std::bind(&ConsolidatedRiskController::OnRiskState, this, account,
-      std::placeholders::_1)));
+      std::bind_front(
+        &ConsolidatedRiskController::OnRiskState, this, account)));
     controller->GetPortfolioPublisher().Monitor(
-      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(
-      std::bind(&ConsolidatedRiskController::OnPortfolioEntry, this, account,
-      std::placeholders::_1)));
+      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(std::bind_front(
+        &ConsolidatedRiskController::OnPortfolioEntry, this, account)));
     m_controllers.push_back(std::move(controller));
   }
 

@@ -378,18 +378,15 @@ namespace Nexus::AdministrationService {
   AdministrationClient<B>::AdministrationClient(BF&& clientBuilder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder),
-              std::bind(&AdministrationClient::OnReconnect, this,
-              std::placeholders::_1)) {
+              std::bind_front(&AdministrationClient::OnReconnect, this)) {
     RegisterAdministrationServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterAdministrationMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<RiskParametersMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&AdministrationClient::OnRiskParametersMessage, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+      std::bind_front(&AdministrationClient::OnRiskParametersMessage, this));
     Beam::Services::AddMessageSlot<RiskStateMessage>(
       Beam::Store(m_clientHandler.GetSlots()),
-      std::bind(&AdministrationClient::OnRiskStateMessage, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+      std::bind_front(&AdministrationClient::OnRiskStateMessage, this));
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(

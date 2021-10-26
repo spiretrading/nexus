@@ -115,6 +115,7 @@ mkacc charting_service $spire_password
 mkacc compliance_service $spire_password
 mkacc order_execution_service $spire_password
 mkacc risk_service $spire_password
+mkacc telemetry_service $spire_password
 mkacc administration_service $spire_password
 mkacc definitions_service $spire_password
 mkacc registry_service $spire_password
@@ -126,11 +127,13 @@ chmod market_data_relay_service @0 1
 chmod market_data_service @0 1
 chmod order_execution_service @0 7
 chmod risk_service @0 7
+chmod telemetry_service @0 7
 chmod web_portal_service @0 7
 cd @0
 cd administrators
 associate administration_service
 associate risk_service
+associate telemetry_service
 associate order_execution_service
 associate compliance_service
 associate web_portal_service

@@ -410,8 +410,9 @@ namespace Details {
     orderEntry->m_driverOrder = driverOrder;
     orderEntry->m_driverOrder->GetPublisher().Monitor(
       m_executionReportTasks.GetSlot<OrderExecutionService::ExecutionReport>(
-        std::bind(&InternalMatchingOrderExecutionDriver::OnExecutionReport,
-          this, std::weak_ptr<OrderEntry>(orderEntry), std::placeholders::_1)));
+        std::bind_front(
+          &InternalMatchingOrderExecutionDriver::OnExecutionReport, this,
+          std::weak_ptr<OrderEntry>(orderEntry))));
   }
 
   template<typename B, typename M, typename T, typename U, typename D>

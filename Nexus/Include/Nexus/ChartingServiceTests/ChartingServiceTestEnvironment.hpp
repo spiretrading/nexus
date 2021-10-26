@@ -93,7 +93,7 @@ namespace Nexus::ChartingService::Tests {
     return ChartingClientBox(std::in_place_type<
       ChartingClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-        std::bind(boost::factory<
+        std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_charting_client", std::ref(m_serverConnection)),
         boost::factory<

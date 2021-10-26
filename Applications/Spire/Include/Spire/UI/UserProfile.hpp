@@ -14,6 +14,7 @@
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
+#include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -52,6 +53,7 @@ namespace Spire {
         \param entitlementDatabase Stores the database of market data
                entitlements.
         \param serviceClients The set of clients connected to Spire services.
+        \param telemetryClient The client used to submit telemetry data.
       */
       UserProfile(const std::string& username, bool isAdministrator,
         bool isManager, const Nexus::CountryDatabase& countryDatabase,
@@ -61,7 +63,8 @@ namespace Spire {
         const Nexus::MarketDatabase& marketDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
         const Nexus::MarketDataService::EntitlementDatabase&
-          entitlementDatabase, Nexus::ServiceClientsBox serviceClients);
+          entitlementDatabase, Nexus::ServiceClientsBox serviceClients,
+        Nexus::TelemetryService::TelemetryClientBox telemetryClient);
 
       ~UserProfile();
 
@@ -99,6 +102,9 @@ namespace Spire {
 
       //! Returns the set of clients connected to Spire services.
       Nexus::ServiceClientsBox& GetServiceClients() const;
+
+      //! Returns the telemetry client.
+      Nexus::TelemetryService::TelemetryClientBox& GetTelemetryClient() const;
 
       //! Creates the profile path.
       void CreateProfilePath() const;
@@ -250,6 +256,7 @@ namespace Spire {
       Nexus::DestinationDatabase m_destinationDatabase;
       Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
       mutable Nexus::ServiceClientsBox m_serviceClients;
+      mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;

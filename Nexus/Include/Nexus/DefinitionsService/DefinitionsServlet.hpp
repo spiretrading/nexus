@@ -105,32 +105,26 @@ namespace Nexus::DefinitionsService {
   void DefinitionsServlet<C>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterDefinitionsServices(Store(slots));
-    LoadMinimumSpireClientVersionService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadMinimumSpireClientVersion, this,
-      std::placeholders::_1));
-    LoadOrganizationNameService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadOrganizationName, this,
-      std::placeholders::_1));
-    LoadCountryDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadCountryDatabase, this, std::placeholders::_1));
-    LoadTimeZoneDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadTimeZoneDatabase, this,
-      std::placeholders::_1));
-    LoadCurrencyDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadCurrencyDatabase, this,
-      std::placeholders::_1));
-    LoadDestinationDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadDestinationDatabase, this,
-      std::placeholders::_1));
-    LoadMarketDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadMarketDatabase, this, std::placeholders::_1));
-    LoadExchangeRatesService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadExchangeRates, this, std::placeholders::_1));
-    LoadComplianceRuleSchemasService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadComplianceRuleSchemas, this,
-      std::placeholders::_1));
-    LoadTradingScheduleService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadTradingSchedule, this, std::placeholders::_1));
+    LoadMinimumSpireClientVersionService::AddSlot(Store(slots), std::bind_front(
+      &DefinitionsServlet::OnLoadMinimumSpireClientVersion, this));
+    LoadOrganizationNameService::AddSlot(Store(slots), std::bind_front(
+      &DefinitionsServlet::OnLoadOrganizationName, this));
+    LoadCountryDatabaseService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadCountryDatabase, this));
+    LoadTimeZoneDatabaseService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadTimeZoneDatabase, this));
+    LoadCurrencyDatabaseService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadCurrencyDatabase, this));
+    LoadDestinationDatabaseService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadDestinationDatabase, this));
+    LoadMarketDatabaseService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadMarketDatabase, this));
+    LoadExchangeRatesService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadExchangeRates, this));
+    LoadComplianceRuleSchemasService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadComplianceRuleSchemas, this));
+    LoadTradingScheduleService::AddSlot(Store(slots),
+      std::bind_front(&DefinitionsServlet::OnLoadTradingSchedule, this));
   }
 
   template<typename C>

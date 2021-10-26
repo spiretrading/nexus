@@ -1,12 +1,15 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize } from '../../..';
+import { DisplaySize } from '../display_size';
 
 interface Properties {
 
   /** The size of the element to display. */
   displaySize: DisplaySize;
+
+  /** Determines if the role icon should be even smaller. */
+  isExtraSmall?: boolean;
 
   /** The role the icon represents. */
   role: Nexus.AccountRoles.Role;
@@ -34,7 +37,6 @@ interface State {
 /** Displays a panel of icons highlighting an account's roles. */
 export class RoleIcon extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    readonly: false,
     onClick: () => {},
     onTouch: () => {}
   };
@@ -60,8 +62,17 @@ export class RoleIcon extends React.Component<Properties, State> {
         return RoleIcon.STYLE.clickable;
       }
     })();
+    const iconSize = (() => {
+      if(this.props.isExtraSmall) {
+        return RoleIcon.IMAGE_SIZE_EXTRA_SMALL;
+      } else {
+        return RoleIcon.IMAGE_SIZE;
+      }
+    })();
     const iconWrapper = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.isExtraSmall) {
+        return RoleIcon.STYLE.iconWrapperExtraSmall;
+      } else if(this.props.displaySize === DisplaySize.SMALL) {
         return RoleIcon.STYLE.iconWrapperSmall;
       } else {
         return RoleIcon.STYLE.iconWrapperLarge;
@@ -75,8 +86,8 @@ export class RoleIcon extends React.Component<Properties, State> {
           onMouseLeave={this.hideToolTipMouse}>
         <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
           style={iconStyle}
-          width={RoleIcon.IMAGE_SIZE}
-          height={RoleIcon.IMAGE_SIZE}/>
+          width={iconSize}
+          height={iconSize}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
           <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLTIP}
               in={this.props.isTouchTooltipShown}>
@@ -182,6 +193,16 @@ export class RoleIcon extends React.Component<Properties, State> {
       padding: '7px',
       outline: 0
     } as React.CSSProperties,
+    iconWrapperExtraSmall: {
+      boxSizing: 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '14px',
+      width: '14px',
+      padding: 0,
+      outline: 0
+    } as React.CSSProperties,
     clickable: {
       cursor: 'pointer'
     } as React.CSSProperties,
@@ -229,6 +250,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     exited: 1
   };
   private static readonly IMAGE_SIZE = '20px';
+  private static readonly IMAGE_SIZE_EXTRA_SMALL = '14px';
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
   private static readonly MANAGER_TOOLTIP_TEXT = 'Manager';
   private static readonly ADMINISTRATOR_TOOLTIP_TEXT = 'Admin';

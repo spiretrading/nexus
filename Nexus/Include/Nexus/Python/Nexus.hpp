@@ -14,6 +14,7 @@
 #include "Nexus/Python/RiskService.hpp"
 #include "Nexus/Python/ServiceClients.hpp"
 #include "Nexus/Python/TechnicalAnalysis.hpp"
+#include "Nexus/Python/TelemetryService.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
 #include "Nexus/Python/ToPythonComplianceClient.hpp"
@@ -22,5 +23,6 @@
 #include "Nexus/Python/ToPythonMarketDataFeedClient.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
 #include "Nexus/Python/ToPythonRiskClient.hpp"
+#include "Nexus/Python/ToPythonTelemetryClient.hpp"
 
 #endif

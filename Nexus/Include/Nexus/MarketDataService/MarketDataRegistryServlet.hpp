@@ -261,48 +261,35 @@ namespace Nexus::MarketDataService {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(slots));
     RegisterMarketDataRegistryMessages(Beam::Store(slots));
-    QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQueryOrderImbalances, this,
-      std::placeholders::_1, std::placeholders::_2));
-    Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
-      std::bind(&MarketDataRegistryServlet::OnEndOrderImbalanceQuery, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    QueryBboQuotesService::AddRequestSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQueryBboQuotes, this,
-      std::placeholders::_1, std::placeholders::_2));
+    QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind_front(
+      &MarketDataRegistryServlet::OnQueryOrderImbalances, this));
+    Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(
+      Store(slots), std::bind_front(
+        &MarketDataRegistryServlet::OnEndOrderImbalanceQuery, this));
+    QueryBboQuotesService::AddRequestSlot(Store(slots),
+      std::bind_front(&MarketDataRegistryServlet::OnQueryBboQuotes, this));
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
-      std::bind(&MarketDataRegistryServlet::OnEndBboQuoteQuery, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    QueryBookQuotesService::AddRequestSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQueryBookQuotes, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRegistryServlet::OnEndBboQuoteQuery, this));
+    QueryBookQuotesService::AddRequestSlot(Store(slots),
+      std::bind_front(&MarketDataRegistryServlet::OnQueryBookQuotes, this));
     Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
-      std::bind(&MarketDataRegistryServlet::OnEndBookQuoteQuery, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    QueryMarketQuotesService::AddRequestSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQueryMarketQuotes, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRegistryServlet::OnEndBookQuoteQuery, this));
+    QueryMarketQuotesService::AddRequestSlot(Store(slots),
+      std::bind_front(&MarketDataRegistryServlet::OnQueryMarketQuotes, this));
     Beam::Services::AddMessageSlot<EndMarketQuoteQueryMessage>(Store(slots),
-      std::bind(&MarketDataRegistryServlet::OnEndMarketQuoteQuery, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    QueryTimeAndSalesService::AddRequestSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQueryTimeAndSales, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRegistryServlet::OnEndMarketQuoteQuery, this));
+    QueryTimeAndSalesService::AddRequestSlot(Store(slots),
+      std::bind_front(&MarketDataRegistryServlet::OnQueryTimeAndSales, this));
     Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
-      std::bind(&MarketDataRegistryServlet::OnEndTimeAndSaleQuery, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnLoadSecuritySnapshot, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this,
-      std::placeholders::_1, std::placeholders::_2));
-    QuerySecurityInfoService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQuerySecurityInfo, this,
-      std::placeholders::_1, std::placeholders::_2));
-    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnLoadSecurityInfoFromPrefix, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&MarketDataRegistryServlet::OnEndTimeAndSaleQuery, this));
+    LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind_front(
+      &MarketDataRegistryServlet::OnLoadSecuritySnapshot, this));
+    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind_front(
+      &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this));
+    QuerySecurityInfoService::AddSlot(Store(slots),
+      std::bind_front(&MarketDataRegistryServlet::OnQuerySecurityInfo, this));
+    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind_front(
+      &MarketDataRegistryServlet::OnLoadSecurityInfoFromPrefix, this));
   }
 
   template<typename C, typename R, typename D, typename A>

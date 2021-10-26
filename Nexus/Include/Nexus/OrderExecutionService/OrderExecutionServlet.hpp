@@ -195,24 +195,20 @@ namespace Nexus::OrderExecutionService {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(slots));
     RegisterOrderExecutionMessages(Beam::Store(slots));
-    LoadOrderByIdService::AddRequestSlot(Beam::Store(slots), std::bind(
-      &OrderExecutionServlet::OnLoadOrderByIdRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    QueryOrderSubmissionsService::AddRequestSlot(Beam::Store(slots), std::bind(
-      &OrderExecutionServlet::OnQueryOrderSubmissionsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    QueryExecutionReportsService::AddRequestSlot(Beam::Store(slots), std::bind(
-      &OrderExecutionServlet::OnQueryExecutionReportsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    NewOrderSingleService::AddRequestSlot(Beam::Store(slots), std::bind(
-      &OrderExecutionServlet::OnNewOrderSingleRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
-    UpdateOrderService::AddSlot(Beam::Store(slots), std::bind(
-      &OrderExecutionServlet::OnUpdateOrderRequest, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    LoadOrderByIdService::AddRequestSlot(Beam::Store(slots),
+      std::bind_front(&OrderExecutionServlet::OnLoadOrderByIdRequest, this));
+    QueryOrderSubmissionsService::AddRequestSlot(Beam::Store(slots),
+      std::bind_front(&OrderExecutionServlet::OnQueryOrderSubmissionsRequest,
+        this));
+    QueryExecutionReportsService::AddRequestSlot(Beam::Store(slots),
+      std::bind_front(&OrderExecutionServlet::OnQueryExecutionReportsRequest,
+        this));
+    NewOrderSingleService::AddRequestSlot(Beam::Store(slots),
+      std::bind_front(&OrderExecutionServlet::OnNewOrderSingleRequest, this));
+    UpdateOrderService::AddSlot(Beam::Store(slots),
+      std::bind_front(&OrderExecutionServlet::OnUpdateOrderRequest, this));
     Beam::Services::AddMessageSlot<CancelOrderMessage>(Beam::Store(slots),
-      std::bind(&OrderExecutionServlet::OnCancelOrder, this,
-        std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&OrderExecutionServlet::OnCancelOrder, this));
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
@@ -315,7 +311,8 @@ namespace Nexus::OrderExecutionService {
             existingExecutionReports->begin() +
             orderRecord->m_executionReports.size());
           for(auto& executionReport : *existingExecutionReports) {
-            m_tasks.Push(std::bind(&OrderExecutionServlet::OnExecutionReport,
+            m_tasks.Push(std::bind_front(
+              &OrderExecutionServlet::OnExecutionReport,
               this, executionReport, order->GetInfo().m_fields.m_account,
               std::ref(*syncShortingModel)));
           }

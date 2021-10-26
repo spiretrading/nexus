@@ -119,25 +119,20 @@ namespace Nexus::Compliance {
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterComplianceServices(Store(slots));
     RegisterComplianceMessages(Store(slots));
-    LoadDirectoryEntryComplianceRuleEntryService::AddSlot(Store(slots),
-      std::bind(&ComplianceServlet::OnLoadDirectoryEntryComplianceRuleEntry,
-      this, std::placeholders::_1, std::placeholders::_2));
+    LoadDirectoryEntryComplianceRuleEntryService::AddSlot(
+      Store(slots), std::bind_front(
+        &ComplianceServlet::OnLoadDirectoryEntryComplianceRuleEntry, this));
     MonitorComplianceRuleEntryService::AddSlot(Store(slots),
-      std::bind(&ComplianceServlet::OnMonitorComplianceRuleEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
-    AddComplianceRuleEntryService::AddSlot(Store(slots), std::bind(
-      &ComplianceServlet::OnAddComplianceRuleEntry, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-    UpdateComplianceRuleEntryService::AddSlot(Store(slots), std::bind(
-      &ComplianceServlet::OnUpdateComplianceRuleEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
-    DeleteComplianceRuleEntryService::AddSlot(Store(slots), std::bind(
-      &ComplianceServlet::OnDeleteComplianceRuleEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::bind_front(&ComplianceServlet::OnMonitorComplianceRuleEntry, this));
+    AddComplianceRuleEntryService::AddSlot(Store(slots),
+      std::bind_front(&ComplianceServlet::OnAddComplianceRuleEntry, this));
+    UpdateComplianceRuleEntryService::AddSlot(Store(slots),
+      std::bind_front(&ComplianceServlet::OnUpdateComplianceRuleEntry, this));
+    DeleteComplianceRuleEntryService::AddSlot(Store(slots),
+      std::bind_front(&ComplianceServlet::OnDeleteComplianceRuleEntry, this));
     Beam::Services::AddMessageSlot<ReportComplianceRuleViolationMessage>(
-      Beam::Store(slots), std::bind(
-      &ComplianceServlet::OnReportComplianceRuleViolation, this,
-      std::placeholders::_1, std::placeholders::_2));
+      Beam::Store(slots), std::bind_front(
+        &ComplianceServlet::OnReportComplianceRuleViolation, this));
   }
 
   template<typename C, typename S, typename A, typename D, typename T>

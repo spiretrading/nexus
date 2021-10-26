@@ -63,7 +63,7 @@ namespace Nexus::Compliance {
         std::move(parameters));
       return std::make_unique<PerAccountComplianceRule>(perAccountSchema,
         std::bind(&MakeComplianceRule<MarketDataClient, DefinitionsClient,
-        TimeClient>, std::placeholders::_1, std::ref(marketDataClient),
+          TimeClient>, std::placeholders::_1, std::ref(marketDataClient),
         std::ref(definitionsClient), std::ref(timeClient)));
     }
     return nullptr;

@@ -97,10 +97,9 @@ namespace Nexus::OrderExecutionService {
     }
     auto query = Beam::Queries::MakeCurrentQuery(security);
     marketDataClient.QueryBboQuotes(query, m_tasks.GetSlot<BboQuote>(
-      std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
+      std::bind_front(&SecurityOrderSimulator::OnBbo, this)));
     marketDataClient.QueryTimeAndSales(query, m_tasks.GetSlot<TimeAndSale>(
-      std::bind(&SecurityOrderSimulator::OnTimeAndSale, this,
-        std::placeholders::_1)));
+      std::bind_front(&SecurityOrderSimulator::OnTimeAndSale, this)));
   }
 
   template<typename C>
