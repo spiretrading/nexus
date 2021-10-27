@@ -1,9 +1,9 @@
 #ifndef SPIRE_CHECK_BOX_HPP
 #define SPIRE_CHECK_BOX_HPP
 #include <QWidget>
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
