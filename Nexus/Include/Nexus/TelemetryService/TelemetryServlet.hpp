@@ -116,8 +116,8 @@ namespace Nexus::TelemetryService {
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
     session.m_sessionId = Beam::ServiceLocator::GenerateSessionId();
-    session.m_roles = m_administrationClient->LoadAccountRoles(
-      session.GetAccount());
+    session.m_roles =
+      m_administrationClient->LoadAccountRoles(session.GetAccount());
     auto event = TelemetryEvent(session.m_sessionId,
       "telemetry_service.accepted", m_timeClient->GetTime(), {});
     Publish(event, session.GetAccount());

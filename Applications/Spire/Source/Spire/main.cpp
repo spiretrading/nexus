@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
     serviceClients->GetAdministrationClient().LoadEntitlements(),
     *serviceClients, *telemetryClient};
   auto loginData = JsonObject();
-  loginData["version"] = SPIRE_VERSION;
+  loginData["version"] = std::string(SPIRE_VERSION);
   userProfile.GetTelemetryClient().Record("spire.login", loginData);
   try {
     userProfile.CreateProfilePath();
