@@ -105,6 +105,9 @@ void Nexus::Python::ExportTelemetryService(module& module) {
   auto submodule = module.def_submodule("telemetry_service");
   telemetryClientBox = std::make_unique<class_<TelemetryClientBox>>(
     ExportTelemetryClient<TelemetryClientBox>(submodule, "TelemetryClient"));
+  telemetryDataStoreBox = std::make_unique<class_<TelemetryDataStoreBox>>(
+    ExportTelemetryDataStore<TelemetryDataStoreBox>(
+      submodule, "TelemetryDataStore"));
   ExportTelemetryClient<ToPythonTelemetryClient<TelemetryClientBox>>(
     submodule, "TelemetryClientBox");
   ExportApplicationTelemetryClient(submodule);
