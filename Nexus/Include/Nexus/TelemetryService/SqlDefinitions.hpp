@@ -1,6 +1,7 @@
 #ifndef NEXUS_TELEMETRY_SERVICE_SQL_DEFINITIONS_HPP
 #define NEXUS_TELEMETRY_SERVICE_SQL_DEFINITIONS_HPP
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Json/JsonParser.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <boost/throw_exception.hpp>
