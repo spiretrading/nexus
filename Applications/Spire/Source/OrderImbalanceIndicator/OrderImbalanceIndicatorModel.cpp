@@ -40,27 +40,23 @@ void OrderImbalanceIndicatorModel::SetMarketFilter(MarketCode market,
   if(isCurrentlyFiltered == filter) {
     return;
   }
+  beginResetModel();
   if(filter) {
-    beginResetModel();
     m_properties.m_filteredMarkets.insert(market);
-    m_displayedOrderImbalances.clear();
-    for(const MarketOrderImbalance& orderImbalance : m_orderImbalances) {
-      if(IsDisplayed(orderImbalance)) {
-        m_displayedOrderImbalances.push_back(orderImbalance);
-      }
-    }
-    endResetModel();
   } else {
-    beginResetModel();
     m_properties.m_filteredMarkets.erase(market);
-    m_displayedOrderImbalances.clear();
-    for(const MarketOrderImbalance& orderImbalance : m_orderImbalances) {
-      if(IsDisplayed(orderImbalance)) {
-        m_displayedOrderImbalances.push_back(orderImbalance);
-      }
-    }
-    endResetModel();
   }
+  m_displayedIndicies.clear();
+  m_displayedOrderImbalances.clear();
+  for(const MarketOrderImbalance& orderImbalance : m_orderImbalances) {
+    if(IsDisplayed(orderImbalance)) {
+      m_displayedIndicies.insert(std::pair(
+        std::pair(orderImbalance.GetIndex(), orderImbalance->m_security),
+        static_cast<int>(m_displayedOrderImbalances.size())));
+      m_displayedOrderImbalances.push_back(orderImbalance);
+    }
+  }
+  endResetModel();
 }
 
 void OrderImbalanceIndicatorModel::UpdateTimeRange(
@@ -142,6 +138,8 @@ void OrderImbalanceIndicatorModel::Reset() {
   beginResetModel();
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
+  m_displayedIndicies.clear();
+  m_imbalanceIndicies.clear();
   m_displayedOrderImbalances.clear();
   m_orderImbalances.clear();
   endResetModel();
@@ -168,13 +166,38 @@ void OrderImbalanceIndicatorModel::InitializePublishers() {
 void OrderImbalanceIndicatorModel::OnOrderImbalance(MarketCode market,
     const OrderImbalance& orderImbalance) {
   MarketOrderImbalance marketOrderImbalance(orderImbalance, market);
-  m_orderImbalances.push_back(marketOrderImbalance);
-  if(IsDisplayed(marketOrderImbalance)) {
-    beginInsertRows(QModelIndex(),
-      static_cast<int>(m_displayedOrderImbalances.size()),
-      static_cast<int>(m_displayedOrderImbalances.size()));
-    m_displayedOrderImbalances.push_back(marketOrderImbalance);
-    endInsertRows();
+  auto key = std::pair(market, orderImbalance.m_security);
+  auto i = m_imbalanceIndicies.find(key);
+  auto isReplacing = false;
+  if(i != m_imbalanceIndicies.end()) {
+    auto& imbalance = m_orderImbalances[i->second];
+    if(orderImbalance.m_timestamp - imbalance->m_timestamp <= minutes(20)) {
+      imbalance = marketOrderImbalance;
+      isReplacing = true;
+    } else {
+      m_imbalanceIndicies.insert(
+        std::pair(key, static_cast<int>(m_orderImbalances.size())));
+      m_orderImbalances.push_back(marketOrderImbalance);
+    }
+  } else {
+    m_imbalanceIndicies.insert(
+      std::pair(key, static_cast<int>(m_orderImbalances.size())));
+    m_orderImbalances.push_back(marketOrderImbalance);
+  }
+  auto j = m_displayedIndicies.find(key);
+  if(!isReplacing || j == m_displayedIndicies.end()) {
+    if(IsDisplayed(marketOrderImbalance)) {
+      beginInsertRows(QModelIndex(),
+        static_cast<int>(m_displayedOrderImbalances.size()),
+        static_cast<int>(m_displayedOrderImbalances.size()));
+      m_displayedIndicies.insert(
+        std::pair(key, static_cast<int>(m_displayedOrderImbalances.size())));
+      m_displayedOrderImbalances.push_back(marketOrderImbalance);
+      endInsertRows();
+    }
+  } else {
+    m_displayedOrderImbalances[j->second] = marketOrderImbalance;
+    dataChanged(index(j->second, 0), index(j->second, COLUMN_COUNT - 1));
   }
 }
 
