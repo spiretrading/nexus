@@ -175,8 +175,7 @@ void OrderImbalanceIndicatorModel::OnOrderImbalance(MarketCode market,
       imbalance = marketOrderImbalance;
       isReplacing = true;
     } else {
-      m_imbalanceIndicies.insert(
-        std::pair(key, static_cast<int>(m_orderImbalances.size())));
+      m_imbalanceIndicies[key] = static_cast<int>(m_orderImbalances.size());
       m_orderImbalances.push_back(marketOrderImbalance);
     }
   } else {
