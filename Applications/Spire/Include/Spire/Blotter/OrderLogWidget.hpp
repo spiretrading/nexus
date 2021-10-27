@@ -79,6 +79,8 @@ namespace Spire {
 
       void OnOrderAdded(const OrderLogModel::OrderEntry& entry);
       void OnOrderRemoved(const OrderLogModel::OrderEntry& entry);
+      void OnProxyOrderAdded(const QModelIndex& parent, int first, int last);
+      void OnProxyOrderRemoved(const QModelIndex& parent, int first, int last);
       void OnCancel();
       void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
         const Nexus::OrderExecutionService::ExecutionReport& executionReport);

@@ -41,7 +41,8 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = nexus.ApplicationServiceClients(username, password, address)
+  service_clients = \
+    nexus.ApplicationServiceClients(username, password, address)
   countries = service_clients.get_definitions_client().load_country_database()
   markets = service_clients.get_definitions_client().load_market_database()
   region = nexus.parse_country_code(args.region, countries)

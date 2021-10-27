@@ -45,6 +45,7 @@ namespace Spire {
       virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
 
     protected:
+      virtual void showEvent(QShowEvent* event);
       virtual void closeEvent(QCloseEvent* event);
       virtual void keyPressEvent(QKeyEvent* event);
 

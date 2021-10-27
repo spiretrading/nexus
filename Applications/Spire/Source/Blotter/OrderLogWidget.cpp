@@ -109,6 +109,10 @@ void OrderLogWidget::SetModel(Ref<UserProfile> userProfile,
   m_orderRemovedConnection =
     m_model->GetOrderLogModel().ConnectOrderRemovedSignal(
     std::bind(&OrderLogWidget::OnOrderRemoved, this, std::placeholders::_1));
+  connect(m_proxyModel.get(), &OrderLogFilterProxyModel::rowsInserted, this,
+    &OrderLogWidget::OnProxyOrderAdded);
+  connect(m_proxyModel.get(), &OrderLogFilterProxyModel::rowsAboutToBeRemoved,
+    this, &OrderLogWidget::OnProxyOrderRemoved);
 }
 
 bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
@@ -151,6 +155,34 @@ void OrderLogWidget::OnOrderRemoved(const OrderLogModel::OrderEntry& entry) {
     return;
   }
   m_orderEntries.erase(orderIterator);
+}
+
+void OrderLogWidget::OnProxyOrderAdded(
+    const QModelIndex& parent, int first, int last) {
+  for(auto i = first; i <= last; ++i) {
+    auto& entry = m_model->GetOrderLogModel().GetEntry(
+      m_proxyModel->mapToSource(m_proxyModel->index(i, 0)));
+    auto orderData = JsonObject();
+    orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
+    orderData["order_id"] =
+      static_cast<double>(entry.m_order->GetInfo().m_orderId);
+    m_userProfile->GetTelemetryClient().Record(
+      "spire.blotter.order_added", orderData);
+  }
+}
+
+void OrderLogWidget::OnProxyOrderRemoved(
+    const QModelIndex& parent, int first, int last) {
+  for(auto i = first; i <= last; ++i) {
+    auto& entry = m_model->GetOrderLogModel().GetEntry(
+      m_proxyModel->mapToSource(m_proxyModel->index(i, 0)));
+    auto orderData = JsonObject();
+    orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
+    orderData["order_id"] =
+      static_cast<double>(entry.m_order->GetInfo().m_orderId);
+    m_userProfile->GetTelemetryClient().Record(
+      "spire.blotter.order_removed", orderData);
+  }
 }
 
 void OrderLogWidget::OnCancel() {

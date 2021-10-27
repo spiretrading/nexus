@@ -99,6 +99,10 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_ui->m_activityLogTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
   m_proxyModel = new CustomVariantSortFilterProxyModel(Ref(*m_userProfile));
   m_proxyModel->setSourceModel(&m_model->GetTasksModel());
+  connect(&m_model->GetTasksModel(), &BlotterTasksModel::rowsInserted, this,
+    &BlotterWindow::OnTasksAdded);
+  connect(&m_model->GetTasksModel(), &BlotterTasksModel::rowsRemoved, this,
+    &BlotterWindow::OnTasksRemoved);
   connect(&m_model->GetTasksModel(), &BlotterTasksModel::dataChanged, this,
     &BlotterWindow::OnPinTaskToggled);
   m_ui->m_taskTable->setModel(m_proxyModel);
@@ -422,16 +426,17 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
 
 void BlotterWindow::OnPositionsAdded(
     const QModelIndex& parent, int first, int last) {
+  auto positions = m_model->GetOpenPositionsModel().GetOpenPositions();
   for(auto i = first; i <= last; ++i) {
     auto positionData = JsonObject();
     positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
-    auto& position = m_model->GetOpenPositionsModel().GetOpenPositions()[i];
     positionData["index"] = i;
     positionData["security"] = [&] {
       auto security = JsonObject();
+      auto& position = positions[i];
       security["symbol"] = position.m_key.m_index.GetSymbol();
-      security["market"] = ToString(
-        position.m_key.m_index.GetMarket(), m_userProfile->GetMarketDatabase());
+      security["market"] = ToString(position.m_key.m_index.GetMarket(),
+        m_userProfile->GetMarketDatabase());
       return security;
     }();
     m_userProfile->GetTelemetryClient().Record(
@@ -447,6 +452,30 @@ void BlotterWindow::OnPositionsRemoved(
     positionData["index"] = i;
     m_userProfile->GetTelemetryClient().Record(
       "spire.blotter.position_removed", positionData);
+  }
+}
+
+void BlotterWindow::OnTasksAdded(
+    const QModelIndex& parent, int first, int last) {
+  for(auto i = first; i <= last; ++i) {
+    auto& entry = m_model->GetTasksModel().GetEntry(i);
+    auto taskData = JsonObject();
+    taskData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
+    taskData["task_id"] = entry.m_task->GetId();
+    taskData["index"] = i;
+    m_userProfile->GetTelemetryClient().Record(
+      "spire.blotter.task_added", taskData);
+  }
+}
+
+void BlotterWindow::OnTasksRemoved(
+    const QModelIndex& parent, int first, int last) {
+  for(auto i = first; i <= last; ++i) {
+    auto taskData = JsonObject();
+    taskData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
+    taskData["index"] = i;
+    m_userProfile->GetTelemetryClient().Record(
+      "spire.blotter.task_removed", taskData);
   }
 }
 
