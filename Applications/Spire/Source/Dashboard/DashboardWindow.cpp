@@ -80,10 +80,20 @@ std::unique_ptr<WindowSettings> DashboardWindow::GetWindowSettings() const {
   return std::make_unique<DashboardWindowSettings>(*this);
 }
 
+void DashboardWindow::showEvent(QShowEvent* event) {
+  auto showData = JsonObject();
+  showData["id"] = reinterpret_cast<std::intptr_t>(this);
+  m_userProfile->GetTelemetryClient().Record("spire.dashboard.show", showData);
+}
+
 void DashboardWindow::closeEvent(QCloseEvent* event) {
   Save();
   auto window = GetWindowSettings();
   m_userProfile->AddRecentlyClosedWindow(std::move(window));
+  auto closeData = JsonObject();
+  closeData["id"] = reinterpret_cast<std::intptr_t>(this);
+  m_userProfile->GetTelemetryClient().Record(
+    "spire.dashboard.close", closeData);
   QWidget::closeEvent(event);
 }
 
