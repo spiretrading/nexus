@@ -236,6 +236,9 @@ int main(int argc, char* argv[]) {
     serviceClients->GetDefinitionsClient().LoadDestinationDatabase(),
     serviceClients->GetAdministrationClient().LoadEntitlements(),
     *serviceClients, *telemetryClient};
+  auto loginData = JsonObject();
+  loginData["version"] = SPIRE_VERSION;
+  userProfile.GetTelemetryClient().Record("spire.login", loginData);
   try {
     userProfile.CreateProfilePath();
   } catch(std::exception&) {
@@ -281,5 +284,6 @@ int main(int argc, char* argv[]) {
   BookViewProperties::Save(userProfile);
   CatalogSettings::Save(userProfile);
   BlotterSettings::Save(userProfile);
+  userProfile.GetTelemetryClient().Record("spire.logout", {});
   return 0;
 }

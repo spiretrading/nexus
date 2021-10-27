@@ -240,6 +240,16 @@ namespace Nexus {
     return !(lhs == rhs);
   }
 
+  inline std::string ToString(
+      MarketCode value, const MarketDatabase& marketDatabase) {
+    auto& market = marketDatabase.FromCode(value);
+    if(market.m_code.IsEmpty()) {
+      return value.GetData();
+    } else {
+      return market.m_displayName;
+    }
+  }
+
   inline const MarketDatabase::Entry& MarketDatabase::GetNoneEntry() {
     static auto NONE = MakeNoneEntry();
     return NONE;

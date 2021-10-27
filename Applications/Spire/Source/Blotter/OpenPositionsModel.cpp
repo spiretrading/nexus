@@ -131,6 +131,9 @@ void OpenPositionsModel::OnPortfolioUpdate(
   const SpirePosition::Key& key = update.m_securityInventory.m_position.m_key;
   auto entryIterator = m_securityToEntry.find(key.m_index);
   if(entryIterator == m_securityToEntry.end()) {
+    if(update.m_securityInventory.m_position.m_quantity == 0) {
+      return;
+    }
     int index = static_cast<int>(m_entries.size());
     beginInsertRows(QModelIndex(), index, index);
     unique_ptr<Entry> entry = std::make_unique<Entry>(index, key);
