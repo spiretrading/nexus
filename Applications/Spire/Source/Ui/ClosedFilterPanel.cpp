@@ -36,17 +36,16 @@ namespace {
     return style;
   }
 
-  void invalidate_children_recursively(QWidget& widget) {
+  void invalidate_descendants(QWidget& widget) {
     for(auto child : widget.children()) {
       if(!child->isWidgetType()) {
         continue;
       }
-      if(auto widget = qobject_cast<QWidget*>(child)) {
-        invalidate_children_recursively(*widget);
-        widget->updateGeometry();
-        if(widget->layout()) {
-          widget->layout()->invalidate();
-        }
+      auto& widget = *static_cast<QWidget*>(child);
+      invalidate_descendants(widget);
+      widget.updateGeometry();
+      if(widget.layout()) {
+        widget.layout()->invalidate();
       }
     }
   }
@@ -171,10 +170,10 @@ void ClosedFilterPanel::on_list_model_operation(
     [=] (const ListModel::AddOperation& operation) {
       set_style(*m_list_view->get_list_item(operation.m_index),
         LIST_ITEM_STYLE());
-      invalidate_children_recursively(*window());
+      invalidate_descendants(*window());
     },
     [=] (const ListModel::RemoveOperation& operation) {
-      invalidate_children_recursively(*window());
+      invalidate_descendants(*window());
     });
 }
 
