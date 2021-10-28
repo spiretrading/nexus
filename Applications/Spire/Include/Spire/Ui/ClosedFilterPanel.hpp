@@ -54,7 +54,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_model_connection;
 
       void add_item(int index);
-      void clear_submission();
       void update_submission(int index, bool is_checked);
       void on_current(const std::shared_ptr<Item>& item, bool is_checked);
       void on_list_model_operation(const ListModel::Operation& operation);

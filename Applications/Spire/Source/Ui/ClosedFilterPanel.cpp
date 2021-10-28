@@ -65,8 +65,6 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
       m_submission->push(m_model->at(i, 0));
     }
   }
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_list_view = new ListView(m_list_model, [=] (const auto& model, int index) {
     auto& item = model->get<std::shared_ptr<Item>>(index);
     auto check_box = new CheckBox(item->m_model);
@@ -88,6 +86,8 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
       scrollable_list_box->maximumHeight()) {
     scrollable_list_box->get_scroll_box().get_vertical_scroll_bar().show();
   }
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
   layout->addWidget(scrollable_list_box);
   m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal(
@@ -105,7 +105,7 @@ connection ClosedFilterPanel::connect_submit_signal(
 }
 
 bool ClosedFilterPanel::eventFilter(QObject* watched, QEvent* event) {
-  if(window() == watched && event->type() == QEvent::Close) {
+  if(event->type() == QEvent::Close) {
     m_filter_panel->hide();
     hide();
   }
@@ -124,17 +124,10 @@ bool ClosedFilterPanel::event(QEvent* event) {
 void ClosedFilterPanel::add_item(int index) {
   auto boolean_model =
     std::make_shared<LocalBooleanModel>(m_model->get<bool>(index, 1));
-  m_list_model->insert(std::make_shared<Item>(boolean_model, index), index);
+  auto item = std::make_shared<Item>(boolean_model, index);
+  m_list_model->insert(item, index);
   boolean_model->connect_current_signal(
-    std::bind_front(&ClosedFilterPanel::on_current, this,
-      m_list_model->get<std::shared_ptr<Item>>(index)));
-}
-
-void ClosedFilterPanel::clear_submission() {
-  auto index = m_submission->get_size();
-  while(--index >= 0) {
-    m_submission->remove(index);
-  }
+    std::bind_front(&ClosedFilterPanel::on_current, this, item));
 }
 
 void ClosedFilterPanel::update_submission(int index, bool is_checked) {
@@ -202,7 +195,10 @@ void ClosedFilterPanel::on_table_model_operation(
       for(auto i = operation.m_index; i < m_list_model->get_size(); ++i) {
         --(m_list_model->get<std::shared_ptr<Item>>(i)->m_index);
       }
-      clear_submission();
+      auto index = m_submission->get_size();
+      while(--index >= 0) {
+        m_submission->remove(index);
+      }
       for(auto i = 0; i < m_model->get_row_size(); ++i) {
         if(m_model->get<bool>(i, 1)) {
           m_submission->push(m_model->at(i, 0));
@@ -212,9 +208,10 @@ void ClosedFilterPanel::on_table_model_operation(
 }
 
 void ClosedFilterPanel::on_reset() {
-  clear_submission();
   for(auto i = 0; i < m_model->get_row_size(); ++i) {
-    m_model->set(i, 1, true);
+    if(!m_model->get<bool>(i, 1)) {
+      m_model->set(i, 1, true);
+    }
   }
   m_submit_signal(m_submission);
 }
