@@ -1,5 +1,6 @@
 #ifndef SPIRE_CLOSED_FILTER_PANEL_HPP
 #define SPIRE_CLOSED_FILTER_PANEL_HPP
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -40,17 +41,25 @@ namespace Spire {
       bool event(QEvent* event) override;
 
     private:
+      struct Item {
+        std::shared_ptr<BooleanModel> m_model;
+        int m_index;
+      };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TableModel> m_model;
+      std::shared_ptr<ArrayListModel> m_list_model;
+      std::shared_ptr<ArrayListModel> m_submission;
       FilterPanel* m_filter_panel;
       ListView* m_list_view;
-      ScrollableListBox* m_scrollable_list_box;
-      std::shared_ptr<ArrayListModel> m_submission;
       boost::signals2::scoped_connection m_model_connection;
 
-      void on_reset();
-      void on_table_model_operation(const TableModel::Operation& operation);
+      void add_item(int index);
+      void clear_submission();
+      void update_submission(int index, bool is_checked);
+      void on_current(const std::shared_ptr<Item>& item, bool is_checked);
       void on_list_model_operation(const ListModel::Operation& operation);
+      void on_table_model_operation(const TableModel::Operation& operation);
+      void on_reset();
   };
 }
 
