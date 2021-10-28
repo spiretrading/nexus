@@ -158,6 +158,7 @@ void OverlayPanel::position() {
       parent_geometry.bottomLeft());
     auto screen_geometry = parentWidget()->screen()->availableGeometry();
     auto panel_size = size();
+    windowHandle()->resize(panel_size);
     auto x = [&] {
       auto x = parent_bottom_left.x() - DROP_SHADOW_WIDTH();
       if(x < screen_geometry.left()) {
