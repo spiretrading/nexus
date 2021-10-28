@@ -1,5 +1,6 @@
 #ifndef SPIRE_ORDERIMBALANCEINDICATORMODEL_HPP
 #define SPIRE_ORDERIMBALANCEINDICATORMODEL_HPP
+#include <map>
 #include <optional>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
@@ -91,6 +92,10 @@ namespace Spire {
       QTimer m_updateTimer;
       std::vector<Nexus::MarketOrderImbalance> m_orderImbalances;
       std::vector<Nexus::MarketOrderImbalance> m_displayedOrderImbalances;
+      std::map<std::pair<Nexus::MarketCode, Nexus::Security>, int>
+        m_imbalanceIndicies;
+      std::map<std::pair<Nexus::MarketCode, Nexus::Security>, int>
+        m_displayedIndicies;
       std::optional<Beam::TaskQueue> m_slotHandler;
 
       bool IsDisplayed(const Nexus::MarketOrderImbalance& orderImbalance) const;

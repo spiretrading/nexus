@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -34,10 +35,13 @@ Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 
 using namespace Beam;
 using namespace Beam::Network;
+using namespace Beam::Services;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
+using namespace Beam::TimeService;
 using namespace boost;
 using namespace Nexus;
+using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -48,6 +52,12 @@ inline void InitializeResources() {
 }
 
 namespace {
+  template<typename C>
+  using MetaTelemetryClient = TelemetryClient<C, TimeClientBox>;
+  using SpireTelemetryClient = ApplicationClient<MetaTelemetryClient,
+    ServiceName<TelemetryService::SERVICE_NAME>,
+    ZLibSessionBuilder<ServiceLocatorClientBox>>;
+
   std::vector<LoginDialog::ServerEntry> ParseServers(const YAML::Node& config,
       const path& configPath) {
     auto servers = std::vector<LoginDialog::ServerEntry>();
@@ -200,6 +210,17 @@ int main(int argc, char* argv[]) {
     QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
     return -1;
   }
+  auto applicationTelemetryClient = boost::optional<SpireTelemetryClient>();
+  auto telemetryClient = boost::optional<TelemetryClientBox>();
+  try {
+    applicationTelemetryClient.emplace(
+      serviceClients->GetServiceLocatorClient(),
+      serviceClients->GetTimeClient());
+    telemetryClient.emplace(applicationTelemetryClient->Get());
+  } catch(const std::exception& e) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
+    return -1;
+  }
   auto isAdministrator =
     serviceClients->GetAdministrationClient().CheckAdministrator(
     serviceClients->GetServiceLocatorClient().GetAccount());
@@ -214,7 +235,10 @@ int main(int argc, char* argv[]) {
     serviceClients->GetDefinitionsClient().LoadMarketDatabase(),
     serviceClients->GetDefinitionsClient().LoadDestinationDatabase(),
     serviceClients->GetAdministrationClient().LoadEntitlements(),
-    *serviceClients};
+    *serviceClients, *telemetryClient};
+  auto loginData = JsonObject();
+  loginData["version"] = std::string(SPIRE_VERSION);
+  userProfile.GetTelemetryClient().Record("spire.login", loginData);
   try {
     userProfile.CreateProfilePath();
   } catch(std::exception&) {
@@ -260,5 +284,6 @@ int main(int argc, char* argv[]) {
   BookViewProperties::Save(userProfile);
   CatalogSettings::Save(userProfile);
   BlotterSettings::Save(userProfile);
+  userProfile.GetTelemetryClient().Record("spire.logout", {});
   return 0;
 }

@@ -3,6 +3,7 @@
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include "Spire/Canvas/ControlNodes/UntilNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
@@ -23,21 +24,30 @@ using namespace Beam::Threading;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
+using namespace Nexus::TelemetryService;
+using namespace Nexus::TelemetryService::Tests;
 using namespace Spire;
 
 namespace {
   struct Environment {
     TestEnvironment m_environment;
     ServiceClientsBox m_serviceClients;
+    TelemetryServiceTestEnvironment m_telemetryEnvironment;
+    TelemetryClientBox m_telemetryClient;
     UserProfile m_userProfile;
 
     Environment()
       : m_serviceClients(std::in_place_type<TestServiceClients>,
           Ref(m_environment)),
+        m_telemetryEnvironment(m_serviceClients.GetServiceLocatorClient(),
+          m_serviceClients.GetTimeClient(),
+          m_serviceClients.GetAdministrationClient()),
+        m_telemetryClient(m_telemetryEnvironment.MakeClient(
+          m_serviceClients.GetServiceLocatorClient())),
         m_userProfile("", false, false, GetDefaultCountryDatabase(),
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-          EntitlementDatabase(), m_serviceClients) {}
+          EntitlementDatabase(), m_serviceClients, m_telemetryClient) {}
   };
 
   const auto TEST_SECURITY = ParseSecurity("TST.TSX");

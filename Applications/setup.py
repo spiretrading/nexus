@@ -102,7 +102,8 @@ def main():
   arg_vars = vars(parser.parse_args())
   setup_beam(arg_vars)
   for server in ['AdministrationServer', 'ComplianceServer',
-      'MarketDataServer', 'RiskServer', 'SimulationOrderExecutionServer']:
+      'MarketDataServer', 'RiskServer', 'SimulationOrderExecutionServer',
+      'TelemetryServer']:
     setup_server_with_mysql(server, arg_vars)
   for server in ['ChartingServer', 'DefinitionsServer',
       'MarketDataRelayServer', 'ReplayMarketDataFeedClient',

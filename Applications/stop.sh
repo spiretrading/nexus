@@ -1,6 +1,7 @@
 #!/bin/bash
 services=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
+services+=" TelemetryServer"
 services+=" RiskServer"
 services+=" SimulationOrderExecutionServer"
 services+=" ComplianceServer"

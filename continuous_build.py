@@ -140,7 +140,7 @@ def build_repo(repo, path, branch):
       'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
       'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'WebPortal']
+      'TelemetryServer', 'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
     copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
