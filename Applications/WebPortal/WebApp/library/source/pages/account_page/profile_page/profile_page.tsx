@@ -167,34 +167,16 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const lastLogin = (() => {
-      const serverDateTime = this.props.identity.lastLoginTime;
-      if(serverDateTime.equals(Beam.DateTime.NEG_INFIN) ||
-          serverDateTime.equals(Beam.DateTime.POS_INFIN) ||
-          serverDateTime.equals(Beam.DateTime.NOT_A_DATE_TIME)) {
+      if(this.props.identity.lastLoginTime.equals(Beam.DateTime.NEG_INFIN)) {
         return 'Never';
       } else {
-        const localizedDate = new Date(Date.UTC(
-          serverDateTime.date.year,
-          serverDateTime.date.month - 1,
-          serverDateTime.date.day,
-          serverDateTime.timeOfDay.split().hours,
-          serverDateTime.timeOfDay.split().minutes,
-          serverDateTime.timeOfDay.split().seconds
-        ));
-        return `${localizedDate.toLocaleDateString()} ${
-          localizedDate.toLocaleTimeString()}`;
+        const date = this.props.identity.lastLoginTime.toDate();
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
       }
     })();
     const registrationDate = (() => {
-      const localizedDate = new Date(Date.UTC(
-        this.props.identity.registrationTime.date.year,
-        this.props.identity.registrationTime.date.month - 1,
-        this.props.identity.registrationTime.date.day,
-        this.props.identity.registrationTime.timeOfDay.split().hours,
-        this.props.identity.registrationTime.timeOfDay.split().minutes,
-        this.props.identity.registrationTime.timeOfDay.split().seconds
-      ));
-      return localizedDate.toLocaleDateString();
+      const date = this.props.identity.registrationTime.toDate();
+      return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     })();
     const groupsList = (() => {
       const list = [];
