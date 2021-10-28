@@ -95,7 +95,7 @@ namespace Nexus::MarketDataService {
       try : m_config(std::move(config)),
             m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
             m_protocolClient(std::forward<PF>(protocolClient)),
-            m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {
+            m_readLoopRoutine(Beam::Routines::Spawn([this] { ReadLoop(); })) {
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to initialize the HKEX market data feed client."));
