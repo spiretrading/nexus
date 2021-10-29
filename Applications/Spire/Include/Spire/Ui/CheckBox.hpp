@@ -68,6 +68,7 @@ namespace Styles {
       bool m_is_read_only;
       Icon* m_check;
       TextBox* m_label;
+      boost::signals2::scoped_connection m_connection;
 
       void on_checked(bool is_checked);
       void on_layout_direction(Qt::LayoutDirection direction);
