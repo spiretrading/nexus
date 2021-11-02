@@ -166,6 +166,18 @@ export class ProfilePage extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const lastLogin = (() => {
+      if(this.props.identity.lastLoginTime.equals(Beam.DateTime.NEG_INFIN)) {
+        return 'Never';
+      } else {
+        const date = this.props.identity.lastLoginTime.toDate();
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      }
+    })();
+    const registrationDate = (() => {
+      const date = this.props.identity.registrationTime.toDate();
+      return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    })();
     const groupsList = (() => {
       const list = [];
       for(const group of this.props.groups) {
@@ -302,7 +314,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Dali.VBoxLayout width='100%'>
               <Dali.Padding size='18px'/>
               <div style={ProfilePage.STYLE.lastLoginBox}>
-                {'Last login: ' + this.props.identity.lastLoginTime.toString()}
+                {`Last login: ${lastLogin}`}
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <div style={ProfilePage.STYLE.headerStyler}>
@@ -368,7 +380,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <FormEntry name='Registration Date'
                       displaySize={this.props.displaySize}>
                     <TextField displaySize={this.props.displaySize}
-                      value={this.props.identity.registrationTime.toString()}
+                      value={registrationDate}
                       readonly/>
                   </FormEntry>
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
