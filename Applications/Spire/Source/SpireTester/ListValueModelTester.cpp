@@ -54,51 +54,30 @@ TEST_SUITE("ListValueModel") {
     REQUIRE(!model2.get_current().has_value());
   }
 
-  TEST_CASE("source_add1") {
+  TEST_CASE("source_add") {
     auto source = std::make_shared<ArrayListModel>();
     source->push(0);
     source->push(1);
-    auto signal_count = 0;
-    auto index = 1;
-    auto model = ListValueModel(source, index);
-    REQUIRE(get_current(model) == 1);
-    auto connection = scoped_connection(model.connect_current_signal(
-      [&] (const auto& current) {
-        ++signal_count;
-        REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
-      }));
+    auto model0 = ListValueModel(source, 0);
+    REQUIRE(get_current(model0) == 0);
+    auto model1 = ListValueModel(source, 1);
+    REQUIRE(get_current(model1) == 1);
     source->insert(10, 1);
-    REQUIRE(signal_count == 1);
-    REQUIRE(get_current(model) == 10);
+    auto new_model1 = ListValueModel(source, 1);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(new_model1) == 10);
+    REQUIRE(get_current(model1) == 1);
     source->insert(20, 0);
-    REQUIRE(signal_count == 2);
-    REQUIRE(get_current(model) == 0);
+    auto new_model0 = ListValueModel(source, 0);
+    REQUIRE(get_current(new_model0) == 20);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(new_model1) == 10);
+    REQUIRE(get_current(model1) == 1);
     source->push(30);
-    REQUIRE(signal_count == 2);
-    REQUIRE(get_current(model) == 0);
-  }
-
-  TEST_CASE("source_add2") {
-    auto source = std::make_shared<ArrayListModel>();
-    source->push(0);
-    source->push(1);
-    auto signal_count = 0;
-    auto index = 3;
-    auto model = ListValueModel(source, index);
-    REQUIRE(model.get_state() == QValidator::State::Invalid);
-    auto connection = scoped_connection(model.connect_current_signal(
-      [&] (const auto& current) {
-        ++signal_count;
-        REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
-      }));
-    source->insert(10, 0);
-    REQUIRE(signal_count == 0);
-    REQUIRE(model.get_state() == QValidator::State::Invalid);
-    REQUIRE(!model.get_current().has_value());
-    source->insert(20, 0);
-    REQUIRE(signal_count == 1);
-    REQUIRE(model.get_state() == QValidator::State::Acceptable);
-    REQUIRE(get_current(model) == 1);
+    REQUIRE(get_current(new_model0) == 20);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(new_model1) == 10);
+    REQUIRE(get_current(model1) == 1);
   }
 
   TEST_CASE("source_remove") {
@@ -107,31 +86,25 @@ TEST_SUITE("ListValueModel") {
     source->push(1);
     source->push(2);
     source->push(3);
-    auto signal_count = 0;
-    auto index = 1;
-    auto model = ListValueModel(source, index);
-    REQUIRE(get_current(model) == 1);
-    auto connection = scoped_connection(model.connect_current_signal(
-      [&] (const auto& current) {
-        ++signal_count;
-        if(index < source->get_size()) {
-          REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
-        } else {
-          REQUIRE(!current.has_value());
-        }
-      }));
-    source->remove(3);
-    REQUIRE(signal_count == 0);
-    REQUIRE(get_current(model) == 1);
+    auto model0 = ListValueModel(source, 0);
+    auto model1 = ListValueModel(source, 1);
+    auto model2 = ListValueModel(source, 2);
+    auto model3 = ListValueModel(source, 3);
     source->remove(1);
-    REQUIRE(signal_count == 1);
-    REQUIRE(get_current(model) == 2);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(model2) == 2);
+    REQUIRE(get_current(model3) == 3);
+    REQUIRE(model1.get_state() == QValidator::State::Invalid);
+    source->remove(2);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(model2) == 2);
+    REQUIRE(model1.get_state() == QValidator::State::Invalid);
+    REQUIRE(model3.get_state() == QValidator::State::Invalid);
     source->remove(0);
-    REQUIRE(signal_count == 2);
-    REQUIRE(!model.get_current().has_value());
-    source->remove(0);
-    REQUIRE(signal_count == 2);
-    REQUIRE(!model.get_current().has_value());
+    REQUIRE(get_current(model2) == 2);
+    REQUIRE(model0.get_state() == QValidator::State::Invalid);
+    REQUIRE(model1.get_state() == QValidator::State::Invalid);
+    REQUIRE(model3.get_state() == QValidator::State::Invalid);
   }
 
   TEST_CASE("source_move") {
@@ -140,24 +113,25 @@ TEST_SUITE("ListValueModel") {
     source->push(1);
     source->push(2);
     source->push(3);
-    auto signal_count = 0;
-    auto index = 1;
-    auto model = ListValueModel(source, index);
-    REQUIRE(get_current(model) == 1);
-    auto connection = scoped_connection(model.connect_current_signal(
-      [&] (const auto& current) {
-        ++signal_count;
-        REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
-      }));
-    source->move(2, 3);
-    REQUIRE(signal_count == 0);
-    REQUIRE(get_current(model) == 1);
-    source->move(0, 2);
-    REQUIRE(signal_count == 1);
-    REQUIRE(get_current(model) == 3);
+    auto model0 = ListValueModel(source, 0);
+    auto model1 = ListValueModel(source, 1);
+    auto model2 = ListValueModel(source, 2);
+    auto model3 = ListValueModel(source, 3);
+    source->move(0, 3);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(model1) == 1);
+    REQUIRE(get_current(model2) == 2);
+    REQUIRE(get_current(model3) == 3);
     source->move(3, 1);
-    REQUIRE(signal_count == 2);
-    REQUIRE(get_current(model) == 2);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(model1) == 1);
+    REQUIRE(get_current(model2) == 2);
+    REQUIRE(get_current(model3) == 3);
+    source->move(1, 2);
+    REQUIRE(get_current(model0) == 0);
+    REQUIRE(get_current(model1) == 1);
+    REQUIRE(get_current(model2) == 2);
+    REQUIRE(get_current(model3) == 3);
   }
 
   TEST_CASE("source_update") {
@@ -184,28 +158,35 @@ TEST_SUITE("ListValueModel") {
     auto source = std::make_shared<ArrayListModel>();
     source->push(0);
     source->push(1);
-    auto signal_count = 0;
-    auto index = 1;
-    auto model = ListValueModel(source, index);
-    auto connection = scoped_connection(model.connect_current_signal(
+    source->push(2);
+    auto model0 = ListValueModel(source, 0);
+    auto model1 = ListValueModel(source, 1);
+    auto model2 = ListValueModel(source, 2);
+    auto signal_count0 = 0;
+    auto connection0 = scoped_connection(model0.connect_current_signal(
       [&] (const auto& current) {
-        ++signal_count;
-        REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
+        ++signal_count0;
+      }));
+    auto signal_count1 = 0;
+    auto connection1 = scoped_connection(model1.connect_current_signal(
+      [&] (const auto& current) {
+        ++signal_count1;
       }));
     source->transact([&] {
-      source->push(2);
+      source->insert(20, 0);
       source->transact([&] {
         source->set(1, 10);
         source->transact([&] {
-          source->insert(20, 0);
-          source->set(2, 30);
-          source->remove(0);
+          source->move(3, 1);
         });
-        source->set(0, 10);
+        source->remove(1);
       });
-      source->move(1, 0);
+      source->set(2, 30);
     });
-    REQUIRE(signal_count == 4);
-    REQUIRE(get_current(model) == 10);
+    REQUIRE(signal_count0 == 1);
+    REQUIRE(signal_count1 == 1);
+    REQUIRE(get_current(model0) == 10);
+    REQUIRE(get_current(model1) == 30);
+    REQUIRE(model2.get_state() == QValidator::State::Invalid);
   }
 }
