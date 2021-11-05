@@ -5,9 +5,11 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/ColumnViewListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListValueModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -51,29 +53,21 @@ namespace {
   }
 }
 
-class BooleanModelAdptor : public BooleanModel {
+class BooleanListValueModel : public BooleanModel {
   public:
-    BooleanModelAdptor(std::shared_ptr<TableModel> source, int row)
+    using Type = BooleanModel::Type;
+
+    explicit BooleanListValueModel(std::shared_ptr<ListValueModel> source)
       : m_source(std::move(source)),
-        m_row(row),
-        m_source_connection(m_source->connect_operation_signal(
-          std::bind_front(&BooleanModelAdptor::on_operation, this))) {}
+        m_source_connection(m_source->connect_current_signal(
+          std::bind_front(&BooleanListValueModel::on_current, this))) {}
 
-    int get_row() const {
-      return m_row;
+    const Type& get_current() const override {
+      return std::any_cast<const Type&>(m_source->get_current());
     }
 
-    void set_row(int row) {
-      m_row = row;
-    }
-
-    const bool& get_current() const override {
-      return m_source->get<bool>(m_row, 1);
-    }
-
-    QValidator::State set_current(const bool& value) override {
-      m_source->set(m_row, 1, value);
-      return QValidator::State::Acceptable;
+    QValidator::State set_current(const Type& value) override {
+      return m_source->set_current(value);
     }
 
     connection connect_current_signal(
@@ -81,68 +75,36 @@ class BooleanModelAdptor : public BooleanModel {
       return m_current_signal.connect(slot);
     }
 
-    void on_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::UpdateOperation& operation) {
-          if(operation.m_row == m_row && operation.m_column == 1) {
-            m_current_signal(m_source->get<bool>(m_row, 1));
-          }
-        });
+    void on_current(const std::any& current) {
+      m_current_signal(std::any_cast<const Type&>(current));
     }
 
   private:
     mutable CurrentSignal m_current_signal;
-    std::shared_ptr<TableModel> m_source;
-    int m_row;
-    scoped_connection m_source_connection;
-};
-
-class TableModelToListModel : public ArrayListModel {
-  public:
-    explicit TableModelToListModel(std::shared_ptr<TableModel> source)
-        : m_source(std::move(source)),
-          m_source_connection(m_source->connect_operation_signal(
-            std::bind_front(&TableModelToListModel::on_operation, this))) {
-      for(auto i = 0; i < m_source->get_row_size(); ++i) {
-        push(std::make_shared<BooleanModelAdptor>(m_source, i));
-      }
-    }
-
-    void on_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          insert(std::make_shared<BooleanModelAdptor>(m_source,
-            operation.m_index), operation.m_index);
-          for(auto i = operation.m_index + 1; i < get_size(); ++i) {
-            auto& boolean_model = get<std::shared_ptr<BooleanModelAdptor>>(i);
-            boolean_model->set_row(boolean_model->get_row() + 1);
-          }
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          remove(operation.m_index);
-          for(auto i = operation.m_index; i < get_size(); ++i) {
-            auto& boolean_model = get<std::shared_ptr<BooleanModelAdptor>>(i);
-            boolean_model->set_row(boolean_model->get_row() - 1);
-          }
-        });
-    }
-
-  private:
-    std::shared_ptr<TableModel> m_source;
+    std::shared_ptr<ListValueModel> m_source;
     scoped_connection m_source_connection;
 };
 
 ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
     QString title, QWidget& parent)
     : QWidget(&parent),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_submission(std::make_shared<ArrayListModel>()) {
+  for(auto i = 0; i < m_model->get_row_size(); ++i) {
+    if(m_model->get<bool>(i, 1)) {
+      m_submission->push(m_model->at(i, 0));
+    }
+  }
   m_list_view = new ListView(
-    std::make_shared<TableModelToListModel>(m_model),
+    std::make_shared<ColumnViewListModel>(m_model, 1),
     [=] (const auto& model, int index) {
-      auto& boolean_model =
-        model->get<std::shared_ptr<BooleanModelAdptor>>(index);
-      boolean_model->connect_current_signal(
-        std::bind_front(&ClosedFilterPanel::on_current, this));
+      auto boolean_model = std::make_shared<BooleanListValueModel>(
+        std::make_shared<ListValueModel>(model, index));
+      auto connection = boolean_model->connect_current_signal(
+        std::bind_front(&ClosedFilterPanel::on_current, this,
+          m_model->at(index, 0)));
+      m_model_items.emplace(m_model_items.begin() + index,
+        new ModelItem{boolean_model, connection});
       auto check_box = new CheckBox(boolean_model);
       check_box->set_label(displayTextAny(m_model->at(index, 0)));
       check_box->setLayoutDirection(Qt::RightToLeft);
@@ -197,14 +159,23 @@ bool ClosedFilterPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void ClosedFilterPanel::on_current(bool is_checked) {
-  auto submission = std::make_shared<ArrayListModel>();
-  for(auto i = 0; i < m_model->get_row_size(); ++i) {
-    if(m_model->get<bool>(i, 1)) {
-      submission->push(m_model->at(i, 0));
+void ClosedFilterPanel::on_current(const std::any& value,  bool is_checked) {
+  auto index = [=, &value] {
+    auto text = displayTextAny(value);
+    for(auto i = 0; i < m_submission->get_size(); ++i) {
+      if(text == displayTextAny(m_submission->at(i))) {
+        return i;
+      }
     }
+    return -1;
+  }();
+  if(index >= 0 && !is_checked) {
+    m_submission->remove(index);
+    m_submit_signal(m_submission);
+  } else if(index == -1 && is_checked) {
+    m_submission->push(value);
+    m_submit_signal(m_submission);
   }
-  m_submit_signal(submission);
 }
 
 void ClosedFilterPanel::on_list_model_operation(
@@ -214,16 +185,32 @@ void ClosedFilterPanel::on_list_model_operation(
       set_style(*m_list_view->get_list_item(operation.m_index),
         LIST_ITEM_STYLE());
       invalidate_descendants(*window());
+      if(m_model->get<bool>(operation.m_index, 1)) {
+        m_submission->push(m_model->at(operation.m_index, 0));
+      }
     },
     [=] (const ListModel::RemoveOperation& operation) {
       invalidate_descendants(*window());
+      m_model_items.erase(m_model_items.begin() + operation.m_index);
+      auto index = m_submission->get_size();
+      while(--index >= 0) {
+        m_submission->remove(index);
+      }
+      for(auto i = 0; i < m_model->get_row_size(); ++i) {
+        if(m_model->get<bool>(i, 1)) {
+          m_submission->push(m_model->at(i, 0));
+        }
+      }
     });
 }
 
 void ClosedFilterPanel::on_reset() {
   for(auto i = 0; i < m_model->get_row_size(); ++i) {
-    if(!m_model->get<bool>(i, 1)) {
-      m_model->set(i, 1, true);
+    if(!m_model_items[i]->m_model->get_current()) {
+      auto blocker = shared_connection_block(m_model_items[i]->m_connection);
+      m_model_items[i]->m_model->set_current(true);
+      m_submission->push(m_model->at(i, 0));
     }
   }
+  m_submit_signal(m_submission);
 }

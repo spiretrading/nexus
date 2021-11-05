@@ -41,13 +41,19 @@ namespace Spire {
       bool event(QEvent* event) override;
 
     private:
+      struct ModelItem {
+        std::shared_ptr<BooleanModel> m_model;
+        boost::signals2::scoped_connection m_connection;
+      };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TableModel> m_model;
+      std::shared_ptr<ArrayListModel> m_submission;
+      std::vector<std::unique_ptr<ModelItem>> m_model_items;
       FilterPanel* m_filter_panel;
       ListView* m_list_view;
       boost::signals2::scoped_connection m_model_connection;
 
-      void on_current(bool is_checked);
+      void on_current(const std::any& value, bool is_checked);
       void on_list_model_operation(const ListModel::Operation& operation);
       void on_reset();
   };
