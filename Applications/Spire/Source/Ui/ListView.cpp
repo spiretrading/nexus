@@ -585,7 +585,7 @@ void ListView::on_selection(const optional<int>& selected) {
   if(m_selected == selected) {
     return;
   }
-  if(m_selected) {
+  if(m_selected && *m_selected < static_cast<int>(m_items.size())) {
     m_items[*m_selected]->m_item->set_selected(false);
   }
   m_selected = selected;

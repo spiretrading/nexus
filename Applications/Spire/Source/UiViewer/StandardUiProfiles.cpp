@@ -14,10 +14,12 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
+#include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
@@ -468,6 +470,88 @@ UiProfile Spire::make_check_box_profile() {
     [=] (auto& profile) {
       return setup_checkable_profile(profile, new CheckBox());
     });
+}
+
+UiProfile Spire::make_closed_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property("item_count", 7));
+  properties.push_back(make_standard_property<QString>("item_label", "item"));
+  properties.push_back(make_standard_property("checked_item", -1));
+  properties.push_back(make_standard_property("unchecked_item", -1));
+  properties.push_back(make_standard_property("insert_item", -1));
+  properties.push_back(make_standard_property("remove_item", -1));
+  auto profile = UiProfile(QString::fromUtf8("ClosedFilterPanel"), properties,
+    [] (auto& profile) {
+      auto& item_count = get<int>("item_count", profile.get_properties());
+      auto& item_text = get<QString>("item_label", profile.get_properties());
+      auto model = std::make_shared<ArrayTableModel>();
+      for(auto i = 0; i < item_count.get(); ++i) {
+        model->push({item_text.get() + QString::fromUtf8("%1").arg(i), false});
+      }
+      auto current_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("CurrentSignal"));
+      model->connect_operation_signal(
+        [=] (const TableModel::Operation& operation) {
+          visit(operation,
+            [=] (const TableModel::UpdateOperation& operation) {
+              auto result = QString();
+              for(auto i = 0; i < model->get_row_size(); ++i) {
+                if(model->get<bool>(i, 1)) {
+                  result += QString("%1 ").arg(i);
+                }
+              }
+              current_filter_slot(result);
+            });
+        });
+      auto& checked_item = get<int>("checked_item", profile.get_properties());
+      checked_item.connect_changed_signal([=] (const auto& value) {
+        if(value < 0 || value >= model->get_row_size()) {
+          return;
+        }
+        model->set(value, 1, true);
+      });
+      auto& unchecked_item = get<int>("unchecked_item", profile.get_properties());
+      unchecked_item.connect_changed_signal([=] (const auto& value) {
+        if(value < 0 || value >= model->get_row_size()) {
+          return;
+        }
+        model->set(value, 1, false);
+      });
+      auto& insert_item = get<int>("insert_item", profile.get_properties());
+      insert_item.connect_changed_signal(
+        [=, index = 0] (const auto& value) mutable {
+          if(value < 0 || value > model->get_row_size()) {
+            return;
+          }
+          model->insert({QString::fromUtf8("newItem%1").arg(index++), false},
+            value);
+        });
+      auto& remove_item = get<int>("remove_item", profile.get_properties());
+      remove_item.connect_changed_signal([=] (const auto& value) {
+        if(value < 0 || value >= model->get_row_size()) {
+          return;
+        }
+        model->remove(value);
+      });
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto panel = new ClosedFilterPanel(model,
+        QString::fromUtf8("Filter by something"), *button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<ListModel>& submission) {
+          auto result = QString();
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            result += displayTextAny(submission->at(i)) + " ";
+          }
+          submit_filter_slot(result);
+        });
+      button->connect_clicked_signal([=] {
+        panel->show();
+      });
+      return button;
+    });
+  return profile;
 }
 
 UiProfile Spire::make_decimal_box_profile() {
