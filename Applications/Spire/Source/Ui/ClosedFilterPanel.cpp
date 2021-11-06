@@ -75,14 +75,15 @@ class BooleanListValueModel : public BooleanModel {
       return m_current_signal.connect(slot);
     }
 
-    void on_current(const std::any& current) {
-      m_current_signal(std::any_cast<const Type&>(current));
-    }
-
   private:
     mutable CurrentSignal m_current_signal;
     std::shared_ptr<ListValueModel> m_source;
     scoped_connection m_source_connection;
+
+    void on_current(const std::any& current) {
+      m_current_signal(std::any_cast<const Type&>(current));
+    }
+
 };
 
 ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
