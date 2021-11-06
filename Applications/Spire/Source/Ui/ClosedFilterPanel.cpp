@@ -159,7 +159,7 @@ bool ClosedFilterPanel::event(QEvent* event) {
 void ClosedFilterPanel::on_list_model_operation(
     const ListModel::Operation& operation) {
   visit(operation,
-    [=] (const ListModel::AddOperation& operation) {
+    [&] (const ListModel::AddOperation& operation) {
       set_style(*m_list_view->get_list_item(operation.m_index),
         LIST_ITEM_STYLE());
       invalidate_descendants(*window());
@@ -167,7 +167,7 @@ void ClosedFilterPanel::on_list_model_operation(
         m_submission->push(m_model->at(operation.m_index, 0));
       }
     },
-    [=] (const ListModel::RemoveOperation& operation) {
+    [&] (const ListModel::RemoveOperation& operation) {
       invalidate_descendants(*window());
       auto index = m_submission->get_size();
       while(--index >= 0) {
@@ -184,7 +184,7 @@ void ClosedFilterPanel::on_list_model_operation(
 void ClosedFilterPanel::on_table_model_operation(
     const TableModel::Operation& operation) {
   visit(operation,
-    [=] (const TableModel::UpdateOperation& operation) {
+    [&] (const TableModel::UpdateOperation& operation) {
       auto index = [&] {
         auto value = displayTextAny(m_model->at(operation.m_row, 0));
         for(auto i = 0; i < m_submission->get_size(); ++i) {
