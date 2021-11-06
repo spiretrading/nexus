@@ -160,8 +160,8 @@ bool ClosedFilterPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void ClosedFilterPanel::on_current(const std::any& value,  bool is_checked) {
-  auto index = [=, &value] {
+void ClosedFilterPanel::on_current(const std::any& value, bool is_checked) {
+  auto index = [&] {
     auto text = displayTextAny(value);
     for(auto i = 0; i < m_submission->get_size(); ++i) {
       if(text == displayTextAny(m_submission->at(i))) {
