@@ -42,15 +42,14 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TableModel> m_model;
+      std::shared_ptr<ArrayListModel> m_submission;
       FilterPanel* m_filter_panel;
       ListView* m_list_view;
-      ScrollableListBox* m_scrollable_list_box;
-      std::shared_ptr<ArrayListModel> m_submission;
       boost::signals2::scoped_connection m_model_connection;
 
-      void on_reset();
-      void on_table_model_operation(const TableModel::Operation& operation);
       void on_list_model_operation(const ListModel::Operation& operation);
+      void on_table_model_operation(const TableModel::Operation& operation);
+      void on_reset();
   };
 }
 

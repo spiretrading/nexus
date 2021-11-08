@@ -34,7 +34,7 @@ namespace Spire {
       mutable CurrentSignal m_current_signal;
       std::shared_ptr<ListModel> m_source;
       int m_index;
-      boost::signals2::scoped_connection m_operation_connection;
+      boost::signals2::scoped_connection m_source_connection;
 
       void on_operation(const ListModel::Operation& operation);
   };
