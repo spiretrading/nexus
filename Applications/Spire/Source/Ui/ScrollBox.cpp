@@ -52,6 +52,8 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer = new ScrollableLayer();
   m_scrollable_layer->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_scrollable_layer->get_vertical_scroll_bar().setVisible(false);
+  m_scrollable_layer->get_horizontal_scroll_bar().setVisible(false);
   m_scrollable_layer->get_vertical_scroll_bar().connect_position_signal(
     [=] (auto position) { on_vertical_scroll(position); });
   m_scrollable_layer->get_horizontal_scroll_bar().connect_position_signal(
