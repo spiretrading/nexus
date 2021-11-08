@@ -14,7 +14,7 @@ namespace Spire {
   using TimeInForceFilterPanel = ClosedFilterPanel;
 
   /**
-   * Returns a new TimeInForceFilterPanel with no selected values.
+   * Returns a new TimeInForceFilterPanel using an empty TimeInForceListModel.
    * @param parent The parent widget.
    */
   TimeInForceFilterPanel* make_time_in_force_filter_panel(QWidget& parent);
