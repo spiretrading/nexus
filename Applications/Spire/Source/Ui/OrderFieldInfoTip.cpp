@@ -69,8 +69,7 @@ namespace {
     layout->setSpacing(0);
     auto value_label = new TextBox(QString::fromStdString(value.m_value));
     value_label->set_read_only(true);
-    value_label->setSizePolicy(
-      QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+    value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     auto value_style = get_style(*value_label);
     value_style.get(ReadOnly()).
       set(border_size(0)).
@@ -82,7 +81,7 @@ namespace {
       new TextAreaBox(QString::fromStdString(value.m_description));
     description_label->set_read_only(true);
     description_label->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Maximum);
+      QSizePolicy::MinimumExpanding, QSizePolicy::Maximum);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
       set(FontSize(scale_height(10))).

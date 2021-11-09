@@ -48,34 +48,12 @@ namespace {
     style.get(Disabled() / Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
-
-  struct VerticalOffsetWrapper : public QWidget {
-    QWidget* m_body;
-
-    VerticalOffsetWrapper(QWidget* body)
-        : m_body(body) {
-      auto layout = new QVBoxLayout();
-      layout->setAlignment(
-        Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
-      layout->setContentsMargins({});
-      m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      layout->addWidget(m_body);
-      setLayout(layout);
-      setFocusProxy(m_body);
-      proxy_style(*this, *body);
-    }
-
-    QSize sizeHint() const override {
-      return m_body->sizeHint();
-    }
-  };
 }
 
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
     ContentSizedTextEdit(std::shared_ptr<TextModel> model)
-        : m_longest_line_width(0),
-          m_model(std::move(model)) {
+        : m_model(std::move(model)) {
       setLineWrapMode(QTextEdit::WidgetWidth);
       horizontalScrollBar()->blockSignals(true);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -90,15 +68,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     }
 
     QSize sizeHint() const override {
-      auto margins = contentsMargins();
-      auto desired_size =
-        QSize(m_longest_line_width, document()->size().toSize().height());
-      auto size = desired_size + QSize(
-        margins.left() + margins.right(), margins.top() + margins.bottom());
-      if(!isReadOnly()) {
-        size.rwidth() += cursorWidth();
-      }
-      return size;
+      return m_size_hint;
     }
 
     QSize minimumSizeHint() const override {
@@ -106,32 +76,39 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     }
 
   private:
-    int m_longest_line_width;
+    QSize m_size_hint;
     std::shared_ptr<TextModel> m_model;
 
     void on_text_changed() {
-      auto previous_longest_line = m_longest_line_width;
-      m_longest_line_width = get_longest_line_width();
-      if(m_longest_line_width != previous_longest_line) {
+      auto size_hint = compute_size_hint();
+      if(size_hint != m_size_hint) {
+        m_size_hint = size_hint;
         updateGeometry();
       }
     }
 
-    int get_longest_line_width() const {
+    QSize compute_size_hint() const {
+      auto metrics = fontMetrics();
       auto lines = m_model->get_current().split('\n');
-      auto longest = 0;
+      auto size_hint = QSize(0, metrics.height() * lines.size());
       for(auto& line : lines) {
-        longest = std::max(longest, fontMetrics().horizontalAdvance(line));
+        size_hint.rwidth() =
+          std::max(size_hint.width(), metrics.horizontalAdvance(line));
       }
-      return longest;
+      auto margins = contentsMargins();
+      size_hint += QSize(
+        margins.left() + margins.right(), margins.top() + margins.bottom());
+      if(!isReadOnly()) {
+        size_hint.rwidth() += cursorWidth();
+      }
+      return size_hint;
     }
 };
 
 class TextAreaBox::ElidedLabel : public QWidget {
   public:
-    ElidedLabel(QWidget* parent)
-      : QWidget(parent),
-        m_line_height(0) {}
+    ElidedLabel()
+      : m_line_height(0) {}
 
     void set_text(const QString &text) {
       m_text = text;
@@ -220,27 +197,28 @@ TextAreaBox::TextAreaBox(QString current, QWidget* parent)
 
 TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
-      m_placeholder_styles([=] { commit_placeholder_style(); }),
-      m_text_edit_styles([=] { commit_style(); }),
       m_model(std::move(model)),
+      m_text_edit_styles([=] { commit_style(); }),
+      m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_submission(m_model->get_current()) {
   m_text_edit = new ContentSizedTextEdit(m_model);
+  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_edit->installEventFilter(this);
-  m_stacked_widget = new QStackedWidget(this);
-  m_stacked_widget->addWidget(new VerticalOffsetWrapper(m_text_edit));
   setFocusProxy(m_text_edit);
-  connect(m_text_edit->document(),
-    &QTextDocument::contentsChanged, this, &TextAreaBox::on_text_changed);
-  m_placeholder = new ElidedLabel(this);
+  connect(m_text_edit->document(), &QTextDocument::contentsChanged, this,
+    &TextAreaBox::on_text_changed);
+  m_placeholder = new ElidedLabel();
   m_placeholder->setFixedSize(0, 0);
-  m_stacked_widget->addWidget(m_placeholder);
   m_placeholder->setCursor(m_text_edit->cursor());
   m_placeholder->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_scroll_box = new ScrollBox(m_stacked_widget, this);
-  m_scroll_box->setFocusProxy(m_text_edit);
+  m_stacked_widget = new QStackedWidget();
+  m_stacked_widget->addWidget(m_text_edit);
+  m_stacked_widget->addWidget(m_placeholder);
+  m_scroll_box = new ScrollBox(m_stacked_widget);
   m_scroll_box->set(
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+  m_scroll_box->setFocusProxy(m_text_edit);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scroll_box);
@@ -250,13 +228,10 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_placeholder_style_connection =
     connect_style_signal(*this, Placeholder(), [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
-  connect(m_text_edit,
-    &QTextEdit::cursorPositionChanged, this, &TextAreaBox::on_cursor_position);
+  connect(m_text_edit, &QTextEdit::cursorPositionChanged, this,
+    &TextAreaBox::on_cursor_position);
   m_current_connection = m_model->connect_current_signal(
     [=] (const auto& value) { on_current(value); });
-  connect(m_text_edit->document()->documentLayout(),
-    &QAbstractTextDocumentLayout::documentSizeChanged,
-    [=] (const auto& size) { m_stacked_widget->adjustSize(); });
 }
 
 const std::shared_ptr<TextModel>& TextAreaBox::get_model() const {
@@ -358,8 +333,8 @@ void TextAreaBox::commit_style() {
   if(m_text_edit_styles.m_line_height &&
       static_cast<int>(font.pixelSize() * *m_text_edit_styles.m_line_height) !=
       m_computed_line_height) {
-    m_computed_line_height = static_cast<int>(m_text_edit->font().pixelSize() *
-      *m_text_edit_styles.m_line_height);
+    m_computed_line_height = static_cast<int>(
+      m_text_edit->font().pixelSize() * *m_text_edit_styles.m_line_height);
     m_placeholder->set_line_height(m_computed_line_height);
     m_scroll_box->get_vertical_scroll_bar().set_line_size(
       m_computed_line_height);
@@ -389,15 +364,9 @@ QSize TextAreaBox::get_padding_size() const {
 
 void TextAreaBox::update_display_text() {
   if(is_read_only()) {
-    if(m_text_edit->toPlainText() != m_model->get_current()) {
-      m_text_edit->blockSignals(true);
-      m_text_edit->setText(m_model->get_current());
-      m_text_edit->blockSignals(false);
-    }
-    auto line_count = (height() - get_padding_size().height()) /
-      m_computed_line_height;
-    auto is_elided = false;
+    auto line_count = m_text_edit->height() / m_computed_line_height;
     if(line_count > 0) {
+      auto is_elided = false;
       auto lines = QStringList();
       for(auto block_index = 0;
           block_index < m_text_edit->document()->blockCount() && !is_elided;
@@ -502,12 +471,24 @@ void TextAreaBox::update_text_edit_width() {
 }
 
 void TextAreaBox::on_current(const QString& current) {
-  auto cursor_pos = m_text_edit->textCursor().position();
-  m_text_edit->setText(current);
+  auto cursor_position = m_text_edit->textCursor().position();
+  {
+    auto blocker = QSignalBlocker(m_text_edit);
+    m_text_edit->setText(current);
+  }
   auto cursor = m_text_edit->textCursor();
-  cursor.setPosition(cursor_pos);
+  cursor.setPosition(cursor_position);
   m_text_edit->setTextCursor(cursor);
   update_display_text();
+
+
+
+/*
+  update_text_edit_width();
+  m_stacked_widget->adjustSize();
+  updateGeometry();
+  update_placeholder_text();
+*/
 }
 
 void TextAreaBox::on_cursor_position() {
@@ -640,12 +621,12 @@ void TextAreaBox::on_style() {
 }
 
 void TextAreaBox::on_text_changed() {
-  if(is_read_only() || m_text_edit->toPlainText() == m_model->get_current()) {
+  if(is_read_only()) {
     return;
   }
-  m_model->set_current(m_text_edit->toPlainText());
-  update_text_edit_width();
-  m_stacked_widget->adjustSize();
-  updateGeometry();
-  update_placeholder_text();
+  auto plain_text = m_text_edit->toPlainText();
+  if(plain_text == m_model->get_current()) {
+    return;
+  }
+  m_model->set_current(plain_text);
 }

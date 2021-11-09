@@ -89,14 +89,14 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TextModel> m_model;
-      QStackedWidget* m_stacked_widget;
       ContentSizedTextEdit* m_text_edit;
-      StyleProperties m_text_edit_styles;
       ElidedLabel* m_placeholder;
+      QStackedWidget* m_stacked_widget;
+      ScrollBox* m_scroll_box;
+      StyleProperties m_text_edit_styles;
       StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
-      ScrollBox* m_scroll_box;
       boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
