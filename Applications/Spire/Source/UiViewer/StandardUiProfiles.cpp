@@ -20,6 +20,7 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
+#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
@@ -34,6 +35,7 @@
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/LocalComboBoxQueryModel.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
@@ -550,6 +552,18 @@ UiProfile Spire::make_closed_filter_panel_profile() {
         panel->show();
       });
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_combo_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("ComboBox"), properties,
+    [](auto& profile) {
+      auto model = std::make_shared<LocalComboBoxQueryModel>();
+      auto combo_box = new ComboBox(model);
+      return combo_box;
     });
   return profile;
 }

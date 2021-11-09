@@ -19,6 +19,7 @@ namespace Spire {
   class CheckBox;
   class ClosedFilterPanel;
   class ColumnViewListModel;
+  class ComboBox;
   class DecimalBox;
   class DestinationListItem;
   class DropDownBox;
@@ -37,6 +38,7 @@ namespace Spire {
   class ListModel;
   class ListValueModel;
   class ListView;
+  class LocalComboBoxQueryModel;
   class MoneyBox;
   class NavigationView;
   class OverlayPanel;

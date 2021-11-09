@@ -17,6 +17,9 @@ namespace Spire {
   /** Returns a UiProfile for the ClosedFilterPanel. */
   UiProfile make_closed_filter_panel_profile();
 
+  /** Returns a UiProfile for the ComboBox. */
+  UiProfile make_combo_box_profile();
+
   /** Returns a UiProfile for the DecimalBox. */
   UiProfile make_decimal_box_profile();
 
