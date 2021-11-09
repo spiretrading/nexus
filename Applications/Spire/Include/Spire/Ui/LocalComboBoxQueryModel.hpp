@@ -15,6 +15,8 @@ namespace Spire {
         query(const ComboBox::QueryModel::Query& query) const override;
 
     private:
+      // TODO: instead of a vector and predicates, maybe use a set and hash
+      //       the data as QStrings.
       std::vector<std::any> m_data;
 
       boost::optional<size_t> index_of(const std::any& value);
