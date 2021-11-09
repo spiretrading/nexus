@@ -128,18 +128,19 @@ namespace {
   }
 
   auto make_prerequisite_container(const QString& prerequisites) {
-    auto container = new QWidget();
-    auto layout = new QVBoxLayout(container);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
-    auto header = make_label(QObject::tr("Prerequisites"), container);
+    auto header = make_label(QObject::tr("Prerequisites"));
     auto header_style = get_style(*header);
     header_style.get(ReadOnly()).
       set(FontSize(scale_height(10)));
     set_style(*header, std::move(header_style));
+    auto container = new QWidget();
+    auto layout = new QVBoxLayout(container);
+    layout->setContentsMargins({});
+    layout->setSpacing(0);
     layout->addWidget(header);
-    auto prerequisites_label =
-      new TextAreaBox(prerequisites, container);
+    auto prerequisites_label = new TextAreaBox(prerequisites);
+    prerequisites_label->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Expanding);
     prerequisites_label->set_read_only(true);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     layout->addWidget(prerequisites_label);
