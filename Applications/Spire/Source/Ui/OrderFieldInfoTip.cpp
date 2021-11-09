@@ -140,7 +140,7 @@ namespace {
     layout->addWidget(header);
     auto prerequisites_label = new TextAreaBox(prerequisites);
     prerequisites_label->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Expanding);
+      QSizePolicy::Expanding, QSizePolicy::Fixed);
     prerequisites_label->set_read_only(true);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     layout->addWidget(prerequisites_label);

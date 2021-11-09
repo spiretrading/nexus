@@ -68,6 +68,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
         &QPlainTextDocumentLayout::documentSizeChanged, this,
         [this] (const auto& size) {
           setFixedHeight(size.height());
+          qDebug() << size << " " << m_model->get_current();
         });
       setText(m_model->get_current());
     }
@@ -208,22 +209,14 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_submission(m_model->get_current()) {
   m_text_edit = new ContentSizedTextEdit(m_model);
   m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  qDebug() << m_text_edit->size() << " " << m_model->get_current() << " foo";
   m_text_edit->installEventFilter(this);
   setFocusProxy(m_text_edit);
   connect(m_text_edit->document(), &QTextDocument::contentsChanged, this,
     &TextAreaBox::on_text_changed);
-  m_placeholder = new ElidedLabel();
-  m_placeholder->setFixedSize(0, 0);
-  m_placeholder->setCursor(m_text_edit->cursor());
-  m_placeholder->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_stacked_widget = new QStackedWidget();
-  m_stacked_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_stacked_widget->addWidget(m_text_edit);
-  m_stacked_widget->addWidget(m_placeholder);
-  m_scroll_box = new ScrollBox(m_stacked_widget);
+  m_scroll_box = new ScrollBox(m_text_edit);
   m_scroll_box->set(
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::ON_OVERFLOW);
-  m_scroll_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   m_scroll_box->setFocusProxy(m_text_edit);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -309,13 +302,10 @@ void TextAreaBox::apply_block_formatting(
 }
 
 void TextAreaBox::commit_placeholder_style() {
-  m_placeholder->set_alignment(m_placeholder_styles.m_alignment);
   auto font = m_placeholder_styles.m_font;
   if(m_placeholder_styles.m_size) {
     font.setPixelSize(*m_placeholder_styles.m_size);
   }
-  m_placeholder->setFont(font);
-  m_placeholder->set_text_color(m_placeholder_styles.m_color);
   update_placeholder_text();
 }
 
@@ -338,7 +328,6 @@ void TextAreaBox::commit_style() {
       m_computed_line_height) {
     m_computed_line_height = static_cast<int>(
       m_text_edit->font().pixelSize() * *m_text_edit_styles.m_line_height);
-    m_placeholder->set_line_height(m_computed_line_height);
     m_scroll_box->get_vertical_scroll_bar().set_line_size(
       m_computed_line_height);
     update_display_text();
@@ -430,22 +419,13 @@ void TextAreaBox::update_document_line_height() {
 
 void TextAreaBox::update_layout() {
   update_text_edit_width();
-  m_stacked_widget->setMinimumSize(
-    size() - get_border_size() - get_padding_size());
-  m_stacked_widget->adjustSize();
   update_placeholder_text();
   updateGeometry();
 }
 
 void TextAreaBox::update_placeholder_text() {
   if(is_placeholder_shown()) {
-    m_placeholder->set_text(m_placeholder_text);
-    m_placeholder->setFixedSize(
-      size() - get_border_size() - get_padding_size());
-    m_stacked_widget->adjustSize();
-    m_placeholder->show();
   } else {
-    m_placeholder->hide();
   }
 }
 
