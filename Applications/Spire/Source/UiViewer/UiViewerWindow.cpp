@@ -148,6 +148,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_time_in_force_box_profile());
+  add(make_time_in_force_filter_panel_profile());
   add(make_tooltip_profile());
   m_widget_list->setCurrentRow(0);
 }
