@@ -92,6 +92,9 @@ namespace Spire {
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 
+  /** Returns a UiProfile for the OrderTypeFilterPanel. */
+  UiProfile make_order_type_filter_panel_profile();
+
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
