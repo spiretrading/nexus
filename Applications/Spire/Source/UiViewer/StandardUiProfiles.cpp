@@ -37,6 +37,7 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -1663,6 +1664,18 @@ UiProfile Spire::make_order_type_box_profile() {
   populate_enum_box_properties(properties, current_property);
   auto profile = UiProfile(QString::fromUtf8("OrderTypeBox"), properties,
     std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
+  return profile;
+}
+
+UiProfile Spire::make_order_type_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<bool>("Limit"));
+  properties.push_back(make_standard_property<bool>("Market"));
+  properties.push_back(make_standard_property<bool>("Pegged"));
+  properties.push_back(make_standard_property<bool>("Stop"));
+  auto profile = UiProfile(QString::fromUtf8("OrderTypeFilterPanel"),
+    properties, std::bind_front(setup_closed_filter_panel_profile<OrderType,
+      OrderTypeListModel, make_order_type_filter_panel>));
   return profile;
 }
 
