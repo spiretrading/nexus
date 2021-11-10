@@ -235,15 +235,12 @@ namespace {
     auto& properties = profile.get_properties();
     auto model = std::make_shared<ArrayListModel>();
     for(auto property : properties) {
-      auto& checked = get<bool>(property->get_name(),
-        profile.get_properties());
-      if(checked.get()) {
+      if(get<bool>(property->get_name(), profile.get_properties()).get()) {
         model->push(*from_string<Type>(property->get_name()));
       }
     }
-    auto selected_model = std::make_shared<ModelType>(model);
     auto button = make_label_button(QString::fromUtf8("Click me"));
-    auto panel = F(selected_model, *button);
+    auto panel = F(std::make_shared<ModelType>(model), *button);
     for(auto i = 0; i < static_cast<int>(properties.size()); ++i) {
       auto& checked = get<bool>(properties[i]->get_name(),
         profile.get_properties());
