@@ -31,7 +31,7 @@ OrderTypeFilterPanel* Spire::make_order_type_filter_panel(
   auto model = std::make_shared<ArrayTableModel>();
   auto& values = populate();
   for(auto& value : values) {
-    model->push({OrderType(value.first), false});
+    model->push({value.first, false});
   }
   for(auto i = 0; i < selected_model->get_size(); ++i) {
     auto type = selected_model->get(i);
