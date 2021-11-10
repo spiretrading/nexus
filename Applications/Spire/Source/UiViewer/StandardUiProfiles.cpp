@@ -47,6 +47,7 @@
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
+#include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -224,6 +225,55 @@ namespace {
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties,
       DecimalBoxProfileProperties(1));
+  }
+
+  template<typename T1, typename T2,
+    typename ClosedFilterPanel* (*F)(std::shared_ptr<T2>, QWidget&)>
+  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    using Type = T1;
+    using ModelType = T2;
+    auto& properties = profile.get_properties();
+    auto model = std::make_shared<ArrayListModel>();
+    for(auto property : properties) {
+      if(get<bool>(property->get_name(), profile.get_properties()).get()) {
+        model->push(*from_string<Type>(property->get_name()));
+      }
+    }
+    auto button = make_label_button(QString::fromUtf8("Click me"));
+    auto panel = F(std::make_shared<ModelType>(model), *button);
+    for(auto i = 0; i < static_cast<int>(properties.size()); ++i) {
+      auto& checked = get<bool>(properties[i]->get_name(),
+        profile.get_properties());
+      checked.connect_changed_signal([=] (const auto& value) {
+        if(panel->get_model()->get<bool>(i, 1) != value) {
+          panel->get_model()->set(i, 1, value);
+        }
+      });
+    }
+    panel->get_model()->connect_operation_signal(
+      [=, &profile] (const TableModel::Operation& operation) {
+        visit(operation,
+          [=, &profile] (const TableModel::UpdateOperation& operation) {
+            auto value = panel->get_model()->get<bool>(operation.m_row, 1);
+            auto& checked = get<bool>(properties[operation.m_row]->get_name(),
+              profile.get_properties());
+            if(checked.get() != value) {
+              checked.set(value);
+            }
+          });
+      });
+    auto submit_filter_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+    panel->connect_submit_signal(
+      [=] (const std::shared_ptr<ListModel>& submission) {
+        auto result = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          result += displayTextAny(submission->at(i)) + " ";
+        }
+        submit_filter_slot(result);
+      });
+    button->connect_clicked_signal([=] { panel->show(); });
+    return button;
   }
 
   template<typename B, typename B* (*F)(QWidget*)>
@@ -1939,6 +1989,16 @@ UiProfile Spire::make_side_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_side_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<bool>("Buy"));
+  properties.push_back(make_standard_property<bool>("Sell"));
+  auto profile = UiProfile(QString::fromUtf8("SideFilterPanel"), properties,
+    std::bind_front(setup_closed_filter_panel_profile<Side, SideListModel,
+      make_side_filter_panel>));
+  return profile;
+}
+
 UiProfile Spire::make_tag_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2140,55 +2200,8 @@ UiProfile Spire::make_time_in_force_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("GTD"));
   properties.push_back(make_standard_property<bool>("MOC"));
   auto profile = UiProfile(QString::fromUtf8("TimeInForceFilterPanel"),
-    properties, [] (auto& profile) {
-      auto& properties = profile.get_properties();
-      auto model = std::make_shared<ArrayListModel>();
-      for(auto property : properties) {
-        auto& checked = get<bool>(property->get_name(),
-          profile.get_properties());
-        if(checked.get()) {
-          model->push(*from_string<TimeInForce>(property->get_name()));
-        }
-      }
-      auto selected_model = std::make_shared<TimeInForceListModel>(model);
-      auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto panel = make_time_in_force_filter_panel(selected_model, *button);
-      for(auto i = 0; i < static_cast<int>(properties.size()); ++i) {
-        auto& checked = get<bool>(properties[i]->get_name(),
-          profile.get_properties());
-        checked.connect_changed_signal([=] (const auto& value) {
-          if(panel->get_model()->get<bool>(i, 1) != value) {
-            panel->get_model()->set(i, 1, value);
-          }
-        });
-      }
-      panel->get_model()->connect_operation_signal(
-        [=, &profile] (const TableModel::Operation& operation) {
-          visit(operation,
-            [=, &profile] (const TableModel::UpdateOperation& operation) {
-              auto value = panel->get_model()->get<bool>(operation.m_row, 1);
-              auto& checked = get<bool>(properties[operation.m_row]->get_name(),
-                profile.get_properties());
-              if(checked.get() != value) {
-                checked.set(value);
-              }
-            });
-        });
-      auto submit_filter_slot =
-        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-      panel->connect_submit_signal(
-        [=] (const std::shared_ptr<ListModel>& submission) {
-          auto result = QString();
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->at(i)) + " ";
-          }
-          submit_filter_slot(result);
-        });
-      button->connect_clicked_signal([=] {
-        panel->show();
-      });
-      return button;
-    });
+    properties, std::bind_front(setup_closed_filter_panel_profile<TimeInForce,
+      TimeInForceListModel, make_time_in_force_filter_panel>));
   return profile;
 }
 
