@@ -208,7 +208,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_submission(model->get_current()) {
   m_text_edit = new ContentSizedTextEdit(std::move(model));
-  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_text_edit->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
   m_text_edit->installEventFilter(this);
   m_scroll_box = new ScrollBox(m_text_edit);
   m_scroll_box->set(

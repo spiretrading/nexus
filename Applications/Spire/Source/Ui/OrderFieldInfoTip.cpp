@@ -78,7 +78,7 @@ namespace {
       new TextAreaBox(QString::fromStdString(value.m_description));
     description_label->set_read_only(true);
     description_label->setSizePolicy(
-      QSizePolicy::MinimumExpanding, QSizePolicy::Maximum);
+      QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
       set(FontSize(scale_height(10))).
@@ -99,7 +99,7 @@ namespace {
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto layout = new QVBoxLayout(container);
     layout->setContentsMargins(
-      scale_width(18), scale_height(18), scale_width(18), scale_height(18));
+      scale_width(18), 0, scale_width(18), scale_height(18));
     layout->setSpacing(scale_height(8));
     for(auto& value : values) {
       layout->addWidget(make_value_widget(value));
@@ -135,17 +135,17 @@ namespace {
       set(FontSize(scale_height(10)));
     set_style(*header, std::move(header_style));
     auto prerequisites_label = new TextAreaBox(prerequisites);
-    prerequisites_label->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Fixed);
     prerequisites_label->set_read_only(true);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     auto container = new QWidget();
+    container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto layout = new QVBoxLayout(container);
     layout->setContentsMargins({});
     layout->setSpacing(0);
     layout->addWidget(header);
     layout->addWidget(prerequisites_label);
     auto box = new Box(container);
+    box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto box_style = get_style(*box);
     box_style.get(Any()).
       set(BorderTopColor(QColor::fromRgb(0xE0E0E0))).
