@@ -95,6 +95,9 @@ namespace Spire {
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 
+  /** Returns a UiProfile for the OrderTypeFilterPanel. */
+  UiProfile make_order_type_filter_panel_profile();
+
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
@@ -128,6 +131,9 @@ namespace Spire {
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
 
+  /** Returns a UiProfile for the SideFilterPanel. */
+  UiProfile make_side_filter_panel_profile();
+
   /** Returns a UiProfile for the Tag. */
   UiProfile make_tag_profile();
 
@@ -142,6 +148,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the TimeInForceBox. */
   UiProfile make_time_in_force_box_profile();
+
+  /** Returns a UiProfile for the TimeInForceFilterPanel. */
+  UiProfile make_time_in_force_filter_panel_profile();
 
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();

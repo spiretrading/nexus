@@ -28,13 +28,13 @@ namespace {
 
   auto CLOSE_BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Body()).
+    style.get(Any() >> is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xE2E0FF)));
-    style.get(!Active() / Body()).
+    style.get(!Active() >> is_a<Icon>()).
       set(Fill(QColor(0xBAB3D9)));
-    style.get(Hover() / Body()).
-      set(BackgroundColor(QColor(0x321471))).
+    style.get((Hover() || Press()) >> is_a<Icon>()).
+      set(BackgroundColor(QColor(0x401D8B))).
       set(Fill(QColor(0xE63F45)));
     return style;
   }
@@ -98,13 +98,13 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_close_button =
+  auto close_button =
     make_icon_button(imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()), this);
-  set_style(*m_close_button, CLOSE_BUTTON_STYLE());
-  m_close_button->setFixedSize(BUTTON_SIZE());
-  m_close_button->setFocusPolicy(Qt::NoFocus);
-  m_close_button->connect_clicked_signal([=] { window()->close(); });
-  layout->addWidget(m_close_button, 0, Qt::AlignRight);
+  set_style(*close_button, CLOSE_BUTTON_STYLE());
+  close_button->setFixedSize(BUTTON_SIZE());
+  close_button->setFocusPolicy(Qt::NoFocus);
+  close_button->connect_clicked_signal([=] { window()->close(); });
+  layout->addWidget(close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
   m_logo_widget = new QLabel(parent);
   m_logo_widget->setFixedSize(scale(134, 50));
