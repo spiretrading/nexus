@@ -1,8 +1,6 @@
 #include "Spire/Ui/TextAreaBox.hpp"
-#include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QPainter>
-#include <QPlainTextDocumentLayout>
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocument>
@@ -54,7 +52,8 @@ namespace {
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
     ContentSizedTextEdit(std::shared_ptr<TextModel> model)
-        : m_model(std::move(model)) {
+        : m_model(std::move(model)),
+          m_is_synchronizing(false) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       setFrameShape(QFrame::NoFrame);
@@ -64,33 +63,55 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       verticalScrollBar()->blockSignals(true);
       document()->setDocumentMargin(0);
       connect(this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
-      connect(document()->documentLayout(),
-        &QPlainTextDocumentLayout::documentSizeChanged, this,
-        [this] (const auto& size) {
-          setFixedHeight(size.height());
-          qDebug() << size << " " << m_model->get_current();
-        });
       setText(m_model->get_current());
+      m_current_connection = m_model->connect_current_signal(
+        [=] (const auto& value) { on_current(value); });
+    }
+
+    const std::shared_ptr<TextModel>& get_model() const {
+      return m_model;
     }
 
     QSize sizeHint() const override {
       return m_size_hint;
     }
 
-    QSize minimumSizeHint() const override {
-      return QSize();
+  private:
+    std::shared_ptr<TextModel> m_model;
+    bool m_is_synchronizing;
+    QSize m_size_hint;
+    scoped_connection m_current_connection;
+
+    template<typename F>
+    void synchronize(F&& f) {
+      if(m_is_synchronizing) {
+        return;
+      }
+      m_is_synchronizing = true;
+      try {
+        std::forward<F>(f)();
+      } catch(const std::exception&) {
+        m_is_synchronizing = false;
+        throw;
+      }
+      m_is_synchronizing = false;
     }
 
-  private:
-    QSize m_size_hint;
-    std::shared_ptr<TextModel> m_model;
-
     void on_text_changed() {
+      synchronize([&] {
+        m_model->set_current(toPlainText());
+      });
       auto size_hint = compute_size_hint();
       if(size_hint != m_size_hint) {
         m_size_hint = size_hint;
         updateGeometry();
       }
+    }
+
+    void on_current(const QString& current) {
+      synchronize([&] {
+        setText(current);
+      });
     }
 
     QSize compute_size_hint() const {
@@ -203,21 +224,16 @@ TextAreaBox::TextAreaBox(QString current, QWidget* parent)
 
 TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)),
       m_text_edit_styles([=] { commit_style(); }),
       m_placeholder_styles([=] { commit_placeholder_style(); }),
-      m_submission(m_model->get_current()) {
-  m_text_edit = new ContentSizedTextEdit(m_model);
-  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  qDebug() << m_text_edit->size() << " " << m_model->get_current() << " foo";
+      m_submission(model->get_current()) {
+  m_text_edit = new ContentSizedTextEdit(std::move(model));
   m_text_edit->installEventFilter(this);
-  setFocusProxy(m_text_edit);
-  connect(m_text_edit->document(), &QTextDocument::contentsChanged, this,
-    &TextAreaBox::on_text_changed);
   m_scroll_box = new ScrollBox(m_text_edit);
   m_scroll_box->set(
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->setFocusProxy(m_text_edit);
+  setFocusProxy(m_scroll_box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scroll_box);
@@ -229,12 +245,10 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
   connect(m_text_edit, &QTextEdit::cursorPositionChanged, this,
     &TextAreaBox::on_cursor_position);
-  m_current_connection = m_model->connect_current_signal(
-    [=] (const auto& value) { on_current(value); });
 }
 
 const std::shared_ptr<TextModel>& TextAreaBox::get_model() const {
-  return m_model;
+  return m_text_edit->get_model();
 }
 
 const QString& TextAreaBox::get_submission() const {
@@ -243,7 +257,6 @@ const QString& TextAreaBox::get_submission() const {
 
 void TextAreaBox::set_placeholder(const QString& value) {
   m_placeholder_text = value;
-  update_placeholder_text();
 }
 
 bool TextAreaBox::is_read_only() const {
@@ -262,7 +275,6 @@ void TextAreaBox::set_read_only(bool read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     unmatch(*this, ReadOnly());
   }
-  update_layout();
 }
 
 connection TextAreaBox::connect_submit_signal(
@@ -270,35 +282,12 @@ connection TextAreaBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-void TextAreaBox::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::EnabledChange) {
-    update_placeholder_text();
-  }
-  QWidget::changeEvent(event);
-}
-
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusOut) {
-    m_submission = m_model->get_current();
+    m_submission = m_text_edit->get_model()->get_current();
     m_submit_signal(m_submission);
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void TextAreaBox::resizeEvent(QResizeEvent* event) {
-  update_layout();
-  QWidget::resizeEvent(event);
-}
-
-void TextAreaBox::apply_block_formatting(
-    const std::function<void(const QTextBlock&)>& format) {
-  auto cursor_position = m_text_edit->textCursor().position();
-  for(auto i = 0; i < m_text_edit->document()->blockCount(); ++i) {
-    format(m_text_edit->document()->findBlockByNumber(i));
-  }
-  auto cursor = m_text_edit->textCursor();
-  cursor.setPosition(cursor_position);
-  m_text_edit->setTextCursor(cursor);
 }
 
 void TextAreaBox::commit_placeholder_style() {
@@ -306,7 +295,6 @@ void TextAreaBox::commit_placeholder_style() {
   if(m_placeholder_styles.m_size) {
     font.setPixelSize(*m_placeholder_styles.m_size);
   }
-  update_placeholder_text();
 }
 
 void TextAreaBox::commit_style() {
@@ -315,24 +303,14 @@ void TextAreaBox::commit_style() {
       background: transparent;
       border-width: 0px;)");
   m_text_edit_styles.m_styles.write(stylesheet);
-  if(m_text_edit_styles.m_alignment!= m_text_edit->alignment()) {
-    update_text_alignment();
-  }
   auto font = m_text_edit_styles.m_font;
   if(m_text_edit_styles.m_size) {
     font.setPixelSize(*m_text_edit_styles.m_size);
   }
   m_text_edit->setFont(font);
-  if(m_text_edit_styles.m_line_height &&
-      static_cast<int>(font.pixelSize() * *m_text_edit_styles.m_line_height) !=
-      m_computed_line_height) {
-    m_computed_line_height = static_cast<int>(
-      m_text_edit->font().pixelSize() * *m_text_edit_styles.m_line_height);
+  if(m_text_edit_styles.m_line_height) {
     m_scroll_box->get_vertical_scroll_bar().set_line_size(
-      m_computed_line_height);
-    update_display_text();
-  } else {
-    m_computed_line_height = m_text_edit->fontMetrics().height();
+      m_text_edit->font().pixelSize() * *m_text_edit_styles.m_line_height);
   }
   if(stylesheet != m_text_edit->styleSheet()) {
     m_text_edit->setStyleSheet(stylesheet);
@@ -340,13 +318,8 @@ void TextAreaBox::commit_style() {
 }
 
 bool TextAreaBox::is_placeholder_shown() const {
-  return !is_read_only() && m_model->get_current().isEmpty() &&
+  return !is_read_only() && m_text_edit->get_model()->get_current().isEmpty() &&
     !m_placeholder_text.isEmpty();
-}
-
-QSize TextAreaBox::get_border_size() const {
-  auto& borders = m_text_edit_styles.m_border_sizes;
-  return {borders.left() + borders.right(), borders.top() + borders.bottom()};
 }
 
 QSize TextAreaBox::get_padding_size() const {
@@ -354,119 +327,7 @@ QSize TextAreaBox::get_padding_size() const {
   return {padding.left() + padding.right(), padding.top() + padding.bottom()};
 }
 
-void TextAreaBox::update_display_text() {
-  if(is_read_only()) {
-/*
-    auto line_count = m_text_edit->height() / m_computed_line_height;
-    if(line_count > 0) {
-      auto is_elided = false;
-      auto lines = QStringList();
-      for(auto block_index = 0;
-          block_index < m_text_edit->document()->blockCount() && !is_elided;
-          ++block_index) {
-        auto block = m_text_edit->document()->findBlockByNumber(block_index);
-        auto block_text = block.text();
-        for(auto line_index = 0; line_index != block.layout()->lineCount();
-            ++line_index) {
-          auto line = block.layout()->lineAt(line_index);
-          lines.append(block_text.mid(line.textStart(), line.textLength()));
-        }
-        if(!lines.isEmpty()) {
-          lines.back().push_back("\n");
-        }
-        is_elided = lines.count() > line_count;
-      }
-      if(is_elided) {
-        while(lines.count() > line_count) {
-          lines.pop_back();
-        }
-        auto& last_line = lines.back();
-        last_line = m_text_edit->fontMetrics().elidedText(last_line,
-          Qt::ElideRight, m_text_edit->width() -
-          m_text_edit->fontMetrics().horizontalAdvance(ELLIPSES_CHAR));
-        if(!last_line.endsWith(ELLIPSES_CHAR)) {
-          if(last_line.endsWith('\n')) {
-            last_line.remove(last_line.size() - 1, 1);
-          }
-          last_line.append(ELLIPSES_CHAR);
-        }
-        {
-          auto blocker = QSignalBlocker(m_text_edit);
-          m_text_edit->setText(lines.join(""));
-        }
-      }
-    }
-*/
-  } else if(m_text_edit->toPlainText() != m_model->get_current()) {
-//    auto blocker = QSignalBlocker(m_text_edit);
-//    m_text_edit->setText(m_model->get_current());
-  }
-  update_text_alignment();
-  update_document_line_height();
-}
-
-void TextAreaBox::update_document_line_height() {
-  apply_block_formatting([&] (const auto& block) {
-    auto cursor = m_text_edit->textCursor();
-    cursor.setPosition(block.position());
-    auto block_format = cursor.blockFormat();
-    block_format.setLineHeight(
-      m_computed_line_height, QTextBlockFormat::FixedHeight);
-    cursor.setBlockFormat(block_format);
-    m_text_edit->setTextCursor(cursor);
-  });
-}
-
-void TextAreaBox::update_layout() {
-  update_text_edit_width();
-  update_placeholder_text();
-  updateGeometry();
-}
-
-void TextAreaBox::update_placeholder_text() {
-  if(is_placeholder_shown()) {
-  } else {
-  }
-}
-
-void TextAreaBox::update_text_alignment() {
-  apply_block_formatting(
-    [&, alignment = m_text_edit_styles.m_alignment] (const auto& block) {
-      auto cursor = m_text_edit->textCursor();
-      cursor.setPosition(block.position());
-      m_text_edit->setTextCursor(cursor);
-      m_text_edit->setAlignment(alignment);
-    });
-}
-
-void TextAreaBox::update_text_edit_width() {
-  auto border_size = get_border_size();
-  auto padding_size = get_padding_size();
-  if(!is_read_only() &&
-      m_text_edit->document()->size().toSize().height() >
-      height() - padding_size.height() - border_size.height()) {
-    m_text_edit->setFixedWidth(width() -
-      m_scroll_box->get_vertical_scroll_bar().sizeHint().width() -
-      border_size.width() - padding_size.width());
-  } else {
-    m_text_edit->setFixedWidth(
-      width() - border_size.width() - padding_size.width());
-  }
-  update_display_text();
-}
-
-void TextAreaBox::on_current(const QString& current) {
-  {
-    auto blocker = QSignalBlocker(m_text_edit);
-    m_text_edit->setText(current);
-  }
-  updateGeometry();
-}
-
 void TextAreaBox::on_cursor_position() {
-  if(!m_text_edit->hasFocus()) {
-    return;
-  }
   if(m_scroll_box->get_vertical_scroll_bar().isVisible() &&
       !m_text_edit->visibleRegion().boundingRect().contains(
         m_text_edit->cursorRect())) {
@@ -590,21 +451,4 @@ void TextAreaBox::on_style() {
         });
     }
   });
-}
-
-void TextAreaBox::on_text_changed() {
-  if(is_read_only()) {
-    static auto block = 0;
-    if(block == 0) {
-      ++block;
-      update_layout();
-      --block;
-    }
-    return;
-  }
-  auto plain_text = m_text_edit->toPlainText();
-  if(plain_text == m_model->get_current()) {
-    return;
-  }
-  m_model->set_current(plain_text);
 }

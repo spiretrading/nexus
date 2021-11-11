@@ -67,9 +67,7 @@ namespace Styles {
         const SubmitSignal::slot_type& slot) const;
 
     protected:
-      void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
 
     private:
       class ContentSizedTextEdit;
@@ -88,7 +86,6 @@ namespace Styles {
         void clear();
       };
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<TextModel> m_model;
       ContentSizedTextEdit* m_text_edit;
       ElidedLabel* m_placeholder;
       QStackedWidget* m_stacked_widget;
@@ -97,28 +94,16 @@ namespace Styles {
       StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
-      boost::signals2::scoped_connection m_current_connection;
       QString m_submission;
       QString m_placeholder_text;
-      int m_computed_line_height;
 
-      void apply_block_formatting(
-        const std::function<void(const QTextBlock& block)>& formatting);
       void commit_placeholder_style();
       void commit_style();
       QSize get_border_size() const;
       QSize get_padding_size() const;
       bool is_placeholder_shown() const;
-      void update_display_text();
-      void update_document_line_height();
-      void update_layout();
-      void update_placeholder_text();
-      void update_text_alignment();
-      void update_text_edit_width();
-      void on_current(const QString& current);
       void on_cursor_position();
       void on_style();
-      void on_text_changed();
   };
 }
 

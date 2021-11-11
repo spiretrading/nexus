@@ -7,6 +7,8 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+#include <QResizeEvent>
+
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -39,7 +41,27 @@ namespace {
     return style;
   }
 
+  struct Dummy : QObject {
+    bool eventFilter(QObject* receiver, QEvent* event) override {
+      if(event->type() == QEvent::Resize) {
+        qDebug() << static_cast<QResizeEvent*>(event)->size();
+      }
+      return QObject::eventFilter(receiver, event);
+    }
+  };
+
   auto make_description_container(const OrderFieldInfoTip::Model& model) {
+    auto name_label = make_label(QString::fromStdString(model.m_tag.m_name));
+    name_label->set_read_only(true);
+    set_style(*name_label, NAME_STYLE());
+    auto description_label =
+      new TextAreaBox(QString::fromStdString(model.m_tag.m_description));
+    description_label->installEventFilter(new Dummy());
+    description_label->set_read_only(true);
+    auto description_style = get_style(*description_label);
+    description_style.get(ReadOnly()).
+      set(PaddingTop(scale_height(6)));
+    set_style(*description_label, std::move(description_style));
     auto description_container = new QWidget();
     description_container->setSizePolicy(
       QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -47,26 +69,12 @@ namespace {
     description_layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
     description_layout->setSpacing(0);
-    auto name_label = make_label(QString::fromStdString(model.m_tag.m_name));
-    name_label->set_read_only(true);
-    set_style(*name_label, NAME_STYLE());
     description_layout->addWidget(name_label);
-    auto description_label =
-      new TextAreaBox(QString::fromStdString(model.m_tag.m_description));
-    description_label->set_read_only(true);
-    auto description_style = get_style(*description_label);
-    description_style.get(ReadOnly()).
-      set(PaddingTop(scale_height(6)));
-    set_style(*description_label, std::move(description_style));
     description_layout->addWidget(description_label);
     return description_container;
   }
 
   auto make_value_widget(const OrderFieldInfoTip::Model::AllowedValue& value) {
-    auto container = new QWidget();
-    auto layout = new QHBoxLayout(container);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
     auto value_label = new TextBox(QString::fromStdString(value.m_value));
     value_label->set_read_only(true);
     value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
@@ -76,7 +84,6 @@ namespace {
       set(FontSize(scale_height(10))).
       set(TextAlign(Qt::AlignTop));
     set_style(*value_label, std::move(value_style));
-    layout->addWidget(value_label, 0, Qt::AlignTop);
     auto description_label =
       new TextAreaBox(QString::fromStdString(value.m_description));
     description_label->set_read_only(true);
@@ -87,6 +94,11 @@ namespace {
       set(FontSize(scale_height(10))).
       set(PaddingLeft(scale_width(8)));
     set_style(*description_label, std::move(description_style));
+    auto container = new QWidget();
+    auto layout = new QHBoxLayout(container);
+    layout->setContentsMargins({});
+    layout->setSpacing(0);
+    layout->addWidget(value_label, 0, Qt::AlignTop);
     layout->addWidget(description_label, 0, Qt::AlignTop);
     return container;
   }
@@ -99,7 +111,7 @@ namespace {
     layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
     layout->setSpacing(scale_height(8));
-    for(const auto& value : values) {
+    for(auto& value : values) {
       layout->addWidget(make_value_widget(value));
     }
     return container;
@@ -119,8 +131,7 @@ namespace {
   }
 
   auto make_scroll_box(const OrderFieldInfoTip::Model& model) {
-    auto scroll_box_body = make_scroll_box_body(model);
-    auto scroll_box = new ScrollBox(scroll_box_body);
+    auto scroll_box = new ScrollBox(make_scroll_box_body(model));
     scroll_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     scroll_box->setFixedWidth(scale_width(280));
     scroll_box->setMaximumHeight(scale_height(240));
@@ -133,16 +144,16 @@ namespace {
     header_style.get(ReadOnly()).
       set(FontSize(scale_height(10)));
     set_style(*header, std::move(header_style));
-    auto container = new QWidget();
-    auto layout = new QVBoxLayout(container);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
-    layout->addWidget(header);
     auto prerequisites_label = new TextAreaBox(prerequisites);
     prerequisites_label->setSizePolicy(
       QSizePolicy::Expanding, QSizePolicy::Fixed);
     prerequisites_label->set_read_only(true);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
+    auto container = new QWidget();
+    auto layout = new QVBoxLayout(container);
+    layout->setContentsMargins({});
+    layout->setSpacing(0);
+    layout->addWidget(header);
     layout->addWidget(prerequisites_label);
     auto box = new Box(container);
     auto box_style = get_style(*box);
