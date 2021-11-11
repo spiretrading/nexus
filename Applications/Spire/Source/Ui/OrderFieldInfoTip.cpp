@@ -7,8 +7,6 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
-#include <QResizeEvent>
-
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -65,17 +63,17 @@ namespace {
     return description_container;
   }
 
-  auto make_value_widget(const OrderFieldInfoTip::Model::AllowedValue& value) {
-    auto value_label = new TextBox(QString::fromStdString(value.m_value));
-    value_label->set_read_only(true);
-    value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-    auto value_style = get_style(*value_label);
-    value_style.get(ReadOnly()).
+  auto make_value_row(const OrderFieldInfoTip::Model::AllowedValue& value) {
+    auto id_label = new TextBox(QString::fromStdString(value.m_value));
+    id_label->set_read_only(true);
+    id_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    auto id_style = get_style(*id_label);
+    id_style.get(ReadOnly()).
       set(vertical_padding(0)).
       set(border_size(0)).
       set(FontSize(scale_height(10))).
       set(TextAlign(Qt::AlignTop));
-    set_style(*value_label, std::move(value_style));
+    set_style(*id_label, std::move(id_style));
     auto description_label =
       new TextAreaBox(QString::fromStdString(value.m_description));
     description_label->set_read_only(true);
@@ -87,25 +85,23 @@ namespace {
       set(FontSize(scale_height(10))).
       set(PaddingLeft(scale_width(8)));
     set_style(*description_label, std::move(description_style));
-    auto container = new QWidget();
-    auto layout = new QHBoxLayout(container);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
-    layout->addWidget(value_label, 0, Qt::AlignTop);
-    layout->addWidget(description_label, 0, Qt::AlignTop);
-    return container;
+    return std::tuple(id_label, description_label);
   }
 
   auto make_values_container(
       const std::vector<OrderFieldInfoTip::Model::AllowedValue>& values) {
     auto container = new QWidget();
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto layout = new QVBoxLayout(container);
+    auto layout = new QGridLayout(container);
     layout->setContentsMargins(
       scale_width(18), 0, scale_width(18), scale_height(18));
-    layout->setSpacing(scale_height(8));
-    for(auto& value : values) {
-      layout->addWidget(make_value_widget(value));
+    layout->setHorizontalSpacing(0);
+    layout->setVerticalSpacing(scale_height(8));
+    for(auto i = std::size_t(0); i != values.size(); ++i) {
+      auto& value = values[i];
+      auto [id, description] = make_value_row(value);
+      layout->addWidget(id, i, 0, Qt::AlignTop);
+      layout->addWidget(description, i, 1, Qt::AlignTop);
     }
     return container;
   }
