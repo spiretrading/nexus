@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
+#include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -36,7 +37,6 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
-#include "Spire/Ui/OrderFieldInfoTip.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
@@ -1636,7 +1636,7 @@ UiProfile Spire::make_order_field_info_tip_profile() {
       model.m_tag.m_description = get<QString>("description",
         profile.get_properties()).get().toStdString();
       auto parse_value = [] (const auto& text) {
-        auto value = OrderFieldInfoTip::Model::AllowedValue{};
+        auto value = OrderFieldInfoTip::Model::Argument();
         auto list = text.split(",");
         if(!list.isEmpty()) {
           value.m_value = list.front().toStdString();
@@ -1654,7 +1654,7 @@ UiProfile Spire::make_order_field_info_tip_profile() {
             tag.m_name = item.toStdString();
             continue;
           }
-          tag.m_values.push_back({item.toStdString(), ""});
+          tag.m_arguments.push_back({item.toStdString(), ""});
         }
         return tag;
       };
@@ -1662,7 +1662,7 @@ UiProfile Spire::make_order_field_info_tip_profile() {
         auto& value = get<QString>(QString("value%1").arg(i),
           profile.get_properties());
         if(auto text = value.get(); !text.isEmpty()) {
-          model.m_tag.m_values.push_back(parse_value(text));
+          model.m_tag.m_arguments.push_back(parse_value(text));
         }
         auto& prereq =
           get<QString>(QString("prereq%1").arg(i), profile.get_properties());
