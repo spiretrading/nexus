@@ -21,7 +21,7 @@ namespace {
     style.get(ReadOnly()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Font(font)).
-      set(TextColor(QColor::fromRgb(0x808080))).
+      set(TextColor(QColor(0x808080))).
       set(horizontal_padding(0));
     return style;
   }
@@ -34,7 +34,7 @@ namespace {
     style.get(ReadOnly()).
       set(border_color(QColor(Qt::transparent))).
       set(Font(font)).
-      set(TextColor(QColor::fromRgb(0x4B23A0))).
+      set(TextColor(QColor(0x4B23A0))).
       set(LineHeight(scale_height(1.13))).
       set(PaddingLeft(scale_width(20))).
       set(PaddingTop(scale_height(4)));
@@ -50,7 +50,8 @@ namespace {
     description_label->set_read_only(true);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
-      set(PaddingTop(scale_height(6)));
+      set(PaddingTop(scale_height(6))).
+      set(PaddingBottom(0));
     set_style(*description_label, std::move(description_style));
     auto description_container = new QWidget();
     description_container->setSizePolicy(
@@ -70,6 +71,7 @@ namespace {
     value_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     auto value_style = get_style(*value_label);
     value_style.get(ReadOnly()).
+      set(vertical_padding(0)).
       set(border_size(0)).
       set(FontSize(scale_height(10))).
       set(TextAlign(Qt::AlignTop));
@@ -81,6 +83,7 @@ namespace {
       QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
+      set(vertical_padding(0)).
       set(FontSize(scale_height(10))).
       set(PaddingLeft(scale_width(8)));
     set_style(*description_label, std::move(description_style));
@@ -148,7 +151,7 @@ namespace {
     box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto box_style = get_style(*box);
     box_style.get(Any()).
-      set(BorderTopColor(QColor::fromRgb(0xE0E0E0))).
+      set(BorderTopColor(QColor(0xE0E0E0))).
       set(BorderTopSize(scale_height(1))).
       set(padding(scale_width(18)));
     set_style(*box, std::move(box_style));
