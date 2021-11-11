@@ -82,7 +82,6 @@ namespace Spire {
       TextBox* m_username_text_box;
       TextBox* m_password_text_box;
       Button* m_sign_in_button;
-      Button* m_close_button;
       bool m_is_dragging;
       QPoint m_last_pos;
       ChromaHashWidget* m_chroma_hash_widget;
