@@ -64,15 +64,10 @@ namespace {
   }
 
   auto make_value_row(const OrderFieldInfoTip::Model::Argument& argument) {
-    auto id_label = new TextBox(QString::fromStdString(argument.m_value));
-    id_label->set_read_only(true);
-    id_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    auto id_label = make_label(QString::fromStdString(argument.m_value));
     auto id_style = get_style(*id_label);
     id_style.get(ReadOnly()).
-      set(vertical_padding(0)).
-      set(border_size(0)).
-      set(FontSize(scale_height(10))).
-      set(TextAlign(Qt::AlignTop));
+      set(FontSize(scale_height(10)));
     set_style(*id_label, std::move(id_style));
     auto description_label =
       new TextAreaBox(QString::fromStdString(argument.m_description));
@@ -81,6 +76,7 @@ namespace {
       QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
+      set(border_size(0)).
       set(vertical_padding(0)).
       set(FontSize(scale_height(10))).
       set(PaddingLeft(scale_width(8)));

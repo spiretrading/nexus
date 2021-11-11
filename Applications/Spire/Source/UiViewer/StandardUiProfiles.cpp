@@ -1606,18 +1606,21 @@ UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(
-    make_standard_property("name", QString::fromUtf8("TestOrderFieldInfoTip")));
+    make_standard_property("name", QString::fromUtf8("TSXPegType")));
   properties.push_back(make_standard_property("description", QString::fromUtf8(
-    "A property to test the style and layout of the OrderFieldInfoTip.")));
-  properties.push_back(
-    make_standard_property("value1", QString::fromUtf8("A,Test value 1.")));
-  properties.push_back(
-    make_standard_property("value2", QString::fromUtf8("B,Test value 2.")));
-  properties.push_back(
-    make_standard_property("value3", QString::fromUtf8("C,Test value 3.")));
-  properties.push_back(
-    make_standard_property("value4", QString::fromUtf8(
-      "D,Test value 4 with an unnecessarily long multiple line description.")));
+    "Peg to the protected NBBO. Available on undisplayed orders only.")));
+  properties.push_back(make_standard_property("value1", QString::fromUtf8(
+    "C,Contra Midpoint Only Plus. Order is priced at the Protected NBBO "
+    "midpoint. Can trade only against other Contra Midpoint Only Plus "
+    "orders.")));
+  properties.push_back(make_standard_property("value2", QString::fromUtf8(
+    "D,Contra Midpoint Only Plus, Dark Sweep. Order is priced at the protected "
+    "NBBO midpoint. Can trade against all dark orders on entry, and only "
+    "against other Contra Midpoint Only Plus orders once resting.")));
+  properties.push_back(make_standard_property("value3", QString::fromUtf8(
+    "M,Subject to the order's optional limit price.")));
+  properties.push_back(make_standard_property("value4", QString::fromUtf8(
+    "Q,Additional value.")));
   properties.push_back(make_standard_property(
     "prereq1", QString::fromUtf8("Prerequisite1,A,B,C,D,E")));
   properties.push_back(make_standard_property(
@@ -1630,7 +1633,7 @@ UiProfile Spire::make_order_field_info_tip_profile() {
     [] (auto& profile) {
       auto label = make_label("Hover me!");
       apply_widget_properties(label, profile.get_properties());
-      auto model = OrderFieldInfoTip::Model{};
+      auto model = OrderFieldInfoTip::Model();
       model.m_tag.m_name =
         get<QString>("name", profile.get_properties()).get().toStdString();
       model.m_tag.m_description = get<QString>("description",
@@ -1647,7 +1650,7 @@ UiProfile Spire::make_order_field_info_tip_profile() {
         return value;
       };
       auto parse_tag = [] (const auto& text) {
-        auto tag = OrderFieldInfoTip::Model::Tag{};
+        auto tag = OrderFieldInfoTip::Model::Tag();
         auto list = text.split(",");
         for(auto& item : list) {
           if(tag.m_name.empty()) {
