@@ -1,8 +1,8 @@
 #include "Spire/Ui/TextAreaBox.hpp"
+#include <QAbstractTextDocumentLayout>
 #include <QHBoxLayout>
 #include <QPainter>
 #include <QScrollBar>
-#include <QTextBlock>
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -63,6 +63,9 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       verticalScrollBar()->blockSignals(true);
       document()->setDocumentMargin(0);
       connect(this, &QTextEdit::textChanged, this, [=] { on_text_changed(); });
+      connect(document()->documentLayout(),
+        &QAbstractTextDocumentLayout::documentSizeChanged, this,
+        [=] (const auto& size) { updateGeometry(); });
       setText(m_model->get_current());
       m_current_connection = m_model->connect_current_signal(
         [=] (const auto& value) { on_current(value); });
@@ -73,13 +76,12 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     }
 
     QSize sizeHint() const override {
-      return m_size_hint;
+      return document()->documentLayout()->documentSize().toSize();
     }
 
   private:
     std::shared_ptr<TextModel> m_model;
     bool m_is_synchronizing;
-    QSize m_size_hint;
     scoped_connection m_current_connection;
 
     template<typename F>
@@ -101,34 +103,12 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       synchronize([&] {
         m_model->set_current(toPlainText());
       });
-      auto size_hint = compute_size_hint();
-      if(size_hint != m_size_hint) {
-        m_size_hint = size_hint;
-        updateGeometry();
-      }
     }
 
     void on_current(const QString& current) {
       synchronize([&] {
         setText(current);
       });
-    }
-
-    QSize compute_size_hint() const {
-      auto metrics = fontMetrics();
-      auto lines = m_model->get_current().split('\n');
-      auto size_hint = QSize(0, metrics.height() * lines.size());
-      for(auto& line : lines) {
-        size_hint.rwidth() =
-          std::max(size_hint.width(), metrics.horizontalAdvance(line));
-      }
-      auto margins = contentsMargins();
-      size_hint += QSize(
-        margins.left() + margins.right(), margins.top() + margins.bottom());
-      if(!isReadOnly()) {
-        size_hint.rwidth() += cursorWidth();
-      }
-      return size_hint;
     }
 };
 
@@ -228,6 +208,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
       m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_submission(model->get_current()) {
   m_text_edit = new ContentSizedTextEdit(std::move(model));
+  m_text_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_text_edit->installEventFilter(this);
   m_scroll_box = new ScrollBox(m_text_edit);
   m_scroll_box->set(

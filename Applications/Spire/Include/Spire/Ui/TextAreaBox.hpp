@@ -99,7 +99,6 @@ namespace Styles {
 
       void commit_placeholder_style();
       void commit_style();
-      QSize get_border_size() const;
       QSize get_padding_size() const;
       bool is_placeholder_shown() const;
       void on_cursor_position();

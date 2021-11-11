@@ -41,22 +41,12 @@ namespace {
     return style;
   }
 
-  struct Dummy : QObject {
-    bool eventFilter(QObject* receiver, QEvent* event) override {
-      if(event->type() == QEvent::Resize) {
-        qDebug() << static_cast<QResizeEvent*>(event)->size();
-      }
-      return QObject::eventFilter(receiver, event);
-    }
-  };
-
   auto make_description_container(const OrderFieldInfoTip::Model& model) {
     auto name_label = make_label(QString::fromStdString(model.m_tag.m_name));
     name_label->set_read_only(true);
     set_style(*name_label, NAME_STYLE());
     auto description_label =
       new TextAreaBox(QString::fromStdString(model.m_tag.m_description));
-    description_label->installEventFilter(new Dummy());
     description_label->set_read_only(true);
     auto description_style = get_style(*description_label);
     description_style.get(ReadOnly()).
