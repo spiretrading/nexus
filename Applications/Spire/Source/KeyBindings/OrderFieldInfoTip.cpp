@@ -39,7 +39,7 @@ namespace {
     return style;
   }
 
-  auto make_description_container(const OrderFieldInfoTip::Model& model) {
+  auto make_description_layout(const OrderFieldInfoTip::Model& model) {
     auto name_label = make_label(QString::fromStdString(model.m_tag.m_name));
     name_label->set_read_only(true);
     set_style(*name_label, NAME_STYLE());
@@ -51,16 +51,13 @@ namespace {
       set(PaddingTop(scale_height(6))).
       set(PaddingBottom(0));
     set_style(*description_label, std::move(description_style));
-    auto description_container = new QWidget();
-    description_container->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto description_layout = new QVBoxLayout(description_container);
-    description_layout->setContentsMargins(
+    auto layout = new QVBoxLayout();
+    layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
-    description_layout->setSpacing(0);
-    description_layout->addWidget(name_label);
-    description_layout->addWidget(description_label);
-    return description_container;
+    layout->setSpacing(0);
+    layout->addWidget(name_label);
+    layout->addWidget(description_label);
+    return layout;
   }
 
   auto make_value_row(const OrderFieldInfoTip::Model::Argument& argument) {
@@ -84,11 +81,9 @@ namespace {
     return std::tuple(id_label, description_label);
   }
 
-  auto make_values_container(
+  auto make_values_table(
       const std::vector<OrderFieldInfoTip::Model::Argument>& arguments) {
-    auto container = new QWidget();
-    container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto layout = new QGridLayout(container);
+    auto layout = new QGridLayout();
     layout->setContentsMargins(
       scale_width(18), 0, scale_width(18), scale_height(18));
     layout->setHorizontalSpacing(0);
@@ -99,7 +94,7 @@ namespace {
       layout->addWidget(id, i, 0, Qt::AlignTop);
       layout->addWidget(description, i, 1, Qt::AlignTop);
     }
-    return container;
+    return layout;
   }
 
   auto make_scroll_box_body(const OrderFieldInfoTip::Model& model) {
@@ -108,9 +103,9 @@ namespace {
     auto layout = new QVBoxLayout(body);
     layout->setContentsMargins({});
     layout->setSpacing(0);
-    layout->addWidget(make_description_container(model));
+    layout->addLayout(make_description_layout(model));
     if(!model.m_tag.m_arguments.empty()) {
-      layout->addWidget(make_values_container(model.m_tag.m_arguments));
+      layout->addLayout(make_values_table(model.m_tag.m_arguments));
     }
     return body;
   }
