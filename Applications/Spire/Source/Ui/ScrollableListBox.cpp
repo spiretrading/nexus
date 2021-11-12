@@ -25,6 +25,7 @@ namespace {
 ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view) {
+  setFocusProxy(m_list_view);
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   m_scroll_box = new ScrollBox(m_list_view);

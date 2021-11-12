@@ -26,11 +26,11 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
       m_panel_border_size(0, 0) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  setFocusProxy(m_list_view);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
   set_style(*m_scrollable_list_box,
     SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
   layout->addWidget(m_scrollable_list_box);
+  setFocusProxy(m_scrollable_list_box);
   m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_focus_out(true);
   on_panel_style();
