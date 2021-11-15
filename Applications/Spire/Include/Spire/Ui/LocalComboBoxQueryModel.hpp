@@ -4,11 +4,21 @@
 
 namespace Spire {
 
+  /** Implements a ComboBox::QueryModel in memory. */
   class LocalComboBoxQueryModel : public ComboBox::QueryModel {
     public:
 
+      /**
+       * Adds a value to the model.
+       * @param value The value to add.
+       */
       void add(const std::any& value);
   
+      /**
+       * Removes the given value from the model iff the model contains that
+       * value.
+       * @param value The value to remove.
+       */
       void remove(const std::any& value);
 
       QtPromise<std::vector<std::any>>
