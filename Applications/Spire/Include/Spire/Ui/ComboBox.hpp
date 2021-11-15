@@ -15,7 +15,7 @@ namespace Spire {
   class ComboBox: public QWidget {
     public:
 
-      /** The model used to filter selectable values. */
+      /** A model over a set of values that can be queried. */
       class QueryModel {
         public:
 
