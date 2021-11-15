@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
+#include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -39,6 +40,7 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -49,10 +51,12 @@
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
+#include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
+#include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
@@ -225,6 +229,55 @@ namespace {
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties,
       DecimalBoxProfileProperties(1));
+  }
+
+  template<typename T1, typename T2,
+    typename ClosedFilterPanel* (*F)(std::shared_ptr<T2>, QWidget&)>
+  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    using Type = T1;
+    using ModelType = T2;
+    auto& properties = profile.get_properties();
+    auto model = std::make_shared<ArrayListModel>();
+    for(auto property : properties) {
+      if(get<bool>(property->get_name(), profile.get_properties()).get()) {
+        model->push(*from_string<Type>(property->get_name()));
+      }
+    }
+    auto button = make_label_button(QString::fromUtf8("Click me"));
+    auto panel = F(std::make_shared<ModelType>(model), *button);
+    for(auto i = 0; i < static_cast<int>(properties.size()); ++i) {
+      auto& checked = get<bool>(properties[i]->get_name(),
+        profile.get_properties());
+      checked.connect_changed_signal([=] (const auto& value) {
+        if(panel->get_model()->get<bool>(i, 1) != value) {
+          panel->get_model()->set(i, 1, value);
+        }
+      });
+    }
+    panel->get_model()->connect_operation_signal(
+      [=, &profile] (const TableModel::Operation& operation) {
+        visit(operation,
+          [=, &profile] (const TableModel::UpdateOperation& operation) {
+            auto value = panel->get_model()->get<bool>(operation.m_row, 1);
+            auto& checked = get<bool>(properties[operation.m_row]->get_name(),
+              profile.get_properties());
+            if(checked.get() != value) {
+              checked.set(value);
+            }
+          });
+      });
+    auto submit_filter_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+    panel->connect_submit_signal(
+      [=] (const std::shared_ptr<ListModel>& submission) {
+        auto result = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          result += displayTextAny(submission->at(i)) + " ";
+        }
+        submit_filter_slot(result);
+      });
+    button->connect_clicked_signal([=] { panel->show(); });
+    return button;
   }
 
   template<typename B, typename B* (*F)(QWidget*)>
@@ -1615,6 +1668,83 @@ UiProfile Spire::make_navigation_view_profile() {
   return profile;
 }
 
+UiProfile Spire::make_order_field_info_tip_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property("name", QString::fromUtf8("TSXPegType")));
+  properties.push_back(make_standard_property("description", QString::fromUtf8(
+    "Peg to the protected NBBO. Available on undisplayed orders only.")));
+  properties.push_back(make_standard_property("value1", QString::fromUtf8(
+    "C,Contra Midpoint Only Plus. Order is priced at the Protected NBBO "
+    "midpoint. Can trade only against other Contra Midpoint Only Plus "
+    "orders.")));
+  properties.push_back(make_standard_property("value2", QString::fromUtf8(
+    "D,Contra Midpoint Only Plus, Dark Sweep. Order is priced at the protected "
+    "NBBO midpoint. Can trade against all dark orders on entry, and only "
+    "against other Contra Midpoint Only Plus orders once resting.")));
+  properties.push_back(make_standard_property("value3", QString::fromUtf8(
+    "M,Subject to the order's optional limit price.")));
+  properties.push_back(make_standard_property("value4", QString::fromUtf8(
+    "Q,Additional value.")));
+  properties.push_back(make_standard_property(
+    "prereq1", QString::fromUtf8("Prerequisite1,A,B,C,D,E")));
+  properties.push_back(make_standard_property(
+    "prereq2", QString::fromUtf8("Prerequisite2,A,B,C,D,E")));
+  properties.push_back(make_standard_property(
+    "prereq3", QString::fromUtf8("Prerequisite3,A,B,C,D,E")));
+  properties.push_back(make_standard_property(
+    "prereq4", QString::fromUtf8("Prerequisite4,A,B,C,D,E")));
+  auto profile = UiProfile(QString::fromUtf8("OrderFieldInfoTip"), properties,
+    [] (auto& profile) {
+      auto label = make_label("Hover me!");
+      apply_widget_properties(label, profile.get_properties());
+      auto model = OrderFieldInfoTip::Model();
+      model.m_tag.m_name =
+        get<QString>("name", profile.get_properties()).get().toStdString();
+      model.m_tag.m_description = get<QString>("description",
+        profile.get_properties()).get().toStdString();
+      auto parse_value = [] (const auto& text) {
+        auto value = OrderFieldInfoTip::Model::Argument();
+        auto list = text.split(",");
+        if(!list.isEmpty()) {
+          value.m_value = list.front().toStdString();
+          if(list.size() > 1) {
+            value.m_description = list[1].toStdString();
+          }
+        }
+        return value;
+      };
+      auto parse_tag = [] (const auto& text) {
+        auto tag = OrderFieldInfoTip::Model::Tag();
+        auto list = text.split(",");
+        for(auto& item : list) {
+          if(tag.m_name.empty()) {
+            tag.m_name = item.toStdString();
+            continue;
+          }
+          tag.m_arguments.push_back({item.toStdString(), ""});
+        }
+        return tag;
+      };
+      for(auto i = 1; i < 5; ++i) {
+        auto& value = get<QString>(QString("value%1").arg(i),
+          profile.get_properties());
+        if(auto text = value.get(); !text.isEmpty()) {
+          model.m_tag.m_arguments.push_back(parse_value(text));
+        }
+        auto& prereq =
+          get<QString>(QString("prereq%1").arg(i), profile.get_properties());
+        if(auto text = prereq.get(); !text.isEmpty()) {
+          model.m_prerequisites.push_back(parse_tag(text));
+        }
+      }
+      auto tip = new OrderFieldInfoTip(std::move(model), label);
+      return label;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_order_type_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1626,6 +1756,18 @@ UiProfile Spire::make_order_type_box_profile() {
   populate_enum_box_properties(properties, current_property);
   auto profile = UiProfile(QString::fromUtf8("OrderTypeBox"), properties,
     std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
+  return profile;
+}
+
+UiProfile Spire::make_order_type_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<bool>("Limit"));
+  properties.push_back(make_standard_property<bool>("Market"));
+  properties.push_back(make_standard_property<bool>("Pegged"));
+  properties.push_back(make_standard_property<bool>("Stop"));
+  auto profile = UiProfile(QString::fromUtf8("OrderTypeFilterPanel"),
+    properties, std::bind_front(setup_closed_filter_panel_profile<OrderType,
+      OrderTypeListModel, make_order_type_filter_panel>));
   return profile;
 }
 
@@ -1952,6 +2094,16 @@ UiProfile Spire::make_side_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_side_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<bool>("Buy"));
+  properties.push_back(make_standard_property<bool>("Sell"));
+  auto profile = UiProfile(QString::fromUtf8("SideFilterPanel"), properties,
+    std::bind_front(setup_closed_filter_panel_profile<Side, SideListModel,
+      make_side_filter_panel>));
+  return profile;
+}
+
 UiProfile Spire::make_tag_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2139,6 +2291,22 @@ UiProfile Spire::make_time_in_force_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("TimeInForceBox"), properties,
     std::bind_front(setup_enum_box_profile<TimeInForceBox,
       make_time_in_force_box>));
+  return profile;
+}
+
+UiProfile Spire::make_time_in_force_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<bool>("DAY"));
+  properties.push_back(make_standard_property<bool>("GTC"));
+  properties.push_back(make_standard_property<bool>("OPG"));
+  properties.push_back(make_standard_property<bool>("IOC"));
+  properties.push_back(make_standard_property<bool>("FOK"));
+  properties.push_back(make_standard_property<bool>("GTX"));
+  properties.push_back(make_standard_property<bool>("GTD"));
+  properties.push_back(make_standard_property<bool>("MOC"));
+  auto profile = UiProfile(QString::fromUtf8("TimeInForceFilterPanel"),
+    properties, std::bind_front(setup_closed_filter_panel_profile<TimeInForce,
+      TimeInForceListModel, make_time_in_force_filter_panel>));
   return profile;
 }
 

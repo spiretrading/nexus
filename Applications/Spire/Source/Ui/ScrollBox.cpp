@@ -377,7 +377,13 @@ void ScrollBox::update_layout() {
   }
   auto body_size = [&] {
     auto body_width = [&] {
-      if(m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Expanding) {
+      if(m_body->sizePolicy().horizontalPolicy() ==
+          QSizePolicy::MinimumExpanding) {
+        auto expanding_width = m_viewport->width() -
+          padding_size.width() - scroll_bar_size.width();
+        return std::max(expanding_width, m_body->sizeHint().width());
+      } else if(m_body->sizePolicy().horizontalPolicy() ==
+          QSizePolicy::Expanding) {
         return m_viewport->width() -
           padding_size.width() - scroll_bar_size.width();
       } else if(m_body->sizeHint().width() != -1 &&
@@ -388,7 +394,13 @@ void ScrollBox::update_layout() {
       return m_body->width();
     }();
     auto body_height = [&] {
-      if(m_body->sizePolicy().verticalPolicy() == QSizePolicy::Expanding) {
+      if(m_body->sizePolicy().verticalPolicy() ==
+          QSizePolicy::MinimumExpanding) {
+        auto expanding_height = m_viewport->height() -
+          padding_size.height() - scroll_bar_size.height();
+        return std::max(expanding_height, m_body->sizeHint().height());
+      } else if(m_body->sizePolicy().verticalPolicy() ==
+          QSizePolicy::Expanding) {
         return m_viewport->height() -
           padding_size.height() - scroll_bar_size.height();
       } else if(m_body->sizeHint().height() != -1 &&

@@ -131,7 +131,9 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());
   add(make_navigation_view_profile());
+  add(make_order_field_info_tip_profile());
   add(make_order_type_box_profile());
+  add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
@@ -143,11 +145,13 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_search_box_profile());
   add(make_security_list_item_profile());
   add(make_side_box_profile());
+  add(make_side_filter_panel_profile());
   add(make_tag_profile());
   add(make_text_area_box_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_time_in_force_box_profile());
+  add(make_time_in_force_filter_panel_profile());
   add(make_tooltip_profile());
   m_widget_list->setCurrentRow(0);
 }

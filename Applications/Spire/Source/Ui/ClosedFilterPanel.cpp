@@ -112,6 +112,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
   for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
     set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
   }
+  m_list_view->get_current_model()->set_current(0);
   m_list_view->get_list_model()->connect_operation_signal(
     std::bind_front(&ClosedFilterPanel::on_list_model_operation, this));
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -124,6 +125,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(scrollable_list_box);
+  setFocusProxy(scrollable_list_box);
   m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal(
     std::bind_front(&ClosedFilterPanel::on_reset, this));
