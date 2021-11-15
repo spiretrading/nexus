@@ -18,10 +18,9 @@ namespace Spire {
       struct AnyHash {
          std::size_t operator ()(const std::any& value) const;
       };
-
       struct Predicate {
-			  bool operator ()(const std::any& first, const std::any& second) const;
-			};
+        bool operator ()(const std::any& first, const std::any& second) const;
+      };
 
       std::unordered_set<std::any, AnyHash, Predicate> m_data;
   };

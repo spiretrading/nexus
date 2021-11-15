@@ -51,25 +51,10 @@ TEST_SUITE("LocalComboBoxQueryModel") {
 
   TEST_CASE("limited_query_with_text") {
     run_test([] {
-
-    });
-  }
-
-  TEST_CASE("reentrant_query") {
-    run_test([] {
-
-    });
-  }
-
-  TEST_CASE("reentrant_query_add_data") {
-    run_test([] {
-
-    });
-  }
-
-  TEST_CASE("reentrant_query_remove_data") {
-    run_test([] {
-      
+      auto model = make_model();
+      auto promise = model->query({"A", SnapshotLimit::FromHead(1)});
+      auto result = wait(std::move(promise));
+      REQUIRE(result.size() == 1);
     });
   }
 }

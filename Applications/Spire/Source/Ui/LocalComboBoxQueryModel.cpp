@@ -8,27 +8,27 @@ using Query = ComboBox::QueryModel::Query;
 
 std::size_t LocalComboBoxQueryModel::AnyHash::operator
     ()(const std::any& value) const {
-  // TODO: rest of these types
   if(value.type() == typeid(std::string)) {
     return std::hash<std::string>{}(std::any_cast<std::string>(value));
   } else if(value.type() == typeid(CurrencyId)) {
     return std::hash<CurrencyId>{}(std::any_cast<CurrencyId>(value));
   } else if(value.type() == typeid(MarketToken)) {
-
+    return this->operator()(std::any_cast<MarketToken>(displayTextAny(value)));
   } else if(value.type() == typeid(Region)) {
-
+    return this->operator()(std::any_cast<Region>(displayTextAny(value)));
   } else if(value.type() == typeid(OrderStatus)) {
-
+    return this->operator()(std::any_cast<OrderStatus>(displayTextAny(value)));
   } else if(value.type() == typeid(OrderType)) {
-
+    return this->operator()(std::any_cast<OrderType>(displayTextAny(value)));
   } else if(value.type() == typeid(PositionSideToken)) {
-
+    return this->operator()(
+      std::any_cast<PositionSideToken>(displayTextAny(value)));
   } else if(value.type() == typeid(Security)) {
     return std::hash<Security>{}(std::any_cast<Security>(value));
   } else if(value.type() == typeid(Side)) {
-
+    return this->operator()(std::any_cast<QString>(displayTextAny(value)));
   } else if(value.type() == typeid(TimeInForce)) {
-    
+    return this->operator()(std::any_cast<TimeInForce>(displayTextAny(value)));
   } else if(value.type() == typeid(QString)) {
     return qHash(std::any_cast<QString>(value));
   }
@@ -53,7 +53,6 @@ QtPromise<std::vector<std::any>>
   if(query.m_limit == SnapshotLimit::None()) {
     return QtPromise(std::vector<std::any>());
   }
-  // TODO: reentrancy, and what happens if the data is modified by a query?
   auto data = std::vector<std::any>();
   for(auto& item : m_data) {
     if(displayTextAny(item).toLower().startsWith(
