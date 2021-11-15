@@ -14,25 +14,6 @@ namespace Spire {
 			class QueryModel {
 				public:
 
-					/*
-					 * Provides a unary predicate for comparing std::any values stored in
-					 * the QueryModel, by comparing their string representations.
-					 */
-					struct UnaryPredicate {
-						public:
-							
-							UnaryPredicate(std::any value);
-
-							bool operator ()(const std::any& value) const;
-
-						private:
-							QString m_value;
-					};
-
-					struct BinaryPredicate {
-						bool operator ()(const std::any& first, const std::any& second);
-					};
-
 					struct Query {
 						std::string m_text;
 						Beam::Queries::SnapshotLimit m_limit;

@@ -2,20 +2,50 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam::Queries;
+using namespace Nexus;
 using namespace Spire;
 using Query = ComboBox::QueryModel::Query;
 
-void LocalComboBoxQueryModel::add(const std::any& value) {
-  if(index_of(value)) {
-    return;
+std::size_t LocalComboBoxQueryModel::AnyHash::operator
+    ()(const std::any& value) const {
+  // TODO: rest of these types
+  if(value.type() == typeid(std::string)) {
+    return std::hash<std::string>{}(std::any_cast<std::string>(value));
+  } else if(value.type() == typeid(CurrencyId)) {
+    return std::hash<CurrencyId>{}(std::any_cast<CurrencyId>(value));
+  } else if(value.type() == typeid(MarketToken)) {
+
+  } else if(value.type() == typeid(Region)) {
+
+  } else if(value.type() == typeid(OrderStatus)) {
+
+  } else if(value.type() == typeid(OrderType)) {
+
+  } else if(value.type() == typeid(PositionSideToken)) {
+
+  } else if(value.type() == typeid(Security)) {
+    return std::hash<Security>{}(std::any_cast<Security>(value));
+  } else if(value.type() == typeid(Side)) {
+
+  } else if(value.type() == typeid(TimeInForce)) {
+    
+  } else if(value.type() == typeid(QString)) {
+    return qHash(std::any_cast<QString>(value));
   }
-  m_data.push_back(value);
+  return 0;
+}
+
+bool LocalComboBoxQueryModel::Predicate::operator
+    ()(const std::any& first, const std::any& second) const {
+  return is_equal(first, second);
+}
+
+void LocalComboBoxQueryModel::add(const std::any& value) {
+  m_data.insert(value);
 }
   
 void LocalComboBoxQueryModel::remove(const std::any& value) {
-  if(auto index = index_of(value)) {
-    m_data.erase(m_data.begin() + *index);
-  }
+  m_data.erase(value);
 }
 
 QtPromise<std::vector<std::any>>
@@ -35,16 +65,4 @@ QtPromise<std::vector<std::any>>
     }
   }
   return QtPromise(data);
-}
-
-boost::optional<size_t>
-    LocalComboBoxQueryModel::index_of(const std::any& value) {
-  auto index = boost::optional<size_t>();
-  auto value_text = displayTextAny(value);
-  auto iter = std::find_if(m_data.begin(), m_data.end(),
-    [&] (const auto& item) { return value_text == displayTextAny(item); });
-  if(iter != m_data.end()) {
-    index = std::distance(m_data.begin(), iter); 
-  }
-  return index;
 }
