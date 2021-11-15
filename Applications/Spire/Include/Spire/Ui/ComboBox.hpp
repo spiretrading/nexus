@@ -22,7 +22,7 @@ namespace Spire {
           /** Represents the parameters of a query. */
           struct Query {
 
-            /** The query text. */
+            /** The query text to match against the values in the model. */
             std::string m_text;
 
             /** The limit for returned values. */
