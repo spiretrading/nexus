@@ -55,6 +55,9 @@ TEST_SUITE("LocalComboBoxQueryModel") {
       auto promise = model->query({"A", SnapshotLimit::FromHead(1)});
       auto result = wait(std::move(promise));
       REQUIRE(result.size() == 1);
+      auto result_string = std::any_cast<QString>(result[0]);
+      REQUIRE_UNARY(
+        result_string == QString("A") || result_string == QString("AB"));
     });
   }
 }
