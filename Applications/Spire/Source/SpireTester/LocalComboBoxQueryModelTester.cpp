@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include <Beam/Queries/SnapshotLimit.hpp>
+#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/LocalComboBoxQueryModel.hpp"
 
 using namespace Beam::Queries;
@@ -25,30 +26,50 @@ namespace {
 
 TEST_SUITE("LocalComboBoxQueryModel") {
   TEST_CASE("empty_query") {
-    auto model = make_model();
-    auto promise = model->query(Query::make_empty_query());
-    auto result = wait(std::move(promise));
-    REQUIRE(result.size() == 4);
-    REQUIRE(contains("A", result));
-    REQUIRE(contains("AB", result));
-    REQUIRE(contains("B", result));
-    REQUIRE(contains("C", result));
+    run_test([] {
+      auto model = make_model();
+      auto promise = model->query(Query::make_empty_query());
+      auto result = wait(std::move(promise));
+      REQUIRE(result.size() == 4);
+      REQUIRE(contains("A", result));
+      REQUIRE(contains("AB", result));
+      REQUIRE(contains("B", result));
+      REQUIRE(contains("C", result));
+    });
   }
 
   TEST_CASE("unlimited_query_with_text") {
-    auto model = make_model();
-    auto promise = model->query({"A", SnapshotLimit::Unlimited()});
-    auto result = wait(std::move(promise));
-    REQUIRE(result.size() == 2);
-    REQUIRE(contains("A", result));
-    REQUIRE(contains("AB", result));
+    run_test([] {
+      auto model = make_model();
+      auto promise = model->query({"A", SnapshotLimit::Unlimited()});
+      auto result = wait(std::move(promise));
+      REQUIRE(result.size() == 2);
+      REQUIRE(contains("A", result));
+      REQUIRE(contains("AB", result));
+    });
   }
 
-  TEST_CASE("limited_query_with_text") {}
+  TEST_CASE("limited_query_with_text") {
+    run_test([] {
 
-  TEST_CASE("reentrant_query") {}
+    });
+  }
 
-  TEST_CASE("reentrant_query_add_data") {}
+  TEST_CASE("reentrant_query") {
+    run_test([] {
 
-  TEST_CASE("reentrant_query_remove_data") {}
+    });
+  }
+
+  TEST_CASE("reentrant_query_add_data") {
+    run_test([] {
+
+    });
+  }
+
+  TEST_CASE("reentrant_query_remove_data") {
+    run_test([] {
+      
+    });
+  }
 }
