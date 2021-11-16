@@ -41,6 +41,8 @@ Box::Box(QWidget* body, QWidget* parent)
       m_body(body),
       m_styles([=] { commit_style(); }) {
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+  auto box_layout = new QHBoxLayout(this);
+  box_layout->setContentsMargins({});
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);
@@ -51,7 +53,7 @@ Box::Box(QWidget* body, QWidget* parent)
   } else {
     m_container = nullptr;
   }
-  connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
 const QWidget* Box::get_body() const {
@@ -108,15 +110,6 @@ bool Box::event(QEvent* event) {
     updateGeometry();
   }
   return QWidget::event(event);
-}
-
-void Box::mouseMoveEvent(QMouseEvent* event) {
-  if(!rect().contains(event->pos())) {
-    unmatch(*this, Hover());
-  } else {
-    match(*this, Hover());
-  }
-  QWidget::mouseMoveEvent(event);
 }
 
 void Box::resizeEvent(QResizeEvent* event) {

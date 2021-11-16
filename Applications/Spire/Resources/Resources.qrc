@@ -104,5 +104,7 @@
         <file>Icons/flag_icons/can.svg</file>
         <file>Icons/flag_icons/usa.svg</file>
         <file>Icons/dropdown-arrow.svg</file>
+        <file>Icons/calendar-arrow-left.svg</file>
+        <file>Icons/calendar-arrow-right.svg</file>
     </qresource>
 </RCC>

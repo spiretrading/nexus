@@ -56,13 +56,7 @@ struct Stylist::StyleEventFilter : QObject {
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::Enter) {
-      if(m_stylist->m_widget->isEnabled()) {
-        m_stylist->match(Hover());
-      }
-    } else if(event->type() == QEvent::Leave) {
-      poll_mouse();
-    } else if(event->type() == QEvent::EnabledChange) {
+    if(event->type() == QEvent::EnabledChange) {
       if(!m_stylist->m_widget->isEnabled()) {
         m_stylist->match(Disabled());
       } else {
@@ -80,20 +74,6 @@ struct Stylist::StyleEventFilter : QObject {
       }
     }
     return QObject::eventFilter(watched, event);
-  }
-
-  void poll_mouse() {
-    if(!m_stylist->get_widget().rect().contains(
-        m_stylist->get_widget().mapFromGlobal(QCursor::pos()))) {
-      m_stylist->unmatch(Hover());
-    } else {
-      auto hovered_widget = qApp->widgetAt(QCursor::pos());
-      if(hovered_widget && contains(m_stylist->get_widget(), *hovered_widget)) {
-        QTimer::singleShot(50, this, [=] { poll_mouse(); });
-      } else {
-        m_stylist->unmatch(Hover());
-      }
-    }
   }
 };
 
@@ -454,8 +434,24 @@ const StyleSheet& Spire::Styles::get_style(const QWidget& widget) {
   return find_stylist(widget).get_style();
 }
 
+const StyleSheet& Spire::Styles::get_style(
+    const QWidget& widget, const PseudoElement& pseudo_element) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    return stylist->get_style();
+  }
+  static auto EMPTY = StyleSheet();
+  return EMPTY;
+}
+
 void Spire::Styles::set_style(QWidget& widget, StyleSheet style) {
   find_stylist(widget).set_style(std::move(style));
+}
+
+void Spire::Styles::set_style(
+    QWidget& widget, const PseudoElement& pseudo_element, StyleSheet style) {
+  if(auto stylist = find_stylist(widget, pseudo_element)) {
+    stylist->set_style(std::move(style));
+  }
 }
 
 const Block& Spire::Styles::get_computed_block(QWidget& widget) {

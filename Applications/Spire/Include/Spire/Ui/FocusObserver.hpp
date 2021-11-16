@@ -1,5 +1,6 @@
 #ifndef SPIRE_FOCUS_OBSERVER_HPP
 #define SPIRE_FOCUS_OBSERVER_HPP
+#include <memory>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -7,7 +8,7 @@ namespace Spire {
   /** Represents an observer to keep track of the focus states of a widget. */
   class FocusObserver {
     public:
-      
+
       /**
        * Specifies the focus state.
        */
@@ -52,7 +53,8 @@ namespace Spire {
     private:
       struct FocusEventFilter;
       mutable StateSignal m_state_signal;
-      std::shared_ptr<FocusEventFilter> m_worker;
+      std::shared_ptr<FocusEventFilter> m_filter;
+      boost::signals2::scoped_connection m_filter_connection;
   };
 
   /**

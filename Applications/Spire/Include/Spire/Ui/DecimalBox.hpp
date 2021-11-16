@@ -131,6 +131,7 @@ namespace Styles {
       boost::optional<Decimal> m_last_current;
       TickIndicator m_tick;
       SignIndicator m_sign;
+      boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;

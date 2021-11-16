@@ -15,7 +15,7 @@ namespace Spire {
        * @param parent The parent widget. Used to determine the position of the
        *               DropDownList.
        */
-      explicit DropDownList(ListView& list_view, QWidget* parent = nullptr);
+      explicit DropDownList(ListView& list_view, QWidget& parent);
 
       QSize sizeHint() const override;
 
@@ -28,6 +28,7 @@ namespace Spire {
       ScrollableListBox* m_scrollable_list_box;
       OverlayPanel* m_panel;
       QSize m_panel_border_size;
+      boost::signals2::scoped_connection m_panel_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
       void on_panel_style();

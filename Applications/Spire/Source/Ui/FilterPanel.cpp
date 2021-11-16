@@ -13,30 +13,26 @@ using namespace Spire::Styles;
 namespace {
   const auto MARGIN_SIZE = 8;
 
-  auto HEADER_STYLE() {
-    auto style = StyleSheet();
+  auto HEADER_STYLE(StyleSheet style) {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(12));
-    style.get(Any()).
-      set(border_size(0)).
+    style.get(ReadOnly() && Disabled()).
       set(text_style(font, QColor(0x808080)));
     return style;
   }
 }
 
-FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
-    : QWidget(parent),
+FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
+    : QWidget(&parent),
       m_body(body) {
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins(
     scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
     scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
-  auto header = new TextBox(std::move(title));
-  header->set_read_only(true);
-  header->setFocusPolicy(Qt::NoFocus);
-  set_style(*header, HEADER_STYLE());
+  auto header = make_label(std::move(title));
+  set_style(*header, HEADER_STYLE(get_style(*header)));
   layout->addWidget(header);
   layout->addSpacing(scale_height(18));
   layout->addWidget(m_body);
@@ -45,8 +41,9 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget* parent)
   reset_button->setFixedHeight(scale_height(26));
   layout->addWidget(reset_button, 0, Qt::AlignRight);
   reset_button->connect_clicked_signal([=] { m_reset_signal(); });
-  m_panel = new OverlayPanel(this, parent);
-  m_panel->set_closed_on_blur(true);
+  m_panel = new OverlayPanel(*this, parent);
+  m_panel->set_closed_on_focus_out(true);
+  m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
 }
 
 const QWidget& FilterPanel::get_body() const {
@@ -66,6 +63,8 @@ bool FilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
     m_body->setFocus();
+  } else if(event->type() == QEvent::HideToParent) {
+    m_panel->hide();
   }
   return QWidget::event(event);
 }

@@ -59,6 +59,8 @@ void ScrollableLayer::keyPressEvent(QKeyEvent* event) {
     scroll_to_start(*m_vertical_scroll_bar);
   } else if(event->key() == Qt::Key_End) {
     scroll_to_end(*m_vertical_scroll_bar);
+  } else {
+    event->ignore();
   }
 }
 
