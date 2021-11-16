@@ -14,8 +14,11 @@ namespace Spire {
   class ArrayTableModel;
   class Box;
   class Button;
+  class CalendarDatePicker;
   template<typename T> class CastListModel;
   class CheckBox;
+  class ClosedFilterPanel;
+  class ColumnViewListModel;
   class DecimalBox;
   class DestinationListItem;
   class DropDownBox;
@@ -38,6 +41,7 @@ namespace Spire {
   class ListValueModel;
   class ListView;
   class MoneyBox;
+  class NavigationView;
   class OverlayPanel;
   class RegionListItem;
   class RowViewListModel;

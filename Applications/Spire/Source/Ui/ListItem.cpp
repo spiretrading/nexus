@@ -27,7 +27,6 @@ namespace {
 ListItem::ListItem(QWidget* component, QWidget* parent)
     : QWidget(parent),
       m_is_selected(false) {
-  setFocusPolicy(Qt::ClickFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_box = new Box(component);
@@ -40,6 +39,7 @@ ListItem::ListItem(QWidget* component, QWidget* parent)
     setFocusProxy(m_button);
   }
   layout->addWidget(m_button);
+  setFocusPolicy(Qt::ClickFocus);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
   set_style(*this, DEFAULT_STYLE());

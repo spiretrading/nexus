@@ -28,6 +28,7 @@ namespace Spire {
   class TechnicalsModel;
   class TestKeySequenceValidationModel;
   template<typename T> class ToDecimalModel;
+  template<typename T> class ToTextModel;
   template<typename T> class ValueModel;
 
   /** Defines the common type of boost signal used throughout Spire. */

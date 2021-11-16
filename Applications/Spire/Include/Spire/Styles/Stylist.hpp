@@ -221,8 +221,16 @@ namespace Spire::Styles {
   /** Returns a QWidget's styling. */
   const StyleSheet& get_style(const QWidget& widget);
 
+  /** Returns a QWidget's styling. */
+  const StyleSheet& get_style(
+    const QWidget& widget, const PseudoElement& pseudo_element);
+
   /** Sets the styling of a QWidget. */
   void set_style(QWidget& widget, StyleSheet style);
+
+  /** Sets the styling of a QWidget. */
+  void set_style(QWidget& widget, const PseudoElement& pseudo_element,
+    StyleSheet style);
 
   /** Returns a Block containing a widget's computed style. */
   const Block& get_computed_block(QWidget& widget);

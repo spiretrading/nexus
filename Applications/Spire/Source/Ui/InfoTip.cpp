@@ -62,9 +62,14 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
       m_is_interactive(false) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
+  auto container = new QWidget(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(get_margins());
-  layout->addWidget(m_body);
+  layout->addWidget(container);
+  auto container_layout = new QHBoxLayout(container);
+  container_layout->setContentsMargins(
+    {scale_width(1), scale_height(1), 0, 0});
+  container_layout->addWidget(m_body);
   m_show_timer.setInterval(DEFAULT_SHOW_DELAY_MS);
   m_show_timer.setSingleShot(true);
   connect(&m_show_timer, &QTimer::timeout, this, &InfoTip::on_show_timeout);

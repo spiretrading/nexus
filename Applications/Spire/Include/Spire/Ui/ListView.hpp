@@ -173,6 +173,7 @@ namespace Styles {
       QRect m_navigation_box;
       QString m_query;
       QTimer* m_query_timer;
+      Qt::FocusReason m_focus_reason;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
@@ -192,6 +193,7 @@ namespace Styles {
       void update_focus(boost::optional<int> current);
       void add_item(int index);
       void remove_item(int index);
+      void move_item(int source, int destination);
       void update_layout();
       void on_list_operation(const ListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);

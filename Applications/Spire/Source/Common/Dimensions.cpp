@@ -9,7 +9,17 @@ int Spire::scale_width(int width) noexcept {
   return (width * dpiX) / DPI;
 }
 
+double Spire::scale_width(double width) noexcept {
+  auto dpiX = QApplication::desktop()->logicalDpiX();
+  return (width * dpiX) / DPI;
+}
+
 int Spire::scale_height(int height) noexcept {
+  auto dpiY = QApplication::desktop()->logicalDpiY();
+  return (height * dpiY) / DPI;
+}
+
+double Spire::scale_height(double height) noexcept {
   auto dpiY = QApplication::desktop()->logicalDpiY();
   return (height * dpiY) / DPI;
 }
@@ -18,7 +28,15 @@ QSize Spire::scale(int width, int height) noexcept {
   return QSize(scale_width(width), scale_height(height));
 }
 
+QSizeF Spire::scale(double width, double height) noexcept {
+  return QSizeF(scale_width(width), scale_height(height));
+}
+
 QSize Spire::scale(const QSize& size) noexcept {
+  return scale(size.width(), size.height());
+}
+
+QSizeF Spire::scale(const QSizeF& size) noexcept {
   return scale(size.width(), size.height());
 }
 

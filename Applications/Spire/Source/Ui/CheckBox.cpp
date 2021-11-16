@@ -2,7 +2,6 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -78,7 +77,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   body_layout->addWidget(check_box);
   m_label = make_label("", this);
   body_layout->addWidget(m_label);
-  m_model->connect_current_signal([=] (auto is_checked) {
+  m_connection = m_model->connect_current_signal([=] (auto is_checked) {
     on_checked(is_checked);
   });
   on_checked(m_model->get_current());
@@ -113,10 +112,6 @@ void CheckBox::set_read_only(bool is_read_only) {
       unmatch(*this, ReadOnly());
     }
   }
-}
-
-QSize CheckBox::sizeHint() const {
-  return scale(80, 16);
 }
 
 void CheckBox::on_checked(bool is_checked) {

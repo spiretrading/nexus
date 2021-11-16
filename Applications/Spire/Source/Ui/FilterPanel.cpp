@@ -43,6 +43,7 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
   reset_button->connect_clicked_signal([=] { m_reset_signal(); });
   m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_focus_out(true);
+  m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
 }
 
 const QWidget& FilterPanel::get_body() const {
@@ -62,6 +63,8 @@ bool FilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
     m_body->setFocus();
+  } else if(event->type() == QEvent::HideToParent) {
+    m_panel->hide();
   }
   return QWidget::event(event);
 }

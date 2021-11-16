@@ -1,15 +1,15 @@
 #ifndef SPIRE_CHECK_BOX_HPP
 #define SPIRE_CHECK_BOX_HPP
 #include <QWidget>
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
 
   /** Selects a checked CheckBox. */
-  using Checked = StateSelector<void, struct CheckedTag>;
+  using Checked = StateSelector<void, struct CheckedSelectorTag>;
 }
 
   /** A ValueModel over a bool. */
@@ -59,8 +59,6 @@ namespace Styles {
        */
       void set_read_only(bool is_read_only);
 
-      QSize sizeHint() const override;
-
     protected:
       void changeEvent(QEvent* event) override;
 
@@ -69,6 +67,7 @@ namespace Styles {
       bool m_is_read_only;
       Icon* m_check;
       TextBox* m_label;
+      boost::signals2::scoped_connection m_connection;
 
       void on_checked(bool is_checked);
       void on_layout_direction(Qt::LayoutDirection direction);
