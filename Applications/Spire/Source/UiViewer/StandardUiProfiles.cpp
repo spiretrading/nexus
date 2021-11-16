@@ -2275,6 +2275,7 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_property<bool>("read_only"));
   properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("horizontal_padding", 8));
   auto profile = UiProfile(QString::fromUtf8("TextBox"), properties,
     [] (auto& profile) {
       auto text_box = new TextBox();
@@ -2298,6 +2299,12 @@ UiProfile Spire::make_text_box_profile() {
         [&current] (const auto& value) {
           current.set(value);
         });
+      auto& padding = get<int>("horizontal_padding", profile.get_properties());
+      padding.connect_changed_signal([=] (const auto& value) {
+        auto style = get_style(*text_box);
+        style.get(Any()).set(horizontal_padding(scale_width(value)));
+        set_style(*text_box, std::move(style));
+      });
       text_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
