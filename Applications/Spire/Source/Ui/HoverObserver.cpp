@@ -31,8 +31,7 @@ struct HoverObserver::EventFilter : QObject {
   QWidget* m_widget;
   State m_state;
   GlobalPositionObserver m_position_observer;
-  std::unordered_map<QWidget*, Child>
-    m_children_observers;
+  std::unordered_map<QWidget*, Child> m_children_observers;
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
@@ -86,9 +85,8 @@ struct HoverObserver::EventFilter : QObject {
     auto observer = std::make_unique<HoverObserver>(child);
     auto connection = observer->connect_state_signal(
       std::bind_front(&EventFilter::on_hover, this));
-    auto child_entry = Child{std::move(observer), std::move(connection)};
-    m_children_observers.insert(
-      std::pair(&child, std::move(child_entry)));
+    auto child_entry = Child(std::move(observer), std::move(connection));
+    m_children_observers.insert(std::pair(&child, std::move(child_entry)));
     set_state(::get_state(*m_widget, m_position_observer.get_position()));
   }
 
@@ -97,7 +95,10 @@ struct HoverObserver::EventFilter : QObject {
   }
 
   void on_position(const QPoint& position) {
-    set_state(::get_state(*m_widget, position));
+    if(m_state != HoverObserver::State::NONE ||
+        QApplication::mouseButtons() == Qt::NoButton) {
+      set_state(::get_state(*m_widget, position));
+    }
   }
 
   void on_widget_destroyed() {
@@ -106,11 +107,11 @@ struct HoverObserver::EventFilter : QObject {
 };
 
 HoverObserver::HoverObserver(QWidget& widget) {
-  static auto widget_workers = std::unordered_map<const QWidget*,
-    std::weak_ptr<EventFilter>>();
-  auto worker = widget_workers.find(&widget);
-  if(worker != widget_workers.end()) {
-    m_event_filter = worker->second.lock();
+  static auto filters =
+    std::unordered_map<const QWidget*, std::weak_ptr<EventFilter>>();
+  auto filter = filters.find(&widget);
+  if(filter != filters.end()) {
+    m_event_filter = filter->second.lock();
   } else {
     m_event_filter = std::shared_ptr<EventFilter>(
       new EventFilter(widget), [] (auto* p) {
@@ -118,19 +119,21 @@ HoverObserver::HoverObserver(QWidget& widget) {
           return;
         }
         if(p->m_widget) {
-          widget_workers.erase(p->m_widget);
+          filters.erase(p->m_widget);
         }
         p->deleteLater();
       });
     QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
-      auto worker = widget_workers.find(&widget);
-      if(worker != widget_workers.end()) {
-        worker->second.lock()->m_widget = nullptr;
-        widget_workers.erase(worker);
+      auto filter = filters.find(&widget);
+      if(filter != filters.end()) {
+        filter->second.lock()->m_widget = nullptr;
+        filters.erase(filter);
       }
     });
-    widget_workers.emplace(&widget, m_event_filter);
+    filters.emplace(&widget, m_event_filter);
   }
+  m_event_filter_connection =
+    m_event_filter->m_state_signal.connect(m_state_signal);
 }
 
 HoverObserver::~HoverObserver() = default;
@@ -141,7 +144,7 @@ HoverObserver::State HoverObserver::get_state() const {
 
 connection HoverObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
-  return m_event_filter->m_state_signal.connect(slot);
+  return m_state_signal.connect(slot);
 }
 
 bool Spire::is_set(HoverObserver::State left, HoverObserver::State right) {

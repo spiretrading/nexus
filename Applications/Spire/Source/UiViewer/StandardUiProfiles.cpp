@@ -1207,31 +1207,33 @@ UiProfile Spire::make_hover_observer_profile() {
       overlap_box2->move(translate(50, 100));
       auto box2 =
         std::make_shared<HoverBox>("overlap_box2", overlap_box2, profile);
-      auto box_stack = std::make_shared<std::stack<HoverBox>>();
+      auto box_stack =
+        std::make_shared<std::stack<std::unique_ptr<HoverBox>>>();
       auto parent_box = make_input_box(new QWidget(), container);
       auto parent_box_observer = HoverObserver(*parent_box);
-      box_stack->push(HoverBox("parent", parent_box, profile));
+      box_stack->push(
+        std::make_unique<HoverBox>("parent", parent_box, profile));
       parent_box->setFixedSize(scale(175, 200));
       parent_box->move(translate(175, 0));
       auto add_button = make_label_button("Add Child", container);
       add_button->move(translate(75, 225));
       add_button->connect_clicked_signal([=, &profile] {
-        auto parent_box = box_stack->top();
-        auto box = make_input_box(new QWidget(), parent_box.m_box);
-        box->setFixedSize(parent_box.m_box->size().shrunkBy({scale_width(10),
+        auto parent_box = std::move(box_stack->top());
+        auto box = make_input_box(new QWidget(), parent_box->m_box);
+        box->setFixedSize(parent_box->m_box->size().shrunkBy({scale_width(10),
           scale_height(10), scale_width(10), scale_height(10)}));
         box->move(translate(10, 10));
         box->show();
-        box_stack->push(
-          HoverBox(QString("child_%1").arg(box_stack->size()), box, profile));
+        box_stack->push(std::make_unique<HoverBox>(
+          QString("child_%1").arg(box_stack->size()), box, profile));
       });
       auto remove_button = make_label_button("Remove Child", container);
       remove_button->move(translate(200, 225));
       remove_button->connect_clicked_signal([=] {
         if(box_stack->size() > 1) {
-          auto box = box_stack->top();
+          auto box = std::move(box_stack->top());
           box_stack->pop();
-          box.m_box->deleteLater();
+          box->m_box->deleteLater();
         }
       });
       auto left_button = make_label_button("Move Left", container);
