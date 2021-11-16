@@ -309,6 +309,7 @@ void TextBox::set_read_only(bool read_only) {
   }
   m_line_edit->setReadOnly(read_only);
   m_line_edit->setCursorPosition(0);
+  setCursor(m_line_edit->cursor());
   if(read_only) {
     match(*this, ReadOnly());
   } else {
