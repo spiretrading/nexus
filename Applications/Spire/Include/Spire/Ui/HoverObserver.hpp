@@ -49,8 +49,8 @@ namespace Spire {
     private:
       struct EventFilter;
       mutable StateSignal m_state_signal;
-      std::shared_ptr<EventFilter> m_event_filter;
-      boost::signals2::scoped_connection m_event_filter_connection;
+      std::shared_ptr<EventFilter> m_filter;
+      boost::signals2::scoped_connection m_filter_connection;
   };
 
   /**

@@ -111,9 +111,9 @@ HoverObserver::HoverObserver(QWidget& widget) {
     std::unordered_map<const QWidget*, std::weak_ptr<EventFilter>>();
   auto filter = filters.find(&widget);
   if(filter != filters.end()) {
-    m_event_filter = filter->second.lock();
+    m_filter = filter->second.lock();
   } else {
-    m_event_filter = std::shared_ptr<EventFilter>(
+    m_filter = std::shared_ptr<EventFilter>(
       new EventFilter(widget), [] (auto* p) {
         if(!p) {
           return;
@@ -130,16 +130,15 @@ HoverObserver::HoverObserver(QWidget& widget) {
         filters.erase(filter);
       }
     });
-    filters.emplace(&widget, m_event_filter);
+    filters.emplace(&widget, m_filter);
   }
-  m_event_filter_connection =
-    m_event_filter->m_state_signal.connect(m_state_signal);
+  m_filter_connection = m_filter->m_state_signal.connect(m_state_signal);
 }
 
 HoverObserver::~HoverObserver() = default;
 
 HoverObserver::State HoverObserver::get_state() const {
-  return m_event_filter->m_state;
+  return m_filter->m_state;
 }
 
 connection HoverObserver::connect_state_signal(
