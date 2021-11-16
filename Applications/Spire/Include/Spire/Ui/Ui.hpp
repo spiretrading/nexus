@@ -17,6 +17,8 @@ namespace Spire {
   class CalendarDatePicker;
   template<typename T> class CastListModel;
   class CheckBox;
+  class ClosedFilterPanel;
+  class ColumnViewListModel;
   class DateBox;
   class DecimalBox;
   class DestinationListItem;
@@ -27,6 +29,9 @@ namespace Spire {
   template<typename T> class EnumBox;
   class FilteredTableModel;
   class FilterPanel;
+  class FocusObserver;
+  class GlobalPositionObserver;
+  class HoverObserver;
   class Icon;
   class InfoTip;
   class KeyInputBox;

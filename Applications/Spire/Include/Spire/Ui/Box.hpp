@@ -158,7 +158,6 @@ namespace Styles {
 
     protected:
       bool event(QEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:

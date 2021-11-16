@@ -84,14 +84,17 @@ namespace Spire::Styles {
     return SelectConnection(std::move(connection));
   }
 
-  SelectConnection select(const Focus& selector,
-    const Stylist& base, const SelectionUpdateSignal& on_update);
+  SelectConnection select(const Focus& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 
-  SelectConnection select(const FocusIn& selector,
-    const Stylist& base, const SelectionUpdateSignal& on_update);
+  SelectConnection select(const FocusIn& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 
-  SelectConnection select(const FocusVisible& selector,
-    const Stylist& base, const SelectionUpdateSignal& on_update);
+  SelectConnection select(const FocusVisible& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
+
+  SelectConnection select(const Hover& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
 
   template<typename T, typename G>
   StateSelector<T, G>::StateSelector(Type data)
