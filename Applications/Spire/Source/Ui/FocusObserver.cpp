@@ -25,8 +25,8 @@ struct FocusObserver::FocusEventFilter : QObject {
     }
     m_old_state = m_state;
     qApp->installEventFilter(this);
-    connect(qApp,
-      &QApplication::focusChanged, this, &FocusEventFilter::on_focus_changed);
+    connect(qApp, &QApplication::focusChanged, this,
+      &FocusEventFilter::on_focus_changed);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
@@ -89,40 +89,41 @@ struct FocusObserver::FocusEventFilter : QObject {
 };
 
 FocusObserver::FocusObserver(const QWidget& widget) {
-  static auto widget_workers = std::unordered_map<const QWidget*,
-    std::weak_ptr<FocusEventFilter>>();
-  auto worker = widget_workers.find(&widget);
-  if(worker != widget_workers.end()) {
-    m_worker = worker->second.lock();
+  static auto filters =
+    std::unordered_map<const QWidget*, std::weak_ptr<FocusEventFilter>>();
+  auto filter = filters.find(&widget);
+  if(filter != filters.end()) {
+    m_filter = filter->second.lock();
   } else {
-    m_worker = std::shared_ptr<FocusEventFilter>(
+    m_filter = std::shared_ptr<FocusEventFilter>(
       new FocusEventFilter(widget), [] (auto* p) {
         if(!p) {
           return;
         }
         if(p->m_widget) {
-          widget_workers.erase(p->m_widget);
+          filters.erase(p->m_widget);
         }
         p->deleteLater();
       });
     QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
-      auto worker = widget_workers.find(&widget);
-      if(worker != widget_workers.end()) {
-        worker->second.lock()->m_widget = nullptr;
-        widget_workers.erase(worker);
+      auto filter = filters.find(&widget);
+      if(filter != filters.end()) {
+        filter->second.lock()->m_widget = nullptr;
+        filters.erase(filter);
       }
     });
-    widget_workers.emplace(&widget, m_worker);
+    filters.emplace(&widget, m_filter);
   }
+  m_filter_connection = m_filter->m_state_signal.connect(m_state_signal);
 }
 
 FocusObserver::State FocusObserver::get_state() const {
-  return m_worker->m_state;
+  return m_filter->m_state;
 }
 
 connection FocusObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
-  return m_worker->connect_state_signal(slot);
+  return m_state_signal.connect(slot);
 }
 
 bool Spire::is_set(FocusObserver::State left, FocusObserver::State right) {
