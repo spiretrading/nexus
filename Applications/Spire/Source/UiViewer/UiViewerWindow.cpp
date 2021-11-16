@@ -7,6 +7,7 @@
 #include <QTextEdit>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 #include "Spire/UiViewer/UiPropertyTableView.hpp"
@@ -57,6 +58,16 @@ namespace {
     button_layout->addWidget(rebuild_button);
     layout->addLayout(button_layout);
     return container;
+  }
+
+  auto get_hover_state_name(HoverObserver::State state) {
+    switch(state) {
+      case HoverObserver::State::MOUSE_IN:
+        return QString::fromUtf8("MOUSE_IN");
+      case HoverObserver::State::MOUSE_OVER:
+        return QString::fromUtf8("MOUSE_OVER");
+    }
+    return QString::fromUtf8("NONE");
   }
 
   struct SizeAdjustedContainer : QWidget {
@@ -117,6 +128,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_duration_filter_panel_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
+  add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_info_tip_profile());
   add(make_input_box_profile());
@@ -185,6 +197,9 @@ void UiViewerWindow::on_event(const QString& name,
       }
       if(argument.type() == typeid(std::nullptr_t)) {
         log += QString::fromUtf8("null");
+      } else if(argument.type() == typeid(HoverObserver::State)) {
+        log +=
+          get_hover_state_name(std::any_cast<HoverObserver::State>(argument));
       } else {
         log += displayTextAny(argument);
       }

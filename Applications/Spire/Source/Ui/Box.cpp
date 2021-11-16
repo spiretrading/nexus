@@ -112,15 +112,6 @@ bool Box::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void Box::mouseMoveEvent(QMouseEvent* event) {
-  if(!rect().contains(event->pos())) {
-    unmatch(*this, Hover());
-  } else {
-    match(*this, Hover());
-  }
-  QWidget::mouseMoveEvent(event);
-}
-
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
