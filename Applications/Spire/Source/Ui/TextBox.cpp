@@ -1,4 +1,5 @@
 #include "Spire/Ui/TextBox.hpp"
+#include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QPainter>
@@ -308,6 +309,7 @@ void TextBox::set_read_only(bool read_only) {
   }
   m_line_edit->setReadOnly(read_only);
   m_line_edit->setCursorPosition(0);
+  setCursor(m_line_edit->cursor());
   if(read_only) {
     match(*this, ReadOnly());
   } else {
@@ -384,10 +386,10 @@ void TextBox::changeEvent(QEvent* event) {
 }
 
 void TextBox::mousePressEvent(QMouseEvent* event) {
-  if(is_placeholder_visible()) {
-    m_line_edit->setFocus();
-  }
   QWidget::mousePressEvent(event);
+  event->accept();
+  event->setLocalPos(m_line_edit->mapFromGlobal(event->globalPos()));
+  QCoreApplication::sendEvent(m_line_edit, event);
 }
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
