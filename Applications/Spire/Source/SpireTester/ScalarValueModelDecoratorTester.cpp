@@ -15,7 +15,25 @@ TEST_SUITE("ScalarValueModelDecorator") {
     REQUIRE(model.get_minimum() == std::numeric_limits<int>::lowest());
     REQUIRE(model.get_maximum() == std::numeric_limits<int>::max());
     REQUIRE(model.get_increment() == 1);
-    model.set_minimum(100);
-    model.set_maximum(200);
+    model.set_minimum(39);
+    model.set_maximum(41);
+    REQUIRE(model.get_minimum() == 39);
+    REQUIRE(model.get_maximum() == 41);
+    REQUIRE(model.set_current(3) == QValidator::State::Intermediate);
+    REQUIRE(model.get_current() == 3);
+    REQUIRE(model.set_current(42) == QValidator::State::Intermediate);
+    REQUIRE(model.get_current() == 42);
+  }
+
+  TEST_CASE("decorate_optional_model") {
+    auto source = std::make_shared<LocalValueModel<optional<int>>>();
+    auto model = ScalarValueModelDecorator(source);
+    REQUIRE(model.get_state() == QValidator::State::Acceptable);
+    REQUIRE(model.get_current() == none);
+    REQUIRE(model.get_increment() == 1);
+    REQUIRE(model.set_current(3) == QValidator::State::Acceptable);
+    REQUIRE(model.get_current() == 3);
+    REQUIRE(model.set_current(none) == QValidator::State::Acceptable);
+    REQUIRE(model.get_current() == none);
   }
 }

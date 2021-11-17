@@ -127,13 +127,29 @@ namespace Spire {
   QValidator::State ScalarValueModelDecorator<T>::set_current(
       const Type& value) {
     using namespace std;
-    if(value) {
+    auto has_value = [&] {
+      if constexpr(std::is_same_v<Scalar, Type>) {
+        return true;
+      } else {
+        return value.is_initialized();
+      }
+    }();
+    if(has_value) {
+      auto& unwrapped_value = [&] () -> decltype(auto) {
+        if constexpr(std::is_same_v<Scalar, Type>) {
+          return value;
+        } else {
+          return *value;
+        }
+      }();
       if constexpr(std::numeric_limits<Type>::is_integer) {
-        if(*value != m_model->get_current() && (*value % m_increment) != 0) {
+        if(unwrapped_value != m_model->get_current() &&
+            (unwrapped_value % m_increment) != 0) {
           return QValidator::State::Invalid;
         }
       } else if constexpr(std::numeric_limits<Type>::is_specialized) {
-        if(*value != m_model->get_current() && fmod(*value, m_increment) != 0) {
+        if(unwrapped_value != m_model->get_current() &&
+            fmod(unwrapped_value, m_increment) != 0) {
           return QValidator::State::Invalid;
         }
       }
@@ -145,8 +161,16 @@ namespace Spire {
     if(m_state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
     }
-    if(value) {
-      if(m_minimum && *value < *m_minimum || m_maximum && *value > *m_maximum) {
+    if(has_value) {
+      auto& unwrapped_value = [&] () -> decltype(auto) {
+        if constexpr(std::is_same_v<Scalar, Type>) {
+          return value;
+        } else {
+          return *value;
+        }
+      }();
+      if(m_minimum && unwrapped_value < *m_minimum ||
+          m_maximum && unwrapped_value > *m_maximum) {
         m_state = QValidator::Intermediate;
       }
     }
