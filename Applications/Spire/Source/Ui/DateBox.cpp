@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -19,6 +20,15 @@ namespace {
     auto style = StyleSheet();
     style.get(Any()).set(DateFormat::YYYYMMDD);
     return style;
+  }
+
+  void apply_integer_box_style(StyleSheet& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(TextAlign(Qt::AlignCenter)).
+      set(border_size(0)).
+      set(padding(0));
+    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
   }
 
   auto make_year_box(const std::shared_ptr<OptionalDateModel>& model) {
@@ -39,7 +49,12 @@ namespace {
             return current;
           }));
     auto box = new IntegerBox(year_model, {});
+    box->set_placeholder("YYYY");
     box->setFixedSize(scale(38, 26));
+    auto style = get_style(*box);
+    apply_integer_box_style(style);
+    style.get(Any()).set(LeadingZeros(4));
+    set_style(*box, std::move(style));
     return box;
   }
 
@@ -61,7 +76,12 @@ namespace {
             return current;
           }));
     auto box = new IntegerBox(month_model, {});
+    box->set_placeholder("MM");
     box->setFixedSize(scale(28, 26));
+    auto style = get_style(*box);
+    apply_integer_box_style(style);
+    style.get(Any()).set(LeadingZeros(2));
+    set_style(*box, std::move(style));
     return box;
   }
 
@@ -83,7 +103,12 @@ namespace {
             return current;
           }));
     auto box = new IntegerBox(day_model, {});
+    box->set_placeholder("DD");
     box->setFixedSize(scale(28, 26));
+    auto style = get_style(*box);
+    apply_integer_box_style(style);
+    style.get(Any()).set(LeadingZeros(2));
+    set_style(*box, std::move(style));
     return box;
   }
 
@@ -131,6 +156,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
       m_focus_observer(*this),
       m_is_read_only(false),
       m_format(DateFormat::YYYYMMDD) {
+  setCursor(Qt::IBeamCursor);
   std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
     make_body(m_model);
   auto input_box = make_input_box(m_body);
@@ -181,6 +207,9 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
+}
+
+void DateBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DateBox::mousePressEvent(QMouseEvent* event) {

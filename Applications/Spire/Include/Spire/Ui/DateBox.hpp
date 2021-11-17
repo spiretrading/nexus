@@ -61,6 +61,7 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
+      void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
