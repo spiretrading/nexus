@@ -640,6 +640,7 @@ UiProfile Spire::make_date_box_profile() {
   auto current_date = day_clock::local_day();
   properties.push_back(
     make_standard_property("current", displayTextAny(current_date)));
+  properties.push_back(make_standard_property("format", DateFormat::YYYYMMDD));
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
     make_standard_property("min", displayTextAny(current_date - months(2))));
@@ -667,6 +668,12 @@ UiProfile Spire::make_date_box_profile() {
         profile.make_event_slot<optional<date>>(QString::fromUtf8("Current")));
       auto date_box = new DateBox(model);
       apply_widget_properties(date_box, profile.get_properties());
+      auto& format = get<DateFormat>("format", profile.get_properties());
+      format.connect_changed_signal([=] (auto format) {
+        auto style = get_style(*date_box);
+        style.get(Any()).set(format);
+        set_style(*date_box, std::move(style));
+      });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
         date_box->set_read_only(value);

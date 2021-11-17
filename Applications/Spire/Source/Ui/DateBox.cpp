@@ -13,6 +13,12 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).set(DateFormat::YYYYMMDD);
+    return style;
+  }
+
   auto make_year_box(const std::shared_ptr<OptionalDateModel>& model) {
     auto year_model =
       std::make_shared<ScalarValueModelDecorator<optional<int>>>(
@@ -94,7 +100,8 @@ namespace {
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
     auto year_box = make_year_box(model);
     layout->addWidget(year_box);
-    layout->addWidget(make_dash());
+    auto year_dash = make_dash();
+    layout->addWidget(year_dash);
     auto month_box = make_month_box(model);
     layout->addWidget(month_box);
     layout->addWidget(make_dash());
@@ -102,7 +109,7 @@ namespace {
     layout->addWidget(day_box);
     layout->addSpacerItem(
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
-    return std::tuple(year_box, month_box, day_box, body);
+    return std::tuple(year_box, year_dash, month_box, day_box, body);
   }
 }
 
@@ -112,8 +119,10 @@ DateBox::DateBox(const optional<date>& current, QWidget* parent)
 DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
-      m_is_read_only(false) {
-  std::tie(m_year_box, m_month_box, m_day_box, m_body) = make_body(m_model);
+      m_is_read_only(false),
+      m_format(DateFormat::YYYYMMDD) {
+  std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
+    make_body(m_model);
   auto input_box = make_input_box(m_body);
   auto style = get_style(*input_box);
   style.get(Any()).set(vertical_padding(0));
@@ -121,6 +130,8 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(input_box);
+  set_style(*this, DEFAULT_STYLE());
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
 const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
@@ -158,4 +169,22 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
+}
+
+void DateBox::on_style() {
+  auto& stylist = find_stylist(*this);
+  auto& block = stylist.get_computed_block();
+  for(auto& property : block) {
+    property.visit(
+      [&] (const EnumProperty<DateFormat>& format) {
+        stylist.evaluate(format, [=] (auto format) {
+          if(format == m_format) {
+            return;
+          }
+          m_format = format;
+          m_year_box->setVisible(m_format == DateFormat::YYYYMMDD);
+          m_year_dash->setVisible(m_format == DateFormat::YYYYMMDD);
+        });
+      });
+  }
 }

@@ -11,11 +11,11 @@ namespace Styles {
   /** Specifies the accepted date format. */
   enum class DateFormat {
 
-    /** The month and day can be input in a MM-DD format. */
-    MMDD,
-
     /** The year, month, and day can be input in a YYYY-MM-DD format. */
-    YYYYMMDD
+    YYYYMMDD,
+
+    /** The month and day can be input in a MM-DD format. */
+    MMDD
   };
 }
 
@@ -64,10 +64,15 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDateModel> m_model;
       IntegerBox* m_year_box;
+      QWidget* m_year_dash;
       IntegerBox* m_month_box;
       IntegerBox* m_day_box;
       QWidget* m_body;
       bool m_is_read_only;
+      Styles::DateFormat m_format;
+      boost::signals2::scoped_connection m_style_connection;
+
+      void on_style();
   };
 }
 
