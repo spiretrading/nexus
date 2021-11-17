@@ -21,6 +21,7 @@ namespace Spire {
   class RealSpinBoxModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
+  template<typename T> class ScalarValueModelDecorator;
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
