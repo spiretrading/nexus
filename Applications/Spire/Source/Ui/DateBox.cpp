@@ -1,5 +1,6 @@
 #include "Spire/Ui/DateBox.hpp"
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
@@ -134,7 +135,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     make_body(m_model);
   auto input_box = make_input_box(m_body);
   auto style = get_style(*input_box);
-  style.get(Any()).set(vertical_padding(0));
+  style.get(Any()).set(padding(0));
   set_style(*input_box, std::move(style));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -180,6 +181,51 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
+}
+
+void DateBox::mousePressEvent(QMouseEvent* event) {
+  if(event->button() == Qt::MouseButton::LeftButton) {
+    auto right_padding =
+      m_body->layout()->itemAt(m_body->layout()->count() - 1)->geometry();
+    right_padding =
+      QRect(m_body->mapToGlobal(right_padding.topLeft()), right_padding.size());
+    if(right_padding.contains(event->globalPos())) {
+      auto box = [&] () -> IntegerBox* {
+        if(m_day_box->isVisible()) {
+          return m_day_box;
+        } else if(m_month_box->isVisible()) {
+          return m_month_box;
+        } else if(m_year_box->isVisible()) {
+          return m_year_box;
+        }
+        return nullptr;
+      }();
+      if(box) {
+        box->setFocus();
+      }
+    } else if(!m_is_read_only) {
+      auto left_padding = m_body->layout()->itemAt(0)->geometry();
+      left_padding =
+        QRect(m_body->mapToGlobal(left_padding.topLeft()), left_padding.size());
+      if(left_padding.contains(event->globalPos())) {
+        auto box = [&] () -> IntegerBox* {
+          if(m_year_box->isVisible()) {
+            return m_year_box;
+          } else if(m_month_box->isVisible()) {
+            return m_month_box;
+          } else if(m_day_box->isVisible()) {
+            return m_day_box;
+          }
+          return nullptr;
+        }();
+        if(box) {
+          box->setFocus();
+          auto editor = box->findChild<QLineEdit*>();
+          editor->setCursorPosition(0);
+        }
+      }
+    }
+  }
 }
 
 void DateBox::on_focus(FocusObserver::State state) {

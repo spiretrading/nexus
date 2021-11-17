@@ -60,6 +60,9 @@ namespace Styles {
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
+    protected:
+      void mousePressEvent(QMouseEvent* event) override;
+
     private:
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
