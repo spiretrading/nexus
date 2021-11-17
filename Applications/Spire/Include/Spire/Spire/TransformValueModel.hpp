@@ -37,8 +37,8 @@ namespace Details {
 
       /** The type of value to model. */
       using Source = U;
-      using typename ValueModel<T>::Type;
-      using typename ValueModel<T>::CurrentSignal;
+      using Type = typename ValueModel<T>::Type;
+      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
 
       /**
        * Constructs a TransformValueModel.
