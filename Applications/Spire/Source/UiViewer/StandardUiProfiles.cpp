@@ -637,13 +637,14 @@ UiProfile Spire::make_closed_filter_panel_profile() {
 UiProfile Spire::make_date_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto current_date = boost::gregorian::day_clock::local_day();
-  properties.push_back(make_standard_property(
-    "current", displayTextAny(current_date)));
-  properties.push_back(make_standard_property(
-    "min", displayTextAny(current_date - boost::gregorian::months(2))));
-  properties.push_back(make_standard_property(
-    "max", displayTextAny(current_date + boost::gregorian::months(2))));
+  auto current_date = day_clock::local_day();
+  properties.push_back(
+    make_standard_property("current", displayTextAny(current_date)));
+  properties.push_back(make_standard_property("read_only", false));
+  properties.push_back(
+    make_standard_property("min", displayTextAny(current_date - months(2))));
+  properties.push_back(
+    make_standard_property("max", displayTextAny(current_date + months(2))));
   properties.push_back(make_standard_property("year_field", true));
   auto profile = UiProfile(QString::fromUtf8("DateBox"), properties,
     [] (auto& profile) {
@@ -662,14 +663,18 @@ UiProfile Spire::make_date_box_profile() {
       } else {
         model->set_maximum(date(2100, 12, 31));
       }
+      model->connect_current_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Current")));
       auto date_box = new DateBox(model);
       apply_widget_properties(date_box, profile.get_properties());
-      date_box->get_model()->connect_current_signal(profile.make_event_slot<
-        optional<date>>(QString::fromUtf8("Current")));
-      date_box->connect_submit_signal(profile.make_event_slot<
-        optional<date>>(QString::fromUtf8("Submit")));
-      date_box->connect_reject_signal(profile.make_event_slot<
-        optional<date>>(QString::fromUtf8("Reject")));
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto value) {
+        date_box->set_read_only(value);
+      });
+      date_box->connect_submit_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Submit")));
+      date_box->connect_reject_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Reject")));
       return date_box;
   });
   return profile;

@@ -2,6 +2,7 @@
 #define SPIRE_DATE_BOX_HPP
 #include <QWidget>
 #include "Spire/Ui/CalendarDatePicker.hpp"
+#include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -44,6 +45,12 @@ namespace Styles {
 
       const std::shared_ptr<OptionalDateModel>& get_model() const;
 
+      /** Returns <code>true</code> iff the DateBox is read-only. */
+      bool is_read_only() const;
+
+      /** Sets whether the DateBox is read-only. */
+      void set_read_only(bool read_only);
+
       /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -56,6 +63,11 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      IntegerBox* m_year_box;
+      IntegerBox* m_month_box;
+      IntegerBox* m_day_box;
+      QWidget* m_body;
+      bool m_is_read_only;
   };
 }
 
