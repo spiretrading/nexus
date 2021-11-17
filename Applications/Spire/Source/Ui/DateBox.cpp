@@ -3,6 +3,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -111,6 +112,13 @@ namespace {
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
     return std::tuple(year_box, year_dash, month_box, day_box, body);
   }
+
+  auto make_date_picker(
+      const std::shared_ptr<OptionalDateModel>& model, QWidget* parent) {
+    auto date_picker = new CalendarDatePicker(model);
+    auto panel = new OverlayPanel(*date_picker, *parent);
+    return panel;
+  }
 }
 
 DateBox::DateBox(const optional<date>& current, QWidget* parent)
@@ -119,6 +127,7 @@ DateBox::DateBox(const optional<date>& current, QWidget* parent)
 DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
+      m_focus_observer(*this),
       m_is_read_only(false),
       m_format(DateFormat::YYYYMMDD) {
   std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
@@ -131,7 +140,9 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   layout->setContentsMargins({});
   layout->addWidget(input_box);
   set_style(*this, DEFAULT_STYLE());
+  m_date_picker = make_date_picker(m_model, this);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_focus_observer.connect_state_signal([=] (auto state) { on_focus(state); });
 }
 
 const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
@@ -169,6 +180,14 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
+}
+
+void DateBox::on_focus(FocusObserver::State state) {
+  if(is_set(state, FocusObserver::State::FOCUS_IN)) {
+    m_date_picker->show();
+  } else {
+    m_date_picker->hide();
+  }
 }
 
 void DateBox::on_style() {

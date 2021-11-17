@@ -2,6 +2,7 @@
 #define SPIRE_DATE_BOX_HPP
 #include <QWidget>
 #include "Spire/Ui/CalendarDatePicker.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -63,15 +64,18 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      FocusObserver m_focus_observer;
       IntegerBox* m_year_box;
       QWidget* m_year_dash;
       IntegerBox* m_month_box;
       IntegerBox* m_day_box;
       QWidget* m_body;
+      OverlayPanel* m_date_picker;
       bool m_is_read_only;
       Styles::DateFormat m_format;
       boost::signals2::scoped_connection m_style_connection;
 
+      void on_focus(FocusObserver::State state);
       void on_style();
   };
 }
