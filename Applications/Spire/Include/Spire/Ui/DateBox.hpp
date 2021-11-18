@@ -68,9 +68,10 @@ namespace Styles {
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
+      struct DateComposerModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<OptionalDateModel> m_model;
+      std::shared_ptr<DateComposerModel> m_model;
       boost::optional<boost::gregorian::date> m_submission;
       FocusObserver m_focus_observer;
       IntegerBox* m_year_box;

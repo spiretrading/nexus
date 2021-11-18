@@ -646,28 +646,45 @@ UiProfile Spire::make_date_box_profile() {
     make_standard_property("min", displayTextAny(current_date - months(2))));
   properties.push_back(
     make_standard_property("max", displayTextAny(current_date + months(2))));
-  properties.push_back(make_standard_property("year_field", true));
   auto profile = UiProfile(QString::fromUtf8("DateBox"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
-      auto& current = get<QString>("current", profile.get_properties());
-      model->set_current(parse_date(current.get()));
-      auto& min = get<QString>("min", profile.get_properties());
-      if(auto min_date = parse_date(min.get())) {
-        model->set_minimum(min_date);
-      } else {
-        model->set_minimum(date(1900, 1, 1));
-      }
-      auto& max = get<QString>("max", profile.get_properties());
-      if(auto max_date = parse_date(max.get())) {
-        model->set_maximum(*max_date);
-      } else {
-        model->set_maximum(date(2100, 12, 31));
-      }
       model->connect_current_signal(
         profile.make_event_slot<optional<date>>(QString::fromUtf8("Current")));
+      auto& current = get<QString>("current", profile.get_properties());
+      model->connect_current_signal([&current] (const auto& value) {
+        if(value) {
+          current.set(QString::fromStdString(std::to_string(value->year()) +
+            "-" + std::to_string(value->month()) + "-" +
+            std::to_string(value->day())));
+        } else {
+          current.set("");
+        }
+      });
+      current.connect_changed_signal([=] (const auto& current) {
+        if(current.isEmpty()) {
+          model->set_current(none);
+        } else {
+          auto date = parse_date(current);
+          if(date && model->get_current() != date) {
+            model->set_current(date);
+          }
+        }
+      });
+      auto& min = get<QString>("min", profile.get_properties());
+      min.connect_changed_signal([=] (const auto& min) {
+        model->set_minimum(parse_date(min));
+      });
+      auto& max = get<QString>("max", profile.get_properties());
+      max.connect_changed_signal([=] (const auto& max) {
+        model->set_maximum(parse_date(max));
+      });
       auto date_box = new DateBox(model);
       apply_widget_properties(date_box, profile.get_properties());
+      date_box->connect_submit_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Submit")));
+      date_box->connect_reject_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Reject")));
       auto& format = get<DateFormat>("format", profile.get_properties());
       format.connect_changed_signal([=] (auto format) {
         auto style = get_style(*date_box);
@@ -678,10 +695,6 @@ UiProfile Spire::make_date_box_profile() {
       read_only.connect_changed_signal([=] (auto value) {
         date_box->set_read_only(value);
       });
-      date_box->connect_submit_signal(
-        profile.make_event_slot<optional<date>>(QString::fromUtf8("Submit")));
-      date_box->connect_reject_signal(
-        profile.make_event_slot<optional<date>>(QString::fromUtf8("Reject")));
       return date_box;
   });
   return profile;
