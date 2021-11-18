@@ -153,6 +153,7 @@ DateBox::DateBox(const optional<date>& current, QWidget* parent)
 DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
+      m_submission(m_model->get_current()),
       m_focus_observer(*this),
       m_is_read_only(false),
       m_format(DateFormat::YYYYMMDD) {
@@ -174,6 +175,10 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
 
 const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
   return m_model;
+}
+
+const optional<date>& DateBox::get_submission() const {
+  return m_submission;
 }
 
 bool DateBox::is_read_only() const {
@@ -207,9 +212,6 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
-}
-
-void DateBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DateBox::mousePressEvent(QMouseEvent* event) {

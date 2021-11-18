@@ -44,7 +44,11 @@ namespace Styles {
       explicit DateBox(
         std::shared_ptr<OptionalDateModel> model, QWidget* parent = nullptr);
 
+      /** Returns the current value model. */
       const std::shared_ptr<OptionalDateModel>& get_model() const;
+
+      /** Returns the last submission. */
+      const boost::optional<boost::gregorian::date>& get_submission() const;
 
       /** Returns <code>true</code> iff the DateBox is read-only. */
       bool is_read_only() const;
@@ -61,13 +65,13 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
-      void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDateModel> m_model;
+      boost::optional<boost::gregorian::date> m_submission;
       FocusObserver m_focus_observer;
       IntegerBox* m_year_box;
       QWidget* m_year_dash;
