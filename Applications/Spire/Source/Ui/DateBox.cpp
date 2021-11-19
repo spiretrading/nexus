@@ -118,6 +118,8 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
         m_year(std::make_shared<LocalOptionalIntegerModel>()),
         m_month(std::make_shared<LocalOptionalIntegerModel>()),
         m_day(std::make_shared<LocalOptionalIntegerModel>()),
+        m_state(m_source->get_state()),
+        m_current(m_source->get_current()),
         m_source_connection(m_source->connect_current_signal(
           std::bind_front(&DateComposerModel::on_current, this))),
         m_year_connection(m_year->connect_current_signal(
@@ -184,13 +186,15 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
       try {
         auto current = date(*m_year->get_current(), *m_month->get_current(),
           *m_day->get_current());
-        m_state = m_current.set_current(current);
+        m_current.set_current(current);
+        m_state = m_source->set_current(current);
       } catch(const std::out_of_range&) {
         m_state = QValidator::State::Intermediate;
       }
     } else if(!m_year->get_current() && !m_month->get_current() &&
         !m_day->get_current()) {
-      m_state = m_current.set_current(none);
+      m_current.set_current(none);
+      m_state = m_source->set_current(none);
     } else {
       m_state = QValidator::State::Intermediate;
     }
@@ -225,6 +229,7 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
         m_day->set_current(none);
       }
     }
+    m_current.set_current(current);
   }
 
   void on_update(const optional<int>& current) {
@@ -297,6 +302,15 @@ connection DateBox::connect_submit_signal(
 connection DateBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
   return m_reject_signal.connect(slot);
+}
+
+void DateBox::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    if(m_model->get_current() != m_submission) {
+      m_model->m_source->set_current(m_submission);
+    }
+  }
+  QWidget::keyPressEvent(event);
 }
 
 void DateBox::mousePressEvent(QMouseEvent* event) {

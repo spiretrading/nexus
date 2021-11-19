@@ -66,6 +66,7 @@ namespace Styles {
 
     protected:
       void mousePressEvent(QMouseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       struct DateComposerModel;

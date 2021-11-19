@@ -663,7 +663,9 @@ UiProfile Spire::make_date_box_profile() {
       });
       current.connect_changed_signal([=] (const auto& current) {
         if(current.isEmpty()) {
-          model->set_current(none);
+          if(model->get_current()) {
+            model->set_current(none);
+          }
         } else {
           auto date = parse_date(current);
           if(date && model->get_current() != date) {

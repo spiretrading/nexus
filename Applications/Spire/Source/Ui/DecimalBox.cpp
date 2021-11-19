@@ -368,10 +368,13 @@ void DecimalBox::keyPressEvent(QKeyEvent* event) {
   if(!is_read_only()) {
     if(event->key() == Qt::Key_Up) {
       increment();
+      return;
     } else if(event->key() == Qt::Key_Down) {
       decrement();
+      return;
     }
   }
+  QWidget::keyPressEvent(event);
 }
 
 void DecimalBox::resizeEvent(QResizeEvent* event) {

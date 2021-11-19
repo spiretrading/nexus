@@ -396,10 +396,10 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     if(m_submission != m_model->get_current()) {
       m_model->set_current(m_submission);
+      return;
     }
-  } else {
-    QWidget::keyPressEvent(event);
   }
+  QWidget::keyPressEvent(event);
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
