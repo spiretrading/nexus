@@ -4,6 +4,10 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -19,6 +23,11 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).set(DateFormat::YYYYMMDD);
+    style.get(Rejected()).
+      set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+        linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
+      set(border_color(
+        chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
     return style;
   }
 
@@ -244,13 +253,23 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<DateComposerModel>(std::move(model))),
       m_submission(m_model->get_current()),
-      m_focus_observer(*this),
       m_is_read_only(false),
+      m_is_rejected(false),
+      m_focus_observer(*this),
       m_format(DateFormat::YYYYMMDD) {
   setCursor(Qt::IBeamCursor);
+  m_model->connect_current_signal(std::bind_front(&DateBox::on_current, this));
   std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
     make_body(m_model->m_year, m_model->m_month, m_model->m_day);
+  for(auto box : {m_year_box, m_month_box, m_day_box}) {
+    box->connect_submit_signal([=] (const auto& submission) {
+      if(box->hasFocus()) {
+        on_submit();
+      }
+    });
+  }
   auto input_box = make_input_box(m_body);
+  proxy_style(*this, *input_box);
   auto style = get_style(*input_box);
   style.get(Any()).set(padding(0));
   set_style(*input_box, std::move(style));
@@ -358,11 +377,37 @@ void DateBox::mousePressEvent(QMouseEvent* event) {
   }
 }
 
+void DateBox::on_current(const optional<date>& current) {
+  if(m_is_rejected) {
+    m_is_rejected = false;
+    unmatch(*this, Rejected());
+  }
+}
+
+void DateBox::on_submit() {
+  if(m_model->get_state() != QValidator::State::Acceptable) {
+    auto current = m_model->get_current();
+    auto submission = m_submission;
+    m_reject_signal(current);
+    m_model->m_source->set_current(m_submission);
+    if(!m_is_rejected) {
+      m_is_rejected = true;
+      match(*this, Rejected());
+    }
+  } else {
+    m_submission = m_model->get_current();
+    m_submit_signal(m_submission);
+  }
+}
+
 void DateBox::on_focus(FocusObserver::State state) {
   if(is_set(state, FocusObserver::State::FOCUS_IN)) {
     m_date_picker->show();
   } else {
     m_date_picker->hide();
+    if(m_submission != m_model->m_source->get_current()) {
+      on_submit();
+    }
   }
 }
 

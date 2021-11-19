@@ -74,6 +74,8 @@ namespace Styles {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<DateComposerModel> m_model;
       boost::optional<boost::gregorian::date> m_submission;
+      bool m_is_read_only;
+      bool m_is_rejected;
       FocusObserver m_focus_observer;
       IntegerBox* m_year_box;
       QWidget* m_year_dash;
@@ -81,10 +83,11 @@ namespace Styles {
       IntegerBox* m_day_box;
       QWidget* m_body;
       OverlayPanel* m_date_picker;
-      bool m_is_read_only;
       Styles::DateFormat m_format;
       boost::signals2::scoped_connection m_style_connection;
 
+      void on_current(const boost::optional<boost::gregorian::date>& current);
+      void on_submit();
       void on_focus(FocusObserver::State state);
       void on_style();
   };
