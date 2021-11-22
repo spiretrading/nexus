@@ -58,6 +58,12 @@ namespace {
     button->setFixedSize(BUTTON_SIZE());
     return button;
   }
+
+  auto make_modifiers(const OptionalDecimalModel& model) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
+    modifiers[Qt::NoModifier] = model.get_increment();
+    return modifiers;
+  }
 }
 
 struct DecimalBox::DecimalToTextModel : TextModel {
@@ -285,10 +291,17 @@ QValidator::State DecimalBox::validate(const Decimal& value,
   return QValidator::State::Invalid;
 }
 
+DecimalBox::DecimalBox(QWidget* parent)
+  : DecimalBox(std::make_shared<LocalOptionalDecimalModel>(), parent) {}
+
 DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
   QWidget* parent)
   : DecimalBox(std::make_shared<LocalOptionalDecimalModel>(),
       std::move(modifiers), parent) {}
+
+DecimalBox::DecimalBox(
+  std::shared_ptr<OptionalDecimalModel> model, QWidget* parent)
+  : DecimalBox(model, make_modifiers(*model), parent) {}
 
 DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)

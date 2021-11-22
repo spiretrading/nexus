@@ -33,7 +33,6 @@ namespace {
 
   void apply_integer_box_style(StyleSheet& style) {
     style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
       set(TextAlign(Qt::AlignCenter)).
       set(border_size(0)).
       set(padding(0));
@@ -41,9 +40,9 @@ namespace {
   }
 
   auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model, {});
+    auto box = new IntegerBox(model);
     box->set_placeholder("YYYY");
-    box->setFixedSize(scale(38, 26));
+    box->setFixedSize(scale(29, 26));
     auto style = get_style(*box);
     apply_integer_box_style(style);
     style.get(Any()).set(LeadingZeros(4));
@@ -52,9 +51,9 @@ namespace {
   }
 
   auto make_month_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model, {});
+    auto box = new IntegerBox(model);
     box->set_placeholder("MM");
-    box->setFixedSize(scale(28, 26));
+    box->setFixedSize(scale(21, 26));
     auto style = get_style(*box);
     apply_integer_box_style(style);
     style.get(Any()).set(LeadingZeros(2));
@@ -63,9 +62,9 @@ namespace {
   }
 
   auto make_day_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model, {});
+    auto box = new IntegerBox(model);
     box->set_placeholder("DD");
-    box->setFixedSize(scale(28, 26));
+    box->setFixedSize(scale(21, 26));
     auto style = get_style(*box);
     apply_integer_box_style(style);
     style.get(Any()).set(LeadingZeros(2));
@@ -75,7 +74,7 @@ namespace {
 
   auto make_dash() {
     auto label = make_label("-");
-    label->setFixedSize(scale(10, 26));
+    label->setFixedSize(scale(4, 26));
     return label;
   }
 
