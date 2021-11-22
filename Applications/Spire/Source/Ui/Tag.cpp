@@ -47,7 +47,9 @@ Tag::Tag(QString label, QWidget* parent)
   m_delete_button = make_delete_icon_button();
   m_delete_button->setFixedSize(scale(16, 16));
   m_delete_button->setFocusPolicy(Qt::NoFocus);
-  set_style(*m_delete_button, DELETE_BUTTON_STYLE(get_style(*m_delete_button)));
+  update_style(*m_delete_button, [&] (auto& style) {
+    style = DELETE_BUTTON_STYLE(style);
+  });
   container_layout->addWidget(m_delete_button);
   auto box = new Box(container);
   auto layout = new QHBoxLayout(this);

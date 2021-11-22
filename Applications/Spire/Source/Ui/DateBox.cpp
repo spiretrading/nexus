@@ -43,10 +43,10 @@ namespace {
     auto box = new IntegerBox(model);
     box->set_placeholder("YYYY");
     box->setFixedSize(scale(29, 26));
-    auto style = get_style(*box);
-    apply_integer_box_style(style);
-    style.get(Any()).set(LeadingZeros(4));
-    set_style(*box, std::move(style));
+    update_style(*box, [&] (auto& style) {
+      apply_integer_box_style(style);
+      style.get(Any()).set(LeadingZeros(4));
+    });
     return box;
   }
 
@@ -54,10 +54,10 @@ namespace {
     auto box = new IntegerBox(model);
     box->set_placeholder("MM");
     box->setFixedSize(scale(21, 26));
-    auto style = get_style(*box);
-    apply_integer_box_style(style);
-    style.get(Any()).set(LeadingZeros(2));
-    set_style(*box, std::move(style));
+    update_style(*box, [&] (auto& style) {
+      apply_integer_box_style(style);
+      style.get(Any()).set(LeadingZeros(2));
+    });
     return box;
   }
 
@@ -65,10 +65,10 @@ namespace {
     auto box = new IntegerBox(model);
     box->set_placeholder("DD");
     box->setFixedSize(scale(21, 26));
-    auto style = get_style(*box);
-    apply_integer_box_style(style);
-    style.get(Any()).set(LeadingZeros(2));
-    set_style(*box, std::move(style));
+    update_style(*box, [&] (auto& style) {
+      apply_integer_box_style(style);
+      style.get(Any()).set(LeadingZeros(2));
+    });
     return box;
   }
 
@@ -269,9 +269,9 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   }
   auto input_box = make_input_box(m_body);
   proxy_style(*this, *input_box);
-  auto style = get_style(*input_box);
-  style.get(Any()).set(padding(0));
-  set_style(*input_box, std::move(style));
+  update_style(*input_box, [&] (auto& style) {
+    style.get(Any()).set(padding(0));
+  });
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(input_box);

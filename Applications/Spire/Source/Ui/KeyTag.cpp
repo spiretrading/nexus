@@ -59,15 +59,17 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
   layout->setContentsMargins({});
   m_label = make_label("");
   proxy_style(*this, *m_label);
-  set_style(*m_label, TAG_STYLE(get_style(*m_label)));
-  auto style = get_style(*this);
-  style.get(Any()).
-    set(BackgroundColor(DEFAULT_BACKGROUND_COLOR));
-  style.get(ModifierKeyState()).
-    set(BackgroundColor(MODIFIER_BACKGROUND_COLOR));
-  style.get(EscapeKeyState()).
-    set(BackgroundColor(ESCAPE_BACKGROUND_COLOR));
-  set_style(*this, std::move(style));
+  update_style(*m_label, [&] (auto& style) {
+    style = TAG_STYLE(style);
+  });
+  update_style(*this, [&] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(DEFAULT_BACKGROUND_COLOR));
+    style.get(ModifierKeyState()).
+      set(BackgroundColor(MODIFIER_BACKGROUND_COLOR));
+    style.get(EscapeKeyState()).
+      set(BackgroundColor(ESCAPE_BACKGROUND_COLOR));
+  });
   layout->addWidget(m_label);
   m_current_connection = m_model->connect_current_signal([=] (auto key) {
     on_current_key(key);

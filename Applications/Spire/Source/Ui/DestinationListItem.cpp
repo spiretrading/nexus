@@ -32,7 +32,9 @@ DestinationListItem::DestinationListItem(DestinationDatabase::Entry destination,
   auto name_label = make_label(
     QString::fromStdString(m_destination.m_description));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
+  update_style(*name_label, [&] (auto& style) {
+    style = NAME_LABEL_STYLE(style);
+  });
   layout->addWidget(name_label);
 }
 

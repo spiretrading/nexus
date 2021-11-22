@@ -312,7 +312,9 @@ namespace {
     auto field = new IntegerBox(std::move(model));
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
-    set_style(*field, HOUR_FIELD_STYLE(get_style(*field)));
+    update_style(*field, [&] (auto& style) {
+      style = HOUR_FIELD_STYLE(style);
+    });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
@@ -322,7 +324,9 @@ namespace {
     auto field = new IntegerBox(std::move(model));
     field->setMinimumWidth(scale_width(28));
     field->set_placeholder("mm");
-    set_style(*field, MINUTE_FIELD_STYLE(get_style(*field)));
+    update_style(*field, [&] (auto& style) {
+      style = MINUTE_FIELD_STYLE(style);
+    });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
@@ -333,7 +337,9 @@ namespace {
     auto field = new DecimalBox(std::move(model));
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
-    set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
+    update_style(*field, [&] (auto& style) {
+      style = SECOND_FIELD_STYLE(style);
+    });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }

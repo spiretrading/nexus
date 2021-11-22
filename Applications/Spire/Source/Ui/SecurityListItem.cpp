@@ -56,7 +56,9 @@ SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
   auto value_label = make_label(
     QString::fromStdString(ToString(m_security_info.m_security)));
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
+  update_style(*value_label, [&] (auto& style) {
+    style = VALUE_LABEL_STYLE(style);
+  });
   value_container_layout->addWidget(value_label);
   auto flag_icon_layout = new QVBoxLayout();
   flag_icon_layout->setContentsMargins({});
@@ -76,7 +78,9 @@ SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
   layout->addLayout(value_container_layout);
   auto name_label = make_label(QString::fromStdString(m_security_info.m_name));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
+  update_style(*name_label, [&] (auto& style) {
+    style = NAME_LABEL_STYLE(style);
+  });
   layout->addWidget(name_label);
 }
 

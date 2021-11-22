@@ -143,13 +143,13 @@ namespace {
     auto& buttons_visible =
       get<bool>("buttons_visible", profile.get_properties());
     buttons_visible.connect_changed_signal([=] (auto value) {
-      auto style = get_style(*box);
-      if(value) {
-        style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
-      } else {
-        style.get(Any() > is_a<Button>()).set(Visibility::NONE);
-      }
-      set_style(*box, std::move(style));
+      update_style(*box, [&] (auto& style) {
+        if(value) {
+          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
+        } else {
+          style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+        }
+      });
     });
     return box;
   }
@@ -477,16 +477,16 @@ UiProfile Spire::make_box_profile() {
         set(border_color(QColor(0xC8C8C8)));
       set_style(*box, std::move(style));
       border_size.connect_changed_signal([=, &border_size] (auto size) {
-        auto style = get_style(*box);
-        style.get(Any()).set(
-          Styles::border_size(scale_width(border_size.get())));
-        set_style(*box, std::move(style));
+        update_style(*box, [&] (auto& style) {
+          style.get(Any()).set(
+            Styles::border_size(scale_width(border_size.get())));
+        });
       });
       border_radius.connect_changed_signal([=, &border_radius] (auto radius) {
-        auto style = get_style(*box);
-        style.get(Any()).set(
-          Styles::border_radius(scale_width(border_radius.get())));
-        set_style(*box, std::move(style));
+        update_style(*box, [&] (auto& style) {
+          style.get(Any()).set(
+            Styles::border_radius(scale_width(border_radius.get())));
+        });
       });
       return box;
     });
@@ -689,9 +689,9 @@ UiProfile Spire::make_date_box_profile() {
         profile.make_event_slot<optional<date>>(QString::fromUtf8("Reject")));
       auto& format = get<DateFormat>("format", profile.get_properties());
       format.connect_changed_signal([=] (auto format) {
-        auto style = get_style(*date_box);
-        style.get(Any()).set(format);
-        set_style(*date_box, std::move(style));
+        update_style(*date_box, [&] (auto& style) {
+          style.get(Any()).set(format);
+        });
       });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto value) {
@@ -772,16 +772,16 @@ UiProfile Spire::make_decimal_box_profile() {
       apply_widget_properties(decimal_box, profile.get_properties());
       auto& leading_zeros = get<int>("leading_zeros", profile.get_properties());
       leading_zeros.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*decimal_box);
-        style.get(Any()).set(LeadingZeros(value));
-        set_style(*decimal_box, std::move(style));
+        update_style(*decimal_box, [&] (auto& style) {
+          style.get(Any()).set(LeadingZeros(value));
+        });
       });
       auto& trailing_zeros =
         get<int>("trailing_zeros", profile.get_properties());
       trailing_zeros.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*decimal_box);
-        style.get(Any()).set(TrailingZeros(value));
-        set_style(*decimal_box, std::move(style));
+        update_style(*decimal_box, [&] (auto& style) {
+          style.get(Any()).set(TrailingZeros(value));
+        });
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
@@ -846,41 +846,41 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& buttons_visible =
         get<bool>("buttons_visible", profile.get_properties());
       buttons_visible.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*decimal_box);
-        if(value) {
-          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
-        } else {
-          style.get(Any() > is_a<Button>()).set(Visibility::NONE);
-        }
-        set_style(*decimal_box, std::move(style));
+        update_style(*decimal_box, [&] (auto& style) {
+          if(value) {
+            style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
+          } else {
+            style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+          }
+        });
       });
       auto& apply_sign_styling =
         get<bool>("apply_sign_styling", profile.get_properties());
       apply_sign_styling.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*decimal_box);
-        if(value) {
-          style.get(ReadOnly() && IsPositive()).
-            set(TextColor(QColor(0x36BB55)));
-          style.get(ReadOnly() && IsNegative()).
-            set(TextColor(QColor(0xE63F44)));
-        }
-        set_style(*decimal_box, std::move(style));
+        update_style(*decimal_box, [&] (auto& style) {
+          if(value) {
+            style.get(ReadOnly() && IsPositive()).
+              set(TextColor(QColor(0x36BB55)));
+            style.get(ReadOnly() && IsNegative()).
+              set(TextColor(QColor(0xE63F44)));
+          }
+        });
       });
       auto& apply_tick_styling =
         get<bool>("apply_tick_styling", profile.get_properties());
       apply_tick_styling.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*decimal_box);
-        if(value) {
-          style.get(ReadOnly() && Uptick()).
-            set(BackgroundColor(
-              chain(timeout(QColor(0xEBFFF0), milliseconds(250)),
-                linear(QColor(0xEBFFF0), revert, milliseconds(300)))));
-          style.get(ReadOnly() && Downtick()).
-            set(BackgroundColor(
-              chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
-                linear(QColor(0xFFF1F1), revert, milliseconds(300)))));
-        }
-        set_style(*decimal_box, std::move(style));
+        update_style(*decimal_box, [&] (auto& style) {
+          if(value) {
+            style.get(ReadOnly() && Uptick()).
+              set(BackgroundColor(
+                chain(timeout(QColor(0xEBFFF0), milliseconds(250)),
+                  linear(QColor(0xEBFFF0), revert, milliseconds(300)))));
+            style.get(ReadOnly() && Downtick()).
+              set(BackgroundColor(
+                chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+                  linear(QColor(0xFFF1F1), revert, milliseconds(300)))));
+          }
+        });
       });
       return decimal_box;
     });
@@ -945,12 +945,12 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
           filter_slot(to_string(min) + QString::fromUtf8(", ") +
             to_string(max));
         });
-        auto style = get_style(*panel);
-        style.get(Any() >> is_a<DecimalBox>()).set(
-          LeadingZeros(leading_zeros.get()));
-        style.get(Any() >> is_a<DecimalBox>()).set(
-          TrailingZeros(trailing_zeros.get()));
-        set_style(*panel, std::move(style));
+        update_style(*panel, [&] (auto& style) {
+          style.get(Any() >> is_a<DecimalBox>()).set(
+            LeadingZeros(leading_zeros.get()));
+          style.get(Any() >> is_a<DecimalBox>()).set(
+            TrailingZeros(trailing_zeros.get()));
+        });
         panel->show();
       });
       return button;
@@ -1209,12 +1209,12 @@ UiProfile Spire::make_focus_observer_profile() {
           return new DurationBox();
         } else if(value == 1) {
           auto label_button = make_label_button("Label Button");
-          auto style = get_style(*label_button);
-          style.get(Focus() / Body()).set(
-            border_color(QColor(Qt::transparent)));
-          style.get(FocusVisible() / Body()).set(
-            border_color(QColor(0x4B23A0)));
-          set_style(*label_button, std::move(style));
+          update_style(*label_button, [&] (auto& style) {
+            style.get(Focus() / Body()).set(
+              border_color(QColor(Qt::transparent)));
+            style.get(FocusVisible() / Body()).set(
+              border_color(QColor(0x4B23A0)));
+          });
           return label_button;
         } else {
           auto item_count = 10;
@@ -1353,9 +1353,9 @@ UiProfile Spire::make_info_tip_profile() {
     [] (auto& profile) {
       auto button = make_label_button("Hover me!");
       auto body_label = make_label("Body Label");
-      auto label_style = get_style(*body_label);
-      label_style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-      set_style(*body_label, label_style);
+      update_style(*body_label, [&] (auto& style) {
+        style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+      });
       auto info_tip = new InfoTip(body_label, button);
       apply_widget_properties(button, profile.get_properties());
       auto& interactive = get<bool>("interactive", profile.get_properties());
@@ -1496,10 +1496,9 @@ UiProfile Spire::make_label_button_profile() {
       auto& pressed_color = get<QColor>("pressed-color",
         profile.get_properties());
       pressed_color.connect_changed_signal([=] (const auto& color) {
-        auto style = get_style(*button);
-        style.get(Press() / Body()).
-          set(BackgroundColor(color));
-        set_style(*button, std::move(style));
+        update_style(*button, [&] (auto& style) {
+          style.get(Press() / Body()).set(BackgroundColor(color));
+        });
       });
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
@@ -1632,9 +1631,9 @@ UiProfile Spire::make_list_view_profile() {
               label->setFixedWidth(scale_height(random_size));
             }
           }
-          auto style = get_style(*label);
-          style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
-          set_style(*label, std::move(style));
+          update_style(*label, [&] (auto& style) {
+            style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
+          });
           return label;
         });
       apply_widget_properties(list_view, profile.get_properties());
@@ -1643,43 +1642,43 @@ UiProfile Spire::make_list_view_profile() {
         if(value < 0) {
           return;
         }
-        auto style = get_style(*list_view);
-        style.get(Any()).set(ListItemGap(scale_width(value)));
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(ListItemGap(scale_width(value)));
+        });
       });
       auto& overflow_gap = get<int>("overflow_gap", profile.get_properties());
       overflow_gap.connect_changed_signal([=] (auto value) {
         if(value < 0) {
           return;
         }
-        auto style = get_style(*list_view);
-        style.get(Any()).set(ListOverflowGap(scale_width(value)));
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(ListOverflowGap(scale_width(value)));
+        });
       });
       direction.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*list_view);
-        style.get(Any()).set(value);
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
       });
       auto& overflow = get<Overflow>("overflow", profile.get_properties());
       overflow.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*list_view);
-        style.get(Any()).set(value);
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
       });
       auto& navigation =
         get<EdgeNavigation>("edge_navigation", profile.get_properties());
       navigation.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*list_view);
-        style.get(Any()).set(value);
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
       });
       auto& selection_mode =
         get<SelectionMode>("selection_mode", profile.get_properties());
       selection_mode.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*list_view);
-        style.get(Any()).set(value);
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
       });
       auto& current_item = get<int>("current_item", profile.get_properties());
       current_item.connect_changed_signal([=] (auto index) {
@@ -2127,23 +2126,23 @@ UiProfile Spire::make_scroll_box_profile() {
       auto& horizontal_padding =
         get<int>("horizontal-padding", profile.get_properties());
       horizontal_padding.connect_changed_signal([=] (auto padding) {
-        auto style = get_style(*scroll_box);
-        style.get(Any()).set(Styles::horizontal_padding(padding));
-        set_style(*scroll_box, std::move(style));
+        update_style(*scroll_box, [&] (auto& style) {
+          style.get(Any()).set(Styles::horizontal_padding(padding));
+        });
       });
       auto& vertical_padding =
         get<int>("vertical-padding", profile.get_properties());
       vertical_padding.connect_changed_signal([=] (auto padding) {
-        auto style = get_style(*scroll_box);
-        style.get(Any()).set(Styles::vertical_padding(padding));
-        set_style(*scroll_box, std::move(style));
+        update_style(*scroll_box, [&] (auto& style) {
+          style.get(Any()).set(Styles::vertical_padding(padding));
+        });
       });
       auto& border_color =
         get<QColor>("border-color", profile.get_properties());
       border_color.connect_changed_signal([=] (const auto& color) {
-        auto style = get_style(*scroll_box);
-        style.get(Any()).set(border(scale_width(1), color));
-        set_style(*scroll_box, std::move(style));
+        update_style(*scroll_box, [&] (auto& style) {
+          style.get(Any()).set(border(scale_width(1), color));
+        });
       });
       return scroll_box;
     });
@@ -2176,15 +2175,15 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       auto& direction =
         get<Qt::Orientation>("direction", profile.get_properties());
       direction.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*list_view);
-        style.get(Any()).set(value);
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
       });
       auto& overflow = get<Overflow>("overflow", profile.get_properties());
       overflow.connect_changed_signal([=] (auto value) {
-        auto style = get_style(*list_view);
-        style.get(Any()).set(value);
-        set_style(*list_view, std::move(style));
+        update_style(*list_view, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
       });
       return scrollable_list_box;
     });
@@ -2314,20 +2313,20 @@ UiProfile Spire::make_text_area_box_profile() {
       auto& line_height = get<int>("line-height", profile.get_properties());
       line_height.connect_changed_signal(
         [=] (auto line_height) {
-          auto style = get_style(*text_area_box);
-          style.get(Any()).set(LineHeight(
-            static_cast<double>(line_height) / 100));
-          set_style(*text_area_box, style);
+          update_style(*text_area_box, [&] (auto& style) {
+            style.get(Any()).set(LineHeight(
+              static_cast<double>(line_height) / 100));
+          });
         });
       auto& horizontal_alignment = get<Qt::Alignment>("horizontal-align",
         profile.get_properties());
       horizontal_alignment.connect_changed_signal(
         [&, text_area_box] (auto alignment) {
-          auto style = get_style(*text_area_box);
-          style.get(Any()).
-            set(TextAlign(
-              Qt::Alignment(alignment) | Qt::AlignTop));
-          set_style(*text_area_box, std::move(style));
+          update_style(*text_area_box, [&] (auto& style) {
+            style.get(Any()).
+              set(TextAlign(
+                Qt::Alignment(alignment) | Qt::AlignTop));
+          });
         });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
@@ -2370,9 +2369,9 @@ UiProfile Spire::make_text_box_profile() {
         });
       auto& padding = get<int>("horizontal_padding", profile.get_properties());
       padding.connect_changed_signal([=] (const auto& value) {
-        auto style = get_style(*text_box);
-        style.get(Any()).set(horizontal_padding(scale_width(value)));
-        set_style(*text_box, std::move(style));
+        update_style(*text_box, [&] (auto& style) {
+          style.get(Any()).set(horizontal_padding(scale_width(value)));
+        });
       });
       text_box->get_model()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));

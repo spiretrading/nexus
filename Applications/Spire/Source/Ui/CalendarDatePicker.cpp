@@ -41,12 +41,12 @@ namespace {
     font.setPixelSize(scale_width(12));
     auto label = make_label(std::move(text), parent);
     label->setFixedSize(scale(24, 24));
-    auto style = get_style(*label);
-    style.get(Disabled() && ReadOnly()).
-      set(Font(font)).
-      set(TextAlign(Qt::AlignCenter)).
-      set(TextColor(QColor(0x4B23A0)));
-    set_style(*label, std::move(style));
+    update_style(*label, [&] (auto& style) {
+      style.get(Disabled() && ReadOnly()).
+        set(Font(font)).
+        set(TextAlign(Qt::AlignCenter)).
+        set(TextColor(QColor(0x4B23A0)));
+    });
     return label;
   }
 
@@ -167,10 +167,10 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
           return QString("%1 %2").
             arg(current.month().as_long_string()).arg(current.year());
         }), this);
-      auto label_style = get_style(*m_label);
-      label_style.get(Disabled() && ReadOnly()).
-        set(TextAlign(Qt::AlignCenter));
-      set_style(*m_label, std::move(label_style));
+      update_style(*m_label, [&] (auto& style) {
+        style.get(Disabled() && ReadOnly()).
+          set(TextAlign(Qt::AlignCenter));
+      });
       layout->addWidget(m_label);
       m_next_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-right.svg", BUTTON_SIZE));
@@ -212,29 +212,29 @@ class CalendarDayLabel : public QWidget {
       setFixedSize(scale(24, 24));
       m_label = make_label("", this);
       proxy_style(*this, *m_label);
-      auto style = get_style(*m_label);
-      style.get(Any()).
-        set(BackgroundColor(QColor(Qt::transparent))).
-        set(border(scale_width(1), QColor(Qt::transparent))).
-        set(border_radius(scale_width(3))).
-        set(TextAlign(Qt::AlignCenter)).
-        set(TextColor(QColor(Qt::black))).
-        set(padding(0));
-      style.get(OutOfMonth() && !Disabled()).
-        set(TextColor(QColor(0xA0A0A0)));
-      style.get(Today() && !Disabled()).
-        set(BackgroundColor(QColor(0xFFF2AB))).
-        set(TextColor(QColor(0xDB8700)));
-      style.get(Hover() || Press()).
-        set(BackgroundColor(QColor(0xF2F2FF))).
-        set(border_color(QColor(Qt::transparent)));
-      style.get(Focus()).
-        set(border_color(QColor(Qt::transparent)));
-      style.get(Disabled()).
-        set(BackgroundColor(QColor(0xFFFFFF))).
-        set(border_color(QColor(Qt::transparent))).
-        set(TextColor(QColor(0xC8C8C8)));
-      set_style(*this, std::move(style));
+      update_style(*m_label, [&] (auto& style) {
+        style.get(Any()).
+          set(BackgroundColor(QColor(Qt::transparent))).
+          set(border(scale_width(1), QColor(Qt::transparent))).
+          set(border_radius(scale_width(3))).
+          set(TextAlign(Qt::AlignCenter)).
+          set(TextColor(QColor(Qt::black))).
+          set(padding(0));
+        style.get(OutOfMonth() && !Disabled()).
+          set(TextColor(QColor(0xA0A0A0)));
+        style.get(Today() && !Disabled()).
+          set(BackgroundColor(QColor(0xFFF2AB))).
+          set(TextColor(QColor(0xDB8700)));
+        style.get(Hover() || Press()).
+          set(BackgroundColor(QColor(0xF2F2FF))).
+          set(border_color(QColor(Qt::transparent)));
+        style.get(Focus()).
+          set(border_color(QColor(Qt::transparent)));
+        style.get(Disabled()).
+          set(BackgroundColor(QColor(0xFFFFFF))).
+          set(border_color(QColor(Qt::transparent))).
+          set(TextColor(QColor(0xC8C8C8)));
+      });
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       layout->addWidget(m_label);

@@ -117,7 +117,9 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_status_label = new TextBox(this);
   m_status_label->set_read_only(true);
   m_status_label->setDisabled(true);
-  set_style(*m_status_label, STATUS_LABEL_STYLE(get_style(*m_status_label)));
+  update_style(*m_status_label, [&] (auto& style) {
+    style = STATUS_LABEL_STYLE(style);
+  });
   layout->addWidget(m_status_label, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(20));
   m_username_text_box = new TextBox(this);
@@ -127,7 +129,9 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
       m_sign_in_button->setDisabled(current.isEmpty());
     });
   m_username_text_box->set_placeholder(tr("Username"));
-  set_style(*m_username_text_box, INPUT_STYLE(get_style(*m_username_text_box)));
+  update_style(*m_username_text_box, [&] (auto& style) {
+    style = INPUT_STYLE(style);
+  });
   layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(15));
   auto password_layout = new QHBoxLayout();
@@ -135,8 +139,9 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   password_layout->setSpacing(0);
   m_password_text_box = new TextBox(this);
   m_password_text_box->set_placeholder(tr("Password"));
-  set_style(*m_password_text_box, PASSWORD_INPUT_STYLE(get_style(
-    *m_password_text_box)));
+  update_style(*m_password_text_box, [&] (auto& style) {
+    style = PASSWORD_INPUT_STYLE(style);
+  });
   m_password_text_box->get_model()->connect_current_signal(
     [=] (const auto& current) {
       m_chroma_hash_widget->set_text(current);
@@ -156,7 +161,9 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     new TextBox(QString(tr("Build ")) + QString::fromStdString(version), this);
   build_label->set_read_only(true);
   build_label->setDisabled(true);
-  set_style(*build_label, BUILD_LABEL_STYLE(get_style(*build_label)));
+  update_style(*build_label, [&] (auto& style) {
+    style = BUILD_LABEL_STYLE(style);
+  });
   button_layout->addWidget(build_label);
   button_layout->addStretch(103);
   m_sign_in_button = make_label_button(tr("Sign In"), this);

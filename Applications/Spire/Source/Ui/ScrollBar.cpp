@@ -47,30 +47,33 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
       m_track_scroll_direction(0),
       m_track_scroll_timer(this) {
   m_thumb = new Box(nullptr, nullptr);
-  auto thumb_style = StyleSheet();
-  thumb_style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
-  set_style(*m_thumb, std::move(thumb_style));
-  m_track = new Box(m_thumb, this);
-  auto track_style = get_style(*m_track);
-  track_style.get(Any()).
-    set(border(0, QColor(Qt::black))).
-    set(BackgroundColor(QColor(0xFFFFFF)));
+  update_style(*m_thumb, [&] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+  });
   if(m_orientation == Qt::Orientation::Vertical) {
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
     m_thumb->setSizePolicy(
       QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
-    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-    track_style.get(Any()).set(PaddingTop(m_thumb_position));
-    track_style.get(Any()).set(PaddingLeft(0));
   } else {
-    m_thumb->setSizePolicy(QSizePolicy::Policy::Fixed,
-      QSizePolicy::Policy::Expanding);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    track_style.get(Any()).set(PaddingTop(0));
-    track_style.get(Any()).set(PaddingLeft(m_thumb_position));
+    m_thumb->setSizePolicy(
+      QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Expanding);
   }
-  track_style.get(Any()).set(PaddingRight(0));
-  track_style.get(Any()).set(PaddingBottom(0));
-  set_style(*m_track, std::move(track_style));
+  m_track = new Box(m_thumb, this);
+  update_style(*m_track, [&] (auto& style) {
+    style.get(Any()).
+      set(border(0, QColor(Qt::black))).
+      set(BackgroundColor(QColor(0xFFFFFF)));
+    if(m_orientation == Qt::Orientation::Vertical) {
+      style.get(Any()).set(PaddingTop(m_thumb_position));
+      style.get(Any()).set(PaddingLeft(0));
+    } else {
+      style.get(Any()).set(PaddingTop(0));
+      style.get(Any()).set(PaddingLeft(m_thumb_position));
+    }
+    style.get(Any()).set(PaddingRight(0));
+    style.get(Any()).set(PaddingBottom(0));
+  });
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_track);
@@ -226,13 +229,13 @@ void ScrollBar::update_thumb() {
     m_thumb_position = (track_size - thumb_size) *
       (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
   }
-  auto track_style = get_style(*m_track);
-  if(m_orientation == Qt::Orientation::Vertical) {
-    track_style.get(Any()).set(PaddingTop(m_thumb_position));
-  } else {
-    track_style.get(Any()).set(PaddingLeft(m_thumb_position));
-  }
-  set_style(*m_track, std::move(track_style));
+  update_style(*m_track, [&] (auto& style) {
+    if(m_orientation == Qt::Orientation::Vertical) {
+      style.get(Any()).set(PaddingTop(m_thumb_position));
+    } else {
+      style.get(Any()).set(PaddingLeft(m_thumb_position));
+    }
+  });
 }
 
 void ScrollBar::scroll_page() {

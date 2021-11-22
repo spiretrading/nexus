@@ -18,7 +18,7 @@ TEST_SUITE("Stylist") {
       proxy_style(parent, child);
       auto style = StyleSheet();
       style.get(+Any() << Any()).set(Visibility::INVISIBLE);
-      set_style(child, style);
+      set_style(child, std::move(style));
       child.setParent(&parent);
     });
   }

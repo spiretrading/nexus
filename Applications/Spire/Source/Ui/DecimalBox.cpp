@@ -42,18 +42,18 @@ namespace {
 
   auto create_button(const QString& icon, QWidget* parent) {
     auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
-    auto style = get_style(*button);
-    style.get(Body()).
-      set(BackgroundColor(QColor(0xFFFFFF))).
-      set(Fill(QColor(0x333333)));
-    style.get(Hover() / Body()).
-      set(BackgroundColor(QColor(0xEBEBEB))).
-      set(Fill(QColor(0x4B23A0)));
-    style.get(Disabled() / Body()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(Fill(QColor(0xC8C8C8)));
-    style.get(+Any() < ReadOnly()).set(Visibility::NONE);
-    set_style(*button, std::move(style));
+    update_style(*button, [&] (auto& style) {
+      style.get(Body()).
+        set(BackgroundColor(QColor(0xFFFFFF))).
+        set(Fill(QColor(0x333333)));
+      style.get(Hover() / Body()).
+        set(BackgroundColor(QColor(0xEBEBEB))).
+        set(Fill(QColor(0x4B23A0)));
+      style.get(Disabled() / Body()).
+        set(BackgroundColor(QColor(Qt::transparent))).
+        set(Fill(QColor(0xC8C8C8)));
+      style.get(+Any() < ReadOnly()).set(Visibility::NONE);
+    });
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
@@ -314,10 +314,10 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
-  auto style = Spire::Styles::get_style(*m_text_box);
-  style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
-    PaddingRight(scale_width(26)));
-  set_style(*m_text_box, std::move(style));
+  update_style(*m_text_box, [&] (auto& style) {
+    style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
+      PaddingRight(scale_width(26)));
+  });
   proxy_style(*this, *m_text_box);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
