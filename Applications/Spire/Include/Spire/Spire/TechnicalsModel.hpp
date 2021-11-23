@@ -1,7 +1,6 @@
 #ifndef SPIRE_TECHNICALS_MODEL_HPP
 #define SPIRE_TECHNICALS_MODEL_HPP
 #include <memory>
-#include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
 #include <boost/signals2.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -12,7 +11,7 @@
 namespace Spire {
 
   /** Models a security's technical indicators. */
-  class TechnicalsModel : private boost::noncopyable {
+  class TechnicalsModel {
     public:
 
       /** Signals a price update. */
@@ -93,6 +92,10 @@ namespace Spire {
 
       /** Constructs a technicals model. */
       TechnicalsModel() = default;
+
+    private:
+      TechnicalsModel(const TechnicalsModel&) = delete;
+      TechnicalsModel& operator =(const TechnicalsModel&) = delete;
   };
 }
 

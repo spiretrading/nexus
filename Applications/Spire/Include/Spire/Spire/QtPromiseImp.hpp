@@ -4,7 +4,6 @@
 #include <memory>
 #include <utility>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
 #include <QCoreApplication>
 #include <QEvent>
@@ -48,8 +47,9 @@ namespace Spire {
   template<typename T>
   using promise_result_t = typename promise_result<T>::type;
 
-  /** Type trait used to determine the type of promise represented by an
-      executor.
+  /**
+   * Type trait used to determine the type of promise represented by an
+   * executor.
    */
   template<typename T, typename... A>
   struct promise_executor_result {
@@ -71,8 +71,9 @@ namespace details {
   inline constexpr auto is_promise_chained_v = is_promise_chained<T>::value;
 
   template<typename T>
-  class BaseQtPromiseImp : public QObject, private boost::noncopyable {
+  class BaseQtPromiseImp : public QObject {
     public:
+      using QObject::QObject;
       using Type = T;
       using ContinuationType = std::function<void (Beam::Expect<Type> value)>;
 
@@ -81,11 +82,16 @@ namespace details {
       virtual void then(ContinuationType continuation) = 0;
 
       virtual void disconnect() = 0;
+
+    private:
+      BaseQtPromiseImp(const BaseQtPromiseImp&) = delete;
+      BaseQtPromiseImp& operator =(const BaseQtPromiseImp&) = delete;
   };
 
   template<>
-  class BaseQtPromiseImp<void> : public QObject, private boost::noncopyable {
+  class BaseQtPromiseImp<void> : public QObject {
     public:
+      using QObject::QObject;
       using Type = void;
       using ContinuationType = std::function<void (Beam::Expect<void> value)>;
 
@@ -94,10 +100,14 @@ namespace details {
       virtual void then(ContinuationType continuation) = 0;
 
       virtual void disconnect() = 0;
+
+    private:
+      BaseQtPromiseImp(const BaseQtPromiseImp&) = delete;
+      BaseQtPromiseImp& operator =(const BaseQtPromiseImp&) = delete;
   };
 
   template<typename Executor>
-  class qt_promise_imp final :
+  class QtPromiseImp final :
       public BaseQtPromiseImp<promise_executor_result_t<Executor>> {
     public:
       using Super = BaseQtPromiseImp<promise_executor_result_t<Executor>>;
@@ -105,9 +115,9 @@ namespace details {
       using ContinuationType = typename Super::ContinuationType;
 
       template<typename ExecutorForward>
-      qt_promise_imp(ExecutorForward&& executor, LaunchPolicy launch_policy);
+      QtPromiseImp(ExecutorForward&& executor, LaunchPolicy launch_policy);
 
-      ~qt_promise_imp() override;
+      ~QtPromiseImp() override;
 
       void bind(std::shared_ptr<void> self);
 
@@ -132,19 +142,19 @@ namespace details {
 
   template<typename Executor>
   template<typename ExecutorForward>
-  qt_promise_imp<Executor>::qt_promise_imp(ExecutorForward&& executor,
-      LaunchPolicy launch_policy)
-      : m_is_disconnected(false),
-        m_executor(std::forward<ExecutorForward>(executor)),
-        m_launch_policy(launch_policy) {}
+  QtPromiseImp<Executor>::QtPromiseImp(
+    ExecutorForward&& executor, LaunchPolicy launch_policy)
+    : m_is_disconnected(false),
+      m_executor(std::forward<ExecutorForward>(executor)),
+      m_launch_policy(launch_policy) {}
 
   template<typename Executor>
-  qt_promise_imp<Executor>::~qt_promise_imp() {
+  QtPromiseImp<Executor>::~QtPromiseImp() {
     disconnect();
   }
 
   template<typename Executor>
-  void qt_promise_imp<Executor>::bind(std::shared_ptr<void> self) {
+  void QtPromiseImp<Executor>::bind(std::shared_ptr<void> self) {
     m_self = std::move(self);
     if(m_launch_policy == LaunchPolicy::DEFERRED) {
       QCoreApplication::postEvent(this, new QtDeferredExecutionEvent());
@@ -157,7 +167,7 @@ namespace details {
   }
 
   template<typename Executor>
-  void qt_promise_imp<Executor>::then(ContinuationType continuation) {
+  void QtPromiseImp<Executor>::then(ContinuationType continuation) {
     m_continuation.emplace(std::move(continuation));
     if(m_value.is_initialized()) {
       QCoreApplication::postEvent(this,
@@ -167,12 +177,12 @@ namespace details {
   }
 
   template<typename Executor>
-  void qt_promise_imp<Executor>::disconnect() {
+  void QtPromiseImp<Executor>::disconnect() {
     m_is_disconnected = true;
   }
 
   template<typename Executor>
-  bool qt_promise_imp<Executor>::event(QEvent* event) {
+  bool QtPromiseImp<Executor>::event(QEvent* event) {
     if(event->type() == QtDeferredExecutionEvent::EVENT_TYPE) {
       auto result = Beam::Try(m_executor);
       if(m_is_disconnected) {
@@ -209,7 +219,7 @@ namespace details {
   }
 
   template<typename Executor>
-  void qt_promise_imp<Executor>::execute() {
+  void QtPromiseImp<Executor>::execute() {
     using Result = std::invoke_result_t<Executor>;
     if constexpr(is_promise_chained_v<Result>) {
       auto result = Beam::Try(m_executor);
