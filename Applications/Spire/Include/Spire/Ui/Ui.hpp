@@ -19,6 +19,7 @@ namespace Spire {
   class CheckBox;
   class ClosedFilterPanel;
   class ColumnViewListModel;
+  class ComboBox;
   class DateBox;
   class DecimalBox;
   class DestinationListItem;

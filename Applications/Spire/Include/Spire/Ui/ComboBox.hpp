@@ -1,22 +1,15 @@
-#ifndef SPIRE_DROP_DOWN_BOX_HPP
-#define SPIRE_DROP_DOWN_BOX_HPP
+#ifndef SPIRE_COMBO_BOX_HPP
+#define SPIRE_COMBO_BOX_HPP
 #include <any>
-#include <QWidget>
+#include <vector>
+#include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-namespace Styles {
 
-  /** Selects a widget displaying a pop-up, ie. the DropDownBox's list. */
-  using PopUp = StateSelector<void, struct PopUpSelectorTag>;
-}
-
-  /**
-   * Represents a widget which allows the user to choose one value from
-   * a drop down list.
-   */
-  class DropDownBox : public QWidget {
+  /** Displays a data field over an open set of selectable values. */
+  class ComboBox : public QWidget {
     public:
 
       /** The type of model representing the index of the current value. */
@@ -28,6 +21,24 @@ namespace Styles {
       /** The type of function used to build a QWidget representing a value. */
       using ViewBuilder = ListView::ViewBuilder;
 
+      /** Used to retreive potential matches to a query. */
+      class QueryModel {
+        public:
+          virtual ~QueryModel() = default;
+
+          /**
+           * Submits a query to be asynchronously resolved.
+           * @param query The query to submit.
+           * @return An asynchronous list of matches to the given <i>query</i>.
+           */
+          virtual QtPromise<std::vector<std::any>> submit(
+            const QString& query) = 0;
+
+        private:
+          QueryModel(const QueryModel&) = delete;
+          QueryModel(QueryModel&&) = delete;
+      };
+
       /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
@@ -35,38 +46,38 @@ namespace Styles {
       using SubmitSignal = Signal<void (const std::any& submission)>;
 
       /**
-       * Constructs a DropDownBox using default local models and a default view
+       * Constructs a ComboBox using default local models and a default view
        * builder.
-       * @param list_model The model of values to display.
+       * @param query_model The model used to query matches.
        * @param parent The parent widget.
        */
-      explicit DropDownBox(
-        std::shared_ptr<ListModel> list_model, QWidget* parent = nullptr);
+      explicit ComboBox(
+        std::shared_ptr<QueryModel> query_model, QWidget* parent = nullptr);
 
       /**
-       * Constructs a DropDownBox using default local models.
-       * @param list_model The model of values to display.
+       * Constructs a ComboBox using default local models.
+       * @param query_model The model used to query matches.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list_model,
+      ComboBox(std::shared_ptr<QueryModel> query_model,
         ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /**
-       * Constructs a DropDownBox.
-       * @param list_model The model of values to display.
+       * Constructs a ComboBox.
+       * @param query_model The model used to query matches.
        * @param current_model The current value's model.
        * @param selection_model The selection value's model.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list_model,
+      ComboBox(std::shared_ptr<QueryModel> query_model,
         std::shared_ptr<CurrentModel> current_model,
         std::shared_ptr<SelectionModel> selection_model,
         ViewBuilder view_builder, QWidget* parent = nullptr);
 
-      /** Returns the list of selectable values. */
-      const std::shared_ptr<ListModel>& get_list_model() const;
+      /** Returns the model used to query matches. */
+      const std::shared_ptr<QueryModel>& get_query_model() const;
 
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current_model() const;
@@ -86,26 +97,6 @@ namespace Styles {
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
-
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-
-    private:
-      mutable SubmitSignal m_submit_signal;
-      ListView* m_list_view;
-      TextBox* m_text_box;
-      Button* m_button;
-      DropDownList* m_drop_down_list;
-      boost::optional<int> m_submission;
-      boost::signals2::scoped_connection m_submit_connection;
-      boost::signals2::scoped_connection m_current_connection;
-
-      void on_click();
-      void on_current(const boost::optional<int>& current);
-      void on_submit(const std::any& submission);
-      void revert_current();
-      void submit();
   };
 }
 
