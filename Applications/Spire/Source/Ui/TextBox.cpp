@@ -282,7 +282,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
-  m_current_connection = m_current->connect_current_signal(
+  m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
 }
 

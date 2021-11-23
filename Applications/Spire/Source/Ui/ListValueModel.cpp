@@ -37,9 +37,9 @@ QValidator::State ListValueModel::set(const Type& value) {
   return m_source->set(m_index, value);
 }
 
-connection ListValueModel::connect_current_signal(
+connection ListValueModel::connect_update_signal(
     const UpdateSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
+  return m_update_signal.connect(slot);
 }
 
 void ListValueModel::on_operation(const ListModel::Operation& operation) {
@@ -72,7 +72,7 @@ void ListValueModel::on_operation(const ListModel::Operation& operation) {
     },
     [&] (const ListModel::UpdateOperation& operation) {
       if(operation.m_index == m_index) {
-        m_current_signal(get());
+        m_update_signal(get());
       }
     });
 }

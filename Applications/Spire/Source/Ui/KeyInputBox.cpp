@@ -103,7 +103,7 @@ KeyInputBox::KeyInputBox(
   body_layout->setContentsMargins({});
   m_body->setLayout(body_layout);
   set_status(Status::NONE);
-  m_current_connection = m_current->connect_current_signal(
+  m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
 }
 

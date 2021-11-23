@@ -67,7 +67,7 @@ namespace {
 }
 
 struct DecimalBox::DecimalToTextModel : TextModel {
-  mutable UpdateSignal m_current_signal;
+  mutable UpdateSignal m_update_signal;
   std::shared_ptr<OptionalDecimalModel> m_model;
   int m_decimal_places;
   int m_leading_zeros;
@@ -84,7 +84,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         m_trailing_zeros(0),
         m_current(to_string(m_model->get())),
         m_is_rejected(false),
-        m_current_connection(m_model->connect_current_signal(
+        m_current_connection(m_model->connect_update_signal(
           [=] (const auto& current) {
             on_current(current);
           })) {
@@ -103,7 +103,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     auto displayed_value = to_string(m_model->get());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
-      m_current_signal(m_current);
+      m_update_signal(m_current);
     }
   }
 
@@ -119,7 +119,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     auto displayed_value = to_string(m_model->get());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
-      m_current_signal(m_current);
+      m_update_signal(m_current);
     }
   }
 
@@ -127,7 +127,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     auto displayed_value = to_string(m_model->get());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
-      m_current_signal(m_current);
+      m_update_signal(m_current);
     }
     return m_model->get();
   }
@@ -162,7 +162,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       auto blocker = shared_connection_block(m_current_connection);
       m_model->set(none);
       m_current = value;
-      m_current_signal(m_current);
+      m_update_signal(m_current);
       m_is_rejected = false;
       return QValidator::State::Intermediate;
     } else if(auto decimal = text_to_decimal(value)) {
@@ -179,7 +179,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         } else {
           m_current = value;
         }
-        m_current_signal(m_current);
+        m_update_signal(m_current);
       }
       m_is_rejected = false;
       return state;
@@ -188,9 +188,9 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return QValidator::State::Invalid;
   }
 
-  connection connect_current_signal(
+  connection connect_update_signal(
       const typename UpdateSignal::slot_type& slot) const override {
-    return m_current_signal.connect(slot);
+    return m_update_signal.connect(slot);
   }
 
   void update_validator() {
@@ -268,7 +268,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   void on_current(const optional<Decimal>& current) {
     m_current = to_string(current);
-    m_current_signal(m_current);
+    m_update_signal(m_current);
   }
 };
 
@@ -333,7 +333,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_sign = SignIndicator::NONE;
     }
   }
-  m_current_connection = m_current->connect_current_signal(
+  m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });

@@ -19,7 +19,7 @@ TEST_SUITE("ToTextModel") {
     REQUIRE(model.get_state() == QValidator::Acceptable);
   }
 
-  TEST_CASE("current") {
+  TEST_CASE("value") {
     auto local_model = std::make_shared<LocalValueModel<int>>(1);
     auto model = ToTextModel<int>(local_model);
     REQUIRE(model.get() == QString("1"));
@@ -31,12 +31,12 @@ TEST_SUITE("ToTextModel") {
     REQUIRE(model.get() == QString("3"));
   }
 
-  TEST_CASE("current_signal") {
+  TEST_CASE("update_signal") {
     auto local_model = std::make_shared<LocalValueModel<int>>(1);
     auto model = ToTextModel<int>(local_model);
     auto current = QString();
     auto call_count = 0;
-    model.connect_current_signal([&] (auto value) {
+    model.connect_update_signal([&] (auto value) {
       current = value;
       ++call_count;
     });

@@ -72,7 +72,7 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(model.get_state() == QValidator::Acceptable);
   }
 
-  TEST_CASE("get_current") {
+  TEST_CASE("get") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
     REQUIRE(model.get() == "");
@@ -82,7 +82,7 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(model.get() == "");
   }
 
-  TEST_CASE("set_current") {
+  TEST_CASE("set") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
     auto bool_model2 = model.get_association("model2");
@@ -99,10 +99,10 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE_FALSE(bool_model2->get());
   }
 
-  TEST_CASE("set_current_reentrant") {
+  TEST_CASE("set_reentrant") {
     auto model = AssociativeValueModel<std::string>();
     auto updates = std::queue<std::string>();
-    model.connect_current_signal([&] (auto value) {
+    model.connect_update_signal([&] (auto value) {
       updates.push(value);
       if(value == "model1") {
         model.set("model2");
@@ -118,11 +118,11 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(updates.empty());
   }
 
-  TEST_CASE("current_signal") {
+  TEST_CASE("update_signal") {
     auto model = AssociativeValueModel<std::string>();
     auto current_value = std::string();
     auto signal_count = 0;
-    model.connect_current_signal([&] (const auto& current) {
+    model.connect_update_signal([&] (const auto& current) {
       ++signal_count;
       current_value = current;
     });

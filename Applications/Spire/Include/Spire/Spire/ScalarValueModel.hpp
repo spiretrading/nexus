@@ -34,8 +34,8 @@ namespace Details {
       using Scalar = Details::scalar_type_t<T>;
 
       /**
-       * Signals a change to the current value.
-       * @param value The current value.
+       * Signals a change to the value.
+       * @param value The updated value.
        */
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 

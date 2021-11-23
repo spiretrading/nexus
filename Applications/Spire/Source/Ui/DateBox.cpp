@@ -128,13 +128,13 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
         m_day(std::make_shared<LocalOptionalIntegerModel>()),
         m_state(m_source->get_state()),
         m_current(m_source->get()),
-        m_source_connection(m_source->connect_current_signal(
+        m_source_connection(m_source->connect_update_signal(
           std::bind_front(&DateComposerModel::on_current, this))),
-        m_year_connection(m_year->connect_current_signal(
+        m_year_connection(m_year->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))),
-        m_month_connection(m_month->connect_current_signal(
+        m_month_connection(m_month->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))),
-        m_day_connection(m_day->connect_current_signal(
+        m_day_connection(m_day->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))) {
     if(m_source->get_minimum()) {
       m_year->set_minimum(static_cast<int>(m_source->get_minimum()->year()));
@@ -183,9 +183,9 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     return m_state;
   }
 
-  connection connect_current_signal(
+  connection connect_update_signal(
       const UpdateSignal::slot_type& slot) const override {
-    return m_current.connect_current_signal(slot);
+    return m_current.connect_update_signal(slot);
   }
 
   void update() {
@@ -257,7 +257,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
       m_focus_observer(*this),
       m_format(DateFormat::YYYYMMDD) {
   setCursor(Qt::IBeamCursor);
-  m_model->connect_current_signal(std::bind_front(&DateBox::on_current, this));
+  m_model->connect_update_signal(std::bind_front(&DateBox::on_current, this));
   std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
     make_body(m_model->m_year, m_model->m_month, m_model->m_day);
   for(auto box : {m_year_box, m_month_box, m_day_box}) {

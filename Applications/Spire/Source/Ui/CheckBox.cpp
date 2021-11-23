@@ -77,7 +77,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
   body_layout->addWidget(check_box);
   m_label = make_label("", this);
   body_layout->addWidget(m_label);
-  m_connection = m_current->connect_current_signal([=] (auto current) {
+  m_connection = m_current->connect_update_signal([=] (auto current) {
     on_current(current);
   });
   on_current(m_current->get());

@@ -23,10 +23,9 @@ namespace Details {
 }
 
   /**
-   * A ValueModel that transforms the current value of a source model via a
-   * callable.
+   * A ValueModel that transforms the value of a source model via a callable.
    * @param <T> The type of value to model.
-   * @param <U> The type of the source's current value.
+   * @param <U> The type of the source's value.
    * @param <F> The type of callable used to transform a value of type <i>U</i>
    *            into a value of type <i>T</i>.
    * @param <G> The type of callable used to invert <i>F</i>.
@@ -65,8 +64,8 @@ namespace Details {
             m_f(std::forward<FF>(f)),
             m_g(std::forward<GG>(g)),
             m_model(m_f(m_source->get())) {
-        m_source->connect_current_signal(
-          std::bind_front(&TransformValueModel::on_current, this));
+        m_source->connect_update_signal(
+          std::bind_front(&TransformValueModel::on_update, this));
       }
 
       QValidator::State get_state() const override;
@@ -75,7 +74,7 @@ namespace Details {
 
       QValidator::State set(const Type& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
     private:
@@ -84,7 +83,7 @@ namespace Details {
       G m_g;
       LocalValueModel<Type> m_model;
 
-      void on_current(const Source& current);
+      void on_update(const Source& value);
   };
 
   template<typename T, typename F,
@@ -131,14 +130,14 @@ namespace Details {
 
   template<typename T, typename U, typename F, typename G>
   boost::signals2::connection
-      TransformValueModel<T, U, F, G>::connect_current_signal(
+      TransformValueModel<T, U, F, G>::connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const {
-    return m_model.connect_current_signal(slot);
+    return m_model.connect_update_signal(slot);
   }
 
   template<typename T, typename U, typename F, typename G>
-  void TransformValueModel<T, U, F, G>::on_current(const Source& current) {
-    m_model.set(m_f(current));
+  void TransformValueModel<T, U, F, G>::on_update(const Source& value) {
+    m_model.set(m_f(value));
   }
 }
 

@@ -124,7 +124,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   layout->addSpacing(scale_height(20));
   m_username_text_box = new TextBox(this);
   m_username_text_box->setFixedSize(scale(280, 30));
-  m_username_text_box->get_current()->connect_current_signal(
+  m_username_text_box->get_current()->connect_update_signal(
     [=] (const auto& current) {
       m_sign_in_button->setDisabled(current.isEmpty());
     });
@@ -142,7 +142,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   update_style(*m_password_text_box, [&] (auto& style) {
     style = PASSWORD_INPUT_STYLE(style);
   });
-  m_password_text_box->get_current()->connect_current_signal(
+  m_password_text_box->get_current()->connect_update_signal(
     [=] (const auto& current) {
       m_chroma_hash_widget->set_text(current);
     });

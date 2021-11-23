@@ -72,18 +72,18 @@ namespace Spire {
 
       QValidator::State set(const QString& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable UpdateSignal m_current_signal;
+      mutable UpdateSignal m_update_signal;
       std::shared_ptr<ValueModel<Source>> m_model;
       ToString m_to_string;
       FromString m_from_string;
-      QString m_current;
-      boost::signals2::scoped_connection m_current_connection;
+      QString m_value;
+      boost::signals2::scoped_connection m_update_connection;
 
-      void on_current(const Source& current);
+      void on_update(const Source& value);
   };
 
   template<typename T>
@@ -114,9 +114,9 @@ namespace Spire {
     : m_model(std::move(model)),
       m_to_string(std::move(to_string)),
       m_from_string(std::move(from_string)),
-      m_current(m_to_string(m_model->get())),
-      m_current_connection(m_model->connect_current_signal(
-        [=] (const auto& current) { on_current(current); })) {}
+      m_value(m_to_string(m_model->get())),
+      m_update_connection(m_model->connect_update_signal(
+        [=] (const auto& value) { on_update(value); })) {}
 
   template<typename T>
   QValidator::State ToTextModel<T>::get_state() const {
@@ -125,27 +125,27 @@ namespace Spire {
 
   template<typename T>
   const QString& ToTextModel<T>::get() const {
-    return m_current;
+    return m_value;
   }
 
   template<typename T>
   QValidator::State ToTextModel<T>::set(const QString& value) {
-    if(auto current = m_from_string(value)) {
-      return m_model->set(*current);
+    if(auto update = m_from_string(value)) {
+      return m_model->set(*update);
     }
     return QValidator::Invalid;
   }
 
   template<typename T>
-  boost::signals2::connection ToTextModel<T>::connect_current_signal(
+  boost::signals2::connection ToTextModel<T>::connect_update_signal(
       const typename UpdateSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+    return m_update_signal.connect(slot);
   }
 
   template<typename T>
-  void ToTextModel<T>::on_current(const Source& current) {
-    m_current = m_to_string(current);
-    m_current_signal(m_current);
+  void ToTextModel<T>::on_update(const Source& value) {
+    m_value = m_to_string(value);
+    m_update_signal(m_value);
   }
 }
 

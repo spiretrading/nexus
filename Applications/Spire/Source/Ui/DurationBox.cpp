@@ -39,7 +39,7 @@ namespace {
       auto state = QValidator::State::Acceptable;
       model.m_state = state;
       model.m_current = value;
-      model.m_current_signal(model.m_current);
+      model.m_update_signal(model.m_current);
       return state;
     }
     return QValidator::State::Invalid;
@@ -56,11 +56,11 @@ namespace {
     } else {
       model.m_current = none;
     }
-    model.m_current_signal(model.m_current);
+    model.m_update_signal(model.m_current);
   }
 
   struct HourModel : ScalarValueModel<optional<int>> {
-    mutable UpdateSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
     std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
@@ -71,7 +71,7 @@ namespace {
     HourModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-          m_source_connection(m_source->connect_current_signal(
+          m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
       on_current(m_source->get());
     }
@@ -105,9 +105,9 @@ namespace {
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
 
-    connection connect_current_signal(
+    connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
+      return m_update_signal.connect(slot);
     }
 
     void on_current(const optional<time_duration>& current) {
@@ -117,7 +117,7 @@ namespace {
   };
 
   struct MinuteModel : ScalarValueModel<optional<int>> {
-    mutable UpdateSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
@@ -128,7 +128,7 @@ namespace {
     MinuteModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-          m_source_connection(m_source->connect_current_signal(
+          m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
       on_current(m_source->get());
     }
@@ -159,9 +159,9 @@ namespace {
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
 
-    connection connect_current_signal(
+    connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
+      return m_update_signal.connect(slot);
     }
 
     void on_current(const optional<time_duration>& current) {
@@ -171,7 +171,7 @@ namespace {
   };
 
   struct SecondModel : ScalarValueModel<optional<Decimal>> {
-    mutable UpdateSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
@@ -187,7 +187,7 @@ namespace {
     SecondModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-          m_source_connection(m_source->connect_current_signal(
+          m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
       on_current(m_source->get());
     }
@@ -219,9 +219,9 @@ namespace {
             to_seconds(m_current.get_value_or(0)));
     }
 
-    connection connect_current_signal(
+    connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
+      return m_update_signal.connect(slot);
     }
 
     void on_current(const optional<time_duration>& current) {
@@ -417,7 +417,7 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
     [=] (const auto& value) { on_reject(); });
   m_second_field->connect_reject_signal(
     [=] (const auto& value) { on_reject(); });
-  m_current->connect_current_signal(
+  m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
 }
 

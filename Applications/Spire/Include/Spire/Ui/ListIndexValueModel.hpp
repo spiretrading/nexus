@@ -52,7 +52,7 @@ namespace Details {
       QValidator::State set(const boost::optional<int>& value) override;
 
       /** Connects a slot to the UpdateSignal. */
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
     private:
@@ -78,7 +78,7 @@ namespace Details {
       std::shared_ptr<ValueModel<SearchType>> value)
       : m_list(std::move(list)),
         m_value(std::move(value)),
-        m_current_connection(m_value->connect_current_signal(
+        m_current_connection(m_value->connect_update_signal(
           std::bind_front(&ListIndexValueModel::on_current, this))) {
     on_current(m_value->get());
   }
@@ -124,9 +124,9 @@ namespace Details {
   }
 
   template<typename T>
-  boost::signals2::connection ListIndexValueModel<T>::connect_current_signal(
+  boost::signals2::connection ListIndexValueModel<T>::connect_update_signal(
       const typename UpdateSignal::slot_type& slot) const {
-    return m_index.connect_current_signal(slot);
+    return m_index.connect_update_signal(slot);
   }
 
   template<typename T>

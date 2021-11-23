@@ -127,7 +127,7 @@ namespace {
         box->get_current()->set(value);
       }
     });
-    box->get_current()->connect_current_signal(
+    box->get_current()->connect_update_signal(
       profile.make_event_slot<optional<Type>>(QString::fromUtf8("Current")));
     box->connect_submit_signal(
       profile.make_event_slot<optional<Type>>(QString::fromUtf8("Submit")));
@@ -168,10 +168,10 @@ namespace {
         check_box->get_current()->set(value);
       }
     });
-    check_box->get_current()->connect_current_signal([&] (auto is_checked) {
+    check_box->get_current()->connect_update_signal([&] (auto is_checked) {
       checked.set(is_checked);
     });
-    check_box->get_current()->connect_current_signal(
+    check_box->get_current()->connect_update_signal(
       profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
     auto& read_only = get<bool>("read-only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
@@ -530,12 +530,12 @@ UiProfile Spire::make_calendar_date_picker_profile() {
           model->set(*date);
         }
       });
-      calendar->get_current()->connect_current_signal([&current] (auto day) {
+      calendar->get_current()->connect_update_signal([&current] (auto day) {
         if(day) {
           current.set(displayTextAny(*day));
         }
       });
-      calendar->get_current()->connect_current_signal(
+      calendar->get_current()->connect_update_signal(
         profile.make_event_slot<optional<date>>(QString::fromUtf8("Current")));
       calendar->connect_submit_signal(
         profile.make_event_slot<optional<date>>(QString::fromUtf8("Submit")));
@@ -651,10 +651,10 @@ UiProfile Spire::make_date_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("DateBox"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
-      model->connect_current_signal(
+      model->connect_update_signal(
         profile.make_event_slot<optional<date>>(QString::fromUtf8("Current")));
       auto& current = get<QString>("current", profile.get_properties());
-      model->connect_current_signal([&current] (const auto& value) {
+      model->connect_update_signal([&current] (const auto& value) {
         if(value) {
           current.set(QString::fromStdString(std::to_string(value->year()) +
             "-" + std::to_string(value->month()) + "-" +
@@ -799,7 +799,7 @@ UiProfile Spire::make_decimal_box_profile() {
       });
       auto current_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("Current"));
-      decimal_box->get_current()->connect_current_signal(
+      decimal_box->get_current()->connect_update_signal(
         [=, &current] (const optional<Decimal>& value) {
           auto text = [&] {
             if(value) {
@@ -1081,7 +1081,7 @@ UiProfile Spire::make_duration_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         duration_box->set_read_only(is_read_only);
       });
-      duration_box->get_current()->connect_current_signal(
+      duration_box->get_current()->connect_update_signal(
         profile.make_event_slot<optional<time_duration>>(
           QString::fromUtf8("Current")));
       duration_box->connect_submit_signal(
@@ -1440,9 +1440,9 @@ UiProfile Spire::make_key_input_box_profile() {
         }
       }
     });
-    box->get_current()->connect_current_signal(
+    box->get_current()->connect_update_signal(
       profile.make_event_slot<QKeySequence>(QString::fromUtf8("Current")));
-    box->get_current()->connect_current_signal([&current] (const auto& value) {
+    box->get_current()->connect_update_signal([&current] (const auto& value) {
       current.set(value.toString());
     });
     box->connect_submit_signal(
@@ -1711,7 +1711,7 @@ UiProfile Spire::make_list_view_profile() {
       });
       auto& auto_set_current_null =
         get<bool>("auto_set_current_null", profile.get_properties());
-      list_view->get_current()->connect_current_signal(
+      list_view->get_current()->connect_update_signal(
         [&, list_view] (const auto& current) {
           if(current && auto_set_current_null.get()) {
             QTimer::singleShot(2000, [list_view] {
@@ -1719,9 +1719,9 @@ UiProfile Spire::make_list_view_profile() {
             });
           }
         });
-      list_view->get_current()->connect_current_signal(
+      list_view->get_current()->connect_update_signal(
         profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
-      list_view->get_selection()->connect_current_signal(
+      list_view->get_selection()->connect_update_signal(
         profile.make_event_slot<optional<int>>(QString::fromUtf8("Selection")));
       list_view->connect_submit_signal(
         profile.make_event_slot<optional<std::any>>(
@@ -1762,11 +1762,10 @@ UiProfile Spire::make_navigation_view_profile() {
       apply_widget_properties(navigation_view, profile.get_properties());
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("CurrentSignal"));
-      navigation_view->get_current()->connect_current_signal(
-        [=] (auto current) {
-          filter_slot(QString("%1_%2").arg(current).
-            arg(navigation_view->get_label(current)));
-        });
+      navigation_view->get_current()->connect_update_signal([=] (auto current) {
+        filter_slot(QString("%1_%2").arg(current).
+          arg(navigation_view->get_label(current)));
+      });
       auto page1 = new QWidget();
       page1->setFixedSize(scale(160, 100));
       auto layout1 = new QVBoxLayout(page1);
@@ -2204,7 +2203,7 @@ UiProfile Spire::make_search_box_profile() {
       placeholder.connect_changed_signal([=] (const auto& text) {
         search_box->set_placeholder(text);
       });
-      search_box->get_current()->connect_current_signal(
+      search_box->get_current()->connect_update_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       search_box->connect_submit_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
@@ -2297,7 +2296,7 @@ UiProfile Spire::make_text_area_box_profile() {
           text_area_box->get_current()->set(value);
         }
       });
-      text_area_box->get_current()->connect_current_signal(
+      text_area_box->get_current()->connect_update_signal(
         [&] (const auto& value) {
           if(current.get() != value) {
             current.set(value);
@@ -2331,7 +2330,7 @@ UiProfile Spire::make_text_area_box_profile() {
         });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
-      text_area_box->get_current()->connect_current_signal(
+      text_area_box->get_current()->connect_update_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       return text_area_box;
     });
@@ -2364,7 +2363,7 @@ UiProfile Spire::make_text_box_profile() {
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_box->set_placeholder(text);
       });
-      text_box->get_current()->connect_current_signal(
+      text_box->get_current()->connect_update_signal(
         [&current] (const auto& value) {
           current.set(value);
         });
@@ -2374,7 +2373,7 @@ UiProfile Spire::make_text_box_profile() {
           style.get(Any()).set(horizontal_padding(scale_width(value)));
         });
       });
-      text_box->get_current()->connect_current_signal(
+      text_box->get_current()->connect_update_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
@@ -2414,7 +2413,7 @@ UiProfile Spire::make_time_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         time_box->set_read_only(is_read_only);
       });
-      time_box->get_current()->connect_current_signal(
+      time_box->get_current()->connect_update_signal(
         profile.make_event_slot<optional<time_duration>>(
           QString::fromUtf8("Current")));
       time_box->connect_submit_signal(

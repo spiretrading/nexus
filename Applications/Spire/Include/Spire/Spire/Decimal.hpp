@@ -101,24 +101,24 @@ namespace Spire {
       QValidator::State
         set(const boost::optional<Decimal>& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable UpdateSignal m_current_signal;
+      mutable UpdateSignal m_update_signal;
       std::shared_ptr<Model> m_model;
-      boost::optional<Decimal> m_current;
-      boost::signals2::scoped_connection m_current_connection;
+      boost::optional<Decimal> m_value;
+      boost::signals2::scoped_connection m_update_connection;
 
-      void on_current(const boost::optional<Type>& current);
+      void on_update(const boost::optional<Type>& value);
   };
 
   template<typename T>
   ToDecimalModel<T>::ToDecimalModel(std::shared_ptr<Model> model)
     : m_model(std::move(model)),
-      m_current(to_decimal(m_model->get())),
-      m_current_connection(m_model->connect_current_signal(
-        [=] (const auto& current) { on_current(current); })) {}
+      m_value(to_decimal(m_model->get())),
+      m_update_connection(m_model->connect_update_signal(
+        [=] (const auto& value) { on_update(value); })) {}
 
   template<typename T>
   boost::optional<Decimal> ToDecimalModel<T>::get_minimum() const {
@@ -142,7 +142,7 @@ namespace Spire {
 
   template<typename T>
   const boost::optional<Decimal>& ToDecimalModel<T>::get() const {
-    return m_current;
+    return m_value;
   }
 
   template<typename T>
@@ -153,22 +153,22 @@ namespace Spire {
     if(state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
     }
-    m_current = value;
-    m_current_signal(value);
+    m_value = value;
+    m_update_signal(value);
     return state;
   }
 
   template<typename T>
-  boost::signals2::connection ToDecimalModel<T>::connect_current_signal(
+  boost::signals2::connection ToDecimalModel<T>::connect_update_signal(
       const UpdateSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+    return m_update_signal.connect(slot);
   }
 
   template<typename T>
-  void ToDecimalModel<T>::on_current(const boost::optional<Type>& current) {
-    auto value = to_decimal(current);
-    m_current = value;
-    m_current_signal(value);
+  void ToDecimalModel<T>::on_update(const boost::optional<Type>& value) {
+    auto update = to_decimal(value);
+    m_value = update;
+    m_update_signal(update);
   }
 }
 

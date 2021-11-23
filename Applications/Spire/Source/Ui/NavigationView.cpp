@@ -92,7 +92,7 @@ NavigationView::NavigationView(
     std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
-      m_current_connection(m_current->connect_current_signal(
+      m_current_connection(m_current->connect_update_signal(
         std::bind_front(&NavigationView::on_current, this))) {
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
@@ -144,7 +144,7 @@ NavigationView::NavigationView(
   set_style(*this, std::move(style));
   m_navigation_view->connect_submit_signal(
     std::bind_front(&NavigationView::on_list_submit, this));
-  m_navigation_view->get_current()->connect_current_signal(
+  m_navigation_view->get_current()->connect_update_signal(
     std::bind_front(&NavigationView::on_list_current, this));
 }
 
@@ -179,7 +179,7 @@ void NavigationView::insert_tab(int index, QWidget& page,
     set(BackgroundColor(QColor(0xC8C8C8)));
   set_style(*m_navigation_view->get_list_item(index), std::move(style));
   m_stacked_widget->insertWidget(index, &page);
-  m_associative_model.get_association(label)->connect_current_signal(
+  m_associative_model.get_association(label)->connect_update_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
   if(index == m_current->get()) {
     on_current(index);

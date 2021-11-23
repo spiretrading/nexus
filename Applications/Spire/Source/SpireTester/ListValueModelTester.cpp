@@ -26,13 +26,13 @@ TEST_SUITE("ListValueModel") {
     REQUIRE(!model3.get().has_value());
   }
 
-  TEST_CASE("set_current") {
+  TEST_CASE("set") {
     auto source = std::make_shared<ArrayListModel>();
     source->push(0);
     auto signal_count = 0;
     auto index = 0;
     auto model1 = ListValueModel(source, index);
-    auto connection = scoped_connection(model1.connect_current_signal(
+    auto connection = scoped_connection(model1.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count;
         REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
@@ -45,7 +45,7 @@ TEST_SUITE("ListValueModel") {
     index = 10;
     auto model2 = ListValueModel(source, index);
     REQUIRE(model2.get_state() == QValidator::State::Invalid);
-    connection = scoped_connection(model2.connect_current_signal(
+    connection = scoped_connection(model2.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count;
       }));
@@ -141,7 +141,7 @@ TEST_SUITE("ListValueModel") {
     auto signal_count = 0;
     auto index = 0;
     auto model = ListValueModel(source, index);
-    auto connection = scoped_connection(model.connect_current_signal(
+    auto connection = scoped_connection(model.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count;
         REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
@@ -163,12 +163,12 @@ TEST_SUITE("ListValueModel") {
     auto model1 = ListValueModel(source, 1);
     auto model2 = ListValueModel(source, 2);
     auto signal_count0 = 0;
-    auto connection0 = scoped_connection(model0.connect_current_signal(
+    auto connection0 = scoped_connection(model0.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count0;
       }));
     auto signal_count1 = 0;
-    auto connection1 = scoped_connection(model1.connect_current_signal(
+    auto connection1 = scoped_connection(model1.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count1;
       }));

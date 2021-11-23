@@ -71,7 +71,7 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> current, QWidget* parent)
       set(BackgroundColor(ESCAPE_BACKGROUND_COLOR));
   });
   layout->addWidget(m_label);
-  m_current_connection = m_current->connect_current_signal([=] (auto key) {
+  m_current_connection = m_current->connect_update_signal([=] (auto key) {
     on_current(key);
   });
   on_current(m_current->get());

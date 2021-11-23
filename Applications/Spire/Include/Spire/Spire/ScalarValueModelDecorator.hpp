@@ -52,7 +52,7 @@ namespace Spire {
 
       QValidator::State set(const Type& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
       boost::optional<Scalar> get_minimum() const override;
@@ -69,7 +69,7 @@ namespace Spire {
       Scalar m_increment;
       boost::signals2::scoped_connection m_connection;
 
-      void on_current(const Type& current);
+      void on_update(const Type& value);
   };
 
   template<typename T>
@@ -92,8 +92,8 @@ namespace Spire {
       m_minimum(std::move(minimum)),
       m_maximum(std::move(maximum)),
       m_increment(std::move(increment)),
-      m_connection(m_model->connect_current_signal(
-        std::bind_front(&ScalarValueModelDecorator::on_current, this))) {}
+      m_connection(m_model->connect_update_signal(
+        std::bind_front(&ScalarValueModelDecorator::on_update, this))) {}
 
   template<typename T>
   void ScalarValueModelDecorator<T>::set_minimum(
@@ -179,9 +179,9 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection
-      ScalarValueModelDecorator<T>::connect_current_signal(
+      ScalarValueModelDecorator<T>::connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const {
-    return m_model->connect_current_signal(slot);
+    return m_model->connect_update_signal(slot);
   }
 
   template<typename T>
@@ -203,7 +203,7 @@ namespace Spire {
   }
 
   template<typename T>
-  void ScalarValueModelDecorator<T>::on_current(const Type& current) {
+  void ScalarValueModelDecorator<T>::on_update(const Type& value) {
     m_state = m_model->get_state();
   }
 }

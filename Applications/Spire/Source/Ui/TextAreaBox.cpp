@@ -67,7 +67,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
         &QAbstractTextDocumentLayout::documentSizeChanged, this,
         [=] (const auto& size) { updateGeometry(); });
       setText(m_current->get());
-      m_current_connection = m_current->connect_current_signal(
+      m_current_connection = m_current->connect_update_signal(
         [=] (const auto& value) { on_current(value); });
     }
 

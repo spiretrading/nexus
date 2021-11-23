@@ -114,9 +114,9 @@ ListView::ListView(
     m_query_timer, &QTimer::timeout, this, [=] { on_query_timer_expired(); });
   m_list_connection = m_list->connect_operation_signal(
     [=] (const auto& operation) { on_list_operation(operation); });
-  m_current_connection = m_current->connect_current_signal(
+  m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
-  m_selection_connection = m_selection->connect_current_signal(
+  m_selection_connection = m_selection->connect_update_signal(
     [=] (const auto& selection) { on_selection(selection); });
 }
 

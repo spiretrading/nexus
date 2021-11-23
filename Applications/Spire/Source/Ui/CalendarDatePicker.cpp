@@ -70,7 +70,7 @@ class CalendarListModel : public ListModel {
   public:
     CalendarListModel(std::shared_ptr<DateModel> current)
         : m_current(std::move(current)),
-          m_current_connection(m_current->connect_current_signal(
+          m_current_connection(m_current->connect_update_signal(
             [=] (auto current) { on_current(current); })) {
       on_current(m_current->get());
     }
@@ -116,7 +116,7 @@ class RequiredDateModel : public DateModel {
     RequiredDateModel(std::shared_ptr<OptionalDateModel> model)
       : m_model(std::move(model)),
         m_current(m_model->get().value_or(day_clock::local_day())),
-        m_current_connection(m_model->connect_current_signal(
+        m_current_connection(m_model->connect_update_signal(
           [=] (const auto& current) { on_current(current); })) {}
 
     const Type& get() const override {
@@ -125,17 +125,17 @@ class RequiredDateModel : public DateModel {
 
     QValidator::State set(const date& value) override {
       m_current = value;
-      m_current_signal(m_current);
+      m_update_signal(m_current);
       return QValidator::State::Acceptable;
     }
 
-    connection connect_current_signal(
+    connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override {
-      return m_current_signal.connect(slot);
+      return m_update_signal.connect(slot);
     }
 
   private:
-    mutable UpdateSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDateModel> m_model;
     date m_current;
     scoped_connection m_current_connection;
@@ -204,7 +204,7 @@ class CalendarDayLabel : public QWidget {
         std::shared_ptr<DateModel> month, QWidget* parent = nullptr)
         : QWidget(parent),
           m_current(std::move(current)),
-          m_current_connection(m_current->connect_current_signal(
+          m_current_connection(m_current->connect_update_signal(
             [=] (const auto& current) {
               on_current(std::any_cast<date>(current));
             })),
@@ -275,7 +275,7 @@ CalendarDatePicker::CalendarDatePicker(
     std::shared_ptr<OptionalDateModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
-  m_current_connection = m_current->connect_current_signal([=] (auto current) {
+  m_current_connection = m_current->connect_update_signal([=] (auto current) {
     on_current(current);
   });
   auto layout = new QVBoxLayout(this);
@@ -293,7 +293,7 @@ CalendarDatePicker::CalendarDatePicker(
       return new CalendarDayLabel(std::make_shared<ListValueModel>(list, index),
         m_month_spinner->get());
     }, this);
-  m_month_spinner->get()->connect_current_signal([=] (auto current) {
+  m_month_spinner->get()->connect_update_signal([=] (auto current) {
     on_current_month(current);
   });
   m_calendar_view->setFixedSize(scale(168, 144));
@@ -301,7 +301,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_calendar_view->installEventFilter(this);
   layout->addWidget(m_calendar_view);
   m_list_current_connection =
-    m_calendar_view->get_current()->connect_current_signal(
+    m_calendar_view->get_current()->connect_update_signal(
       [=] (const auto& index) { on_list_current(index); });
   m_calendar_view->connect_submit_signal([=] (const auto& value) {
     on_submit(std::any_cast<date>(value));

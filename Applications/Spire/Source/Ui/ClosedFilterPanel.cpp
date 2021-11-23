@@ -60,7 +60,7 @@ class BooleanListValueModel : public BooleanModel {
 
     explicit BooleanListValueModel(std::shared_ptr<ListValueModel> source)
       : m_source(std::move(source)),
-        m_source_connection(m_source->connect_current_signal(
+        m_source_connection(m_source->connect_update_signal(
           std::bind_front(&BooleanListValueModel::on_current, this))) {}
 
     const Type& get() const override {
@@ -71,18 +71,18 @@ class BooleanListValueModel : public BooleanModel {
       return m_source->set(value);
     }
 
-    connection connect_current_signal(
+    connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override {
-      return m_current_signal.connect(slot);
+      return m_update_signal.connect(slot);
     }
 
   private:
-    mutable UpdateSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<ListValueModel> m_source;
     scoped_connection m_source_connection;
 
     void on_current(const std::any& current) {
-      m_current_signal(std::any_cast<const Type&>(current));
+      m_update_signal(std::any_cast<const Type&>(current));
     }
 };
 

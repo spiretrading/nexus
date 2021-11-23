@@ -24,43 +24,43 @@ namespace Spire {
 
       /**
        * Constructs a model with an explicit constant.
-       * @param current The constant to store.
+       * @param value The constant to store.
        */
-      ConstantValueModel(Type current);
+      ConstantValueModel(Type value);
 
       const Type& get() const override;
 
       QValidator::State set(const Type& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      Type m_current;
+      Type m_value;
   };
 
   /**
    * Allocates a shared ConstantValueModel.
-   * @param current The constant to store in the model.
+   * @param value The constant to store in the model.
    */
   template<typename T>
-  auto make_constant_value_model(T&& current) {
+  auto make_constant_value_model(T&& value) {
     using Type = std::decay_t<T>;
-    return std::make_shared<ConstantValueModel<Type>>(std::forward<T>(current));
+    return std::make_shared<ConstantValueModel<Type>>(std::forward<T>(value));
   }
 
   template<typename T>
   ConstantValueModel<T>::ConstantValueModel()
-    : m_current() {}
+    : m_value() {}
 
   template<typename T>
-  ConstantValueModel<T>::ConstantValueModel(Type current)
-    : m_current(std::move(current)) {}
+  ConstantValueModel<T>::ConstantValueModel(Type value)
+    : m_value(std::move(value)) {}
 
   template<typename T>
   const typename ConstantValueModel<T>::Type&
       ConstantValueModel<T>::get() const {
-    return m_current;
+    return m_value;
   }
 
   template<typename T>
@@ -69,7 +69,7 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection ConstantValueModel<T>::connect_current_signal(
+  boost::signals2::connection ConstantValueModel<T>::connect_update_signal(
       const typename UpdateSignal::slot_type& slot) const {
     return {};
   }

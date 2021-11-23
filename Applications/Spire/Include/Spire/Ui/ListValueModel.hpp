@@ -27,11 +27,11 @@ namespace Spire {
 
       QValidator::State set(const Type& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable UpdateSignal m_current_signal;
+      mutable UpdateSignal m_update_signal;
       std::shared_ptr<ListModel> m_source;
       int m_index;
       boost::signals2::scoped_connection m_source_connection;

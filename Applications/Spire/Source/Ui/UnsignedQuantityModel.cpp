@@ -45,7 +45,7 @@ QValidator::State UnsignedQuantityModel::set(
   return m_model->set(value);
 }
 
-connection UnsignedQuantityModel::connect_current_signal(
+connection UnsignedQuantityModel::connect_update_signal(
     const UpdateSignal::slot_type& slot) const {
-  return m_model->connect_current_signal(slot);
+  return m_model->connect_update_signal(slot);
 }

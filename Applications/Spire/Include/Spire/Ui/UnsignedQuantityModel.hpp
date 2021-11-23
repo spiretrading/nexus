@@ -30,7 +30,7 @@ namespace Spire {
       QValidator::State set(
         const boost::optional<Nexus::Quantity>& value) override;
 
-      boost::signals2::connection connect_current_signal(
+      boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
     private:
