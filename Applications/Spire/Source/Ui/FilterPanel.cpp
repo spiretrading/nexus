@@ -32,7 +32,9 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
     scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
     scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
   auto header = make_label(std::move(title));
-  set_style(*header, HEADER_STYLE(get_style(*header)));
+  update_style(*header, [&] (auto& style) {
+    style = HEADER_STYLE(style);
+  });
   layout->addWidget(header);
   layout->addSpacing(scale_height(18));
   layout->addWidget(m_body);

@@ -31,12 +31,29 @@ namespace Spire {
       using RejectSignal = Signal<void (boost::optional<Type> value)>;
 
       /**
+       * Constructs a DecimalBoxAdaptor with a LocalValueModel with modifiers
+       * set to the model's increment.
+       * @param parent The parent widget.
+       */
+      explicit DecimalBoxAdaptor(QWidget* parent = nullptr);
+
+      /**
        * Constructs a DecimalBoxAdaptor with a LocalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
       explicit DecimalBoxAdaptor(
         QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DecimalBoxAdaptor with modifiers set to the model's
+       * increment.
+       * @param model The model used for the current value.
+       * @param parent The parent widget.
+       */
+      DecimalBoxAdaptor(
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a DecimalBoxAdaptor.
@@ -78,6 +95,17 @@ namespace Spire {
        * Constructs a DecimalBoxAdaptor with a custom adaptor model.
        * @param model The model used for the current value.
        * @param adaptor_model The model adapting from the scalar to the Decimal.
+       * @param parent The parent widget.
+       */
+      DecimalBoxAdaptor(
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DecimalBoxAdaptor with a custom adaptor model.
+       * @param model The model used for the current value.
+       * @param adaptor_model The model adapting from the scalar to the Decimal.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
@@ -100,9 +128,17 @@ namespace Spire {
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_reject_connection;
 
+      static auto make_modifiers(
+        const ScalarValueModel<boost::optional<Type>>& model);
       void on_submit(const boost::optional<Decimal>& submission);
       void on_reject(const boost::optional<Decimal>& value);
   };
+
+  template<typename T>
+  DecimalBoxAdaptor<T>::DecimalBoxAdaptor(QWidget* parent)
+    : DecimalBoxAdaptor(
+        std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
+        parent) {}
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
@@ -110,6 +146,13 @@ namespace Spire {
     : DecimalBoxAdaptor(
         std::make_shared<LocalScalarValueModel<boost::optional<Type>>>(),
         std::move(modifiers), parent) {}
+
+  template<typename T>
+  DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
+    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+    QWidget* parent)
+    : DecimalBoxAdaptor(model, std::make_shared<ToDecimalModel<Type>>(model),
+        parent) {}
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
@@ -154,6 +197,13 @@ namespace Spire {
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
+    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+    std::shared_ptr<ToDecimalModel<Type>> adaptor_model, QWidget* parent)
+    : DecimalBoxAdaptor(model, std::move(adaptor_model), make_modifiers(*model),
+        parent) {}
+
+  template<typename T>
+  DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
       std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
       std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
       QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
@@ -182,6 +232,14 @@ namespace Spire {
   template<typename T>
   DecimalBox& DecimalBoxAdaptor<T>::get_decimal_box() {
     return *m_decimal_box;
+  }
+
+  template<typename T>
+  auto DecimalBoxAdaptor<T>::make_modifiers(
+      const ScalarValueModel<boost::optional<Type>>& model) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Type>();
+    modifiers[Qt::NoModifier] = model.get_increment();
+    return modifiers;
   }
 
   template<typename T>

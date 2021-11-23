@@ -232,6 +232,14 @@ namespace Spire::Styles {
   void set_style(QWidget& widget, const PseudoElement& pseudo_element,
     StyleSheet style);
 
+  /** Updates a QWidget's style. */
+  template<typename F>
+  void update_style(QWidget& widget, F&& f) {
+    auto style = get_style(widget);
+    std::forward<F>(f)(style);
+    set_style(widget, std::move(style));
+  }
+
   /** Returns a Block containing a widget's computed style. */
   const Block& get_computed_block(QWidget& widget);
 

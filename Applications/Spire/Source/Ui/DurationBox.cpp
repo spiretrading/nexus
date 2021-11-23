@@ -299,13 +299,6 @@ namespace {
     return style;
   }
 
-  template<typename T>
-  auto create_modifiers() {
-    return QHash<Qt::KeyboardModifier, T>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-       {Qt::ShiftModifier, 20}});
-  }
-
   QWidget* find_focus_proxy(QWidget& widget) {
     auto proxy = &widget;
     while(proxy->focusProxy()) {
@@ -316,20 +309,24 @@ namespace {
 
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(model), create_modifiers<int>());
+    auto field = new IntegerBox(std::move(model));
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
-    set_style(*field, HOUR_FIELD_STYLE(get_style(*field)));
+    update_style(*field, [&] (auto& style) {
+      style = HOUR_FIELD_STYLE(style);
+    });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
 
   auto make_minute_field(std::shared_ptr<OptionalIntegerModel> model,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(model), create_modifiers<int>());
+    auto field = new IntegerBox(std::move(model));
     field->setMinimumWidth(scale_width(28));
     field->set_placeholder("mm");
-    set_style(*field, MINUTE_FIELD_STYLE(get_style(*field)));
+    update_style(*field, [&] (auto& style) {
+      style = MINUTE_FIELD_STYLE(style);
+    });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }
@@ -337,10 +334,12 @@ namespace {
   auto make_second_field(
       std::shared_ptr<ScalarValueModel<optional<Decimal>>> model,
         QWidget& event_filter) {
-    auto field = new DecimalBox(std::move(model), create_modifiers<Decimal>());
+    auto field = new DecimalBox(std::move(model));
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
-    set_style(*field, SECOND_FIELD_STYLE(get_style(*field)));
+    update_style(*field, [&] (auto& style) {
+      style = SECOND_FIELD_STYLE(style);
+    });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
   }

@@ -61,11 +61,27 @@ namespace Styles {
         const boost::optional<Decimal>& max);
 
       /**
+       * Constructs a DecimalBox with a LocalValueModel and
+       * increments/decrements by 1.0.
+       * @param parent The parent widget.
+       */
+      explicit DecimalBox(QWidget* parent = nullptr);
+
+      /**
        * Constructs a DecimalBox with a LocalValueModel.
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
       explicit DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DecimalBox with 6 decimal places and no trailing zeros
+       * with an increment determined by the model's increment.
+       * @param model The model used for the current value.
+       * @param parent The parent widget.
+       */
+      explicit DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
         QWidget* parent = nullptr);
 
       /**

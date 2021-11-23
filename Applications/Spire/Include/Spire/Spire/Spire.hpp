@@ -21,6 +21,7 @@ namespace Spire {
   class RealSpinBoxModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
+  template<typename T> class ScalarValueModelDecorator;
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
@@ -29,6 +30,8 @@ namespace Spire {
   class TestKeySequenceValidationModel;
   template<typename T> class ToDecimalModel;
   template<typename T> class ToTextModel;
+  template<typename T, typename U, typename F, typename G>
+    class TransformValueModel;
   template<typename T> class ValueModel;
 
   /** Defines the common type of boost signal used throughout Spire. */

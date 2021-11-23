@@ -9,6 +9,7 @@
 
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   struct SizeFilter : QObject {
@@ -234,4 +235,18 @@ std::shared_ptr<TypedUiProperty<QString>>
       });
       return setter;
     });
+}
+
+template<>
+std::shared_ptr<TypedUiProperty<DateFormat>>
+    Spire::make_standard_property<DateFormat>(QString name, DateFormat value) {
+  auto formats = define_enum<DateFormat>(
+    {{"YYYYMMDD", DateFormat::YYYYMMDD}, {"MMDD", DateFormat::MMDD}});
+  return make_standard_enum_property(std::move(name), value, formats);
+}
+
+template<>
+std::shared_ptr<TypedUiProperty<DateFormat>>
+    Spire::make_standard_property<DateFormat>(QString name) {
+  return make_standard_property(std::move(name), DateFormat::YYYYMMDD);
 }

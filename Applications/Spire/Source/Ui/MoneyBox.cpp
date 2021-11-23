@@ -24,7 +24,7 @@ MoneyBox::MoneyBox(std::shared_ptr<OptionalMoneyModel> model,
     QHash<Qt::KeyboardModifier, Money> modifiers, QWidget* parent)
     : DecimalBoxAdaptor(model, std::make_shared<MoneyToDecimalModel>(model),
         std::move(modifiers), parent) {
-  auto style = get_style(get_decimal_box());
-  style.get(Any()).set(TrailingZeros(2));
-  set_style(get_decimal_box(), std::move(style));
+  update_style(get_decimal_box(), [&] (auto& style) {
+    style.get(Any()).set(TrailingZeros(2));
+  });
 }

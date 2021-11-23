@@ -27,8 +27,9 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
-  set_style(*m_scrollable_list_box,
-    SCROLLABLE_LIST_STYLE(get_style(*m_scrollable_list_box)));
+  update_style(*m_scrollable_list_box, [&] (auto& style) {
+    style = SCROLLABLE_LIST_STYLE(style);
+  });
   layout->addWidget(m_scrollable_list_box);
   setFocusProxy(m_scrollable_list_box);
   m_panel = new OverlayPanel(*this, parent);

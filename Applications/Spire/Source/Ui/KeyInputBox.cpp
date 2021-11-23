@@ -94,9 +94,9 @@ KeyInputBox::KeyInputBox(
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
   auto input_box = make_input_box(layers, this);
-  auto input_box_style = get_style(*input_box);
-  input_box_style.get(Any()).set(vertical_padding(scale_height(3)));
-  set_style(*input_box, std::move(input_box_style));
+  update_style(*input_box, [&] (auto& style) {
+    style.get(Any()).set(vertical_padding(scale_height(3)));
+  });
   layout->addWidget(input_box);
   setLayout(layout);
   auto body_layout = new QHBoxLayout();
@@ -196,9 +196,9 @@ void KeyInputBox::set_status(Status status) {
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     prompt->set_read_only(true);
     prompt->setDisabled(true);
-    auto style = get_style(*prompt);
-    style.get(Disabled() && ReadOnly()).set(TextColor(QColor(0xA0A0A0)));
-    set_style(*prompt, std::move(style));
+    update_style(*prompt, [&] (auto& style) {
+      style.get(Disabled() && ReadOnly()).set(TextColor(QColor(0xA0A0A0)));
+    });
     layout.addWidget(prompt);
   }
 }

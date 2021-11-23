@@ -46,11 +46,11 @@ namespace {
     auto description_label =
       new TextAreaBox(QString::fromStdString(model.m_tag.m_description));
     description_label->set_read_only(true);
-    auto description_style = get_style(*description_label);
-    description_style.get(ReadOnly()).
-      set(PaddingTop(scale_height(6))).
-      set(PaddingBottom(0));
-    set_style(*description_label, std::move(description_style));
+    update_style(*description_label, [&] (auto& style) {
+      style.get(ReadOnly()).
+        set(PaddingTop(scale_height(6))).
+        set(PaddingBottom(0));
+    });
     auto layout = new QVBoxLayout();
     layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
@@ -62,22 +62,21 @@ namespace {
 
   auto make_value_row(const OrderFieldInfoTip::Model::Argument& argument) {
     auto id_label = make_label(QString::fromStdString(argument.m_value));
-    auto id_style = get_style(*id_label);
-    id_style.get(ReadOnly()).
-      set(FontSize(scale_height(10)));
-    set_style(*id_label, std::move(id_style));
+    update_style(*id_label, [&] (auto& style) {
+      style.get(ReadOnly()).set(FontSize(scale_height(10)));
+    });
     auto description_label =
       new TextAreaBox(QString::fromStdString(argument.m_description));
     description_label->set_read_only(true);
     description_label->setSizePolicy(
       QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto description_style = get_style(*description_label);
-    description_style.get(ReadOnly()).
-      set(border_size(0)).
-      set(vertical_padding(0)).
-      set(FontSize(scale_height(10))).
-      set(PaddingLeft(scale_width(8)));
-    set_style(*description_label, std::move(description_style));
+    update_style(*description_label, [&] (auto& style) {
+      style.get(ReadOnly()).
+        set(border_size(0)).
+        set(vertical_padding(0)).
+        set(FontSize(scale_height(10))).
+        set(PaddingLeft(scale_width(8)));
+    });
     return std::tuple(id_label, description_label);
   }
 
@@ -143,10 +142,9 @@ namespace {
 
   auto make_prerequisite_container(const OrderFieldInfoTip::Model& model) {
     auto header = make_label(QObject::tr("Prerequisites"));
-    auto header_style = get_style(*header);
-    header_style.get(ReadOnly()).
-      set(FontSize(scale_height(10)));
-    set_style(*header, std::move(header_style));
+    update_style(*header, [&] (auto& style) {
+      style.get(ReadOnly()).set(FontSize(scale_height(10)));
+    });
     auto prerequisites_label = new TextAreaBox(describe_prerequisites(model));
     prerequisites_label->set_read_only(true);
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
@@ -159,12 +157,12 @@ namespace {
     layout->addWidget(prerequisites_label);
     auto box = new Box(container);
     box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto box_style = get_style(*box);
-    box_style.get(Any()).
-      set(BorderTopColor(QColor(0xE0E0E0))).
-      set(BorderTopSize(scale_height(1))).
-      set(padding(scale_width(18)));
-    set_style(*box, std::move(box_style));
+    update_style(*box, [&] (auto& style) {
+      style.get(Any()).
+        set(BorderTopColor(QColor(0xE0E0E0))).
+        set(BorderTopSize(scale_height(1))).
+        set(padding(scale_width(18)));
+    });
     return box;
   }
 }

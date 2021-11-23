@@ -1,10 +1,7 @@
 #ifndef SPIRE_LOCAL_SCALAR_VALUE_MODEL_HPP
 #define SPIRE_LOCAL_SCALAR_VALUE_MODEL_HPP
-#include <utility>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/optional/optional.hpp>
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/ScalarValueModel.hpp"
+#include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -56,70 +53,55 @@ namespace Spire {
         const typename CurrentSignal::slot_type& slot) const override;
 
     private:
-      LocalValueModel<Type> m_model;
-      QValidator::State m_state;
-      boost::optional<Scalar> m_minimum;
-      boost::optional<Scalar> m_maximum;
-      Scalar m_increment;
+      ScalarValueModelDecorator<Type> m_model;
   };
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel()
-      : m_state(m_model.get_state()) {
-    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      m_increment = Scalar(std::numeric_limits<Scalar>::max() /
-        std::numeric_limits<Scalar>::max());
-    }
-  }
+    : m_model(std::make_shared<LocalValueModel<Type>>()) {}
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel(Type current)
-      : m_model(std::move(current)),
-        m_state(m_model.get_state()) {
-    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      m_increment = Scalar(std::numeric_limits<Scalar>::max() /
-        std::numeric_limits<Scalar>::max());
-    }
-  }
+    : m_model(std::make_shared<LocalValueModel<Type>>(std::move(current))) {}
 
   template<typename T>
   void LocalScalarValueModel<T>::set_minimum(
       const boost::optional<Scalar>& minimum) {
-    m_minimum = minimum;
+    m_model.set_minimum(minimum);
   }
 
   template<typename T>
   void LocalScalarValueModel<T>::set_maximum(
       const boost::optional<Scalar>& maximum) {
-    m_maximum = maximum;
+    m_model.set_maximum(maximum);
   }
 
   template<typename T>
   void LocalScalarValueModel<T>::set_increment(const Scalar& increment) {
-    m_increment = increment;
+    m_model.set_increment(increment);
   }
 
   template<typename T>
   boost::optional<typename LocalScalarValueModel<T>::Scalar>
       LocalScalarValueModel<T>::get_minimum() const {
-    return m_minimum;
+    return m_model.get_minimum();
   }
 
   template<typename T>
   boost::optional<typename LocalScalarValueModel<T>::Scalar>
       LocalScalarValueModel<T>::get_maximum() const {
-    return m_maximum;
+    return m_model.get_maximum();
   }
 
   template<typename T>
   typename LocalScalarValueModel<T>::Scalar
       LocalScalarValueModel<T>::get_increment() const {
-    return m_increment;
+    return m_model.get_increment();
   }
 
   template<typename T>
   QValidator::State LocalScalarValueModel<T>::get_state() const {
-    return m_state;
+    return m_model.get_state();
   }
 
   template<typename T>
@@ -130,25 +112,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State LocalScalarValueModel<T>::set_current(const Type& value) {
-    using namespace std;
-    if(value) {
-      if constexpr(std::numeric_limits<Type>::is_integer) {
-        if(*value != m_model.get_current() && (*value % m_increment) != 0) {
-          return QValidator::State::Invalid;
-        }
-      } else if constexpr(std::numeric_limits<Type>::is_specialized) {
-        if(*value != m_model.get_current() && fmod(*value, m_increment) != 0) {
-          return QValidator::State::Invalid;
-        }
-      }
-    }
-    m_state = m_model.set_current(value);
-    if(value) {
-      if(m_minimum && *value < *m_minimum || m_maximum && *value > *m_maximum) {
-        m_state = QValidator::Intermediate;
-      }
-    }
-    return m_state;
+    return m_model.set_current(value);
   }
 
   template<typename T>

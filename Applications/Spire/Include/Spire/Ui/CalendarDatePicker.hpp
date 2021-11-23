@@ -1,7 +1,9 @@
 #ifndef SPIRE_CALENDAR_DATE_PICKER_HPP
 #define SPIRE_CALENDAR_DATE_PICKER_HPP
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

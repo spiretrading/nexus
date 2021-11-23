@@ -19,13 +19,13 @@ using namespace Spire::Styles;
 
 namespace {
   void apply_label_style(TextBox& text_box) {
-    auto style = get_style(text_box);
-    style.get(Any()).
-      set(border_size(0)).
-      set(vertical_padding(0));
-    style.get(ReadOnly() && Disabled()).
-      set(TextColor(QColor(Qt::black)));
-    set_style(text_box, std::move(style));
+    update_style(text_box, [&] (auto& style) {
+      style.get(Any()).
+        set(border_size(0)).
+        set(vertical_padding(0));
+      style.get(ReadOnly() && Disabled()).
+        set(TextColor(QColor(Qt::black)));
+    });
     text_box.setDisabled(true);
     text_box.set_read_only(true);
   }
@@ -396,10 +396,10 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     if(m_submission != m_model->get_current()) {
       m_model->set_current(m_submission);
+      return;
     }
-  } else {
-    QWidget::keyPressEvent(event);
   }
+  QWidget::keyPressEvent(event);
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {

@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Spire/Ui/DateBox.hpp"
 #include "Spire/UiViewer/TypedUiProperty.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
 
@@ -221,6 +222,16 @@ namespace Spire {
   template<>
   std::shared_ptr<TypedUiProperty<QString>>
     make_standard_property<QString>(QString name, QString value);
+
+  /**
+   * Returns a standard TypedUiProperty<Styles::DateFormat>.
+   * @param name The name of the property.
+   * @param value The property's initial value.
+   */
+  template<>
+  std::shared_ptr<TypedUiProperty<Styles::DateFormat>>
+    make_standard_property<Styles::DateFormat>(
+      QString name, Styles::DateFormat value);
 
   template<typename T>
   StandardUiProperty<T>::StandardUiProperty(QString name,

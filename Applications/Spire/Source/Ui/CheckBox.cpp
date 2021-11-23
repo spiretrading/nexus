@@ -123,26 +123,26 @@ void CheckBox::on_checked(bool is_checked) {
 }
 
 void CheckBox::on_layout_direction(Qt::LayoutDirection direction) {
-  auto style = get_style(*this);
-  auto [padding_left, padding_right] = [&] {
-    if(direction == Qt::LeftToRight) {
-      return std::make_tuple(scale_width(8), 0);
-    }
-    return std::make_tuple(0, scale_width(8));
-  }();
-  style.get(Any() >> is_a<TextBox>()).
-    set(PaddingLeft(padding_left)).
-    set(PaddingRight(padding_right));
-  set_style(*this, style);
+  update_style(*this, [&] (auto& style) {
+    auto [padding_left, padding_right] = [&] {
+      if(direction == Qt::LeftToRight) {
+        return std::make_tuple(scale_width(8), 0);
+      }
+      return std::make_tuple(0, scale_width(8));
+    }();
+    style.get(Any() >> is_a<TextBox>()).
+      set(PaddingLeft(padding_left)).
+      set(PaddingRight(padding_right));
+  });
 }
 
 CheckBox* Spire::make_radio_button(QWidget* parent) {
   auto button = new CheckBox(parent);
-  auto style = get_style(*button);
-  style.get(Any() >> is_a<Icon>()).
-    set(IconImage(RADIO_CHECK_ICON()));
-  style.get(Any() >> is_a<Box>()).
-    set(border_radius(scale_width(8)));
-  set_style(*button, std::move(style));
+  update_style(*button, [&] (auto& style) {
+    style.get(Any() >> is_a<Icon>()).
+      set(IconImage(RADIO_CHECK_ICON()));
+    style.get(Any() >> is_a<Box>()).
+      set(border_radius(scale_width(8)));
+  });
   return button;
 }

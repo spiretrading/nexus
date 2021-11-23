@@ -26,7 +26,7 @@ QuantityBox::QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
     QHash<Qt::KeyboardModifier, Quantity> modifiers, QWidget* parent)
     : DecimalBoxAdaptor(model, std::make_shared<QuantityToDecimalModel>(model),
         std::move(modifiers), parent) {
-  auto style = get_style(get_decimal_box());
-  style.get(Any()).set(TrailingZeros(0));
-  set_style(get_decimal_box(), std::move(style));
+  update_style(get_decimal_box(), [&] (auto& style) {
+    style.get(Any()).set(TrailingZeros(0));
+  });
 }

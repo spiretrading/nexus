@@ -61,7 +61,9 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
   value_container_layout->setSpacing(0);
   auto value_label = make_value_label();
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*value_label, VALUE_LABEL_STYLE(get_style(*value_label)));
+  update_style(*value_label, [&] (auto& style) {
+    style = VALUE_LABEL_STYLE(style);
+  });
   value_container_layout->addWidget(value_label);
   auto type_icon_layout = new QVBoxLayout();
   type_icon_layout->setContentsMargins({});
@@ -77,7 +79,9 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
   layout->addLayout(value_container_layout);
   auto name_label = make_label(QString::fromStdString(m_region.GetName()));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  set_style(*name_label, NAME_LABEL_STYLE(get_style(*name_label)));
+  update_style(*name_label, [&] (auto& style) {
+    style = NAME_LABEL_STYLE(style);
+  });
   layout->addWidget(name_label);
 }
 

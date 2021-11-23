@@ -108,7 +108,9 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> model,
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
       return check_box;
     });
-  set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
+  update_style(*m_list_view, [&] (auto& style) {
+    style = LIST_VIEW_STYLE(style);
+  });
   for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
     set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
   }
@@ -162,8 +164,8 @@ void ClosedFilterPanel::on_list_model_operation(
     const ListModel::Operation& operation) {
   visit(operation,
     [&] (const ListModel::AddOperation& operation) {
-      set_style(*m_list_view->get_list_item(operation.m_index),
-        LIST_ITEM_STYLE());
+      set_style(
+        *m_list_view->get_list_item(operation.m_index), LIST_ITEM_STYLE());
       invalidate_descendants(*window());
       if(m_model->get<bool>(operation.m_index, 1)) {
         m_submission->push(m_model->at(operation.m_index, 0));

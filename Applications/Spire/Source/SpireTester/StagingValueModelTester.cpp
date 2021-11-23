@@ -1,0 +1,27 @@
+#include <doctest/doctest.h>
+#include <boost/optional/optional_io.hpp>
+#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/StagingValueModel.hpp"
+
+using namespace boost;
+using namespace Spire;
+
+TEST_SUITE("StagingValueModel") {
+  TEST_CASE("stage_local_model") {
+    auto source = std::make_shared<LocalValueModel<int>>(47);
+    auto model = StagingValueModel(source);
+    REQUIRE(model.get_state() == QValidator::State::Acceptable);
+    REQUIRE(model.get_current() == 47);
+    REQUIRE(model.set_current(123) == QValidator::State::Intermediate);
+    REQUIRE(model.get_current() == 123);
+    REQUIRE(model.get_state() == QValidator::State::Intermediate);
+    REQUIRE(source->get_current() == 47);
+    REQUIRE(model.commit() == QValidator::State::Acceptable);
+    REQUIRE(model.get_state() == QValidator::State::Acceptable);
+    REQUIRE(source->get_current() == 123);
+    REQUIRE(model.set_current(321) == QValidator::State::Intermediate);
+    source->set_current(555);
+    REQUIRE(model.get_current() == 555);
+    REQUIRE(model.get_state() == QValidator::State::Acceptable);
+  }
+}

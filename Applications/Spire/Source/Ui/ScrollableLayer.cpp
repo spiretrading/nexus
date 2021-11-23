@@ -23,9 +23,9 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   layout->addItem(spacer, 0, 0);
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
-  auto style = get_style(*m_corner_box);
-  style.get(Any()).set(BackgroundColor(QColor(0xFF, 0xFF, 0xFF)));
-  set_style(*m_corner_box, std::move(style));
+  update_style(*m_corner_box, [&] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xFF, 0xFF, 0xFF)));
+  });
   m_corner_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   layout->addWidget(m_corner_box, 1, 1);
   setAttribute(Qt::WA_TransparentForMouseEvents);

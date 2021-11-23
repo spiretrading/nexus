@@ -39,9 +39,9 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
   m_current_connection =
     m_list_view->get_current_model()->connect_current_signal(
       [=] (const auto& current) { on_current(current); });
-  auto style = get_style(*m_list_view);
-  style.get(Any()).set(EdgeNavigation::CONTAIN);
-  set_style(*m_list_view, std::move(style));
+  update_style(*m_list_view, [&] (auto& style) {
+    style.get(Any()).set(EdgeNavigation::CONTAIN);
+  });
 }
 
 ListView& ScrollableListBox::get_list_view() {
