@@ -17,13 +17,6 @@ namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
     style.get(Any()).
       set(vertical_padding(scale_height(3)));
-    style.get(Any() >> is_a<ListView>()).
-      set(ListItemGap(scale_width(4))).
-      set(ListOverflowGap(scale_width(3))).
-      set(Overflow::WRAP).
-      set(Qt::Horizontal);
-    style.get((ReadOnly() || Disabled()) >> is_a<ListView>()).
-      set(Overflow::NONE);
     return style;
   }
 
@@ -33,6 +26,17 @@ namespace {
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(padding(0));
+    return style;
+  }
+
+  auto LIST_VIEW_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(ListItemGap(scale_width(4))).
+      set(ListOverflowGap(scale_width(3))).
+      set(Overflow::WRAP).
+      set(Qt::Horizontal);
+    style.get((ReadOnly() || Disabled())).
+      set(Overflow::NONE);
     return style;
   }
 
@@ -95,18 +99,19 @@ TagBox::TagBox(std::shared_ptr<ListModel> list_model,
   set_style(*m_text_box, TEXT_BOX_STYLE(get_style(*m_text_box)));
   m_list_view = new ListView(std::make_shared<PartialListModel>(m_model),
     std::bind_front(&TagBox::build_tag, this));
+  set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
   for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
     set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
   }
   m_list_view->get_list_model()->connect_operation_signal(
     std::bind_front(&TagBox::on_operation, this));
   auto input_box = make_input_box(m_list_view);
-  layout->addWidget(input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
+  layout->addWidget(input_box);
   setFocusProxy(m_list_view);
-  setFocusPolicy(Qt::StrongFocus);
   m_text_box->findChild<QLineEdit*>()->installEventFilter(this);
+  m_list_view->installEventFilter(this);
 }
 
 const std::shared_ptr<ListModel>& TagBox::get_list_model() const {
@@ -126,8 +131,10 @@ void TagBox::set_read_only(bool is_read_only) {
   update_tag_read_only();
   if(is_read_only) {
     match(*this, ReadOnly());
+    match(*m_list_view, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
+    unmatch(*m_list_view, ReadOnly());
   }
 }
 
@@ -137,7 +144,15 @@ connection TagBox::connect_delete_signal(
 }
 
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
+  if(m_list_view == watched) {
+    if(event->type() == QEvent::LayoutRequest &&
+        (is_read_only() || !isEnabled())) {
+      for(auto i = 0; i < m_list_view->get_list_model()->get_size(); ++i) {
+        m_list_view->get_list_item(i)->
+          setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+      }
+    }
+  } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     switch(key_event.key()) {
       case Qt::Key_Backspace:
@@ -170,7 +185,7 @@ QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
     auto label = displayTextAny(model->at(index));
     auto tag = new Tag(label, this);
     tag->setFocusProxy(m_text_box);
-    tag->set_read_only(m_text_box->is_read_only());
+    tag->set_read_only(m_text_box->is_read_only() || !isEnabled());
     tag->connect_delete_signal([=] {
       auto tag_index = [&] {
         for(auto i = 0; i < model->get_size(); ++i) {
@@ -194,23 +209,19 @@ QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
 void TagBox::on_operation(const ListModel::Operation& operation) {
   visit(operation,
     [&] (const ListModel::AddOperation& operation) {
-      auto item = m_list_view->get_list_item(operation.m_index);
-      set_style(*item, LIST_ITEM_STYLE());
-      setTabOrder(previousInFocusChain(), item);
-      setTabOrder(item, m_text_box->nextInFocusChain());
+      set_style(*m_list_view->get_list_item(operation.m_index),
+        LIST_ITEM_STYLE());
       m_text_box->setFocusPolicy(Qt::StrongFocus);
     },
     [&] (const ListModel::RemoveOperation& operation) {
       m_tags.erase(m_tags.begin() + operation.m_index);
-      if(m_tags.empty()) {
-        m_list_view->setFocusProxy(m_text_box);
-      }
+      m_list_view->setFocusProxy(m_text_box);
     });
 }
 
 void TagBox::update_tag_read_only() {
   auto is_read_only = m_text_box->is_read_only() || !isEnabled();
-  for(auto& tag : m_tags) {
+  for(auto tag : m_tags) {
     tag->set_read_only(is_read_only);
   }
 }
