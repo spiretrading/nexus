@@ -1685,17 +1685,17 @@ UiProfile Spire::make_list_view_profile() {
       auto& current_item = get<int>("current_item", profile.get_properties());
       current_item.connect_changed_signal([=] (auto index) {
         if(index == -1) {
-          list_view->get_current_model()->set_current(none);
+          list_view->get_current()->set_current(none);
         } else if(index >= 0 && index < list_model->get_size()) {
-          list_view->get_current_model()->set_current(index);
+          list_view->get_current()->set_current(index);
         }
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
       select_item.connect_changed_signal([=] (auto index) {
         if(index == -1) {
-          list_view->get_selection_model()->set_current(none);
+          list_view->get_selection()->set_current(none);
         } else if(index >= 0 && index < list_model->get_size()) {
-          list_view->get_selection_model()->set_current(index);
+          list_view->get_selection()->set_current(index);
         }
       });
       auto& disable_item = get<int>("disable_item", profile.get_properties());
