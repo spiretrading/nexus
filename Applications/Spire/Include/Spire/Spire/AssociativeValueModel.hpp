@@ -86,7 +86,7 @@ namespace Spire {
        * @return Acceptable if the value was set successfully, Invalid
        *         otherwise.
        */
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
       /** Connects a slot to the current signal. */
       boost::signals2::connection connect_current_signal(
@@ -100,7 +100,7 @@ namespace Spire {
         void signal() const;
         QValidator::State get_state() const override;
         const Type& get() const override;
-        QValidator::State set_current(const Type& value) override;
+        QValidator::State set(const Type& value) override;
         boost::signals2::connection connect_current_signal(
           const typename CurrentSignal::slot_type& slot) const override;
 
@@ -167,7 +167,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State AssociativeValueModel<T>::set_current(const Type& value) {
+  QValidator::State AssociativeValueModel<T>::set(const Type& value) {
     auto i = m_models.find(value);
     if(i == m_models.end()) {
       return QValidator::Invalid;
@@ -196,9 +196,9 @@ namespace Spire {
   template<typename T>
   void AssociativeValueModel<T>::on_current(const Type& value, bool current) {
     if(current) {
-      set_current(value);
+      set(value);
     } else {
-      set_current(*m_default);
+      set(*m_default);
     }
   }
 
@@ -225,7 +225,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State AssociativeValueModel<T>::InnerModel::set_current(
+  QValidator::State AssociativeValueModel<T>::InnerModel::set(
       const Type& value) {
     if(value != m_current) {
       m_slot(value);

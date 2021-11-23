@@ -138,17 +138,17 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
   } else if(event->modifiers() == 0) {
     if(key == Qt::Key_Delete || key == Qt::Key_Backspace) {
       m_submission = m_current->get();
-      m_current->set_current(QKeySequence());
+      m_current->set(QKeySequence());
     } else if(key == Qt::Key_Escape &&
-        m_current->set_current(key) == QValidator::Invalid) {
-      m_current->set_current(m_submission);
+        m_current->set(key) == QValidator::Invalid) {
+      m_current->set(m_submission);
     } else if(key == Qt::Key_Return) {
       transition_submission();
     } else {
-      m_current->set_current(key);
+      m_current->set(key);
     }
   } else {
-    m_current->set_current(event->modifiers() + key);
+    m_current->set(event->modifiers() + key);
   }
 }
 

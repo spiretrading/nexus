@@ -21,7 +21,7 @@ using namespace Spire::Styles;
 
 namespace {
   template<typename Model, typename M1, typename M2>
-  QValidator::State set_current(Model& model, const typename Model::Type& value,
+  QValidator::State set(Model& model, const typename Model::Type& value,
       std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
         const optional<time_duration>& update) {
     auto current = [&] () -> optional<time_duration> {
@@ -35,7 +35,7 @@ namespace {
       return update;
     }();
     auto blocker = shared_connection_block(model.m_source_connection);
-    if(model.m_source->set_current(current) != QValidator::State::Invalid) {
+    if(model.m_source->set(current) != QValidator::State::Invalid) {
       auto state = QValidator::State::Acceptable;
       model.m_state = state;
       model.m_current = value;
@@ -99,8 +99,8 @@ namespace {
       return m_current;
     }
 
-    QValidator::State set_current(const Type& value) {
-      return ::set_current(*this, value, m_minutes, m_seconds,
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value, m_minutes, m_seconds,
         m_source->get().get_value_or(hours(0)) +
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
@@ -153,8 +153,8 @@ namespace {
       return m_current;
     }
 
-    QValidator::State set_current(const Type& value) {
-      return ::set_current(*this, value, m_hours, m_seconds,
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value, m_hours, m_seconds,
         m_source->get().get_value_or(minutes(0)) +
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
@@ -212,8 +212,8 @@ namespace {
       return m_current;
     }
 
-    QValidator::State set_current(const Type& value) {
-      return ::set_current(*this, value, m_hours, m_minutes,
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value, m_hours, m_minutes,
         m_source->get().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
             to_seconds(m_current.get_value_or(0)));
@@ -535,7 +535,7 @@ void DurationBox::on_reject() {
   auto current = m_current->get();
   auto submission = m_submission;
   m_reject_signal(current);
-  m_current->set_current(submission);
+  m_current->set(submission);
   if(!m_is_rejected) {
     m_is_rejected = true;
     match(*this, Rejected());
@@ -545,13 +545,13 @@ void DurationBox::on_reject() {
 void DurationBox::update_empty_fields() {
   if(m_submission) {
     if(!m_hour_field->get()->get()) {
-      m_hour_field->get()->set_current(0);
+      m_hour_field->get()->set(0);
     }
     if(!m_minute_field->get()->get()) {
-      m_minute_field->get()->set_current(0);
+      m_minute_field->get()->set(0);
     }
     if(!m_second_field->get()->get()) {
-      m_second_field->get()->set_current(Decimal(0));
+      m_second_field->get()->set(Decimal(0));
     }
   }
 }

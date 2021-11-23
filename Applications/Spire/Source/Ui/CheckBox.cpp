@@ -64,7 +64,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
   auto button = new Button(body, this);
   setFocusProxy(button);
   button->connect_clicked_signal([=] {
-    m_current->set_current(!m_current->get());
+    m_current->set(!m_current->get());
   });
   layout->addWidget(button);
   auto body_layout = new QHBoxLayout(body);
@@ -96,7 +96,7 @@ const std::shared_ptr<BooleanModel>& CheckBox::get() const {
 }
 
 void CheckBox::set_label(const QString& label) {
-  m_label->get()->set_current(label);
+  m_label->get()->set(label);
 }
 
 void CheckBox::set_read_only(bool is_read_only) {

@@ -29,7 +29,7 @@ namespace Spire {
 
       const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
         const typename CurrentSignal::slot_type& slot) const override;
@@ -54,7 +54,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State LocalValueModel<T>::set_current(const Type& value) {
+  QValidator::State LocalValueModel<T>::set(const Type& value) {
     m_current = value;
     m_current_signal(value);
     return QValidator::State::Acceptable;

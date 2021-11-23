@@ -19,9 +19,9 @@ TEST_SUITE("ScalarValueModelDecorator") {
     model.set_maximum(41);
     REQUIRE(model.get_minimum() == 39);
     REQUIRE(model.get_maximum() == 41);
-    REQUIRE(model.set_current(3) == QValidator::State::Intermediate);
+    REQUIRE(model.set(3) == QValidator::State::Intermediate);
     REQUIRE(model.get() == 3);
-    REQUIRE(model.set_current(42) == QValidator::State::Intermediate);
+    REQUIRE(model.set(42) == QValidator::State::Intermediate);
     REQUIRE(model.get() == 42);
   }
 
@@ -31,9 +31,9 @@ TEST_SUITE("ScalarValueModelDecorator") {
     REQUIRE(model.get_state() == QValidator::State::Acceptable);
     REQUIRE(model.get() == none);
     REQUIRE(model.get_increment() == 1);
-    REQUIRE(model.set_current(3) == QValidator::State::Acceptable);
+    REQUIRE(model.set(3) == QValidator::State::Acceptable);
     REQUIRE(model.get() == 3);
-    REQUIRE(model.set_current(none) == QValidator::State::Acceptable);
+    REQUIRE(model.set(none) == QValidator::State::Acceptable);
     REQUIRE(model.get() == none);
   }
 }

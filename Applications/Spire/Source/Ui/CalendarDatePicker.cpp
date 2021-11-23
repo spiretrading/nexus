@@ -123,7 +123,7 @@ class RequiredDateModel : public DateModel {
       return m_current;
     }
 
-    QValidator::State set_current(const date& value) override {
+    QValidator::State set(const date& value) override {
       m_current = value;
       m_current_signal(m_current);
       return QValidator::State::Acceptable;
@@ -142,7 +142,7 @@ class RequiredDateModel : public DateModel {
 
     void on_current(const optional<date>& current) {
       if(current) {
-        set_current(*current);
+        set(*current);
       }
     }
 };
@@ -190,11 +190,11 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     Button* m_next_button;
 
     void decrement() {
-      m_current->set_current(m_current->get() - months(1));
+      m_current->set(m_current->get() - months(1));
     }
 
     void increment() {
-      m_current->set_current(m_current->get() + months(1));
+      m_current->set(m_current->get() + months(1));
     }
 };
 
@@ -248,7 +248,7 @@ class CalendarDayLabel : public QWidget {
     TextBox* m_label;
 
     void on_current(date day) {
-      m_label->get()->set_current(QString("%1").arg(day.day()));
+      m_label->get()->set(QString("%1").arg(day.day()));
       if(day == day_clock::local_day()) {
         match(*this, Today());
       } else {
@@ -346,12 +346,12 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
       auto current_index = m_calendar_view->get()->get();
       if(current_index) {
         if(*current_index == 0 && e->key() == Qt::Key_Left) {
-          m_current->set_current(*m_current->get() - days(1));
+          m_current->set(*m_current->get() - days(1));
           return true;
         } else if(*current_index ==
             m_calendar_view->get_list()->get_size() - 1 &&
             e->key() == Qt::Key_Right) {
-          m_current->set_current(*m_current->get() + days(1));
+          m_current->set(*m_current->get() + days(1));
           return true;
         }
       }
@@ -373,7 +373,7 @@ boost::optional<int> CalendarDatePicker::get_index(date day) const {
 void CalendarDatePicker::set_current_index(const optional<int>& index) {
   auto current_block =
     shared_connection_block(m_list_current_connection);
-  m_calendar_view->get()->set_current(index);
+  m_calendar_view->get()->set(index);
 }
 
 void CalendarDatePicker::on_current(const optional<date>& current) {
@@ -416,7 +416,7 @@ void CalendarDatePicker::on_current_month(date month) {
 void CalendarDatePicker::on_list_current(const optional<int>& index) {
   if(index) {
     auto current_block = shared_connection_block(m_current_connection);
-    m_current->set_current(m_calendar_view->get_list()->get<date>(*index));
+    m_current->set(m_calendar_view->get_list()->get<date>(*index));
   }
 }
 

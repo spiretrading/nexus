@@ -88,7 +88,7 @@ struct TextBox::TextValidator : QValidator {
       return QValidator::State::Acceptable;
     }
     auto current = std::move(input);
-    auto state = m_model->set_current(current);
+    auto state = m_model->set(current);
     input = m_model->get();
     if(state == QValidator::State::Invalid) {
       return state;
@@ -395,7 +395,7 @@ void TextBox::mousePressEvent(QMouseEvent* event) {
 void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     if(m_submission != m_current->get()) {
-      m_current->set_current(m_submission);
+      m_current->set(m_submission);
       return;
     }
   }
@@ -514,7 +514,7 @@ void TextBox::on_editing_finished() {
       m_submit_signal(m_submission);
     } else {
       m_reject_signal(m_current->get());
-      m_current->set_current(m_submission);
+      m_current->set(m_submission);
       if(!m_is_rejected) {
         m_is_rejected = true;
         match(*this, Rejected());

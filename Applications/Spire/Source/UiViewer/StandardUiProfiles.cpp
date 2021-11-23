@@ -124,7 +124,7 @@ namespace {
     auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       if(box->get()->get() != value) {
-        box->get()->set_current(value);
+        box->get()->set(value);
       }
     });
     box->get()->connect_current_signal(
@@ -165,7 +165,7 @@ namespace {
     auto& checked = get<bool>("checked", profile.get_properties());
     checked.connect_changed_signal([=] (auto value) {
       if(check_box->get()->get() != value) {
-        check_box->get()->set_current(value);
+        check_box->get()->set(value);
       }
     });
     check_box->get()->connect_current_signal([&] (auto is_checked) {
@@ -290,7 +290,7 @@ namespace {
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
-      box->get()->set_current(value);
+      box->get()->set(value);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
@@ -509,7 +509,7 @@ UiProfile Spire::make_calendar_date_picker_profile() {
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
       auto& current = get<QString>("current", profile.get_properties());
-      model->set_current(parse_date(current.get()));
+      model->set(parse_date(current.get()));
       auto& min = get<QString>("min", profile.get_properties());
       if(auto min_date = parse_date(min.get())) {
         model->set_minimum(min_date);
@@ -527,7 +527,7 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       current.connect_changed_signal([=] (const auto& value) {
         auto date = parse_date(value);
         if(date && !date->is_not_a_date() && *date != model->get()) {
-          model->set_current(*date);
+          model->set(*date);
         }
       });
       calendar->get()->connect_current_signal([&current] (auto day) {
@@ -666,12 +666,12 @@ UiProfile Spire::make_date_box_profile() {
       current.connect_changed_signal([=] (const auto& current) {
         if(current.isEmpty()) {
           if(model->get()) {
-            model->set_current(none);
+            model->set(none);
           }
         } else {
           auto date = parse_date(current);
           if(date && model->get() != date) {
-            model->set_current(date);
+            model->set(date);
           }
         }
       });
@@ -789,11 +789,11 @@ UiProfile Spire::make_decimal_box_profile() {
       current.connect_changed_signal([=] (const auto& value) {
         if(value == QString::fromUtf8("null")) {
           if(decimal_box->get()->get()) {
-            decimal_box->get()->set_current(none);
+            decimal_box->get()->set(none);
           }
         } else if(auto decimal = parse_decimal(value)) {
           if(decimal_box->get()->get() != *decimal) {
-            decimal_box->get()->set_current(*decimal);
+            decimal_box->get()->set(*decimal);
           }
         }
       });
@@ -1073,7 +1073,7 @@ UiProfile Spire::make_duration_box_profile() {
       current.connect_changed_signal([=] (auto value) {
         if(auto current_value = parse_duration(value)) {
           if(duration_box->get()->get() != *current_value) {
-            duration_box->get()->set_current(*current_value);
+            duration_box->get()->set(*current_value);
           }
         }
       });
@@ -1236,7 +1236,7 @@ UiProfile Spire::make_focus_observer_profile() {
           auto timer = new QTimer(list_view);
           QObject::connect(timer, &QTimer::timeout, [=] {
             if(auto& current = list_view->get()->get()) {
-              list_view->get()->set_current(
+              list_view->get()->set(
                 (*current + 1) % item_count);
             }
           });
@@ -1431,13 +1431,13 @@ UiProfile Spire::make_key_input_box_profile() {
     current.connect_changed_signal([=] (auto value) {
       if(value.isEmpty()) {
         if(box->get()->get() != QKeySequence()) {
-          box->get()->set_current(QKeySequence());
+          box->get()->set(QKeySequence());
         }
       } else {
         auto sequence = QKeySequence(value);
         if(sequence.count() != 0 && sequence[0] != Qt::Key::Key_unknown &&
             box->get()->get() != sequence) {
-          box->get()->set_current(sequence);
+          box->get()->set(sequence);
         }
       }
     });
@@ -1476,7 +1476,7 @@ UiProfile Spire::make_key_tag_profile() {
           }
           return Qt::Key_unknown;
         }();
-        key_tag->get()->set_current(key);
+        key_tag->get()->set(key);
       });
       return key_tag;
     });
@@ -1685,17 +1685,17 @@ UiProfile Spire::make_list_view_profile() {
       auto& current_item = get<int>("current_item", profile.get_properties());
       current_item.connect_changed_signal([=] (auto index) {
         if(index == -1) {
-          list_view->get()->set_current(none);
+          list_view->get()->set(none);
         } else if(index >= 0 && index < list_model->get_size()) {
-          list_view->get()->set_current(index);
+          list_view->get()->set(index);
         }
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
       select_item.connect_changed_signal([=] (auto index) {
         if(index == -1) {
-          list_view->get_selection()->set_current(none);
+          list_view->get_selection()->set(none);
         } else if(index >= 0 && index < list_model->get_size()) {
-          list_view->get_selection()->set_current(index);
+          list_view->get_selection()->set(index);
         }
       });
       auto& disable_item = get<int>("disable_item", profile.get_properties());
@@ -1716,7 +1716,7 @@ UiProfile Spire::make_list_view_profile() {
         [&, list_view] (const auto& current) {
           if(current && auto_set_current_null.get()) {
             QTimer::singleShot(2000, [list_view] {
-              list_view->get()->set_current(none);
+              list_view->get()->set(none);
             });
           }
         });
@@ -1807,7 +1807,7 @@ UiProfile Spire::make_navigation_view_profile() {
       auto& current = get<int>("current", profile.get_properties());
       current.connect_changed_signal([=] (auto index) {
         if(index >= 0 && index < navigation_view->get_count()) {
-          navigation_view->get()->set_current(index);
+          navigation_view->get()->set(index);
         }
       });
       return navigation_view;
@@ -2295,7 +2295,7 @@ UiProfile Spire::make_text_area_box_profile() {
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
         if(text_area_box->get()->get() != value) {
-          text_area_box->get()->set_current(value);
+          text_area_box->get()->set(value);
         }
       });
       text_area_box->get()->connect_current_signal(
@@ -2358,7 +2358,7 @@ UiProfile Spire::make_text_box_profile() {
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         if(text_box->get()->get() != current) {
-          text_box->get()->set_current(current);
+          text_box->get()->set(current);
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -2407,7 +2407,7 @@ UiProfile Spire::make_time_box_profile() {
       current.connect_changed_signal([=] (auto value) {
         if(auto current_value = parse_time(value)) {
           if(time_box->get()->get() != *current_value) {
-            time_box->get()->set_current(*current_value);
+            time_box->get()->set(*current_value);
           }
         }
       });

@@ -216,7 +216,7 @@ namespace Spire {
         return box;
       }
     }();
-    field->get()->set_current(model.get());
+    field->get()->set(model.get());
     return field;
   }
 
@@ -236,21 +236,21 @@ namespace Spire {
 
   template<typename T>
   void ScalarFilterPanel<T>::on_reset() {
-    m_min->set_current(m_default_min);
-    m_max->set_current(m_default_max);
-    m_min_box->get()->set_current(m_default_min);
-    m_max_box->get()->set_current(m_default_max);
+    m_min->set(m_default_min);
+    m_max->set(m_default_max);
+    m_min_box->get()->set(m_default_min);
+    m_max_box->get()->set(m_default_max);
     m_submit_signal(m_default_min, m_default_max);
   }
 
   template<typename T>
   void ScalarFilterPanel<T>::on_submit_min(
       const boost::optional<Type>& submission) {
-    m_min->set_current(submission);
+    m_min->set(submission);
     if(m_max->get() && submission &&
         *m_max->get() < *submission) {
-      m_max->set_current(submission);
-      m_max_box->get()->set_current(submission);
+      m_max->set(submission);
+      m_max_box->get()->set(submission);
     }
     m_submit_signal(m_min->get(), m_max->get());
   }
@@ -258,11 +258,11 @@ namespace Spire {
   template<typename T>
   void ScalarFilterPanel<T>::on_submit_max(
       const boost::optional<Type>& submission) {
-    m_max->set_current(submission);
+    m_max->set(submission);
     if(m_min->get() && submission &&
         *m_min->get() > *submission) {
-      m_min->set_current(submission);
-      m_min_box->get()->set_current(submission);
+      m_min->set(submission);
+      m_min_box->get()->set(submission);
     }
     m_submit_signal(m_min->get(), m_max->get());
   }

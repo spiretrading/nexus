@@ -152,7 +152,7 @@ namespace Styles {
         int m_index;
         bool m_is_current;
 
-        void set_current(bool is_current);
+        void set(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ListModel> m_list;
@@ -189,7 +189,7 @@ namespace Styles {
       void cross_next();
       void cross_previous();
       void cross(int direction);
-      void set_current(boost::optional<int> current);
+      void set(boost::optional<int> current);
       void update_focus(boost::optional<int> current);
       void add_item(int index);
       void remove_item(int index);

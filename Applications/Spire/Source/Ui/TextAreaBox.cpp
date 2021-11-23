@@ -101,7 +101,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
     void on_text_changed() {
       synchronize([&] {
-        m_current->set_current(toPlainText());
+        m_current->set(toPlainText());
       });
     }
 

@@ -133,7 +133,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && !m_drop_down_list->isVisible()) {
         submit();
-        m_list_view->get_selection()->set_current(m_submission);
+        m_list_view->get_selection()->set(m_submission);
       }
     }
   } else if(watched == m_drop_down_list) {
@@ -211,7 +211,7 @@ void DropDownBox::on_current(const optional<int>& current) {
     }
     return QString();
   }();
-  m_text_box->get()->set_current(text);
+  m_text_box->get()->set(text);
 }
 
 void DropDownBox::on_submit(const std::any& submission) {
@@ -224,7 +224,7 @@ void DropDownBox::on_submit(const std::any& submission) {
 
 void DropDownBox::revert_current() {
   if(m_submission != m_list_view->get()->get()) {
-    m_list_view->get()->set_current(m_submission);
+    m_list_view->get()->set(m_submission);
   }
 }
 

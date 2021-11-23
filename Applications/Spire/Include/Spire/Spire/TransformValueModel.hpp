@@ -73,7 +73,7 @@ namespace Details {
 
       const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
         const typename CurrentSignal::slot_type& slot) const override;
@@ -120,10 +120,10 @@ namespace Details {
   }
 
   template<typename T, typename U, typename F, typename G>
-  QValidator::State TransformValueModel<T, U, F, G>::set_current(
+  QValidator::State TransformValueModel<T, U, F, G>::set(
       const Type& value) {
     try {
-      return m_source->set_current(m_g(m_source->get(), value));
+      return m_source->set(m_g(m_source->get(), value));
     } catch(const std::invalid_argument&) {
       return QValidator::State::Invalid;
     }
@@ -138,7 +138,7 @@ namespace Details {
 
   template<typename T, typename U, typename F, typename G>
   void TransformValueModel<T, U, F, G>::on_current(const Source& current) {
-    m_model.set_current(m_f(current));
+    m_model.set(m_f(current));
   }
 }
 

@@ -177,9 +177,9 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     return m_current.get();
   }
 
-  QValidator::State set_current(const Type& value) {
+  QValidator::State set(const Type& value) {
     m_state = QValidator::State::Acceptable;
-    m_current.set_current(value);
+    m_current.set(value);
     return m_state;
   }
 
@@ -194,15 +194,15 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
       try {
         auto current = date(*m_year->get(), *m_month->get(),
           *m_day->get());
-        m_current.set_current(current);
-        m_state = m_source->set_current(current);
+        m_current.set(current);
+        m_state = m_source->set(current);
       } catch(const std::out_of_range&) {
         m_state = QValidator::State::Intermediate;
       }
     } else if(!m_year->get() && !m_month->get() &&
         !m_day->get()) {
-      m_current.set_current(none);
-      m_state = m_source->set_current(none);
+      m_current.set(none);
+      m_state = m_source->set(none);
     } else {
       m_state = QValidator::State::Intermediate;
     }
@@ -213,31 +213,31 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     if(current) {
       {
         auto blocker = shared_connection_block(m_year_connection);
-        m_year->set_current(static_cast<int>(current->year()));
+        m_year->set(static_cast<int>(current->year()));
       }
       {
         auto blocker = shared_connection_block(m_month_connection);
-        m_month->set_current(static_cast<int>(current->month()));
+        m_month->set(static_cast<int>(current->month()));
       }
       {
         auto blocker = shared_connection_block(m_day_connection);
-        m_day->set_current(static_cast<int>(current->day()));
+        m_day->set(static_cast<int>(current->day()));
       }
     } else {
       {
         auto blocker = shared_connection_block(m_year_connection);
-        m_year->set_current(none);
+        m_year->set(none);
       }
       {
         auto blocker = shared_connection_block(m_month_connection);
-        m_month->set_current(none);
+        m_month->set(none);
       }
       {
         auto blocker = shared_connection_block(m_day_connection);
-        m_day->set_current(none);
+        m_day->set(none);
       }
     }
-    m_current.set_current(current);
+    m_current.set(current);
   }
 
   void on_update(const optional<int>& current) {
@@ -325,7 +325,7 @@ connection DateBox::connect_reject_signal(
 void DateBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     if(m_model->get() != m_submission) {
-      m_model->m_source->set_current(m_submission);
+      m_model->m_source->set(m_submission);
     }
   }
   QWidget::keyPressEvent(event);
@@ -388,7 +388,7 @@ void DateBox::on_submit() {
     auto current = m_model->get();
     auto submission = m_submission;
     m_reject_signal(current);
-    m_model->m_source->set_current(m_submission);
+    m_model->m_source->set(m_submission);
     if(!m_is_rejected) {
       m_is_rejected = true;
       match(*this, Rejected());

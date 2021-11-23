@@ -38,7 +38,7 @@ namespace Spire {
        * Sets the current value. By default this operation is a no-op that
        * always returns <i>QValidator::State::Invalid</i>.
        */
-      virtual QValidator::State set_current(const Type& value);
+      virtual QValidator::State set(const Type& value);
 
       /** Connects a slot to the CurrentSignal. */
       virtual boost::signals2::connection connect_current_signal(
@@ -60,7 +60,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ValueModel<T>::set_current(const Type& value) {
+  QValidator::State ValueModel<T>::set(const Type& value) {
     return QValidator::State::Invalid;
   }
 }

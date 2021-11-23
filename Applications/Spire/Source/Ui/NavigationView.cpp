@@ -225,7 +225,7 @@ void NavigationView::set_enabled(int index, bool is_enabled) {
       m_navigation_view->setEnabled(true);
     }
     if(!m_stacked_widget->currentWidget()->isEnabled()) {
-      m_current->set_current(index);
+      m_current->set(index);
     }
   } else if(m_current->get() == index) {
     auto new_index = [=] {
@@ -242,7 +242,7 @@ void NavigationView::set_enabled(int index, bool is_enabled) {
       return -1;
     }();
     if(new_index > -1) {
-      m_current->set_current(new_index);
+      m_current->set(new_index);
     } else {
       m_navigation_view->setEnabled(false);
     }
@@ -254,12 +254,12 @@ void NavigationView::on_current(int index) {
     return;
   }
   m_associative_model.get_association(
-    m_navigation_list->get<QString>(index))->set_current(true);
+    m_navigation_list->get<QString>(index))->set(true);
 }
 
 void NavigationView::on_list_submit(const std::any& submission) {
   m_associative_model.get_association(
-    std::any_cast<QString>(submission))->set_current(true);
+    std::any_cast<QString>(submission))->set(true);
 }
 
 void NavigationView::on_list_current(const optional<int>& current) {
@@ -274,9 +274,9 @@ void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
     match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
-    m_navigation_view->get()->set_current(index);
+    m_navigation_view->get()->set(index);
     if(index != m_current->get()) {
-      m_current->set_current(index);
+      m_current->set(index);
     }
   } else {
     unmatch(*m_navigation_view->get_list_item(index), Checked());

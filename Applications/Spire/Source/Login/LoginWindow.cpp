@@ -191,8 +191,8 @@ void LoginWindow::set_state(State state) {
       m_username_text_box->setEnabled(false);
       m_password_text_box->setEnabled(false);
       static_cast<TextBox&>(
-        m_sign_in_button->get_body()).get()->set_current(tr("Cancel"));
-      m_status_label->get()->set_current("");
+        m_sign_in_button->get_body()).get()->set(tr("Cancel"));
+      m_status_label->get()->set("");
       m_logo_widget->movie()->start();
       break;
     }
@@ -202,13 +202,13 @@ void LoginWindow::set_state(State state) {
       break;
     }
     case State::INCORRECT_CREDENTIALS: {
-      m_status_label->get()->set_current(
+      m_status_label->get()->set(
         tr("Incorrect username or password."));
       reset_visuals();
       break;
     }
     case State::SERVER_UNAVAILABLE: {
-      m_status_label->get()->set_current(tr("Server is unavailable."));
+      m_status_label->get()->set(tr("Server is unavailable."));
       reset_visuals();
       break;
     }
@@ -239,7 +239,7 @@ void LoginWindow::keyPressEvent(QKeyEvent* event) {
     return;
   } else if(!m_username_text_box->hasFocus() &&
       m_username_text_box->get()->get().isEmpty()) {
-    m_username_text_box->get()->set_current(event->text());
+    m_username_text_box->get()->set(event->text());
     m_username_text_box->setFocus();
   }
 }
@@ -272,7 +272,7 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void LoginWindow::reset_all() {
-  m_status_label->get()->set_current("");
+  m_status_label->get()->set("");
   reset_visuals();
 }
 
@@ -281,7 +281,7 @@ void LoginWindow::reset_visuals() {
   m_password_text_box->setEnabled(true);
   m_sign_in_button->setFocus();
   static_cast<TextBox&>(
-    m_sign_in_button->get_body()).get()->set_current(tr("Sign In"));
+    m_sign_in_button->get_body()).get()->set(tr("Sign In"));
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
 }

@@ -38,7 +38,7 @@ TEST_SUITE("ListValueModel") {
         REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
       }));
     auto value = 10;
-    REQUIRE(model1.set_current(value) == QValidator::State::Acceptable);
+    REQUIRE(model1.set(value) == QValidator::State::Acceptable);
     REQUIRE(signal_count == 1);
     REQUIRE(get(model1) == value);
     signal_count = 0;
@@ -49,7 +49,7 @@ TEST_SUITE("ListValueModel") {
       [&] (const auto& current) {
         ++signal_count;
       }));
-    REQUIRE(model2.set_current(value) == QValidator::State::Invalid);
+    REQUIRE(model2.set(value) == QValidator::State::Invalid);
     REQUIRE(signal_count == 0);
     REQUIRE(!model2.get().has_value());
   }

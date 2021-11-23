@@ -30,7 +30,7 @@ const ListValueModel::Type& ListValueModel::get() const {
   return m_source->at(m_index);
 }
 
-QValidator::State ListValueModel::set_current(const Type& value) {
+QValidator::State ListValueModel::set(const Type& value) {
   if(m_index == -1) {
     return QValidator::State::Invalid;
   }

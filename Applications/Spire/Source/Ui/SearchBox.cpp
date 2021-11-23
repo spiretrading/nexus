@@ -94,5 +94,5 @@ void SearchBox::on_current(const QString& current) {
 }
 
 void SearchBox::on_delete_button() {
-  m_text_box->get()->set_current({});
+  m_text_box->get()->set({});
 }

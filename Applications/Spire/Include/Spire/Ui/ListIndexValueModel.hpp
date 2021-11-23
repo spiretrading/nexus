@@ -49,7 +49,7 @@ namespace Details {
        * Sets the current value. By default this operation is a no-op that
        * always returns <i>QValidator::State::Invalid</i>.
        */
-      QValidator::State set_current(const boost::optional<int>& value) override;
+      QValidator::State set(const boost::optional<int>& value) override;
 
       /** Connects a slot to the CurrentSignal. */
       boost::signals2::connection connect_current_signal(
@@ -94,16 +94,16 @@ namespace Details {
   }
 
   template<typename T>
-  QValidator::State ListIndexValueModel<T>::set_current(
+  QValidator::State ListIndexValueModel<T>::set(
       const boost::optional<int>& value) {
     if(!value) {
       if constexpr(is_optional) {
         auto blocker =
           boost::signals2::shared_connection_block(m_current_connection);
-        if(m_value->set_current(boost::none) == QValidator::Invalid) {
+        if(m_value->set(boost::none) == QValidator::Invalid) {
           return QValidator::Invalid;
         }
-        return m_index.set_current(boost::none);
+        return m_index.set(boost::none);
       } else {
         return QValidator::Invalid;
       }
@@ -113,14 +113,14 @@ namespace Details {
     try {
       auto blocker =
         boost::signals2::shared_connection_block(m_current_connection);
-      if(m_value->set_current(m_list->get<ListType>(*value)) ==
+      if(m_value->set(m_list->get<ListType>(*value)) ==
           QValidator::Invalid) {
         return QValidator::Invalid;
       }
     } catch(const std::bad_any_cast&) {
       return QValidator::Invalid;
     }
-    return m_index.set_current(*value);
+    return m_index.set(*value);
   }
 
   template<typename T>
@@ -134,12 +134,12 @@ namespace Details {
     for(auto i = 0; i != m_list->get_size(); ++i) {
       try {
         if(m_list->get<ListType>(i) == current) {
-          m_index.set_current(i);
+          m_index.set(i);
           return;
         }
       } catch(const std::bad_any_cast&) {}
     }
-    m_index.set_current(boost::none);
+    m_index.set(boost::none);
   }
 }
 

@@ -14,11 +14,11 @@ TEST_SUITE("TransformValueModel") {
         return std::stoi(current);
       });
     REQUIRE(model.get() == "1");
-    source->set_current(123);
+    source->set(123);
     REQUIRE(model.get() == "123");
-    REQUIRE(model.set_current("221") == QValidator::State::Acceptable);
+    REQUIRE(model.set("221") == QValidator::State::Acceptable);
     REQUIRE(source->get() == 221);
-    REQUIRE(model.set_current("abc") == QValidator::State::Invalid);
+    REQUIRE(model.set("abc") == QValidator::State::Invalid);
     REQUIRE(source->get() == 221);
   }
 
@@ -32,11 +32,11 @@ TEST_SUITE("TransformValueModel") {
         return std::stoi(next);
       });
     REQUIRE(model.get() == "1");
-    source->set_current(123);
+    source->set(123);
     REQUIRE(model.get() == "123");
-    REQUIRE(model.set_current("221") == QValidator::State::Acceptable);
+    REQUIRE(model.set("221") == QValidator::State::Acceptable);
     REQUIRE(source->get() == 221);
-    REQUIRE(model.set_current("abc") == QValidator::State::Invalid);
+    REQUIRE(model.set("abc") == QValidator::State::Invalid);
     REQUIRE(source->get() == 221);
   }
 

@@ -82,7 +82,7 @@ const std::shared_ptr<KeyModel>& KeyTag::get() const {
 }
 
 void KeyTag::on_current_key(Qt::Key key) {
-  m_label->get()->set_current(get_key_text(key));
+  m_label->get()->set(get_key_text(key));
   switch(key) {
     case Qt::Key_Alt:
     case Qt::Key_Control:

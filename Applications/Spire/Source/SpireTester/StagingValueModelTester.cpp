@@ -12,15 +12,15 @@ TEST_SUITE("StagingValueModel") {
     auto model = StagingValueModel(source);
     REQUIRE(model.get_state() == QValidator::State::Acceptable);
     REQUIRE(model.get() == 47);
-    REQUIRE(model.set_current(123) == QValidator::State::Intermediate);
+    REQUIRE(model.set(123) == QValidator::State::Intermediate);
     REQUIRE(model.get() == 123);
     REQUIRE(model.get_state() == QValidator::State::Intermediate);
     REQUIRE(source->get() == 47);
     REQUIRE(model.commit() == QValidator::State::Acceptable);
     REQUIRE(model.get_state() == QValidator::State::Acceptable);
     REQUIRE(source->get() == 123);
-    REQUIRE(model.set_current(321) == QValidator::State::Intermediate);
-    source->set_current(555);
+    REQUIRE(model.set(321) == QValidator::State::Intermediate);
+    source->set(555);
     REQUIRE(model.get() == 555);
     REQUIRE(model.get_state() == QValidator::State::Acceptable);
   }

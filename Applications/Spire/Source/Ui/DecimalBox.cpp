@@ -144,7 +144,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return m_current;
   }
 
-  QValidator::State set_current(const QString& value) override {
+  QValidator::State set(const QString& value) override {
     auto decimal_places = 0;
     auto i = m_model->get_increment();
     while(i < 1) {
@@ -160,7 +160,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return QValidator::State::Invalid;
     } else if(value.isEmpty() || value == "-" || value == "+") {
       auto blocker = shared_connection_block(m_current_connection);
-      m_model->set_current(none);
+      m_model->set(none);
       m_current = value;
       m_current_signal(m_current);
       m_is_rejected = false;
@@ -172,7 +172,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         return QValidator::State::Invalid;
       }
       auto blocker = shared_connection_block(m_current_connection);
-      state = m_model->set_current(*decimal);
+      state = m_model->set(*decimal);
       if(state != QValidator::State::Invalid) {
         if(m_is_rejected) {
           m_current = to_string(*decimal);
@@ -459,7 +459,7 @@ void DecimalBox::step_by(const Decimal& value) {
     next = *m_current->get_maximum();
   }
   if(next != m_current->get()) {
-    m_current->set_current(next);
+    m_current->set(next);
   }
 }
 

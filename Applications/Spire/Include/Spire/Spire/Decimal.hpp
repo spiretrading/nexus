@@ -99,7 +99,7 @@ namespace Spire {
       const boost::optional<Decimal>& get() const override;
 
       QValidator::State
-        set_current(const boost::optional<Decimal>& value) override;
+        set(const boost::optional<Decimal>& value) override;
 
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const override;
@@ -146,10 +146,10 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ToDecimalModel<T>::set_current(
+  QValidator::State ToDecimalModel<T>::set(
       const boost::optional<Decimal>& value) {
     auto state =
-      m_model->set_current(from_decimal<Type>(value));
+      m_model->set(from_decimal<Type>(value));
     if(state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
     }

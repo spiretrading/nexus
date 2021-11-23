@@ -41,7 +41,7 @@ namespace Spire {
 
       const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
         const typename CurrentSignal::slot_type& slot) const override;
@@ -81,7 +81,7 @@ namespace Spire {
     auto state = [&] {
       auto blocker =
         boost::signals2::shared_connection_block(m_current_connection);
-      return m_model->set_current(*m_current);
+      return m_model->set(*m_current);
     }();
     if(state != QValidator::State::Invalid) {
       m_current = boost::none;
@@ -99,7 +99,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State StagingValueModel<T>::set_current(const Type& value) {
+  QValidator::State StagingValueModel<T>::set(const Type& value) {
     m_current = value;
     m_current_signal(value);
     return QValidator::State::Intermediate;

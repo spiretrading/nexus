@@ -27,7 +27,7 @@ namespace Spire {
 
       const boost::optional<Nexus::Quantity>& get() const override;
 
-      QValidator::State set_current(
+      QValidator::State set(
         const boost::optional<Nexus::Quantity>& value) override;
 
       boost::signals2::connection connect_current_signal(

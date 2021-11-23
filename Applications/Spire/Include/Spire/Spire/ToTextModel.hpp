@@ -70,7 +70,7 @@ namespace Spire {
 
       const QString& get() const override;
 
-      QValidator::State set_current(const QString& value) override;
+      QValidator::State set(const QString& value) override;
 
       boost::signals2::connection connect_current_signal(
         const typename CurrentSignal::slot_type& slot) const override;
@@ -129,9 +129,9 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ToTextModel<T>::set_current(const QString& value) {
+  QValidator::State ToTextModel<T>::set(const QString& value) {
     if(auto current = m_from_string(value)) {
-      return m_model->set_current(*current);
+      return m_model->set(*current);
     }
     return QValidator::Invalid;
   }

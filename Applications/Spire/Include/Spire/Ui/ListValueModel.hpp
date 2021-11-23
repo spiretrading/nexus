@@ -25,7 +25,7 @@ namespace Spire {
 
       const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
         const CurrentSignal::slot_type& slot) const override;
