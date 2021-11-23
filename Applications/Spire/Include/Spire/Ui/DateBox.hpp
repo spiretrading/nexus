@@ -61,7 +61,7 @@ namespace Styles {
         std::shared_ptr<OptionalDateModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<OptionalDateModel>& get_current() const;
+      const std::shared_ptr<OptionalDateModel>& get() const;
 
       /** Returns the last submission. */
       const boost::optional<boost::gregorian::date>& get_submission() const;

@@ -28,7 +28,7 @@ namespace Spire {
        */
       ConstantValueModel(Type current);
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
       QValidator::State set_current(const Type& value) override;
 
@@ -59,7 +59,7 @@ namespace Spire {
 
   template<typename T>
   const typename ConstantValueModel<T>::Type&
-      ConstantValueModel<T>::get_current() const {
+      ConstantValueModel<T>::get() const {
     return m_current;
   }
 

@@ -67,7 +67,7 @@ namespace Spire {
 
       /** Returns the current value model. */
       const std::shared_ptr<ScalarValueModel<boost::optional<Type>>>&
-        get_current() const;
+        get() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -165,7 +165,7 @@ namespace Spire {
   template<typename T>
   const std::shared_ptr<ScalarValueModel<
       boost::optional<typename DecimalBoxAdaptor<T>::Type>>>&
-        DecimalBoxAdaptor<T>::get_current() const {
+        DecimalBoxAdaptor<T>::get() const {
     return m_current;
   }
 
@@ -211,7 +211,7 @@ namespace Spire {
       : QWidget(parent),
         m_current(std::move(current)),
         m_adaptor_model(std::move(adaptor_model)),
-        m_submission(m_current->get_current()) {
+        m_submission(m_current->get()) {
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});
     auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
@@ -246,7 +246,7 @@ namespace Spire {
   template<typename T>
   void DecimalBoxAdaptor<T>::on_submit(
       const boost::optional<Decimal>& submission) {
-    m_submission = m_current->get_current();
+    m_submission = m_current->get();
     m_submit_signal(m_submission);
   }
 

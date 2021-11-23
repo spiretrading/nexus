@@ -71,13 +71,13 @@ SearchBox::SearchBox(std::shared_ptr<TextModel> model, QWidget* parent)
   layout->addWidget(box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
-  m_current_connection = m_text_box->get_current()->connect_current_signal(
+  m_current_connection = m_text_box->get()->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
   m_delete_button->connect_clicked_signal([=] { on_delete_button(); });
 }
 
-const std::shared_ptr<TextModel>& SearchBox::get_current() const {
-  return m_text_box->get_current();
+const std::shared_ptr<TextModel>& SearchBox::get() const {
+  return m_text_box->get();
 }
 
 void SearchBox::set_placeholder(const QString& text) {
@@ -94,5 +94,5 @@ void SearchBox::on_current(const QString& current) {
 }
 
 void SearchBox::on_delete_button() {
-  m_text_box->get_current()->set_current({});
+  m_text_box->get()->set_current({});
 }

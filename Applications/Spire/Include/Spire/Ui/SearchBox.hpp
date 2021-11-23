@@ -31,7 +31,7 @@ namespace Spire {
         std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value. */
-      const std::shared_ptr<TextModel>& get_current() const;
+      const std::shared_ptr<TextModel>& get() const;
 
       /**
        * Sets the placeholder text.

@@ -13,13 +13,13 @@ TEST_SUITE("TransformValueModel") {
       [] (const std::string& current) {
         return std::stoi(current);
       });
-    REQUIRE(model.get_current() == "1");
+    REQUIRE(model.get() == "1");
     source->set_current(123);
-    REQUIRE(model.get_current() == "123");
+    REQUIRE(model.get() == "123");
     REQUIRE(model.set_current("221") == QValidator::State::Acceptable);
-    REQUIRE(source->get_current() == 221);
+    REQUIRE(source->get() == 221);
     REQUIRE(model.set_current("abc") == QValidator::State::Invalid);
-    REQUIRE(source->get_current() == 221);
+    REQUIRE(source->get() == 221);
   }
 
   TEST_CASE("elaborate_transformers") {
@@ -31,13 +31,13 @@ TEST_SUITE("TransformValueModel") {
       [] (int current, const std::string& next) {
         return std::stoi(next);
       });
-    REQUIRE(model.get_current() == "1");
+    REQUIRE(model.get() == "1");
     source->set_current(123);
-    REQUIRE(model.get_current() == "123");
+    REQUIRE(model.get() == "123");
     REQUIRE(model.set_current("221") == QValidator::State::Acceptable);
-    REQUIRE(source->get_current() == 221);
+    REQUIRE(source->get() == 221);
     REQUIRE(model.set_current("abc") == QValidator::State::Invalid);
-    REQUIRE(source->get_current() == 221);
+    REQUIRE(source->get() == 221);
   }
 
   TEST_CASE("shared_factory") {

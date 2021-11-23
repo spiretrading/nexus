@@ -89,7 +89,7 @@ namespace Styles {
         std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<TextModel>& get_current() const;
+      const std::shared_ptr<TextModel>& get() const;
 
       /** Returns the last submitted value. */
       const QString& get_submission() const;

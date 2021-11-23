@@ -44,7 +44,7 @@ namespace Styles {
         std::shared_ptr<BooleanModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<BooleanModel>& get_current() const;
+      const std::shared_ptr<BooleanModel>& get() const;
 
       /**
        * Sets the text of the label.

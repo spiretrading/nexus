@@ -32,7 +32,7 @@ namespace Spire {
         std::shared_ptr<CurrentModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<CurrentModel>& get_current() const;
+      const std::shared_ptr<CurrentModel>& get() const;
 
       /**
        * Appends a tab with a page and label.

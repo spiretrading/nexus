@@ -22,7 +22,7 @@ QValidator::State ListValueModel::get_state() const {
   return QValidator::State::Acceptable;
 }
 
-const ListValueModel::Type& ListValueModel::get_current() const {
+const ListValueModel::Type& ListValueModel::get() const {
   if(m_index == -1) {
     static auto value = std::any();
     return value;
@@ -72,7 +72,7 @@ void ListValueModel::on_operation(const ListModel::Operation& operation) {
     },
     [&] (const ListModel::UpdateOperation& operation) {
       if(operation.m_index == m_index) {
-        m_current_signal(get_current());
+        m_current_signal(get());
       }
     });
 }

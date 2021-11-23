@@ -45,7 +45,7 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
       QValidator::State set_current(const Type& value) override;
 
@@ -106,8 +106,8 @@ namespace Spire {
 
   template<typename T>
   const typename LocalScalarValueModel<T>::Type&
-      LocalScalarValueModel<T>::get_current() const {
-    return m_model.get_current();
+      LocalScalarValueModel<T>::get() const {
+    return m_model.get();
   }
 
   template<typename T>

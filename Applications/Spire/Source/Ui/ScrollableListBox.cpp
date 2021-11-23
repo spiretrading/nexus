@@ -36,7 +36,7 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
   m_list_view_style_connection =
     connect_style_signal(*m_list_view, [=] { on_list_view_style(); });
   set_style(*this, make_default_style());
-  m_current_connection = m_list_view->get_current()->connect_current_signal(
+  m_current_connection = m_list_view->get()->connect_current_signal(
       [=] (const auto& current) { on_current(current); });
   update_style(*m_list_view, [&] (auto& style) {
     style.get(Any()).set(EdgeNavigation::CONTAIN);

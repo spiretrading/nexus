@@ -72,10 +72,10 @@ class CalendarListModel : public ListModel {
         : m_current(std::move(current)),
           m_current_connection(m_current->connect_current_signal(
             [=] (auto current) { on_current(current); })) {
-      on_current(m_current->get_current());
+      on_current(m_current->get());
     }
 
-    const std::shared_ptr<DateModel>& get_current() const {
+    const std::shared_ptr<DateModel>& get() const {
       return m_current;
     }
 
@@ -115,11 +115,11 @@ class RequiredDateModel : public DateModel {
   public:
     RequiredDateModel(std::shared_ptr<OptionalDateModel> model)
       : m_model(std::move(model)),
-        m_current(m_model->get_current().value_or(day_clock::local_day())),
+        m_current(m_model->get().value_or(day_clock::local_day())),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) { on_current(current); })) {}
 
-    const Type& get_current() const override {
+    const Type& get() const override {
       return m_current;
     }
 
@@ -179,7 +179,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       layout->addWidget(m_next_button);
     }
 
-    const std::shared_ptr<DateModel>& get_current() const {
+    const std::shared_ptr<DateModel>& get() const {
       return m_current;
     }
 
@@ -190,11 +190,11 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     Button* m_next_button;
 
     void decrement() {
-      m_current->set_current(m_current->get_current() - months(1));
+      m_current->set_current(m_current->get() - months(1));
     }
 
     void increment() {
-      m_current->set_current(m_current->get_current() + months(1));
+      m_current->set_current(m_current->get() + months(1));
     }
 };
 
@@ -238,7 +238,7 @@ class CalendarDayLabel : public QWidget {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       layout->addWidget(m_label);
-      on_current(std::any_cast<date>(m_current->get_current()));
+      on_current(std::any_cast<date>(m_current->get()));
     }
 
   private:
@@ -248,13 +248,13 @@ class CalendarDayLabel : public QWidget {
     TextBox* m_label;
 
     void on_current(date day) {
-      m_label->get_current()->set_current(QString("%1").arg(day.day()));
+      m_label->get()->set_current(QString("%1").arg(day.day()));
       if(day == day_clock::local_day()) {
         match(*this, Today());
       } else {
         unmatch(*this, Today());
       }
-      if(day.month() != m_month->get_current().month()) {
+      if(day.month() != m_month->get().month()) {
         match(*this, OutOfMonth());
       } else {
         unmatch(*this, OutOfMonth());
@@ -288,12 +288,12 @@ CalendarDatePicker::CalendarDatePicker(
   layout->addWidget(m_month_spinner);
   layout->addWidget(make_day_header(this));
   m_calendar_view = new ListView(
-    std::make_shared<CalendarListModel>(m_month_spinner->get_current()),
+    std::make_shared<CalendarListModel>(m_month_spinner->get()),
     [=] (const std::shared_ptr<ListModel>& list, int index) {
       return new CalendarDayLabel(std::make_shared<ListValueModel>(list, index),
-        m_month_spinner->get_current());
+        m_month_spinner->get());
     }, this);
-  m_month_spinner->get_current()->connect_current_signal([=] (auto current) {
+  m_month_spinner->get()->connect_current_signal([=] (auto current) {
     on_current_month(current);
   });
   m_calendar_view->setFixedSize(scale(168, 144));
@@ -301,7 +301,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_calendar_view->installEventFilter(this);
   layout->addWidget(m_calendar_view);
   m_list_current_connection =
-    m_calendar_view->get_current()->connect_current_signal(
+    m_calendar_view->get()->connect_current_signal(
       [=] (const auto& index) { on_list_current(index); });
   m_calendar_view->connect_submit_signal([=] (const auto& value) {
     on_submit(std::any_cast<date>(value));
@@ -323,11 +323,11 @@ CalendarDatePicker::CalendarDatePicker(
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   setFocusProxy(m_calendar_view);
-  on_current(m_current->get_current());
+  on_current(m_current->get());
 }
 
 const std::shared_ptr<OptionalDateModel>&
-    CalendarDatePicker::get_current() const {
+    CalendarDatePicker::get() const {
   return m_current;
 }
 
@@ -343,15 +343,15 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
         (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)) {
       QCoreApplication::sendEvent(m_calendar_view, e);
     } else {
-      auto current_index = m_calendar_view->get_current()->get_current();
+      auto current_index = m_calendar_view->get()->get();
       if(current_index) {
         if(*current_index == 0 && e->key() == Qt::Key_Left) {
-          m_current->set_current(*m_current->get_current() - days(1));
+          m_current->set_current(*m_current->get() - days(1));
           return true;
         } else if(*current_index ==
             m_calendar_view->get_list()->get_size() - 1 &&
             e->key() == Qt::Key_Right) {
-          m_current->set_current(*m_current->get_current() + days(1));
+          m_current->set_current(*m_current->get() + days(1));
           return true;
         }
       }
@@ -373,7 +373,7 @@ boost::optional<int> CalendarDatePicker::get_index(date day) const {
 void CalendarDatePicker::set_current_index(const optional<int>& index) {
   auto current_block =
     shared_connection_block(m_list_current_connection);
-  m_calendar_view->get_current()->set_current(index);
+  m_calendar_view->get()->set_current(index);
 }
 
 void CalendarDatePicker::on_current(const optional<date>& current) {
@@ -401,11 +401,11 @@ void CalendarDatePicker::on_current_month(date month) {
       }
     }
     item->setDisabled(is_disabled);
-    if(current == m_current->get_current()) {
+    if(current == m_current->get()) {
       current_index = i;
     }
   }
-  if(current_index != m_calendar_view->get_current()->get_current()) {
+  if(current_index != m_calendar_view->get()->get()) {
     set_current_index(current_index);
   }
   if(list_has_focus) {

@@ -48,7 +48,7 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
       QValidator::State set_current(const Type& value) override;
 
@@ -119,8 +119,8 @@ namespace Spire {
 
   template<typename T>
   const typename ScalarValueModelDecorator<T>::Type&
-      ScalarValueModelDecorator<T>::get_current() const {
-    return m_model->get_current();
+      ScalarValueModelDecorator<T>::get() const {
+    return m_model->get();
   }
 
   template<typename T>
@@ -143,12 +143,12 @@ namespace Spire {
         }
       }();
       if constexpr(std::numeric_limits<Type>::is_integer) {
-        if(unwrapped_value != m_model->get_current() &&
+        if(unwrapped_value != m_model->get() &&
             (unwrapped_value % m_increment) != 0) {
           return QValidator::State::Invalid;
         }
       } else if constexpr(std::numeric_limits<Type>::is_specialized) {
-        if(unwrapped_value != m_model->get_current() &&
+        if(unwrapped_value != m_model->get() &&
             fmod(unwrapped_value, m_increment) != 0) {
           return QValidator::State::Invalid;
         }

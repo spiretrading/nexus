@@ -23,7 +23,7 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
       QValidator::State set_current(const Type& value) override;
 

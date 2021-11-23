@@ -78,7 +78,7 @@ namespace Spire {
        * Returns the AssociativeValueModel's current value.
        * @return The current value.
        */
-      const Type& get_current() const override;
+      const Type& get() const override;
 
       /**
        * Sets the current value, iff a model is associated with the value.
@@ -99,7 +99,7 @@ namespace Spire {
         void update(bool value);
         void signal() const;
         QValidator::State get_state() const override;
-        const Type& get_current() const override;
+        const Type& get() const override;
         QValidator::State set_current(const Type& value) override;
         boost::signals2::connection connect_current_signal(
           const typename CurrentSignal::slot_type& slot) const override;
@@ -162,7 +162,7 @@ namespace Spire {
 
   template<typename T>
   const typename AssociativeValueModel<T>::Type&
-      AssociativeValueModel<T>::get_current() const {
+      AssociativeValueModel<T>::get() const {
     return *m_current;
   }
 
@@ -220,7 +220,7 @@ namespace Spire {
 
   template<typename T>
   const typename AssociativeValueModel<T>::InnerModel::Type&
-      AssociativeValueModel<T>::InnerModel::get_current() const {
+      AssociativeValueModel<T>::InnerModel::get() const {
     return m_current;
   }
 

@@ -68,7 +68,7 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const QString& get_current() const override;
+      const QString& get() const override;
 
       QValidator::State set_current(const QString& value) override;
 
@@ -114,7 +114,7 @@ namespace Spire {
     : m_model(std::move(model)),
       m_to_string(std::move(to_string)),
       m_from_string(std::move(from_string)),
-      m_current(m_to_string(m_model->get_current())),
+      m_current(m_to_string(m_model->get())),
       m_current_connection(m_model->connect_current_signal(
         [=] (const auto& current) { on_current(current); })) {}
 
@@ -124,7 +124,7 @@ namespace Spire {
   }
 
   template<typename T>
-  const QString& ToTextModel<T>::get_current() const {
+  const QString& ToTextModel<T>::get() const {
     return m_current;
   }
 

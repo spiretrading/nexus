@@ -64,7 +64,7 @@ namespace Styles {
         QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<OptionalDurationModel>& get_current() const;
+      const std::shared_ptr<OptionalDurationModel>& get() const;
 
       //! Returns <code>true</code> iff this box is read-only.
       bool is_read_only() const;

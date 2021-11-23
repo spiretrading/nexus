@@ -66,12 +66,12 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       connect(document()->documentLayout(),
         &QAbstractTextDocumentLayout::documentSizeChanged, this,
         [=] (const auto& size) { updateGeometry(); });
-      setText(m_current->get_current());
+      setText(m_current->get());
       m_current_connection = m_current->connect_current_signal(
         [=] (const auto& value) { on_current(value); });
     }
 
-    const std::shared_ptr<TextModel>& get_current() const {
+    const std::shared_ptr<TextModel>& get() const {
       return m_current;
     }
 
@@ -206,7 +206,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_text_edit_styles([=] { commit_style(); }),
       m_placeholder_styles([=] { commit_placeholder_style(); }),
-      m_submission(current->get_current()) {
+      m_submission(current->get()) {
   m_text_edit = new ContentSizedTextEdit(std::move(current));
   m_text_edit->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
@@ -229,8 +229,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
     &TextAreaBox::on_cursor_position);
 }
 
-const std::shared_ptr<TextModel>& TextAreaBox::get_current() const {
-  return m_text_edit->get_current();
+const std::shared_ptr<TextModel>& TextAreaBox::get() const {
+  return m_text_edit->get();
 }
 
 const QString& TextAreaBox::get_submission() const {
@@ -266,7 +266,7 @@ connection TextAreaBox::connect_submit_signal(
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusOut) {
-    m_submission = m_text_edit->get_current()->get_current();
+    m_submission = m_text_edit->get()->get();
     m_submit_signal(m_submission);
   }
   return QWidget::eventFilter(watched, event);
@@ -301,7 +301,7 @@ void TextAreaBox::commit_style() {
 
 bool TextAreaBox::is_placeholder_shown() const {
   return !is_read_only() &&
-    m_text_edit->get_current()->get_current().isEmpty() &&
+    m_text_edit->get()->get().isEmpty() &&
     !m_placeholder_text.isEmpty();
 }
 

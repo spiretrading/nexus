@@ -95,7 +95,7 @@ namespace Styles {
         QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<OptionalDecimalModel>& get_current() const;
+      const std::shared_ptr<OptionalDecimalModel>& get() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);

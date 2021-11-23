@@ -96,7 +96,7 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const boost::optional<Decimal>& get_current() const override;
+      const boost::optional<Decimal>& get() const override;
 
       QValidator::State
         set_current(const boost::optional<Decimal>& value) override;
@@ -116,7 +116,7 @@ namespace Spire {
   template<typename T>
   ToDecimalModel<T>::ToDecimalModel(std::shared_ptr<Model> model)
     : m_model(std::move(model)),
-      m_current(to_decimal(m_model->get_current())),
+      m_current(to_decimal(m_model->get())),
       m_current_connection(m_model->connect_current_signal(
         [=] (const auto& current) { on_current(current); })) {}
 
@@ -141,7 +141,7 @@ namespace Spire {
   }
 
   template<typename T>
-  const boost::optional<Decimal>& ToDecimalModel<T>::get_current() const {
+  const boost::optional<Decimal>& ToDecimalModel<T>::get() const {
     return m_current;
   }
 

@@ -32,7 +32,7 @@ namespace Spire {
       virtual QValidator::State get_state() const;
 
       /** Returns the current value. */
-      virtual const Type& get_current() const = 0;
+      virtual const Type& get() const = 0;
 
       /**
        * Sets the current value. By default this operation is a no-op that

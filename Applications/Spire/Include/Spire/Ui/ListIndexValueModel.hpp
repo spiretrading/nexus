@@ -43,7 +43,7 @@ namespace Details {
       QValidator::State get_state() const override;
 
       /** Returns the current value. */
-      const boost::optional<int>& get_current() const override;
+      const boost::optional<int>& get() const override;
 
       /**
        * Sets the current value. By default this operation is a no-op that
@@ -80,7 +80,7 @@ namespace Details {
         m_value(std::move(value)),
         m_current_connection(m_value->connect_current_signal(
           std::bind_front(&ListIndexValueModel::on_current, this))) {
-    on_current(m_value->get_current());
+    on_current(m_value->get());
   }
 
   template<typename T>
@@ -89,8 +89,8 @@ namespace Details {
   }
 
   template<typename T>
-  const boost::optional<int>& ListIndexValueModel<T>::get_current() const {
-    return m_index.get_current();
+  const boost::optional<int>& ListIndexValueModel<T>::get() const {
+    return m_index.get();
   }
 
   template<typename T>

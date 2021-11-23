@@ -34,7 +34,7 @@ namespace Spire {
 
       /** The type of scalar to filter. */
       using Type = typename std::remove_reference_t<
-        decltype(*std::declval<ScalarBox>().get_current())>::Scalar;
+        decltype(*std::declval<ScalarBox>().get())>::Scalar;
 
       /** The type of model representing the min and max range values. */
       using Model = ScalarValueModel<boost::optional<Type>>;
@@ -216,7 +216,7 @@ namespace Spire {
         return box;
       }
     }();
-    field->get_current()->set_current(model.get_current());
+    field->get()->set_current(model.get());
     return field;
   }
 
@@ -238,8 +238,8 @@ namespace Spire {
   void ScalarFilterPanel<T>::on_reset() {
     m_min->set_current(m_default_min);
     m_max->set_current(m_default_max);
-    m_min_box->get_current()->set_current(m_default_min);
-    m_max_box->get_current()->set_current(m_default_max);
+    m_min_box->get()->set_current(m_default_min);
+    m_max_box->get()->set_current(m_default_max);
     m_submit_signal(m_default_min, m_default_max);
   }
 
@@ -247,24 +247,24 @@ namespace Spire {
   void ScalarFilterPanel<T>::on_submit_min(
       const boost::optional<Type>& submission) {
     m_min->set_current(submission);
-    if(m_max->get_current() && submission &&
-        *m_max->get_current() < *submission) {
+    if(m_max->get() && submission &&
+        *m_max->get() < *submission) {
       m_max->set_current(submission);
-      m_max_box->get_current()->set_current(submission);
+      m_max_box->get()->set_current(submission);
     }
-    m_submit_signal(m_min->get_current(), m_max->get_current());
+    m_submit_signal(m_min->get(), m_max->get());
   }
 
   template<typename T>
   void ScalarFilterPanel<T>::on_submit_max(
       const boost::optional<Type>& submission) {
     m_max->set_current(submission);
-    if(m_min->get_current() && submission &&
-        *m_min->get_current() > *submission) {
+    if(m_min->get() && submission &&
+        *m_min->get() > *submission) {
       m_min->set_current(submission);
-      m_min_box->get_current()->set_current(submission);
+      m_min_box->get()->set_current(submission);
     }
-    m_submit_signal(m_min->get_current(), m_max->get_current());
+    m_submit_signal(m_min->get(), m_max->get());
   }
 
   using DecimalFilterPanel = ScalarFilterPanel<DecimalBox>;

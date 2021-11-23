@@ -63,8 +63,8 @@ class BooleanListValueModel : public BooleanModel {
         m_source_connection(m_source->connect_current_signal(
           std::bind_front(&BooleanListValueModel::on_current, this))) {}
 
-    const Type& get_current() const override {
-      return std::any_cast<const Type&>(m_source->get_current());
+    const Type& get() const override {
+      return std::any_cast<const Type&>(m_source->get());
     }
 
     QValidator::State set_current(const Type& value) override {
@@ -113,7 +113,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
     set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
   }
-  m_list_view->get_current()->set_current(0);
+  m_list_view->get()->set_current(0);
   m_list_view->get_list()->connect_operation_signal(
     std::bind_front(&ClosedFilterPanel::on_list_model_operation, this));
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);

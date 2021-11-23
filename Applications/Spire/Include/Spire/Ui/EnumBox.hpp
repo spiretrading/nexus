@@ -72,7 +72,7 @@ namespace Spire {
       explicit EnumBox(Settings settings, QWidget* parent = nullptr);
 
       /** Returns the model representing the current value. */
-      const std::shared_ptr<CurrentModel>& get_current() const;
+      const std::shared_ptr<CurrentModel>& get() const;
 
       /** Returns <code>true</code> iff this EnumBox is read-only. */
       bool is_read_only() const;
@@ -107,7 +107,7 @@ namespace Spire {
       : m_current(std::move(settings.m_current)) {
     if(!settings.m_cases) {
       auto model = std::make_shared<ArrayListModel>();
-      model->push(m_current->get_current());
+      model->push(m_current->get());
       settings.m_cases = std::move(model);
     } if(!m_current) {
       m_current =
@@ -126,7 +126,7 @@ namespace Spire {
 
   template<typename T>
   const std::shared_ptr<typename EnumBox<T>::CurrentModel>&
-      EnumBox<T>::get_current() const {
+      EnumBox<T>::get() const {
     return m_current;
   }
 

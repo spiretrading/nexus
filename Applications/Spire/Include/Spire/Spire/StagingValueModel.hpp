@@ -39,7 +39,7 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
       QValidator::State set_current(const Type& value) override;
 
@@ -91,11 +91,11 @@ namespace Spire {
 
   template<typename T>
   const typename StagingValueModel<T>::Type&
-      StagingValueModel<T>::get_current() const {
+      StagingValueModel<T>::get() const {
     if(m_current) {
       return *m_current;
     }
-    return m_model->get_current();
+    return m_model->get();
   }
 
   template<typename T>

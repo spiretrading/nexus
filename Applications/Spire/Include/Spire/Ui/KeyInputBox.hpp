@@ -39,7 +39,7 @@ namespace Spire {
       explicit KeyInputBox(QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<KeySequenceValueModel>& get_current() const;
+      const std::shared_ptr<KeySequenceValueModel>& get() const;
 
       /**
        * Connects a slot to the SubmitSignal.

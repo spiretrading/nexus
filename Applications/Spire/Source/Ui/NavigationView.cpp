@@ -144,12 +144,12 @@ NavigationView::NavigationView(
   set_style(*this, std::move(style));
   m_navigation_view->connect_submit_signal(
     std::bind_front(&NavigationView::on_list_submit, this));
-  m_navigation_view->get_current()->connect_current_signal(
+  m_navigation_view->get()->connect_current_signal(
     std::bind_front(&NavigationView::on_list_current, this));
 }
 
 const std::shared_ptr<NavigationView::CurrentModel>&
-    NavigationView::get_current() const {
+    NavigationView::get() const {
   return m_current;
 }
 
@@ -181,7 +181,7 @@ void NavigationView::insert_tab(int index, QWidget& page,
   m_stacked_widget->insertWidget(index, &page);
   m_associative_model.get_association(label)->connect_current_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
-  if(index == m_current->get_current()) {
+  if(index == m_current->get()) {
     on_current(index);
   }
 }
@@ -227,7 +227,7 @@ void NavigationView::set_enabled(int index, bool is_enabled) {
     if(!m_stacked_widget->currentWidget()->isEnabled()) {
       m_current->set_current(index);
     }
-  } else if(m_current->get_current() == index) {
+  } else if(m_current->get() == index) {
     auto new_index = [=] {
       for(auto i = index + 1; i < get_count(); ++i) {
         if(m_navigation_view->get_list_item(i)->isEnabled()) {
@@ -274,8 +274,8 @@ void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
     match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
-    m_navigation_view->get_current()->set_current(index);
-    if(index != m_current->get_current()) {
+    m_navigation_view->get()->set_current(index);
+    if(index != m_current->get()) {
       m_current->set_current(index);
     }
   } else {

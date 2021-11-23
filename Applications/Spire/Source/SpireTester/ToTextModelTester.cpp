@@ -22,13 +22,13 @@ TEST_SUITE("ToTextModel") {
   TEST_CASE("current") {
     auto local_model = std::make_shared<LocalValueModel<int>>(1);
     auto model = ToTextModel<int>(local_model);
-    REQUIRE(model.get_current() == QString("1"));
+    REQUIRE(model.get() == QString("1"));
     local_model->set_current(2);
-    REQUIRE(model.get_current() == QString("2"));
+    REQUIRE(model.get() == QString("2"));
     model.set_current("3");
-    REQUIRE(model.get_current() == QString("3"));
+    REQUIRE(model.get() == QString("3"));
     model.set_current("four");
-    REQUIRE(model.get_current() == QString("3"));
+    REQUIRE(model.get() == QString("3"));
   }
 
   TEST_CASE("current_signal") {

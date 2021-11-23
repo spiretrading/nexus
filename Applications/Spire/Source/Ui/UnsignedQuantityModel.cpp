@@ -33,8 +33,8 @@ QValidator::State UnsignedQuantityModel::get_state() const {
   return m_model->get_state();
 }
 
-const optional<Quantity>& UnsignedQuantityModel::get_current() const {
-  return m_model->get_current();
+const optional<Quantity>& UnsignedQuantityModel::get() const {
+  return m_model->get();
 }
 
 QValidator::State UnsignedQuantityModel::set_current(

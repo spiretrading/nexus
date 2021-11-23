@@ -164,7 +164,7 @@ void TitleBar::on_window_title_change(const QString& title) {
   QFontMetrics metrics(m_title_label->font());
   auto shortened_text = metrics.elidedText(title,
     Qt::ElideRight, m_title_label->width());
-  m_title_label->get_current()->set_current(shortened_text);
+  m_title_label->get()->set_current(shortened_text);
 }
 
 void TitleBar::on_minimize_button_press() {

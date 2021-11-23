@@ -82,7 +82,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
         m_leading_zeros(0),
         m_trailing_zeros(0),
-        m_current(to_string(m_model->get_current())),
+        m_current(to_string(m_model->get())),
         m_is_rejected(false),
         m_current_connection(m_model->connect_current_signal(
           [=] (const auto& current) {
@@ -100,7 +100,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     if(m_current.isEmpty()) {
       return;
     }
-    auto displayed_value = to_string(m_model->get_current());
+    auto displayed_value = to_string(m_model->get());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
       m_current_signal(m_current);
@@ -116,7 +116,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     if(m_current.isEmpty()) {
       return;
     }
-    auto displayed_value = to_string(m_model->get_current());
+    auto displayed_value = to_string(m_model->get());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
       m_current_signal(m_current);
@@ -124,12 +124,12 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   const optional<Decimal>& submit() {
-    auto displayed_value = to_string(m_model->get_current());
+    auto displayed_value = to_string(m_model->get());
     if(displayed_value != m_current) {
       m_current = std::move(displayed_value);
       m_current_signal(m_current);
     }
-    return m_model->get_current();
+    return m_model->get();
   }
 
   void reject() {
@@ -140,7 +140,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return m_model->get_state();
   }
 
-  const QString& get_current() const {
+  const QString& get() const {
     return m_current;
   }
 
@@ -308,7 +308,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
     : QWidget(parent),
       m_current(std::move(current)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_current)),
-      m_submission(m_current->get_current()),
+      m_submission(m_current->get()),
       m_modifiers(std::move(modifiers)),
       m_tick(TickIndicator::NONE) {
   auto layout = new QHBoxLayout(this);
@@ -322,7 +322,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
-  if(auto current = m_current->get_current()) {
+  if(auto current = m_current->get()) {
     if(*current > 0) {
       m_sign = SignIndicator::POSITIVE;
       match(*this, IsPositive());
@@ -346,7 +346,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   update_button_positions();
 }
 
-const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
+const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get() const {
   return m_current;
 }
 
@@ -439,8 +439,8 @@ Decimal DecimalBox::get_increment() const {
 void DecimalBox::step_by(const Decimal& value) {
   setFocus();
   auto current = [&] {
-    if(m_current->get_current()) {
-      return *m_current->get_current();
+    if(m_current->get()) {
+      return *m_current->get();
     } else if(!m_current->get_minimum() && !m_current->get_maximum() ||
         !m_current->get_minimum() && *m_current->get_maximum() >= 0 ||
         !m_current->get_maximum() && *m_current->get_minimum() <= 0 ||
@@ -458,7 +458,7 @@ void DecimalBox::step_by(const Decimal& value) {
   } else if(m_current->get_maximum() && next > m_current->get_maximum()) {
     next = *m_current->get_maximum();
   }
-  if(next != m_current->get_current()) {
+  if(next != m_current->get()) {
     m_current->set_current(next);
   }
 }
@@ -509,11 +509,11 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     }
   }
   m_up_button->setEnabled(!is_read_only() && (!m_current->get_maximum() ||
-    !m_current->get_current() ||
-    m_current->get_current() < m_current->get_maximum()));
+    !m_current->get() ||
+    m_current->get() < m_current->get_maximum()));
   m_down_button->setEnabled(!is_read_only() && (!m_current->get_minimum() ||
-    !m_current->get_current() ||
-    m_current->get_current() > m_current->get_minimum()));
+    !m_current->get() ||
+    m_current->get() > m_current->get_minimum()));
 }
 
 void DecimalBox::on_submit(const QString& submission) {

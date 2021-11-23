@@ -124,7 +124,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   layout->addSpacing(scale_height(20));
   m_username_text_box = new TextBox(this);
   m_username_text_box->setFixedSize(scale(280, 30));
-  m_username_text_box->get_current()->connect_current_signal(
+  m_username_text_box->get()->connect_current_signal(
     [=] (const auto& current) {
       m_sign_in_button->setDisabled(current.isEmpty());
     });
@@ -142,7 +142,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   update_style(*m_password_text_box, [&] (auto& style) {
     style = PASSWORD_INPUT_STYLE(style);
   });
-  m_password_text_box->get_current()->connect_current_signal(
+  m_password_text_box->get()->connect_current_signal(
     [=] (const auto& current) {
       m_chroma_hash_widget->set_text(current);
     });
@@ -191,8 +191,8 @@ void LoginWindow::set_state(State state) {
       m_username_text_box->setEnabled(false);
       m_password_text_box->setEnabled(false);
       static_cast<TextBox&>(
-        m_sign_in_button->get_body()).get_current()->set_current(tr("Cancel"));
-      m_status_label->get_current()->set_current("");
+        m_sign_in_button->get_body()).get()->set_current(tr("Cancel"));
+      m_status_label->get()->set_current("");
       m_logo_widget->movie()->start();
       break;
     }
@@ -202,13 +202,13 @@ void LoginWindow::set_state(State state) {
       break;
     }
     case State::INCORRECT_CREDENTIALS: {
-      m_status_label->get_current()->set_current(
+      m_status_label->get()->set_current(
         tr("Incorrect username or password."));
       reset_visuals();
       break;
     }
     case State::SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set_current(tr("Server is unavailable."));
+      m_status_label->get()->set_current(tr("Server is unavailable."));
       reset_visuals();
       break;
     }
@@ -231,15 +231,15 @@ void LoginWindow::keyPressEvent(QKeyEvent* event) {
     window()->close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     if(m_password_text_box->hasFocus()) {
-      if(!m_username_text_box->get_current()->get_current().isEmpty()) {
+      if(!m_username_text_box->get()->get().isEmpty()) {
         try_login();
       }
     }
   } else if(m_password_text_box->hasFocus()) {
     return;
   } else if(!m_username_text_box->hasFocus() &&
-      m_username_text_box->get_current()->get_current().isEmpty()) {
-    m_username_text_box->get_current()->set_current(event->text());
+      m_username_text_box->get()->get().isEmpty()) {
+    m_username_text_box->get()->set_current(event->text());
     m_username_text_box->setFocus();
   }
 }
@@ -272,7 +272,7 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void LoginWindow::reset_all() {
-  m_status_label->get_current()->set_current("");
+  m_status_label->get()->set_current("");
   reset_visuals();
 }
 
@@ -281,19 +281,19 @@ void LoginWindow::reset_visuals() {
   m_password_text_box->setEnabled(true);
   m_sign_in_button->setFocus();
   static_cast<TextBox&>(
-    m_sign_in_button->get_body()).get_current()->set_current(tr("Sign In"));
+    m_sign_in_button->get_body()).get()->set_current(tr("Sign In"));
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
 }
 
 void LoginWindow::try_login() {
   if(m_state != State::LOGGING_IN) {
-    if(m_username_text_box->get_current()->get_current().isEmpty()) {
+    if(m_username_text_box->get()->get().isEmpty()) {
       set_state(State::INCORRECT_CREDENTIALS);
     } else {
       m_login_signal(
-        m_username_text_box->get_current()->get_current().toStdString(),
-        m_password_text_box->get_current()->get_current().toStdString());
+        m_username_text_box->get()->get().toStdString(),
+        m_password_text_box->get()->get().toStdString());
       set_state(State::LOGGING_IN);
     }
   } else {
