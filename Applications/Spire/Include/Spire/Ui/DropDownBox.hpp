@@ -75,7 +75,7 @@ namespace Styles {
       const std::shared_ptr<ListModel>& get_list() const;
 
       /** Returns the current value model. */
-      const std::shared_ptr<CurrentModel>& get() const;
+      const std::shared_ptr<CurrentModel>& get_current() const;
 
       /** Returns the selection model. */
       const std::shared_ptr<SelectionModel>& get_selection() const;

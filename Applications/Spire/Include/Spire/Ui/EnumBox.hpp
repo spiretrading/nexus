@@ -72,7 +72,7 @@ namespace Spire {
       explicit EnumBox(Settings settings, QWidget* parent = nullptr);
 
       /** Returns the model representing the current value. */
-      const std::shared_ptr<CurrentModel>& get() const;
+      const std::shared_ptr<CurrentModel>& get_current() const;
 
       /** Returns <code>true</code> iff this EnumBox is read-only. */
       bool is_read_only() const;
@@ -126,7 +126,7 @@ namespace Spire {
 
   template<typename T>
   const std::shared_ptr<typename EnumBox<T>::CurrentModel>&
-      EnumBox<T>::get() const {
+      EnumBox<T>::get_current() const {
     return m_current;
   }
 

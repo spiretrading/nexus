@@ -113,7 +113,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
     set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
   }
-  m_list_view->get()->set(0);
+  m_list_view->get_current()->set(0);
   m_list_view->get_list()->connect_operation_signal(
     std::bind_front(&ClosedFilterPanel::on_list_model_operation, this));
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);

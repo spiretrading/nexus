@@ -48,7 +48,7 @@ namespace Styles {
         std::shared_ptr<KeyModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<KeyModel>& get() const;
+      const std::shared_ptr<KeyModel>& get_current() const;
 
     private:
       enum class State {
@@ -61,7 +61,7 @@ namespace Styles {
       TextBox* m_label;
       State m_state;
 
-      void on_current_key(Qt::Key key);
+      void on_current(Qt::Key key);
   };
 }
 

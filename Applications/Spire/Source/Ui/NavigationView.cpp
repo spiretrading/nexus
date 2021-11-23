@@ -144,12 +144,12 @@ NavigationView::NavigationView(
   set_style(*this, std::move(style));
   m_navigation_view->connect_submit_signal(
     std::bind_front(&NavigationView::on_list_submit, this));
-  m_navigation_view->get()->connect_current_signal(
+  m_navigation_view->get_current()->connect_current_signal(
     std::bind_front(&NavigationView::on_list_current, this));
 }
 
 const std::shared_ptr<NavigationView::CurrentModel>&
-    NavigationView::get() const {
+    NavigationView::get_current() const {
   return m_current;
 }
 
@@ -274,7 +274,7 @@ void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
     match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
-    m_navigation_view->get()->set(index);
+    m_navigation_view->get_current()->set(index);
     if(index != m_current->get()) {
       m_current->set(index);
     }

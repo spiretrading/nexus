@@ -39,15 +39,15 @@ namespace Spire {
       explicit KeyInputBox(QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<KeySequenceValueModel>& get() const;
+      const std::shared_ptr<KeySequenceValueModel>& get_current() const;
 
       /**
        * Connects a slot to the SubmitSignal.
        * @param slot The slot to connect to the SubmitSignal.
        * @return The connection to the SubmitSignal.
        */
-      boost::signals2::connection
-        connect_submit_signal(const SubmitSignal::slot_type& slot) const;
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
 
     protected:
       void focusInEvent(QFocusEvent* event) override;

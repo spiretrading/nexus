@@ -421,7 +421,7 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
     [=] (const auto& value) { on_current(value); });
 }
 
-const std::shared_ptr<OptionalDurationModel>& DurationBox::get() const {
+const std::shared_ptr<OptionalDurationModel>& DurationBox::get_current() const {
   return m_current;
 }
 
@@ -469,18 +469,18 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     auto [field, is_field_empty] = [&] () -> std::pair<QWidget*, bool> {
       if(m_minute_field->hasFocus()) {
-        return {m_minute_field, !m_minute_field->get()->get()};
+        return {m_minute_field, !m_minute_field->get_current()->get()};
       } else if(m_second_field->hasFocus()) {
-        return {m_second_field, !m_second_field->get()->get()};
+        return {m_second_field, !m_second_field->get_current()->get()};
       } else if(m_hour_field->hasFocus()) {
-        return {m_hour_field, !m_hour_field->get()->get()};
+        return {m_hour_field, !m_hour_field->get_current()->get()};
       }
       return {nullptr, true};
     }();
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
-      if(is_field_empty && (m_hour_field->get()->get() ||
-          m_minute_field->get()->get() ||
-          m_second_field->get()->get())) {
+      if(is_field_empty && (m_hour_field->get_current()->get() ||
+          m_minute_field->get_current()->get() ||
+          m_second_field->get_current()->get())) {
         on_submit();
         return true;
       }
@@ -544,14 +544,14 @@ void DurationBox::on_reject() {
 
 void DurationBox::update_empty_fields() {
   if(m_submission) {
-    if(!m_hour_field->get()->get()) {
-      m_hour_field->get()->set(0);
+    if(!m_hour_field->get_current()->get()) {
+      m_hour_field->get_current()->set(0);
     }
-    if(!m_minute_field->get()->get()) {
-      m_minute_field->get()->set(0);
+    if(!m_minute_field->get_current()->get()) {
+      m_minute_field->get_current()->set(0);
     }
-    if(!m_second_field->get()->get()) {
-      m_second_field->get()->set(Decimal(0));
+    if(!m_second_field->get_current()->get()) {
+      m_second_field->get_current()->set(Decimal(0));
     }
   }
 }

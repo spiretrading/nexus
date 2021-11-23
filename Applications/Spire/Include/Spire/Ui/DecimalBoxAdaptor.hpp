@@ -67,7 +67,7 @@ namespace Spire {
 
       /** Returns the current value model. */
       const std::shared_ptr<ScalarValueModel<boost::optional<Type>>>&
-        get() const;
+        get_current() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -165,7 +165,7 @@ namespace Spire {
   template<typename T>
   const std::shared_ptr<ScalarValueModel<
       boost::optional<typename DecimalBoxAdaptor<T>::Type>>>&
-        DecimalBoxAdaptor<T>::get() const {
+        DecimalBoxAdaptor<T>::get_current() const {
     return m_current;
   }
 

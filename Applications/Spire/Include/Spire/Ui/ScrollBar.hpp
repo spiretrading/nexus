@@ -28,8 +28,8 @@ namespace Spire {
        * @param orientation The orientation of the scroll bar.
        * @param parent The parent widget.
        */
-      explicit ScrollBar(Qt::Orientation orientation,
-        QWidget* parent = nullptr);
+      explicit ScrollBar(
+        Qt::Orientation orientation, QWidget* parent = nullptr);
 
       /** Returns the orientation of the scrollbar. */
       Qt::Orientation get_orientation();

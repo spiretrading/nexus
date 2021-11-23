@@ -96,7 +96,7 @@ namespace {
   template<typename B>
   auto setup_decimal_box_profile(UiProfile& profile) {
     using Type =
-      std::decay_t<decltype(*std::declval<B>().get())>::Scalar;
+      std::decay_t<decltype(*std::declval<B>().get_current())>::Scalar;
     auto model = std::make_shared<LocalScalarValueModel<optional<Type>>>();
     auto& minimum = get<Type>("minimum", profile.get_properties());
     minimum.connect_changed_signal([=] (auto value) {
@@ -123,11 +123,11 @@ namespace {
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
-      if(box->get()->get() != value) {
-        box->get()->set(value);
+      if(box->get_current()->get() != value) {
+        box->get_current()->set(value);
       }
     });
-    box->get()->connect_current_signal(
+    box->get_current()->connect_current_signal(
       profile.make_event_slot<optional<Type>>(QString::fromUtf8("Current")));
     box->connect_submit_signal(
       profile.make_event_slot<optional<Type>>(QString::fromUtf8("Submit")));
@@ -164,14 +164,14 @@ namespace {
     });
     auto& checked = get<bool>("checked", profile.get_properties());
     checked.connect_changed_signal([=] (auto value) {
-      if(check_box->get()->get() != value) {
-        check_box->get()->set(value);
+      if(check_box->get_current()->get() != value) {
+        check_box->get_current()->set(value);
       }
     });
-    check_box->get()->connect_current_signal([&] (auto is_checked) {
+    check_box->get_current()->connect_current_signal([&] (auto is_checked) {
       checked.set(is_checked);
     });
-    check_box->get()->connect_current_signal(
+    check_box->get_current()->connect_current_signal(
       profile.make_event_slot<bool>(QString::fromUtf8("CheckedSignal")));
     auto& read_only = get<bool>("read-only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
@@ -290,7 +290,7 @@ namespace {
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<Type>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
-      box->get()->set(value);
+      box->get_current()->set(value);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
@@ -313,7 +313,7 @@ namespace {
   template<typename B>
   auto setup_scalar_filter_panel_profile(UiProfile& profile) {
     using Type =
-      std::decay_t<decltype(*std::declval<B>().get())>::Scalar;
+      std::decay_t<decltype(*std::declval<B>().get_current())>::Scalar;
     auto& title = get<QString>("title", profile.get_properties());
     auto& default_min = get<Type>("default_minimum", profile.get_properties());
     auto& default_max = get<Type>("default_maximum", profile.get_properties());
@@ -530,15 +530,15 @@ UiProfile Spire::make_calendar_date_picker_profile() {
           model->set(*date);
         }
       });
-      calendar->get()->connect_current_signal([&current] (auto day) {
+      calendar->get_current()->connect_current_signal([&current] (auto day) {
         if(day) {
           current.set(displayTextAny(*day));
         }
       });
-      calendar->get()->connect_current_signal(profile.make_event_slot<
-        optional<date>>(QString::fromUtf8("Current")));
-      calendar->connect_submit_signal(profile.make_event_slot<
-        optional<date>>(QString::fromUtf8("Submit")));
+      calendar->get_current()->connect_current_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Current")));
+      calendar->connect_submit_signal(
+        profile.make_event_slot<optional<date>>(QString::fromUtf8("Submit")));
       return calendar;
     });
   return profile;
@@ -788,18 +788,18 @@ UiProfile Spire::make_decimal_box_profile() {
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
         if(value == QString::fromUtf8("null")) {
-          if(decimal_box->get()->get()) {
-            decimal_box->get()->set(none);
+          if(decimal_box->get_current()->get()) {
+            decimal_box->get_current()->set(none);
           }
         } else if(auto decimal = parse_decimal(value)) {
-          if(decimal_box->get()->get() != *decimal) {
-            decimal_box->get()->set(*decimal);
+          if(decimal_box->get_current()->get() != *decimal) {
+            decimal_box->get_current()->set(*decimal);
           }
         }
       });
       auto current_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("Current"));
-      decimal_box->get()->connect_current_signal(
+      decimal_box->get_current()->connect_current_signal(
         [=, &current] (const optional<Decimal>& value) {
           auto text = [&] {
             if(value) {
@@ -1072,8 +1072,8 @@ UiProfile Spire::make_duration_box_profile() {
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (auto value) {
         if(auto current_value = parse_duration(value)) {
-          if(duration_box->get()->get() != *current_value) {
-            duration_box->get()->set(*current_value);
+          if(duration_box->get_current()->get() != *current_value) {
+            duration_box->get_current()->set(*current_value);
           }
         }
       });
@@ -1081,7 +1081,7 @@ UiProfile Spire::make_duration_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         duration_box->set_read_only(is_read_only);
       });
-      duration_box->get()->connect_current_signal(
+      duration_box->get_current()->connect_current_signal(
         profile.make_event_slot<optional<time_duration>>(
           QString::fromUtf8("Current")));
       duration_box->connect_submit_signal(
@@ -1235,9 +1235,8 @@ UiProfile Spire::make_focus_observer_profile() {
           }
           auto timer = new QTimer(list_view);
           QObject::connect(timer, &QTimer::timeout, [=] {
-            if(auto& current = list_view->get()->get()) {
-              list_view->get()->set(
-                (*current + 1) % item_count);
+            if(auto& current = list_view->get_current()->get()) {
+              list_view->get_current()->set((*current + 1) % item_count);
             }
           });
           timer->start(3000);
@@ -1430,20 +1429,20 @@ UiProfile Spire::make_key_input_box_profile() {
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       if(value.isEmpty()) {
-        if(box->get()->get() != QKeySequence()) {
-          box->get()->set(QKeySequence());
+        if(box->get_current()->get() != QKeySequence()) {
+          box->get_current()->set(QKeySequence());
         }
       } else {
         auto sequence = QKeySequence(value);
         if(sequence.count() != 0 && sequence[0] != Qt::Key::Key_unknown &&
-            box->get()->get() != sequence) {
-          box->get()->set(sequence);
+            box->get_current()->get() != sequence) {
+          box->get_current()->set(sequence);
         }
       }
     });
-    box->get()->connect_current_signal(
+    box->get_current()->connect_current_signal(
       profile.make_event_slot<QKeySequence>(QString::fromUtf8("Current")));
-    box->get()->connect_current_signal([&current] (const auto& value) {
+    box->get_current()->connect_current_signal([&current] (const auto& value) {
       current.set(value.toString());
     });
     box->connect_submit_signal(
@@ -1476,7 +1475,7 @@ UiProfile Spire::make_key_tag_profile() {
           }
           return Qt::Key_unknown;
         }();
-        key_tag->get()->set(key);
+        key_tag->get_current()->set(key);
       });
       return key_tag;
     });
@@ -1685,9 +1684,9 @@ UiProfile Spire::make_list_view_profile() {
       auto& current_item = get<int>("current_item", profile.get_properties());
       current_item.connect_changed_signal([=] (auto index) {
         if(index == -1) {
-          list_view->get()->set(none);
+          list_view->get_current()->set(none);
         } else if(index >= 0 && index < list_model->get_size()) {
-          list_view->get()->set(index);
+          list_view->get_current()->set(index);
         }
       });
       auto& select_item = get<int>("select_item", profile.get_properties());
@@ -1712,15 +1711,15 @@ UiProfile Spire::make_list_view_profile() {
       });
       auto& auto_set_current_null =
         get<bool>("auto_set_current_null", profile.get_properties());
-      list_view->get()->connect_current_signal(
+      list_view->get_current()->connect_current_signal(
         [&, list_view] (const auto& current) {
           if(current && auto_set_current_null.get()) {
             QTimer::singleShot(2000, [list_view] {
-              list_view->get()->set(none);
+              list_view->get_current()->set(none);
             });
           }
         });
-      list_view->get()->connect_current_signal(
+      list_view->get_current()->connect_current_signal(
         profile.make_event_slot<optional<int>>(QString::fromUtf8("Current")));
       list_view->get_selection()->connect_current_signal(
         profile.make_event_slot<optional<int>>(QString::fromUtf8("Selection")));
@@ -1763,7 +1762,7 @@ UiProfile Spire::make_navigation_view_profile() {
       apply_widget_properties(navigation_view, profile.get_properties());
       auto filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("CurrentSignal"));
-      navigation_view->get()->connect_current_signal(
+      navigation_view->get_current()->connect_current_signal(
         [=] (auto current) {
           filter_slot(QString("%1_%2").arg(current).
             arg(navigation_view->get_label(current)));
@@ -1807,7 +1806,7 @@ UiProfile Spire::make_navigation_view_profile() {
       auto& current = get<int>("current", profile.get_properties());
       current.connect_changed_signal([=] (auto index) {
         if(index >= 0 && index < navigation_view->get_count()) {
-          navigation_view->get()->set(index);
+          navigation_view->get_current()->set(index);
         }
       });
       return navigation_view;
@@ -2205,7 +2204,7 @@ UiProfile Spire::make_search_box_profile() {
       placeholder.connect_changed_signal([=] (const auto& text) {
         search_box->set_placeholder(text);
       });
-      search_box->get()->connect_current_signal(
+      search_box->get_current()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       search_box->connect_submit_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
@@ -2294,11 +2293,11 @@ UiProfile Spire::make_text_area_box_profile() {
       apply_widget_properties(text_area_box, profile.get_properties());
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& value) {
-        if(text_area_box->get()->get() != value) {
-          text_area_box->get()->set(value);
+        if(text_area_box->get_current()->get() != value) {
+          text_area_box->get_current()->set(value);
         }
       });
-      text_area_box->get()->connect_current_signal(
+      text_area_box->get_current()->connect_current_signal(
         [&] (const auto& value) {
           if(current.get() != value) {
             current.set(value);
@@ -2332,7 +2331,7 @@ UiProfile Spire::make_text_area_box_profile() {
         });
       text_area_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
-      text_area_box->get()->connect_current_signal(
+      text_area_box->get_current()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       return text_area_box;
     });
@@ -2357,15 +2356,15 @@ UiProfile Spire::make_text_box_profile() {
       });
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
-        if(text_box->get()->get() != current) {
-          text_box->get()->set(current);
+        if(text_box->get_current()->get() != current) {
+          text_box->get_current()->set(current);
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_box->set_placeholder(text);
       });
-      text_box->get()->connect_current_signal(
+      text_box->get_current()->connect_current_signal(
         [&current] (const auto& value) {
           current.set(value);
         });
@@ -2375,7 +2374,7 @@ UiProfile Spire::make_text_box_profile() {
           style.get(Any()).set(horizontal_padding(scale_width(value)));
         });
       });
-      text_box->get()->connect_current_signal(
+      text_box->get_current()->connect_current_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Current")));
       text_box->connect_submit_signal(profile.make_event_slot<QString>(
         QString::fromUtf8("Submit")));
@@ -2406,8 +2405,8 @@ UiProfile Spire::make_time_box_profile() {
       apply_widget_properties(time_box, profile.get_properties());
       current.connect_changed_signal([=] (auto value) {
         if(auto current_value = parse_time(value)) {
-          if(time_box->get()->get() != *current_value) {
-            time_box->get()->set(*current_value);
+          if(time_box->get_current()->get() != *current_value) {
+            time_box->get_current()->set(*current_value);
           }
         }
       });
@@ -2415,7 +2414,7 @@ UiProfile Spire::make_time_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         time_box->set_read_only(is_read_only);
       });
-      time_box->get()->connect_current_signal(
+      time_box->get_current()->connect_current_signal(
         profile.make_event_slot<optional<time_duration>>(
           QString::fromUtf8("Current")));
       time_box->connect_submit_signal(
@@ -2443,8 +2442,8 @@ UiProfile Spire::make_time_in_force_box_profile() {
      {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
   populate_enum_box_properties(properties, current_property);
   auto profile = UiProfile(QString::fromUtf8("TimeInForceBox"), properties,
-    std::bind_front(setup_enum_box_profile<TimeInForceBox,
-      make_time_in_force_box>));
+    std::bind_front(
+      setup_enum_box_profile<TimeInForceBox, make_time_in_force_box>));
   return profile;
 }
 

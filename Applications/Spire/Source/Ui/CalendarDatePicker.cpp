@@ -248,7 +248,7 @@ class CalendarDayLabel : public QWidget {
     TextBox* m_label;
 
     void on_current(date day) {
-      m_label->get()->set(QString("%1").arg(day.day()));
+      m_label->get_current()->set(QString("%1").arg(day.day()));
       if(day == day_clock::local_day()) {
         match(*this, Today());
       } else {
@@ -301,7 +301,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_calendar_view->installEventFilter(this);
   layout->addWidget(m_calendar_view);
   m_list_current_connection =
-    m_calendar_view->get()->connect_current_signal(
+    m_calendar_view->get_current()->connect_current_signal(
       [=] (const auto& index) { on_list_current(index); });
   m_calendar_view->connect_submit_signal([=] (const auto& value) {
     on_submit(std::any_cast<date>(value));
@@ -327,7 +327,7 @@ CalendarDatePicker::CalendarDatePicker(
 }
 
 const std::shared_ptr<OptionalDateModel>&
-    CalendarDatePicker::get() const {
+    CalendarDatePicker::get_current() const {
   return m_current;
 }
 
@@ -343,7 +343,7 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
         (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)) {
       QCoreApplication::sendEvent(m_calendar_view, e);
     } else {
-      auto current_index = m_calendar_view->get()->get();
+      auto current_index = m_calendar_view->get_current()->get();
       if(current_index) {
         if(*current_index == 0 && e->key() == Qt::Key_Left) {
           m_current->set(*m_current->get() - days(1));
@@ -373,7 +373,7 @@ boost::optional<int> CalendarDatePicker::get_index(date day) const {
 void CalendarDatePicker::set_current_index(const optional<int>& index) {
   auto current_block =
     shared_connection_block(m_list_current_connection);
-  m_calendar_view->get()->set(index);
+  m_calendar_view->get_current()->set(index);
 }
 
 void CalendarDatePicker::on_current(const optional<date>& current) {
@@ -405,7 +405,7 @@ void CalendarDatePicker::on_current_month(date month) {
       current_index = i;
     }
   }
-  if(current_index != m_calendar_view->get()->get()) {
+  if(current_index != m_calendar_view->get_current()->get()) {
     set_current_index(current_index);
   }
   if(list_has_focus) {

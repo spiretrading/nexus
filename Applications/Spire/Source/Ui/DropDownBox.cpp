@@ -87,9 +87,9 @@ DropDownBox::DropDownBox(std::shared_ptr<ListModel> list,
   window->installEventFilter(this);
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
-  on_current(get()->get());
+  on_current(get_current()->get());
   m_button->connect_clicked_signal([=] { on_click(); });
-  m_current_connection = m_list_view->get()->connect_current_signal(
+  m_current_connection = m_list_view->get_current()->connect_current_signal(
       [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_list_view->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
@@ -101,8 +101,8 @@ const std::shared_ptr<ListModel>& DropDownBox::get_list() const {
 }
 
 const std::shared_ptr<DropDownBox::CurrentModel>&
-    DropDownBox::get() const {
-  return m_list_view->get();
+    DropDownBox::get_current() const {
+  return m_list_view->get_current();
 }
 
 const std::shared_ptr<DropDownBox::SelectionModel>&
@@ -211,7 +211,7 @@ void DropDownBox::on_current(const optional<int>& current) {
     }
     return QString();
   }();
-  m_text_box->get()->set(text);
+  m_text_box->get_current()->set(text);
 }
 
 void DropDownBox::on_submit(const std::any& submission) {
@@ -223,13 +223,13 @@ void DropDownBox::on_submit(const std::any& submission) {
 }
 
 void DropDownBox::revert_current() {
-  if(m_submission != m_list_view->get()->get()) {
-    m_list_view->get()->set(m_submission);
+  if(m_submission != m_list_view->get_current()->get()) {
+    m_list_view->get_current()->set(m_submission);
   }
 }
 
 void DropDownBox::submit() {
-  m_submission = m_list_view->get()->get();
+  m_submission = m_list_view->get_current()->get();
   if(m_submission) {
     m_submit_signal(m_list_view->get_list()->at(*m_submission));
   }

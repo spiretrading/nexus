@@ -346,7 +346,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   update_button_positions();
 }
 
-const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get() const {
+const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
   return m_current;
 }
 

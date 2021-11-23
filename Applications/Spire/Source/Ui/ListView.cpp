@@ -124,7 +124,7 @@ const std::shared_ptr<ListModel>& ListView::get_list() const {
   return m_list;
 }
 
-const std::shared_ptr<ListView::CurrentModel>& ListView::get() const {
+const std::shared_ptr<ListView::CurrentModel>& ListView::get_current() const {
   return m_current;
 }
 

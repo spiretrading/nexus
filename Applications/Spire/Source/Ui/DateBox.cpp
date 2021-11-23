@@ -281,7 +281,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
   m_focus_observer.connect_state_signal([=] (auto state) { on_focus(state); });
 }
 
-const std::shared_ptr<OptionalDateModel>& DateBox::get() const {
+const std::shared_ptr<OptionalDateModel>& DateBox::get_current() const {
   return m_model->m_source;
 }
 

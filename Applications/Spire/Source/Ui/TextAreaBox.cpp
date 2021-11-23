@@ -71,7 +71,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
         [=] (const auto& value) { on_current(value); });
     }
 
-    const std::shared_ptr<TextModel>& get() const {
+    const std::shared_ptr<TextModel>& get_current() const {
       return m_current;
     }
 
@@ -229,8 +229,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
     &TextAreaBox::on_cursor_position);
 }
 
-const std::shared_ptr<TextModel>& TextAreaBox::get() const {
-  return m_text_edit->get();
+const std::shared_ptr<TextModel>& TextAreaBox::get_current() const {
+  return m_text_edit->get_current();
 }
 
 const QString& TextAreaBox::get_submission() const {
@@ -266,7 +266,7 @@ connection TextAreaBox::connect_submit_signal(
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusOut) {
-    m_submission = m_text_edit->get()->get();
+    m_submission = m_text_edit->get_current()->get();
     m_submit_signal(m_submission);
   }
   return QWidget::eventFilter(watched, event);
@@ -300,8 +300,7 @@ void TextAreaBox::commit_style() {
 }
 
 bool TextAreaBox::is_placeholder_shown() const {
-  return !is_read_only() &&
-    m_text_edit->get()->get().isEmpty() &&
+  return !is_read_only() && m_text_edit->get_current()->get().isEmpty() &&
     !m_placeholder_text.isEmpty();
 }
 

@@ -44,7 +44,7 @@ namespace Styles {
         std::shared_ptr<BooleanModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<BooleanModel>& get() const;
+      const std::shared_ptr<BooleanModel>& get_current() const;
 
       /**
        * Sets the text of the label.
@@ -69,7 +69,7 @@ namespace Styles {
       TextBox* m_label;
       boost::signals2::scoped_connection m_connection;
 
-      void on_checked(bool is_checked);
+      void on_current(bool current);
       void on_layout_direction(Qt::LayoutDirection direction);
   };
 

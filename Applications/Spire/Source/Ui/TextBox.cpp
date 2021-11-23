@@ -286,7 +286,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     [=] (const auto& value) { on_current(value); });
 }
 
-const std::shared_ptr<TextModel>& TextBox::get() const {
+const std::shared_ptr<TextModel>& TextBox::get_current() const {
   return m_current;
 }
 

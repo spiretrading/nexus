@@ -72,17 +72,17 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> current, QWidget* parent)
   });
   layout->addWidget(m_label);
   m_current_connection = m_current->connect_current_signal([=] (auto key) {
-    on_current_key(key);
+    on_current(key);
   });
-  on_current_key(m_current->get());
+  on_current(m_current->get());
 }
 
-const std::shared_ptr<KeyModel>& KeyTag::get() const {
+const std::shared_ptr<KeyModel>& KeyTag::get_current() const {
   return m_current;
 }
 
-void KeyTag::on_current_key(Qt::Key key) {
-  m_label->get()->set(get_key_text(key));
+void KeyTag::on_current(Qt::Key key) {
+  m_label->get_current()->set(get_key_text(key));
   switch(key) {
     case Qt::Key_Alt:
     case Qt::Key_Control:

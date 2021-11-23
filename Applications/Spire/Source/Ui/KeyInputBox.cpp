@@ -110,7 +110,7 @@ KeyInputBox::KeyInputBox(
 KeyInputBox::KeyInputBox(QWidget* parent)
   : KeyInputBox(std::make_shared<LocalKeySequenceValueModel>(), parent) {}
 
-const std::shared_ptr<KeySequenceValueModel>& KeyInputBox::get() const {
+const std::shared_ptr<KeySequenceValueModel>& KeyInputBox::get_current() const {
   return m_current;
 }
 
