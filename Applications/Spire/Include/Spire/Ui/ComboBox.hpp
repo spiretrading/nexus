@@ -109,8 +109,15 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<SelectionModel> m_selection;
       ViewBuilder m_view_builder;
-      TextBox* m_input_box;
       bool m_is_read_only;
+      TextBox* m_input_box;
+      std::shared_ptr<ArrayListModel> m_matches;
+      DropDownList* m_drop_down_list;
+      QtPromise<std::vector<std::any>> m_query_result;
+      boost::signals2::scoped_connection m_input_connection;
+
+      void on_input(const QString& query);
+      void on_query(Beam::Expect<std::vector<std::any>>&& result);
   };
 
   /**

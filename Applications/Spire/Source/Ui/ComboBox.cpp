@@ -1,9 +1,12 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include <QHBoxLayout>
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -28,7 +31,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_current(std::move(current)),
       m_selection(std::move(selection)),
       m_view_builder(std::move(view_builder)),
-      m_is_read_only(false) {
+      m_is_read_only(false),
+      m_matches(std::make_shared<ArrayListModel>()) {
   m_input_box = new TextBox();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
@@ -36,6 +40,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(m_input_box);
+  m_input_connection = m_input_box->get_current()->connect_update_signal(
+    std::bind_front(&ComboBox::on_input, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -73,6 +79,25 @@ connection ComboBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+void ComboBox::on_input(const QString& query) {
+  if(query.isEmpty()) {
+    on_query(std::vector<std::any>());
+  } else {
+    m_query_result = m_query_model->submit(query);
+    m_query_result.then(std::bind_front(&ComboBox::on_query, this));
+  }
+}
+
+void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
+  auto selection = [&] {
+    try {
+      return result.Get();
+    } catch(const std::exception&) {
+      return std::vector<std::any>();
+    }
+  }();
+}
+
 void LocalComboBoxQueryModel::add(const std::any& value) {
   add(displayTextAny(value), value);
 }
@@ -81,5 +106,5 @@ void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {}
 
 QtPromise<std::vector<std::any>> LocalComboBoxQueryModel::submit(
     const QString& query) {
-  return {};
+  return QtPromise(std::vector<std::any>());;
 }
