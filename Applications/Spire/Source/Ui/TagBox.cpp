@@ -100,7 +100,6 @@ TagBox::TagBox(std::shared_ptr<ListModel> list_model,
   }
   m_list_view->get_list_model()->connect_operation_signal(
     std::bind_front(&TagBox::on_operation, this));
-  m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   auto input_box = make_input_box(m_list_view);
   layout->addWidget(input_box);
   proxy_style(*this, *input_box);
