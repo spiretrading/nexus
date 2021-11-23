@@ -15,10 +15,12 @@ using namespace Spire::Styles;
 
 namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(vertical_padding(scale_height(3)));
     style.get(Any() >> is_a<ListView>()).
-      set(Overflow::WRAP).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
+      set(Overflow::WRAP).
       set(Qt::Horizontal);
     style.get((ReadOnly() || Disabled()) >> is_a<ListView>()).
       set(Overflow::NONE);
@@ -29,7 +31,7 @@ namespace {
     auto style = StyleSheet();
     style.get(Any()).
       set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_color(QColor(Qt::transparent))).
+      set(border_size(0)).
       set(padding(0));
     return style;
   }
@@ -37,8 +39,9 @@ namespace {
   auto TEXT_BOX_STYLE(StyleSheet style) {
     style.get(Any() || Hover() || Focus() || Disabled()).
       set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_color(QColor(Qt::transparent))).
-      set(padding(0));
+      set(border_size(0)).
+      set(horizontal_padding(0)).
+      set(vertical_padding(scale_height(2)));
     return style;
   }
 }
@@ -200,6 +203,9 @@ void TagBox::on_operation(const ListModel::Operation& operation) {
     },
     [&] (const ListModel::RemoveOperation& operation) {
       m_tags.erase(m_tags.begin() + operation.m_index);
+      if(m_tags.empty()) {
+        m_list_view->setFocusProxy(m_text_box);
+      }
     });
 }
 
