@@ -34,7 +34,8 @@ namespace Spire {
         const typename CurrentSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<ScalarValueModel<boost::optional<Nexus::Quantity>>> m_model;
+      std::shared_ptr<ScalarValueModel<boost::optional<Nexus::Quantity>>>
+        m_model;
   };
 }
 

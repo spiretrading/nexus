@@ -21,11 +21,11 @@ namespace Spire {
 
   /**
    * Returns a new SideFilterPanel.
-   * @param selected_model A model including a list of selected values.
+   * @param selection A model including a list of selected values.
    * @param parent The parent widget.
    */
   SideFilterPanel* make_side_filter_panel(
-    std::shared_ptr<SideListModel> selected_model, QWidget& parent);
+    std::shared_ptr<SideListModel> selection, QWidget& parent);
 }
 
 #endif

@@ -307,9 +307,9 @@ namespace {
     return proxy;
   }
 
-  auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
+  auto make_hour_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(model));
+    auto field = new IntegerBox(std::move(current));
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
     update_style(*field, [&] (auto& style) {
@@ -319,9 +319,9 @@ namespace {
     return field;
   }
 
-  auto make_minute_field(std::shared_ptr<OptionalIntegerModel> model,
+  auto make_minute_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(model));
+    auto field = new IntegerBox(std::move(current));
     field->setMinimumWidth(scale_width(28));
     field->set_placeholder("mm");
     update_style(*field, [&] (auto& style) {
@@ -332,9 +332,9 @@ namespace {
   }
 
   auto make_second_field(
-      std::shared_ptr<ScalarValueModel<optional<Decimal>>> model,
+      std::shared_ptr<ScalarValueModel<optional<Decimal>>> current,
         QWidget& event_filter) {
-    auto field = new DecimalBox(std::move(model));
+    auto field = new DecimalBox(std::move(current));
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
     update_style(*field, [&] (auto& style) {
@@ -357,19 +357,19 @@ namespace {
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalOptionalDurationModel>(), parent) {}
 
-DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
+DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
     QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)),
-      m_submission(m_model->get_current()),
+      m_current(std::move(current)),
+      m_submission(m_current->get_current()),
       m_is_read_only(false),
       m_is_rejected(false),
       m_has_update(false) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto hour_model = std::make_shared<HourModel>(m_model);
-  auto minute_model = std::make_shared<MinuteModel>(m_model);
-  auto second_model = std::make_shared<SecondModel>(m_model);
+  auto hour_model = std::make_shared<HourModel>(m_current);
+  auto minute_model = std::make_shared<MinuteModel>(m_current);
+  auto second_model = std::make_shared<SecondModel>(m_current);
   hour_model->m_minutes = minute_model;
   hour_model->m_seconds = second_model;
   minute_model->m_hours = hour_model;
@@ -417,12 +417,12 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
     [=] (const auto& value) { on_reject(); });
   m_second_field->connect_reject_signal(
     [=] (const auto& value) { on_reject(); });
-  m_model->connect_current_signal(
+  m_current->connect_current_signal(
     [=] (const auto& value) { on_current(value); });
 }
 
-const std::shared_ptr<OptionalDurationModel>& DurationBox::get_model() const {
-  return m_model;
+const std::shared_ptr<OptionalDurationModel>& DurationBox::get_current() const {
+  return m_current;
 }
 
 bool DurationBox::is_read_only() const {
@@ -469,18 +469,18 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     auto [field, is_field_empty] = [&] () -> std::pair<QWidget*, bool> {
       if(m_minute_field->hasFocus()) {
-        return {m_minute_field, !m_minute_field->get_model()->get_current()};
+        return {m_minute_field, !m_minute_field->get_current()->get_current()};
       } else if(m_second_field->hasFocus()) {
-        return {m_second_field, !m_second_field->get_model()->get_current()};
+        return {m_second_field, !m_second_field->get_current()->get_current()};
       } else if(m_hour_field->hasFocus()) {
-        return {m_hour_field, !m_hour_field->get_model()->get_current()};
+        return {m_hour_field, !m_hour_field->get_current()->get_current()};
       }
       return {nullptr, true};
     }();
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
-      if(is_field_empty && (m_hour_field->get_model()->get_current() ||
-          m_minute_field->get_model()->get_current() ||
-          m_second_field->get_model()->get_current())) {
+      if(is_field_empty && (m_hour_field->get_current()->get_current() ||
+          m_minute_field->get_current()->get_current() ||
+          m_second_field->get_current()->get_current())) {
         on_submit();
         return true;
       }
@@ -520,10 +520,10 @@ void DurationBox::on_current(const optional<time_duration>& current) {
 }
 
 void DurationBox::on_submit() {
-  if(m_model->get_state() != QValidator::State::Acceptable) {
+  if(m_current->get_state() != QValidator::State::Acceptable) {
     on_reject();
   } else {
-    m_submission = m_model->get_current();
+    m_submission = m_current->get_current();
     update_empty_fields();
     m_has_update = false;
     auto submission = m_submission;
@@ -532,10 +532,10 @@ void DurationBox::on_submit() {
 }
 
 void DurationBox::on_reject() {
-  auto current = m_model->get_current();
+  auto current = m_current->get_current();
   auto submission = m_submission;
   m_reject_signal(current);
-  m_model->set_current(submission);
+  m_current->set_current(submission);
   if(!m_is_rejected) {
     m_is_rejected = true;
     match(*this, Rejected());
@@ -544,14 +544,14 @@ void DurationBox::on_reject() {
 
 void DurationBox::update_empty_fields() {
   if(m_submission) {
-    if(!m_hour_field->get_model()->get_current()) {
-      m_hour_field->get_model()->set_current(0);
+    if(!m_hour_field->get_current()->get_current()) {
+      m_hour_field->get_current()->set_current(0);
     }
-    if(!m_minute_field->get_model()->get_current()) {
-      m_minute_field->get_model()->set_current(0);
+    if(!m_minute_field->get_current()->get_current()) {
+      m_minute_field->get_current()->set_current(0);
     }
-    if(!m_second_field->get_model()->get_current()) {
-      m_second_field->get_model()->set_current(Decimal(0));
+    if(!m_second_field->get_current()->get_current()) {
+      m_second_field->get_current()->set_current(Decimal(0));
     }
   }
 }

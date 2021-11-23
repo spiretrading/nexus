@@ -19,17 +19,17 @@ namespace Spire {
 
       /**
        * Constructs a ClosedFilterPanel.
-       * @param model A TableModel whose first column is a selectable value,
+       * @param table A TableModel whose first column is a selectable value,
        *        and whose second column is a boolean value indicating whether
        *        the value in the first column is currently included.
        * @param title The title of the panel.
        * @param parent The parent widget.
        */
-      ClosedFilterPanel(std::shared_ptr<TableModel> model, QString title,
-        QWidget& parent);
+      ClosedFilterPanel(
+        std::shared_ptr<TableModel> table, QString title, QWidget& parent);
 
       /** Returns the table of values and whether they are selected. */
-      const std::shared_ptr<TableModel>& get_model() const;
+      const std::shared_ptr<TableModel>& get_table() const;
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
@@ -41,11 +41,11 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<TableModel> m_model;
+      std::shared_ptr<TableModel> m_table;
       std::shared_ptr<ArrayListModel> m_submission;
       FilterPanel* m_filter_panel;
       ListView* m_list_view;
-      boost::signals2::scoped_connection m_model_connection;
+      boost::signals2::scoped_connection m_table_connection;
 
       void on_list_model_operation(const ListModel::Operation& operation);
       void on_table_model_operation(const TableModel::Operation& operation);

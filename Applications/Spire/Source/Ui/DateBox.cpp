@@ -39,8 +39,8 @@ namespace {
     style.get(Any() > is_a<Button>()).set(Visibility::NONE);
   }
 
-  auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model);
+  auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& current) {
+    auto box = new IntegerBox(current);
     box->set_placeholder("YYYY");
     box->setFixedSize(scale(29, 26));
     update_style(*box, [&] (auto& style) {
@@ -50,8 +50,8 @@ namespace {
     return box;
   }
 
-  auto make_month_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model);
+  auto make_month_box(const std::shared_ptr<OptionalIntegerModel>& current) {
+    auto box = new IntegerBox(current);
     box->set_placeholder("MM");
     box->setFixedSize(scale(21, 26));
     update_style(*box, [&] (auto& style) {
@@ -61,8 +61,8 @@ namespace {
     return box;
   }
 
-  auto make_day_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model);
+  auto make_day_box(const std::shared_ptr<OptionalIntegerModel>& current) {
+    auto box = new IntegerBox(current);
     box->set_placeholder("DD");
     box->setFixedSize(scale(21, 26));
     update_style(*box, [&] (auto& style) {
@@ -78,23 +78,23 @@ namespace {
     return label;
   }
 
-  auto make_body(const std::shared_ptr<OptionalIntegerModel>& year_model,
-      const std::shared_ptr<OptionalIntegerModel>& month_model,
-      const std::shared_ptr<OptionalIntegerModel>& day_model) {
+  auto make_body(const std::shared_ptr<OptionalIntegerModel>& year,
+      const std::shared_ptr<OptionalIntegerModel>& month,
+      const std::shared_ptr<OptionalIntegerModel>& day) {
     auto body = new QWidget();
     auto layout = new QHBoxLayout(body);
     layout->setContentsMargins({});
     layout->setSpacing(0);
     layout->addSpacerItem(
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
-    auto year_box = make_year_box(year_model);
+    auto year_box = make_year_box(year);
     layout->addWidget(year_box);
     auto year_dash = make_dash();
     layout->addWidget(year_dash);
-    auto month_box = make_month_box(month_model);
+    auto month_box = make_month_box(month);
     layout->addWidget(month_box);
     layout->addWidget(make_dash());
-    auto day_box = make_day_box(day_model);
+    auto day_box = make_day_box(day);
     layout->addWidget(day_box);
     layout->addSpacerItem(
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
@@ -102,8 +102,8 @@ namespace {
   }
 
   auto make_date_picker(
-      const std::shared_ptr<OptionalDateModel>& model, QWidget* parent) {
-    auto date_picker = new CalendarDatePicker(model);
+      const std::shared_ptr<OptionalDateModel>& current, QWidget* parent) {
+    auto date_picker = new CalendarDatePicker(current);
     auto panel = new OverlayPanel(*date_picker, *parent);
     return panel;
   }
@@ -248,9 +248,9 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
 DateBox::DateBox(const optional<date>& current, QWidget* parent)
   : DateBox(std::make_shared<LocalOptionalDateModel>(current), parent) {}
 
-DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
+DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<DateComposerModel>(std::move(model))),
+      m_model(std::make_shared<DateComposerModel>(std::move(current))),
       m_submission(m_model->get_current()),
       m_is_read_only(false),
       m_is_rejected(false),
@@ -281,7 +281,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   m_focus_observer.connect_state_signal([=] (auto state) { on_focus(state); });
 }
 
-const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
+const std::shared_ptr<OptionalDateModel>& DateBox::get_current() const {
   return m_model->m_source;
 }
 

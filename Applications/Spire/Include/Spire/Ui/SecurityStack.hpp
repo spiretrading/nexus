@@ -8,29 +8,29 @@
 
 namespace Spire {
 
-  //! Stores a stack like cycle of security's viewed by a user.
+  /** Stores a stack like cycle of security's viewed by a user. */
   class SecurityStack {
     public:
 
-      //! Constructs an empty stack.
+      /** Constructs an empty stack. */
       SecurityStack() = default;
 
-      //! Pushes a security onto the stack.
-      void push(Nexus::Security s);
+      /** Pushes a security onto the stack. */
+      void push(const Nexus::Security& security);
 
-      //! Pushes a security onto the stack and yields the top of the stack.
-      /*!
-        \param s The security to push.
-        \return The top of the stack.
-      */
-      Nexus::Security push_front(Nexus::Security s);
+      /**
+       * Pushes a security onto the stack and yields the top of the stack.
+       * @param security The security to push.
+       * @return The top of the stack.
+       */
+      Nexus::Security push_front(const Nexus::Security& security);
 
-      //! Pushes a security onto the stack and pops out the bottom of the stack.
-      /*!
-        \param s The security to push.
-        \return The bottom of the stack.
-      */
-      Nexus::Security push_back(Nexus::Security s);
+      /**
+       * Pushes a security onto the stack and pops out the bottom of the stack.
+       * @param security The security to push.
+       * @return The bottom of the stack.
+       */
+      Nexus::Security push_back(const Nexus::Security& security);
 
     private:
       friend struct Beam::Serialization::DataShuttle;

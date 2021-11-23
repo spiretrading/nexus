@@ -51,8 +51,8 @@ namespace {
 
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
   public:
-    ContentSizedTextEdit(std::shared_ptr<TextModel> model)
-        : m_model(std::move(model)),
+    ContentSizedTextEdit(std::shared_ptr<TextModel> current)
+        : m_current(std::move(current)),
           m_is_synchronizing(false) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -66,13 +66,13 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       connect(document()->documentLayout(),
         &QAbstractTextDocumentLayout::documentSizeChanged, this,
         [=] (const auto& size) { updateGeometry(); });
-      setText(m_model->get_current());
-      m_current_connection = m_model->connect_current_signal(
+      setText(m_current->get_current());
+      m_current_connection = m_current->connect_current_signal(
         [=] (const auto& value) { on_current(value); });
     }
 
-    const std::shared_ptr<TextModel>& get_model() const {
-      return m_model;
+    const std::shared_ptr<TextModel>& get_current() const {
+      return m_current;
     }
 
     QSize sizeHint() const override {
@@ -80,7 +80,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
     }
 
   private:
-    std::shared_ptr<TextModel> m_model;
+    std::shared_ptr<TextModel> m_current;
     bool m_is_synchronizing;
     scoped_connection m_current_connection;
 
@@ -101,7 +101,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
 
     void on_text_changed() {
       synchronize([&] {
-        m_model->set_current(toPlainText());
+        m_current->set_current(toPlainText());
       });
     }
 
@@ -202,12 +202,12 @@ TextAreaBox::TextAreaBox(QWidget* parent)
 TextAreaBox::TextAreaBox(QString current, QWidget* parent)
   : TextAreaBox(std::make_shared<LocalTextModel>(std::move(current)), parent) {}
 
-TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
+TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_text_edit_styles([=] { commit_style(); }),
       m_placeholder_styles([=] { commit_placeholder_style(); }),
-      m_submission(model->get_current()) {
-  m_text_edit = new ContentSizedTextEdit(std::move(model));
+      m_submission(current->get_current()) {
+  m_text_edit = new ContentSizedTextEdit(std::move(current));
   m_text_edit->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
   m_text_edit->installEventFilter(this);
@@ -229,8 +229,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> model, QWidget* parent)
     &TextAreaBox::on_cursor_position);
 }
 
-const std::shared_ptr<TextModel>& TextAreaBox::get_model() const {
-  return m_text_edit->get_model();
+const std::shared_ptr<TextModel>& TextAreaBox::get_current() const {
+  return m_text_edit->get_current();
 }
 
 const QString& TextAreaBox::get_submission() const {
@@ -266,7 +266,7 @@ connection TextAreaBox::connect_submit_signal(
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusOut) {
-    m_submission = m_text_edit->get_model()->get_current();
+    m_submission = m_text_edit->get_current()->get_current();
     m_submit_signal(m_submission);
   }
   return QWidget::eventFilter(watched, event);
@@ -300,7 +300,8 @@ void TextAreaBox::commit_style() {
 }
 
 bool TextAreaBox::is_placeholder_shown() const {
-  return !is_read_only() && m_text_edit->get_model()->get_current().isEmpty() &&
+  return !is_read_only() &&
+    m_text_edit->get_current()->get_current().isEmpty() &&
     !m_placeholder_text.isEmpty();
 }
 

@@ -78,24 +78,24 @@ namespace Styles {
       /**
        * Constructs a DecimalBox with 6 decimal places and no trailing zeros
        * with an increment determined by the model's increment.
-       * @param model The model used for the current value.
+       * @param current The model used for the current value.
        * @param parent The parent widget.
        */
-      explicit DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
+      explicit DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
         QWidget* parent = nullptr);
 
       /**
        * Constructs a DecimalBox with 6 decimal places and no trailing zeros.
-       * @param model The model used for the current value.
+       * @param current The model used for the current value.
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
-      DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
+      DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
         QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<OptionalDecimalModel>& get_model() const;
+      const std::shared_ptr<OptionalDecimalModel>& get_current() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -136,7 +136,7 @@ namespace Styles {
       struct DecimalToTextModel;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<OptionalDecimalModel> m_model;
+      std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
       boost::optional<Decimal> m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;

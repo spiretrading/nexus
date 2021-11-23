@@ -59,9 +59,9 @@ namespace {
     return button;
   }
 
-  auto make_modifiers(const OptionalDecimalModel& model) {
+  auto make_modifiers(const OptionalDecimalModel& current) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
-    modifiers[Qt::NoModifier] = model.get_increment();
+    modifiers[Qt::NoModifier] = current.get_increment();
     return modifiers;
   }
 }
@@ -300,15 +300,15 @@ DecimalBox::DecimalBox(QHash<Qt::KeyboardModifier, Decimal> modifiers,
       std::move(modifiers), parent) {}
 
 DecimalBox::DecimalBox(
-  std::shared_ptr<OptionalDecimalModel> model, QWidget* parent)
-  : DecimalBox(model, make_modifiers(*model), parent) {}
+  std::shared_ptr<OptionalDecimalModel> current, QWidget* parent)
+  : DecimalBox(current, make_modifiers(*current), parent) {}
 
-DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
+DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)),
-      m_adaptor_model(std::make_shared<DecimalToTextModel>(m_model)),
-      m_submission(m_model->get_current()),
+      m_current(std::move(current)),
+      m_adaptor_model(std::make_shared<DecimalToTextModel>(m_current)),
+      m_submission(m_current->get_current()),
       m_modifiers(std::move(modifiers)),
       m_tick(TickIndicator::NONE) {
   auto layout = new QHBoxLayout(this);
@@ -322,7 +322,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   layout->addWidget(m_text_box);
-  if(auto current = m_model->get_current()) {
+  if(auto current = m_current->get_current()) {
     if(*current > 0) {
       m_sign = SignIndicator::POSITIVE;
       match(*this, IsPositive());
@@ -333,7 +333,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
       m_sign = SignIndicator::NONE;
     }
   }
-  m_current_connection = m_model->connect_current_signal(
+  m_current_connection = m_current->connect_current_signal(
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_text_box->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
@@ -346,8 +346,8 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> model,
   update_button_positions();
 }
 
-const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_model() const {
-  return m_model;
+const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
+  return m_current;
 }
 
 void DecimalBox::set_placeholder(const QString& value) {
@@ -439,27 +439,27 @@ Decimal DecimalBox::get_increment() const {
 void DecimalBox::step_by(const Decimal& value) {
   setFocus();
   auto current = [&] {
-    if(m_model->get_current()) {
-      return *m_model->get_current();
-    } else if(!m_model->get_minimum() && !m_model->get_maximum() ||
-        !m_model->get_minimum() && *m_model->get_maximum() >= 0 ||
-        !m_model->get_maximum() && *m_model->get_minimum() <= 0 ||
-        *m_model->get_minimum() <= 0 && *m_model->get_maximum() >= 0) {
+    if(m_current->get_current()) {
+      return *m_current->get_current();
+    } else if(!m_current->get_minimum() && !m_current->get_maximum() ||
+        !m_current->get_minimum() && *m_current->get_maximum() >= 0 ||
+        !m_current->get_maximum() && *m_current->get_minimum() <= 0 ||
+        *m_current->get_minimum() <= 0 && *m_current->get_maximum() >= 0) {
       return Decimal(0);
-    } else if(abs(*m_model->get_minimum()) < abs(*m_model->get_maximum())) {
-      return *m_model->get_minimum();
+    } else if(abs(*m_current->get_minimum()) < abs(*m_current->get_maximum())) {
+      return *m_current->get_minimum();
     } else {
-      return *m_model->get_maximum();
+      return *m_current->get_maximum();
     }
   }();
   auto next = Decimal(current + value);
-  if(m_model->get_minimum() && next < m_model->get_minimum()) {
-    next = *m_model->get_minimum();
-  } else if(m_model->get_maximum() && next > m_model->get_maximum()) {
-    next = *m_model->get_maximum();
+  if(m_current->get_minimum() && next < m_current->get_minimum()) {
+    next = *m_current->get_minimum();
+  } else if(m_current->get_maximum() && next > m_current->get_maximum()) {
+    next = *m_current->get_maximum();
   }
-  if(next != m_model->get_current()) {
-    m_model->set_current(next);
+  if(next != m_current->get_current()) {
+    m_current->set_current(next);
   }
 }
 
@@ -508,12 +508,12 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
       m_sign = SignIndicator::NEGATIVE;
     }
   }
-  m_up_button->setEnabled(
-    !is_read_only() && (!m_model->get_maximum() || !m_model->get_current() ||
-      m_model->get_current() < m_model->get_maximum()));
-  m_down_button->setEnabled(
-    !is_read_only() && (!m_model->get_minimum() || !m_model->get_current() ||
-      m_model->get_current() > m_model->get_minimum()));
+  m_up_button->setEnabled(!is_read_only() && (!m_current->get_maximum() ||
+    !m_current->get_current() ||
+    m_current->get_current() < m_current->get_maximum()));
+  m_down_button->setEnabled(!is_read_only() && (!m_current->get_minimum() ||
+    !m_current->get_current() ||
+    m_current->get_current() > m_current->get_minimum()));
 }
 
 void DecimalBox::on_submit(const QString& submission) {

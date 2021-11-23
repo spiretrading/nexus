@@ -48,26 +48,26 @@ namespace Spire {
       /**
        * Constructs a DecimalBoxAdaptor with modifiers set to the model's
        * increment.
-       * @param model The model used for the current value.
+       * @param current The model used for the current value.
        * @param parent The parent widget.
        */
       DecimalBoxAdaptor(
-        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
         QWidget* parent = nullptr);
 
       /**
        * Constructs a DecimalBoxAdaptor.
-       * @param model The model used for the current value.
+       * @param current The model used for the current value.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
       DecimalBoxAdaptor(
-        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
         QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
       const std::shared_ptr<ScalarValueModel<boost::optional<Type>>>&
-        get_model() const;
+        get_current() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
@@ -93,24 +93,24 @@ namespace Spire {
 
       /**
        * Constructs a DecimalBoxAdaptor with a custom adaptor model.
-       * @param model The model used for the current value.
+       * @param current The model used for the current value.
        * @param adaptor_model The model adapting from the scalar to the Decimal.
        * @param parent The parent widget.
        */
       DecimalBoxAdaptor(
-        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
         std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
         QWidget* parent = nullptr);
 
       /**
        * Constructs a DecimalBoxAdaptor with a custom adaptor model.
-       * @param model The model used for the current value.
+       * @param current The model used for the current value.
        * @param adaptor_model The model adapting from the scalar to the Decimal.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
       DecimalBoxAdaptor(
-        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
         std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
         QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent = nullptr);
 
@@ -120,7 +120,7 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<ScalarValueModel<boost::optional<Type>>> m_model;
+      std::shared_ptr<ScalarValueModel<boost::optional<Type>>> m_current;
       std::shared_ptr<ToDecimalModel<Type>> m_adaptor_model;
       boost::optional<Type> m_submission;
       DecimalBox* m_decimal_box;
@@ -149,23 +149,24 @@ namespace Spire {
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
-    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
     QWidget* parent)
-    : DecimalBoxAdaptor(model, std::make_shared<ToDecimalModel<Type>>(model),
-        parent) {}
+    : DecimalBoxAdaptor(
+        current, std::make_shared<ToDecimalModel<Type>>(current), parent) {}
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
-    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
     QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
-    : DecimalBoxAdaptor(model, std::make_shared<ToDecimalModel<Type>>(model),
-        std::move(modifiers), parent) {}
+    : DecimalBoxAdaptor(current,
+        std::make_shared<ToDecimalModel<Type>>(current), std::move(modifiers),
+        parent) {}
 
   template<typename T>
   const std::shared_ptr<ScalarValueModel<
       boost::optional<typename DecimalBoxAdaptor<T>::Type>>>&
-        DecimalBoxAdaptor<T>::get_model() const {
-    return m_model;
+        DecimalBoxAdaptor<T>::get_current() const {
+    return m_current;
   }
 
   template<typename T>
@@ -197,20 +198,20 @@ namespace Spire {
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
-    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+    std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
     std::shared_ptr<ToDecimalModel<Type>> adaptor_model, QWidget* parent)
-    : DecimalBoxAdaptor(model, std::move(adaptor_model), make_modifiers(*model),
-        parent) {}
+    : DecimalBoxAdaptor(current, std::move(adaptor_model),
+        make_modifiers(*current), parent) {}
 
   template<typename T>
   DecimalBoxAdaptor<T>::DecimalBoxAdaptor(
-      std::shared_ptr<ScalarValueModel<boost::optional<Type>>> model,
+      std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current,
       std::shared_ptr<ToDecimalModel<Type>> adaptor_model,
       QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
       : QWidget(parent),
-        m_model(std::move(model)),
+        m_current(std::move(current)),
         m_adaptor_model(std::move(adaptor_model)),
-        m_submission(m_model->get_current()) {
+        m_submission(m_current->get_current()) {
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});
     auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
@@ -245,7 +246,7 @@ namespace Spire {
   template<typename T>
   void DecimalBoxAdaptor<T>::on_submit(
       const boost::optional<Decimal>& submission) {
-    m_submission = m_model->get_current();
+    m_submission = m_current->get_current();
     m_submit_signal(m_submission);
   }
 

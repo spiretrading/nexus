@@ -34,11 +34,11 @@ namespace Spire {
 
       /**
        * Constructs a QuantityBox.
-       * @param model The model used for the current value.
+       * @param current The current value model.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
        */
-      QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
+      QuantityBox(std::shared_ptr<OptionalQuantityModel> current,
         QHash<Qt::KeyboardModifier, Nexus::Quantity> modifiers,
         QWidget* parent = nullptr);
   };

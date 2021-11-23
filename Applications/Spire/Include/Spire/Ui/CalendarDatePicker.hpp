@@ -2,8 +2,8 @@
 #define SPIRE_CALENDAR_DATE_PICKER_HPP
 #include <boost/optional/optional.hpp>
 #include <QWidget>
-#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -52,19 +52,19 @@ namespace Styles {
        * @param current The current date.
        * @param parent The parent widget.
        */
-      explicit CalendarDatePicker(boost::gregorian::date current,
-        QWidget* parent = nullptr);
+      explicit CalendarDatePicker(
+        boost::gregorian::date current, QWidget* parent = nullptr);
 
       /**
        * Constructs a CalendarDatePicker.
-       * @param model The current value's model.
+       * @param current The current value model.
        * @param parent The parent widget.
        */
-      explicit CalendarDatePicker(std::shared_ptr<OptionalDateModel> model,
-        QWidget* parent = nullptr);
+      explicit CalendarDatePicker(
+        std::shared_ptr<OptionalDateModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model. */
-      const std::shared_ptr<OptionalDateModel>& get_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<OptionalDateModel>& get_current() const;
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
@@ -76,7 +76,7 @@ namespace Styles {
     private:
       class MonthSpinner;
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<OptionalDateModel> m_model;
+      std::shared_ptr<OptionalDateModel> m_current;
       boost::signals2::scoped_connection m_current_connection;
       MonthSpinner* m_month_spinner;
       ListView* m_calendar_view;

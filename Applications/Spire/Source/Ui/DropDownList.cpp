@@ -68,7 +68,7 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
 
 bool DropDownList::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
-    if(m_list_view->get_list_model()->get_size() > 0) {
+    if(m_list_view->get_list()->get_size() > 0) {
       m_panel->show();
       auto margins = m_panel->layout()->contentsMargins();
       m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);

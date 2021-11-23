@@ -82,14 +82,14 @@ namespace Styles {
 
       /**
        * Constructs a TextBox.
-       * @param model The current value's model.
+       * @param current The current value model.
        * @param parent The parent widget.
        */
-      explicit TextBox(std::shared_ptr<TextModel> model,
-        QWidget* parent = nullptr);
+      explicit TextBox(
+        std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model. */
-      const std::shared_ptr<TextModel>& get_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<TextModel>& get_current() const;
 
       /** Returns the last submitted value. */
       const QString& get_submission() const;
@@ -136,7 +136,7 @@ namespace Styles {
       class PlaceholderBox;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<TextModel> m_model;
+      std::shared_ptr<TextModel> m_current;
       QLineEdit* m_line_edit;
       TextValidator* m_text_validator;
       PlaceholderBox* m_box;
@@ -170,11 +170,11 @@ namespace Styles {
 
   /**
    * Returns a TextBox as a label using a model.
-   * @param model The current value's model.
+   * @param current The current value model.
    * @param parent The parent widget.
    */
-  TextBox* make_label(std::shared_ptr<TextModel> model,
-    QWidget* parent = nullptr);
+  TextBox* make_label(
+    std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 }
 
 #endif

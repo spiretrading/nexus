@@ -29,16 +29,16 @@ namespace Spire {
    * @param current The initial current value.
    * @param parent The parent widget.
    */
-  TimeInForceBox* make_time_in_force_box(Nexus::TimeInForce current,
-    QWidget* parent = nullptr);
+  TimeInForceBox* make_time_in_force_box(
+    Nexus::TimeInForce current, QWidget* parent = nullptr);
 
   /**
    * Returns a TimeInForceBox.
-   * @param model The current value's model.
+   * @param current The current value model.
    * @param parent The parent widget.
    */
    TimeInForceBox* make_time_in_force_box(
-     std::shared_ptr<TimeInForceModel> model, QWidget* parent = nullptr);
+     std::shared_ptr<TimeInForceModel> current, QWidget* parent = nullptr);
 }
 
 #endif
