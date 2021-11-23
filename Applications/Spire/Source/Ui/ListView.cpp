@@ -85,9 +85,10 @@ ListView::ListView(std::shared_ptr<ListModel> list_model,
   for(auto i = 0; i < m_list_model->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list_model, i));
     m_items.emplace_back(new ItemEntry{item, i, false});
-    item->connect_submit_signal([=, item = m_items.back().get()] {
-      on_item_submitted(*item);
-    });
+    m_items.back()->m_connection =
+      item->connect_submit_signal([=, item = m_items.back().get()] {
+        on_item_submitted(*item);
+      });
   }
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
@@ -389,9 +390,10 @@ void ListView::update_focus(optional<int> current) {
 void ListView::add_item(int index) {
   auto item = new ListItem(m_view_builder(m_list_model, index));
   m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
-  item->connect_submit_signal([=, item = m_items[index].get()] {
-    on_item_submitted(*item);
-  });
+  m_items[index]->m_connection = item->connect_submit_signal(
+    [=, item = m_items[index].get()] {
+      on_item_submitted(*item);
+    });
   for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
     ++(*i)->m_index;
   }

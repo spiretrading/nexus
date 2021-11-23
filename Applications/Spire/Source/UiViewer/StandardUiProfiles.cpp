@@ -2208,14 +2208,33 @@ UiProfile Spire::make_tag_profile() {
 UiProfile Spire::make_tag_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("read_only", false));
+  properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile(QString::fromUtf8("TagBox"), properties,
     [] (auto& profile) {
-      auto model = std::make_shared<ArrayListModel>();
-      model->push(QString("ONE"));
-      model->push(QString("TWO"));
-      model->push(QString("THREE"));
-      auto tag_box = new TagBox(model);
+      auto list_model = std::make_shared<ArrayListModel>();
+      list_model->push(QString("ONE"));
+      list_model->push(QString("TWO"));
+      list_model->push(QString("THREE"));
+      auto current_model = std::make_shared<LocalTextModel>();
+      auto tag_box = new TagBox(list_model, current_model);
       apply_widget_properties(tag_box, profile.get_properties());
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal([=] (auto is_read_only) {
+        tag_box->set_read_only(is_read_only);
+      });
+      auto& add_tag = get<QString>("add_tag", profile.get_properties());
+      add_tag.connect_changed_signal([=] (const auto& value) {
+        if(!value.isEmpty()) {
+          list_model->push(value);
+        }
+      });
+      auto delete_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("Delete"));
+      tag_box->connect_delete_signal([=] (int index) {
+        list_model->remove(index);
+        delete_slot(QString("%1").arg(index));
+      });
       return tag_box;
     });
   return profile;

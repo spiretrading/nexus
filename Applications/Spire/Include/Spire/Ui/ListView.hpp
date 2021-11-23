@@ -151,6 +151,7 @@ namespace Styles {
         ListItem* m_item;
         int m_index;
         bool m_is_current;
+        boost::signals2::scoped_connection m_connection;
 
         void set_current(bool is_current);
       };
