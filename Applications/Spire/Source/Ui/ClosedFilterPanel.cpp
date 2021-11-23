@@ -72,12 +72,12 @@ class BooleanListValueModel : public BooleanModel {
     }
 
     connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override {
+        const typename UpdateSignal::slot_type& slot) const override {
       return m_current_signal.connect(slot);
     }
 
   private:
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_current_signal;
     std::shared_ptr<ListValueModel> m_source;
     scoped_connection m_source_connection;
 

@@ -17,7 +17,7 @@ namespace Spire {
 
       using Scalar = typename ScalarValueModel<T>::Scalar;
 
-      using CurrentSignal = typename ScalarValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ScalarValueModel<T>::UpdateSignal;
 
       /** Constructs a default model. */
       LocalScalarValueModel();
@@ -50,7 +50,7 @@ namespace Spire {
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       ScalarValueModelDecorator<Type> m_model;
@@ -117,7 +117,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection LocalScalarValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+      const typename UpdateSignal::slot_type& slot) const {
     return m_model.connect_current_signal(slot);
   }
 }

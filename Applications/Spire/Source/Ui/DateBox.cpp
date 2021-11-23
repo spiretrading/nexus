@@ -184,7 +184,7 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
   }
 
   connection connect_current_signal(
-      const CurrentSignal::slot_type& slot) const override {
+      const UpdateSignal::slot_type& slot) const override {
     return m_current.connect_current_signal(slot);
   }
 

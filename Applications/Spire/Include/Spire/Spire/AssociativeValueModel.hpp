@@ -28,7 +28,7 @@ namespace Spire {
   template<typename T>
   class AssociativeValueModel : public ValueModel<T> {
     public:
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       using Type = typename ValueModel<T>::Type;
 
@@ -90,7 +90,7 @@ namespace Spire {
 
       /** Connects a slot to the current signal. */
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       struct InnerModel : ValueModel<bool> {
@@ -102,13 +102,13 @@ namespace Spire {
         const Type& get() const override;
         QValidator::State set(const Type& value) override;
         boost::signals2::connection connect_current_signal(
-          const typename CurrentSignal::slot_type& slot) const override;
+          const typename UpdateSignal::slot_type& slot) const override;
 
-        mutable CurrentSignal m_current_signal;
+        mutable UpdateSignal m_current_signal;
         bool m_current;
         std::function<void (bool)> m_slot;
       };
-      mutable CurrentSignal m_current_signal;
+      mutable UpdateSignal m_current_signal;
       std::unordered_map<Type, std::shared_ptr<InnerModel>> m_models;
       const Type* m_default;
       const Type* m_current;
@@ -189,7 +189,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection AssociativeValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+      const typename UpdateSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 
@@ -236,7 +236,7 @@ namespace Spire {
   template<typename T>
   boost::signals2::connection
       AssociativeValueModel<T>::InnerModel::connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const {
+        const typename UpdateSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 }

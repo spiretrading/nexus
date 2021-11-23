@@ -17,7 +17,7 @@ namespace Spire {
     public:
       using Type = typename ValueModel<T>::Type;
 
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Constructs a model using a default constructed value. */
       ConstantValueModel();
@@ -33,7 +33,7 @@ namespace Spire {
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       Type m_current;
@@ -70,7 +70,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection ConstantValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+      const typename UpdateSignal::slot_type& slot) const {
     return {};
   }
 }

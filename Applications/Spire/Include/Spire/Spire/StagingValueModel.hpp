@@ -21,7 +21,7 @@ namespace Spire {
     public:
       using Type = typename ValueModel<T>::Type;
 
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /**
        * Constructs a StagingValueModel.
@@ -44,10 +44,10 @@ namespace Spire {
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable typename CurrentSignal m_current_signal;
+      mutable typename UpdateSignal m_current_signal;
       std::shared_ptr<ValueModel<Type>> m_model;
       boost::optional<Type> m_current;
       boost::signals2::scoped_connection m_current_connection;
@@ -107,7 +107,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection StagingValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+      const typename UpdateSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 

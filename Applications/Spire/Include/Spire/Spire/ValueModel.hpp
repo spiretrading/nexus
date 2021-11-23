@@ -19,9 +19,9 @@ namespace Spire {
 
       /**
        * Signals a change to the current value.
-       * @param current The current value.
+       * @param value The current value.
        */
-      using CurrentSignal = Signal<void (const Type&)>;
+      using UpdateSignal = Signal<void (const Type& value)>;
 
       virtual ~ValueModel() = default;
 
@@ -40,9 +40,9 @@ namespace Spire {
        */
       virtual QValidator::State set(const Type& value);
 
-      /** Connects a slot to the CurrentSignal. */
+      /** Connects a slot to the UpdateSignal. */
       virtual boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const = 0;
+        const typename UpdateSignal::slot_type& slot) const = 0;
 
     protected:
 

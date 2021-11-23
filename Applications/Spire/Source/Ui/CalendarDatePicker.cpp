@@ -130,12 +130,12 @@ class RequiredDateModel : public DateModel {
     }
 
     connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override {
+        const typename UpdateSignal::slot_type& slot) const override {
       return m_current_signal.connect(slot);
     }
 
   private:
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_current_signal;
     std::shared_ptr<OptionalDateModel> m_model;
     date m_current;
     scoped_connection m_current_connection;

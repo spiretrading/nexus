@@ -51,9 +51,9 @@ namespace Details {
        */
       QValidator::State set(const boost::optional<int>& value) override;
 
-      /** Connects a slot to the CurrentSignal. */
+      /** Connects a slot to the UpdateSignal. */
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       static constexpr auto is_optional =
@@ -125,7 +125,7 @@ namespace Details {
 
   template<typename T>
   boost::signals2::connection ListIndexValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+      const typename UpdateSignal::slot_type& slot) const {
     return m_index.connect_current_signal(slot);
   }
 

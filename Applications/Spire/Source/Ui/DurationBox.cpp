@@ -60,7 +60,7 @@ namespace {
   }
 
   struct HourModel : ScalarValueModel<optional<int>> {
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
     std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
@@ -106,7 +106,7 @@ namespace {
     }
 
     connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
+        const UpdateSignal::slot_type& slot) const {
       return m_current_signal.connect(slot);
     }
 
@@ -117,7 +117,7 @@ namespace {
   };
 
   struct MinuteModel : ScalarValueModel<optional<int>> {
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
@@ -160,7 +160,7 @@ namespace {
     }
 
     connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
+        const UpdateSignal::slot_type& slot) const {
       return m_current_signal.connect(slot);
     }
 
@@ -171,7 +171,7 @@ namespace {
   };
 
   struct SecondModel : ScalarValueModel<optional<Decimal>> {
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_current_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
@@ -220,7 +220,7 @@ namespace {
     }
 
     connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
+        const UpdateSignal::slot_type& slot) const {
       return m_current_signal.connect(slot);
     }
 

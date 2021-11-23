@@ -35,9 +35,9 @@ namespace Details {
 
       /**
        * Signals a change to the current value.
-       * @param current The current value.
+       * @param value The current value.
        */
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Returns the minimum scalar value or none if there is no minimum. */
       virtual boost::optional<Scalar> get_minimum() const;

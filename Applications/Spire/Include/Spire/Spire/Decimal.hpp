@@ -102,10 +102,10 @@ namespace Spire {
         set(const boost::optional<Decimal>& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const override;
+        const UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable CurrentSignal m_current_signal;
+      mutable UpdateSignal m_current_signal;
       std::shared_ptr<Model> m_model;
       boost::optional<Decimal> m_current;
       boost::signals2::scoped_connection m_current_connection;
@@ -160,7 +160,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection ToDecimalModel<T>::connect_current_signal(
-      const CurrentSignal::slot_type& slot) const {
+      const UpdateSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 

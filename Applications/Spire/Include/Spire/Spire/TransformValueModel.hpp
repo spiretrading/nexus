@@ -38,7 +38,7 @@ namespace Details {
       /** The type of value to model. */
       using Source = U;
       using Type = typename ValueModel<T>::Type;
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /**
        * Constructs a TransformValueModel.
@@ -76,7 +76,7 @@ namespace Details {
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<ValueModel<Source>> m_source;
@@ -132,7 +132,7 @@ namespace Details {
   template<typename T, typename U, typename F, typename G>
   boost::signals2::connection
       TransformValueModel<T, U, F, G>::connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const {
+        const typename UpdateSignal::slot_type& slot) const {
     return m_model.connect_current_signal(slot);
   }
 

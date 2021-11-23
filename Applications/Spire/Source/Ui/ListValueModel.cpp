@@ -38,7 +38,7 @@ QValidator::State ListValueModel::set(const Type& value) {
 }
 
 connection ListValueModel::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
+    const UpdateSignal::slot_type& slot) const {
   return m_current_signal.connect(slot);
 }
 

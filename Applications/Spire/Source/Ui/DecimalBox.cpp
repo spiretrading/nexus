@@ -67,7 +67,7 @@ namespace {
 }
 
 struct DecimalBox::DecimalToTextModel : TextModel {
-  mutable CurrentSignal m_current_signal;
+  mutable UpdateSignal m_current_signal;
   std::shared_ptr<OptionalDecimalModel> m_model;
   int m_decimal_places;
   int m_leading_zeros;
@@ -189,7 +189,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   connection connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const override {
+      const typename UpdateSignal::slot_type& slot) const override {
     return m_current_signal.connect(slot);
   }
 

@@ -73,10 +73,10 @@ namespace Spire {
       QValidator::State set(const QString& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable CurrentSignal m_current_signal;
+      mutable UpdateSignal m_current_signal;
       std::shared_ptr<ValueModel<Source>> m_model;
       ToString m_to_string;
       FromString m_from_string;
@@ -138,7 +138,7 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection ToTextModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+      const typename UpdateSignal::slot_type& slot) const {
     return m_current_signal.connect(slot);
   }
 

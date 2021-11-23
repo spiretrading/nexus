@@ -16,7 +16,7 @@ namespace Spire {
     public:
       using Type = ScalarValueModel<T>::Type;
       using Scalar = ScalarValueModel<T>::Scalar;
-      using CurrentSignal = ScalarValueModel<T>::CurrentSignal;
+      using UpdateSignal = ScalarValueModel<T>::UpdateSignal;
 
       /**
        * Constructs a ScalarValueModelDecorator with the default minimum,
@@ -53,7 +53,7 @@ namespace Spire {
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+        const typename UpdateSignal::slot_type& slot) const override;
 
       boost::optional<Scalar> get_minimum() const override;
 
@@ -180,7 +180,7 @@ namespace Spire {
   template<typename T>
   boost::signals2::connection
       ScalarValueModelDecorator<T>::connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const {
+        const typename UpdateSignal::slot_type& slot) const {
     return m_model->connect_current_signal(slot);
   }
 
