@@ -21,25 +21,25 @@ using namespace Spire::Styles;
 
 namespace {
   template<typename Model, typename M1, typename M2>
-  QValidator::State set_current(Model& model, const typename Model::Type& value,
+  QValidator::State set(Model& model, const typename Model::Type& value,
       std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
         const optional<time_duration>& update) {
     auto current = [&] () -> optional<time_duration> {
       if(!value) {
         auto s1 = m1.lock();
         auto s2 = m2.lock();
-        if((!s1 || !s1->get_current()) && (!s2 || !s2->get_current())) {
+        if((!s1 || !s1->get()) && (!s2 || !s2->get())) {
           return none;
         }
       }
       return update;
     }();
     auto blocker = shared_connection_block(model.m_source_connection);
-    if(model.m_source->set_current(current) != QValidator::State::Invalid) {
+    if(model.m_source->set(current) != QValidator::State::Invalid) {
       auto state = QValidator::State::Acceptable;
       model.m_state = state;
       model.m_current = value;
-      model.m_current_signal(model.m_current);
+      model.m_update_signal(model.m_current);
       return state;
     }
     return QValidator::State::Invalid;
@@ -56,11 +56,11 @@ namespace {
     } else {
       model.m_current = none;
     }
-    model.m_current_signal(model.m_current);
+    model.m_update_signal(model.m_current);
   }
 
   struct HourModel : ScalarValueModel<optional<int>> {
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
     std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
@@ -71,9 +71,9 @@ namespace {
     HourModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-          m_source_connection(m_source->connect_current_signal(
+          m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
-      on_current(m_source->get_current());
+      on_current(m_source->get());
     }
 
     optional<int> get_minimum() const {
@@ -95,19 +95,19 @@ namespace {
       return m_state;
     }
 
-    const optional<int>& get_current() const {
+    const optional<int>& get() const {
       return m_current;
     }
 
-    QValidator::State set_current(const Type& value) {
-      return ::set_current(*this, value, m_minutes, m_seconds,
-        m_source->get_current().get_value_or(hours(0)) +
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value, m_minutes, m_seconds,
+        m_source->get().get_value_or(hours(0)) +
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
 
-    connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const {
+      return m_update_signal.connect(slot);
     }
 
     void on_current(const optional<time_duration>& current) {
@@ -117,7 +117,7 @@ namespace {
   };
 
   struct MinuteModel : ScalarValueModel<optional<int>> {
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
@@ -128,9 +128,9 @@ namespace {
     MinuteModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-          m_source_connection(m_source->connect_current_signal(
+          m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
-      on_current(m_source->get_current());
+      on_current(m_source->get());
     }
 
     optional<int> get_minimum() const {
@@ -149,19 +149,19 @@ namespace {
       return m_state;
     }
 
-    const optional<int>& get_current() const {
+    const optional<int>& get() const {
       return m_current;
     }
 
-    QValidator::State set_current(const Type& value) {
-      return ::set_current(*this, value, m_hours, m_seconds,
-        m_source->get_current().get_value_or(minutes(0)) +
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value, m_hours, m_seconds,
+        m_source->get().get_value_or(minutes(0)) +
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
 
-    connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const {
+      return m_update_signal.connect(slot);
     }
 
     void on_current(const optional<time_duration>& current) {
@@ -171,7 +171,7 @@ namespace {
   };
 
   struct SecondModel : ScalarValueModel<optional<Decimal>> {
-    mutable CurrentSignal m_current_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
     std::weak_ptr<OptionalIntegerModel> m_hours;
     std::weak_ptr<OptionalIntegerModel> m_minutes;
@@ -187,9 +187,9 @@ namespace {
     SecondModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-          m_source_connection(m_source->connect_current_signal(
+          m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
-      on_current(m_source->get_current());
+      on_current(m_source->get());
     }
 
     optional<Decimal> get_minimum() const {
@@ -208,20 +208,20 @@ namespace {
       return m_state;
     }
 
-    const optional<Decimal>& get_current() const {
+    const optional<Decimal>& get() const {
       return m_current;
     }
 
-    QValidator::State set_current(const Type& value) {
-      return ::set_current(*this, value, m_hours, m_minutes,
-        m_source->get_current().get_value_or(seconds(0)) +
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value, m_hours, m_minutes,
+        m_source->get().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
             to_seconds(m_current.get_value_or(0)));
     }
 
-    connection connect_current_signal(
-        const CurrentSignal::slot_type& slot) const {
-      return m_current_signal.connect(slot);
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const {
+      return m_update_signal.connect(slot);
     }
 
     void on_current(const optional<time_duration>& current) {
@@ -307,9 +307,9 @@ namespace {
     return proxy;
   }
 
-  auto make_hour_field(std::shared_ptr<OptionalIntegerModel> model,
+  auto make_hour_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(model));
+    auto field = new IntegerBox(std::move(current));
     field->setMinimumWidth(scale_width(24));
     field->set_placeholder("hh");
     update_style(*field, [&] (auto& style) {
@@ -319,9 +319,9 @@ namespace {
     return field;
   }
 
-  auto make_minute_field(std::shared_ptr<OptionalIntegerModel> model,
+  auto make_minute_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(model));
+    auto field = new IntegerBox(std::move(current));
     field->setMinimumWidth(scale_width(28));
     field->set_placeholder("mm");
     update_style(*field, [&] (auto& style) {
@@ -332,9 +332,9 @@ namespace {
   }
 
   auto make_second_field(
-      std::shared_ptr<ScalarValueModel<optional<Decimal>>> model,
+      std::shared_ptr<ScalarValueModel<optional<Decimal>>> current,
         QWidget& event_filter) {
-    auto field = new DecimalBox(std::move(model));
+    auto field = new DecimalBox(std::move(current));
     field->setMinimumWidth(scale_width(44));
     field->set_placeholder("ss.sss");
     update_style(*field, [&] (auto& style) {
@@ -357,19 +357,19 @@ namespace {
 DurationBox::DurationBox(QWidget* parent)
   : DurationBox(std::make_shared<LocalOptionalDurationModel>(), parent) {}
 
-DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
+DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
     QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)),
-      m_submission(m_model->get_current()),
+      m_current(std::move(current)),
+      m_submission(m_current->get()),
       m_is_read_only(false),
       m_is_rejected(false),
       m_has_update(false) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto hour_model = std::make_shared<HourModel>(m_model);
-  auto minute_model = std::make_shared<MinuteModel>(m_model);
-  auto second_model = std::make_shared<SecondModel>(m_model);
+  auto hour_model = std::make_shared<HourModel>(m_current);
+  auto minute_model = std::make_shared<MinuteModel>(m_current);
+  auto second_model = std::make_shared<SecondModel>(m_current);
   hour_model->m_minutes = minute_model;
   hour_model->m_seconds = second_model;
   minute_model->m_hours = hour_model;
@@ -417,12 +417,12 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> model,
     [=] (const auto& value) { on_reject(); });
   m_second_field->connect_reject_signal(
     [=] (const auto& value) { on_reject(); });
-  m_model->connect_current_signal(
+  m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
 }
 
-const std::shared_ptr<OptionalDurationModel>& DurationBox::get_model() const {
-  return m_model;
+const std::shared_ptr<OptionalDurationModel>& DurationBox::get_current() const {
+  return m_current;
 }
 
 bool DurationBox::is_read_only() const {
@@ -469,18 +469,18 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     auto [field, is_field_empty] = [&] () -> std::pair<QWidget*, bool> {
       if(m_minute_field->hasFocus()) {
-        return {m_minute_field, !m_minute_field->get_model()->get_current()};
+        return {m_minute_field, !m_minute_field->get_current()->get()};
       } else if(m_second_field->hasFocus()) {
-        return {m_second_field, !m_second_field->get_model()->get_current()};
+        return {m_second_field, !m_second_field->get_current()->get()};
       } else if(m_hour_field->hasFocus()) {
-        return {m_hour_field, !m_hour_field->get_model()->get_current()};
+        return {m_hour_field, !m_hour_field->get_current()->get()};
       }
       return {nullptr, true};
     }();
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
-      if(is_field_empty && (m_hour_field->get_model()->get_current() ||
-          m_minute_field->get_model()->get_current() ||
-          m_second_field->get_model()->get_current())) {
+      if(is_field_empty && (m_hour_field->get_current()->get() ||
+          m_minute_field->get_current()->get() ||
+          m_second_field->get_current()->get())) {
         on_submit();
         return true;
       }
@@ -520,10 +520,10 @@ void DurationBox::on_current(const optional<time_duration>& current) {
 }
 
 void DurationBox::on_submit() {
-  if(m_model->get_state() != QValidator::State::Acceptable) {
+  if(m_current->get_state() != QValidator::State::Acceptable) {
     on_reject();
   } else {
-    m_submission = m_model->get_current();
+    m_submission = m_current->get();
     update_empty_fields();
     m_has_update = false;
     auto submission = m_submission;
@@ -532,10 +532,10 @@ void DurationBox::on_submit() {
 }
 
 void DurationBox::on_reject() {
-  auto current = m_model->get_current();
+  auto current = m_current->get();
   auto submission = m_submission;
   m_reject_signal(current);
-  m_model->set_current(submission);
+  m_current->set(submission);
   if(!m_is_rejected) {
     m_is_rejected = true;
     match(*this, Rejected());
@@ -544,14 +544,14 @@ void DurationBox::on_reject() {
 
 void DurationBox::update_empty_fields() {
   if(m_submission) {
-    if(!m_hour_field->get_model()->get_current()) {
-      m_hour_field->get_model()->set_current(0);
+    if(!m_hour_field->get_current()->get()) {
+      m_hour_field->get_current()->set(0);
     }
-    if(!m_minute_field->get_model()->get_current()) {
-      m_minute_field->get_model()->set_current(0);
+    if(!m_minute_field->get_current()->get()) {
+      m_minute_field->get_current()->set(0);
     }
-    if(!m_second_field->get_model()->get_current()) {
-      m_second_field->get_model()->set_current(Decimal(0));
+    if(!m_second_field->get_current()->get()) {
+      m_second_field->get_current()->set(Decimal(0));
     }
   }
 }

@@ -33,19 +33,19 @@ QValidator::State UnsignedQuantityModel::get_state() const {
   return m_model->get_state();
 }
 
-const optional<Quantity>& UnsignedQuantityModel::get_current() const {
-  return m_model->get_current();
+const optional<Quantity>& UnsignedQuantityModel::get() const {
+  return m_model->get();
 }
 
-QValidator::State UnsignedQuantityModel::set_current(
+QValidator::State UnsignedQuantityModel::set(
     const optional<Quantity>& value) {
   if(value && *value < 0) {
     return QValidator::State::Invalid;
   }
-  return m_model->set_current(value);
+  return m_model->set(value);
 }
 
-connection UnsignedQuantityModel::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
-  return m_model->connect_current_signal(slot);
+connection UnsignedQuantityModel::connect_update_signal(
+    const UpdateSignal::slot_type& slot) const {
+  return m_model->connect_update_signal(slot);
 }

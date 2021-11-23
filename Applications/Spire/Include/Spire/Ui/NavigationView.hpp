@@ -25,14 +25,14 @@ namespace Spire {
 
       /**
        * Constructs a NavigationView.
-       * @param current_model The current value's model.
+       * @param current The current value's model.
        * @param parent The parent widget.
        */
-      explicit NavigationView(std::shared_ptr<CurrentModel> current_model,
-        QWidget* parent = nullptr);
+      explicit NavigationView(
+        std::shared_ptr<CurrentModel> current, QWidget* parent = nullptr);
 
-      /** Returns the current model. */
-      const std::shared_ptr<CurrentModel>& get_current_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<CurrentModel>& get_current() const;
 
       /**
        * Appends a tab with a page and label.
@@ -73,7 +73,8 @@ namespace Spire {
       QWidget& get_page(int index) const;
 
       /**
-       * Returns <code>true</code> iff the tab at the specified index is enabled.
+       * Returns <code>true</code> iff the tab at the specified index is
+       * enabled.
        * @throws <code>std::out_of_range</code> -
        *         <code>index < 0 or index >= get_tab_count()</code>.
        */
@@ -89,9 +90,9 @@ namespace Spire {
       void set_enabled(int index, bool is_enabled);
 
     private:
-      std::shared_ptr<CurrentModel> m_current_model;
-      std::shared_ptr<ArrayListModel> m_navigation_list_model;
-      ListView* m_navigation_list;
+      std::shared_ptr<CurrentModel> m_current;
+      std::shared_ptr<ArrayListModel> m_navigation_list;
+      ListView* m_navigation_view;
       QStackedWidget* m_stacked_widget;
       AssociativeValueModel<QString> m_associative_model;
       boost::signals2::scoped_connection m_current_connection;

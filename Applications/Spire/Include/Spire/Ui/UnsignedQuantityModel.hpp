@@ -25,16 +25,17 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const boost::optional<Nexus::Quantity>& get_current() const override;
+      const boost::optional<Nexus::Quantity>& get() const override;
 
-      QValidator::State set_current(
+      QValidator::State set(
         const boost::optional<Nexus::Quantity>& value) override;
 
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<ScalarValueModel<boost::optional<Nexus::Quantity>>> m_model;
+      std::shared_ptr<ScalarValueModel<boost::optional<Nexus::Quantity>>>
+        m_model;
   };
 }
 

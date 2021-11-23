@@ -34,7 +34,7 @@ namespace Spire {
 
       /** The type of scalar to filter. */
       using Type = typename std::remove_reference_t<
-        decltype(*std::declval<ScalarBox>().get_model())>::Scalar;
+        decltype(*std::declval<ScalarBox>().get_current())>::Scalar;
 
       /** The type of model representing the min and max range values. */
       using Model = ScalarValueModel<boost::optional<Type>>;
@@ -61,22 +61,22 @@ namespace Spire {
 
       /**
        * Constructs a ScalarFilterPanel.
-       * @param min_model The Model used for the minimum value.
-       * @param max_model The Model used for the maximum value.
+       * @param min The Model used for the minimum value.
+       * @param max The Model used for the maximum value.
        * @param default_min The default minimum value.
        * @param default_max The default maximum value.
        * @param title The title of the panel.
        * @param parent The parent widget that shows the panel.
        */
-      ScalarFilterPanel(std::shared_ptr<Model> min_model,
-        std::shared_ptr<Model> max_model, boost::optional<Type> default_min,
-        boost::optional<Type> default_max, QString title, QWidget& parent);
+      ScalarFilterPanel(std::shared_ptr<Model> min, std::shared_ptr<Model> max,
+        boost::optional<Type> default_min, boost::optional<Type> default_max,
+        QString title, QWidget& parent);
 
-      /** Returns the minimum value's model. */
-      const std::shared_ptr<Model>& get_min_model() const;
+      /** Returns the minimum value model. */
+      const std::shared_ptr<Model>& get_min() const;
 
-      /** Returns the maximum value's model. */
-      const std::shared_ptr<Model>& get_max_model() const;
+      /** Returns the maximum value model. */
+      const std::shared_ptr<Model>& get_max() const;
 
       /** Returns the default minimum value. */
       const boost::optional<Type>& get_default_min() const;
@@ -97,8 +97,8 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<Model> m_min_model;
-      std::shared_ptr<Model> m_max_model;
+      std::shared_ptr<Model> m_min;
+      std::shared_ptr<Model> m_max;
       boost::optional<Type> m_default_min;
       boost::optional<Type> m_default_max;
       FilterPanel* m_filter_panel;
@@ -122,12 +122,12 @@ namespace Spire {
         parent) {}
 
   template<typename T>
-  ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<Model> min_model,
-      std::shared_ptr<Model> max_model, boost::optional<Type> default_min,
+  ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<Model> min,
+      std::shared_ptr<Model> max, boost::optional<Type> default_min,
       boost::optional<Type> default_max, QString title, QWidget& parent)
       : QWidget(&parent),
-        m_min_model(std::move(min_model)),
-        m_max_model(std::move(max_model)),
+        m_min(std::move(min)),
+        m_max(std::move(max)),
         m_default_min(std::move(default_min)),
         m_default_max(std::move(default_max)) {
     m_filter_panel = new FilterPanel(std::move(title), this, parent);
@@ -135,11 +135,11 @@ namespace Spire {
     auto layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
-    m_min_box = make_scalar_box(*m_min_model);
+    m_min_box = make_scalar_box(*m_min);
     auto min_layout = make_row_layout(tr("Min"), *m_min_box);
     layout->addLayout(min_layout);
     layout->addSpacing(scale_height(10));
-    m_max_box = make_scalar_box(*m_max_model);
+    m_max_box = make_scalar_box(*m_max);
     auto max_layout = make_row_layout(tr("Max"), *m_max_box);
     layout->addLayout(max_layout);
     m_min_box->connect_submit_signal([=] (const auto& submission) {
@@ -152,14 +152,14 @@ namespace Spire {
 
   template<typename T>
   const std::shared_ptr<typename ScalarFilterPanel<T>::Model>&
-      ScalarFilterPanel<T>::get_min_model() const {
-    return m_min_model;
+      ScalarFilterPanel<T>::get_min() const {
+    return m_min;
   }
 
   template<typename T>
   const std::shared_ptr<typename ScalarFilterPanel<T>::Model>&
-      ScalarFilterPanel<T>::get_max_model() const {
-    return m_max_model;
+      ScalarFilterPanel<T>::get_max() const {
+    return m_max;
   }
 
   template<typename T>
@@ -216,13 +216,13 @@ namespace Spire {
         return box;
       }
     }();
-    field->get_model()->set_current(model.get_current());
+    field->get_current()->set(model.get());
     return field;
   }
 
   template<typename T>
-  QHBoxLayout*
-      ScalarFilterPanel<T>::make_row_layout(QString label, ScalarBox& box) {
+  QHBoxLayout* ScalarFilterPanel<T>::make_row_layout(
+      QString label, ScalarBox& box) {
     auto layout = new QHBoxLayout();
     auto label_box = new TextBox(std::move(label));
     label_box->set_read_only(true);
@@ -236,35 +236,33 @@ namespace Spire {
 
   template<typename T>
   void ScalarFilterPanel<T>::on_reset() {
-    m_min_model->set_current(m_default_min);
-    m_max_model->set_current(m_default_max);
-    m_min_box->get_model()->set_current(m_default_min);
-    m_max_box->get_model()->set_current(m_default_max);
+    m_min->set(m_default_min);
+    m_max->set(m_default_max);
+    m_min_box->get_current()->set(m_default_min);
+    m_max_box->get_current()->set(m_default_max);
     m_submit_signal(m_default_min, m_default_max);
   }
 
   template<typename T>
   void ScalarFilterPanel<T>::on_submit_min(
       const boost::optional<Type>& submission) {
-    m_min_model->set_current(submission);
-    if(m_max_model->get_current() && submission &&
-        *m_max_model->get_current() < *submission) {
-      m_max_model->set_current(submission);
-      m_max_box->get_model()->set_current(submission);
+    m_min->set(submission);
+    if(m_max->get() && submission && *m_max->get() < *submission) {
+      m_max->set(submission);
+      m_max_box->get_current()->set(submission);
     }
-    m_submit_signal(m_min_model->get_current(), m_max_model->get_current());
+    m_submit_signal(m_min->get(), m_max->get());
   }
 
   template<typename T>
   void ScalarFilterPanel<T>::on_submit_max(
       const boost::optional<Type>& submission) {
-    m_max_model->set_current(submission);
-    if(m_min_model->get_current() && submission &&
-        *m_min_model->get_current() > *submission) {
-      m_min_model->set_current(submission);
-      m_min_box->get_model()->set_current(submission);
+    m_max->set(submission);
+    if(m_min->get() && submission && *m_min->get() > *submission) {
+      m_min->set(submission);
+      m_min_box->get_current()->set(submission);
     }
-    m_submit_signal(m_min_model->get_current(), m_max_model->get_current());
+    m_submit_signal(m_min->get(), m_max->get());
   }
 
   using DecimalFilterPanel = ScalarFilterPanel<DecimalBox>;

@@ -39,8 +39,8 @@ namespace {
     style.get(Any() > is_a<Button>()).set(Visibility::NONE);
   }
 
-  auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model);
+  auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& current) {
+    auto box = new IntegerBox(current);
     box->set_placeholder("YYYY");
     box->setFixedSize(scale(29, 26));
     update_style(*box, [&] (auto& style) {
@@ -50,8 +50,8 @@ namespace {
     return box;
   }
 
-  auto make_month_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model);
+  auto make_month_box(const std::shared_ptr<OptionalIntegerModel>& current) {
+    auto box = new IntegerBox(current);
     box->set_placeholder("MM");
     box->setFixedSize(scale(21, 26));
     update_style(*box, [&] (auto& style) {
@@ -61,8 +61,8 @@ namespace {
     return box;
   }
 
-  auto make_day_box(const std::shared_ptr<OptionalIntegerModel>& model) {
-    auto box = new IntegerBox(model);
+  auto make_day_box(const std::shared_ptr<OptionalIntegerModel>& current) {
+    auto box = new IntegerBox(current);
     box->set_placeholder("DD");
     box->setFixedSize(scale(21, 26));
     update_style(*box, [&] (auto& style) {
@@ -78,23 +78,23 @@ namespace {
     return label;
   }
 
-  auto make_body(const std::shared_ptr<OptionalIntegerModel>& year_model,
-      const std::shared_ptr<OptionalIntegerModel>& month_model,
-      const std::shared_ptr<OptionalIntegerModel>& day_model) {
+  auto make_body(const std::shared_ptr<OptionalIntegerModel>& year,
+      const std::shared_ptr<OptionalIntegerModel>& month,
+      const std::shared_ptr<OptionalIntegerModel>& day) {
     auto body = new QWidget();
     auto layout = new QHBoxLayout(body);
     layout->setContentsMargins({});
     layout->setSpacing(0);
     layout->addSpacerItem(
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
-    auto year_box = make_year_box(year_model);
+    auto year_box = make_year_box(year);
     layout->addWidget(year_box);
     auto year_dash = make_dash();
     layout->addWidget(year_dash);
-    auto month_box = make_month_box(month_model);
+    auto month_box = make_month_box(month);
     layout->addWidget(month_box);
     layout->addWidget(make_dash());
-    auto day_box = make_day_box(day_model);
+    auto day_box = make_day_box(day);
     layout->addWidget(day_box);
     layout->addSpacerItem(
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
@@ -102,8 +102,8 @@ namespace {
   }
 
   auto make_date_picker(
-      const std::shared_ptr<OptionalDateModel>& model, QWidget* parent) {
-    auto date_picker = new CalendarDatePicker(model);
+      const std::shared_ptr<OptionalDateModel>& current, QWidget* parent) {
+    auto date_picker = new CalendarDatePicker(current);
     auto panel = new OverlayPanel(*date_picker, *parent);
     return panel;
   }
@@ -127,14 +127,14 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
         m_month(std::make_shared<LocalOptionalIntegerModel>()),
         m_day(std::make_shared<LocalOptionalIntegerModel>()),
         m_state(m_source->get_state()),
-        m_current(m_source->get_current()),
-        m_source_connection(m_source->connect_current_signal(
+        m_current(m_source->get()),
+        m_source_connection(m_source->connect_update_signal(
           std::bind_front(&DateComposerModel::on_current, this))),
-        m_year_connection(m_year->connect_current_signal(
+        m_year_connection(m_year->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))),
-        m_month_connection(m_month->connect_current_signal(
+        m_month_connection(m_month->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))),
-        m_day_connection(m_day->connect_current_signal(
+        m_day_connection(m_day->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))) {
     if(m_source->get_minimum()) {
       m_year->set_minimum(static_cast<int>(m_source->get_minimum()->year()));
@@ -166,43 +166,43 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
       m_day->set_minimum(1);
       m_day->set_maximum(31);
     }
-    on_current(m_source->get_current());
+    on_current(m_source->get());
   }
 
   QValidator::State get_state() const override {
     return m_state;
   }
 
-  const Type& get_current() const override {
-    return m_current.get_current();
+  const Type& get() const override {
+    return m_current.get();
   }
 
-  QValidator::State set_current(const Type& value) {
+  QValidator::State set(const Type& value) {
     m_state = QValidator::State::Acceptable;
-    m_current.set_current(value);
+    m_current.set(value);
     return m_state;
   }
 
-  connection connect_current_signal(
-      const CurrentSignal::slot_type& slot) const override {
-    return m_current.connect_current_signal(slot);
+  connection connect_update_signal(
+      const UpdateSignal::slot_type& slot) const override {
+    return m_current.connect_update_signal(slot);
   }
 
   void update() {
-    if(m_year->get_current() &&
-        m_month->get_current() && m_day->get_current()) {
+    if(m_year->get() &&
+        m_month->get() && m_day->get()) {
       try {
-        auto current = date(*m_year->get_current(), *m_month->get_current(),
-          *m_day->get_current());
-        m_current.set_current(current);
-        m_state = m_source->set_current(current);
+        auto current = date(*m_year->get(), *m_month->get(),
+          *m_day->get());
+        m_current.set(current);
+        m_state = m_source->set(current);
       } catch(const std::out_of_range&) {
         m_state = QValidator::State::Intermediate;
       }
-    } else if(!m_year->get_current() && !m_month->get_current() &&
-        !m_day->get_current()) {
-      m_current.set_current(none);
-      m_state = m_source->set_current(none);
+    } else if(!m_year->get() && !m_month->get() &&
+        !m_day->get()) {
+      m_current.set(none);
+      m_state = m_source->set(none);
     } else {
       m_state = QValidator::State::Intermediate;
     }
@@ -213,31 +213,31 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     if(current) {
       {
         auto blocker = shared_connection_block(m_year_connection);
-        m_year->set_current(static_cast<int>(current->year()));
+        m_year->set(static_cast<int>(current->year()));
       }
       {
         auto blocker = shared_connection_block(m_month_connection);
-        m_month->set_current(static_cast<int>(current->month()));
+        m_month->set(static_cast<int>(current->month()));
       }
       {
         auto blocker = shared_connection_block(m_day_connection);
-        m_day->set_current(static_cast<int>(current->day()));
+        m_day->set(static_cast<int>(current->day()));
       }
     } else {
       {
         auto blocker = shared_connection_block(m_year_connection);
-        m_year->set_current(none);
+        m_year->set(none);
       }
       {
         auto blocker = shared_connection_block(m_month_connection);
-        m_month->set_current(none);
+        m_month->set(none);
       }
       {
         auto blocker = shared_connection_block(m_day_connection);
-        m_day->set_current(none);
+        m_day->set(none);
       }
     }
-    m_current.set_current(current);
+    m_current.set(current);
   }
 
   void on_update(const optional<int>& current) {
@@ -248,16 +248,16 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
 DateBox::DateBox(const optional<date>& current, QWidget* parent)
   : DateBox(std::make_shared<LocalOptionalDateModel>(current), parent) {}
 
-DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
+DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<DateComposerModel>(std::move(model))),
-      m_submission(m_model->get_current()),
+      m_model(std::make_shared<DateComposerModel>(std::move(current))),
+      m_submission(m_model->get()),
       m_is_read_only(false),
       m_is_rejected(false),
       m_focus_observer(*this),
       m_format(DateFormat::YYYYMMDD) {
   setCursor(Qt::IBeamCursor);
-  m_model->connect_current_signal(std::bind_front(&DateBox::on_current, this));
+  m_model->connect_update_signal(std::bind_front(&DateBox::on_current, this));
   std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
     make_body(m_model->m_year, m_model->m_month, m_model->m_day);
   for(auto box : {m_year_box, m_month_box, m_day_box}) {
@@ -281,7 +281,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> model, QWidget* parent)
   m_focus_observer.connect_state_signal([=] (auto state) { on_focus(state); });
 }
 
-const std::shared_ptr<OptionalDateModel>& DateBox::get_model() const {
+const std::shared_ptr<OptionalDateModel>& DateBox::get_current() const {
   return m_model->m_source;
 }
 
@@ -324,8 +324,8 @@ connection DateBox::connect_reject_signal(
 
 void DateBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
-    if(m_model->get_current() != m_submission) {
-      m_model->m_source->set_current(m_submission);
+    if(m_model->get() != m_submission) {
+      m_model->m_source->set(m_submission);
     }
   }
   QWidget::keyPressEvent(event);
@@ -385,16 +385,16 @@ void DateBox::on_current(const optional<date>& current) {
 
 void DateBox::on_submit() {
   if(m_model->get_state() != QValidator::State::Acceptable) {
-    auto current = m_model->get_current();
+    auto current = m_model->get();
     auto submission = m_submission;
     m_reject_signal(current);
-    m_model->m_source->set_current(m_submission);
+    m_model->m_source->set(m_submission);
     if(!m_is_rejected) {
       m_is_rejected = true;
       match(*this, Rejected());
     }
   } else {
-    m_submission = m_model->get_current();
+    m_submission = m_model->get();
     m_submit_signal(m_submission);
   }
 }
@@ -404,7 +404,7 @@ void DateBox::on_focus(FocusObserver::State state) {
     m_date_picker->show();
   } else {
     m_date_picker->hide();
-    if(m_submission != m_model->m_source->get_current()) {
+    if(m_submission != m_model->m_source->get()) {
       on_submit();
     }
   }

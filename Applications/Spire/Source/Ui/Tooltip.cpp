@@ -32,7 +32,7 @@ Tooltip::Tooltip(QString text, QWidget* parent)
 }
 
 void Tooltip::set_label(const QString& text) {
-  m_label->get_model()->set_current(text);
+  m_label->get_current()->set(text);
   m_tooltip->adjustSize();
   m_tooltip->setDisabled(text.isEmpty());
   if(!m_tooltip->isEnabled()) {

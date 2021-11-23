@@ -17,21 +17,21 @@ namespace Spire {
 
       using Scalar = typename ScalarValueModel<T>::Scalar;
 
-      using CurrentSignal = typename ScalarValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ScalarValueModel<T>::UpdateSignal;
 
       /** Constructs a default model. */
       LocalScalarValueModel();
 
       /**
-       * Constructs a model with an initial current value.
-       * @param current The initial current value.
+       * Constructs a model with an initial value.
+       * @param value The initial value.
        */
-      LocalScalarValueModel(Type current);
+      LocalScalarValueModel(Type value);
 
-      /** Sets the minimum value assignable to current. */
+      /** Sets the minimum assignable value. */
       void set_minimum(const boost::optional<Scalar>& minimum);
 
-      /** Sets the maximum value assignable to current. */
+      /** Sets the maximum assignable value. */
       void set_maximum(const boost::optional<Scalar>& maximum);
 
       /** Sets the increment. */
@@ -45,12 +45,12 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       ScalarValueModelDecorator<Type> m_model;
@@ -61,8 +61,8 @@ namespace Spire {
     : m_model(std::make_shared<LocalValueModel<Type>>()) {}
 
   template<typename T>
-  LocalScalarValueModel<T>::LocalScalarValueModel(Type current)
-    : m_model(std::make_shared<LocalValueModel<Type>>(std::move(current))) {}
+  LocalScalarValueModel<T>::LocalScalarValueModel(Type value)
+    : m_model(std::make_shared<LocalValueModel<Type>>(std::move(value))) {}
 
   template<typename T>
   void LocalScalarValueModel<T>::set_minimum(
@@ -106,19 +106,19 @@ namespace Spire {
 
   template<typename T>
   const typename LocalScalarValueModel<T>::Type&
-      LocalScalarValueModel<T>::get_current() const {
-    return m_model.get_current();
+      LocalScalarValueModel<T>::get() const {
+    return m_model.get();
   }
 
   template<typename T>
-  QValidator::State LocalScalarValueModel<T>::set_current(const Type& value) {
-    return m_model.set_current(value);
+  QValidator::State LocalScalarValueModel<T>::set(const Type& value) {
+    return m_model.set(value);
   }
 
   template<typename T>
-  boost::signals2::connection LocalScalarValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
-    return m_model.connect_current_signal(slot);
+  boost::signals2::connection LocalScalarValueModel<T>::connect_update_signal(
+      const typename UpdateSignal::slot_type& slot) const {
+    return m_model.connect_update_signal(slot);
   }
 }
 

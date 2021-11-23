@@ -9,23 +9,23 @@ namespace Spire {
   class LocalTechnicalsModel : public TechnicalsModel {
     public:
 
-      //! Constructs a LocalTechnicalsModel.
-      /*!
-        \param security The security to model.
-      */
+      /**
+       * Constructs a LocalTechnicalsModel.
+       * @param security The security to model.
+       */
       LocalTechnicalsModel(Nexus::Security security);
 
-      //! Sets the closing price.
-      /*!
-        \param price The closing price to use.
-      */
+      /**
+       * Sets the closing price.
+       * @param price The closing price to use.
+       */
       void set_close(Nexus::Money price);
 
-      //! Updates the model with a TimeAndSale.
-      /*!
-        \param time_and_sale The TimeAndSale containing a trade used to update
-               the technicals, ie. price and quantity.
-      */
+      /**
+       * Updates the model with a TimeAndSale.
+       * @param time_and_sale The TimeAndSale containing a trade used to update
+       *        the technicals, ie. price and quantity.
+       */
       void update(const Nexus::TimeAndSale& time_and_sale);
 
       const Nexus::Security& get_security() const override;

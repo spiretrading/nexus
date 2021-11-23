@@ -28,7 +28,7 @@ namespace Spire {
   template<typename T>
   class AssociativeValueModel : public ValueModel<T> {
     public:
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       using Type = typename ValueModel<T>::Type;
 
@@ -40,20 +40,20 @@ namespace Spire {
 
       /**
        * Constructs an AssociativeValueModel with a default value used when
-       * the BooleanModel whose current value is <code>true</code> is set to
+       * the BooleanModel whose value is <code>true</code> is set to
        * <code>false</code>.
        * @param default_value The default value.
        */
       explicit AssociativeValueModel(Type default_value);
 
       /**
-       * Returns a BooleanModel whose current value is <code>true</code>
-       * whenever <code>this</code> model's current value is a specified value,
-       * and vice-versa.
+       * Returns a BooleanModel whose value is <code>true</code> whenever
+       * <code>this</code> model's current value is a specified value, and
+       * vice-versa.
        * @param value The value used to engage the returned BooleanModel,
-       *        when <code>this</code> has a current value of <i>value</i> then
-       *        the returned model will have a current value of
-       *        <code>true</code> and vice-versa.
+       *        when <code>this</code> has a value of <i>value</i> then the
+       *        returned model will have a current value of <code>true</code>
+       *        and vice-versa.
        * @return The associated model.
        */
       std::shared_ptr<ValueModel<bool>> get_association(const Type& value);
@@ -68,29 +68,25 @@ namespace Spire {
       std::shared_ptr<ValueModel<bool>> find(const Type& value) const;
 
       /**
-       * Returns Acceptable if the model's current value is valid, Invalid
-       * otherwise.
+       * Returns Acceptable if the model's value is valid, Invalid otherwise.
        * @return The state of the AssociativeValueModel.
        */
       QValidator::State get_state() const override;
 
-      /**
-       * Returns the AssociativeValueModel's current value.
-       * @return The current value.
-       */
-      const Type& get_current() const override;
+      /** Returns the AssociativeValueModel's value. */
+      const Type& get() const override;
 
       /**
-       * Sets the current value, iff a model is associated with the value.
-       * @param value The current value.
+       * Sets the value iff a model is associated with the value.
+       * @param value The value to set.
        * @return Acceptable if the value was set successfully, Invalid
        *         otherwise.
        */
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
-      /** Connects a slot to the current signal. */
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      /** Connects a slot to the update signal. */
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       struct InnerModel : ValueModel<bool> {
@@ -99,16 +95,16 @@ namespace Spire {
         void update(bool value);
         void signal() const;
         QValidator::State get_state() const override;
-        const Type& get_current() const override;
-        QValidator::State set_current(const Type& value) override;
-        boost::signals2::connection connect_current_signal(
-          const typename CurrentSignal::slot_type& slot) const override;
+        const Type& get() const override;
+        QValidator::State set(const Type& value) override;
+        boost::signals2::connection connect_update_signal(
+          const typename UpdateSignal::slot_type& slot) const override;
 
-        mutable CurrentSignal m_current_signal;
+        mutable UpdateSignal m_update_signal;
         bool m_current;
         std::function<void (bool)> m_slot;
       };
-      mutable CurrentSignal m_current_signal;
+      mutable UpdateSignal m_update_signal;
       std::unordered_map<Type, std::shared_ptr<InnerModel>> m_models;
       const Type* m_default;
       const Type* m_current;
@@ -162,12 +158,12 @@ namespace Spire {
 
   template<typename T>
   const typename AssociativeValueModel<T>::Type&
-      AssociativeValueModel<T>::get_current() const {
+      AssociativeValueModel<T>::get() const {
     return *m_current;
   }
 
   template<typename T>
-  QValidator::State AssociativeValueModel<T>::set_current(const Type& value) {
+  QValidator::State AssociativeValueModel<T>::set(const Type& value) {
     auto i = m_models.find(value);
     if(i == m_models.end()) {
       return QValidator::Invalid;
@@ -183,22 +179,22 @@ namespace Spire {
     previous_current->signal();
     next_current->signal();
     auto current = m_current;
-    m_current_signal(*current);
+    m_update_signal(*current);
     return QValidator::Acceptable;
   }
 
   template<typename T>
-  boost::signals2::connection AssociativeValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+  boost::signals2::connection AssociativeValueModel<T>::connect_update_signal(
+      const typename UpdateSignal::slot_type& slot) const {
+    return m_update_signal.connect(slot);
   }
 
   template<typename T>
   void AssociativeValueModel<T>::on_current(const Type& value, bool current) {
     if(current) {
-      set_current(value);
+      set(value);
     } else {
-      set_current(*m_default);
+      set(*m_default);
     }
   }
 
@@ -210,7 +206,7 @@ namespace Spire {
   template<typename T>
   void AssociativeValueModel<T>::InnerModel::signal() const {
     auto current = m_current;
-    m_current_signal(current);
+    m_update_signal(current);
   }
 
   template<typename T>
@@ -220,12 +216,12 @@ namespace Spire {
 
   template<typename T>
   const typename AssociativeValueModel<T>::InnerModel::Type&
-      AssociativeValueModel<T>::InnerModel::get_current() const {
+      AssociativeValueModel<T>::InnerModel::get() const {
     return m_current;
   }
 
   template<typename T>
-  QValidator::State AssociativeValueModel<T>::InnerModel::set_current(
+  QValidator::State AssociativeValueModel<T>::InnerModel::set(
       const Type& value) {
     if(value != m_current) {
       m_slot(value);
@@ -235,9 +231,9 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection
-      AssociativeValueModel<T>::InnerModel::connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+      AssociativeValueModel<T>::InnerModel::connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const {
+    return m_update_signal.connect(slot);
   }
 }
 

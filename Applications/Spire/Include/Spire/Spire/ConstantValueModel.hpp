@@ -17,60 +17,60 @@ namespace Spire {
     public:
       using Type = typename ValueModel<T>::Type;
 
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Constructs a model using a default constructed value. */
       ConstantValueModel();
 
       /**
        * Constructs a model with an explicit constant.
-       * @param current The constant to store.
+       * @param value The constant to store.
        */
-      ConstantValueModel(Type current);
+      ConstantValueModel(Type value);
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State set(const Type& value) override;
 
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      Type m_current;
+      Type m_value;
   };
 
   /**
    * Allocates a shared ConstantValueModel.
-   * @param current The constant to store in the model.
+   * @param value The constant to store in the model.
    */
   template<typename T>
-  auto make_constant_value_model(T&& current) {
+  auto make_constant_value_model(T&& value) {
     using Type = std::decay_t<T>;
-    return std::make_shared<ConstantValueModel<Type>>(std::forward<T>(current));
+    return std::make_shared<ConstantValueModel<Type>>(std::forward<T>(value));
   }
 
   template<typename T>
   ConstantValueModel<T>::ConstantValueModel()
-    : m_current() {}
+    : m_value() {}
 
   template<typename T>
-  ConstantValueModel<T>::ConstantValueModel(Type current)
-    : m_current(std::move(current)) {}
+  ConstantValueModel<T>::ConstantValueModel(Type value)
+    : m_value(std::move(value)) {}
 
   template<typename T>
   const typename ConstantValueModel<T>::Type&
-      ConstantValueModel<T>::get_current() const {
-    return m_current;
+      ConstantValueModel<T>::get() const {
+    return m_value;
   }
 
   template<typename T>
-  QValidator::State ConstantValueModel<T>::set_current(const Type& value) {
+  QValidator::State ConstantValueModel<T>::set(const Type& value) {
     return QValidator::State::Invalid;
   }
 
   template<typename T>
-  boost::signals2::connection ConstantValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
+  boost::signals2::connection ConstantValueModel<T>::connect_update_signal(
+      const typename UpdateSignal::slot_type& slot) const {
     return {};
   }
 }

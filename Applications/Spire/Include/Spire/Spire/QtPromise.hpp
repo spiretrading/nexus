@@ -3,7 +3,6 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include <boost/noncopyable.hpp>
 #include <QApplication>
 #include "Spire/Spire/ChainedQtPromise.hpp"
 #include "Spire/Spire/QtPromiseImp.hpp"
@@ -11,49 +10,50 @@
 
 namespace Spire {
 
-  /*! \brief Performs an asyncronous computation and signals the result within a
-             Qt-thread in a thread-safe manner.
-      \tparam T The type of value to compute.
-  */
+  /**
+   * Performs an asyncronous computation and signals the result within a
+   * Qt-thread in a thread-safe manner.
+   * @param <T> The type of value to compute.
+   */
   template<typename T>
-  class QtPromise : private boost::noncopyable {
+  class QtPromise {
     public:
 
-      //! The type of value to compute.
+      /** The type of value to compute. */
       using Type = T;
 
-      //! Constructs an empty promise.
+      /** Constructs an empty promise. */
       QtPromise();
 
-      //! Constructs a Qt promise.
-      /*!
-        \param executor The callable performing the computation.
-        \param launch_policy Specifies how the executor should be invoked.
-      */
+      /**
+       * Constructs a Qt promise.
+       * @param executor The callable performing the computation.
+       * @param launch_policy Specifies how the executor should be invoked.
+       */
       template<typename Executor,
         typename = std::enable_if_t<std::is_invocable_v<Executor>>>
       explicit QtPromise(Executor&& executor, LaunchPolicy launch_policy =
           LaunchPolicy::DEFERRED) {
-        auto imp = std::make_shared<details::qt_promise_imp<Executor>>(
+        auto imp = std::make_shared<details::QtPromiseImp<Executor>>(
           std::forward<Executor>(executor), launch_policy);
         imp->bind(imp);
         m_imp = std::move(imp);
       }
 
-      //! Constructs an immediate Qt promise.
-      /*!
-        \param value The value to evaluate to.
-      */
+      /**
+       * Constructs an immediate Qt promise.
+       * @param value The value to evaluate to.
+       */
       template<typename U, typename = std::enable_if_t<!std::is_invocable_v<U>>>
       QtPromise(U&& value)
         : QtPromise([value = std::forward<U>(value)] () mutable {
             return std::move(value);
           }) {}
 
-      //! Constructs an immediate Qt promise.
-      /*!
-        \param value The value to evaluate to.
-      */
+      /**
+       * Constructs an immediate Qt promise.
+       * @param value The value to evaluate to.
+       */
       template<typename U>
       QtPromise(Beam::Expect<U> value);
 
@@ -64,19 +64,22 @@ namespace Spire {
 
       ~QtPromise();
 
-      //! Assigns a function to be called when the computation completes.
-      /*!
-        \param continuation The function to call when the computation completes.
-      */
+      /**
+       * Assigns a function to be called when the computation completes.
+       * @param continuation The function to call when the computation
+       *        completes.
+       */
       template<typename F>
       QtPromise<promise_executor_result_t<F, Beam::Expect<T>>> then(
         F&& continuation);
 
-      //! Disconnects from this promise, upon disconnection the callback
-      //! will not be called when the executor completes its computation.
+      /**
+       * Disconnects from this promise, upon disconnection the callback will not
+       * be called when the executor completes its computation.
+       */
       void disconnect();
 
-      //! Disconnects this promise and then moves another promise into this.
+      /** Disconnects this promise and then moves another promise into this. */
       QtPromise& operator =(QtPromise&& other);
 
     private:
@@ -84,6 +87,8 @@ namespace Spire {
       template<typename, typename> friend class ChainedQtPromise;
       std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
 
+      QtPromise(const QtPromise&) = delete;
+      QtPromise& operator =(const QtPromise&) = delete;
       template<typename U, typename F>
       QtPromise(QtPromise<U> promise, F&& continuation);
       template<typename F>
@@ -107,12 +112,12 @@ namespace Spire {
 
   QtPromise() -> QtPromise<void>;
 
-  //! Returns a promise that signals the result only when all provided
-  //! promises have completed, or throws an exception if any provided
-  //! promise throws an exception.
-  /*!
-    \param promises The promises to be executed.
-  */
+  /**
+   * Returns a promise that signals the result only when all provided promises
+   * have completed, or throws an exception if any provided promise throws an
+   * exception.
+   * @param promises The promises to be executed.
+   */
   template<typename T>
   QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
     if(promises.empty()) {
@@ -141,11 +146,11 @@ namespace Spire {
   /** Specialization of all for QtPromise<void>. */
   QtPromise<void> all(std::vector<QtPromise<void>> promises);
 
-  //! Waits for a promise to complete and returns its result.
-  /*!
-    \param promise The promise to wait for.
-    \return The result of the promise's execution.
-  */
+  /**
+   * Waits for a promise to complete and returns its result.
+   * @param promise The promise to wait for.
+   * @return The result of the promise's execution.
+   */
   template<typename T>
   T wait(QtPromise<T>& promise) {
     auto future = std::optional<Beam::Expect<T>>();
@@ -163,11 +168,11 @@ namespace Spire {
     }
   }
 
-  //! Waits for a promise to complete and returns its result.
-  /*!
-    \param promise The promise to wait for.
-    \return The result of the promise's execution.
-  */
+  /**
+   * Waits for a promise to complete and returns its result.
+   * @param promise The promise to wait for.
+   * @return The result of the promise's execution.
+   */
   template<typename T>
   T wait(QtPromise<T> promise) {
     return static_cast<T (*)(QtPromise<T>&)>(wait)(promise);
@@ -178,7 +183,7 @@ namespace Spire {
     if constexpr(std::is_same_v<T, void>) {
       auto executor = [] {};
       using Executor = decltype(executor);
-      auto imp = std::make_shared<details::qt_promise_imp<Executor>>(executor,
+      auto imp = std::make_shared<details::QtPromiseImp<Executor>>(executor,
         LaunchPolicy::ASYNC);
       imp->bind(imp);
       m_imp = std::move(imp);

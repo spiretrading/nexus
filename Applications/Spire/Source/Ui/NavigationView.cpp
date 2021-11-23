@@ -88,11 +88,11 @@ class NavigationTab : public QWidget {
 NavigationView::NavigationView(QWidget* parent)
   : NavigationView(std::make_shared<LocalValueModel<int>>(), parent) {}
 
-NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
-    QWidget* parent)
+NavigationView::NavigationView(
+    std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_current_model(std::move(current_model)),
-      m_current_connection(m_current_model->connect_current_signal(
+      m_current(std::move(current)),
+      m_current_connection(m_current->connect_update_signal(
         std::bind_front(&NavigationView::on_current, this))) {
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
@@ -106,13 +106,13 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
   auto navigation_list_layout = new QHBoxLayout();
   navigation_list_layout->setContentsMargins({});
   navigation_list_layout->setSpacing(0);
-  m_navigation_list_model = std::make_shared<ArrayListModel>();
-  m_navigation_list = new ListView(m_navigation_list_model,
+  m_navigation_list = std::make_shared<ArrayListModel>();
+  m_navigation_view = new ListView(m_navigation_list,
     [] (const auto& model, auto index) {
       return new NavigationTab(model->get<QString>(index));
     });
-  m_navigation_list->setFixedHeight(scale_height(28));
-  navigation_list_layout->addWidget(m_navigation_list);
+  m_navigation_view->setFixedHeight(scale_height(28));
+  navigation_list_layout->addWidget(m_navigation_view);
   navigation_list_layout->addStretch();
   navigation_menu_layout->addLayout(navigation_list_layout);
   auto separator = new Separator();
@@ -142,15 +142,15 @@ NavigationView::NavigationView(std::shared_ptr<CurrentModel> current_model,
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));
   set_style(*this, std::move(style));
-  m_navigation_list->connect_submit_signal(
+  m_navigation_view->connect_submit_signal(
     std::bind_front(&NavigationView::on_list_submit, this));
-  m_navigation_list->get_current_model()->connect_current_signal(
+  m_navigation_view->get_current()->connect_update_signal(
     std::bind_front(&NavigationView::on_list_current, this));
 }
 
 const std::shared_ptr<NavigationView::CurrentModel>&
-    NavigationView::get_current_model() const {
-  return m_current_model;
+    NavigationView::get_current() const {
+  return m_current;
 }
 
 void NavigationView::add_tab(QWidget& page, const QString& label) {
@@ -162,7 +162,7 @@ void NavigationView::insert_tab(int index, QWidget& page,
   if(index < 0 || index > get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  m_navigation_list_model->insert(label, index);
+  m_navigation_list->insert(label, index);
   auto style = StyleSheet();
   style.get(Any()).
     set(BackgroundColor(QColor(Qt::transparent))).
@@ -177,24 +177,24 @@ void NavigationView::insert_tab(int index, QWidget& page,
     set(BackgroundColor(QColor(0x4B23A0)));
   style.get((Checked() && Disabled()) >> is_a<SelectLine>()).
     set(BackgroundColor(QColor(0xC8C8C8)));
-  set_style(*m_navigation_list->get_list_item(index), std::move(style));
+  set_style(*m_navigation_view->get_list_item(index), std::move(style));
   m_stacked_widget->insertWidget(index, &page);
-  m_associative_model.get_association(label)->connect_current_signal(
+  m_associative_model.get_association(label)->connect_update_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
-  if(index == m_current_model->get_current()) {
+  if(index == m_current->get()) {
     on_current(index);
   }
 }
 
 int NavigationView::get_count() const {
-  return m_navigation_list_model->get_size();
+  return m_navigation_list->get_size();
 }
 
 QString NavigationView::get_label(int index) const {
   if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_navigation_list_model->get<QString>(index);
+  return m_navigation_list->get<QString>(index);
 }
 
 QWidget& NavigationView::get_page(int index) const {
@@ -208,7 +208,7 @@ bool NavigationView::is_enabled(int index) const {
   if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_navigation_list->get_list_item(index)->isEnabled();
+  return m_navigation_view->get_list_item(index)->isEnabled();
 }
 
 void NavigationView::set_enabled(int index, bool is_enabled) {
@@ -218,33 +218,33 @@ void NavigationView::set_enabled(int index, bool is_enabled) {
   if(!isEnabled()) {
     return;
   }
-  m_navigation_list->get_list_item(index)->setEnabled(is_enabled);
+  m_navigation_view->get_list_item(index)->setEnabled(is_enabled);
   m_stacked_widget->widget(index)->setEnabled(is_enabled);
   if(is_enabled) {
-    if(!m_navigation_list->isEnabled()) {
-      m_navigation_list->setEnabled(true);
+    if(!m_navigation_view->isEnabled()) {
+      m_navigation_view->setEnabled(true);
     }
     if(!m_stacked_widget->currentWidget()->isEnabled()) {
-      m_current_model->set_current(index);
+      m_current->set(index);
     }
-  } else if(m_current_model->get_current() == index) {
+  } else if(m_current->get() == index) {
     auto new_index = [=] {
       for(auto i = index + 1; i < get_count(); ++i) {
-        if(m_navigation_list->get_list_item(i)->isEnabled()) {
+        if(m_navigation_view->get_list_item(i)->isEnabled()) {
           return i;
         }
       }
       for(auto i = index - 1; i > -1; --i) {
-        if(m_navigation_list->get_list_item(i)->isEnabled()) {
+        if(m_navigation_view->get_list_item(i)->isEnabled()) {
           return i;
         }
       }
       return -1;
     }();
     if(new_index > -1) {
-      m_current_model->set_current(new_index);
+      m_current->set(new_index);
     } else {
-      m_navigation_list->setEnabled(false);
+      m_navigation_view->setEnabled(false);
     }
   }
 }
@@ -254,31 +254,31 @@ void NavigationView::on_current(int index) {
     return;
   }
   m_associative_model.get_association(
-    m_navigation_list_model->get<QString>(index))->set_current(true);
+    m_navigation_list->get<QString>(index))->set(true);
 }
 
 void NavigationView::on_list_submit(const std::any& submission) {
   m_associative_model.get_association(
-    std::any_cast<QString>(submission))->set_current(true);
+    std::any_cast<QString>(submission))->set(true);
 }
 
 void NavigationView::on_list_current(const optional<int>& current) {
   if(current) {
     m_stacked_widget->setFocusPolicy(Qt::TabFocus);
-    setTabOrder(m_stacked_widget, m_navigation_list->get_list_item(*current));
+    setTabOrder(m_stacked_widget, m_navigation_view->get_list_item(*current));
     m_stacked_widget->setFocusPolicy(Qt::NoFocus);
   }
 }
 
 void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
-    match(*m_navigation_list->get_list_item(index), Checked());
+    match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
-    m_navigation_list->get_current_model()->set_current(index);
-    if(index != m_current_model->get_current()) {
-      m_current_model->set_current(index);
+    m_navigation_view->get_current()->set(index);
+    if(index != m_current->get()) {
+      m_current->set(index);
     }
   } else {
-    unmatch(*m_navigation_list->get_list_item(index), Checked());
+    unmatch(*m_navigation_view->get_list_item(index), Checked());
   }
 }

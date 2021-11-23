@@ -5,15 +5,15 @@
 
 namespace Spire {
 
-  //! Displays a transition animation on top of another widget.
+  /** Displays a transition animation on top of another widget. */
   class TransitionWidget : public QWidget {
     public:
 
-      //! Constructs a transition widget.
-      /*!
-        \param parent The parent widget, and the widget that the transition
-                      animation will be displayed on top of.
-      */
+      /**
+       * Constructs a transition widget.
+       * @param parent The parent widget, and the widget that the transition
+       *               animation will be displayed on top of.
+       */
       explicit TransitionWidget(QWidget* parent = nullptr);
 
     protected:

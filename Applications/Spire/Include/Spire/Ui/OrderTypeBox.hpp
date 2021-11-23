@@ -27,16 +27,16 @@ namespace Spire {
    * @param current The initial current value.
    * @param parent The parent widget.
    */
-  OrderTypeBox* make_order_type_box(Nexus::OrderType current,
-    QWidget* parent = nullptr);
+  OrderTypeBox* make_order_type_box(
+    Nexus::OrderType current, QWidget* parent = nullptr);
 
   /**
    * Returns an OrderTypeBox.
-   * @param model The current value's model.
+   * @param current The current value's model.
    * @param parent The parent widget.
    */
    OrderTypeBox* make_order_type_box(
-     std::shared_ptr<OrderTypeModel> model, QWidget* parent = nullptr);
+    std::shared_ptr<OrderTypeModel> current, QWidget* parent = nullptr);
 }
 
 #endif

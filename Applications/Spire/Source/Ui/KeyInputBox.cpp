@@ -103,7 +103,7 @@ KeyInputBox::KeyInputBox(
   body_layout->setContentsMargins({});
   m_body->setLayout(body_layout);
   set_status(Status::NONE);
-  m_current_connection = m_current->connect_current_signal(
+  m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
 }
 
@@ -137,18 +137,18 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
     transition_submission();
   } else if(event->modifiers() == 0) {
     if(key == Qt::Key_Delete || key == Qt::Key_Backspace) {
-      m_submission = m_current->get_current();
-      m_current->set_current(QKeySequence());
+      m_submission = m_current->get();
+      m_current->set(QKeySequence());
     } else if(key == Qt::Key_Escape &&
-        m_current->set_current(key) == QValidator::Invalid) {
-      m_current->set_current(m_submission);
+        m_current->set(key) == QValidator::Invalid) {
+      m_current->set(m_submission);
     } else if(key == Qt::Key_Return) {
       transition_submission();
     } else {
-      m_current->set_current(key);
+      m_current->set(key);
     }
   } else {
-    m_current->set_current(event->modifiers() + key);
+    m_current->set(event->modifiers() + key);
   }
 }
 
@@ -157,7 +157,7 @@ void KeyInputBox::layout_key_sequence() {
     auto& layout = *m_body->layout();
     clear(layout);
     layout.setSpacing(scale_width(4));
-    for(auto key : split(m_current->get_current())) {
+    for(auto key : split(m_current->get())) {
       auto tag = new KeyTag(make_constant_value_model(key));
       tag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
       layout.addWidget(tag);
@@ -166,7 +166,7 @@ void KeyInputBox::layout_key_sequence() {
 }
 
 void KeyInputBox::transition_status() {
-  if(m_current->get_current().count() == 0) {
+  if(m_current->get().count() == 0) {
     set_status(Status::PROMPT);
   } else {
     set_status(Status::NONE);
@@ -177,7 +177,7 @@ void KeyInputBox::transition_submission() {
   if(m_status == Status::PROMPT) {
     return;
   }
-  m_submission = m_current->get_current();
+  m_submission = m_current->get();
   m_submit_signal(m_submission);
 }
 

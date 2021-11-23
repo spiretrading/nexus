@@ -38,14 +38,30 @@ namespace Styles {
       using RejectSignal = Signal<
         void (const boost::optional<boost::gregorian::date>& value)>;
 
+      /**
+       * Constructs a DateBox with a local model set to the current system's
+       * date.
+       * @param parent The parent widget.
+       */
+      explicit DateBox(QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DateBox using a local model set to an initial value.
+       * @param current The initial value to display.
+       * @param parent The parent widget.
+       */
       explicit DateBox(const boost::optional<boost::gregorian::date>& current,
         QWidget* parent = nullptr);
 
+      /**
+       * Constructs a DateBox.
+       * @param parent The parent widget.
+       */
       explicit DateBox(
-        std::shared_ptr<OptionalDateModel> model, QWidget* parent = nullptr);
+        std::shared_ptr<OptionalDateModel> current, QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<OptionalDateModel>& get_model() const;
+      const std::shared_ptr<OptionalDateModel>& get_current() const;
 
       /** Returns the last submission. */
       const boost::optional<boost::gregorian::date>& get_submission() const;

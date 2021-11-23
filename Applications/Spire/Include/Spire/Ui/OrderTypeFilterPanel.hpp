@@ -21,11 +21,11 @@ namespace Spire {
 
   /**
    * Returns a new OrderTypeFilterPanel.
-   * @param selected_model A model including a list of selected values.
+   * @param selection A model including a list of selected values.
    * @param parent The parent widget.
    */
   OrderTypeFilterPanel* make_order_type_filter_panel(
-    std::shared_ptr<OrderTypeListModel> selected_model, QWidget& parent);
+    std::shared_ptr<OrderTypeListModel> selection, QWidget& parent);
 }
 
 #endif

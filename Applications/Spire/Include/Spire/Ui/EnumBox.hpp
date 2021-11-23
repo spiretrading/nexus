@@ -107,7 +107,7 @@ namespace Spire {
       : m_current(std::move(settings.m_current)) {
     if(!settings.m_cases) {
       auto model = std::make_shared<ArrayListModel>();
-      model->push(m_current->get_current());
+      model->push(m_current->get());
       settings.m_cases = std::move(model);
     } if(!m_current) {
       m_current =
