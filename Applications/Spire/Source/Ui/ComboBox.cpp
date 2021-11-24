@@ -130,16 +130,30 @@ void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
   }
 }
 
+LocalComboBoxQueryModel::LocalComboBoxQueryModel()
+  : m_values(QChar()) {}
+
 void LocalComboBoxQueryModel::add(const std::any& value) {
   add(displayTextAny(value).toLower(), value);
 }
 
-void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {}
+void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {
+  m_values[id.data()] = value;
+}
+
+std::any LocalComboBoxQueryModel::parse(const QString& query) {
+  auto i = m_values.find(query.toLower().data());
+  if(i == m_values.end()) {
+    return {};
+  }
+  return i->second;
+}
 
 QtPromise<std::vector<std::any>> LocalComboBoxQueryModel::submit(
     const QString& query) {
   auto matches = std::vector<std::any>();
-  matches.push_back(QString("abc"));
-  matches.push_back(QString("def"));
+  for(auto i = m_values.startsWith(query.data()); i != m_values.end(); ++i) {
+    matches.push_back(*i->second);
+  }
   return QtPromise(std::move(matches));
 }

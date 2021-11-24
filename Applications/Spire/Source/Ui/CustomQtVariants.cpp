@@ -146,6 +146,9 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<QString>(value));
   } else if(value.type() == typeid(QKeySequence)) {
     return QVariant::fromValue(std::any_cast<QKeySequence>(value));
+  } else if(value.type() == typeid(const char*)) {
+    return QVariant::fromValue(
+      QString::fromUtf8(std::any_cast<const char*>(value)));
   }
   return QVariant();
 }
@@ -313,6 +316,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().to_string();
+  } else if(value.canConvert<QString>()) {
+    return value.value<QString>();
   } else if(value.canConvert<Region>()) {
     auto region = value.value<Region>();
     if(region.IsGlobal()) {

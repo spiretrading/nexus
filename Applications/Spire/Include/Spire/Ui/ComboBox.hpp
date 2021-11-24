@@ -2,6 +2,7 @@
 #define SPIRE_COMBO_BOX_HPP
 #include <any>
 #include <vector>
+#include <Beam/Collections/Trie.hpp>
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -31,6 +32,15 @@ namespace Spire {
       class QueryModel {
         public:
           virtual ~QueryModel() = default;
+
+          /**
+           * Parses a value from a query string.
+           * @param query The query string to parse.
+           * @return The value represented by the <i>query</i> or an empty
+           *         object if the <i>query</i> does not represent a valid
+           *         value.
+           */
+          virtual std::any parse(const QString& query) = 0;
 
           /**
            * Submits a query to be asynchronously resolved.
@@ -130,7 +140,7 @@ namespace Spire {
     public:
 
       /** Constructs an empty model. */
-      LocalComboBoxQueryModel() = default;
+      LocalComboBoxQueryModel();
 
       /**
        * Adds a value to the model that can be queried through its string
@@ -146,7 +156,12 @@ namespace Spire {
        */
       void add(const QString& id, const std::any& value);
 
+      std::any parse(const QString& query) override;
+
       QtPromise<std::vector<std::any>> submit(const QString& query) override;
+
+    private:
+      rtv::Trie<QChar, std::any> m_values;
   };
 }
 

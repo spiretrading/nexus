@@ -644,6 +644,13 @@ UiProfile Spire::make_combo_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("ComboBox"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalComboBoxQueryModel>();
+      model->add("Almond");
+      model->add("Amber");
+      model->add("Apple");
+      model->add("Beige");
+      model->add("Bronze");
+      model->add("Brown");
+      model->add("Black");
       auto box = new ComboBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
