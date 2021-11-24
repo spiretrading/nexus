@@ -105,6 +105,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;

@@ -1,5 +1,6 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -46,9 +47,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   m_list_view = new ListView(m_matches, std::move(current),
     std::move(selection), std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);
-  auto window = m_drop_down_list->window();
-  window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
-  window->installEventFilter(this);
+  m_drop_down_list->installEventFilter(this);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -95,6 +94,10 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void ComboBox::keyPressEvent(QKeyEvent* event) {
+  QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
+}
+
 void ComboBox::on_input(const QString& query) {
   if(query.isEmpty()) {
     on_query(std::vector<std::any>());
@@ -124,7 +127,6 @@ void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
     m_drop_down_list->hide();
   } else if(!m_drop_down_list->isVisible()) {
     m_drop_down_list->show();
-    m_drop_down_list->setFocus();
   }
 }
 

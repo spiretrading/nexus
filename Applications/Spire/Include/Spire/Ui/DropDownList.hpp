@@ -17,6 +17,9 @@ namespace Spire {
        */
       explicit DropDownList(ListView& list_view, QWidget& parent);
 
+      /** Returns the ListView being displayed. */
+      ListView& get_list_view();
+
       QSize sizeHint() const override;
 
     protected:

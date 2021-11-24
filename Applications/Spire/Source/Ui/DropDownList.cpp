@@ -52,6 +52,10 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
   m_scrollable_list_box->installEventFilter(this);
 }
 
+ListView& DropDownList::get_list_view() {
+  return *m_list_view;
+}
+
 QSize DropDownList::sizeHint() const {
   if(!m_size_hint) {
     auto width = std::max(m_panel->parentWidget()->size().width() -
