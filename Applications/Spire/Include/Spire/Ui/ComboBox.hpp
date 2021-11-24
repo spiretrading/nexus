@@ -4,6 +4,7 @@
 #include <vector>
 #include <Beam/Collections/Trie.hpp>
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -120,6 +121,7 @@ namespace Spire {
       bool m_is_read_only;
       TextBox* m_input_box;
       ListView* m_list_view;
+      FocusObserver m_focus_observer;
       std::shared_ptr<ArrayListModel> m_matches;
       DropDownList* m_drop_down_list;
       QtPromise<std::vector<std::any>> m_query_result;
@@ -128,6 +130,7 @@ namespace Spire {
       void on_input(const QString& query);
       void on_query(Beam::Expect<std::vector<std::any>>&& result);
       void on_drop_down_submit(const std::any& submission);
+      void on_focus(FocusObserver::State state);
   };
 
   /**

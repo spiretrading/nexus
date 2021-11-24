@@ -31,6 +31,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_current(std::move(current)),
       m_submission(m_current->get()),
       m_is_read_only(false),
+      m_focus_observer(*this),
       m_matches(std::make_shared<ArrayListModel>()) {
   update_style(*this, [] (auto& style) {
     style.get(FocusIn()).set(border_color(QColor(0x4B23A0)));
@@ -49,6 +50,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   m_drop_down_list->installEventFilter(this);
   m_drop_down_list->get_list_view().connect_submit_signal(
     std::bind_front(&ComboBox::on_drop_down_submit, this));
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&ComboBox::on_focus, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -96,6 +99,12 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
 
 void ComboBox::keyPressEvent(QKeyEvent* event) {
   QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
+  if(event->key() == Qt::Key_Escape) {
+    if(m_drop_down_list->get_list_view().get_selection().get() == 0) {
+      m_drop_down_list->hide();
+      return QWidget::keyPressEvent(event);
+    }
+  }
 }
 
 void ComboBox::on_input(const QString& query) {
@@ -139,6 +148,12 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
   m_submission = submission;
   m_drop_down_list->hide();
   m_submit_signal(submission);
+}
+
+void ComboBox::on_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    m_drop_down_list->hide();
+  }
 }
 
 LocalComboBoxQueryModel::LocalComboBoxQueryModel()

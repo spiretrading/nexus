@@ -640,6 +640,7 @@ UiProfile Spire::make_closed_filter_panel_profile() {
 UiProfile Spire::make_combo_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile(QString::fromUtf8("ComboBox"), properties,
     [] (auto& profile) {
@@ -655,6 +656,23 @@ UiProfile Spire::make_combo_box_profile() {
       auto box = new ComboBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& current) {
+        auto value = model->parse(current);
+        if(!value.has_value()) {
+          return;
+        }
+        if(!is_equal(box->get_current()->get(), value)) {
+          box->get_current()->set(value);
+        }
+      });
+      box->get_current()->connect_update_signal(
+        [&current] (const auto& value) {
+          auto text = displayTextAny(value);
+          if(text != current.get()) {
+            current.set(text);
+          }
+        });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal(
         std::bind_front(&ComboBox::set_read_only, box));
