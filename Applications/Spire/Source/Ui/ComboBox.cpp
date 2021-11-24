@@ -3,6 +3,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -47,6 +48,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   auto window = m_drop_down_list->window();
   window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
+  window->installEventFilter(this);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -82,6 +84,15 @@ void ComboBox::set_read_only(bool is_read_only) {
 connection ComboBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Show) {
+    match(*this, PopUp());
+  } else if(event->type() == QEvent::Hide) {
+    unmatch(*this, PopUp());
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void ComboBox::on_input(const QString& query) {
