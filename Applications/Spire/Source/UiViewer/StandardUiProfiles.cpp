@@ -651,14 +651,17 @@ UiProfile Spire::make_combo_box_profile() {
       model->add("Bronze");
       model->add("Brown");
       model->add("Black");
+      model->add("Car");
       auto box = new ComboBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal(
         std::bind_front(&ComboBox::set_read_only, box));
-      box->connect_submit_signal(profile.make_event_slot<optional<std::any>>(
+      box->connect_submit_signal(profile.make_event_slot<std::any>(
         QString::fromUtf8("Submit")));
+      box->get_current()->connect_update_signal(
+        profile.make_event_slot<std::any>(QString::fromUtf8("Current")));
       return box;
     });
   return profile;

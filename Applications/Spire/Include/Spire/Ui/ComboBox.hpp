@@ -13,11 +13,8 @@ namespace Spire {
   class ComboBox : public QWidget {
     public:
 
-      /** The type of model representing the index of the current value. */
-      using CurrentModel = ListView::CurrentModel;
-
-      /** The type of model representing the index of the selected value. */
-      using SelectionModel = ListView::SelectionModel;
+      /** The type of model representing the current value. */
+      using CurrentModel = ValueModel<std::any>;
 
       /** The type of function used to build a QWidget representing a value. */
       using ViewBuilder = ListView::ViewBuilder;
@@ -82,13 +79,11 @@ namespace Spire {
        * Constructs a ComboBox.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
-       * @param selection The selection value's model.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
-        std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+        std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
@@ -97,8 +92,8 @@ namespace Spire {
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
-      /** Returns the selection model. */
-      const std::shared_ptr<SelectionModel>& get_selection() const;
+      /** Returns the last submission. */
+      const std::any& get_submission() const;
 
       /** Returns <code>true</code> iff this DropDownBox is read-only. */
       bool is_read_only() const;
@@ -120,6 +115,8 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<QueryModel> m_query_model;
+      std::shared_ptr<CurrentModel> m_current;
+      std::any m_submission;
       bool m_is_read_only;
       TextBox* m_input_box;
       ListView* m_list_view;
@@ -130,6 +127,7 @@ namespace Spire {
 
       void on_input(const QString& query);
       void on_query(Beam::Expect<std::vector<std::any>>&& result);
+      void on_drop_down_submit(const std::any& submission);
   };
 
   /**

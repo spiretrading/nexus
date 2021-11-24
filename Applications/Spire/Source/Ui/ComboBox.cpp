@@ -20,16 +20,16 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model, QWidget* parent)
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   ViewBuilder view_builder, QWidget* parent)
   : ComboBox(std::move(query_model),
-      std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::make_shared<LocalValueModel<std::any>>(),
       std::move(view_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-    std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+    std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
     QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
+      m_current(std::move(current)),
+      m_submission(m_current->get()),
       m_is_read_only(false),
       m_matches(std::make_shared<ArrayListModel>()) {
   update_style(*this, [] (auto& style) {
@@ -44,10 +44,11 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   layout->addWidget(m_input_box);
   m_input_connection = m_input_box->get_current()->connect_update_signal(
     std::bind_front(&ComboBox::on_input, this));
-  m_list_view = new ListView(m_matches, std::move(current),
-    std::move(selection), std::move(view_builder));
+  m_list_view = new ListView(m_matches, std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
+  m_drop_down_list->get_list_view().connect_submit_signal(
+    std::bind_front(&ComboBox::on_drop_down_submit, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -55,12 +56,11 @@ const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
 }
 
 const std::shared_ptr<ComboBox::CurrentModel>& ComboBox::get_current() const {
-  return m_list_view->get_current();
+  return m_current;
 }
 
-const std::shared_ptr<ComboBox::SelectionModel>&
-    ComboBox::get_selection() const {
-  return m_list_view->get_selection();
+const std::any& ComboBox::get_submission() const {
+  return m_submission;
 }
 
 bool ComboBox::is_read_only() const {
@@ -104,6 +104,10 @@ void ComboBox::on_input(const QString& query) {
   } else {
     m_query_result = m_query_model->submit(query);
     m_query_result.then(std::bind_front(&ComboBox::on_query, this));
+    auto value = m_query_model->parse(query);
+    if(value.has_value()) {
+      m_current->set(value);
+    }
   }
 }
 
@@ -130,6 +134,13 @@ void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
   }
 }
 
+void ComboBox::on_drop_down_submit(const std::any& submission) {
+  m_current->set(submission);
+  m_submission = submission;
+  m_drop_down_list->hide();
+  m_submit_signal(submission);
+}
+
 LocalComboBoxQueryModel::LocalComboBoxQueryModel()
   : m_values(QChar()) {}
 
@@ -146,7 +157,7 @@ std::any LocalComboBoxQueryModel::parse(const QString& query) {
   if(i == m_values.end()) {
     return {};
   }
-  return i->second;
+  return *i->second;
 }
 
 QtPromise<std::vector<std::any>> LocalComboBoxQueryModel::submit(
