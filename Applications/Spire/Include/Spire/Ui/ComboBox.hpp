@@ -106,11 +106,9 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<QueryModel> m_query_model;
-      std::shared_ptr<CurrentModel> m_current;
-      std::shared_ptr<SelectionModel> m_selection;
-      ViewBuilder m_view_builder;
       bool m_is_read_only;
       TextBox* m_input_box;
+      ListView* m_list_view;
       std::shared_ptr<ArrayListModel> m_matches;
       DropDownList* m_drop_down_list;
       QtPromise<std::vector<std::any>> m_query_result;

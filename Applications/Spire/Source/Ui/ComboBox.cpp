@@ -28,11 +28,11 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
-      m_current(std::move(current)),
-      m_selection(std::move(selection)),
-      m_view_builder(std::move(view_builder)),
       m_is_read_only(false),
       m_matches(std::make_shared<ArrayListModel>()) {
+  update_style(*this, [] (auto& style) {
+    style.get(FocusIn()).set(border_color(QColor(0x4B23A0)));
+  });
   m_input_box = new TextBox();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
@@ -42,6 +42,11 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   layout->addWidget(m_input_box);
   m_input_connection = m_input_box->get_current()->connect_update_signal(
     std::bind_front(&ComboBox::on_input, this));
+  m_list_view = new ListView(m_matches, std::move(current),
+    std::move(selection), std::move(view_builder));
+  m_drop_down_list = new DropDownList(*m_list_view, *this);
+  auto window = m_drop_down_list->window();
+  window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -49,12 +54,12 @@ const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
 }
 
 const std::shared_ptr<ComboBox::CurrentModel>& ComboBox::get_current() const {
-  return m_current;
+  return m_list_view->get_current();
 }
 
 const std::shared_ptr<ComboBox::SelectionModel>&
     ComboBox::get_selection() const {
-  return m_selection;
+  return m_list_view->get_selection();
 }
 
 bool ComboBox::is_read_only() const {
@@ -96,15 +101,32 @@ void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
       return std::vector<std::any>();
     }
   }();
+  m_matches->transact([&] {
+    while(m_matches->get_size() != 0) {
+      m_matches->remove(m_matches->get_size() - 1);
+    }
+    for(auto& item : selection) {
+      m_matches->push(item);
+    }
+  });
+  if(selection.empty()) {
+    m_drop_down_list->hide();
+  } else if(!m_drop_down_list->isVisible()) {
+    m_drop_down_list->show();
+    m_drop_down_list->setFocus();
+  }
 }
 
 void LocalComboBoxQueryModel::add(const std::any& value) {
-  add(displayTextAny(value), value);
+  add(displayTextAny(value).toLower(), value);
 }
 
 void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {}
 
 QtPromise<std::vector<std::any>> LocalComboBoxQueryModel::submit(
     const QString& query) {
-  return QtPromise(std::vector<std::any>());;
+  auto matches = std::vector<std::any>();
+  matches.push_back(QString("abc"));
+  matches.push_back(QString("def"));
+  return QtPromise(std::move(matches));
 }

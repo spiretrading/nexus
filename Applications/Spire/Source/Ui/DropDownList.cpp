@@ -1,6 +1,6 @@
 #include "Spire/Ui/DropDownList.hpp"
-#include <QEvent>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -18,6 +18,17 @@ namespace {
       set(border_size(0));
     return style;
   }
+
+  template<bool (QWidget::* method)(bool)>
+  struct FocusNext {
+    friend void focus_next(QWidget& widget, bool next) {
+      (widget.*method)(next);
+    }
+  };
+
+  template struct FocusNext<&QWidget::focusNextPrevChild>;
+
+  void focus_next(QWidget& widget, bool next);
 }
 
 DropDownList::DropDownList(ListView& list_view, QWidget& parent)
@@ -77,6 +88,26 @@ bool DropDownList::event(QEvent* event) {
     m_panel->hide();
   }
   return QWidget::event(event);
+}
+
+void DropDownList::keyPressEvent(QKeyEvent* event) {
+  if(!window()->parentWidget()) {
+    return QWidget::keyPressEvent(event);
+  }
+  auto is_next = [&] () -> optional<bool> {
+    if(event->key() == Qt::Key_Tab) {
+      return make_optional(true);
+    } else if(event->key() == Qt::Key_Backtab) {
+      return make_optional(false);
+    }
+    return none;
+  }();
+  if(is_next) {
+    hide();
+    focus_next(*window()->parentWidget(), *is_next);
+  } else {
+    return QWidget::keyPressEvent(event);
+  }
 }
 
 void DropDownList::on_panel_style() {
