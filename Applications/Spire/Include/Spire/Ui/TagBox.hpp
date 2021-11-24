@@ -59,7 +59,7 @@ namespace Spire {
 
       QWidget* build_tag(const std::shared_ptr<ListModel>& model, int index);
       void on_operation(const ListModel::Operation& operation);
-      void update_tag_read_only();
+      void update_uneditable();
   };
 }
 
