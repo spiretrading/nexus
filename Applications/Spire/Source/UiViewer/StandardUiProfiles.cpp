@@ -645,14 +645,14 @@ UiProfile Spire::make_combo_box_profile() {
   auto profile = UiProfile(QString::fromUtf8("ComboBox"), properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalComboBoxQueryModel>();
-      model->add("Almond");
-      model->add("Amber");
-      model->add("Apple");
-      model->add("Beige");
-      model->add("Bronze");
-      model->add("Brown");
-      model->add("Black");
-      model->add("Car");
+      model->add(QString("Almond"));
+      model->add(QString("Amber"));
+      model->add(QString("Apple"));
+      model->add(QString("Beige"));
+      model->add(QString("Bronze"));
+      model->add(QString("Brown"));
+      model->add(QString("Black"));
+      model->add(QString("Car"));
       auto box = new ComboBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
@@ -669,7 +669,7 @@ UiProfile Spire::make_combo_box_profile() {
       box->get_current()->connect_update_signal(
         [&current] (const auto& value) {
           auto text = displayTextAny(value);
-          if(text != current.get()) {
+          if(text.toLower() != current.get().toLower()) {
             current.set(text);
           }
         });
