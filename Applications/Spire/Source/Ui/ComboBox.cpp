@@ -180,7 +180,8 @@ void ComboBox::on_query(
   update_completion();
   if(selection.empty()) {
     m_drop_down_list->hide();
-  } else if(!m_drop_down_list->isVisible()) {
+  } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
+      !m_drop_down_list->isVisible()) {
     m_drop_down_list->show();
   }
 }
