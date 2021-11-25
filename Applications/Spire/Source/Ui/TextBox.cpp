@@ -85,7 +85,6 @@ struct TextBox::TextValidator : QValidator {
       if(state == QValidator::State::Invalid) {
         return state;
       }
-      return QValidator::State::Acceptable;
     }
     auto current = std::move(input);
     auto state = m_model->set(current);

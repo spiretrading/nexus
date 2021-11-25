@@ -1,4 +1,5 @@
 #include "Spire/Ui/ComboBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -109,14 +110,34 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
 
 void ComboBox::update_completion() {
   if(m_matches->get_size() != 0) {
+    auto editor = m_input_box->findChild<QLineEdit*>();
+    if(editor->cursorPosition() != editor->text().size()) {
+      m_prefix.clear();
+      m_completion.clear();
+      return;
+    }
     auto& query = m_input_box->get_current()->get();
     auto top_match = displayTextAny(m_matches->at(0));
-    if(top_match.toLower().startsWith(query.toLower())) {
-      m_completion = top_match.mid(query.size());
-    } else {
+    if(!top_match.toLower().startsWith(query.toLower())) {
+      m_prefix.clear();
       m_completion.clear();
+      return;
     }
+    auto prefix = top_match.mid(0, query.size()).toLower();
+    auto completion = top_match.mid(query.size());
+    if(completion.isEmpty() || m_prefix.isEmpty() ||
+        !completion.endsWith(m_completion) && !m_prefix.startsWith(prefix)) {
+      auto selection_start = query.size();
+      {
+        auto blocker = shared_connection_block(m_input_connection);
+        m_input_box->get_current()->set(query + completion);
+      }
+      editor->setSelection(selection_start, completion.size());
+    }
+    m_prefix = std::move(prefix);
+    m_completion = std::move(completion);
   } else {
+    m_prefix.clear();
     m_completion.clear();
   }
 }

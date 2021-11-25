@@ -125,6 +125,7 @@ namespace Spire {
       std::shared_ptr<ArrayListModel> m_matches;
       DropDownList* m_drop_down_list;
       QtPromise<std::vector<std::any>> m_query_result;
+      QString m_prefix;
       QString m_completion;
       boost::signals2::scoped_connection m_input_connection;
 
