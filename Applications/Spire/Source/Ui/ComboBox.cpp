@@ -40,12 +40,12 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   m_input_box = new TextBox();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
+  m_input_connection = m_input_box->get_current()->connect_update_signal(
+    std::bind_front(&ComboBox::on_input, this));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(m_input_box);
-  m_input_connection = m_input_box->get_current()->connect_update_signal(
-    std::bind_front(&ComboBox::on_input, this));
   m_list_view = new ListView(m_matches, std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
@@ -111,15 +111,15 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
 void ComboBox::update_completion() {
   if(m_matches->get_size() != 0) {
     auto editor = m_input_box->findChild<QLineEdit*>();
-    if(editor->cursorPosition() != editor->text().size()) {
+    auto& query = m_input_box->get_current()->get();
+    if(editor->cursorPosition() != query.size()) {
       m_prefix.clear();
       m_completion.clear();
       return;
     }
-    auto& query = m_input_box->get_current()->get();
     auto top_match = displayTextAny(m_matches->at(0));
     if(!top_match.toLower().startsWith(query.toLower())) {
-      m_prefix.clear();
+      m_prefix = query;
       m_completion.clear();
       return;
     }
@@ -137,7 +137,7 @@ void ComboBox::update_completion() {
     m_prefix = std::move(prefix);
     m_completion = std::move(completion);
   } else {
-    m_prefix.clear();
+    m_prefix = m_input_box->get_current()->get();
     m_completion.clear();
   }
 }
@@ -214,7 +214,8 @@ std::any LocalComboBoxQueryModel::parse(const QString& query) {
 QtPromise<std::vector<std::any>> LocalComboBoxQueryModel::submit(
     const QString& query) {
   auto matches = std::vector<std::any>();
-  for(auto i = m_values.startsWith(query.data()); i != m_values.end(); ++i) {
+  for(auto i = m_values.startsWith(query.toLower().data());
+      i != m_values.end(); ++i) {
     matches.push_back(*i->second);
   }
   return QtPromise(std::move(matches));
