@@ -33,7 +33,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_submission(m_current->get()),
       m_is_read_only(false),
       m_focus_observer(*this),
-      m_matches(std::make_shared<ArrayListModel>()) {
+      m_matches(std::make_shared<ArrayListModel>()),
+      m_completion_tag(0) {
   update_style(*this, [] (auto& style) {
     style.get(FocusIn()).set(border_color(QColor(0x4B23A0)));
   });
@@ -144,10 +145,11 @@ void ComboBox::update_completion() {
 
 void ComboBox::on_input(const QString& query) {
   if(query.isEmpty()) {
-    on_query(std::vector<std::any>());
+    on_query(++m_completion_tag, std::vector<std::any>());
   } else {
     m_query_result = m_query_model->submit(query);
-    m_query_result.then(std::bind_front(&ComboBox::on_query, this));
+    m_query_result.then(
+      std::bind_front(&ComboBox::on_query, this, ++m_completion_tag));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
       m_current->set(value);
@@ -155,7 +157,11 @@ void ComboBox::on_input(const QString& query) {
   }
 }
 
-void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
+void ComboBox::on_query(
+    std::uint32_t tag, Expect<std::vector<std::any>>&& result) {
+  if(m_completion_tag != tag) {
+    return;
+  }
   auto selection = [&] {
     try {
       return result.Get();

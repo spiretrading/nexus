@@ -1,6 +1,7 @@
 #ifndef SPIRE_COMBO_BOX_HPP
 #define SPIRE_COMBO_BOX_HPP
 #include <any>
+#include <cstdint>
 #include <vector>
 #include <Beam/Collections/Trie.hpp>
 #include "Spire/Spire/QtPromise.hpp"
@@ -124,6 +125,7 @@ namespace Spire {
       FocusObserver m_focus_observer;
       std::shared_ptr<ArrayListModel> m_matches;
       DropDownList* m_drop_down_list;
+      std::uint32_t m_completion_tag;
       QtPromise<std::vector<std::any>> m_query_result;
       QString m_prefix;
       QString m_completion;
@@ -131,7 +133,8 @@ namespace Spire {
 
       void update_completion();
       void on_input(const QString& query);
-      void on_query(Beam::Expect<std::vector<std::any>>&& result);
+      void on_query(
+        std::uint32_t tag, Beam::Expect<std::vector<std::any>>&& result);
       void on_drop_down_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
   };
