@@ -107,6 +107,20 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+void ComboBox::update_completion() {
+  if(m_matches->get_size() != 0) {
+    auto& query = m_input_box->get_current()->get();
+    auto top_match = displayTextAny(m_matches->at(0));
+    if(top_match.toLower().startsWith(query.toLower())) {
+      m_completion = top_match.mid(query.size());
+    } else {
+      m_completion.clear();
+    }
+  } else {
+    m_completion.clear();
+  }
+}
+
 void ComboBox::on_input(const QString& query) {
   if(query.isEmpty()) {
     on_query(std::vector<std::any>());
@@ -136,6 +150,7 @@ void ComboBox::on_query(Expect<std::vector<std::any>>&& result) {
       m_matches->push(item);
     }
   });
+  update_completion();
   if(selection.empty()) {
     m_drop_down_list->hide();
   } else if(!m_drop_down_list->isVisible()) {
