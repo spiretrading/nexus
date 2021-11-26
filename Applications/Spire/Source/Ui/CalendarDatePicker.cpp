@@ -123,6 +123,10 @@ class RequiredDateModel : public DateModel {
       return m_current;
     }
 
+    QValidator::State test(const date& value) const override {
+      return QValidator::State::Acceptable;
+    }
+
     QValidator::State set(const date& value) override {
       m_current = value;
       m_update_signal(m_current);

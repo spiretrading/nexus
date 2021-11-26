@@ -144,6 +144,37 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return m_current;
   }
 
+  QValidator::State test(const QString& value) const override {
+    auto decimal_places = 0;
+    auto i = m_model->get_increment();
+    while(i < 1) {
+      i *= 10;
+      ++decimal_places;
+    }
+    auto local_validator = optional<const QRegExp>();
+    auto& validator = [&] () -> auto& {
+      if(decimal_places != m_decimal_places) {
+        local_validator.emplace(make_validator(decimal_places));
+        return *local_validator;
+      } else {
+        return m_validator;
+      }
+    }();
+    if(!validator.exactMatch(value)) {
+      return QValidator::State::Invalid;
+    } else if(value.isEmpty() || value == "-" || value == "+") {
+      return QValidator::State::Intermediate;
+    } else if(auto decimal = text_to_decimal(value)) {
+      auto state =
+        validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
+      if(state == QValidator::State::Invalid) {
+        return QValidator::State::Invalid;
+      }
+      return m_model->test(*decimal);
+    }
+    return QValidator::State::Invalid;
+  }
+
   QValidator::State set(const QString& value) override {
     auto decimal_places = 0;
     auto i = m_model->get_increment();
@@ -193,18 +224,21 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return m_update_signal.connect(slot);
   }
 
-  void update_validator() {
-    if(m_decimal_places <= 0) {
-      m_validator = QRegExp(QString("^[-|\\+]?[0-9]*"));
-    } else if(m_trailing_zeros > m_decimal_places) {
-      auto delta = m_trailing_zeros - m_decimal_places;
-      m_validator =
-        QRegExp(QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1}0{0,%2})?").arg(
-          m_decimal_places).arg(delta));
+  QRegExp make_validator(int decimal_places) const {
+    if(decimal_places <= 0) {
+      return QRegExp(QString("^[-|\\+]?[0-9]*"));
+    } else if(m_trailing_zeros > decimal_places) {
+      auto delta = m_trailing_zeros - decimal_places;
+      return QRegExp(QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1}0{0,%2})?").arg(
+        decimal_places).arg(delta));
     } else {
-      m_validator = QRegExp(
-        QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(m_decimal_places));
+      return QRegExp(
+        QString("^[-|\\+]?[0-9]*(\\.[0-9]{0,%1})?").arg(decimal_places));
     }
+  }
+
+  void update_validator() {
+    m_validator = make_validator(m_decimal_places);
   }
 
   bool update_leading_zeros(QString& source, const QString& digits) const {

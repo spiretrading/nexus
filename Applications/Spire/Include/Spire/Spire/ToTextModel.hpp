@@ -70,6 +70,8 @@ namespace Spire {
 
       const QString& get() const override;
 
+      QValidator::State test(const QString& value) const override;
+
       QValidator::State set(const QString& value) override;
 
       boost::signals2::connection connect_update_signal(
@@ -126,6 +128,14 @@ namespace Spire {
   template<typename T>
   const QString& ToTextModel<T>::get() const {
     return m_value;
+  }
+
+  template<typename T>
+  QValidator::State ToTextModel<T>::test(const QString& value) const {
+    if(auto update = m_from_string(value)) {
+      return m_model->test(*update);
+    }
+    return QValidator::Invalid;
   }
 
   template<typename T>

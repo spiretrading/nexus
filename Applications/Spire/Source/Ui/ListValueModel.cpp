@@ -30,6 +30,13 @@ const ListValueModel::Type& ListValueModel::get() const {
   return m_source->at(m_index);
 }
 
+QValidator::State ListValueModel::test(const Type& value) const {
+  if(m_index == -1) {
+    return QValidator::State::Invalid;
+  }
+  return QValidator::State::Acceptable;
+}
+
 QValidator::State ListValueModel::set(const Type& value) {
   if(m_index == -1) {
     return QValidator::State::Invalid;

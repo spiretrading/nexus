@@ -37,8 +37,15 @@ const optional<Quantity>& UnsignedQuantityModel::get() const {
   return m_model->get();
 }
 
-QValidator::State UnsignedQuantityModel::set(
-    const optional<Quantity>& value) {
+QValidator::State UnsignedQuantityModel::test(
+    const optional<Quantity>& value) const {
+  if(value && *value < 0) {
+    return QValidator::State::Invalid;
+  }
+  return m_model->test(value);
+}
+
+QValidator::State UnsignedQuantityModel::set(const optional<Quantity>& value) {
   if(value && *value < 0) {
     return QValidator::State::Invalid;
   }
