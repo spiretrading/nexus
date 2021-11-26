@@ -47,6 +47,8 @@ namespace Spire {
 
       const Type& get() const override;
 
+      QValidator::State test(const Type& value) const override;
+
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_update_signal(
@@ -108,6 +110,11 @@ namespace Spire {
   const typename LocalScalarValueModel<T>::Type&
       LocalScalarValueModel<T>::get() const {
     return m_model.get();
+  }
+
+  template<typename T>
+  QValidator::State LocalScalarValueModel<T>::test(const Type& value) const {
+    return m_model.test(value);
   }
 
   template<typename T>

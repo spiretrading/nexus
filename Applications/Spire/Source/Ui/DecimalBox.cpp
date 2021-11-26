@@ -144,6 +144,10 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     return m_current;
   }
 
+  QValidator::State test(const QString& value) const override {
+    return QValidator::State::Invalid;
+  }
+
   QValidator::State set(const QString& value) override {
     auto decimal_places = 0;
     auto i = m_model->get_increment();

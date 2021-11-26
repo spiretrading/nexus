@@ -45,6 +45,8 @@ namespace Details {
       /** Returns the current value. */
       const boost::optional<int>& get() const override;
 
+      QValidator::State test(const boost::optional<int>& value) const override;
+
       /**
        * Sets the current value. By default this operation is a no-op that
        * always returns <i>QValidator::State::Invalid</i>.
@@ -94,6 +96,31 @@ namespace Details {
   }
 
   template<typename T>
+  QValidator::State ListIndexValueModel<T>::test(
+      const boost::optional<int>& value) const {
+    if(!value) {
+      if constexpr(is_optional) {
+        if(m_value->test(boost::none) == QValidator::Invalid) {
+          return QValidator::Invalid;
+        }
+        return m_index.test(boost::none);
+      } else {
+        return QValidator::Invalid;
+      }
+    } else if(value && *value < 0 || value >= m_list->get_size()) {
+      return QValidator::Invalid;
+    }
+    try {
+      if(m_value->test(m_list->get<ListType>(*value)) == QValidator::Invalid) {
+        return QValidator::Invalid;
+      }
+    } catch(const std::bad_any_cast&) {
+      return QValidator::Invalid;
+    }
+    return m_index.test(*value);
+  }
+
+  template<typename T>
   QValidator::State ListIndexValueModel<T>::set(
       const boost::optional<int>& value) {
     if(!value) {
@@ -113,8 +140,7 @@ namespace Details {
     try {
       auto blocker =
         boost::signals2::shared_connection_block(m_current_connection);
-      if(m_value->set(m_list->get<ListType>(*value)) ==
-          QValidator::Invalid) {
+      if(m_value->set(m_list->get<ListType>(*value)) == QValidator::Invalid) {
         return QValidator::Invalid;
       }
     } catch(const std::bad_any_cast&) {

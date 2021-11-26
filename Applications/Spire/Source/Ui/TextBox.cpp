@@ -80,20 +80,7 @@ struct TextBox::TextValidator : QValidator {
     if(m_is_text_elided) {
       return QValidator::State::Acceptable;
     }
-    if(input == m_model->get()) {
-      auto state = m_model->get_state();
-      if(state == QValidator::State::Invalid) {
-        return state;
-      }
-      return QValidator::State::Acceptable;
-    }
-    auto current = std::move(input);
-    auto state = m_model->set(current);
-    input = m_model->get();
-    if(state == QValidator::State::Invalid) {
-      return state;
-    }
-    return QValidator::State::Acceptable;
+    return m_model->test(input);
   }
 };
 

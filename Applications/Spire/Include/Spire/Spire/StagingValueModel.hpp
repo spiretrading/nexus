@@ -41,6 +41,8 @@ namespace Spire {
 
       const Type& get() const override;
 
+      QValidator::State test(const Type& value) const override;
+
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_update_signal(
@@ -99,10 +101,19 @@ namespace Spire {
   }
 
   template<typename T>
+  QValidator::State StagingValueModel<T>::test(const Type& value) const {
+    if(m_model->test(value) == QValidator::State::Acceptable) {
+      return QValidator::State::Acceptable;
+    }
+    return QValidator::State::Intermediate;
+  }
+
+  template<typename T>
   QValidator::State StagingValueModel<T>::set(const Type& value) {
+    auto state = test(value);
     m_value = value;
     m_update_signal(value);
-    return QValidator::State::Intermediate;
+    return state;
   }
 
   template<typename T>

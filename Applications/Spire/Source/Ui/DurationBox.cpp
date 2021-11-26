@@ -21,6 +21,23 @@ using namespace Spire::Styles;
 
 namespace {
   template<typename Model, typename M1, typename M2>
+  QValidator::State test(Model& model, const typename Model::Type& value,
+      std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
+        const optional<time_duration>& update) {
+    auto current = [&] () -> optional<time_duration> {
+      if(!value) {
+        auto s1 = m1.lock();
+        auto s2 = m2.lock();
+        if((!s1 || !s1->get()) && (!s2 || !s2->get())) {
+          return none;
+        }
+      }
+      return update;
+    }();
+    return model.m_source->test(current);
+  }
+
+  template<typename Model, typename M1, typename M2>
   QValidator::State set(Model& model, const typename Model::Type& value,
       std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
         const optional<time_duration>& update) {
@@ -99,6 +116,12 @@ namespace {
       return m_current;
     }
 
+    QValidator::State test(const Type& value) const {
+      return ::test(*this, value, m_minutes, m_seconds,
+        m_source->get().get_value_or(hours(0)) +
+          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
+    }
+
     QValidator::State set(const Type& value) {
       return ::set(*this, value, m_minutes, m_seconds,
         m_source->get().get_value_or(hours(0)) +
@@ -151,6 +174,12 @@ namespace {
 
     const optional<int>& get() const {
       return m_current;
+    }
+
+    QValidator::State test(const Type& value) const {
+      return ::test(*this, value, m_hours, m_seconds,
+        m_source->get().get_value_or(minutes(0)) +
+          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
 
     QValidator::State set(const Type& value) {
@@ -210,6 +239,13 @@ namespace {
 
     const optional<Decimal>& get() const {
       return m_current;
+    }
+
+    QValidator::State test(const Type& value) const {
+      return ::test(*this, value, m_hours, m_minutes,
+        m_source->get().get_value_or(seconds(0)) +
+          to_seconds(value.get_value_or(0)) -
+            to_seconds(m_current.get_value_or(0)));
     }
 
     QValidator::State set(const Type& value) {

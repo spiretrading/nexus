@@ -72,6 +72,8 @@ namespace Details {
 
       const Type& get() const override;
 
+      QValidator::State test(const Type& value) const override;
+
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_update_signal(
@@ -80,7 +82,7 @@ namespace Details {
     private:
       std::shared_ptr<ValueModel<Source>> m_source;
       F m_f;
-      G m_g;
+      mutable G m_g;
       LocalValueModel<Type> m_model;
 
       void on_update(const Source& value);
@@ -119,8 +121,17 @@ namespace Details {
   }
 
   template<typename T, typename U, typename F, typename G>
-  QValidator::State TransformValueModel<T, U, F, G>::set(
-      const Type& value) {
+  QValidator::State TransformValueModel<T, U, F, G>::test(
+      const Type& value) const {
+    try {
+      return m_source->test(m_g(m_source->get(), value));
+    } catch(const std::invalid_argument&) {
+      return QValidator::State::Invalid;
+    }
+  }
+
+  template<typename T, typename U, typename F, typename G>
+  QValidator::State TransformValueModel<T, U, F, G>::set(const Type& value) {
     try {
       return m_source->set(m_g(m_source->get(), value));
     } catch(const std::invalid_argument&) {

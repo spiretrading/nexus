@@ -67,6 +67,10 @@ class BooleanListValueModel : public BooleanModel {
       return std::any_cast<const Type&>(m_source->get());
     }
 
+    QValidator::State test(const Type& value) const override {
+      return m_source->test(value);
+    }
+
     QValidator::State set(const Type& value) override {
       return m_source->set(value);
     }

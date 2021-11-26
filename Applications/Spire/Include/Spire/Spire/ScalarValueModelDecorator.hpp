@@ -50,6 +50,8 @@ namespace Spire {
 
       const Type& get() const override;
 
+      QValidator::State test(const Type& value) const override;
+
       QValidator::State set(const Type& value) override;
 
       boost::signals2::connection connect_update_signal(
@@ -124,8 +126,8 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ScalarValueModelDecorator<T>::set(
-      const Type& value) {
+  QValidator::State ScalarValueModelDecorator<T>::test(
+      const Type& value) const {
     using namespace std;
     auto has_value = [&] {
       if constexpr(std::is_same_v<Scalar, Type>) {
@@ -154,14 +156,10 @@ namespace Spire {
         }
       }
     }
-    {
-      auto blocker = boost::signals2::shared_connection_block(m_connection);
-      m_state = m_model->set(value);
-    }
-    if(m_state == QValidator::State::Invalid) {
+    auto state = m_model->test(value);
+    if(state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
-    }
-    if(has_value) {
+    } else if(state == QValidator::Acceptable && has_value) {
       auto& unwrapped_value = [&] () -> decltype(auto) {
         if constexpr(std::is_same_v<Scalar, Type>) {
           return value;
@@ -171,10 +169,24 @@ namespace Spire {
       }();
       if(m_minimum && unwrapped_value < *m_minimum ||
           m_maximum && unwrapped_value > *m_maximum) {
-        m_state = QValidator::Intermediate;
+        state = QValidator::Intermediate;
       }
     }
-    return m_state;
+    return state;
+  }
+
+  template<typename T>
+  QValidator::State ScalarValueModelDecorator<T>::set(const Type& value) {
+    auto state = test(value);
+    if(state == QValidator::State::Invalid) {
+      return QValidator::State::Invalid;
+    }
+    m_state = state;
+    {
+      auto blocker = boost::signals2::shared_connection_block(m_connection);
+      m_model->set(value);
+    }
+    return state;
   }
 
   template<typename T>
