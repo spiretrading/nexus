@@ -80,7 +80,11 @@ struct TextBox::TextValidator : QValidator {
     if(m_is_text_elided) {
       return QValidator::State::Acceptable;
     }
-    return m_model->test(input);
+    auto state = m_model->test(input);
+    if(state == QValidator::State::Invalid) {
+      return QValidator::State::Invalid;
+    }
+    return QValidator::State::Acceptable;
   }
 };
 
@@ -511,7 +515,7 @@ void TextBox::on_editing_finished() {
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  update_placeholder_text();
+  m_current->set(text);
 }
 
 void TextBox::on_style() {
