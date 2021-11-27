@@ -187,6 +187,13 @@ void ComboBox::on_query(
 }
 
 void ComboBox::on_drop_down_submit(const std::any& submission) {
+  {
+    auto blocker = shared_connection_block(m_input_connection);
+    auto text = displayTextAny(submission);
+    m_input_box->get_current()->set(text);
+    auto editor = m_input_box->findChild<QLineEdit*>();
+    editor->setCursorPosition(text.size());
+  }
   m_current->set(submission);
   m_submission = submission;
   m_drop_down_list->hide();
