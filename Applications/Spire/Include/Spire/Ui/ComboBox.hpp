@@ -131,12 +131,14 @@ namespace Spire {
       QString m_prefix;
       QString m_completion;
       boost::signals2::scoped_connection m_input_connection;
+      boost::signals2::scoped_connection m_current_connection;
 
       void update_completion();
       void on_input(const QString& query);
+      void on_submit(const QString& query);
       void on_query(
         std::uint32_t tag, Beam::Expect<std::vector<std::any>>&& result);
-      void on_selection(boost::optional<int> index);
+      void on_drop_down_current(boost::optional<int> index);
       void on_drop_down_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
   };
