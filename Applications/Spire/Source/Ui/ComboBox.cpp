@@ -206,6 +206,7 @@ void ComboBox::on_submit(const QString& query) {
   auto editor = m_input_box->findChild<QLineEdit*>();
   editor->setSelection(0, 0);
   editor->setCursorPosition(query.size());
+  m_drop_down_list->hide();
   m_submit_signal(value);
 }
 
