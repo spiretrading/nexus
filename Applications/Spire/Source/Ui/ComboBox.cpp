@@ -166,7 +166,8 @@ void ComboBox::update_completion() {
         auto blocker = shared_connection_block(m_input_connection);
         m_input_box->get_current()->set(query + completion);
       }
-      editor->setSelection(selection_start, completion.size());
+      editor->setSelection(
+        selection_start + completion.size(), -completion.size());
     }
     m_prefix = std::move(prefix);
     m_completion = std::move(completion);
