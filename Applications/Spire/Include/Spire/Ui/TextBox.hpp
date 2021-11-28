@@ -147,6 +147,7 @@ namespace Styles {
       QString m_submission;
       bool m_is_rejected;
       bool m_has_update;
+      bool m_is_handling_key_press;
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;

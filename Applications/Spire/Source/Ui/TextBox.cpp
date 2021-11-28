@@ -248,7 +248,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_current(std::move(current)),
       m_submission(m_current->get()),
       m_is_rejected(false),
-      m_has_update(false) {
+      m_has_update(false),
+      m_is_handling_key_press(false) {
   m_line_edit = new QLineEdit(m_current->get());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
@@ -354,13 +355,10 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       update_display_text();
     }
   } else if(event->type() == QEvent::KeyPress) {
-    auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
-      key_event.ignore();
+    if(!m_is_handling_key_press) {
+      QCoreApplication::sendEvent(this, event);
+      event->accept();
       return true;
-    } else if(key_event.key() == Qt::Key_Enter ||
-        key_event.key() == Qt::Key_Return) {
-      m_has_update = true;
     }
   } else if(event->type() == QEvent::Resize) {
     update_display_text();
@@ -388,6 +386,15 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
       m_current->set(m_submission);
       return;
     }
+  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    m_has_update = true;
+    on_editing_finished();
+    return;
+  } else if(!m_is_handling_key_press) {
+    m_is_handling_key_press = true;
+    QCoreApplication::sendEvent(m_line_edit, event);
+    m_is_handling_key_press = false;
+    return;
   }
   QWidget::keyPressEvent(event);
 }
