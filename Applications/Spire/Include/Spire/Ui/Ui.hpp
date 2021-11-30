@@ -67,6 +67,7 @@ namespace Spire {
   class TransitionWidget;
   class TranslatedTableModel;
   class Window;
+  class WindowObserver;
 
   /**
    * Draws a border inside the given region.
