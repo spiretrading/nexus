@@ -237,6 +237,9 @@ void ComboBox::on_query(
     m_drop_down_list->hide();
   } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
       !m_drop_down_list->isVisible()) {
+    auto blocker = shared_connection_block(m_current_connection);
+    m_drop_down_list->get_list_view().get_current()->set(none);
+    m_drop_down_list->get_list_view().get_selection()->set(none);
     m_drop_down_list->show();
   }
 }
@@ -245,12 +248,12 @@ void ComboBox::on_drop_down_current(optional<int> index) {
   if(index) {
     auto& value = m_drop_down_list->get_list_view().get_list()->at(*index);
     auto text = displayTextAny(value);
-    m_prefix = text;
-    m_completion.clear();
     {
       auto blocker = shared_connection_block(m_input_connection);
       m_input_box->get_current()->set(text);
     }
+    m_completion.clear();
+    m_prefix.clear();
     m_current->set(value);
   }
 }
