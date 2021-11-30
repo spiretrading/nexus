@@ -2,6 +2,7 @@
 #define SPIRE_OVERLAY_PANEL_HPP
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/WindowObserver.hpp"
 
 namespace Spire {
 
@@ -83,6 +84,8 @@ namespace Spire {
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
       FocusObserver m_focus_observer;
+      WindowObserver m_window_observer;
+      QWidget* m_window;
       boost::signals2::scoped_connection m_focus_connection;
       FocusObserver m_parent_focus_observer;
       boost::signals2::scoped_connection m_parent_focus_connection;
@@ -90,6 +93,7 @@ namespace Spire {
       void position();
       void on_focus(FocusObserver::State state);
       void on_parent_focus(FocusObserver::State state);
+      void on_window(QWidget* window);
       void update_mask();
   };
 }
