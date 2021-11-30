@@ -164,8 +164,8 @@ void ComboBox::update_completion() {
     }
     auto prefix = top_match.mid(0, query.size()).toLower();
     auto completion = top_match.mid(query.size());
-    if(!completion.isEmpty() && (m_prefix.isEmpty() ||
-        !completion.endsWith(m_completion) && !m_prefix.startsWith(prefix))) {
+    if(m_last_completion.size() < query.size()) {
+      m_last_completion = query;
       auto selection_start = query.size();
       {
         auto blocker = shared_connection_block(m_input_connection);
@@ -175,6 +175,8 @@ void ComboBox::update_completion() {
       editor->setSelection(
         selection_start + completion.size(), -completion.size());
       m_has_autocomplete_selection = true;
+    } else {
+      m_last_completion = query;
     }
     m_prefix = std::move(prefix);
     m_completion = std::move(completion);

@@ -130,6 +130,7 @@ namespace Spire {
       QtPromise<std::vector<std::any>> m_query_result;
       QString m_prefix;
       QString m_completion;
+      QString m_last_completion;
       bool m_has_autocomplete_selection;
       boost::signals2::scoped_connection m_input_connection;
       boost::signals2::scoped_connection m_current_connection;
