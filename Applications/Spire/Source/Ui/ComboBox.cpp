@@ -181,6 +181,7 @@ void ComboBox::update_completion() {
     m_prefix = std::move(prefix);
     m_completion = std::move(completion);
   } else {
+    m_last_completion.clear();
     m_prefix = m_input_box->get_current()->get();
     m_completion.clear();
   }
@@ -228,6 +229,7 @@ void ComboBox::on_submit(const QString& query) {
     m_has_autocomplete_selection = false;
     m_current->set(value);
   }
+  m_last_completion = query;
   m_prefix = query;
   m_completion.clear();
   auto editor = m_input_box->findChild<QLineEdit*>();
@@ -278,6 +280,7 @@ void ComboBox::on_drop_down_current(optional<int> index) {
       auto blocker = shared_connection_block(m_input_connection);
       m_input_box->get_current()->set(text);
     }
+    m_last_completion = text;
     m_completion.clear();
     m_prefix.clear();
     m_has_autocomplete_selection = false;
