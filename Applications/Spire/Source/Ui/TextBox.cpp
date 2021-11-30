@@ -245,15 +245,18 @@ TextBox::TextBox(QString current, QWidget* parent)
 
 TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
-      m_line_edit_styles([=] { commit_style(); }),
       m_current(std::move(current)),
       m_submission(m_current->get()),
+      m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_is_rejected(false),
-      m_has_update(false) {
+      m_has_update(false),
+      m_line_edit_styles([=] { commit_style(); }) {
   m_line_edit = new QLineEdit(m_current->get());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto& highlight = m_highlight->get();
+  m_line_edit->setSelection(highlight.m_start, highlight.m_end);
   m_text_validator = new TextValidator(m_current, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
@@ -275,6 +278,10 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
+  connect(m_line_edit, &QLineEdit::selectionChanged, this,
+    std::bind_front(&TextBox::on_selection, this));
+  m_highlight->connect_update_signal(
+    std::bind_front(&TextBox::on_highlight, this));
 }
 
 const std::shared_ptr<TextModel>& TextBox::get_current() const {
@@ -516,6 +523,23 @@ void TextBox::on_editing_finished() {
 
 void TextBox::on_text_edited(const QString& text) {
   m_current->set(text);
+}
+
+void TextBox::on_selection() {
+  if(m_highlight->get() ==
+      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
+    return;
+  }
+  m_highlight->set(
+    {m_line_edit->selectionStart(), m_line_edit->selectionEnd()});
+}
+
+void TextBox::on_highlight(const Highlight& highlight) {
+  if(highlight ==
+      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
+    return;
+  }
+  m_line_edit->setSelection(highlight.m_start, highlight.m_end);
 }
 
 void TextBox::on_style() {

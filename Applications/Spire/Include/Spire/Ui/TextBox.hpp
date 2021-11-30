@@ -51,6 +51,29 @@ namespace Styles {
   /** A LocalValueModel over an optional QString. */
   using LocalOptionalTextModel = LocalValueModel<boost::optional<QString>>;
 
+  /**
+   * Stores the range of text currently highlighted. Can also be used to
+   * determine the position of the caret. If the end of the Highlight comes
+   * before the start, then the caret is positioned at the beginning of the
+   * highlighted range, otherwise the caret is positioned at the end.
+   */
+  struct Highlight {
+
+    /** The start of the highlight. */
+    int m_start;
+
+    /**
+     * The end of the highlight (inclusive). Also represents the position of the
+     * caret.
+     */
+    int m_end;
+
+    auto operator <=>(const Highlight&) const = default;
+  };
+
+  /** A value model over a Highlight. */
+  using HighlightModel = ValueModel<Highlight>;
+
   /** Displays a single line of text within a box. */
   class TextBox : public QWidget {
     public:
@@ -93,6 +116,9 @@ namespace Styles {
 
       /** Returns the last submitted value. */
       const QString& get_submission() const;
+
+      /** Returns the highlight model. */
+      std::shared_ptr<HighlightModel> get_highlight() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& placeholder);
@@ -137,16 +163,17 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
-      QLineEdit* m_line_edit;
-      TextValidator* m_text_validator;
-      PlaceholderBox* m_box;
+      QString m_submission;
+      std::shared_ptr<HighlightModel> m_highlight;
+      bool m_is_rejected;
+      bool m_has_update;
       StyleProperties m_line_edit_styles;
+      TextValidator* m_text_validator;
+      QLineEdit* m_line_edit;
+      PlaceholderBox* m_box;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
-      QString m_submission;
-      bool m_is_rejected;
-      bool m_has_update;
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
@@ -158,6 +185,8 @@ namespace Styles {
       void on_current(const QString& current);
       void on_editing_finished();
       void on_text_edited(const QString& text);
+      void on_selection();
+      void on_highlight(const Highlight& highlight);
       void on_style();
   };
 
