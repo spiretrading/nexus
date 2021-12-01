@@ -129,7 +129,8 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
 
 void ComboBox::keyPressEvent(QKeyEvent* event) {
   if(m_drop_down_list->isVisible() &&
-      (event->key() == Qt::Key_Down || event->key() == Qt::Key_Up)) {
+      (event->key() == Qt::Key_Down || event->key() == Qt::Key_Up ||
+      event->key() == Qt::Key_PageUp || event->key() == Qt::Key_PageDown)) {
     QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
   }
   if(event->key() == Qt::Key_Down || event->key() == Qt::Key_Up) {
