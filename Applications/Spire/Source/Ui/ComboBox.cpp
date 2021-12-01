@@ -47,9 +47,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::bind_front(&ComboBox::on_submit, this));
   m_input_connection = m_input_box->get_current()->connect_update_signal(
     std::bind_front(&ComboBox::on_input, this));
-  auto editor = m_input_box->findChild<QLineEdit*>();
-  connect(editor, &QLineEdit::selectionChanged, this,
-    std::bind_front(&ComboBox::on_selection, this));
+  m_input_box->get_highlight()->connect_update_signal(
+    std::bind_front(&ComboBox::on_highlight, this));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -149,9 +148,9 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
 
 void ComboBox::update_completion() {
   if(m_matches->get_size() != 0) {
-    auto editor = m_input_box->findChild<QLineEdit*>();
+    auto& highlight = *m_input_box->get_highlight();
     auto& query = m_input_box->get_current()->get();
-    if(editor->cursorPosition() != query.size()) {
+    if(highlight.get().m_end != query.size()) {
       m_prefix.clear();
       m_completion.clear();
       return;
@@ -172,8 +171,7 @@ void ComboBox::update_completion() {
         m_input_box->get_current()->set(query + completion);
       }
       m_has_autocomplete_selection = false;
-      editor->setSelection(
-        selection_start + completion.size(), -completion.size());
+      highlight.set({selection_start + completion.size(), selection_start});
       m_has_autocomplete_selection = true;
     } else {
       m_last_completion = query;
@@ -203,7 +201,7 @@ void ComboBox::on_input(const QString& query) {
   }
 }
 
-void ComboBox::on_selection() {
+void ComboBox::on_highlight(const Highlight& highlight) {
   if(!m_has_autocomplete_selection) {
     return;
   }
@@ -232,9 +230,7 @@ void ComboBox::on_submit(const QString& query) {
   m_last_completion = query;
   m_prefix = query;
   m_completion.clear();
-  auto editor = m_input_box->findChild<QLineEdit*>();
-  editor->setSelection(0, 0);
-  editor->setCursorPosition(query.size());
+  m_input_box->get_highlight()->set(Highlight(query.size()));
   m_drop_down_list->hide();
   m_submit_signal(value);
 }
@@ -294,8 +290,7 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
     auto text = displayTextAny(submission);
     m_input_box->get_current()->set(text);
     m_has_autocomplete_selection = false;
-    auto editor = m_input_box->findChild<QLineEdit*>();
-    editor->setCursorPosition(text.size());
+    m_input_box->get_highlight()->set(Highlight(text.size()));
   }
   m_current->set(submission);
   m_submission = submission;

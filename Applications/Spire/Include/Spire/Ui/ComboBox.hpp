@@ -137,7 +137,7 @@ namespace Spire {
 
       void update_completion();
       void on_input(const QString& query);
-      void on_selection();
+      void on_highlight(const Highlight& highlight);
       void on_submit(const QString& query);
       void on_query(
         std::uint32_t tag, Beam::Expect<std::vector<std::any>>&& result);

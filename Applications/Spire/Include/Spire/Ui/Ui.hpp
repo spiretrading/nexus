@@ -32,6 +32,7 @@ namespace Spire {
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
+  struct Highlight;
   class HoverObserver;
   class Icon;
   class InfoTip;
