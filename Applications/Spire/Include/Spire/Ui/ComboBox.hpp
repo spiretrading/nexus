@@ -133,9 +133,11 @@ namespace Spire {
       QString m_last_completion;
       bool m_has_autocomplete_selection;
       boost::signals2::scoped_connection m_input_connection;
+      boost::signals2::scoped_connection m_highlight_connection;
       boost::signals2::scoped_connection m_current_connection;
 
       void update_completion();
+      void revert_current();
       void on_input(const QString& query);
       void on_highlight(const Highlight& highlight);
       void on_submit(const QString& query);

@@ -47,7 +47,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::bind_front(&ComboBox::on_submit, this));
   m_input_connection = m_input_box->get_current()->connect_update_signal(
     std::bind_front(&ComboBox::on_input, this));
-  m_input_box->get_highlight()->connect_update_signal(
+  m_highlight_connection = m_input_box->get_highlight()->connect_update_signal(
     std::bind_front(&ComboBox::on_highlight, this));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -111,15 +111,7 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
       auto& key_event = static_cast<QKeyEvent&>(*event);
       if(key_event.key() == Qt::Key_Escape && m_drop_down_list->isVisible()) {
         m_drop_down_list->hide();
-        auto& list_view = m_drop_down_list->get_list_view();
-        list_view.get_current()->set(none);
-        list_view.get_selection()->set(none);
-        if(m_user_query) {
-          auto blocker = shared_connection_block(m_input_connection);
-          m_input_box->get_current()->set(*m_user_query);
-          m_has_autocomplete_selection = false;
-          update_completion();
-        }
+        revert_current();
         return true;
       }
     }
@@ -131,7 +123,13 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
   if(m_drop_down_list->isVisible() &&
       (event->key() == Qt::Key_Down || event->key() == Qt::Key_Up ||
       event->key() == Qt::Key_PageUp || event->key() == Qt::Key_PageDown)) {
+    auto is_top_current =
+      m_drop_down_list->get_list_view().get_current()->get() == 0;
     QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
+    if(event->key() == Qt::Key_Up && is_top_current &&
+        m_drop_down_list->get_list_view().get_current()->get() == 0) {
+      revert_current();
+    }
   }
   if(event->key() == Qt::Key_Down || event->key() == Qt::Key_Up) {
     m_drop_down_list->setVisible(
@@ -183,6 +181,21 @@ void ComboBox::update_completion() {
     m_last_completion.clear();
     m_prefix = m_input_box->get_current()->get();
     m_completion.clear();
+  }
+}
+
+void ComboBox::revert_current() {
+  auto& list_view = m_drop_down_list->get_list_view();
+  list_view.get_current()->set(none);
+  list_view.get_selection()->set(none);
+  if(m_user_query) {
+    auto blocker = shared_connection_block(m_input_connection);
+    m_input_box->get_current()->set(*m_user_query);
+    m_has_autocomplete_selection = false;
+    m_last_completion.clear();
+    m_prefix = *m_user_query;
+    m_completion.clear();
+    update_completion();
   }
 }
 
@@ -274,7 +287,8 @@ void ComboBox::on_drop_down_current(optional<int> index) {
     auto& value = m_drop_down_list->get_list_view().get_list()->at(*index);
     auto text = displayTextAny(value);
     {
-      auto blocker = shared_connection_block(m_input_connection);
+      auto input_blocker = shared_connection_block(m_input_connection);
+      auto highlight_blocker = shared_connection_block(m_highlight_connection);
       m_input_box->get_current()->set(text);
     }
     m_last_completion = text;
@@ -287,7 +301,8 @@ void ComboBox::on_drop_down_current(optional<int> index) {
 
 void ComboBox::on_drop_down_submit(const std::any& submission) {
   {
-    auto blocker = shared_connection_block(m_input_connection);
+    auto input_blocker = shared_connection_block(m_input_connection);
+    auto highlight_blocker = shared_connection_block(m_highlight_connection);
     auto text = displayTextAny(submission);
     m_input_box->get_current()->set(text);
     m_has_autocomplete_selection = false;
