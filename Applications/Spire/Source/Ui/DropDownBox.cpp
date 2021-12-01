@@ -142,19 +142,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         auto key = static_cast<QKeyEvent*>(event)->key();
         if(key == Qt::Key_Escape) {
           revert_current();
-        } else {
-          auto is_next = [&] {
-            if(key == Qt::Key_Tab) {
-              return optional<bool>(true);
-            } else if(key == Qt::Key_Backtab) {
-              return optional<bool>(false);
-            }
-            return optional<bool>();
-          }();
-          if(is_next) {
-            m_drop_down_list->hide();
-            focusNextPrevChild(*is_next);
-          }
         }
       }
     }

@@ -67,6 +67,24 @@ namespace {
   }
 }
 
+Highlight::Highlight()
+  : Highlight(0) {}
+
+Highlight::Highlight(int position)
+  : Highlight(position, position) {}
+
+Highlight::Highlight(int start, int end)
+  : m_start(start),
+    m_end(end) {}
+
+bool Spire::is_collapsed(const Highlight& highlight) {
+  return highlight.m_start == highlight.m_end;
+}
+
+int Spire::get_size(const Highlight& highlight) {
+  return highlight.m_end - highlight.m_start;
+}
+
 struct TextBox::TextValidator : QValidator {
   std::shared_ptr<TextModel> m_model;
   bool m_is_text_elided;
@@ -80,8 +98,7 @@ struct TextBox::TextValidator : QValidator {
     if(m_is_text_elided) {
       return QValidator::State::Acceptable;
     }
-    auto state = m_model->test(input);
-    if(state == QValidator::State::Invalid) {
+    if(m_model->test(input) == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
     }
     return QValidator::State::Acceptable;
@@ -250,13 +267,15 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_is_rejected(false),
       m_has_update(false),
+      m_is_handling_key_press(false),
       m_line_edit_styles([=] { commit_style(); }) {
   m_line_edit = new QLineEdit(m_current->get());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto& highlight = m_highlight->get();
-  m_line_edit->setSelection(highlight.m_start, highlight.m_end);
+  m_line_edit->setCursorPosition(highlight.m_end);
+  m_line_edit->setSelection(highlight.m_start, get_size(highlight));
   m_text_validator = new TextValidator(m_current, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
@@ -278,6 +297,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
+  connect(m_line_edit, &QLineEdit::cursorPositionChanged, this,
+    std::bind_front(&TextBox::on_cursor_position, this));
   connect(m_line_edit, &QLineEdit::selectionChanged, this,
     std::bind_front(&TextBox::on_selection, this));
   m_highlight->connect_update_signal(
@@ -290,6 +311,10 @@ const std::shared_ptr<TextModel>& TextBox::get_current() const {
 
 const QString& TextBox::get_submission() const {
   return m_submission;
+}
+
+const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
+  return m_highlight;
 }
 
 void TextBox::set_placeholder(const QString& placeholder) {
@@ -362,13 +387,10 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       update_display_text();
     }
   } else if(event->type() == QEvent::KeyPress) {
-    auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
-      key_event.ignore();
+    if(!m_is_handling_key_press) {
+      QCoreApplication::sendEvent(this, event);
+      event->accept();
       return true;
-    } else if(key_event.key() == Qt::Key_Enter ||
-        key_event.key() == Qt::Key_Return) {
-      m_has_update = true;
     }
   } else if(event->type() == QEvent::Resize) {
     update_display_text();
@@ -396,6 +418,15 @@ void TextBox::keyPressEvent(QKeyEvent* event) {
       m_current->set(m_submission);
       return;
     }
+  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    m_has_update = true;
+    on_editing_finished();
+    return;
+  } else if(!m_is_handling_key_press) {
+    m_is_handling_key_press = true;
+    QCoreApplication::sendEvent(m_line_edit, event);
+    m_is_handling_key_press = false;
+    return;
   }
   QWidget::keyPressEvent(event);
 }
@@ -525,21 +556,34 @@ void TextBox::on_text_edited(const QString& text) {
   m_current->set(text);
 }
 
-void TextBox::on_selection() {
-  if(m_highlight->get() ==
-      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
-    return;
+void TextBox::on_cursor_position(int old_position, int new_position) {
+  if(m_line_edit->hasSelectedText()) {
+    on_selection();
+  } else if(m_highlight->get() != Highlight(m_line_edit->cursorPosition())) {
+    m_highlight->set(Highlight(m_line_edit->cursorPosition()));
   }
-  m_highlight->set(
-    {m_line_edit->selectionStart(), m_line_edit->selectionEnd()});
+}
+
+void TextBox::on_selection() {
+  if(!m_line_edit->hasSelectedText()) {
+    on_cursor_position(0, m_line_edit->cursorPosition());
+  } else if(m_highlight->get() !=
+      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
+    m_highlight->set(
+      {m_line_edit->selectionStart(), m_line_edit->selectionEnd()});
+  }
 }
 
 void TextBox::on_highlight(const Highlight& highlight) {
-  if(highlight ==
+  if(is_collapsed(highlight)) {
+    auto blocker = QSignalBlocker(m_line_edit);
+    m_line_edit->deselect();
+    m_line_edit->setCursorPosition(highlight.m_end);
+  } else if(highlight !=
       Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
-    return;
+    auto blocker = QSignalBlocker(m_line_edit);
+    m_line_edit->setSelection(highlight.m_start, get_size(highlight));
   }
-  m_line_edit->setSelection(highlight.m_start, highlight.m_end);
 }
 
 void TextBox::on_style() {

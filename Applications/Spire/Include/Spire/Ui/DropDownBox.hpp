@@ -19,19 +19,13 @@ namespace Styles {
   class DropDownBox : public QWidget {
     public:
 
-      /**
-       * The type of model representing the index of the current value.
-       */
+      /** The type of model representing the index of the current value. */
       using CurrentModel = ListView::CurrentModel;
 
-      /**
-       * The type of model representing the index of the selected value.
-       */
+      /** The type of model representing the index of the selected value. */
       using SelectionModel = ListView::SelectionModel;
 
-      /**
-       * The type of function used to build a QWidget representing a value.
-       */
+      /** The type of function used to build a QWidget representing a value. */
       using ViewBuilder = ListView::ViewBuilder;
 
       /**
