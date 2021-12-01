@@ -119,6 +119,7 @@ namespace Spire {
       std::shared_ptr<QueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
       std::any m_submission;
+      QString m_submission_text;
       bool m_is_read_only;
       TextBox* m_input_box;
       ListView* m_list_view;
@@ -137,7 +138,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_current_connection;
 
       void update_completion();
-      void revert_to(const QString& query);
+      void revert_to(const QString& query, bool autocomplete);
       void revert_current();
       void submit(const QString& query, bool is_passive = false);
       void on_input(const QString& query);
