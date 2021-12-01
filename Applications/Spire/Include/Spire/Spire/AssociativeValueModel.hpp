@@ -76,6 +76,8 @@ namespace Spire {
       /** Returns the AssociativeValueModel's value. */
       const Type& get() const override;
 
+      QValidator::State test(const Type& value) const override;
+
       /**
        * Sets the value iff a model is associated with the value.
        * @param value The value to set.
@@ -96,6 +98,7 @@ namespace Spire {
         void signal() const;
         QValidator::State get_state() const override;
         const Type& get() const override;
+        QValidator::State test(const Type& value) const override;
         QValidator::State set(const Type& value) override;
         boost::signals2::connection connect_update_signal(
           const typename UpdateSignal::slot_type& slot) const override;
@@ -163,6 +166,15 @@ namespace Spire {
   }
 
   template<typename T>
+  QValidator::State AssociativeValueModel<T>::test(const Type& value) const {
+    auto i = m_models.find(value);
+    if(i == m_models.end()) {
+      return QValidator::Invalid;
+    }
+    return QValidator::Acceptable;
+  }
+
+  template<typename T>
   QValidator::State AssociativeValueModel<T>::set(const Type& value) {
     auto i = m_models.find(value);
     if(i == m_models.end()) {
@@ -218,6 +230,12 @@ namespace Spire {
   const typename AssociativeValueModel<T>::InnerModel::Type&
       AssociativeValueModel<T>::InnerModel::get() const {
     return m_current;
+  }
+
+  template<typename T>
+  QValidator::State AssociativeValueModel<T>::InnerModel::test(
+      const Type& value) const {
+    return QValidator::State::Acceptable;
   }
 
   template<typename T>

@@ -177,6 +177,10 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     return m_current.get();
   }
 
+  QValidator::State test(const Type& value) const {
+    return QValidator::State::Acceptable;
+  }
+
   QValidator::State set(const Type& value) {
     m_state = QValidator::State::Acceptable;
     m_current.set(value);

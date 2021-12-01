@@ -19,6 +19,7 @@ namespace Spire {
   class CheckBox;
   class ClosedFilterPanel;
   class ColumnViewListModel;
+  class ComboBox;
   class DateBox;
   class DateFilterPanel;
   class DecimalBox;
@@ -32,6 +33,7 @@ namespace Spire {
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
+  struct Highlight;
   class HoverObserver;
   class Icon;
   class InfoTip;
@@ -67,6 +69,7 @@ namespace Spire {
   class TransitionWidget;
   class TranslatedTableModel;
   class Window;
+  class WindowObserver;
 
   /**
    * Draws a border inside the given region.

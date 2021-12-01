@@ -30,8 +30,6 @@ namespace Spire {
 
       const Type& get() const override;
 
-      QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
@@ -61,11 +59,6 @@ namespace Spire {
   const typename ConstantValueModel<T>::Type&
       ConstantValueModel<T>::get() const {
     return m_value;
-  }
-
-  template<typename T>
-  QValidator::State ConstantValueModel<T>::set(const Type& value) {
-    return QValidator::State::Invalid;
   }
 
   template<typename T>

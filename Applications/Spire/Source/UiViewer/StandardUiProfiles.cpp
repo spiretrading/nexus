@@ -22,6 +22,7 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
+#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
@@ -633,6 +634,55 @@ UiProfile Spire::make_closed_filter_panel_profile() {
         panel->show();
       });
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_combo_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile(QString::fromUtf8("ComboBox"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<LocalComboBoxQueryModel>();
+      model->add(QString("Almond"));
+      model->add(QString("Amber"));
+      model->add(QString("Amberose"));
+      model->add(QString("Apple"));
+      model->add(QString("Beige"));
+      model->add(QString("Bronze"));
+      model->add(QString("Brown"));
+      model->add(QString("Black"));
+      model->add(QString("Car"));
+      auto box = new ComboBox(model);
+      box->setFixedWidth(scale_width(112));
+      apply_widget_properties(box, profile.get_properties());
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& current) {
+        auto value = model->parse(current);
+        if(!value.has_value()) {
+          return;
+        }
+        if(!is_equal(box->get_current()->get(), value)) {
+          box->get_current()->set(value);
+        }
+      });
+      box->get_current()->connect_update_signal(
+        [&current] (const auto& value) {
+          auto text = displayTextAny(value);
+          if(text.toLower() != current.get().toLower()) {
+            current.set(text);
+          }
+        });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal(
+        std::bind_front(&ComboBox::set_read_only, box));
+      box->connect_submit_signal(profile.make_event_slot<std::any>(
+        QString::fromUtf8("Submit")));
+      box->get_current()->connect_update_signal(
+        profile.make_event_slot<std::any>(QString::fromUtf8("Current")));
+      return box;
     });
   return profile;
 }

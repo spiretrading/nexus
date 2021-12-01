@@ -35,6 +35,13 @@ namespace Spire {
       virtual const Type& get() const = 0;
 
       /**
+       * Tests if a value is valid, can be used to determine what a set
+       * operation would return without actually modifying the model.
+       * @param value The value to test.
+       */
+      virtual QValidator::State test(const Type& value) const;
+
+      /**
        * Sets the value. By default this operation is a no-op that always
        * returns <i>QValidator::State::Invalid</i>.
        */
@@ -57,6 +64,11 @@ namespace Spire {
   template<typename T>
   QValidator::State ValueModel<T>::get_state() const {
     return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  QValidator::State ValueModel<T>::test(const Type& value) const {
+    return QValidator::State::Invalid;
   }
 
   template<typename T>
