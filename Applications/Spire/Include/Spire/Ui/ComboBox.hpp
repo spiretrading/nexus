@@ -138,7 +138,7 @@ namespace Spire {
 
       void update_completion();
       void revert_current();
-      void submit(const QString& query);
+      void submit(const QString& query, bool is_passive = false);
       void on_input(const QString& query);
       void on_highlight(const Highlight& highlight);
       void on_submit(const QString& query);

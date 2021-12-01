@@ -199,9 +199,12 @@ void ComboBox::revert_current() {
   }
 }
 
-void ComboBox::submit(const QString& query) {
+void ComboBox::submit(const QString& query, bool is_passive) {
   auto value = m_query_model->parse(query);
   if(!value.has_value()) {
+    return;
+  }
+  if(is_passive && displayTextAny(value) == displayTextAny(m_submission)) {
     return;
   }
   if(!m_completion.isEmpty()) {
@@ -213,6 +216,7 @@ void ComboBox::submit(const QString& query) {
   m_last_completion = query;
   m_prefix = query;
   m_completion.clear();
+  m_submission = value;
   m_input_box->get_highlight()->set(Highlight(query.size()));
   m_drop_down_list->hide();
   m_submit_signal(value);
@@ -315,7 +319,6 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
     m_has_autocomplete_selection = false;
     m_input_box->get_highlight()->set(Highlight(text.size()));
   }
-  m_current->set(submission);
   m_submission = submission;
   m_drop_down_list->hide();
   m_submit_signal(submission);
@@ -324,7 +327,7 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
 void ComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     m_drop_down_list->hide();
-    submit(m_input_box->get_current()->get());
+    submit(m_input_box->get_current()->get(), true);
   }
 }
 
