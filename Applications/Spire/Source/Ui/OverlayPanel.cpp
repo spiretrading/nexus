@@ -60,11 +60,12 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
   box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  box->installEventFilter(this);
   setFocusProxy(box);
-  auto layout = new QHBoxLayout(this);
+  auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());
   layout->addWidget(box);
+  layout->addSpacerItem(
+    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   auto shadow = new QGraphicsDropShadowEffect();
@@ -128,14 +129,12 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       if(mouse_event.buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
-    } else if(event->type() == QEvent::Resize) {
-      auto& resize_event = static_cast<QResizeEvent&>(*event);
-      resize(resize_event.size());
     }
-  } else if(watched == m_window &&
-      (event->type() == QEvent::Move || event->type() == QEvent::Resize)) {
-    if(isVisible()) {
-      position();
+  } else if(watched == m_window) {
+    if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
+      if(isVisible()) {
+        position();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
