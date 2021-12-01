@@ -61,8 +61,6 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       std::bind_front(&ComboBox::on_drop_down_current, this));
   m_drop_down_list->get_list_view().connect_submit_signal(
     std::bind_front(&ComboBox::on_drop_down_submit, this));
-  m_focus_observer.connect_state_signal(
-    std::bind_front(&ComboBox::on_focus, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -231,6 +229,9 @@ void ComboBox::on_highlight(const Highlight& highlight) {
 }
 
 void ComboBox::on_submit(const QString& query) {
+  if(find_focus_state(*m_input_box) == FocusObserver::State::NONE) {
+    return;
+  }
   auto value = m_query_model->parse(query);
   if(!value.has_value()) {
     return;
@@ -312,12 +313,6 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
   m_submission = submission;
   m_drop_down_list->hide();
   m_submit_signal(submission);
-}
-
-void ComboBox::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
-    m_drop_down_list->hide();
-  }
 }
 
 LocalComboBoxQueryModel::LocalComboBoxQueryModel()

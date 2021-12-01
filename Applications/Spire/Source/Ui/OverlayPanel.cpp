@@ -134,7 +134,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_window &&
       (event->type() == QEvent::Move || event->type() == QEvent::Resize)) {
-    position();
+    if(isVisible()) {
+      position();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }

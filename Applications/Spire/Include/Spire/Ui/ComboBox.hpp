@@ -145,7 +145,6 @@ namespace Spire {
         std::uint32_t tag, Beam::Expect<std::vector<std::any>>&& result);
       void on_drop_down_current(boost::optional<int> index);
       void on_drop_down_submit(const std::any& submission);
-      void on_focus(FocusObserver::State state);
   };
 
   /**
