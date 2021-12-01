@@ -19,14 +19,14 @@ struct GlobalPositionObserver::EventFilter : QObject {
   QWidget* m_widget;
   QPoint m_position;
   std::unique_ptr<GlobalPositionObserver> m_parent_observer;
-  boost::signals2::scoped_connection m_parent_position_connection;
+  scoped_connection m_parent_position_connection;
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
         m_position(::get_position(*m_widget)) {
     m_widget->installEventFilter(this);
-    m_widget->connect(m_widget, &QObject::destroyed, this,
-      &EventFilter::on_widget_destroyed);
+    m_widget->connect(
+      m_widget, &QObject::destroyed, this, &EventFilter::on_widget_destroyed);
     observe_parent();
   }
 
