@@ -61,6 +61,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       std::bind_front(&ComboBox::on_drop_down_current, this));
   m_drop_down_list->get_list_view().connect_submit_signal(
     std::bind_front(&ComboBox::on_drop_down_submit, this));
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&ComboBox::on_focus, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& ComboBox::get_query_model() const {
@@ -197,6 +199,25 @@ void ComboBox::revert_current() {
   }
 }
 
+void ComboBox::submit(const QString& query) {
+  auto value = m_query_model->parse(query);
+  if(!value.has_value()) {
+    return;
+  }
+  if(!m_completion.isEmpty()) {
+    auto blocker = shared_connection_block(m_input_connection);
+    m_input_box->get_current()->set(query);
+    m_has_autocomplete_selection = false;
+    m_current->set(value);
+  }
+  m_last_completion = query;
+  m_prefix = query;
+  m_completion.clear();
+  m_input_box->get_highlight()->set(Highlight(query.size()));
+  m_drop_down_list->hide();
+  m_submit_signal(value);
+}
+
 void ComboBox::on_input(const QString& query) {
   m_user_query = query;
   m_has_autocomplete_selection = false;
@@ -232,22 +253,7 @@ void ComboBox::on_submit(const QString& query) {
   if(find_focus_state(*m_input_box) == FocusObserver::State::NONE) {
     return;
   }
-  auto value = m_query_model->parse(query);
-  if(!value.has_value()) {
-    return;
-  }
-  if(!m_completion.isEmpty()) {
-    auto blocker = shared_connection_block(m_input_connection);
-    m_input_box->get_current()->set(query);
-    m_has_autocomplete_selection = false;
-    m_current->set(value);
-  }
-  m_last_completion = query;
-  m_prefix = query;
-  m_completion.clear();
-  m_input_box->get_highlight()->set(Highlight(query.size()));
-  m_drop_down_list->hide();
-  m_submit_signal(value);
+  submit(query);
 }
 
 void ComboBox::on_query(
@@ -313,6 +319,13 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
   m_submission = submission;
   m_drop_down_list->hide();
   m_submit_signal(submission);
+}
+
+void ComboBox::on_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    m_drop_down_list->hide();
+    submit(m_input_box->get_current()->get());
+  }
 }
 
 LocalComboBoxQueryModel::LocalComboBoxQueryModel()
