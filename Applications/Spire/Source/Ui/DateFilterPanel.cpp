@@ -358,6 +358,7 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
   m_range_body = make_range_setting_body(*start_date_box, *end_date_box);
   layout->addWidget(m_range_body);
   on_date_range_type_current(m_type_button_group->get_current()->get());
+  window()->setWindowFlags(Qt::Tool | (window()->windowFlags() & ~Qt::Popup));
   window()->installEventFilter(this);
 }
 
@@ -390,6 +391,7 @@ bool DateFilterPanel::eventFilter(QObject* watched, QEvent* event) {
 bool DateFilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_filter_panel->show();
+    window()->activateWindow();
     m_type_button_group->get_current_button()->setFocus();
   } else if(event->type() == QEvent::HideToParent) {
     m_filter_panel->hide();
