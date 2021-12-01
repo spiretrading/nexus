@@ -109,9 +109,13 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == m_input_box) {
     if(event->type() == QEvent::KeyPress) {
       auto& key_event = static_cast<QKeyEvent&>(*event);
-      if(key_event.key() == Qt::Key_Escape && m_drop_down_list->isVisible()) {
-        m_drop_down_list->hide();
-        revert_current();
+      if(key_event.key() == Qt::Key_Escape) {
+        if(m_drop_down_list->isVisible()) {
+          m_drop_down_list->hide();
+          revert_current();
+        } else {
+          revert_to(displayTextAny(m_submission));
+        }
         return true;
       }
     }
@@ -184,18 +188,22 @@ void ComboBox::update_completion() {
   }
 }
 
+void ComboBox::revert_to(const QString& query) {
+  auto blocker = shared_connection_block(m_input_connection);
+  m_input_box->get_current()->set(query);
+  m_has_autocomplete_selection = false;
+  m_last_completion.clear();
+  m_prefix = query;
+  m_completion.clear();
+  update_completion();
+}
+
 void ComboBox::revert_current() {
   auto& list_view = m_drop_down_list->get_list_view();
   list_view.get_current()->set(none);
   list_view.get_selection()->set(none);
   if(m_user_query) {
-    auto blocker = shared_connection_block(m_input_connection);
-    m_input_box->get_current()->set(*m_user_query);
-    m_has_autocomplete_selection = false;
-    m_last_completion.clear();
-    m_prefix = *m_user_query;
-    m_completion.clear();
-    update_completion();
+    revert_to(*m_user_query);
   }
 }
 
@@ -219,6 +227,10 @@ void ComboBox::submit(const QString& query, bool is_passive) {
   m_submission = value;
   m_input_box->get_highlight()->set(Highlight(query.size()));
   m_drop_down_list->hide();
+  m_user_query = none;
+  m_query_result = m_query_model->submit(query);
+  m_query_result.then(
+    std::bind_front(&ComboBox::on_query, this, ++m_completion_tag, false));
   m_submit_signal(value);
 }
 
@@ -226,11 +238,11 @@ void ComboBox::on_input(const QString& query) {
   m_user_query = query;
   m_has_autocomplete_selection = false;
   if(query.isEmpty()) {
-    on_query(++m_completion_tag, std::vector<std::any>());
+    on_query(++m_completion_tag, true, std::vector<std::any>());
   } else {
     m_query_result = m_query_model->submit(query);
     m_query_result.then(
-      std::bind_front(&ComboBox::on_query, this, ++m_completion_tag));
+      std::bind_front(&ComboBox::on_query, this, ++m_completion_tag, true));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
       m_current->set(value);
@@ -261,7 +273,7 @@ void ComboBox::on_submit(const QString& query) {
 }
 
 void ComboBox::on_query(
-    std::uint32_t tag, Expect<std::vector<std::any>>&& result) {
+    std::uint32_t tag, bool show, Expect<std::vector<std::any>>&& result) {
   if(m_completion_tag != tag) {
     return;
   }
@@ -282,14 +294,16 @@ void ComboBox::on_query(
     }
   }
   update_completion();
-  if(selection.empty()) {
-    m_drop_down_list->hide();
-  } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
-      !m_drop_down_list->isVisible()) {
-    auto blocker = shared_connection_block(m_current_connection);
-    m_drop_down_list->get_list_view().get_current()->set(none);
-    m_drop_down_list->get_list_view().get_selection()->set(none);
-    m_drop_down_list->show();
+  if(show) {
+    if(selection.empty()) {
+      m_drop_down_list->hide();
+    } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
+        !m_drop_down_list->isVisible()) {
+      auto blocker = shared_connection_block(m_current_connection);
+      m_drop_down_list->get_list_view().get_current()->set(none);
+      m_drop_down_list->get_list_view().get_selection()->set(none);
+      m_drop_down_list->show();
+    }
   }
 }
 
@@ -320,6 +334,7 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
     m_input_box->get_highlight()->set(Highlight(text.size()));
   }
   m_submission = submission;
+  m_user_query = none;
   m_drop_down_list->hide();
   m_submit_signal(submission);
 }

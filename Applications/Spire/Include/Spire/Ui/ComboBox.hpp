@@ -137,13 +137,14 @@ namespace Spire {
       boost::signals2::scoped_connection m_current_connection;
 
       void update_completion();
+      void revert_to(const QString& query);
       void revert_current();
       void submit(const QString& query, bool is_passive = false);
       void on_input(const QString& query);
       void on_highlight(const Highlight& highlight);
       void on_submit(const QString& query);
-      void on_query(
-        std::uint32_t tag, Beam::Expect<std::vector<std::any>>&& result);
+      void on_query(std::uint32_t tag, bool show,
+        Beam::Expect<std::vector<std::any>>&& result);
       void on_drop_down_current(boost::optional<int> index);
       void on_drop_down_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
