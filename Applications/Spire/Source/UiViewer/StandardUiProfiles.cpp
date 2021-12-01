@@ -647,6 +647,7 @@ UiProfile Spire::make_combo_box_profile() {
       auto model = std::make_shared<LocalComboBoxQueryModel>();
       model->add(QString("Almond"));
       model->add(QString("Amber"));
+      model->add(QString("Amberose"));
       model->add(QString("Apple"));
       model->add(QString("Beige"));
       model->add(QString("Bronze"));

@@ -60,6 +60,7 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
   box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  box->installEventFilter(this);
   setFocusProxy(box);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());
@@ -119,17 +120,22 @@ void OverlayPanel::set_positioning(Positioning positioning) {
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
     if(event->type() == QEvent::MouseButtonPress) {
-      auto mouse_event = static_cast<QMouseEvent*>(event);
-      m_mouse_pressed_position = mouse_event->pos();
+      auto& mouse_event = static_cast<QMouseEvent&>(*event);
+      m_mouse_pressed_position = mouse_event.pos();
     } else if(event->type() == QEvent::MouseMove && m_is_draggable &&
         m_positioning != Positioning::PARENT) {
-      auto mouse_event = static_cast<QMouseEvent*>(event);
-      if(mouse_event->buttons() & Qt::LeftButton) {
-        move(pos() + (mouse_event->pos() - m_mouse_pressed_position));
+      auto& mouse_event = static_cast<QMouseEvent&>(*event);
+      if(mouse_event.buttons() & Qt::LeftButton) {
+        move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
     }
   } else if(watched == m_window && event->type() == QEvent::Move) {
     position();
+  } else {
+    if(event->type() == QEvent::Resize) {
+      auto& resize_event = static_cast<QResizeEvent&>(*event);
+      resize(resize_event.size());
+    }
   }
   return QWidget::eventFilter(watched, event);
 }

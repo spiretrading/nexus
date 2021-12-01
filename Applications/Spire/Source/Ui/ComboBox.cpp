@@ -34,7 +34,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_is_read_only(false),
       m_focus_observer(*this),
       m_matches(std::make_shared<ArrayListModel>()),
-      m_completion_tag(0) {
+      m_completion_tag(0),
+      m_has_autocomplete_selection(false) {
   update_style(*this, [] (auto& style) {
     style.get(FocusIn()).set(border_color(QColor(0x4B23A0)));
   });
@@ -46,6 +47,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::bind_front(&ComboBox::on_submit, this));
   m_input_connection = m_input_box->get_current()->connect_update_signal(
     std::bind_front(&ComboBox::on_input, this));
+  m_input_box->get_highlight()->connect_update_signal(
+    std::bind_front(&ComboBox::on_highlight, this));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -114,6 +117,7 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
         if(m_user_query) {
           auto blocker = shared_connection_block(m_input_connection);
           m_input_box->get_current()->set(*m_user_query);
+          m_has_autocomplete_selection = false;
           update_completion();
         }
         return true;
@@ -144,9 +148,9 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
 
 void ComboBox::update_completion() {
   if(m_matches->get_size() != 0) {
-    auto editor = m_input_box->findChild<QLineEdit*>();
+    auto& highlight = *m_input_box->get_highlight();
     auto& query = m_input_box->get_current()->get();
-    if(editor->cursorPosition() != query.size()) {
+    if(highlight.get().m_end != query.size()) {
       m_prefix.clear();
       m_completion.clear();
       return;
@@ -159,19 +163,23 @@ void ComboBox::update_completion() {
     }
     auto prefix = top_match.mid(0, query.size()).toLower();
     auto completion = top_match.mid(query.size());
-    if(!completion.isEmpty() && (m_prefix.isEmpty() ||
-        !completion.endsWith(m_completion) && !m_prefix.startsWith(prefix))) {
+    if(m_last_completion.size() < query.size()) {
+      m_last_completion = query;
       auto selection_start = query.size();
       {
         auto blocker = shared_connection_block(m_input_connection);
         m_input_box->get_current()->set(query + completion);
       }
-      editor->setSelection(
-        selection_start + completion.size(), -completion.size());
+      m_has_autocomplete_selection = false;
+      highlight.set({selection_start + completion.size(), selection_start});
+      m_has_autocomplete_selection = true;
+    } else {
+      m_last_completion = query;
     }
     m_prefix = std::move(prefix);
     m_completion = std::move(completion);
   } else {
+    m_last_completion.clear();
     m_prefix = m_input_box->get_current()->get();
     m_completion.clear();
   }
@@ -179,6 +187,7 @@ void ComboBox::update_completion() {
 
 void ComboBox::on_input(const QString& query) {
   m_user_query = query;
+  m_has_autocomplete_selection = false;
   if(query.isEmpty()) {
     on_query(++m_completion_tag, std::vector<std::any>());
   } else {
@@ -192,6 +201,21 @@ void ComboBox::on_input(const QString& query) {
   }
 }
 
+void ComboBox::on_highlight(const Highlight& highlight) {
+  if(!m_has_autocomplete_selection) {
+    return;
+  }
+  m_has_autocomplete_selection = false;
+  auto& query = m_input_box->get_current()->get();
+  auto value = m_query_model->parse(query);
+  if(!value.has_value()) {
+    return;
+  }
+  m_prefix = query;
+  m_completion.clear();
+  m_current->set(value);
+}
+
 void ComboBox::on_submit(const QString& query) {
   auto value = m_query_model->parse(query);
   if(!value.has_value()) {
@@ -200,13 +224,13 @@ void ComboBox::on_submit(const QString& query) {
   if(!m_completion.isEmpty()) {
     auto blocker = shared_connection_block(m_input_connection);
     m_input_box->get_current()->set(query);
+    m_has_autocomplete_selection = false;
     m_current->set(value);
   }
+  m_last_completion = query;
   m_prefix = query;
   m_completion.clear();
-  auto editor = m_input_box->findChild<QLineEdit*>();
-  editor->setSelection(0, 0);
-  editor->setCursorPosition(query.size());
+  m_input_box->get_highlight()->set(Highlight(query.size()));
   m_drop_down_list->hide();
   m_submit_signal(value);
 }
@@ -237,6 +261,9 @@ void ComboBox::on_query(
     m_drop_down_list->hide();
   } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
       !m_drop_down_list->isVisible()) {
+    auto blocker = shared_connection_block(m_current_connection);
+    m_drop_down_list->get_list_view().get_current()->set(none);
+    m_drop_down_list->get_list_view().get_selection()->set(none);
     m_drop_down_list->show();
   }
 }
@@ -245,12 +272,14 @@ void ComboBox::on_drop_down_current(optional<int> index) {
   if(index) {
     auto& value = m_drop_down_list->get_list_view().get_list()->at(*index);
     auto text = displayTextAny(value);
-    m_prefix = text;
-    m_completion.clear();
     {
       auto blocker = shared_connection_block(m_input_connection);
       m_input_box->get_current()->set(text);
     }
+    m_last_completion = text;
+    m_completion.clear();
+    m_prefix.clear();
+    m_has_autocomplete_selection = false;
     m_current->set(value);
   }
 }
@@ -260,8 +289,8 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
     auto blocker = shared_connection_block(m_input_connection);
     auto text = displayTextAny(submission);
     m_input_box->get_current()->set(text);
-    auto editor = m_input_box->findChild<QLineEdit*>();
-    editor->setCursorPosition(text.size());
+    m_has_autocomplete_selection = false;
+    m_input_box->get_highlight()->set(Highlight(text.size()));
   }
   m_current->set(submission);
   m_submission = submission;
