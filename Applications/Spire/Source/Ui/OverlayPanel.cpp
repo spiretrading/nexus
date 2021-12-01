@@ -128,14 +128,13 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       if(mouse_event.buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
-    }
-  } else if(watched == m_window && event->type() == QEvent::Move) {
-    position();
-  } else {
-    if(event->type() == QEvent::Resize) {
+    } else if(event->type() == QEvent::Resize) {
       auto& resize_event = static_cast<QResizeEvent&>(*event);
       resize(resize_event.size());
     }
+  } else if(watched == m_window &&
+      (event->type() == QEvent::Move || event->type() == QEvent::Resize)) {
+    position();
   }
   return QWidget::eventFilter(watched, event);
 }
