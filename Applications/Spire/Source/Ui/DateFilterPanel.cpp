@@ -23,7 +23,8 @@ namespace {
       set(BackgroundColor(QColor(0x7F5EEC))).
       set(TextColor(QColor(0xFFFFFF)));
     style.get((Checked() && Disabled()) / Body()).
-      set(BackgroundColor(QColor(0xC8C8C8)));
+      set(BackgroundColor(QColor(0xC8C8C8))).
+      set(TextColor(QColor(0xFFFFFF)));
     return style;
   }
 
