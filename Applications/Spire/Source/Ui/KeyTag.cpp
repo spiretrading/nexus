@@ -50,9 +50,9 @@ namespace {
 KeyTag::KeyTag(QWidget* parent)
   : KeyTag(std::make_shared<LocalKeyModel>(Qt::Key_unknown), parent) {}
 
-KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
+KeyTag::KeyTag(std::shared_ptr<KeyModel> current, QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)),
+      m_current(std::move(current)),
       m_state(State::DEFAULT) {
   setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
@@ -71,18 +71,18 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> model, QWidget* parent)
       set(BackgroundColor(ESCAPE_BACKGROUND_COLOR));
   });
   layout->addWidget(m_label);
-  m_current_connection = m_model->connect_current_signal([=] (auto key) {
-    on_current_key(key);
+  m_current_connection = m_current->connect_update_signal([=] (auto key) {
+    on_current(key);
   });
-  on_current_key(m_model->get_current());
+  on_current(m_current->get());
 }
 
-const std::shared_ptr<KeyModel>& KeyTag::get_model() const {
-  return m_model;
+const std::shared_ptr<KeyModel>& KeyTag::get_current() const {
+  return m_current;
 }
 
-void KeyTag::on_current_key(Qt::Key key) {
-  m_label->get_model()->set_current(get_key_text(key));
+void KeyTag::on_current(Qt::Key key) {
+  m_label->get_current()->set(get_key_text(key));
   switch(key) {
     case Qt::Key_Alt:
     case Qt::Key_Control:

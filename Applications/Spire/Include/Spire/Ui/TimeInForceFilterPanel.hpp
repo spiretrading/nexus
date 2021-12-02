@@ -21,11 +21,11 @@ namespace Spire {
 
   /**
    * Returns a new TimeInForceFilterPanel.
-   * @param selected_model A model including a list of selected values.
+   * @param selection A model including a list of selected values.
    * @param parent The parent widget.
    */
   TimeInForceFilterPanel* make_time_in_force_filter_panel(
-    std::shared_ptr<TimeInForceListModel> selected_model, QWidget& parent);
+    std::shared_ptr<TimeInForceListModel> selection, QWidget& parent);
 }
 
 #endif

@@ -34,10 +34,10 @@ namespace Details {
       using Scalar = Details::scalar_type_t<T>;
 
       /**
-       * Signals a change to the current value.
-       * @param current The current value.
+       * Signals a change to the value.
+       * @param value The updated value.
        */
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Returns the minimum scalar value or none if there is no minimum. */
       virtual boost::optional<Scalar> get_minimum() const;

@@ -21,7 +21,7 @@ namespace Spire {
     public:
       using Type = typename ValueModel<T>::Type;
 
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /**
        * Constructs a StagingValueModel.
@@ -30,29 +30,31 @@ namespace Spire {
       explicit StagingValueModel(std::shared_ptr<ValueModel<Type>> model);
 
       /**
-       * Commits the current value from this model up to the target model. If
-       * the target model rejects the value or there is nothing staged, then
-       * this is a no-op.
+       * Commits the value from this model up to the target model. If the
+       * target model rejects the value or there is nothing staged, then this
+       * is a no-op.
        * @return The state of the target model after the commit.
        */
       QValidator::State commit();
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State test(const Type& value) const override;
 
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      QValidator::State set(const Type& value) override;
+
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable typename CurrentSignal m_current_signal;
+      mutable typename UpdateSignal m_update_signal;
       std::shared_ptr<ValueModel<Type>> m_model;
-      boost::optional<Type> m_current;
-      boost::signals2::scoped_connection m_current_connection;
+      boost::optional<Type> m_value;
+      boost::signals2::scoped_connection m_update_connection;
 
-      void on_current(const Type& current);
+      void on_update(const Type& value);
   };
 
   template<typename T>
@@ -62,12 +64,12 @@ namespace Spire {
   StagingValueModel<T>::StagingValueModel(
     std::shared_ptr<ValueModel<Type>> model)
     : m_model(std::move(model)),
-      m_current_connection(m_model->connect_current_signal(
-        std::bind_front(&StagingValueModel::on_current, this))) {}
+      m_update_connection(m_model->connect_update_signal(
+        std::bind_front(&StagingValueModel::on_update, this))) {}
 
   template<typename T>
   QValidator::State StagingValueModel<T>::get_state() const {
-    if(m_current) {
+    if(m_value) {
       return QValidator::State::Intermediate;
     }
     return m_model->get_state();
@@ -75,46 +77,55 @@ namespace Spire {
 
   template<typename T>
   QValidator::State StagingValueModel<T>::commit() {
-    if(!m_current) {
+    if(!m_value) {
       return m_model->get_state();
     }
     auto state = [&] {
       auto blocker =
-        boost::signals2::shared_connection_block(m_current_connection);
-      return m_model->set_current(*m_current);
+        boost::signals2::shared_connection_block(m_update_connection);
+      return m_model->set(*m_value);
     }();
     if(state != QValidator::State::Invalid) {
-      m_current = boost::none;
+      m_value = boost::none;
     }
     return state;
   }
 
   template<typename T>
   const typename StagingValueModel<T>::Type&
-      StagingValueModel<T>::get_current() const {
-    if(m_current) {
-      return *m_current;
+      StagingValueModel<T>::get() const {
+    if(m_value) {
+      return *m_value;
     }
-    return m_model->get_current();
+    return m_model->get();
   }
 
   template<typename T>
-  QValidator::State StagingValueModel<T>::set_current(const Type& value) {
-    m_current = value;
-    m_current_signal(value);
+  QValidator::State StagingValueModel<T>::test(const Type& value) const {
+    if(m_model->test(value) == QValidator::State::Acceptable) {
+      return QValidator::State::Acceptable;
+    }
     return QValidator::State::Intermediate;
   }
 
   template<typename T>
-  boost::signals2::connection StagingValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+  QValidator::State StagingValueModel<T>::set(const Type& value) {
+    auto state = test(value);
+    m_value = value;
+    m_update_signal(value);
+    return state;
   }
 
   template<typename T>
-  void StagingValueModel<T>::on_current(const Type& current) {
-    m_current = boost::none;
-    m_current_signal(current);
+  boost::signals2::connection StagingValueModel<T>::connect_update_signal(
+      const typename UpdateSignal::slot_type& slot) const {
+    return m_update_signal.connect(slot);
+  }
+
+  template<typename T>
+  void StagingValueModel<T>::on_update(const Type& value) {
+    m_value = boost::none;
+    m_update_signal(value);
   }
 }
 

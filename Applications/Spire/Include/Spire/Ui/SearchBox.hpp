@@ -24,14 +24,14 @@ namespace Spire {
 
       /**
        * Constructs a SearchBox.
-       * @param model The current value's model.
+       * @param model The current value model.
        * @param parent The parent widget.
        */
-      explicit SearchBox(std::shared_ptr<TextModel> model,
-        QWidget* parent = nullptr);
+      explicit SearchBox(
+        std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model associated with the TextBox. */
-      const std::shared_ptr<TextModel>& get_model() const;
+      /** Returns the current value. */
+      const std::shared_ptr<TextModel>& get_current() const;
 
       /**
        * Sets the placeholder text.
@@ -44,9 +44,9 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      boost::signals2::scoped_connection m_current_connection;
       TextBox* m_text_box;
       Button* m_delete_button;
+      boost::signals2::scoped_connection m_current_connection;
 
       void on_current(const QString& current);
       void on_delete_button();

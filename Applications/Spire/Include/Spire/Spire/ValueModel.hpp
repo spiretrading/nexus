@@ -18,31 +18,38 @@ namespace Spire {
       using Type = T;
 
       /**
-       * Signals a change to the current value.
-       * @param current The current value.
+       * Signals a change to the value.
+       * @param value The updated value.
        */
-      using CurrentSignal = Signal<void (const Type&)>;
+      using UpdateSignal = Signal<void (const Type& value)>;
 
       virtual ~ValueModel() = default;
 
       /**
-       * Returns the state of the current value, by default this is
+       * Returns the state of the value, by default this is
        * <i>QValidator::State::Acceptable</i>
        */
       virtual QValidator::State get_state() const;
 
-      /** Returns the current value. */
-      virtual const Type& get_current() const = 0;
+      /** Returns the value. */
+      virtual const Type& get() const = 0;
 
       /**
-       * Sets the current value. By default this operation is a no-op that
-       * always returns <i>QValidator::State::Invalid</i>.
+       * Tests if a value is valid, can be used to determine what a set
+       * operation would return without actually modifying the model.
+       * @param value The value to test.
        */
-      virtual QValidator::State set_current(const Type& value);
+      virtual QValidator::State test(const Type& value) const;
 
-      /** Connects a slot to the CurrentSignal. */
-      virtual boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const = 0;
+      /**
+       * Sets the value. By default this operation is a no-op that always
+       * returns <i>QValidator::State::Invalid</i>.
+       */
+      virtual QValidator::State set(const Type& value);
+
+      /** Connects a slot to the UpdateSignal. */
+      virtual boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const = 0;
 
     protected:
 
@@ -60,7 +67,12 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ValueModel<T>::set_current(const Type& value) {
+  QValidator::State ValueModel<T>::test(const Type& value) const {
+    return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ValueModel<T>::set(const Type& value) {
     return QValidator::State::Invalid;
   }
 }

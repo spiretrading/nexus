@@ -37,14 +37,14 @@ namespace Styles {
 
       /**
        * Constructs a CheckBox.
-       * @param model The check state's model.
+       * @param current The current value model.
        * @param parent The parent widget.
        */
       explicit CheckBox(
-        std::shared_ptr<BooleanModel> model, QWidget* parent = nullptr);
+        std::shared_ptr<BooleanModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model. */
-      const std::shared_ptr<BooleanModel>& get_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<BooleanModel>& get_current() const;
 
       /**
        * Sets the text of the label.
@@ -63,13 +63,13 @@ namespace Styles {
       void changeEvent(QEvent* event) override;
 
     private:
-      std::shared_ptr<BooleanModel> m_model;
+      std::shared_ptr<BooleanModel> m_current;
       bool m_is_read_only;
       Icon* m_check;
       TextBox* m_label;
       boost::signals2::scoped_connection m_connection;
 
-      void on_checked(bool is_checked);
+      void on_current(bool current);
       void on_layout_direction(Qt::LayoutDirection direction);
   };
 

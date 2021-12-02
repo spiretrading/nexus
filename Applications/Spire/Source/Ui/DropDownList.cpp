@@ -1,6 +1,6 @@
 #include "Spire/Ui/DropDownList.hpp"
-#include <QEvent>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -18,6 +18,17 @@ namespace {
       set(border_size(0));
     return style;
   }
+
+  template<bool (QWidget::* method)(bool)>
+  struct FocusNext {
+    friend void focus_next(QWidget& widget, bool next) {
+      (widget.*method)(next);
+    }
+  };
+
+  template struct FocusNext<&QWidget::focusNextPrevChild>;
+
+  void focus_next(QWidget& widget, bool next);
 }
 
 DropDownList::DropDownList(ListView& list_view, QWidget& parent)
@@ -39,6 +50,10 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
     connect_style_signal(*m_panel, [=] { on_panel_style(); });
   parent.installEventFilter(this);
   m_scrollable_list_box->installEventFilter(this);
+}
+
+ListView& DropDownList::get_list_view() {
+  return *m_list_view;
 }
 
 QSize DropDownList::sizeHint() const {
@@ -68,7 +83,7 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
 
 bool DropDownList::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
-    if(m_list_view->get_list_model()->get_size() > 0) {
+    if(m_list_view->get_list()->get_size() > 0) {
       m_panel->show();
       auto margins = m_panel->layout()->contentsMargins();
       m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);
@@ -77,6 +92,26 @@ bool DropDownList::event(QEvent* event) {
     m_panel->hide();
   }
   return QWidget::event(event);
+}
+
+void DropDownList::keyPressEvent(QKeyEvent* event) {
+  if(!window()->parentWidget()) {
+    return QWidget::keyPressEvent(event);
+  }
+  auto is_next = [&] () -> optional<bool> {
+    if(event->key() == Qt::Key_Tab) {
+      return make_optional(true);
+    } else if(event->key() == Qt::Key_Backtab) {
+      return make_optional(false);
+    }
+    return none;
+  }();
+  if(is_next) {
+    hide();
+    focus_next(*window()->parentWidget(), *is_next);
+  } else {
+    return QWidget::keyPressEvent(event);
+  }
 }
 
 void DropDownList::on_panel_style() {

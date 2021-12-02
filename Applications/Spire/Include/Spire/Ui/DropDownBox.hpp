@@ -19,19 +19,13 @@ namespace Styles {
   class DropDownBox : public QWidget {
     public:
 
-      /**
-       * The type of model representing the index of the current value.
-       */
+      /** The type of model representing the index of the current value. */
       using CurrentModel = ListView::CurrentModel;
 
-      /**
-       * The type of model representing the index of the selected value.
-       */
+      /** The type of model representing the index of the selected value. */
       using SelectionModel = ListView::SelectionModel;
 
-      /**
-       * The type of function used to build a QWidget representing a value.
-       */
+      /** The type of function used to build a QWidget representing a value. */
       using ViewBuilder = ListView::ViewBuilder;
 
       /**
@@ -43,42 +37,42 @@ namespace Styles {
       /**
        * Constructs a DropDownBox using default local models and a default view
        * builder.
-       * @param list_model The model of values to display.
+       * @param list The model of list of values to display.
        * @param parent The parent widget.
        */
-      explicit DropDownBox(std::shared_ptr<ListModel> list_model,
-        QWidget* parent = nullptr);
+      explicit DropDownBox(
+        std::shared_ptr<ListModel> list, QWidget* parent = nullptr);
 
       /**
        * Constructs a DropDownBox using default local models.
-       * @param list_model The model of values to display.
+       * @param list The model of list of values to display.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list_model,
-        ViewBuilder view_builder, QWidget* parent = nullptr);
+      DropDownBox(std::shared_ptr<ListModel> list, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a DropDownBox.
-       * @param list_model The model of values to display.
-       * @param current_model The current value's model.
-       * @param selection_model The selection value's model.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param selection The selection model.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list_model,
-        std::shared_ptr<CurrentModel> current_model,
-        std::shared_ptr<SelectionModel> selection_model,
-        ViewBuilder view_builder, QWidget* parent = nullptr);
+      DropDownBox(std::shared_ptr<ListModel> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
 
-      /** Returns the list of selectable values. */
-      const std::shared_ptr<ListModel>& get_list_model() const;
+      /** Returns the model of list of values displayed. */
+      const std::shared_ptr<ListModel>& get_list() const;
 
-      /** Returns the current model. */
-      const std::shared_ptr<CurrentModel>& get_current_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<CurrentModel>& get_current() const;
 
       /** Returns the selection model. */
-      const std::shared_ptr<SelectionModel>& get_selection_model() const;
+      const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Returns <code>true</code> iff this DropDownBox is read-only. */
       bool is_read_only() const;

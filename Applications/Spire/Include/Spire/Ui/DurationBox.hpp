@@ -60,11 +60,11 @@ namespace Styles {
        * @param model The model used for the current value.
        * @param parent The parent widget.
        */
-      explicit DurationBox(std::shared_ptr<OptionalDurationModel> model,
+      explicit DurationBox(std::shared_ptr<OptionalDurationModel> current,
         QWidget* parent = nullptr);
 
-      /** Returns the model used for the current value. */
-      const std::shared_ptr<OptionalDurationModel>& get_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<OptionalDurationModel>& get_current() const;
 
       //! Returns <code>true</code> iff this box is read-only.
       bool is_read_only() const;
@@ -88,7 +88,7 @@ namespace Styles {
     private:
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
-      std::shared_ptr<OptionalDurationModel> m_model;
+      std::shared_ptr<OptionalDurationModel> m_current;
       boost::optional<boost::posix_time::time_duration> m_submission;
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;

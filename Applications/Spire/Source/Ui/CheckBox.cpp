@@ -53,9 +53,9 @@ namespace {
 CheckBox::CheckBox(QWidget* parent)
   : CheckBox(std::make_shared<LocalBooleanModel>(false), parent) {}
 
-CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
+CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)),
+      m_current(std::move(current)),
       m_is_read_only(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -64,7 +64,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   auto button = new Button(body, this);
   setFocusProxy(button);
   button->connect_clicked_signal([=] {
-    m_model->set_current(!m_model->get_current());
+    m_current->set(!m_current->get());
   });
   layout->addWidget(button);
   auto body_layout = new QHBoxLayout(body);
@@ -77,10 +77,10 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> model, QWidget* parent)
   body_layout->addWidget(check_box);
   m_label = make_label("", this);
   body_layout->addWidget(m_label);
-  m_connection = m_model->connect_current_signal([=] (auto is_checked) {
-    on_checked(is_checked);
+  m_connection = m_current->connect_update_signal([=] (auto current) {
+    on_current(current);
   });
-  on_checked(m_model->get_current());
+  on_current(m_current->get());
   set_style(*this, DEFAULT_STYLE());
   on_layout_direction(layoutDirection());
 }
@@ -91,12 +91,12 @@ void CheckBox::changeEvent(QEvent* event) {
   }
 }
 
-const std::shared_ptr<BooleanModel>& CheckBox::get_model() const {
-  return m_model;
+const std::shared_ptr<BooleanModel>& CheckBox::get_current() const {
+  return m_current;
 }
 
 void CheckBox::set_label(const QString& label) {
-  m_label->get_model()->set_current(label);
+  m_label->get_current()->set(label);
 }
 
 void CheckBox::set_read_only(bool is_read_only) {
@@ -114,8 +114,8 @@ void CheckBox::set_read_only(bool is_read_only) {
   }
 }
 
-void CheckBox::on_checked(bool is_checked) {
-  if(is_checked) {
+void CheckBox::on_current(bool current) {
+  if(current) {
     match(*this, Checked());
   } else {
     unmatch(*this, Checked());

@@ -16,54 +16,61 @@ namespace Spire {
     public:
       using Type = typename ValueModel<T>::Type;
 
-      using CurrentSignal = typename ValueModel<T>::CurrentSignal;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Constructs a default model. */
       LocalValueModel();
 
       /**
-       * Constructs a model with an initial current value.
-       * @param current The initial current value.
+       * Constructs a model with an initial value.
+       * @param value The initial value.
        */
-      LocalValueModel(Type current);
+      LocalValueModel(Type value);
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State test(const Type& value) const override;
 
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      QValidator::State set(const Type& value) override;
+
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable typename CurrentSignal m_current_signal;
-      Type m_current;
+      mutable typename UpdateSignal m_update_signal;
+      Type m_value;
   };
 
   template<typename T>
   LocalValueModel<T>::LocalValueModel()
-    : m_current() {}
+    : m_value() {}
 
   template<typename T>
-  LocalValueModel<T>::LocalValueModel(Type current)
-    : m_current(std::move(current)) {}
+  LocalValueModel<T>::LocalValueModel(Type value)
+    : m_value(std::move(value)) {}
 
   template<typename T>
   const typename LocalValueModel<T>::Type&
-      LocalValueModel<T>::get_current() const {
-    return m_current;
+      LocalValueModel<T>::get() const {
+    return m_value;
   }
 
   template<typename T>
-  QValidator::State LocalValueModel<T>::set_current(const Type& value) {
-    m_current = value;
-    m_current_signal(value);
+  QValidator::State LocalValueModel<T>::test(const Type& value) const {
     return QValidator::State::Acceptable;
   }
 
   template<typename T>
-  boost::signals2::connection LocalValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
-    return m_current_signal.connect(slot);
+  QValidator::State LocalValueModel<T>::set(const Type& value) {
+    m_value = value;
+    m_update_signal(value);
+    return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  boost::signals2::connection LocalValueModel<T>::connect_update_signal(
+      const typename UpdateSignal::slot_type& slot) const {
+    return m_update_signal.connect(slot);
   }
 }
 

@@ -17,11 +17,15 @@ namespace Spire {
        */
       explicit DropDownList(ListView& list_view, QWidget& parent);
 
+      /** Returns the ListView being displayed. */
+      ListView& get_list_view();
+
       QSize sizeHint() const override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       ListView* m_list_view;

@@ -41,14 +41,14 @@ namespace Styles {
 
       /**
        * Constructs a TextAreaBox.
-       * @param model The current value's model.
+       * @param current The current value model.
        * @param parent The parent widget.
        */
-      explicit TextAreaBox(std::shared_ptr<TextModel> model,
-        QWidget* parent = nullptr);
+      explicit TextAreaBox(
+        std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model. */
-      const std::shared_ptr<TextModel>& get_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<TextModel>& get_current() const;
 
       /** Returns the last submitted value. */
       const QString& get_submission() const;

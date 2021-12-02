@@ -67,6 +67,24 @@ namespace {
   }
 }
 
+Highlight::Highlight()
+  : Highlight(0) {}
+
+Highlight::Highlight(int position)
+  : Highlight(position, position) {}
+
+Highlight::Highlight(int start, int end)
+  : m_start(start),
+    m_end(end) {}
+
+bool Spire::is_collapsed(const Highlight& highlight) {
+  return highlight.m_start == highlight.m_end;
+}
+
+int Spire::get_size(const Highlight& highlight) {
+  return highlight.m_end - highlight.m_start;
+}
+
 struct TextBox::TextValidator : QValidator {
   std::shared_ptr<TextModel> m_model;
   bool m_is_text_elided;
@@ -80,18 +98,8 @@ struct TextBox::TextValidator : QValidator {
     if(m_is_text_elided) {
       return QValidator::State::Acceptable;
     }
-    if(input == m_model->get_current()) {
-      auto state = m_model->get_state();
-      if(state == QValidator::State::Invalid) {
-        return state;
-      }
-      return QValidator::State::Acceptable;
-    }
-    auto current = std::move(input);
-    auto state = m_model->set_current(current);
-    input = m_model->get_current();
-    if(state == QValidator::State::Invalid) {
-      return state;
+    if(m_model->test(input) == QValidator::State::Invalid) {
+      return QValidator::State::Invalid;
     }
     return QValidator::State::Acceptable;
   }
@@ -252,18 +260,23 @@ TextBox::TextBox(QWidget* parent)
 TextBox::TextBox(QString current, QWidget* parent)
   : TextBox(std::make_shared<LocalTextModel>(std::move(current)), parent) {}
 
-TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
+TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
-      m_line_edit_styles([=] { commit_style(); }),
-      m_model(std::move(model)),
-      m_submission(m_model->get_current()),
+      m_current(std::move(current)),
+      m_submission(m_current->get()),
+      m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_is_rejected(false),
-      m_has_update(false) {
-  m_line_edit = new QLineEdit(m_model->get_current());
+      m_has_update(false),
+      m_is_handling_key_press(false),
+      m_line_edit_styles([=] { commit_style(); }) {
+  m_line_edit = new QLineEdit(m_current->get());
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_text_validator = new TextValidator(m_model, this);
+  auto& highlight = m_highlight->get();
+  m_line_edit->setCursorPosition(highlight.m_end);
+  m_line_edit->setSelection(highlight.m_start, get_size(highlight));
+  m_text_validator = new TextValidator(m_current, this);
   m_line_edit->setValidator(m_text_validator);
   m_line_edit->installEventFilter(this);
   setCursor(m_line_edit->cursor());
@@ -282,16 +295,26 @@ TextBox::TextBox(std::shared_ptr<TextModel> model, QWidget* parent)
   connect(m_line_edit, &QLineEdit::editingFinished, this,
     &TextBox::on_editing_finished);
   connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
-  m_current_connection = m_model->connect_current_signal(
+  m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
+  connect(m_line_edit, &QLineEdit::cursorPositionChanged, this,
+    std::bind_front(&TextBox::on_cursor_position, this));
+  connect(m_line_edit, &QLineEdit::selectionChanged, this,
+    std::bind_front(&TextBox::on_selection, this));
+  m_highlight->connect_update_signal(
+    std::bind_front(&TextBox::on_highlight, this));
 }
 
-const std::shared_ptr<TextModel>& TextBox::get_model() const {
-  return m_model;
+const std::shared_ptr<TextModel>& TextBox::get_current() const {
+  return m_current;
 }
 
 const QString& TextBox::get_submission() const {
   return m_submission;
+}
+
+const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
+  return m_highlight;
 }
 
 void TextBox::set_placeholder(const QString& placeholder) {
@@ -340,7 +363,7 @@ QSize TextBox::sizeHint() const {
     return 1;
   }();
   m_size_hint.emplace(
-    m_line_edit->fontMetrics().horizontalAdvance(m_model->get_current()) +
+    m_line_edit->fontMetrics().horizontalAdvance(m_current->get()) +
       cursor_width, m_line_edit->fontMetrics().height());
   *m_size_hint += compute_decoration_size();
   return *m_size_hint;
@@ -352,8 +375,8 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
     if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
         focus_event->reason() != Qt::PopupFocusReason) {
       m_text_validator->m_is_text_elided = false;
-      if(m_line_edit->text() != m_model->get_current()) {
-        m_line_edit->setText(m_model->get_current());
+      if(m_line_edit->text() != m_current->get()) {
+        m_line_edit->setText(m_current->get());
       }
     }
   } else if(event->type() == QEvent::FocusOut) {
@@ -364,13 +387,10 @@ bool TextBox::eventFilter(QObject* watched, QEvent* event) {
       update_display_text();
     }
   } else if(event->type() == QEvent::KeyPress) {
-    auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
-      key_event.ignore();
+    if(!m_is_handling_key_press) {
+      QCoreApplication::sendEvent(this, event);
+      event->accept();
       return true;
-    } else if(key_event.key() == Qt::Key_Enter ||
-        key_event.key() == Qt::Key_Return) {
-      m_has_update = true;
     }
   } else if(event->type() == QEvent::Resize) {
     update_display_text();
@@ -394,10 +414,19 @@ void TextBox::mousePressEvent(QMouseEvent* event) {
 
 void TextBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
-    if(m_submission != m_model->get_current()) {
-      m_model->set_current(m_submission);
+    if(m_submission != m_current->get()) {
+      m_current->set(m_submission);
       return;
     }
+  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    m_has_update = true;
+    on_editing_finished();
+    return;
+  } else if(!m_is_handling_key_press) {
+    m_is_handling_key_press = true;
+    QCoreApplication::sendEvent(m_line_edit, event);
+    m_is_handling_key_press = false;
+    return;
   }
   QWidget::keyPressEvent(event);
 }
@@ -440,7 +469,7 @@ QSize TextBox::compute_decoration_size() const {
 }
 
 bool TextBox::is_placeholder_visible() const {
-  return !is_read_only() && m_model->get_current().isEmpty() &&
+  return !is_read_only() && m_current->get().isEmpty() &&
     !m_box->get_placeholder().isEmpty();
 }
 
@@ -448,8 +477,8 @@ void TextBox::elide_text() {
   auto font_metrics = m_line_edit->fontMetrics();
   auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
   auto elided_text = font_metrics.elidedText(
-    m_model->get_current(), Qt::ElideRight, rect.width());
-  m_text_validator->m_is_text_elided = elided_text != m_model->get_current();
+    m_current->get(), Qt::ElideRight, rect.width());
+  m_text_validator->m_is_text_elided = elided_text != m_current->get();
   if(elided_text != m_line_edit->text()) {
     m_line_edit->setText(elided_text);
     m_line_edit->setCursorPosition(0);
@@ -459,8 +488,8 @@ void TextBox::elide_text() {
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else if(m_line_edit->text() != m_model->get_current()) {
-    m_line_edit->setText(m_model->get_current());
+  } else if(m_line_edit->text() != m_current->get()) {
+    m_line_edit->setText(m_current->get());
   }
   m_size_hint = none;
   updateGeometry();
@@ -508,13 +537,13 @@ void TextBox::on_current(const QString& current) {
 
 void TextBox::on_editing_finished() {
   if(!is_read_only() && m_has_update) {
-    if(m_model->get_state() == QValidator::Acceptable) {
-      m_submission = m_model->get_current();
+    if(m_current->get_state() == QValidator::Acceptable) {
+      m_submission = m_current->get();
       m_has_update = false;
       m_submit_signal(m_submission);
     } else {
-      m_reject_signal(m_model->get_current());
-      m_model->set_current(m_submission);
+      m_reject_signal(m_current->get());
+      m_current->set(m_submission);
       if(!m_is_rejected) {
         m_is_rejected = true;
         match(*this, Rejected());
@@ -524,7 +553,37 @@ void TextBox::on_editing_finished() {
 }
 
 void TextBox::on_text_edited(const QString& text) {
-  update_placeholder_text();
+  m_current->set(text);
+}
+
+void TextBox::on_cursor_position(int old_position, int new_position) {
+  if(m_line_edit->hasSelectedText()) {
+    on_selection();
+  } else if(m_highlight->get() != Highlight(m_line_edit->cursorPosition())) {
+    m_highlight->set(Highlight(m_line_edit->cursorPosition()));
+  }
+}
+
+void TextBox::on_selection() {
+  if(!m_line_edit->hasSelectedText()) {
+    on_cursor_position(0, m_line_edit->cursorPosition());
+  } else if(m_highlight->get() !=
+      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
+    m_highlight->set(
+      {m_line_edit->selectionStart(), m_line_edit->selectionEnd()});
+  }
+}
+
+void TextBox::on_highlight(const Highlight& highlight) {
+  if(is_collapsed(highlight)) {
+    auto blocker = QSignalBlocker(m_line_edit);
+    m_line_edit->deselect();
+    m_line_edit->setCursorPosition(highlight.m_end);
+  } else if(highlight !=
+      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
+    auto blocker = QSignalBlocker(m_line_edit);
+    m_line_edit->setSelection(highlight.m_start, get_size(highlight));
+  }
 }
 
 void TextBox::on_style() {

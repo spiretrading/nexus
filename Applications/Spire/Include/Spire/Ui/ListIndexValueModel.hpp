@@ -43,17 +43,19 @@ namespace Details {
       QValidator::State get_state() const override;
 
       /** Returns the current value. */
-      const boost::optional<int>& get_current() const override;
+      const boost::optional<int>& get() const override;
+
+      QValidator::State test(const boost::optional<int>& value) const override;
 
       /**
        * Sets the current value. By default this operation is a no-op that
        * always returns <i>QValidator::State::Invalid</i>.
        */
-      QValidator::State set_current(const boost::optional<int>& value) override;
+      QValidator::State set(const boost::optional<int>& value) override;
 
-      /** Connects a slot to the CurrentSignal. */
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      /** Connects a slot to the UpdateSignal. */
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       static constexpr auto is_optional =
@@ -78,9 +80,9 @@ namespace Details {
       std::shared_ptr<ValueModel<SearchType>> value)
       : m_list(std::move(list)),
         m_value(std::move(value)),
-        m_current_connection(m_value->connect_current_signal(
+        m_current_connection(m_value->connect_update_signal(
           std::bind_front(&ListIndexValueModel::on_current, this))) {
-    on_current(m_value->get_current());
+    on_current(m_value->get());
   }
 
   template<typename T>
@@ -89,21 +91,46 @@ namespace Details {
   }
 
   template<typename T>
-  const boost::optional<int>& ListIndexValueModel<T>::get_current() const {
-    return m_index.get_current();
+  const boost::optional<int>& ListIndexValueModel<T>::get() const {
+    return m_index.get();
   }
 
   template<typename T>
-  QValidator::State ListIndexValueModel<T>::set_current(
+  QValidator::State ListIndexValueModel<T>::test(
+      const boost::optional<int>& value) const {
+    if(!value) {
+      if constexpr(is_optional) {
+        if(m_value->test(boost::none) == QValidator::Invalid) {
+          return QValidator::Invalid;
+        }
+        return m_index.test(boost::none);
+      } else {
+        return QValidator::Invalid;
+      }
+    } else if(value && *value < 0 || value >= m_list->get_size()) {
+      return QValidator::Invalid;
+    }
+    try {
+      if(m_value->test(m_list->get<ListType>(*value)) == QValidator::Invalid) {
+        return QValidator::Invalid;
+      }
+    } catch(const std::bad_any_cast&) {
+      return QValidator::Invalid;
+    }
+    return m_index.test(*value);
+  }
+
+  template<typename T>
+  QValidator::State ListIndexValueModel<T>::set(
       const boost::optional<int>& value) {
     if(!value) {
       if constexpr(is_optional) {
         auto blocker =
           boost::signals2::shared_connection_block(m_current_connection);
-        if(m_value->set_current(boost::none) == QValidator::Invalid) {
+        if(m_value->set(boost::none) == QValidator::Invalid) {
           return QValidator::Invalid;
         }
-        return m_index.set_current(boost::none);
+        return m_index.set(boost::none);
       } else {
         return QValidator::Invalid;
       }
@@ -113,20 +140,19 @@ namespace Details {
     try {
       auto blocker =
         boost::signals2::shared_connection_block(m_current_connection);
-      if(m_value->set_current(m_list->get<ListType>(*value)) ==
-          QValidator::Invalid) {
+      if(m_value->set(m_list->get<ListType>(*value)) == QValidator::Invalid) {
         return QValidator::Invalid;
       }
     } catch(const std::bad_any_cast&) {
       return QValidator::Invalid;
     }
-    return m_index.set_current(*value);
+    return m_index.set(*value);
   }
 
   template<typename T>
-  boost::signals2::connection ListIndexValueModel<T>::connect_current_signal(
-      const typename CurrentSignal::slot_type& slot) const {
-    return m_index.connect_current_signal(slot);
+  boost::signals2::connection ListIndexValueModel<T>::connect_update_signal(
+      const typename UpdateSignal::slot_type& slot) const {
+    return m_index.connect_update_signal(slot);
   }
 
   template<typename T>
@@ -134,12 +160,12 @@ namespace Details {
     for(auto i = 0; i != m_list->get_size(); ++i) {
       try {
         if(m_list->get<ListType>(i) == current) {
-          m_index.set_current(i);
+          m_index.set(i);
           return;
         }
       } catch(const std::bad_any_cast&) {}
     }
-    m_index.set_current(boost::none);
+    m_index.set(boost::none);
   }
 }
 

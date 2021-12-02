@@ -30,11 +30,11 @@ namespace Spire {
 
   /**
    * Returns a SideBox.
-   * @param model The current value's model.
+   * @param model The current value model.
    * @param parent The parent widget.
    */
    SideBox* make_side_box(
-     std::shared_ptr<SideModel> model, QWidget* parent = nullptr);
+    std::shared_ptr<SideModel> current, QWidget* parent = nullptr);
 }
 
 #endif

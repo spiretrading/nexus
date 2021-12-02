@@ -57,6 +57,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_filter_connection;
   };
 
+  /** Returns the current focus state of a widget. */
+  FocusObserver::State find_focus_state(const QWidget& widget);
+
   /**
    * Tests if a state is a superset of another.
    * @return <code>true</code> iff <i>left</i> is a superset of <i>right</i>.

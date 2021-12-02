@@ -15,14 +15,8 @@ struct FocusObserver::FocusEventFilter : QObject {
 
   FocusEventFilter(const QWidget& widget)
       : m_widget(&widget),
-        m_focus_reason(Qt::MouseFocusReason) {
-    if(m_widget->hasFocus()) {
-      m_state = State::FOCUS;
-    } else if(is_ancestor(m_widget, QApplication::focusWidget())) {
-      m_state = State::FOCUS_IN;
-    } else {
-      m_state = State::NONE;
-    }
+        m_focus_reason(Qt::MouseFocusReason),
+        m_state(find_focus_state(*m_widget)) {
     m_old_state = m_state;
     qApp->installEventFilter(this);
     connect(qApp, &QApplication::focusChanged, this,
@@ -124,6 +118,15 @@ FocusObserver::State FocusObserver::get_state() const {
 connection FocusObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
   return m_state_signal.connect(slot);
+}
+
+FocusObserver::State Spire::find_focus_state(const QWidget& widget) {
+  if(widget.hasFocus()) {
+    return FocusObserver::State::FOCUS;
+  } else if(is_ancestor(&widget, QApplication::focusWidget())) {
+    return FocusObserver::State::FOCUS_IN;
+  }
+  return FocusObserver::State::NONE;
 }
 
 bool Spire::is_set(FocusObserver::State left, FocusObserver::State right) {

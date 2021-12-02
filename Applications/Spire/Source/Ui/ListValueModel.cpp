@@ -22,7 +22,7 @@ QValidator::State ListValueModel::get_state() const {
   return QValidator::State::Acceptable;
 }
 
-const ListValueModel::Type& ListValueModel::get_current() const {
+const ListValueModel::Type& ListValueModel::get() const {
   if(m_index == -1) {
     static auto value = std::any();
     return value;
@@ -30,16 +30,23 @@ const ListValueModel::Type& ListValueModel::get_current() const {
   return m_source->at(m_index);
 }
 
-QValidator::State ListValueModel::set_current(const Type& value) {
+QValidator::State ListValueModel::test(const Type& value) const {
+  if(m_index == -1) {
+    return QValidator::State::Invalid;
+  }
+  return QValidator::State::Acceptable;
+}
+
+QValidator::State ListValueModel::set(const Type& value) {
   if(m_index == -1) {
     return QValidator::State::Invalid;
   }
   return m_source->set(m_index, value);
 }
 
-connection ListValueModel::connect_current_signal(
-    const CurrentSignal::slot_type& slot) const {
-  return m_current_signal.connect(slot);
+connection ListValueModel::connect_update_signal(
+    const UpdateSignal::slot_type& slot) const {
+  return m_update_signal.connect(slot);
 }
 
 void ListValueModel::on_operation(const ListModel::Operation& operation) {
@@ -72,7 +79,7 @@ void ListValueModel::on_operation(const ListModel::Operation& operation) {
     },
     [&] (const ListModel::UpdateOperation& operation) {
       if(operation.m_index == m_index) {
-        m_current_signal(get_current());
+        m_update_signal(get());
       }
     });
 }

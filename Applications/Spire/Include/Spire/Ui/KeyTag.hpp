@@ -41,14 +41,14 @@ namespace Styles {
 
       /**
        * Constructs a KeyTag.
-       * @param model The current key's model.
+       * @param current The current value model.
        * @param parent The parent widget.
        */
       explicit KeyTag(
-        std::shared_ptr<KeyModel> model, QWidget* parent = nullptr);
+        std::shared_ptr<KeyModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model. */
-      const std::shared_ptr<KeyModel>& get_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<KeyModel>& get_current() const;
 
     private:
       enum class State {
@@ -56,12 +56,12 @@ namespace Styles {
         MODIFIER,
         ESCAPE
       };
-      std::shared_ptr<KeyModel> m_model;
+      std::shared_ptr<KeyModel> m_current;
       boost::signals2::scoped_connection m_current_connection;
       TextBox* m_label;
       State m_state;
 
-      void on_current_key(Qt::Key key);
+      void on_current(Qt::Key key);
   };
 }
 

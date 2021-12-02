@@ -16,7 +16,7 @@ Button::Button(QWidget* body, QWidget* parent)
       m_body(body),
       m_is_down(false) {
   auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setContentsMargins({});
   layout->addWidget(m_body);
   setFocusPolicy(Qt::StrongFocus);
 }
@@ -110,14 +110,14 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   style.get(Body()).
     set(BackgroundColor(QColor(0xF5F5F5))).
     set(border(scale_width(1), QColor(Qt::transparent)));
-  style.get((Hover() || Press()) / Body()).
+  style.get((!Disabled() && Hover() || Press()) / Body()).
     set(BackgroundColor(QColor(0xE0E0E0)));
   style.get(Focus() / Body()).
     set(border_color(QColor(0x4B, 0x23, 0xA0)));
   style.get(Any() >> is_a<Icon>()).
     set(BackgroundColor(QColor(Qt::transparent))).
     set(Fill(QColor(0x535353)));
-  style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
+  style.get((!Disabled() && Hover() || Press()) / Body() >> is_a<Icon>()).
     set(Fill(QColor(0x4B, 0x23, 0xA0)));
   style.get(Disabled() / Body() >> is_a<Icon>()).
     set(Fill(QColor(0xD0, 0xD0, 0xD0)));
@@ -134,7 +134,7 @@ Button* Spire::make_delete_icon_button(QWidget* parent) {
     style.get(Any() >> is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xA0A0A0)));
-    style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
+    style.get((!Disabled() && Hover() || Press()) / Body() >> is_a<Icon>()).
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(Fill(QColor(0x4B, 0x23, 0xA0)));
     style.get(Disabled() / Body() >> is_a<Icon>()).
@@ -153,11 +153,11 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(border(scale_width(1), QColor(Qt::transparent))).
     set(BackgroundColor(QColor(0xEBEBEB))).
     set(horizontal_padding(scale_width(8)));
-  style.get((Hover() || Press()) / Body()).
+  style.get((!Disabled() && Hover() || Press()) / Body()).
     set(TextColor(QColor(0xFFFFFF))).
     set(BackgroundColor(QColor(0x4B23A0)));
-  style.get(Focus() / Body()).set(
-    border_color(QColor(0x4B23A0)));
+  style.get(Focus() / Body()).
+    set(border_color(QColor(0x4B23A0)));
   style.get(Disabled() / Body()).
     set(TextColor(QColor(0xC8C8C8)));
   set_style(*button, std::move(style));

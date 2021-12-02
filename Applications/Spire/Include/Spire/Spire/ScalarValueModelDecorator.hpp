@@ -16,7 +16,7 @@ namespace Spire {
     public:
       using Type = ScalarValueModel<T>::Type;
       using Scalar = ScalarValueModel<T>::Scalar;
-      using CurrentSignal = ScalarValueModel<T>::CurrentSignal;
+      using UpdateSignal = ScalarValueModel<T>::UpdateSignal;
 
       /**
        * Constructs a ScalarValueModelDecorator with the default minimum,
@@ -48,12 +48,14 @@ namespace Spire {
 
       QValidator::State get_state() const override;
 
-      const Type& get_current() const override;
+      const Type& get() const override;
 
-      QValidator::State set_current(const Type& value) override;
+      QValidator::State test(const Type& value) const override;
 
-      boost::signals2::connection connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const override;
+      QValidator::State set(const Type& value) override;
+
+      boost::signals2::connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override;
 
       boost::optional<Scalar> get_minimum() const override;
 
@@ -69,7 +71,7 @@ namespace Spire {
       Scalar m_increment;
       boost::signals2::scoped_connection m_connection;
 
-      void on_current(const Type& current);
+      void on_update(const Type& value);
   };
 
   template<typename T>
@@ -92,8 +94,8 @@ namespace Spire {
       m_minimum(std::move(minimum)),
       m_maximum(std::move(maximum)),
       m_increment(std::move(increment)),
-      m_connection(m_model->connect_current_signal(
-        std::bind_front(&ScalarValueModelDecorator::on_current, this))) {}
+      m_connection(m_model->connect_update_signal(
+        std::bind_front(&ScalarValueModelDecorator::on_update, this))) {}
 
   template<typename T>
   void ScalarValueModelDecorator<T>::set_minimum(
@@ -119,13 +121,13 @@ namespace Spire {
 
   template<typename T>
   const typename ScalarValueModelDecorator<T>::Type&
-      ScalarValueModelDecorator<T>::get_current() const {
-    return m_model->get_current();
+      ScalarValueModelDecorator<T>::get() const {
+    return m_model->get();
   }
 
   template<typename T>
-  QValidator::State ScalarValueModelDecorator<T>::set_current(
-      const Type& value) {
+  QValidator::State ScalarValueModelDecorator<T>::test(
+      const Type& value) const {
     using namespace std;
     auto has_value = [&] {
       if constexpr(std::is_same_v<Scalar, Type>) {
@@ -143,25 +145,21 @@ namespace Spire {
         }
       }();
       if constexpr(std::numeric_limits<Type>::is_integer) {
-        if(unwrapped_value != m_model->get_current() &&
+        if(unwrapped_value != m_model->get() &&
             (unwrapped_value % m_increment) != 0) {
           return QValidator::State::Invalid;
         }
       } else if constexpr(std::numeric_limits<Type>::is_specialized) {
-        if(unwrapped_value != m_model->get_current() &&
+        if(unwrapped_value != m_model->get() &&
             fmod(unwrapped_value, m_increment) != 0) {
           return QValidator::State::Invalid;
         }
       }
     }
-    {
-      auto blocker = boost::signals2::shared_connection_block(m_connection);
-      m_state = m_model->set_current(value);
-    }
-    if(m_state == QValidator::State::Invalid) {
+    auto state = m_model->test(value);
+    if(state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;
-    }
-    if(has_value) {
+    } else if(state == QValidator::Acceptable && has_value) {
       auto& unwrapped_value = [&] () -> decltype(auto) {
         if constexpr(std::is_same_v<Scalar, Type>) {
           return value;
@@ -171,17 +169,31 @@ namespace Spire {
       }();
       if(m_minimum && unwrapped_value < *m_minimum ||
           m_maximum && unwrapped_value > *m_maximum) {
-        m_state = QValidator::Intermediate;
+        state = QValidator::Intermediate;
       }
     }
-    return m_state;
+    return state;
+  }
+
+  template<typename T>
+  QValidator::State ScalarValueModelDecorator<T>::set(const Type& value) {
+    auto state = test(value);
+    if(state == QValidator::State::Invalid) {
+      return QValidator::State::Invalid;
+    }
+    m_state = state;
+    {
+      auto blocker = boost::signals2::shared_connection_block(m_connection);
+      m_model->set(value);
+    }
+    return state;
   }
 
   template<typename T>
   boost::signals2::connection
-      ScalarValueModelDecorator<T>::connect_current_signal(
-        const typename CurrentSignal::slot_type& slot) const {
-    return m_model->connect_current_signal(slot);
+      ScalarValueModelDecorator<T>::connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const {
+    return m_model->connect_update_signal(slot);
   }
 
   template<typename T>
@@ -203,7 +215,7 @@ namespace Spire {
   }
 
   template<typename T>
-  void ScalarValueModelDecorator<T>::on_current(const Type& current) {
+  void ScalarValueModelDecorator<T>::on_update(const Type& value) {
     m_state = m_model->get_state();
   }
 }

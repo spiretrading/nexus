@@ -71,13 +71,13 @@ namespace Styles {
 
       /**
        * The type of function used to build a QWidget representing a value.
-       * @param model The model containing the list values being displayed.
+       * @param list The list values being displayed.
        * @param index The index of the specific value to be displayed.
        * @return The QWidget that shall be used to display the value in the
-       *         <i>model</i> at the given <i>index</i>.
+       *         <i>list</i> at the given <i>index</i>.
        */
       using ViewBuilder = std::function<
-        QWidget* (const std::shared_ptr<ListModel>& model, int index)>;
+        QWidget* (const std::shared_ptr<ListModel>& list, int index)>;
 
       /**
        * Signals that the current item was submitted.
@@ -90,47 +90,47 @@ namespace Styles {
        * the text representation of its value.
        */
       static QWidget* default_view_builder(
-        const std::shared_ptr<ListModel>& model, int index);
+        const std::shared_ptr<ListModel>& list, int index);
 
       /**
        * Constructs a ListView using default local models and a default view
        * builder.
-       * @param list_model The model of values to display.
+       * @param list The model of values to display.
        * @param parent The parent widget.
        */
       explicit ListView(
-        std::shared_ptr<ListModel> list_model, QWidget* parent = nullptr);
+        std::shared_ptr<ListModel> list, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
-       * @param list_model The model of values to display.
+       * @param list The model of values to display.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<ListModel> list_model,
-        ViewBuilder view_builder, QWidget* parent = nullptr);
+      ListView(std::shared_ptr<ListModel> list, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView.
-       * @param list_model The list model which holds a list of items.
-       * @param current_model The current value's model.
-       * @param selection_model The selection value's model.
+       * @param list The list model which holds a list of items.
+       * @param current The current value model.
+       * @param selection The selection model.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<ListModel> list_model,
-        std::shared_ptr<CurrentModel> current_model,
-        std::shared_ptr<SelectionModel> selection_model,
-        ViewBuilder view_builder, QWidget* parent = nullptr);
+      ListView(std::shared_ptr<ListModel> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
 
       /** Returns the list of values displayed. */
-      const std::shared_ptr<ListModel>& get_list_model() const;
+      const std::shared_ptr<ListModel>& get_list() const;
 
-      /** Returns the current model. */
-      const std::shared_ptr<CurrentModel>& get_current_model() const;
+      /** Returns the current value model. */
+      const std::shared_ptr<CurrentModel>& get_current() const;
 
       /** Returns the selection model. */
-      const std::shared_ptr<SelectionModel>& get_selection_model() const;
+      const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /**
        * Returns the ListItem at a specified index, or <code>nullptr</code> iff
@@ -153,14 +153,14 @@ namespace Styles {
         bool m_is_current;
         boost::signals2::scoped_connection m_connection;
 
-        void set_current(bool is_current);
+        void set(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<ListModel> m_list_model;
-      std::shared_ptr<CurrentModel> m_current_model;
+      std::shared_ptr<ListModel> m_list;
+      std::shared_ptr<CurrentModel> m_current;
       boost::optional<int> m_last_current;
       boost::optional<int> m_focus_index;
-      std::shared_ptr<SelectionModel> m_selection_model;
+      std::shared_ptr<SelectionModel> m_selection;
       ViewBuilder m_view_builder;
       boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
@@ -190,7 +190,7 @@ namespace Styles {
       void cross_next();
       void cross_previous();
       void cross(int direction);
-      void set_current(boost::optional<int> current);
+      void set(boost::optional<int> current);
       void update_focus(boost::optional<int> current);
       void add_item(int index);
       void remove_item(int index);

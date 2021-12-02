@@ -11,51 +11,51 @@ TEST_SUITE("AssociativeValueModel") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
     auto bool_model2 = model.get_association("model2");
-    bool_model1->set_current(true);
-    REQUIRE(bool_model1->get_current());
-    REQUIRE_FALSE(bool_model2->get_current());
-    REQUIRE(model.get_current() == "model1");
-    bool_model2->set_current(true);
-    REQUIRE_FALSE(bool_model1->get_current());
-    REQUIRE(bool_model2->get_current());
-    REQUIRE(model.get_current() == "model2");
-    bool_model2->set_current(false);
-    REQUIRE_FALSE(bool_model1->get_current());
-    REQUIRE_FALSE(bool_model2->get_current());
-    REQUIRE(model.get_current() == "");
+    bool_model1->set(true);
+    REQUIRE(bool_model1->get());
+    REQUIRE_FALSE(bool_model2->get());
+    REQUIRE(model.get() == "model1");
+    bool_model2->set(true);
+    REQUIRE_FALSE(bool_model1->get());
+    REQUIRE(bool_model2->get());
+    REQUIRE(model.get() == "model2");
+    bool_model2->set(false);
+    REQUIRE_FALSE(bool_model1->get());
+    REQUIRE_FALSE(bool_model2->get());
+    REQUIRE(model.get() == "");
   }
 
   TEST_CASE("reassociate_current") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
-    model.set_current("model1");
-    REQUIRE(model.get_current() == "model1");
+    model.set("model1");
+    REQUIRE(model.get() == "model1");
     auto bool_model2 = model.get_association("model1");
     REQUIRE(bool_model1 == bool_model2);
-    REQUIRE(model.get_current() == "model1");
-    REQUIRE(bool_model2->get_current());
+    REQUIRE(model.get() == "model1");
+    REQUIRE(bool_model2->get());
     auto bool_model3 = model.get_association("model1");
     REQUIRE(bool_model2 == bool_model3);
-    REQUIRE(model.get_current() == "model1");
-    REQUIRE(bool_model3->get_current());
+    REQUIRE(model.get() == "model1");
+    REQUIRE(bool_model3->get());
   }
 
   TEST_CASE("make_association") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
     auto bool_model2 = model.get_association("model2");
-    bool_model1->set_current(true);
-    REQUIRE(bool_model1->get_current());
-    REQUIRE_FALSE(bool_model2->get_current());
-    REQUIRE(model.get_current() == "model1");
-    bool_model2->set_current(true);
-    REQUIRE_FALSE(bool_model1->get_current());
-    REQUIRE(bool_model2->get_current());
-    REQUIRE(model.get_current() == "model2");
-    bool_model2->set_current(false);
-    REQUIRE_FALSE(bool_model1->get_current());
-    REQUIRE_FALSE(bool_model2->get_current());
-    REQUIRE(model.get_current() == "");
+    bool_model1->set(true);
+    REQUIRE(bool_model1->get());
+    REQUIRE_FALSE(bool_model2->get());
+    REQUIRE(model.get() == "model1");
+    bool_model2->set(true);
+    REQUIRE_FALSE(bool_model1->get());
+    REQUIRE(bool_model2->get());
+    REQUIRE(model.get() == "model2");
+    bool_model2->set(false);
+    REQUIRE_FALSE(bool_model1->get());
+    REQUIRE_FALSE(bool_model2->get());
+    REQUIRE(model.get() == "");
   }
 
   TEST_CASE("find") {
@@ -72,45 +72,45 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(model.get_state() == QValidator::Acceptable);
   }
 
-  TEST_CASE("get_current") {
+  TEST_CASE("get") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
-    REQUIRE(model.get_current() == "");
-    bool_model1->set_current(true);
-    REQUIRE(model.get_current() == "model1");
-    bool_model1->set_current(false);
-    REQUIRE(model.get_current() == "");
+    REQUIRE(model.get() == "");
+    bool_model1->set(true);
+    REQUIRE(model.get() == "model1");
+    bool_model1->set(false);
+    REQUIRE(model.get() == "");
   }
 
-  TEST_CASE("set_current") {
+  TEST_CASE("set") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
     auto bool_model2 = model.get_association("model2");
-    REQUIRE(model.get_current() == "");
-    REQUIRE(model.set_current("model2") == QValidator::Acceptable);
-    REQUIRE_FALSE(bool_model1->get_current());
-    REQUIRE(model.get_current() == "model2");
-    REQUIRE(model.set_current("model1") == QValidator::Acceptable);
-    REQUIRE(model.get_current() == "model1");
-    REQUIRE_FALSE(bool_model2->get_current());
-    REQUIRE(model.set_current("null") == QValidator::Invalid);
-    REQUIRE(model.get_current() == "model1");
-    REQUIRE(bool_model1->get_current());
-    REQUIRE_FALSE(bool_model2->get_current());
+    REQUIRE(model.get() == "");
+    REQUIRE(model.set("model2") == QValidator::Acceptable);
+    REQUIRE_FALSE(bool_model1->get());
+    REQUIRE(model.get() == "model2");
+    REQUIRE(model.set("model1") == QValidator::Acceptable);
+    REQUIRE(model.get() == "model1");
+    REQUIRE_FALSE(bool_model2->get());
+    REQUIRE(model.set("null") == QValidator::Invalid);
+    REQUIRE(model.get() == "model1");
+    REQUIRE(bool_model1->get());
+    REQUIRE_FALSE(bool_model2->get());
   }
 
-  TEST_CASE("set_current_reentrant") {
+  TEST_CASE("set_reentrant") {
     auto model = AssociativeValueModel<std::string>();
     auto updates = std::queue<std::string>();
-    model.connect_current_signal([&] (auto value) {
+    model.connect_update_signal([&] (auto value) {
       updates.push(value);
       if(value == "model1") {
-        model.set_current("model2");
+        model.set("model2");
       }
     });
     model.get_association("model1");
     model.get_association("model2");
-    model.set_current("model1");
+    model.set("model1");
     REQUIRE(updates.front() == "model1");
     updates.pop();
     REQUIRE(updates.front() == "model2");
@@ -118,28 +118,28 @@ TEST_SUITE("AssociativeValueModel") {
     REQUIRE(updates.empty());
   }
 
-  TEST_CASE("current_signal") {
+  TEST_CASE("update_signal") {
     auto model = AssociativeValueModel<std::string>();
     auto current_value = std::string();
     auto signal_count = 0;
-    model.connect_current_signal([&] (const auto& current) {
+    model.connect_update_signal([&] (const auto& current) {
       ++signal_count;
       current_value = current;
     });
     auto bool_model1 = model.get_association("model1");
     auto bool_model2 = model.get_association("model2");
-    model.set_current("model1");
+    model.set("model1");
     REQUIRE(current_value == "model1");
     REQUIRE(signal_count == 1);
     REQUIRE(current_value == "model1");
     REQUIRE(signal_count == 1);
-    bool_model1->set_current(false);
+    bool_model1->set(false);
     REQUIRE(current_value == "");
     REQUIRE(signal_count == 2);
-    bool_model2->set_current(true);
+    bool_model2->set(true);
     REQUIRE(current_value == "model2");
     REQUIRE(signal_count == 3);
-    bool_model2->set_current(true);
+    bool_model2->set(true);
     REQUIRE(current_value == "model2");
     REQUIRE(signal_count == 3);
   }
@@ -148,33 +148,33 @@ TEST_SUITE("AssociativeValueModel") {
     auto model = AssociativeValueModel<std::string>("default");
     auto default_model = model.get_association("default");
     auto bool_model = model.get_association("model1");
-    bool_model->set_current(true);
-    REQUIRE(model.get_current() == "model1");
-    bool_model->set_current(false);
-    REQUIRE(model.get_current() == "default");
-    default_model->set_current(false);
-    REQUIRE(model.get_current() == "default");
-    REQUIRE(default_model->get_current());
+    bool_model->set(true);
+    REQUIRE(model.get() == "model1");
+    bool_model->set(false);
+    REQUIRE(model.get() == "default");
+    default_model->set(false);
+    REQUIRE(model.get() == "default");
+    REQUIRE(default_model->get());
   }
 
   TEST_CASE("default_instance_values") {
     auto model = AssociativeValueModel<std::string>();
     auto bool_model1 = model.get_association("model1");
-    REQUIRE(model.get_current() == "");
-    REQUIRE_FALSE(bool_model1->get_current());
+    REQUIRE(model.get() == "");
+    REQUIRE_FALSE(bool_model1->get());
   }
 
   TEST_CASE("optional_model") {
     auto model = AssociativeValueModel<optional<std::string>>();
     auto bool_model1 = model.get_association(std::string("model1"));
     auto bool_model2 = model.get_association(std::string("model2"));
-    REQUIRE_FALSE(model.get_current());
-    bool_model1->set_current(true);
-    REQUIRE(model.get_current() == std::string("model1"));
-    REQUIRE_FALSE(bool_model2->get_current());
-    bool_model1->set_current(false);
-    REQUIRE_FALSE(model.get_current());
-    REQUIRE_FALSE(bool_model1->get_current());
-    REQUIRE_FALSE(bool_model2->get_current());
+    REQUIRE_FALSE(model.get());
+    bool_model1->set(true);
+    REQUIRE(model.get() == std::string("model1"));
+    REQUIRE_FALSE(bool_model2->get());
+    bool_model1->set(false);
+    REQUIRE_FALSE(model.get());
+    REQUIRE_FALSE(bool_model1->get());
+    REQUIRE_FALSE(bool_model2->get());
   }
 }
