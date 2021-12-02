@@ -2,11 +2,13 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
+#include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -266,7 +268,7 @@ struct DateFilterPanel::DateRangeComposerModel :
       if(current.m_offset) {
         return *current.m_offset;
       } else {
-        return DateOffset{DateUnit::DAY, *m_offset_value->get_minimum()};
+        return DateOffset{m_date_unit->get(), *m_offset_value->get_minimum()};
       }
     }();
     auto value_blocker = shared_connection_block(m_offset_value_connection);
@@ -321,7 +323,7 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
     : QWidget(&parent),
       m_model(std::make_unique<DateRangeComposerModel>(std::move(model))),
       m_default_date_range(std::move(default_range)),
-      m_type_button_group(std::make_unique<DateRangeTypeButtonGroup>(
+      m_range_type_button_group(std::make_unique<DateRangeTypeButtonGroup>(
         std::make_shared<AssociativeValueModel<DateRangeType>>(),
           m_model->get())) {
   m_filter_panel = new FilterPanel(QObject::tr("Filter by Date"), this, parent);
@@ -329,9 +331,10 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_type_button_group->get_current()->connect_update_signal(
+  m_range_type_button_group->get_current()->connect_update_signal(
     std::bind_front(&DateFilterPanel::on_date_range_type_current, this));
-  auto offset_button = m_type_button_group->get_button(DateRangeType::OFFSET);
+  auto offset_button =
+    m_range_type_button_group->get_button(DateRangeType::OFFSET);
   offset_button->setFixedHeight(scale_height(16));
   layout->addWidget(offset_button, 0, Qt::AlignLeft);
   layout->addSpacing(scale_height(18));
@@ -346,7 +349,8 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
   layout->addSpacing(scale_height(18));
   layout->addWidget(make_line_element());
   layout->addSpacing(scale_height(18));
-  auto range_button = m_type_button_group->get_button(DateRangeType::RANGE);
+  auto range_button =
+    m_range_type_button_group->get_button(DateRangeType::RANGE);
   range_button->setFixedHeight(scale_height(16));
   layout->addWidget(range_button, 0, Qt::AlignLeft);
   layout->addSpacing(scale_height(14));
@@ -358,7 +362,7 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
     std::bind_front(&DateFilterPanel::on_end_date_submit, this));
   m_range_body = make_range_setting_body(*start_date_box, *end_date_box);
   layout->addWidget(m_range_body);
-  on_date_range_type_current(m_type_button_group->get_current()->get());
+  on_date_range_type_current(m_range_type_button_group->get_current()->get());
   window()->setWindowFlags(Qt::Tool | (window()->windowFlags() & ~Qt::Popup));
   window()->installEventFilter(this);
 }
@@ -393,7 +397,7 @@ bool DateFilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_filter_panel->show();
     window()->activateWindow();
-    m_type_button_group->get_current_button()->setFocus();
+    m_range_type_button_group->get_current_button()->setFocus();
   } else if(event->type() == QEvent::HideToParent) {
     m_filter_panel->hide();
   }
@@ -460,7 +464,7 @@ void DateFilterPanel::on_offset_value_submit(
 void DateFilterPanel::on_reset() {
   auto unit_blocker = shared_connection_block(m_date_unit_connection);
   m_model->set(m_default_date_range);
-  m_type_button_group->set(m_default_date_range);
-  m_type_button_group->get_current_button()->setFocus();
+  m_range_type_button_group->set(m_default_date_range);
+  m_range_type_button_group->get_current_button()->setFocus();
   m_submit_signal(m_default_date_range);
 }

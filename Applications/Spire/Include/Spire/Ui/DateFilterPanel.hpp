@@ -1,7 +1,5 @@
 #ifndef SPIRE_DATE_FILTER_PANEL_HPP
 #define SPIRE_DATE_FILTER_PANEL_HPP
-#include "Spire/Spire/AssociativeValueModel.hpp"
-#include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -104,7 +102,7 @@ namespace Spire {
       QWidget* m_offset_body;
       QWidget* m_range_body;
       FilterPanel* m_filter_panel;
-      std::unique_ptr<DateRangeTypeButtonGroup> m_type_button_group;
+      std::unique_ptr<DateRangeTypeButtonGroup> m_range_type_button_group;
       boost::signals2::scoped_connection m_date_unit_connection;
 
       void on_date_range_type_current(DateRangeType type);
