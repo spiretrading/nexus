@@ -21,6 +21,7 @@ namespace Spire {
   class ColumnViewListModel;
   class ComboBox;
   class DateBox;
+  class DateFilterPanel;
   class DecimalBox;
   class DestinationListItem;
   class DropDownBox;

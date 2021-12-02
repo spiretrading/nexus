@@ -397,7 +397,8 @@ void CalendarDatePicker::on_current_month(date month) {
   for(auto i = 0; i < m_calendar_view->get_list()->get_size(); ++i) {
     auto current = m_calendar_view->get_list()->get<date>(i);
     auto item = m_calendar_view->get_list_item(i);
-    auto is_disabled = current < *minimum || current > *maximum;
+    auto is_disabled = (minimum && current < *minimum) ||
+      (maximum && current > *maximum);
     if(is_disabled) {
       if(item->hasFocus()) {
         m_calendar_view->setFocusProxy(nullptr);
