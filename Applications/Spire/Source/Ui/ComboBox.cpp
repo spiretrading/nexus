@@ -37,9 +37,6 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_matches(std::make_shared<ArrayListModel>()),
       m_completion_tag(0),
       m_has_autocomplete_selection(false) {
-  update_style(*this, [] (auto& style) {
-    style.get(FocusIn()).set(border_color(QColor(0x4B23A0)));
-  });
   m_input_box = new TextBox();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
