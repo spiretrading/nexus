@@ -39,13 +39,11 @@ export class ApplicationController extends React.Component<Properties, State> {
       return <div/>;
     }
     return (
-      <Router.BrowserRouter>
-        <Router.Switch>
-          <Router.Route exact path='/login' render={this.renderLoginPage}/>
-          <AuthenticatedRoute path='/' account={this.state.account}
-            render={this.renderDashboardPage}/>
-        </Router.Switch>
-      </Router.BrowserRouter>);
+      <Router.Switch>
+        <Router.Route exact path='/login' render={this.renderLoginPage}/>
+        <AuthenticatedRoute path='/' account={this.state.account}
+          render={this.renderDashboardPage}/>
+      </Router.Switch>);
   }
 
   public componentDidMount(): void {
