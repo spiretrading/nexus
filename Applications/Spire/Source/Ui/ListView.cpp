@@ -396,6 +396,7 @@ void ListView::add_item(int index) {
   for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
     ++(*i)->m_index;
   }
+  update_layout();
   auto selection = m_selection->get();
   if(m_current->get() && *m_current->get() >= index) {
     set(*m_current->get() + 1);
@@ -404,7 +405,6 @@ void ListView::add_item(int index) {
     m_selected = *selection + 1;
     m_selection->set(m_selected);
   }
-  update_layout();
 }
 
 void ListView::remove_item(int index) {

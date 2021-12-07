@@ -2327,6 +2327,10 @@ UiProfile Spire::make_tag_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("read_only", false));
+  auto overflow_property = define_enum<TagBoxOverflow>(
+    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile(QString::fromUtf8("TagBox"), properties,
     [] (auto& profile) {
@@ -2340,6 +2344,16 @@ UiProfile Spire::make_tag_box_profile() {
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal([=] (auto is_read_only) {
         tag_box->set_read_only(is_read_only);
+      });
+      auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
+      overflow.connect_changed_signal([=] (auto value) {
+        update_style(*tag_box, [&] (auto& style) {
+          style.get(Any()).set(value);
+        });
+        if(value == TagBoxOverflow::WRAP) {
+          tag_box->setMinimumSize(0, 0);
+          tag_box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        }
       });
       auto& add_tag = get<QString>("add_tag", profile.get_properties());
       add_tag.connect_changed_signal([=] (const auto& value) {
