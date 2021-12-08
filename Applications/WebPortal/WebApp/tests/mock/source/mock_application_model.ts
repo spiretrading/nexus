@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
 import * as WebPortal from 'web_portal';
+import { MockLoginModel } from './mock_login_model';
 
 /** Implements the ApplicationModel using mock data. */
 export class MockApplicationModel extends WebPortal.ApplicationModel {
@@ -22,7 +23,7 @@ export class MockApplicationModel extends WebPortal.ApplicationModel {
 
   public reset(): void {
     this.account = Beam.DirectoryEntry.INVALID;
-    this._loginModel = new WebPortal.LocalLoginModel();
+    this._loginModel = new MockLoginModel();
   }
 
   private account: Beam.DirectoryEntry;
