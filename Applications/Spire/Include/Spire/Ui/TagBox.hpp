@@ -1,6 +1,5 @@
 #ifndef SPIRE_TAG_BOX_HPP
 #define SPIRE_TAG_BOX_HPP
-#include <QHBoxLayout>
 #include <QWidget>
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListModel.hpp"
@@ -70,7 +69,6 @@ namespace Styles {
       struct PartialListModel;
       std::shared_ptr<PartialListModel> m_model;
       QWidget* m_list_view_container;
-      QHBoxLayout* m_container_layout;
       ListView* m_list_view;
       TextBox* m_text_box;
       QLineEdit* m_line_edit;

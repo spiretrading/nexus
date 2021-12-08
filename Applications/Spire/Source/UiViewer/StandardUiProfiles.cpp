@@ -2353,6 +2353,8 @@ UiProfile Spire::make_tag_box_profile() {
         if(value == TagBoxOverflow::WRAP) {
           tag_box->setMinimumSize(0, 0);
           tag_box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        } else {
+          tag_box->setFixedWidth(tag_box->size().width());
         }
       });
       auto& add_tag = get<QString>("add_tag", profile.get_properties());

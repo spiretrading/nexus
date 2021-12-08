@@ -1,4 +1,5 @@
 #include "Spire/Ui/TagBox.hpp"
+#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ArrayListModel.hpp"
@@ -90,6 +91,7 @@ TagBox::TagBox(std::shared_ptr<ListModel> list_model,
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list_model))),
       m_focus_observer(*this),
+      m_overflow(TagBoxOverflow::WRAP),
       m_tags_width(0),
       m_list_item_gap(0) {
   auto layout = new QHBoxLayout(this);
@@ -99,6 +101,7 @@ TagBox::TagBox(std::shared_ptr<ListModel> list_model,
   m_text_box->installEventFilter(this);
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::build_tag, this));
+  m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
   m_list_view_style_connection = connect_style_signal(*m_list_view,
     std::bind_front(&TagBox::on_list_view_style, this));
@@ -111,10 +114,10 @@ TagBox::TagBox(std::shared_ptr<ListModel> list_model,
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
   m_list_view_container = new QWidget();
-  m_container_layout = new QHBoxLayout(m_list_view_container);
-  m_container_layout->setContentsMargins({});
-  m_container_layout->setSpacing(0);
-  m_container_layout->addWidget(m_list_view, 0, Qt::AlignLeft);
+  auto container_layout = new QHBoxLayout(m_list_view_container);
+  container_layout->setContentsMargins({});
+  container_layout->setSpacing(0);
+  container_layout->addWidget(m_list_view);
   auto input_box = make_input_box(m_list_view_container);
   layout->addWidget(input_box);
   proxy_style(*this, *input_box);
@@ -308,6 +311,7 @@ void TagBox::on_style() {
       m_list_view->layout()->setSizeConstraint(QLayout::SetFixedSize);
       m_list_view->updateGeometry();
       update_tags_width();
+      m_list_view_container->layout()->setAlignment(m_list_view, Qt::AlignLeft);
     } else {
       update_style(*m_list_view, [] (auto& style) {
         style.get(Any()).set(Overflow::WRAP);
@@ -316,6 +320,8 @@ void TagBox::on_style() {
       m_list_view->setMinimumSize(0, 0);
       m_list_view->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       m_list_view->updateGeometry();
+      m_list_view_container->layout()->setAlignment(m_list_view,
+        Qt::Alignment());
     }
   }
 }
@@ -449,16 +455,16 @@ void TagBox::show_all_tags() {
 }
 
 void TagBox::add_list_view_to_layout() {
-  if(m_container_layout->isEmpty()) {
+  if(m_list_view_container->layout()->isEmpty()) {
     m_list_view_container->setMinimumSize(0, 0);
     m_list_view_container->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-    m_container_layout->addWidget(m_list_view, 0, Qt::AlignLeft);
+    m_list_view_container->layout()->addWidget(m_list_view);
+    m_list_view_container->layout()->setAlignment(m_list_view, Qt::AlignLeft);
   }
 }
 
 void TagBox::remove_list_view_from_layout() {
-  if(!m_container_layout->isEmpty()) {
-    m_container_layout->removeWidget(m_list_view);
+  if(!m_list_view_container->layout()->isEmpty()) {
     m_list_view_container->layout()->removeWidget(m_list_view);
     m_list_view_container->setFixedSize(m_list_view_container->size());
     m_list_view->setParent(m_list_view_container);
