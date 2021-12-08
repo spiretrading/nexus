@@ -25,6 +25,7 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
+#include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
@@ -752,6 +753,102 @@ UiProfile Spire::make_date_box_profile() {
       });
       return date_box;
   });
+  return profile;
+}
+
+UiProfile Spire::make_date_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto current_date = day_clock::local_day();
+  properties.push_back(
+    make_standard_property("default_start_date",
+      displayTextAny(current_date - months(3))));
+  properties.push_back(
+    make_standard_property("default_end_date", displayTextAny(current_date)));
+  properties.push_back(make_standard_property("default_offset_value", 1));
+  auto default_unit_property = define_enum<DateFilterPanel::DateUnit>(
+    {{"Day", DateFilterPanel::DateUnit::DAY},
+     {"Week", DateFilterPanel::DateUnit::WEEK},
+     {"Month", DateFilterPanel::DateUnit::MONTH},
+     {"Year", DateFilterPanel::DateUnit::YEAR}});
+  properties.push_back(make_standard_enum_property(
+    "default_date_unit", default_unit_property));
+  auto profile = UiProfile(QString::fromUtf8("DateFilterPanel"), properties,
+    [] (auto& profile) {
+      auto& default_start_date =
+        get<QString>("default_start_date", profile.get_properties());
+      auto& default_end_date =
+        get<QString>("default_end_date", profile.get_properties());
+      auto& default_offset_value =
+        get<int>("default_offset_value", profile.get_properties());
+      auto& default_date_unit = get<DateFilterPanel::DateUnit>(
+        "default_date_unit", profile.get_properties());
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto model = std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>();
+      auto default_date_range = DateFilterPanel::DateRange();
+      default_date_range.m_start = parse_date(default_start_date.get());
+      default_date_range.m_end = parse_date(default_end_date.get());
+      default_date_range.m_offset = DateFilterPanel::DateOffset{
+        default_date_unit.get(), default_offset_value.get()};
+      auto panel = new DateFilterPanel(model, default_date_range, *button);
+      default_start_date.connect_changed_signal([=] (const auto& value) {
+        auto range = panel->get_default_range();
+        range.m_start = parse_date(value);
+        panel->set_default_range(range);
+      });
+      default_end_date.connect_changed_signal([=] (const auto& value) {
+        auto range = panel->get_default_range();
+        range.m_end = parse_date(value);
+        panel->set_default_range(range);
+      });
+      default_offset_value.connect_changed_signal([=] (const auto& value) {
+        auto range = panel->get_default_range();
+        range.m_offset->m_value = value;
+        panel->set_default_range(range);
+      });
+      default_date_unit.connect_changed_signal([=] (const auto& value) {
+        auto range = panel->get_default_range();
+        range.m_offset->m_unit = value;
+        panel->set_default_range(range);
+      });
+      auto filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const DateFilterPanel::DateRange& submission) {
+          auto result = QString();
+          if(submission.m_start) {
+            result += displayTextAny(*submission.m_start);
+          } else {
+            result += "none";
+          }
+          result += " - ";
+          if(submission.m_end) {
+            result += displayTextAny(*submission.m_end);
+          } else {
+            result += "none";
+          }
+          if(submission.m_offset) {
+            auto to_string = [] (auto unit) {
+              if(unit == DateFilterPanel::DateUnit::DAY) {
+                return "Day";
+              } else if(unit == DateFilterPanel::DateUnit::WEEK) {
+                return "Week";
+              } else if(unit == DateFilterPanel::DateUnit::MONTH) {
+                return "Month";
+              } else {
+                return "Year";
+              }
+            };
+            result += QString("; %1 %2").
+              arg(submission.m_offset->m_value).
+              arg(to_string(submission.m_offset->m_unit));
+          }
+          filter_slot(result);
+        });
+      button->connect_clicked_signal([=] {
+        panel->show();
+      });
+      return button;
+    });
   return profile;
 }
 

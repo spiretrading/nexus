@@ -120,6 +120,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_closed_filter_panel_profile());
   add(make_combo_box_profile());
   add(make_date_box_profile());
+  add(make_date_filter_panel_profile());
   add(make_decimal_box_profile());
   add(make_decimal_filter_panel_profile());
   add(make_delete_icon_button_profile());
