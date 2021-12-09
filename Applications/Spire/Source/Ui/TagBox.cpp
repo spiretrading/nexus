@@ -62,11 +62,11 @@ struct TagBox::PartialListModel : public ListModel {
   explicit PartialListModel(std::shared_ptr<ListModel> source)
     : m_source(std::move(source)) {}
 
-  virtual int get_size() const override {
+  int get_size() const override {
     return m_source->get_size() + 2;
   }
 
-  virtual const std::any& at(int index) const override {
+  const std::any& at(int index) const override {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
@@ -77,7 +77,7 @@ struct TagBox::PartialListModel : public ListModel {
     return value;
   }
 
-  virtual QValidator::State set(int index, const std::any& value) override {
+  QValidator::State set(int index, const std::any& value) override {
     if(index < 0 || index >= get_size()) {
       return QValidator::State::Invalid;
     }
