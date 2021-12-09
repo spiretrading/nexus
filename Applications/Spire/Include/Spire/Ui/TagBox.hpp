@@ -68,6 +68,7 @@ namespace Styles {
       mutable DeleteSignal m_delete_signal;
       struct PartialListModel;
       std::shared_ptr<PartialListModel> m_model;
+      bool m_is_read_only;
       QWidget* m_list_view_container;
       ListView* m_list_view;
       TextBox* m_text_box;
@@ -89,7 +90,7 @@ namespace Styles {
       void on_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
-      void update_uneditable();
+      void update_tags_read_only();
       void update_tags_width();
       void overflow();
       void reposition_list_view();

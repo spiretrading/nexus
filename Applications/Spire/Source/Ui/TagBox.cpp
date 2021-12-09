@@ -97,6 +97,7 @@ TagBox::TagBox(std::shared_ptr<ListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
+      m_is_read_only(false),
       m_focus_observer(*this),
       m_overflow(TagBoxOverflow::WRAP),
       m_tags_width(0),
@@ -148,13 +149,17 @@ const std::shared_ptr<TextModel>& TagBox::get_current() const {
 }
 
 bool TagBox::is_read_only() const {
-  return m_text_box->is_read_only();
+  return m_is_read_only;
 }
 
 void TagBox::set_read_only(bool is_read_only) {
-  m_text_box->set_read_only(is_read_only);
-  update_uneditable();
-  if(is_read_only) {
+  if(m_is_read_only == is_read_only) {
+    return;
+  }
+  m_is_read_only = is_read_only;
+  m_text_box->set_read_only(m_is_read_only);
+  update_tags_read_only();
+  if(m_is_read_only) {
     match(*this, ReadOnly());
     match(*m_list_view, ReadOnly());
   } else {
@@ -174,6 +179,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     switch(key_event.key()) {
       case Qt::Key_Backspace:
         if(m_text_box->get_highlight()->get().m_start == 0 &&
+            m_text_box->get_highlight()->get().m_end == 0 &&
             get_list()->get_size() > 0) {
           m_delete_signal(get_list()->get_size() - 1);
         }
@@ -187,6 +193,8 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
         break;
     }
   } else if(watched == m_list_view && event->type() == QEvent::Resize) {
+    update_tags_width();
+    overflow();
     reposition_list_view();
   }
   return QWidget::eventFilter(watched, event);
@@ -194,7 +202,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
 
 void TagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    update_uneditable();
+    update_tags_read_only();
   }
   QWidget::changeEvent(event);
 }
@@ -208,7 +216,7 @@ QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
   if(index < model->get_size() - 2) {
     auto label = displayTextAny(model->at(index));
     auto tag = new Tag(label, this);
-    tag->set_read_only(is_read_only() || !isEnabled());
+    tag->set_read_only(m_is_read_only || !isEnabled());
     tag->connect_delete_signal([=] {
       auto tag_index = [=] {
         for(auto i = 0; i < get_list()->get_size(); ++i) {
@@ -346,10 +354,10 @@ void TagBox::on_list_view_style() {
 
 }
 
-void TagBox::update_uneditable() {
-  auto is_uneditable = is_read_only() || !isEnabled();
+void TagBox::update_tags_read_only() {
+  auto is_read_only = m_is_read_only || !isEnabled();
   for(auto tag : m_tags) {
-    tag->set_read_only(is_uneditable);
+    tag->set_read_only(is_read_only);
   }
 }
 
