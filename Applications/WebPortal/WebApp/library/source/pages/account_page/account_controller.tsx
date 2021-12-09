@@ -56,10 +56,6 @@ export class AccountController extends React.Component<Properties, State> {
       readonly: true,
       isPasswordReadOnly: true
     };
-    this.renderProfilePage = this.renderProfilePage.bind(this);
-    this.renderEntitlementsPage = this.renderEntitlementsPage.bind(this);
-    this.renderRiskPage = this.renderRiskPage.bind(this);
-    this.onMenuClick = this.onMenuClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -135,15 +131,20 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private parseUrlPrefix(): string {
-    const url = window.location.pathname;
-    const prefix = url.substr(0, url.lastIndexOf('/'));
+    const url = (() => {
+      if(window.location.hash) {
+        return window.location.hash.substring(1);
+      }
+      return window.location.pathname;
+    })();
+    const prefix = url.substring(0, url.lastIndexOf('/'));
     if(prefix === '') {
       return url;
     }
     return prefix;
   }
 
-  private renderProfilePage() {
+  private renderProfilePage = () => {
     return <ProfileController
       displaySize={this.props.displaySize}
       countryDatabase={this.props.countryDatabase}
@@ -153,7 +154,7 @@ export class AccountController extends React.Component<Properties, State> {
       model={this.props.model.profileModel}/>;
   }
 
-  private renderEntitlementsPage() {
+  private renderEntitlementsPage = () => {
     return <EntitlementsController roles={this.props.model.roles}
       entitlements={this.props.entitlements}
       model={this.props.model.entitlementsModel}
@@ -162,7 +163,7 @@ export class AccountController extends React.Component<Properties, State> {
       displaySize={this.props.displaySize}/>;
   }
 
-  private renderRiskPage() {
+  private renderRiskPage = () => {
     return <RiskController
       currencyDatabase={this.props.currencyDatabase}
       displaySize={this.props.displaySize}
@@ -170,7 +171,7 @@ export class AccountController extends React.Component<Properties, State> {
       roles={this.props.model.roles}/>;
   }
 
-  private onMenuClick(subPage: SubPage) {
+  private onMenuClick = (subPage: SubPage) => {
     const urlPrefix = this.parseUrlPrefix();
     if(subPage === SubPage.PROFILE) {
       this.setState({redirect: `${urlPrefix}/profile`});
