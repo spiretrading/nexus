@@ -104,6 +104,10 @@ TagBox::TagBox(std::shared_ptr<ListModel> list,
       m_list_item_gap(0) {
   m_text_box = new TextBox(std::move(current));
   set_style(*m_text_box, TEXT_BOX_STYLE(get_style(*m_text_box)));
+  m_text_box_style_connection = connect_style_signal(*m_text_box,
+    std::bind_front(&TagBox::on_text_box_style, this));
+  m_highlight_connection = m_text_box->get_highlight()->connect_update_signal(
+    [=] (const Highlight&) { reposition_list_view(); });
   m_text_box->installEventFilter(this);
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::build_tag, this));
@@ -133,9 +137,6 @@ TagBox::TagBox(std::shared_ptr<ListModel> list,
   m_ellipses_item->hide();
   setFocusProxy(m_text_box);
   setFocusPolicy(Qt::StrongFocus);
-  m_line_edit = m_text_box->findChild<QLineEdit*>();
-  connect(m_line_edit, &QLineEdit::cursorPositionChanged,
-    std::bind_front(&TagBox::reposition_list_view, this));
   m_focus_connection = m_focus_observer.connect_state_signal(
     std::bind_front(&TagBox::on_focus, this));
 }
@@ -351,7 +352,24 @@ void TagBox::on_list_view_style() {
         });
       });
   }
+}
 
+void TagBox::on_text_box_style() {
+  m_font = {};
+  auto& stylist = find_stylist(*m_text_box);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const Font& font) {
+        stylist.evaluate(font, [=] (auto font) {
+          m_font = font;
+        });
+      },
+      [&] (const FontSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_font.setPixelSize(size);
+        });
+      });
+  }
 }
 
 void TagBox::update_tags_read_only() {
@@ -378,7 +396,7 @@ void TagBox::overflow() {
     auto visible_area_width = width() - m_margins.left() - m_margins.right();
     auto ellipses_width = m_ellipses_item->sizeHint().width();
     auto text_box_with = m_text_box->sizeHint().width();
-    auto first_char_length = m_line_edit->fontMetrics().horizontalAdvance(
+    auto first_char_length = QFontMetrics(m_font).horizontalAdvance(
       m_text_box->get_current()->get(), 1);
     auto difference = m_tags_width + ellipses_width + m_list_item_gap +
       first_char_length - visible_area_width;
@@ -420,13 +438,13 @@ void TagBox::overflow() {
 void TagBox::reposition_list_view() {
   if(m_overflow == TagBoxOverflow::ELIDE &&
       m_focus_observer.get_state() == FocusObserver::State::FOCUS_IN) {
-    auto text_length = m_line_edit->fontMetrics().horizontalAdvance(
+    auto text_length = QFontMetrics(m_font).horizontalAdvance(
       m_text_box->get_current()->get(), -1);
     auto cursor_pos = [=] {
       if(text_length > 0) {
-        return m_line_edit->fontMetrics().horizontalAdvance(
+        return QFontMetrics(m_font).horizontalAdvance(
           m_text_box->get_current()->get(),
-          m_text_box->get_highlight()->get().m_start + 1);
+          m_text_box->get_highlight()->get().m_end + 1);
       }
       return 1;
     }();

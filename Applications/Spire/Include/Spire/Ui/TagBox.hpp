@@ -72,16 +72,18 @@ namespace Styles {
       QWidget* m_list_view_container;
       ListView* m_list_view;
       TextBox* m_text_box;
-      QLineEdit* m_line_edit;
       ListItem* m_ellipses_item;
       FocusObserver m_focus_observer;
       std::vector<Tag*> m_tags;
       Styles::TagBoxOverflow m_overflow;
+      QFont m_font;
       QMargins m_margins;
       int m_tags_width;
       int m_list_item_gap;
+      boost::signals2::scoped_connection m_highlight_connection;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
+      boost::signals2::scoped_connection m_text_box_style_connection;
       boost::signals2::scoped_connection m_focus_connection;
 
       QWidget* build_tag(const std::shared_ptr<ListModel>& model, int index);
@@ -90,6 +92,7 @@ namespace Styles {
       void on_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
+      void on_text_box_style();
       void update_tags_read_only();
       void update_tags_width();
       void overflow();
