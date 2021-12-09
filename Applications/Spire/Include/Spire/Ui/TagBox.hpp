@@ -32,12 +32,12 @@ namespace Styles {
 
       /**
        * Constructs a TagBox.
-       * @param list_model The list model which holds a list of tags.
-       * @param current_model The current text's model.
+       * @param list The list model which holds a list of tags.
+       * @param current The current text's model.
        * @param parent The parent widget.
        */
-      TagBox(std::shared_ptr<ListModel> list_model,
-        std::shared_ptr<TextModel> current_model, QWidget* parent = nullptr);
+      TagBox(std::shared_ptr<ListModel> list,
+        std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
       /** Returns the list of tags. */
       const std::shared_ptr<ListModel>& get_list() const;

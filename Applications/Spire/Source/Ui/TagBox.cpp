@@ -55,11 +55,11 @@ struct TagBox::PartialListModel : public ListModel {
   explicit PartialListModel(std::shared_ptr<ListModel> source)
     : m_source(std::move(source)) {}
 
-  virtual int get_size() const {
+  virtual int get_size() const override {
     return m_source->get_size() + 2;
   }
 
-  virtual const std::any& at(int index) const {
+  virtual const std::any& at(int index) const override {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
@@ -70,7 +70,7 @@ struct TagBox::PartialListModel : public ListModel {
     return value;
   }
 
-  virtual QValidator::State set(int index, const std::any& value) {
+  virtual QValidator::State set(int index, const std::any& value) override {
     if(index < 0 || index >= get_size()) {
       return QValidator::State::Invalid;
     }
@@ -81,22 +81,20 @@ struct TagBox::PartialListModel : public ListModel {
   }
 
   connection connect_operation_signal(
-    const OperationSignal::slot_type& slot) const override {
+      const OperationSignal::slot_type& slot) const override {
     return m_source->connect_operation_signal(slot);
   }
 };
 
-TagBox::TagBox(std::shared_ptr<ListModel> list_model,
-    std::shared_ptr<TextModel> current_model, QWidget* parent)
+TagBox::TagBox(std::shared_ptr<ListModel> list,
+    std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<PartialListModel>(std::move(list_model))),
+      m_model(std::make_shared<PartialListModel>(std::move(list))),
       m_focus_observer(*this),
       m_overflow(TagBoxOverflow::WRAP),
       m_tags_width(0),
       m_list_item_gap(0) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  m_text_box = new TextBox(std::move(current_model));
+  m_text_box = new TextBox(std::move(current));
   set_style(*m_text_box, TEXT_BOX_STYLE(get_style(*m_text_box)));
   m_text_box->installEventFilter(this);
   m_list_view = new ListView(m_model,
@@ -119,6 +117,9 @@ TagBox::TagBox(std::shared_ptr<ListModel> list_model,
   container_layout->setSpacing(0);
   container_layout->addWidget(m_list_view);
   auto input_box = make_input_box(m_list_view_container);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
   layout->addWidget(input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
@@ -224,7 +225,7 @@ QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
     m_tags.emplace_back(tag);
     return tag;
   } else if(index == model->get_size() - 2) {
-    auto ellipses_box = make_label(QObject::tr("..."));
+    auto ellipses_box = make_label(tr("..."));
     set_style(*ellipses_box, TEXT_BOX_STYLE(get_style(*ellipses_box)));
     return ellipses_box;
   }
