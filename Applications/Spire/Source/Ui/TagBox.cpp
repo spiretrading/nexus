@@ -199,14 +199,14 @@ void TagBox::resizeEvent(QResizeEvent* event) {
 }
 
 QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
-  if(index < get_list()->get_size()) {
+  if(index < model->get_size() - 2) {
     auto label = displayTextAny(model->at(index));
     auto tag = new Tag(label, this);
-    tag->set_read_only(m_text_box->is_read_only() || !isEnabled());
+    tag->set_read_only(is_read_only() || !isEnabled());
     tag->connect_delete_signal([=] {
-      auto tag_index = [&] {
+      auto tag_index = [=] {
         for(auto i = 0; i < get_list()->get_size(); ++i) {
-          if(label == displayTextAny(model->at(i))) {
+          if(label == displayTextAny(m_model->at(i))) {
             return i;
           }
         }
@@ -223,7 +223,7 @@ QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
     });
     m_tags.emplace_back(tag);
     return tag;
-  } else if(index == get_list()->get_size()) {
+  } else if(index == model->get_size() - 2) {
     auto ellipses_box = make_label(QObject::tr("..."));
     set_style(*ellipses_box, TEXT_BOX_STYLE(get_style(*ellipses_box)));
     return ellipses_box;
@@ -341,7 +341,7 @@ void TagBox::on_list_view_style() {
 }
 
 void TagBox::update_uneditable() {
-  auto is_uneditable = m_text_box->is_read_only() || !isEnabled();
+  auto is_uneditable = is_read_only() || !isEnabled();
   for(auto tag : m_tags) {
     tag->set_read_only(is_uneditable);
   }
@@ -366,8 +366,8 @@ void TagBox::overflow() {
     auto text_box_with = m_text_box->sizeHint().width();
     auto first_char_length = m_line_edit->fontMetrics().horizontalAdvance(
       m_text_box->get_current()->get(), 1);
-    auto difference = m_tags_width + first_char_length + ellipses_width +
-      ellipses_width + m_list_item_gap - visible_area_width;
+    auto difference = m_tags_width + ellipses_width + m_list_item_gap +
+      first_char_length - visible_area_width;
     if(difference <= 0) {
       show_all_tags();
       m_text_box->setFixedWidth(visible_area_width - m_tags_width);
