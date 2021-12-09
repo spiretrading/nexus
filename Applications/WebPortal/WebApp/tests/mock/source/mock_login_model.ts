@@ -20,7 +20,7 @@ export class MockLoginModel extends WebPortal.LoginModel {
       } else if(username === 'manager') {
         return Beam.DirectoryEntry.makeAccount(210, 'manager');
       } else if(username === 'trader') {
-        return Beam.DirectoryEntry.makeAccount(210, 'manager');
+        return Beam.DirectoryEntry.makeAccount(210, 'trader');
       }
       throw Error('Invalid username or password.');
     })();

@@ -100,7 +100,7 @@ export class DashboardController extends React.Component<Properties, State> {
       const match = DashboardController.ACCOUNT_PATTERN.exec(
         window.location.pathname);
       const account = (() => {
-        if(match[1]) {
+        if(match?.[1]) {
           return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
         }
         return this.props.model.account;
