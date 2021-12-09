@@ -153,6 +153,13 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+bool ListView::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_layout();
+  }
+  return QWidget::event(event);
+}
+
 void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
