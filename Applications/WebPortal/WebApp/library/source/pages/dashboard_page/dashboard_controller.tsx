@@ -76,15 +76,17 @@ export class DashboardController extends React.Component<Properties, State> {
       </DashboardPage>);
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        if(window.location.pathname === '/') {
-          this.setState({isLoaded: true, redirect: '/account'});
-        } else {
-          this.setState({isLoaded: true});
-        }
-      }).catch(() => this.setState({cannotLoad: true}));
+  public async componentDidMount(): Promise<void> {
+    try {
+      await this.props.model.load();
+      if(window.location.pathname === '/') {
+        this.setState({isLoaded: true, redirect: '/account'});
+      } else {
+        this.setState({isLoaded: true});
+      }
+    } catch {
+      this.setState({cannotLoad: true});
+    }
   }
 
   public componentDidUpdate(): void {
