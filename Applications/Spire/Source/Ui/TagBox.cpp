@@ -36,6 +36,13 @@ namespace {
       set(ListOverflowGap(scale_width(3))).
       set(Overflow::WRAP).
       set(Qt::Horizontal);
+    auto& list_item_rule = style.get(Any() >> is_a<ListItem>());
+    auto list_item_style = LIST_ITEM_STYLE();
+    for(auto& rule : list_item_style.get_rules()) {
+      for(auto& property : rule.get_block()) {
+        list_item_rule.set(property);
+      }
+    }
     return style;
   }
 
@@ -103,9 +110,6 @@ TagBox::TagBox(std::shared_ptr<ListModel> list,
   set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
   m_list_view_style_connection = connect_style_signal(*m_list_view,
     std::bind_front(&TagBox::on_list_view_style, this));
-  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
-  }
   m_list_view->get_list()->connect_operation_signal(
     std::bind_front(&TagBox::on_operation, this));
   m_list_view->connect_submit_signal(std::bind_front(&TagBox::on_submit, this));
