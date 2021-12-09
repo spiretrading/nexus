@@ -173,7 +173,8 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     switch(key_event.key()) {
       case Qt::Key_Backspace:
-        if(m_line_edit->cursorPosition() == 0 && get_list()->get_size() > 0) {
+        if(m_text_box->get_highlight()->get().m_start == 0 &&
+            get_list()->get_size() > 0) {
           m_delete_signal(get_list()->get_size() - 1);
         }
         break;
@@ -416,7 +417,8 @@ void TagBox::reposition_list_view() {
     auto cursor_pos = [=] {
       if(text_length > 0) {
         return m_line_edit->fontMetrics().horizontalAdvance(
-          m_text_box->get_current()->get(), m_line_edit->cursorPosition() + 1);
+          m_text_box->get_current()->get(),
+          m_text_box->get_highlight()->get().m_start + 1);
       }
       return 1;
     }();
