@@ -29,7 +29,7 @@ interface Properties {
 
   /** The authenticated user's account. */
   authenticatedAccount: Beam.DirectoryEntry;
-  
+
   /** The authenticated user's roles. */
   roles: Nexus.AccountRoles;
 
