@@ -1,3 +1,4 @@
+export * from './compliance_controller';
 export * from './compliance_page';
 export * from './new_rule_modal';
 export * from './parameter_entry';

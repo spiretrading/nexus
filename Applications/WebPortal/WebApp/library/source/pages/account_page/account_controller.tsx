@@ -5,6 +5,7 @@ import * as Router from 'react-router-dom';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
+import { ComplianceController } from './compliance_page';
 import { EntitlementsController } from './entitlements_page';
 import { ProfileController } from './profile_page';
 import { RiskController } from './risk_page';
@@ -89,6 +90,8 @@ export class AccountController extends React.Component<Properties, State> {
             render={this.renderEntitlementsPage}/>
           <Router.Route path='/account/:id(\d+)?/risk'
             render={this.renderRiskPage}/>
+          <Router.Route path='/account/:id(\d+)?/compliance'
+            render={this.renderCompliancePage}/>
           <Router.Route path='/account/:id(\d+)?'
             render={({match}: any) => {
               const url = (() => {
@@ -166,6 +169,10 @@ export class AccountController extends React.Component<Properties, State> {
       roles={this.props.model.roles}/>;
   }
 
+  private renderCompliancePage = () => {
+    return <ComplianceController/>;
+  }
+
   private onMenuClick = (subPage: SubPage) => {
     const urlPrefix = this.parseUrlPrefix();
     if(subPage === SubPage.PROFILE) {
@@ -174,6 +181,8 @@ export class AccountController extends React.Component<Properties, State> {
       this.setState({redirect: `${urlPrefix}/entitlements`});
     } else if(subPage === SubPage.RISK_CONTROLS) {
       this.setState({redirect: `${urlPrefix}/risk`});
+    } else if(subPage === SubPage.COMPLIANCE) {
+      this.setState({redirect: `${urlPrefix}/compliance`});
     }
   }
 }
