@@ -30,6 +30,7 @@ export class LocalDashboardModel extends DashboardModel {
     this._account = account;
     this._roles = roles;
     this._accountDirectoryModel = accountDirectoryModel;
+    this.accountModels = new Beam.Map<Beam.DirectoryEntry, LocalAccountModel>();
   }
 
   /** Returns true of this model has been loaded. */
@@ -72,10 +73,17 @@ export class LocalDashboardModel extends DashboardModel {
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
-    if(account.equals(this._account)) {
-      return new LocalAccountModel(this.account, this.roles, []);
+    let model = this.accountModels.get(account);
+    if(model === undefined) {
+      model = (() => {
+        if(account.equals(this._account)) {
+          return new LocalAccountModel(this.account, this.roles, []);
+        }
+        return new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
+      })();
+      this.accountModels.set(account, model);
     }
-    return new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
+    return model;
   }
 
   public makeGroupModel(group: Beam.DirectoryEntry): LocalGroupModel {
@@ -98,4 +106,5 @@ export class LocalDashboardModel extends DashboardModel {
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
   private _accountDirectoryModel: AccountDirectoryModel;
+  private accountModels: Beam.Map<Beam.DirectoryEntry, LocalAccountModel>;
 }

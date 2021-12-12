@@ -10,7 +10,7 @@ import { ProfileController } from './profile_page';
 import { RiskController } from './risk_page';
 import { SubPage } from './sub_page';
 
-interface Properties {
+interface Properties extends Router.RouteComponentProps {
 
   /** Stores the entitlements to display. */
   entitlements: Nexus.EntitlementDatabase;
@@ -69,11 +69,11 @@ export class AccountController extends React.Component<Properties, State> {
       return <LoadingPage/>;
     }
     const subPage = (() => {
-      if(window.location.pathname.endsWith('/profile')) {
+      if(this.props.location.pathname.endsWith('/profile')) {
         return SubPage.PROFILE;
-      } else if(window.location.pathname.endsWith('/entitlements')) {
+      } else if(this.props.location.pathname.endsWith('/entitlements')) {
         return SubPage.ENTITLEMENTS;
-      } else if(window.location.pathname.endsWith('/risk')) {
+      } else if(this.props.location.pathname.endsWith('/risk')) {
         return SubPage.RISK_CONTROLS;
       }
       return SubPage.NONE;
@@ -106,7 +106,7 @@ export class AccountController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      const readonly = 
+      const readonly =
         !(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) && (
           this.props.authenticatedAccount.equals(this.props.model.account) ||
           this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
@@ -131,12 +131,7 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private parseUrlPrefix(): string {
-    const url = (() => {
-      if(window.location.hash) {
-        return window.location.hash.substring(1);
-      }
-      return window.location.pathname;
-    })();
+    const url = this.props.location.pathname;
     const prefix = url.substring(0, url.lastIndexOf('/'));
     if(prefix === '') {
       return url;

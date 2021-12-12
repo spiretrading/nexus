@@ -27,11 +27,6 @@ export class ApplicationController extends React.Component<Properties, State> {
       account: Beam.DirectoryEntry.INVALID,
       isLoading: true
     };
-    this.onResize = this.onResize.bind(this);
-    this.onLogin = this.onLogin.bind(this);
-    this.onLogout = this.onLogout.bind(this);
-    this.renderLoginPage = this.renderLoginPage.bind(this);
-    this.renderDashboardPage = this.renderDashboardPage.bind(this);
   }
 
   public render(): JSX.Element {
@@ -61,27 +56,27 @@ export class ApplicationController extends React.Component<Properties, State> {
     window.removeEventListener('resize', this.onResize);
   }
 
-  private onResize() {
+  private onResize = () => {
     const displaySize = DisplaySize.getDisplaySize();
     if(displaySize !== this.state.displaySize) {
       this.setState({displaySize: displaySize});
     }
   }
 
-  private onLogin(account: Beam.DirectoryEntry) {
+  private onLogin = (account: Beam.DirectoryEntry) => {
     this.setState({
       account: account
     });
   }
 
-  private onLogout() {
+  private onLogout = () => {
     this.props.model.reset();
     this.setState({
       account: Beam.DirectoryEntry.INVALID
     });
   }
 
-  private renderLoginPage() {
+  private renderLoginPage = () => {
     if(this.state.account.equals(Beam.DirectoryEntry.INVALID)) {
       return <LoginController model={this.props.model.loginModel}
         onLogin={this.onLogin}/>;
@@ -89,8 +84,9 @@ export class ApplicationController extends React.Component<Properties, State> {
     return <Router.Redirect to='/'/>;
   }
 
-  private renderDashboardPage() {
-    return <DashboardController model={this.props.model.dashboardModel}
+  private renderDashboardPage = (props: any) => {
+    return <DashboardController {...props}
+      model={this.props.model.dashboardModel}
       displaySize={this.state.displaySize} onLogout={this.onLogout}/>;
   }
 }
@@ -100,11 +96,11 @@ class AuthenticatedRoute extends React.Component<any> {
     return (
       <Router.Route
         {...this.props}
-        render={(_) => {
+        render={(props) => {
           if(this.props.account.equals(Beam.DirectoryEntry.INVALID)) {
             return <Router.Redirect to='/login'/>;
           } else {
-            return this.props.render();
+            return this.props.render(props);
           }
         }}/>);
   }

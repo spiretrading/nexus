@@ -9,7 +9,7 @@ import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
 
-interface Properties {
+interface Properties extends Router.RouteComponentProps {
 
   /** The model to use. */
   model: DashboardModel;
@@ -79,7 +79,7 @@ export class DashboardController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      if(window.location.pathname === '/') {
+      if(this.props.location.pathname === '/') {
         this.setState({isLoaded: true, redirect: '/account'});
       } else {
         this.setState({isLoaded: true});
@@ -95,10 +95,10 @@ export class DashboardController extends React.Component<Properties, State> {
     }
   }
 
-  private renderAccountPage = () => {
+  private renderAccountPage = (props: Router.RouteComponentProps) => {
     const model = (() => {
-      const match = DashboardController.ACCOUNT_PATTERN.exec(
-        window.location.pathname);
+      const match =
+        DashboardController.ACCOUNT_PATTERN.exec(this.props.location.pathname);
       const account = (() => {
         if(match?.[1]) {
           return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
@@ -108,7 +108,7 @@ export class DashboardController extends React.Component<Properties, State> {
       return this.props.model.makeAccountModel(account);
     })();
     return (
-      <AccountController
+      <AccountController {...props}
         entitlements={this.props.model.entitlementDatabase}
         countryDatabase={this.props.model.countryDatabase}
         currencyDatabase={this.props.model.currencyDatabase}
@@ -120,8 +120,8 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private renderGroupPage = () => {
-    const match = DashboardController.GROUP_PATTERN.exec(
-      window.location.pathname);
+    const match =
+      DashboardController.GROUP_PATTERN.exec(this.props.location.pathname);
     if(!match[1]) {
       return this.renderPageNotFound();
     }
