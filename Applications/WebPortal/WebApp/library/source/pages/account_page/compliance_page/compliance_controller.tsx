@@ -1,9 +1,14 @@
 import * as React from 'react';
+import { DisplaySize } from '../../..';
 import { LoadingPage, LoadingState } from '../..';
 import { ComplianceModel } from './compliance_model';
+import { CompliancePage } from './compliance_page';
 import { ComplianceService } from './compliance_service';
 
 interface Properties {
+
+  /** The size at which the component should be displayed at. */
+  displaySize: DisplaySize;
 
   /** The services used by the CompliancePage. */
   service: ComplianceService;
@@ -27,8 +32,11 @@ export class ComplianceController extends React.Component<Properties, State> {
   public render(): JSX.Element {
     if(this.state.loadingState.isLoading()) {
       return <LoadingPage/>;
+    } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
+      return <div/>;
     }
-    return <div/>;
+    return <CompliancePage displaySize={this.props.displaySize}
+      model={this.state.model}/>;
   }
 
   public async componentDidMount(): Promise<void> {

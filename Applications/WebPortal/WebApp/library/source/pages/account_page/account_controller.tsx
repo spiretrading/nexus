@@ -170,7 +170,8 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private renderCompliancePage = () => {
-    return <ComplianceController service={new NullComplianceService()}/>;
+    return <ComplianceController displaySize={this.props.displaySize}
+      service={new NullComplianceService()}/>;
   }
 
   private onMenuClick = (subPage: SubPage) => {
