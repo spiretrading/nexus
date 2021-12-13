@@ -56,9 +56,13 @@ namespace {
 
 struct TagBox::PartialListModel : public ListModel {
   std::shared_ptr<ListModel> m_source;
+  ListModelTransactionLog m_transaction;
+  scoped_connection m_source_connection;
 
   explicit PartialListModel(std::shared_ptr<ListModel> source)
-    : m_source(std::move(source)) {}
+    : m_source(std::move(source)),
+      m_source_connection(m_source->connect_operation_signal(
+        std::bind_front(&PartialListModel::on_operation, this))) {}
 
   int get_size() const override {
     return m_source->get_size() + 2;
@@ -76,18 +80,19 @@ struct TagBox::PartialListModel : public ListModel {
   }
 
   QValidator::State set(int index, const std::any& value) override {
-    if(index < 0 || index >= get_size()) {
+    if(index < 0 || index >= m_source->get_size()) {
       return QValidator::State::Invalid;
     }
-    if(index < m_source->get_size()) {
-      return m_source->set(index, value);
-    }
-    return QValidator::State::Acceptable;
+    return m_source->set(index, value);
   }
 
   connection connect_operation_signal(
       const OperationSignal::slot_type& slot) const override {
-    return m_source->connect_operation_signal(slot);
+    return m_transaction.connect_operation_signal(slot);
+  }
+
+  void on_operation(const Operation& operation) {
+    m_transaction.push(Operation(operation));
   }
 };
 
