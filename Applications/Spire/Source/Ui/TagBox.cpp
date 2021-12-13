@@ -110,7 +110,7 @@ TagBox::TagBox(std::shared_ptr<ListModel> list,
     [=] (const Highlight&) { reposition_list_view(); });
   m_text_box->installEventFilter(this);
   m_list_view = new ListView(m_model,
-    std::bind_front(&TagBox::build_tag, this));
+    std::bind_front(&TagBox::make_tag, this));
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
   m_list_view_style_connection = connect_style_signal(*m_list_view,
@@ -213,7 +213,7 @@ void TagBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-QWidget* TagBox::build_tag(const std::shared_ptr<ListModel>& model, int index) {
+QWidget* TagBox::make_tag(const std::shared_ptr<ListModel>& model, int index) {
   if(index < model->get_size() - 2) {
     auto label = displayTextAny(model->at(index));
     auto tag = new Tag(label, this);

@@ -86,7 +86,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_text_box_style_connection;
       boost::signals2::scoped_connection m_focus_connection;
 
-      QWidget* build_tag(const std::shared_ptr<ListModel>& model, int index);
+      QWidget* make_tag(const std::shared_ptr<ListModel>& model, int index);
       void on_focus(FocusObserver::State state);
       void on_operation(const ListModel::Operation& operation);
       void on_submit(const std::any& submission);
