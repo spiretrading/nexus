@@ -33,7 +33,8 @@ export class ComplianceValue {
     return new ComplianceValue(value.type, data);
   }
 
-  /** Constructs a ComplianceValue.
+  /**
+   * Constructs a ComplianceValue.
    * @param type The type of value to store.
    * @param value The raw value.
    */

@@ -11,7 +11,8 @@ export class Currency {
     return new Currency(value);
   }
 
-  /** Constructs a Currency.
+  /**
+   * Constructs a Currency.
    * @param code - The ISO 4217 currency code.
    */
   constructor(code: number = 0) {
@@ -57,7 +58,8 @@ export class CurrencyDatabase {
     this._entries = [];
   }
 
-  /** Returns an entry from a currency.
+  /**
+   * Returns an entry from a currency.
    * @param currency - The currency to lookup.
    * @return The entry with the specified currency.
    */
@@ -70,7 +72,8 @@ export class CurrencyDatabase {
     return CurrencyDatabase.Entry.NONE;
   }
 
-  /** Returns an entry from a code.
+  /**
+   * Returns an entry from a code.
    * @param code - The code to lookup.
    * @return The entry with the specified code.
    */
@@ -83,7 +86,8 @@ export class CurrencyDatabase {
     return CurrencyDatabase.Entry.NONE;
   }
 
-  /** Adds an entry.
+  /**
+   * Adds an entry.
    * @param entry - The entry to add.
    */
   public add(entry: CurrencyDatabase.Entry): void {
@@ -93,7 +97,8 @@ export class CurrencyDatabase {
     }
   }
 
-  /** Removes an entry.
+  /**
+   * Removes an entry.
    * @param currency - The currency whose entry is to be removed.
    */
   public delete(currency: Currency): void {
@@ -130,7 +135,8 @@ export module CurrencyDatabase {
       return new Entry(Currency.fromJson(value.id), value.code, value.sign);
     }
 
-    /** Constructs an entry.
+    /**
+     * Constructs an entry.
      * @param currency - The currency to represent.
      * @param code - The currency's code ie. (USD)
      * @param sign - The currency's sign ie. ($)

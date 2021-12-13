@@ -10,7 +10,8 @@ export class ComplianceRuleSchema {
       Beam.arrayFromJson(ComplianceParameter, value.parameters));
   }
 
-  /** Constructs a ComplianceRuleSchema.
+  /**
+   * Constructs a ComplianceRuleSchema.
    * @param name The name of the rule.
    * @param parameters The list of parameters.
    */

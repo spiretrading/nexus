@@ -56,7 +56,8 @@ export class MarketDatabase {
     this._entries = [];
   }
 
-  /** Returns an entry from its code.
+  /**
+   * Returns an entry from its code.
    * @param code - The MarketCode to lookup.
    * @return The Entry with the specified code.
    */
@@ -69,7 +70,8 @@ export class MarketDatabase {
     return MarketDatabase.Entry.NONE;
   }
 
-  /** Adds an entry.
+  /**
+   * Adds an entry.
    * @param entry - The entry to add.
    */
   public add(entry: MarketDatabase.Entry): void {
@@ -78,7 +80,8 @@ export class MarketDatabase {
     }
   }
 
-  /** Removes an entry.
+  /**
+   * Removes an entry.
    * @param code - The MarketCode whose entry is to be removed.
    */
   public delete(code: MarketCode): void {
@@ -119,7 +122,8 @@ export module MarketDatabase {
         value.display_name);
     }
 
-    /** Constructs an entry.
+    /**
+     * Constructs an entry.
      * @param code - The market identifier code.
      * @param countryCode - The market's country code.
      * @param timeZone - The market's time zone.

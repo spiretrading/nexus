@@ -15,7 +15,8 @@ export class Security {
       CountryCode.fromJson(value.country));
   }
 
-  /** Constructs a Security.
+  /**
+   * Constructs a Security.
    * @param symbol - The security's ticker symbol.
    * @param market - The security's market code.
    * @param country - The security's country of origin.

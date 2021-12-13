@@ -16,7 +16,8 @@ export abstract class ServiceClients {
   /** Returns the RiskClient. */
   public abstract get riskClient(): RiskClient;
 
-  /** Logs into and opens all services.
+  /**
+   * Logs into and opens all services.
    * @param username - The account's username.
    * @param password - The account's password.
    * @return The directory entry of the account that logged in.

@@ -19,7 +19,8 @@ export abstract class DefinitionsClient {
   /** Returns the market database. */
   public abstract get marketDatabase(): MarketDatabase;
 
-  /** Connects to the service.
+  /**
+   * Connects to the service.
    * @throws ServiceError Indicates the connection failed.
    */
   public abstract open(): Promise<void>;

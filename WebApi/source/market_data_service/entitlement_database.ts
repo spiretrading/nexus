@@ -19,7 +19,8 @@ export class EntitlementDatabase {
     this._entries = [];
   }
 
-  /** Returns the entry belonging to a group.
+  /**
+   * Returns the entry belonging to a group.
    * @param group - The group to search for.
    * @return The entry belonging to the specified group.
    */
@@ -32,7 +33,8 @@ export class EntitlementDatabase {
     return EntitlementDatabase.Entry.NONE;
   }
 
-  /** Adds an entry.
+  /**
+   * Adds an entry.
    * @param entry - The entry to add.
    */
   public add(entry: EntitlementDatabase.Entry): void {
@@ -41,7 +43,8 @@ export class EntitlementDatabase {
     }
   }
 
-  /** Removes an entry.
+  /**
+   * Removes an entry.
    * @param entry - The entitlement entry to remove.
    */
   public delete(entry: EntitlementDatabase.Entry): void {
@@ -84,7 +87,8 @@ export module EntitlementDatabase {
           MarketDataTypeSet, value.applicability));
     }
 
-    /** Constructs an entry.
+    /**
+     * Constructs an entry.
      * @param name - The display name.
      * @param price - The entitlement's price.
      * @param currency - The currency the entitlement is priced in.
