@@ -15,8 +15,7 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
 SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_current(std::move(current)),
-      m_is_read_only(false) {
+      m_current(std::move(current)) {
   auto combo_box_current = make_transform_value_model(m_current,
     [] (const Security& current) {
       return std::any(current);
@@ -52,15 +51,11 @@ const Security& SecurityBox::get_submission() const {
 }
 
 bool SecurityBox::is_read_only() const {
-  return m_is_read_only;
+  return m_combo_box->is_read_only();
 }
 
 void SecurityBox::set_read_only(bool is_read_only) {
-  if(m_is_read_only == is_read_only) {
-    return;
-  }
-  m_is_read_only = is_read_only;
-  m_combo_box->set_read_only(m_is_read_only);
+  m_combo_box->set_read_only(is_read_only);
 }
 
 connection SecurityBox::connect_submit_signal(

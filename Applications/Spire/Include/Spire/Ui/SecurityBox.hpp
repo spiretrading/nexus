@@ -63,7 +63,6 @@ namespace Spire {
       ComboBox* m_combo_box;
       std::shared_ptr<CurrentModel> m_current;
       Nexus::Security m_submission;
-      bool m_is_read_only;
   };
 }
 
