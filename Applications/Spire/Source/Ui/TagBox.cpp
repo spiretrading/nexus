@@ -38,10 +38,8 @@ namespace {
       set(Qt::Horizontal);
     auto& list_item_rule = style.get(Any() >> is_a<ListItem>());
     auto list_item_style = LIST_ITEM_STYLE();
-    for(auto& rule : list_item_style.get_rules()) {
-      for(auto& property : rule.get_block()) {
-        list_item_rule.set(property);
-      }
+    for(auto& property : list_item_style.get(Any()).get_block()) {
+      list_item_rule.set(property);
     }
     return style;
   }
