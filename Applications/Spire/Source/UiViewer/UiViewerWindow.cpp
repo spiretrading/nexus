@@ -163,6 +163,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
   add(make_tag_profile());
+  add(make_tag_box_profile());
   add(make_text_area_box_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());

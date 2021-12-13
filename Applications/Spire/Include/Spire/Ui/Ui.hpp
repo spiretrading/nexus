@@ -62,6 +62,7 @@ namespace Spire {
   template<typename T> class StagingValueModel;
   class TableModel;
   class Tag;
+  class TagBox;
   class TextAreaBox;
   class TextBox;
   class TimeBox;
