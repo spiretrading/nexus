@@ -2,11 +2,12 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
+import { SubmissionInput } from '..';
 import { NewRuleModal } from './new_rule_modal';
 import { RulesList } from './rules_list';
 
 interface Properties {
-  
+
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
@@ -18,6 +19,15 @@ interface Properties {
 
   /** The list of rule schemas. Used in adding new rules. */
   schemas: Nexus.ComplianceRuleSchema[];
+
+  /** The account's roles. */
+  roles: Nexus.AccountRoles;
+
+  /** Whether an error occurred. */
+  isError?: boolean;
+
+  /** The status message to display. */
+  status?: string;
 
   /** Determines if the component is readonly. */
   readonly?: boolean;
@@ -31,16 +41,24 @@ interface Properties {
 
 interface State {
   isAddRuleModalOpen: boolean;
+  isSubmitEnabled: boolean;
 }
 
 /* Displays the compliance page.*/
 export class CompliancePage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    isError: false,
+    status: '',
+    onRuleAdd: () => {},
+    onRuleChange: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isAddRuleModalOpen: false
+      isAddRuleModalOpen: false,
+      isSubmitEnabled: false
     };
-    this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
   }
 
   public render(): JSX.Element {
@@ -78,9 +96,9 @@ export class CompliancePage extends React.Component<Properties, State> {
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <HLine color='#E6E6E6'/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
-          <button className={css(CompliancePage.EXTRA_STYLE.button)}>
-            {'Save Changes'}
-          </button>
+          <SubmissionInput roles={this.props.roles} isError={this.props.isError}
+            status={this.props.status} isEnabled={this.state.isSubmitEnabled}
+            onSubmit={this.onSubmit}/>
           <div style={CompliancePage.STYLE.paddingSmall}/>
           <div style={CompliancePage.STYLE.statusBox}>
             {'Saved'}
@@ -89,8 +107,12 @@ export class CompliancePage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onToggleAddRuleModal() {
+  private onToggleAddRuleModal = () => {
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
+  }
+
+  private onSubmit = () => {
+//    this.props.onSubmit(this.state.comment, this.state.parameters);
   }
 
   private static readonly STYLE = {

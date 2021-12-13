@@ -4,8 +4,7 @@ import { Transition } from 'react-transition-group';
 
 interface Properties {
 
-  /** Amount of time in milliseconds before
-  * displaying the loading animation. */
+  /** Amount of time in milliseconds before displaying the loading animation. */
   delay?: number;
 }
 
@@ -65,4 +64,75 @@ export class LoadingPage extends React.Component<Properties, State> {
   };
   private static readonly TOP_PADDING = '150px';
   private static readonly BOTTOM_PADDING = '40px';
+}
+
+/** Helper class for keeping track of a page's loading state. */
+export class LoadingState {
+
+  /**
+   * Constructs a LoadingState in a given state with a given message. By default
+   * the state is LOADING with an empty message.
+   */
+  constructor(state?: LoadingState.State, message?: string) {
+    if(state) {
+      this._state = state;
+    } else {
+      this._state = LoadingState.State.LOADING;
+    }
+    if(message) {
+      this._message = message;
+    } else {
+      this._message = '';
+    }
+  }
+
+  /** Returns the current state. */
+  public get state(): LoadingState.State {
+    return this._state;
+  }
+
+  /** Returns the current message. */
+  public get message(): string {
+    if(this._state === LoadingState.State.ERROR) {
+      return this._message;
+    }
+    return '';
+  }
+
+  /** Returns true iff the state is LOADING. */
+  public isLoading(): boolean {
+    return this.state === LoadingState.State.LOADING;
+  }
+
+  /** Updates the state to indicate success. */
+  public succeed(): void {
+    this._state = LoadingState.State.LOADED;
+  }
+
+  /** Updates the state to indicate failure. */
+  public fail(message?: string): void {
+    this._state = LoadingState.State.ERROR;
+    if(message) {
+      this._message = message;
+    }
+  }
+
+  private _state: LoadingState.State;
+  private _message: string;
+}
+
+export namespace LoadingState {
+
+  /** Enumerates a page's loading states. */
+  export enum State {
+
+    /** The initial state indicating the page is loading. */
+    LOADING,
+
+    /** A terminal state for when the page successfully loaded. */
+    LOADED,
+
+    /** A terminal state for when the page failed to load. */
+    ERROR
+  }
 }

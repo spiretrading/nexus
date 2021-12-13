@@ -38,16 +38,18 @@ class TestApp extends React.Component<Properties, State> {
             TOGGLE READONLY
           </button>
         </div>
-      <WebPortal.PageWrapper>
-        <WebPortal.CompliancePage
-          onRuleAdd={this.onRuleAdd}
-          onRuleChange={this.onRuleChange}
-          displaySize={this.props.displaySize} 
-          schemas={this.state.schemas}
-          readonly={this.state.readonly}
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-          entries={this.state.entries}/>
-      </WebPortal.PageWrapper>
+        <WebPortal.PageWrapper>
+          <WebPortal.CompliancePage
+            roles=
+              {new Nexus.AccountRoles(Nexus.AccountRoles.Role.ADMINISTRATOR)}
+            onRuleAdd={this.onRuleAdd}
+            onRuleChange={this.onRuleChange}
+            displaySize={this.props.displaySize} 
+            schemas={this.state.schemas}
+            readonly={this.state.readonly}
+            currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+            entries={this.state.entries}/>
+        </WebPortal.PageWrapper>
       </div>);
   }
 
