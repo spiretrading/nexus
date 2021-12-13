@@ -60,9 +60,8 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      ComboBox* m_combo_box;
       std::shared_ptr<CurrentModel> m_current;
-      Nexus::Security m_submission;
+      ComboBox* m_combo_box;
   };
 }
 

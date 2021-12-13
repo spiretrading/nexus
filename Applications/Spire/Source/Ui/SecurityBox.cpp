@@ -25,10 +25,11 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     });
   m_combo_box = new ComboBox(std::move(query_model), combo_box_current,
     [] (const auto& list, auto index) {
-      return new SecurityListItem(std::any_cast<SecurityInfo>(list->at(index)));
+      return new SecurityListItem(
+        std::any_cast<const SecurityInfo&>(list->at(index)));
     });
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
-    m_submit_signal(std::any_cast<SecurityInfo>(submission).m_security);
+    m_submit_signal(std::any_cast<const SecurityInfo&>(submission).m_security);
   });
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -47,7 +48,7 @@ const std::shared_ptr<SecurityBox::CurrentModel>&
 }
 
 const Security& SecurityBox::get_submission() const {
-  return m_submission;
+  return std::any_cast<const Security&>(m_combo_box->get_submission());
 }
 
 bool SecurityBox::is_read_only() const {
