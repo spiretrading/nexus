@@ -1,5 +1,5 @@
-import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
-  MarketDatabase } from '..';
+import { ComplianceRuleSchema, CountryDatabase, CurrencyDatabase,
+  EntitlementDatabase, MarketDatabase } from '..';
 
 /** Client used to access definitions services. */
 export abstract class DefinitionsClient {
@@ -18,6 +18,9 @@ export abstract class DefinitionsClient {
 
   /** Returns the market database. */
   public abstract get marketDatabase(): MarketDatabase;
+
+  /** Returns the list of compliace rule schemas. */
+  public abstract get complianceRuleSchemas(): ComplianceRuleSchema[];
 
   /**
    * Connects to the service.

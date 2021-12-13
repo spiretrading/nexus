@@ -68,7 +68,7 @@ export class HttpAccountModel extends AccountModel {
       }
       return await
         this.serviceClients.serviceLocatorClient.loadDirectoryEntryFromId(
-        this.account.id);
+          this.account.id);
     })();
     const roles =
       await this.serviceClients.administrationClient.loadAccountRoles(account);
@@ -81,10 +81,13 @@ export class HttpAccountModel extends AccountModel {
       }
       return [group];
     })();
-    this.serviceClients.definitionsClient.currencyDatabase;
+    const complianceRuleEntries =
+      await this.serviceClients.complianceClient.load(account);
     this.model =
       new LocalAccountModel(account, roles, groups, new ComplianceModel(
-        roles, [], [], this.serviceClients.definitionsClient.currencyDatabase));
+        roles, this.serviceClients.definitionsClient.complianceRuleSchemas,
+        complianceRuleEntries,
+        this.serviceClients.definitionsClient.currencyDatabase));
     this._entitlementsModel =
       new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
