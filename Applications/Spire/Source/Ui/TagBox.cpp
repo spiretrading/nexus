@@ -165,10 +165,8 @@ void TagBox::set_read_only(bool is_read_only) {
   update_tags_read_only();
   if(m_is_read_only) {
     match(*this, ReadOnly());
-    match(*m_list_view, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
-    unmatch(*m_list_view, ReadOnly());
   }
 }
 
