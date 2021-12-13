@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import { ComplianceService } from './compliance_page';
 import { EntitlementsModel } from './entitlements_page';
 import { ProfileModel } from './profile_page'
 import { RiskModel } from './risk_page';
@@ -24,6 +25,9 @@ export abstract class AccountModel {
 
   /** Returns the account's RiskModel. */
   public abstract get riskModel(): RiskModel;
+
+  /** Returns the ComplianceService tied to the account. */
+  public abstract get complianceService(): ComplianceService;
 
   /** Loads this model. */
   public abstract load(): Promise<void>;

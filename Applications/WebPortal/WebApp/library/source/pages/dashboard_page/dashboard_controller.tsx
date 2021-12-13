@@ -3,8 +3,8 @@ import * as React from 'react';
 import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
-import { AccountController, AccountDirectoryController,
-  CreateAccountController, GroupController } from '..';
+import { AccountController, AccountDirectoryController, CreateAccountController,
+  GroupController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';

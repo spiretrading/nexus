@@ -1,3 +1,5 @@
+import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../..';
 import { LoadingPage, LoadingState } from '../..';
@@ -17,6 +19,9 @@ interface Properties {
 interface State {
   loadingState: LoadingState;
   model: ComplianceModel;
+  hasChange: boolean;
+  hasError: boolean;
+  status: string;
 }
 
 /** Implements the controller for the CompliancePage. */
@@ -25,7 +30,10 @@ export class ComplianceController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       loadingState: new LoadingState(),
-      model: null
+      model: null,
+      hasChange: false,
+      hasError: false,
+      status: ''
     }
   }
 
@@ -36,7 +44,9 @@ export class ComplianceController extends React.Component<Properties, State> {
       return <div/>;
     }
     return <CompliancePage displaySize={this.props.displaySize}
-      model={this.state.model}/>;
+      model={this.state.model} isError={this.state.hasError}
+      status={this.state.status} readonly={false} onRuleAdd={this.onRuleAdd}
+      onRuleChange={this.onRuleChange} onSubmit={this.onSubmit}/>;
   }
 
   public async componentDidMount(): Promise<void> {
@@ -54,6 +64,46 @@ export class ComplianceController extends React.Component<Properties, State> {
           loadingState: state.loadingState.fail(error.toString())
         };
       });
+    }
+  }
+
+  private onRuleAdd = (newSchema: Nexus.ComplianceRuleSchema) => {
+    this.setState(state => {
+      state.model.update(new Nexus.ComplianceRuleEntry(-1,
+        Beam.DirectoryEntry.INVALID, Nexus.ComplianceRuleEntry.State.DISABLED,
+        new Nexus.ComplianceRuleSchema(
+          newSchema.name, newSchema.parameters.slice())));
+      return {
+        model: state.model,
+        hasChange: true
+      };
+    });
+  }
+
+  private onRuleChange = (updatedRule: Nexus.ComplianceRuleEntry) => {
+    this.setState(state => {
+      state.model.update(updatedRule);
+      return {
+        model: state.model,
+        hasChange: true
+      };
+    });
+  }
+
+  private onSubmit = async () => {
+    try {
+      await this.props.service.submit(this.state.model.entries);
+      this.setState(
+        {
+          hasError: false,
+          status: ''
+        });
+    } catch(error) {
+      this.setState(
+        {
+          hasError: true,
+          status: error.toString()
+        });
     }
   }
 }

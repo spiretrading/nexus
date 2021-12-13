@@ -21,6 +21,9 @@ interface Properties {
   /** The status message to display. */
   status?: string;
 
+  /** Whether the changes can be submitted. */
+  hasChange?: boolean;
+
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
@@ -36,7 +39,6 @@ interface Properties {
 
 interface State {
   isAddRuleModalOpen: boolean;
-  hasChange: boolean;
 }
 
 /** Displays the compliance page. */
@@ -44,6 +46,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     isError: false,
     status: '',
+    hasChange: false,
     onRuleAdd: () => {},
     onRuleChange: () => {}
   }
@@ -51,8 +54,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isAddRuleModalOpen: false,
-      hasChange: false
+      isAddRuleModalOpen: false
     };
   }
 
@@ -79,21 +81,21 @@ export class CompliancePage extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           currencyDatabase={this.props.model.currencyDatabase}
           complianceList={this.props.model.entries}
-          onChange={this.onRuleChange}
+          onChange={this.props.onRuleChange}
           readonly={this.props.readonly}/>
         <div style={footerStyle}>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleModal displaySize={this.props.displaySize}
             isOpen={this.state.isAddRuleModalOpen}
             onToggleModal={this.onToggleAddRuleModal}
-            onAddNewRule={this.onRuleAdd}
+            onAddNewRule={this.props.onRuleAdd}
             schemas={this.props.model.schemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <HLine color='#E6E6E6'/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <SubmissionInput roles={this.props.model.roles}
             isError={this.props.isError} status={this.props.status}
-            isEnabled={this.state.hasChange} onSubmit={this.props.onSubmit}/>
+            isEnabled={this.props.hasChange} onSubmit={this.props.onSubmit}/>
           <div style={CompliancePage.STYLE.paddingSmall}/>
           <div style={CompliancePage.STYLE.statusBox}>Saved</div>
         </div>
@@ -102,20 +104,6 @@ export class CompliancePage extends React.Component<Properties, State> {
 
   private onToggleAddRuleModal = () => {
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
-  }
-
-  private onRuleAdd = (newSchema: Nexus.ComplianceRuleSchema) => {
-    if(!this.state.hasChange) {
-      this.setState({ hasChange: true });
-    }
-    this.props.onRuleAdd(newSchema);
-  }
-
-  private onRuleChange = (updatedRule: Nexus.ComplianceRuleEntry) => {
-    if(!this.state.hasChange) {
-      this.setState({ hasChange: true });
-    }
-    this.props.onRuleChange(updatedRule);
   }
 
   private static readonly STYLE = {

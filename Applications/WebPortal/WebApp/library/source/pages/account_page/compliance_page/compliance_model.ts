@@ -24,18 +24,26 @@ export class ComplianceModel {
     }
   }
 
+  /** Returns the account's roles. */
   public get roles(): Nexus.AccountRoles {
     return this._roles;
   }
 
+  /** Returns the list of available schemas. */
   public get schemas(): Nexus.ComplianceRuleSchema[] {
     return this._schemas.slice();
   }
 
+  /** Returns the list of applicable compliance rules. */
   public get entries(): Nexus.ComplianceRuleEntry[] {
     return this._entries.slice();
   }
 
+  /**
+   * Updates (or adds) a rule.
+   * @param entry The updated entry, if an existing entry doesn't exist then
+   *              one will be added.
+   */
   public update(entry: Nexus.ComplianceRuleEntry) {
     if(entry.id === -1) {
       this._entries.push(entry);
@@ -49,12 +57,18 @@ export class ComplianceModel {
     }
   }
 
+  /** Returns the database of available currencies. */
   public get currencyDatabase(): Nexus.CurrencyDatabase {
     return this._currencyDatabase;
   }
 
+  public clone(): ComplianceModel {
+    return new ComplianceModel(this._roles, this._schemas, this._entries,
+      this._currencyDatabase);
+  }
+
   private _roles: Nexus.AccountRoles;
-  private _currencyDatabase: Nexus.CurrencyDatabase;
   private _schemas: Nexus.ComplianceRuleSchema[];
   private _entries: Nexus.ComplianceRuleEntry[];
+  private _currencyDatabase: Nexus.CurrencyDatabase;
 }

@@ -1,12 +1,13 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountDirectoryModel, LocalAccountModel, LocalGroupModel } from '..';
+import { AccountDirectoryModel, ComplianceModel, LocalAccountModel, LocalGroupModel } from '..';
 import { DashboardModel } from './dashboard_model';
 
 /** Implements the DashboardModel using local memory. */
 export class LocalDashboardModel extends DashboardModel {
 
-  /** Constructs a LocalDashboardModel.
+  /**
+   * Constructs a LocalDashboardModel.
    * @param account - The account that's logged in.
    * @param roles - The account's roles.
    * @param entitlementDatabase - The entitlement database to use.
@@ -39,47 +40,52 @@ export class LocalDashboardModel extends DashboardModel {
   }
 
   public get entitlementDatabase(): Nexus.EntitlementDatabase {
+    this.ensureLoaded();
     return this._entitlementDatabase;
   }
 
   public get countryDatabase(): Nexus.CountryDatabase {
+    this.ensureLoaded();
     return this._countryDatabase;
   }
 
   public get currencyDatabase(): Nexus.CurrencyDatabase {
+    this.ensureLoaded();
     return this._currencyDatabase;
   }
 
   public get marketDatabase(): Nexus.MarketDatabase {
+    this.ensureLoaded();
     return this._marketDatabase;
   }
 
   public get account(): Beam.DirectoryEntry {
-    if(!this.isLoaded) {
-      throw Error('Model not loaded.');
-    }
+    this.ensureLoaded();
     return this._account;
   }
 
   public get roles(): Nexus.AccountRoles {
-    if(!this.isLoaded) {
-      throw Error('Model not loaded.');
-    }
+    this.ensureLoaded();
     return this._roles;
   }
 
   public get accountDirectoryModel(): AccountDirectoryModel {
+    this.ensureLoaded();
     return this._accountDirectoryModel;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
+    this.ensureLoaded();
     let model = this.accountModels.get(account);
     if(model === undefined) {
       model = (() => {
         if(account.equals(this._account)) {
-          return new LocalAccountModel(this.account, this.roles, []);
+          return new LocalAccountModel(this.account, this.roles, [],
+            new ComplianceModel(this.roles, [], [], this._currencyDatabase));
         }
-        return new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
+        return new LocalAccountModel(account, new Nexus.AccountRoles(0), [],
+          new ComplianceModel(
+            new Nexus.AccountRoles(0), [], [], this._currencyDatabase));
       })();
       this.accountModels.set(account, model);
     }
@@ -87,6 +93,7 @@ export class LocalDashboardModel extends DashboardModel {
   }
 
   public makeGroupModel(group: Beam.DirectoryEntry): LocalGroupModel {
+    this.ensureLoaded();
     return new LocalGroupModel(group, []);
   }
 
@@ -96,6 +103,12 @@ export class LocalDashboardModel extends DashboardModel {
 
   public async logout(): Promise<void> {
     return;
+  }
+
+  private ensureLoaded() {
+    if(!this._isLoaded) {
+      throw Error('Model not loaded.');
+    }
   }
 
   private _isLoaded: boolean;
