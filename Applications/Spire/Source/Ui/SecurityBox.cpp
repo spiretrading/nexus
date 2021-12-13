@@ -10,20 +10,20 @@ using namespace Spire;
 SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   QWidget* parent)
   : SecurityBox(std::move(query_model),
-    std::make_shared<LocalValueModel<Security>>(), parent) {}
+      std::make_shared<LocalValueModel<Security>>(), parent) {}
 
 SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, QWidget* parent)
-      : QWidget(parent),
-        m_current(std::move(current)),
-        m_is_read_only(false) {
+    : QWidget(parent),
+      m_current(std::move(current)),
+      m_is_read_only(false) {
   auto combo_box_current = make_transform_value_model(m_current,
-      [] (const Security& current) {
-        return std::any(current);
-      },
-      [] (const std::any& current) {
-        return std::any_cast<SecurityInfo>(current).m_security;
-      });
+    [] (const Security& current) {
+      return std::any(current);
+    },
+    [] (const std::any& current) {
+      return std::any_cast<SecurityInfo>(current).m_security;
+    });
   m_combo_box = new ComboBox(std::move(query_model), combo_box_current,
     [] (const auto& list, auto index) {
       return new SecurityListItem(std::any_cast<SecurityInfo>(list->at(index)));
