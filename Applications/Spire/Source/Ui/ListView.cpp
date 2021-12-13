@@ -85,9 +85,10 @@ ListView::ListView(
   for(auto i = 0; i < m_list->get_size(); ++i) {
     auto item = new ListItem(m_view_builder(m_list, i));
     m_items.emplace_back(new ItemEntry{item, i, false});
-    item->connect_submit_signal([=, item = m_items.back().get()] {
-      on_item_submitted(*item);
-    });
+    m_items.back()->m_connection =
+      item->connect_submit_signal([=, item = m_items.back().get()] {
+        on_item_submitted(*item);
+      });
   }
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
@@ -150,6 +151,13 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool ListView::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_layout();
+  }
+  return QWidget::event(event);
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
@@ -388,12 +396,14 @@ void ListView::update_focus(optional<int> current) {
 void ListView::add_item(int index) {
   auto item = new ListItem(m_view_builder(m_list, index));
   m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
-  item->connect_submit_signal([=, item = m_items[index].get()] {
-    on_item_submitted(*item);
-  });
+  m_items[index]->m_connection = item->connect_submit_signal(
+    [=, item = m_items[index].get()] {
+      on_item_submitted(*item);
+    });
   for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
     ++(*i)->m_index;
   }
+  update_layout();
   auto selection = m_selection->get();
   if(m_current->get() && *m_current->get() >= index) {
     set(*m_current->get() + 1);
@@ -402,7 +412,6 @@ void ListView::add_item(int index) {
     m_selected = *selection + 1;
     m_selection->set(m_selected);
   }
-  update_layout();
 }
 
 void ListView::remove_item(int index) {

@@ -144,6 +144,7 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
@@ -151,6 +152,7 @@ namespace Styles {
         ListItem* m_item;
         int m_index;
         bool m_is_current;
+        boost::signals2::scoped_connection m_connection;
 
         void set(bool is_current);
       };
