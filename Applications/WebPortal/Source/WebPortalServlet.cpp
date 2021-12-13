@@ -42,13 +42,13 @@ WebPortalServlet::~WebPortalServlet() {
 std::vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
-    std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind_front(&WebPortalServlet::OnIndex, this));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
-    std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind_front(&WebPortalServlet::OnIndex, this));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/index.html"),
-    std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind_front(&WebPortalServlet::OnIndex, this));
   slots.emplace_back(MatchAny(HttpMethod::GET),
-    std::bind(&WebPortalServlet::OnServeFile, this, std::placeholders::_1));
+    std::bind_front(&WebPortalServlet::OnServeFile, this));
   auto serviceLocatorSlots = m_serviceLocatorServlet.GetSlots();
   slots.insert(slots.end(), serviceLocatorSlots.begin(),
     serviceLocatorSlots.end());
