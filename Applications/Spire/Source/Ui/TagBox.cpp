@@ -2,10 +2,10 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Tag.hpp"
 
@@ -220,7 +220,7 @@ QWidget* TagBox::make_tag(const std::shared_ptr<ListModel>& model, int index) {
     auto tag = new Tag(label, this);
     tag->set_read_only(m_is_read_only || !isEnabled());
     tag->connect_delete_signal([=] {
-      auto tag_index = [=] {
+      auto tag_index = [&] {
         for(auto i = 0; i < get_list()->get_size(); ++i) {
           if(label == displayTextAny(m_model->at(i))) {
             return i;
@@ -441,7 +441,7 @@ void TagBox::reposition_list_view() {
       m_focus_observer.get_state() == FocusObserver::State::FOCUS_IN) {
     auto text_length = QFontMetrics(m_font).horizontalAdvance(
       m_text_box->get_current()->get(), -1);
-    auto cursor_pos = [=] {
+    auto cursor_pos = [&] {
       if(text_length > 0) {
         return QFontMetrics(m_font).horizontalAdvance(
           m_text_box->get_current()->get(),
