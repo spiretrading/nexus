@@ -105,16 +105,13 @@ export class LoadingState {
   }
 
   /** Updates the state to indicate success. */
-  public succeed(): void {
-    this._state = LoadingState.State.LOADED;
+  public succeed(): LoadingState {
+    return new LoadingState(LoadingState.State.LOADED, this._message);
   }
 
   /** Updates the state to indicate failure. */
-  public fail(message?: string): void {
-    this._state = LoadingState.State.ERROR;
-    if(message) {
-      this._message = message;
-    }
+  public fail(message?: string): LoadingState {
+    return new LoadingState(LoadingState.State.ERROR, message);
   }
 
   private _state: LoadingState.State;

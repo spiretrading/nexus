@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
 import { SubmissionInput } from '..';
+import { ComplianceModel } from './compliance_model';
 import { NewRuleModal } from './new_rule_modal';
 import { RulesList } from './rules_list';
 
@@ -11,17 +12,8 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The set of available currencies to select. */
-  currencyDatabase?: Nexus.CurrencyDatabase;
-
-  /** The list of compliance rules to display and edit. */
-  entries: Nexus.ComplianceRuleEntry[];
-
-  /** The list of rule schemas. Used in adding new rules. */
-  schemas: Nexus.ComplianceRuleSchema[];
-
-  /** The account's roles. */
-  roles: Nexus.AccountRoles;
+  /** The page's model. */
+  model: ComplianceModel;
 
   /** Whether an error occurred. */
   isError?: boolean;
@@ -44,7 +36,7 @@ interface State {
   isSubmitEnabled: boolean;
 }
 
-/* Displays the compliance page.*/
+/** Displays the compliance page. */
 export class CompliancePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     isError: false,
@@ -82,8 +74,8 @@ export class CompliancePage extends React.Component<Properties, State> {
       <div style={contentStyle}>
         <RulesList
           displaySize={this.props.displaySize}
-          currencyDatabase={this.props.currencyDatabase}
-          complianceList={this.props.entries}
+          currencyDatabase={this.props.model.currencyDatabase}
+          complianceList={this.props.model.entries}
           onChange={this.props.onRuleChange}
           readonly={this.props.readonly}/>
         <div style={footerStyle}>
@@ -92,17 +84,15 @@ export class CompliancePage extends React.Component<Properties, State> {
             isOpen={this.state.isAddRuleModalOpen}
             onToggleModal={this.onToggleAddRuleModal}
             onAddNewRule={this.props.onRuleAdd}
-            schemas={this.props.schemas}/>
+            schemas={this.props.model.schemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <HLine color='#E6E6E6'/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
-          <SubmissionInput roles={this.props.roles} isError={this.props.isError}
-            status={this.props.status} isEnabled={this.state.isSubmitEnabled}
-            onSubmit={this.onSubmit}/>
+          <SubmissionInput roles={this.props.model.roles}
+            isError={this.props.isError} status={this.props.status}
+            isEnabled={this.state.isSubmitEnabled} onSubmit={this.onSubmit}/>
           <div style={CompliancePage.STYLE.paddingSmall}/>
-          <div style={CompliancePage.STYLE.statusBox}>
-            {'Saved'}
-          </div>
+          <div style={CompliancePage.STYLE.statusBox}>Saved</div>
         </div>
       </div>);
   }

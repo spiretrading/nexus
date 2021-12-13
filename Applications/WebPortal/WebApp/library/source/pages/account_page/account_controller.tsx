@@ -5,7 +5,7 @@ import * as Router from 'react-router-dom';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
-import { ComplianceController } from './compliance_page';
+import { ComplianceController, NullComplianceService } from './compliance_page';
 import { EntitlementsController } from './entitlements_page';
 import { ProfileController } from './profile_page';
 import { RiskController } from './risk_page';
@@ -170,7 +170,7 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private renderCompliancePage = () => {
-    return <ComplianceController/>;
+    return <ComplianceController service={new NullComplianceService()}/>;
   }
 
   private onMenuClick = (subPage: SubPage) => {
