@@ -37,7 +37,6 @@ export class NewRuleModal extends React.Component<Properties, State> {
     this.state = {
       selection: -1
     }
-    this.addNewRule = this.addNewRule.bind(this);
   }
 
   public render(): JSX.Element {
@@ -62,22 +61,20 @@ export class NewRuleModal extends React.Component<Properties, State> {
         return NewRuleModal.STYLE.buttonWrapper;
       }
     })();
-    const options = [];
-    for(let i = 0; i < this.props.schemas.length; ++i) {
-      if(i === this.state.selection) {
-        options.push(
-          <div className={css(NewRuleModal.EXTRA_STYLE.selectedRow)}
-              onClick={this.onClickRule.bind(this, i)}>
-            {this.props.schemas[i].name}
-          </div>);
-      } else {
-        options.push(
-          <div className={css(NewRuleModal.EXTRA_STYLE.optionRow)}
-              onClick={this.onClickRule.bind(this, i)}>
-            {this.props.schemas[i].name}
-          </div>);
-      }
-    }
+    const options = this.props.schemas.map((schema, i) => {
+      const className = (() => {
+        if(i === this.state.selection) {
+          return NewRuleModal.EXTRA_STYLE.selectedRow;
+        } else {
+          return NewRuleModal.EXTRA_STYLE.optionRow;
+        }
+      })();
+      return (
+        <div key={i} className={css(className)}
+            onClick={this.onClickRule.bind(this, i)}>
+          {schema.name}
+        </div>);
+    });
     return (
       <div>
         <div style={NewRuleModal.STYLE.modalButtonWrapper}
@@ -123,7 +120,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
     }
   }
 
-  private addNewRule() {
+  private addNewRule = () => {
     if(this.state.selection === -1) {
       return;
     }

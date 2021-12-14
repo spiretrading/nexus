@@ -43,7 +43,7 @@ export class ComplianceController extends React.Component<Properties, State> {
       return <div/>;
     }
     const readonly =
-      this.state.model.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
+      !this.state.model.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     return <CompliancePage displaySize={this.props.displaySize}
       model={this.state.model} isError={this.state.hasError}
       status={this.state.status} hasChange={this.state.hasChange}
@@ -54,14 +54,14 @@ export class ComplianceController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       const model = await this.props.service.load();
-      this.setState((state) => {
+      this.setState(state => {
         return {
           loadingState: state.loadingState.succeed(),
           model
         };
       });
     } catch(error) {
-      this.setState((state) => {
+      this.setState(state => {
         return {
           loadingState: state.loadingState.fail(error.toString())
         };
