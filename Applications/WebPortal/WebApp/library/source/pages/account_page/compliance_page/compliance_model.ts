@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 
 /** Stores the data needed to display the CompliancePage. */
@@ -5,18 +6,25 @@ export class ComplianceModel {
 
   /**
    * Constructs a ComplianceModel.
-   * @param roles The account's roles.
+   * @param directoryEntry The account/group represented by this model.
+   * @param roles The roles belonging to the account viewing this model.
    * @param schemas The list of existing schemas.
    * @param entries The list of applicable compliance rules.
    * @param currencyDatabase The database of available currencies, uses the
    *        default database if one is not explicitly provided.
    */
-  constructor(roles: Nexus.AccountRoles, schemas: Nexus.ComplianceRuleSchema[],
+  constructor(directoryEntry: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
+      schemas: Nexus.ComplianceRuleSchema[],
       entries: Nexus.ComplianceRuleEntry[],
       currencyDatabase?: Nexus.CurrencyDatabase) {
+    this._directoryEntry = directoryEntry;
     this._roles = roles;
     this._schemas = schemas.slice();
     this._entries = entries.slice();
+    this.nextId = 1;
+    for(const entry of this._entries) {
+      this.nextId = Math.max(this.nextId, entry.id + 1);
+    }
     if(currencyDatabase) {
       this._currencyDatabase = currencyDatabase;
     } else {
@@ -40,19 +48,25 @@ export class ComplianceModel {
   }
 
   /**
-   * Updates (or adds) a rule.
-   * @param entry The updated entry, if an existing entry doesn't exist then
-   *              one will be added.
+   * Adds a new rule based on a schema.
+   * @param schema The schema used to base the new rule off of.
    */
-  public update(entry: Nexus.ComplianceRuleEntry) {
-    if(entry.id === -1) {
-      this._entries.push(entry);
-    } else {
-      for(let i = 0; i != this._entries.length; ++i) {
-        if(this._entries[i].id === entry.id) {
-          this._entries[i] = entry;
-          break;
-        }
+  public add(schema: Nexus.ComplianceRuleSchema): void {
+    const entry = new Nexus.ComplianceRuleEntry(this.nextId,
+      this._directoryEntry, Nexus.ComplianceRuleEntry.State.ACTIVE, schema);
+    ++this.nextId;
+    this._entries.push(entry);
+  }
+
+  /**
+   * Updates an existing rule.
+   * @param entry The updated entry.
+   */
+  public update(entry: Nexus.ComplianceRuleEntry): void {
+    for(let i = 0; i != this._entries.length; ++i) {
+      if(this._entries[i].id === entry.id) {
+        this._entries[i] = entry;
+        break;
       }
     }
   }
@@ -63,12 +77,14 @@ export class ComplianceModel {
   }
 
   public clone(): ComplianceModel {
-    return new ComplianceModel(this._roles, this._schemas, this._entries,
-      this._currencyDatabase);
+    return new ComplianceModel(this._directoryEntry, this._roles, this._schemas,
+      this._entries, this._currencyDatabase);
   }
 
+  private _directoryEntry: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
   private _schemas: Nexus.ComplianceRuleSchema[];
   private _entries: Nexus.ComplianceRuleEntry[];
+  private nextId: number;
   private _currencyDatabase: Nexus.CurrencyDatabase;
 }

@@ -18,12 +18,12 @@ export class LocalAccountModel extends AccountModel {
     this._account = account;
     this._roles = roles;
     this._groups = groups.slice();
-    this._entitlementsModel = new LocalEntitlementsModel(this._account,
-      new Beam.Set<Beam.DirectoryEntry>());
-    this._profileModel = new LocalProfileModel(this._account, this._roles, 
-      new Nexus.AccountIdentity());
-    this._riskModel = new LocalRiskModel(this._account,
-      Nexus.RiskParameters.INVALID);
+    this._entitlementsModel = new LocalEntitlementsModel(
+      this._account, new Beam.Set<Beam.DirectoryEntry>());
+    this._profileModel = new LocalProfileModel(
+      this._account, this._roles,  new Nexus.AccountIdentity());
+    this._riskModel =
+      new LocalRiskModel(this._account, Nexus.RiskParameters.INVALID);
     this._complianceService = new LocalComplianceService(complianceModel);
   }
 

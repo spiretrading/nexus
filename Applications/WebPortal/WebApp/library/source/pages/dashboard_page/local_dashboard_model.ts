@@ -81,11 +81,12 @@ export class LocalDashboardModel extends DashboardModel {
       model = (() => {
         if(account.equals(this._account)) {
           return new LocalAccountModel(this.account, this.roles, [],
-            new ComplianceModel(this.roles, [], [], this._currencyDatabase));
+            new ComplianceModel(this.account, this.roles, [], [],
+              this._currencyDatabase));
         }
         return new LocalAccountModel(account, new Nexus.AccountRoles(0), [],
-          new ComplianceModel(
-            new Nexus.AccountRoles(0), [], [], this._currencyDatabase));
+          new ComplianceModel(account, new Nexus.AccountRoles(0), [], [],
+            this._currencyDatabase));
       })();
       this.accountModels.set(account, model);
     }

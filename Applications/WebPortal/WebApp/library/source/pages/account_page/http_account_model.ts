@@ -19,9 +19,9 @@ export class HttpAccountModel extends AccountModel {
   constructor(
       account: Beam.DirectoryEntry, serviceClients: Nexus.ServiceClients) {
     super();
-    this.model = new LocalAccountModel(
-      account, new Nexus.AccountRoles(0), [], new ComplianceModel(
-        new Nexus.AccountRoles(0), [], [], new Nexus.CurrencyDatabase()));
+    this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0), [],
+      new ComplianceModel(account, new Nexus.AccountRoles(0), [], [],
+        new Nexus.CurrencyDatabase()));
     this.serviceClients = serviceClients;
     this._entitlementsModel =
       new HttpEntitlementsModel(account, this.serviceClients);
@@ -85,7 +85,8 @@ export class HttpAccountModel extends AccountModel {
       await this.serviceClients.complianceClient.load(account);
     this.model =
       new LocalAccountModel(account, roles, groups, new ComplianceModel(
-        roles, this.serviceClients.definitionsClient.complianceRuleSchemas,
+        this.account, roles,
+        this.serviceClients.definitionsClient.complianceRuleSchemas,
         complianceRuleEntries,
         this.serviceClients.definitionsClient.currencyDatabase));
     this._entitlementsModel =

@@ -45,7 +45,8 @@ export class ComplianceController extends React.Component<Properties, State> {
     }
     return <CompliancePage displaySize={this.props.displaySize}
       model={this.state.model} isError={this.state.hasError}
-      status={this.state.status} readonly={false} onRuleAdd={this.onRuleAdd}
+      status={this.state.status} hasChange={this.state.hasChange}
+      readonly={false} onRuleAdd={this.onRuleAdd}
       onRuleChange={this.onRuleChange} onSubmit={this.onSubmit}/>;
   }
 
@@ -69,10 +70,7 @@ export class ComplianceController extends React.Component<Properties, State> {
 
   private onRuleAdd = (newSchema: Nexus.ComplianceRuleSchema) => {
     this.setState(state => {
-      state.model.update(new Nexus.ComplianceRuleEntry(-1,
-        Beam.DirectoryEntry.INVALID, Nexus.ComplianceRuleEntry.State.DISABLED,
-        new Nexus.ComplianceRuleSchema(
-          newSchema.name, newSchema.parameters.slice())));
+      state.model.add(newSchema);
       return {
         model: state.model,
         hasChange: true

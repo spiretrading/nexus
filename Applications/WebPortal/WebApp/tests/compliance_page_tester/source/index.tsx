@@ -204,8 +204,9 @@ function makeEntries() {
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
+    const account = Beam.DirectoryEntry.makeAccount(2201, 'trader');
     const model = new WebPortal.ComplianceModel(
-      new Nexus.AccountRoles(Nexus.AccountRoles.Role.ADMINISTRATOR),
+      account, new Nexus.AccountRoles(Nexus.AccountRoles.Role.ADMINISTRATOR),
       makeSchemas(), makeEntries(), Nexus.buildDefaultCurrencyDatabase());
     this.state = {
       model,
@@ -238,10 +239,7 @@ class TestApp extends React.Component<Properties, State> {
 
   private onRuleAdd = (newSchema: Nexus.ComplianceRuleSchema) => {
     this.setState(state => {
-      state.model.update(new Nexus.ComplianceRuleEntry(-1,
-        Beam.DirectoryEntry.INVALID, Nexus.ComplianceRuleEntry.State.DISABLED,
-        new Nexus.ComplianceRuleSchema(
-          newSchema.name, newSchema.parameters.slice())));
+      state.model.add(newSchema);
       return {model: state.model};
     });
   }
