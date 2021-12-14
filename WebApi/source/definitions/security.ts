@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
-import { CountryCode } from './country';
+import { CountryCode, CountryDatabase } from './country';
+import { defaultCountryDatabase } from './default_country_database';
 import { defaultMarketDatabase } from './default_market_database';
 import { MarketCode, MarketDatabase } from './market';
 
@@ -97,4 +98,95 @@ export class Security {
   private _symbol: string;
   private _market: MarketCode;
   private _country: CountryCode;
+}
+
+/**
+ * Parses a string that potentially represents a wild card Security.
+ * @param source The string to parse.
+ * @param marketDatabase The database of markets to reference.
+ * @param countryDatabase The database of countries to reference.
+ * @return A Security potentially representing a wild card.
+ */
+export function parseWildCardSecurity(
+    source: string, marketDatabase?: MarketDatabase,
+    countryDatabase?: CountryDatabase): Security {
+  marketDatabase = marketDatabase || defaultMarketDatabase;
+  countryDatabase = countryDatabase || defaultCountryDatabase;
+  if(source === '*' || source === '*.*' || source === '*.*.*') {
+    return new Security('*', new MarketCode('*'), CountryCode.NONE);
+  }
+  const seperator = source.lastIndexOf('.');
+  if(seperator === -1) {
+    return Security.NONE;
+  }
+  const header = source.substring(0, seperator);
+  const trailer = source.substring(seperator + 1);
+  if(header === '*') {
+    const market = MarketDatabase.Entry.parse(trailer, marketDatabase);
+    if(!market.code.equals(MarketCode.NONE)) {
+      return new Security(header, market.code, market.countryCode);
+    }
+  }
+  const prefixSecurity =
+    parseWildCardSecurity(header, marketDatabase, countryDatabase);
+  if(!prefixSecurity.equals(Security.NONE)) {
+    if(trailer.length == 2) {
+      const code = countryDatabase.fromLetterCode(trailer);
+      if(!code.code.equals(CountryCode.NONE)) {
+        return new Security(
+          prefixSecurity.symbol, prefixSecurity.market, code.code);
+      } else {
+        return Security.NONE;
+      }
+    } else if(trailer === '*') {
+      return new Security(
+        prefixSecurity.symbol, prefixSecurity.market, CountryCode.NONE);
+    } else {
+      return Security.NONE;
+    }
+  }
+  let market = null;
+  let country = null;
+  if(trailer === '*') {
+    [market, country] = [new MarketCode('*'), CountryCode.NONE];
+  } else {
+    const marketEntry = MarketDatabase.Entry.parse(trailer, marketDatabase);
+    if(marketEntry.code.equals(MarketCode.NONE)) {
+      return Security.NONE;
+    }
+    [market, country] = [marketEntry.code, marketEntry.countryCode];
+  }
+  return new Security(header, market, country);
+}
+
+
+/**
+ * Returns the string representation of a Security, including wild-cards.
+ * @param security The Security to represent.
+ * @param marketDatabase The MarketDatabase used to represent the MarketCode.
+ * @param countryDatabase The CountryDatabase used to represent the CountryCode.
+ * @return The string representation of the security.
+ */
+export function toWildCardString(security: Security,
+    marketDatabase?: MarketDatabase, countryDatabase?: CountryDatabase) {
+  marketDatabase = marketDatabase || defaultMarketDatabase;
+  countryDatabase = countryDatabase || defaultCountryDatabase;
+  if(security.symbol === '*' && security.market.toString() === '*' &&
+      security.country.equals(CountryCode.NONE)) {
+    return '*';
+  } else if(security.equals(Security.NONE)) {
+    return '';
+  }
+  const suffix = (() => {
+    if(security.market.toString() === '*') {
+      if(!security.country.equals(CountryCode.NONE)) {
+        const countryEntry = countryDatabase.fromCode(security.country);
+        return countryEntry.twoLetterCode;
+      }
+      return '*';
+    }
+    const market = marketDatabase.fromCode(security.market);
+    return market.displayName;
+  })();
+  return `${security.symbol}.${suffix}`;
 }

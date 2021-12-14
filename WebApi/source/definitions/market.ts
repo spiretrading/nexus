@@ -136,6 +136,20 @@ export module MarketDatabase {
         value.display_name);
     }
 
+   /**
+    * Parses a MarketEntry from a string.
+    * @param source The string to parse.
+    * @param database The MarketDatabase containing the available MarketEntry.
+    * @return The MarketCode represented by the source.
+    */
+    public static parse(source: string, database: MarketDatabase): Entry {
+      const entry = database.fromDisplayName(source);
+      if(entry.code.equals(MarketCode.NONE)) {
+        return database.fromCode(new MarketCode(source));
+      }
+      return entry;
+    }
+
     /**
      * Constructs an entry.
      * @param code - The market identifier code.

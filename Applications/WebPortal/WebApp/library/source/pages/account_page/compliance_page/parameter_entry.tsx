@@ -145,7 +145,14 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {
-    return complianceValues.map(value => value.value) as Nexus.Security[];
+    const securities = [];
+    for(const value of complianceValues) {
+      const security = value.value as Nexus.Security;
+      if(!security.equals(Nexus.Security.NONE)) {
+        securities.push(security);
+      }
+    }
+    return securities;
   }
 
   private onSecurityListChange = (newValues: Nexus.Security[]) => {

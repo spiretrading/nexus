@@ -4,7 +4,7 @@ import * as Beam from 'beam';
 export class CountryCode {
 
   /** Represents no country. */
-  public static readonly NONE = new CountryCode(~0);
+  public static readonly NONE = new CountryCode(65535);
 
   /** Parses a CountryCode from JSON. */
   public static fromJson(value: any): CountryCode {
@@ -63,6 +63,20 @@ export class CountryDatabase {
   public fromCode(code: CountryCode): CountryDatabase.Entry {
     for(const entry of this._entries) {
       if(entry.code.equals(code)) {
+        return entry;
+      }
+    }
+    return CountryDatabase.Entry.NONE;
+  }
+
+  /**
+   * Returns an entry from a two or three letter country code.
+   * @param code - The two or three letter country code to lookup.
+   * @return The entry with the specified code.
+   */
+  public fromLetterCode(code: string): CountryDatabase.Entry {
+    for(const entry of this._entries) {
+      if(entry.twoLetterCode === code || entry.threeLetterCode === code) {
         return entry;
       }
     }

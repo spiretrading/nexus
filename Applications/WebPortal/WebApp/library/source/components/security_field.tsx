@@ -102,7 +102,7 @@ export class SecurityField extends React.Component<Properties, State> {
     })();
     const displayValue = (() => {
       if(this.props.value !== null) {
-        return this.props.value.toString();
+        return Nexus.toWildCardString(this.props.value);
       } else {
         return '';
       }

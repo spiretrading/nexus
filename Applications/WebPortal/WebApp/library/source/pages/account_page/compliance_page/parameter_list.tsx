@@ -45,10 +45,11 @@ export class ParametersList extends React.Component<Properties> {
       const parameter = this.props.schema.parameters[i];
       if(this.props.schema.parameters.indexOf(parameter) !== 0) {
         parameterEntries.push(
-          <div style={ParametersList.STYLE.fillerBetweenRows}/>);
+          <div key={parameterEntries.length}
+            style={ParametersList.STYLE.fillerBetweenRows}/>);
       }
       parameterEntries.push(<ParameterEntry 
-        key={i}
+        key={parameterEntries.length}
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
         readonly={this.props.readonly}
