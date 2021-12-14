@@ -18,7 +18,7 @@ interface Properties {
   checked: Beam.Set<Beam.DirectoryEntry>;
 
   /** Whether the submit button is enabled. */
-  isSubmitEnabled?: boolean;
+  canSubmit?: boolean;
 
   /** Whether an error occurred. */
   isError?: boolean;
@@ -51,7 +51,7 @@ interface State {
 /* Displays a list of entitlements. */
 export class EntitlementsPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    isSubmitEnabled: false,
+    canSubmit: false,
     isError: false,
     status: '',
     onEntitlementClick: () => {},
@@ -106,7 +106,7 @@ export class EntitlementsPage extends React.Component<Properties, State> {
             <Padding size={EntitlementsPage.LINE_PADDING}/>
             <SubmissionInput comment={this.state.comment}
               roles={this.props.roles} isError={this.props.isError}
-              status={this.props.status} isEnabled={this.props.isSubmitEnabled}
+              status={this.props.status} isEnabled={this.props.canSubmit}
               onChange={this.onCommentChange}
               onSubmit={this.onSubmit}/>
             <Padding size={EntitlementsPage.BOTTOM_PADDING}/>

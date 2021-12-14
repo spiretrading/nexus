@@ -21,7 +21,7 @@ interface Properties {
 interface State {
   loadingState: LoadingState;
   model: ComplianceModel;
-  hasChange: boolean;
+  canSubmit: boolean;
   hasError: boolean;
   status: string;
 }
@@ -33,7 +33,7 @@ export class ComplianceController extends React.Component<Properties, State> {
     this.state = {
       loadingState: new LoadingState(),
       model: null,
-      hasChange: false,
+      canSubmit: false,
       hasError: false,
       status: ''
     }
@@ -48,7 +48,7 @@ export class ComplianceController extends React.Component<Properties, State> {
     return <CompliancePage displaySize={this.props.displaySize}
       roles={this.props.roles} model={this.state.model}
       isError={this.state.hasError} status={this.state.status}
-      hasChange={this.state.hasChange} onRuleAdd={this.onRuleAdd}
+      canSubmit={this.state.canSubmit} onRuleAdd={this.onRuleAdd}
       onRuleChange={this.onRuleChange} onSubmit={this.onSubmit}/>;
   }
 
@@ -75,7 +75,8 @@ export class ComplianceController extends React.Component<Properties, State> {
       state.model.add(newSchema);
       return {
         model: state.model,
-        hasChange: true
+        status: '',
+        canSubmit: true
       };
     });
   }
@@ -85,18 +86,24 @@ export class ComplianceController extends React.Component<Properties, State> {
       state.model.update(updatedRule);
       return {
         model: state.model,
-        hasChange: true
+        status: '',
+        canSubmit: true
       };
     });
   }
 
   private onSubmit = async () => {
     try {
+      this.setState({
+        canSubmit: false,
+        hasError: false,
+        status: ''
+      });
       const model = await this.props.service.submit(this.state.model);
       this.setState(
         {
           hasError: false,
-          status: '',
+          status: 'Saved.',
           model
         });
     } catch(error) {

@@ -25,7 +25,7 @@ interface Properties {
   status?: string;
 
   /** Whether the changes can be submitted. */
-  hasChange?: boolean;
+  canSubmit?: boolean;
 
   /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
@@ -46,7 +46,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     isError: false,
     status: '',
-    hasChange: false,
+    canSubmit: false,
     onRuleAdd: () => {},
     onRuleChange: () => {}
   }
@@ -96,7 +96,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <SubmissionInput roles={this.props.roles}
             isError={this.props.isError} status={this.props.status}
-            isEnabled={this.props.hasChange} onSubmit={this.props.onSubmit}/>
+            isEnabled={this.props.canSubmit} onSubmit={this.props.onSubmit}/>
         </div>
       </div>);
   }
