@@ -2392,7 +2392,8 @@ UiProfile Spire::make_security_box_profile() {
         "Methanex Corporation", "", 0);
       auto model = std::make_shared<LocalComboBoxQueryModel>();
       for(auto security_info : security_infos) {
-        model->add(security_info);
+        model->add(displayTextAny(security_info.m_security).toLower(),
+          security_info);
       }
       auto box = new SecurityBox(model);
       box->setFixedWidth(scale_width(112));

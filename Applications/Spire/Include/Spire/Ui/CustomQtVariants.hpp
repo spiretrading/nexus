@@ -15,7 +15,6 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -96,7 +95,6 @@ Q_DECLARE_METATYPE(Nexus::OrderType);
 Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Region);
 Q_DECLARE_METATYPE(Nexus::Security);
-Q_DECLARE_METATYPE(Nexus::SecurityInfo);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Spire::MarketToken);

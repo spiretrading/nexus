@@ -136,8 +136,6 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<PositionSideToken>(value));
   } else if(value.type() == typeid(Security)) {
     return QVariant::fromValue(std::any_cast<Security>(value));
-  } else if(value.type() == typeid(SecurityInfo)) {
-    return QVariant::fromValue(std::any_cast<SecurityInfo>(value));
   } else if(value.type() == typeid(Side)) {
     return QVariant::fromValue(std::any_cast<Side>(value));
   } else if(value.type() == typeid(TimeInForce)) {
@@ -275,8 +273,8 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   }
   return is_equal_any<bool, int, Quantity, double, gregorian::date, ptime,
     posix_time::time_duration, std::string, CurrencyId, MarketToken, Money,
-    Region, OrderStatus, OrderType, PositionSideToken, Security, SecurityInfo,
-    Side, TimeInForce, QColor, QString>(left, right);
+    Region, OrderStatus, OrderType, PositionSideToken, Security, Side,
+    TimeInForce, QColor, QString>(left, right);
 }
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
@@ -329,8 +327,6 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<Security>()) {
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
       GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
-  } else if(value.canConvert<SecurityInfo>()) {
-    return displayTextAny(value.value<SecurityInfo>().m_security);
   } else if(value.canConvert<Side>()) {
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
@@ -385,11 +381,6 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(left_variant.canConvert<Security>()) {
     return compare(ToString(left_variant.value<Security>(),
       GetDefaultMarketDatabase()), ToString(right_variant.value<Security>(),
-      GetDefaultMarketDatabase()), left, right);
-  } else if(left_variant.canConvert<SecurityInfo>()) {
-    return compare(ToString(left_variant.value<SecurityInfo>().m_security,
-      GetDefaultMarketDatabase()),
-      ToString(right_variant.value<SecurityInfo>().m_security,
       GetDefaultMarketDatabase()), left, right);
   } else if(left_variant.canConvert<Side>()) {
     return compare(displayText(left_variant.value<Side>()),
