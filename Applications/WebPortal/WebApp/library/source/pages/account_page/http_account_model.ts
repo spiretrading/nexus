@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel } from './account_model';
-import { ComplianceModel, ComplianceService, LocalComplianceService } from
+import { ComplianceModel, ComplianceService, HttpComplianceService } from
   './compliance_page';
 import { HttpEntitlementsModel } from './entitlements_page';
 import { HttpProfileModel } from './profile_page';
@@ -27,6 +27,8 @@ export class HttpAccountModel extends AccountModel {
       new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
+    this._complianceService =
+      new HttpComplianceService(account, this.model.roles, this.serviceClients);
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -54,7 +56,7 @@ export class HttpAccountModel extends AccountModel {
   }
 
   public get complianceService(): ComplianceService {
-    return this.model.complianceService;
+    return this._complianceService;
   }
 
   public async load(): Promise<void> {
@@ -93,6 +95,8 @@ export class HttpAccountModel extends AccountModel {
       new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
+    this._complianceService =
+      new HttpComplianceService(account, roles, this.serviceClients);
     return this.model.load();
   }
 
@@ -101,4 +105,5 @@ export class HttpAccountModel extends AccountModel {
   private _entitlementsModel: HttpEntitlementsModel;
   private _profileModel: HttpProfileModel;
   private _riskModel: HttpRiskModel;
+  private _complianceService: HttpComplianceService;
 }

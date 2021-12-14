@@ -57,9 +57,9 @@ export class ParametersList extends React.Component<Properties> {
     }
     return (
       <div style={leftPadding}>
-        <div id={'topFiller'}/>
+        <div id='topFiller'/>
         <div style={ParametersList.STYLE.header}>Parameters</div>
-        <div id={'moreFiller'}/>
+        <div id='moreFiller'/>
         {parameterEntries}
         <div style={ParametersList.STYLE.bottomFiller}/>
       </div>);
@@ -75,8 +75,8 @@ export class ParametersList extends React.Component<Properties> {
         newParameters[i] = this.props.schema.parameters[i];
       }
     }
-    const newSchema = new Nexus.ComplianceRuleSchema(
-      this.props.schema.name, newParameters);
+    const newSchema =
+      new Nexus.ComplianceRuleSchema(this.props.schema.name, newParameters);
     this.props.onChange(newSchema);
   }
 

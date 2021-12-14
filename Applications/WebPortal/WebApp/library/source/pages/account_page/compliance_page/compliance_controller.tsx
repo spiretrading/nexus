@@ -1,4 +1,3 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../..';
@@ -43,10 +42,12 @@ export class ComplianceController extends React.Component<Properties, State> {
     } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
       return <div/>;
     }
+    const readonly =
+      this.state.model.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     return <CompliancePage displaySize={this.props.displaySize}
       model={this.state.model} isError={this.state.hasError}
       status={this.state.status} hasChange={this.state.hasChange}
-      readonly={false} onRuleAdd={this.onRuleAdd}
+      readonly={readonly} onRuleAdd={this.onRuleAdd}
       onRuleChange={this.onRuleChange} onSubmit={this.onSubmit}/>;
   }
 
@@ -90,11 +91,12 @@ export class ComplianceController extends React.Component<Properties, State> {
 
   private onSubmit = async () => {
     try {
-      await this.props.service.submit(this.state.model.entries);
+      const model = await this.props.service.submit(this.state.model);
       this.setState(
         {
           hasError: false,
-          status: ''
+          status: '',
+          model
         });
     } catch(error) {
       this.setState(

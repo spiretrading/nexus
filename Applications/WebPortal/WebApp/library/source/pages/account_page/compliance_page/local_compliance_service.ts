@@ -1,4 +1,3 @@
-import * as Nexus from 'nexus';
 import { ComplianceModel } from './compliance_model';
 import { ComplianceService } from './compliance_service';
 
@@ -18,8 +17,8 @@ export class LocalComplianceService extends ComplianceService {
     return this.model.clone();
   }
 
-  public submit(entries: Nexus.ComplianceRuleEntry[]): Promise<void> {
-    return;
+  public async submit(model: ComplianceModel): Promise<ComplianceModel> {
+    return await this.load();
   }
 
   private model: ComplianceModel;

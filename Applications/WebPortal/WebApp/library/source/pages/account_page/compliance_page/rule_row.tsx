@@ -23,7 +23,7 @@ interface Properties {
   readonly?: boolean;
 
   /** The event handler called when the rule entry changes. */
-  onChange? :(ruleEntry: Nexus.ComplianceRuleEntry) => void;
+  onChange?: (ruleEntry: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -33,15 +33,16 @@ interface State {
 
 /** Displays a given compliance rule. */
 export class RuleRow extends React.Component<Properties, State> {
-  constructor(props: Properties){
+  public static readonly defaultProps = {
+    onChange: () => {}
+  };
+
+  constructor(props: Properties) {
     super(props);
     this.state = {
       isExpanded: false,
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     };
-    this.onRuleModeChange = this.onRuleModeChange.bind(this);
-    this.onRuleOpen = this.onRuleOpen.bind(this);
-    this.onParameterChange = this.onParameterChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -127,25 +128,21 @@ export class RuleRow extends React.Component<Properties, State> {
     });
   }
 
-  private onRuleModeChange(newMode: Nexus.ComplianceRuleEntry.State) {
+  private onRuleModeChange = (newMode: Nexus.ComplianceRuleEntry.State) => {
     const newRule = new Nexus.ComplianceRuleEntry(
-      this.props.complianceRule.id,
-      this.props.complianceRule.directoryEntry,
-      newMode,
-      this.props.complianceRule.schema);
+      this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
+      newMode, this.props.complianceRule.schema);
     this.props.onChange(newRule);
   }
 
-  private onRuleOpen(event?: React.MouseEvent<any>) {
+  private onRuleOpen = (event?: React.MouseEvent<any>) => {
     this.setState({isExpanded: !this.state.isExpanded});
   }
 
-  private onParameterChange(schema: Nexus.ComplianceRuleSchema) {
+  private onParameterChange = (schema: Nexus.ComplianceRuleSchema) => {
     const newRule = new Nexus.ComplianceRuleEntry(
-      this.props.complianceRule.id,
-      this.props.complianceRule.directoryEntry,
-      this.props.complianceRule.state,
-      schema);
+      this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
+      this.props.complianceRule.state, schema);
     this.props.onChange(newRule);
   }
 

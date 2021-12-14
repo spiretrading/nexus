@@ -28,7 +28,6 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -53,21 +52,21 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
           className={css(RuleExecutionDropDown.EXTRA_STYLE.noHighlighting)}
           style={boxStyle}>
         <option value={Nexus.ComplianceRuleEntry.State.ACTIVE}>
-          {'Active'}
+          Active
         </option>
         <option value={Nexus.ComplianceRuleEntry.State.PASSIVE}>
-          {'Passive'}
+          Passive
         </option>
         <option value={Nexus.ComplianceRuleEntry.State.DISABLED}>
-          {'Disabled'}
+          Disabled
         </option>
         <option value={Nexus.ComplianceRuleEntry.State.DELETED}>
-          {'Delete'}
+          Delete
         </option>
       </select>);
   }
 
-  private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+  private onChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     this.props.onChange(parseInt(event.target.value));
   }
 

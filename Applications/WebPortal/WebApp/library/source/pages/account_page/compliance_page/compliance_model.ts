@@ -21,10 +21,11 @@ export class ComplianceModel {
     this._roles = roles;
     this._schemas = schemas.slice();
     this._entries = entries.slice();
-    this.nextId = 1;
+    this.newId = 1;
     for(const entry of this._entries) {
-      this.nextId = Math.max(this.nextId, entry.id + 1);
+      this.newId = Math.max(this.newId, entry.id + 1);
     }
+    this.nextId = this.newId;
     if(currencyDatabase) {
       this._currencyDatabase = currencyDatabase;
     } else {
@@ -45,6 +46,24 @@ export class ComplianceModel {
   /** Returns the list of applicable compliance rules. */
   public get entries(): Nexus.ComplianceRuleEntry[] {
     return this._entries.slice();
+  }
+
+  /** Returns the list of newly added rules. */
+  public get newEntries(): Nexus.ComplianceRuleEntry[] {
+    return this._entries.filter(entry => entry.id >= this.newId);
+  }
+
+  /** Returns the list of updated rules. */
+  public get updatedEntries(): Nexus.ComplianceRuleEntry[] {
+    return this._entries.filter(entry => entry.id < this.newId);
+  }
+
+  /** Returns the list of deleted rules. */
+  public get deletedEntries(): Nexus.ComplianceRuleEntry[] {
+    return this._entries.filter(entry => {
+      return entry.id < this.newId &&
+        entry.state === Nexus.ComplianceRuleEntry.State.DELETED;
+    });
   }
 
   /**
@@ -85,6 +104,7 @@ export class ComplianceModel {
   private _roles: Nexus.AccountRoles;
   private _schemas: Nexus.ComplianceRuleSchema[];
   private _entries: Nexus.ComplianceRuleEntry[];
+  private newId: number;
   private nextId: number;
   private _currencyDatabase: Nexus.CurrencyDatabase;
 }
