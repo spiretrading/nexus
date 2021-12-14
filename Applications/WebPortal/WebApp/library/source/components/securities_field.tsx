@@ -181,7 +181,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
     })();
     let displayValue  = '';
     for(let i = 0; i < this.props.value.length; ++i) {
-      const symbol = this.props.value[i].symbol;
+      const symbol = this.props.value[i].toString();
       displayValue = displayValue.concat(symbol);
       if(this.props.value.length > 1 && i < this.props.value.length - 1) {
         displayValue = displayValue.concat(', ');
@@ -487,12 +487,12 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
             <div style={SymbolsField.STYLE.scrollBoxHeaderSmall}>
-              'Added Symbols'
+              Added Symbols
             </div>);
         } else {
           return (
             <div style={SymbolsField.STYLE.scrollBoxHeaderLarge}>
-              'Added Symbols'
+              Added Symbols
             </div>);
         }
       } else {
@@ -513,7 +513,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
     })();
     const entries = [];
     for(let i = 0; i < this.props.value.length; ++i) {
-        const symbol = this.props.value[i].symbol;
+        const symbol = this.props.value[i].toString();
         if(this.props.readonly) {
           entries.push(
             <div className={css(SymbolsField.EXTRA_STYLE.entryReadonly)}>

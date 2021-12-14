@@ -39,13 +39,11 @@ export class SecurityInput extends React.Component<Properties> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.keyCode === 13) {
-      const newSecurity =
-        new Nexus.Security(
-          this.props.value,
-          Nexus.MarketCode.NONE,
-          Nexus.DefaultCountries.CA);
-      this.props.onEnter(newSecurity);
+    if(event.key === 'Enter') {
+      const security = Nexus.Security.parse(this.props.value.toUpperCase());
+      if(!security.equals(Nexus.Security.NONE)) {
+        this.props.onEnter(security);
+      }
     }
   }
 

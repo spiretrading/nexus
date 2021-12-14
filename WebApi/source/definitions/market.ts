@@ -71,6 +71,20 @@ export class MarketDatabase {
   }
 
   /**
+   * Returns an entry from its display name.
+   * @param displayName The market's display name.
+   * @return The Entry with the specified display name.
+   */
+  public fromDisplayName(displayName: string): MarketDatabase.Entry {
+    for(const entry of this._entries) {
+      if(entry.displayName === displayName) {
+        return entry;
+      }
+    }
+    return MarketDatabase.Entry.NONE;
+  }
+
+  /**
    * Adds an entry.
    * @param entry - The entry to add.
    */

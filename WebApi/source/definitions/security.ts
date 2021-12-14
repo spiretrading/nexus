@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import { CountryCode } from './country';
-import { MarketCode } from './market';
+import { defaultMarketDatabase } from './default_market_database';
+import { MarketCode, MarketDatabase } from './market';
 
 /** Identifies a financial security. */
 export class Security {
@@ -13,6 +14,26 @@ export class Security {
   public static fromJson(value: any): Security {
     return new Security(value.symbol, MarketCode.fromJson(value.market),
       CountryCode.fromJson(value.country));
+  }
+
+  /** Parses a value from a string. */
+  public static parse(source: string, marketDatabase?: MarketDatabase):
+      Security {
+    const seperator = source.lastIndexOf('.');
+    if(seperator === -1) {
+      return Security.NONE;
+    }
+    const symbol = source.substring(0, seperator);
+    const marketSource = new MarketCode(source.substring(seperator + 1));
+    const database = marketDatabase || defaultMarketDatabase;
+    let market = database.fromDisplayName(marketSource.toString());
+    if(market.code.equals(MarketCode.NONE)) {
+      market = database.fromCode(marketSource);
+      if(market.code.equals(MarketCode.NONE)) {
+        return Security.NONE;
+      }
+    }
+    return new Security(symbol, market.code, market.countryCode);
   }
 
   /**
@@ -59,6 +80,18 @@ export class Security {
   /** Returns a hash of this value. */
   public hash(): number {
     return Beam.hashCombine(Beam.hash(this.symbol), Beam.hash(this.country));
+  }
+
+  public toString(marketDatabase?: MarketDatabase): string {
+    if(this._market.equals(MarketCode.NONE) || this._symbol === '') {
+      return this._symbol;
+    }
+    const database = marketDatabase || defaultMarketDatabase;
+    const market = database.fromCode(this._market);
+    if(market.code.equals(MarketCode.NONE)) {
+      return `${this._symbol}.${this._market.toString()}`;
+    }
+    return `${this._symbol}.${market.displayName}`;
   }
 
   private _symbol: string;
