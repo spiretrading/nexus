@@ -7,18 +7,16 @@ export class ComplianceModel {
   /**
    * Constructs a ComplianceModel.
    * @param directoryEntry The account/group represented by this model.
-   * @param roles The roles belonging to the account viewing this model.
    * @param schemas The list of existing schemas.
    * @param entries The list of applicable compliance rules.
    * @param currencyDatabase The database of available currencies, uses the
    *        default database if one is not explicitly provided.
    */
-  constructor(directoryEntry: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
+  constructor(directoryEntry: Beam.DirectoryEntry,
       schemas: Nexus.ComplianceRuleSchema[],
       entries: Nexus.ComplianceRuleEntry[],
       currencyDatabase?: Nexus.CurrencyDatabase) {
     this._directoryEntry = directoryEntry;
-    this._roles = roles;
     this._schemas = schemas.slice();
     this._entries = entries.slice();
     this.newId = 1;
@@ -31,11 +29,6 @@ export class ComplianceModel {
     } else {
       this._currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
     }
-  }
-
-  /** Returns the account's roles. */
-  public get roles(): Nexus.AccountRoles {
-    return this._roles;
   }
 
   /** Returns the list of available schemas. */
@@ -96,12 +89,11 @@ export class ComplianceModel {
   }
 
   public clone(): ComplianceModel {
-    return new ComplianceModel(this._directoryEntry, this._roles, this._schemas,
+    return new ComplianceModel(this._directoryEntry, this._schemas,
       this._entries, this._currencyDatabase);
   }
 
   private _directoryEntry: Beam.DirectoryEntry;
-  private _roles: Nexus.AccountRoles;
   private _schemas: Nexus.ComplianceRuleSchema[];
   private _entries: Nexus.ComplianceRuleEntry[];
   private newId: number;

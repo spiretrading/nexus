@@ -76,6 +76,8 @@ export class AccountController extends React.Component<Properties, State> {
         return SubPage.ENTITLEMENTS;
       } else if(this.props.location.pathname.endsWith('/risk')) {
         return SubPage.RISK_CONTROLS;
+      } else if(this.props.location.pathname.endsWith('/compliance')) {
+        return SubPage.COMPLIANCE;
       }
       return SubPage.NONE;
     })();
@@ -171,7 +173,7 @@ export class AccountController extends React.Component<Properties, State> {
 
   private renderCompliancePage = () => {
     return <ComplianceController displaySize={this.props.displaySize}
-      service={this.props.model.complianceService}/>;
+      roles={this.props.roles} service={this.props.model.complianceService}/>;
   }
 
   private onMenuClick = (subPage: SubPage) => {

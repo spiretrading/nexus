@@ -20,15 +20,15 @@ export class HttpAccountModel extends AccountModel {
       account: Beam.DirectoryEntry, serviceClients: Nexus.ServiceClients) {
     super();
     const roles = new Nexus.AccountRoles(0);
-    this.model = new LocalAccountModel(account, roles, [], new ComplianceModel(
-      account, roles, [], [], new Nexus.CurrencyDatabase()));
+    this.model = new LocalAccountModel(account, roles, [],
+      new ComplianceModel(account, [], [], new Nexus.CurrencyDatabase()));
     this.serviceClients = serviceClients;
     this._entitlementsModel =
       new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
     this._complianceService =
-      new HttpComplianceService(account, roles, this.serviceClients);
+      new HttpComplianceService(account, this.serviceClients);
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -87,7 +87,7 @@ export class HttpAccountModel extends AccountModel {
       await this.serviceClients.complianceClient.load(account);
     this.model =
       new LocalAccountModel(account, roles, groups, new ComplianceModel(
-        this.account, roles,
+        this.account,
         this.serviceClients.definitionsClient.complianceRuleSchemas,
         complianceRuleEntries,
         this.serviceClients.definitionsClient.currencyDatabase));
@@ -96,7 +96,7 @@ export class HttpAccountModel extends AccountModel {
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
     this._complianceService =
-      new HttpComplianceService(account, roles, this.serviceClients);
+      new HttpComplianceService(account, this.serviceClients);
     return this.model.load();
   }
 

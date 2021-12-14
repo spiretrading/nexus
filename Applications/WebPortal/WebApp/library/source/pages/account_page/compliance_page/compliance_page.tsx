@@ -12,6 +12,9 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
+  /** The roles belonging to the account viewing this page. */
+  roles: Nexus.AccountRoles;
+
   /** The page's model. */
   model: ComplianceModel;
 
@@ -23,9 +26,6 @@ interface Properties {
 
   /** Whether the changes can be submitted. */
   hasChange?: boolean;
-
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
 
   /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
@@ -68,8 +68,10 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
+    const readonly =
+      !this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     const footerStyle = (() => {
-      if(this.props.readonly) {
+      if(readonly) {
         return CompliancePage.STYLE.hidden;
       } else {
         return CompliancePage.STYLE.footer;
@@ -81,8 +83,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           currencyDatabase={this.props.model.currencyDatabase}
           complianceList={this.props.model.entries}
-          onChange={this.props.onRuleChange}
-          readonly={this.props.readonly}/>
+          onChange={this.props.onRuleChange} readonly={readonly}/>
         <div style={footerStyle}>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleModal displaySize={this.props.displaySize}
@@ -93,7 +94,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <HLine color='#E6E6E6'/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
-          <SubmissionInput roles={this.props.model.roles}
+          <SubmissionInput roles={this.props.roles}
             isError={this.props.isError} status={this.props.status}
             isEnabled={this.props.hasChange} onSubmit={this.props.onSubmit}/>
           <div style={CompliancePage.STYLE.paddingSmall}/>

@@ -205,9 +205,8 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     const account = Beam.DirectoryEntry.makeAccount(2201, 'trader');
-    const model = new WebPortal.ComplianceModel(
-      account, new Nexus.AccountRoles(Nexus.AccountRoles.Role.ADMINISTRATOR),
-      makeSchemas(), makeEntries(), Nexus.buildDefaultCurrencyDatabase());
+    const model = new WebPortal.ComplianceModel(account, makeSchemas(),
+      makeEntries(), Nexus.buildDefaultCurrencyDatabase());
     this.state = {
       model,
       readonly: false
@@ -215,6 +214,8 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const role = this.state.readonly &&
+      Nexus.AccountRoles.Role.TRADER || Nexus.AccountRoles.Role.ADMINISTRATOR;
     return (
       <div style={{backgroundColor: 'black', height: '100%'}}>
         <div style={TestApp.STYLE.testingComponents}>
@@ -223,8 +224,8 @@ class TestApp extends React.Component<Properties, State> {
           </button>
         </div>
         <WebPortal.PageWrapper>
-          <WebPortal.CompliancePage displaySize={this.props.displaySize} 
-            model={this.state.model} readonly={this.state.readonly}
+          <WebPortal.CompliancePage displaySize={this.props.displaySize}
+            roles={new Nexus.AccountRoles(role)} model={this.state.model}
             onRuleAdd={this.onRuleAdd} onRuleChange={this.onRuleChange}/>
         </WebPortal.PageWrapper>
       </div>);

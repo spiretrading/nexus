@@ -9,21 +9,19 @@ export class HttpComplianceService extends ComplianceService {
   /**
    * Constructs an HttpComplianceService.
    * @param directoryEntry The account/group represented.
-   * @param roles The roles of the account using this service.
    * @param serviceClients The ServiceClients providing the HTTP services.
    */
-  constructor(directoryEntry: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
+  constructor(directoryEntry: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {
     super();
     this.directoryEntry = directoryEntry;
-    this.roles = roles;
     this.serviceClients = serviceClients;
   }
 
   public async load(): Promise<ComplianceModel> {
     const entries =
       await this.serviceClients.complianceClient.load(this.directoryEntry);
-    return new ComplianceModel(this.directoryEntry, this.roles,
+    return new ComplianceModel(this.directoryEntry,
       this.serviceClients.definitionsClient.complianceRuleSchemas, entries,
       this.serviceClients.definitionsClient.currencyDatabase);
   }
@@ -43,6 +41,5 @@ export class HttpComplianceService extends ComplianceService {
   }
 
   private directoryEntry: Beam.DirectoryEntry;
-  private roles: Nexus.AccountRoles;
   private serviceClients: Nexus.ServiceClients;
 }

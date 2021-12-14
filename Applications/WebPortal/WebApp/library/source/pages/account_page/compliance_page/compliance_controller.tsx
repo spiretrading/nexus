@@ -11,6 +11,9 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
+  /** The roles belonging to the account viewing this page. */
+  roles: Nexus.AccountRoles;
+
   /** The services used by the CompliancePage. */
   service: ComplianceService;
 }
@@ -42,12 +45,10 @@ export class ComplianceController extends React.Component<Properties, State> {
     } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
       return <div/>;
     }
-    const readonly =
-      !this.state.model.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     return <CompliancePage displaySize={this.props.displaySize}
-      model={this.state.model} isError={this.state.hasError}
-      status={this.state.status} hasChange={this.state.hasChange}
-      readonly={readonly} onRuleAdd={this.onRuleAdd}
+      roles={this.props.roles} model={this.state.model}
+      isError={this.state.hasError} status={this.state.status}
+      hasChange={this.state.hasChange} onRuleAdd={this.onRuleAdd}
       onRuleChange={this.onRuleChange} onSubmit={this.onSubmit}/>;
   }
 
