@@ -23,6 +23,7 @@ namespace Spire {
   class DateBox;
   class DateFilterPanel;
   class DecimalBox;
+  class DestinationBox;
   class DestinationListItem;
   class DropDownBox;
   class DropDownList;

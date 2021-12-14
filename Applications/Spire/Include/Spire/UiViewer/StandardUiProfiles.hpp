@@ -35,6 +35,9 @@ namespace Spire {
   /** Returns a UiProfile for the DeleteIconButton. */
   UiProfile make_delete_icon_button_profile();
 
+  /** Returns a UiProfile for the DestinationBox. */
+  UiProfile make_destination_box_profile();
+
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
