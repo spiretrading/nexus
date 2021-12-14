@@ -32,7 +32,7 @@ struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
             return std::vector<std::any>();
           }
         }();
-        std::vector<std::any> result;
+        auto result = std::vector<std::any>();
         for(auto& value : matches) {
           result.push_back(std::any_cast<SecurityInfo&>(value).m_security);
         }
