@@ -93,7 +93,8 @@ export class LocalDashboardModel extends DashboardModel {
 
   public makeGroupModel(group: Beam.DirectoryEntry): LocalGroupModel {
     this.ensureLoaded();
-    return new LocalGroupModel(group, []);
+    return new LocalGroupModel(
+      group, [], new ComplianceModel(group, [], [], this._currencyDatabase));
   }
 
   public async load(): Promise<void> {

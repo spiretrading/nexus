@@ -127,8 +127,8 @@ export class DashboardController extends React.Component<Properties, State> {
     }
     const group = Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
     const model = this.props.model.makeGroupModel(group);
-    return (
-      <GroupController model={model} displaySize={this.props.displaySize}/>);
+    return <GroupController roles={this.props.model.roles} model={model}
+      displaySize={this.props.displaySize}/>;
   }
   
   private renderPageNotFound = () => {
