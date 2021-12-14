@@ -97,8 +97,6 @@ export class CompliancePage extends React.Component<Properties, State> {
           <SubmissionInput roles={this.props.roles}
             isError={this.props.isError} status={this.props.status}
             isEnabled={this.props.hasChange} onSubmit={this.props.onSubmit}/>
-          <div style={CompliancePage.STYLE.paddingSmall}/>
-          <div style={CompliancePage.STYLE.statusBox}>Saved</div>
         </div>
       </div>);
   }
