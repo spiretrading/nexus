@@ -289,8 +289,11 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
 }
 
 void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
-  m_sources.erase(std::find_if(m_sources.begin(), m_sources.end(),
-    [&] (const auto& entry) { return entry.m_rule == &rule; }));
+  auto i = std::find_if(m_sources.begin(), m_sources.end(),
+    [&] (const auto& entry) { return entry.m_rule == &rule; });
+  if(i != m_sources.end()) {
+    m_sources.erase(i);
+  }
   apply_proxies();
 }
 

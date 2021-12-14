@@ -52,6 +52,7 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
+#include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
@@ -2356,6 +2357,73 @@ UiProfile Spire::make_search_box_profile() {
       search_box->connect_submit_signal(
         profile.make_event_slot<QString>(QString::fromUtf8("Submit")));
       return search_box;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_security_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile(QString::fromUtf8("SecurityBox"), properties,
+    [] (auto& profile) {
+      auto security_infos = std::vector<SecurityInfo>();
+      security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Metro Inc.", "", 0);
+      security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Magna International Inc.", "", 0);
+      security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Mega Uranium Ltd.", "", 0);
+      security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Mackenzie Global Fixed Income Alloc ETF", "", 0);
+      security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Monsanto Co.", "", 0);
+      security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Manulife Financial Corporation", "", 0);
+      security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+        "Methanex Corporation", "", 0);
+      auto model = std::make_shared<LocalComboBoxQueryModel>();
+      for(auto security_info : security_infos) {
+        model->add(displayTextAny(security_info.m_security).toLower(),
+          security_info);
+      }
+      auto box = new SecurityBox(model);
+      box->setFixedWidth(scale_width(112));
+      apply_widget_properties(box, profile.get_properties());
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& current) {
+        auto value = model->parse(current);
+        if(!value.has_value()) {
+          return;
+        }
+        auto security = std::any_cast<SecurityInfo>(value).m_security;
+        if(!is_equal(box->get_current()->get(), security)) {
+          box->get_current()->set(security);
+        }
+      });
+      box->get_current()->connect_update_signal(
+        [&current] (const auto& value) {
+          auto text = displayTextAny(value);
+          if(text.toLower() != current.get().toLower()) {
+            current.set(text);
+          }
+        });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal(
+        std::bind_front(&SecurityBox::set_read_only, box));
+      box->connect_submit_signal(profile.make_event_slot<Security>(
+        QString::fromUtf8("Submit")));
+      box->get_current()->connect_update_signal(
+        profile.make_event_slot<Security>(QString::fromUtf8("Current")));
+      return box;
     });
   return profile;
 }
