@@ -6,7 +6,8 @@ export abstract class LoginModel {
   /** Returns the account currently logged in. */
   public abstract get account(): Beam.DirectoryEntry;
 
-  /** Logs into the client web portal.
+  /**
+   * Logs into the client web portal.
    * @param username - The username.
    * @param password - The password.
    * @return The directory entry of the account that logged in.

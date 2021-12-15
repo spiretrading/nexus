@@ -17,7 +17,8 @@ interface Properties {
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
-  /** Callback for when the parameters are changed.
+  /**
+   * Callback for when the parameters are changed.
    * @param parameters - The new parameters.
    */
   onChange?: (parameters: Nexus.RiskParameters) => void;
@@ -48,8 +49,8 @@ export class RiskParametersView extends React.Component<Properties> {
           <CurrencySelectionField className={
             css(RiskParametersView.STYLE.dropdownButton)}
             currencyDatabase={this.props.currencyDatabase}
-            value={this.props.parameters.currency} onChange={
-            this.onCurrencyChange}/>
+            value={this.props.parameters.currency}
+            onChange={this.onCurrencyChange}/>
           <Padding size='30px'/>
           <Label text={`Buying Power (${currencySign})`}/>
           <Padding size='12px'/>

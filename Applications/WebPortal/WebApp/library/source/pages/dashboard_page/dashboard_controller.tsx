@@ -3,13 +3,13 @@ import * as React from 'react';
 import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
-import { AccountController, AccountDirectoryController,
-  CreateAccountController, GroupController } from '..';
+import { AccountController, AccountDirectoryController, CreateAccountController,
+  GroupController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
 
-interface Properties {
+interface Properties extends Router.RouteComponentProps {
 
   /** The model to use. */
   model: DashboardModel;
@@ -76,15 +76,17 @@ export class DashboardController extends React.Component<Properties, State> {
       </DashboardPage>);
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        if(window.location.pathname === '/') {
-          this.setState({isLoaded: true, redirect: '/account'});
-        } else {
-          this.setState({isLoaded: true});
-        }
-      }).catch(() => this.setState({cannotLoad: true}));
+  public async componentDidMount(): Promise<void> {
+    try {
+      await this.props.model.load();
+      if(this.props.location.pathname === '/') {
+        this.setState({isLoaded: true, redirect: '/account'});
+      } else {
+        this.setState({isLoaded: true});
+      }
+    } catch {
+      this.setState({cannotLoad: true});
+    }
   }
 
   public componentDidUpdate(): void {
@@ -93,12 +95,12 @@ export class DashboardController extends React.Component<Properties, State> {
     }
   }
 
-  private renderAccountPage = () => {
+  private renderAccountPage = (props: Router.RouteComponentProps) => {
     const model = (() => {
-      const match = DashboardController.ACCOUNT_PATTERN.exec(
-        window.location.pathname);
+      const match =
+        DashboardController.ACCOUNT_PATTERN.exec(this.props.location.pathname);
       const account = (() => {
-        if(match[1]) {
+        if(match?.[1]) {
           return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
         }
         return this.props.model.account;
@@ -106,7 +108,7 @@ export class DashboardController extends React.Component<Properties, State> {
       return this.props.model.makeAccountModel(account);
     })();
     return (
-      <AccountController
+      <AccountController {...props}
         entitlements={this.props.model.entitlementDatabase}
         countryDatabase={this.props.model.countryDatabase}
         currencyDatabase={this.props.model.currencyDatabase}
@@ -117,16 +119,16 @@ export class DashboardController extends React.Component<Properties, State> {
         displaySize={this.props.displaySize}/>);
   }
 
-  private renderGroupPage = () => {
-    const match = DashboardController.GROUP_PATTERN.exec(
-      window.location.pathname);
+  private renderGroupPage = (props: Router.RouteComponentProps) => {
+    const match =
+      DashboardController.GROUP_PATTERN.exec(this.props.location.pathname);
     if(!match[1]) {
       return this.renderPageNotFound();
     }
     const group = Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
     const model = this.props.model.makeGroupModel(group);
-    return (
-      <GroupController model={model} displaySize={this.props.displaySize}/>);
+    return <GroupController {...props} roles={this.props.model.roles}
+      model={model} displaySize={this.props.displaySize}/>;
   }
   
   private renderPageNotFound = () => {

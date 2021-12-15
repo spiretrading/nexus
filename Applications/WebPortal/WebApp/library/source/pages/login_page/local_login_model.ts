@@ -9,7 +9,8 @@ export class LocalLoginModel extends LoginModel {
     this.loginResolver(this.account);
   }
 
-  /** Rejects the login.
+  /**
+   * Rejects the login.
    * @param message - The reason for the rejection.
    */
   public reject(message: string): void {

@@ -4,7 +4,8 @@ import * as Nexus from 'nexus';
 /** Represents an account entry and its roles. */
 export class AccountEntry {
 
-  /** Constructs an AccountEntry
+  /**
+   * Constructs an AccountEntry
    * @param account - The account to represent.
    * @param roles - The roles associated with the account.
    */

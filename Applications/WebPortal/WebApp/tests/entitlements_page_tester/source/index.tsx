@@ -34,32 +34,21 @@ class TestApp extends React.Component<Properties, State> {
       displayedStatus: '',
       submitEnabled: false
     };
-    this.changeRole = this.changeRole.bind(this);
-    this.toggleCheckMark = this.toggleCheckMark.bind(this);
-    this.setup = this.setup.bind(this);
-    this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
-    this.changeStatus = this.changeStatus.bind(this);
-    this.commentsSubmitted = this.commentsSubmitted.bind(this);
-    this.toggleButtonEnabled = this.toggleButtonEnabled.bind(this);
   }
 
   public render(): JSX.Element {
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
-        <WebPortal.EntitlementsPage
-          displaySize={this.props.displaySize}
-          marketDatabase={this.state.marketDB}
-          roles={this.state.roles}
-          entitlements={this.state.entitlementDB}
-          checked={this.state.checkedDB}
+        <WebPortal.EntitlementsPage displaySize={this.props.displaySize}
+          marketDatabase={this.state.marketDB} roles={this.state.roles}
+          entitlements={this.state.entitlementDB} checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
           onEntitlementClick={this.toggleCheckMark}
           status={this.state.displayedStatus}
-          isSubmitEnabled={this.state.submitEnabled}
+          canSubmit={this.state.submitEnabled}
           onSubmit={this.commentsSubmitted}/>
         <div style={TestApp.STYLE.testingComponents}>
-          <button tabIndex={-1}
-              onClick={() =>
+          <button tabIndex={-1} onClick={() =>
               this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
             ADMINISTRATOR
           </button>
@@ -71,20 +60,17 @@ class TestApp extends React.Component<Properties, State> {
               onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
             MANAGER
           </button>
-          <button tabIndex={-1}
-              onClick={() => this.changeStatus('')}>
+          <button tabIndex={-1} onClick={() => this.changeStatus('')}>
             NOT SUBMITTED
           </button>
-          <button tabIndex={-1}
-              onClick={() => this.changeStatus('Saved')}>
+          <button tabIndex={-1} onClick={() => this.changeStatus('Saved')}>
             SUCCESSFUL SUBMIT
           </button>
           <button tabIndex={-1}
               onClick={() => this.changeStatus('Server issue')}>
             UNSUCCESSFUL SUBMIT
           </button>
-          <button tabIndex={-1}
-              onClick={this.toggleButtonEnabled}>
+          <button tabIndex={-1} onClick={this.toggleButtonEnabled}>
             TOGGLE SUBMIT
           </button>
         </div>
@@ -93,17 +79,18 @@ class TestApp extends React.Component<Properties, State> {
 
   public componentDidMount(): void {
     this.setState({ roles: this.testAdmin });
-    this.setup();
+    this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
+    this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
+    this.buildEntitlementDB();
   }
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
     if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
       this.setState({ roles: this.testAdmin });
-    }
-    if(newRole === Nexus.AccountRoles.Role.TRADER) {
+    } else if(newRole === Nexus.AccountRoles.Role.TRADER) {
       this.setState({ roles: this.testTrader });
-    }
-    if(newRole === Nexus.AccountRoles.Role.MANAGER) {
+    } else if(newRole === Nexus.AccountRoles.Role.MANAGER) {
       this.setState({ roles: this.testManager });
     }
   }
@@ -116,28 +103,21 @@ class TestApp extends React.Component<Properties, State> {
     }
   }
 
-  private commentsSubmitted(value: string) {
+  private commentsSubmitted = (value: string) => {
     this.setState({ displayedStatus: this.state.status.toString()});
   }
 
-  private toggleButtonEnabled() {
-    this.setState({submitEnabled: !this.state.submitEnabled});
+  private toggleButtonEnabled = () => {
+    this.setState(state => {submitEnabled: !state.submitEnabled});
   }
 
-  private toggleCheckMark(value: Beam.DirectoryEntry) {
+  private toggleCheckMark = (value: Beam.DirectoryEntry) => {
     if(!this.state.checkedDB.test(value)) {
       this.state.checkedDB.add(value);
     } else {
       this.state.checkedDB.remove(value);
     }
     this.setState({checkedDB: this.state.checkedDB});
-  }
-
-  private setup() {
-    this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
-    this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
-    this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
-    this.buildEntitlementDB();
   }
 
   private buildEntitlementDB() {

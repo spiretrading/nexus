@@ -10,7 +10,8 @@ export class EntitlementKey {
       MarketCode.fromJson(value.source));
   }
 
-  /** Constructs an EntitlementKey.
+  /**
+   * Constructs an EntitlementKey.
    * @param market - The market the security belongs to.
    * @param source - The market disseminating the data, the default value is
    *        the market.

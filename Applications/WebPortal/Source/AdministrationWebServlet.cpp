@@ -25,122 +25,110 @@ AdministrationWebServlet::~AdministrationWebServlet() {
 
 std::vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_accounts_by_roles"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountsByRoles, this,
-    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_accounts_by_roles"),
+    std::bind_front(&AdministrationWebServlet::OnLoadAccountsByRoles, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_administrators_root_entry"),
-    std::bind(&AdministrationWebServlet::OnLoadAdministratorsRootEntry, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_services_root_entry"),
-    std::bind(&AdministrationWebServlet::OnLoadServicesRootEntry, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadAdministratorsRootEntry, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_services_root_entry"),
+    std::bind_front(&AdministrationWebServlet::OnLoadServicesRootEntry, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_trading_groups_root_entry"),
-    std::bind(&AdministrationWebServlet::OnLoadTradingGroupsRootEntry, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadTradingGroupsRootEntry, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_trading_group"),
+    std::bind_front(&AdministrationWebServlet::OnLoadTradingGroup, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_trading_group"),
-    std::bind(&AdministrationWebServlet::OnLoadTradingGroup, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_managed_trading_groups"),
-    std::bind(&AdministrationWebServlet::OnLoadManagedTradingGroups, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_parent_trading_group"),
-    std::bind(&AdministrationWebServlet::OnLoadParentTradingGroup, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_account_roles"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountRoles, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/store_account_roles"),
-    std::bind(&AdministrationWebServlet::OnStoreAccountRoles, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_account_identity"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountIdentity, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/store_account_identity"),
-    std::bind(&AdministrationWebServlet::OnStoreAccountIdentity, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_entitlements_database"),
-    std::bind(&AdministrationWebServlet::OnLoadEntitlementsDatabase, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_account_entitlements"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountEntitlements, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/store_account_entitlements"),
-    std::bind(&AdministrationWebServlet::OnStoreAccountEntitlements, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_risk_parameters"),
-    std::bind(&AdministrationWebServlet::OnLoadRiskParameters, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/store_risk_parameters"),
-    std::bind(&AdministrationWebServlet::OnStoreRiskParameters, this,
-    std::placeholders::_1));
+    "/api/administration_service/load_managed_trading_groups"), std::bind_front(
+      &AdministrationWebServlet::OnLoadManagedTradingGroups, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_parent_trading_group"),
+    std::bind_front(&AdministrationWebServlet::OnLoadParentTradingGroup, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_account_roles"),
+    std::bind_front(&AdministrationWebServlet::OnLoadAccountRoles, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/store_account_roles"),
+    std::bind_front(&AdministrationWebServlet::OnStoreAccountRoles, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_account_identity"),
+    std::bind_front(&AdministrationWebServlet::OnLoadAccountIdentity, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/store_account_identity"),
+    std::bind_front(&AdministrationWebServlet::OnStoreAccountIdentity, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_entitlements_database"),
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadEntitlementsDatabase, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_account_entitlements"),
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadAccountEntitlements, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/store_account_entitlements"),
+    std::bind_front(
+      &AdministrationWebServlet::OnStoreAccountEntitlements, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_risk_parameters"),
+    std::bind_front(&AdministrationWebServlet::OnLoadRiskParameters, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/store_risk_parameters"),
+    std::bind_front(&AdministrationWebServlet::OnStoreRiskParameters, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequest, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadAccountModificationRequest, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request_ids"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestIds,
-    this, std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadAccountModificationRequestIds, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_managed_account_modification_request_ids"),
-    std::bind(
-    &AdministrationWebServlet::OnLoadManagedAccountModificationRequestIds, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadManagedAccountModificationRequestIds,
+      this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_entitlement_modification"),
-    std::bind(&AdministrationWebServlet::OnLoadEntitlementModification, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadEntitlementModification, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/submit_entitlement_modification_request"),
-    std::bind(&AdministrationWebServlet::OnSubmitEntitlementModificationRequest,
-    this, std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_risk_modification"),
-    std::bind(&AdministrationWebServlet::OnLoadRiskModification, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnSubmitEntitlementModificationRequest, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_risk_modification"),
+    std::bind_front(&AdministrationWebServlet::OnLoadRiskModification, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/submit_risk_modification_request"),
-    std::bind(&AdministrationWebServlet::OnSubmitRiskModificationRequest,
-    this, std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnSubmitRiskModificationRequest, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request_status"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestStatus,
-    this, std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnLoadAccountModificationRequestStatus, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/approve_account_modification_request"),
-    std::bind(&AdministrationWebServlet::OnApproveAccountModificationRequest,
-    this, std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnApproveAccountModificationRequest, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/reject_account_modification_request"),
-    std::bind(&AdministrationWebServlet::OnRejectAccountModificationRequest,
-    this, std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_message"), std::bind(
-    &AdministrationWebServlet::OnLoadMessage, this, std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_message_ids"), std::bind(
-    &AdministrationWebServlet::OnLoadMessageIds, this, std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnRejectAccountModificationRequest, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_message"),
+    std::bind_front(&AdministrationWebServlet::OnLoadMessage, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/administration_service/load_message_ids"),
+    std::bind_front(&AdministrationWebServlet::OnLoadMessageIds, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/send_account_modification_request_message"),
-    std::bind(
-    &AdministrationWebServlet::OnSendAccountModificationRequestMessage, this,
-    std::placeholders::_1));
+    std::bind_front(
+      &AdministrationWebServlet::OnSendAccountModificationRequestMessage,
+      this));
   return slots;
 }
 
@@ -330,7 +318,7 @@ HttpResponse AdministrationWebServlet::OnStoreAccountRoles(
   auto& serviceClients = session->GetServiceClients();
   auto groups =
     serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
-    session->GetAccount());
+      session->GetAccount());
   auto memberGroup = TradingGroup();
   for(auto& group : groups) {
     auto tradingGroup =

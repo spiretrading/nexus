@@ -32,35 +32,28 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/login"),
-    std::bind(&ServiceLocatorWebServlet::OnLogin, this, std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnLogin, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/logout"),
-    std::bind(&ServiceLocatorWebServlet::OnLogout, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnLogout, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
-    std::bind(&ServiceLocatorWebServlet::OnLoadCurrentAccount, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnLoadCurrentAccount, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/service_locator/load_directory_entry_from_id"),
-    std::bind(&ServiceLocatorWebServlet::OnLoadDirectoryEntryFromId, this,
-    std::placeholders::_1));
+    "/api/service_locator/load_directory_entry_from_id"), std::bind_front(
+      &ServiceLocatorWebServlet::OnLoadDirectoryEntryFromId, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/store_password"),
-    std::bind(&ServiceLocatorWebServlet::OnStorePassword, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnStorePassword, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/service_locator/search_directory_entry"),
-    std::bind(&ServiceLocatorWebServlet::OnSearchDirectoryEntry, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnSearchDirectoryEntry, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/create_account"),
-    std::bind(&ServiceLocatorWebServlet::OnCreateAccount, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnCreateAccount, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/create_group"),
-    std::bind(&ServiceLocatorWebServlet::OnCreateGroup, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnCreateGroup, this));
   return slots;
 }
 
@@ -214,26 +207,47 @@ HttpResponse ServiceLocatorWebServlet::OnSearchDirectoryEntry(
   }
   auto managedTradingGroups =
     serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
-    session->GetAccount());
+      session->GetAccount());
   for(auto& managedTradingGroup : managedTradingGroups) {
     auto group = serviceClients.GetAdministrationClient().LoadTradingGroup(
       managedTradingGroup);
     if(starts_with(to_lower_copy(group.GetEntry().m_name), parameters.m_name)) {
       result.push_back(
-        ResultEntry{group.GetEntry(), AccountRoles(0), group.GetEntry()});
+        ResultEntry(group.GetEntry(), AccountRoles(0), group.GetEntry()));
     }
     for(auto& manager : group.GetManagers()) {
       if(starts_with(to_lower_copy(manager.m_name), parameters.m_name)) {
-        auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
-          manager);
-        result.push_back(ResultEntry{manager, roles, group.GetEntry()});
+        auto roles =
+          serviceClients.GetAdministrationClient().LoadAccountRoles(manager);
+        result.push_back(ResultEntry(manager, roles, group.GetEntry()));
       }
     }
     for(auto& trader : group.GetTraders()) {
       if(starts_with(to_lower_copy(trader.m_name), parameters.m_name)) {
-        auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
-          trader);
-        result.push_back(ResultEntry{trader, roles, group.GetEntry()});
+        auto roles =
+          serviceClients.GetAdministrationClient().LoadAccountRoles(trader);
+        result.push_back(ResultEntry(trader, roles, group.GetEntry()));
+      }
+    }
+  }
+  auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(roles.Test(AccountRole::ADMINISTRATOR)) {
+    auto organizationRoles = AccountRoles();
+    organizationRoles.Set(AccountRole::SERVICE);
+    organizationRoles.Set(AccountRole::ADMINISTRATOR);
+    auto organizationEntries =
+      serviceClients.GetAdministrationClient().LoadAccountsByRoles(
+        organizationRoles);
+    auto organizationEntry =
+      serviceClients.GetAdministrationClient().LoadTradingGroupsRootEntry();
+    organizationEntry.m_name =
+      serviceClients.GetDefinitionsClient().LoadOrganizationName();
+    for(auto& entry : organizationEntries) {
+      if(starts_with(to_lower_copy(entry.m_name), parameters.m_name)) {
+        auto roles =
+          serviceClients.GetAdministrationClient().LoadAccountRoles(entry);
+        result.push_back(ResultEntry(entry, roles, organizationEntry));
       }
     }
   }

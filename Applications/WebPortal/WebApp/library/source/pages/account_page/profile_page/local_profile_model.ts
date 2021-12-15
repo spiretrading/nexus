@@ -16,6 +16,7 @@ export class LocalProfileModel extends ProfileModel {
     this._isLoaded = false;
     this._account = account;
     this._roles = roles;
+    this._groups = [];
     this._identity = identity.clone();
   }
 

@@ -23,26 +23,16 @@ interface Properties {
 
 /** Displays a list of rules. */
 export class RulesList extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onChange: () => {}
-  };
-
   public render(): JSX.Element {
-    const rules = [];
-    for(let i = 0; i < this.props.complianceList.length; ++i) {
-      const rule = this.props.complianceList[i];
-      rules.push(
-        <RuleRow
-          key={rule.id}
-          displaySize={this.props.displaySize}
-          complianceRule={rule}
-          currencyDatabase={this.props.currencyDatabase}
-          readonly={this.props.readonly}
-          onChange={this.props.onChange}/>);
-    }
-    return (
-      <div>
-        {rules}
-      </div>);
+    const rules = this.props.complianceList.map(entry => {
+      return <RuleRow
+        key={entry.id}
+        displaySize={this.props.displaySize}
+        complianceRule={entry}
+        currencyDatabase={this.props.currencyDatabase}
+        readonly={this.props.readonly}
+        onChange={this.props.onChange}/>;
+    });
+    return <div>{rules}</div>;
   }
 }
