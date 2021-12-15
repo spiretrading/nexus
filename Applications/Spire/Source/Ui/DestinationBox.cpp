@@ -87,7 +87,12 @@ const std::shared_ptr<DestinationBox::CurrentModel>&
 }
 
 const Destination& DestinationBox::get_submission() const {
-  return std::any_cast<const Destination&>(m_combo_box->get_submission());
+  auto& submission = m_combo_box->get_submission();
+  if(submission.has_value()) {
+    return std::any_cast<const Destination&>(submission);
+  }
+  static auto destination = Destination();
+  return destination;
 }
 
 bool DestinationBox::is_read_only() const {
