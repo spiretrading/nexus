@@ -142,7 +142,7 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private onRuleOpen = (event?: React.MouseEvent<any>) => {
-    this.setState(state => {isExpanded: !state.isExpanded});
+    this.setState(state => ({isExpanded: !state.isExpanded}));
   }
 
   private onParameterChange = (schema: Nexus.ComplianceRuleSchema) => {
