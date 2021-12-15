@@ -18,30 +18,17 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     super();
     this.account = account;
     this.serviceClients = serviceClients;
+    this._organizationGroup = null;
     this._createAccountModel = new HttpCreateAccountModel(serviceClients);
     this._groupSuggestionModel = new LocalGroupSuggestionModel([]);
   }
 
-  public async load(): Promise<void> {
-    this.roles =
-      await this.serviceClients.administrationClient.loadAccountRoles(
-        await this.serviceClients.serviceLocatorClient.loadCurrentAccount());
-    this._groups =
-      await this.serviceClients.administrationClient.loadManagedTradingGroups(
-        this.account);
-    if(this.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-      this.tradingGroupsRoot = await
-        this.serviceClients.administrationClient.loadTradingGroupsRootEntry();
-      const organizationEntry = Beam.DirectoryEntry.makeDirectory(
-        this.tradingGroupsRoot.id,
-        this.serviceClients.definitionsClient.organizationName);
-      this._groups.splice(0, 0, organizationEntry);
-    }
-    this._groupSuggestionModel = new LocalGroupSuggestionModel(this._groups);
-  }
-
   public get groups(): Beam.DirectoryEntry[] {
     return this._groups.slice();
+  }
+
+  public get organizationGroup(): Beam.DirectoryEntry {
+    return this._organizationGroup;
   }
 
   public get createAccountModel(): CreateAccountModel {
@@ -116,11 +103,30 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     return result;
   }
 
+  public async load(): Promise<void> {
+    this.roles =
+      await this.serviceClients.administrationClient.loadAccountRoles(
+        await this.serviceClients.serviceLocatorClient.loadCurrentAccount());
+    this._groups =
+      await this.serviceClients.administrationClient.loadManagedTradingGroups(
+        this.account);
+    if(this.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      this.tradingGroupsRoot = await
+        this.serviceClients.administrationClient.loadTradingGroupsRootEntry();
+      this._organizationGroup = Beam.DirectoryEntry.makeDirectory(
+        this.tradingGroupsRoot.id,
+        this.serviceClients.definitionsClient.organizationName);
+      this._groups.push(this._organizationGroup);
+    }
+    this._groupSuggestionModel = new LocalGroupSuggestionModel(this._groups);
+  }
+
   private account: Beam.DirectoryEntry;
   private roles: Nexus.AccountRoles;
   private tradingGroupsRoot: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private _groups: Beam.DirectoryEntry[];
+  private _organizationGroup: Beam.DirectoryEntry;
   private _createAccountModel: HttpCreateAccountModel;
   private _groupSuggestionModel: LocalGroupSuggestionModel;
 }

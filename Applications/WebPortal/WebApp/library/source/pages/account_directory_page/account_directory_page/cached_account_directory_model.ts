@@ -22,6 +22,10 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
     return this._model.groups;
   }
 
+  public get organizationGroup(): Beam.DirectoryEntry {
+    return this._model.organizationGroup;
+  }
+
   public get createAccountModel(): CreateAccountModel {
     return this._model.createAccountModel;
   }

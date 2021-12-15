@@ -9,6 +9,9 @@ export abstract class AccountDirectoryModel {
   /** Returns a list of all groups. */
   public abstract get groups(): Beam.DirectoryEntry[];
 
+  /** Returns the group representing the organization or null if unavailable. */
+  public abstract get organizationGroup(): Beam.DirectoryEntry;
+
   /** Returns a CreateAccountModel. */
   public abstract get createAccountModel(): CreateAccountModel;
 

@@ -81,8 +81,7 @@ export class AccountDirectoryController extends
       this.setState(state => {
         return {
           loadingState: state.loadingState.succeed(),
-          sortedKeys: this.props.model.groups.sort(
-            AccountDirectoryController.groupComparator)
+          sortedKeys: this.props.model.groups.sort(this.groupComparator)
         };
       });
     } catch(error) {
@@ -115,8 +114,7 @@ export class AccountDirectoryController extends
     try {
       await this.props.model.createGroup(name);
       this.setState({
-        sortedKeys: this.props.model.groups.sort(
-          AccountDirectoryController.groupComparator)
+        sortedKeys: this.props.model.groups.sort(this.groupComparator)
       });
     } catch(e) {
       this.setState({createGroupStatus: e.toString()});
@@ -137,7 +135,7 @@ export class AccountDirectoryController extends
         pair[1].sort(AccountDirectoryController.accountComparator);
         keys.push(pair[0]);
       }
-      keys.sort(AccountDirectoryController.groupComparator);
+      keys.sort(this.groupComparator);
       this.setState({
         filter: newFilter,
         filteredGroups: accounts,
@@ -152,13 +150,18 @@ export class AccountDirectoryController extends
     }
   }
 
-  private static groupComparator(groupA: Beam.DirectoryEntry,
-      groupB: Beam.DirectoryEntry): number {
+  private groupComparator =
+      (groupA: Beam.DirectoryEntry, groupB: Beam.DirectoryEntry) => {
+    if(groupA.equals(this.props.model.organizationGroup)) {
+      return -1;
+    } else if(groupB.equals(this.props.model.organizationGroup)) {
+      return 1;
+    }
     return groupA.name.localeCompare(groupB.name);
   }
 
-  private static accountComparator(accountA: AccountEntry,
-      accountB: AccountEntry): number {
+  private static accountComparator(
+      accountA: AccountEntry, accountB: AccountEntry) {
     return accountA.account.name.localeCompare(accountB.account.name);
   }
 }
