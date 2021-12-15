@@ -85,7 +85,12 @@ const std::shared_ptr<SecurityBox::CurrentModel>&
 }
 
 const Security& SecurityBox::get_submission() const {
-  return std::any_cast<const Security&>(m_combo_box->get_submission());
+  auto& submission = m_combo_box->get_submission();
+  if(submission.has_value()) {
+    return std::any_cast<const Security&>(submission);
+  }
+  static auto security = Security();
+  return security;
 }
 
 bool SecurityBox::is_read_only() const {
