@@ -11,6 +11,24 @@ import { TradingGroup } from './trading_group';
 export abstract class AdministrationClient {
 
   /**
+   * Loads the list of accounts that match a set of roles.
+   * @param roles The roles to match.
+   * @return The list of directory entries of accounts that match the
+   *         specified roles.
+   */
+  public abstract loadAccountsByRoles(roles: AccountRoles):
+    Promise<Beam.DirectoryEntry[]>;
+
+  /** Loads the DirectoryEntry containing all administrators. */
+  public abstract loadAdministratorsRootEntry(): Promise<Beam.DirectoryEntry>;
+
+  /** Loads the DirectoryEntry containing all service accounts. */
+  public abstract loadServicesRootEntry(): Promise<Beam.DirectoryEntry>;
+
+  /** Loads the DirectoryEntry containing all trading groups. */
+  public abstract loadTradingGroupsRootEntry(): Promise<Beam.DirectoryEntry>;
+
+  /**
    * Searches for accounts whose name matches a prefix.
    * @param prefix The prefix to match.
    * @return A list of matching tuples where the first element is a group, the

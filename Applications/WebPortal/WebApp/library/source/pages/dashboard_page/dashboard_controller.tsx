@@ -119,7 +119,7 @@ export class DashboardController extends React.Component<Properties, State> {
         displaySize={this.props.displaySize}/>);
   }
 
-  private renderGroupPage = () => {
+  private renderGroupPage = (props: Router.RouteComponentProps) => {
     const match =
       DashboardController.GROUP_PATTERN.exec(this.props.location.pathname);
     if(!match[1]) {
@@ -127,8 +127,8 @@ export class DashboardController extends React.Component<Properties, State> {
     }
     const group = Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
     const model = this.props.model.makeGroupModel(group);
-    return <GroupController roles={this.props.model.roles} model={model}
-      displaySize={this.props.displaySize}/>;
+    return <GroupController {...props} roles={this.props.model.roles}
+      model={model} displaySize={this.props.displaySize}/>;
   }
   
   private renderPageNotFound = () => {

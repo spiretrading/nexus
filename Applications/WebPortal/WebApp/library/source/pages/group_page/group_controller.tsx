@@ -1,14 +1,15 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
-import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
+import { DisplaySize, LoadingPage, LoadingState, PageNotFoundPage } from
+  '../..';
 import { ComplianceController } from '..';
 import { GroupInfoController } from './group_info_page';
 import { GroupModel } from './group_model';
 import { GroupPage } from './group_page';
 import { GroupSubPage } from './group_sub_page';
 
-interface Properties {
+interface Properties extends Router.RouteComponentProps {
 
   /** Determines the layout to use based on the display device. */
   displaySize: DisplaySize;
@@ -21,9 +22,8 @@ interface Properties {
 }
 
 interface State {
-  isLoaded: boolean;
-  cannotLoad: boolean;
   redirect: string;
+  loadingState: LoadingState;
 }
 
 /** Implements a controller for the GroupPage. */
@@ -31,28 +31,25 @@ export class GroupController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isLoaded: false,
-      cannotLoad: false,
-      redirect: null
+      redirect: null,
+      loadingState: new LoadingState()
     };
   }
 
   public render(): JSX.Element {
     if(this.state.redirect) {
       return <Router.Redirect push to={this.state.redirect}/>;
-    }
-    if(this.state.cannotLoad) {
+    } else if(this.state.loadingState.isLoading()) {
+      return <LoadingPage/>;
+    } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
       return <PageNotFoundPage displaySize={this.props.displaySize}/>;
     }
-    if(!this.state.isLoaded) {
-      return <LoadingPage/>;
-    }
     const subPage = (() => {
-      if(window.location.pathname.endsWith('/group_info')) {
+      if(this.props.location.pathname.endsWith('/group_info')) {
         return GroupSubPage.GROUP;
-      } else if(window.location.pathname.endsWith('/compliance')) {
+      } else if(this.props.location.pathname.endsWith('/compliance')) {
         return GroupSubPage.COMPLIANCE;
-      } else if(window.location.pathname.endsWith('/profit_loss')) {
+      } else if(this.props.location.pathname.endsWith('/profit_loss')) {
         return GroupSubPage.PROFIT_LOSS;
       }
       return GroupSubPage.NONE;
@@ -80,9 +77,17 @@ export class GroupController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      this.setState({isLoaded: true});
-    } catch {
-      this.setState({cannotLoad: true});
+      this.setState(state => {
+        return {
+          loadingState: state.loadingState.succeed()
+        };
+      });
+    } catch(error) {
+      this.setState(state => {
+        return {
+          loadingState: state.loadingState.fail(error.toString())
+        };
+      });
     }
   }
 
@@ -93,7 +98,7 @@ export class GroupController extends React.Component<Properties, State> {
   }
 
   private parseUrlPrefix = (): string => {
-    const url = window.location.pathname;
+    const url = this.props.location.pathname;
     const prefix = url.substring(0, url.lastIndexOf('/'));
     if(prefix === '') {
       return url;

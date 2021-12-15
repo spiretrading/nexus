@@ -23,15 +23,16 @@ export abstract class AccountDirectoryModel {
   public abstract createGroup(name: string): Promise<Beam.DirectoryEntry>;
 
   /** Returns the accounts that belong to a particular group. */
-  public abstract loadAccounts(
-    group: Beam.DirectoryEntry): Promise<AccountEntry[]>;
+  public abstract loadAccounts(group: Beam.DirectoryEntry):
+    Promise<AccountEntry[]>;
 
-  /** Returns all the accounts where the filter is a prefix to the name.
+  /**
+   * Returns all the accounts where the filter is a prefix to the name.
    * If the filter is a empty string a empty map is returned.
    * @param filter - The string that is the current filter.
    */
-  public abstract loadFilteredAccounts(
-    filter: string): Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>;
+  public abstract loadFilteredAccounts(filter: string):
+    Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>;
 
   /** Loads this model. */
   public abstract load(): Promise<void>;
