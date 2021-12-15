@@ -318,7 +318,7 @@ HttpResponse AdministrationWebServlet::OnStoreAccountRoles(
   auto& serviceClients = session->GetServiceClients();
   auto groups =
     serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
-    session->GetAccount());
+      session->GetAccount());
   auto memberGroup = TradingGroup();
   for(auto& group : groups) {
     auto tradingGroup =

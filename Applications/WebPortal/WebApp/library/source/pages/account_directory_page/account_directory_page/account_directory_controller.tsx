@@ -130,7 +130,7 @@ export class AccountDirectoryController extends
   private onFilterChange = async (newFilter: string) => {
     if(newFilter !== '') {
       const accounts = await this.props.model.loadFilteredAccounts(newFilter);
-      let keys = [] as Beam.DirectoryEntry[];
+      const keys = [] as Beam.DirectoryEntry[];
       for(const pair of accounts) {
         pair[1].sort(AccountDirectoryController.accountComparator);
         keys.push(pair[0]);

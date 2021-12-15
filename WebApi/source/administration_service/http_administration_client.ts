@@ -11,7 +11,6 @@ import { TradingGroup } from './trading_group';
 
 /** Implements the AdministrationClient using HTTP requests. */
 export class HttpAdministrationClient extends AdministrationClient {
-
   public async loadAccountsByRoles(roles: AccountRoles):
       Promise<Beam.DirectoryEntry[]> {
     const response = await Beam.post(

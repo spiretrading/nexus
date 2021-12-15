@@ -74,14 +74,14 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     return group;
   }
 
-  public async loadAccounts(
-      group: Beam.DirectoryEntry): Promise<AccountEntry[]> {
+  public async loadAccounts(group: Beam.DirectoryEntry):
+      Promise<AccountEntry[]> {
     this.ensureLoaded();
     return this._accounts.get(group).slice();
   }
 
-  public async loadFilteredAccounts(
-      filter: string): Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
+  public async loadFilteredAccounts(filter: string):
+      Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
     this.ensureLoaded();
     const matches = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     if(filter) {

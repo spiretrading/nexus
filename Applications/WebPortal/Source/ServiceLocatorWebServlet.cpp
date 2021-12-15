@@ -207,26 +207,47 @@ HttpResponse ServiceLocatorWebServlet::OnSearchDirectoryEntry(
   }
   auto managedTradingGroups =
     serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
-    session->GetAccount());
+      session->GetAccount());
   for(auto& managedTradingGroup : managedTradingGroups) {
     auto group = serviceClients.GetAdministrationClient().LoadTradingGroup(
       managedTradingGroup);
     if(starts_with(to_lower_copy(group.GetEntry().m_name), parameters.m_name)) {
       result.push_back(
-        ResultEntry{group.GetEntry(), AccountRoles(0), group.GetEntry()});
+        ResultEntry(group.GetEntry(), AccountRoles(0), group.GetEntry()));
     }
     for(auto& manager : group.GetManagers()) {
       if(starts_with(to_lower_copy(manager.m_name), parameters.m_name)) {
-        auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
-          manager);
-        result.push_back(ResultEntry{manager, roles, group.GetEntry()});
+        auto roles =
+          serviceClients.GetAdministrationClient().LoadAccountRoles(manager);
+        result.push_back(ResultEntry(manager, roles, group.GetEntry()));
       }
     }
     for(auto& trader : group.GetTraders()) {
       if(starts_with(to_lower_copy(trader.m_name), parameters.m_name)) {
-        auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
-          trader);
-        result.push_back(ResultEntry{trader, roles, group.GetEntry()});
+        auto roles =
+          serviceClients.GetAdministrationClient().LoadAccountRoles(trader);
+        result.push_back(ResultEntry(trader, roles, group.GetEntry()));
+      }
+    }
+  }
+  auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(roles.Test(AccountRole::ADMINISTRATOR)) {
+    auto organizationRoles = AccountRoles();
+    organizationRoles.Set(AccountRole::SERVICE);
+    organizationRoles.Set(AccountRole::ADMINISTRATOR);
+    auto organizationEntries =
+      serviceClients.GetAdministrationClient().LoadAccountsByRoles(
+        organizationRoles);
+    auto organizationEntry =
+      serviceClients.GetAdministrationClient().LoadTradingGroupsRootEntry();
+    organizationEntry.m_name =
+      serviceClients.GetDefinitionsClient().LoadOrganizationName();
+    for(auto& entry : organizationEntries) {
+      if(starts_with(to_lower_copy(entry.m_name), parameters.m_name)) {
+        auto roles =
+          serviceClients.GetAdministrationClient().LoadAccountRoles(entry);
+        result.push_back(ResultEntry(entry, roles, organizationEntry));
       }
     }
   }
