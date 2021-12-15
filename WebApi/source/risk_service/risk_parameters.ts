@@ -17,7 +17,8 @@ export class RiskParameters {
       value.loss_from_top, Beam.Duration.fromJson(value.transition_time));
   }
 
-  /** Constructs RiskParameters.
+  /**
+   * Constructs RiskParameters.
    * @param currency - The currency used for risk calculations.
    * @param buyingPower - The maximum amount of buying power.
    * @param allowedState - The default risk state.
@@ -89,7 +90,8 @@ export class RiskParameters {
     this._lossFromTop = value;
   }
 
-  /** The amount of time allowed to transition from closed orders mode to
+  /**
+   * The amount of time allowed to transition from closed orders mode to
    * disabled mode.
    */
   public get transitionTime(): Beam.Duration {

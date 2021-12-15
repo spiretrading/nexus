@@ -89,6 +89,8 @@ export function buildDefaultMarketDatabase(): MarketDatabase {
   return database;
 }
 
+export const defaultMarketDatabase = buildDefaultMarketDatabase();
+
 export namespace DefaultMarkets {
   export const ASX = new MarketCode('XASX');
   export const CXA = new MarketCode('CHIA');

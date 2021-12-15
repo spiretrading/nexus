@@ -11,7 +11,8 @@ export class RiskState {
     return new RiskState(value.type, Beam.DateTime.fromJson(value.expiry));
   }
 
-  /** Constructs a RiskState.
+  /**
+   * Constructs a RiskState.
    * @param type The state's type.
    * @param expiry When this state is expired to expire.
    */

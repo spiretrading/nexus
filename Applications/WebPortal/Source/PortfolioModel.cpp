@@ -25,8 +25,7 @@ PortfolioModel::PortfolioModel(ServiceClientsBox serviceClients)
     : m_serviceClients(std::move(serviceClients)) {
   m_serviceClients.GetRiskClient().GetRiskPortfolioUpdatePublisher().Monitor(
     m_tasks.GetSlot<RiskInventoryEntry>(
-      std::bind(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this,
-        std::placeholders::_1)));
+      std::bind_front(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this)));
 }
 
 PortfolioModel::~PortfolioModel() {
@@ -59,9 +58,8 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
           SecurityValuation(
             inventory.m_value.m_position.m_key.m_currency))).first;
         m_serviceClients.GetMarketDataClient().QueryBboQuotes(query,
-          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioModel::OnBboQuote, this,
-            security, std::ref(valuationIterator->second),
-            std::placeholders::_1)));
+          m_tasks.GetSlot<BboQuote>(std::bind_front(&PortfolioModel::OnBboQuote,
+            this, security, std::ref(valuationIterator->second))));
       }
       return valuationIterator->second;
     }();

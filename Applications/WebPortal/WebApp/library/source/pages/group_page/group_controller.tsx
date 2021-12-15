@@ -1,6 +1,8 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
+import { ComplianceController } from '..';
 import { GroupInfoController } from './group_info_page';
 import { GroupModel } from './group_model';
 import { GroupPage } from './group_page';
@@ -10,6 +12,9 @@ interface Properties {
 
   /** Determines the layout to use based on the display device. */
   displaySize: DisplaySize;
+
+  /** The authenticated user's roles. */
+  roles: Nexus.AccountRoles;
 
   /** The model representing the group to display. */
   model: GroupModel;
@@ -89,7 +94,7 @@ export class GroupController extends React.Component<Properties, State> {
 
   private parseUrlPrefix = (): string => {
     const url = window.location.pathname;
-    const prefix = url.substr(0, url.lastIndexOf('/'));
+    const prefix = url.substring(0, url.lastIndexOf('/'));
     if(prefix === '') {
       return url;
     }
@@ -97,14 +102,13 @@ export class GroupController extends React.Component<Properties, State> {
   }
 
   private renderGroupInfoPage = () => {
-    return (
-      <GroupInfoController
-        displaySize={this.props.displaySize}
-        accounts={this.props.model.accounts}/>);
+    return <GroupInfoController displaySize={this.props.displaySize}
+      accounts={this.props.model.accounts}/>;
   }
 
   private renderCompliancePage = () => {
-    return <div/>;
+    return <ComplianceController displaySize={this.props.displaySize}
+      roles={this.props.roles} service={this.props.model.complianceService}/>;
   }
 
   private renderProfitLossPage = () => {

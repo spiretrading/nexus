@@ -7,12 +7,14 @@ interface Properties {
   /** The current value of the input field. */
   value: string;
 
-  /** Called when the displayed value changes.
+  /**
+   * Called when the displayed value changes.
    * @param value - The new value.
    */
   onChange: (value: string) => void;
 
-  /** Called when the value is submitted.
+  /**
+   * Called when the value is submitted.
    * @param value - The security.
    */
   onEnter: (value: Nexus.Security) => void;
@@ -39,13 +41,12 @@ export class SecurityInput extends React.Component<Properties> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.keyCode === 13) {
-      const newSecurity =
-        new Nexus.Security(
-          this.props.value,
-          Nexus.MarketCode.NONE,
-          Nexus.DefaultCountries.CA);
-      this.props.onEnter(newSecurity);
+    if(event.key === 'Enter') {
+      const security =
+        Nexus.parseWildCardSecurity(this.props.value.toUpperCase());
+      if(!security.equals(Nexus.Security.NONE)) {
+        this.props.onEnter(security);
+      }
     }
   }
 

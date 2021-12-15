@@ -13,7 +13,8 @@ export class Message {
       Beam.arrayFromJson(Message.Body, value.bodies));
   }
 
-  /** Constructs a plain text message from a string.
+  /**
+   * Constructs a plain text message from a string.
    * @param message: The plain text message.
    */
   public static fromPlainText(message: string): Message {
@@ -22,7 +23,8 @@ export class Message {
       [Message.Body.fromPlainText(message)]);
   }
 
-  /** Constructs a Message.
+  /**
+   * Constructs a Message.
    * @param id - The message's unique id.
    * @param account - The account that sent the message.
    * @param timestamp - The timestamp when the message was received.
@@ -98,14 +100,16 @@ export module Message {
       return new Body(value.content_type, value.message);
     }
 
-    /** Constructs a plain text body.
+    /**
+     * Constructs a plain text body.
      * @param message - The contents of the message.
      */
     public static fromPlainText(message: string): Body {
       return new Body(Message.PLAIN_TEXT, message);
     }
 
-    /** Constructs a message body.
+    /**
+     * Constructs a message body.
      * @param contentType - The MIME-type of the message.
      * @param message - The contents of the message.
      */

@@ -56,7 +56,8 @@ export class MarketDatabase {
     this._entries = [];
   }
 
-  /** Returns an entry from its code.
+  /**
+   * Returns an entry from its code.
    * @param code - The MarketCode to lookup.
    * @return The Entry with the specified code.
    */
@@ -69,7 +70,22 @@ export class MarketDatabase {
     return MarketDatabase.Entry.NONE;
   }
 
-  /** Adds an entry.
+  /**
+   * Returns an entry from its display name.
+   * @param displayName The market's display name.
+   * @return The Entry with the specified display name.
+   */
+  public fromDisplayName(displayName: string): MarketDatabase.Entry {
+    for(const entry of this._entries) {
+      if(entry.displayName === displayName) {
+        return entry;
+      }
+    }
+    return MarketDatabase.Entry.NONE;
+  }
+
+  /**
+   * Adds an entry.
    * @param entry - The entry to add.
    */
   public add(entry: MarketDatabase.Entry): void {
@@ -78,7 +94,8 @@ export class MarketDatabase {
     }
   }
 
-  /** Removes an entry.
+  /**
+   * Removes an entry.
    * @param code - The MarketCode whose entry is to be removed.
    */
   public delete(code: MarketCode): void {
@@ -119,7 +136,22 @@ export module MarketDatabase {
         value.display_name);
     }
 
-    /** Constructs an entry.
+   /**
+    * Parses a MarketEntry from a string.
+    * @param source The string to parse.
+    * @param database The MarketDatabase containing the available MarketEntry.
+    * @return The MarketCode represented by the source.
+    */
+    public static parse(source: string, database: MarketDatabase): Entry {
+      const entry = database.fromDisplayName(source);
+      if(entry.code.equals(MarketCode.NONE)) {
+        return database.fromCode(new MarketCode(source));
+      }
+      return entry;
+    }
+
+    /**
+     * Constructs an entry.
      * @param code - The market identifier code.
      * @param countryCode - The market's country code.
      * @param timeZone - The market's time zone.

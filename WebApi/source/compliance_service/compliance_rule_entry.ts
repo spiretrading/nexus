@@ -12,7 +12,8 @@ export class ComplianceRuleEntry {
       ComplianceRuleSchema.fromJson(value.schema));
   }
 
-  /** Constructs a ComplianceRuleEntry.
+  /**
+   * Constructs a ComplianceRuleEntry.
    * @param name The name of the rule.
    * @param parameters The list of parameters.
    */

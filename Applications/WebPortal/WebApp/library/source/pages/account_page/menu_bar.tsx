@@ -12,7 +12,8 @@ interface Properties {
   /** The type of display to render on. */
   displaySize: DisplaySize;
 
-  /** Indicates a menu item was clicked.
+  /**
+   * Indicates a menu item was clicked.
    * @param subPage - The sub-page item that was clicked.
    */
   onClick?: (subPage: SubPage) => void;
@@ -33,9 +34,6 @@ export class MenuBar extends React.Component<Properties, State> {
     this.state = {
       hovered: SubPage.NONE
     };
-    this.onIconMouseEnter = this.onIconMouseEnter.bind(this);
-    this.onIconMouseLeave = this.onIconMouseLeave.bind(this);
-    this.onIconClick = this.onIconClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -133,15 +131,15 @@ export class MenuBar extends React.Component<Properties, State> {
     return MenuBar.STYLE.unselectedBorder;
   }
 
-  private onIconMouseEnter(subPage: SubPage) {
+  private onIconMouseEnter = (subPage: SubPage) => {
     this.setState({hovered: subPage});
   }
 
-  private onIconMouseLeave() {
+  private onIconMouseLeave = () => {
     this.setState({hovered: SubPage.NONE});
   }
 
-  private onIconClick(subPage: SubPage) {
+  private onIconClick = (subPage: SubPage) => {
     if(this.props.selected !== subPage) {
       this.props.onClick(subPage);
     }

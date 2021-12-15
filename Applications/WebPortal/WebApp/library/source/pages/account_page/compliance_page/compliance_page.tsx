@@ -2,45 +2,60 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
+import { SubmissionInput } from '..';
+import { ComplianceModel } from './compliance_model';
 import { NewRuleModal } from './new_rule_modal';
 import { RulesList } from './rules_list';
 
 interface Properties {
-  
+
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The set of available currencies to select. */
-  currencyDatabase?: Nexus.CurrencyDatabase;
+  /** The roles belonging to the account viewing this page. */
+  roles: Nexus.AccountRoles;
 
-  /** The list of compliance rules to display and edit. */
-  entries: Nexus.ComplianceRuleEntry[];
+  /** The page's model. */
+  model: ComplianceModel;
 
-  /** The list of rule schemas. Used in adding new rules. */
-  schemas: Nexus.ComplianceRuleSchema[];
+  /** Whether an error occurred. */
+  isError?: boolean;
 
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
+  /** The status message to display. */
+  status?: string;
+
+  /** Whether the changes can be submitted. */
+  canSubmit?: boolean;
 
   /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
   /** The callback for updating a changed rule. */
   onRuleChange?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
+
+  /** Indicates the compliance rules are to be submitted. */
+  onSubmit?: () => void;
 }
 
 interface State {
   isAddRuleModalOpen: boolean;
 }
 
-/* Displays the compliance page.*/
+/** Displays the compliance page. */
 export class CompliancePage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    isError: false,
+    status: '',
+    canSubmit: false,
+    onRuleAdd: () => {},
+    onRuleChange: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
       isAddRuleModalOpen: false
     };
-    this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
   }
 
   public render(): JSX.Element {
@@ -53,8 +68,10 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
+    const readonly =
+      !this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     const footerStyle = (() => {
-      if(this.props.readonly) {
+      if(readonly) {
         return CompliancePage.STYLE.hidden;
       } else {
         return CompliancePage.STYLE.footer;
@@ -64,32 +81,27 @@ export class CompliancePage extends React.Component<Properties, State> {
       <div style={contentStyle}>
         <RulesList
           displaySize={this.props.displaySize}
-          currencyDatabase={this.props.currencyDatabase}
-          complianceList={this.props.entries}
-          onChange={this.props.onRuleChange}
-          readonly={this.props.readonly}/>
+          currencyDatabase={this.props.model.currencyDatabase}
+          complianceList={this.props.model.entries}
+          onChange={this.props.onRuleChange} readonly={readonly}/>
         <div style={footerStyle}>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleModal displaySize={this.props.displaySize}
             isOpen={this.state.isAddRuleModalOpen}
             onToggleModal={this.onToggleAddRuleModal}
             onAddNewRule={this.props.onRuleAdd}
-            schemas={this.props.schemas}/>
+            schemas={this.props.model.schemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <HLine color='#E6E6E6'/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
-          <button className={css(CompliancePage.EXTRA_STYLE.button)}>
-            {'Save Changes'}
-          </button>
-          <div style={CompliancePage.STYLE.paddingSmall}/>
-          <div style={CompliancePage.STYLE.statusBox}>
-            {'Saved'}
-          </div>
+          <SubmissionInput roles={this.props.roles}
+            isError={this.props.isError} status={this.props.status}
+            isEnabled={this.props.canSubmit} onSubmit={this.props.onSubmit}/>
         </div>
       </div>);
   }
 
-  private onToggleAddRuleModal() {
+  private onToggleAddRuleModal = () => {
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
   }
 

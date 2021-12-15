@@ -16,6 +16,8 @@ export function buildDefaultCountryDatabase(): CountryDatabase {
   return database;
 }
 
+export const defaultCountryDatabase = buildDefaultCountryDatabase();
+
 export namespace DefaultCountries {
   export const AU = new CountryCode(36);
   export const BR = new CountryCode(76);

@@ -26,8 +26,7 @@ std::vector<HttpRequestSlot> MarketDataWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/market_data_service/load_security_info_from_prefix"),
-    std::bind(&MarketDataWebServlet::OnLoadSecurityInfoFromPrefix, this,
-    std::placeholders::_1));
+    std::bind_front(&MarketDataWebServlet::OnLoadSecurityInfoFromPrefix, this));
   return slots;
 }
 

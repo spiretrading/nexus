@@ -11,7 +11,8 @@ export class AccountModificationRequest {
       Beam.DateTime.fromJson(value.timestamp));
   }
 
-  /** Constructs an AccountModificationRequest.
+  /**
+   * Constructs an AccountModificationRequest.
    * @param id - The id that uniquely identifies this request.
    * @param type - The type of modification requested.
    * @param account - The account to modify.
@@ -115,7 +116,8 @@ export module AccountModificationRequest {
         Beam.DateTime.fromJson(value.timestamp));
     }
 
-    /** Constructs an Update.
+    /**
+     * Constructs an Update.
      * @param status - The updated status.
      * @param account - The account that updated the status.
      * @param sequenceNumber - The update sequence number.

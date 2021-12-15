@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, LoadingPage } from '../../..';
+import { DisplaySize, LoadingPage, LoadingState } from '../../..';
 import { RiskModel } from './risk_model';
 import { RiskPage } from './risk_page';
 
@@ -20,8 +20,11 @@ interface Properties {
 }
 
 interface State {
-  isError: boolean;
-  isLoaded: boolean;
+  loadingState: LoadingState;
+  comment: string;
+  parameters: Nexus.RiskParameters;
+  canSubmit: boolean;
+  hasSubmissionError: boolean;
   status: string;
 }
 
@@ -30,38 +33,69 @@ export class RiskController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isError: false,
-      isLoaded: false,
+      loadingState: new LoadingState(),
+      comment: '',
+      parameters: null,
+      canSubmit: false,
+      hasSubmissionError: false,
       status: ''
     };
   }
 
   public render(): JSX.Element {
-    if(!this.state.isLoaded) {
+    if(this.state.loadingState.isLoading()) {
       return <LoadingPage/>;
+    } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
+      return <div/>;
     }
-    return <RiskPage
+    return <RiskPage comment={this.state.comment}
+      parameters={this.state.parameters}
       currencyDatabase={this.props.currencyDatabase}
-      displaySize={this.props.displaySize}
-      parameters={this.props.model.riskParameters}
-      roles={this.props.roles}
-      isError={this.state.isError}
-      status={this.state.status}
-      onSubmit={this.onSubmit}/>;  
+      displaySize={this.props.displaySize} roles={this.props.roles}
+      canSubmit={this.state.canSubmit} isError={this.state.hasSubmissionError}
+      status={this.state.status} onComment={this.onComment}
+      onParameters={this.onParameters} onSubmit={this.onSubmit}/>;  
   }
 
   public async componentDidMount(): Promise<void> {
-    await this.props.model.load();
+    try {
+      await this.props.model.load();
+      this.setState(state => {
+        return {
+          loadingState: state.loadingState.succeed(),
+          comment: '',
+          parameters: this.props.model.riskParameters.clone()
+        };
+      });
+    } catch(error) {
+      this.setState(state => {
+        return {
+          loadingState: state.loadingState.fail(error.toString())
+        };
+      });
+    }
+  }
+
+  private onComment = (comment: string) => {
     this.setState({
-      isLoaded: true
+      canSubmit: true,
+      comment
     });
   }
 
-  private onSubmit = async (comment: string,
-      parameters: Nexus.RiskParameters) => {
+  private onParameters = (parameters: Nexus.RiskParameters) => {
+    this.setState({
+      canSubmit: true,
+      parameters
+    });
+  }
+
+  private onSubmit = async (
+      comment: string, parameters: Nexus.RiskParameters) => {
     try {
       this.setState({
-        isError: false,
+        canSubmit: false,
+        hasSubmissionError: false,
         status: ''
       });
       await this.props.model.submit(comment, parameters);
@@ -70,7 +104,7 @@ export class RiskController extends React.Component<Properties, State> {
       });
     } catch(e) {
       this.setState({
-        isError: true,
+        hasSubmissionError: true,
         status: e.toString()
       });
     }

@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
   MarketDatabase } from '..';
+import { ComplianceRuleSchema } from '../compliance_service';
 import { DefinitionsClient } from './definitions_client';
 
 /** Implements the DefinitionsClient using HTTP requests. */
@@ -25,6 +26,10 @@ export class HttpDefinitionsClient extends DefinitionsClient {
     return this._marketDatabase;
   }
 
+  public get complianceRuleSchemas(): ComplianceRuleSchema[] {
+    return this._complianceRuleSchemas.slice();
+  }
+
   public async open(): Promise<void> {
     const organizationNameResponse = await Beam.post(
       '/api/definitions_service/load_organization_name', {});
@@ -42,6 +47,10 @@ export class HttpDefinitionsClient extends DefinitionsClient {
     const marketResponse = await Beam.post(
       '/api/definitions_service/load_market_database', {});
     this._marketDatabase = MarketDatabase.fromJson(marketResponse);
+    const complianceRuleSchemasResponse = await Beam.post(
+      '/api/definitions_service/load_compliance_rule_schemas', {});
+    this._complianceRuleSchemas =
+      Beam.arrayFromJson(ComplianceRuleSchema, complianceRuleSchemasResponse);
   }
 
   public async close(): Promise<void> {
@@ -53,4 +62,5 @@ export class HttpDefinitionsClient extends DefinitionsClient {
   private _countryDatabase: CountryDatabase;
   private _currencyDatabase: CurrencyDatabase;
   private _marketDatabase: MarketDatabase;
+  private _complianceRuleSchemas: ComplianceRuleSchema[];
 }

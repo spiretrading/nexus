@@ -32,35 +32,28 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/login"),
-    std::bind(&ServiceLocatorWebServlet::OnLogin, this, std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnLogin, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/logout"),
-    std::bind(&ServiceLocatorWebServlet::OnLogout, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnLogout, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
-    std::bind(&ServiceLocatorWebServlet::OnLoadCurrentAccount, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnLoadCurrentAccount, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/service_locator/load_directory_entry_from_id"),
-    std::bind(&ServiceLocatorWebServlet::OnLoadDirectoryEntryFromId, this,
-    std::placeholders::_1));
+    "/api/service_locator/load_directory_entry_from_id"), std::bind_front(
+      &ServiceLocatorWebServlet::OnLoadDirectoryEntryFromId, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/store_password"),
-    std::bind(&ServiceLocatorWebServlet::OnStorePassword, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnStorePassword, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/service_locator/search_directory_entry"),
-    std::bind(&ServiceLocatorWebServlet::OnSearchDirectoryEntry, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnSearchDirectoryEntry, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/create_account"),
-    std::bind(&ServiceLocatorWebServlet::OnCreateAccount, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnCreateAccount, this));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/create_group"),
-    std::bind(&ServiceLocatorWebServlet::OnCreateGroup, this,
-    std::placeholders::_1));
+    std::bind_front(&ServiceLocatorWebServlet::OnCreateGroup, this));
   return slots;
 }
 
