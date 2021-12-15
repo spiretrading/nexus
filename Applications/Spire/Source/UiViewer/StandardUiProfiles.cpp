@@ -27,6 +27,7 @@
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -1119,6 +1120,53 @@ UiProfile Spire::make_delete_icon_button_profile() {
       button->connect_clicked_signal(
         profile.make_event_slot(QString::fromUtf8("ClickedSignal")));
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_destination_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile(QString::fromUtf8("DestinationBox"), properties,
+    [] (auto& profile) {
+      auto destinations = GetDefaultDestinationDatabase().SelectEntries(
+        [] (auto& value) { return true; });
+      auto model = std::make_shared<LocalComboBoxQueryModel>();
+      for(auto destination : destinations) {
+        model->add(displayTextAny(destination.m_id).toLower(), destination);
+      }
+      auto box = new DestinationBox(model);
+      box->setFixedWidth(scale_width(112));
+      apply_widget_properties(box, profile.get_properties());
+      auto& current = get<QString>("current", profile.get_properties());
+      current.connect_changed_signal([=] (const auto& current) {
+        auto value = model->parse(current);
+        if(!value.has_value()) {
+          return;
+        }
+        auto destination =
+          std::any_cast<DestinationDatabase::Entry>(value).m_id;
+        if(!is_equal(box->get_current()->get(), destination)) {
+          box->get_current()->set(destination);
+        }
+      });
+      box->get_current()->connect_update_signal(
+        [&current] (const auto& value) {
+          auto text = displayTextAny(value);
+          if(text.toLower() != current.get().toLower()) {
+            current.set(text);
+          }
+        });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal(
+        std::bind_front(&DestinationBox::set_read_only, box));
+      box->connect_submit_signal(profile.make_event_slot<Destination>(
+        QString::fromUtf8("Submit")));
+      box->get_current()->connect_update_signal(
+        profile.make_event_slot<Destination>(QString::fromUtf8("Current")));
+      return box;
     });
   return profile;
 }
