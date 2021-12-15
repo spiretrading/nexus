@@ -14,6 +14,15 @@ export class ComplianceRuleSchema {
       Beam.arrayFromJson(ComplianceParameter, value.parameters));
   }
 
+  /** Returns the title case of a ComplianceRuleSchema. */
+  public static toTitleCase(schema: ComplianceRuleSchema) {
+    const split = schema.name.replace(/_/g, ' ').split(' ');
+    for(let i = 0; i < split.length; ++i) {
+      split[i] = split[i].charAt(0).toUpperCase() + split[i].substring(1);
+    }
+    return split.join(' '); 
+  }
+
   /**
    * Constructs a ComplianceRuleSchema.
    * @param name The name of the rule.

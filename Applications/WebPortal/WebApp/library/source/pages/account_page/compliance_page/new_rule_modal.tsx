@@ -71,8 +71,8 @@ export class NewRuleModal extends React.Component<Properties, State> {
       })();
       return (
         <div key={i} className={css(className)}
-            onClick={this.onClickRule.bind(this, i)}>
-          {schema.name}
+            onClick={() => this.onClickRule(i)}>
+          {Nexus.ComplianceRuleSchema.toTitleCase(schema)}
         </div>);
     });
     return (
@@ -112,7 +112,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onClickRule(index: number) {
+  private onClickRule = (index: number) => {
     if(index === this.state.selection) {
       this.setState({selection: -1});
     } else {

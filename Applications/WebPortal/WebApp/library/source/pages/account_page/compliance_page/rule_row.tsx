@@ -92,7 +92,8 @@ export class RuleRow extends React.Component<Properties, State> {
               isExpanded={this.state.isExpanded}/>
             <div style={prefixPaddingStyle}/>
             <div style={headerTextStyle}>
-              {this.props.complianceRule.schema.name}
+              {Nexus.ComplianceRuleSchema.toTitleCase(
+                this.props.complianceRule.schema)}
             </div>
           </div>
           {spacing}
