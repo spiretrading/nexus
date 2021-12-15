@@ -21,8 +21,8 @@ export class ComplianceRuleSchema {
    */
   constructor(name: string, parameters: ComplianceParameter[]) {
     this._rawName = name;
-    this._parameters = parameters.slice();
-    Object.freeze(this._parameters);
+    this._rawParameters = parameters.slice();
+    Object.freeze(this._rawParameters);
     this._applicability = (() => {
       if(this._rawName === ComplianceRuleSchema.PER_ACCOUNT_NAME) {
         return ComplianceRuleSchema.Applicability.PER_ACCOUNT;
@@ -30,15 +30,20 @@ export class ComplianceRuleSchema {
       return ComplianceRuleSchema.Applicability.CONSOLIDATED;
     })();
     if(this._applicability === ComplianceRuleSchema.Applicability.PER_ACCOUNT) {
-      for(const parameter of this._parameters) {
+      this._parameters = [];
+      for(const parameter of this._rawParameters) {
         if(parameter.name === 'name') {
           this._name = parameter.value.value as string;
-          break;
+        } else if(parameter.name.startsWith('\\')) {
+          this._parameters.push(new ComplianceParameter(
+            parameter.name.substring(1), parameter.value));
         }
       }
     } else {
       this._name = this._rawName;
+      this._parameters = this._rawParameters;
     }
+    Object.freeze(this._parameters);
   }
 
   /** Returns the name of the rule. */
@@ -79,8 +84,12 @@ export class ComplianceRuleSchema {
     }
     const name = new ComplianceParameter('name',
       new ComplianceValue(ComplianceValue.Type.STRING, this.name));
-    const parameters = this._parameters.slice();
-    parameters.splice(0, 0, name);
+    const parameters = [];
+    parameters.push(name);
+    for(const parameter of this._rawParameters) {
+      parameters.push(
+        new ComplianceParameter('\\' + parameter.name, parameter.value));
+    }
     return new ComplianceRuleSchema(
       ComplianceRuleSchema.PER_ACCOUNT_NAME, parameters);
   }
@@ -89,11 +98,12 @@ export class ComplianceRuleSchema {
   public toJson(): any {
     return {
       name: this._rawName,
-      parameters: Beam.arrayToJson(this._parameters)
+      parameters: Beam.arrayToJson(this._rawParameters)
     };
   }
 
   private _rawName: string;
+  private _rawParameters: ComplianceParameter[];
   private _parameters: ComplianceParameter[];
   private _applicability: ComplianceRuleSchema.Applicability;
   private _name: string;
