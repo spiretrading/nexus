@@ -14,7 +14,7 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The rule to display. */
-  complianceRule?: Nexus.ComplianceRuleEntry;
+  complianceRule: Nexus.ComplianceRuleEntry;
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
@@ -77,6 +77,10 @@ export class RuleRow extends React.Component<Properties, State> {
       }
     })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
+    const mode = {
+      state: this.props.complianceRule.state,
+      applicability: this.props.complianceRule.schema.applicability
+    };
     return (
       <div style={RuleRow.STYLE.wrapper}>
         <div style={boxStyle}>
@@ -94,8 +98,9 @@ export class RuleRow extends React.Component<Properties, State> {
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
             <RuleExecutionDropDown
+              entryType={this.props.complianceRule.directoryEntry.type}
               displaySize={this.props.displaySize}
-              value={this.props.complianceRule.state}
+              value={mode}
               readonly={this.props.readonly}
               onChange={this.onRuleModeChange}/>
           </div>
@@ -128,22 +133,23 @@ export class RuleRow extends React.Component<Properties, State> {
     });
   }
 
-  private onRuleModeChange = (newMode: Nexus.ComplianceRuleEntry.State) => {
-    const newRule = new Nexus.ComplianceRuleEntry(
+  private onRuleModeChange = (mode: RuleExecutionDropDown.Mode) => {
+    const rule = new Nexus.ComplianceRuleEntry(
       this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
-      newMode, this.props.complianceRule.schema);
-    this.props.onChange(newRule);
+      mode.state,
+      this.props.complianceRule.schema.toApplicability(mode.applicability));
+    this.props.onChange(rule);
   }
 
   private onRuleOpen = (event?: React.MouseEvent<any>) => {
-    this.setState({isExpanded: !this.state.isExpanded});
+    this.setState(state => {isExpanded: !state.isExpanded});
   }
 
   private onParameterChange = (schema: Nexus.ComplianceRuleSchema) => {
-    const newRule = new Nexus.ComplianceRuleEntry(
+    const rule = new Nexus.ComplianceRuleEntry(
       this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
       this.props.complianceRule.state, schema);
-    this.props.onChange(newRule);
+    this.props.onChange(rule);
   }
 
   private static readonly STYLE = {
