@@ -1,4 +1,3 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
@@ -109,103 +108,63 @@ export class CompliancePage extends React.Component<Properties, State> {
     paddingSmall: {
       width: '100%',
       height: '18px'
-    },
+    } as React.CSSProperties,
     paddingMedium: {
       width: '100%',
       height: '20px'
-    },
+    } as React.CSSProperties,
     paddingLarge: {
       width: '100%',
       height: '30px'
-    },
+    } as React.CSSProperties,
     smallContent: {
       paddingTop: '18px',
       paddingLeft: '18px',
       paddingRight: '18px',
       paddingBottom: '60px',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      display: 'flex',
+      flexDirection: 'column',
       flexBasis: '284px',
       flexGrow: 1,
       minWidth: '284px',
       maxWidth: '424px'
-    },
+    } as React.CSSProperties,
     mediumContent: {
       paddingTop: '18px',
       paddingLeft: '18px',
       paddingRight: '18px',
       paddingBottom: '60px',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      display: 'flex',
+      flexDirection: 'column',
       width: '732px'
-    },
+    } as React.CSSProperties,
     largeContent: {
       paddingTop: '18px',
       paddingLeft: '18px',
       paddingRight: '18px',
       paddingBottom: '60px',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      display: 'flex',
+      flexDirection: 'column',
       width: '1000px'
-    },
+    } as React.CSSProperties,
     footer: {
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'center' as 'center',
-    },
+      display: 'flex',
+      flexDirection: 'column',
+      flexWrap: 'nowrap',
+      justifyContent: 'center',
+    } as React.CSSProperties,
     hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    },
+      visibility: 'hidden',
+      display: 'none'
+    } as React.CSSProperties,
     statusBox: {
       height: '19px',
       width: '100%',
-      display: 'flex' as 'flex',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       font: '400 14px Roboto',
       color: '#36BB55'
-    }
+    } as React.CSSProperties
   };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    button: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 14px Roboto',
-      outline: 'none',
-      MozAppearance: 'none' as 'none',
-      alignSelf: 'center' as 'center',
-      cursor: 'pointer' as 'pointer',
-      ':active' : {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
-      },
-      ':hover':{
-        backgroundColor: '#4B23A0'
-      },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
-      },
-      ':-moz-focusring': {
-        outline: 0
-      }
-    }
-  });
 }
