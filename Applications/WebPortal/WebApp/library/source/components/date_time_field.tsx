@@ -76,8 +76,8 @@ export class DateTimeField extends React.Component<Properties, State> {
               value={this.state.period}
               disabled={this.props.readonly}
               className={css(DateTimeField.EXTRA_STYLE.effects)}>
-            <option value={Periods.AM}>{'AM'}</option>
-            <option value={Periods.PM}>{'PM'}</option>
+            <option value={Periods.AM}>AM</option>
+            <option value={Periods.PM}>PM</option>
           </select>
         </div>
       </div>);

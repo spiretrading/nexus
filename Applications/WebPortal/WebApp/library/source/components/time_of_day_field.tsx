@@ -18,12 +18,6 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
-  /** The largest value the hours field can hold. */
-  maxHourValue?: number;
-
-  /** The smallest value the hours field can hold. */
-  minHourValue?: number;
-
   /** Determines if the field box is read only. */
   readonly?: boolean;
 
@@ -39,12 +33,10 @@ interface State {
   componentWidth: number
 }
 
-/** A component that displays a duration. */
-export class DurationField extends React.Component<Properties, State> {
+/** A component that displays a time of day. */
+export class TimeOfDayField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
-    minHourValue: 0,
-    maxHourValue: 99,
     onChange: () => {}
   };
 
@@ -58,17 +50,26 @@ export class DurationField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const splitTime = this.props.value.split();
+    const now = new Date();
+    const utcDateTime = new Beam.DateTime(new Beam.Date(
+      now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate()),
+      this.props.value);
+    const localDateTime = utcDateTime.toDate();
+    const splitTime = {
+      hours: localDateTime.getHours(),
+      minutes: localDateTime.getMinutes(),
+      seconds: localDateTime.getSeconds()
+    };
     const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationField.STYLE.containerSmall;
+        return TimeOfDayField.STYLE.containerSmall;
       } else {
-        return DurationField.STYLE.containerLarge;
+        return TimeOfDayField.STYLE.containerLarge;
       }
     })();
     const focusClassName = (() => {
       if(this.state.isFocused) {
-        return DurationField.STYLE.focused;
+        return TimeOfDayField.STYLE.focused;
       } else {
         return null;
       }
@@ -91,35 +92,35 @@ export class DurationField extends React.Component<Properties, State> {
           ref={this.containerRef}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
-        <div style={DurationField.STYLE.inner}>
+        <div style={TimeOfDayField.STYLE.inner}>
           <IntegerField
-            min={this.props.minHourValue} max={this.props.maxHourValue}
+            min={0} max={23}
             value={splitTime.hours}
-            className={css(DurationField.EXTRA_STYLE.effects)}
-            style={DurationField.STYLE.integerBox}
-            onChange={this.onChange.bind(this, TimeUnit.HOURS)}
+            className={css(TimeOfDayField.EXTRA_STYLE.effects)}
+            style={TimeOfDayField.STYLE.integerBox}
+            onChange={(hours) => this.onChange(TimeUnit.HOURS, hours)}
             readonly={this.props.readonly}
             padding={2}/>
-          <div style={DurationField.STYLE.colon}>:</div>
+          <div style={TimeOfDayField.STYLE.colon}>:</div>
           <IntegerField
             min={0} max={59}
             value={splitTime.minutes}
-            className={css(DurationField.EXTRA_STYLE.effects)}
-            style={DurationField.STYLE.integerBox}
-            onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
+            className={css(TimeOfDayField.EXTRA_STYLE.effects)}
+            style={TimeOfDayField.STYLE.integerBox}
+            onChange={(minutes) => this.onChange(TimeUnit.MINUTES, minutes)}
             readonly={this.props.readonly}
             padding={2}/>
-          <div style={DurationField.STYLE.colon}>:</div>
+          <div style={TimeOfDayField.STYLE.colon}>:</div>
           <IntegerField
             min={0} max={59}
             value={splitTime.seconds}
-            className={css(DurationField.EXTRA_STYLE.effects)}
-            style={DurationField.STYLE.integerBox}
-            onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
+            className={css(TimeOfDayField.EXTRA_STYLE.effects)}
+            style={TimeOfDayField.STYLE.integerBox}
+            onChange={(seconds) => this.onChange(TimeUnit.SECONDS, seconds)}
             readonly={this.props.readonly}
             padding={2}/>
         </div>
-        <div style={DurationField.STYLE.placeholder}>
+        <div style={TimeOfDayField.STYLE.placeholder}>
           {hintText}
         </div>
       </div>);
@@ -156,7 +157,7 @@ export class DurationField extends React.Component<Properties, State> {
 
   private onChange = (timeUnit: TimeUnit, value: number) => {
     const oldDuration = this.props.value.split();
-    const newValue = (() => {
+    const localTimeValue = (() => {
       switch(timeUnit) {
         case TimeUnit.HOURS:
           return Beam.Duration.HOUR.multiply(value).add(
@@ -172,7 +173,15 @@ export class DurationField extends React.Component<Properties, State> {
             Beam.Duration.SECOND.multiply(value));
       }
     })();
-    this.props.onChange(newValue);
+    const localTimeSplit = localTimeValue.split();
+    const date = new Date();
+    date.setHours(localTimeSplit.hours);
+    date.setMinutes(localTimeSplit.minutes);
+    date.setSeconds(localTimeSplit.seconds);
+    this.props.onChange(
+      Beam.Duration.HOUR.multiply(date.getUTCHours()).add(
+        Beam.Duration.MINUTE.multiply(date.getUTCMinutes())).add(
+        Beam.Duration.SECOND.multiply(date.getUTCSeconds())));
   }
 
   private static readonly STYLE = {

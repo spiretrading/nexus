@@ -18,3 +18,4 @@ export * from './security_field';
 export * from './security_input';
 export * from './securities_field';
 export * from './text_field';
+export * from './time_of_day_field';
