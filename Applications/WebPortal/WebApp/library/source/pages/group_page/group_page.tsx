@@ -41,7 +41,9 @@ export class GroupPage extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout height='100%' width='100%'
-          style={{overflow: 'hidden' as 'hidden'}}>
+          style={{
+            overflowX: 'hidden' as 'hidden',
+            overflowY: 'auto' as 'auto'}}>
         <Header name={this.props.group.name}>
           <MenuBar displaySize={this.props.displaySize}
             selected={this.props.subPage} onClick={this.props.onMenuClick}/>
