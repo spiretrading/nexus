@@ -11,6 +11,34 @@ import { TradingGroup } from './trading_group';
 
 /** Implements the AdministrationClient using HTTP requests. */
 export class HttpAdministrationClient extends AdministrationClient {
+  public async loadAccountsByRoles(roles: AccountRoles):
+      Promise<Beam.DirectoryEntry[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_accounts_by_roles',
+      {
+        roles: roles.toJson()
+      });
+    return Beam.arrayFromJson(Beam.DirectoryEntry, response);
+  }
+
+  public async loadAdministratorsRootEntry(): Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post(
+      '/api/administration_service/load_administrators_root_entry', {});
+    return Beam.DirectoryEntry.fromJson(response);
+  }
+
+  public async loadServicesRootEntry(): Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post(
+      '/api/administration_service/load_services_root_entry', {});
+    return Beam.DirectoryEntry.fromJson(response);
+  }
+
+  public async loadTradingGroupsRootEntry(): Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post(
+      '/api/administration_service/load_trading_groups_root_entry', {});
+    return Beam.DirectoryEntry.fromJson(response);
+  }
+
   public async searchAccounts(prefix: string):
       Promise<[Beam.DirectoryEntry, Beam.DirectoryEntry, AccountRoles][]> {
     const response = await Beam.post(

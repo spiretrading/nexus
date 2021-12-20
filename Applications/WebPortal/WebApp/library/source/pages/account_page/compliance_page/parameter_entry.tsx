@@ -1,8 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Checkmark, CurrencySelectionField, DateTimeField, DisplaySize,
-  DurationField, MoneyField, NumberField, SecuritiesField,
-  SecurityField, TextField } from '../../..';
+  MoneyField, NumberField, SecuritiesField, SecurityField, TextField,
+  TimeOfDayField } from '../../..';
 
 interface Properties {
 
@@ -27,13 +27,6 @@ export class ParameterEntry extends React.Component<Properties> {
   public static readonly defaultProps = {
     onChange: () => {}
   };
-
-  constructor(props: Properties) {
-    super(props);
-    this.onChange = this.onChange.bind(this);
-    this.onCheckmarkChange = this.onCheckmarkChange.bind(this);
-    this.onSecurityListChange = this.onSecurityListChange.bind(this);
-  }
 
   public render(): JSX.Element {
     const rowStyle = (() => {
@@ -82,7 +75,7 @@ export class ParameterEntry extends React.Component<Properties> {
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
-          return <DurationField
+          return <TimeOfDayField
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             readonly={this.props.readonly}
@@ -142,32 +135,33 @@ export class ParameterEntry extends React.Component<Properties> {
       </div>);
   }
 
-  private onChange(newValue: any) {
+  private onChange = (newValue: any) => {
     this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name,
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
   }
 
-  private onCheckmarkChange() {
+  private onCheckmarkChange = () => {
     this.onChange(!this.props.parameter.value.value);
   }
 
   private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {
-    const securityList = [] as Nexus.Security[];
-    for(let i = 0; i < complianceValues.length; ++i) {
-      securityList.push(complianceValues[i].value);
+    const securities = [];
+    for(const value of complianceValues) {
+      const security = value.value as Nexus.Security;
+      if(!security.equals(Nexus.Security.NONE)) {
+        securities.push(security);
+      }
     }
-    return securityList;
+    return securities;
   }
 
-  private onSecurityListChange(newValues: Nexus.Security[]) {
-    const newParameterList = [];
-    for(let i = 0; i < newValues.length; ++i) {
-      newParameterList.push(
-        new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.SECURITY, newValues[i]));
-    }
-    this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name,
-      new Nexus.ComplianceValue(
+  private onSecurityListChange = (newValues: Nexus.Security[]) => {
+    const newParameterList = newValues.map(newValue => {
+      return new Nexus.ComplianceValue(
+        Nexus.ComplianceValue.Type.SECURITY, newValue);
+    });
+    this.props.onChange(new Nexus.ComplianceParameter(
+      this.props.parameter.name, new Nexus.ComplianceValue(
         Nexus.ComplianceValue.Type.LIST, newParameterList)));
   }
 

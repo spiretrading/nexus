@@ -27,7 +27,8 @@ interface Properties {
   /** Determines if the field box is read only. */
   readonly?: boolean;
 
-  /** Called when the value changes.
+  /**
+   * Called when the value changes.
    * @param value - The updated value.
    */
   onChange?: (value: Beam.Duration) => void;

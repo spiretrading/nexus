@@ -61,6 +61,9 @@ source_group("StampProtocol" FILES ${stamp_protocol_header_files})
 file(GLOB technical_analysis_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/TechnicalAnalysis/*.hpp)
 source_group("TechnicalAnalysis" FILES ${technical_analysis_header_files})
+file(GLOB telemetry_service_header_files
+  ${NEXUS_INCLUDE_PATH}/Nexus/TelemetryService/*.hpp)
+source_group("TelemetryService" FILES ${telemetry_service_header_files})
 file(GLOB header_files ${accounting_header_files}
   ${administration_service_header_files} ${backtester_header_files}
   ${binary_sequence_protocol_header_files} ${charting_service_header_files}
@@ -72,7 +75,7 @@ file(GLOB header_files ${accounting_header_files}
   ${queries_header_files} ${risk_service_header_files}
   ${service_clients_header_files} ${simulation_matcher_header_files}
   ${soup_bin_tcp_header_files} ${stamp_protocol_header_files}
-  ${technical_analysis_header_files} )
+  ${technical_analysis_header_files} ${telemetry_service_header_files})
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()

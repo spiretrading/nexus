@@ -10,6 +10,7 @@ services+=" ChartingServer"
 services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
+services+=" TelemetryServer"
 services+=" WebPortal"
 services+=" SimulationMarketDataFeedClient"
 

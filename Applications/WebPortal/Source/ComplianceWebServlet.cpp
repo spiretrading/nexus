@@ -27,20 +27,17 @@ std::vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/compliance_service/load_directory_entry_compliance_rule_entry"),
-    std::bind(&ComplianceWebServlet::OnLoadDirectoryEntryComplianceRuleEntry,
-    this, std::placeholders::_1));
+    std::bind_front(
+      &ComplianceWebServlet::OnLoadDirectoryEntryComplianceRuleEntry, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/compliance_service/add_compliance_rule_entry"),
-    std::bind(&ComplianceWebServlet::OnAddComplianceRuleEntry, this,
-    std::placeholders::_1));
+    std::bind_front(&ComplianceWebServlet::OnAddComplianceRuleEntry, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/compliance_service/update_compliance_rule_entry"),
-    std::bind(&ComplianceWebServlet::OnUpdateComplianceRuleEntry, this,
-    std::placeholders::_1));
+    std::bind_front(&ComplianceWebServlet::OnUpdateComplianceRuleEntry, this));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/compliance_service/delete_compliance_rule_entry"),
-    std::bind(&ComplianceWebServlet::OnDeleteComplianceRuleEntry, this,
-    std::placeholders::_1));
+    std::bind_front(&ComplianceWebServlet::OnDeleteComplianceRuleEntry, this));
   return slots;
 }
 

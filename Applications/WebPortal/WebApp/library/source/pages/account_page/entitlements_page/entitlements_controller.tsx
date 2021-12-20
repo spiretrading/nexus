@@ -28,7 +28,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  isSubmitEnabled: boolean;
+  canSubmit: boolean;
   isError: boolean;
   status: string;
   selectedEntitlements: Beam.Set<Beam.DirectoryEntry>;
@@ -40,7 +40,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      isSubmitEnabled: false,
+      canSubmit: false,
       isError: false,
       status: '',
       selectedEntitlements: new Beam.Set<Beam.DirectoryEntry>()
@@ -55,9 +55,9 @@ export class EntitlementsController extends React.Component<Properties, State> {
     }
     return <EntitlementsPage roles={this.props.roles}
       entitlements={this.props.entitlements}
-      checked={this.state.selectedEntitlements}
-      isSubmitEnabled={this.state.isSubmitEnabled} isError={this.state.isError}
-      status={this.state.status} currencyDatabase={this.props.currencyDatabase}
+      checked={this.state.selectedEntitlements} canSubmit={this.state.canSubmit}
+      isError={this.state.isError} status={this.state.status}
+      currencyDatabase={this.props.currencyDatabase}
       marketDatabase={this.props.marketDatabase}
       displaySize={this.props.displaySize}
       onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
@@ -80,7 +80,8 @@ export class EntitlementsController extends React.Component<Properties, State> {
       this.state.selectedEntitlements.add(entitlement);
     }
     this.setState({
-      isSubmitEnabled: true,
+      canSubmit: true,
+      status: '',
       selectedEntitlements: this.state.selectedEntitlements
     });
   }
@@ -88,7 +89,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
   private async onSubmit(comment: string) {
     try {
       this.setState({
-        isSubmitEnabled: false,
+        canSubmit: false,
         isError: false,
         status: ''
       });
@@ -98,7 +99,6 @@ export class EntitlementsController extends React.Component<Properties, State> {
       });
     } catch(e) {
       this.setState({
-        isSubmitEnabled: true,
         isError: true,
         status: e.toString()
       });

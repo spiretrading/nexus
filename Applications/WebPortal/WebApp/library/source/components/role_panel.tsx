@@ -1,5 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import { DisplaySize } from '../display_size';
+import { RoleIcon } from './role_icon';
 
 interface Properties {
 
@@ -7,35 +9,73 @@ interface Properties {
   roles: Nexus.AccountRoles;
 }
 
+interface State {
+  mobileTooltipRole: Nexus.AccountRoles.Role;
+}
+
 /** Displays a panel of icons highlighting an account's roles. */
-export class RolePanel extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const getIconColour = (role: Nexus.AccountRoles.Role) => {
-      if(this.props.roles.test(role)) {
-        return 'purple';
-      }
-      return 'grey';
+export class RolePanel extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      mobileTooltipRole: null
     };
+  }
+
+  public render(): JSX.Element {
     return (
       <div style={RolePanel.STYLE.containerStyle}>
-        <img src={`resources/account/trader-${
-          getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
-          width='14px'
-          height='14px'/>
-        <img src={`resources/account/manager-${
-          getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
-          width='14px'
-          height='14px'/>
-        <img src={`resources/account/admin-${
-          getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
-          width='14px'
-          height='14px'/>
-        <img src={`resources/account/service-${
-          getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
-          width='14px'
-          height='14px'/>
+        <RoleIcon
+          displaySize={DisplaySize.getDisplaySize()}
+          isExtraSmall
+          readonly
+          role={Nexus.AccountRoles.Role.TRADER}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.TRADER}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.TRADER)}/>
+        <RoleIcon
+          displaySize={DisplaySize.getDisplaySize()}
+          isExtraSmall
+          readonly
+          role={Nexus.AccountRoles.Role.MANAGER}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.MANAGER}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.MANAGER)}/>
+        <RoleIcon
+          displaySize={DisplaySize.getDisplaySize()}
+          isExtraSmall
+          readonly
+          role={Nexus.AccountRoles.Role.ADMINISTRATOR}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.ADMINISTRATOR}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
+        <RoleIcon
+          displaySize={DisplaySize.getDisplaySize()}
+          isExtraSmall
+          readonly
+          role={Nexus.AccountRoles.Role.SERVICE}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.SERVICE}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.SERVICE)}/>
       </div>);
   }
+
+  private onTouchTooltipEvent = (role: Nexus.AccountRoles.Role) => {
+    this.setState({mobileTooltipRole: role});
+    clearTimeout(this.timerID);
+    this.timerID = setTimeout(() => {
+      this.setState({mobileTooltipRole: null});}, 1500);
+  }
+
+  private timerID: NodeJS.Timeout;
 
   private static readonly STYLE = {
     containerStyle: {

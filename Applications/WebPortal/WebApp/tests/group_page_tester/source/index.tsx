@@ -1,8 +1,9 @@
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { DisplaySize, displaySizeRenderer, GroupPage, GroupSubPage,
-  LoadingPage, LocalGroupModel } from 'web_portal';
+import { ComplianceModel, DisplaySize, displaySizeRenderer, GroupPage,
+  GroupSubPage, LoadingPage, LocalGroupModel } from 'web_portal';
 
 interface Properties {
   displaySize: DisplaySize;
@@ -20,8 +21,10 @@ class GroupPageTester extends React.Component<Properties, State> {
       subPage: GroupSubPage.NONE,
       isLoaded: false
     };
+    const group = Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here');
     this.groupModel = new LocalGroupModel(
-      Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here'), []);
+      group, [],
+      new ComplianceModel(group, [], [], Nexus.buildDefaultCurrencyDatabase()));
   }
 
   public async componentDidMount(): Promise<void> {

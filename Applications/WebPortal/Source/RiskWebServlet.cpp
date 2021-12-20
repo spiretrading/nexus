@@ -48,12 +48,10 @@ RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
       m_portfolioTimer(m_serviceClients.MakeTimer(seconds(1))) {
   try {
     m_portfolioTimer.GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
-      std::bind(&RiskWebServlet::OnPortfolioTimerExpired, this,
-        std::placeholders::_1)));
+      std::bind_front(&RiskWebServlet::OnPortfolioTimerExpired, this)));
     m_portfolioModel.GetPublisher().Monitor(
       m_tasks.GetSlot<PortfolioModel::Entry>(
-        std::bind(&RiskWebServlet::OnPortfolioUpdate, this,
-          std::placeholders::_1)));
+        std::bind_front(&RiskWebServlet::OnPortfolioUpdate, this)));
     m_portfolioTimer.Start();
   } catch(const std::exception&) {
     Close();
@@ -73,10 +71,9 @@ std::vector<HttpRequestSlot> RiskWebServlet::GetSlots() {
 std::vector<HttpUpgradeSlot<RiskWebServlet::WebSocketChannel>>
     RiskWebServlet::GetWebSocketSlots() {
   auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
-  slots.emplace_back(MatchesPath(HttpMethod::GET,
-    "/api/risk_service/portfolio"), std::bind(
-      &RiskWebServlet::OnPortfolioUpgrade, this, std::placeholders::_1,
-      std::placeholders::_2));
+  slots.emplace_back(
+    MatchesPath(HttpMethod::GET, "/api/risk_service/portfolio"),
+    std::bind_front(&RiskWebServlet::OnPortfolioUpgrade, this));
   return slots;
 }
 

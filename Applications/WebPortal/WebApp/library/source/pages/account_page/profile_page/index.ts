@@ -8,5 +8,4 @@ export * from './profile_controller';
 export * from './profile_model';
 export * from './profile_page';
 export * from './roles_field';
-export * from './role_icon';
 export * from './submit_button';

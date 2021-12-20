@@ -8,7 +8,8 @@ export class RiskModification {
     return new RiskModification(RiskParameters.fromJson(value));
   }
 
-  /** Constructs a RiskModification.
+  /**
+   * Constructs a RiskModification.
    * @param parameters - The risk parameters being requested.
    */
   constructor(parameters: RiskParameters) {

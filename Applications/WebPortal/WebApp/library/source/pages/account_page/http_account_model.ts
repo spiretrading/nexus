@@ -1,6 +1,8 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel } from './account_model';
+import { ComplianceModel, ComplianceService, HttpComplianceService } from
+  './compliance_page';
 import { HttpEntitlementsModel } from './entitlements_page';
 import { HttpProfileModel } from './profile_page';
 import { HttpRiskModel } from './risk_page';
@@ -9,19 +11,24 @@ import { LocalAccountModel } from './local_account_model';
 /** Implements an AccountModel using HTTP services. */
 export class HttpAccountModel extends AccountModel {
 
-  /** Constructs an HttpAccountModel.
+  /**
+   * Constructs an HttpAccountModel.
    * @param account - The account this model represents.
    * @param serviceClients - The clients used to access the HTTP services.
    */
-  constructor(account: Beam.DirectoryEntry,
-      serviceClients: Nexus.ServiceClients) {
+  constructor(
+      account: Beam.DirectoryEntry, serviceClients: Nexus.ServiceClients) {
     super();
-    this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
+    const roles = new Nexus.AccountRoles(0);
+    this.model = new LocalAccountModel(account, roles, [],
+      new ComplianceModel(account, [], [], new Nexus.CurrencyDatabase()));
     this.serviceClients = serviceClients;
-    this._entitlementsModel = new HttpEntitlementsModel(account,
-      this.serviceClients);
+    this._entitlementsModel =
+      new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
+    this._complianceService =
+      new HttpComplianceService(account, this.serviceClients);
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -48,6 +55,10 @@ export class HttpAccountModel extends AccountModel {
     return this._riskModel;
   }
 
+  public get complianceService(): ComplianceService {
+    return this._complianceService;
+  }
+
   public async load(): Promise<void> {
     if(this.model.isLoaded) {
       return;
@@ -59,24 +70,33 @@ export class HttpAccountModel extends AccountModel {
       }
       return await
         this.serviceClients.serviceLocatorClient.loadDirectoryEntryFromId(
-        this.account.id);
+          this.account.id);
     })();
     const roles =
       await this.serviceClients.administrationClient.loadAccountRoles(account);
     const groups = await (async () => {
-      const group = await
-        this.serviceClients.administrationClient.loadParentTradingGroup(
-        account);
+      const group =
+        await this.serviceClients.administrationClient.loadParentTradingGroup(
+          account);
       if(group.equals(Beam.DirectoryEntry.INVALID)) {
         return [];
       }
       return [group];
     })();
-    this.model = new LocalAccountModel(account, roles, groups);
-    this._entitlementsModel = new HttpEntitlementsModel(account,
-      this.serviceClients);
+    const complianceRuleEntries =
+      await this.serviceClients.complianceClient.load(account);
+    this.model =
+      new LocalAccountModel(account, roles, groups, new ComplianceModel(
+        this.account,
+        this.serviceClients.definitionsClient.complianceRuleSchemas,
+        complianceRuleEntries,
+        this.serviceClients.definitionsClient.currencyDatabase));
+    this._entitlementsModel =
+      new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
+    this._complianceService =
+      new HttpComplianceService(account, this.serviceClients);
     return this.model.load();
   }
 
@@ -85,4 +105,5 @@ export class HttpAccountModel extends AccountModel {
   private _entitlementsModel: HttpEntitlementsModel;
   private _profileModel: HttpProfileModel;
   private _riskModel: HttpRiskModel;
+  private _complianceService: HttpComplianceService;
 }

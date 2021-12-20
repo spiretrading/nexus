@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
-import {AdministrationClient, DefinitionsClient, RiskClient} from '..';
+import {AdministrationClient, ComplianceClient, DefinitionsClient,
+  RiskClient} from '..';
 
 /** Client used to access Nexus services. */
 export abstract class ServiceClients {
@@ -13,10 +14,14 @@ export abstract class ServiceClients {
   /** Returns the DefinitionsClient. */
   public abstract get definitionsClient(): DefinitionsClient;
 
+  /** Returns the ComplianceClient. */
+  public abstract get complianceClient(): ComplianceClient;
+
   /** Returns the RiskClient. */
   public abstract get riskClient(): RiskClient;
 
-  /** Logs into and opens all services.
+  /**
+   * Logs into and opens all services.
    * @param username - The account's username.
    * @param password - The account's password.
    * @return The directory entry of the account that logged in.

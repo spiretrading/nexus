@@ -1,7 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../..';
-import { RoleIcon } from './role_icon';
+import { DisplaySize, RoleIcon } from '../../..';
 
 interface Properties {
 

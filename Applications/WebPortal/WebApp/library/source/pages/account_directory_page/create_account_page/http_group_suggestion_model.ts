@@ -30,6 +30,10 @@ export class HttpGroupSuggestionModel extends GroupSuggestionModel {
     return this._model.loadSuggestions(prefix);
   }
 
+  public addGroup(directory: Beam.DirectoryEntry): void {
+    this._model.addGroup(directory);
+  }
+
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private _model: LocalGroupSuggestionModel;

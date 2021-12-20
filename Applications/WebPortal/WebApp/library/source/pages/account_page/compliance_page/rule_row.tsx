@@ -14,7 +14,7 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The rule to display. */
-  complianceRule?: Nexus.ComplianceRuleEntry;
+  complianceRule: Nexus.ComplianceRuleEntry;
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
@@ -23,7 +23,7 @@ interface Properties {
   readonly?: boolean;
 
   /** The event handler called when the rule entry changes. */
-  onChange? :(ruleEntry: Nexus.ComplianceRuleEntry) => void;
+  onChange?: (ruleEntry: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -33,15 +33,16 @@ interface State {
 
 /** Displays a given compliance rule. */
 export class RuleRow extends React.Component<Properties, State> {
-  constructor(props: Properties){
+  public static readonly defaultProps = {
+    onChange: () => {}
+  };
+
+  constructor(props: Properties) {
     super(props);
     this.state = {
       isExpanded: false,
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     };
-    this.onRuleModeChange = this.onRuleModeChange.bind(this);
-    this.onRuleOpen = this.onRuleOpen.bind(this);
-    this.onParameterChange = this.onParameterChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -76,6 +77,10 @@ export class RuleRow extends React.Component<Properties, State> {
       }
     })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
+    const mode = {
+      state: this.props.complianceRule.state,
+      applicability: this.props.complianceRule.schema.applicability
+    };
     return (
       <div style={RuleRow.STYLE.wrapper}>
         <div style={boxStyle}>
@@ -87,14 +92,16 @@ export class RuleRow extends React.Component<Properties, State> {
               isExpanded={this.state.isExpanded}/>
             <div style={prefixPaddingStyle}/>
             <div style={headerTextStyle}>
-              {this.props.complianceRule.schema.name}
+              {Nexus.ComplianceRuleSchema.toTitleCase(
+                this.props.complianceRule.schema)}
             </div>
           </div>
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
             <RuleExecutionDropDown
+              entryType={this.props.complianceRule.directoryEntry.type}
               displaySize={this.props.displaySize}
-              value={this.props.complianceRule.state}
+              value={mode}
               readonly={this.props.readonly}
               onChange={this.onRuleModeChange}/>
           </div>
@@ -127,26 +134,23 @@ export class RuleRow extends React.Component<Properties, State> {
     });
   }
 
-  private onRuleModeChange(newMode: Nexus.ComplianceRuleEntry.State) {
-    const newRule = new Nexus.ComplianceRuleEntry(
-      this.props.complianceRule.id,
-      this.props.complianceRule.directoryEntry,
-      newMode,
-      this.props.complianceRule.schema);
-    this.props.onChange(newRule);
+  private onRuleModeChange = (mode: RuleExecutionDropDown.Mode) => {
+    const rule = new Nexus.ComplianceRuleEntry(
+      this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
+      mode.state,
+      this.props.complianceRule.schema.toApplicability(mode.applicability));
+    this.props.onChange(rule);
   }
 
-  private onRuleOpen(event?: React.MouseEvent<any>) {
-    this.setState({isExpanded: !this.state.isExpanded});
+  private onRuleOpen = (event?: React.MouseEvent<any>) => {
+    this.setState(state => ({isExpanded: !state.isExpanded}));
   }
 
-  private onParameterChange(schema: Nexus.ComplianceRuleSchema) {
-    const newRule = new Nexus.ComplianceRuleEntry(
-      this.props.complianceRule.id,
-      this.props.complianceRule.directoryEntry,
-      this.props.complianceRule.state,
-      schema);
-    this.props.onChange(newRule);
+  private onParameterChange = (schema: Nexus.ComplianceRuleSchema) => {
+    const rule = new Nexus.ComplianceRuleEntry(
+      this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
+      this.props.complianceRule.state, schema);
+    this.props.onChange(rule);
   }
 
   private static readonly STYLE = {
