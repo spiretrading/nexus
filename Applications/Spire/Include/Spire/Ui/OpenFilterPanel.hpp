@@ -82,10 +82,8 @@ namespace Spire {
 
     private:
       class FilterModeButtonGroup;
-      //struct OpenFilterQueryModel;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ArrayListModel> m_filtered;
-      //std::shared_ptr<OpenFilterQueryModel> m_query_model;
       std::unique_ptr<FilterModeButtonGroup> m_mode_button_group;
       QWidget* m_combo_box;
       ScrollableListBox* m_scrollable_list_box;

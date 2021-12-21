@@ -324,6 +324,7 @@ void OpenFilterPanel::on_reset() {
   while(m_filtered->get_size() != 0) {
     m_filtered->remove(m_filtered->get_size() - 1);
   }
+  m_mode_button_group->get_current()->set(FilterMode::INCLUDE);
   m_combo_box->setFocus();
   m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
 }
