@@ -24,7 +24,7 @@ namespace Spire {
 
       using FieldModel<T>::get;
     protected:
-      void* get(void* member) const override;
+      void* get(const FieldPointer& member) const override;
 
     private:
       Type m_value;
@@ -57,7 +57,7 @@ namespace Spire {
   }
 
   template<typename T>
-  void* LocalFieldModel<T>::get(void* member) const {
+  void* LocalFieldModel<T>::get(const FieldPointer& member) const {
     return nullptr;
   }
 }
