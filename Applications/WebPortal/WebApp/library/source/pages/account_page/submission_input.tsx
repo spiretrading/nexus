@@ -7,7 +7,7 @@ import { SubmitButton } from './submit_button';
 interface Properties {
 
   /** The comment to be displayed. */
-  comment: string;
+  comment?: string;
 
   /** Determines how a form gets submitted depending on the account's roles. */
   roles: Nexus.AccountRoles;
@@ -21,7 +21,8 @@ interface Properties {
   /** Determines if the submit button is enabled. */
   isEnabled?: boolean;
 
-  /** The callback function that updates the comment.
+  /**
+   * The callback function that updates the comment.
    * @param comment - The new comment.
    */
   onChange?: (comment: string) => void;
@@ -33,6 +34,7 @@ interface Properties {
 /** Displays the components needed to submit an account related form. */
 export class SubmissionInput extends React.Component<Properties> {
   public static defaultProps = {
+    comment: '',
     isEnabled: false,
     isError: false,
     status: '',

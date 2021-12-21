@@ -20,34 +20,27 @@ DefinitionsWebServlet::~DefinitionsWebServlet() {
 
 std::vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_organization_name"),
-    std::bind(&DefinitionsWebServlet::OnLoadOrganizationName, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_compliance_rule_schemas"),
-    std::bind(&DefinitionsWebServlet::OnLoadComplianceRuleSchemas, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_country_database"),
-    std::bind(&DefinitionsWebServlet::OnLoadCountryDatabase, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_currency_database"),
-    std::bind(&DefinitionsWebServlet::OnLoadCurrencyDatabase, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_destination_database"),
-    std::bind(&DefinitionsWebServlet::OnLoadDestinationDatabase, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_exchange_rates"),
-    std::bind(&DefinitionsWebServlet::OnLoadExchangeRates, this,
-    std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/definitions_service/load_market_database"),
-    std::bind(&DefinitionsWebServlet::OnLoadMarketDatabase, this,
-    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_organization_name"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadOrganizationName, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_compliance_rule_schemas"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadComplianceRuleSchemas, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_country_database"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadCountryDatabase, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_currency_database"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadCurrencyDatabase, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_destination_database"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadDestinationDatabase, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_exchange_rates"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadExchangeRates, this));
+  slots.emplace_back(MatchesPath(
+    HttpMethod::POST, "/api/definitions_service/load_market_database"),
+    std::bind_front(&DefinitionsWebServlet::OnLoadMarketDatabase, this));
   return slots;
 }
 

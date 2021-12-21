@@ -181,7 +181,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
     })();
     let displayValue  = '';
     for(let i = 0; i < this.props.value.length; ++i) {
-      const symbol = this.props.value[i].symbol;
+      const symbol = Nexus.toWildCardString(this.props.value[i]);
       displayValue = displayValue.concat(symbol);
       if(this.props.value.length > 1 && i < this.props.value.length - 1) {
         displayValue = displayValue.concat(', ');
@@ -190,15 +190,15 @@ export class SecuritiesField extends React.Component<Properties, State> {
     return (
       <div>
         <input
+          readOnly
           style={SecuritiesField.STYLE.textBox}
           className={css(SecuritiesField.EXTRA_STYLE.effects)}
           value={displayValue}
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
-          <Modal displaySize={this.props.displaySize} 
-              width='300px' height={modalHeight}
-              onClose={this.onClose}>
+          <Modal displaySize={this.props.displaySize} width='300px'
+              height={modalHeight} onClose={this.onClose}>
             <div style={SecuritiesField.STYLE.modalPadding}>
               <div style={SecuritiesField.STYLE.header}>
                 <div style={SecuritiesField.STYLE.headerText}>
@@ -231,10 +231,10 @@ export class SecuritiesField extends React.Component<Properties, State> {
       </div>);
   }
   
-  private addEntry = (paramter: Nexus.Security) => {
+  private addEntry = (parameter: Nexus.Security) => {
     this.setState({
       inputString: '',
-      localValue: this.state.localValue.slice().concat(paramter)
+      localValue: this.state.localValue.slice().concat(parameter)
     });
   }
 
@@ -487,12 +487,12 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
             <div style={SymbolsField.STYLE.scrollBoxHeaderSmall}>
-              'Added Symbols'
+              Added Symbols
             </div>);
         } else {
           return (
             <div style={SymbolsField.STYLE.scrollBoxHeaderLarge}>
-              'Added Symbols'
+              Added Symbols
             </div>);
         }
       } else {
@@ -513,25 +513,25 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
     })();
     const entries = [];
     for(let i = 0; i < this.props.value.length; ++i) {
-        const symbol = this.props.value[i].symbol;
-        if(this.props.readonly) {
-          entries.push(
-            <div className={css(SymbolsField.EXTRA_STYLE.entryReadonly)}>
-              {symbol}
-            </div>);
-        } else if(this.props.selection === i) {
-          entries.push(
-            <div className={css(SymbolsField.EXTRA_STYLE.entrySelected)}
-                onClick={this.selectEntry.bind(this, i)}>
-              {symbol}
-            </div>);
-        } else {
-          entries.push(
-            <div className={css(SymbolsField.EXTRA_STYLE.entry)}
-                onClick={this.selectEntry.bind(this, i)}>
-              {symbol}
-            </div>);
-        }
+      const symbol = Nexus.toWildCardString(this.props.value[i]);
+      if(this.props.readonly) {
+        entries.push(
+          <div key={i} className={css(SymbolsField.EXTRA_STYLE.entryReadonly)}>
+            {symbol}
+          </div>);
+      } else if(this.props.selection === i) {
+        entries.push(
+          <div key={i} className={css(SymbolsField.EXTRA_STYLE.entrySelected)}
+              onClick={this.selectEntry.bind(this, i)}>
+            {symbol}
+          </div>);
+      } else {
+        entries.push(
+          <div key={i} className={css(SymbolsField.EXTRA_STYLE.entry)}
+              onClick={this.selectEntry.bind(this, i)}>
+            {symbol}
+          </div>);
+      }
     }
     return (
       <div style={selectedSecuritiesBox}>

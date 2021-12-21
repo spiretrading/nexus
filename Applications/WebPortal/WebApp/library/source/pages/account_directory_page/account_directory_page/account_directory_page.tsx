@@ -37,7 +37,8 @@ interface Properties {
   /** Called when a card is clicked on. */
   onCardClick?: (group: Beam.DirectoryEntry) => void;
 
-  /** Called when the user wants to make a new group. 
+  /**
+   * Called when the user wants to make a new group. 
    * @param name - The name of the group.
    */
   onCreateGroup?: (name: string) => void;
@@ -118,8 +119,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     })();
     const createGroupModal = (() => {
       if(this.state.isCreateGroupModalOpen) {
-        return <CreateGroupModal 
-          displaySize={this.props.displaySize}
+        return <CreateGroupModal displaySize={this.props.displaySize}
           errorStatus={this.props.createGroupStatus}
           isOpen={this.state.isCreateGroupModalOpen}
           onClose={this.onCloseCreateGroupModal}
@@ -128,8 +128,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const cards = [];
-    for (const group of this.props.groups) {
+    const cards = this.props.groups.map(group => {
       const accounts = (() => {
         if(this.props.filter && !this.props.openedGroups.get(group)) {
           return this.props.filteredGroups.get(group) || [];
@@ -137,15 +136,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           return this.props.openedGroups.get(group) || [];
         }
       })();
-      cards.push(
-        <GroupCard key={group.id}
-          displaySize={this.props.displaySize}
-          group={group}
-          accounts={accounts}
-          filter={this.props.filter}
-          isOpen={this.props.openedGroups.get(group) !== undefined}
-          onDropDownClick={() => this.props.onCardClick(group)}/>);
-    }
+      return <GroupCard key={group.id} displaySize={this.props.displaySize}
+        group={group} accounts={accounts} filter={this.props.filter}
+        isOpen={this.props.openedGroups.get(group) !== undefined}
+        onDropDownClick={() => this.props.onCardClick(group)}/>;
+    });
     return (
       <PageWrapper>
         {createGroupModal}

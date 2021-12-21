@@ -4,7 +4,7 @@ import * as Beam from 'beam';
 export class CountryCode {
 
   /** Represents no country. */
-  public static readonly NONE = new CountryCode(~0);
+  public static readonly NONE = new CountryCode(65535);
 
   /** Parses a CountryCode from JSON. */
   public static fromJson(value: any): CountryCode {
@@ -55,7 +55,8 @@ export class CountryDatabase {
     this._entries = [];
   }
 
-  /** Returns an entry from a CountryCode.
+  /**
+   * Returns an entry from a CountryCode.
    * @param code - The CountryCode to lookup.
    * @return The entry with the specified code.
    */
@@ -68,7 +69,22 @@ export class CountryDatabase {
     return CountryDatabase.Entry.NONE;
   }
 
-  /** Adds an entry.
+  /**
+   * Returns an entry from a two or three letter country code.
+   * @param code - The two or three letter country code to lookup.
+   * @return The entry with the specified code.
+   */
+  public fromLetterCode(code: string): CountryDatabase.Entry {
+    for(const entry of this._entries) {
+      if(entry.twoLetterCode === code || entry.threeLetterCode === code) {
+        return entry;
+      }
+    }
+    return CountryDatabase.Entry.NONE;
+  }
+
+  /**
+   * Adds an entry.
    * @param entry - The entry to add.
    */
   public add(entry: CountryDatabase.Entry): void {
@@ -77,7 +93,8 @@ export class CountryDatabase {
     }
   }
 
-  /** Removes an entry.
+  /**
+   * Removes an entry.
    * @param code - The country code whose entry is to be removed.
    */
   public delete(code: CountryCode): void {
@@ -116,7 +133,8 @@ export module CountryDatabase {
         value.two_letter_code, value.three_letter_code);
     }
 
-    /** Constructs an entry.
+    /**
+     * Constructs an entry.
      * @param code - The country code.
      * @param name - The name of the country.
      * @param twoLetterCode - The country's two letter code.

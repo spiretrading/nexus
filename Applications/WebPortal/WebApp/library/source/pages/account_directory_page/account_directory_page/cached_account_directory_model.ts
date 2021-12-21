@@ -7,7 +7,8 @@ import { AccountEntry } from './account_entry';
 /** Implements an AccountDirectoryModel that caches. */
 export class CachedAccountDirectoryModel extends AccountDirectoryModel {
 
-  /** Constructs an cached model from a existing model
+  /**
+   * Constructs an cached model from a existing model
    * @param model - The model to be used.
    */
   constructor(model: AccountDirectoryModel) {
@@ -15,11 +16,15 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
     this._model = model;
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     this._prevFiltered = new
-      Map<string,Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>();
+      Map<string, Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>();
   }
 
   public get groups(): Beam.DirectoryEntry[] {
     return this._model.groups;
+  }
+
+  public get organizationGroup(): Beam.DirectoryEntry {
+    return this._model.organizationGroup;
   }
 
   public get createAccountModel(): CreateAccountModel {

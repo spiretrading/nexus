@@ -14,7 +14,8 @@ interface Properties {
   /** The security to display. */
   value?: Nexus.Security;
 
-  /** Called when the value changes.
+  /**
+   * Called when the value changes.
    * @param value - The new security.
    */
   onChange?: (value: Nexus.Security) => void;
@@ -99,9 +100,9 @@ export class SecurityField extends React.Component<Properties, State> {
           </div>);
       }
     })();
-    let displayValue = (() => {
+    const displayValue = (() => {
       if(this.props.value !== null) {
-        return this.props.value.symbol;
+        return Nexus.toWildCardString(this.props.value);
       } else {
         return '';
       }

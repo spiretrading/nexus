@@ -9,31 +9,32 @@ export class ComplianceValue {
   /** Parses a ComplianceValue from JSON. */
   public static fromJson(value: any): ComplianceValue {
     const data = (() => {
-      if(value.type === ComplianceValue.Type.BOOLEAN ||
-          value.type === ComplianceValue.Type.DOUBLE ||
-          value.type === ComplianceValue.Type.STRING) {
+      if(value.which === ComplianceValue.Type.BOOLEAN ||
+          value.which === ComplianceValue.Type.DOUBLE ||
+          value.which === ComplianceValue.Type.STRING) {
         return value.value;
-      } else if(value.type === ComplianceValue.Type.QUANTITY) {
+      } else if(value.which === ComplianceValue.Type.QUANTITY) {
         return value.value / 1000000;
-      } else if(value.type === ComplianceValue.Type.DATE_TIME) {
+      } else if(value.which === ComplianceValue.Type.DATE_TIME) {
         return Beam.DateTime.fromJson(value.value);
-      } else if(value.type === ComplianceValue.Type.DURATION) {
+      } else if(value.which === ComplianceValue.Type.DURATION) {
         return Beam.Duration.fromJson(value.value);
-      } else if(value.type === ComplianceValue.Type.CURRENCY) {
+      } else if(value.which === ComplianceValue.Type.CURRENCY) {
         return Currency.fromJson(value.value);
-      } else if(value.type === ComplianceValue.Type.MONEY) {
+      } else if(value.which === ComplianceValue.Type.MONEY) {
         return Money.fromJson(value.value);
-      } else if(value.type === ComplianceValue.Type.SECURITY) {
+      } else if(value.which === ComplianceValue.Type.SECURITY) {
         return Security.fromJson(value.value);
-      } else if(value.type === ComplianceValue.Type.LIST) {
+      } else if(value.which === ComplianceValue.Type.LIST) {
         return Beam.arrayFromJson(ComplianceValue, value.value);
       }
       throw RangeError('Unknown type for ComplianceValue.');
     })();
-    return new ComplianceValue(value.type, data);
+    return new ComplianceValue(value.which, data);
   }
 
-  /** Constructs a ComplianceValue.
+  /**
+   * Constructs a ComplianceValue.
    * @param type The type of value to store.
    * @param value The raw value.
    */
@@ -68,7 +69,7 @@ export class ComplianceValue {
       }
     })();
     return {
-      type: this._type,
+      which: this._type,
       value: value
     };
   }

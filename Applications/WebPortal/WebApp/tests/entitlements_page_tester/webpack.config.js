@@ -1,11 +1,6 @@
 const path = require('path');
 module.paths.push(path.resolve(process.cwd(), 'node_modules'));
-const MinifyPlugin = require("babel-minify-webpack-plugin");
 const PROD = JSON.parse(process.env.PROD_ENV || '0');
-const minifyOpts = {};
-const minigyPluginOpts = {
-  test: /\.js($|\?)/i,
-};
 module.exports = {
   devtool: PROD ? false : 'source-map',
   entry: path.resolve(process.cwd(), 'source/index.tsx'),
@@ -30,8 +25,13 @@ module.exports = {
   performance: {
     hints: false
   },
-  plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
   resolve: {
+    alias: {
+      react: path.resolve('node_modules/react'),
+      'react-dom': path.resolve('node_modules/react-dom'),
+      'react-router': path.resolve('node_modules/react-router'),
+      'react-router-dom': path.resolve('node_modules/react-router-dom'),
+    },
     symlinks: false,
     extensions: ['.ts', '.tsx', '.js', '.json']
   }

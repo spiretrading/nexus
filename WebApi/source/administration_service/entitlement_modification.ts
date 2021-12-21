@@ -9,7 +9,8 @@ export class EntitlementModification {
       Beam.DirectoryEntry, value.entitlements));
   }
 
-  /** Constructs an EntitlementModification.
+  /**
+   * Constructs an EntitlementModification.
    * @param entitlements - The set of entitlements to grant.
    */
   constructor(entitlements: Beam.Set<Beam.DirectoryEntry>) {
