@@ -47,6 +47,7 @@ namespace Spire {
   class ListView;
   class MoneyBox;
   class NavigationView;
+  class OpenFilterPanel;
   class OverlayPanel;
   class RegionListItem;
   class RowViewListModel;
