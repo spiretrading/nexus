@@ -19,6 +19,7 @@ namespace Spire {
   template<typename T> class QtPromise;
   class RangeInputModel;
   class RealSpinBoxModel;
+  template<typename T> class ReferenceValueModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;

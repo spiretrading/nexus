@@ -59,6 +59,14 @@ namespace Spire {
       template<typename U, typename T>
       U& access(T& object) const;
 
+      /**
+       * Returns a ValueModel referencing a field within an object.
+       * @param <T> The type of object to access.
+       * @param object The object whose field is being accessed.
+       */
+      template<typename T>
+      std::shared_ptr<void> make_reference_model(T& object) const;
+
       /** Tests if two pointers point to the same member variable. */
       bool operator ==(const FieldPointer& other) const;
 
