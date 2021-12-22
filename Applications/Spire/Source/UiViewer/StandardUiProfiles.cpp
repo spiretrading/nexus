@@ -2442,7 +2442,7 @@ UiProfile Spire::make_security_box_profile() {
           box->get_current()->set(security);
         } else {
           auto current_blocker = shared_connection_block(current_connection);
-          box->get_current()->set(Security());
+          box->get_current()->set(Security(current.toStdString(), CountryCode::NONE));
         }
       });
       auto& read_only = get<bool>("read_only", profile.get_properties());
