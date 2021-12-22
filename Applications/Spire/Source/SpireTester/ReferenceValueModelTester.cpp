@@ -23,5 +23,10 @@ TEST_SUITE("ReferenceValueModel") {
     REQUIRE(updates.size() == 1);
     REQUIRE(updates.front() == 555);
     updates.pop_front();
+    value = 222;
+    model->signal_update();
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front() == 222);
+    updates.pop_front();
   }
 }

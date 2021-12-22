@@ -44,6 +44,8 @@ namespace Spire {
       mutable typename UpdateSignal m_update_signal;
       Type m_value;
       mutable std::vector<Entry> m_fields;
+
+      void on_update();
   };
 
   template<typename T>
@@ -63,6 +65,11 @@ namespace Spire {
 
   template<typename T>
   QValidator::State LocalFieldModel<T>::set(const Type& value) {
+    m_value = value;
+    m_update_signal(value);
+    for(auto& field : m_fields) {
+      field.m_model.signal_update();
+    }
     return QValidator::State::Acceptable;
   }
 
@@ -80,10 +87,17 @@ namespace Spire {
     if(i == m_fields.end()) {
       auto model =
         member.make_reference_value_model_box(const_cast<Type&>(m_value));
+      model.connect_update_signal(std::bind_front(
+        &LocalFieldModel::on_update, const_cast<LocalFieldModel*>(this)));
       m_fields.push_back({member, model});
       i = m_fields.end() - 1;
     }
     return &i->m_model.get_model();
+  }
+
+  template<typename T>
+  void LocalFieldModel<T>::on_update() {
+    m_update_signal(m_value);
   }
 }
 

@@ -19,5 +19,9 @@ TEST_SUITE("ReferenceValueModelBox") {
     REQUIRE(updates.size() == 1);
     REQUIRE(updates.front() == true);
     updates.pop_front();
+    box.signal_update();
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front() == true);
+    updates.pop_front();
   }
 }
