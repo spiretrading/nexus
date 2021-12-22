@@ -38,7 +38,7 @@ namespace Spire {
   template<typename U>
   const std::shared_ptr<ValueModel<typename
       FieldPointer::split_pointer_to_member<U>::field>>&
-      CompositeValueModel<T>::get( U field) const {
+      CompositeValueModel<T>::get(U field) const {
     return *static_cast<const std::shared_ptr<ValueModel<
       typename FieldPointer::split_pointer_to_member<U>::field>>*>(
         get(FieldPointer(field)));

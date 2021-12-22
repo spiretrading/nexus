@@ -21,6 +21,17 @@ namespace Spire {
 
       using UpdateSignal = typename CompositeValueModel<T>::UpdateSignal;
 
+      /**
+       * Constructs a LocalCompositeValueModel with a default constructed value.
+       */
+      LocalCompositeValueModel();
+
+      /**
+       * Constructs a LocalCompositeValueModel.
+       * @param value The model's initial value.
+       */
+      explicit LocalCompositeValueModel(Type value);
+
       QValidator::State get_state() const override;
 
       const Type& get() const override;
@@ -48,6 +59,14 @@ namespace Spire {
 
       void on_update();
   };
+
+  template<typename T>
+  LocalCompositeValueModel<T>::LocalCompositeValueModel()
+    : m_value() {}
+
+  template<typename T>
+  LocalCompositeValueModel<T>::LocalCompositeValueModel(Type value)
+    : m_value(std::move(value)) {}
 
   template<typename T>
   QValidator::State LocalCompositeValueModel<T>::get_state() const {

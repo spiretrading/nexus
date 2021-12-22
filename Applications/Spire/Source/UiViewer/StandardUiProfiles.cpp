@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalCompositeValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -57,6 +58,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/TableHeaderCell.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
@@ -2510,6 +2512,27 @@ UiProfile Spire::make_side_filter_panel_profile() {
   auto profile = UiProfile(QString::fromUtf8("SideFilterPanel"), properties,
     std::bind_front(setup_closed_filter_panel_profile<Side, SideListModel,
       make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_table_header_cell_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
+    [] (auto& profile) {
+      auto cell_model = TableHeaderCell::Model();
+      cell_model.m_name = "Reference Volume";
+      auto model =
+        std::make_shared<LocalCompositeValueModel<TableHeaderCell::Model>>(
+          cell_model);
+      auto cell = new TableHeaderCell(model);
+      apply_widget_properties(cell, profile.get_properties());
+      cell->connect_hide_signal(
+        profile.make_event_slot(QString::fromUtf8("Hide")));
+      cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
+        QString::fromUtf8("Sort")));
+      return cell;
+    });
   return profile;
 }
 
