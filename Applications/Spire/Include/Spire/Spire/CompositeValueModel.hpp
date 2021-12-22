@@ -1,5 +1,5 @@
-#ifndef SPIRE_FIELD_MODEL_HPP
-#define SPIRE_FIELD_MODEL_HPP
+#ifndef SPIRE_COMPOSITE_VALUE_MODEL_HPP
+#define SPIRE_COMPOSITE_VALUE_MODEL_HPP
 #include <memory>
 #include "Spire/Spire/FieldPointer.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -14,7 +14,7 @@ namespace Spire {
    * @param <T> The type of value to model.
    */
   template<typename T>
-  class FieldModel : public ValueModel<T> {
+  class CompositeValueModel : public ValueModel<T> {
     public:
       using Type = typename ValueModel<T>::Type;
 
@@ -37,8 +37,8 @@ namespace Spire {
   template<typename T>
   template<typename U>
   const std::shared_ptr<ValueModel<typename
-      FieldPointer::split_pointer_to_member<U>::field>>& FieldModel<T>::get(
-        U field) const {
+      FieldPointer::split_pointer_to_member<U>::field>>&
+      CompositeValueModel<T>::get( U field) const {
     return *static_cast<const std::shared_ptr<ValueModel<
       typename FieldPointer::split_pointer_to_member<U>::field>>*>(
         get(FieldPointer(field)));

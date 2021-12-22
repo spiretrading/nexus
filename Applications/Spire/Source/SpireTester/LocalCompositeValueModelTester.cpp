@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Spire/Spire/LocalFieldModel.hpp"
+#include "Spire/Spire/LocalCompositeValueModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -11,9 +11,9 @@ namespace {
   };
 }
 
-TEST_SUITE("LocalFieldModel") {
+TEST_SUITE("LocalCompositeValueModel") {
   TEST_CASE("construct") {
-    auto point = std::make_shared<LocalFieldModel<Point>>();
+    auto point = std::make_shared<LocalCompositeValueModel<Point>>();
     auto x = point->get(&Point::m_x);
   }
 }

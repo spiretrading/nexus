@@ -8,12 +8,12 @@
 
 namespace Spire {
   class CancelKeySequenceValidationModel;
+  template<typename T> class CompositeValueModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
-  template<typename T> class FieldModel;
   class FieldPointer;
   class KeySequenceValidationModel;
-  template<typename T> class LocalFieldModel;
+  template<typename T> class LocalCompositeValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
