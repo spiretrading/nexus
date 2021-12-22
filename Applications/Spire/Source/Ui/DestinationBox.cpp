@@ -95,6 +95,10 @@ const Destination& DestinationBox::get_submission() const {
   return destination;
 }
 
+void DestinationBox::set_placeholder(const QString& placeholder) {
+  m_combo_box->set_placeholder(placeholder);
+}
+
 bool DestinationBox::is_read_only() const {
   return m_combo_box->is_read_only();
 }

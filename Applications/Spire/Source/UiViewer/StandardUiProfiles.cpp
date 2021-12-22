@@ -645,6 +645,7 @@ UiProfile Spire::make_combo_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile(QString::fromUtf8("ComboBox"), properties,
     [] (auto& profile) {
@@ -678,6 +679,10 @@ UiProfile Spire::make_combo_box_profile() {
             current.set(text);
           }
         });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        box->set_placeholder(placeholder);
+      });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal(
         std::bind_front(&ComboBox::set_read_only, box));
@@ -1128,6 +1133,7 @@ UiProfile Spire::make_destination_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile(QString::fromUtf8("DestinationBox"), properties,
     [] (auto& profile) {
@@ -1159,6 +1165,10 @@ UiProfile Spire::make_destination_box_profile() {
             current.set(text);
           }
         });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        box->set_placeholder(placeholder);
+      });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal(
         std::bind_front(&DestinationBox::set_read_only, box));
@@ -2413,6 +2423,7 @@ UiProfile Spire::make_security_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile(QString::fromUtf8("SecurityBox"), properties,
     [] (auto& profile) {
@@ -2464,6 +2475,10 @@ UiProfile Spire::make_security_box_profile() {
             current.set(text);
           }
         });
+      auto& placeholder = get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        box->set_placeholder(placeholder);
+      });
       auto& read_only = get<bool>("read_only", profile.get_properties());
       read_only.connect_changed_signal(
         std::bind_front(&SecurityBox::set_read_only, box));

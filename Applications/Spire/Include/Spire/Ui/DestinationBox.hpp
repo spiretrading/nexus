@@ -45,6 +45,9 @@ namespace Spire {
       /** Returns the last submission. */
       const Nexus::Destination& get_submission() const;
 
+      /** Sets the placeholder value. */
+      void set_placeholder(const QString& placeholder);
+
       /** Returns <code>true</code> iff this DestinationBox is read-only. */
       bool is_read_only() const;
 
