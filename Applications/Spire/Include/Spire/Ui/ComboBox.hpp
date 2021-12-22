@@ -97,6 +97,9 @@ namespace Spire {
       /** Returns the last submission. */
       const std::any& get_submission() const;
 
+      /** Sets the placeholder value. */
+      void set_placeholder(const QString& placeholder);
+
       /** Returns <code>true</code> iff this DropDownBox is read-only. */
       bool is_read_only() const;
 

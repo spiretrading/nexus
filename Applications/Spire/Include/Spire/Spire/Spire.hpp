@@ -8,9 +8,12 @@
 
 namespace Spire {
   class CancelKeySequenceValidationModel;
+  template<typename T> class CompositeValueModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
+  class FieldPointer;
   class KeySequenceValidationModel;
+  template<typename T> class LocalCompositeValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
@@ -19,6 +22,8 @@ namespace Spire {
   template<typename T> class QtPromise;
   class RangeInputModel;
   class RealSpinBoxModel;
+  template<typename T> class ReferenceValueModel;
+  class ReferenceValueModelBox;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;

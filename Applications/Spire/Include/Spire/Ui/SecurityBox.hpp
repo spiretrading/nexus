@@ -45,6 +45,9 @@ namespace Spire {
       /** Returns the last submission. */
       const Nexus::Security& get_submission() const;
 
+      /** Sets the placeholder value. */
+      void set_placeholder(const QString& placeholder);
+
       /** Returns <code>true</code> iff this SecurityBox is read-only. */
       bool is_read_only() const;
 

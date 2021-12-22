@@ -77,6 +77,10 @@ const std::any& ComboBox::get_submission() const {
   return m_submission;
 }
 
+void ComboBox::set_placeholder(const QString& placeholder) {
+  m_input_box->set_placeholder(placeholder);
+}
+
 bool ComboBox::is_read_only() const {
   return m_is_read_only;
 }
