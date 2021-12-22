@@ -1,14 +1,25 @@
 #ifndef SPIRE_TABLE_HEADER_CELL_HPP
 #define SPIRE_TABLE_HEADER_CELL_HPP
+#include <boost/signals2/connection.hpp>
 #include <QWidget>
 #include "Spire/Spire/CompositeValueModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 
 namespace Spire {
 
   /** Displays a single cell within a TableViewHeader. */
   class TableHeaderCell : public QWidget {
     public:
+
+      /** Styles this column when it's sort order is not UNORDERED. */
+      using Sortable = Styles::StateSelector<void, struct SortableTag>;
+
+      /** Identifies styling for the label sub-component. */
+      using Label = Styles::StateSelector<void, struct LabelTag>;
+
+      /** Identifies styling for the hover element sub-component. */
+      using HoverElement = Styles::StateSelector<void, struct HoverElementTag>;
 
       /** Specifies whether and how the column is sorted. */
       enum class Order {
@@ -78,6 +89,9 @@ namespace Spire {
       mutable HideSignal m_hide_signal;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<CompositeValueModel<Model>> m_model;
+      boost::signals2::scoped_connection m_order_connection;
+
+      void on_order(Order order);
   };
 }
 
