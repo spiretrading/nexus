@@ -2518,15 +2518,35 @@ UiProfile Spire::make_side_filter_panel_profile() {
 UiProfile Spire::make_table_header_cell_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  auto order_property = define_enum<TableHeaderCell::Order>(
+    {{"NONE", TableHeaderCell::Order::NONE},
+      {"UNORDERED", TableHeaderCell::Order::UNORDERED},
+      {"ASCENDING", TableHeaderCell::Order::ASCENDING},
+      {"DESCENDING", TableHeaderCell::Order::DESCENDING}});
+  properties.push_back(make_standard_enum_property("order", order_property));
   auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
     [] (auto& profile) {
       auto cell_model = TableHeaderCell::Model();
       cell_model.m_name = "Reference Volume";
+      cell_model.m_order = TableHeaderCell::Order::ASCENDING;
       auto model =
         std::make_shared<LocalCompositeValueModel<TableHeaderCell::Model>>(
           cell_model);
       auto cell = new TableHeaderCell(model);
       apply_widget_properties(cell, profile.get_properties());
+      auto& order =
+        get<TableHeaderCell::Order>("order", profile.get_properties());
+      auto order_model = model->get(&TableHeaderCell::Model::m_order);
+      order.connect_changed_signal([=] (auto value) {
+        if(order_model->get() != value) {
+          order_model->set(value);
+        }
+      });
+      order_model->connect_update_signal([&] (auto value) {
+        if(order.get() != value) {
+          order.set(value);
+        }
+      });
       cell->connect_hide_signal(
         profile.make_event_slot(QString::fromUtf8("Hide")));
       cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
