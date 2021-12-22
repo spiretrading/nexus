@@ -2527,7 +2527,7 @@ UiProfile Spire::make_table_header_cell_profile() {
   auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
     [] (auto& profile) {
       auto cell_model = TableHeaderCell::Model();
-      cell_model.m_name = "Reference Volume";
+      cell_model.m_name = "Security";
       cell_model.m_order = TableHeaderCell::Order::ASCENDING;
       auto model =
         std::make_shared<LocalCompositeValueModel<TableHeaderCell::Model>>(

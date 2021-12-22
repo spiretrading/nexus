@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -56,13 +57,37 @@ namespace {
       }();
       if(icon) {
         icon->setFixedSize(scale(5, 6));
-        update_style(*icon, [&] (auto& style) {
+        update_style(*icon, [] (auto& style) {
           style.get(Any()).set(BackgroundColor(Qt::transparent));
         });
         layout()->addWidget(icon);
       }
     }
   };
+
+  auto make_filter_button() {
+    static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
+    auto button = make_icon_button(icon);
+    button->setFixedSize(scale(16, 16));
+    return button;
+  }
+
+  auto make_sash() {
+    auto sash = new QWidget();
+    sash->setFixedWidth(scale_width(5));
+    sash->setCursor(Qt::SizeHorCursor);
+    auto resize_handle = new Box(nullptr);
+    resize_handle->setFixedWidth(scale_width(1));
+    update_style(*resize_handle, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+    });
+    auto layout = new QHBoxLayout(sash);
+    layout->setContentsMargins({});
+    layout->addSpacerItem(
+      new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+    layout->addWidget(resize_handle);
+    return sash;
+  }
 }
 
 TableHeaderCell::TableHeaderCell(
@@ -72,10 +97,15 @@ TableHeaderCell::TableHeaderCell(
   auto name_label = make_label(m_model->get(&Model::m_name));
   match(*name_label, Label());
   auto sort_indicator = new SortIndicator(m_model->get(&Model::m_order));
+  auto filter_button = make_filter_button();
   auto inner_layout = new QHBoxLayout();
   inner_layout->setContentsMargins({});
   inner_layout->addWidget(name_label);
+  inner_layout->addSpacerItem(
+    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   inner_layout->addWidget(sort_indicator);
+  inner_layout->addWidget(filter_button);
+  inner_layout->addWidget(make_sash());
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
   match(*hover_element, HoverElement());
