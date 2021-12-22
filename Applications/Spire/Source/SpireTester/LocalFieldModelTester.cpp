@@ -13,9 +13,7 @@ namespace {
 
 TEST_SUITE("LocalFieldModel") {
   TEST_CASE("construct") {
-/*
     auto point = std::make_shared<LocalFieldModel<Point>>();
     auto x = point->get(&Point::m_x);
-*/
   }
 }

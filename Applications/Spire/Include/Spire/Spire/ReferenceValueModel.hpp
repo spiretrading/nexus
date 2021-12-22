@@ -22,6 +22,12 @@ namespace Spire {
        */
       explicit ReferenceValueModel(Type& object);
 
+      /**
+       * Signals an update, used when an update was made to the referenced
+       * object from outside of this model.
+       */
+      void signal_update();
+
       const Type& get() const override;
 
       QValidator::State test(const Type& value) const override;
@@ -39,6 +45,11 @@ namespace Spire {
   template<typename T>
   ReferenceValueModel<T>::ReferenceValueModel(Type& object)
     : m_object(&object) {}
+
+  template<typename T>
+  void ReferenceValueModel<T>::signal_update() {
+    m_update_signal(*m_object);
+  }
 
   template<typename T>
   const typename ReferenceValueModel<T>::Type&

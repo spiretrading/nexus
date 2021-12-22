@@ -1,11 +1,18 @@
 #ifndef SPIRE_LOCAL_FIELD_MODEL_HPP
 #define SPIRE_LOCAL_FIELD_MODEL_HPP
 #include <memory>
-#include <unordered_map>
+#include <tuple>
+#include <vector>
 #include "Spire/Spire/FieldModel.hpp"
+#include "Spire/Spire/ReferenceValueModelBox.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+
+  /**
+   * Implements a FieldModel by keeping the value as a local member variable.
+   * @param <T> The type of value to model.
+   */
   template<typename T>
   class LocalFieldModel : public FieldModel<T> {
     public:
@@ -27,12 +34,16 @@ namespace Spire {
       using FieldModel<T>::get;
 
     protected:
-      void* get(const FieldPointer& member) const override;
+      const void* get(const FieldPointer& member) const override;
 
     private:
+      struct Entry {
+        FieldPointer m_member;
+        ReferenceValueModelBox m_model;
+      };
       mutable typename UpdateSignal m_update_signal;
       Type m_value;
-      std::unordered_map<FieldPointer, std::shared_ptr<void>> m_fields;
+      mutable std::vector<Entry> m_fields;
   };
 
   template<typename T>
@@ -62,13 +73,17 @@ namespace Spire {
   }
 
   template<typename T>
-  void* LocalFieldModel<T>::get(const FieldPointer& member) const {
-    auto i = m_fields.find(member);
+  const void* LocalFieldModel<T>::get(const FieldPointer& member) const {
+    auto i = std::find_if(m_fields.begin(), m_fields.end(), [&] (auto& field) {
+      return field.m_member == member;
+    });
     if(i == m_fields.end()) {
-      auto model = member.make_reference_model(m_value);
-      m_fields.insert(std::pair(member, model));
+      auto model =
+        member.make_reference_value_model_box(const_cast<Type&>(m_value));
+      m_fields.push_back({member, model});
+      i = m_fields.end() - 1;
     }
-    return &i->second;
+    return &i->m_model.get_model();
   }
 }
 

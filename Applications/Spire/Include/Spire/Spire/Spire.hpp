@@ -10,7 +10,10 @@ namespace Spire {
   class CancelKeySequenceValidationModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
+  template<typename T> class FieldModel;
+  class FieldPointer;
   class KeySequenceValidationModel;
+  template<typename T> class LocalFieldModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
@@ -20,6 +23,7 @@ namespace Spire {
   class RangeInputModel;
   class RealSpinBoxModel;
   template<typename T> class ReferenceValueModel;
+  class ReferenceValueModelBox;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;

@@ -3,6 +3,7 @@
 #include <memory>
 #include <typeinfo>
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/ReferenceValueModelBox.hpp"
 
 namespace Spire {
 
@@ -65,7 +66,7 @@ namespace Spire {
        * @param object The object whose field is being accessed.
        */
       template<typename T>
-      std::shared_ptr<void> make_reference_model(T& object) const;
+      ReferenceValueModelBox make_reference_value_model_box(T& object) const;
 
       /** Tests if two pointers point to the same member variable. */
       bool operator ==(const FieldPointer& other) const;
@@ -82,6 +83,8 @@ namespace Spire {
         virtual ~VirtualFieldPointer() = default;
         virtual void* access(void* object, const std::type_info& object_type,
           const std::type_info& member_type) const = 0;
+        virtual ReferenceValueModelBox make_reference_value_model_box(
+          void* object) const = 0;
         virtual bool operator ==(const VirtualFieldPointer& other) const = 0;
         bool operator !=(const VirtualFieldPointer& other) const = default;
       };
@@ -92,6 +95,8 @@ namespace Spire {
         FieldPointerWrapper(T pointer);
         void* access(void* object, const std::type_info& object_type,
           const std::type_info& member_type) const override;
+        ReferenceValueModelBox make_reference_value_model_box(
+          void* object) const override;
         bool operator ==(const VirtualFieldPointer& other) const override;
       };
       std::shared_ptr<VirtualFieldPointer> m_instance;
@@ -116,6 +121,15 @@ namespace Spire {
   }
 
   template<typename T>
+  ReferenceValueModelBox FieldPointer::make_reference_value_model_box(T& object)
+      const {
+    if(m_instance) {
+      return m_instance->make_reference_value_model_box(&object);
+    }
+    throw std::bad_cast();
+  }
+
+  template<typename T>
   FieldPointer::FieldPointerWrapper<T>::FieldPointerWrapper(T pointer)
     : m_pointer(pointer) {}
 
@@ -129,6 +143,15 @@ namespace Spire {
       throw std::bad_cast();
     }
     return &(static_cast<typename Split::object*>(object)->*m_pointer);
+  }
+
+  template<typename T>
+  ReferenceValueModelBox FieldPointer::FieldPointerWrapper<T>::
+      make_reference_value_model_box(void* object) const {
+    using Split = split_pointer_to_member<T>;
+    return ReferenceValueModelBox(
+      std::make_shared<ReferenceValueModel<typename Split::field>>(
+        static_cast<typename Split::object*>(object)->*m_pointer));
   }
 
   template<typename T>
