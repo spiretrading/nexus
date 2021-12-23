@@ -190,7 +190,7 @@ QWidget* OpenFilterPanel::default_combo_box_builder(
     const SubmitHandler& submit_handler) {
   auto box = new ComboBox(query_model);
   box->connect_submit_signal(submit_handler);
-  box->findChild<TextBox*>()->set_placeholder(tr("Type here"));
+  box->set_placeholder(tr("Type here"));
   return box;
 }
 
