@@ -22,11 +22,11 @@ namespace Spire {
   template<typename T> class QtPromise;
   class RangeInputModel;
   class RealSpinBoxModel;
-  template<typename T> class ReferenceValueModel;
-  class ReferenceValueModelBox;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
+  template<typename T> class SharedValueModel;
+  class SharedValueModelBox;
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
