@@ -14,7 +14,7 @@
 #include <boost/variant/get.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <QValidator>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 namespace Details {
@@ -71,61 +71,72 @@ namespace Details {
   }
 }
 
-  /** Base class for a model over a list of values. */
-  class ListModel {
+  /** Used to factor out definitions common to all ListModel<T>. */
+  struct BaseListModel {
+
+    /** Indicates a value was added to the model. */
+    struct AddOperation {
+
+      /** The index where the value was inserted. */
+      int m_index;
+    };
+
+    /** Indicates a value was removed from the model. */
+    struct RemoveOperation {
+
+      /** The index of the value removed. */
+      int m_index;
+    };
+
+    /** Indicates a value was moved from one index to another. */
+    struct MoveOperation {
+
+      /** The index of the value that was moved. */
+      int m_source;
+
+      /** The index that the value was moved to. */
+      int m_destination;
+    };
+
+    /** Indicates a value was updated. */
+    struct UpdateOperation {
+
+      /** The index of the updated value. */
+      int m_index;
+    };
+
+    /** Consolidates all basic operations. */
+    using Operation = typename boost::make_recursive_variant<AddOperation,
+      RemoveOperation, MoveOperation, UpdateOperation,
+      Details::ModelTransaction<boost::recursive_variant_>>::type;
+
+    /**
+     * An operation consisting of a list of sub-operations performed as single
+     * transaction.
+     */
+    using Transaction = typename boost::mpl::deref<
+      typename boost::mpl::advance<
+        typename boost::mpl::begin<Operation::types>::type,
+        boost::mpl::int_<
+          boost::mpl::size<Operation::types>::value - 1>>::type>::type;
+
+    /**
+     * Signals an operation was applied to this model.
+     * @param operation The operation that was applied.
+     */
+    using OperationSignal = Signal<void (const Operation&)>;
+  };
+
+  /**
+   * Base class for a model over a list of values.
+   * @param <T> The type of value being listed.
+   */
+  template<typename T>
+  class ListModel : public BaseListModel {
     public:
 
-      /** Indicates a value was added to the model. */
-      struct AddOperation {
-
-        /** The index where the value was inserted. */
-        int m_index;
-      };
-
-      /** Indicates a value was removed from the model. */
-      struct RemoveOperation {
-
-        /** The index of the value removed. */
-        int m_index;
-      };
-
-      /** Indicates a value was moved from one index to another. */
-      struct MoveOperation {
-
-        /** The index of the value that was moved. */
-        int m_source;
-
-        /** The index that the value was moved to. */
-        int m_destination;
-      };
-
-      /** Indicates a value was updated. */
-      struct UpdateOperation {
-
-        /** The index of the updated value. */
-        int m_index;
-      };
-
-      /** Consolidates all basic operations. */
-      using Operation = typename boost::make_recursive_variant<AddOperation,
-        RemoveOperation, MoveOperation, UpdateOperation,
-        Details::ModelTransaction<boost::recursive_variant_>>::type;
-
-      /**
-       * An operation consisting of a list of sub-operations performed as
-       * single transaction.
-       */
-      using Transaction = typename boost::mpl::deref<
-        typename boost::mpl::advance<
-          typename boost::mpl::begin<Operation::types>::type,
-          boost::mpl::int_<
-            boost::mpl::size<Operation::types>::value - 1>>::type>::type;
-
-      /**
-       * Signals an operation was applied to this model.
-       * @param operation The operation that was applied.
-       */
-      using OperationSignal = Signal<void (const Operation&)>;
+      /** The type of value being listed. */
+      using Type = T;
 
       virtual ~ListModel() = default;
 
@@ -136,14 +147,7 @@ namespace Details {
        * Returns the value at a specified index.
        * @throws <code>std::out_of_range</code> iff index is out of range.
        */
-      virtual const std::any& at(int index) const = 0;
-
-      /**
-       * Returns the value at a specified index.
-       * @throws <code>std::out_of_range</code> iff index is out of range.
-       */
-      template<typename T>
-      const T& get(int index) const;
+      virtual const Type& get(int index) const = 0;
 
       /**
        * Sets the value at a specified index.
@@ -153,11 +157,11 @@ namespace Details {
        *         <code>QValidator::State::Invalid</code> iff row or column is
        *         out of range.
        */
-      virtual QValidator::State set(int index, const std::any& value);
+      virtual QValidator::State set(int index, const Type& value);
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const = 0;
+        const typename OperationSignal::slot_type& slot) const = 0;
 
     protected:
 
@@ -169,10 +173,8 @@ namespace Details {
       ListModel& operator =(const ListModel&) = delete;
   };
 
-  template<typename T>
-  const T& ListModel::get(int index) const {
-    return std::any_cast<const T&>(at(index));
-  }
+  /** A type-erased ListModel over any value. */
+  using AnyListModel = ListModel<std::any>;
 
   /**
    * Applies a callable to an Operation.
@@ -180,8 +182,8 @@ namespace Details {
    * @param f The callable to apply to the <i>operation</i>.
    */
   template<typename... F>
-  void visit(const ListModel::Operation& operation, F&&... f) {
-    return Details::visit<ListModel>(operation, std::forward<F>(f)...);
+  void visit(const BaseListModel::Operation& operation, F&&... f) {
+    return Details::visit<BaseListModel>(operation, std::forward<F>(f)...);
   }
 }
 

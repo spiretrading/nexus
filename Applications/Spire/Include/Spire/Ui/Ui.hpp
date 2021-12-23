@@ -10,7 +10,6 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-  class ArrayListModel;
   class ArrayTableModel;
   class Box;
   class Button;
@@ -42,7 +41,6 @@ namespace Spire {
   class LayeredWidget;
   template<typename T> class ListIndexValueModel;
   class ListItem;
-  class ListModel;
   class ListValueModel;
   class ListView;
   class MoneyBox;

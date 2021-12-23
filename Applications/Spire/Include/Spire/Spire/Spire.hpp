@@ -7,12 +7,14 @@
 #endif
 
 namespace Spire {
+  template<typename T> class ArrayListModel;
   class CancelKeySequenceValidationModel;
   template<typename T> class CompositeValueModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
   class FieldPointer;
   class KeySequenceValidationModel;
+  template<typename T> class ListModel;
   template<typename T> class LocalCompositeValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;

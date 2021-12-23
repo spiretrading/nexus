@@ -1,7 +1,7 @@
 #ifndef SPIRE_COLUMN_VIEW_LIST_MODEL_HPP
 #define SPIRE_COLUMN_VIEW_LIST_MODEL_HPP
 #include <boost/signals2/connection.hpp>
-#include "Spire/Ui/ListModel.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -12,7 +12,8 @@ namespace Spire {
    * Implements a ListModel that provides a view into a single column of
    * a source table model.
    */
-  class ColumnViewListModel : public ListModel {
+  template<typename T>
+  class ColumnViewListModel : public ListModel<T> {
     public:
 
       /** 
@@ -25,9 +26,9 @@ namespace Spire {
 
       int get_size() const override;
 
-      const std::any& at(int index) const override;
+      const Type& get(int index) const override;
 
-      QValidator::State set(int index, const std::any& value) override;
+      QValidator::State set(int index, const Type& value) override;
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
