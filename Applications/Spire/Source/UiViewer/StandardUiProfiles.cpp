@@ -78,6 +78,23 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+
+  /** Keeps a model synchronized with a property (and vice-versa). */
+  template<typename T>
+  void link(const std::shared_ptr<ValueModel<T>>& model,
+      TypedUiProperty<T>& property) {
+    property.connect_changed_signal([=] (auto value) {
+      if(model->get() != value) {
+        model->set(value);
+      }
+    });
+    model->connect_update_signal([&] (auto value) {
+      if(property.get() != value) {
+        property.set(value);
+      }
+    });
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -2524,6 +2541,7 @@ UiProfile Spire::make_table_header_cell_profile() {
       {"ASCENDING", TableHeaderCell::Order::ASCENDING},
       {"DESCENDING", TableHeaderCell::Order::DESCENDING}});
   properties.push_back(make_standard_enum_property("order", order_property));
+  properties.push_back(make_standard_property<bool>("has_filter", true));
   auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
     [] (auto& profile) {
       auto cell_model = TableHeaderCell::Model();
@@ -2534,23 +2552,14 @@ UiProfile Spire::make_table_header_cell_profile() {
           cell_model);
       auto cell = new TableHeaderCell(model);
       apply_widget_properties(cell, profile.get_properties());
-      auto& order =
-        get<TableHeaderCell::Order>("order", profile.get_properties());
-      auto order_model = model->get(&TableHeaderCell::Model::m_order);
-      order.connect_changed_signal([=] (auto value) {
-        if(order_model->get() != value) {
-          order_model->set(value);
-        }
-      });
-      order_model->connect_update_signal([&] (auto value) {
-        if(order.get() != value) {
-          order.set(value);
-        }
-      });
-      cell->connect_hide_signal(
-        profile.make_event_slot(QString::fromUtf8("Hide")));
+      link(model->get(&TableHeaderCell::Model::m_order),
+        get<TableHeaderCell::Order>("order", profile.get_properties()));
+      link(model->get(&TableHeaderCell::Model::m_has_filter),
+        get<bool>("has_filter", profile.get_properties()));
       cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
         QString::fromUtf8("Sort")));
+      cell->connect_filter_signal(
+        profile.make_event_slot(QString::fromUtf8("Filter")));
       return cell;
     });
   return profile;
@@ -2705,20 +2714,12 @@ UiProfile Spire::make_text_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_box->set_read_only(is_read_only);
       });
-      auto& current = get<QString>("current", profile.get_properties());
-      current.connect_changed_signal([=] (const auto& current) {
-        if(text_box->get_current()->get() != current) {
-          text_box->get_current()->set(current);
-        }
-      });
+      link(text_box->get_current(),
+        get<QString>("current", profile.get_properties()));
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_box->set_placeholder(text);
       });
-      text_box->get_current()->connect_update_signal(
-        [&current] (const auto& value) {
-          current.set(value);
-        });
       auto& padding = get<int>("horizontal_padding", profile.get_properties());
       padding.connect_changed_signal([=] (const auto& value) {
         update_style(*text_box, [&] (auto& style) {

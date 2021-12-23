@@ -69,6 +69,7 @@ namespace {
     static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
+    match(*button, TableHeaderCell::FilterButton());
     update_style(*button, [] (auto& style) {
       style.get(Body()).set(BackgroundColor(Qt::transparent));
       style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
@@ -103,14 +104,14 @@ TableHeaderCell::TableHeaderCell(
   auto name_label = make_label(m_model->get(&Model::m_name));
   match(*name_label, Label());
   auto sort_indicator = new SortIndicator(m_model->get(&Model::m_order));
-  auto filter_button = make_filter_button();
+  m_filter_button = make_filter_button();
   auto inner_layout = new QHBoxLayout();
   inner_layout->setContentsMargins({});
   inner_layout->addWidget(name_label);
   inner_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   inner_layout->addWidget(sort_indicator);
-  inner_layout->addWidget(filter_button);
+  inner_layout->addWidget(m_filter_button);
   inner_layout->addWidget(make_sash());
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
@@ -131,7 +132,13 @@ TableHeaderCell::TableHeaderCell(
   style.get((Hover() && Sortable()) > HoverElement()).
     set(BackgroundColor(0x4B23A0)).
     set(Visibility::VISIBLE);
+  style.get(Filtered() > FilterButton() / Body() / Body()).
+    set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
+  auto has_filter_model = m_model->get(&Model::m_has_filter);
+  on_has_filter(has_filter_model->get());
+  m_has_filter_connection = has_filter_model->connect_update_signal(
+    std::bind_front(&TableHeaderCell::on_has_filter, this));
   auto order_model = m_model->get(&Model::m_order);
   on_order(order_model->get());
   m_order_connection = order_model->connect_update_signal(
@@ -143,14 +150,27 @@ const std::shared_ptr<CompositeValueModel<TableHeaderCell::Model>>&
   return m_model;
 }
 
-connection TableHeaderCell::connect_hide_signal(
-    const HideSignal::slot_type& slot) const {
-  return m_hide_signal.connect(slot);
-}
-
 connection TableHeaderCell::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
+}
+
+connection TableHeaderCell::connect_filter_signal(
+    const FilterSignal::slot_type& slot) const {
+  return m_filter_button->connect_clicked_signal(slot);
+}
+
+void TableHeaderCell::mouseReleaseEvent(QMouseEvent* event) {
+  auto order = m_model->get().m_order;
+  if(order == Order::NONE || order == Order::DESCENDING) {
+    m_sort_signal(Order::ASCENDING);
+  } else if(order == Order::ASCENDING) {
+    m_sort_signal(Order::DESCENDING);
+  }
+}
+
+void TableHeaderCell::on_has_filter(bool has_filter) {
+  m_filter_button->setVisible(has_filter);
 }
 
 void TableHeaderCell::on_order(Order order) {
