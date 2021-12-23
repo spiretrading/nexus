@@ -325,7 +325,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     }
     return QString::fromStdString(region.GetName());
   } else if(value.canConvert<Security>()) {
-    return QString::fromStdString(ToString(value.value<Security>()));
+    return QString::fromStdString(ToWildCardString(value.value<Security>(),
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
   } else if(value.canConvert<Side>()) {
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {

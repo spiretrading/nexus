@@ -2453,7 +2453,8 @@ UiProfile Spire::make_security_box_profile() {
           box->get_current()->set(security);
         } else {
           auto current_blocker = shared_connection_block(current_connection);
-          box->get_current()->set(Security(current.toStdString(), CountryCode::NONE));
+          box->get_current()->set(
+            Security(current.toStdString(), CountryCode::NONE));
         }
       });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
