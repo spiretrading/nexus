@@ -69,6 +69,12 @@ namespace {
     static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
+    update_style(*button, [] (auto& style) {
+      style.get(Body()).set(BackgroundColor(Qt::transparent));
+      style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
+      style.get(Press() || (Body() && Hover())).
+        set(BackgroundColor(QColor(0xF2F2F2)));
+    });
     return button;
   }
 
