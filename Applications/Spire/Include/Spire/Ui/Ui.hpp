@@ -49,6 +49,7 @@ namespace Spire {
   class NavigationView;
   class OverlayPanel;
   class RegionListItem;
+  class ResponsiveLabel;
   class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
