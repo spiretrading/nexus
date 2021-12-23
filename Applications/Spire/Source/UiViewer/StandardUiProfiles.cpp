@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalCompositeValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -58,6 +59,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/TableHeaderCell.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
@@ -77,6 +79,23 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+
+  /** Keeps a model synchronized with a property (and vice-versa). */
+  template<typename T>
+  void link(const std::shared_ptr<ValueModel<T>>& model,
+      TypedUiProperty<T>& property) {
+    property.connect_changed_signal([=] (auto value) {
+      if(model->get() != value) {
+        model->set(value);
+      }
+    });
+    model->connect_update_signal([&] (auto value) {
+      if(property.get() != value) {
+        property.set(value);
+      }
+    });
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -663,23 +682,18 @@ UiProfile Spire::make_combo_box_profile() {
       auto box = new ComboBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
+      auto current_connection = box->get_current()->connect_update_signal(
+        profile.make_event_slot<std::any>(QString::fromUtf8("Current")));
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         auto value = model->parse(current);
-        if(!value.has_value()) {
-          return;
-        }
-        if(!is_equal(box->get_current()->get(), value)) {
+        if(value.has_value()) {
           box->get_current()->set(value);
+        } else {
+          auto current_blocker = shared_connection_block(current_connection);
+          box->get_current()->set(current);
         }
       });
-      box->get_current()->connect_update_signal(
-        [&current] (const auto& value) {
-          auto text = displayTextAny(value);
-          if(text.toLower() != current.get().toLower()) {
-            current.set(text);
-          }
-        });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& placeholder) {
         box->set_placeholder(placeholder);
@@ -689,8 +703,6 @@ UiProfile Spire::make_combo_box_profile() {
         std::bind_front(&ComboBox::set_read_only, box));
       box->connect_submit_signal(profile.make_event_slot<std::any>(
         QString::fromUtf8("Submit")));
-      box->get_current()->connect_update_signal(
-        profile.make_event_slot<std::any>(QString::fromUtf8("Current")));
       return box;
     });
   return profile;
@@ -1147,25 +1159,20 @@ UiProfile Spire::make_destination_box_profile() {
       auto box = new DestinationBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
+      auto current_connection = box->get_current()->connect_update_signal(
+        profile.make_event_slot<Destination>(QString::fromUtf8("Current")));
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         auto value = model->parse(current);
-        if(!value.has_value()) {
-          return;
-        }
-        auto destination =
-          std::any_cast<DestinationDatabase::Entry>(value).m_id;
-        if(!is_equal(box->get_current()->get(), destination)) {
+        if(value.has_value()) {
+          auto destination =
+            std::any_cast<DestinationDatabase::Entry>(value).m_id;
           box->get_current()->set(destination);
+        } else {
+          auto current_blocker = shared_connection_block(current_connection);
+          box->get_current()->set(current.toStdString());
         }
       });
-      box->get_current()->connect_update_signal(
-        [&current] (const auto& value) {
-          auto text = displayTextAny(value);
-          if(text.toLower() != current.get().toLower()) {
-            current.set(text);
-          }
-        });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& placeholder) {
         box->set_placeholder(placeholder);
@@ -1175,8 +1182,6 @@ UiProfile Spire::make_destination_box_profile() {
         std::bind_front(&DestinationBox::set_read_only, box));
       box->connect_submit_signal(profile.make_event_slot<Destination>(
         QString::fromUtf8("Submit")));
-      box->get_current()->connect_update_signal(
-        profile.make_event_slot<Destination>(QString::fromUtf8("Current")));
       return box;
     });
   return profile;
@@ -2497,24 +2502,19 @@ UiProfile Spire::make_security_box_profile() {
       auto box = new SecurityBox(model);
       box->setFixedWidth(scale_width(112));
       apply_widget_properties(box, profile.get_properties());
+      auto current_connection = box->get_current()->connect_update_signal(
+        profile.make_event_slot<Security>(QString::fromUtf8("Current")));
       auto& current = get<QString>("current", profile.get_properties());
       current.connect_changed_signal([=] (const auto& current) {
         auto value = model->parse(current);
-        if(!value.has_value()) {
-          return;
-        }
-        auto security = std::any_cast<SecurityInfo>(value).m_security;
-        if(!is_equal(box->get_current()->get(), security)) {
+        if(value.has_value()) {
+          auto security = std::any_cast<SecurityInfo>(value).m_security;
           box->get_current()->set(security);
+        } else {
+          auto current_blocker = shared_connection_block(current_connection);
+          box->get_current()->set(Security());
         }
       });
-      box->get_current()->connect_update_signal(
-        [&current] (const auto& value) {
-          auto text = displayTextAny(value);
-          if(text.toLower() != current.get().toLower()) {
-            current.set(text);
-          }
-        });
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& placeholder) {
         box->set_placeholder(placeholder);
@@ -2524,8 +2524,6 @@ UiProfile Spire::make_security_box_profile() {
         std::bind_front(&SecurityBox::set_read_only, box));
       box->connect_submit_signal(profile.make_event_slot<Security>(
         QString::fromUtf8("Submit")));
-      box->get_current()->connect_update_signal(
-        profile.make_event_slot<Security>(QString::fromUtf8("Current")));
       return box;
     });
   return profile;
@@ -2565,6 +2563,39 @@ UiProfile Spire::make_side_filter_panel_profile() {
   auto profile = UiProfile(QString::fromUtf8("SideFilterPanel"), properties,
     std::bind_front(setup_closed_filter_panel_profile<Side, SideListModel,
       make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_table_header_cell_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto order_property = define_enum<TableHeaderCell::Order>(
+    {{"NONE", TableHeaderCell::Order::NONE},
+      {"UNORDERED", TableHeaderCell::Order::UNORDERED},
+      {"ASCENDING", TableHeaderCell::Order::ASCENDING},
+      {"DESCENDING", TableHeaderCell::Order::DESCENDING}});
+  properties.push_back(make_standard_enum_property("order", order_property));
+  properties.push_back(make_standard_property<bool>("has_filter", true));
+  auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
+    [] (auto& profile) {
+      auto cell_model = TableHeaderCell::Model();
+      cell_model.m_name = "Security";
+      cell_model.m_order = TableHeaderCell::Order::ASCENDING;
+      auto model =
+        std::make_shared<LocalCompositeValueModel<TableHeaderCell::Model>>(
+          cell_model);
+      auto cell = new TableHeaderCell(model);
+      apply_widget_properties(cell, profile.get_properties());
+      link(model->get(&TableHeaderCell::Model::m_order),
+        get<TableHeaderCell::Order>("order", profile.get_properties()));
+      link(model->get(&TableHeaderCell::Model::m_has_filter),
+        get<bool>("has_filter", profile.get_properties()));
+      cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
+        QString::fromUtf8("Sort")));
+      cell->connect_filter_signal(
+        profile.make_event_slot(QString::fromUtf8("Filter")));
+      return cell;
+    });
   return profile;
 }
 
@@ -2717,20 +2748,12 @@ UiProfile Spire::make_text_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_box->set_read_only(is_read_only);
       });
-      auto& current = get<QString>("current", profile.get_properties());
-      current.connect_changed_signal([=] (const auto& current) {
-        if(text_box->get_current()->get() != current) {
-          text_box->get_current()->set(current);
-        }
-      });
+      link(text_box->get_current(),
+        get<QString>("current", profile.get_properties()));
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_box->set_placeholder(text);
       });
-      text_box->get_current()->connect_update_signal(
-        [&current] (const auto& value) {
-          current.set(value);
-        });
       auto& padding = get<int>("horizontal_padding", profile.get_properties());
       padding.connect_changed_signal([=] (const auto& value) {
         update_style(*text_box, [&] (auto& style) {

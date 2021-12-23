@@ -1,10 +1,9 @@
 #ifndef SPIRE_LOCAL_COMPOSITE_VALUE_MODEL_HPP
 #define SPIRE_LOCAL_COMPOSITE_VALUE_MODEL_HPP
 #include <memory>
-#include <tuple>
 #include <vector>
 #include "Spire/Spire/CompositeValueModel.hpp"
-#include "Spire/Spire/ReferenceValueModelBox.hpp"
+#include "Spire/Spire/SharedValueModelBox.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -20,6 +19,17 @@ namespace Spire {
       using Type = typename CompositeValueModel<T>::Type;
 
       using UpdateSignal = typename CompositeValueModel<T>::UpdateSignal;
+
+      /**
+       * Constructs a LocalCompositeValueModel with a default constructed value.
+       */
+      LocalCompositeValueModel();
+
+      /**
+       * Constructs a LocalCompositeValueModel.
+       * @param value The model's initial value.
+       */
+      explicit LocalCompositeValueModel(Type value);
 
       QValidator::State get_state() const override;
 
@@ -40,14 +50,22 @@ namespace Spire {
     private:
       struct Entry {
         FieldPointer m_member;
-        ReferenceValueModelBox m_model;
+        SharedValueModelBox m_model;
       };
       mutable typename UpdateSignal m_update_signal;
-      Type m_value;
+      std::shared_ptr<Type> m_value;
       mutable std::vector<Entry> m_fields;
 
       void on_update();
   };
+
+  template<typename T>
+  LocalCompositeValueModel<T>::LocalCompositeValueModel()
+    : m_value(std::make_shared<Type>()) {}
+
+  template<typename T>
+  LocalCompositeValueModel<T>::LocalCompositeValueModel(Type value)
+    : m_value(std::make_shared<Type>(std::move(value))) {}
 
   template<typename T>
   QValidator::State LocalCompositeValueModel<T>::get_state() const {
@@ -57,7 +75,7 @@ namespace Spire {
   template<typename T>
   const typename LocalCompositeValueModel<T>::Type&
       LocalCompositeValueModel<T>::get() const {
-    return m_value;
+    return *m_value;
   }
 
   template<typename T>
@@ -67,7 +85,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State LocalCompositeValueModel<T>::set(const Type& value) {
-    m_value = value;
+    *m_value = value;
     m_update_signal(value);
     for(auto& field : m_fields) {
       field.m_model.signal_update();
@@ -89,8 +107,7 @@ namespace Spire {
       return field.m_member == member;
     });
     if(i == m_fields.end()) {
-      auto model =
-        member.make_reference_value_model_box(const_cast<Type&>(m_value));
+      auto model = member.make_shared_value_model_box(m_value);
       model.connect_update_signal(std::bind_front(
         &LocalCompositeValueModel::on_update,
         const_cast<LocalCompositeValueModel*>(this)));
@@ -102,7 +119,7 @@ namespace Spire {
 
   template<typename T>
   void LocalCompositeValueModel<T>::on_update() {
-    m_update_signal(m_value);
+    m_update_signal(*m_value);
   }
 }
 

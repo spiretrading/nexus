@@ -1,25 +1,24 @@
-#ifndef SPIRE_REFERENCE_VALUE_MODEL_BOX_HPP
-#define SPIRE_REFERENCE_VALUE_MODEL_BOX_HPP
+#ifndef SPIRE_SHARED_VALUE_MODEL_BOX_HPP
+#define SPIRE_SHARED_VALUE_MODEL_BOX_HPP
 #include <functional>
-#include "Spire/Spire/ReferenceValueModel.hpp"
+#include "Spire/Spire/SharedValueModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /** Wraps a type-erased ReferenceValueModel. */
-  class ReferenceValueModelBox {
+  /** Wraps a type-erased SharedValueModel. */
+  class SharedValueModelBox {
     public:
 
       /** Signals a change to the value. */
       using UpdateSignal = Signal<void ()>;
 
       /**
-       * Constructs a ReferenceValueModelBox.
+       * Constructs a SharedValueModelBox.
        * @param model The model to box.
        */
       template<typename T>
-      explicit ReferenceValueModelBox(
-        std::shared_ptr<ReferenceValueModel<T>> model);
+      explicit SharedValueModelBox(std::shared_ptr<SharedValueModel<T>> model);
 
       /** Returns a reference to the model. */
       const std::shared_ptr<void>& get_model() const;
@@ -39,14 +38,14 @@ namespace Spire {
   };
 
   template<typename T>
-  ReferenceValueModelBox::ReferenceValueModelBox(
-    std::shared_ptr<ReferenceValueModel<T>> model)
+  SharedValueModelBox::SharedValueModelBox(
+      std::shared_ptr<SharedValueModel<T>> model)
     : m_model(std::move(model)),
       m_signal_update([=] {
-        static_cast<ReferenceValueModel<T>*>(m_model.get())->signal_update();
+        static_cast<SharedValueModel<T>*>(m_model.get())->signal_update();
       }),
       m_connect_update_signal([=] (const auto& slot) {
-        return static_cast<ReferenceValueModel<T>*>(
+        return static_cast<SharedValueModel<T>*>(
           m_model.get())->connect_update_signal([=] (const auto&) { slot(); });
       }) {}
 }

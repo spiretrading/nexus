@@ -1,0 +1,7 @@
+<svg id="filter" xmlns="http://www.w3.org/2000/svg" width="6" height="6" viewBox="0 0 6 6">
+  <rect id="container" width="6" height="6" fill="none"/>
+  <g id="paths">
+    <path id="Path_108" data-name="Path 108" d="M5.5,1H.5A.5.5,0,0,1,0,.5H0A.5.5,0,0,1,.5,0h5A.5.5,0,0,1,6,.5H6A.5.5,0,0,1,5.5,1Z" fill="#c8c8c8"/>
+    <path id="Path_109" data-name="Path 109" d="M5,2H1L2.5,3.5v2a.5.5,0,0,0,1,0v-2Z" fill="#c8c8c8"/>
+  </g>
+</svg>

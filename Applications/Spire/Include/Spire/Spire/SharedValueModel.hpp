@@ -1,5 +1,6 @@
-#ifndef SPIRE_REFERENCE_VALUE_MODEL_HPP
-#define SPIRE_REFERENCE_VALUE_MODEL_HPP
+#ifndef SPIRE_SHARED_VALUE_MODEL_HPP
+#define SPIRE_SHARED_VALUE_MODEL_HPP
+#include <memory>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
@@ -10,17 +11,17 @@ namespace Spire {
    * @param <T> The type of object to reference.
    */
   template<typename T>
-  class ReferenceValueModel : public ValueModel<T> {
+  class SharedValueModel : public ValueModel<T> {
     public:
       using Type = typename ValueModel<T>::Type;
 
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /**
-       * Constructs a ReferenceValueModel.
+       * Constructs a SharedValueModel.
        * @param object The object to reference.
        */
-      explicit ReferenceValueModel(Type& object);
+      explicit SharedValueModel(std::shared_ptr<Type> object);
 
       /**
        * Signals an update, used when an update was made to the referenced
@@ -39,38 +40,37 @@ namespace Spire {
 
     private:
       mutable typename UpdateSignal m_update_signal;
-      Type* m_object;
+      std::shared_ptr<Type> m_object;
   };
 
   template<typename T>
-  ReferenceValueModel<T>::ReferenceValueModel(Type& object)
-    : m_object(&object) {}
+  SharedValueModel<T>::SharedValueModel(std::shared_ptr<Type> object)
+    : m_object(std::move(object)) {}
 
   template<typename T>
-  void ReferenceValueModel<T>::signal_update() {
+  void SharedValueModel<T>::signal_update() {
     m_update_signal(*m_object);
   }
 
   template<typename T>
-  const typename ReferenceValueModel<T>::Type&
-      ReferenceValueModel<T>::get() const {
+  const typename SharedValueModel<T>::Type& SharedValueModel<T>::get() const {
     return *m_object;
   }
 
   template<typename T>
-  QValidator::State ReferenceValueModel<T>::test(const Type& value) const {
+  QValidator::State SharedValueModel<T>::test(const Type& value) const {
     return QValidator::State::Acceptable;
   }
 
   template<typename T>
-  QValidator::State ReferenceValueModel<T>::set(const Type& value) {
+  QValidator::State SharedValueModel<T>::set(const Type& value) {
     *m_object = value;
     m_update_signal(value);
     return QValidator::State::Acceptable;
   }
 
   template<typename T>
-  boost::signals2::connection ReferenceValueModel<T>::connect_update_signal(
+  boost::signals2::connection SharedValueModel<T>::connect_update_signal(
       const typename UpdateSignal::slot_type& slot) const {
     return m_update_signal.connect(slot);
   }
