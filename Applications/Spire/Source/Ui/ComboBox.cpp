@@ -243,9 +243,11 @@ void ComboBox::submit(const QString& query, bool is_passive) {
 
 void ComboBox::on_current(const std::any& current) {
   auto text = displayTextAny(current);
-  if(text != m_input_box->get_current()->get()) {
-    m_input_box->get_current()->set(text);
+  auto value = m_query_model->parse(m_input_box->get_current()->get());
+  if(value.has_value() && displayTextAny(value) == text) {
+    return;
   }
+  m_input_box->get_current()->set(text);
 }
 
 void ComboBox::on_input(const QString& query) {
