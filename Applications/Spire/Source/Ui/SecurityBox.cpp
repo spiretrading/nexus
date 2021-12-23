@@ -54,10 +54,6 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_current(std::move(current)) {
   auto combo_box_current = make_transform_value_model(m_current,
     [] (const Security& current) {
-      if(current.GetMarket().IsEmpty() &&
-          current.GetCountry() == CountryCode::NONE) {
-        return std::any(current.GetSymbol());
-      }
       return std::any(current);
     },
     [] (const std::any& current) {
