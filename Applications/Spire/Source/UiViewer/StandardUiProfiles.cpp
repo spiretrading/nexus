@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalCompositeValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -57,6 +58,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/TableHeaderCell.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
@@ -76,6 +78,23 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+
+  /** Keeps a model synchronized with a property (and vice-versa). */
+  template<typename T>
+  void link(const std::shared_ptr<ValueModel<T>>& model,
+      TypedUiProperty<T>& property) {
+    property.connect_changed_signal([=] (auto value) {
+      if(model->get() != value) {
+        model->set(value);
+      }
+    });
+    model->connect_update_signal([&] (auto value) {
+      if(property.get() != value) {
+        property.set(value);
+      }
+    });
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -2528,6 +2547,39 @@ UiProfile Spire::make_side_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_table_header_cell_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto order_property = define_enum<TableHeaderCell::Order>(
+    {{"NONE", TableHeaderCell::Order::NONE},
+      {"UNORDERED", TableHeaderCell::Order::UNORDERED},
+      {"ASCENDING", TableHeaderCell::Order::ASCENDING},
+      {"DESCENDING", TableHeaderCell::Order::DESCENDING}});
+  properties.push_back(make_standard_enum_property("order", order_property));
+  properties.push_back(make_standard_property<bool>("has_filter", true));
+  auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
+    [] (auto& profile) {
+      auto cell_model = TableHeaderCell::Model();
+      cell_model.m_name = "Security";
+      cell_model.m_order = TableHeaderCell::Order::ASCENDING;
+      auto model =
+        std::make_shared<LocalCompositeValueModel<TableHeaderCell::Model>>(
+          cell_model);
+      auto cell = new TableHeaderCell(model);
+      apply_widget_properties(cell, profile.get_properties());
+      link(model->get(&TableHeaderCell::Model::m_order),
+        get<TableHeaderCell::Order>("order", profile.get_properties()));
+      link(model->get(&TableHeaderCell::Model::m_has_filter),
+        get<bool>("has_filter", profile.get_properties()));
+      cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
+        QString::fromUtf8("Sort")));
+      cell->connect_filter_signal(
+        profile.make_event_slot(QString::fromUtf8("Filter")));
+      return cell;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_tag_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2677,20 +2729,12 @@ UiProfile Spire::make_text_box_profile() {
       read_only.connect_changed_signal([=] (auto is_read_only) {
         text_box->set_read_only(is_read_only);
       });
-      auto& current = get<QString>("current", profile.get_properties());
-      current.connect_changed_signal([=] (const auto& current) {
-        if(text_box->get_current()->get() != current) {
-          text_box->get_current()->set(current);
-        }
-      });
+      link(text_box->get_current(),
+        get<QString>("current", profile.get_properties()));
       auto& placeholder = get<QString>("placeholder", profile.get_properties());
       placeholder.connect_changed_signal([=] (const auto& text) {
         text_box->set_placeholder(text);
       });
-      text_box->get_current()->connect_update_signal(
-        [&current] (const auto& value) {
-          current.set(value);
-        });
       auto& padding = get<int>("horizontal_padding", profile.get_properties());
       padding.connect_changed_signal([=] (const auto& value) {
         update_style(*text_box, [&] (auto& style) {

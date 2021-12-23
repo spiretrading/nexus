@@ -61,6 +61,7 @@ namespace Spire {
   class SecurityStack;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
+  class TableHeaderCell;
   class TableModel;
   class Tag;
   class TagBox;

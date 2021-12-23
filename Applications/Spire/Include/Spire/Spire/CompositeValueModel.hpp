@@ -28,6 +28,7 @@ namespace Spire {
       const std::shared_ptr<ValueModel<typename
         FieldPointer::split_pointer_to_member<U>::field>>& get(U field) const;
 
+      using ValueModel<T>::get;
     protected:
 
       /** Implements a type erased version of the <i>get</i> method. */
@@ -38,7 +39,7 @@ namespace Spire {
   template<typename U>
   const std::shared_ptr<ValueModel<typename
       FieldPointer::split_pointer_to_member<U>::field>>&
-      CompositeValueModel<T>::get( U field) const {
+      CompositeValueModel<T>::get(U field) const {
     return *static_cast<const std::shared_ptr<ValueModel<
       typename FieldPointer::split_pointer_to_member<U>::field>>*>(
         get(FieldPointer(field)));

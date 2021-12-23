@@ -1,16 +1,16 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/Spire/ReferenceValueModelBox.hpp"
+#include "Spire/Spire/SharedValueModelBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-TEST_SUITE("ReferenceValueModelBox") {
+TEST_SUITE("SharedValueModelBox") {
   TEST_CASE("state") {
-    auto value = 123;
-    auto model = std::make_shared<ReferenceValueModel<int>>(value);
-    auto box = ReferenceValueModelBox(model);
+    auto value = std::make_shared<int>(123);
+    auto model = std::make_shared<SharedValueModel<int>>(value);
+    auto box = SharedValueModelBox(model);
     auto updates = std::deque<bool>();
     auto connection = scoped_connection(box.connect_update_signal([&] () {
       updates.push_back(true);
