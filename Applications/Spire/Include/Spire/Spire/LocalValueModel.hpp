@@ -1,7 +1,6 @@
 #ifndef SPIRE_LOCAL_VALUE_MODEL_HPP
 #define SPIRE_LOCAL_VALUE_MODEL_HPP
 #include <utility>
-#include <boost/signals2/connection.hpp>
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 

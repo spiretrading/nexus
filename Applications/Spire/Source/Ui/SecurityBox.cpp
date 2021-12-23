@@ -93,6 +93,10 @@ const Security& SecurityBox::get_submission() const {
   return security;
 }
 
+void SecurityBox::set_placeholder(const QString& placeholder) {
+  m_combo_box->set_placeholder(placeholder);
+}
+
 bool SecurityBox::is_read_only() const {
   return m_combo_box->is_read_only();
 }
