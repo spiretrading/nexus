@@ -84,6 +84,7 @@ namespace Styles {
           template<std::invocable<const std::shared_ptr<AnyListModel>&, int> B>
           ViewBuilder(B builder);
 
+          /** Constructs a ViewBuilder that transforms a operating on an AnyListModel. */
           template<typename T,
             std::invocable<const std::shared_ptr<ListModel<T>>&, int> B>
           ViewBuilder(B builder);
