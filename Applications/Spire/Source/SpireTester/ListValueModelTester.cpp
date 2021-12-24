@@ -1,33 +1,27 @@
 #include <doctest/doctest.h>
-#include "Spire/Ui/ArrayListModel.hpp"
-#include "Spire/Ui/ListValueModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  int get(const ListValueModel& model) {
-    return std::any_cast<int>(model.get());
-  }
-}
-
 TEST_SUITE("ListValueModel") {
   TEST_CASE("construct") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     auto model1 = ListValueModel(source, 0);
     REQUIRE(model1.get_state() == QValidator::State::Acceptable);
-    REQUIRE(get(model1) == 0);
+    REQUIRE(model1.get() == 0);
     auto model2 = ListValueModel(source, -1);
     REQUIRE(model2.get_state() == QValidator::State::Invalid);
-    REQUIRE(!model2.get().has_value());
+    REQUIRE_THROWS(model2.get());
     auto model3 = ListValueModel(source, 2);
     REQUIRE(model3.get_state() == QValidator::State::Invalid);
-    REQUIRE(!model3.get().has_value());
+    REQUIRE_THROWS(model3.get());
   }
 
   TEST_CASE("set") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     auto signal_count = 0;
     auto index = 0;
@@ -35,12 +29,12 @@ TEST_SUITE("ListValueModel") {
     auto connection = scoped_connection(model1.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count;
-        REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
+        REQUIRE(current == source->get(index));
       }));
     auto value = 10;
     REQUIRE(model1.set(value) == QValidator::State::Acceptable);
     REQUIRE(signal_count == 1);
-    REQUIRE(get(model1) == value);
+    REQUIRE(model1.get() == value);
     signal_count = 0;
     index = 10;
     auto model2 = ListValueModel(source, index);
@@ -51,37 +45,37 @@ TEST_SUITE("ListValueModel") {
       }));
     REQUIRE(model2.set(value) == QValidator::State::Invalid);
     REQUIRE(signal_count == 0);
-    REQUIRE(!model2.get().has_value());
+    REQUIRE_THROWS(model2.get());
   }
 
   TEST_CASE("source_add") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     source->push(1);
     auto model0 = ListValueModel(source, 0);
-    REQUIRE(get(model0) == 0);
+    REQUIRE(model0.get() == 0);
     auto model1 = ListValueModel(source, 1);
-    REQUIRE(get(model1) == 1);
+    REQUIRE(model1.get() == 1);
     source->insert(10, 1);
     auto new_model1 = ListValueModel(source, 1);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(new_model1) == 10);
-    REQUIRE(get(model1) == 1);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(new_model1.get() == 10);
+    REQUIRE(model1.get() == 1);
     source->insert(20, 0);
     auto new_model0 = ListValueModel(source, 0);
-    REQUIRE(get(new_model0) == 20);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(new_model1) == 10);
-    REQUIRE(get(model1) == 1);
+    REQUIRE(new_model0.get() == 20);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(new_model1.get() == 10);
+    REQUIRE(model1.get() == 1);
     source->push(30);
-    REQUIRE(get(new_model0) == 20);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(new_model1) == 10);
-    REQUIRE(get(model1) == 1);
+    REQUIRE(new_model0.get() == 20);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(new_model1.get() == 10);
+    REQUIRE(model1.get() == 1);
   }
 
   TEST_CASE("source_remove") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     source->push(1);
     source->push(2);
@@ -91,24 +85,24 @@ TEST_SUITE("ListValueModel") {
     auto model2 = ListValueModel(source, 2);
     auto model3 = ListValueModel(source, 3);
     source->remove(1);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(model2) == 2);
-    REQUIRE(get(model3) == 3);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(model2.get() == 2);
+    REQUIRE(model3.get() == 3);
     REQUIRE(model1.get_state() == QValidator::State::Invalid);
     source->remove(2);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(model2) == 2);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(model2.get() == 2);
     REQUIRE(model1.get_state() == QValidator::State::Invalid);
     REQUIRE(model3.get_state() == QValidator::State::Invalid);
     source->remove(0);
-    REQUIRE(get(model2) == 2);
+    REQUIRE(model2.get() == 2);
     REQUIRE(model0.get_state() == QValidator::State::Invalid);
     REQUIRE(model1.get_state() == QValidator::State::Invalid);
     REQUIRE(model3.get_state() == QValidator::State::Invalid);
   }
 
   TEST_CASE("source_move") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     source->push(1);
     source->push(2);
@@ -118,24 +112,24 @@ TEST_SUITE("ListValueModel") {
     auto model2 = ListValueModel(source, 2);
     auto model3 = ListValueModel(source, 3);
     source->move(0, 3);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(model1) == 1);
-    REQUIRE(get(model2) == 2);
-    REQUIRE(get(model3) == 3);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(model1.get() == 1);
+    REQUIRE(model2.get() == 2);
+    REQUIRE(model3.get() == 3);
     source->move(3, 1);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(model1) == 1);
-    REQUIRE(get(model2) == 2);
-    REQUIRE(get(model3) == 3);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(model1.get() == 1);
+    REQUIRE(model2.get() == 2);
+    REQUIRE(model3.get() == 3);
     source->move(1, 2);
-    REQUIRE(get(model0) == 0);
-    REQUIRE(get(model1) == 1);
-    REQUIRE(get(model2) == 2);
-    REQUIRE(get(model3) == 3);
+    REQUIRE(model0.get() == 0);
+    REQUIRE(model1.get() == 1);
+    REQUIRE(model2.get() == 2);
+    REQUIRE(model3.get() == 3);
   }
 
   TEST_CASE("source_update") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     source->push(1);
     auto signal_count = 0;
@@ -144,18 +138,18 @@ TEST_SUITE("ListValueModel") {
     auto connection = scoped_connection(model.connect_update_signal(
       [&] (const auto& current) {
         ++signal_count;
-        REQUIRE(std::any_cast<int>(current) == source->get<int>(index));
+        REQUIRE(current == source->get(index));
       }));
     source->set(index, 10);
     REQUIRE(signal_count == 1);
-    REQUIRE(get(model) == 10);
+    REQUIRE(model.get() == 10);
     source->set(1, 20);
     REQUIRE(signal_count == 1);
-    REQUIRE(get(model) == 10);
+    REQUIRE(model.get() == 10);
   }
 
   TEST_CASE("source_transaction") {
-    auto source = std::make_shared<ArrayListModel>();
+    auto source = std::make_shared<ArrayListModel<int>>();
     source->push(0);
     source->push(1);
     source->push(2);
@@ -185,8 +179,8 @@ TEST_SUITE("ListValueModel") {
     });
     REQUIRE(signal_count0 == 1);
     REQUIRE(signal_count1 == 1);
-    REQUIRE(get(model0) == 10);
-    REQUIRE(get(model1) == 30);
+    REQUIRE(model0.get() == 10);
+    REQUIRE(model1.get() == 30);
     REQUIRE(model2.get_state() == QValidator::State::Invalid);
   }
 }

@@ -1,14 +1,13 @@
 #ifndef SPIRE_SIDE_FILTER_PANEL_HPP
 #define SPIRE_SIDE_FILTER_PANEL_HPP
 #include "Nexus/Definitions/Side.hpp"
-#include "Spire/Ui/CastListModel.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   /** A CastListModel over a Nexus::Side. */
-  using SideListModel = CastListModel<Nexus::Side>;
+  using SideListModel = ListModel<Nexus::Side>;
 
   /** Displays a ClosedFilterPanel over a list of Nexus::Side. */
   using SideFilterPanel = ClosedFilterPanel;

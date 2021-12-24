@@ -7,12 +7,18 @@
 #endif
 
 namespace Spire {
+  class AnyListModel;
+  template<typename T> class ArrayListModel;
   class CancelKeySequenceValidationModel;
+  template<typename T> class ColumnViewListModel;
   template<typename T> class CompositeValueModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
   class FieldPointer;
   class KeySequenceValidationModel;
+  template<typename T> class ListIndexValueModel;
+  template<typename T> class ListModel;
+  template<typename T> class ListValueModel;
   template<typename T> class LocalCompositeValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
@@ -22,6 +28,7 @@ namespace Spire {
   template<typename T> class QtPromise;
   class RangeInputModel;
   class RealSpinBoxModel;
+  template<typename T> class RowViewListModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;

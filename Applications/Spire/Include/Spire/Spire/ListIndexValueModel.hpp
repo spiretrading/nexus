@@ -3,8 +3,8 @@
 #include <type_traits>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <boost/optional/optional.hpp>
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -33,7 +33,7 @@ namespace Details {
        * @param list The ListModel to index into.
        * @param value The value to find within the <i>list</i>.
        */
-      ListIndexValueModel(std::shared_ptr<ListModel> list,
+      ListIndexValueModel(std::shared_ptr<ListModel<SearchType>> list,
         std::shared_ptr<ValueModel<SearchType>> value);
 
       /**
@@ -60,15 +60,8 @@ namespace Details {
     private:
       static constexpr auto is_optional =
         Details::is_index_optional<SearchType>::value;
-      using ListType = typename decltype([] {
-        if constexpr(is_optional) {
-          return std::type_identity<typename SearchType::value_type>();
-        } else {
-          return std::type_identity<SearchType>();
-        }
-      }())::type;
       LocalValueModel<boost::optional<int>> m_index;
-      std::shared_ptr<ListModel> m_list;
+      std::shared_ptr<ListModel<SearchType>> m_list;
       std::shared_ptr<ValueModel<SearchType>> m_value;
       boost::signals2::scoped_connection m_current_connection;
 
@@ -76,7 +69,8 @@ namespace Details {
   };
 
   template<typename T>
-  ListIndexValueModel<T>::ListIndexValueModel(std::shared_ptr<ListModel> list,
+  ListIndexValueModel<T>::ListIndexValueModel(
+      std::shared_ptr<ListModel<SearchType>> list,
       std::shared_ptr<ValueModel<SearchType>> value)
       : m_list(std::move(list)),
         m_value(std::move(value)),
@@ -111,7 +105,7 @@ namespace Details {
       return QValidator::Invalid;
     }
     try {
-      if(m_value->test(m_list->get<ListType>(*value)) == QValidator::Invalid) {
+      if(m_value->test(m_list->get(*value)) == QValidator::Invalid) {
         return QValidator::Invalid;
       }
     } catch(const std::bad_any_cast&) {
@@ -140,7 +134,7 @@ namespace Details {
     try {
       auto blocker =
         boost::signals2::shared_connection_block(m_current_connection);
-      if(m_value->set(m_list->get<ListType>(*value)) == QValidator::Invalid) {
+      if(m_value->set(m_list->get(*value)) == QValidator::Invalid) {
         return QValidator::Invalid;
       }
     } catch(const std::bad_any_cast&) {
@@ -159,7 +153,7 @@ namespace Details {
   void ListIndexValueModel<T>::on_current(const SearchType& current) {
     for(auto i = 0; i != m_list->get_size(); ++i) {
       try {
-        if(m_list->get<ListType>(i) == current) {
+        if(m_list->get(i) == current) {
           m_index.set(i);
           return;
         }

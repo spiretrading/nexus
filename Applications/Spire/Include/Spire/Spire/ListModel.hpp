@@ -14,7 +14,7 @@
 #include <boost/variant/get.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <QValidator>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 namespace Details {
@@ -71,8 +71,8 @@ namespace Details {
   }
 }
 
-  /** Base class for a model over a list of values. */
-  class ListModel {
+  /** Base class used to model a list of values. */
+  class AnyListModel {
     public:
 
       /** Indicates a value was added to the model. */
@@ -112,8 +112,8 @@ namespace Details {
         Details::ModelTransaction<boost::recursive_variant_>>::type;
 
       /**
-       * An operation consisting of a list of sub-operations performed as
-       * single transaction.
+       * An operation consisting of a list of sub-operations performed as single
+       * transaction.
        */
       using Transaction = typename boost::mpl::deref<
         typename boost::mpl::advance<
@@ -127,7 +127,7 @@ namespace Details {
        */
       using OperationSignal = Signal<void (const Operation&)>;
 
-      virtual ~ListModel() = default;
+      virtual ~AnyListModel() = default;
 
       /** Returns the number of items in the model. */
       virtual int get_size() const = 0;
@@ -136,14 +136,7 @@ namespace Details {
        * Returns the value at a specified index.
        * @throws <code>std::out_of_range</code> iff index is out of range.
        */
-      virtual const std::any& at(int index) const = 0;
-
-      /**
-       * Returns the value at a specified index.
-       * @throws <code>std::out_of_range</code> iff index is out of range.
-       */
-      template<typename T>
-      const T& get(int index) const;
+      std::any get(int index) const;
 
       /**
        * Sets the value at a specified index.
@@ -153,11 +146,54 @@ namespace Details {
        *         <code>QValidator::State::Invalid</code> iff row or column is
        *         out of range.
        */
-      virtual QValidator::State set(int index, const std::any& value);
+      virtual QValidator::State set(int index, const std::any& value) = 0;
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const = 0;
+
+    protected:
+
+      /** Constructs an empty model. */
+      AnyListModel() = default;
+
+      /**
+       * Returns the value at a specified index.
+       * @throws <code>std::out_of_range</code> iff index is out of range.
+       */
+      virtual std::any at(int index) const = 0;
+
+    private:
+      AnyListModel(const AnyListModel&) = delete;
+      AnyListModel& operator =(const AnyListModel&) = delete;
+  };
+
+  /**
+   * Base class for a model over a list of values.
+   * @param <T> The type of value being listed.
+   */
+  template<typename T>
+  class ListModel : public AnyListModel {
+    public:
+
+      /** The type of value being listed. */
+      using Type = T;
+
+      /**
+       * Returns the value at a specified index.
+       * @throws <code>std::out_of_range</code> iff index is out of range.
+       */
+      virtual const Type& get(int index) const = 0;
+
+      /**
+       * Sets the value at a specified index.
+       * @param index - The index to set.
+       * @param value - The value to set at the specified index.
+       * @return The state of the value at the <i>index</i>, or
+       *         <code>QValidator::State::Invalid</code> iff row or column is
+       *         out of range.
+       */
+      virtual QValidator::State set(int index, const Type& value);
 
     protected:
 
@@ -167,12 +203,27 @@ namespace Details {
     private:
       ListModel(const ListModel&) = delete;
       ListModel& operator =(const ListModel&) = delete;
+      QValidator::State set(int index, const std::any& value) override;
+      std::any at(int index) const override;
   };
 
-  template<typename T>
-  const T& ListModel::get(int index) const {
-    return std::any_cast<const T&>(at(index));
-  }
+  template<>
+  class ListModel<std::any> : public AnyListModel {
+    public:
+      using Type = std::any;
+
+      virtual const Type& get(int index) const = 0;
+
+      virtual QValidator::State set(int index, const Type& value);
+
+    protected:
+      ListModel() = default;
+
+    private:
+      ListModel(const ListModel&) = delete;
+      ListModel& operator =(const ListModel&) = delete;
+      std::any at(int index) const override;
+  };
 
   /**
    * Applies a callable to an Operation.
@@ -180,8 +231,23 @@ namespace Details {
    * @param f The callable to apply to the <i>operation</i>.
    */
   template<typename... F>
-  void visit(const ListModel::Operation& operation, F&&... f) {
-    return Details::visit<ListModel>(operation, std::forward<F>(f)...);
+  void visit(const AnyListModel::Operation& operation, F&&... f) {
+    return Details::visit<AnyListModel>(operation, std::forward<F>(f)...);
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::set(int index, const Type& value) {
+    return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::set(int index, const std::any& value) {
+    return set(index, std::any_cast<const Type&>(value));
+  }
+
+  template<typename T>
+  std::any ListModel<T>::at(int index) const {
+    return get(index);
   }
 }
 
