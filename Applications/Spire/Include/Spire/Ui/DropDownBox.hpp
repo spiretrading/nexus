@@ -52,6 +52,16 @@ namespace Styles {
         QWidget* parent = nullptr);
 
       /**
+       * Constructs a DropDownBox using default local models.
+       * @param list The model of list of values to display.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<typename T, typename F>
+      DropDownBox(std::shared_ptr<ListModel<T>> list, F&& view_builder,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a DropDownBox.
        * @param list The model of list of values to display.
        * @param current The current value model.
@@ -62,6 +72,20 @@ namespace Styles {
       DropDownBox(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param selection The selection model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<typename T, typename F>
+      DropDownBox(std::shared_ptr<ListModel<T>> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection, F&& view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the model of list of values displayed. */
@@ -106,6 +130,16 @@ namespace Styles {
       void revert_current();
       void submit();
   };
+
+  template<typename T, typename F>
+  DropDownBox::DropDownBox(std::shared_ptr<ListModel<T>> list, F&& view_builder,
+      QWidget* parent) {}
+
+  template<typename T, typename F>
+  DropDownBox::DropDownBox(std::shared_ptr<ListModel<T>> list,
+    std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection, F&& view_builder,
+    QWidget* parent) {}
 }
 
 #endif
