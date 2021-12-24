@@ -1,7 +1,6 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"

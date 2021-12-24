@@ -39,17 +39,17 @@ namespace {
   }
 }
 
-DropDownBox::DropDownBox(std::shared_ptr<ListModel> list, QWidget* parent)
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list, QWidget* parent)
   : DropDownBox(std::move(list), ListView::default_view_builder, parent) {}
 
 DropDownBox::DropDownBox(
-  std::shared_ptr<ListModel> list, ViewBuilder view_builder, QWidget* parent)
+  std::shared_ptr<AnyListModel> list, ViewBuilder view_builder, QWidget* parent)
   : DropDownBox(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::move(view_builder), parent) {}
 
-DropDownBox::DropDownBox(std::shared_ptr<ListModel> list,
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
     QWidget* parent)
@@ -96,7 +96,7 @@ DropDownBox::DropDownBox(std::shared_ptr<ListModel> list,
   m_button->installEventFilter(this);
 }
 
-const std::shared_ptr<ListModel>& DropDownBox::get_list() const {
+const std::shared_ptr<AnyListModel>& DropDownBox::get_list() const {
   return m_list_view->get_list();
 }
 
@@ -194,7 +194,7 @@ void DropDownBox::on_click() {
 void DropDownBox::on_current(const optional<int>& current) {
   auto text = [&] {
     if(current) {
-      return displayTextAny(m_list_view->get_list()->at(*current));
+      return displayTextAny(m_list_view->get_list()->get(*current));
     }
     return QString();
   }();
@@ -218,6 +218,6 @@ void DropDownBox::revert_current() {
 void DropDownBox::submit() {
   m_submission = m_list_view->get_current()->get();
   if(m_submission) {
-    m_submit_signal(m_list_view->get_list()->at(*m_submission));
+    m_submit_signal(m_list_view->get_list()->get(*m_submission));
   }
 }

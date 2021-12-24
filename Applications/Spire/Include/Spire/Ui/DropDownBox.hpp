@@ -1,6 +1,5 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
-#include <any>
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -41,7 +40,7 @@ namespace Styles {
        * @param parent The parent widget.
        */
       explicit DropDownBox(
-        std::shared_ptr<ListModel> list, QWidget* parent = nullptr);
+        std::shared_ptr<AnyListModel> list, QWidget* parent = nullptr);
 
       /**
        * Constructs a DropDownBox using default local models.
@@ -49,7 +48,7 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list, ViewBuilder view_builder,
+      DropDownBox(std::shared_ptr<AnyListModel> list, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -60,13 +59,13 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list,
+      DropDownBox(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the model of list of values displayed. */
-      const std::shared_ptr<ListModel>& get_list() const;
+      const std::shared_ptr<AnyListModel>& get_list() const;
 
       /** Returns the current value model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
