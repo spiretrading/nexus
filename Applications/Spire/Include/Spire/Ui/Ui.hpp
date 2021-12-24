@@ -41,7 +41,6 @@ namespace Spire {
   class LayeredWidget;
   template<typename T> class ListIndexValueModel;
   class ListItem;
-  class ListValueModel;
   class ListView;
   class MoneyBox;
   class NavigationView;

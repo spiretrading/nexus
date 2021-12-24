@@ -15,6 +15,7 @@ namespace Spire {
   class FieldPointer;
   class KeySequenceValidationModel;
   template<typename T> class ListModel;
+  template<typename T> class ListValueModel;
   template<typename T> class LocalCompositeValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;

@@ -1,9 +1,9 @@
 #ifndef SPIRE_LIST_VIEW_HPP
 #define SPIRE_LIST_VIEW_HPP
 #include <QWidget>
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
-#include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -77,7 +77,7 @@ namespace Styles {
        *         <i>list</i> at the given <i>index</i>.
        */
       using ViewBuilder = std::function<
-        QWidget* (const std::shared_ptr<ListModel>& list, int index)>;
+        QWidget* (const std::shared_ptr<AnyListModel>& list, int index)>;
 
       /**
        * Signals that the current item was submitted.
@@ -90,7 +90,7 @@ namespace Styles {
        * the text representation of its value.
        */
       static QWidget* default_view_builder(
-        const std::shared_ptr<ListModel>& list, int index);
+        const std::shared_ptr<AnyListModel>& list, int index);
 
       /**
        * Constructs a ListView using default local models and a default view
@@ -99,7 +99,7 @@ namespace Styles {
        * @param parent The parent widget.
        */
       explicit ListView(
-        std::shared_ptr<ListModel> list, QWidget* parent = nullptr);
+        std::shared_ptr<AnyListModel> list, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
@@ -107,7 +107,7 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<ListModel> list, ViewBuilder view_builder,
+      ListView(std::shared_ptr<AnyListModel> list, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -118,13 +118,13 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      ListView(std::shared_ptr<ListModel> list,
+      ListView(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the list of values displayed. */
-      const std::shared_ptr<ListModel>& get_list() const;
+      const std::shared_ptr<AnyListModel>& get_list() const;
 
       /** Returns the current value model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
@@ -157,7 +157,7 @@ namespace Styles {
         void set(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<ListModel> m_list;
+      std::shared_ptr<AnyListModel> m_list;
       std::shared_ptr<CurrentModel> m_current;
       boost::optional<int> m_last_current;
       boost::optional<int> m_focus_index;
@@ -197,7 +197,7 @@ namespace Styles {
       void remove_item(int index);
       void move_item(int source, int destination);
       void update_layout();
-      void on_list_operation(const ListModel::Operation& operation);
+      void on_list_operation(const AnyListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);
       void on_selection(const boost::optional<int>& selected);
       void on_item_submitted(ItemEntry& item);
