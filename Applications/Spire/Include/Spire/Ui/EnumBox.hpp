@@ -2,10 +2,10 @@
 #define SPIRE_ENUM_BOX_HPP
 #include <QHBoxLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ListIndexValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
-#include "Spire/Ui/ListIndexValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 

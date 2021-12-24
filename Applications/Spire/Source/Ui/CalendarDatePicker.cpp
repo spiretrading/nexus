@@ -4,12 +4,12 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListValueModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -66,7 +66,7 @@ namespace {
   }
 }
 
-class CalendarListModel : public ListModel {
+class CalendarListModel : public ListModel<date> {
   public:
     CalendarListModel(std::shared_ptr<DateModel> current)
         : m_current(std::move(current)),
@@ -83,7 +83,7 @@ class CalendarListModel : public ListModel {
       return m_dates.size();
     }
 
-    const std::any& at(int index) const override {
+    const date& get(int index) const override {
       return m_dates[index];
     }
 
@@ -95,8 +95,8 @@ class CalendarListModel : public ListModel {
   private:
     std::shared_ptr<DateModel> m_current;
     scoped_connection m_current_connection;
-    std::array<std::any, CALENDAR_DAY_COUNT> m_dates;
-    ListModelTransactionLog m_transaction;
+    std::array<date, CALENDAR_DAY_COUNT> m_dates;
+    ListModelTransactionLog<CalendarListModel> m_transaction;
 
     void on_current(date current) {
       auto dates = get_calendar_dates(current);
@@ -204,13 +204,13 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
 
 class CalendarDayLabel : public QWidget {
   public:
-    CalendarDayLabel(std::shared_ptr<ListValueModel> current,
+    CalendarDayLabel(std::shared_ptr<ListValueModel<date>> current,
         std::shared_ptr<DateModel> month, QWidget* parent = nullptr)
         : QWidget(parent),
           m_current(std::move(current)),
           m_current_connection(m_current->connect_update_signal(
             [=] (const auto& current) {
-              on_current(std::any_cast<date>(current));
+              on_current(current);
             })),
           m_month(std::move(month)) {
       setFixedSize(scale(24, 24));
@@ -246,7 +246,7 @@ class CalendarDayLabel : public QWidget {
     }
 
   private:
-    std::shared_ptr<ListValueModel> m_current;
+    std::shared_ptr<ListValueModel<date>> m_current;
     scoped_connection m_current_connection;
     std::shared_ptr<DateModel> m_month;
     TextBox* m_label;
@@ -291,10 +291,12 @@ CalendarDatePicker::CalendarDatePicker(
   m_month_spinner->installEventFilter(this);
   layout->addWidget(m_month_spinner);
   layout->addWidget(make_day_header(this));
-  m_calendar_view = new ListView(
-    std::make_shared<CalendarListModel>(m_month_spinner->get()),
-    [=] (const std::shared_ptr<ListModel>& list, int index) {
-      return new CalendarDayLabel(std::make_shared<ListValueModel>(list, index),
+  m_calendar_model =
+    std::make_shared<CalendarListModel>(m_month_spinner->get());
+  m_calendar_view = new ListView(m_calendar_model,
+    [=] (const auto& list, int index) {
+      return new CalendarDayLabel(
+        std::make_shared<ListValueModel<date>>(list, index),
         m_month_spinner->get());
     }, this);
   m_month_spinner->get()->connect_update_signal([=] (auto current) {
@@ -352,8 +354,7 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
         if(*current_index == 0 && e->key() == Qt::Key_Left) {
           m_current->set(*m_current->get() - days(1));
           return true;
-        } else if(*current_index ==
-            m_calendar_view->get_list()->get_size() - 1 &&
+        } else if(*current_index == m_calendar_model->get_size() - 1 &&
             e->key() == Qt::Key_Right) {
           m_current->set(*m_current->get() + days(1));
           return true;
@@ -365,9 +366,8 @@ bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
 }
 
 boost::optional<int> CalendarDatePicker::get_index(date day) const {
-  auto first_date = m_calendar_view->get_list()->get<date>(0);
-  auto last_date =  m_calendar_view->get_list()->get<date>(
-    m_calendar_view->get_list()->get_size() - 1);
+  auto first_date = m_calendar_model->get(0);
+  auto last_date =  m_calendar_model->get(m_calendar_model->get_size() - 1);
   if(day < first_date || last_date < day) {
     return {};
   }
@@ -394,8 +394,8 @@ void CalendarDatePicker::on_current_month(date month) {
     m_calendar_view->isAncestorOf(focusWidget());
   auto minimum = m_current->get_minimum();
   auto maximum = m_current->get_maximum();
-  for(auto i = 0; i < m_calendar_view->get_list()->get_size(); ++i) {
-    auto current = m_calendar_view->get_list()->get<date>(i);
+  for(auto i = 0; i < m_calendar_model->get_size(); ++i) {
+    auto current = m_calendar_model->get(i);
     auto item = m_calendar_view->get_list_item(i);
     auto is_disabled = (minimum && current < *minimum) ||
       (maximum && current > *maximum);
@@ -421,7 +421,7 @@ void CalendarDatePicker::on_current_month(date month) {
 void CalendarDatePicker::on_list_current(const optional<int>& index) {
   if(index) {
     auto current_block = shared_connection_block(m_current_connection);
-    m_current->set(m_calendar_view->get_list()->get<date>(*index));
+    m_current->set(m_calendar_model->get(*index));
   }
 }
 

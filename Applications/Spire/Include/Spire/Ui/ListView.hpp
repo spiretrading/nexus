@@ -111,6 +111,16 @@ namespace Styles {
         QWidget* parent = nullptr);
 
       /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<typename T, typename F>
+      ListView(std::shared_ptr<ListModel<T>> list, F&& view_builder,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a ListView.
        * @param list The list model which holds a list of items.
        * @param current The current value model.
@@ -121,6 +131,20 @@ namespace Styles {
       ListView(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView.
+       * @param list The list model which holds a list of items.
+       * @param current The current value model.
+       * @param selection The selection model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<typename T, typename F>
+      ListView(std::shared_ptr<ListModel<T>> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection, F&& view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the list of values displayed. */
@@ -204,6 +228,25 @@ namespace Styles {
       void on_style();
       void on_query_timer_expired();
   };
+
+  template<typename T, typename F>
+  ListView::ListView(std::shared_ptr<ListModel<T>> list, F&& view_builder,
+    QWidget* parent)
+    : ListView(nullptr, [=, view_builder = std::forward<F>(view_builder)] (
+          const auto&, int index) {
+        return view_builder(list, index);
+      }, parent) {}
+
+  template<typename T, typename F>
+  ListView::ListView(std::shared_ptr<ListModel<T>> list,
+    std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection, F&& view_builder,
+    QWidget* parent)
+    : ListView(nullptr, std::move(current), std::move(selection),
+        [=, view_builder = std::forward<F>(view_builder)] (
+          const auto&, int index) {
+          return view_builder(list, index);
+        }, parent) {}
 }
 
 #endif
