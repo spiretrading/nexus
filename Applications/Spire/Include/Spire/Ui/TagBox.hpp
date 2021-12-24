@@ -1,8 +1,8 @@
 #ifndef SPIRE_TAG_BOX_HPP
 #define SPIRE_TAG_BOX_HPP
 #include <QWidget>
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
-#include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -36,11 +36,11 @@ namespace Styles {
        * @param current The current text's model.
        * @param parent The parent widget.
        */
-      TagBox(std::shared_ptr<ListModel> list,
+      TagBox(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
       /** Returns the list of tags. */
-      const std::shared_ptr<ListModel>& get_list() const;
+      const std::shared_ptr<AnyListModel>& get_list() const;
 
       /** Returns the current text model. */
       const std::shared_ptr<TextModel>& get_current() const;
@@ -86,9 +86,9 @@ namespace Styles {
       boost::signals2::scoped_connection m_text_box_style_connection;
       boost::signals2::scoped_connection m_focus_connection;
 
-      QWidget* make_tag(const std::shared_ptr<ListModel>& model, int index);
+      QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
       void on_focus(FocusObserver::State state);
-      void on_operation(const ListModel::Operation& operation);
+      void on_operation(const AnyListModel::Operation& operation);
       void on_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
