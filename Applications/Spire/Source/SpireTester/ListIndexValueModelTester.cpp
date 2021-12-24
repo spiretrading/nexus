@@ -1,15 +1,15 @@
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ListIndexValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
-#include "Spire/Ui/ListIndexValueModel.hpp"
 
 using namespace boost;
 using namespace Spire;
 
 TEST_SUITE("ListIndexValueModel") {
   TEST_CASE("get_set") {
-    auto list = std::make_shared<ArrayListModel>();
+    auto list = std::make_shared<ArrayListModel<int>>();
     list->push(12);
     list->push(4);
     list->push(8);
