@@ -50,7 +50,7 @@ namespace Spire {
     private:
       std::shared_ptr<TableModel> m_source;
       int m_column;
-      ListModelTransactionLog<ListModel<T>> m_transaction;
+      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       void on_operation(const TableModel::Operation& operation);

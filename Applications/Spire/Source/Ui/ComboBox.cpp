@@ -53,7 +53,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(m_input_box);
-  m_list_view = new ListView(m_matches, std::move(view_builder));
+  m_list_view = new ListView(
+    std::static_pointer_cast<AnyListModel>(m_matches), std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
   m_drop_down_current_connection =
@@ -326,7 +327,7 @@ void ComboBox::on_query(
 
 void ComboBox::on_drop_down_current(optional<int> index) {
   if(index) {
-    auto& value = m_drop_down_list->get_list_view().get_list()->get(*index);
+    auto value = m_drop_down_list->get_list_view().get_list()->get(*index);
     auto text = displayTextAny(value);
     {
       auto input_blocker = shared_connection_block(m_input_connection);

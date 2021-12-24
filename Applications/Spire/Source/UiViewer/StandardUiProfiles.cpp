@@ -9,6 +9,7 @@
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalCompositeValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -16,7 +17,6 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -263,7 +263,7 @@ namespace {
     using Type = T1;
     using ModelType = T2;
     auto& properties = profile.get_properties();
-    auto model = std::make_shared<ArrayListModel>();
+    auto model = std::make_shared<ArrayListModel<Type>>();
     for(auto property : properties) {
       if(get<bool>(property->get_name(), profile.get_properties()).get()) {
         model->push(*from_string<Type>(property->get_name()));
@@ -295,10 +295,10 @@ namespace {
     auto submit_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
     panel->connect_submit_signal(
-      [=] (const std::shared_ptr<ListModel>& submission) {
+      [=] (const std::shared_ptr<ListModel<QString>>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->at(i)) + " ";
+          result += displayTextAny(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });

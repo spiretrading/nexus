@@ -14,7 +14,6 @@ namespace Spire {
   class Box;
   class Button;
   class CalendarDatePicker;
-  template<typename T> class CastListModel;
   class CheckBox;
   class ClosedFilterPanel;
   class ComboBox;
@@ -44,7 +43,6 @@ namespace Spire {
   class NavigationView;
   class OverlayPanel;
   class RegionListItem;
-  class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
   class ScrollBox;

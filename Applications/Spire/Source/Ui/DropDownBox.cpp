@@ -42,8 +42,8 @@ namespace {
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list, QWidget* parent)
   : DropDownBox(std::move(list), ListView::default_view_builder, parent) {}
 
-DropDownBox::DropDownBox(
-  std::shared_ptr<AnyListModel> list, ViewBuilder view_builder, QWidget* parent)
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
+  ViewBuilder<> view_builder, QWidget* parent)
   : DropDownBox(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<LocalValueModel<optional<int>>>(),
@@ -51,7 +51,7 @@ DropDownBox::DropDownBox(
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+    std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
     QWidget* parent)
     : QWidget(parent) {
   m_list_view = new ListView(std::move(list), std::move(current),

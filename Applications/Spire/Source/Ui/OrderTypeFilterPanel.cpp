@@ -1,5 +1,5 @@
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
 using namespace Nexus;
@@ -22,8 +22,7 @@ namespace {
 
 OrderTypeFilterPanel* Spire::make_order_type_filter_panel(QWidget& parent) {
   return make_order_type_filter_panel(
-    std::make_shared<OrderTypeListModel>(std::make_shared<ArrayListModel>()),
-      parent);
+    std::make_shared<ArrayListModel<OrderType>>(), parent);
 }
 
 OrderTypeFilterPanel* Spire::make_order_type_filter_panel(
@@ -39,6 +38,6 @@ OrderTypeFilterPanel* Spire::make_order_type_filter_panel(
       model->set(values[type], 1, true);
     }
   }
-  return new ClosedFilterPanel(std::move(model),
-    QObject::tr("Filter by Order Type"), parent);
+  return new ClosedFilterPanel(
+    std::move(model), QObject::tr("Filter by Order Type"), parent);
 }

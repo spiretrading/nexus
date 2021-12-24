@@ -96,7 +96,7 @@ class CalendarListModel : public ListModel<date> {
     std::shared_ptr<DateModel> m_current;
     scoped_connection m_current_connection;
     std::array<date, CALENDAR_DAY_COUNT> m_dates;
-    ListModelTransactionLog<CalendarListModel> m_transaction;
+    ListModelTransactionLog<date> m_transaction;
 
     void on_current(date current) {
       auto dates = get_calendar_dates(current);
@@ -105,7 +105,7 @@ class CalendarListModel : public ListModel<date> {
       }
       m_transaction.transact([&] {
         for(auto i = 0; i < static_cast<int>(m_dates.size()); ++i) {
-          m_transaction.push(UpdateOperation{i});
+          m_transaction.push(UpdateOperation(i));
         }
       });
     }
@@ -294,7 +294,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_calendar_model =
     std::make_shared<CalendarListModel>(m_month_spinner->get());
   m_calendar_view = new ListView(m_calendar_model,
-    [=] (const auto& list, int index) {
+    [=] (const std::shared_ptr<ListModel<date>>& list, int index) {
       return new CalendarDayLabel(
         std::make_shared<ListValueModel<date>>(list, index),
         m_month_spinner->get());

@@ -68,7 +68,7 @@ struct TagBox::PartialListModel : public AnyListModel {
     return m_source->get_size() + 2;
   }
 
-  const std::any& get(int index) const override {
+  std::any at(int index) const override {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }

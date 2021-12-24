@@ -1,6 +1,6 @@
 #ifndef SPIRE_CLOSED_FILTER_PANEL_HPP
 #define SPIRE_CLOSED_FILTER_PANEL_HPP
-#include "Spire/Ui/ListModel.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -15,7 +15,7 @@ namespace Spire {
        * @param submission The list of values selected by the user.
        */
       using SubmitSignal =
-        Signal<void (const std::shared_ptr<ListModel>& submission)>;
+        Signal<void (const std::shared_ptr<AnyListModel>& submission)>;
 
       /**
        * Constructs a ClosedFilterPanel.
@@ -42,12 +42,12 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<TableModel> m_table;
-      std::shared_ptr<ArrayListModel> m_submission;
+      std::shared_ptr<ArrayListModel<std::any>> m_submission;
       FilterPanel* m_filter_panel;
       ListView* m_list_view;
       boost::signals2::scoped_connection m_table_connection;
 
-      void on_list_model_operation(const ListModel::Operation& operation);
+      void on_list_model_operation(const AnyListModel::Operation& operation);
       void on_table_model_operation(const TableModel::Operation& operation);
       void on_reset();
   };

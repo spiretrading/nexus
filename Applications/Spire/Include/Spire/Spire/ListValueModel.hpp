@@ -74,6 +74,9 @@ namespace Spire {
 
   template<typename T>
   const typename ListValueModel<T>::Type& ListValueModel<T>::get() const {
+    if(m_index == -1) {
+      throw std::out_of_range("Index out of range.");
+    }
     return m_source->get(m_index);
   }
 

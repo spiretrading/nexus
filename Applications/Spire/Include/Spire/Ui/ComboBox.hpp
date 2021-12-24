@@ -19,7 +19,7 @@ namespace Spire {
       using CurrentModel = ValueModel<std::any>;
 
       /** The type of function used to build a QWidget representing a value. */
-      using ViewBuilder = ListView::ViewBuilder;
+      using ViewBuilder = ListView::ViewBuilder<void>;
 
       /**
        * Signals that the value was submitted.
