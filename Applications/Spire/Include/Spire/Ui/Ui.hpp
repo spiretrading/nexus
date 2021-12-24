@@ -17,7 +17,6 @@ namespace Spire {
   template<typename T> class CastListModel;
   class CheckBox;
   class ClosedFilterPanel;
-  class ColumnViewListModel;
   class ComboBox;
   class DateBox;
   class DateFilterPanel;

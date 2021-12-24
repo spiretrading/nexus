@@ -9,6 +9,7 @@
 namespace Spire {
   template<typename T> class ArrayListModel;
   class CancelKeySequenceValidationModel;
+  template<typename T> class ColumnViewListModel;
   template<typename T> class CompositeValueModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
